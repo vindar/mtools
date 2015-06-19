@@ -1,0 +1,410 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug-DLL|Win32">
+      <Configuration>Debug-DLL</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug-DLL|x64">
+      <Configuration>Debug-DLL</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release-DLL|Win32">
+      <Configuration>Release-DLL</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release-DLL|x64">
+      <Configuration>Release-DLL</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{16837E6B-8097-42BE-87B4-5027529E1774}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>mtools</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>NotSet</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>NotSet</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>NotSet</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>NotSet</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-DLL|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>NotSet</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-DLL|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>NotSet</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-DLL|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>NotSet</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-DLL|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>NotSet</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug-DLL|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug-DLL|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release-DLL|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release-DLL|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <IncludePath>./;./headers/;$(CIMG_LIB)/;$(FLTK_LIB)/;$(FLTK_LIB)/zlib/;$(FLTK_LIB)/png/;$(FLTK_LIB)/jpeg/;$(IncludePath)</IncludePath>
+    <OutDir>./lib/</OutDir>
+    <IntDir>./lib/temp32d/</IntDir>
+    <TargetName>mtools32d</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <IncludePath>./;./headers/;$(CIMG_LIB)/;$(FLTK_LIB)/;$(FLTK_LIB)/zlib/;$(FLTK_LIB)/png/;$(FLTK_LIB)/jpeg/;$(IncludePath)</IncludePath>
+    <OutDir>./lib/</OutDir>
+    <IntDir>./lib/temp32/</IntDir>
+    <TargetName>mtools32</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>./;./headers/;$(CIMG_LIB)/;$(FLTK_LIB)/;$(FLTK_LIB)/zlib/;$(FLTK_LIB)/png/;$(FLTK_LIB)/jpeg/;$(IncludePath)</IncludePath>
+    <OutDir>./lib/</OutDir>
+    <IntDir>./lib/temp64d/</IntDir>
+    <TargetName>mtools64d</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>./;./headers/;$(CIMG_LIB)/;$(FLTK_LIB)/;$(FLTK_LIB)/zlib/;$(FLTK_LIB)/png/;$(FLTK_LIB)/jpeg/;$(IncludePath)</IncludePath>
+    <OutDir>./lib/</OutDir>
+    <IntDir>./lib/temp64/</IntDir>
+    <TargetName>mtools64</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-DLL|Win32'">
+    <IncludePath>./;./headers/;$(CIMG_LIB)/;$(FLTK_LIB)/;$(FLTK_LIB)/zlib/;$(FLTK_LIB)/png/;$(FLTK_LIB)/jpeg/;$(IncludePath)</IncludePath>
+    <OutDir>./lib/</OutDir>
+    <IntDir>./lib/temp32d-fltkdll/</IntDir>
+    <TargetName>mtools32d-fltkdll</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-DLL|Win32'">
+    <IncludePath>./;./headers/;$(CIMG_LIB)/;$(FLTK_LIB)/;$(FLTK_LIB)/zlib/;$(FLTK_LIB)/png/;$(FLTK_LIB)/jpeg/;$(IncludePath)</IncludePath>
+    <OutDir>./lib/</OutDir>
+    <IntDir>./lib/temp32-fltkdll/</IntDir>
+    <TargetName>mtools32-fltkdll</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-DLL|x64'">
+    <IncludePath>./;./headers/;$(CIMG_LIB)/;$(FLTK_LIB)/;$(FLTK_LIB)/zlib/;$(FLTK_LIB)/png/;$(FLTK_LIB)/jpeg/;$(IncludePath)</IncludePath>
+    <OutDir>./lib/</OutDir>
+    <IntDir>./lib/temp64d-fltkdll/</IntDir>
+    <TargetName>mtools64d-fltkdll</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-DLL|x64'">
+    <IncludePath>./;./headers/;$(CIMG_LIB)/;$(FLTK_LIB)/;$(FLTK_LIB)/zlib/;$(FLTK_LIB)/png/;$(FLTK_LIB)/jpeg/;$(IncludePath)</IncludePath>
+    <OutDir>./lib/</OutDir>
+    <IntDir>./lib/temp64-fltkdll/</IntDir>
+    <TargetName>mtools64-fltkdll</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalOptions>/Zm200 %(AdditionalOptions)</AdditionalOptions>
+      <PrecompiledHeaderFile>stdafx_mtools.h</PrecompiledHeaderFile>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <ProgramDataBaseFileName>./lib/mtools32d.pdb</ProgramDataBaseFileName>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug-DLL|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;FL_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalOptions>/Zm200 %(AdditionalOptions)</AdditionalOptions>
+      <PrecompiledHeaderFile>stdafx_mtools.h</PrecompiledHeaderFile>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <ProgramDataBaseFileName>./lib/mtools32d-fltkdll.pdb</ProgramDataBaseFileName>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalOptions>/Zm200 %(AdditionalOptions)</AdditionalOptions>
+      <PrecompiledHeaderFile>stdafx_mtools.h</PrecompiledHeaderFile>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <ProgramDataBaseFileName>./lib/mtools64d.pdb</ProgramDataBaseFileName>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug-DLL|x64'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;FL_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalOptions>/Zm200 %(AdditionalOptions)</AdditionalOptions>
+      <PrecompiledHeaderFile>stdafx_mtools.h</PrecompiledHeaderFile>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <ProgramDataBaseFileName>./lib/mtools64d-fltkdll.pdb</ProgramDataBaseFileName>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalOptions>/Zm200 %(AdditionalOptions)</AdditionalOptions>
+      <PrecompiledHeaderFile>stdafx_mtools.h</PrecompiledHeaderFile>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <DebugInformationFormat>None</DebugInformationFormat>
+      <ProgramDataBaseFileName>./lib/mtools32.pdb</ProgramDataBaseFileName>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release-DLL|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;FL_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalOptions>/Zm200 %(AdditionalOptions)</AdditionalOptions>
+      <PrecompiledHeaderFile>stdafx_mtools.h</PrecompiledHeaderFile>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <DebugInformationFormat>None</DebugInformationFormat>
+      <ProgramDataBaseFileName>./lib/mtools32-fltkdll.pdb</ProgramDataBaseFileName>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalOptions>/Zm200 %(AdditionalOptions)</AdditionalOptions>
+      <PrecompiledHeaderFile>stdafx_mtools.h</PrecompiledHeaderFile>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <DebugInformationFormat>None</DebugInformationFormat>
+      <ProgramDataBaseFileName>./lib/mtools64.pdb</ProgramDataBaseFileName>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release-DLL|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;FL_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalOptions>/Zm200 %(AdditionalOptions)</AdditionalOptions>
+      <PrecompiledHeaderFile>stdafx_mtools.h</PrecompiledHeaderFile>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <DebugInformationFormat>None</DebugInformationFormat>
+      <ProgramDataBaseFileName>./lib/mtools64-fltkdll.pdb</ProgramDataBaseFileName>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="headers\containers\bitgraphZ2.hpp" />
+    <ClInclude Include="headers\containers\extab.hpp" />
+    <ClInclude Include="headers\containers\grid_basic.hpp" />
+    <ClInclude Include="headers\containers\grid_factor.hpp" />
+    <ClInclude Include="headers\containers\grid_static.hpp" />
+    <ClInclude Include="headers\containers\internals_grid.hpp" />
+    <ClInclude Include="headers\containers\randomurn.hpp" />
+    <ClInclude Include="headers\containers\RWtreegraph.hpp" />
+    <ClInclude Include="headers\graphics\cimgwidget.hpp" />
+    <ClInclude Include="headers\graphics\cimg_plugin.hpp" />
+    <ClInclude Include="headers\graphics\customcimg.hpp" />
+    <ClInclude Include="headers\graphics\drawable2Dobject.hpp" />
+    <ClInclude Include="headers\graphics\edgesiteimage.hpp" />
+    <ClInclude Include="headers\graphics\interpolation.hpp" />
+    <ClInclude Include="headers\graphics\latticedrawer.hpp" />
+    <ClInclude Include="headers\graphics\plot2Darray.hpp" />
+    <ClInclude Include="headers\graphics\plot2Daxes.hpp" />
+    <ClInclude Include="headers\graphics\plot2Dbasegraph.hpp" />
+    <ClInclude Include="headers\graphics\plot2Dfun.hpp" />
+    <ClInclude Include="headers\graphics\plot2Dgrid.hpp" />
+    <ClInclude Include="headers\graphics\plot2Dlattice.hpp" />
+    <ClInclude Include="headers\graphics\plot2Dvector.hpp" />
+    <ClInclude Include="headers\graphics\view2Dwidget.hpp" />
+    <ClInclude Include="headers\graphics\plotter2D.hpp" />
+    <ClInclude Include="headers\graphics\plotter2Dobj.hpp" />
+    <ClInclude Include="headers\graphics\rangemanager.hpp" />
+    <ClInclude Include="headers\graphics\rgbc.hpp" />
+    <ClInclude Include="headers\graphics\simpleBMP.hpp" />
+    <ClInclude Include="headers\io\console.hpp" />
+    <ClInclude Include="headers\io\fileio.hpp" />
+    <ClInclude Include="headers\io\fltk_supervisor.hpp" />
+    <ClInclude Include="headers\io\internals_serialization.hpp" />
+    <ClInclude Include="headers\io\logfile.hpp" />
+    <ClInclude Include="headers\io\serialization.hpp" />
+    <ClInclude Include="headers\maths\rect.hpp" />
+    <ClInclude Include="headers\maths\sqrmatrix.hpp" />
+    <ClInclude Include="headers\maths\vec.hpp" />
+    <ClInclude Include="headers\misc\error.hpp" />
+    <ClInclude Include="headers\misc\indirectcall.hpp" />
+    <ClInclude Include="headers\misc\internals_stringfct.hpp" />
+    <ClInclude Include="headers\misc\memory.hpp" />
+    <ClInclude Include="headers\misc\metaprog.hpp" />
+    <ClInclude Include="headers\misc\misc.hpp" />
+    <ClInclude Include="headers\misc\stringfct.hpp" />
+    <ClInclude Include="headers\misc\timefct.hpp" />
+    <ClInclude Include="headers\mtools.hpp" />
+    <ClInclude Include="headers\randomgen\classiclaws.hpp" />
+    <ClInclude Include="headers\randomgen\krikunlaw.hpp" />
+    <ClInclude Include="headers\randomgen\mt2002_32.hpp" />
+    <ClInclude Include="headers\randomgen\mt2004_64.hpp" />
+    <ClInclude Include="headers\randomgen\srwonZandZ2.hpp" />
+    <ClInclude Include="headers\randomgen\srwonZ_cdf.hpp" />
+    <ClInclude Include="headers\randomgen\xorgen4096_64.hpp" />
+    <ClInclude Include="stdafx_mtools.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="sources\cimgwidget.cpp" />
+    <ClCompile Include="sources\console.cpp" />
+    <ClCompile Include="sources\drawable2Dobject.cpp" />
+    <ClCompile Include="sources\edgesiteimage.cpp" />
+    <ClCompile Include="sources\error.cpp" />
+    <ClCompile Include="sources\fileio.cpp" />
+    <ClCompile Include="sources\fltk_supervisor.cpp" />
+    <ClCompile Include="sources\interpolation.cpp" />
+    <ClCompile Include="sources\logfile.cpp" />
+    <ClCompile Include="sources\plot2Daxes.cpp" />
+    <ClCompile Include="sources\plot2Dbasegraph.cpp" />
+    <ClCompile Include="sources\plot2Dgrid.cpp" />
+    <ClCompile Include="sources\view2Dwidget.cpp" />
+    <ClCompile Include="sources\plotter2D.cpp" />
+    <ClCompile Include="sources\plotter2Dobj.cpp" />
+    <ClCompile Include="sources\rangemanager.cpp" />
+    <ClCompile Include="sources\rgbc.cpp" />
+    <ClCompile Include="sources\simpleBMP.cpp" />
+    <ClCompile Include="sources\stringfct.cpp" />
+    <ClCompile Include="sources\timefct.cpp" />
+    <ClCompile Include="stdafx_mtools.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug-DLL|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release-DLL|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug-DLL|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release-DLL|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

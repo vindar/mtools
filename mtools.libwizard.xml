@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Installation script -->
+<VAR name = "LIB_INSTALLED" value = "MTOOLS2015_INSTALLED"/> <!-- alias for the library "is installed" flag -->
+<VAR name = "LIB_INSTALL" value = "MTOOLS2015_INSTALL"/> <!-- alias for the library "should install" flag -->
+<!-- First, we check if already installed, force install or if we should ask  -->
+<IFEQUAL expr1 = "%%LIB_INSTALLED%%" expr2 = "yes" > <TEXT> Library %LibName% already installed. Skipping... </TEXT> <EXIT/> </IFEQUAL> <!-- nothing to do if already installed -->
+<IFEQUAL expr1 = "%%LIB_INSTALL%%" expr2 = "" > <YESNO text = "Do you want to install the %LibName% library ?" name = "%LIB_INSTALL%" /> </IFEQUAL> <!-- Query whether we hould install the library -->
+<IFNOTEQUAL expr1 = "%%LIB_INSTALL%%" expr2 = "yes" > <EXIT/>  </IFNOTEQUAL> <!-- quit if we should not install the library -->
+
+<!-- here, we really install the library -->
+<YESNO text = "Do you want to install mtools locally ?" name = "MTOOLS_LOCAL_INSTALL" />
+<IFEQUAL expr1 = "%MTOOLS_LOCAL_INSTALL%" expr2 = "yes" > 
+	<!-- local installation of the library -->
+	<COPY source = "%LibDir%/mtools/headers/*" dest ="%ProjectDir%/mtools/*" />
+	<COPY source = "%LibDir%/mtools/lib/*.lib" dest ="%ProjectDir%/mtools/lib/*.*" />
+	<COPY source = "%LibDir%/mtools/lib/*.pdb" dest ="%ProjectDir%/mtools/lib/*.*" />
+	<COPY source = "%LibDir%/mtools/lib/*.idb" dest ="%ProjectDir%/mtools/lib/*.*" />
+	<INCLUDE_PATH path = "%ProjectDir%/mtools/" config = "all" /> 
+	<LIB_PATH path = "%ProjectDir%/mtools/lib/" config = "all" />
+</IFEQUAL>
+<IFNOTEQUAL expr1 = "%MTOOLS_LOCAL_INSTALL%" expr2 = "yes" > 
+	<!-- distant installation of the library -->
+	<INCLUDE_PATH path = "%LibDir%/mtools/headers/" config = "all" /> 
+	<LIB_PATH path = "%LibDir%/mtools/lib/" config = "all" />
+</IFNOTEQUAL>
+
+<IFEQUAL expr1 = "%FLTK_USEDLL%" expr2 = "" > <YESNO text = "Do you want to use the DLL version of FLTK ?" name = "FLTK_USEDLL" />  </IFEQUAL> <!-- Query whether we should install the library -->
+<IFEQUAL expr1 = "%FLTK_USEDLL%" expr2 = "yes" > 
+	<!-- use the DLL version of FLTK -->
+	<LIB filename = "mtools32-fltkdll.lib" config = "win32" />
+	<LIB filename = "mtools32d-fltkdll.lib" config = "win32d" />
+	<LIB filename = "mtools64-fltkdll.lib" config = "x64" />
+	<LIB filename = "mtools64d-fltkdll.lib" config = "x64d" />	
+</IFEQUAL>
+<IFNOTEQUAL expr1 = "%FLTK_USEDLL%" expr2 = "yes" > 
+	<!-- use the static LIB version of FLTK -->
+	<LIB filename = "mtools32.lib" config = "win32" />
+	<LIB filename = "mtools32d.lib" config = "win32d" />
+	<LIB filename = "mtools64.lib" config = "x64" />
+	<LIB filename = "mtools64d.lib" config = "x64d" />	
+</IFNOTEQUAL>
+
+<MISC_COMPILER_OPTION option = "/Zm400" config = "all" />
+
+<MAIN_CPP>
+#include "mtools.hpp"
+using namespace mtools;
+</MAIN_CPP>
+<STDAFX_H>
+#if defined (_MSC_VER) 
+#pragma warning( push )
+#pragma warning( disable : 4312 )
+#pragma warning( disable : 4319 )
+#endif
+#include "graphics/customcimg.hpp"
+#if defined (_MSC_VER) 
+#pragma warning( pop )
+#endif
+#include "mtools.hpp"
+</STDAFX_H>
+<!-- mark CImg as needed to be installed -->
+<VAR name = "CIMG_NOMAIN" value = "yes" /> <!-- prevent CImg to interfere with the plugin -->
+<VAR name = "CIMG_INSTALL" value = "yes" /> <!-- set the flag for installation of CImg to true -->
+<!-- mark FLTK as needed to be installed -->
+<VAR name = "FLTK_INSTALL" value = "yes" /> <!-- set the flag for installation of fltk to true -->
+<VAR name = "FLTK_ADDMISC" value = "yes" /> <!-- set the flag to force installation of the auxiliary lib when fltk is installled as a static library -->
+<!-- done ! -->
+<VAR name = "%LIB_INSTALLED%"  value = "yes" /> <!-- Mark the library as installed -->
