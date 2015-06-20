@@ -4,6 +4,16 @@
 *.sln.docstates
 *.userprefs
 
+[Cc]out.txt
+[Dd]ebug.txt
+examples/*/*.png
+examples/*/*.jpg
+examples/*/*.jpeg
+examples/*/*.bmp
+
+
+
+
 [Ll]ib/
 [Bb]in/
 [Oo]bj/
