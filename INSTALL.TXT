@@ -2,27 +2,26 @@
          INSTALLATION OF MTOOLS
 ---------------------------------------------
 
-The mtools library uses several C++11 specific constructs as well 
-as the new headers in the STL so you need a recent compiler to 
-build it. It also depends a few other libraries cross platform
-libraries:
+The library uses several C++11 specific constructs and as some of 
+the new headers in the STL so you need a fairly recent compiler to 
+build it. It also depends a few other libraries:
 
-	- CImg (http://cimg.eu)
-	- fltk (http://www.fltk.org)
-	- zlib (http://www.zlib.net)
-	- libpng (http://www.libpng.org)
-	- libjpeg (http://www.libpng.org)
+	- CImg (http://cimg.eu) [image library]
+	- fltk (http://www.fltk.org) [gui library]
+	- zlib (http://www.zlib.net) [compression library]
+	- libpng (http://www.libpng.org) [for reading/writing png images]
+	- libjpeg (http://sourceforge.net/projects/libjpeg/) [for reading/writing jpeg images]
 
 ----------------------
      On windows
 ----------------------
 [tested on Windows 7 with VS2015RC]
 
-You must first install the libraries above before compiling mtools. 
-Since FLTK already bundles zlib, libpng and libjpeg, it suffices 
-to install fltk and CImg. The visual studio solution/project files 
-define both 32bit and 64bit configurations hence every library 
-should also provide binaries for both platform. 
+You must install the libraries above before compiling mtools. Since 
+FLTK already bundles zlib, libpng and libjpeg, it suffices to install 
+fltk and CImg. The visual studio solution/project files  define both 
+32bit and 64bit configurations so the libraries should also provide 
+binaries for both platform. 
 
 1) Download fltk (http://www.fltk.org), version 1.3.3 or above. 
 
@@ -32,59 +31,56 @@ lib/ subdirectory.
 
 3) Create a new directory lib32/ at the root of the FLTK source tree 
 and move the content of lib/ to this new directory. add also 
-fltkdll.dll  and fltkdlld.dll to lib32/ (these are not by default in 
-the /lib directory). The directory should therefore contain at least: 
-fltk.lib, fltkd.lib, fltkdll.lib, fltkdlld.lib, fltkdll.dll, 
-fltkdlld.dll, fltkimages, fltkimagesd, fltkjpeg.lib, fltkjpegd.lib, 
-fltkpng.lib, fltkpngd.lib, fltkzlib.lib, fltkzlib
+fltkdll.dll  and fltkdlld.dll to lib32/ (these files are not by default 
+in  the /lib directory). The directory should therefore contain at least: 
+fltk.lib, fltkd.lib, fltkdll.lib, fltkdlld.lib, fltkdll.dll, fltkdlld.dll,
+fltkimages, fltkimagesd, fltkjpeg.lib, fltkjpegd.lib,  fltkpng.lib, 
+fltkpngd.lib, fltkzlib.lib, fltkzlib
 
-4) Repeat the same step building the libraries for 64bit and then, again, 
-move all the binaries to a directory named lib64/ at the root of the FLTK 
-source tree.
+4) Repeat the same step building the libraries for 64bit. Again, move all 
+the binaries to a directory named lib64/ at the root of the FLTK source 
+tree.
 
 5) Define an global environment variable 'FLTK_LIB' in Windows pointing 
-to FLTK root directory. Normally, this directory should contain at least 
-the following sub directories:
-                 - /FL/   with the FLTK headers
-                 - /zlib/ with the zlib headers
-                 - /png/  with the libpng headers
-                 - /jpeg/ with the libjpeg headers
-                 - /lib32/ with the binaries (32 bit)
-                 - /lib64/ with the binaries (64 bit)
+to FLTK root directory. The directory pointed by 'FLTK_LIB'should contain 
+at least the following sub directories:
+        - /FL/   with the FLTK headers
+        - /zlib/ with the zlib headers
+        - /png/  with the libpng headers
+        - /jpeg/ with the libjpeg headers
+        - /lib32/ with the binaries (32 bit)
+        - /lib64/ with the binaries (64 bit)
 
-6) download CImg (http://cimg.eu) version 1.6.3 or higher. There is nothing
+6) Download CImg (http://cimg.eu) version 1.6.3 or higher. There is nothing
 to install, just put the CImg folder wherever you please and then define
 the environement variable 'CIMG_LIB' in Windows so that it points to the 
-CImg directory.
+CImg directory (i.e. the directory that contain CImh.h)
 
-5) open the mtools.sln file at the root of the mtools source tree with 
-VS2105 and build each versions of the library. Hopefully this should work...
+5) Open the mtools.sln file at the root of the mtools source tree with 
+VS2105 and build each versions of the library. Hopefully it should work...
+You can try the test program to check that everything is ok. 
 
-NOTE: On windows, programs making use of the mtools::cout console object 
-before main() even start (e.g. in constructors of global objects) should 
-always link against the DLL version of fltk instead of the static library 
-as it will insure that FLTK is always properly initialized before it is 
-used. Otherwise, "static initialization fiasco" type problem may occur...
-
+NOTE: If you use mtools::cout before 'main()' starts, you should probably 
+use the mtools version linked against the DLL version of FLTK as it will 
+insure that FLTK is always properly initialized before it is used. Otherwise, 
+"static initialization fiasco" type problems may occur...
 
 
 ----------------------
       On Linux 
 ----------------------
-[tested on a virtual machine with Arch-Linux and with gcc 5.1]
+[tested on Arch-Linux and with gcc 5.1]
 
 1) Make sure that the required libs (fltk, zlib, libpng, libjpeg and CImg) 
-are installed on the system, up to date, and accessible (in /usr/...
-or /usr/local/...)
+are installed on the system, up to date, and accessible (in /usr, /usr/local/...)
 
-2) Run 'make' in the linux/ sub-directory of the mtools tree and pray. 
+2) Run 'make' in the linux/ sub-directory of the mtools tree and wait/pray. 
 
 
 
 ----------------------
      On MacOS X
 ----------------------
-Good luck to you ! (it should theorically work wihtout much trouble but I 
-have never tried...)
+Good luck to you ! It should 'theorically' work but I have never tried...
 
 
