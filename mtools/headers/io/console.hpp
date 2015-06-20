@@ -126,6 +126,27 @@ namespace mtools
 
 
         /**
+         * Query a boolean from the console. Set to true if the user type one of the ofllowing key: 'o',
+         * 'O', 'y', 'Y', '1' and false if the user type 'N', 'n' or the escape key.
+         *
+         * @param [in,out]  b   The boolean to fill the anwser with.
+         *
+         * @return  The console for chaining
+         **/
+        Console & operator>>(bool & b);
+
+
+        /**
+        * Query a char from the console.
+        *
+        * @param [in,out]  c   The char to fill. 
+        *
+        * @return  The console for chaining
+        **/
+        Console & operator>>(char & c);
+
+
+        /**
          * Wait for the user to press a key and return its code.
          *
          * @return  The key code (FLTK code). 

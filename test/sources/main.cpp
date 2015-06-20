@@ -190,7 +190,12 @@ void load(uint64 steps, double delta)
 
 int main()
     {
-   
+
+    bool b;
+    cout << "bool = "; cout >> b; cout << "[" << b << "]\n";
+    char c;
+    cout << "bool = "; cout >> c; cout << "[" << c << "]\n";
+
   //  load(100000000, 0.5);
     makeLERRW(1000000, 0.5);
     return 0;

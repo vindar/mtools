@@ -6,13 +6,10 @@
 
 [Cc]out.txt
 [Dd]ebug.txt
-examples/*/*.png
-examples/*/*.jpg
-examples/*/*.jpeg
-examples/*/*.bmp
-
-
-
+examples/*/*.[Pp][Nn][Gg]
+examples/*/*.[Jj][Pp][Gg]
+examples/*/*.[Jj][Pp][Ee][Gg]
+examples/*/*.[Bb][Mm][pp]
 
 [Ll]ib/
 [Bb]in/

@@ -413,6 +413,27 @@ namespace mtools
         }
 
 
+    Console & Console::operator>>(bool & b)
+        {
+        while (1)
+            {
+            int k = getKey();
+            if ((k == 'O') || (k == 'o') || (k == 'Y') || (k == 'y') || (k == '1')) { b = true; return *this;; }
+            if ((k == 'N') || (k == 'n') || (k == 27)) { b = false; return *this;; }
+            }
+        }
+
+
+    Console & Console::operator>>(char & c)
+        {
+        while(1)
+            {
+            int k = getKey();
+            if (k < 256) { c = (char)k; return(*this); }
+            }
+        }
+
+
     int Console::getKey()
     {
         if (!_startProtect()) { return 0; }
