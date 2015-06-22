@@ -1,16 +1,23 @@
-/***********************************************************************************************************************//**
-* @file planedrawer.hpp
-* @version 2.2
-* @author Vindar
-* @date 02 / 03 / 2015
-* @copyright GNU Public License.
-* @note header only
-*
-* Create an image of a portion of R^2
-***************************************************************************************************************************/
+/** @file planedrawer.hpp */
+//
+// Copyright 2015 Arvind Singh
+//
+// This file is part of the mtools library.
+//
+// mtools is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with mtools  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef INC_planedrawer_HPP
-#define INC_planedrawer_HPP
+#pragma once
 
 
 #include "drawable2Dobject.hpp"
@@ -48,11 +55,12 @@ namespace mtools
 
 
 /**
- * Draws part of a plane into into a CImg image. This class implement the Drawable2DObject interface.
+ * Draws part of a plane into into a CImg image. This class implement the Drawable2DObject
+ * interface.
  * 
- * - The parameters of the drawing are set using the `setImageType` , `setParam`, `ResetDrawing`
- * method. The method `work` is used to create the drawing itself. The actual warping of the
- * image into a given CImg image is performed using the `drawOnto` method which is quite fast.
+ * - The parameters of the drawing are set using the `setParam`  method. The method `work` is
+ * used to create the drawing itself. The actual warping of the image onto a given CImg image is
+ * performed using the `drawOnto` method.
  * 
  * - All the public methods of this class are thread-safe : they can be called simultaneously
  * from any thread and the call are lined up. In particular, the `work` method can be time
@@ -60,12 +68,12 @@ namespace mtools
  * class for a generic implementation.
  * 
  * - The template PlaneObj must implement a method `RGBc getColor(fVec2 pos)` which return the
- * color associated with a given point. The method should be made as fast as possible. The fourth
- * channel of the returned color will be used when drawing on 4 channel images and ignored when
- * drawing on 3 channel images.
- *        
- * @tparam  PlaneObj    Type of the lattice object. Can be any class provided that it defines the 
- *                      method `RGBc getColor(fVec2 pos)` method.
+ * color associated with a given point. The method should be made as fast as possible. The
+ * fourth channel of the returned color will be used when drawing on 4 channel images and
+ * ignored when drawing on 3 channel images.
+ *
+ * @tparam  PlaneObj    Type of the lattice object. Can be any class which define the method
+ *                      `RGBc getColor(fVec2 pos)` method.
  **/
 template<class PlaneObj> class PlaneDrawer : public mtools::internals_graphics::Drawable2DObject
 {
@@ -85,7 +93,7 @@ public:
 		_g_r(-100.5, 100.5, -100.5, 100.5), 
 		_g_redraw(true)
 		{
-        static_assert(mtools::metaprog::has_getColor<LatticeObj, mtools::iVec2>::value, "The object T must be implement a 'RGBc getColor(iVec2 pos)' method.");
+        static_assert(mtools::metaprog::has_getColorfVec<LatticeObj, mtools::fVec2>::value, "The object T must be implement a 'RGBc getColor(fVec2 pos)' method.");
         _initInt16Buf();
 		_initRand();
 		}
@@ -108,10 +116,10 @@ public:
     * Set the parameters of the drawing. Calling this method interrupt any work() in progress. 
     * This method is fast, it does not draw anything.
     **/
-    virtual void setParam(mtools::fRect range, mtools::iVec2 imageSize)
+    virtual void setParam(mtools::fRect range, mtools::iVec2 imageSize) override
         {
         MTOOLS_ASSERT(!range.isEmpty());
-        MTOOLS_ASSERT((imageSize.X() >0) && (imageSize.Y()>0));     // make sure the image not empty.
+        MTOOLS_ASSERT((imageSize.X() >0) && (imageSize.Y()>0));
         ++_g_requestAbort; // request immediate stop of the work method if active.
             {
             std::lock_guard<std::timed_mutex> lg(_g_lock); // and wait until we acquire the lock 
@@ -128,7 +136,7 @@ public:
      * Force a reset of the drawing. Calling this method interrupt any work() is progress. This
      * method is fast, it does not draw anything.
      **/
-    virtual void resetDrawing()
+    virtual void resetDrawing() override
         {
         ++_g_requestAbort; // request immediate stop of the work method if active.
             {
@@ -141,17 +149,17 @@ public:
 
 
     /**
-     * Draw onto a given image. This method is called by the composer when it want the picture. This
-     * method is fast and does not "compute" anything. It simply warp the current drawing onto a
-     * given cimg image.
+     * Draw onto a given image. This method does not "compute" anything. It simply warp the current
+     * drawing onto a given cimg image.
      * 
      * The provided cimg image may must have 3 or 4 channel and the same size as that set via
      * setParam().
      * 
      * - If im has 3 channels, then the drawer uses only 3 channels for the lattice and simply
-     * superpose the image created over im (multiplying it by an optional opacity parameter).
+     * superpose the image created over im (multiplying it by the optional opacity parameter).
      * 
-     * - If im has 4 channels, the drawer uses also 4th channel for the lattice.
+     * - If im has 4 channels, the drawer uses also 4th channel for the latticeusing the A over B
+     * operation (and multipliyng by the opacity parameter).  
      * 
      * The method is faster when transparency is not used (i.e. when the supplied image im has 3
      * channel) and fastest when opacity is 1.0 (or 0.0, but this does nothing).
@@ -159,13 +167,11 @@ public:
      * @param [in,out]  im  The image to draw onto (must be a 3 or 4 channel image and it size must
      *                      be equal to the size previously set via the setParam() method.
      * @param   opacity     The opacity that should be applied to the picture prior to drawing onto
-     *                      im. If set to 0.0, then the method returns without drawing anything. The
-     *                      opacity is multiplied with other opacities when dealing with 4 channel
-     *                      images.
+     *                      im. If set to 0.0, then the method returns without drawing anything.
      *
      * @return  The quality of the drawing performed (0 = nothing drawn, 100 = perfect drawing).
      **/
-    virtual int drawOnto(cimg_library::CImg<unsigned char> & im, float opacity = 1.0)
+    virtual int drawOnto(cimg_library::CImg<unsigned char> & im, float opacity = 1.0) override
         {
         MTOOLS_ASSERT((im.width() == _g_imSize.X()) && (im.height() == _g_imSize.Y()));
         MTOOLS_ASSERT((im.spectrum() == 3) || (im.spectrum() == 4));
@@ -188,12 +194,11 @@ public:
      *
      * @return  The current quality between 0 (nothing to show) and 100 (perfect drawing).
      **/
-    virtual int quality() const {return _g_current_quality;}
+    virtual int quality() const  override {return _g_current_quality;}
 
 
     /**
-     * Works on the drawing for a maximum specified period of time. If the drawing is already
-     * completed, returns directly.
+     * Works on the drawing for a maximum specified period of time.
      * 
      * The function has the lowest priority of all the public methods and may be interrupted (hence
      * returning early) if another method such as drawOnto(),setParam()... is accessed by another
@@ -202,14 +207,14 @@ public:
      * If another thread already launched some work, this method will wait until the lock is
      * released (but will return if the time allowed is exceeded).
      * 
-     * A typical time span of 50/100ms is usually enough to get some drawing to show. If maxtime_ms
-     * = 0, then the function return immediately (with the current quality of the drawing).
+     * If maxtime_ms = 0, then the function return immediately (with the current quality of the
+     * drawing).
      *
      * @param   maxtime_ms  The maximum time in millisecond allowed for drawing.
      *
      * @return  The quality of the current drawing:  0 = nothing to show, 100 = perfect drawing.
      **/
-    virtual int work(int maxtime_ms)
+    virtual int work(int maxtime_ms) override
         {
         MTOOLS_ASSERT(maxtime_ms >= 0);
         if (((int)_g_requestAbort > 0) || (maxtime_ms <= 0)) { return _g_current_quality; } // do not even try to work if the flag is set
@@ -226,14 +231,14 @@ public:
      *
      * @return  true.
      **/
-    virtual bool needWork() const { return true; }
+    virtual bool needWork() const  override { return true; }
 
 
 
     /**
      * Stop any ongoing work and then return
      **/
-    virtual void stopWork()
+    virtual void stopWork() override
         {
         ++_g_requestAbort; // request immediate stop of the work method if active.
             {
@@ -269,7 +274,7 @@ private:
 // THE PIXEL DRAWER
 // ****************************************************************
 
-fRect           _pr;                    // the current range
+//fRect           _pr;                    // the current range
 uint32 			_counter1,_counter2;	// counter for the number of pixel added in each cell: counter1 for cells < (_qi,_qj) and counter2 for cells >= (_qi,qj)
 uint32 			_qi,_qj;		        // position where we stopped previously
 int 			_phase;			        // the current phase of the drawing
@@ -439,6 +444,7 @@ void _workPixel(int maxtime_ms)
     _qualityPixelDraw(); // update the quality
     return;
     }
+
 
 
 
@@ -692,7 +698,6 @@ inline void _warpInt16Buf_4channel(CImg<unsigned char> & im, float op) const
 // ****************************************************************
 
 static const int _maxtic = 100;	    // number of tic until we look for time
-static const int _maxtic2 = 10;   	// number of tic until we look for time
 int _tic;							// current tic
 clock_t _stime;						// start time
 
@@ -706,23 +711,11 @@ inline bool _isTime(uint32 ms)
 	++_tic;
     if (_g_requestAbort > 0) {return true; }
     if (_tic < _maxtic) return false;
-    if (_g_drawingtype == TYPEPIXEL) { _qualityPixelDraw(); } else { _qualityImageDraw(); } // update the quality of the drawing
+    _qualityPixelDraw(); // update the quality of the drawing
 	if (((clock() - _stime)*1000)/CLOCKS_PER_SEC > (clock_t)ms) {_tic = _maxtic; return true;}
 	_tic = 0;
 	return false;
 	}
-
-/* check more often */
-inline bool _isTime2(uint32 ms)
-    {
-    ++_tic;
-    if (_g_requestAbort > 0) {return true; }
-    if (_tic < _maxtic2) return false;
-    if (_g_drawingtype == TYPEPIXEL) { _qualityPixelDraw(); } else { _qualityImageDraw(); } // update the quality of the drawing
-    if (((clock() - _stime) * 1000) / CLOCKS_PER_SEC > (clock_t)ms) { _tic = _maxtic; return true; }
-    _tic = 0;
-    return false;
-    }
 
 
 
@@ -755,10 +748,6 @@ inline double _rand_double0()
 // ****************************************************************
 
 
-/* return the average number of site per pixel */
-inline double _sitePerPixel(const fRect & r,const iVec2 & sizeIm) const {return (r.lx()/sizeIm.X())*(r.ly()/sizeIm.Y());}
-
-
 /* return the number of stochastic draw per pixel per turn */
 inline uint32 _nbDrawPerTurn(const fRect & r,const iVec2 & sizeIm) const
 	{
@@ -779,6 +768,5 @@ inline int _getLinePourcent(int qj,int maxqj,int minv,int maxv) const
 
 }
 
-#endif
 /* end of file */
 
