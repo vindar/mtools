@@ -44,13 +44,32 @@ namespace mtools
      * to create an instance and one can just pass nullptr to the LatticeDrawer as the associated object.
      * 
      * @tparam  getColorFun The getColor method that will be called when querying the color of a
-     *                      point. The signature must match `mtools::RGBc getColor(mtools::fVec2 pos)`.
+     *                      point. The signature must match `mtools::RGBc getColor(mtools::fVec2 pos)` or 
+     *                      `mtools::RGBc getColor(mtools::fVec2 pos, fRect R)`
      **/
-    template<mtools::RGBc (*getColorFun)(mtools::fVec pos)> class PlaneObj
+    template<mtools::RGBc (*getColorFun)(mtools::fVec2 pos)> class PlaneObj
         {
         public:
        inline static RGBc getColor(mtools::fVec2 pos) { return getColorFun(pos); }
        inline static PlaneObj<getColorFun> * get() { return(nullptr); }
+        };
+
+
+    /**
+     * Encapsulate an extended `getColor()` function into a plane object that can be used with the
+     * PlaneDrawer class. This wrapper class contain no data and just a static method, therefore,
+     * there is no need to create an instance and one can just pass nullptr to the LatticeDrawer as
+     * the associated object.
+     *
+     * @tparam  getColorFun The getColor method that will be called when querying the color of a
+     *                      point. The signature must match `mtools::RGBc getColor(mtools::fVec2 pos,
+     *                      fRect R)`.
+     **/
+    template<mtools::RGBc(*getColorFun)(mtools::fVec2 pos, fRect R)> class PlaneObjExt
+        {
+        public:
+            inline static RGBc getColor(mtools::fVec2 pos, fRect R) { return getColorFun(pos, R); }
+            inline static PlaneObj<getColorFun> * get() { return(nullptr); }
         };
 
 
@@ -67,13 +86,17 @@ namespace mtools
  * expensive and might be better called from a worker thread : see the `AutoDrawable2DObject`
  * class for a generic implementation.
  * 
- * - The template PlaneObj must implement a method `RGBc getColor(fVec2 pos)` which return the
- * color associated with a given point. The method should be made as fast as possible. The
- * fourth channel of the returned color will be used when drawing on 4 channel images and
+ * - The template PlaneObj must implement a method `RGBc getColor(fVec2 pos)` or `RGBc
+ * getColor(fVec2 pos, fRect R)` which must return the color associated with a given point. In
+ * the seocnd version, the rectangle R  contain the point pos and represent the aera of the
+ * pixel drawn. The method should be made as fast as possible.
+ * 
+ * - The fourth channel of the returned color will be used when drawing on 4 channel images and
  * ignored when drawing on 3 channel images.
  *
  * @tparam  PlaneObj    Type of the lattice object. Can be any class which define the method
- *                      `RGBc getColor(fVec2 pos)` method.
+ *                      `RGBc getColor(fVec2 pos)` or `RGBc getColor(fVec2 pos, fRect R)`. If both
+ *                      method are defined, the extended method is used.
  **/
 template<class PlaneObj> class PlaneDrawer : public mtools::internals_graphics::Drawable2DObject
 {
@@ -93,7 +116,7 @@ public:
 		_g_r(-100.5, 100.5, -100.5, 100.5), 
 		_g_redraw(true)
 		{
-        static_assert(mtools::metaprog::has_getColorfVec<LatticeObj, mtools::fVec2>::value, "The object T must be implement a 'RGBc getColor(fVec2 pos)' method.");
+        static_assert(((mtools::metaprog::has_getColor<PlaneObj, RGBc, fVec2>::value)|| (mtools::metaprog::has_getColorExt<PlaneObj, RGBc, fVec2, fRect>::value)), "The object T must be implement either a 'RGBc getColor(fVec2 pos)' or 'RGBc getColor(fVec2 pos, fRect R)' method.");
         _initInt16Buf();
 		_initRand();
 		}

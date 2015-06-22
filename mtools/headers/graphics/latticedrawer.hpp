@@ -98,7 +98,6 @@ namespace mtools
         public:
 
         inline static RGBc getColor(mtools::iVec2 pos) { return getColorFun(pos); }
-
         inline static const cimg_library::CImg<unsigned char> * getImage(mtools::iVec2 pos, mtools::iVec2 size) { return getImageFun(pos,size); }
         inline static LatticeObjImage<getColorFun, getImageFun> * get() { return(nullptr); }
 
@@ -215,7 +214,7 @@ public:
      **/
     LatticeDrawer(LatticeObj * obj) : _g_requestAbort(0), _g_current_quality(0), _g_obj(obj), _g_drawingtype(TYPEPIXEL), _g_reqdrawtype(TYPEPIXEL), _g_imSize(201, 201), _g_r(-100.5, 100.5, -100.5, 100.5), _g_redraw_im(true), _g_redraw_pix(true)
 		{
-        static_assert(mtools::metaprog::has_getColor<LatticeObj, mtools::iVec2>::value, "The object T must be implement a 'RGBc getColor(iVec2 pos)' method.");
+        static_assert(mtools::metaprog::has_getColor<LatticeObj, mtools::RGBc, mtools::iVec2>::value, "The object T must be implement a 'RGBc getColor(iVec2 pos)' method.");
         _initInt16Buf();
 		_initRand();
 		}
@@ -278,7 +277,7 @@ public:
      **/
     bool hasImage() const
         {
-        return metaprog::has_getImage<LatticeObj, mtools::iVec2>::value;
+        return metaprog::has_getImage<LatticeObj, const cimg_library::CImg<unsigned char>*, mtools::iVec2, mtools::iVec2>::value;
         }
 
 
@@ -454,13 +453,13 @@ private:
     void _setDrawingMode(int imageType)
         {
         if (imageType != TYPEIMAGE) { _g_drawingtype = TYPEPIXEL; return; }
-        if (metaprog::has_getImage<LatticeObj, mtools::iVec2>::value == false) { _g_drawingtype = TYPEPIXEL; return; }
+        if (!hasImage()) { _g_drawingtype = TYPEPIXEL; return; }
         if (((_g_imSize.X() / _g_r.lx()) < 6) || ((_g_imSize.Y() / _g_r.ly()) < 6))  { _g_drawingtype = TYPEPIXEL; return; }
         if ((_g_r.lx() < 0.25) || (_g_r.ly() < 0.25)) { _g_drawingtype = TYPEPIXEL; return; }
         _g_drawingtype = TYPEIMAGE; 
         return;
         }
-
+    
 
 // ****************************************************************
 // THE PIXEL DRAWER
@@ -939,7 +938,7 @@ void _improveImage(int maxtime_ms)
 					if (_exact_qbuf(i,j) == 0) // site must be redrawn
 						{
                         --_exact_Q0;
-                        const CImg<unsigned char>  * spr = _getimage(_exact_r.xmin + i, _exact_r.ymin + j, _exact_sx, _exact_sy, metaprog::dummy<metaprog::has_getImage<LatticeObj, mtools::iVec2>::value>());
+                        const CImg<unsigned char>  * spr = _getimage(_exact_r.xmin + i, _exact_r.ymin + j, _exact_sx, _exact_sy, metaprog::dummy< metaprog::has_getImage<LatticeObj, const cimg_library::CImg<unsigned char>*, mtools::iVec2, mtools::iVec2>::value >());
                         if (spr == nullptr) { _exact_qbuf(i, j) = 3; ++_exact_Q23; } // no image, don't do anything
                         else
                             {
@@ -982,7 +981,7 @@ void _improveImage(int maxtime_ms)
 					if (_exact_qbuf(i,j) == 1) // site must be redrawn
 						{
                         _exact_Q23++;
-                        const CImg<unsigned char>  * spr = _getimage(_exact_r.xmin + i, _exact_r.ymin + j, _exact_sx, _exact_sy, metaprog::dummy<metaprog::has_getImage<LatticeObj, mtools::iVec2>::value>());
+                        const CImg<unsigned char>  * spr = _getimage(_exact_r.xmin + i, _exact_r.ymin + j, _exact_sx, _exact_sy, metaprog::dummy< metaprog::has_getImage<LatticeObj, const cimg_library::CImg<unsigned char>*, mtools::iVec2, mtools::iVec2>::value >());
                         if (spr == nullptr) { _exact_qbuf(i, j) = 3; } // no image (a change in the lattice occured betwen phase 0 and 1) don't do anything
                         else
                             {

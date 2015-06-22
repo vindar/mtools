@@ -178,7 +178,7 @@ void load(uint64 steps, double delta)
     G.load(fn);
     cout << " done in " << (double)Chronometer() / 1000 << "sec.\n";
     Plotter2D Plotter;
-    auto L = makePlot2DLattice(LatticeObj<colorLERRW>::get());
+    auto L = makePlot2DLattice(LatticeObjImage<colorLERRW, imageLERRW>::get());
     Plotter[L];
     Plotter.gridObject(true)->setUnitCells();
     Plotter.plot();
@@ -187,9 +187,20 @@ void load(uint64 steps, double delta)
 
 
 
+class A
+    {
+    public:
+        int * getColor(iVec2 & pos) { return 0; }
+
+    };
+
 
 int main()
     {
+    cout << std::is_convertible<const char *, std::string>::value << "\n";
+    cout << mtools::metaprog::has_getColor<A, RGBc, iVec2>::value << "\n";
+    cout << mtools::metaprog::has_getColor<A, RGBc, fVec2>::value << "\n";
+    cout << mtools::metaprog::has_getColor<A, int, iVec2>::value << "\n";
 
     bool b;
     cout << "bool = "; cout >> b; cout << "[" << b << "]\n";
