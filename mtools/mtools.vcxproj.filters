@@ -198,6 +198,9 @@
     <ClInclude Include="headers\graphics\planedrawer.hpp">
       <Filter>Header Files\graphics</Filter>
     </ClInclude>
+    <ClInclude Include="headers\graphics\plot2Dplane.hpp">
+      <Filter>Header Files\graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\fltk_supervisor.cpp">

@@ -44,8 +44,7 @@ namespace mtools
      * to create an instance and one can just pass nullptr to the LatticeDrawer as the associated object.
      * 
      * @tparam  getColorFun The getColor method that will be called when querying the color of a
-     *                      point. The signature must match `mtools::RGBc getColor(mtools::fVec2 pos)` or 
-     *                      `mtools::RGBc getColor(mtools::fVec2 pos, fRect R)`
+     *                      point. The signature must match `mtools::RGBc getColor(mtools::fVec2 pos)`.
      **/
     template<mtools::RGBc (*getColorFun)(mtools::fVec2 pos)> class PlaneObj
         {
@@ -108,7 +107,7 @@ public:
      *
      * @param [in,out]  obj The object to draw, it must survive the drawer.
      **/
-    PlaneDrawer(LatticeObj * obj) : 
+    PlaneDrawer(PlaneObj * obj) : 
 		_g_requestAbort(0), 
 		_g_current_quality(0), 
 		_g_obj(obj), 
@@ -204,7 +203,7 @@ public:
             --_g_requestAbort; // and then remove the stop request
             if (opacity > 0.0)
                 {
-                _warpImage(im, opacity); 
+                _warp(im, opacity); 
                 }
             return _g_current_quality; // return the quality of the drawing
             }
@@ -276,9 +275,6 @@ private:
 
 
 
-
-
-
 	/**************************************************************************************************************************************************
 	*                                                                    PRIVATE PART 
 	************************************************************************************************************************************************/
@@ -286,21 +282,14 @@ private:
     std::timed_mutex  _g_lock;             // mutex for locking
     std::atomic<int>  _g_requestAbort;     // flag used for requesting the work() method to abort.
     mutable std::atomic<int> _g_current_quality;  // the current quality of the drawing
-    LatticeObj *      _g_obj;               // the object to draw
+    PlaneObj *        _g_obj;               // the object to draw
     iVec2             _g_imSize;            // size of the drawing
     fRect             _g_r;                 // current range
     std::atomic<bool> _g_redraw;            // true if we should redraw from scratch
 
-
-
-// ****************************************************************
-// THE PIXEL DRAWER
-// ****************************************************************
-
-//fRect           _pr;                    // the current range
-uint32 			_counter1,_counter2;	// counter for the number of pixel added in each cell: counter1 for cells < (_qi,_qj) and counter2 for cells >= (_qi,qj)
-uint32 			_qi,_qj;		        // position where we stopped previously
-int 			_phase;			        // the current phase of the drawing
+    uint32 			_counter1,_counter2;	// counter for the number of pixel added in each cell: counter1 for cells < (_qi,_qj) and counter2 for cells >= (_qi,qj)
+    uint32 			_qi,_qj;		        // position where we stopped previously
+    int 			_phase;			        // the current phase of the drawing
 
 
 /* update the quality of the picture  */
@@ -309,131 +298,87 @@ void _qualityPixelDraw() const
     switch (_phase)
         {
         case 0: {_g_current_quality = 0; break; }
-        case 1: {_g_current_quality = _getLinePourcent(_counter2, _nbPointToDraw(_pr, _int16_buffer_dim), 1, 25); break; }
-        case 2: {_g_current_quality = _getLinePourcent(_qj, (int)_int16_buffer_dim.Y(), 26, 99); break; }
-        case 3: {_g_current_quality = 100; break; }
+        case 1: {_g_current_quality = _getLinePourcent(_counter2, 255, 1, 99); break; }
+        case 2: {_g_current_quality = 100; break; }
         default: MTOOLS_INSURE(false); // wtf are we doing here
         }
     return;
     }
 
-/* draw as much as possible of a fast drawing, return true if finished false otherwise
-  if finished, then _qi,_qj are set to zero and counter1 = counter2 has the correct value */
+/* draw as much as possible of a fast drawing  */
 void _drawPixel_fast(int maxtime_ms)
 	{
-    const fRect r = _pr;
+    const fRect r = _g_r;
     const double px = ((double)r.lx()) / ((double)_int16_buffer_dim.X())  // size of a pixel
                , py = ((double)r.ly()) / ((double)_int16_buffer_dim.Y()); 
-	_counter1 = 1;
+    _counter1 = 1;
+	_counter2 = 0;
 	bool fixstart = true; 
-    RGBc coul;
-    int64 prevsx = (int64)floor(r.xmin) - 2;
-    int64 prevsy = (int64)floor(r.ymax) + 2;
     for (int j = 0; j < _int16_buffer_dim.Y(); j++)
     for (int i = 0; i < _int16_buffer_dim.X(); i++)
 		{
 		if (fixstart) {i = _qi; j = _qj; fixstart=false;}					        // fix the position of thestarting pixel 
 		if (_isTime(maxtime_ms)) {_qi = i; _qj = j; return;}	                    // time's up : we quit
-		double x = r.xmin + (i + 0.5)*px, y = r.ymax - (j + 0.5)*py;            	// pick the center point inside the pixel
-		int64 sx = (int64)floor(x + 0.5); int64 sy = (int64)floor(y + 0.5); 		// compute the integer position which covers it
-        if ((prevsx != sx) || (prevsy != sy)) 
-            { // not the same point as before
-            coul = _g_obj->getColor({ sx, sy });
-            prevsx = sx; prevsy = sy;
-            }
+        const double xmin = r.xmin + i*px; const double xmax = xmin + px; const double x = xmin + 0.5*px;
+        const double ymax = r.ymax - j*py; const double ymin = ymax - py; const double y = ymax - 0.5*py;
+        const fRect sR = fRect(xmin, xmax, ymin, ymax);
+        const RGBc coul = _getColor(fVec2(x,y),sR);
         _setInt16Buf(i, j, coul);						    // set the color in the buffer
 		}
 	// we are done
-	_counter2 = _counter1; _qi=0; _qj=0;
-    if (_skipStochastic(r, _int16_buffer_dim)) { _phase = 2; } else { _phase = 1; } // go to next phase, skip stochastic if not needed.
+	_counter2 = 1; _qi=0; _qj=0; 
+    _phase = 1;
 	return;
 	}
 
 
-/* draw as much as possible of a stochastic drawing, return true if finished, false otherwise
-  if finished, then _qi,_qj are set to zero and counter1 = counter2 has the correct value */
+/* draw as using random points */
 void _drawPixel_stochastic(int maxtime_ms)
 	{
-    const fRect r = _pr;
+    const fRect r = _g_r;
     const double px = ((double)r.lx()) / ((double)_int16_buffer_dim.X())  // size of a pixel
                , py = ((double)r.ly()) / ((double)_int16_buffer_dim.Y());
-    uint32 ndraw = _nbDrawPerTurn(r, _int16_buffer_dim);
-    while(_counter2 < _nbPointToDraw(r, _int16_buffer_dim))
-		{
-		if (_counter2 == _counter1) {++_counter1;} // start of a loop: we increase counter1 
-		bool fixstart = true; 
+    const uint32 ndraw = _nbDrawPerTurn(r, _int16_buffer_dim);
+    while (_counter2 < 255)
+        {
+        if (_counter2 == _counter1) { ++_counter1; } // start of a loop: we increase counter1 
+        bool fixstart = true;
         for (int j = 0; j < _int16_buffer_dim.Y(); j++)
         for (int i = 0; i < _int16_buffer_dim.X(); i++)
-			{
-			if (fixstart) {i = _qi; j = _qj; fixstart=false;}		// fix the position of thestarting pixel
+            {
+            if (fixstart) { i = _qi; j = _qj; fixstart = false; }		// fix the position of thestarting pixel
             if (_isTime(maxtime_ms)) { _qi = i; _qj = j; return; }	// time's up : we quit
-			uint32 R=0,G=0,B=0,A=0;
- 			for(uint32 k=0;k<ndraw;k++)
-				{
-				double x = r.xmin + (i + _rand_double0())*px, y = r.ymax - (j + _rand_double0())*py; 	// pick a point at random inside the pixel
-				int64 sx = (int64)floor(x + 0.5); int64 sy = (int64)floor(y + 0.5);     			// compute the integer position which covers it
-                RGBc coul = _g_obj->getColor({ sx, sy }); 			                     				// get the color of the site
-                R += coul.R; G += coul.G; B += coul.B; A += coul.A;
-				}
-			_addInt16Buf(i,j,R/ndraw,G/ndraw,B/ndraw,A/ndraw);
-			}
-		// we finished a loop
-		_counter2 = _counter1;	_qi=0; _qj=0;
-		}
-    _phase = 2; // go to next phase
-	return;
-	}
-
-
-/* draw as much as possible of a perfect drawing, return true if finished, false otherwise
-  if finished, then _qi,_qj are set to zero and counter1 = counter2 has the correct value */
-void _drawPixel_perfect(int maxtime_ms)
-	{
-    const fRect r = _pr;
-    const double px = ((double)r.lx()) / ((double)_int16_buffer_dim.X())  // size of a pixel
-               , py = ((double)r.ly()) / ((double)_int16_buffer_dim.Y());
-	_counter1 = 1; // counter1 must be 1
-	bool fixstart = true; 
-    RGBc coul;
-    int64 pk = (int64)floor(r.xmin) - 2;
-    int64 pl = (int64)floor(r.ymax) + 2;
-    for (int j = 0; j < _int16_buffer_dim.Y(); j++)
-    for (int i = 0; i < _int16_buffer_dim.X(); i++)
-		{
-		if (fixstart) {i = _qi; j = _qj; fixstart=false;}	// fix the position of thestarting pixel 
-		fRect pixr(r.xmin + i*px,r.xmin + (i+1)*px,r.ymax - (j+1)*py,r.ymax - j*py); // the rectangle corresponding to pixel (i,j)
-		iRect ipixr = pixr.integerEnclosingRect(); // the integer sites whose square intersect the pixel square
-		double cr=0.0 ,cg=0.0, cb=0.0, ca=0.0, tot=0.0;
-		for(int64 k=ipixr.xmin;k<=ipixr.xmax;k++) for(int64 l=ipixr.ymin;l<=ipixr.ymax;l++) // iterate over all those points
-			{
-            if (_isTime(maxtime_ms)) { _qi = i; _qj = j; return; } // time's up : we quit and abandon this pixel
-			double a = pixr.pointArea((double)k,(double)l); // get the surface of the intersection
-            if ((k != pk) || (l != pl))
+            uint32 R = 0, G = 0, B = 0, A = 0;
+            const double xmin = r.xmin + i*px; const double xmax = xmin + px;
+            const double ymax = r.ymax - j*py; const double ymin = ymax - py;
+            const fRect sR = fRect(xmin, xmax, ymin, ymax);
+            for (uint32 k = 0;k<ndraw;k++)
                 {
-                coul = _g_obj->getColor({ k, l });
-                pk = k; pl = l;
+                const double x = xmin + _rand_double0()*px;
+                const double y = ymax - _rand_double0()*py;
+                RGBc coul = _getColor(fVec2(x, y), sR);
+                R += coul.R; G += coul.G; B += coul.B; A += coul.A;
                 }
-            cr += (coul.R*a); cg += (coul.G*a); cb += (coul.B*a); ca += (coul.A*a); // get the color and add it proportionally to the intersection
-			tot+=a;
-			}
-		_setInt16Buf(i,j,cr/tot,cg/tot,cb/tot,ca/tot);
-		}
-	_qi=0; _qj=0; _counter2 = _counter1;
-    _phase = 3; // we are done, perfect drawing !
-	return;
+            _addInt16Buf(i, j, R / ndraw, G / ndraw, B / ndraw, A / ndraw);
+            }
+        // we finished a loop
+        _counter2 = _counter1;	_qi = 0; _qj = 0;
+        }
+    _phase = 2; // we are finished with drawing
+    return;
 	}
+
+
 
 
 /* the main method for drawing a pixel image */
-void _workPixel(int maxtime_ms)
+void _work(int maxtime_ms)
     {
     _startTimer();
-    if (_g_imSize != _int16_buffer_dim) { _g_redraw_pix = true; } //set redraw to true if the size of the image changed
-    if (_g_r != _pr) _g_redraw_pix = true; // set redraw to true if the range changed
-    if (_g_redraw_pix)
+    if (_g_imSize != _int16_buffer_dim) { _g_redraw = true; } //set redraw to true if the size of the image changed
+    if (_g_redraw)
         { // we must completly redraw, initialize everything
-        _g_redraw_pix = false;
-        _pr = _g_r;
+        _g_redraw = false;
         _qi = 0; _qj = 0;
         _counter1 = 0; _counter2 = 0;
         _resizeInt16Buf(_g_imSize);
@@ -441,7 +386,7 @@ void _workPixel(int maxtime_ms)
         }
     if (maxtime_ms > 0) 
         {
-        while ((_phase != 3) && (!_isTime(maxtime_ms)))
+        while ((_phase != 2) && (!_isTime(maxtime_ms)))
             {
             switch (_phase)
                 {
@@ -455,11 +400,6 @@ void _workPixel(int maxtime_ms)
                     _drawPixel_stochastic(maxtime_ms);
                     break;
                     }
-                case 2: // perfect drawing phase : start from _qi,qj and make a stochastic drawing
-                    {                    
-                    _drawPixel_perfect(maxtime_ms);
-                    break;
-                    }
                 default: MTOOLS_INSURE(false); // wtf are we doing here
                 }
             }
@@ -468,6 +408,15 @@ void _workPixel(int maxtime_ms)
     return;
     }
 
+
+/* used when there is an extended getColor() method */
+inline RGBc _getColor(fVec2 pos, fRect R, mtools::metaprog::dummy<true> D) { return _g_obj->getColor(pos, R); }
+
+/* used when there is only a regular getColor() method */
+inline RGBc _getColor(fVec2 pos, fRect R, mtools::metaprog::dummy<false> D) { return _g_obj->getColor(pos); }
+
+/* return the color of a given point, use either the object getColor or "extended" getColor method depending on the method detected */
+inline RGBc _getColor(fVec2 pos, fRect R) { return _getColor(pos, R, mtools::metaprog::dummy<mtools::metaprog::has_getColorExt<PlaneObj, RGBc, fVec2, fRect>::value>()); }
 
 
 
@@ -507,18 +456,6 @@ inline void _setInt16Buf(uint32 x,uint32 y,const RGBc & color)
     _int16_buffer[x + y*dx + dxy] = color.G;
     _int16_buffer[x + y*dx + 2 * dxy] = color.B;
     _int16_buffer[x + y*dx + 3 * dxy] = color.A;
-
-    }
-
-/* set a color at position (i,j) */
-inline void _setInt16Buf(uint32 x,uint32 y,double R,double G,double B,double A)
-	{
-    const size_t dx = (size_t)_int16_buffer_dim.X();
-    const size_t dxy = (size_t)(dx * _int16_buffer_dim.Y());
-    _int16_buffer[x + y*dx] = (uint16)round(R);
-	_int16_buffer[x + y*dx + dxy] = (uint16)round(G);
-	_int16_buffer[x + y*dx + 2*dxy] = (uint16)round(B);
-    _int16_buffer[x + y*dx + 3*dxy] = (uint16)round(A);
     }
 
 /* add a color at position (i,j) */
@@ -534,10 +471,15 @@ inline void _addInt16Buf(uint32 x,uint32 y,uint32 R,uint32 G,uint32 B,uint32 A)
 
 
 
+// *****************************
+// Warping the buffer onto the image
+// *****************************
+
+
 /* the main method for warping the pixel image to the cimg image*/
 void _warp(cimg_library::CImg<unsigned char> & im, float opacity)
     {
-    _workPixel(0); // make sure everything is in sync. 
+    _work(0); // make sure everything is in sync. 
     if (_g_current_quality > 0)
         {
         if (im.spectrum() == 4)

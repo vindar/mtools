@@ -195,12 +195,44 @@ class A
     };
 
 
+
+
+
+
+
+RGBc mandelbrot(fVec2 pos)
+    {
+    double pr = pos.X();
+    double pi = pos.Y();
+    double newRe = 0.0;
+    double newIm = 0.0;
+    double oldRe = 0.0;
+    double oldIm = 0.0;
+    int i;
+    for(i = 0; i < 128; i++)
+        {
+        oldRe = newRe; oldIm = newIm;
+        newRe = oldRe * oldRe - oldIm * oldIm + pr;
+        newIm = 2 * oldRe * oldIm + pi;
+        if ((newRe * newRe + newIm * newIm) > 4) { return RGBc::jetPalette(i, 1, 127); }
+        }
+    return RGBc::c_Black;
+    }
+
+
 int main()
     {
-    cout << std::is_convertible<const char *, std::string>::value << "\n";
-    cout << mtools::metaprog::has_getColor<A, RGBc, iVec2>::value << "\n";
-    cout << mtools::metaprog::has_getColor<A, RGBc, fVec2>::value << "\n";
-    cout << mtools::metaprog::has_getColor<A, int, iVec2>::value << "\n";
+
+
+    Plotter2D Plotter;
+    auto PD = makePlot2DPlane(PlaneObj<mandelbrot>::get());
+    Plotter[PD];
+
+    Plotter.plot();
+
+    return 0;
+
+
 
     bool b;
     cout << "bool = "; cout >> b; cout << "[" << b << "]\n";

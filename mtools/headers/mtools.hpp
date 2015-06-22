@@ -37,6 +37,7 @@
 #include "graphics/edgesiteimage.hpp"
 #include "graphics/interpolation.hpp"
 #include "graphics/latticedrawer.hpp"
+#include "graphics/planedrawer.hpp"
 
 #include "graphics/plotter2D.hpp"
 #include "graphics/plot2Darray.hpp"
@@ -44,6 +45,7 @@
 #include "graphics/plot2Dfun.hpp"
 #include "graphics/plot2Dgrid.hpp"
 #include "graphics/plot2Dlattice.hpp"
+#include "graphics/plot2Dplane.hpp"
 #include "graphics/plot2Dvector.hpp"
 
 //i.o.
