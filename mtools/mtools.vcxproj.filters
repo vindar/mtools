@@ -195,6 +195,9 @@
     <ClInclude Include="headers\io\internals_serialization.hpp">
       <Filter>Header Files\io</Filter>
     </ClInclude>
+    <ClInclude Include="headers\graphics\planedrawer.hpp">
+      <Filter>Header Files\graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\fltk_supervisor.cpp">
