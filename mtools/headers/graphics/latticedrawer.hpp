@@ -42,7 +42,7 @@ namespace mtools
 
     /**
      * Encapsulate a `getColor()` function into a lattice object that can be used with the LatticeDrawer
-     * class. This wrapper class contain no data and just a static method, thereofre, there is no need 
+     * class. This wrapper class contain no data and just a static method, therefore, there is no need 
      * to create an instance one can just pass nullptr to the LatticeDrawer as the associated object.
      * 
      * @par Example

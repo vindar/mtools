@@ -9,8 +9,7 @@ using namespace mtools;
 
 int nbIter;
 
-/* return the color associated with point pos in the mandelbrot set 
-by calculating at most nbIter iteration */
+
 RGBc mandelbrot(fVec2 pos)
     {
     const double cx = pos.X();
@@ -29,17 +28,38 @@ RGBc mandelbrot(fVec2 pos)
     }
 
 
+RGBc rabbit(fVec2 pos)
+    {
+    const double cx = -0.122561;
+    const double cy = 0.744862;
+    double X = pos.X();
+    double Y = pos.Y();
+    for (int i = 0; i < nbIter; i++)
+        {
+        const double sX = X;
+        const double sY = Y;
+        X = sX*sX - sY*sY + cx;
+        Y = 2 * sX*sY + cy;
+        if ((X*X + Y*Y) > 4) { return RGBc::jetPalette(i, 1, nbIter); }
+        }
+    return RGBc::c_Black;
+    }
+
+
 int main(int argc, char *argv[]) 
     {
-	cout << "Mandelbrot set demo.\n";
-    cout << "Maximum number of iterations (1-1024) ? ";
+	cout << "Mandelbrot + Douady's rabbit.\n";
+    cout << "Maximum number of iterations (1-1024) ? (recommended 64) ";
     cout >> nbIter;
-    if (nbIter < 1) nbIter = 1; else if (nbIter >104) nbIter = 1024;
+    if (nbIter < 1) nbIter = 1; else if (nbIter >1024) nbIter = 1024;
     cout << nbIter << "\n"; 
     Plotter2D Plotter;  // create the plotter
-    auto PD = makePlot2DPlane<mandelbrot>("Mandelbrot Set");
-    Plotter[PD];
-    Plotter.range().setRange(fRect(-2, 2, -2, 2));
+    auto M = makePlot2DPlane<mandelbrot>("Mandelbrot Set"); // the mandelbrot set
+    auto D = makePlot2DPlane<rabbit>("Douady's rabbit"); // the mandelbrot set
+    Plotter[M][D];
+    M.opacity(0.5);
+    D.opacity(0.5);
+    Plotter.range().setRange(fRect(-0.65,-0.15,0.4,0.8));
     Plotter.plot();
     return 0;
 	}

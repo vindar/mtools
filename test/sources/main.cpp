@@ -153,7 +153,7 @@ void makeLERRW(uint64 steps, double delta)
   
 
     Plotter2D Plotter;
-    auto L = makePlot2DLattice(LatticeObjImage<colorLERRW,imageLERRW>::get());
+    auto L = makePlot2DLattice<colorLERRW>();
     Plotter[L];
     Plotter.gridObject(true)->setUnitCells();
 
@@ -222,6 +222,7 @@ RGBc mandelbrot(fVec2 pos)
 
 int main()
     {
+    /*
     cout << "Mandelbrot set demo.\n";
     cout << "Max number of iteration (1-1024) ? ";
     cout >> nbIter;
@@ -240,7 +241,7 @@ int main()
     cout << "bool = "; cout >> b; cout << "[" << b << "]\n";
     char c;
     cout << "bool = "; cout >> c; cout << "[" << c << "]\n";
-
+    */
   //  load(100000000, 0.5);
     makeLERRW(1000000, 0.5);
     return 0;

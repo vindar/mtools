@@ -36,13 +36,27 @@ namespace mtools
 
 
     /**
-    * Factory function for a plot2DPlane (reference verison).
-    *
-    * @code{.cpp}
-    *    auto L1 = makePlot2DPlane( PlaneObjExt<colorFctExt>::get() ); // create an object from a global extended color function
-    *    auto L2 = makePlot2DPlane( PlaneObj<colorFct>::get() ); // create an object from a global color functions.
-    *    auto L3 = makePlot2DPlane( myPlaneObj , "my plane"); //  creates from a class implementing getColor and give the plot a specific name.
-    * @endcode.
+    * Factory function for a constructing a plot2DPlane object from a global extended getColor() function.
+    * The signature of the template function must match 'RGBc getColor(fVec2 pos, fRect R)'.
+    **/
+    template<mtools::RGBc(*getColorFun)(mtools::fVec2 pos, fRect R)> auto makePlot2DPlane(std::string name = "Plane") -> decltype(Plot2DPlane<PlaneObjExt<getColorFun> >(PlaneObjExt<getColorFun>::get()))
+        {
+        return Plot2DPlane<PlaneObjExt<getColorFun> >(PlaneObjExt<getColorFun>::get(), name);
+        }
+
+
+    /**
+    * Factory function for a constructing a plot2DPlane object from a global getColor() function.
+    * The signature of the template function must match 'RGBc getColor(fVec2 pos)'
+    **/
+    template<mtools::RGBc(*getColorFun)(mtools::fVec2 pos)> auto makePlot2DPlane(std::string name = "Plane") -> decltype(Plot2DPlane<PlaneObj<getColorFun> >(PlaneObj<getColorFun>::get()))
+        {
+        return Plot2DPlane<PlaneObj<getColorFun> >(PlaneObj<getColorFun>::get(), name);
+        }
+
+
+    /**
+    * Factory function for creating a plot2DPlane (reference version).
     *
     * @tparam  T   The class must implement the PlaneDrawer requirements.
     * @param [in,out]  obj The Plane object to plot (reference version)
@@ -56,25 +70,9 @@ namespace mtools
         }
 
 
-    template<mtools::RGBc(*getColorFun)(mtools::fVec2 pos, fRect R)> auto makePlot2DPlane(std::string name = "Plane") -> decltype(Plot2DPlane<PlaneObjExt<getColorFun> >(PlaneObjExt<getColorFun>::get()))
-        {
-        return Plot2DPlane<PlaneObjExt<getColorFun> >(PlaneObjExt<getColorFun>::get(),name);
-        }
-
-    template<mtools::RGBc(*getColorFun)(mtools::fVec2 pos)> auto makePlot2DPlane(std::string name = "Plane") -> decltype(Plot2DPlane<PlaneObj<getColorFun> >(PlaneObj<getColorFun>::get()))
-        {
-        return Plot2DPlane<PlaneObj<getColorFun> >(PlaneObj<getColorFun>::get(), name);
-        }
-
 
     /**
-    * Factory function for a plot2DPlane (pointer verison).
-    *
-    * @code{.cpp}
-    *    auto L1 = makePlot2DPlane( PlaneObjExt<colorFctExt>::get() ); // create an object from a global extended color function
-    *    auto L2 = makePlot2DPlane( PlaneObj<colorFct>::get() ); // create an object from a global color functions.
-    *    auto L3 = makePlot2DPlane( myPlaneObj , "my plane"); //  creates from a class implementing getColor and give the plot a specific name.
-    * @endcode.
+    * Factory function for creating a plot2DPlane (pointer version).
     *
     * @tparam  T   The class must implement the PlaneDrawer requirements.
     * @param [in,out]  obj The Plane object to plot (reference version)

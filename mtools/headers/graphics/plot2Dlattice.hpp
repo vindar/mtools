@@ -36,6 +36,28 @@ namespace mtools
     template< typename T > class  Plot2DLattice;
 
 
+        /**
+        * Factory function for a constructing a plot2DLattice object from a global getColor() function.
+        * The signature of the template fucntion must match 'RGBc getColor(iVec2 pos)'
+        **/
+        template<mtools::RGBc (*getColorFun)(mtools::iVec2 pos)> auto makePlot2DLattice(std::string name = "Lattice") -> decltype(Plot2DLattice<LatticeObj<getColorFun> >(LatticeObj<getColorFun>::get(),name))
+            {
+            return Plot2DLattice<LatticeObj<getColorFun> >(LatticeObj<getColorFun>::get(), name);
+            }
+
+
+        /**
+        * Factory function for a constructing a plot2DLattice object from global getColor() and getImage() functions.
+        * the signatures of the template functions must match 'RGBc getColor(iVec2 pos)' and 
+        * 'const CImg<unsigned char>* getImage(iVec2 pos, iVec2 size)'.
+        **/
+        template<mtools::RGBc(*getColorFun)(mtools::iVec2 pos), const cimg_library::CImg<unsigned char>* (*getImageFun)(mtools::iVec2 pos, mtools::iVec2 size)> 
+        auto makePlot2DLattice(std::string name = "Lattice") -> decltype(Plot2DLattice<LatticeObjImage<getColorFun, getImageFun> >(LatticeObjImage<getColorFun, getImageFun>::get(), name))
+            {
+            return Plot2DLattice<LatticeObjImage<getColorFun, getImageFun> >(LatticeObjImage<getColorFun, getImageFun>::get(), name);
+            }
+        
+
     /**
      * Factory function for a plot2Dlattice (reference verison).
      *
