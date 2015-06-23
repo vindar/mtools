@@ -285,7 +285,7 @@ public:
     * Set the parameters of the drawing. Calling this method interrupt any work() in progress. 
     * This method is fast, it does not draw anything.
     **/
-    virtual void setParam(mtools::fRect range, mtools::iVec2 imageSize)
+    virtual void setParam(mtools::fRect range, mtools::iVec2 imageSize) override
         {
         MTOOLS_ASSERT(!range.isEmpty());
         MTOOLS_ASSERT((imageSize.X() >0) && (imageSize.Y()>0));     // make sure the image not empty.
@@ -305,7 +305,7 @@ public:
      * Force a reset of the drawing. Calling this method interrupt any work() is progress. This
      * method is fast, it does not draw anything.
      **/
-    virtual void resetDrawing()
+    virtual void resetDrawing() override
         {
         ++_g_requestAbort; // request immediate stop of the work method if active.
             {
@@ -348,7 +348,7 @@ public:
      *
      * @return  The quality of the drawing performed (0 = nothing drawn, 100 = perfect drawing).
      **/
-    virtual int drawOnto(cimg_library::CImg<unsigned char> & im, float opacity = 1.0)
+    virtual int drawOnto(cimg_library::CImg<unsigned char> & im, float opacity = 1.0) override
         {
         MTOOLS_ASSERT((im.width() == _g_imSize.X()) && (im.height() == _g_imSize.Y()));
         MTOOLS_ASSERT((im.spectrum() == 3) || (im.spectrum() == 4));
@@ -371,7 +371,7 @@ public:
      *
      * @return  The current quality between 0 (nothing to show) and 100 (perfect drawing).
      **/
-    virtual int quality() const {return _g_current_quality;}
+    virtual int quality() const override {return _g_current_quality;}
 
 
     /**
@@ -393,7 +393,7 @@ public:
      * @return  The quality of the current drawing:  0 = nothing to show, 100 = perfect drawing  that
      *          cannot be improved.
      **/
-    virtual int work(int maxtime_ms)
+    virtual int work(int maxtime_ms) override
         {
         MTOOLS_ASSERT(maxtime_ms >= 0);
         if (((int)_g_requestAbort > 0) || (maxtime_ms <= 0)) { return _g_current_quality; } // do not even try to work if the flag is set
@@ -410,14 +410,14 @@ public:
      *
      * @return  true.
      **/
-    virtual bool needWork() const { return true; }
+    virtual bool needWork() const override { return true; }
 
 
 
     /**
      * Stop any ongoing work and then return
      **/
-    virtual void stopWork()
+    virtual void stopWork() override
         {
         ++_g_requestAbort; // request immediate stop of the work method if active.
             {

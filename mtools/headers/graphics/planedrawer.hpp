@@ -23,6 +23,7 @@
 #include "drawable2Dobject.hpp"
 #include "customcimg.hpp"
 #include "rgbc.hpp"
+#include "maths/vec.hpp"
 #include "maths/rect.hpp"
 #include "misc/misc.hpp"
 #include "misc/metaprog.hpp"
@@ -62,13 +63,14 @@ namespace mtools
      *
      * @tparam  getColorFun The getColor method that will be called when querying the color of a
      *                      point. The signature must match `mtools::RGBc getColor(mtools::fVec2 pos,
-     *                      fRect R)`.
+     *                      fRect R)` (here R contain pos and represent the pixel containing the
+     *                      point at pos.
      **/
     template<mtools::RGBc(*getColorFun)(mtools::fVec2 pos, fRect R)> class PlaneObjExt
         {
         public:
             inline static RGBc getColor(mtools::fVec2 pos, fRect R) { return getColorFun(pos, R); }
-            inline static PlaneObj<getColorFun> * get() { return(nullptr); }
+            inline static PlaneObjExt<getColorFun> * get() { return(nullptr); }
         };
 
 
@@ -87,7 +89,7 @@ namespace mtools
  * 
  * - The template PlaneObj must implement a method `RGBc getColor(fVec2 pos)` or `RGBc
  * getColor(fVec2 pos, fRect R)` which must return the color associated with a given point. In
- * the seocnd version, the rectangle R  contain the point pos and represent the aera of the
+ * the seocnd version, the rectangle R contain the point pos and represent the aera of the
  * pixel drawn. The method should be made as fast as possible.
  * 
  * - The fourth channel of the returned color will be used when drawing on 4 channel images and
@@ -105,7 +107,7 @@ public:
     /**
      * Constructor. Set the plane object that will be drawn. 
      *
-     * @param [in,out]  obj The object to draw, it must survive the drawer.
+     * @param [in,out]  obj The planar object to draw, it must survive the drawer.
      **/
     PlaneDrawer(PlaneObj * obj) : 
 		_g_requestAbort(0), 
@@ -180,7 +182,7 @@ public:
      * - If im has 3 channels, then the drawer uses only 3 channels for the lattice and simply
      * superpose the image created over im (multiplying it by the optional opacity parameter).
      * 
-     * - If im has 4 channels, the drawer uses also 4th channel for the latticeusing the A over B
+     * - If im has 4 channels, the drawer uses also 4th channel for the lattice using the A over B
      * operation (and multipliyng by the opacity parameter).  
      * 
      * The method is faster when transparency is not used (i.e. when the supplied image im has 3
@@ -323,7 +325,7 @@ void _drawPixel_fast(int maxtime_ms)
         const double ymax = r.ymax - j*py; const double ymin = ymax - py; const double y = ymax - 0.5*py;
         const fRect sR = fRect(xmin, xmax, ymin, ymax);
         const RGBc coul = _getColor(fVec2(x,y),sR);
-        _setInt16Buf(i, j, coul);						    // set the color in the buffer
+        _setInt16Buf(i, j, coul);
 		}
 	// we are done
 	_counter2 = 1; _qi=0; _qj=0; 
@@ -716,7 +718,7 @@ inline double _rand_double0()
 /* return the number of stochastic draw per pixel per turn */
 inline uint32 _nbDrawPerTurn(const fRect & r,const iVec2 & sizeIm) const
 	{
-	return 5;
+	return 3;
 	}
 
 

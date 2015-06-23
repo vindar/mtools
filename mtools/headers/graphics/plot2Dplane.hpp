@@ -56,6 +56,17 @@ namespace mtools
         }
 
 
+    template<mtools::RGBc(*getColorFun)(mtools::fVec2 pos, fRect R)> auto makePlot2DPlane(std::string name = "Plane") -> decltype(Plot2DPlane<PlaneObjExt<getColorFun> >(PlaneObjExt<getColorFun>::get()))
+        {
+        return Plot2DPlane<PlaneObjExt<getColorFun> >(PlaneObjExt<getColorFun>::get(),name);
+        }
+
+    template<mtools::RGBc(*getColorFun)(mtools::fVec2 pos)> auto makePlot2DPlane(std::string name = "Plane") -> decltype(Plot2DPlane<PlaneObj<getColorFun> >(PlaneObj<getColorFun>::get()))
+        {
+        return Plot2DPlane<PlaneObj<getColorFun> >(PlaneObj<getColorFun>::get(), name);
+        }
+
+
     /**
     * Factory function for a plot2DPlane (pointer verison).
     *
@@ -81,9 +92,6 @@ namespace mtools
 
     /**
     * Plot Object which encapsulate a Plane object.
-    *
-    * @code{.cpp}
-    * @endcode.
     *
     * @tparam  T   Object which fulfills the same requirements as those needed by the PlaneDrawer
     *              class.
@@ -124,8 +132,9 @@ namespace mtools
             **/
             Plot2DPlane(Plot2DPlane && o) : internals_graphics::Plotter2DObj(std::move(o)), _LD((PlaneDrawer<T>*)o._LD)
                 {
-                o._LD = nullptr; // so that the Latice drawer is not destroyed when the first object goes out of scope.
+                o._LD = nullptr; // so that the plane drawer is not destroyed when the first object goes out of scope.
                 }
+
 
             /**
             * Destructor. Remove the object if it is still inserted.
@@ -142,17 +151,17 @@ namespace mtools
 
 
             /**
-            * Override of the removed method
+            * Override of the removed method, nothing to do...
             **/
-            virtual void removed(Fl_Group * optionWin)
+            virtual void removed(Fl_Group * optionWin) override
                 {
                 }
 
 
             /**
-            * Override of the inserted method
+            * Override of the inserted method. There is no option window for a plane object...
             **/
-            virtual internals_graphics::Drawable2DObject * inserted(Fl_Group * & optionWin, int reqWidth)
+            virtual internals_graphics::Drawable2DObject * inserted(Fl_Group * & optionWin, int reqWidth) override
                 {
                 optionWin = nullptr;
                 return _LD;
@@ -161,7 +170,7 @@ namespace mtools
 
         private:
 
-            PlaneDrawer<T> * _LD;                 // the plane drawer
+            PlaneDrawer<T> * _LD;                 // the plane drawer object
 
         };
 

@@ -198,23 +198,23 @@ class A
 
 
 
+int nbIter;
 
-
+/* return the color associated with point pos in the mandelbrot set 
+by calculating at most nbIter iteration */
 RGBc mandelbrot(fVec2 pos)
     {
-    double pr = pos.X();
-    double pi = pos.Y();
-    double newRe = 0.0;
-    double newIm = 0.0;
-    double oldRe = 0.0;
-    double oldIm = 0.0;
-    int i;
-    for(i = 0; i < 128; i++)
+    const double cx = pos.X();
+    const double cy = pos.Y();
+    double X = 0.0;
+    double Y = 0.0;
+    for(int i = 0; i < nbIter; i++)
         {
-        oldRe = newRe; oldIm = newIm;
-        newRe = oldRe * oldRe - oldIm * oldIm + pr;
-        newIm = 2 * oldRe * oldIm + pi;
-        if ((newRe * newRe + newIm * newIm) > 4) { return RGBc::jetPalette(i, 1, 127); }
+        const double sX = X;
+        const double sY = Y;
+        X = sX*sX - sY*sY + cx;
+        Y = 2*sX*sY + cy;
+        if ((X*X + Y*Y) > 4) { return RGBc::jetPalette(i, 1, nbIter); }
         }
     return RGBc::c_Black;
     }
@@ -222,14 +222,16 @@ RGBc mandelbrot(fVec2 pos)
 
 int main()
     {
-
-
-    Plotter2D Plotter;
-    auto PD = makePlot2DPlane(PlaneObj<mandelbrot>::get());
+    cout << "Mandelbrot set demo.\n";
+    cout << "Max number of iteration (1-1024) ? ";
+    cout >> nbIter;
+    if (nbIter < 1) nbIter = 1; else if (nbIter >104) nbIter = 1024;
+    cout << nbIter << "\n"; 
+    Plotter2D Plotter;  // create the plotter
+    auto PD = makePlot2DPlane<mandelbrot>("Mandelbrot Set");
     Plotter[PD];
-
+    Plotter.range().setRange(fRect(-2, 2, -2, 2));
     Plotter.plot();
-
     return 0;
 
 
