@@ -336,6 +336,7 @@
     <ClInclude Include="headers\graphics\plot2Darray.hpp" />
     <ClInclude Include="headers\graphics\plot2Daxes.hpp" />
     <ClInclude Include="headers\graphics\plot2Dbasegraph.hpp" />
+    <ClInclude Include="headers\graphics\plot2Dcimg.hpp" />
     <ClInclude Include="headers\graphics\plot2Dfun.hpp" />
     <ClInclude Include="headers\graphics\plot2Dgrid.hpp" />
     <ClInclude Include="headers\graphics\plot2Dlattice.hpp" />
@@ -386,6 +387,7 @@
     <ClCompile Include="sources\logfile.cpp" />
     <ClCompile Include="sources\plot2Daxes.cpp" />
     <ClCompile Include="sources\plot2Dbasegraph.cpp" />
+    <ClCompile Include="sources\plot2Dcimg.cpp" />
     <ClCompile Include="sources\plot2Dgrid.cpp" />
     <ClCompile Include="sources\view2Dwidget.cpp" />
     <ClCompile Include="sources\plotter2D.cpp" />

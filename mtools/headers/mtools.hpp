@@ -47,6 +47,7 @@
 #include "graphics/plot2Dlattice.hpp"
 #include "graphics/plot2Dplane.hpp"
 #include "graphics/plot2Dvector.hpp"
+#include "graphics/plot2Dcimg.hpp"
 
 //i.o.
 #include "io/console.hpp"

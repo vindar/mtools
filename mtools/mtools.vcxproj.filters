@@ -201,6 +201,9 @@
     <ClInclude Include="headers\graphics\plot2Dplane.hpp">
       <Filter>Header Files\graphics</Filter>
     </ClInclude>
+    <ClInclude Include="headers\graphics\plot2Dcimg.hpp">
+      <Filter>Header Files\graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\fltk_supervisor.cpp">
@@ -264,6 +267,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="stdafx_mtools.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\plot2Dcimg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
