@@ -156,16 +156,44 @@ void makeLERRW(uint64 steps, double delta)
 
     Plotter2D Plotter;
     auto L = makePlot2DLattice<colorLERRW,imageLERRW>();
-    Plotter[L];
+    L.domain(iRect(-10, 10, -12, 15));
+//    Plotter[L];
+//    
     Plotter.gridObject(true)->setUnitCells();
 
     auto PF = makePlot2DFun(f);
-    Plotter[PF];
+    //Plotter[PF];
 
-    L.domain(iRect(-10, 10, -12, 15));
+
+
+
+    CImg<unsigned char> im;
+    im.load("lena.png");
+
+    auto LENA = makePlot2DCImg(im, "lena");
+
+    Plotter[LENA];
+
+
 
     auto PT = makePlot2DArray(tab, 1000);
-    Plotter[PT];
+    //Plotter[PT];
+
+    Plotter.startPlot();
+
+    cout.getKey();
+    LENA.position(LENA.TYPECENTER);
+
+    cout.getKey();
+    LENA.image(nullptr);
+
+    cout.getKey();
+    LENA.position(LENA.TYPEBOTTOMLEFT);
+
+    CImg<unsigned char> im2;
+    im2.load("mandel.png");
+    LENA.image(im2);
+
 
     Plotter.plot();
     return;

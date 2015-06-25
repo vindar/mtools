@@ -27,6 +27,45 @@
 
 
     /**
+     * Return the color of a pixel.
+     *
+     * @param   pos The position of the pixel
+     *
+     * @return  The color. If the image has only 3 channel, the alpha channel is set to 255 and to its correct value otherwise.
+     **/
+    inline mtools::RGBc getPixel(mtools::iVec2 pos) const
+        {
+        const int x = (int)pos.X();
+        const int y = (int)pos.Y();
+        const char r = operator()(x, y, 0, 0);
+        const char g = operator()(x, y, 0, 1);
+        const char b = operator()(x, y, 0, 2);
+        const char a = ((spectrum() >= 4) ? (operator()(x, y, 0, 3)) : 255);
+        return RGBc(r, g, b, a);
+        }
+
+
+    /**
+     * Sets the color of a pixel.
+     *
+     * @param   pos     The position of the pixel.
+     * @param   color   The color. The alpha channel is set if the image has more than 3 channel and
+     *                  ignored otherwise.
+     **/
+    inline void setPixel(mtools::iVec2 pos, mtools::RGBc color)
+        {
+        const int x = (int)pos.X();
+        const int y = (int)pos.Y();
+        operator()(x, y, 0, 0) = color.r;
+        operator()(x, y, 0, 1) = color.g;
+        operator()(x, y, 0, 2) = color.b;
+        if (spectrum() >= 4) { operator()(x, y, 0, 3) = color.a; }
+        }
+
+
+
+
+    /**
      * Return the image size into a iVec2 structure.
      **/
     inline mtools::iVec2 imageSize() const { return mtools::iVec2(width(), height()); }
