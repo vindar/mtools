@@ -189,7 +189,11 @@ namespace mtools
 
         Fl_Round_Button * _checkButtonImage;    // the "use getImage" button
         Fl_Round_Button * _checkButtonColor;    // the "use getColor" button
-        LatticeDrawer<T> * _LD;                 // the lattice drawer
+
+
+
+        LatticeDrawer<T> * _LD;                 // the lattice drawer used for drawing the image
+
 
     };
 
