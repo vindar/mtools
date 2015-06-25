@@ -217,7 +217,8 @@ public:
         static_assert(mtools::metaprog::has_getColor<LatticeObj, mtools::RGBc, mtools::iVec2>::value, "The object T must be implement a 'RGBc getColor(iVec2 pos)' method.");
         _initInt16Buf();
 		_initRand();
-		}
+        domainFull();
+        }
 
 
     /**
@@ -282,6 +283,93 @@ public:
 
 
     /**
+     * Get the definition domain of the lattice (does not interrupt any computation in progress).
+     * By default this is everything.
+     *
+     * @return  An iRect.
+     **/
+    mtools::iRect domain() const 
+        {
+        return _g_domR;
+        }
+
+    /**
+    * Query if the domain is the whole lattice  (does not interrupt any computation in progress).
+    *
+    * @return  true if the domain is full, false if not.
+    **/
+    bool isDomainFull() const
+        {
+        return ((_g_domR.xmin == std::numeric_limits<int64>::min()) && (_g_domR.xmax == std::numeric_limits<int64>::max()) && (_g_domR.ymin == std::numeric_limits<int64>::min()) && (_g_domR.ymax == std::numeric_limits<int64>::max()));
+        }
+
+
+    /**
+    * Queries if the domain is empty  (does not interrupt any computation in progress).
+    *
+    * @return  true if the domain is empty, false if not.
+    **/
+    bool isDomainEmpty() const
+        {
+        return _g_domR.isEmpty();
+        }
+
+
+    /**
+     * Set the definition domain. It is guaranted that no point outside of the domain are never
+     * queried via getColor().
+     *
+     * @param   R   The new definition domain.
+     **/
+    void domain(mtools::iRect R)
+        {
+        ++_g_requestAbort; // request immediate stop of the work method if active.
+            {
+            std::lock_guard<std::timed_mutex> lg(_g_lock); // and wait until we aquire the lock 
+            --_g_requestAbort; // and then remove the stop request
+            _g_domR = R;
+            _g_redraw_im = true;   // request redraw
+            _g_redraw_pix = true;  //
+            }
+        }
+    
+
+    /**
+     * Set a full definition Domain.
+     **/
+    void domainFull()
+        {
+        ++_g_requestAbort; // request immediate stop of the work method if active.
+            {
+            std::lock_guard<std::timed_mutex> lg(_g_lock); // and wait until we aquire the lock 
+            --_g_requestAbort; // and then remove the stop request
+            _g_domR.xmin = std::numeric_limits<int64>::min();
+            _g_domR.xmax = std::numeric_limits<int64>::max();
+            _g_domR.ymin = std::numeric_limits<int64>::min();
+            _g_domR.ymax = std::numeric_limits<int64>::max();
+            _g_redraw_im = true;   // request redraw
+            _g_redraw_pix = true;  //
+            }
+        }
+
+
+    /**
+    * Set an empty definition Domain.
+    **/
+    void domainEmpty()
+        {
+        ++_g_requestAbort; // request immediate stop of the work method if active.
+            {
+            std::lock_guard<std::timed_mutex> lg(_g_lock); // and wait until we aquire the lock 
+            --_g_requestAbort; // and then remove the stop request
+            _g_domR.clear(); // clear the domain
+            _g_redraw_im = true;   // request redraw
+            _g_redraw_pix = true;  //
+            }
+        }
+
+
+    /**
     * Set the parameters of the drawing. Calling this method interrupt any work() in progress. 
     * This method is fast, it does not draw anything.
     **/
@@ -319,32 +407,18 @@ public:
 
 
     /**
-     * Draw onto a given image. This method is called by the composer when it want the picture. This
-     * method is fast and does not "compute" anything. It simply warp the current drawing onto a
-     * given cimg image.
+     * Draw onto a given image. This method does not "compute" anything. It simply warp the current
+     * drawing onto a given cimg image.
      * 
-     * The provided cimg image may must have 3 or 4 channel and the same size as that set via
-     * setParam().
-     * 
-     * - If im has 3 channels, then the drawer uses only 3 channels for the lattice and simply
-     * superpose the image created over im (multiplying it by an optional opacity parameter).
-     * 
-     * - If im has 4 channels, the drawer uses also 4th channel for the lattice.
-     *     - For pixel type drawing : this is simply the 4th channels of the RGBc return by the
-     *     getColor() method.
-     *     - For Image drawing. This is the 4th channel of the image returned by the getImage()
-     *     method. If the returned sprite has only 3 channels, a 4th completely opaque channel (255)
-     *     is added.
-     * 
-     * The method is faster when transparency is not used (i.e. when the supplied image im has 3
-     * channel) and fastest when opacity is 1.0 (or 0.0, but this does nothing).
+     * The provided cimg image must have 3 or 4 channel and the same size as that set via
+     * setParam(). The current drawing of the plane has its opacity channel multiplied by the
+     * opacity parameter and is then superposed with the current content of im using the A over B
+     * operation. If im has only 3 channel, it is considered as having full opacity.
      *
      * @param [in,out]  im  The image to draw onto (must be a 3 or 4 channel image and it size must
      *                      be equal to the size previously set via the setParam() method.
      * @param   opacity     The opacity that should be applied to the picture prior to drawing onto
-     *                      im. If set to 0.0, then the method returns without drawing anything. The
-     *                      opacity is multiplied with other opacities when dealing with 4 channel
-     *                      images.
+     *                      im. If set to 0.0, then the method returns without drawing anything.
      *
      * @return  The quality of the drawing performed (0 = nothing drawn, 100 = perfect drawing).
      **/
@@ -445,8 +519,8 @@ private:
     iVec2             _g_imSize;            // size of the drawing
     fRect             _g_r;                 // current range.
     std::atomic<bool> _g_redraw_im;         // true if we should redraw from scratch the pixel image
-    std::atomic<bool> _g_redraw_pix;         // true if we should redraw from scratch the sprite image
-
+    std::atomic<bool> _g_redraw_pix;        // true if we should redraw from scratch the sprite image
+    iRect             _g_domR;              // definition domain of the object 
 
 
     /* set the new drawing mode to imageType (but silently change it if needed) */
@@ -487,6 +561,14 @@ void _qualityPixelDraw() const
     }
 
 
+/* return the color of a point or trnasparent white if outside of the definition domain */
+inline RGBc getColor(iVec2 pos)
+    {
+    if (!_g_domR.isInside(pos)) return RGBc::c_TransparentWhite;
+    return _g_obj->getColor(pos);
+    }
+
+
 /* draw as much as possible of a fast drawing, return true if finished false otherwise
   if finished, then _qi,_qj are set to zero and counter1 = counter2 has the correct value */
 void _drawPixel_fast(int maxtime_ms)
@@ -508,7 +590,7 @@ void _drawPixel_fast(int maxtime_ms)
 		int64 sx = (int64)floor(x + 0.5); int64 sy = (int64)floor(y + 0.5); 		// compute the integer position which covers it
         if ((prevsx != sx) || (prevsy != sy)) 
             { // not the same point as before
-            coul = _g_obj->getColor({ sx, sy });
+            coul = getColor({ sx, sy });
             prevsx = sx; prevsy = sy;
             }
         _setInt16Buf(i, j, coul);						    // set the color in the buffer
@@ -542,7 +624,7 @@ void _drawPixel_stochastic(int maxtime_ms)
 				{
 				double x = r.xmin + (i + _rand_double0())*px, y = r.ymax - (j + _rand_double0())*py; 	// pick a point at random inside the pixel
 				int64 sx = (int64)floor(x + 0.5); int64 sy = (int64)floor(y + 0.5);     			// compute the integer position which covers it
-                RGBc coul = _g_obj->getColor({ sx, sy }); 			                     				// get the color of the site
+                RGBc coul = getColor({ sx, sy }); 			                     				// get the color of the site
                 R += coul.R; G += coul.G; B += coul.B; A += coul.A;
 				}
 			_addInt16Buf(i,j,R/ndraw,G/ndraw,B/ndraw,A/ndraw);
@@ -580,7 +662,7 @@ void _drawPixel_perfect(int maxtime_ms)
 			double a = pixr.pointArea((double)k,(double)l); // get the surface of the intersection
             if ((k != pk) || (l != pl))
                 {
-                coul = _g_obj->getColor({ k, l });
+                coul = getColor({ k, l });
                 pk = k; pl = l;
                 }
             cr += (coul.R*a); cg += (coul.G*a); cb += (coul.B*a); ca += (coul.A*a); // get the color and add it proportionally to the intersection
@@ -706,103 +788,33 @@ inline void _addInt16Buf(uint32 x,uint32 y,uint32 R,uint32 G,uint32 B,uint32 A)
 /* the main method for warping the pixel image to the cimg image*/
 void _drawOntoPixel(cimg_library::CImg<unsigned char> & im, float opacity)
     {
+    MTOOLS_ASSERT((im.spectrum() == 3) || (im.spectrum() == 4));
     _workPixel(0); // make sure everything is in sync. 
     if (_g_current_quality > 0)
         {
-        if (im.spectrum() == 4)
-            {
-            _warpInt16Buf_4channel(im, opacity);
-            }
-        else
-            {
-            if (opacity >= 1.0) _warpInt16Buf_opaque(im); else _warpInt16Buf(im, opacity);
-            }
+        if (im.spectrum() == 4) { _warpInt16Buf_4channel(im, opacity); } else { _warpInt16Buf_3channel(im, opacity); }
         }
     return;
     }
 
 
 
-/* warp the buffer onto an image using _qi,_qj,_counter1 and _counter2 : fast method when opacity = 1.0*/
-inline void _warpInt16Buf(CImg<unsigned char> & im,const float op) const
-	{
-    const float po = 1 - op;
-    const size_t dx = (size_t)_int16_buffer_dim.X();
-    const size_t dxy = (size_t)(dx * _int16_buffer_dim.Y());
-	size_t l1 = _qi + (dx*_qj);
-	size_t l2 = (dxy) - l1;
-	for(int c=0;c<im.spectrum();c++)
-		{
-		if (l1>0)
-			{
-			unsigned char * pdest = im.data(0,0,0,c);
-			uint16 * psource = _int16_buffer + c*dxy;
-			if (_counter1==0) {/* memset(pdest,0,l1); */}
-			else 
-				{     
-                if (_counter1 == 1) { for (size_t i = 0; i < l1; i++) { (*pdest) = (unsigned char)((*pdest)*po + (*psource)*op); ++pdest; ++psource; } }
-                else { for (size_t i = 0; i<l1; i++) { (*pdest) = (unsigned char)((*pdest)*po + (*psource)*op/_counter1); ++pdest; ++psource; } }
-				}
-			}
-		if (l2>0)
-			{
-			unsigned char * pdest = im.data(_qi,_qj,0,c);
-			uint16 * psource      = _int16_buffer + c*dxy + l1;
-			if (_counter2==0) {/* memset(pdest,0,l2); */}
-			else 
-				{
-                if (_counter2 == 1) { for (size_t i = 0; i<l2; i++) { (*pdest) = (unsigned char)((*pdest)*po + (*psource)*op); ++pdest; ++psource; } }
-                else { for (size_t i = 0; i<l2; i++) { (*pdest) = (unsigned char)((*pdest)*po + (*psource)*op / _counter2);  ++pdest; ++psource; } }
-				}
-			}
-		}
-	return;
-	}
 
-/* warp the buffer onto an image using _qi,_qj,_counter1 and _counter2 : fast method when opacity = 1.0*/
-inline void _warpInt16Buf_opaque(CImg<unsigned char> & im) const
-{
-    const size_t dx = (size_t)_int16_buffer_dim.X();
-    const size_t dxy = (size_t)(dx * _int16_buffer_dim.Y());
-    size_t l1 = _qi + (dx*_qj);
-    size_t l2 = (dxy)-l1;
-    for (int c = 0; c< im.spectrum(); c++)
+/* make B -> A and return the resulting opacity */
+inline unsigned char _blendcolor4(unsigned char & A, float opA, unsigned char B, float opB ) const
     {
-        if (l1>0)
-        {
-            unsigned char * pdest = im.data(0, 0, 0, c);
-            uint16 * psource = _int16_buffer + c*dxy;
-            if (_counter1 == 0) {/* memset(pdest,0,l1); */ } else
-            {
-                if (_counter1 == 1) { for (size_t i = 0; i<l1; i++) { (*pdest) = (unsigned char)(*psource); ++pdest; ++psource; } } else { for (size_t i = 0; i<l1; i++) { (*pdest) = (unsigned char)((*psource) / _counter1); ++pdest; ++psource; } }
-            }
-        }
-        if (l2>0)
-        {
-            unsigned char * pdest = im.data(_qi, _qj, 0, c);
-            uint16 * psource = _int16_buffer + c*dxy + l1;
-            if (_counter2 == 0) {/* memset(pdest,0,l2); */ } else
-            {
-                if (_counter2 == 1) { for (size_t i = 0; i<l2; i++) { (*pdest) = (unsigned char)(*psource); ++pdest; ++psource; } } else { for (size_t i = 0; i<l2; i++) { (*pdest) = (unsigned char)((*psource) / _counter2);  ++pdest; ++psource; } }
-            }
-        }
-    }
-    return;
-}
-
-/* make B -> A */
-inline unsigned char _blendcolor(unsigned char & A, float opA, unsigned char B, float opB ) const
-    {
-    float o = opB + opA*(1 - opB);
+    float o = opB + opA*(1 - opB); //resulting opacity
     if (o == 0)  return 0;
     A = (unsigned char)((B*opB + A*opA*(1 - opB))/o);
     return (unsigned char)(255 * o);
     }
 
-/* warp the buffer onto an image using _qi,_qj,_counter1 and _counter2 : four channel on the image : use transparency 
- * PARTIAL SUPPORT */
+/* warp the buffer onto an image using _qi,_qj,_counter1 and _counter2 : 
+   method when im has four channels : use transparency and A over B operation 
+ */
 inline void _warpInt16Buf_4channel(CImg<unsigned char> & im, float op) const
 {
+    MTOOLS_ASSERT(im.spectrum() == 4);
     const float po = 1.0;
     const size_t dx = (size_t)_int16_buffer_dim.X();
     const size_t dxy = (size_t)(dx * _int16_buffer_dim.Y());
@@ -824,9 +836,11 @@ inline void _warpInt16Buf_4channel(CImg<unsigned char> & im, float op) const
                 { 
                 for (size_t i = 0; i < l1; i++) 
                     { 
-                    _blendcolor((*pdest0), ((po*(*pdest_opa)) / 255), (unsigned char)(*psource0), ((op*(*psource_opb)) / 255));
-                    _blendcolor((*pdest1), ((po*(*pdest_opa)) / 255), (unsigned char)(*psource1), ((op*(*psource_opb)) / 255));
-                    (*pdest_opa) = _blendcolor((*pdest2), ((po*(*pdest_opa)) / 255), (unsigned char)(*psource2), ((op*(*psource_opb)) / 255));
+                    const float g = ((op*(*psource_opb)) / 255);
+                    const float h = ((po*(*pdest_opa)) / 255);
+                    _blendcolor4((*pdest0), h, (unsigned char)(*psource0), g);
+                    _blendcolor4((*pdest1), h, (unsigned char)(*psource1), g);
+                    (*pdest_opa) = _blendcolor4((*pdest2), h, (unsigned char)(*psource2), g);
                     ++pdest0; ++pdest1; ++pdest2; ++pdest_opa;
                     ++psource0; ++psource1; ++psource2; ++psource_opb;
                     } 
@@ -835,9 +849,11 @@ inline void _warpInt16Buf_4channel(CImg<unsigned char> & im, float op) const
                { 
                for (size_t i = 0; i < l1; i++) 
                     { 
-                    _blendcolor((*pdest0), ((po*(*pdest_opa)) / 255), (unsigned char)((*psource0) / _counter1), ((op*(*psource_opb) / _counter1) / 255));
-                    _blendcolor((*pdest1), ((po*(*pdest_opa)) / 255), (unsigned char)((*psource1) / _counter1), ((op*(*psource_opb) / _counter1) / 255));
-                    (*pdest_opa) = _blendcolor((*pdest2), ((po*(*pdest_opa)) / 255), (unsigned char)((*psource2) / _counter1), ((op*(*psource_opb) / _counter1) / 255));
+                    const float g = ((op*(*psource_opb) / _counter1) / 255);
+                    const float h = ((po*(*pdest_opa)) / 255);
+                    _blendcolor4((*pdest0), h, (unsigned char)((*psource0) / _counter1), g);
+                    _blendcolor4((*pdest1), h, (unsigned char)((*psource1) / _counter1), g);
+                    (*pdest_opa) = _blendcolor4((*pdest2), h, (unsigned char)((*psource2) / _counter1), g);
                     ++pdest0; ++pdest1; ++pdest2; ++pdest_opa;
                     ++psource0; ++psource1; ++psource2; ++psource_opb;
                     } 
@@ -860,9 +876,11 @@ inline void _warpInt16Buf_4channel(CImg<unsigned char> & im, float op) const
                 {
                 for (size_t i = 0; i<l2; i++) 
                     { 
-                    _blendcolor((*pdest0), (po*(*pdest_opa)) / 255, (unsigned char)(*psource0), (op*(*psource_opb)) / 255);
-                    _blendcolor((*pdest1), (po*(*pdest_opa)) / 255, (unsigned char)(*psource1), (op*(*psource_opb)) / 255);
-                    (*pdest_opa) = _blendcolor((*pdest2), (po*(*pdest_opa)) / 255, (unsigned char)(*psource2), (op*(*psource_opb)) / 255);
+                    const float g = (op*(*psource_opb)) / 255;
+                    const float h = (po*(*pdest_opa)) / 255;
+                    _blendcolor4((*pdest0), h , (unsigned char)(*psource0), g);
+                    _blendcolor4((*pdest1), h, (unsigned char)(*psource1), g);
+                    (*pdest_opa) = _blendcolor4((*pdest2), h, (unsigned char)(*psource2), g);
                     ++pdest0; ++pdest1; ++pdest2; ++pdest_opa;
                     ++psource0; ++psource1; ++psource2; ++psource_opb;
                     }
@@ -871,9 +889,11 @@ inline void _warpInt16Buf_4channel(CImg<unsigned char> & im, float op) const
                 { 
                 for (size_t i = 0; i<l2; i++) 
                     { 
-                    _blendcolor((*pdest0), (po*(*pdest_opa)) / 255, (*psource0) / _counter2, (op*(*psource_opb) / _counter2) / 255); 
-                    _blendcolor((*pdest1), (po*(*pdest_opa)) / 255, (*psource1) / _counter2, (op*(*psource_opb) / _counter2) / 255);
-                    (*pdest_opa) = _blendcolor((*pdest2), (po*(*pdest_opa)) / 255, (*psource2) / _counter2, (op*(*psource_opb) / _counter2) / 255);
+                    const float g = (op*(*psource_opb) / _counter2) / 255;
+                    const float h = (po*(*pdest_opa)) / 255;
+                    _blendcolor4((*pdest0), h , (unsigned char)((*psource0) / _counter2), g);
+                    _blendcolor4((*pdest1), h , (unsigned char)((*psource1) / _counter2), g);
+                    (*pdest_opa) = _blendcolor4((*pdest2), h , (unsigned char)((*psource2) / _counter2), g);
                     ++pdest0; ++pdest1; ++pdest2; ++pdest_opa;
                     ++psource0; ++psource1; ++psource2; ++psource_opb;
                     }
@@ -884,6 +904,101 @@ inline void _warpInt16Buf_4channel(CImg<unsigned char> & im, float op) const
 }
 
 
+/* make B -> A when A has full opacity */
+inline void _blendcolor3(unsigned char & A, unsigned char B, float opB) const
+    {
+    A = (unsigned char)(B*opB + A*(1.0 - opB));
+    }
+
+
+/* warp the buffer onto an image using _qi,_qj,_counter1 and _counter2 :
+method when im has 3 channels (same as if the fourth channel was completely opaque)
+*/
+inline void _warpInt16Buf_3channel(CImg<unsigned char> & im, float op) const
+{
+    MTOOLS_ASSERT(im.spectrum() == 3);
+    const size_t dx = (size_t)_int16_buffer_dim.X();
+    const size_t dxy = (size_t)(dx * _int16_buffer_dim.Y());
+    const size_t l1 = _qi + (dx*_qj);
+    const size_t l2 = (dxy)-l1;
+    if (l1>0)
+    {
+        unsigned char * pdest0 = im.data(0, 0, 0, 0);
+        unsigned char * pdest1 = im.data(0, 0, 0, 1);
+        unsigned char * pdest2 = im.data(0, 0, 0, 2);
+        uint16 * psource0 = _int16_buffer;
+        uint16 * psource1 = _int16_buffer + dxy;
+        uint16 * psource2 = _int16_buffer + 2 * dxy;
+        uint16 * psource_opb = _int16_buffer + 3 * dxy;
+        if (_counter1 == 0) {/* memset(pdest,0,l1); */ }
+        else
+        {
+            if (_counter1 == 1)
+            {
+            for (size_t i = 0; i < l1; i++)
+                {
+                    const float g = ((op*(*psource_opb)) / 255);
+                    _blendcolor3((*pdest0), (unsigned char)(*psource0), g);
+                    _blendcolor3((*pdest1), (unsigned char)(*psource1), g);
+                    _blendcolor3((*pdest2), (unsigned char)(*psource2), g);
+                    ++pdest0; ++pdest1; ++pdest2;
+                    ++psource0; ++psource1; ++psource2; ++psource_opb;
+                }
+            }
+            else
+            {
+                for (size_t i = 0; i < l1; i++)
+                {
+                    const float g = ((op*(*psource_opb) / _counter1) / 255);
+                    _blendcolor3((*pdest0), (unsigned char)((*psource0) / _counter1), g);
+                    _blendcolor3((*pdest1), (unsigned char)((*psource1) / _counter1), g);
+                    _blendcolor3((*pdest2), (unsigned char)((*psource2) / _counter1), g);
+                    ++pdest0; ++pdest1; ++pdest2;
+                    ++psource0; ++psource1; ++psource2; ++psource_opb;
+                }
+            }
+        }
+    }
+    if (l2>0)
+    {
+        unsigned char * pdest0 = im.data(_qi, _qj, 0, 0);
+        unsigned char * pdest1 = im.data(_qi, _qj, 0, 1);
+        unsigned char * pdest2 = im.data(_qi, _qj, 0, 2);
+        uint16 * psource0 = _int16_buffer + +l1;
+        uint16 * psource1 = _int16_buffer + dxy + l1;
+        uint16 * psource2 = _int16_buffer + 2 * dxy + l1;
+        uint16 * psource_opb = _int16_buffer + 3 * dxy + l1;
+        if (_counter2 == 0) {/* memset(pdest,0,l2); */ }
+        else
+        {
+            if (_counter2 == 1)
+            {
+                for (size_t i = 0; i<l2; i++)
+                {
+                    const float g = (op*(*psource_opb)) / 255;
+                    _blendcolor3((*pdest0), (unsigned char)(*psource0), g);
+                    _blendcolor3((*pdest1), (unsigned char)(*psource1), g);
+                    _blendcolor3((*pdest2), (unsigned char)(*psource2), g);
+                    ++pdest0; ++pdest1; ++pdest2;
+                    ++psource0; ++psource1; ++psource2; ++psource_opb;
+                }
+            }
+            else
+            {
+                for (size_t i = 0; i<l2; i++)
+                {
+                    const float g = (op*(*psource_opb) / _counter2) / 255;
+                    _blendcolor3((*pdest0), (unsigned char)((*psource0) / _counter2), g);
+                    _blendcolor3((*pdest1), (unsigned char)((*psource1) / _counter2), g);
+                    _blendcolor3((*pdest2), (unsigned char)((*psource2) / _counter2), g);
+                    ++pdest0; ++pdest1; ++pdest2;
+                    ++psource0; ++psource1; ++psource2; ++psource_opb;
+                }
+            }
+        }
+    }
+    return;
+}
 
 
 
@@ -909,7 +1024,9 @@ uint32              _exact_Q23;             // number of images of good quality
 /* version when LatticeObj implement the getImage method */
 inline const CImg<unsigned char > * _getimage(int64 i, int64 j, int lx, int ly, mtools::metaprog::dummy<true> D)
     {
-    return _g_obj->getImage({ i, j }, { lx, ly });
+    const iVec2 pos(i, j);
+    if (!_g_domR.isInside(pos)) return nullptr;
+    return _g_obj->getImage(pos, { lx, ly });
     }
 
 /* fallback method when LatticeObj does not implement getImage() method */
@@ -1165,42 +1282,21 @@ inline void _drawOntoImage(cimg_library::CImg<unsigned char> & im, float op)
         const double stepy = ((double)ly)/((double)ny);
         // iterate over the pixels of im
         if (im.spectrum() == 3)
-            { // RGB image without transparency,
-            if (op >= 1.0)
-                { // opaque copy is fastest..
-                cimg_forC(im, c)
-                    {    
-                    cimg_forXY(im, i, j)
-                        {
-                            const int x = ax + (int)(stepx*i);  // the corresponding pixel in exactim 
-                            const int y = ay + (int)(stepy*j);  //
-                            const int qqi = x / _exact_sx;                           // the associated quality buffer
-                            const int qqy = _exact_qbuf.height() - 1 - y / _exact_sy;  //
-                            if ((_exact_qbuf(qqi, qqy) != 3) && (_exact_qbuf(qqi, qqy) != 0)) // skip pixels that belong to sites without image or not yet dr
-                            {
-                            im(i, j, 0, c) = _exact_im(x, y, 0, c);
-                            }
-                        }
-                    }
-                }
-            else
-                { // not opaque, superpose with the image.
-                const float po = 1 - op;
-                cimg_forC(im, c)
+            { // 3 channel image.
+                cimg_forXY(im, i, j)
                     {
-                    cimg_forXY(im, i, j)
+                    const int x = ax + (int)(stepx*i);  // the corresponding pixel in exactim 
+                    const int y = ay + (int)(stepy*j);  //
+                    const int qqi = x / _exact_sx;                           // the associated quality buffer
+                    const int qqy = _exact_qbuf.height() - 1 - y / _exact_sy;  //
+                    if ((_exact_qbuf(qqi, qqy) != 3) && (_exact_qbuf(qqi, qqy) != 0))  // skip pixels that belong to sites without image or not yet drawn
                         {
-                        const int x = ax + (int)(stepx*i);  // the corresponding pixel in exactim 
-                        const int y = ay + (int)(stepy*j);  //
-                        const int qqi = x / _exact_sx;                           // the associated quality buffer
-                        const int qqy = _exact_qbuf.height() - 1 - y / _exact_sy;  //
-                        if ((_exact_qbuf(qqi, qqy) != 3) && (_exact_qbuf(qqi, qqy) != 0))  // skip pixels that belong to sites without image or not yet drawn
-                            {
-                            im(i, j, 0, c) = (unsigned char)(po*im(i, j, 0, c) + op*_exact_im(x, y, 0, c));
-                            }
+                        const float g = _exact_im(x, y, 0, 3)*op / 255;
+                        _blendcolor3(im(i, j, 0, 0), _exact_im(x, y, 0, 0), g);
+                        _blendcolor3(im(i, j, 0, 1), _exact_im(x, y, 0, 1), g);
+                        _blendcolor3(im(i, j, 0, 2), _exact_im(x, y, 0, 2), g);
                         }
                     }
-                }
             }
         else
             { // 4 channel image.
@@ -1213,9 +1309,11 @@ inline void _drawOntoImage(cimg_library::CImg<unsigned char> & im, float op)
                     const int qqy = _exact_qbuf.height() - 1 - y / _exact_sy;  //
                     if ((_exact_qbuf(qqi, qqy) != 3) && (_exact_qbuf(qqi, qqy) != 0))  // skip pixels that belong to sites without image or not yet drawn
                         {
-                                         _blendcolor(im(i, j, 0, 0), im(i, j, 0, 3)*po / 255, _exact_im(x, y, 0, 0), _exact_im(x, y, 0, 3)*op / 255);
-                                         _blendcolor(im(i, j, 0, 1), im(i, j, 0, 3)*po / 255, _exact_im(x, y, 0, 1), _exact_im(x, y, 0, 3)*op / 255);
-                        im(i, j, 0, 3) = _blendcolor(im(i, j, 0, 2), im(i, j, 0, 3)*po / 255, _exact_im(x, y, 0, 2), _exact_im(x, y, 0, 3)*op / 255);
+                        const float g = _exact_im(x, y, 0, 3)*op / 255;
+                        const float h = im(i, j, 0, 3)*po / 255;
+                        _blendcolor4(im(i, j, 0, 0), h , _exact_im(x, y, 0, 0), g);
+                        _blendcolor4(im(i, j, 0, 1), h, _exact_im(x, y, 0, 1), g);
+                        im(i, j, 0, 3) = _blendcolor4(im(i, j, 0, 2), h, _exact_im(x, y, 0, 2), g);
                         }
                     }
             }

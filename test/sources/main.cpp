@@ -94,13 +94,15 @@ RGBc colorLERRW(iVec2 pos)
 const cimg_library::CImg<unsigned char> * imageLERRW(mtools::iVec2 pos, mtools::iVec2 size) 
     {
     static EdgeSiteImage ES;
-    static cimg_library::CImg<unsigned char> im(1, 1, 1, 3);
+    static cimg_library::CImg<unsigned char> im(1, 1, 1, 4);
     const siteInfo * S = G.peek(pos);
     if ((S == nullptr) || (S->V == 0)) return nullptr;
     ES.site(true);
     ES.siteColor(RGBc::jetPaletteLog(S->V, 0, S->maxV, 1.2));
     ES.text("Azerty");
+    ES.bkColor(RGBc::c_TransparentWhite);
     ES.makeImage(im, size);
+
     //std::this_thread::sleep_for(std::chrono::milliseconds(1));
     return &im;
     }
@@ -153,12 +155,14 @@ void makeLERRW(uint64 steps, double delta)
   
 
     Plotter2D Plotter;
-    auto L = makePlot2DLattice<colorLERRW>();
+    auto L = makePlot2DLattice<colorLERRW,imageLERRW>();
     Plotter[L];
     Plotter.gridObject(true)->setUnitCells();
 
     auto PF = makePlot2DFun(f);
     Plotter[PF];
+
+    L.domain(iRect(-10, 10, -12, 15));
 
     auto PT = makePlot2DArray(tab, 1000);
     Plotter[PT];
@@ -222,7 +226,7 @@ RGBc mandelbrot(fVec2 pos)
 
 int main()
     {
-    /*
+        /*
     cout << "Mandelbrot set demo.\n";
     cout << "Max number of iteration (1-1024) ? ";
     cout >> nbIter;
@@ -230,18 +234,23 @@ int main()
     cout << nbIter << "\n"; 
     Plotter2D Plotter;  // create the plotter
     auto PD = makePlot2DPlane<mandelbrot>("Mandelbrot Set");
+    
+    
     Plotter[PD];
     Plotter.range().setRange(fRect(-2, 2, -2, 2));
+
+
+    Plotter.startPlot();
+    cout.getKey();
+    PD.domain(fRect(-2, 0.5, -0.3, 1.2));
+    cout.getKey();
+    PD.domainEmpty();
+    cout.getKey();
+    PD.domainFull();
     Plotter.plot();
     return 0;
+  */
 
-
-
-    bool b;
-    cout << "bool = "; cout >> b; cout << "[" << b << "]\n";
-    char c;
-    cout << "bool = "; cout >> c; cout << "[" << c << "]\n";
-    */
   //  load(100000000, 0.5);
     makeLERRW(1000000, 0.5);
     return 0;

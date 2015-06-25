@@ -230,6 +230,113 @@ namespace mtools
             static const int TYPEIMAGE = LatticeDrawer<T>::TYPEIMAGE; ///< draw (if possible) each site using an image for the site (1)
 
 
+            /**
+             * Query the definition domain.
+             *
+             * @return  The current definition domain.
+             **/
+            iRect domain() const
+                {
+                return _LD->domain();
+                }
+
+
+            /**
+            * Query if the domain is the whole lattice.
+            *
+            * @return  true if the domain is full, false if not.
+            **/
+            bool isDomainFull() const
+                {
+                return _LD->isDomainFull();
+                }
+
+
+            /**
+            * Queries if the domain is empty.
+            *
+            * @return  true if the domain is empty, false if not.
+            **/
+            bool isDomainEmpty() const
+                {
+                return _LD->isDomainEmpty();
+                }
+
+
+            /**
+            * Set the definition domain.
+            *
+            * @param   R   The new definition domain
+            **/
+            void domain(mtools::iRect R)
+                {
+                if (R == domain()) return;
+                _LD->domain(R);
+                if (isInserted())
+                    {
+                    enable(false); enable(true); resetDrawing(); // force update the range button on the object menu and then reset the drawing 
+                    }
+                }
+
+
+            /**
+            * Set a full definition Domain.
+            **/
+            void domainFull()
+                {
+                if (isDomainFull()) return;
+                _LD->domainFull();
+                if (isInserted())
+                    {
+                    enable(false); enable(true); resetDrawing(); // force update the range button on the object menu and then reset the drawing 
+                    }
+                }
+
+
+            /**
+            * Set an empty definition Domain.
+            **/
+            void domainEmpty()
+                {
+                if (isDomainEmpty()) return;
+                _LD->domainEmpty();
+                if (isInserted())
+                    {
+                    enable(false); enable(true); resetDrawing(); // force update the range button on the object menu and then reset the drawing 
+                    }
+                }
+
+
+
+
+            virtual fRect favouriteRangeX(fRect R) override
+                {
+                if ((_LD->isDomainEmpty() || _LD->isDomainFull())) return fRect(); // no favourite range
+                iRect D = _LD->domain();
+                return fRect((double)D.xmin - 0.5, (double)D.xmax + 0.5, (double)D.ymin - 0.5, (double)D.ymax + 0.5);
+                }
+
+
+            virtual fRect favouriteRangeY(fRect R) override
+                {
+                if ((_LD->isDomainEmpty() || _LD->isDomainFull())) return fRect(); // no favourite range
+                iRect D = _LD->domain();
+                return fRect((double)D.xmin - 0.5, (double)D.xmax + 0.5, (double)D.ymin - 0.5, (double)D.ymax + 0.5);
+                }
+
+
+            virtual bool hasFavouriteRangeX() override
+                {
+                return(!(_LD->isDomainEmpty() || _LD->isDomainFull())); // there is a favourite range if the domain is neither empy nor full
+                }
+
+
+            virtual bool hasFavouriteRangeY() override
+                {
+                return(!(_LD->isDomainEmpty() || _LD->isDomainFull())); // there is a favourite range if the domain is neither empy nor full
+                }
+
+
         protected:
 
 

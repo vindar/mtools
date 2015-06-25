@@ -144,6 +144,109 @@ namespace mtools
                 }
 
 
+            /**
+            * Query the definition domain.
+            *
+            * @return  The current definition domain.
+            **/
+            fRect domain() const
+                {
+                return _LD->domain();
+                }
+
+            /**
+            * Query if the domain is the whole plane.
+            *
+            * @return  true if the domain is full, false if not.
+            **/
+            bool isDomainFull() const
+                {
+                return _LD->isDomainFull();
+                }
+
+
+            /**
+            * Queries if the domain is empty.
+            *
+            * @return  true if the domain is empty, false if not.
+            **/
+            bool isDomainEmpty() const
+                {
+                return _LD->isDomainEmpty();
+                }
+
+
+            /**
+            * Set the definition domain.
+            *
+            * @param   R   The new definition domain
+            **/
+            void domain(mtools::fRect R)
+                {
+                if (R == domain()) return;
+                _LD->domain(R);
+                if (isInserted())
+                    {
+                    enable(false); enable(true); resetDrawing(); // force update the range button on the object menu and then reset the drawing 
+                    }
+                }
+
+
+            /**
+            * Set a full definition Domain.
+            **/
+            void domainFull()
+                {
+                if (isDomainFull()) return;
+                _LD->domainFull();
+                if (isInserted())
+                    {
+                    enable(false); enable(true); resetDrawing(); // force update the range button on the object menu and then reset the drawing 
+                    }
+                }
+
+
+            /**
+            * Set an empty definition Domain.
+            **/
+            void domainEmpty()
+                {
+                if (isDomainEmpty()) return;
+                _LD->domainEmpty();
+                if (isInserted())
+                    {
+                    enable(false); enable(true); resetDrawing(); // force update the range button on the object menu and then reset the drawing 
+                    }
+                }
+
+
+
+            virtual fRect favouriteRangeX(fRect R) override
+                {
+                if ((_LD->isDomainEmpty() || _LD->isDomainFull())) return fRect(); // no favourite range
+                return _LD->domain();
+                }
+
+
+            virtual fRect favouriteRangeY(fRect R) override
+                {
+                if ((_LD->isDomainEmpty() || _LD->isDomainFull())) return fRect(); // no favourite range
+                return _LD->domain();
+                }
+
+
+            virtual bool hasFavouriteRangeX() override
+                {
+                return(!(_LD->isDomainEmpty() || _LD->isDomainFull())); // there is a favourite range if the domain is neither empy nor full
+                }
+
+
+            virtual bool hasFavouriteRangeY() override
+                {
+                return(!(_LD->isDomainEmpty() || _LD->isDomainFull())); // there is a favourite range if the domain is neither empy nor full
+                }
+
+
 
         protected:
 

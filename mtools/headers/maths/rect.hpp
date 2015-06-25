@@ -164,6 +164,33 @@ namespace mtools
 
 
         /**
+         * Query if a point is inside the closed rectangle
+         *
+         * @param   pos The position to check
+         *
+         * @return  true if the point is in the close rectangle and false otherwise
+         **/
+        inline bool isInside(const Vec<T, 2> pos) const
+        {
+        return ((pos.X() >= xmin) && (pos.X() <= xmax) && (pos.Y() >= ymin) && (pos.Y() <= ymax));
+        }
+
+
+        /**
+        * Query if a point is inside the open rectangle
+        *
+        * @param   pos The position to check
+        *
+        * @return  true if the point is in the close rectangle and false otherwise
+        **/
+        inline bool isStrictlyInside(const Vec<T, 2> pos) const
+        {
+        return ((pos.X() > xmin) && (pos.X() < xmax) && (pos.Y() > ymin) && (pos.Y() < ymax));
+        }
+
+
+
+        /**
          * Return the width : max(0,xmax-xmin) of the rectangle.
          * (may be 0 even for non empty rectangle or positive even if rectangle is empty).
          **/
@@ -178,7 +205,7 @@ namespace mtools
 
 
         /**
-         * Query if the rectangle is reduced to a signle point.
+         * Query if the rectangle is reduced to a single point.
          *
          * @return  true if it is a signle point, false if not.
          **/

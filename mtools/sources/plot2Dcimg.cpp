@@ -20,7 +20,7 @@
 
 #include "stdafx_mtools.h"
 
-#include "graphics/plot2Dcimg.hpp"
+//#include "graphics/plot2Dcimg.hpp"
 
 
 namespace mtools

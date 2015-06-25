@@ -120,7 +120,8 @@ public:
         static_assert(((mtools::metaprog::has_getColor<PlaneObj, RGBc, fVec2>::value)|| (mtools::metaprog::has_getColorExt<PlaneObj, RGBc, fVec2, fRect>::value)), "The object T must be implement either a 'RGBc getColor(fVec2 pos)' or 'RGBc getColor(fVec2 pos, fRect R)' method.");
         _initInt16Buf();
 		_initRand();
-		}
+        domainFull();
+        }
 
 
     /**
@@ -134,6 +135,91 @@ public:
             _removeInt16Buf(); // remove the int16 buffer
             }
         }
+
+    /**
+    * Get the definiton domain of the plane (does not interrupt any computation in progress).
+    * By default this is everything.
+    *
+    * @return  An fRect.
+    **/
+    mtools::fRect domain() const
+        {
+        return _g_domR;
+        }
+
+
+    /**
+     * Query if the domain is the whole plane (does not interrupt any computation in progress).
+     *
+     * @return  true if the domain is full, false if not.
+     **/
+    bool isDomainFull() const
+        {
+        return ((_g_domR.xmin <= -DBL_MAX / 2) && (_g_domR.xmax >= DBL_MAX / 2) && (_g_domR.ymin <= -DBL_MAX / 2) && (_g_domR.ymax >= DBL_MAX / 2));
+        }
+
+
+    /**
+     * Queries if the domain is empty (does not interrupt any computation in progress).
+     *
+     * @return  true if the domain is empty, false if not.
+     **/
+    bool isDomainEmpty() const
+        {
+        return _g_domR.isEmpty();
+        }
+
+
+    /**
+     * Set the definition domain. It is guaranted that no point outside of the domain are never
+     * queried via getColor().
+     *
+     * @param   R   The new definition domain.
+     **/
+    void domain(mtools::fRect R)
+    {
+        ++_g_requestAbort; // request immediate stop of the work method if active.
+        {
+            std::lock_guard<std::timed_mutex> lg(_g_lock); // and wait until we aquire the lock 
+            --_g_requestAbort; // and then remove the stop request
+            _g_domR = R;
+            _g_redraw = true;   // request redraw
+        }
+    }
+
+
+    /**
+    * Set a full definition Domain.
+    **/
+    void domainFull()
+    {
+        ++_g_requestAbort; // request immediate stop of the work method if active.
+        {
+            std::lock_guard<std::timed_mutex> lg(_g_lock); // and wait until we aquire the lock 
+            --_g_requestAbort; // and then remove the stop request
+            _g_domR.xmin = - DBL_MAX/2;
+            _g_domR.xmax = DBL_MAX / 2;
+            _g_domR.ymin = -DBL_MAX / 2;
+            _g_domR.ymax = DBL_MAX / 2;
+            _g_redraw = true;   // request redraw
+        }
+    }
+
+
+    /**
+    * Set an empty definition Domain.
+    **/
+    void domainEmpty()
+    {
+        ++_g_requestAbort; // request immediate stop of the work method if active.
+        {
+            std::lock_guard<std::timed_mutex> lg(_g_lock); // and wait until we aquire the lock 
+            --_g_requestAbort; // and then remove the stop request
+            _g_domR.clear(); // clear the domain
+            _g_redraw = true;   // request redraw
+        }
+    }
+
 
 
     /**
@@ -173,28 +259,21 @@ public:
 
 
     /**
-     * Draw onto a given image. This method does not "compute" anything. It simply warp the current
-     * drawing onto a given cimg image.
-     * 
-     * The provided cimg image may must have 3 or 4 channel and the same size as that set via
-     * setParam().
-     * 
-     * - If im has 3 channels, then the drawer uses only 3 channels for the lattice and simply
-     * superpose the image created over im (multiplying it by the optional opacity parameter).
-     * 
-     * - If im has 4 channels, the drawer uses also 4th channel for the lattice using the A over B
-     * operation (and multipliyng by the opacity parameter).  
-     * 
-     * The method is faster when transparency is not used (i.e. when the supplied image im has 3
-     * channel) and fastest when opacity is 1.0 (or 0.0, but this does nothing).
-     *
-     * @param [in,out]  im  The image to draw onto (must be a 3 or 4 channel image and it size must
-     *                      be equal to the size previously set via the setParam() method.
-     * @param   opacity     The opacity that should be applied to the picture prior to drawing onto
-     *                      im. If set to 0.0, then the method returns without drawing anything.
-     *
-     * @return  The quality of the drawing performed (0 = nothing drawn, 100 = perfect drawing).
-     **/
+    * Draw onto a given image. This method does not "compute" anything. It simply warp the current
+    * drawing onto a given cimg image.
+    *
+    * The provided cimg image must have 3 or 4 channel and the same size as that set via
+    * setParam(). The current drawing of the plane has its opacity channel multiplied by the
+    * opacity parameter and is then superposed with the current content of im using the A over B
+    * operation. If im has only 3 channel, it is considered as having full opacity.
+    *
+    * @param [in,out]  im  The image to draw onto (must be a 3 or 4 channel image and it size must
+    *                      be equal to the size previously set via the setParam() method.
+    * @param   opacity     The opacity that should be applied to the picture prior to drawing onto
+    *                      im. If set to 0.0, then the method returns without drawing anything.
+    *
+    * @return  The quality of the drawing performed (0 = nothing drawn, 100 = perfect drawing).
+    **/
     virtual int drawOnto(cimg_library::CImg<unsigned char> & im, float opacity = 1.0) override
         {
         MTOOLS_ASSERT((im.width() == _g_imSize.X()) && (im.height() == _g_imSize.Y()));
@@ -288,6 +367,7 @@ private:
     iVec2             _g_imSize;            // size of the drawing
     fRect             _g_r;                 // current range
     std::atomic<bool> _g_redraw;            // true if we should redraw from scratch
+    fRect           _g_domR;                // the definition domain
 
     uint32 			_counter1,_counter2;	// counter for the number of pixel added in each cell: counter1 for cells < (_qi,_qj) and counter2 for cells >= (_qi,qj)
     uint32 			_qi,_qj;		        // position where we stopped previously
@@ -418,7 +498,11 @@ inline RGBc _getColor(fVec2 pos, fRect R, mtools::metaprog::dummy<true> D) { ret
 inline RGBc _getColor(fVec2 pos, fRect R, mtools::metaprog::dummy<false> D) { return _g_obj->getColor(pos); }
 
 /* return the color of a given point, use either the object getColor or "extended" getColor method depending on the method detected */
-inline RGBc _getColor(fVec2 pos, fRect R) { return _getColor(pos, R, mtools::metaprog::dummy<mtools::metaprog::has_getColorExt<PlaneObj, RGBc, fVec2, fRect>::value>()); }
+inline RGBc _getColor(fVec2 pos, fRect R) 
+    {
+    if (!_g_domR.isInside(pos)) return RGBc::c_TransparentWhite;
+    return _getColor(pos, R, mtools::metaprog::dummy<mtools::metaprog::has_getColorExt<PlaneObj, RGBc, fVec2, fRect>::value>()); 
+    }
 
 
 
@@ -481,183 +565,215 @@ inline void _addInt16Buf(uint32 x,uint32 y,uint32 R,uint32 G,uint32 B,uint32 A)
 /* the main method for warping the pixel image to the cimg image*/
 void _warp(cimg_library::CImg<unsigned char> & im, float opacity)
     {
+    MTOOLS_ASSERT((im.spectrum() == 3) || (im.spectrum() == 4));
     _work(0); // make sure everything is in sync. 
     if (_g_current_quality > 0)
         {
-        if (im.spectrum() == 4)
-            {
-            _warpInt16Buf_4channel(im, opacity);
-            }
-        else
-            {
-            if (opacity >= 1.0) _warpInt16Buf_opaque(im); else _warpInt16Buf(im, opacity);
-            }
+        if (im.spectrum() == 4) { _warpInt16Buf_4channel(im, opacity); } else { _warpInt16Buf_3channel(im, opacity); }
         }
     return;
     }
 
 
-/* warp the buffer onto an image using _qi,_qj,_counter1 and _counter2 : fast method when opacity = 1.0*/
-inline void _warpInt16Buf(CImg<unsigned char> & im,const float op) const
-	{
-    const float po = 1 - op;
-    const size_t dx = (size_t)_int16_buffer_dim.X();
-    const size_t dxy = (size_t)(dx * _int16_buffer_dim.Y());
-	size_t l1 = _qi + (dx*_qj);
-	size_t l2 = (dxy) - l1;
-	for(int c=0;c<im.spectrum();c++)
-		{
-		if (l1>0)
-			{
-			unsigned char * pdest = im.data(0,0,0,c);
-			uint16 * psource = _int16_buffer + c*dxy;
-			if (_counter1==0) {/* memset(pdest,0,l1); */}
-			else 
-				{     
-                if (_counter1 == 1) { for (size_t i = 0; i < l1; i++) { (*pdest) = (unsigned char)((*pdest)*po + (*psource)*op); ++pdest; ++psource; } }
-                else { for (size_t i = 0; i<l1; i++) { (*pdest) = (unsigned char)((*pdest)*po + (*psource)*op/_counter1); ++pdest; ++psource; } }
-				}
-			}
-		if (l2>0)
-			{
-			unsigned char * pdest = im.data(_qi,_qj,0,c);
-			uint16 * psource      = _int16_buffer + c*dxy + l1;
-			if (_counter2==0) {/* memset(pdest,0,l2); */}
-			else 
-				{
-                if (_counter2 == 1) { for (size_t i = 0; i<l2; i++) { (*pdest) = (unsigned char)((*pdest)*po + (*psource)*op); ++pdest; ++psource; } }
-                else { for (size_t i = 0; i<l2; i++) { (*pdest) = (unsigned char)((*pdest)*po + (*psource)*op / _counter2);  ++pdest; ++psource; } }
-				}
-			}
-		}
-	return;
-	}
 
-/* warp the buffer onto an image using _qi,_qj,_counter1 and _counter2 : fast method when opacity = 1.0*/
-inline void _warpInt16Buf_opaque(CImg<unsigned char> & im) const
+/* make B -> A and return the resulting opacity */
+inline unsigned char _blendcolor4(unsigned char & A, float opA, unsigned char B, float opB) const
 {
-    const size_t dx = (size_t)_int16_buffer_dim.X();
-    const size_t dxy = (size_t)(dx * _int16_buffer_dim.Y());
-    size_t l1 = _qi + (dx*_qj);
-    size_t l2 = (dxy)-l1;
-    for (int c = 0; c< im.spectrum(); c++)
-    {
-        if (l1>0)
-        {
-            unsigned char * pdest = im.data(0, 0, 0, c);
-            uint16 * psource = _int16_buffer + c*dxy;
-            if (_counter1 == 0) {/* memset(pdest,0,l1); */ } else
-            {
-                if (_counter1 == 1) { for (size_t i = 0; i<l1; i++) { (*pdest) = (unsigned char)(*psource); ++pdest; ++psource; } } else { for (size_t i = 0; i<l1; i++) { (*pdest) = (unsigned char)((*psource) / _counter1); ++pdest; ++psource; } }
-            }
-        }
-        if (l2>0)
-        {
-            unsigned char * pdest = im.data(_qi, _qj, 0, c);
-            uint16 * psource = _int16_buffer + c*dxy + l1;
-            if (_counter2 == 0) {/* memset(pdest,0,l2); */ } else
-            {
-                if (_counter2 == 1) { for (size_t i = 0; i<l2; i++) { (*pdest) = (unsigned char)(*psource); ++pdest; ++psource; } } else { for (size_t i = 0; i<l2; i++) { (*pdest) = (unsigned char)((*psource) / _counter2);  ++pdest; ++psource; } }
-            }
-        }
-    }
-    return;
+    float o = opB + opA*(1 - opB); //resulting opacity
+    if (o == 0)  return 0;
+    A = (unsigned char)((B*opB + A*opA*(1 - opB)) / o);
+    return (unsigned char)(255 * o);
 }
 
 
-/* make B -> A */
-inline unsigned char _blendcolor(unsigned char & A, float opA, unsigned char B, float opB ) const
-    {
-    float o = opB + opA*(1 - opB);
-    if (o == 0)  return 0;
-    A = (unsigned char)((B*opB + A*opA*(1 - opB))/o);
-    return (unsigned char)(255 * o);
-    }
-
-/* warp the buffer onto an image using _qi,_qj,_counter1 and _counter2 : four channel on the image : use transparency 
- * PARTIAL SUPPORT */
+/* warp the buffer onto an image using _qi,_qj,_counter1 and _counter2 :
+method when im has four channels : use transparency and A over B operation
+*/
 inline void _warpInt16Buf_4channel(CImg<unsigned char> & im, float op) const
 {
+    MTOOLS_ASSERT(im.spectrum() == 4);
     const float po = 1.0;
     const size_t dx = (size_t)_int16_buffer_dim.X();
     const size_t dxy = (size_t)(dx * _int16_buffer_dim.Y());
     const size_t l1 = _qi + (dx*_qj);
     const size_t l2 = (dxy)-l1;
     if (l1>0)
-        {
+    {
         unsigned char * pdest0 = im.data(0, 0, 0, 0);
         unsigned char * pdest1 = im.data(0, 0, 0, 1);
         unsigned char * pdest2 = im.data(0, 0, 0, 2);
         unsigned char * pdest_opa = im.data(0, 0, 0, 3);
         uint16 * psource0 = _int16_buffer;
         uint16 * psource1 = _int16_buffer + dxy;
-        uint16 * psource2 = _int16_buffer + 2*dxy;
+        uint16 * psource2 = _int16_buffer + 2 * dxy;
         uint16 * psource_opb = _int16_buffer + 3 * dxy;
-        if (_counter1 == 0) {/* memset(pdest,0,l1); */ } else
+        if (_counter1 == 0) {/* memset(pdest,0,l1); */ }
+        else
+        {
+            if (_counter1 == 1)
             {
-            if (_counter1 == 1) 
-                { 
-                for (size_t i = 0; i < l1; i++) 
-                    { 
-                    _blendcolor((*pdest0), ((po*(*pdest_opa)) / 255), (unsigned char)(*psource0), ((op*(*psource_opb)) / 255));
-                    _blendcolor((*pdest1), ((po*(*pdest_opa)) / 255), (unsigned char)(*psource1), ((op*(*psource_opb)) / 255));
-                    (*pdest_opa) = _blendcolor((*pdest2), ((po*(*pdest_opa)) / 255), (unsigned char)(*psource2), ((op*(*psource_opb)) / 255));
+                for (size_t i = 0; i < l1; i++)
+                {
+                    const float g = ((op*(*psource_opb)) / 255);
+                    _blendcolor4((*pdest0), ((po*(*pdest_opa)) / 255), (unsigned char)(*psource0), g);
+                    _blendcolor4((*pdest1), ((po*(*pdest_opa)) / 255), (unsigned char)(*psource1), g);
+                    (*pdest_opa) = _blendcolor4((*pdest2), ((po*(*pdest_opa)) / 255), (unsigned char)(*psource2), g);
                     ++pdest0; ++pdest1; ++pdest2; ++pdest_opa;
                     ++psource0; ++psource1; ++psource2; ++psource_opb;
-                    } 
                 }
-            else 
-               { 
-               for (size_t i = 0; i < l1; i++) 
-                    { 
-                    _blendcolor((*pdest0), ((po*(*pdest_opa)) / 255), (unsigned char)((*psource0) / _counter1), ((op*(*psource_opb) / _counter1) / 255));
-                    _blendcolor((*pdest1), ((po*(*pdest_opa)) / 255), (unsigned char)((*psource1) / _counter1), ((op*(*psource_opb) / _counter1) / 255));
-                    (*pdest_opa) = _blendcolor((*pdest2), ((po*(*pdest_opa)) / 255), (unsigned char)((*psource2) / _counter1), ((op*(*psource_opb) / _counter1) / 255));
+            }
+            else
+            {
+                for (size_t i = 0; i < l1; i++)
+                {
+                    const float g = ((op*(*psource_opb) / _counter1) / 255);
+                    _blendcolor4((*pdest0), ((po*(*pdest_opa)) / 255), (unsigned char)((*psource0) / _counter1), g);
+                    _blendcolor4((*pdest1), ((po*(*pdest_opa)) / 255), (unsigned char)((*psource1) / _counter1), g);
+                    (*pdest_opa) = _blendcolor4((*pdest2), ((po*(*pdest_opa)) / 255), (unsigned char)((*psource2) / _counter1), g);
                     ++pdest0; ++pdest1; ++pdest2; ++pdest_opa;
                     ++psource0; ++psource1; ++psource2; ++psource_opb;
-                    } 
                 }
             }
         }
+    }
     if (l2>0)
-        {
+    {
         unsigned char * pdest0 = im.data(_qi, _qj, 0, 0);
         unsigned char * pdest1 = im.data(_qi, _qj, 0, 1);
         unsigned char * pdest2 = im.data(_qi, _qj, 0, 2);
         unsigned char * pdest_opa = im.data(_qi, _qj, 0, 3);
-        uint16 * psource0 = _int16_buffer +  + l1;
+        uint16 * psource0 = _int16_buffer + +l1;
         uint16 * psource1 = _int16_buffer + dxy + l1;
-        uint16 * psource2 = _int16_buffer + 2*dxy + l1;
-        uint16 * psource_opb = _int16_buffer + 3*dxy + l1;
-        if (_counter2 == 0) {/* memset(pdest,0,l2); */ } else
+        uint16 * psource2 = _int16_buffer + 2 * dxy + l1;
+        uint16 * psource_opb = _int16_buffer + 3 * dxy + l1;
+        if (_counter2 == 0) {/* memset(pdest,0,l2); */ }
+        else
+        {
+            if (_counter2 == 1)
             {
-            if (_counter2 == 1) 
+                for (size_t i = 0; i<l2; i++)
                 {
-                for (size_t i = 0; i<l2; i++) 
-                    { 
-                    _blendcolor((*pdest0), (po*(*pdest_opa)) / 255, (unsigned char)(*psource0), (op*(*psource_opb)) / 255);
-                    _blendcolor((*pdest1), (po*(*pdest_opa)) / 255, (unsigned char)(*psource1), (op*(*psource_opb)) / 255);
-                    (*pdest_opa) = _blendcolor((*pdest2), (po*(*pdest_opa)) / 255, (unsigned char)(*psource2), (op*(*psource_opb)) / 255);
+                    const float g = (op*(*psource_opb)) / 255;
+                    _blendcolor4((*pdest0), (po*(*pdest_opa)) / 255, (unsigned char)(*psource0), g);
+                    _blendcolor4((*pdest1), (po*(*pdest_opa)) / 255, (unsigned char)(*psource1), g);
+                    (*pdest_opa) = _blendcolor4((*pdest2), (po*(*pdest_opa)) / 255, (unsigned char)(*psource2), g);
                     ++pdest0; ++pdest1; ++pdest2; ++pdest_opa;
                     ++psource0; ++psource1; ++psource2; ++psource_opb;
-                    }
-                }
-            else 
-                { 
-                for (size_t i = 0; i<l2; i++) 
-                    { 
-                    _blendcolor((*pdest0), (po*(*pdest_opa)) / 255, (*psource0) / _counter2, (op*(*psource_opb) / _counter2) / 255); 
-                    _blendcolor((*pdest1), (po*(*pdest_opa)) / 255, (*psource1) / _counter2, (op*(*psource_opb) / _counter2) / 255);
-                    (*pdest_opa) = _blendcolor((*pdest2), (po*(*pdest_opa)) / 255, (*psource2) / _counter2, (op*(*psource_opb) / _counter2) / 255);
-                    ++pdest0; ++pdest1; ++pdest2; ++pdest_opa;
-                    ++psource0; ++psource1; ++psource2; ++psource_opb;
-                    }
                 }
             }
-         }
+            else
+            {
+                for (size_t i = 0; i<l2; i++)
+                {
+                    const float g = (op*(*psource_opb) / _counter2) / 255;
+                    _blendcolor4((*pdest0), (po*(*pdest_opa)) / 255, (unsigned char)((*psource0) / _counter2), g);
+                    _blendcolor4((*pdest1), (po*(*pdest_opa)) / 255, (unsigned char)((*psource1) / _counter2), g);
+                    (*pdest_opa) = _blendcolor4((*pdest2), (po*(*pdest_opa)) / 255, (unsigned char)((*psource2) / _counter2), g);
+                    ++pdest0; ++pdest1; ++pdest2; ++pdest_opa;
+                    ++psource0; ++psource1; ++psource2; ++psource_opb;
+                }
+            }
+        }
+    }
     return;
 }
 
+
+/* make B -> A when A has full opacity */
+inline void _blendcolor3(unsigned char & A, unsigned char B, float opB) const
+{
+    A = (unsigned char)(B*opB + A*(1.0 - opB));
+}
+
+
+/* warp the buffer onto an image using _qi,_qj,_counter1 and _counter2 :
+method when im has 3 channels (same as if the fourth channel was completely opaque)
+*/
+inline void _warpInt16Buf_3channel(CImg<unsigned char> & im, float op) const
+{
+    MTOOLS_ASSERT(im.spectrum() == 3);
+    const size_t dx = (size_t)_int16_buffer_dim.X();
+    const size_t dxy = (size_t)(dx * _int16_buffer_dim.Y());
+    const size_t l1 = _qi + (dx*_qj);
+    const size_t l2 = (dxy)-l1;
+    if (l1>0)
+    {
+        unsigned char * pdest0 = im.data(0, 0, 0, 0);
+        unsigned char * pdest1 = im.data(0, 0, 0, 1);
+        unsigned char * pdest2 = im.data(0, 0, 0, 2);
+        uint16 * psource0 = _int16_buffer;
+        uint16 * psource1 = _int16_buffer + dxy;
+        uint16 * psource2 = _int16_buffer + 2 * dxy;
+        uint16 * psource_opb = _int16_buffer + 3 * dxy;
+        if (_counter1 == 0) {/* memset(pdest,0,l1); */ }
+        else
+        {
+            if (_counter1 == 1)
+            {
+                for (size_t i = 0; i < l1; i++)
+                {
+                    const float g = ((op*(*psource_opb)) / 255);
+                    _blendcolor3((*pdest0), (unsigned char)(*psource0), g);
+                    _blendcolor3((*pdest1), (unsigned char)(*psource1), g);
+                    _blendcolor3((*pdest2), (unsigned char)(*psource2), g);
+                    ++pdest0; ++pdest1; ++pdest2;
+                    ++psource0; ++psource1; ++psource2; ++psource_opb;
+                }
+            }
+            else
+            {
+                for (size_t i = 0; i < l1; i++)
+                {
+                    const float g = ((op*(*psource_opb) / _counter1) / 255);
+                    _blendcolor3((*pdest0), (unsigned char)((*psource0) / _counter1), g);
+                    _blendcolor3((*pdest1), (unsigned char)((*psource1) / _counter1), g);
+                    _blendcolor3((*pdest2), (unsigned char)((*psource2) / _counter1), g);
+                    ++pdest0; ++pdest1; ++pdest2;
+                    ++psource0; ++psource1; ++psource2; ++psource_opb;
+                }
+            }
+        }
+    }
+    if (l2>0)
+    {
+        unsigned char * pdest0 = im.data(_qi, _qj, 0, 0);
+        unsigned char * pdest1 = im.data(_qi, _qj, 0, 1);
+        unsigned char * pdest2 = im.data(_qi, _qj, 0, 2);
+        uint16 * psource0 = _int16_buffer + +l1;
+        uint16 * psource1 = _int16_buffer + dxy + l1;
+        uint16 * psource2 = _int16_buffer + 2 * dxy + l1;
+        uint16 * psource_opb = _int16_buffer + 3 * dxy + l1;
+        if (_counter2 == 0) {/* memset(pdest,0,l2); */ }
+        else
+        {
+            if (_counter2 == 1)
+            {
+                for (size_t i = 0; i<l2; i++)
+                {
+                    const float g = (op*(*psource_opb)) / 255;
+                    _blendcolor3((*pdest0), (unsigned char)(*psource0), g);
+                    _blendcolor3((*pdest1), (unsigned char)(*psource1), g);
+                    _blendcolor3((*pdest2), (unsigned char)(*psource2), g);
+                    ++pdest0; ++pdest1; ++pdest2;
+                    ++psource0; ++psource1; ++psource2; ++psource_opb;
+                }
+            }
+            else
+            {
+                for (size_t i = 0; i<l2; i++)
+                {
+                    const float g = (op*(*psource_opb) / _counter2) / 255;
+                    _blendcolor3((*pdest0), (unsigned char)((*psource0) / _counter2), g);
+                    _blendcolor3((*pdest1), (unsigned char)((*psource1) / _counter2), g);
+                    _blendcolor3((*pdest2), (unsigned char)((*psource2) / _counter2), g);
+                    ++pdest0; ++pdest1; ++pdest2;
+                    ++psource0; ++psource1; ++psource2; ++psource_opb;
+                }
+            }
+        }
+    }
+    return;
+}
 
 
 // ****************************************************************

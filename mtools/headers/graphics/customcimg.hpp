@@ -54,6 +54,8 @@
 #endif
 
 #include <CImg.h>	    // the header for the cimg library
+#undef min
+#undef max
 
 using cimg_library::CImg; 
 using cimg_library::CImgList;
