@@ -57,7 +57,8 @@ namespace mtools
             template<typename U> static decltype(  ((*(U*)(0)) == (*(U*)(0))) ) test(int); // test the existence comparison with ==
             template<typename> static no test(...);                                              // fallback for SFINAE
         public:
-            static const bool value = std::is_convertible< std::decay<decltype(test<T>(0))>::type, bool >::value;
+            
+            static const bool value = std::is_convertible< typename std::decay<decltype(test<T>(0))>::type, bool >::value;
         };
 
 
@@ -123,7 +124,7 @@ namespace mtools
             template<typename U> static decltype((*((U*)0)).toString()) test(int); // test the existence of the method toString()
             template<typename> static no test(...);                                       // fallback for SFINAE
         public:
-            static const bool value = std::is_convertible< std::decay<decltype(test<T>(0))>::type, std::string >::value;
+            static const bool value = std::is_convertible< typename std::decay<decltype(test<T>(0))>::type, std::string >::value;
         };
 
 
@@ -137,7 +138,7 @@ namespace mtools
             template<typename U> static decltype((*((U*)0)).to_string()) test(int); // test the existence of the method toString()
             template<typename> static no test(...);                                       // fallback for SFINAE
         public:
-            static const bool value = std::is_convertible< std::decay<decltype(test<T>(0))>::type, std::string >::value;
+            static const bool value = std::is_convertible< typename std::decay<decltype(test<T>(0))>::type, std::string >::value;
         };
 
 
@@ -153,7 +154,7 @@ namespace mtools
             template<typename U> static decltype((*((U*)0)).getColor(*((V*)0))) test(int); // test the existence of the method getColor(iVec2 )
             template<typename> static no test(...);                                       // fallback for SFINAE
         public:
-            static const bool value = std::is_convertible< std::decay<decltype(test<T>(0))>::type, std::decay<O>::type >::value;
+            static const bool value = std::is_convertible< typename std::decay<decltype(test<T>(0))>::type, typename std::decay<O>::type >::value;
         };
 
         /**
@@ -169,7 +170,7 @@ namespace mtools
             template<typename U> static decltype((*((U*)0)).getColor(*((V*)0), *((W*)0))) test(int); // test the existence of the method getColor(iVec2 )
             template<typename> static no test(...);                                       // fallback for SFINAE
             public:
-                static const bool value = std::is_convertible< std::decay<decltype(test<T>(0))>::type, std::decay<O>::type >::value;
+                static const bool value = std::is_convertible< typename std::decay<decltype(test<T>(0))>::type, typename std::decay<O>::type >::value;
             };
 
 
@@ -184,7 +185,7 @@ namespace mtools
             template<typename U> static decltype((*((U*)0)).getImage((*((V*)0)), (*((W*)0)))) test(int); // test the existence of the method getImage(iVec2 )
             template<typename> static no test(...);                                       // fallback for SFINAE
         public:
-            static const bool value = std::is_convertible< std::decay<decltype(test<T>(0))>::type, std::decay<O>::type >::value;
+            static const bool value = std::is_convertible< typename std::decay<decltype(test<T>(0))>::type, typename std::decay<O>::type >::value;
         };
 
 

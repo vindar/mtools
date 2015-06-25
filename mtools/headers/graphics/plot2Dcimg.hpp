@@ -155,9 +155,9 @@ namespace mtools
                 pos.X() -= _im->width() /2;
                 pos.Y() = _im->height()/2 - 1 - pos.Y();
                 }
-            const int dx = _im->width();
-            const int dxy = dx*_im->height();
-            size_t off = pos.X() + dx*pos.Y();
+            const int64 dx = _im->width();
+            const int64 dxy = dx*_im->height();
+            int64 off = pos.X() + dx*pos.Y();
             if ((off < 0) || (off >= dxy)) return RGBc::c_TransparentWhite;
             const unsigned char * p = _im->data();
             const char r = *(p + off);

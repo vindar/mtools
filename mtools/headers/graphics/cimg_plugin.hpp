@@ -41,7 +41,7 @@
         const char g = operator()(x, y, 0, 1);
         const char b = operator()(x, y, 0, 2);
         const char a = ((spectrum() >= 4) ? (operator()(x, y, 0, 3)) : 255);
-        return RGBc(r, g, b, a);
+        return mtools::RGBc(r, g, b, a);
         }
 
 
@@ -56,10 +56,10 @@
         {
         const int x = (int)pos.X();
         const int y = (int)pos.Y();
-        operator()(x, y, 0, 0) = color.r;
-        operator()(x, y, 0, 1) = color.g;
-        operator()(x, y, 0, 2) = color.b;
-        if (spectrum() >= 4) { operator()(x, y, 0, 3) = color.a; }
+        operator()(x, y, 0, 0) = color.R;
+        operator()(x, y, 0, 1) = color.G;
+        operator()(x, y, 0, 2) = color.B;
+        if (spectrum() >= 4) { operator()(x, y, 0, 3) = color.A; }
         }
 
 
