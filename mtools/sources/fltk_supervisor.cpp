@@ -169,9 +169,10 @@ namespace mtools
                 Msg ms(proxy, Msg::NEW_MSG); // create the message
                 _thMsgList.pushTop(&ms); // push it
                 Fl::awake(&FLTK_Supervisor::_processMsgCB, nullptr); // inform fltk
+                Fl::awake(); // again...
                 while (!ms.status)
                     {
-                    _cv.wait_for(lck, std::chrono::milliseconds(10)); // wait for signalization of the condition variable (or time elapsed).
+                    _cv.wait_for(lck, std::chrono::milliseconds(5)); // wait for signalization of the condition variable (or time elapsed).
                     if (!ms.status) { Fl::awake(); }
                     if (_stopped) {MTOOLS_DEBUG("!!!! Construction failed : the FLTK thread stopped while waiting for an answer !!!!"); return;}
                     cc++; if (cc > 100) { MTOOLS_DEBUG("... hanging ..."); cc = 0; }
@@ -208,9 +209,10 @@ namespace mtools
                 Msg ms(proxy, Msg::DELETE_MSG); // create the message
                 _thMsgList.pushTop(&ms); // push it
                 Fl::awake(&FLTK_Supervisor::_processMsgCB, nullptr); // inform fltk
+                Fl::awake(); // again...
                 while (!ms.status)
                     {
-                    _cv.wait_for(lck, std::chrono::milliseconds(10)); // wait for signalization of the condition variable (or time elapsed).
+                    _cv.wait_for(lck, std::chrono::milliseconds(5)); // wait for signalization of the condition variable (or time elapsed).
                     if (!ms.status) { Fl::awake(); }
                     if (_stopped) { MTOOLS_DEBUG("!!!! Destruction failed : the FLTK thread stopped while waiting for an answer !!!!"); return; }
                     cc++; if (cc > 100) { MTOOLS_DEBUG("... hanging ..."); cc = 0; }
@@ -243,9 +245,10 @@ namespace mtools
                 Msg ms(proxycall, Msg::RUN_MSG); // create the message
                 _thMsgList.pushTop(&ms); // push it
                 Fl::awake(&FLTK_Supervisor::_processMsgCB, nullptr); // inform fltk
+                Fl::awake(); // again...
                 while (!ms.status)
                     {
-                    _cv.wait_for(lck, std::chrono::milliseconds(10)); // wait for signalization of the condition variable (or time elapsed).
+                    _cv.wait_for(lck, std::chrono::milliseconds(5)); // wait for signalization of the condition variable (or time elapsed).
                     if (!ms.status) { Fl::awake(); }
                     if (_stopped) { MTOOLS_DEBUG("!!!! run failed : the FLTK thread stopped while waiting for an answer !!!!"); return; }
                     cc++; if (cc > 100) { MTOOLS_DEBUG("... hanging ..."); cc = 0; }

@@ -179,9 +179,10 @@ void makeLERRW(uint64 steps, double delta)
     auto PT = makePlot2DArray(tab, 1000);
     //Plotter[PT];
 
-    Plotter.startPlot();
+    Plotter.plot();
+    return;
 
-    cout.getKey();
+    
     LENA.position(LENA.TYPECENTER);
 
     cout.getKey();

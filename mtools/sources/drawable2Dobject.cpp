@@ -99,11 +99,17 @@ namespace internals_graphics
         /* the thread procedure doing the work */
         void AutoDrawable2DObject::_workerThread()
             {
+            int nb = 0;
             _threadon = true; // ok we are on...
             while (!_mustexit) // loop until we are required to exit
                 {
-                int q =_obj->work(300); // work for 1/3 of a second
-                if (q == 100) {std::this_thread::sleep_for(std::chrono::milliseconds(10));}
+                int q =_obj->work(500); // work for 1/3 of a second
+                if (q == 100) {
+                    std::this_thread::yield();
+                    if (nb >= 100) { std::this_thread::sleep_for(std::chrono::milliseconds(1)); nb = 0; }
+                    nb++;
+                    }
+                else { nb = 0; }
                 }
             _threadon = false; // ...and we are off
             }
