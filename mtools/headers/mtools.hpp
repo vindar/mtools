@@ -22,7 +22,7 @@
 
 // containers
 #include "containers/grid_basic.hpp"
-//#include "containers/grid_factor.hpp"
+#include "containers/grid_factor.hpp"
 #include "containers/grid_static.hpp"
 #include "containers/bitgraphZ2.hpp"
 #include "containers/randomurn.hpp"

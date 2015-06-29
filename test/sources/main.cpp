@@ -168,9 +168,9 @@ void makeLERRW(uint64 steps, double delta)
 
 
     CImg<unsigned char> im;
-    im.load("lena.png");
+    im.load("lenna.jpg");
 
-    auto LENA = makePlot2DCImg(im, "lena");
+    auto LENA = makePlot2DCImg(im, "Lenna");
 
     Plotter[LENA];
 
@@ -192,7 +192,7 @@ void makeLERRW(uint64 steps, double delta)
     LENA.position(LENA.TYPEBOTTOMLEFT);
 
     CImg<unsigned char> im2;
-    im2.load("mandel.png");
+    im2.load("lenna.jpg");
     LENA.image(im2);
 
 

@@ -34,7 +34,7 @@ namespace mtools
         template<size_t D, typename T, size_t R> struct _box;
         template<size_t D, typename T, size_t R> struct _node;
         template<size_t D, typename T, size_t R> struct _leaf;
-        template<size_t D, typename T, size_t R> struct _leafFactor;
+        template<size_t D, typename T, size_t R, size_t NB_SPECIAL> struct _leafFactor;
 
 
         /* Box object */
@@ -138,6 +138,18 @@ namespace mtools
         };
 
 
+        /* Leaf Factor object */
+        template<size_t D, typename T, size_t R, size_t NB_SPECIAL> struct _leafFactor : public _leaf< D, T, R>
+        {
+            _leafFactor() {}
+            ~_leafFactor() {};
+
+            size_t count[NB_SPECIAL]; // number of special element of each type
+
+        private:
+            _leafFactor(const _leafFactor &) = delete;                // no copy
+            _leafFactor & operator=(const _leafFactor &) = delete;    //
+        };
 
 
 
