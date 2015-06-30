@@ -549,7 +549,7 @@ namespace mtools
             if (_pcurrent->isLeaf())
                 {
                 if (((_pleaf)_pcurrent)->isInBox(pos)) { return(((_pleaf)_pcurrent)->get(pos)); }
-                if (_pcurrent->father == nullptr) { _pcurrent->father = _allocateNode(_pcurrent); }
+                MTOOLS_ASSERT(_pcurrent->father != nullptr); // a leaf must always have a father
                 _pcurrent = _pcurrent->father;
                 }
             // going up...

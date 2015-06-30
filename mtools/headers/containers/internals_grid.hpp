@@ -34,7 +34,7 @@ namespace mtools
         template<size_t D, typename T, size_t R> struct _box;
         template<size_t D, typename T, size_t R> struct _node;
         template<size_t D, typename T, size_t R> struct _leaf;
-        template<size_t D, typename T, size_t R, size_t NB_SPECIAL> struct _leafFactor;
+        template<size_t D, typename T, size_t NB_SPECIAL, size_t R > struct _leafFactor;
 
 
         /* Box object */
@@ -78,7 +78,7 @@ namespace mtools
             /* return true if the point belong to this box, false otherwise */
             inline bool isInBox(const Pos & pos) const { int64 l = (3 * this->rad + 1); for (size_t i = 0; i < D; ++i) { int64 u = pos[i] - this->center[i];  if ((u > l) || (u < -l)) { return false; } } return true; }
 
-            /* return a reference to the element in tab containing pointer to the subbox containing the point pos (no boundary check) */
+            /* return a reference to the element in tab containing the pointer to the subbox containing the point pos (no boundary check) */
             inline _pbox & getSubBox(const Pos & pos)
                 {
                 size_t m = 1, r = 0;
@@ -139,7 +139,7 @@ namespace mtools
 
 
         /* Leaf Factor object  */
-        template<size_t D, typename T, size_t R, size_t NB_SPECIAL> struct _leafFactor : public _leaf< D, T, R>
+        template<size_t D, typename T, size_t NB_SPECIAL, size_t R> struct _leafFactor : public _leaf< D, T, R>
         {
             _leafFactor() {}
             ~_leafFactor() {};

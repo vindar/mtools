@@ -63,6 +63,22 @@ namespace mtools
 
 
         /**
+        * has_assignementOperator::value = true if T has a method which call be called in this way: `T->operator=(T)`
+        *
+        * @tparam  T   Generic type parameter.
+        **/
+        template<typename T> class has_assignementOperator
+        {
+            template<typename U> static decltype(((*(U*)(0)) = (*(U*)(0))), yes()) test(int); // test the existence of operator=()
+            template<typename> static no test(...);                                               // fallback for SFINAE
+        public:
+            static const bool value = (sizeof(test<T>(0)) == sizeof(yes));
+        };
+
+
+
+
+        /**
          * Check if a type is serialisable.
          *  is_serializable<T>::value_serialize return the type of serialization supported.
          *  is_serializable<T>::value_deserialize return the type of deserialization supported.

@@ -255,6 +255,23 @@ RGBc mandelbrot(fVec2 pos)
 
 int main()
     {
+
+
+    Grid_factor<2, int, 7> G(0, 6, true);
+
+    iVec<2> pos;
+
+    G.get(pos);
+
+    int vv = 12;
+    G.set(pos, -1);
+
+    const int * a = G.peek(pos);
+
+    cout << a << G.toString(true);
+
+    cout.getKey();
+    return 0;
         /*
     cout << "Mandelbrot set demo.\n";
     cout << "Max number of iteration (1-1024) ? ";
