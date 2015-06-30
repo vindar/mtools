@@ -342,7 +342,6 @@ namespace mtools
         static_assert(metaprog::has_assignementOperator<T>::value, "The object T must be assignable via operator=()");
 
 
-
         /* print the tree, for debug purpose only */
         std::string _printTree(_pbox p, std::string tab) const
             {

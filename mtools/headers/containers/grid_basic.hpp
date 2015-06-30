@@ -438,7 +438,7 @@ namespace mtools
         inline const T * peek(const Pos & pos) const
             {
             MTOOLS_ASSERT(_pcurrent != nullptr);
-            // first we go up
+            // check if we are at the right leaf
             if (_pcurrent->isLeaf())
                 {
                 _pleaf p = (_pleaf)(_pcurrent);
@@ -446,13 +446,14 @@ namespace mtools
                 if (p->father == nullptr) return nullptr;
                 _pcurrent = p->father;
                 }
+            // no we go up...
             _pnode q = (_pnode)(_pcurrent);
             while (!q->isInBox(pos))
                 {
                 if (q->father == nullptr) { _pcurrent = q; return nullptr; }
                 q = (_pnode)q->father;
                 }
-            // now we go down
+            // and down...
             while (1)
                 {
                 _pbox b = q->getSubBox(pos);
