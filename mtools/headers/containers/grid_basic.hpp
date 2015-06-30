@@ -369,6 +369,19 @@ namespace mtools
 
 
         /**
+        * Return the spacial range of elements accessed in an iRect structure. The rectangle is empty
+        * if no elements have ever been accessed/created.
+        *
+        * @return  an iRect containing the spacial range of element accessed.
+        **/
+        inline iRect getRangeiRect() const
+            {
+            static_assert(D == 2, "getRangeiRect() method can only be used when the dimension template parameter D is 2");
+            return mtools::iRect(_rangemin.X(), _rangemax.X(), _rangemin.Y(), _rangemax.Y());
+            }
+
+
+        /**
          * Sets the value at a given site. This method require T to be assignable via T.operator=. If the
          * value at the site does not exist prior to the call of the method, it is first created then the
          * assignement is performed.

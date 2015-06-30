@@ -254,15 +254,19 @@ RGBc mandelbrot(fVec2 pos)
 
 
 
-Grid_factor<2, int, 10, 2> GF(0, 2, true);
-//Grid_basic<2, int, 2> GF;
+Grid_factor<2, int, 10> GF(0, 2, true);
+//Grid_basic<2, int> GF;
+
 
 RGBc colorGF(iVec2 pos)
     {
     const int * S = GF.peek(pos);
     if (S == nullptr) return RGBc::c_TransparentWhite;
     if (*S == 0) return RGBc::c_Cyan;
-    return RGBc::jetPalette(*S, 1, 100);
+    if (*S == 1) return RGBc::c_Blue;
+    if (*S == 2) return RGBc::c_Green;
+    if (*S == 2) return RGBc::c_Red;
+    return RGBc::c_Orange;
     }
 
 void testWalk(int64 N)
@@ -279,27 +283,36 @@ void testWalk(int64 N)
     }
 
 
+
+void fillSqr(iRect R, int val)
+    {
+    for (int64 j = R.ymin; j <= R.ymax; j++)
+        for (int64 i = R.xmin; i <= R.xmax; i++)
+        GF.set({ i,j }, val);
+    }
+
 int main()
     {
 
 
-       /*
-       GF.set({ 2,2 }, 100);
-        GF.set({ -3,0 }, 1);
+
+    fillSqr(iRect(-7, 7, -7, 7), 2);
+
+    GF.set({ 3,3 }, 1);
+    GF.set({ 8,0 }, 1);
+    GF.set({ 8,0 }, 0);
 
 
-        for (int i = -2; i <= 2; i++)
-            for (int j = -2; j <= 2; j++)
-            GF.set({ -100 + i,100 +j }, 2);
 
-        GF.set({ -100,100 }, 1);
+    GF.set({ 3,3 }, 2);
 
-        GF.set({ -100,100 }, 2);
+    Chronometer();
+    testWalk(100000000);
+    cout << "\ntime = " << Chronometer() << "\n";
+        
+    cout << GF.getRangeiRect() << "\n";
+    cout << GF.toString(false);
 
-        */
-
-        testWalk(10000000);
-        cout << GF.toString(false);
 
     Plotter2D Plotter;
     Plotter.gridObject(true)->setUnitCells();
