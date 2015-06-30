@@ -253,26 +253,62 @@ RGBc mandelbrot(fVec2 pos)
     }
 
 
+
+Grid_factor<2, int, 10, 2> GF(0, 2, true);
+//Grid_basic<2, int, 2> GF;
+
+RGBc colorGF(iVec2 pos)
+    {
+    const int * S = GF.peek(pos);
+    if (S == nullptr) return RGBc::c_TransparentWhite;
+    if (*S == 0) return RGBc::c_Cyan;
+    return RGBc::jetPalette(*S, 1, 100);
+    }
+
+void testWalk(int64 N)
+    {
+    iVec2 pos = { 0,0 };
+    for (int64 i = 0;i < N;i++)
+        {
+        GF.set(pos, 1);
+        double a = gen.rand_double0();
+        if (a < 0.25) pos.X()--; else
+        if (a < 0.5) pos.X()++; else
+        if (a < 0.75) pos.Y()--; else pos.Y()++;
+        }
+    }
+
+
 int main()
     {
 
 
-    Grid_factor<2, int, 7> G(0, 6, true);
+       /*
+       GF.set({ 2,2 }, 100);
+        GF.set({ -3,0 }, 1);
 
-    iVec<2> pos;
 
-    G.get(pos);
+        for (int i = -2; i <= 2; i++)
+            for (int j = -2; j <= 2; j++)
+            GF.set({ -100 + i,100 +j }, 2);
 
-    int vv = 12;
-    G.set(pos, -1);
+        GF.set({ -100,100 }, 1);
 
-    const int * a = G.peek(pos);
+        GF.set({ -100,100 }, 2);
 
-    cout << a << G.toString(true);
+        */
 
-    cout.getKey();
+        testWalk(10000000);
+        cout << GF.toString(false);
+
+    Plotter2D Plotter;
+    Plotter.gridObject(true)->setUnitCells();
+    auto PGF = makePlot2DLattice<colorGF>("Grid factor");
+    Plotter[PGF];
+    Plotter.plot();
     return 0;
-        /*
+
+    /*
     cout << "Mandelbrot set demo.\n";
     cout << "Max number of iteration (1-1024) ? ";
     cout >> nbIter;

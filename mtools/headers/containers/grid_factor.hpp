@@ -141,7 +141,7 @@ namespace mtools
          **/
         Grid_factor(int64 minSpecial = 0, int64 maxSpecial = -1, bool callDtors = true)
             { 
-            _reset(minSpecial, maxSpecial, callDtors);
+            reset(minSpecial, maxSpecial, callDtors);
             }
 
 
