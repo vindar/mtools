@@ -138,7 +138,7 @@ namespace mtools
         };
 
 
-        /* Leaf Factor object */
+        /* Leaf Factor object  */
         template<size_t D, typename T, size_t R, size_t NB_SPECIAL> struct _leafFactor : public _leaf< D, T, R>
         {
             _leafFactor() {}

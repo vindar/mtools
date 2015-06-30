@@ -342,7 +342,7 @@ namespace mtools
          * Returns a string with some information concerning the object.
          *
          * @param   debug   Set this flag to true to enable the debug mode where the whole tree structure
-         *                  of the lattice is written into the string [should not be used for large grid].
+         *                  of the lattice is written into the string [should not be used for large grids].
          *
          * @return  an info string.
          **/

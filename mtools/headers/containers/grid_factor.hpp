@@ -131,6 +131,131 @@ namespace mtools
         **/
         typedef iVec<D> Pos;
 
+
+        /**
+         * Constructor. An empty grid (no objet of type T is created).
+         *
+         * @param   minSpecial  The minimum value of the special objects.
+         * @param   maxSpecial  The maximum value of the special objects.
+         * @param   callDtors   true to call the destructors of the T objects when destroyed. 
+         **/
+        Grid_factor(int64 minSpecial, int64 maxSpecial, bool callDtors)
+            { 
+            _reset(minSpecial, maxSpecial, callDtors);
+            }
+
+
+        /**
+        * Constructor. Loads a grid from a file. If the loading fails, the grid is constructed empty.
+        *
+        * @param   filename    Filename of the file.
+        **/
+        Grid_factor(const std::string & filename)
+            { 
+            _reset(0, 0, true);
+            load(filename);
+            }
+
+
+        /**
+        * Destructor. Destroys the grid. The destructors of all the T objects in the grid are invoqued.
+        * In order to prevent calling the dtors of T objects, call `reset(false)` prior to destructing
+        * the grid.
+        **/
+        ~Grid_factor() { _reset(); }
+
+
+        /**
+        * Copy Constructor. Makes a Deep copy of the grid. The class T must be copyable by the copy
+        * operator `T(const T&)`.
+        **/
+        template<size_t NB_SPECIAL2> Grid_factor(const Grid_factor<D, T, R, NB_SPECIAL2> & G)
+            {
+            _reset(0, 0, true);
+            this->operator=(G);
+            }
+
+
+        /**
+        * Assignement operator. Create a deep copy of G. The class T must be copyable by the copy
+        * operator T(const T&). The assignement operator `operator=(const T &)` is never used and need
+        * not be defined. If the grid is not empty, it is first reset : all the object inside are
+        * destroyed and their dtors are invoqued.
+        **/
+        template<size_t NB_SPECIAL2> Grid_factor<D, T, R, NB_SPECIAL> & operator=(const Grid_factor<D, T, R, NB_SPECIAL2> & G)
+            {
+            static_assert((NB_SPECIAL2 <= NB_SPECIAL), "The number of NB_SPECIAL of special object of the source must be smaller than than of the destination");
+            if ((&G) == this) { return(*this); }
+            _reset(G._minSpec,G._maxSpec,G._callDtors);
+            // *********************** TODO ************************
+            return(*this);
+            }
+
+
+        /**
+        * Resets the grid. Keep the previous minSpecial, maxSpecial et callDtor parameters. 
+        **/
+        void reset()
+            {
+            _reset();
+            _createBaseNode();
+            }
+
+
+        /**
+         * Resets the grid and change the range of the special values.
+         *
+         * @param   minSpecial  the new minimum value for the special parameters.
+         * @param   maxSpecial  the new maximum value for the special parameters.
+         * @param   callDtors   true to call dthe destructors of the object when they are destroyed. 
+         **/
+        void reset(int64 minSpecial, int64 maxSpecial, bool callDtors = true)
+            {
+            _reset(minSpecial,maxSpecial,callDtors);
+            _createBaseNode();
+            }
+
+
+
+        //void serialize(OArchive & ar)
+        // 
+        //void deserialize(IArchive & ar)
+
+        //bool save(const std::string & filename) const
+        
+        //bool load(std::string filename)
+        
+
+
+        /**
+        * Returns a string with some information concerning the object.
+        *
+        * @param   debug   Set this flag to true to enable the debug mode where the whole tree structure
+        *                  of the lattice is written into the string [should not be used for large grids].
+        *
+        * @return  an info string.
+        **/
+        std::string toString(bool debug = false) const
+            {
+            std::string s;
+            s += std::string("Grid_factor<") + mtools::toString(D) + " , " + typeid(T).name() + " , " + mtools::toString(R) + " , " + mtools::toString(NB_SPECIAL) + ">\n";
+            s += std::string(" - Memory used : ") + mtools::toString((_poolLeaf.footprint() + _poolNode.footprint() + _poolSpec.footprint()) / (1024 * 1024)) + "MB\n";
+            s += std::string(" - Range min = ") + _rangemin.toString(false) + "\n";
+            s += std::string(" - Range max = ") + _rangemax.toString(false) + "\n";
+            s += std::string(" - Special object range [") + mtools::toString(_minSpec) + " , " + mtools::toString(_maxSpec) + "]\n";
+            int64 
+            for (int i = 0;i < (_maxSpec - _minSpec + 1); i++)
+                {
+                s += std::string(" - special (") + mtools::toString(_minSpec + i) + ") = " + mtools::toString(_tabSpecNB[i]) + "\n";
+                }
+
+            s += std::string(" - Number of 'normal' objects = ") + mtools::toString(_nbNormalObj) + "\n";
+            if (debug) {s += "\n" + _printTree(_getRoot(),"");}
+            return s;
+            }
+
+
+
     private:
 
         static_assert(NB_SPECIAL > 0, "the number of special objects must be > 0, use Grid_basic otherwise.");
@@ -138,6 +263,10 @@ namespace mtools
         static_assert(R > 0, "template parameter R (radius) must be non-zero");
         static_assert(std::is_constructible<T>::value || std::is_constructible<T, Pos>::value, "The object T must either be default constructible T() or constructible with T(const Pos &)");
         static_assert(std::is_copy_constructible<T>::value, "The object T must be copy constructible T(const T&).");
+
+
+
+
 
 
 
@@ -162,11 +291,10 @@ namespace mtools
                     (pleaf->count[off])++;               // increase the counter in the leaf associated with this special object
                     (_tabSpecNB[off])++;                 // increase the global counter about the number of these special objects 
                     }
-                else {_nbNormalObj++;} // increase global counter for number of normal object
+                else {_nbNormalObj++;} // increase the global counter for the number of normal object
                 for (size_t i = 0; i < D; ++i) { if (pos[i] < (center[i] + (int64)R)) { pos[i]++;  break; } pos[i] -= (2 * R); } // move to the next cell.
                 }
-            if (off < 0) return (_maxSpec + 1); // there were no special object created. 
-            if (_tabSpecNB[off] < metaprog::power<(2 * R + 1), D>::value) return (_maxSpec + 1); // no all of them were special
+            if ((off < 0) || (_tabSpecNB[off] < metaprog::power<(2 * R + 1), D>::value)) return (_maxSpec + 1); // no all object are the same special object 
             return(off + _minSpec); // yes, all the elements correspond to the same special object. 
             }
 
@@ -189,16 +317,15 @@ namespace mtools
                     (pleaf->count[off])++;               // increase the counter in the leaf associated with this special object
                     (_tabSpecNB[off])++;                 // increase the global counter about the number of these special objects 
                     }
-                else { _nbNormalObj++; } // increase global counter for number of normal object
+                else { _nbNormalObj++; } // increase the global counter for the number of normal object
                 }
-            if (off < 0) return (_maxSpec + 1); // there were no special object created. 
-            if (_tabSpecNB[off] < metaprog::power<(2 * R + 1), D>::value) return (_maxSpec + 1); // no all of them were special
+            if ((off < 0)|| (_tabSpecNB[off] < metaprog::power<(2 * R + 1), D>::value)) return (_maxSpec + 1); // no all object are the same special object 
             return(off + _minSpec); // yes, all the elements correspond to the same special object. 
             }
 
 
 
-        /* Create a leaf at a given position May reutrn a dummy node. */
+        /* Create a leaf at a given position. Can possibly return a dummy node. */
         inline _pbox _allocateLeaf(_pbox above, const Pos & centerpos) const
             {
             _pleafFactor p = _poolLeaf.allocate(); // allocate the memory
@@ -232,19 +359,22 @@ namespace mtools
 
         /* Allocate a node, call constructor from above */
         inline _pnode _allocateNode(_pbox above, const Pos & centerpos, _pbox fill) const
-        {
+            {
+            MTOOLS_ASSERT(above->rad > R);
             _pnode p = _poolNode.allocate();
             for (size_t i = 0; i < metaprog::power<3, D>::value; ++i) { p->tab[i] = fill; }
             p->center = centerpos;
             p->rad = (above->rad - 1) / 3;
             p->father = above;
             return p;
-        }
+            }
 
 
-        /* Allocate a node, call constructor from below */
+
+
+        /* create a node, call constructor from below */
         inline _pnode _allocateNode(_pbox below) const
-        {
+            {
             _pnode p = _poolNode.allocate();
             for (size_t i = 0; i < metaprog::power<3, D>::value; ++i) { p->tab[i] = nullptr; }
             p->tab[(metaprog::power<3, D>::value - 1) / 2] = below;
@@ -252,31 +382,66 @@ namespace mtools
             p->rad = ((below->rad == 1) ? R : (below->rad * 3 + 1));
             p->father = nullptr;
             return p;
-        }
+            }
 
 
 
+        /* Reset the object and change the min and max values for the special objects
+        * and the call dtor flag */
+        void _reset(int64 minVal, int64 maxVal, bool callDtors)
+            {
+            MTOOLS_ASSERT(minVal <= maxVal);
+            MTOOLS_ASSERT(maxVal - minVal < NB_SPECIAL);
+            _reset();
+            _minSpec = minVal;
+            _maxSpec = maxVal;
+            _callDtors = callDtors;
+            }
 
 
+        /* Reset the object */
+        void _reset()
+            {
+            if (_callDtors)
+                {
+                _poolNode.destroyAll();
+                _poolLeaf.destroyAll();
+                _poolSpec.destroyAll();
+                }
+            else
+                {
+                _poolNode.deallocateAll();
+                _poolLeaf.deallocateAll();
+                _poolSpec.deallocateAll();
+                }
+            _pcurrent = nullptr;
+            _rangemin.clear((int64)1);
+            _rangemax.clear((int64)-1);
 
-        bool _callDtors;                        // do we call the dtors of T objects destroyed. 
+            memset(_tabSpecObj, 0, sizeof(_tabSpecObj));
+            memset(_tabSpecNB, 0, sizeof(_tabSpecNB));
+            _nbNormalObj = 0;
+            return;
+            }
+
 
         mutable _pbox _pcurrent;                // pointer to the current box
-        mutable Pos   _rangemin;                // the minimal range
-        mutable Pos   _rangemax;                // the maximal range
+        mutable Pos   _rangemin;                // the minimal accessed range
+        mutable Pos   _rangemax;                // the maximal accessed range
 
-        mutable SingleAllocator<internals_grid::_leafFactor<D, T, R, NB_SPECIAL>,200 >  _poolLeaf; // pool for leaf objects
-        mutable SingleAllocator<internals_grid::_node<D, T, R>,200 >  _poolNode;       // pool for node objects
+        mutable SingleAllocator<internals_grid::_leafFactor<D, T, R, NB_SPECIAL>,200>  _poolLeaf;   // pool for leaf objects
+        mutable SingleAllocator<internals_grid::_node<D, T, R>,200 >  _poolNode;                    // pool for node objects
+        mutable SingleAllocator<T, NB_SPECIAL + 1 >  _poolSpec;                                     // pool for special objects
 
-        mutable SingleAllocator<T, NB_SPECIAL + 1 >  _poolSpec;                 // pool for special objects
+        T* _tabSpecObj[NB_SPECIAL];                                                                 // array of T pointers to the special objects.
+        mutable uint64 _tabSpecNB[NB_SPECIAL];                                                      // total number of special objects of each type. 
+        mutable uint64 _nbNormalObj;                                                                // number of objects which are not special
 
-        static const internals_grid::_node<D, T, R> _dummyNodes[NB_SPECIAL];    // dummy nodes used solely to indicate special objects. 
-        T* _tabSpecObj[NB_SPECIAL];                                             // array of pointers to the special objects.
-        mutable uint64 _tabSpecNB[NB_SPECIAL];                                  // number of special objects of each type. 
-        mutable uint64 _nbNormalObj;                                            // number of object which are not special
-        int64 _minSpec;                                                         // min and
-        int64 _maxSpec;                                                         // max value for special objects.
-        
+        static const internals_grid::_node<D, T, R> _dummyNodes[NB_SPECIAL];                        // dummy nodes array used solely to indicate special objects. 
+        int64 _minSpec,_maxSpec;                                                                    // min and max value of special objects
+        bool _callDtors;                                                                            // should we call the dtors of T objects. 
+
+
 
 
 
@@ -311,17 +476,7 @@ namespace mtools
             }
 
 
-        /* set The value inside a Leaf */
-        inline void setValue(const T * V, internals_grid::_leafFactor<D, T, R, NB_SPECIAL> * pleaf, const Pos & pos)
-            {
-
-            }
-
-
-
-
-        /* set a special object with a given value, 
-           does nothing if already set.
+        /* set a special object. Does nothing if already set.
            Return the associated dummy node */
         inline internals_grid::_box<D, T, R> * _setSpecial(int64 value, T* obj)
             {
@@ -338,28 +493,6 @@ namespace mtools
             }
 
 
-        /* init everything regarding special objects */
-        void _initSpec(int64 minVal,int64 maxVal)
-            {
-            MTOOLS_ASSERT(minVal <= maxVal);
-            MTOOLS_ASSERT(maxVal - minVal < NB_SPECIAL);
-            _minSpec = minVal;
-            _maxSpec = maxVal;
-            memset(_tabSpecObj, 0, sizeof(_tabSpecObj));
-            memset(_tabSpecNB, 0, sizeof(_tabSpecNB));
-            _nbNormalObj = 0;
-            _poolSpec.deallocateAll();
-            }
-
-
-        /* clear everything about special objects */
-        void _resetSpec()
-            {
-            memset(_tabSpecObj, 0, sizeof(_tabSpecObj));
-            memset(_tabSpecNB, 0, sizeof(_tabSpecNB));
-            _nbNormalObj = 0;
-            if (_callDtors) _poolSpec.destroyAll(); else _poolSpec.deallocateAll();
-            }
 
     };
 
