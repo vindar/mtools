@@ -321,7 +321,6 @@
     <ClInclude Include="headers\containers\extab.hpp" />
     <ClInclude Include="headers\containers\grid_basic.hpp" />
     <ClInclude Include="headers\containers\grid_factor.hpp" />
-    <ClInclude Include="headers\containers\grid_static.hpp" />
     <ClInclude Include="headers\containers\internals_grid.hpp" />
     <ClInclude Include="headers\containers\randomurn.hpp" />
     <ClInclude Include="headers\containers\RWtreegraph.hpp" />

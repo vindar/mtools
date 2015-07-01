@@ -90,9 +90,6 @@
     <ClInclude Include="headers\mtools.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="headers\containers\grid_static.hpp">
-      <Filter>Header Files\containers</Filter>
-    </ClInclude>
     <ClInclude Include="headers\misc\internals_stringfct.hpp">
       <Filter>Header Files\misc</Filter>
     </ClInclude>
