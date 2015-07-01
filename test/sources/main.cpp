@@ -307,14 +307,19 @@ int main()
     GF.set({ 3,3 }, 2);
 
     Chronometer();
+
     testWalk(100000000);
+
+    /*
     cout << "\ntime = " << Chronometer() << "\n";
-        
+    
     cout << GF.getRangeiRect() << "\n";
     cout << GF.toString(false);
-
+    */
+    //cout.getKey();
 
     Plotter2D Plotter;
+
     Plotter.gridObject(true)->setUnitCells();
     auto PGF = makePlot2DLattice<colorGF>("Grid factor");
     Plotter[PGF];

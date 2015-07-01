@@ -285,12 +285,14 @@ namespace mtools
         bool save(const std::string & filename) const
             {
                 // *********************** TODO ************************
+            return false;
             }
 
 
         bool load(std::string filename)
             {
                 // *********************** TODO ************************
+            return false;
             }
 
 
@@ -640,9 +642,9 @@ namespace mtools
                 // yes, we can simplify                
                 if (N->father == nullptr) { N->father = _allocateNode(N); } // make sure the father exist 
                 _pnode F = (_pnode)(N->father); // the father node
-                _pbox & R = F->getSubBox(N->center); // get the corresponding pointer in the father tab
-                MTOOLS_ASSERT(R == N); // make sure everything is coherent
-                R = p; // set the new value
+                _pbox & B = F->getSubBox(N->center); // get the corresponding pointer in the father tab
+                MTOOLS_ASSERT(B == N); // make sure everything is coherent
+                B = p; // set the new value
                 _poolNode.deallocate(N); // delete the node (no need to call dtors, there are none in node objects)
                 N = F; // go to the father;
                 }
@@ -681,9 +683,9 @@ namespace mtools
                         { // yes the leaf can be factorized
                         _pnode F = (_pnode)(leaf->father); // the father of the leaf
                         MTOOLS_ASSERT(F != nullptr);
-                        _pbox & R = F->getSubBox(pos); // the pointer to the leaf in the father tab
-                        MTOOLS_ASSERT(R == ((_pbox)leaf)); // make sure we are coherent.
-                        R = _setSpecial(value, obj); // save the special object if needed and set the dummy node in place of the pointer to the leaf
+                        _pbox & B = F->getSubBox(pos); // the pointer to the leaf in the father tab
+                        MTOOLS_ASSERT(B == ((_pbox)leaf)); // make sure we are coherent.
+                        B = _setSpecial(value, obj); // save the special object if needed and set the dummy node in place of the pointer to the leaf
                         if (_callDtors) _poolLeaf.destroy(leaf); else _poolLeaf.deallocate(leaf); // delete the leaf possibly calling the destructors
                         return _simplifyTree(F); // we try to simplify the tree starting from the father
                         }
@@ -714,9 +716,9 @@ namespace mtools
                     { // ok, we can factorize and remove this leaf.
                     _pnode F = (_pnode)(leaf->father); // the father of the leaf
                     MTOOLS_ASSERT(F != nullptr);
-                    _pbox & R = F->getSubBox(pos); // the pointer to the leaf in the father tab
-                    MTOOLS_ASSERT(R == ((_pbox)leaf)); // make sure we are coherent.
-                    R = _setSpecial(value, obj); // save the special object if needed and set the dummy node in place of the pointer to the leaf
+                    _pbox & B = F->getSubBox(pos); // the pointer to the leaf in the father tab
+                    MTOOLS_ASSERT(B == ((_pbox)leaf)); // make sure we are coherent.
+                    B = _setSpecial(value, obj); // save the special object if needed and set the dummy node in place of the pointer to the leaf
                     if (_callDtors) _poolLeaf.destroy(leaf); else _poolLeaf.deallocate(leaf); // delete the leaf possibly calling the destructors
                     return _simplifyTree(F); // we try to simplify the tree starting from the father
                     } 
@@ -876,8 +878,8 @@ namespace mtools
            Return nullptr if the node is not special */
         inline T * _getSpecialObject(_pbox p) const
             {
-            auto off = ((_pnode)p) - (_dummyNodes);
-            if ((off >= 0) && (off < NB_SPECIAL))
+            int64 off = ((_pnode)p) - (_dummyNodes);
+            if ((off >= 0) && (off < (int64)NB_SPECIAL))
                 { 
                 MTOOLS_ASSERT(_tabSpecObj[off] != nullptr); // make sure the special object was previously created.
                 return _tabSpecObj[off];
