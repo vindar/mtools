@@ -294,8 +294,13 @@ void fillSqr(iRect R, int val)
 int main()
     {
 
+    int64 mi = std::numeric_limits<int64>::min();
+    int64 ma = std::numeric_limits<int64>::max();
 
-
+    cout << mi << " " << ma << "\n";
+    
+    cout.getKey();
+    return 0;
     fillSqr(iRect(-7, 7, -7, 7), 2);
 
     GF.set({ 3,3 }, 1);
