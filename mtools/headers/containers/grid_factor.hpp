@@ -174,44 +174,12 @@ namespace mtools
             _nbNormalObj = G._nbNormalObj;
 
             // copy the whole tree structure
-            _pcurrent = _copyTree(nullptr, G._getRoot(), G);
+            _pcurrent = _copyTree<NB_SPECIAL2>(nullptr, G._getRoot(), G);
 
             // we are done
             return(*this);
             }
 
-        /* recursive algorithm to copy a tree from G */
-        _pbox _copyTree(_pbox father, _pbox p, const Grid_factor<D, T, NB_SPECIAL2, R> & G)
-            {
-            if (p == nullptr) return nullptr; // nothing to do
-            if (G._getSpecialObject(p))
-                { // special node from G
-                return _getSpecialNode(G._getSpecialValue(p)); // get the corrsponding dummy node for this object 
-                }
-            // node is not special
-            if (p->isLeaf())
-                { // we must copy a leaf
-
-
-                }
-            // we must copy a node
-            _pnode N = _poolNode.allocate();
-            N->center = p->center;
-            N->rad = p->center;
-            N->father = father;
-            for (size_t i = 0; i < metaprog::power<3, D>::value; ++i)
-                {
-                const _pbox K = N->tab[i];
-                if (K != nullptr)
-                    {
-                    if (_getSpecialObject(K) != nullptr)
-                        { // we expand special nodes
-                        N->tab[i] = _allocateNode(N, N->subBoxCenterFromIndex(i), K); // create it
-                        }
-                    _expandBelowNode((_pnode)(N->tab[i])); // and recurse
-                    }
-                }
-            }
 
         /**
          * Change the set of special objects. This method first epxand the whole tree structure to
@@ -660,7 +628,7 @@ namespace mtools
         /* Reset the object and change the min and max values for the special objects and the calldtor flag */
         void _reset(int64 minSpec, int64 maxSpec, bool callDtors)
             {
-            MTOOLS_INSURE(((maxSpec < minSpec) || (maxSpec - minSpec < NB_SPECIAL)));
+            MTOOLS_INSURE(((maxSpec < minSpec) || (maxSpec - minSpec < ((int64)NB_SPECIAL))));
             _reset();
             _minSpec = minSpec;
             _maxSpec = maxSpec;
@@ -702,12 +670,50 @@ namespace mtools
         * Working with leafs and nodes
         ***************************************************************/
 
+        /* recursive method for copying a tree from G
+        * used by operator=() */
+        template<size_t NB_SPECIAL2> _pbox _copyTree(_pbox father, _pbox p, const Grid_factor<D, T, NB_SPECIAL2, R> & G)
+            {
+            MTOOLS_ASSERT(p != nullptr);
+            if (G._getSpecialObject(p))
+                { // special node from G
+                return _getSpecialNode(G._getSpecialValue(p)); // get the corresponding dummy node for this object 
+                }
+            // node is not special
+            if (p->isLeaf())
+                { // we must copy a leaf
+                _pleafFactor F = _poolLeaf.allocate();
+                F->center = p->center;
+                F->rad = p->rad;
+                F->father = father;
+                memset(F->count, 0, sizeof(F->count)); // reset the number of each type of special object
+                for (size_t x = 0; x < metaprog::power<(2 * R + 1), D>::value; ++x)
+                    {
+                    new(F->data + x) T((((_pleafFactor)p)->data[x])); // copy ctor
+                    int64 val = (int64)(F->data[x]); // convert to int64
+                    if (_isSpecial(val)) { (F->count[val - _minSpec])++; }
+                    }
+                return F;
+                }
+            // we must copy a node
+            _pnode N = _poolNode.allocate();
+            N->center = p->center;
+            N->rad = p->rad;
+            N->father = father;
+            for (size_t i = 0; i < metaprog::power<3, D>::value; ++i)
+                {
+                const _pbox B = ((_pnode)p)->tab[i];
+                if (B != nullptr) { N->tab[i] = _copyTree<NB_SPECIAL2>(N, B, G); }
+                }
+            return N;
+            }
+
 
         /* change the range of the special object and reconstruct the whole tree
         * so that it is coherent with the new special range */
         void _changeSpecialRange(int64 newMinSpec, int64 newMaxSpec)
             {
-            MTOOLS_INSURE(((newMaxSpec < newMinSpec) || (newMaxSpec - newMinSpec < NB_SPECIAL)));
+            MTOOLS_INSURE(((newMaxSpec < newMinSpec) || ((newMaxSpec - newMinSpec) < ((int64)NB_SPECIAL))));
 
             _expandTree(); // we expand the whole tree, removing every dummy links
 
@@ -925,7 +931,7 @@ namespace mtools
             int64 value = (int64)(*obj);        // the new object value
             if (oldvalue == value)
                 { // the old and new object have the same value
-                if (_isSpecial(val)) 
+                if (_isSpecial(value)) 
                     { // it is a special value
                     MTOOLS_ASSERT( (leaf->count[value - _minSpec] <= metaprog::power<(2 * R + 1), D>::value) );
                     if (leaf->count[value - _minSpec] == metaprog::power<(2 * R + 1), D>::value) // check if the value is the only one in this leaf

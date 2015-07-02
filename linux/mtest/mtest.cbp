@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="mtest" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/mtest" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/mtest" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+			<Add option="-fexceptions" />
+		</Compiler>
+		<Unit filename="../../mtools/headers/containers/RWtreegraph.hpp" />
+		<Unit filename="../../mtools/headers/containers/bitgraphZ2.hpp" />
+		<Unit filename="../../mtools/headers/containers/extab.hpp" />
+		<Unit filename="../../mtools/headers/containers/grid_basic.hpp" />
+		<Unit filename="../../mtools/headers/containers/grid_factor.hpp" />
+		<Unit filename="../../mtools/headers/containers/internals_grid.hpp" />
+		<Unit filename="../../mtools/headers/containers/old/CylinderGraph.h" />
+		<Unit filename="../../mtools/headers/containers/old/GLZ2internals.h" />
+		<Unit filename="../../mtools/headers/containers/old/GLZ3internals.h" />
+		<Unit filename="../../mtools/headers/containers/old/GrowingLatticeZ2.h" />
+		<Unit filename="../../mtools/headers/containers/old/GrowingLatticeZ3.h" />
+		<Unit filename="../../mtools/headers/containers/old/RW_Z2Site.h" />
+		<Unit filename="../../mtools/headers/containers/old/distrtab.h" />
+		<Unit filename="../../mtools/headers/containers/randomurn.hpp" />
+		<Unit filename="../../mtools/headers/graphics/cimg_plugin.hpp" />
+		<Unit filename="../../mtools/headers/graphics/cimgwidget.hpp" />
+		<Unit filename="../../mtools/headers/graphics/customcimg.hpp" />
+		<Unit filename="../../mtools/headers/graphics/drawable2Dobject.hpp" />
+		<Unit filename="../../mtools/headers/graphics/edgesiteimage.hpp" />
+		<Unit filename="../../mtools/headers/graphics/interpolation.hpp" />
+		<Unit filename="../../mtools/headers/graphics/latticedrawer.hpp" />
+		<Unit filename="../../mtools/headers/graphics/planedrawer.hpp" />
+		<Unit filename="../../mtools/headers/graphics/plot2Darray.hpp" />
+		<Unit filename="../../mtools/headers/graphics/plot2Daxes.hpp" />
+		<Unit filename="../../mtools/headers/graphics/plot2Dbasegraph.hpp" />
+		<Unit filename="../../mtools/headers/graphics/plot2Dcimg.hpp" />
+		<Unit filename="../../mtools/headers/graphics/plot2Dfun.hpp" />
+		<Unit filename="../../mtools/headers/graphics/plot2Dgrid.hpp" />
+		<Unit filename="../../mtools/headers/graphics/plot2Dlattice.hpp" />
+		<Unit filename="../../mtools/headers/graphics/plot2Dplane.hpp" />
+		<Unit filename="../../mtools/headers/graphics/plot2Dvector.hpp" />
+		<Unit filename="../../mtools/headers/graphics/plotter2D.hpp" />
+		<Unit filename="../../mtools/headers/graphics/plotter2Dobj.hpp" />
+		<Unit filename="../../mtools/headers/graphics/rangemanager.hpp" />
+		<Unit filename="../../mtools/headers/graphics/rgbc.hpp" />
+		<Unit filename="../../mtools/headers/graphics/simpleBMP.hpp" />
+		<Unit filename="../../mtools/headers/graphics/view2Dwidget.hpp" />
+		<Unit filename="../../mtools/headers/io/console.hpp" />
+		<Unit filename="../../mtools/headers/io/fileio.hpp" />
+		<Unit filename="../../mtools/headers/io/fltk_supervisor.hpp" />
+		<Unit filename="../../mtools/headers/io/internals_serialization.hpp" />
+		<Unit filename="../../mtools/headers/io/logfile.hpp" />
+		<Unit filename="../../mtools/headers/io/serialization.hpp" />
+		<Unit filename="../../mtools/headers/maths/rect.hpp" />
+		<Unit filename="../../mtools/headers/maths/sqrmatrix.hpp" />
+		<Unit filename="../../mtools/headers/maths/vec.hpp" />
+		<Unit filename="../../mtools/headers/misc/error.hpp" />
+		<Unit filename="../../mtools/headers/misc/indirectcall.hpp" />
+		<Unit filename="../../mtools/headers/misc/internals_stringfct.hpp" />
+		<Unit filename="../../mtools/headers/misc/memory.hpp" />
+		<Unit filename="../../mtools/headers/misc/metaprog.hpp" />
+		<Unit filename="../../mtools/headers/misc/misc.hpp" />
+		<Unit filename="../../mtools/headers/misc/stringfct.hpp" />
+		<Unit filename="../../mtools/headers/misc/timefct.hpp" />
+		<Unit filename="../../mtools/headers/mtools.hpp" />
+		<Unit filename="../../mtools/headers/old models/ACMP_Tree.h" />
+		<Unit filename="../../mtools/headers/old models/ContactProcessOnTree.h" />
+		<Unit filename="../../mtools/headers/old models/OnceERRW.h" />
+		<Unit filename="../../mtools/headers/old models/OnceVRRW_Z2.h" />
+		<Unit filename="../../mtools/headers/old models/OrientedERRW.h" />
+		<Unit filename="../../mtools/headers/randomgen/classiclaws.hpp" />
+		<Unit filename="../../mtools/headers/randomgen/krikunlaw.hpp" />
+		<Unit filename="../../mtools/headers/randomgen/mt2002_32.hpp" />
+		<Unit filename="../../mtools/headers/randomgen/mt2004_64.hpp" />
+		<Unit filename="../../mtools/headers/randomgen/srwonZ_cdf.hpp" />
+		<Unit filename="../../mtools/headers/randomgen/srwonZandZ2.hpp" />
+		<Unit filename="../../mtools/headers/randomgen/xorgen4096_64.hpp" />
+		<Unit filename="../../mtools/sources/cimgwidget.cpp" />
+		<Unit filename="../../mtools/sources/console.cpp" />
+		<Unit filename="../../mtools/sources/drawable2Dobject.cpp" />
+		<Unit filename="../../mtools/sources/edgesiteimage.cpp" />
+		<Unit filename="../../mtools/sources/error.cpp" />
+		<Unit filename="../../mtools/sources/fileio.cpp" />
+		<Unit filename="../../mtools/sources/fltk_supervisor.cpp" />
+		<Unit filename="../../mtools/sources/interpolation.cpp" />
+		<Unit filename="../../mtools/sources/logfile.cpp" />
+		<Unit filename="../../mtools/sources/plot2Daxes.cpp" />
+		<Unit filename="../../mtools/sources/plot2Dbasegraph.cpp" />
+		<Unit filename="../../mtools/sources/plot2Dcimg.cpp" />
+		<Unit filename="../../mtools/sources/plot2Dgrid.cpp" />
+		<Unit filename="../../mtools/sources/plotter2D.cpp" />
+		<Unit filename="../../mtools/sources/plotter2Dobj.cpp" />
+		<Unit filename="../../mtools/sources/rangemanager.cpp" />
+		<Unit filename="../../mtools/sources/rgbc.cpp" />
+		<Unit filename="../../mtools/sources/simpleBMP.cpp" />
+		<Unit filename="../../mtools/sources/stringfct.cpp" />
+		<Unit filename="../../mtools/sources/timefct.cpp" />
+		<Unit filename="../../mtools/sources/view2Dwidget.cpp" />
+		<Unit filename="../../mtools/stdafx_mtools.cpp" />
+		<Unit filename="../../mtools/stdafx_mtools.h" />
+		<Unit filename="main.cpp" />
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+			<lib_finder disable_auto="1" />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

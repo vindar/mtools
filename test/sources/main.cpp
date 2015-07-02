@@ -313,7 +313,9 @@ int main()
     GF.set({ 3,3 }, 2);
 
     Chronometer();
-    testWalk(1000000000);
+    testWalk(100000000);
+
+
 
     cout << "\ntime = " << Chronometer() << "\n";
     cout << GF.toString(false);
