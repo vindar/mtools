@@ -110,7 +110,7 @@ namespace mtools
         **/
         Grid_factor(const std::string & filename)
             { 
-            _reset(0, -1, true);
+            reset(0,-1,true);
             load(filename);
             }
 
@@ -123,32 +123,117 @@ namespace mtools
 
 
         /**
-        * Copy Constructor. Makes a Deep copy of the grid.
-        **/
+         * Copy Constructor. Makes a Deep copy of the grid. The resulting grid is exactly the same as the
+         * source, with the same special value and the same statistics (bounding box and min/max value)
+         * and the same flag for calling the destructors.
+         * 
+         * The template parameter NB_SPECIAL must be large enough to hold all the special values (which
+         * is necessarily the case if it is larger or equal to NB_SPECIAL of the source).
+         *
+         * @tparam  NB_SPECIAL2 Type of the nb special 2.
+         * @param   G   The const Grid_factor<D,T,NB_SPECIAL2,R> & to process.
+         **/
         template<size_t NB_SPECIAL2> Grid_factor(const Grid_factor<D, T, NB_SPECIAL2, R> & G)
             {
-            _reset(0, -1, true);
+            MTOOLS_INSURE(((!G._existSpecial()) || (G._specialRange()<= NB_SPECIAL))); // make sure we can hold all the special element of the source.
+            reset(0, -1, true);
             this->operator=(G);
             }
 
 
         /**
-         * Assignement operator. Create a deep copy of G. If the grid is not empty, it is first reset :
-         * all the object inside are destroyed and their dtors are invoqued.
+         * Assignement operator. Create a deep copy of G. If the grid is not empty, it is first reset().
+         * The resulting grid is exactly the same a the source, with the same special value and the same
+         * statistics (bounding box and min max value).
+         * 
+         * The template parameter NB_SPECIAL must be large enough to hold all the special values (which
+         * is necessarily the case if it is larger or equal to NB_SPECIAL of the source).
          **/
         template<size_t NB_SPECIAL2> Grid_factor<D, T, NB_SPECIAL2, R> & operator=(const Grid_factor<D, T, NB_SPECIAL2, R> & G)
             {
-            static_assert((NB_SPECIAL2 <= NB_SPECIAL), "The number of NB_SPECIAL of special object of the source must be smaller than than of the destination");
-            if ((&G) == this) { return(*this); }
-            _reset(G._minSpec,G._maxSpec,G._callDtors);
-            // *********************** TODO ************************
+            MTOOLS_INSURE(((!G._existSpecial()) || (G._specialRange() <= NB_SPECIAL))); // make sure we can hold all the special element of the source.
+            if ((&G) == this) { return(*this); } // nothing to do
+
+            _reset(G._minSpec,G._maxSpec,G._callDtors); // reset the grid and set the special range and dtor flag
+
+            _rangemin = G._rangemin;    // same statistics
+            _rangemax = G._rangemax;    //
+            _minVal = G._minVal;        //
+            _maxVal = G._maxVal;        //
+
+            // copy the special objects. 
+            for (int64 i = 0; i < _specialRange(); i++)
+                {
+                _tabSpecNB[i] = G._tabSpecNB[i];
+                if (G._tabSpecObj[i] != nullptr)
+                    {
+                    _tabSpecObj[i] = _poolSpec.allocate();
+                    new(_tabSpecObj[i]) T(*(G._tabSpecObj[i]));
+                    }
+                }
+            _nbNormalObj = G._nbNormalObj;
+
+            // copy the whole tree structure
+            _pcurrent = _copyTree(nullptr, G._getRoot(), G);
+
+            // we are done
             return(*this);
+            }
+
+        /* recursive algorithm to copy a tree from G */
+        _pbox _copyTree(_pbox father, _pbox p, const Grid_factor<D, T, NB_SPECIAL2, R> & G)
+            {
+            if (p == nullptr) return nullptr; // nothing to do
+            if (G._getSpecialObject(p))
+                { // special node from G
+                return _getSpecialNode(G._getSpecialValue(p)); // get the corrsponding dummy node for this object 
+                }
+            // node is not special
+            if (p->isLeaf())
+                { // we must copy a leaf
+
+
+                }
+            // we must copy a node
+            _pnode N = _poolNode.allocate();
+            N->center = p->center;
+            N->rad = p->center;
+            N->father = father;
+            for (size_t i = 0; i < metaprog::power<3, D>::value; ++i)
+                {
+                const _pbox K = N->tab[i];
+                if (K != nullptr)
+                    {
+                    if (_getSpecialObject(K) != nullptr)
+                        { // we expand special nodes
+                        N->tab[i] = _allocateNode(N, N->subBoxCenterFromIndex(i), K); // create it
+                        }
+                    _expandBelowNode((_pnode)(N->tab[i])); // and recurse
+                    }
+                }
+            }
+
+        /**
+         * Change the set of special objects. This method first epxand the whole tree structure to
+         * remove all factorization of the tree then set the nw range for the special object and then
+         * simplify the tree using the new paramters.
+         * 
+         * This method can be time and memory consumming
+         * 
+         * Set newMaxSpec \< newMinSpec to disable special object and expand the whole tree.
+         *
+         * @param   newMinSpec  the new minimum value for the special objects range.
+         * @param   newMaxSpec  the new maximum value for the special object range.
+         **/
+        void changeSpecialRange(int64 newMinSpec, int64 newMaxSpec)
+            {
+            _changeSpecialRange(newMinSpec, newMaxSpec);
             }
 
 
         /**
-        * Resets the grid. Keep the current minSpecial, maxSpecial et callDtor parameters. 
-        **/
+         * Resets the grid. Keep the current minSpecial, maxSpecial et callDtor parameters.
+         **/
         void reset()
             {
             _reset();
@@ -172,7 +257,7 @@ namespace mtools
 
 
         /**
-         * Check if we can call the destructor of object when they are not needed anymore.
+         * Check if we currently call the destructor of object when they are not needed anymore.
          *
          * @return  true if we call the dtors and false otherwise.
          **/
@@ -205,19 +290,20 @@ namespace mtools
 
 
         /**
-        * Return the spacial range of elements accessed. The method returns maxpos<minpos if no element have
-        * ever been accessed/created.
-        *
-        * @param [in,out]  minpos  a vector with the minimal coord. in each direction.
-        * @param [in,out]  maxpos  a vector with the maximal coord. in each direction.
-        **/
+         * Return a bounding box containing the set of all position accessed either by get() or set()
+         * methods (peek does not count). The method returns maxpos<minpos if no element have ever 
+         * been accessed.
+         *
+         * @param [in,out]  minpos  a vector with the minimal coord. in each direction.
+         * @param [in,out]  maxpos  a vector with the maximal coord. in each direction.
+         **/
         inline void getPosRange(Pos & minpos, Pos & maxpos) const { minpos = _rangemin; maxpos = _rangemax; }
 
 
         /**
-         * Return the spacial range of elements accessed in an iRect structure. The rectangle is empty
-         * if no elements have ever been accessed/created. This method is specific when the dimension
-         * (template paramter D) is 2.
+         * Return a bounding rectangle of the position of all the elements accessed either by get()
+         * or set() methods (peek does not count). The rectangle is empty if no elements have ever 
+         * been accessed/created. This method is specific for dimension 2 (ie template paramter D is 2).
          *
          * @return  an iRect containing the spacial range of element accessed.
          **/
@@ -230,8 +316,8 @@ namespace mtools
 
         /**
         * The current minimum value of all element ever created in the grid (obtained by casting the
-        * element into int64). This value may be different from the elment really accessed since other
-        * element can be silently created.
+        * element into int64). This value may be different from the min value of all elements really 
+        * accessed since other elements can be silently created.
         *
         * @return  The minimum value (converted as int64) for all the element ever creaed in the grid.
         **/
@@ -240,8 +326,8 @@ namespace mtools
 
         /**
          * The current maximum value of all element ever created in the grid (obtained by casting the
-         * element into int64). This value may be different from the elment really accessed since other
-         * element can be silently created.
+         * element into int64). This value may be different from the max value of all elements really 
+         * accessed since other elements can be silently created.
          *
          * @return  The maximum value (converted as int64) for all the element ever creaed in the grid.
          **/
@@ -357,11 +443,11 @@ namespace mtools
             s += std::string(" - Memory used : ") + mtools::toString((_poolLeaf.footprint() + _poolNode.footprint() + _poolSpec.footprint()) / (1024 * 1024)) + "MB\n";
             s += std::string(" - Min position accessed = ") + _rangemin.toString(false) + "\n";
             s += std::string(" - Max position accessed = ") + _rangemax.toString(false) + "\n";
-            s += std::string(" - Min value created = ") + _minVal + "\n";
-            s += std::string(" - Max value created = ") + _maxVal + "\n";
+            s += std::string(" - Min value created = ") + mtools::toString(_minVal) + "\n";
+            s += std::string(" - Max value created = ") + mtools::toString(_maxVal) + "\n";
             s += std::string(" - Special object value range [") + mtools::toString(_minSpec) + " , " + mtools::toString(_maxSpec) + "]";         
-            if (_maxSpec < _minSpec) { s += std::string(" NONE!\n"); } else { s += std::string("\n"); }
-            for (int i = 0;i < (_maxSpec - _minSpec + 1); i++)
+            if (!_existSpecial()) { s += std::string(" NONE!\n"); } else { s += std::string("\n"); }
+            for (int i = 0;i < _specialRange(); i++)
                 {
                 s += std::string("    [") + ((_tabSpecObj[i] == nullptr) ? " " : "X") + "] value (" + mtools::toString(_minSpec + i) + ") = " + mtools::toString(_tabSpecNB[i]) + "\n";
                 }
@@ -537,7 +623,7 @@ namespace mtools
                             }
                         // the leaf is full
                         b = _setSpecial(cv, L->data); // save the special value if needed and set the link inside the father node tab
-                        if (_callDtors) _poolLeaf.destroy(L); else _poolLeaf.deallocate(L);
+                        _releaseLeaf(L);
                         _pcurrent = _simplifyNode(q);
                         return(*_getSpecialObject(cv));
                         }
@@ -574,7 +660,7 @@ namespace mtools
         /* Reset the object and change the min and max values for the special objects and the calldtor flag */
         void _reset(int64 minSpec, int64 maxSpec, bool callDtors)
             {
-            MTOOLS_INSURE((maxSpec < minSpec) || (maxSpec - minSpec < NB_SPECIAL));
+            MTOOLS_INSURE(((maxSpec < minSpec) || (maxSpec - minSpec < NB_SPECIAL)));
             _reset();
             _minSpec = minSpec;
             _maxSpec = maxSpec;
@@ -617,119 +703,127 @@ namespace mtools
         ***************************************************************/
 
 
-        /* expand the whole tree below a given node (ie remove all references 
-         * to dummy node and replace them by real nodes/leafs.
-         * Recursive. This operation can be time and memory consumming  */
+        /* change the range of the special object and reconstruct the whole tree
+        * so that it is coherent with the new special range */
+        void _changeSpecialRange(int64 newMinSpec, int64 newMaxSpec)
+            {
+            MTOOLS_INSURE(((newMaxSpec < newMinSpec) || (newMaxSpec - newMinSpec < NB_SPECIAL)));
+
+            _expandTree(); // we expand the whole tree, removing every dummy links
+
+            if (_callDtors) _poolSpec.destroyAll(); else _poolSpec.deallocateAll(); // release the memory for all the special objects saved
+            memset(_tabSpecObj, 0, sizeof(_tabSpecObj)); // clear the list of pointer to special objects
+            memset(_tabSpecNB, 0, sizeof(_tabSpecNB));   // clear the count for special objects
+            _nbNormalObj = 0; // reset the number of normal objects
+
+            _minSpec = newMinSpec; // set the new min value for the special objects
+            _maxSpec = newMaxSpec; // set the new max value for the special objects
+
+            _recountTree(); // recount all the leafs with the new spectial object range
+
+            if (!_existSpecial()) return; // no need to simplify since there are no special objects
+            _simplifyTree(); // simplify the tree using the new special objects
+            }
+
+
+
+        /* expand the whole tree 
+         * _pcurrent is set to the root of the tree
+         */
+        void _expandTree()
+            {
+            _pcurrent = _getRoot();
+            MTOOLS_ASSERT(_pcurrent != nullptr);
+            _expandBelowNode((_pnode)_pcurrent);
+            }
+
+
+        /* expand the whole tree below a given node. */
         void _expandBelowNode(_pnode N)
             {
+            if (N->rad > R)
+                { 
+                // children of this node are also nodes
+                for (size_t i = 0; i < metaprog::power<3, D>::value; ++i)
+                    {
+                    const _pbox K = N->tab[i];
+                    if (K != nullptr)
+                        {
+                        if (_getSpecialObject(K) != nullptr)
+                            { // we expand special nodes
+                            N->tab[i] = _allocateNode(N, N->subBoxCenterFromIndex(i), K); // create it
+                            }
+                        _expandBelowNode((_pnode)(N->tab[i])); // and recurse
+                        }
+                    }
+                return; 
+                }
+            // children of this node are leaves
             for (size_t i = 0; i < metaprog::power<3, D>::value; ++i)
                 {
                 const _pbox K = N->tab[i];
                 T * pv = _getSpecialObject(K);
                 if (pv != nullptr) // check if the child node is special
                     { // yes we expand it
-                    if (N->rad > R) 
-                        { // it is a node
-                        N->tab[i] = _allocateNode(N, N->subBoxCenterFromIndex(i), K); // create it
-                        _expandBelowNode(N->tab[i]); // and recurse
-                        }
-                    else
-                        { // it is a leaf
-                        N->tab[i] = _allocateLeafCst(N, N->subBoxCenterFromIndex(i), pv, _getSpecialValue(K)); // create it
-                        }
+                    N->tab[i] = _allocateLeafCst(N, N->subBoxCenterFromIndex(i), pv, _getSpecialValue(K)); // create it
                     }
                 }
             }
 
 
-        /* simplify the whole sub-tree below a given node */ 
-        _pbox _simplifyBelowNode(_pnode N)
+        /* Simplify the whole tree. 
+         * _pcurrent is set to the (possibly new) root of the tree */
+        void _simplifyTree()
             {
+            _pbox p = _getRoot(); // find the root of the tree
+            MTOOLS_ASSERT(p != nullptr);
+            _pbox q = _simplifyBelow(p); // simplify the tree
+            if (q == p) { _pcurrent = p; return; }
+            // we must create the root father
+            MTOOLS_ASSERT(_getSpecialObject(q) != nullptr); // q should be a dummy link
+            MTOOLS_ASSERT(p->father == nullptr);
+            _pnode F = _allocateNode(p);  // the new root
+            _pbox & B = F->getSubBox(p->center); // get the corresponding pointer in the father tab
+            MTOOLS_ASSERT(B == p); // make sure everything is coherent
+            B = q; // set the new value
+            _releaseBox(p);
+            _pcurrent = F;
+            }
+
+
+        /* simplify the whole sub-tree below a given node/leaf */ 
+        _pbox _simplifyBelow(_pbox N)
+            {
+            if (N == nullptr) return nullptr; // nothing to do
+            if (_getSpecialObject(N) != nullptr) return N; // already a special node
+            // we have a real pointer (no dummy or nullptr)
+            if (N->isLeaf()) // we have a leaf
+                {  
+                _pleafFactor L = (_pleafFactor)N;
+                int64 val = _isLeafFull(L);
+                if (val <= _maxSpec) { return _setSpecial(val, L->data); } // yes, the leaf is full and we can factorize it
+                return N; // no factorization is possible
+                }
+            // we have a node
             for (size_t i = 0; i < metaprog::power<3, D>::value; ++i) // we iterate over the children
                 {
-                const _pbox K = N->tab[i];
-                if ((K != nullptr) && (_getSpecialObject(K) == nullptr))
-                    { // the ith child is a real (not nullptr or a dummy node)
-                    if (N->rad == R)
-                        { // it is a leaf
-                        _pleafFactor L = (_pleafFactor)K;
-                        int64 val = _isLeafFull(L);
-                        if (val <= _maxSpec)
-                            { // yes, the leaf is full and we can factorize it
-                            N->tab[i] = _setSpecial(val, L->data); // save the special element and set the dummy node instead 
-                            if (_callDtors) _poolLeaf.destroy(L); else _poolLeaf.deallocate(L); // release memory
-                            }
-                        }
-                    else
-                        { //it is a node
-                        _simplifyBelowNode(K); // we simplify it
-                        }
-                    }
+                _pbox & C = ((_pnode)N)->tab[i];
+                _pbox K = _simplifyBelow(C); // simplify if possible
+                if (K != C) { _releaseBox(C); C = K; } // yes, we release the memory and save the dummy link
                 }
             // now that every children is simplified, we go again to see if we can simplify the node itself
-            _pbox p = N->tab[0]; // the first child of the node
-            if (_getSpecialObject(p) == nullptr) return; // the first child is not special, no further simplification
+            _pbox p = ((_pnode)N)->tab[0]; // the first child of the node
+            if (_getSpecialObject(p) == nullptr) return N; // the first child is not special: no further simplification
             for (size_t i = 1; i < metaprog::power<3, D>::value; ++i)
                 {
-                if (N->tab[i] != p) return N; // not the same special value for all children: no further simplification
+                if (((_pnode)N)->tab[i] != p) return N; // not the same special value for all children: no further simplification
                 }
+            return p; // yep, we can simplify using the dummy pointer p
             }
 
 
-        /* change the range of the special object and reconstruct the whole tree 
-         * so that it is ciherent with the new special range */
-        void _changeSpecialRange(int64 newMinSpec, int64 newMaxSpec)
-            {
-            _pcurrent = _getRoot(); // go to the root
-
-            _expandBelowNode((_pnode)_pcurrent); // expand the whole tree so there is no more dummy links
-            
-            if (_callDtors) _poolSpec.destroyAll(); else _poolSpec.deallocateAll(); // release the memory for all the special oejcts
-            memset(_tabSpecObj, 0, sizeof(_tabSpecObj)); // clear the list of pointer to special objects
-            memset(_tabSpecNB, 0, sizeof(_tabSpecNB));   // clear the count for special objects
-            _nbNormalObj = 0; // reset the number of normal objects
-
-            _minSpec = newMinSpec; // new min value for the special objects
-            _maxSpec = newMaxSpec; // new max value for the special objects
-
-            _recountAllLeafs(); // recount all the leafs with the new spectial object range
-            
-            _simplifyTree(); // simplify the tree using the new special objects
-            }
-
-
-        /* recount all the leaf in a given sub-tree */
-        void _recountAllLeafs(_pnode N)
-            {
-            if (N->isLeaf()) {}
-            }
-
-
-        /* recount a leaf : recompute from scratch the count[] tab 
-           also increase the global counter for special object and normal object */
-        void _recountLeaf(_pleafFactor L)
-            {
-            memset(L->count, 0, sizeof(L->count)); // reset the number of each type of special object
-            if (_maxSpec > _minSpec) { _nbNormalObj += metaprog::power<(2 * R + 1), D>::value; return; } // no special value, all the value are therefore normal   
-            for (size_t x = 0; x < metaprog::power<(2 * R + 1), D>::value; ++x)
-                {
-                int64 val = (int64)(*(L->data[x])); // convert to int64
-                if ((val >= _minSpec) && (val <= _maxSpec)) // check if it is a special value
-                    { // yes
-                    auto off = val - _minSpec;           // the offset of the special object
-                    (pleaf->count[off])++;               // increase the counter in the leaf associated with this special object
-                    (_tabSpecNB[off])++;                 // increase the global counter about the number of these special objects 
-                    }
-                else { _nbNormalObj++; } // increase the global counter for the number of normal object
-                }
-            }
-
-
-
-
-
-
-        /* simplify the branche going up above a given node */
+        /* simplify the branche going up above a given node and return
+        the (possibly new) end point of the branche */
         _pnode _simplifyNode(_pnode N) const
             {
             while (1)
@@ -740,14 +834,68 @@ namespace mtools
                     {
                     if (N->tab[i] != p) return N; // not the same special value for all children: no simplification
                     }
-                // yes, we can simplify                
+                // yes, we can simplify
                 if (N->father == nullptr) { N->father = _allocateNode(N); } // make sure the father exist 
                 _pnode F = (_pnode)(N->father); // the father node
                 _pbox & B = F->getSubBox(N->center); // get the corresponding pointer in the father tab
                 MTOOLS_ASSERT(B == N); // make sure everything is coherent
                 B = p; // set the new value
-                _poolNode.deallocate(N); // delete the node (no need to call dtors, there are none in node objects)
+                _releaseNode(N);
                 N = F; // go to the father;
+                }
+            }
+
+
+        /* recount all the leaf in the tree.
+        * this method also increase the global counters for special objects and normal objects 
+        * set _pcurrent to the root of the tree */
+        void _recountTree()
+            {
+            _pcurrent = _getRoot();
+            _recountBelow(_pcurrent);
+            }
+            
+
+        /* recompute the count[] array of all the leafs of a given subtree
+         * this method also increase the global counters for special objects 
+         * and normal objects */
+        void _recountBelow(_pbox N)
+            {
+            if (N == nullptr) return; // nothing to do
+            if (_getSpecialObject(N) != nullptr) return; // special node, nothing to do
+            // we have a real pointer (no dummy or nullptr)
+            if (N->isLeaf()) // we have a leaf
+                {
+                _recountLeaf((_pleafFactor)N); // we recount it
+                }
+            else
+                { // we have a node
+                for (size_t i = 0; i < metaprog::power<3, D>::value; ++i) // we iterate over the children
+                    {
+                    _recountBelow(((_pnode)N)->tab[i]); // recount each subtree
+                    }
+                }
+            return;
+            }
+
+
+        /* Recompute from scratch the count[] array of a leaf. 
+           This method also increase the global counters for 
+           special objects and normal object */
+        void _recountLeaf(_pleafFactor L)
+            {
+            memset(L->count, 0, sizeof(L->count)); // reset the number of each type of special object
+            if (!_existSpecial()) { _nbNormalObj += metaprog::power<(2 * R + 1), D>::value; return; } // no special value, all the value are therefore normal   
+            for (size_t x = 0; x < metaprog::power<(2 * R + 1), D>::value; ++x)
+                {
+                int64 val = (int64)(L->data[x]); // convert to int64
+                if (_isSpecial(val)) // check if it is a special value
+                    { // yes
+                    auto off = val - _minSpec;           // the offset of the special object
+                    (L->count[off])++;                   // increase the counter in the leaf associated with this special object
+                    (_tabSpecNB[off])++;                 // increase the global counter about the number of these special objects 
+                    }
+                else { _nbNormalObj++; } // increase the global counter for the number of normal object
                 }
             }
 
@@ -758,7 +906,7 @@ namespace mtools
             {
             MTOOLS_ASSERT(L != nullptr);
             int64 val = (int64)(*(L->data));
-            if ((val >= _minSpec) && (val <= _maxSpec))
+            if (_isSpecial(val))
                 {
                 MTOOLS_ASSERT( (L->count[val - _minSpec] <= metaprog::power<(2 * R + 1), D>::value) );
                 if (L->count[val - _minSpec] == metaprog::power<(2 * R + 1), D>::value) { return val; }
@@ -777,7 +925,7 @@ namespace mtools
             int64 value = (int64)(*obj);        // the new object value
             if (oldvalue == value)
                 { // the old and new object have the same value
-                if ((value >= _minSpec) && (value <= _maxSpec)) 
+                if (_isSpecial(val)) 
                     { // it is a special value
                     MTOOLS_ASSERT( (leaf->count[value - _minSpec] <= metaprog::power<(2 * R + 1), D>::value) );
                     if (leaf->count[value - _minSpec] == metaprog::power<(2 * R + 1), D>::value) // check if the value is the only one in this leaf
@@ -787,7 +935,7 @@ namespace mtools
                         _pbox & B = F->getSubBox(pos); // the pointer to the leaf in the father tab
                         MTOOLS_ASSERT(B == ((_pbox)leaf)); // make sure we are coherent.
                         B = _setSpecial(value, obj); // save the special object if needed and set the dummy node in place of the pointer to the leaf
-                        if (_callDtors) _poolLeaf.destroy(leaf); else _poolLeaf.deallocate(leaf); // delete the leaf possibly calling the destructors
+                        _releaseLeaf(leaf);
                         return _simplifyNode(F); // we try to simplify the tree starting from the father
                         }
                     return leaf; // return the leaf (it cannot be factorized)
@@ -798,7 +946,7 @@ namespace mtools
             // old and new do not have the same value
             _updateValueRange(value); // possibly a new extreme value
             (*oldobj) = (*obj); // save the new value
-            if ((oldvalue >= _minSpec) && (oldvalue <= _maxSpec)) 
+            if (_isSpecial(oldvalue)) 
                 { //old value was special, decrement the global count and the leaf count 
                 auto off = oldvalue - _minSpec; 
                 MTOOLS_ASSERT(_tabSpecNB[off] > 0);
@@ -810,7 +958,7 @@ namespace mtools
                 MTOOLS_ASSERT(_nbNormalObj >0);
                 _nbNormalObj--;
                 }
-            if ((value >= _minSpec) && (value <= _maxSpec))
+            if (_isSpecial(value))
                 { // new value is special, increment the global and local count
                 auto off = value - _minSpec; (_tabSpecNB[off])++; (leaf->count[off])++; // increment its count
                 MTOOLS_ASSERT( (leaf->count[off] <= metaprog::power<(2 * R + 1), D>::value) );
@@ -821,7 +969,7 @@ namespace mtools
                     _pbox & B = F->getSubBox(pos); // the pointer to the leaf in the father tab
                     MTOOLS_ASSERT(B == ((_pbox)leaf)); // make sure we are coherent.
                     B = _setSpecial(value, obj); // save the special object if needed and set the dummy node in place of the pointer to the leaf
-                    if (_callDtors) _poolLeaf.destroy(leaf); else _poolLeaf.deallocate(leaf); // delete the leaf possibly calling the destructors
+                    _releaseLeaf(leaf);
                     return _simplifyNode(F); // we try to simplify the tree starting from the father
                     } 
                 }
@@ -839,6 +987,37 @@ namespace mtools
         ***************************************************************/
 
 
+        /* release the memory associated with a node/leaf and call the dtor
+         depending on the status of _callDtors */
+        inline void _releaseBox(_pbox N) const 
+            {
+            MTOOLS_ASSERT(N != nullptr); // the node must not be nullptr
+            MTOOLS_ASSERT(_getSpecialObject(N) == nullptr); // the node must not be special
+            if (N->isLeaf()) { _releaseLeaf((_pleafFactor)N); return; }
+            _releaseNode((_pnode)N);
+            }
+
+
+        /* release the memory associated with a node */
+        inline void _releaseNode(_pnode N) const
+            {
+             MTOOLS_ASSERT(N != nullptr); // the node must not be nullptr
+             MTOOLS_ASSERT(_getSpecialObject(N) == nullptr); // the node must not be special
+             MTOOLS_ASSERT(!(N->isLeaf()));
+             _poolNode.deallocate(N);
+            }
+        
+
+        /* release the memory associated with a leaf */
+        inline void _releaseLeaf(_pleafFactor L) const
+            {
+            MTOOLS_ASSERT(L != nullptr); // the node must not be nullptr
+            MTOOLS_ASSERT(_getSpecialObject(L) == nullptr); // the node must not be special
+            MTOOLS_ASSERT(L->isLeaf());
+            if (_callDtors) { _poolLeaf.destroy(L); } else { _poolLeaf.deallocate(L); }
+            }
+
+
         /* sub-method using the positional constructor */
         void _createDataLeaf(_pleafFactor pleaf, Pos pos, metaprog::dummy<true> dum) const
             {
@@ -850,7 +1029,7 @@ namespace mtools
                 new(pleaf->data + x) T(pos); // create using the positionnal constructor
                 int64 val = (int64)(*(pleaf->data + x)); // convert to int64
                 _updateValueRange(val); // possibly a new extremum value
-                if ((val >= _minSpec) && (val <= _maxSpec)) // check if it is a special value
+                if (_isSpecial(val)) // check if it is a special value
                     { // yes
                     auto off = val - _minSpec;           // the offset of the special object
                     (pleaf->count[off])++;               // increase the counter in the leaf associated with this special object
@@ -872,7 +1051,7 @@ namespace mtools
                 new(pleaf->data + i) T();
                 int64 val = (int64)(*(pleaf->data + i)); // convert to int64
                 _updateValueRange(val); // possibly a new extremum value
-                if ((val >= _minSpec) && (val <= _maxSpec)) // check if it is a special value
+                if (_isSpecial(val)) // check if it is a special value
                     { // yes
                     auto off = val - _minSpec;           // the offset of the special object
                     (pleaf->count[off])++;               // increase the counter in the leaf associated with this special object
@@ -904,7 +1083,7 @@ namespace mtools
             memset(pleaf->count, 0, sizeof(pleaf->count)); // reset the number of each type of special object 
             for (size_t i = 0; i < metaprog::power<(2 * R + 1), D>::value; ++i) { new(pleaf->data + i) T(*obj); } // init all objects with copy ctor
             MTOOLS_ASSERT(value == (int64)(*obj)); // make sure obj and value match
-            if ((value >= _minSpec) && (value <= _maxSpec)) { (pleaf->count[value - _minSpec]) = metaprog::power<(2 * R + 1), D>::value; } // update the count array when obj is special
+            if (_isSpecial(value)) { (pleaf->count[value - _minSpec]) = metaprog::power<(2 * R + 1), D>::value; } // update the count array when obj is special
             pleaf->center = centerpos;
             pleaf->rad = 1;
             pleaf->father = above;
@@ -957,13 +1136,23 @@ namespace mtools
         * Dealing with special values 
         ***************************************************************/
 
+        /* return true if val is a special value */
+        inline bool _isSpecial(int64 val) const { return((val <= _maxSpec)&&(val >= _minSpec)); }
+
+
+        /* return true if the special value range is non empty */
+        inline bool _existSpecial() const { return (_maxSpec >= _minSpec); }
+
+        /* the number of special element, negative or zero if there are none */
+        inline int64 _specialRange() const { return (_maxSpec - _minSpec + 1); }
+
         /* Return the value associated with a dummy node
          * No checking that the node is indeed a dummy node */
         inline int64  _getSpecialValue(_pbox p) const
             {
             int64 off = ((_pnode)p) - (_dummyNodes);
             off += _minSpec;
-            MTOOLS_ASSERT((off >= _minSpec) && (off <= _maxSpec));
+            MTOOLS_ASSERT(_isSpecial(off));
             return off;
             }
             
@@ -972,7 +1161,7 @@ namespace mtools
            No checking that the the value is correct or that an object was associated with it */
         inline T * _getSpecialObject(int64 value) const
             {
-            MTOOLS_ASSERT((value >= _minSpec) && (value <= _maxSpec));
+            MTOOLS_ASSERT(_isSpecial(value));
             MTOOLS_ASSERT(_tabSpecObj[value - _minSpec] != nullptr);
             return _tabSpecObj[value - _minSpec];
             }
@@ -996,7 +1185,7 @@ namespace mtools
          * No checking that the value is a correct special value */
         inline _pbox _getSpecialNode(int64 value) const
             {
-            MTOOLS_ASSERT((value >= _minSpec) && (value <= _maxSpec));
+            MTOOLS_ASSERT(_isSpecial(value));
             return _dummyNodes + (value - _minSpec);
             }
 
@@ -1006,7 +1195,7 @@ namespace mtools
            No checking that value and obj are correct */
         inline _pbox _setSpecial(int64 value, const T* obj) const
             {
-            MTOOLS_ASSERT((value >= _minSpec) && (value <= _maxSpec));
+            MTOOLS_ASSERT(_isSpecial(value));
             MTOOLS_ASSERT(((int64)(*obj)) == value);
             const auto off = value - _minSpec;
             T* & p = _tabSpecObj[off];
@@ -1032,8 +1221,8 @@ namespace mtools
         mutable int64 _minVal;                  // current minimum value in the grid
         mutable int64 _maxVal;                  // current maximum value in the grid
 
-        mutable SingleAllocator<internals_grid::_leafFactor<D, T, NB_SPECIAL, R>, 200>  _poolLeaf;   // pool for leaf objects
-        mutable SingleAllocator<internals_grid::_node<D, T, R>, 200 >  _poolNode;                    // pool for node objects
+        mutable SingleAllocator<internals_grid::_leafFactor<D, T, NB_SPECIAL, R>, 200>  _poolLeaf;  // pool for leaf objects
+        mutable SingleAllocator<internals_grid::_node<D, T, R>, 200 >  _poolNode;                   // pool for node objects
         mutable SingleAllocator<T, NB_SPECIAL + 1 >  _poolSpec;                                     // pool for special objects
 
         mutable T* _tabSpecObj[NB_SPECIAL];                                                         // array of T pointers to the special objects.
