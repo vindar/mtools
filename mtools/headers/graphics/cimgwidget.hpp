@@ -126,6 +126,8 @@ namespace mtools
             std::atomic<int>  _ox;              // size of the offscreen buffer
             std::atomic<int>  _oy;              //
             bool _initdraw;                     // to make sure we call the draw method of the base class at least once.
+
+
         };
 
     }

@@ -54,6 +54,7 @@ namespace mtools
                 }
             const int nox = im->width();
             const int noy = im->height();
+            if (!_initdraw) return;                         // TO PREVENT FLTK'S BUG WITH FL_OFFSCREEN
             if ((nox != _ox) || (noy != _oy))
                 {
                 if (_offbuf != ((Fl_Offscreen)0)) { fl_delete_offscreen((Fl_Offscreen)(_offbuf)); }
@@ -88,6 +89,7 @@ namespace mtools
                 }
             const int nox = im->width();
             const int noy = im->height();
+            if (!_initdraw) return;                         // TO PREVENT FLTK'S BUG WITH FL_OFFSCREEN
             if ((nox != _ox) || (noy != _oy))
                 {
                 if (_offbuf != ((Fl_Offscreen)0)) { fl_delete_offscreen((Fl_Offscreen)(_offbuf)); }

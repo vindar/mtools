@@ -313,7 +313,7 @@ int main()
     GF.set({ 3,3 }, 2);
 
     Chronometer();
-    testWalk(100000000);
+    testWalk(100);
 
 
 
