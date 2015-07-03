@@ -313,7 +313,7 @@ int main()
     GF.set({ 3,3 }, 2);
 
     Chronometer();
-    testWalk(100);
+    testWalk(100000000);
 
     mtools::ProgressBar<int64> PB(100, "coucou", true);
     PB.step(1);
@@ -331,7 +331,6 @@ int main()
     cout << "\ntime = " << Chronometer() << "\n";
     cout << GF.toString(false);
 
-
     GF.changeSpecialRange(1, 0);
     cout << "\ntime = " << Chronometer() << "\n";
     cout << GF.toString(false);
@@ -339,6 +338,26 @@ int main()
     GF.changeSpecialRange(0, 5);
     cout << "\ntime = " << Chronometer() << "\n";
     cout << GF.toString(false);
+
+    Grid_factor<2, int, 100, 2> GF2(GF);
+
+    cout << "\ntime = " << Chronometer() << "\n";
+    cout << GF2.toString(false);
+
+
+    GF.reset();
+
+
+    GF2.changeSpecialRange(-1, 1);
+
+    GF = GF2;
+    
+
+    cout << "\ntime = " << Chronometer() << "\n";
+    cout << GF.toString(false);
+
+
+
 
     //cout.getKey();
 

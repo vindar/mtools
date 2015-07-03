@@ -77,6 +77,11 @@ namespace mtools
     template < size_t D, typename T, size_t NB_SPECIAL = 256 , size_t R = internals_grid::defaultR<D>::val > class Grid_factor
     {
 
+
+    friend class Grid_factor; 
+
+
+
         typedef internals_grid::_box<D, T, R> *     _pbox;
         typedef internals_grid::_node<D, T, R> *    _pnode;
         typedef internals_grid::_leafFactor<D, T, NB_SPECIAL, R> *    _pleafFactor;
@@ -149,10 +154,12 @@ namespace mtools
          * The template parameter NB_SPECIAL must be large enough to hold all the special values (which
          * is necessarily the case if it is larger or equal to NB_SPECIAL of the source).
          **/
-        template<size_t NB_SPECIAL2> Grid_factor<D, T, NB_SPECIAL2, R> & operator=(const Grid_factor<D, T, NB_SPECIAL2, R> & G)
+        template<size_t NB_SPECIAL2> Grid_factor<D, T, NB_SPECIAL, R> & operator=(const Grid_factor<D, T, NB_SPECIAL2, R> & G)
             {
             MTOOLS_INSURE(((!G._existSpecial()) || (G._specialRange() <= NB_SPECIAL))); // make sure we can hold all the special element of the source.
-            if ((&G) == this) { return(*this); } // nothing to do
+            const void * p1 = (const void *)(&G);
+            const void * p2 = (const void *)(this);
+            if (p1 == p2) { return(*this); } // nothing to do
 
             _reset(G._minSpec,G._maxSpec,G._callDtors); // reset the grid and set the special range and dtor flag
 
@@ -670,12 +677,13 @@ namespace mtools
         * Working with leafs and nodes
         ***************************************************************/
 
+
         /* recursive method for copying a tree from G
         * used by operator=() */
         template<size_t NB_SPECIAL2> _pbox _copyTree(_pbox father, _pbox p, const Grid_factor<D, T, NB_SPECIAL2, R> & G)
             {
             MTOOLS_ASSERT(p != nullptr);
-            if (G._getSpecialObject(p))
+            if (G._getSpecialObject(p) != nullptr)
                 { // special node from G
                 return _getSpecialNode(G._getSpecialValue(p)); // get the corresponding dummy node for this object 
                 }
@@ -703,7 +711,7 @@ namespace mtools
             for (size_t i = 0; i < metaprog::power<3, D>::value; ++i)
                 {
                 const _pbox B = ((_pnode)p)->tab[i];
-                if (B != nullptr) { N->tab[i] = _copyTree<NB_SPECIAL2>(N, B, G); }
+                N->tab[i] = ((B == nullptr) ? nullptr : _copyTree<NB_SPECIAL2>(N, B, G));
                 }
             return N;
             }
