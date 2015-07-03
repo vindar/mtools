@@ -73,12 +73,12 @@ namespace mtools
 
 
             /* constructor of the widget */
-            ProgressWidget(bool sht,const char * tit) : Fl_Window(0,0,300,110), title(tit), showtime(sht), newval(0), updatetime(0)
+            ProgressWidget(bool sht,const char * tit) : Fl_Window(0,0,300,110), showtime(sht), newval(0), updatetime(0)
                 {
                 startTime = std::chrono::high_resolution_clock::now();
                 resize((Fl::w() - 300) / 2, (Fl::h() -110) / 2, 300, 110);
                 size_range(300, 110, 300, 110);
-                label(title.c_str());
+                copy_label(tit);
                 begin();
                 progBar = new Fl_Progress(10,20, 280, 30);
                 progBar->minimum(0.0);
@@ -102,10 +102,6 @@ namespace mtools
             ~ProgressWidget()
                 {
                 Fl::remove_timeout(static_timer_callback, this);
-                progBar->label(nullptr);
-                textBar1->label(nullptr);
-                textBar2->label(nullptr);
-                label(nullptr);
                 }
 
             /* Handle events */
@@ -144,9 +140,8 @@ namespace mtools
                 if (progBar->value() != (float)newval)
                     {
                     progBar->value((float)newval); progBar->redraw();
-                    progBar->label(nullptr);
-                    text_pourcentage = mtools::toString((int)(100 * newval)) + "%";
-                    progBar->label(text_pourcentage.c_str());
+                    auto text_pourcentage = mtools::toString((int)(100 * newval)) + "%";
+                    progBar->copy_label(text_pourcentage.c_str());
                     progBar->redraw_label();
                     if (shown()&&(newval > 1.0)) { hide(); } else if ((!shown())&& (newval <= 1.0)) { show(); }
                     }
@@ -159,12 +154,10 @@ namespace mtools
                         auto e = std::chrono::duration_cast<std::chrono::duration<long double>>(std::chrono::high_resolution_clock::now() - startTime);
                         uint64 elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(e).count();
                         uint64 remain = ((newval < 0.0000001)||(newval>=1.0)) ? 0 : (uint64)(((1.0 - newval) / newval)*elapsed);
-                        textBar1->label(nullptr);
-                        textBar2->label(nullptr);
-                        text_elapsed = std::string("Elapsed: ") + durationToString(elapsed + 999, false);
-                        text_remaining = std::string("Remaining: ") + durationToString(remain + 999, false);
-                        textBar1->label(text_elapsed.c_str());
-                        textBar2->label(text_remaining.c_str());
+                        auto text_elapsed = std::string("Elapsed: ") + durationToString(elapsed + 999, false);
+                        auto text_remaining = std::string("Remaining: ") + durationToString(remain + 999, false);
+                        textBar1->copy_label(text_elapsed.c_str());
+                        textBar2->copy_label(text_remaining.c_str());
                         }
                     }
                 Fl::repeat_timeout(0.05, static_timer_callback, this); // refresh 20 times per second, if possible...
@@ -177,14 +170,8 @@ namespace mtools
             friend void setProgressWidgetValue(ProgressWidget *, double);
             friend void deleteProgressWidget(ProgressWidget *);
 
-
             ProgressWidget(const ProgressWidget &) = delete;              // no copy
             ProgressWidget & operator=(const ProgressWidget &) = delete;  //
-
-            const std::string   title;      // tilte of the progress bar
-            std::string         text_pourcentage;// pourcentage done
-            std::string         text_elapsed; // elapsed text
-            std::string         text_remaining; // remaining text
 
             bool                showtime;   // show remaining time
             Fl_Progress *       progBar;    // the progress bar widget.

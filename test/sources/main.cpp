@@ -315,7 +315,10 @@ int main()
     Chronometer();
     testWalk(100);
 
-
+    mtools::ProgressBar<int64> PB(100, "coucou", true);
+    PB.step(1);
+    PB.update(2);
+    PB.hide();
 
     cout << "\ntime = " << Chronometer() << "\n";
     cout << GF.toString(false);

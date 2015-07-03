@@ -549,7 +549,6 @@ namespace mtools
             std::atomic<float> _opacity;                    // the opacity for drawing
             std::atomic<int>   _drawOn;                     // is the object enabled.
             std::string _name;                              // the object name
-            std::string _progText;                          // the "static" text of the progress bar
             int _progVal;                                   // the last value of the progress bar, -1 if thread stopped
             Fl_Button *             _nameBox;               // the box with the name of the drawing
             Fl_Group *              _optionWin;             // the option window

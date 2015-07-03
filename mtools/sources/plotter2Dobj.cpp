@@ -106,9 +106,7 @@ namespace mtools
                 }
             _name = newname;
             if ((pnot)_ownercb == nullptr) return;
-            _nameBox->label(nullptr);
-            _name = newname;
-            _nameBox->label(_name.c_str());
+            _nameBox->copy_label(_name.c_str());
             _nameBox->redraw();
             }
 
@@ -529,9 +527,8 @@ namespace mtools
                 _progBar->labelcolor(FL_WHITE);
                 _progBar->selection_color(FL_RED);
                 _progBar->labelsize(11);
-                _progText = "stopped";
                 _progVal = -1;
-                _progBar->label(_progText.c_str());
+                _progBar->copy_label("stopped");
                 // and add the timer
                 Fl::add_timeout(0.1, _timerCB_static, this);
                 }
@@ -711,12 +708,10 @@ namespace mtools
                 if (_progVal != -1)
                     {
                     _progVal = -1;
-                    _progBar->label(nullptr);
                     _progBar->selection_color(FL_DARK_RED);
                     _progBar->labelsize(11);
                     _progBar->value(100);
-                    _progText = "stopped";
-                    _progBar->label(_progText.c_str());
+                    _progBar->copy_label("stopped");
                     _progBar->redraw();
                     }
                 }
@@ -726,12 +721,11 @@ namespace mtools
                 if (_progVal != q)
                     {
                     _progVal = q;
-                    _progBar->label(nullptr);
                     _progBar->selection_color((q<100) ? FL_DARK_BLUE : FL_DARK_GREEN);
                     _progBar->labelsize(11);
                     _progBar->value((float)q);
-                    _progText = toString(q) + "%";
-                    _progBar->label(_progText.c_str());
+                    auto progText = mtools::toString(q) + "%";
+                    _progBar->copy_label(progText.c_str());
                     _progBar->redraw();
                     }
                 }

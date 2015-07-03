@@ -237,7 +237,7 @@ namespace mtools
             void setWindowSize(int W, int H);
 
             /* set the text "keep aspect ratio : xxx */
-            void setRatioText(bool removetext = false);
+            void setRatioTextLabel();
 
             /* set the refresh rate */
             void setRefreshRate(int newrate);
@@ -295,7 +295,6 @@ namespace mtools
             View2DWidget * _PW;                 // the 2D widget displaying the graphics
 
             int _obj_width;                     // the object window width
-            std::string _ratiotxt;              // the sting that contain the text "keep aspect ratio : xxx"
 
             Plot2DAxes * _axePlot;              // the axes plot
             Plot2DGrid * _gridPlot;             // the grid plot
@@ -798,7 +797,7 @@ namespace mtools
             _w_fixedratio->value(((RangeManager*)_RM)->fixedAspectRatio() ? 1 : 0); // update the fixed aspect ratio checkbox status
 
             setRangeInput(((RangeManager*)_RM)->getRange());    // update the range input buttons
-            setRatioText();                                     // update the "keep aspect ratio" text
+            setRatioTextLabel();                                     // update the "keep aspect ratio" text
 
             setRefreshRate(0);                                  // no refresh by default
             Fl::add_timeout(0.1, static_updateViewTimer, this); // set the timer used for updating the view
@@ -823,8 +822,6 @@ namespace mtools
             _insertAxesObject(false); // remove the axes if needed
             _insertGridObject(false); // remove the grid if needed
             removeAll(); // remove all the object still in the plotter
-
-            setRatioText(true); // remove the string label for the "keep aspect ratio" non static text
 
             ((RangeManager*)_RM)->setNotificationCallback(nullptr, nullptr,nullptr); // remove the range manager callback so we do not receive modif event anymore
 
@@ -997,7 +994,7 @@ namespace mtools
             setImageSize((int)winSize.X(), (int)winSize.Y(), _nbchannels);    // resize the image if needed
             updateView();                                           // update the view
             setRangeInput(R);                                       // update the range widgets
-            setRatioText();                                         // and the aspect ratio text
+            setRatioTextLabel();                                    // and the aspect ratio text
             _w_fixedratio->value(fixedAR ? 1 : 0);                  // update the fixed apsect ratio checkbox
             _w_zoomfactortext->copy_label((std::string("[") + toString(winSize.X()) + "x" + toString(winSize.Y()) + "]").c_str()); // update the View size text
             _w_zoomfactortext->redraw_label();
@@ -1756,12 +1753,12 @@ namespace mtools
 
 
         /* set the text "keep aspect ratio : xxx */
-        void Plotter2DWindow::setRatioText(bool removetext)
+        void Plotter2DWindow::setRatioTextLabel()
         {
-            if ((removetext) || (((RangeManager*)_RM) == nullptr)) {_w_fixedratio->label("Maintain the aspect ratio");}
+            if (((RangeManager*)_RM) == nullptr) {_w_fixedratio->copy_label("Maintain the aspect ratio");}
             double ratio = ((RangeManager*)_RM)->ratio();
-            _ratiotxt = std::string("Maintain the aspect ratio : ") + doubleToStringNice(ratio);
-            _w_fixedratio->label(_ratiotxt.c_str());
+            auto ratiotxt = std::string("Maintain the aspect ratio : ") + doubleToStringNice(ratio);
+            _w_fixedratio->copy_label(ratiotxt.c_str());
         }
 
 
