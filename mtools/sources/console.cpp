@@ -56,13 +56,13 @@ namespace mtools
             public:
 
             /* constructor of the widget */
-            ConsoleWidget(int X, int Y, int W, int H, std::string * name, std::string * wt, std::mutex * m, std::atomic<size_t> * t) : Fl_Double_Window(X, Y, W, H), waiting_text(*wt), mutext(*m), tl(*t), inputOn(false), keyed(0), consoleName(*name)
+            ConsoleWidget(int X, int Y, int W, int H, std::string * name, std::string * wt, std::mutex * m, std::atomic<size_t> * t) : Fl_Double_Window(X, Y, W, H), waiting_text(*wt), mutext(*m), tl(*t), inputOn(false), keyed(0)
                 {
 
                 buff = new Fl_Text_Buffer(100000);  // create the text buffer
-
-                label(consoleName.c_str());
-                begin();
+                copy_label(name->c_str()); // the console title
+    
+                begin(); // begin adding child widgets 
 
                 disp = new Fl_Text_Display(5, 5, w() - 10, h() - 40); // the text display widget
                 disp->buffer(buff);                       //
@@ -103,7 +103,6 @@ namespace mtools
             ~ConsoleWidget()
                 {
                 removeTimer();
-                label(nullptr); // remove consolename pointer from the widget.
                 remove(disp);
                 delete disp;
                 delete buff;
@@ -122,7 +121,7 @@ namespace mtools
                         }
                     case FL_KEYDOWN:
                         {
-                      //  keyed = Fl::event_key();
+                        // keyed = Fl::event_key();
                         break;
                         }
                     case FL_KEYUP:
@@ -259,9 +258,7 @@ namespace mtools
             Fl_Toggle_Button *  bscroll;    // the scroll on/off button
             Fl_Box *            pressText; // press a key text.
             Fl_Window *         subBox; // the box containing the imput widget, scroll button and getKey text.
-            const std::string consoleName; // name of the console
-
-            Fl_Text_Buffer * buff;    // text buffer associated with the text display widget
+            Fl_Text_Buffer *    buff;    // text buffer associated with the text display widget
 
         };
 
