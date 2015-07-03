@@ -47,46 +47,6 @@ namespace mtools
 
 
         /**
-         * Subclassing of Fl_Text_Display. The Text window widget of the Console object.
-         **/
-        class ConsoleDisplay : public Fl_Text_Display
-        {
-            friend class ConsoleWidget;
-
-            public:
-
-            /* constructor of the widget */
-            ConsoleDisplay(int X, int Y, int W, int H) : Fl_Text_Display(X, Y, W, H)
-                {
-                buff = new Fl_Text_Buffer(100000);  // the text buffer
-                buffer(buff);                       //
-                textfont(FL_COURIER);               // font and size of the text
-                textsize(12);                       //
-                wrap_mode(WRAP_AT_BOUNDS, 1);       // we wrap lines
-                linenumber_size(10);                // line numbering
-                linenumber_format("%d");            //
-                linenumber_align(FL_ALIGN_RIGHT);   //
-                linenumber_font(FL_TIMES);        //
-                linenumber_bgcolor(FL_GRAY);        //
-                linenumber_width(40);               //
-                }
-
-            /* destructor */
-            ~ConsoleDisplay()
-                {
-                buffer(nullptr);
-                delete buff;
-                }
-
-            private:
-            Fl_Text_Buffer * buff;    // text buffer associated with the text display widget
-            const std::string consoleName;
-        };
-
-
-
-
-        /**
          * Subclassing of Fl_Double_Window. The Console widget.
          *
          * Methods of ConsoleWidget are called only from the FLTK thread.
@@ -98,9 +58,24 @@ namespace mtools
             /* constructor of the widget */
             ConsoleWidget(int X, int Y, int W, int H, std::string * name, std::string * wt, std::mutex * m, std::atomic<size_t> * t) : Fl_Double_Window(X, Y, W, H), waiting_text(*wt), mutext(*m), tl(*t), inputOn(false), keyed(0), consoleName(*name)
                 {
+
+                buff = new Fl_Text_Buffer(100000);  // create the text buffer
+
                 label(consoleName.c_str());
                 begin();
-                disp = new ConsoleDisplay(5, 5, w() - 10, h() - 40);
+
+                disp = new Fl_Text_Display(5, 5, w() - 10, h() - 40); // the text display widget
+                disp->buffer(buff);                       //
+                disp->textfont(FL_COURIER);               // font and size of the text
+                disp->textsize(12);                       //
+                disp->wrap_mode(disp->WRAP_AT_BOUNDS, 1);       // we wrap lines
+                disp->linenumber_size(10);                // line numbering
+                disp->linenumber_format("%d");            //
+                disp->linenumber_align(FL_ALIGN_RIGHT);   //
+                disp->linenumber_font(FL_TIMES);        //
+                disp->linenumber_bgcolor(FL_GRAY);        //
+                disp->linenumber_width(40);               //
+
                 subBox = new Fl_Window(5, h() - 30, w() - 10, 25);
                 subBox->begin();
                 pressText = new Fl_Box(0, 0, subBox->w() - 35, 25,"Press a key...");
@@ -129,6 +104,10 @@ namespace mtools
                 {
                 removeTimer();
                 label(nullptr); // remove consolename pointer from the widget.
+                remove(disp);
+                delete disp;
+                delete buff;
+
                 }
 
             /* Handle events in the Fl_Double_Window */
@@ -216,7 +195,7 @@ namespace mtools
                 }
 
             /* clear the screen */
-            void clearScreen() { disp->buff->text(nullptr); }
+            void clearScreen() { buff->text(nullptr); }
 
             /* static callback, redirect to timer_callback */
             static void static_timer_callback(void* p) { if (p == nullptr) { return; } ((ConsoleWidget*)p)->window_timer(); }
@@ -275,12 +254,15 @@ namespace mtools
             ConsoleWidget(const ConsoleWidget &) = delete;              // no copy
             ConsoleWidget & operator=(const ConsoleWidget &) = delete;  //
 
-            ConsoleDisplay *    disp;  //  the main text window
+            Fl_Text_Display *   disp;  //  the main text window
             Fl_Input *          input; //  the text input widget
             Fl_Toggle_Button *  bscroll;    // the scroll on/off button
             Fl_Box *            pressText; // press a key text.
             Fl_Window *         subBox; // the box containing the imput widget, scroll button and getKey text.
             const std::string consoleName; // name of the console
+
+            Fl_Text_Buffer * buff;    // text buffer associated with the text display widget
+
         };
 
 
