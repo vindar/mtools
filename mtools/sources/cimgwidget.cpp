@@ -30,20 +30,24 @@ namespace mtools
     {
 
 
-        CImgWidget::CImgWidget(int X, int Y, int W, int H, const char *l) : Fl_Window(X, Y, W, H, l), _offbuf((Fl_Offscreen)0), _ox(0), _oy(0), _initdraw(false)
+        CImgWidget::CImgWidget(int X, int Y, int W, int H, const char *l) : Fl_Window(X, Y, W, H, l), _offbuf((Fl_Offscreen)0), _ox(0), _oy(0), _initdraw(false), _saved_im(nullptr), _saved_im32(nullptr), _saved_nbRounds(0)
         {
         }
 
 
+        
+
         CImgWidget::~CImgWidget()
             {
             if (_offbuf != ((Fl_Offscreen)0)) { fl_delete_offscreen((Fl_Offscreen)(_offbuf)); }
+            delete _saved_im; _saved_im = nullptr;
+            delete _saved_im32; _saved_im32 = nullptr;
             }
 
 
         void CImgWidget::setImage(cimg_library::CImg<unsigned char> * im)
         {
-            std::lock_guard<std::mutex> lock(_mutim);
+            std::lock_guard<std::recursive_mutex> lock(_mutim);
             if ((im == nullptr) || (im->width() == 0) || (im->height() == 0)||(im->spectrum()<3))
                 {
                 if (_offbuf != ((Fl_Offscreen)0)) { fl_delete_offscreen((Fl_Offscreen)(_offbuf)); }
@@ -52,9 +56,15 @@ namespace mtools
                 redraw();  
                 return;
                 }
+            if (!_initdraw) // prevent FLTK bug on linux
+                {
+                delete _saved_im; _saved_im = nullptr;
+                delete _saved_im32; _saved_im32 = nullptr;
+                _saved_im = new cimg_library::CImg<unsigned char>(*im, false);
+                return;
+                }
             const int nox = im->width();
             const int noy = im->height();
-            if (!_initdraw) return;                         // TO PREVENT FLTK'S BUG WITH FL_OFFSCREEN
             if ((nox != _ox) || (noy != _oy))
                 {
                 if (_offbuf != ((Fl_Offscreen)0)) { fl_delete_offscreen((Fl_Offscreen)(_offbuf)); }
@@ -78,7 +88,7 @@ namespace mtools
 
         void CImgWidget::setImage32(cimg_library::CImg<uint32> * im,int nbRounds)
             {
-            std::lock_guard<std::mutex> lock(_mutim);
+            std::lock_guard<std::recursive_mutex> lock(_mutim);
             if ((nbRounds<=0)||(im == nullptr) || (im->width() == 0) || (im->height() == 0) || (im->spectrum()<3))
                 {
                 if (_offbuf != ((Fl_Offscreen)0)) { fl_delete_offscreen((Fl_Offscreen)(_offbuf)); }
@@ -87,9 +97,16 @@ namespace mtools
                 redraw();
                 return;
                 }
+            if (!_initdraw) // prevent FLTK bug on linux
+                {
+                delete _saved_im; _saved_im = nullptr;
+                delete _saved_im32; _saved_im32 = nullptr;
+                _saved_im32 = new cimg_library::CImg<uint32>(*im, false);
+                _saved_nbRounds = nbRounds;
+                return;
+                }
             const int nox = im->width();
             const int noy = im->height();
-            if (!_initdraw) return;                         // TO PREVENT FLTK'S BUG WITH FL_OFFSCREEN
             if ((nox != _ox) || (noy != _oy))
                 {
                 if (_offbuf != ((Fl_Offscreen)0)) { fl_delete_offscreen((Fl_Offscreen)(_offbuf)); }
@@ -126,7 +143,7 @@ namespace mtools
             if (!_initdraw) { draw(); return; }
             else
                 {
-                std::lock_guard<std::mutex> lock(_mutim);
+                std::lock_guard<std::recursive_mutex> lock(_mutim);
                 iRect rr = mtools::intersectionRect(r, iRect(0, _ox - 1, 0, _oy - 1));
                 if ((_offbuf == ((Fl_Offscreen)0))||(rr.lx() < 0) || (rr.ly() < 0)) return;
                 fl_copy_offscreen((int)rr.xmin, (int)rr.ymin, (int)rr.lx() + 1, (int)rr.ly() + 1, (Fl_Offscreen)_offbuf, (int)rr.xmin, (int)rr.ymin);
@@ -136,9 +153,15 @@ namespace mtools
 
         void CImgWidget::draw()
             {
-            if ((!_initdraw) || (w() > ((int)_ox)) || (h() > ((int)_oy))) { Fl_Window::draw(); _initdraw = true; } // first time or base widget showing : redraw it.
+            if ((!_initdraw) || (w() > ((int)_ox)) || (h() > ((int)_oy))) { Fl_Window::draw(); } // first time or base widget showing : redraw it.
                 {
-                std::lock_guard<std::mutex> lock(_mutim);
+                std::lock_guard<std::recursive_mutex> lock(_mutim);
+                if (!_initdraw)
+                    { 
+                    _initdraw = true;
+                    if (_saved_im != nullptr) { setImage(_saved_im); delete _saved_im; _saved_im = nullptr; }
+                    if (_saved_im32 != nullptr) { setImage32(_saved_im32,_saved_nbRounds); delete _saved_im32; _saved_im32 = nullptr; }
+                    }
                 int lx = ((int)_ox > w()) ? w() : (int)_ox;
                 int ly = ((int)_oy > h()) ? h() : (int)_oy;
                 if ((_offbuf == ((Fl_Offscreen)0)) || (_ox <= 0) || (_oy <= 0)) { return; }

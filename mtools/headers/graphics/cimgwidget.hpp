@@ -121,11 +121,14 @@ namespace mtools
             /* callback called when copying the image into the offscreen buffer line by line */
             static void _drawLine_callback32(void * data, int x, int y, int w, uchar *buf);
 
-            std::mutex _mutim;                  // mutex for synchronization
+            std::recursive_mutex _mutim;        // mutex for synchronization
             std::atomic<Fl_Offscreen>  _offbuf; // offscreen buffer
             std::atomic<int>  _ox;              // size of the offscreen buffer
             std::atomic<int>  _oy;              //
             bool _initdraw;                     // to make sure we call the draw method of the base class at least once.
+            cimg_library::CImg<unsigned char> * _saved_im;  // used for saving the image prior to the first drawing
+            cimg_library::CImg<uint32> * _saved_im32;       // of the window in order to avoid a seg fault with X11
+            int _saved_nbRounds;                            // 
 
 
         };

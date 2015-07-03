@@ -10,7 +10,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <ctime>
-#include <cmath>  
+#include <cmath>
 #include <cwchar>
 #include <locale>
 
@@ -71,7 +71,7 @@
 #include "FL/Fl_Button.H"
 #include "FL/Fl_Check_Button.H"
 #include "FL/Fl_Round_Button.H"
-#include "Fl/Fl_Toggle_Button.H"
+#include "FL/Fl_Toggle_Button.H"
 #include "FL/Fl_Value_Slider.H"
 #include "FL/Fl_Scroll.H"
 #include "FL/Fl_Progress.H"
@@ -86,8 +86,6 @@
 #pragma warning( pop )
 #endif
 
-// *** Library fltk ***
-#include "GL/glut.h"    // fltk glut
 #include "zlib.h"       // fltk zlib
 #include "png.h"        // fltk libpng
 #include "jpeglib.h"    // fltk libjpeg
