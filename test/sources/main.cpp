@@ -306,57 +306,24 @@ int main()
 
     GF.set({ 3,3 }, 1);
     GF.set({ 8,0 }, 1);
-  //  GF.set({ 8,0 }, 0);
-
-
-
+    GF.set({ 8,0 }, 0);
     GF.set({ 3,3 }, 2);
 
     Chronometer();
     testWalk(100000000);
-
-    mtools::ProgressBar<int64> PB(100, "coucou", true);
-    PB.step(1);
-    PB.update(2);
-    PB.hide();
-
-    cout << "\ntime = " << Chronometer() << "\n";
-    cout << GF.toString(false);
- 
-    GF.changeSpecialRange(2, 5);
-    cout << "\ntime = " << Chronometer() << "\n";
-    cout << GF.toString(false);
-
-    GF.changeSpecialRange(-1,1);
-    cout << "\ntime = " << Chronometer() << "\n";
-    cout << GF.toString(false);
-
-    GF.changeSpecialRange(1, 0);
-    cout << "\ntime = " << Chronometer() << "\n";
-    cout << GF.toString(false);
-
-    GF.changeSpecialRange(0, 5);
-    cout << "\ntime = " << Chronometer() << "\n";
-    cout << GF.toString(false);
-
-    Grid_factor<2, int, 100, 2> GF2(GF);
-
-    cout << "\ntime = " << Chronometer() << "\n";
-    cout << GF2.toString(false);
-
-
-    GF.reset();
-
-
-    GF2.changeSpecialRange(-1, 1);
-
-    GF = GF2;
     
+    cout << "\ntime = " << Chronometer() << "\n";
+    cout << GF.toString(false);
+
+    {
+    mtools::OArchive AR("test.ar");
+    AR & GF;
+    }
 
     cout << "\ntime = " << Chronometer() << "\n";
     cout << GF.toString(false);
 
-
+    
 
 
     //cout.getKey();

@@ -168,6 +168,13 @@ namespace internals_serialization
         static inline void write(uint64 & nbitem, OArchive & ar, const typeT & obj, std::string & dest) { nbitem++; createTokenFP(obj, dest); }
     };
 
+    /* specialization for bool */
+    template<> class OArchiveHelper < bool >
+        {
+        public:
+            typedef bool typeT;
+            static inline void write(uint64 & nbitem, OArchive & ar, const typeT & obj, std::string & dest) { nbitem++; createTokenI((int64)((obj == true) ? 1 : 0), dest); }
+        };
 
 
     /* specialization for fixed size C-arrays */
@@ -602,7 +609,13 @@ public:
     static inline void read(uint64 & nbitem, IArchive & ar, typeT & obj) { ar._tempstr.clear(); ar.readTokenFromArchive(ar._tempstr); if (readTokenFP(ar._tempstr, obj) != ar._tempstr.length()) { throw "IArchive error"; }  nbitem++; }
 };
 
-
+/* specialization for bool */
+template<> class IArchiveHelper < bool >
+    {
+    public:
+        typedef bool typeT;
+        static inline void read(uint64 & nbitem, IArchive & ar, typeT & obj) { int64 v; ar._tempstr.clear(); ar.readTokenFromArchive(ar._tempstr); if (readTokenI(ar._tempstr, v) != ar._tempstr.length()) { throw "IArchive error"; } obj = ((v == 0) ? false : true); nbitem++; }
+    };
 
 /* specialization for fixed size C-arrays */
 template<typename T, size_t N> class IArchiveHelper < T[N] >

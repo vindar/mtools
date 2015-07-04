@@ -188,6 +188,86 @@ namespace mtools
             }
 
 
+
+        /**
+        * Serializes the grid into an OArchive. If T implement a serialize method recognized by
+        * OArchive, it is used for serialization otherwise OArchive uses the default serialization
+        * method which correspond to a basic memcpy() of the object memory
+        *
+        * @param [in,out]  ar  The archive object to serialise the grid into.
+        *
+        * @sa  class OArchive, class IArchive
+        **/
+        void serialize(OArchive & ar)
+            {
+            ar << "\nBegining of Grid_factor<" << D << " , [" << std::string(typeid(T).name()) << "] , " << NB_SPECIAL << " , " << R << ">\n";
+
+            ar << "Version"; ar & ((uint64)1); ar.newline();
+            ar << "Template D"; ar & ((uint64)D); ar.newline();
+            ar << "Template R"; ar & ((uint64)R); ar.newline();
+            ar << "object T"; ar & std::string(typeid(T).name()); ar.newline();
+            ar << "sizeof(T)"; ar & ((uint64)sizeof(T)); ar.newline();
+            ar << "_rangemin"; ar & _rangemin; ar.newline();
+            ar << "_rangemax"; ar & _rangemax; ar.newline();
+
+            ar << "_minSpec"; ar & _minSpec; ar.newline();
+            ar << "_maxSpec"; ar & _maxSpec; ar.newline();
+            ar << "List of special objects\n";
+            for (int64 i = 0; i < _specialRange(); i++)
+                {
+                ar << "Object (" << _minSpec + i << ")";
+                if (_tabSpecObj[i] == nullptr) { ar & false; }
+                else
+                    {
+                    ar & true;
+                    ar & (*_tabSpecObj[i]);
+                    }
+                ar.newline();
+                }
+            ar << "Grid tree\n";
+            //_serializeTree(ar, _getRoot());
+            ar << "End of Grid_factor<" << D << " , [" << std::string(typeid(T).name()) << "] , " << NB_SPECIAL << " , " << R << ">\n";
+            }
+
+
+        /**
+        * Deserializes the grid from an IArchive. If T has a constructor of the form T(IArchive &), it
+        * is used for deserializing the T objects in the grid. Otherwise, if T implements one of the
+        * serialize methods recognized by IArchive, the objects in the grid are first position/default
+        * constructed and then deserialized using those methods. If no specific deserialization procedure
+        * is implemented, the object is treated as a POD and is deserialized using basic memcpy().
+        *
+        * @param [in,out]  ar  The archive to deserialize the grid from.
+        *
+        * @sa  class OArchive, class IArchive
+        **/
+        void deserialize(IArchive & ar)
+            {
+            /*
+            try
+                {
+                _destroyTree(true);
+                uint32 ver, d, r, sizeoft, nbspec, res;
+                ar & ver;       if (ver != 1) throw "wrong version";
+                ar & d;         if (d != D) throw "wrong dimension";
+                ar & r;         if (r != R) throw "wrong R parameter";
+                ar & sizeoft;   if (sizeoft != sizeof(T)) throw "wrong sizeof(T)";
+                ar & _rangemin;
+                ar & _rangemax;
+                ar & nbspec;
+                ar & res;       if (res != 0) throw "wrong reserved parameter (not 0)";
+                _pcurrent = _deserializeTree(ar, nullptr);
+                }
+            catch (...)
+                {
+                _destroyTree(false);    // object are dumped into oblivion, may result in a memory leak.
+                _createBaseNode();
+                throw; // rethrow
+                }
+                */
+            }
+
+
         /**
          * Change the set of special objects. This method first epxand the whole tree structure to
          * remove all factorization of the tree then set the nw range for the special object and then
@@ -307,18 +387,6 @@ namespace mtools
          * @return  The maximum value (converted as int64) for all the element ever creaed in the grid.
          **/
         inline int64 maxValue() const { return _minVal; }
-
-
-        void serialize(OArchive & ar)
-            {
-                // *********************** TODO ************************
-            }
-        
-
-        void deserialize(IArchive & ar)
-            {
-                // *********************** TODO ************************
-            }
 
 
         bool save(const std::string & filename) const
