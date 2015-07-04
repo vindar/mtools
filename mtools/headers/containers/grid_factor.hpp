@@ -160,14 +160,11 @@ namespace mtools
             const void * p1 = (const void *)(&G);
             const void * p2 = (const void *)(this);
             if (p1 == p2) { return(*this); } // nothing to do
-
             _reset(G._minSpec,G._maxSpec,G._callDtors); // reset the grid and set the special range and dtor flag
-
             _rangemin = G._rangemin;    // same statistics
             _rangemax = G._rangemax;    //
             _minVal = G._minVal;        //
             _maxVal = G._maxVal;        //
-
             // copy the special objects. 
             for (int64 i = 0; i < _specialRange(); i++)
                 {
@@ -179,14 +176,59 @@ namespace mtools
                     }
                 }
             _nbNormalObj = G._nbNormalObj;
-
             // copy the whole tree structure
             _pcurrent = _copyTree<NB_SPECIAL2>(nullptr, G._getRoot(), G);
-
-            // we are done
             return(*this);
             }
 
+
+        /**
+         * Saves the grid into a file (using the archive format). The file is compressed if it ends by
+         * the extension ".gz", ".gzip" or ".z".
+         * 
+         * Grid file for grid_Factor and Grid_basic are compatible provided the template parameters D,R
+         * and T are the same (NB_SPECIAL may differ but must always be large enough to accomodate the
+         * range of special object). In particular, if the Grid_factor is saved without special objects
+         * (by calling for exemple removeSpecialObjects() prior to saving it) then it may subsequently be
+         * loaded by a Grid_basic object.
+         *
+         * @param   filename    The filename.
+         *
+         * @return  true if it succeeds, false if it fails.
+         **/
+        bool save(const std::string & filename) const
+            {
+            try
+                {
+                OArchive ar(filename);
+                ar & (*this); // use the serialize method.
+                }
+            catch (...) { return false; } // error
+            return true; // ok
+            }
+
+
+        /**
+         * Loads the given file. The file may have been created by saving either a Grid_basic or a
+         * Grid_factor object with same template paramter T, D, R.
+         * 
+         * The template paramter NB_SPECIAL may differ from of the object used to save the grid but must
+         * be large enough to hold the special value range of the grid to load.
+         *
+         * @param   filename    The filename to load.
+         *
+         * @return  true if it succeeds, false if it fails.
+         **/
+        bool load(std::string filename)
+            {
+            try
+                {
+                IArchive ar(filename);
+                ar & (*this); // use the deserialize method.
+                }
+            catch (...) { reset(0, -1, true); return false; } // error
+            return true; // ok
+            }
 
 
         /**
@@ -198,35 +240,29 @@ namespace mtools
         *
         * @sa  class OArchive, class IArchive
         **/
-        void serialize(OArchive & ar)
+        void serialize(OArchive & ar) const
             {
             ar << "\nBegining of Grid_factor<" << D << " , [" << std::string(typeid(T).name()) << "] , " << NB_SPECIAL << " , " << R << ">\n";
-
-            ar << "Version"; ar & ((uint64)1); ar.newline();
+            ar << "Version";    ar & ((uint64)1); ar.newline();
             ar << "Template D"; ar & ((uint64)D); ar.newline();
             ar << "Template R"; ar & ((uint64)R); ar.newline();
-            ar << "object T"; ar & std::string(typeid(T).name()); ar.newline();
-            ar << "sizeof(T)"; ar & ((uint64)sizeof(T)); ar.newline();
-            ar << "_rangemin"; ar & _rangemin; ar.newline();
-            ar << "_rangemax"; ar & _rangemax; ar.newline();
-
-            ar << "_minSpec"; ar & _minSpec; ar.newline();
-            ar << "_maxSpec"; ar & _maxSpec; ar.newline();
+            ar << "object T";   ar & std::string(typeid(T).name()); ar.newline();
+            ar << "sizeof(T)";  ar & ((uint64)sizeof(T)); ar.newline();
+            ar << "call dtors"; ar & (_callDtors); ar.newline();
+            ar << "_rangemin";  ar & _rangemin; ar.newline();
+            ar << "_rangemax";  ar & _rangemax; ar.newline();
+            ar << "_minSpec";   ar & _minSpec; ar.newline();
+            ar << "_maxSpec";   ar & _maxSpec; ar.newline();
             ar << "List of special objects\n";
             for (int64 i = 0; i < _specialRange(); i++)
                 {
                 ar << "Object (" << _minSpec + i << ")";
-                if (_tabSpecObj[i] == nullptr) { ar & false; }
-                else
-                    {
-                    ar & true;
-                    ar & (*_tabSpecObj[i]);
-                    }
+                if (_tabSpecObj[i] == nullptr) { ar & false; } else { ar & true; ar & (*_tabSpecObj[i]); }
                 ar.newline();
                 }
             ar << "Grid tree\n";
-            //_serializeTree(ar, _getRoot());
-            ar << "End of Grid_factor<" << D << " , [" << std::string(typeid(T).name()) << "] , " << NB_SPECIAL << " , " << R << ">\n";
+            _serializeTree(ar, _getRoot());
+            ar << "\nEnd of Grid_factor<" << D << " , [" << std::string(typeid(T).name()) << "] , " << NB_SPECIAL << " , " << R << ">\n";
             }
 
 
@@ -243,34 +279,43 @@ namespace mtools
         **/
         void deserialize(IArchive & ar)
             {
-            /*
             try
                 {
-                _destroyTree(true);
-                uint32 ver, d, r, sizeoft, nbspec, res;
-                ar & ver;       if (ver != 1) throw "wrong version";
-                ar & d;         if (d != D) throw "wrong dimension";
-                ar & r;         if (r != R) throw "wrong R parameter";
-                ar & sizeoft;   if (sizeoft != sizeof(T)) throw "wrong sizeof(T)";
+                _reset(-1, 0, true); // reset the object, do not create the root node
+                uint64 ver;         ar & ver;      if (ver != 1) throw "wrong version";
+                uint64 d;           ar & d;        if (d != D) throw "wrong dimension";
+                uint64 r;           ar & r;        if (r != R) throw "wrong R parameter";
+                std::string stype;  ar & stype;
+                uint64 sizeofT;     ar & sizeofT;  if (sizeofT != sizeof(T)) throw "wrong sizeof(T)";
+                ar & _callDtors;
                 ar & _rangemin;
                 ar & _rangemax;
-                ar & nbspec;
-                ar & res;       if (res != 0) throw "wrong reserved parameter (not 0)";
+                ar & _minSpec;
+                ar & _maxSpec;
+                if (NB_SPECIAL < _specialRange()) throw "NB_SPECIAL to small to fit all special values";
+                for (int64 i = 0; i < _specialRange(); i++)
+                    {
+                    bool b; ar & b;
+                    if (b)
+                        {
+                        _tabSpecObj[i] = _poolSpec.allocate();      // allocate the memory
+                        _deserializeObjectT(ar, _tabSpecObj[i]);    // deserialize the object
+                        MTOOLS_ASSERT((((int64)(*(_tabSpecObj[i]))) == (i + _minSpec)));
+                        }
+                    }
                 _pcurrent = _deserializeTree(ar, nullptr);
                 }
             catch (...)
                 {
-                _destroyTree(false);    // object are dumped into oblivion, may result in a memory leak.
-                _createBaseNode();
+                reset(0, -1, true); // put the object in a valid state
                 throw; // rethrow
                 }
-                */
             }
 
 
         /**
-         * Change the set of special objects. This method first epxand the whole tree structure to
-         * remove all factorization of the tree then set the nw range for the special object and then
+         * Change the set of special objects. This method first expand the whole tree structure to
+         * remove all factorization of the tree then set the new range for the special object and then
          * simplify the tree using the new paramters.
          * 
          * This method can be time and memory consumming
@@ -283,6 +328,17 @@ namespace mtools
         void changeSpecialRange(int64 newMinSpec, int64 newMaxSpec)
             {
             _changeSpecialRange(newMinSpec, newMaxSpec);
+            }
+
+
+        /**
+         * Removes the special objects. This makes the grid compatible with Grid_basic object
+         * 
+         *  Same as 'changeSpecialRange(0, -1)'.
+         **/
+        void removeSpecialObjects()
+            {
+            changeSpecialRange(0, -1)
             }
 
 
@@ -362,7 +418,7 @@ namespace mtools
          *
          * @return  an iRect containing the spacial range of element accessed.
          **/
-        inline iRect getPosRange() const 
+        inline iRect getPosRangeiRect() const 
             {
             static_assert(D == 2, "getRangeiRect() method can only be used when the dimension template parameter D is 2");
             return mtools::iRect(_rangemin.X(), _rangemax.X(), _rangemin.Y(), _rangemax.Y());
@@ -387,20 +443,6 @@ namespace mtools
          * @return  The maximum value (converted as int64) for all the element ever creaed in the grid.
          **/
         inline int64 maxValue() const { return _minVal; }
-
-
-        bool save(const std::string & filename) const
-            {
-                // *********************** TODO ************************
-            return false;
-            }
-
-
-        bool load(std::string filename)
-            {
-                // *********************** TODO ************************
-            return false;
-            }
 
 
 
@@ -741,9 +783,74 @@ namespace mtools
 
 
 
+
         /***************************************************************
         * Working with leafs and nodes
         ***************************************************************/
+
+
+        /* recursive method for serialization of the tree 
+           used by serialize() */
+            void _serializeTree(OArchive & ar, _pbox p) const
+            {
+            if (p == nullptr) { ar & ((char)'V'); return; } // void pointer
+            if (_getSpecialObject(p) != nullptr)
+                {
+                ar & ((char)'S'); // special object
+                ar & ((int64)_getSpecialValue(p));
+                ar.newline();
+                return;
+                }
+            if (p->isLeaf())
+                {
+                ar & ((char)'L');
+                ar & p->center;
+                ar & p->rad;
+                for (size_t i = 0; i < metaprog::power<(2 * R + 1), D>::value; ++i) { ar & (((_pleafFactor)p)->data[i]); }
+                ar.newline();
+                return;
+                }
+            ar & ((char)'N');
+            ar & p->center;
+            ar & p->rad;
+            ar.newline();
+            for (size_t i = 0; i < metaprog::power<3, D>::value; ++i) { _serializeTree(ar, ((_pnode)p)->tab[i]); }
+            return;
+            }
+
+
+        /* recursive method for deserialization of the tree 
+           used by deserialize() */
+        _pbox _deserializeTree(IArchive & ar, _pbox father)
+            {
+            char c;
+            ar & c;
+            if (c == 'V') return nullptr;
+            if (c == 'S')
+                {
+                uint64 val;
+                ar & val;
+                MTOOLS_ASSERT(_isSpecial(val));
+                _updateValueRange(val); // possibly a new extremum value
+                int64 n = 2*(father->rad) + 1; int64 pow = 1; for (size_t i = 0; i < D; i++) { pow *= n; }
+                _tabSpecNB[val - _minSpec] += pow; // add to the correct number of special object to the global counter
+                return _getSpecialNode(val);
+                }
+            if (c == 'L')
+                {
+                return _deserializeLeaf(ar, father);
+                }
+            if (c == 'N')
+                {
+                _pnode p = _poolNode.allocate();
+                ar & p->center;
+                ar & p->rad;
+                p->father = father;
+                for (size_t i = 0; i < metaprog::power<3, D>::value; ++i) { p->tab[i] = _deserializeTree(ar, p); }
+                return p;
+                }
+            throw "";
+            }
 
 
         /* recursive method for copying a tree from G
@@ -801,7 +908,7 @@ namespace mtools
             _minSpec = newMinSpec; // set the new min value for the special objects
             _maxSpec = newMaxSpec; // set the new max value for the special objects
 
-            _recountTree(); // recount all the leafs with the new spectial object range
+            _recountTree(); // recount all the leafs with the new special object range
 
             if (!_existSpecial()) return; // no need to simplify since there are no special objects
             _simplifyTree(); // simplify the tree using the new special objects
@@ -1097,6 +1204,94 @@ namespace mtools
             MTOOLS_ASSERT(_getSpecialObject(L) == nullptr); // the node must not be special
             MTOOLS_ASSERT(L->isLeaf());
             if (_callDtors) { _poolLeaf.destroy(L); } else { _poolLeaf.deallocate(L); }
+            }
+
+
+
+        /* deserialize a single object, use positional constructor first and then deserialize */
+        inline void _deserializeObjectT_sub(IArchive & ar, T * p, metaprog::dummy<false> dum) { new(p) T(Pos(0));  ar &  (*p); }
+
+        /* deserialize a single object, use default constructor first and then deserialize */
+        inline void _deserializeObjectT_sub(IArchive & ar, T * p, metaprog::dummy<true> dum)  { new(p) T(); ar &  (*p); }
+
+        /* deserialize a single object using a constructor and then the deserialization method */
+        inline void _deserializeObjectT(IArchive & ar, T * p, metaprog::dummy<false> dum) {_deserializeObjectT_sub(ar, p, metaprog::dummy<std::is_constructible<T>::value>());}
+
+        /* deserialize a single object using the IArchive constructor */
+        inline void _deserializeObjectT(IArchive & ar, T * p, metaprog::dummy<true> dum) { new(p) T(ar); }
+
+        /* deserialize a single object, use the correct constructor  */
+        inline void _deserializeObjectT(IArchive & ar, T * p)
+            {
+            _deserializeObjectT(ar, p, metaprog::dummy< std::is_constructible<T, IArchive>::value>());
+            }
+
+
+        /* deserialize data, use positional constructor first and then deserialize */
+        inline void _deserializeDataLeaf_sub(IArchive & ar, _pleafFactor L, metaprog::dummy<true> dum)
+            {
+            Pos pos = L->center;
+            for (size_t i = 0; i < D; ++i) { pos[i] -= R; } // go to the first cell
+            for (size_t x = 0; x < metaprog::power<(2 * R + 1), D>::value; ++x)
+                {
+                new(L->data + x) T(pos); // create the object using the positional constructor
+                ar &  (L->data[x]); // deserialize
+                for (size_t i = 0; i < D; ++i) { if (pos[i] < (L->center[i] + (int64)R)) { pos[i]++;  break; } pos[i] -= (2 * R); } // move to the next cell.
+                }
+            return;
+            }
+
+
+        /* deserialize data, use default constructor first and then deserialize */
+        inline void _deserializeDataLeaf_sub(IArchive & ar, _pleafFactor L, metaprog::dummy<false> dum)
+            {
+            for (size_t x = 0; x < metaprog::power<(2 * R + 1), D>::value; ++x)
+                {
+                new(L->data + x) T();  // create the object using the default constructor
+                ar &  (L->data[x]); // deserialize
+                }
+            return;
+            }
+
+
+        /* deserialize data, use a constructor before deserialization */
+        inline void _deserializeDataLeaf(IArchive & ar, _pleafFactor L, metaprog::dummy<false> dum)
+            {
+            _deserializeDataLeaf_sub(ar, L, metaprog::dummy<std::is_constructible<T,Pos>::value>()); // call the correct constructor method
+            }
+
+
+        /* deserialize data, use IArchive constructor */
+        inline void _deserializeDataLeaf(IArchive & ar, _pleafFactor L, metaprog::dummy<true> dum)
+            {
+            for (size_t i = 0; i < metaprog::power<(2 * R + 1), D>::value; ++i) { new(L->data + i) T(ar); }
+            }
+
+
+        /* deserialize a leaf, call the correct constructor for the T objects */
+        inline _pleafFactor _deserializeLeaf(IArchive & ar, _pbox father)
+            {
+            MTOOLS_ASSERT(father->rad == R);
+            _pleafFactor L = _poolLeaf.allocate();
+            L->father = father;
+            ar & L->center;
+            ar & L->rad;
+            MTOOLS_ASSERT(L->rad == 1);
+            _deserializeDataLeaf(ar, L, metaprog::dummy< std::is_constructible<T, IArchive>::value>()); // reconstruct the data, calling the correct ctor
+            memset(L->count, 0, sizeof(L->count));
+            for (size_t i = 0; i < metaprog::power<(2 * R + 1), D>::value; ++i)
+                {
+                int64 val = (int64)(*(L->data + i)); // convert to int64
+                _updateValueRange(val); // possibly a new extremum value
+                if (_isSpecial(val)) // check if it is a special value
+                    { // yes
+                    auto off = val - _minSpec;       // the offset of the special object
+                    (L->count[off])++;               // increase the counter in the leaf associated with this special object
+                    (_tabSpecNB[off])++;             // increase the global counter about the number of these special objects 
+                    }
+                else { _nbNormalObj++; } // increase the global counter for the number of normal object
+                }
+            return L;
             }
 
 

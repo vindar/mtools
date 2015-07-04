@@ -310,15 +310,25 @@ int main()
     GF.set({ 3,3 }, 2);
 
     Chronometer();
+    //testWalk(309215);
+
     testWalk(100000000);
-    
+
+    GF.changeSpecialRange(0, 1);
+
     cout << "\ntime = " << Chronometer() << "\n";
     cout << GF.toString(false);
 
-    {
-    mtools::OArchive AR("test.ar");
-    AR & GF;
-    }
+    GF.save("test.gz");
+  
+
+    GF.reset(1, 0);
+
+    cout << "\ntime = " << Chronometer() << "\n";
+    cout << GF.toString(false);
+
+
+    GF.load("test.gz");
 
     cout << "\ntime = " << Chronometer() << "\n";
     cout << GF.toString(false);
