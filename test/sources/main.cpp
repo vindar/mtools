@@ -255,7 +255,7 @@ RGBc mandelbrot(fVec2 pos)
 
 
 Grid_factor<2, int, 10,2> GF(0, 3, true);
-//Grid_basic<2, int> GF;
+Grid_basic<2, int, 2> GS;
 
 
 RGBc colorGF(iVec2 pos)
@@ -314,21 +314,33 @@ int main()
 
     testWalk(100000000);
 
-    GF.changeSpecialRange(0, 1);
+    cout << "\ntime = " << Chronometer() << "\n";
+    cout << GF.toString(false);
+
+    GF.removeSpecialObjects();
 
     cout << "\ntime = " << Chronometer() << "\n";
     cout << GF.toString(false);
 
     GF.save("test.gz");
   
-
     GF.reset(1, 0);
 
     cout << "\ntime = " << Chronometer() << "\n";
     cout << GF.toString(false);
 
+    GS.load("test.gz");
 
-    GF.load("test.gz");
+    cout << "\ntime = " << Chronometer() << "\n";
+    cout << GS.toString(false);
+
+    GS.save("test2.ar");
+
+    cout << "\ntime = " << Chronometer() << "\n";
+
+    GF.load("test2.ar");
+
+    GF.changeSpecialRange(0, 4);
 
     cout << "\ntime = " << Chronometer() << "\n";
     cout << GF.toString(false);

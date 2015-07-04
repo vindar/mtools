@@ -166,10 +166,14 @@ namespace mtools
          **/
         typedef iVec<D> Pos;
 
+
         /**
          * Constructor. An empty grid (no objet of type T is created).
+         *
+         * @param   callDtors   true (default) if we should call the destructor of T object when memory
+         *                      is released.
          **/
-        Grid_basic() : _pcurrent(nullptr), _rangemin(1), _rangemax(-1) { _createBaseNode(); }
+        Grid_basic(bool callDtors = true) : _pcurrent(nullptr), _rangemin(1), _rangemax(-1), _callDtors(callDtors) { _createBaseNode(); }
 
 
         /**
@@ -177,7 +181,7 @@ namespace mtools
          *
          * @param   filename    Filename of the file.
          **/
-        Grid_basic(const std::string & filename) : _pcurrent(nullptr), _rangemin(1), _rangemax(-1) {load(filename);}
+        Grid_basic(const std::string & filename) : _pcurrent(nullptr), _rangemin(1), _rangemax(-1), _callDtors(true) {load(filename);}
 
 
         /**
@@ -185,14 +189,14 @@ namespace mtools
          * In order to prevent calling the dtors of T objects, call `reset(false)` prior to destructing
          * the grid.
          **/
-        ~Grid_basic() { _destroyTree(true); }
+        ~Grid_basic() { _destroyTree(); }
 
 
         /**
          * Copy Constructor. Makes a Deep copy of the grid. The class T must be copyable by the copy
          * operator `T(const T&)`.
          **/
-        Grid_basic(const Grid_basic<D, T, R> & G) : _pcurrent(nullptr), _rangemin(1), _rangemax(-1)
+        Grid_basic(const Grid_basic<D, T, R> & G) : _pcurrent(nullptr), _rangemin(1), _rangemax(-1), _callDtors(true)
             {
             static_assert(std::is_copy_constructible<T>::value, "The object T must be copy-constructible T(const T&) in order to use the copy constructor of the grid.");
             this->operator=(G);
@@ -209,28 +213,23 @@ namespace mtools
             {
             static_assert(std::is_copy_constructible<T>::value,"The object T must be copy constructible T(const T&) in order to use assignement operator= on the grid.");
             if ((&G) == this) { return(*this); }
-            _destroyTree(true);
+            _destroyTree();
             _rangemin = G._rangemin;
             _rangemax = G._rangemax;
             _pcurrent = _copy(G._getRoot(),nullptr);
+            _callDtors = G._callDtors;
             return(*this);
             }
 
 
-        /**
-         * Resets the grid.
-         *
-         * @param   callObjDtors    [default true]. True to call the destructors of the T objects in the
-         *                          grid. Set this to false to release all the memory without calling the
-         *                          objects destructors ~T().
-         **/
-        void reset(bool callObjDtors = true) { _destroyTree(callObjDtors); _createBaseNode(); }
+        /** Resets the grid. Call the destructor of the object if the flag callDtors is set. */
+        void reset() { _destroyTree(); _createBaseNode(); }
 
 
         /**
          * Serializes the grid into an OArchive. If T implement a serialize method recognized by
-         * OArchive, it is used for serialization otherwise OaRchive uses the default serialization
-         * method which correpsond to memcpy().
+         * OArchive, it is used for serialization otherwise OArchive uses the default serialization
+         * method which correspond to a basic memcpy() of the object memory.
          *
          * @param [in,out]  ar  The archive object to serialise the grid into.
          *
@@ -238,17 +237,20 @@ namespace mtools
          **/
         void serialize(OArchive & ar)
             {
-            ar << "Grid_basic<" << D << " , [" << std::string(typeid(T).name()) << "] , " << R << ">\n"; // comment
-            ar & ((uint32)1);           // version
-            ar & ((uint32)D);           // dimension
-            ar & ((uint32)R);           // elementary radius
-            ar & ((uint32)sizeof(T));   // size of T
-            ar & _rangemin;             // the min range
-            ar & _rangemax;             // the max range
-            ar & ((uint32)0);           // no special objects
-            ar & ((uint32)0);           // reserved, = 0
-            ar.newline(); ar << "end of Grid_basic<" << D << " , [" << std::string(typeid(T).name()) << "] , " << R << ">\n"; // comment
+            ar << "\nBegining of Grid_basic<" << D << " , [" << std::string(typeid(T).name()) << "] , " << R << ">\n";
+            ar << "Version";    ar & ((uint64)1); ar.newline();
+            ar << "Template D"; ar & ((uint64)D); ar.newline();
+            ar << "Template R"; ar & ((uint64)R); ar.newline();
+            ar << "object T";   ar & std::string(typeid(T).name()); ar.newline();
+            ar << "sizeof(T)";  ar & ((uint64)sizeof(T)); ar.newline();
+            ar << "call dtors"; ar & _callDtors; ar.newline();
+            ar << "_rangemin";  ar & _rangemin; ar.newline();
+            ar << "_rangemax";  ar & _rangemax; ar.newline();
+            ar << "_minSpec";   ar & ((int64)0); ar.newline();
+            ar << "_maxSpec";   ar & ((int64)-1); ar.newline();
+            ar << "Grid tree\n";
             _serializeTree(ar, _getRoot());
+            ar << "\nEnd of Grid_basic<" << D << " , [" << std::string(typeid(T).name()) << "] , " << R << ">\n";
             }
 
 
@@ -256,8 +258,11 @@ namespace mtools
          * Deserializes the grid from an IArchive. If T has a constructor of the form T(IArchive &), it
          * is used for deserializing the T objects in the grid. Otherwise, if T implements one of the
          * serialize methods recognized by IArchive, the objects in the grid are first position/default
-         * constructed and then deserialized using those methods. If no specific deserialization procedure
-         * is implemented, the object is treated as a POD and is deserialized using basic memcpy().
+         * constructed and then deserialized using those methods. If no specific deserialization
+         * procedure is implemented, the object is treated as a POD and is deserialized using basic
+         * memcpy().
+         * 
+         * If the grid is non-empty, it is first reset.
          *
          * @param [in,out]  ar  The archive to deserialize the grid from.
          *
@@ -267,21 +272,25 @@ namespace mtools
             {
             try
                 {
-                _destroyTree(true);
-                uint32 ver, d, r, sizeoft, nbspec, res;
-                ar & ver;       if (ver != 1) throw "wrong version";
-                ar & d;         if (d != D) throw "wrong dimension";
-                ar & r;         if (r != R) throw "wrong R parameter";
-                ar & sizeoft;   if (sizeoft != sizeof(T)) throw "wrong sizeof(T)";
+                _destroyTree();
+                uint64 ver;         ar & ver;      if (ver != 1) throw "wrong version";
+                uint64 d;           ar & d;        if (d != D) throw "wrong dimension";
+                uint64 r;           ar & r;        if (r != R) throw "wrong R parameter";
+                std::string stype;  ar & stype;
+                uint64 sizeofT;     ar & sizeofT;  if (sizeofT != sizeof(T)) throw "wrong sizeof(T)";
+                ar & _callDtors;
                 ar & _rangemin;
                 ar & _rangemax;
-                ar & nbspec;
-                ar & res;       if (res != 0) throw "wrong reserved parameter (not 0)";
+                int64 minSpec; ar & minSpec;
+                int64 maxSpec; ar & maxSpec;
+                if (minSpec <= maxSpec) throw "The file contain special objects hence must be opened using a Grid_factor instead of a Grid_basic object";
                 _pcurrent = _deserializeTree(ar, nullptr);
                 }
             catch(...)
                 {
-                _destroyTree(false);    // object are dumped into oblivion, may result in a memory leak.
+                _callDtors = false;
+                _destroyTree();    // object are dumped into oblivion, may result in a memory leak.
+                _callDtors = true;
                 _createBaseNode();
                 throw; // rethrow
                 }
@@ -289,14 +298,17 @@ namespace mtools
 
 
         /**
-         * Saves the grid into a file. Grid files are compatible between all grid classes. The object
-         * are serialized using the OArchive serialization procedure.
+         * Saves the grid into a file (using the archive format). The file is compressed if it ends by
+         * the extension ".gz", ".gzip" or ".z".
+         * 
+         * Grid file for grid_Factor and Grid_basic are compatible so that the file can subsequently be
+         * opened with a Grid_factor object (provided the tmepalte parameters T, R and D are the same).
          *
          * @param   filename    The filename to save.
          *
          * @return  true if  success, false if failure.
          *
-         * @sa serialize, deserialize, class OArchive, class IArchive
+         * @sa  serialize, deserialize, class OArchive, class IArchive
          **/
         bool save(const std::string & filename) const
             {
@@ -311,14 +323,16 @@ namespace mtools
 
 
         /**
-         * Loads a grid from a file. Grid files are compatible between all grid classes. If the grid is
-         * non-empty, it is first reset and the destructors of all T objects inside it are called.
-         *
-         * If T has a constructor of the form T(IArchive &), it is usedwhen reconstructing the T objects
-         * in the grid. Otherwise, if T implements one of the serialize methods recognized by IArchive,
-         * the objects in the grid are first position/default constructed and then deserialized using those
-         * methods. If no specific deserialization procedure is implemented, the class T is treated as a
-         * POD and is deserialized using basic memcpy().         *
+         * Loads a grid from a file. Grid files are compatible between classes hence this method can
+         * also load file created from a grid_factor class provided that there is not special objects.
+         * 
+         * If the grid is non-empty, it is first reset.
+         * 
+         * If T has a constructor of the form T(IArchive &), it is used when reconstructing the T
+         * objects in the grid. Otherwise, if T implements one of the serialize methods recognized by
+         * IArchive, the objects in the grid are first position/default constructed and then
+         * deserialized using those methods. If no specific deserialization procedure is implemented,
+         * the class T is treated as a POD and is deserialized using basic memcpy().         *.
          *
          * @param   filename    The filename to load.
          *
@@ -333,28 +347,8 @@ namespace mtools
                 IArchive ar(filename);
                 ar & (*this); // use the deserialize method.
                 }
-            catch (...) { _destroyTree(true); _createBaseNode(); return false; } // error
+            catch (...) { _callDtors = false; _destroyTree(); _callDtors = true; _createBaseNode(); return false; } // error
             return true; // ok
-            }
-
-
-        /**
-         * Returns a string with some information concerning the object.
-         *
-         * @param   debug   Set this flag to true to enable the debug mode where the whole tree structure
-         *                  of the lattice is written into the string [should not be used for large grids].
-         *
-         * @return  an info string.
-         **/
-        std::string toString(bool debug = false) const
-            {
-            std::string s;
-            s += std::string("Grid_basic<") + mtools::toString(D) + " , " + typeid(T).name() + " , " + mtools::toString(R) + ">\n";
-            s += std::string(" - Memory used : ") + mtools::toString((_poolLeaf.footprint() + _poolNode.footprint()) / (1024 * 1024)) + "MB\n";
-            s += std::string(" - Range min = ") + _rangemin.toString(false) + "\n";
-            s += std::string(" - Range max = ") + _rangemax.toString(false) + "\n";
-            if (debug) {s += "\n" + _printTree(_getRoot(),"");}
-            return s;
             }
 
 
@@ -365,7 +359,7 @@ namespace mtools
          * @param [in,out]  minpos  a vector with the minimal coord. in each direction.
          * @param [in,out]  maxpos  a vector with the maximal coord. in each direction.
          **/
-        inline void getRange(Pos & minpos, Pos & maxpos) const { minpos = _rangemin; maxpos = _rangemax;}
+        inline void getPosRange(Pos & minpos, Pos & maxpos) const { minpos = _rangemin; maxpos = _rangemax;}
 
 
         /**
@@ -374,10 +368,47 @@ namespace mtools
         *
         * @return  an iRect containing the spacial range of element accessed.
         **/
-        inline iRect getRangeiRect() const
+        inline iRect getPosRangeiRect() const
             {
             static_assert(D == 2, "getRangeiRect() method can only be used when the dimension template parameter D is 2");
             return mtools::iRect(_rangemin.X(), _rangemax.X(), _rangemin.Y(), _rangemax.Y());
+            }
+
+
+        /**
+        * Check if we currently call the destructor of object when they are not needed anymore.
+        *
+        * @return  true if we call the dtors and false otherwise.
+        **/
+        bool callDtors() const { return _callDtors; }
+
+
+        /**
+        * Set whether we should, from now on, call the destructor of object when they are not needed
+        * anymore.
+        *
+        * @param   callDtor    true to call the destructors.
+        **/
+        void callDtors(bool callDtor) { _callDtors = callDtor; }
+
+
+        /**
+        * Returns a string with some information concerning the object.
+        *
+        * @param   debug   Set this flag to true to enable the debug mode where the whole tree structure
+        *                  of the lattice is written into the string [should not be used for large grids].
+        *
+        * @return  an info string.
+        **/
+        std::string toString(bool debug = false) const
+            {
+            std::string s;
+            s += std::string("Grid_basic<") + mtools::toString(D) + " , " + typeid(T).name() + " , " + mtools::toString(R) + ">\n";
+            s += std::string(" - Memory used : ") + mtools::toString((_poolLeaf.footprint() + _poolNode.footprint()) / (1024 * 1024)) + "MB\n";
+            s += std::string(" - Range min = ") + _rangemin.toString(false) + "\n";
+            s += std::string(" - Range max = ") + _rangemax.toString(false) + "\n";
+            if (debug) { s += "\n" + _printTree(_getRoot(), ""); }
+            return s;
             }
 
 
@@ -695,56 +726,20 @@ namespace mtools
                 for (size_t i = 0; i < metaprog::power<3, D>::value; ++i) { p->tab[i] = _deserializeTree(ar, p); }
                 return p;
                 }
-            if (c == 'S')
-                {
-                Pos center;
-                uint64 rad;
-                uint32 nospec;
-                ar & center;
-                ar & rad;
-                ar & nospec;
-                return _expand_subtree(father, center, rad, nospec);
-                }
             throw "";
             }
 
 
-        /* create the expanded sub-tree with the special object number nbspec*/
-        _pbox _expand_subtree(_pbox father, Pos center, uint64 rad, uint32 nospec) const
-            {
-            /*
-            if (rad == 1)
-                { // we create leafs
-                _pleaf p = _poolLeaf.allocate();
-                p->center = center;
-                p->rad = rad;
-                p->father = father;
-                for (size_t i = 0; i < metaprog::power<(2 * R + 1), D>::value; ++i)  { _makeObj(p->data + i, V,str); }
-                return p;
-                }
-            // create a node
-            _pnode p = _poolNode.allocate();
-            p->center = center;
-            p->rad = rad;
-            p->father = father;
-            for (size_t i = 0; i < metaprog::power<3, D>::value; ++i) { p->tab[i] = _expand_subtree(p, p->subBoxCenterFromIndex(i), (rad-1)/3, V,str); }
-            return p;
-            */
-            return nullptr;
-            }
-
-
         /* Release all the allocated  memory and reset the tree */
-        void _destroyTree(bool callObjDtor)
+        void _destroyTree()
             {
-            if (callObjDtor)
+            _poolNode.destroyAll();
+            if (_callDtors)
                 {
-                _poolNode.destroyAll();
                 _poolLeaf.destroyAll();
                 }
             else
                 {
-                _poolNode.deallocateAll();
                 _poolLeaf.deallocateAll();
                 }
             _pcurrent = nullptr;
@@ -852,6 +847,7 @@ namespace mtools
         mutable _pbox _pcurrent;        // pointer to the current box
         mutable Pos   _rangemin;        // the minimal range
         mutable Pos   _rangemax;        // the maximal range
+        bool _callDtors;                // should we call the destructors
 
         mutable SingleAllocator<internals_grid::_leaf<D, T, R>,200>  _poolLeaf;       // the two memory pools
         mutable SingleAllocator<internals_grid::_node<D, T, R>,200>  _poolNode;       //

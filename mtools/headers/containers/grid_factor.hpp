@@ -212,6 +212,8 @@ namespace mtools
          * Loads the given file. The file may have been created by saving either a Grid_basic or a
          * Grid_factor object with same template paramter T, D, R.
          * 
+         * If the grid is non-empty, it is first reset.
+         *
          * The template paramter NB_SPECIAL may differ from of the object used to save the grid but must
          * be large enough to hold the special value range of the grid to load.
          *
@@ -267,16 +269,19 @@ namespace mtools
 
 
         /**
-        * Deserializes the grid from an IArchive. If T has a constructor of the form T(IArchive &), it
-        * is used for deserializing the T objects in the grid. Otherwise, if T implements one of the
-        * serialize methods recognized by IArchive, the objects in the grid are first position/default
-        * constructed and then deserialized using those methods. If no specific deserialization procedure
-        * is implemented, the object is treated as a POD and is deserialized using basic memcpy().
-        *
-        * @param [in,out]  ar  The archive to deserialize the grid from.
-        *
-        * @sa  class OArchive, class IArchive
-        **/
+         * Deserializes the grid from an IArchive. If T has a constructor of the form T(IArchive &), it
+         * is used for deserializing the T objects in the grid. Otherwise, if T implements one of the
+         * serialize methods recognized by IArchive, the objects in the grid are first position/default
+         * constructed and then deserialized using those methods. If no specific deserialization
+         * procedure is implemented, the object is treated as a POD and is deserialized using basic
+         * memcpy().
+         * 
+         * If the grid is non-empty, it is first reset.
+         *
+         * @param [in,out]  ar  The archive to deserialize the grid from.
+         *
+         * @sa  class OArchive, class IArchive
+         **/
         void deserialize(IArchive & ar)
             {
             try
@@ -292,7 +297,7 @@ namespace mtools
                 ar & _rangemax;
                 ar & _minSpec;
                 ar & _maxSpec;
-                if (NB_SPECIAL < _specialRange()) throw "NB_SPECIAL to small to fit all special values";
+                if (NB_SPECIAL < _specialRange()) throw "NB_SPECIAL too small to fit all special values";
                 for (int64 i = 0; i < _specialRange(); i++)
                     {
                     bool b; ar & b;
@@ -307,6 +312,7 @@ namespace mtools
                 }
             catch (...)
                 {
+                callDtors(false); // prevent calling the destructor of object when we release memory (since we do not know whch one may be in an invalid state)
                 reset(0, -1, true); // put the object in a valid state
                 throw; // rethrow
                 }
@@ -338,7 +344,7 @@ namespace mtools
          **/
         void removeSpecialObjects()
             {
-            changeSpecialRange(0, -1)
+            changeSpecialRange(0, -1);
             }
 
 
@@ -355,6 +361,9 @@ namespace mtools
         /**
          * Resets the grid and change the range of the special values. Set minSpecial \> maxSpecial to
          * disable special values.
+         * 
+         * the calldtors flag is set AFTER destruction ie the previous status is used when releasing
+         * memory.
          *
          * @param   minSpecial  the new minimum value for the special parameters.
          * @param   maxSpecial  the new maximum value for the special parameters.
@@ -742,7 +751,8 @@ namespace mtools
             }
 
 
-        /* Reset the object and change the min and max values for the special objects and the calldtor flag */
+        /* Reset the object and change the min and max values for the special objects and the calldtor flag
+           (the calldtors is set AFTER destruction ie the previous status is used when releasing memory) */
         void _reset(int64 minSpec, int64 maxSpec, bool callDtors)
             {
             MTOOLS_INSURE(((maxSpec < minSpec) || (maxSpec - minSpec < ((int64)NB_SPECIAL))));
