@@ -283,6 +283,14 @@ void testWalk(int64 N)
     for (int64 i = 0;i < N / 2;i++)
         {
         GF.set(pos, 3);
+        iRect R;
+        GF.findFullBoxiRect(pos, R);
+
+        if (R.lx()*R.ly() >0)
+            {
+       //     cout << R << "\n";
+        //    cout << pos << "\n\n";
+            }
         double a = gen.rand_double0();
         if (a < 0.25) pos.X()--; else
         if (a < 0.5) pos.X()++; else
@@ -318,6 +326,12 @@ int main()
     cout << GF.toString(false);
 
     GF.removeSpecialObjects();
+
+    GF.simplify();
+
+    GF.access({ 0,0 });
+
+    cout << GF.getPosRangeiRect();
 
     cout << "\ntime = " << Chronometer() << "\n";
     cout << GF.toString(false);

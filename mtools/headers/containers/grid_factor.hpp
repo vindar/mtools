@@ -23,6 +23,7 @@
 
 #include "misc/misc.hpp"
 #include "maths/vec.hpp"
+#include "maths/rect.hpp"
 #include "misc/metaprog.hpp"
 #include "io/serialization.hpp"
 #include "internals_grid.hpp"
@@ -178,6 +179,7 @@ namespace mtools
             _nbNormalObj = G._nbNormalObj;
             // copy the whole tree structure
             _pcurrent = _copyTree<NB_SPECIAL2>(nullptr, G._getRoot(), G);
+            simplify(); // make sure the object is in a valid factorized state
             return(*this);
             }
 
@@ -210,7 +212,7 @@ namespace mtools
 
         /**
          * Loads the given file. The file may have been created by saving either a Grid_basic or a
-         * Grid_factor object with same template paramter T, D, R.
+         * Grid_factor object with same template parameter T, D, R.
          * 
          * If the grid is non-empty, it is first reset.
          *
@@ -244,6 +246,7 @@ namespace mtools
         **/
         void serialize(OArchive & ar) const
             {
+            simplify(); // make sure the object is in a valid factorized state before saving it.
             ar << "\nBegining of Grid_factor<" << D << " , [" << std::string(typeid(T).name()) << "] , " << NB_SPECIAL << " , " << R << ">\n";
             ar << "Version";    ar & ((uint64)1); ar.newline();
             ar << "Template D"; ar & ((uint64)D); ar.newline();
@@ -333,7 +336,17 @@ namespace mtools
          **/
         void changeSpecialRange(int64 newMinSpec, int64 newMaxSpec)
             {
-            _changeSpecialRange(newMinSpec, newMaxSpec);
+            MTOOLS_INSURE(((newMaxSpec < newMinSpec) || ((newMaxSpec - newMinSpec) < ((int64)NB_SPECIAL))));
+            _expandTree(); // we expand the whole tree, removing every dummy links
+            if (_callDtors) _poolSpec.destroyAll(); else _poolSpec.deallocateAll(); // release the memory for all the special objects saved
+            memset(_tabSpecObj, 0, sizeof(_tabSpecObj)); // clear the list of pointer to special objects
+            memset(_tabSpecNB, 0, sizeof(_tabSpecNB));   // clear the count for special objects
+            _nbNormalObj = 0; // reset the number of normal objects
+            _minSpec = newMinSpec; // set the new min value for the special objects
+            _maxSpec = newMaxSpec; // set the new max value for the special objects
+            _recountTree(); // recount all the leafs with the new special object range
+            if (!_existSpecial()) return; // no need to simplify since there are no special objects
+            _simplifyTree(); // simplify the tree using the new special objects
             }
 
 
@@ -345,6 +358,21 @@ namespace mtools
         void removeSpecialObjects()
             {
             changeSpecialRange(0, -1);
+            }
+
+
+        /**
+         * Make sure the object is in a valid factorized state and recompute the statistic about the T
+         * object inside. This method should be called after a direct modification of the internal state
+         * of the object (by using access() for example).
+         **/
+        void simplify() const
+            {
+            if (!_existSpecial()) return; // nothing to do if there is no special objects
+            memset(_tabSpecNB, 0, sizeof(_tabSpecNB));   // clear the count for special objects
+            _nbNormalObj = 0; // reset the number of normal objects
+            _recountTree(); // recount all the leafs with the new special object range
+            _simplifyTree(); // simplify the tree using the new special objects
             }
 
 
@@ -476,6 +504,24 @@ namespace mtools
 
 
         /**
+         * Access the element at a given position. If the element does not exist, it is created first.
+         * The refrence returned is non const hence may be modified.
+         * 
+         * @warning NEVER EVER MODIFY THE VALUE OF A SPECIAL ELEMENT AS IT MAY BE SHARED BY MANY OTHER
+         * SITES (YET, PROBABLY NOT ALL OF THEM EITHER). It is safe to change the value of a 'normal'
+         * element to that of another 'normal' element. It is alos possible to change the value of a
+         * normal element to that of a special element but it is necessary to call 'Simplify()'
+         * afterward to insure that the whole grid goes back in its fully factorized state. Otherwise,
+         * anything can happen...
+         *
+         * @param   pos The position to access.
+         *
+         * @return  A reference to the element at position pos.
+         **/
+        inline T & access(const Pos & pos) { return _get(pos); }
+
+
+        /**
          * Return a pointer to the object at a given position. If the value at the site was not yet
          * created, returns nullptr. This method does not modify the object at all and is particularly
          * suited when drawing the lattice using, for instance, the LatticeDrawer class.
@@ -510,9 +556,10 @@ namespace mtools
                 _pbox b = q->getSubBox(pos);
                 if (b == nullptr) { _pcurrent = q; return nullptr; }
                 T * obj = _getSpecialObject(b); // check if the link is a special dummy link
-                if (obj != nullptr) { return obj; }
+                if (obj != nullptr) { _pcurrent = q; return obj; }
                 if (b->isLeaf()) 
-                    { _pcurrent = b; 
+                    { 
+                    _pcurrent = b; 
                     MTOOLS_ASSERT(_isLeafFull((_pleafFactor)_pcurrent) == (_maxSpec + 1)); // the leaf cannot be full
                     return(&(((_pleafFactor)b)->get(pos))); 
                     }
@@ -539,16 +586,154 @@ namespace mtools
             s += std::string(" - Max position accessed = ") + _rangemax.toString(false) + "\n";
             s += std::string(" - Min value created = ") + mtools::toString(_minVal) + "\n";
             s += std::string(" - Max value created = ") + mtools::toString(_maxVal) + "\n";
-            s += std::string(" - Special object value range [") + mtools::toString(_minSpec) + " , " + mtools::toString(_maxSpec) + "]";         
+            s += std::string(" - Special object value range [") + mtools::toString(_minSpec) + " , " + mtools::toString(_maxSpec) + "]";     
+            uint64 totE = 0;
             if (!_existSpecial()) { s += std::string(" NONE!\n"); } else { s += std::string("\n"); }
             for (int i = 0;i < _specialRange(); i++)
                 {
                 s += std::string("    [") + ((_tabSpecObj[i] == nullptr) ? " " : "X") + "] value (" + mtools::toString(_minSpec + i) + ") = " + mtools::toString(_tabSpecNB[i]) + "\n";
+                totE += _tabSpecNB[i];
                 }
             s += std::string(" - Number of 'normal' objects = ") + mtools::toString(_nbNormalObj) + "\n";
+            totE += _nbNormalObj;
+            s += std::string(" - Total number of objects = ") + mtools::toString(totE) + "\n";
             if (debug) {s += "\n" + _printTree(_getRoot(),"");}
             return s;
             }
+
+
+        /**
+         * Find a box containing point pos and such that all the elements inside share the same special
+         * value (which is, necessarily the special value at pos).
+         * 
+         * When the method returns, [boxMin,boxMAx] is such that all the element inside (the closed box)
+         * have the same special value. Set boxMin = boxMax = pos if the site at pos is not special or
+         * no bigger box could be found.
+         * 
+         * The box returned is not optimal : it is simply the box given by the underlying tree struture
+         * of the grid. Choosing smaller vlaue for R improves the quality of the returned box.
+         *
+         * @param   pos             The position.
+         * @param [in,out]  boxMin  Vector to put the minimum value of the box in each direction.
+         * @param [in,out]  boxMax  Vector to put the maximum value of the box in each direction.
+         *
+         * @return  A pointer to the element at position pos or nullptr if it does not exist.
+         **/
+        const T * findFullBox(const Pos & pos, Pos & boxMin, Pos & boxMax) const
+            {
+            MTOOLS_ASSERT(_pcurrent != nullptr);
+            // check if we are at the right place
+            if (_pcurrent->isLeaf())
+                {
+                _pleafFactor p = (_pleafFactor)(_pcurrent);
+                MTOOLS_ASSERT(_isLeafFull(p) == (_maxSpec + 1)); // the leaf cannot be full
+                if (p->isInBox(pos)) { boxMin = pos; boxMax = pos; return(&(p->get(pos))); } // just a singleton...
+                MTOOLS_ASSERT(_pcurrent->father != nullptr); // a leaf must always have a father
+                _pcurrent = p->father;
+                }
+            // no, going up...
+            _pnode q = (_pnode)(_pcurrent);
+            while (!q->isInBox(pos))
+                {
+                if (q->father == nullptr) { boxMin = pos; boxMax = pos; _pcurrent = q; return nullptr; } // just a singleton...
+                q = (_pnode)q->father;
+                }
+            // and down..
+            while (1)
+                {
+                _pbox b = q->getSubBox(pos);
+                if (b == nullptr) { boxMin = pos; boxMax = pos; _pcurrent = q; return nullptr; } // just a singleton...
+                T * obj = _getSpecialObject(b); // check if the link is a special dummy link
+                if (obj != nullptr) 
+                        { // good we have a non trivial box
+                        _pcurrent = q;
+                        const int64 rad = q->rad;
+                        boxMin = q->subBoxCenter(pos);
+                        boxMax = boxMin;
+                        boxMin -= rad; 
+                        boxMax += rad;
+                        return obj; 
+                        }
+                if (b->isLeaf())
+                    {
+                    _pcurrent = b;
+                    MTOOLS_ASSERT(_isLeafFull((_pleafFactor)_pcurrent) == (_maxSpec + 1)); // the leaf cannot be full
+                    boxMin = pos; boxMax = pos;
+                    return(&(((_pleafFactor)b)->get(pos))); // just a singleton
+                    }
+                q = (_pnode)b;
+                }
+            }
+
+
+        /**
+         * Find a box containing point pos and such that all the elements inside share the same special
+         * value (which is, necessarily the special value at pos).
+         * 
+         * When the method returns, the (closed) box is such that all the element inside have the same
+         * special value. Set box to the singleton pos if the site at pos is not special or if  no
+         * bigger box could be found.
+         * 
+         * The box returned is not optimal : it is simply the box given by the underlying tree struture
+         * of the grid. Choosing smaller value for R improves the quality of the returned box.
+         * 
+         * This method is specific to dimension 2 (template paramter D = 2).  
+         *
+         * @param   pos         The position.
+         * @param [in,out]  box The iRec box to put the result in. The set of value equal if the closed
+         *                      box.
+         *
+         * @return  A pointer to the element at position pos or nullptr if it does not exist.
+         **/
+        const T * findFullBoxiRect(const Pos & pos, iRect & box) const
+            {
+            static_assert(D == 2, "findFullBoxiRect() method can only be used when the dimension template parameter D is 2");
+            MTOOLS_ASSERT(_pcurrent != nullptr);
+            // check if we are at the right place
+            if (_pcurrent->isLeaf())
+                {
+                _pleafFactor p = (_pleafFactor)(_pcurrent);
+                MTOOLS_ASSERT(_isLeafFull(p) == (_maxSpec + 1)); // the leaf cannot be full
+                if (p->isInBox(pos)) { box.xmin = pos.X(); box.xmax = pos.X(); box.ymin = pos.Y(); box.ymax = pos.Y(); return(&(p->get(pos))); } // just a singleton...
+                MTOOLS_ASSERT(_pcurrent->father != nullptr); // a leaf must always have a father
+                _pcurrent = p->father;
+                }
+            // no, going up...
+            _pnode q = (_pnode)(_pcurrent);
+            while (!q->isInBox(pos))
+                {
+                if (q->father == nullptr) { box.xmin = pos.X(); box.xmax = pos.X(); box.ymin = pos.Y(); box.ymax = pos.Y(); _pcurrent = q; return nullptr; } // just a singleton...
+                q = (_pnode)q->father;
+                }
+            // and down..
+            while (1)
+                {
+                _pbox b = q->getSubBox(pos);
+                if (b == nullptr) { box.xmin = pos.X(); box.xmax = pos.X(); box.ymin = pos.Y(); box.ymax = pos.Y(); _pcurrent = q; return nullptr; } // just a singleton...
+                T * obj = _getSpecialObject(b); // check if the link is a special dummy link
+                if (obj != nullptr)
+                    { // good we have a non trivial box
+                    _pcurrent = q;
+                    const int64 rad = q->rad;
+                    Pos center = q->subBoxCenter(pos);
+                    box.xmin = center.X() - rad; 
+                    box.xmax = center.X() + rad;
+                    box.ymin = center.Y() - rad;
+                    box.ymax = center.Y() + rad;
+                    return obj;
+                    }
+                if (b->isLeaf())
+                    {
+                    _pcurrent = b;
+                    MTOOLS_ASSERT(_isLeafFull((_pleafFactor)_pcurrent) == (_maxSpec + 1)); // the leaf cannot be full
+                    box.xmin = pos.X(); box.xmax = pos.X(); box.ymin = pos.Y(); box.ymax = pos.Y();
+                    return(&(((_pleafFactor)b)->get(pos))); // just a singleton
+                    }
+                q = (_pnode)b;
+                }
+            }
+
+
 
 
     private:
@@ -679,7 +864,7 @@ namespace mtools
         /* get the object at a given position. 
          * keep the tree consistent and simplified 
          * the object is created if it does not exist */
-        inline const T & _get(const Pos & pos) const
+        inline T & _get(const Pos & pos) const
             {
             MTOOLS_ASSERT(_pcurrent != nullptr);
             _updatePosRange(pos);
@@ -902,30 +1087,6 @@ namespace mtools
             }
 
 
-        /* change the range of the special object and reconstruct the whole tree
-        * so that it is coherent with the new special range */
-        void _changeSpecialRange(int64 newMinSpec, int64 newMaxSpec)
-            {
-            MTOOLS_INSURE(((newMaxSpec < newMinSpec) || ((newMaxSpec - newMinSpec) < ((int64)NB_SPECIAL))));
-
-            _expandTree(); // we expand the whole tree, removing every dummy links
-
-            if (_callDtors) _poolSpec.destroyAll(); else _poolSpec.deallocateAll(); // release the memory for all the special objects saved
-            memset(_tabSpecObj, 0, sizeof(_tabSpecObj)); // clear the list of pointer to special objects
-            memset(_tabSpecNB, 0, sizeof(_tabSpecNB));   // clear the count for special objects
-            _nbNormalObj = 0; // reset the number of normal objects
-
-            _minSpec = newMinSpec; // set the new min value for the special objects
-            _maxSpec = newMaxSpec; // set the new max value for the special objects
-
-            _recountTree(); // recount all the leafs with the new special object range
-
-            if (!_existSpecial()) return; // no need to simplify since there are no special objects
-            _simplifyTree(); // simplify the tree using the new special objects
-            }
-
-
-
         /* expand the whole tree 
          * _pcurrent is set to the root of the tree
          */
@@ -972,7 +1133,7 @@ namespace mtools
 
         /* Simplify the whole tree. 
          * _pcurrent is set to the (possibly new) root of the tree */
-        void _simplifyTree()
+        void _simplifyTree() const
             {
             _pbox p = _getRoot(); // find the root of the tree
             MTOOLS_ASSERT(p != nullptr);
@@ -991,7 +1152,7 @@ namespace mtools
 
 
         /* simplify the whole sub-tree below a given node/leaf */ 
-        _pbox _simplifyBelow(_pbox N)
+        _pbox _simplifyBelow(_pbox N) const
             {
             if (N == nullptr) return nullptr; // nothing to do
             if (_getSpecialObject(N) != nullptr) return N; // already a special node
@@ -1048,7 +1209,7 @@ namespace mtools
         /* recount all the leaf in the tree.
         * this method also increase the global counters for special objects and normal objects 
         * set _pcurrent to the root of the tree */
-        void _recountTree()
+        void _recountTree() const
             {
             _pcurrent = _getRoot();
             _recountBelow(_pcurrent);
@@ -1058,7 +1219,7 @@ namespace mtools
         /* recompute the count[] array of all the leafs of a given subtree
          * this method also increase the global counters for special objects 
          * and normal objects */
-        void _recountBelow(_pbox N)
+        void _recountBelow(_pbox N) const
             {
             if (N == nullptr) return; // nothing to do
             if (_getSpecialObject(N) != nullptr) return; // special node, nothing to do
@@ -1081,7 +1242,7 @@ namespace mtools
         /* Recompute from scratch the count[] array of a leaf. 
            This method also increase the global counters for 
            special objects and normal object */
-        void _recountLeaf(_pleafFactor L)
+        void _recountLeaf(_pleafFactor L) const 
             {
             memset(L->count, 0, sizeof(L->count)); // reset the number of each type of special object
             if (!_existSpecial()) { _nbNormalObj += metaprog::power<(2 * R + 1), D>::value; return; } // no special value, all the value are therefore normal   
@@ -1117,7 +1278,7 @@ namespace mtools
         /* Set the value in a leaf.
          * - Factorizes the leaf and its nodes above if needed.
          * - Return the leaf or the first node above */
-        inline _pbox _setLeafValue(const T * obj, Pos pos, _pleafFactor leaf)
+        inline _pbox _setLeafValue(const T * obj, const Pos & pos, _pleafFactor leaf)
             {
             T * oldobj = &(leaf->get(pos));     // the previous object
             int64 oldvalue = (int64)(*oldobj);  // the previous object value
