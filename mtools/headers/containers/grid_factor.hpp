@@ -37,6 +37,11 @@
 namespace mtools
 {
 
+
+    /* forward declaration of the Grid_basic class*/
+    template< size_t D, typename T, size_t R> class Grid_basic;
+
+
     /**
      * A D-dimensional grid containing objects of type T.
      * 
