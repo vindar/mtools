@@ -254,7 +254,8 @@ RGBc mandelbrot(fVec2 pos)
 
 
 
-Grid_factor<2, int, 10,2> GF(0, 3, true);
+Grid_factor<2, int, 10> GF(0, 3, true);
+
 Grid_basic<2, int, 2> GS;
 
 
@@ -309,42 +310,26 @@ void fillSqr(iRect R, int val)
 
 int main()
     {
-
+    /*
     fillSqr(iRect(-7, 7, -7, 7), 2);
 
     GF.set({ 3,3 }, 1);
     GF.set({ 8,0 }, 1);
     GF.set({ 8,0 }, 0);
     GF.set({ 3,3 }, 2);
+    */
 
     Chronometer();
     
-    testWalk(10000000);
+    testWalk(10000000000);
 
     cout << "\ntime = " << Chronometer() << "\n"; cout << GF.toString(false);
 
-    GF.removeSpecialObjects();
-    
-    Grid_basic<2, int, 2> GB(GF);
+    GF.save("walklong2.ar.gz");
 
-    GF.reset();
-
-    Grid_basic<2, int, 2> GB2(GB);
-
-    Grid_basic<2, int, 2> GB3;
-    
-    GB3 = GB2;
-
-    Grid_factor<2, int, 100, 2> GF2(GB3);
-
-    Grid_factor<2, int, 100, 2> GF3(GF2);
-
-    GF3.changeSpecialRange(-1, 5);
-    GF = GF3;
+    GF.callDtors(false);
 
     cout << "\ntime = " << Chronometer() << "\n"; cout << GF.toString(false);
-
-    cout.getKey();
 
     Plotter2D Plotter;
 
@@ -352,6 +337,8 @@ int main()
     auto PGF = makePlot2DLattice<colorGF>("Grid factor");
     Plotter[PGF];
     Plotter.plot();
+
+
     return 0;
 
     /*

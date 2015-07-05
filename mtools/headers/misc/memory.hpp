@@ -284,7 +284,7 @@ namespace mtools
 
             // should only be called when no object are allocated. 
             inline void _releaseMallocedMemory()
-                {                                    
+                {                                 
                 MTOOLS_ASSERT(_m_allocatedobj == 0);
                 while (_m_firstpool != nullptr) { _pool * p = _m_firstpool; _m_firstpool = _m_firstpool->next; free(p); }
                 _m_firstfree = nullptr;
