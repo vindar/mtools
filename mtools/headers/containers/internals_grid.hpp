@@ -154,8 +154,6 @@ namespace mtools
 
 
 
-
-
         /* the default value for the radius of an elementary sub-grid */
         template<size_t D> struct defaultR { static const size_t val = ((D == 1) ? 10000 : ((D == 2) ? 100 : ((D == 3) ? 20 : ((D == 4) ? 6 : ((D == 5) ? 3 : 1))))); };
 

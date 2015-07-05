@@ -1,3 +1,81 @@
+/*
+* @code{.cpp}
+// ***********************************************************
+// Simulation of a Linearly Edge Reinforced Random Walk on Z^2.
+// ***********************************************************
+using namespace mtools;
+
+// structure at each site of Z^2.
+struct siteInfo
+{
+siteInfo() : up(1), right(1), V(0) {}    // ctor, set the intial weights of the edges to 1
+double up, right;   // weights of the up and right edges.
+int64 V;            // number of visits to the site.
+static int64 maxV;  // maximum number of visits of any site.
+};
+
+int64 siteInfo::maxV = 0;
+Grid_basic<2, siteInfo> G;   // the grid
+MT2004_64 gen;
+
+// site are colored w.r.t. the local time of the walk.
+RGBc colorLERRW(iVec2 pos)
+{
+const siteInfo * S = G.peek(pos);
+if ((S == nullptr) || (S->V == 0)) return RGBc::c_TransparentWhite;
+return RGBc::jetPaletteLog(S->V, 0, S->maxV, 1.2);
+}
+
+// Simulate the LERRW with reinforcment parameter delta for steps unit of time.
+void makeLERRW(uint64 steps, double delta)
+{
+Chronometer();
+cout << "Simulating " << steps << " steps of the LERRW with reinf. param " << delta << ".\n";
+ProgressBar<uint64> PB(steps,"Simulating..");
+iVec2 pos = { 0, 0 };
+uint64 t = 0;
+for (uint64 n = 0; n < steps; n++)
+{
+PB.update(n);
+siteInfo & S = G[pos];                          // info at the current site
+if ((++S.V) > S.maxV) { S.maxV = S.V; }
+double & right = S.right;                       // get a reference to the weight
+double & up = S.up;                             // of the 4 adjacent edges of the
+double & left = G(pos.X() - 1, pos.Y()).right;  // current position.
+double & down = G(pos.X(), pos.Y() - 1).up;     //
+double e = gen.rand_double0()*(left + right + up + down);
+if (e < left) { left += delta; pos.X()--; }
+else {
+if (e < (left + right)) { right += delta; pos.X()++; }
+else {
+if (e < (left + right + up)) { up += delta; pos.Y()++; }
+else {
+down += delta; pos.Y()--; }}}
+}
+PB.hide();
+cout << "\nSimulation completed in = " << Chronometer() / 1000.0 << " seconds.\n";
+std::string fn = std::string("LERRW-N") + mtools::toString(steps) + "-d" + mtools::doubleToStringNice(delta) + ".grid";
+G.save(fn); // save the grid in fn
+cout << "- saved in file " << fn << "\n";
+Plotter2D Plotter;
+auto L = makePlot2DLattice(LatticeObj<colorLERRW>::get());
+Plotter[L];
+Plotter.gridObject(true)->setUnitCells();
+Plotter.plot();
+return;
+}
+
+int main()
+{
+makeLERRW(100000000, 0.5);
+return 0;
+}
+*/
+
+
+
+
+
 #include "stdafx_test.h"
 
 
@@ -321,11 +399,11 @@ int main()
 
     Chronometer();
     
-    testWalk(10000000000);
+    //testWalk(1000000000);
 
     cout << "\ntime = " << Chronometer() << "\n"; cout << GF.toString(false);
 
-    GF.save("walklong2.ar.gz");
+    GF.load("walklong2.ar.gz");
 
     GF.callDtors(false);
 

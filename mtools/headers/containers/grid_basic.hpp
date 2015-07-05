@@ -20,7 +20,6 @@
 
 #pragma once
 
-
 #include "misc/error.hpp"
 #include "maths/vec.hpp"
 #include "maths/rect.hpp"
@@ -39,127 +38,59 @@ namespace mtools
 
 
     /**
-     * A D-dimensional grid Z^d where each site contain an object of type T. This is the basic class
-     * without "factorization" of objects.
-     *
+     * A D-dimensional grid Z^d where each site contain an object of type T. This is a container
+     * similar to a D-dimensionnal 'octree'. This is the 'basic' version: fastest get/set method and
+     * need only T to be constructible. See Grid_factor for the more advanced (but with more
+     * requirement on T) version where similar objects are 'factorized'.
+     * 
      * - Each site of Z^d contain a unique objet of type T (which is not shared with any other
      * site). Objects at each sites are created on the fly. They are not deleted until the grid is
      * destroyed or reset.
-     *
+     * 
      * - Internally, the grid Z^d is represented as a tree whose leafs are elementary sub-boxes of
-     * size [1,2R+1]^D. The tree grows dynamically to fit the set of sites accessed. Objects associated
-     * to sites are created by bunch, (2R+1)^D at a time. This means that an object at some position
-     * x may be created even without ever being accesssed.
+     * the form [x-R,x+R]^D where R is a template parameter. Nodes of the tree have arity 3^D. The
+     * tree grows dynamically to fit the set of sites accessed. This means that an object at some
+     * position x may be created even without ever being accesssed.
+     * 
+     * - Access time to any given site is logarithmic with respect to its distance from the
+     * previously accessed element.
+     * 
+     * - No objet of type T is ever deleted, copied or moved around during the whole life of the
+     * grid. Thus, pointers/references to elements are never invalidated. Destructors of all the
+     * objects created are called when the grid is destoyed or reset (unless the caller specifically
+     * requests not to call the dtors).
+     * 
+     * - The type T need only be constructible with `T()` or `T(const Pos &)`. If both ctor exist,
+     * the positional constructor is used. Furthermore, if T has a copy constructor, then the whole
+     * grid object can be copied/assigned via the copy ctor/assignement operator (the assignement
+     * operator of T is not used, even when assigning the grid).
+     * 
+     * - The grid can be serialized to file using the I/OArchive serialization classes and using the
+     * default serialization method for T. Furthermore, it is possible to deserialize the object via
+     * a specific constructor `T(IArchive &)` (this prevent having to construct a default object
+     * first and then deserialize it).
+     * 
+     * - Grid_basic objects are compatible with Grid_factor objects (with the same template
+     * parameters). Files saved with one object can be open with the other one and conversion using
+     * copy construtor and assignement operators are implemented in both directions (provided, of
+     * course, that the object T fullfills the requirement of Grid_factor and, conversely, that the
+     * grid_factor objects do not have special objects at the time of conversion).
      *
-     * - Access time to any given site is logarithmic with respect to its distance from the previously
-     * accessed element.
+     * @tparam  D   Dimension of the grid Z^D.
+     * @tparam  T   Type of objects stored in each sites of the grid. This can be any type that has a
+     *              public default constructor or a public positionnal constructor.
+     * @tparam  R   Radius of an elementary box (leaf of the tree) i.e. each elementary box contain
+     *              (2R+1)^D objects.
+     *              | Dimension | default value for R
+     *              |-----------|-------------------
+     *              | 1         | 10000
+     *              | 2         | 100
+     *              | 3         | 20
+     *              | 4         | 6
+     *              | >= 5      | 1.
      *
-     * - GUARANTEE: No objet of type T is ever deleted, copied or moved around during the whole life of the
-     * grid. Thus, pointers/references to elements are never invalidated. Every destructors are called when
-     *  the grid is destoyed or reset (unless the caller specifically requests not to call the dtors).
-     *
-     * - The type T must satisfy the following properties:
-     *
-     * | Requir.  | Property.
-     * |----------|-------------------------------------------------------------------
-     * | REQUIRED | Public constructor `T()` or `T(const Pos &)`. If both ctor exist, the positional constructor is favored.
-     * | OPTIONAL | Copy constructor `T(const T&)`. If the copy ctor exist, then the whole grid object can be copied/assigned. [the assignement `T.operator=()` is never needed nor used].
-     *
-     * - Serialization is performed using the OArchive class and look serializing methods of the class object T.
-     * It is also possible to deserialize the object via the specific constructor `T(IArchive &)`. If no serialization
-     * method is implemented, then OArchive use the basic serialization using memcpy().
-	 *
-	 * @tparam  D   Dimension of the grid Z^D.
-     *
-     * @tparam  T   Type of objects stored in each sites of the grid. This can be any type satisfying the requirements above.
-     *
-     * @tparam  R   Radius of an elementary box i.e. each elementary box contain (2R+1)^D objects.
-	 *              | Dimension | default value for R
-	 *              |-----------|-------------------
-	 *              | 1         | 10000
-	 *              | 2         | 100
-	 *              | 3         | 20
-	 *              | 4         | 6
-	 *              | >= 5      | 1
-     *
-     * @sa Grid_factor, Grid_static, Pos
-     *
-     * @code{.cpp}
-     // ***********************************************************
-     // Simulation of a Linearly Edge Reinforced Random Walk on Z^2.
-     // ***********************************************************
-     using namespace mtools;
-
-     // structure at each site of Z^2.
-     struct siteInfo
-        {
-        siteInfo() : up(1), right(1), V(0) {}    // ctor, set the intial weights of the edges to 1
-        double up, right;   // weights of the up and right edges.
-        int64 V;            // number of visits to the site.
-        static int64 maxV;  // maximum number of visits of any site.
-        };
-
-     int64 siteInfo::maxV = 0;
-     Grid_basic<2, siteInfo> G;   // the grid
-     MT2004_64 gen;
-
-     // site are colored w.r.t. the local time of the walk.
-     RGBc colorLERRW(iVec2 pos)
-        {
-        const siteInfo * S = G.peek(pos);
-        if ((S == nullptr) || (S->V == 0)) return RGBc::c_TransparentWhite;
-        return RGBc::jetPaletteLog(S->V, 0, S->maxV, 1.2);
-        }
-
-     // Simulate the LERRW with reinforcment parameter delta for steps unit of time.
-     void makeLERRW(uint64 steps, double delta)
-     {
-     Chronometer();
-     cout << "Simulating " << steps << " steps of the LERRW with reinf. param " << delta << ".\n";
-     ProgressBar<uint64> PB(steps,"Simulating..");
-     iVec2 pos = { 0, 0 };
-     uint64 t = 0;
-     for (uint64 n = 0; n < steps; n++)
-        {
-        PB.update(n);
-        siteInfo & S = G[pos];                          // info at the current site
-        if ((++S.V) > S.maxV) { S.maxV = S.V; }
-        double & right = S.right;                       // get a reference to the weight
-        double & up = S.up;                             // of the 4 adjacent edges of the
-        double & left = G(pos.X() - 1, pos.Y()).right;  // current position.
-        double & down = G(pos.X(), pos.Y() - 1).up;     //
-        double e = gen.rand_double0()*(left + right + up + down);
-        if (e < left) { left += delta; pos.X()--; }
-        else {
-        if (e < (left + right)) { right += delta; pos.X()++; }
-        else {
-        if (e < (left + right + up)) { up += delta; pos.Y()++; }
-        else {
-        down += delta; pos.Y()--; }}}
-        }
-     PB.hide();
-     cout << "\nSimulation completed in = " << Chronometer() / 1000.0 << " seconds.\n";
-     std::string fn = std::string("LERRW-N") + mtools::toString(steps) + "-d" + mtools::doubleToStringNice(delta) + ".grid";
-     G.save(fn); // save the grid in fn
-     cout << "- saved in file " << fn << "\n";
-     Plotter2D Plotter;
-     auto L = makePlot2DLattice(LatticeObj<colorLERRW>::get());
-     Plotter[L];
-     Plotter.gridObject(true)->setUnitCells();
-     Plotter.plot();
-     return;
-     }
-
-     int main()
-     {
-     makeLERRW(100000000, 0.5);
-     return 0;
-     }
-     * @endcode
+     * @sa  Grid_factor
      **/
-
-
-
     template<size_t D, typename T, size_t R = internals_grid::defaultR<D>::val > class Grid_basic
     {
 
@@ -182,7 +113,8 @@ namespace mtools
          * Constructor. An empty grid (no objet of type T is created).
          *
          * @param   callDtors   true (default) if we should call the destructor of T object when memory
-         *                      is released.
+         *                      is released. Setting this to false can speed up memory relase for basic
+         *                      type that do not have 'important' destructors.
          **/
         Grid_basic(bool callDtors = true) : _pcurrent(nullptr), _rangemin(std::numeric_limits<int64>::max()), _rangemax(std::numeric_limits<int64>::min()), _callDtors(callDtors) { _createBaseNode(); }
 
@@ -205,15 +137,17 @@ namespace mtools
 
         /**
          * Destructor. Destroys the grid. The destructors of all the T objects in the grid are invoqued.
-         * In order to prevent calling the dtors of T objects, call `reset(false)` prior to destructing
-         * the grid.
+         * In order to prevent calling the dtors of T objects, invoque `callDtors(false)` prior to
+         * destructing the grid.
          **/
         ~Grid_basic() { _destroyTree(); }
 
 
         /**
-         * Copy Constructor. Makes a Deep copy of the grid. The class T must be copyable by the copy
-         * operator `T(const T&)`.
+         * Copy Constructor. Makes a Deep copy of the grid. The source must have the same template
+         * parameters D,T,R and the class T must be copyable by the copy operator `T(const T&)`.
+         *
+         * @param   G   The const Grid_basic<D,T,R> & to process.
          **/
         Grid_basic(const Grid_basic<D, T, R> & G) : _pcurrent(nullptr), _rangemin(std::numeric_limits<int64>::max()), _rangemax(std::numeric_limits<int64>::min()), _callDtors(true)
             {
@@ -223,8 +157,9 @@ namespace mtools
 
 
         /**
-         * Copy constructor from a grid factor object. The class T must be copyable by the copy operator
-         * `T(const T&)` and the source object must not have special values.
+         * Copy constructor from a grid factor object. The source object must have the same template
+         * parameters D,T,R and not have special values (use `Grid_factor::removeSpecialObjects()` to
+         * remove special object if needed prior to converting).
          *
          * @param   G   The source Grid_factor object to copy.
          **/
@@ -236,10 +171,11 @@ namespace mtools
 
 
         /**
-         * Assignement operator. Create a deep copy of G. The class T must be copyable by the copy
-         * operator T(const T&) [the assignement operator `operator=(const T &)` is never used and need
-         * not be defined]. If the grid is not empty, it is first reset : all the object inside are
-         * destroyed and their dtors are invoqued.
+         * Assignement operator. Create a deep copy of G. The source object must have the same template
+         * parameters D,T,R. The class T must be copyable by the copy operator `T(const T&)` [the
+         * assignement operator `operator=(const T &)` is never used and need not be defined]. If the
+         * grid is not empty, it is first reset: all the objects inside are destroyed and their dtors
+         * are invoqued if the callDtors flag is set.
          *
          * @param   G   the grid to copy.
          *
@@ -259,9 +195,11 @@ namespace mtools
 
 
         /**
-         * Assignment operator. Create a deep copy of G. The class T must be copyable by the copy
-         * operator T(const T&) and the source object must not have special values. If the grid is not
-         * empty, it is first reset.
+         * Assignment operator. Create a deep copy of a Grid_factor object. The source must have the
+         * same template parameters D,T,R and not have special values (use
+         * `Grid_factor::removeSpecialObjects()` to remove special object if needed prior to
+         * converting). If the grid is not empty, it is first reset: all the objects inside are
+         * destroyed and their dtors are invoqued if the callDtors flag is set.
          *
          * @param   G   The source Grid_factor object to copy.
          *
@@ -270,14 +208,17 @@ namespace mtools
         template<size_t NB_SPECIAL> Grid_basic<D, T, R> & operator=(const Grid_factor<D, T, NB_SPECIAL, R> & G);
 
 
-        /** Resets the grid. Call the destructor of the object if the flag callDtors is set. */
+        /**
+         * Resets the grid to its initial state. Call the destructor of all the T objects if the flag
+         * callDtors is set. When the method returns, there are no living T object inside the grid.
+         **/
         void reset() { _destroyTree(); _createBaseNode(); }
 
 
         /**
          * Serializes the grid into an OArchive. If T implement a serialize method recognized by
-         * OArchive, it is used for serialization otherwise OArchive uses the default serialization
-         * method which correspond to a basic memcpy() of the object memory.
+         * OArchive, it is used for serialization otherwise OArchive uses its default serialization
+         * method (which correspond to a basic memcpy() of the object memory).
          *
          * @param [in,out]  ar  The archive object to serialise the grid into.
          *
@@ -306,11 +247,11 @@ namespace mtools
          * Deserializes the grid from an IArchive. If T has a constructor of the form T(IArchive &), it
          * is used for deserializing the T objects in the grid. Otherwise, if T implements one of the
          * serialize methods recognized by IArchive, the objects in the grid are first position/default
-         * constructed and then deserialized using those methods. If no specific deserialization
-         * procedure is implemented, the object is treated as a POD and is deserialized using basic
-         * memcpy().
+         * constructed and then deserialized using those methods. If no specific deserialization method
+         * is found, IArchive falls back to its default derialization method.
          * 
-         * If the grid is non-empty, it is first reset.
+         * If the grid is non-empty, it is first reset, possibly calling the ctor of the existing T
+         * objects depending on the status of the callCtor flag.
          *
          * @param [in,out]  ar  The archive to deserialize the grid from.
          *
@@ -351,13 +292,16 @@ namespace mtools
          * the extension ".gz", ".gzip" or ".z".
          * 
          * Grid file for grid_Factor and Grid_basic are compatible so that the file can subsequently be
-         * opened with a Grid_factor object (provided the tempalte parameters T, R and D are the same).
+         * opened with a Grid_factor object (provided the template parameters T, R and D are the same
+         * and T fullfills the requirement of Grid_factor).
+         * 
+         * The method simply call serialize() to create the archive file.
          *
          * @param   filename    The filename to save.
          *
-         * @return  true if  success, false if failure.
+         * @return  true on success, false on failure.
          *
-         * @sa  serialize, deserialize, class OArchive, class IArchive
+         * @sa  load, serialize, deserialize, class OArchive, class IArchive
          **/
         bool save(const std::string & filename) const
             {
@@ -377,21 +321,19 @@ namespace mtools
 
         /**
          * Loads a grid from a file. Grid files are compatible between classes hence this method can
-         * also load file created from a grid_factor class provided that there is not special objects.
+         * also load file created from a grid_factor class provided that the grid_factor object had no
+         * special object at the time of saving the file.
          * 
-         * If the grid is non-empty, it is first reset.
+         * If the grid is non-empty, it is first reset, possibly calling the dtors of T object depending
+         * on the status of the callDtor flag.
          * 
-         * If T has a constructor of the form T(IArchive &), it is used when reconstructing the T
-         * objects in the grid. Otherwise, if T implements one of the serialize methods recognized by
-         * IArchive, the objects in the grid are first position/default constructed and then
-         * deserialized using those methods. If no specific deserialization procedure is implemented,
-         * the class T is treated as a POD and is deserialized using basic memcpy().         *.
+         * The method simply call deserialize() to recreate the grid from the archive file.
          *
          * @param   filename    The filename to load.
          *
          * @return  true on success, false on failure [in this case, the lattice is reset].
          *
-         * @sa  class OArchive, class IArchive
+         * @sa  save, class OArchive, class IArchive
          **/
         bool load(const std::string & filename)
             {
@@ -412,7 +354,7 @@ namespace mtools
 
         /**
          * Return the range of elements accessed. The method returns maxpos<minpos if no element have
-         * ever been accessed/created.
+         * ever been accessed.
          *
          * @param [in,out]  minpos  a vector with the minimal coord. in each direction.
          * @param [in,out]  maxpos  a vector with the maximal coord. in each direction.
@@ -422,7 +364,7 @@ namespace mtools
 
         /**
         * Return the spacial range of elements accessed in an iRect structure. The rectangle is empty
-        * if no elements have ever been accessed/created.
+        * if no elements have ever been accessed. Specific to dimension D = 2.
         *
         * @return  an iRect containing the spacial range of element accessed.
         **/
@@ -434,10 +376,10 @@ namespace mtools
 
 
         /**
-        * Check if we currently call the destructor of object when they are not needed anymore.
-        *
-        * @return  true if we call the dtors and false otherwise.
-        **/
+         * Check if we should call the destructors of T objects when they are not needed anymore.
+         *
+         * @return  true if we call the dtors and false otherwise.
+         **/
         bool callDtors() const { return _callDtors; }
 
 
@@ -501,7 +443,7 @@ namespace mtools
          *
          * @param   pos The position.
          *
-         * @return  A const reference to the value.
+         * @return  A reference to the value.
          **/
         inline T & get(const Pos & pos) { return _get(pos); }
 
@@ -529,7 +471,7 @@ namespace mtools
 
         /**
          * Return a pointer to the object at a given position. If the value at the site was not yet
-         * created, returns nullptr. This method does not create sites and is suited for use to draw the
+         * created, returns nullptr. This method does not create sites and is suited when drawing the
          * lattice using, for instance, the LatticeDrawer class.
          *
          * @param   pos The position to peek.
@@ -588,50 +530,51 @@ namespace mtools
 
 
         /**
-         * get a value at a given position. Dimension 1 specialization. (non-const version)
+         * get a value at a given position. Dimension 1 specialization.
          * This creates the object if it does not exist yet.
          **/
         inline T & operator()(int64 x) { static_assert(D == 1, "template parameter D must be 1"); return _get(Pos(x)); }
 
 
         /**
-         * get a value at a given position. Dimension 2 specialization. (non-const version)
+         * get a value at a given position. Dimension 2 specialization.
          * This creates the object if it does not exist yet.
          **/
         inline T & operator()(int64 x, int64 y) { static_assert(D == 2, "template parameter D must be 2"); return _get(Pos(x, y)); }
 
 
         /**
-         * get a value at a given position. Dimension 3 specialization. (non-const version)
+         * get a value at a given position. Dimension 3 specialization.
          * This creates the object if it does not exist yet.
          **/
         inline T & operator()(int64 x, int64 y, int64 z)  { static_assert(D == 3, "template parameter D must be 3"); return _get(Pos(x, y, z)); }
 
 
         /**
-         * peek at a value at a given position. Dimension 1 specialization. (const version)
+         * peek at a value at a given position. Dimension 1 specialization.
          * Returns nullptr if the object at this position is not created.
          **/
         inline const T * peek(int64 x) const { static_assert(D == 1, "template parameter D must be 1"); return peek(Pos(x)); }
 
 
         /**
-         * peek at a value at a given position. Dimension 2 specialization. (const version)
+         * peek at a value at a given position. Dimension 2 specialization.
          * Returns nullptr if the object at this position is not created.
          **/
         inline const T * peek(int64 x, int64 y) const { static_assert(D == 2, "template parameter D must be 2"); return peek(Pos(x, y)); }
 
 
         /**
-         * peek at a value at a given position. Dimension 3 specialization. (const version)
+         * peek at a value at a given position. Dimension 3 specialization.
          * Returns null if the object at this position is not created.
          **/
         inline const T * peek(int64 x, int64 y, int64 z) const { static_assert(D == 3, "template parameter D must be 3"); return peek(Pos(x, y, z)); }
 
 
 
-
-        /************************** PRIVATE PART ***************************************************************************************************************************/
+        /***************************************************************
+        * Private section
+        ***************************************************************/
 
 
     private:

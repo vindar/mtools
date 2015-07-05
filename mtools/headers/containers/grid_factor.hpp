@@ -43,42 +43,68 @@ namespace mtools
 
 
     /**
-     * A D-dimensional grid containing objects of type T.
+     * A D-dimensional grid containing objects of type T. This is a container similar to a D-
+     * dimensionnal 'octree'. This is the 'factor' version where 'special objects' can be factorized
+     * to gain space. See Grid_basic for a simpler container with weaker requirement on the type T.
      * 
-     * Version with factorization: there are "special object" which are unique.
+     * - The type T must be convertible to int64 (long long).  
      * 
-     * DUPLICATES: each site of Z^d contain an object but the special objets appear only once and
-     * all the sites containing the same special object are, in fact, sharing the same reference.
+     * - There are two types of objects : 'normal' and 'special' object. An object is said to be
+     * special if its int64 value belong to a certain (possible empty) range [minSpec, maxSpec].
+     * Special object have the property that they can be factorized: many sites containing the same
+     * special object (ie with same value) may, in fact, share the same reference to the object.
+     * These allows to save some space. So it is advisable that every instance object which convert
+     * to the same special value should be equivalent. RQ: even though special valued object may be
+     * factorized, not everyone of them share the same reference in general so there is usually
+     * multiple instance of the same special object (special object are factorized when a leaf in
+     * the octree become full with all its element sharing the same special value, in this case, the
+     * whole leaf is replaced by a ponter to a single special object).
      * 
-     * GUARANTEE: every object which is NOT a special object is unique and is never deleted, moved
-     * around or copied during the whole life of the grid. Thus, pointer to non-special elements are
-     * never invalidated. On the other hand, special objects may be created, deleted and multiple
-     * sites with the same special objet will point to the same reference. Every destructor is
-     * called when the object is detroyed or when reset() is called.  
+     * - On the other hand, it is guaranteed that 'normal' object i.e. those whose converted int64
+     * value does not belong to the special range [minSpec,maxSpec] are uniquely associated to a
+     * site and are never copied, moved Thus, pointer to non-special elements are never invalidated.
+     * 
+     * 
+     * 
+     * - The special range can be modified on the fly (this induces a factorization which can be
+     * time consumming) or even disabled by setting an empty range. In this case, the grid obtained
+     * is perfectly compatible with Grid_basic and conversion back and forth between these two types
+     * of grid is possible.
+     * 
+     * 
+     * - the class T must also satisfy the following properties:  
+     *     - Constructible via `T()` or `T(const Pos &)`. If the positional ctor exist it is
+     *     preferred.  
+     *     - Copy constructible with `T(const T&)` and assignable with `operator=(const T&)`.
+     * 
+     * - The grid can be serialized to file using the I/OArchive serialization classes and using the
+     * default serialization method for T. Furthermore, it is possible to deserialize the object via
+     * a specific constructor `T(IArchive &)` (this prevent having to construct a default object
+     * first and then deserialize it).
+     * 
+     * - Grid_factor objects are compatible with Grid_factor objects (with the same template
+     * parameters). Files saved with one object can be open with the other one and conversion using
+     * copy construtor and assignement operators are implemented in both directions (provided, of
+     * course, that the object T fullfills the requirement of Grid_factor and, conversely, that the
+     * grid_factor objects do not have special objects at the time of conversion).
      *
-     * The objet T must satisfy the following properties:
-     * 
-     * | Requir.  | Property.                                                          
-     * |----------|--------------------------------------------------------------------
-     * | REQUIRED | Constructor `T()` or `T(const Pos &)`. If the positional constructor exist it is used instead of `T()`.                                        
-     * | REQUIRED | Copy constructor `T(const T&)`. [The assignement `operator=()` is not needed].
-     * | OPTIONAL | Comparison `operator==()`. If T is comparable with `==`, then this operator is used for testing whether an object is special. Otherwise, basic memcmp() comparison is used.                      
-     * | OPTIONAL | Serialization via `serialize(OArchive &)` and `deserialize(IArchive &)` or constructor `T(IArchive &)`. Otherwise, basic memcpy is used when saving to/loading from file. 
-     * 
-     * @tparam  D   Dimension of the grid (e.g. Z^D).
-     *              
-     * @tparam  T   Type of objects stored in the sites of the grid. Can be any type satisfying the requirment above.
-     *              
-     * @tparam  R   Radius of an elementary box i.e. each elementary box contain (2R+1)^D objects.
-	 *              | Dimension | default value for R
-	 *              |-----------|-------------------
-	 *              | 1         | 10000
-	 *              | 2         | 100
-	 *              | 3         | 20
-	 *              | 4         | 6
-	 *              | >= 5      | 1
-     *              
-     * @sa Grid_basic, Grid_static
+     * @tparam  D           Dimension of the grid (e.g. Z^D).
+     * @tparam  T           Type of objects stored in the sites of the grid. Can be any type
+     *                      satisfying the requirments above.
+     * @tparam  NB_SPECIAL  The maximum number of special object. This is simply an upper bound which
+     *                      need not be matched.
+     * @tparam  D           Type of the d.
+     * @tparam  R           Radius of an elementary box i.e. each elementary box contain (2R+1)^D
+     *                      objects.
+     *                      | Dimension | default value for R
+     *                      |-----------|-------------------
+     *                      | 1         | 10000
+     *                      | 2         | 100
+     *                      | 3         | 20
+     *                      | 4         | 6
+     *                      | >= 5      | 1.
+     *
+     * @sa  Grid_basic
      **/
     template < size_t D, typename T, size_t NB_SPECIAL = 256 , size_t R = internals_grid::defaultR<D>::val > class Grid_factor
     {
@@ -100,8 +126,8 @@ namespace mtools
 
 
         /**
-         * Constructor. Construct an empty grid (no objet of type T is created). Set minSpecial \> maxSpecial to
-         * disable special values.
+         * Constructor. Construct an empty grid (no objet of type T is created yet). Set minSpecial \>
+         * maxSpecial (default) to disable special values.
          *
          * @param   minSpecial  The minimum value of the special objects.
          * @param   maxSpecial  The maximum value of the special objects.
@@ -114,10 +140,10 @@ namespace mtools
 
 
         /**
-        * Constructor. Loads a grid from a file. If the loading fails, the grid is constructed empty.
-        *
-        * @param   filename    Filename of the file.
-        **/
+         * Constructor. Loads a grid from a file. If the loading fails, the grid is constructed empty.
+         *
+         * @param   filename    Filename of the file.
+         **/
         Grid_factor(const std::string & filename)
             { 
             reset(0,-1,true);
@@ -126,20 +152,21 @@ namespace mtools
 
 
         /**
-        * Destructor. Destroys the grid. The destructors of all the T objects in the grid are invoqued
-        * if the callDtor flag is set and are dropped into oblivion otherwise.
-        **/
+         * Destructor. Destroys the grid. The destructors of all the T objects in the grid are invoqued
+         * if the callDtor flag is set and are dropped into oblivion otherwise.
+         **/
         ~Grid_factor() { _reset(); }
 
 
         /**
-         * Copy Constructor. The resulting grid is exactly the same as the source, with the same special
-         * values and the same statistics (bounding box and min/max values) and the same flag for
-         * calling the destructors.
+         * Copy Constructor. Create a deep copy of the source, with the same special values and the same
+         * statistics (bounding box and min/max values) and the same flag for calling the destructors.
          * 
-         * The template parameter NB_SPECIAL must be large enough to hold all the special values (which
-         * is necessarily the case if it is larger or equal to NB_SPECIAL2 of the source).
+         * The source must have the same D,T,R template parameters. The template parameter NB_SPECIAL
+         * need not be the same but must be large enough to hold all the special values (which is the
+         * case if it is larger or equal to NB_SPECIAL2 of the source).
          *
+         * @tparam  NB_SPECIAL2 the template paramter for the max number of special object of the source.
          * @param   G   the source Grid_factor to copy.
          **/
         template<size_t NB_SPECIAL2> Grid_factor(const Grid_factor<D, T, NB_SPECIAL2, R> & G)
@@ -167,8 +194,8 @@ namespace mtools
 
 
         /**
-         * Copy Constructor. construct the object from a grid_basic. The special object range is set to
-         * [-1,0] (ie empty) so that there is no factorization done.
+         * Copy Constructor. construct the object from a grid_basic object. The special object range is
+         * set to [-1,0] (i.e. empty) so that there is no factorization.
          *
          * @param   G   The basic_grid to process.
          **/
@@ -180,12 +207,22 @@ namespace mtools
 
 
         /**
-         * Assignement operator. Create a deep copy of G. If the grid is not empty, it is first reset().
-         * The resulting grid is exactly the same a the source, with the same special value and the same
-         * statistics (bounding box and min max value).
+         * Assignement operator. Create a deep copy of G.  The resulting grid is exactly the same as the
+         * source, with the same special value and the same statistics (bounding box and min max value)
+         * and the same flag for calling the destructors.
          * 
-         * The template parameter NB_SPECIAL must be large enough to hold all the special values (which
-         * is necessarily the case if it is larger or equal to NB_SPECIAL of the source).
+         * 
+         * The source must have the same D,T,R template paramters. The template parameter NB_SPECIAL
+         * must be large enough to hold all the special values (which is the case if it is larger or
+         * equal to NB_SPECIAL of the source).
+         * 
+         * If the grid is not empty, it is first reset() and the dtor of current object are called
+         * depending on the status of the callDtor flag.
+         *
+         * @tparam  NB_SPECIAL2 the template paramter for the max number of special object of the source.
+         * @param   G   the source grid.
+         *
+         * @return  the object for chaining.
          **/
         template<size_t NB_SPECIAL2> Grid_factor<D, T, NB_SPECIAL, R> & operator=(const Grid_factor<D, T, NB_SPECIAL2, R> & G)
             {
@@ -217,13 +254,19 @@ namespace mtools
 
 
         /**
-        * Assignement operator. Create a deep copy of G. If the grid is not empty, it is first reset().
-        * The resulting grid is exactly the same a the source, with the same special value and the same
-        * statistics (bounding box and min max value).
-        *
-        * Version with the same template paramter NB_SPECIAL.
-        *
-        **/
+         * Assignement operator. Create a deep copy of G.  The resulting grid is exactly the same as the
+         * source, with the same special value and the same statistics (bounding box and min max value)
+         * and the same flag for calling the destructors.
+         * 
+         * If the grid is not empty, it is first reset() and the dtor of current object are called
+         * depending on the status of the callDtor flag.
+         * 
+         * Version with the same template paramter NB_SPECIAL.
+         *
+         * @param   G   the source grid.
+         *
+         * @return  the object for chaining.
+         **/
         Grid_factor<D, T, NB_SPECIAL, R> & operator=(const Grid_factor<D, T, NB_SPECIAL, R> & G)
             {
             return operator=<NB_SPECIAL>(G);
@@ -251,11 +294,12 @@ namespace mtools
             }
 
 
-
         /**
-         * Assignment operator. Create a deep copy of a basic_grid object into this Grid_factor object.
-         * The object is reset if it is not empty and the special value range is set to [-1,0] (ie
-         * empty) so there is no factorization.
+         * Assignment operator. Create a copy of a basic_grid object into this Grid_factor object. The
+         * special value range is set to [-1,0] (ie empty) so there is no factorization.
+         * 
+         * If the grid is not empty, it is first reset() and the dtor of current objects are called
+         * depending on the status of the callDtor flag.
          *
          * @param   G   The basic_grid to copy.
          *
@@ -298,10 +342,12 @@ namespace mtools
          * Loads the given file. The file may have been created by saving either a Grid_basic or a
          * Grid_factor object with same template parameter T, D, R.
          * 
-         * If the grid is non-empty, it is first reset.
-         *
-         * The template paramter NB_SPECIAL may differ from of the object used to save the grid but must
-         * be large enough to hold the special value range of the grid to load.
+         * If the grid is non-empty, it is first reset, possibly calling the dtor depending on the
+         * status of the callDtor flag.
+         * 
+         * The template paramter NB_SPECIAL may differ from that of the object used when saving the
+         * grid. It must simply be large enough to hold the special value range of the grid described in
+         * the file.
          *
          * @param   filename    The filename to load.
          *
@@ -331,7 +377,7 @@ namespace mtools
         *
         * @param [in,out]  ar  The archive object to serialise the grid into.
         *
-        * @sa  class OArchive, class IArchive
+        * @sa  deserialize, class OArchive, class IArchive
         **/
         void serialize(OArchive & ar) const
             {
@@ -364,15 +410,15 @@ namespace mtools
          * Deserializes the grid from an IArchive. If T has a constructor of the form T(IArchive &), it
          * is used for deserializing the T objects in the grid. Otherwise, if T implements one of the
          * serialize methods recognized by IArchive, the objects in the grid are first position/default
-         * constructed and then deserialized using those methods. If no specific deserialization
-         * procedure is implemented, the object is treated as a POD and is deserialized using basic
-         * memcpy().
+         * constructed and then deserialized using those methods. If no specific deserialization method
+         * is found, IArchive falls back on its default deserialization method. memcpy().
          * 
-         * If the grid is non-empty, it is first reset.
+         * If the grid is non-empty, it is first reset, possibly calling the ctor of the existing T
+         * objects depending on the status of the callCtor flag.
          *
          * @param [in,out]  ar  The archive to deserialize the grid from.
          *
-         * @sa  class OArchive, class IArchive
+         * @sa  serialize, class OArchive, class IArchive
          **/
         void deserialize(IArchive & ar)
             {
@@ -389,7 +435,7 @@ namespace mtools
                 ar & _rangemax;
                 ar & _minSpec;
                 ar & _maxSpec;
-                if (NB_SPECIAL < _specialRange()) { MTOOLS_DEBUG("NB_SPECIAL too small to fit all special values"); throw ""; }
+                if (((int64)NB_SPECIAL) < _specialRange()) { MTOOLS_DEBUG("NB_SPECIAL too small to fit all special values"); throw ""; }
                 for (int64 i = 0; i < _specialRange(); i++)
                     {
                     bool b; ar & b;
@@ -413,13 +459,13 @@ namespace mtools
 
 
         /**
-         * Change the set of special objects. This method first expand the whole tree structure to
-         * remove all factorization of the tree then set the new range for the special object and then
-         * simplify the tree using the new paramters.
+         * Change the range of special objects. This method first expand the whole tree structure to
+         * remove all factorization of the tree then set the new range for the special objects and
+         * subsequently re-factorizes the tree using the new paramters.
          * 
          * This method can be time and memory consumming
          * 
-         * Set newMaxSpec \< newMinSpec to disable special object and expand the whole tree.
+         * Set newMaxSpec \< newMinSpec to disable special object and expand the whole tree (or simply call the `removeSpecialObjects()` method).
          *
          * @param   newMinSpec  the new minimum value for the special objects range.
          * @param   newMaxSpec  the new maximum value for the special object range.
@@ -459,7 +505,7 @@ namespace mtools
          * using the access() method.
          * 
          * If acess() is not used, the method is useless and should not be called as it can be time
-         * consuming...
+         * consumming...
          **/
         void simplify() const
             {                     
@@ -472,7 +518,8 @@ namespace mtools
 
 
         /**
-         * Resets the grid. Keep the current minSpecial, maxSpecial et callDtor parameters.
+         * Resets the grid, possibly calling the destructor of the T object depending on the status of
+         * callDtor. Keep the current values for the minSpecial, maxSpecial et callDtor parameters.
          **/
         void reset()
             {
@@ -482,11 +529,12 @@ namespace mtools
 
 
         /**
-         * Resets the grid and change the range of the special values. Set minSpecial \> maxSpecial to
-         * disable special values.
+         * Resets the grid and modify the range of the special values and the callDtor flag. Set
+         * newMaxSpec \< newMinSpec to disable special object.
          * 
-         * the calldtors flag is set AFTER destruction ie the previous status is used when releasing
-         * memory.
+         * the modification to the calldtors flag is made AFTER destruction i.e. the previous status is
+         * used when releasing memory. `Call callDtor(status)` prior to calling reset to modify the way
+         * object are released with this method.
          *
          * @param   minSpecial  the new minimum value for the special parameters.
          * @param   maxSpecial  the new maximum value for the special parameters.
@@ -517,7 +565,7 @@ namespace mtools
 
 
         /**
-         * Minimum value of special object (those that are factorized).
+         * Lower bound of the special value range.
          *
          * @return  the minimum value of a special object.
          **/
@@ -525,7 +573,7 @@ namespace mtools
 
 
         /**
-         * Maximum value of special object (those that are factorized).
+         * Upper bound of the special value range
          *
          * @return  the maximum value of a special object
          **/
@@ -533,8 +581,8 @@ namespace mtools
 
 
         /**
-         * Return a bounding box containing the set of all position accessed either by get() or set()
-         * methods (peek does not count). The method returns maxpos<minpos if no element have ever 
+         * Return a bounding box containing the set of all positions accessed either by get() or set()
+         * methods (peek does not count). The method returns maxpos \< minpos if no element have ever 
          * been accessed.
          *
          * @param [in,out]  minpos  a vector with the minimal coord. in each direction.
@@ -544,9 +592,11 @@ namespace mtools
 
 
         /**
-         * Return a bounding rectangle of the position of all the elements accessed either by get()
-         * or set() methods (peek does not count). The rectangle is empty if no elements have ever 
-         * been accessed/created. This method is specific for dimension 2 (ie template paramter D is 2).
+         * Return a bounding rectangle for the position of all the elements accessed either by get()
+         * or set() methods (peek does not count). The rectangle is empty if no elements have ever been
+         * accessed/created.
+         * 
+         * This method is specific for dimension D = 2.
          *
          * @return  an iRect containing the spacial range of element accessed.
          **/
@@ -558,38 +608,38 @@ namespace mtools
 
 
         /**
-        * The current minimum value of all element ever created in the grid (obtained by casting the
-        * element into int64). This value may be different from the min value of all elements really 
-        * accessed since other elements can be silently created.
-        *
-        * @return  The minimum value (converted as int64) for all the element ever creaed in the grid.
-        **/
+         * The all time (since the last reset) minimum value of all elements ever created/set in the
+         * grid (obtained by casting the element into int64). This value may be different from the min
+         * value of all elements really accessed since other elements can be silently created.
+         *
+         * @return  The minimum value (converted as int64) of all the elements ever created in the grid.
+         **/
         inline int64 minValue() const { return _minVal; }
 
 
         /**
-         * The current maximum value of all element ever created in the grid (obtained by casting the
-         * element into int64). This value may be different from the max value of all elements really 
-         * accessed since other elements can be silently created.
+         * The all time (since the last reset) maximum value of all element ever created/set in the grid
+         * (obtained by casting the element into int64). This value may be different from the max value
+         * of all elements really accessed since other elements can be silently created.
          *
-         * @return  The maximum value (converted as int64) for all the element ever creaed in the grid.
+         * @return  The maximum value (converted as int64) of all the elements ever created in the grid.
          **/
         inline int64 maxValue() const { return _minVal; }
 
 
         /**
-        * Sets the value at a given site. If the value at the site does not exist prior to the call of the method, 
-        * it is first created and then the assignement is performed.
-        *
-        * @param   pos The position of the site to access.
-        * @param   val The value to set.
-        **/
+         * Sets the value at a given site. If the value at the site does not exist prior to the call, it
+         * is first created and then the assignement is performed with `T::operator=()`.
+         *
+         * @param   pos The position of the site to access.
+         * @param   val The value to set.
+         **/
         inline void set(const Pos & pos, const T & val) { _set(pos,&val); }
 
 
         /**
-        * Set a value at a given position. Dimension 1 specialization.
-        **/
+         * Set a value at a given position. Dimension 1 specialization.
+         **/
         inline void set(int64 x, const T & val) { static_assert(D == 1, "template parameter D must be 1"); return _set(Pos(x),&val); }
 
 
@@ -657,9 +707,9 @@ namespace mtools
          * @warning NEVER EVER MODIFY THE VALUE OF A SPECIAL ELEMENT AS IT MAY BE SHARED BY MANY OTHER
          * SITES (BUT PROBABLY NOT ALL OF THEM EITHER). It is safe to change the value of a 'normal'
          * element to that of another 'normal' element. It is also possible to change the value of a
-         * normal element to that of a special element but you should call 'Simplify()' afterward to
-         * insure that the whole grid goes back in its fully factorized state. Otherwise, anything can
-         * happen...
+         * normal element to that of a special element but in this case you should call 'simplify()'
+         * afterward to insure that the whole grid goes back in its fully factorized state. Otherwise,
+         * anything can happen... Use this method at your own risk !
          *
          * @param   pos The position to access.
          *
@@ -771,14 +821,18 @@ namespace mtools
 
         /**
          * Find a box containing point pos and such that all the elements inside share the same special
-         * value (which is, necessarily the special value at pos).
+         * value (which is, therefore the special value at pos).
          * 
-         * When the method returns, [boxMin,boxMAx] is such that all the element inside (the closed box)
-         * have the same special value. Set boxMin = boxMax = pos if the site at pos is not special or
-         * no bigger box could be found.
+         * When the method returns, [boxMin,boxMax] is such that all the elements inside the D-
+         * dimensionnal closed box have the same special value. This method sets boxMin = boxMax = pos
+         * if the site at pos is not special or if no bigger box could be found.
          * 
          * The box returned is not optimal : it is simply the box given by the underlying tree struture
-         * of the grid. Choosing smaller vlaue for R improves the quality of the returned box.
+         * of the grid. Hence choosing smaller values for the template parameter can R improves the
+         * quality of the returned box.
+         * 
+         * Same as `peek()`, this method does not create elements. In particular, if the elemnt at pos
+         * is not created, the method simply sets boxMin = boxMax = pos and return nullptr.
          *
          * @param   pos             The position.
          * @param [in,out]  boxMin  Vector to put the minimum value of the box in each direction.
@@ -835,24 +889,27 @@ namespace mtools
 
         /**
          * Find a box containing point pos and such that all the elements inside share the same special
-         * value (which is, necessarily the special value at pos).
+         * value (which is, therefore the special value at pos).
          * 
-         * When the method returns, the (closed) box is such that all the element inside have the same
-         * special value. Set box to the singleton pos if the site at pos is not special or if  no
+         * Specialization for dimension 2 using an iRect structure.
+         * 
+         * When the method returns, r is such that all the elements inside the closed iRect have the
+         * same special value. This method sets r = {pos} if the site at pos is not special or if no
          * bigger box could be found.
          * 
-         * The box returned is not optimal : it is simply the box given by the underlying tree struture
-         * of the grid. Choosing smaller value for R improves the quality of the returned box.
+         * The iRect returned is not optimal : it is simply the box given by the underlying tree
+         * struture of the grid. Hence choosing smaller values for the template parameter r can improves
+         * the quality of the returned box.
          * 
-         * This method is specific to dimension 2 (template paramter D = 2).  
+         * Same as `peek()`, this method does not create elements. In particular, if the element at pos
+         * is not created, the method simply sets r = {pos} and then return nullptr.
          *
          * @param   pos         The position.
-         * @param [in,out]  box The iRec box to put the result in. The set of value equal if the closed
-         *                      box.
+         * @param [in,out]  r   The iRect & to process.
          *
          * @return  A pointer to the element at position pos or nullptr if it does not exist.
          **/
-        const T * findFullBoxiRect(const Pos & pos, iRect & box) const
+        const T * findFullBoxiRect(const Pos & pos, iRect & r) const
             {
             static_assert(D == 2, "findFullBoxiRect() method can only be used when the dimension template parameter D is 2");
             MTOOLS_ASSERT(_pcurrent != nullptr);
@@ -861,7 +918,7 @@ namespace mtools
                 {
                 _pleafFactor p = (_pleafFactor)(_pcurrent);
                 MTOOLS_ASSERT(_isLeafFull(p) == (_maxSpec + 1)); // the leaf cannot be full
-                if (p->isInBox(pos)) { box.xmin = pos.X(); box.xmax = pos.X(); box.ymin = pos.Y(); box.ymax = pos.Y(); return(&(p->get(pos))); } // just a singleton...
+                if (p->isInBox(pos)) { r.xmin = pos.X(); r.xmax = pos.X(); r.ymin = pos.Y(); r.ymax = pos.Y(); return(&(p->get(pos))); } // just a singleton...
                 MTOOLS_ASSERT(_pcurrent->father != nullptr); // a leaf must always have a father
                 _pcurrent = p->father;
                 }
@@ -869,31 +926,31 @@ namespace mtools
             _pnode q = (_pnode)(_pcurrent);
             while (!q->isInBox(pos))
                 {
-                if (q->father == nullptr) { box.xmin = pos.X(); box.xmax = pos.X(); box.ymin = pos.Y(); box.ymax = pos.Y(); _pcurrent = q; return nullptr; } // just a singleton...
+                if (q->father == nullptr) { r.xmin = pos.X(); r.xmax = pos.X(); r.ymin = pos.Y(); r.ymax = pos.Y(); _pcurrent = q; return nullptr; } // just a singleton...
                 q = (_pnode)q->father;
                 }
             // and down..
             while (1)
                 {
                 _pbox b = q->getSubBox(pos);
-                if (b == nullptr) { box.xmin = pos.X(); box.xmax = pos.X(); box.ymin = pos.Y(); box.ymax = pos.Y(); _pcurrent = q; return nullptr; } // just a singleton...
+                if (b == nullptr) { r.xmin = pos.X(); r.xmax = pos.X(); r.ymin = pos.Y(); r.ymax = pos.Y(); _pcurrent = q; return nullptr; } // just a singleton...
                 T * obj = _getSpecialObject(b); // check if the link is a special dummy link
                 if (obj != nullptr)
                     { // good we have a non trivial box
                     _pcurrent = q;
                     const int64 rad = q->rad;
                     Pos center = q->subBoxCenter(pos);
-                    box.xmin = center.X() - rad; 
-                    box.xmax = center.X() + rad;
-                    box.ymin = center.Y() - rad;
-                    box.ymax = center.Y() + rad;
+                    r.xmin = center.X() - rad; 
+                    r.xmax = center.X() + rad;
+                    r.ymin = center.Y() - rad;
+                    r.ymax = center.Y() + rad;
                     return obj;
                     }
                 if (b->isLeaf())
                     {
                     _pcurrent = b;
                     MTOOLS_ASSERT(_isLeafFull((_pleafFactor)_pcurrent) == (_maxSpec + 1)); // the leaf cannot be full
-                    box.xmin = pos.X(); box.xmax = pos.X(); box.ymin = pos.Y(); box.ymax = pos.Y();
+                    r.xmin = pos.X(); r.xmax = pos.X(); r.ymin = pos.Y(); r.ymax = pos.Y();
                     return(&(((_pleafFactor)b)->get(pos))); // just a singleton
                     }
                 q = (_pnode)b;
@@ -902,6 +959,9 @@ namespace mtools
 
 
 
+        /***************************************************************
+        * Private section
+        ***************************************************************/
 
     private:
 
