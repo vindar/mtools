@@ -65,7 +65,6 @@ the library. Before, compiling the example, you must define yet another
 environement variable 'MTOOLS_LIB' pointing to the base directory of the 
 library (i.e. the directory containing this file).
 
-
 NOTE: If you use mtools::cout before 'main()' starts, you should probably 
 use the mtools version linked against the DLL version of FLTK as it will 
 insure that FLTK is always properly initialized before it is used. Otherwise, 
@@ -75,18 +74,25 @@ insure that FLTK is always properly initialized before it is used. Otherwise,
 ----------------------
       On Linux 
 ----------------------
-[tested on Arch-Linux and with gcc 5.1]
+[tested on Linux Mint and with gcc 5.1]
 
-1) Make sure that the required libs (fltk, zlib, libpng, libjpeg and CImg) 
-are installed on the system, up to date, and accessible (in /usr, /usr/local/...)
+1) Make sure you use a recent version of gcc (gcc 4.8 do no have support for
+some C++11 specificities needed to build the library). 
 
-2) Run 'make' in the linux/ sub-directory of the mtools tree and wait/pray. 
+2) Make sure that the required libs (fltk, zlib, libpng, libjpeg and CImg) 
+are installed on the system, up to date, and accessible (in /usr, /usr/local/...).
+You need FLTK at least version 1.33. 
 
+3) Run 'make' in the linux/ sub-directory of the mtools tree and wait/pray. 
+
+4) Once the library is builded. You can go into the exemple directories and type 
+make to build and try some of the examples. 
 
 
 ----------------------
      On MacOS X
 ----------------------
-Good luck to you ! It should 'theorically' work but I have never tried...
+Good luck to you ! 
+It should 'theorically' work but I have never tried...
 
 
