@@ -318,51 +318,33 @@ int main()
     GF.set({ 3,3 }, 2);
 
     Chronometer();
-    //testWalk(309215);
+    
+    testWalk(10000000);
 
-    testWalk(100000000);
-
-    cout << "\ntime = " << Chronometer() << "\n";
-    cout << GF.toString(false);
+    cout << "\ntime = " << Chronometer() << "\n"; cout << GF.toString(false);
 
     GF.removeSpecialObjects();
-
-    GF.simplify();
-
-    GF.access({ 0,0 });
-
-    cout << GF.getPosRangeiRect();
-
-    cout << "\ntime = " << Chronometer() << "\n";
-    cout << GF.toString(false);
-
-    GF.save("test.gz");
-  
-    GF.reset(1, 0);
-
-    cout << "\ntime = " << Chronometer() << "\n";
-    cout << GF.toString(false);
-
-    GS.load("test.gz");
-
-    cout << "\ntime = " << Chronometer() << "\n";
-    cout << GS.toString(false);
-
-    GS.save("test2.ar");
-
-    cout << "\ntime = " << Chronometer() << "\n";
-
-    GF.load("test2.ar");
-
-    GF.changeSpecialRange(0, 4);
-
-    cout << "\ntime = " << Chronometer() << "\n";
-    cout << GF.toString(false);
-
     
+    Grid_basic<2, int, 2> GB(GF);
 
+    GF.reset();
 
-    //cout.getKey();
+    Grid_basic<2, int, 2> GB2(GB);
+
+    Grid_basic<2, int, 2> GB3;
+    
+    GB3 = GB2;
+
+    Grid_factor<2, int, 100, 2> GF2(GB3);
+
+    Grid_factor<2, int, 100, 2> GF3(GF2);
+
+    GF3.changeSpecialRange(-1, 5);
+    GF = GF3;
+
+    cout << "\ntime = " << Chronometer() << "\n"; cout << GF.toString(false);
+
+    cout.getKey();
 
     Plotter2D Plotter;
 

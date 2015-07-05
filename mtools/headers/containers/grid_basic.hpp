@@ -23,14 +23,19 @@
 
 #include "misc/error.hpp"
 #include "maths/vec.hpp"
+#include "maths/rect.hpp"
 #include "misc/metaprog.hpp"
 #include "io/serialization.hpp"
 #include "internals_grid.hpp"
 
 #include <string>
 
+
 namespace mtools
 {
+
+    /* forward declaration of the Grid_basic class*/
+    template< size_t D, typename T, size_t NB_SPECIAL, size_t R> class Grid_factor;
 
 
     /**
@@ -152,12 +157,18 @@ namespace mtools
      }
      * @endcode
      **/
+
+
+
     template<size_t D, typename T, size_t R = internals_grid::defaultR<D>::val > class Grid_basic
     {
+
+        template<size_t D2, typename T2, size_t NB_SPECIAL2, size_t R2> friend class Grid_factor;
 
         typedef internals_grid::_box<D, T, R> *     _pbox;
         typedef internals_grid::_node<D, T, R> *    _pnode;
         typedef internals_grid::_leaf<D, T, R> *    _pleaf;
+
 
     public:
 
@@ -173,7 +184,7 @@ namespace mtools
          * @param   callDtors   true (default) if we should call the destructor of T object when memory
          *                      is released.
          **/
-        Grid_basic(bool callDtors = true) : _pcurrent(nullptr), _rangemin(1), _rangemax(-1), _callDtors(callDtors) { _createBaseNode(); }
+        Grid_basic(bool callDtors = true) : _pcurrent(nullptr), _rangemin(std::numeric_limits<int64>::max()), _rangemax(std::numeric_limits<int64>::min()), _callDtors(callDtors) { _createBaseNode(); }
 
 
         /**
@@ -181,7 +192,15 @@ namespace mtools
          *
          * @param   filename    Filename of the file.
          **/
-        Grid_basic(const std::string & filename) : _pcurrent(nullptr), _rangemin(1), _rangemax(-1), _callDtors(true) {load(filename);}
+        Grid_basic(const std::string & filename) : _pcurrent(nullptr), _rangemin(std::numeric_limits<int64>::max()), _rangemax(std::numeric_limits<int64>::min()), _callDtors(true) {load(filename);}
+        
+        
+        /**
+        * Constructor. Loads a grid from a file. If the loading fails, the grid is constructed empty.
+        *
+        * @param   filename    Filename of the file.
+        **/
+        Grid_basic(const char * str) : _pcurrent(nullptr), _rangemin(std::numeric_limits<int64>::max()), _rangemax(std::numeric_limits<int64>::min()), _callDtors(true) { load(std::string(str)); } // needed together with the std::string ctor to prevent implicit conversion to bool and call of the wrong ctor.
 
 
         /**
@@ -196,7 +215,20 @@ namespace mtools
          * Copy Constructor. Makes a Deep copy of the grid. The class T must be copyable by the copy
          * operator `T(const T&)`.
          **/
-        Grid_basic(const Grid_basic<D, T, R> & G) : _pcurrent(nullptr), _rangemin(1), _rangemax(-1), _callDtors(true)
+        Grid_basic(const Grid_basic<D, T, R> & G) : _pcurrent(nullptr), _rangemin(std::numeric_limits<int64>::max()), _rangemax(std::numeric_limits<int64>::min()), _callDtors(true)
+            {
+            static_assert(std::is_copy_constructible<T>::value, "The object T must be copy-constructible T(const T&) in order to use the copy constructor of the grid.");
+            this->operator=(G);
+            }
+
+
+        /**
+         * Copy constructor from a grid factor object. The class T must be copyable by the copy operator
+         * `T(const T&)` and the source object must not have special values.
+         *
+         * @param   G   The source Grid_factor object to copy.
+         **/
+        template<size_t NB_SPECIAL> Grid_basic(const Grid_factor<D, T, NB_SPECIAL, R> & G) : _pcurrent(nullptr), _rangemin(std::numeric_limits<int64>::max()), _rangemax(std::numeric_limits<int64>::min()), _callDtors(true)
             {
             static_assert(std::is_copy_constructible<T>::value, "The object T must be copy-constructible T(const T&) in order to use the copy constructor of the grid.");
             this->operator=(G);
@@ -205,9 +237,13 @@ namespace mtools
 
         /**
          * Assignement operator. Create a deep copy of G. The class T must be copyable by the copy
-         * operator T(const T&). The assignement operator `operator=(const T &)` is never used and need
-         * not be defined. If the grid is not empty, it is first reset : all the object inside are
+         * operator T(const T&) [the assignement operator `operator=(const T &)` is never used and need
+         * not be defined]. If the grid is not empty, it is first reset : all the object inside are
          * destroyed and their dtors are invoqued.
+         *
+         * @param   G   the grid to copy.
+         *
+         * @return  the object for chaining.
          **/
         Grid_basic<D, T, R> & operator=(const Grid_basic<D, T, R> & G)
             {
@@ -220,6 +256,18 @@ namespace mtools
             _callDtors = G._callDtors;
             return(*this);
             }
+
+
+        /**
+         * Assignment operator. Create a deep copy of G. The class T must be copyable by the copy
+         * operator T(const T&) and the source object must not have special values. If the grid is not
+         * empty, it is first reset.
+         *
+         * @param   G   The source Grid_factor object to copy.
+         *
+         * @return  The object for chaining.
+         **/
+        template<size_t NB_SPECIAL> Grid_basic<D, T, R> & operator=(const Grid_factor<D, T, NB_SPECIAL, R> & G);
 
 
         /** Resets the grid. Call the destructor of the object if the flag callDtors is set. */
@@ -273,17 +321,17 @@ namespace mtools
             try
                 {
                 _destroyTree();
-                uint64 ver;         ar & ver;      if (ver != 1) throw "wrong version";
-                uint64 d;           ar & d;        if (d != D) throw "wrong dimension";
-                uint64 r;           ar & r;        if (r != R) throw "wrong R parameter";
+                uint64 ver;         ar & ver;      if (ver != 1) { MTOOLS_DEBUG("wrong version"); throw ""; }
+                uint64 d;           ar & d;        if (d != D) { MTOOLS_DEBUG("wrong dimension"); throw ""; }
+                uint64 r;           ar & r;        if (r != R) { MTOOLS_DEBUG("wrong R parameter"); throw ""; }
                 std::string stype;  ar & stype;
-                uint64 sizeofT;     ar & sizeofT;  if (sizeofT != sizeof(T)) throw "wrong sizeof(T)";
+                uint64 sizeofT;     ar & sizeofT;  if (sizeofT != sizeof(T)) { MTOOLS_DEBUG("wrong sizeof(T)"); throw ""; }
                 ar & _callDtors;
                 ar & _rangemin;
                 ar & _rangemax;
                 int64 minSpec; ar & minSpec;
                 int64 maxSpec; ar & maxSpec;
-                if (minSpec <= maxSpec) throw "The file contain special objects hence must be opened using a Grid_factor instead of a Grid_basic object";
+                if (minSpec <= maxSpec) { MTOOLS_DEBUG("The file contain special objects hence must be opened using a Grid_factor instead of a Grid_basic object"); throw ""; }
                 _pcurrent = _deserializeTree(ar, nullptr);
                 }
             catch(...)
@@ -292,6 +340,7 @@ namespace mtools
                 _destroyTree();    // object are dumped into oblivion, may result in a memory leak.
                 _callDtors = true;
                 _createBaseNode();
+                MTOOLS_DEBUG("Aborting deserialization of Grid_basic object");
                 throw; // rethrow
                 }
             }
@@ -302,7 +351,7 @@ namespace mtools
          * the extension ".gz", ".gzip" or ".z".
          * 
          * Grid file for grid_Factor and Grid_basic are compatible so that the file can subsequently be
-         * opened with a Grid_factor object (provided the tmepalte parameters T, R and D are the same).
+         * opened with a Grid_factor object (provided the tempalte parameters T, R and D are the same).
          *
          * @param   filename    The filename to save.
          *
@@ -317,7 +366,11 @@ namespace mtools
                 OArchive ar(filename);
                 ar & (*this); // use the serialize method.
                 }
-            catch (...) {return false;} // error
+            catch (...) 
+                {
+                MTOOLS_DEBUG("Error saving Grid_basic object");
+                return false;
+                } // error
             return true; // ok
             }
 
@@ -340,14 +393,19 @@ namespace mtools
          *
          * @sa  class OArchive, class IArchive
          **/
-        bool load(std::string filename)
+        bool load(const std::string & filename)
             {
             try
                 {
                 IArchive ar(filename);
                 ar & (*this); // use the deserialize method.
                 }
-            catch (...) { _callDtors = false; _destroyTree(); _callDtors = true; _createBaseNode(); return false; } // error
+            catch (...) 
+                {
+                MTOOLS_DEBUG("Error loading Grid_basic object");
+                _callDtors = false; _destroyTree(); _callDtors = true; _createBaseNode(); 
+                return false; 
+                } // error
             return true; // ok
             }
 
@@ -583,8 +641,6 @@ namespace mtools
         static_assert(R > 0, "template parameter R (radius) must be non-zero");
         static_assert(std::is_constructible<T>::value || std::is_constructible<T, Pos>::value, "The object T must either be default constructible T() or constructible with T(const Pos &)");
 
-    // TODO FIX CONST CORRECTNESS, DIRTY MUTABLE...
-
 
         /* get sub method */
         inline T & _get(const Pos & pos) const
@@ -634,7 +690,6 @@ namespace mtools
         /* update _rangemin and _rangemax */
         inline void _updaterange(const Pos & pos) const
             {
-            if (_rangemax[0] < _rangemin[0]) { _rangemin = pos; _rangemax = pos; return; }
             for (size_t i = 0; i < D; i++) {if (pos[i] < _rangemin[i]) { _rangemin[i] = pos[i]; } else if (pos[i] > _rangemax[i]) { _rangemax[i] = pos[i]; } }
             }
 
@@ -726,6 +781,7 @@ namespace mtools
                 for (size_t i = 0; i < metaprog::power<3, D>::value; ++i) { p->tab[i] = _deserializeTree(ar, p); }
                 return p;
                 }
+            MTOOLS_DEBUG(std::string("Unknown tag [") + std::string(1, c) + "]");
             throw "";
             }
 
@@ -743,8 +799,8 @@ namespace mtools
                 _poolLeaf.deallocateAll();
                 }
             _pcurrent = nullptr;
-            _rangemin.clear((int64)1);
-            _rangemax.clear((int64)-1);
+            _rangemin.clear(std::numeric_limits<int64>::max());
+            _rangemax.clear(std::numeric_limits<int64>::min());
             return;
             }
 
@@ -857,6 +913,30 @@ namespace mtools
 
 }
 
+
+/* now we can include grid_factor */
+#include "grid_factor.hpp"
+
+
+namespace mtools
+{
+
+
+    template<size_t D, typename T, size_t R> template<size_t NB_SPECIAL> Grid_basic<D, T, R> & Grid_basic<D, T, R>::operator=(const Grid_factor<D, T, NB_SPECIAL, R> & G)
+        {
+        static_assert(std::is_copy_constructible<T>::value, "The object T must be copy constructible T(const T&) in order to use assignement operator= on the grid.");
+        MTOOLS_INSURE(G._specialRange() <= 0); // there must not be any special objects. 
+        _destroyTree();
+        _rangemin = G._rangemin;
+        _rangemax = G._rangemax;
+        _pcurrent = _copy(G._getRoot(), nullptr);
+        _callDtors = G._callDtors;
+        return(*this);
+        }
+
+
+
+}
 
 /* end of file */
 

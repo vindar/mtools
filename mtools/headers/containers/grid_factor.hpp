@@ -83,9 +83,8 @@ namespace mtools
     template < size_t D, typename T, size_t NB_SPECIAL = 256 , size_t R = internals_grid::defaultR<D>::val > class Grid_factor
     {
 
-
-    friend class Grid_factor; 
-
+        template<size_t D2, typename T2, size_t NB_SPECIAL2, size_t R2> friend class Grid_factor;
+        template<size_t D2, typename T2, size_t R2> friend class Grid_basic;
 
 
         typedef internals_grid::_box<D, T, R> *     _pbox;
@@ -101,7 +100,7 @@ namespace mtools
 
 
         /**
-         * Constructor. An empty grid (no objet of type T is created). Set minSpecial \> maxSpecial to
+         * Constructor. Construct an empty grid (no objet of type T is created). Set minSpecial \> maxSpecial to
          * disable special values.
          *
          * @param   minSpecial  The minimum value of the special objects.
@@ -128,25 +127,53 @@ namespace mtools
 
         /**
         * Destructor. Destroys the grid. The destructors of all the T objects in the grid are invoqued
-        * if the callDtor flag is set and are droped into oblivion otherwise.
+        * if the callDtor flag is set and are dropped into oblivion otherwise.
         **/
         ~Grid_factor() { _reset(); }
 
 
         /**
-         * Copy Constructor. Makes a Deep copy of the grid. The resulting grid is exactly the same as the
-         * source, with the same special value and the same statistics (bounding box and min/max value)
-         * and the same flag for calling the destructors.
+         * Copy Constructor. The resulting grid is exactly the same as the source, with the same special
+         * values and the same statistics (bounding box and min/max values) and the same flag for
+         * calling the destructors.
          * 
          * The template parameter NB_SPECIAL must be large enough to hold all the special values (which
-         * is necessarily the case if it is larger or equal to NB_SPECIAL of the source).
+         * is necessarily the case if it is larger or equal to NB_SPECIAL2 of the source).
          *
-         * @tparam  NB_SPECIAL2 Type of the nb special 2.
-         * @param   G   The const Grid_factor<D,T,NB_SPECIAL2,R> & to process.
+         * @param   G   the source Grid_factor to copy.
          **/
         template<size_t NB_SPECIAL2> Grid_factor(const Grid_factor<D, T, NB_SPECIAL2, R> & G)
             {
             MTOOLS_INSURE(((!G._existSpecial()) || (G._specialRange()<= NB_SPECIAL))); // make sure we can hold all the special element of the source.
+            reset(0, -1, true);
+            this->operator=(G);
+            }
+
+
+        /**
+        * Copy Constructor. The resulting grid is exactly the same as the source, with the same special
+        * values and the same statistics (bounding box and min/max values) and the same flag for
+        * calling the destructors.
+        *
+        * Version with the same template paramter NB_SPECIAL.
+        * 
+        * @param   G   the source Grid_factor to copy.
+        **/
+        Grid_factor(const Grid_factor<D, T, NB_SPECIAL, R> & G)
+            {
+            reset(0, -1, true);
+            this->operator=(G);
+            }
+
+
+        /**
+         * Copy Constructor. construct the object from a grid_basic. The special object range is set to
+         * [-1,0] (ie empty) so that there is no factorization done.
+         *
+         * @param   G   The basic_grid to process.
+         **/
+        Grid_factor(const Grid_basic<D, T, R> & G)
+            {
             reset(0, -1, true);
             this->operator=(G);
             }
@@ -184,9 +211,57 @@ namespace mtools
             _nbNormalObj = G._nbNormalObj;
             // copy the whole tree structure
             _pcurrent = _copyTree<NB_SPECIAL2>(nullptr, G._getRoot(), G);
-            simplify(); // make sure the object is in a valid factorized state
+       //     simplify(); // make sure the object is in a valid factorized state
             return(*this);
             }
+
+
+        /**
+        * Assignement operator. Create a deep copy of G. If the grid is not empty, it is first reset().
+        * The resulting grid is exactly the same a the source, with the same special value and the same
+        * statistics (bounding box and min max value).
+        *
+        * Version with the same template paramter NB_SPECIAL.
+        *
+        **/
+        Grid_factor<D, T, NB_SPECIAL, R> & operator=(const Grid_factor<D, T, NB_SPECIAL, R> & G)
+            {
+            return operator=<NB_SPECIAL>(G);
+            
+            if (this == (&G)) { return(*this); } // nothing to do
+            _reset(G._minSpec, G._maxSpec, G._callDtors); // reset the grid and set the special range and dtor flag
+            _rangemin = G._rangemin;    // same statistics
+            _rangemax = G._rangemax;    //
+            _minVal = G._minVal;        //
+            _maxVal = G._maxVal;        //
+            for (int64 i = 0; i < _specialRange(); i++)
+                {
+                _tabSpecNB[i] = G._tabSpecNB[i];
+                if (G._tabSpecObj[i] != nullptr)
+                    {
+                    _tabSpecObj[i] = _poolSpec.allocate();
+                    new(_tabSpecObj[i]) T(*(G._tabSpecObj[i]));
+                    }
+                }
+            _nbNormalObj = G._nbNormalObj;
+            // copy the whole tree structure
+            _pcurrent = _copyTree<NB_SPECIAL>(nullptr, G._getRoot(), G);
+   //         simplify(); // make sure the object is in a valid factorized state
+            return(*this);
+            }
+
+
+
+        /**
+         * Assignment operator. Create a deep copy of a basic_grid object into this Grid_factor object.
+         * The object is reset if it is not empty and the special value range is set to [-1,0] (ie
+         * empty) so there is no factorization.
+         *
+         * @param   G   The basic_grid to copy.
+         *
+         * @return  the object for chaining.
+         **/
+        Grid_factor<D, T, NB_SPECIAL, R> & operator=(const Grid_basic<D, T, R> & G); // definition below to prevent circular inclusion
 
 
         /**
@@ -210,7 +285,11 @@ namespace mtools
                 OArchive ar(filename);
                 ar & (*this); // use the serialize method.
                 }
-            catch (...) { return false; } // error
+            catch (...) 
+                {
+                MTOOLS_DEBUG("Error saving Grid_factor object");
+                return false; 
+                } // error
             return true; // ok
             }
 
@@ -228,14 +307,19 @@ namespace mtools
          *
          * @return  true if it succeeds, false if it fails.
          **/
-        bool load(std::string filename)
+        bool load(const std::string & filename)
             {
             try
                 {
                 IArchive ar(filename);
                 ar & (*this); // use the deserialize method.
                 }
-            catch (...) { reset(0, -1, true); return false; } // error
+            catch (...) 
+                {
+                MTOOLS_DEBUG("Error loading Grid_factor object");
+                reset(0, -1, true); 
+                return false; 
+                } // error
             return true; // ok
             }
 
@@ -251,7 +335,7 @@ namespace mtools
         **/
         void serialize(OArchive & ar) const
             {
-            simplify(); // make sure the object is in a valid factorized state before saving it.
+   //         simplify(); // make sure the object is in a valid factorized state before saving it.
             ar << "\nBegining of Grid_factor<" << D << " , [" << std::string(typeid(T).name()) << "] , " << NB_SPECIAL << " , " << R << ">\n";
             ar << "Version";    ar & ((uint64)1); ar.newline();
             ar << "Template D"; ar & ((uint64)D); ar.newline();
@@ -295,17 +379,17 @@ namespace mtools
             try
                 {
                 _reset(-1, 0, true); // reset the object, do not create the root node
-                uint64 ver;         ar & ver;      if (ver != 1) throw "wrong version";
-                uint64 d;           ar & d;        if (d != D) throw "wrong dimension";
-                uint64 r;           ar & r;        if (r != R) throw "wrong R parameter";
+                uint64 ver;         ar & ver;      if (ver != 1) { MTOOLS_DEBUG("wrong version"); throw ""; }
+                uint64 d;           ar & d;        if (d != D) { MTOOLS_DEBUG("wrong dimension"); throw ""; }
+                uint64 r;           ar & r;        if (r != R) { MTOOLS_DEBUG("wrong R parameter"); throw ""; }
                 std::string stype;  ar & stype;
-                uint64 sizeofT;     ar & sizeofT;  if (sizeofT != sizeof(T)) throw "wrong sizeof(T)";
+                uint64 sizeofT;     ar & sizeofT;  if (sizeofT != sizeof(T)) { MTOOLS_DEBUG("wrong sizeof(T)"); throw ""; }
                 ar & _callDtors;
                 ar & _rangemin;
                 ar & _rangemax;
                 ar & _minSpec;
                 ar & _maxSpec;
-                if (NB_SPECIAL < _specialRange()) throw "NB_SPECIAL too small to fit all special values";
+                if (NB_SPECIAL < _specialRange()) { MTOOLS_DEBUG("NB_SPECIAL too small to fit all special values"); throw ""; }
                 for (int64 i = 0; i < _specialRange(); i++)
                     {
                     bool b; ar & b;
@@ -322,6 +406,7 @@ namespace mtools
                 {
                 callDtors(false); // prevent calling the destructor of object when we release memory (since we do not know whch one may be in an invalid state)
                 reset(0, -1, true); // put the object in a valid state
+                MTOOLS_DEBUG("Aborting deserialization of Grid_factor object");
                 throw; // rethrow
                 }
             }
@@ -368,11 +453,16 @@ namespace mtools
 
         /**
          * Make sure the object is in a valid factorized state and recompute the statistic about the T
-         * object inside. This method should be called after a direct modification of the internal state
-         * of the object (by using access() for example).
+         * object inside.
+         * 
+         * This method must be called after a direct modification of the internal state of the object
+         * using the access() method.
+         * 
+         * If acess() is not used, the method is useless and should not be called as it can be time
+         * consuming...
          **/
         void simplify() const
-            {
+            {                     
             if (!_existSpecial()) return; // nothing to do if there is no special objects
             memset(_tabSpecNB, 0, sizeof(_tabSpecNB));   // clear the count for special objects
             _nbNormalObj = 0; // reset the number of normal objects
@@ -487,7 +577,6 @@ namespace mtools
         inline int64 maxValue() const { return _minVal; }
 
 
-
         /**
         * Sets the value at a given site. If the value at the site does not exist prior to the call of the method, 
         * it is first created and then the assignement is performed.
@@ -496,6 +585,24 @@ namespace mtools
         * @param   val The value to set.
         **/
         inline void set(const Pos & pos, const T & val) { _set(pos,&val); }
+
+
+        /**
+        * Set a value at a given position. Dimension 1 specialization.
+        **/
+        inline void set(int64 x, const T & val) { static_assert(D == 1, "template parameter D must be 1"); return _set(Pos(x),&val); }
+
+
+        /**
+        * Set a value at a given position. Dimension 1 specialization.
+        **/
+        inline void set(int64 x, int64 y, const T & val) { static_assert(D == 2, "template parameter D must be 2"); return _set(Pos(x,y), &val); }
+
+
+        /**
+        * Set a value at a given position. Dimension 1 specialization.
+        **/
+        inline void set(int64 x, int64 y, int64 z, const T & val) { static_assert(D == 3, "template parameter D must be 3"); return _set(Pos(x,y,z), &val); }
 
 
         /**
@@ -509,15 +616,50 @@ namespace mtools
 
 
         /**
+        * get a value at a given position. Same as the get() method.
+        * This creates the object if it does not exist yet.
+        **/
+        inline const T & operator[](const Pos & pos) const { return _get(pos); }
+
+
+        /**
+        * get a value at a given position. Same as the get() method.
+        * This creates the object if it does not exist yet.
+        **/
+        inline const T & operator()(const Pos & pos) const { return _get(pos); }
+
+
+        /**
+        * get a value at a given position. Dimension 1 specialization.
+        * This creates the object if it does not exist yet.
+        **/
+        inline const T & operator()(int64 x) const { static_assert(D == 1, "template parameter D must be 1"); return _get(Pos(x)); }
+
+
+        /**
+        * get a value at a given position. Dimension 2 specialization.
+        * This creates the object if it does not exist yet.
+        **/
+        inline const T & operator()(int64 x, int64 y) const { static_assert(D == 2, "template parameter D must be 2"); return _get(Pos(x, y)); }
+
+
+        /**
+        * get a value at a given position. Dimension 3 specialization.
+        * This creates the object if it does not exist yet.
+        **/
+        inline const T & operator()(int64 x, int64 y, int64 z) const { static_assert(D == 3, "template parameter D must be 3"); return _get(Pos(x, y, z)); }
+
+
+        /**
          * Access the element at a given position. If the element does not exist, it is created first.
          * The refrence returned is non const hence may be modified.
          * 
          * @warning NEVER EVER MODIFY THE VALUE OF A SPECIAL ELEMENT AS IT MAY BE SHARED BY MANY OTHER
-         * SITES (YET, PROBABLY NOT ALL OF THEM EITHER). It is safe to change the value of a 'normal'
-         * element to that of another 'normal' element. It is alos possible to change the value of a
-         * normal element to that of a special element but it is necessary to call 'Simplify()'
-         * afterward to insure that the whole grid goes back in its fully factorized state. Otherwise,
-         * anything can happen...
+         * SITES (BUT PROBABLY NOT ALL OF THEM EITHER). It is safe to change the value of a 'normal'
+         * element to that of another 'normal' element. It is also possible to change the value of a
+         * normal element to that of a special element but you should call 'Simplify()' afterward to
+         * insure that the whole grid goes back in its fully factorized state. Otherwise, anything can
+         * happen...
          *
          * @param   pos The position to access.
          *
@@ -572,6 +714,26 @@ namespace mtools
                 }
             }
 
+
+        /**
+        * peek at a value at a given position. Dimension 1 specialization.
+        * Returns nullptr if the object at this position is not created.
+        **/
+        inline const T * peek(int64 x) const { static_assert(D == 1, "template parameter D must be 1"); return peek(Pos(x)); }
+
+
+        /**
+        * peek at a value at a given position. Dimension 2 specialization.
+        * Returns nullptr if the object at this position is not created.
+        **/
+        inline const T * peek(int64 x, int64 y) const { static_assert(D == 2, "template parameter D must be 2"); return peek(Pos(x, y)); }
+
+
+        /**
+        * peek at a value at a given position. Dimension 3 specialization.
+        * Returns null if the object at this position is not created.
+        **/
+        inline const T * peek(int64 x, int64 y, int64 z) const { static_assert(D == 3, "template parameter D must be 3"); return peek(Pos(x, y, z)); }
 
 
         /**
@@ -1049,7 +1211,38 @@ namespace mtools
                 for (size_t i = 0; i < metaprog::power<3, D>::value; ++i) { p->tab[i] = _deserializeTree(ar, p); }
                 return p;
                 }
+            MTOOLS_DEBUG(std::string("Unknown tag [") + std::string(1,c) + "]");
             throw "";
+            }
+
+
+
+        /* recursive method for copying a tree from G used by operator=(Grid_basic) */
+        _pbox _copyTreeFromGridBasic(_pbox father, _pbox p)
+            {
+            MTOOLS_ASSERT(p != nullptr);
+            if (p->isLeaf())
+                { // we must copy a leaf
+                _pleafFactor F = _poolLeaf.allocate();
+                F->center = p->center;
+                F->rad = p->rad;
+                F->father = father;
+                memset(F->count, 0, sizeof(F->count)); // reset the number of each type of special object
+                for (size_t x = 0; x < metaprog::power<(2 * R + 1), D>::value; ++x) { new(F->data + x) T((((_pleafFactor)p)->data[x])); }
+                _nbNormalObj += metaprog::power<(2 * R + 1), D>::value;
+                return F;
+                }
+            // we must copy a node
+            _pnode N = _poolNode.allocate();
+            N->center = p->center;
+            N->rad = p->rad;
+            N->father = father;
+            for (size_t i = 0; i < metaprog::power<3, D>::value; ++i)
+                {
+                const _pbox B = ((_pnode)p)->tab[i];
+                N->tab[i] = ((B == nullptr) ? nullptr : _copyTreeFromGridBasic(N, B));
+                }
+            return N;
             }
 
 
@@ -1226,18 +1419,27 @@ namespace mtools
          * and normal objects */
         void _recountBelow(_pbox N) const
             {
-            if (N == nullptr) return; // nothing to do
-            if (_getSpecialObject(N) != nullptr) return; // special node, nothing to do
-            // we have a real pointer (no dummy or nullptr)
+            MTOOLS_ASSERT(((N != nullptr) && (_getSpecialObject(N) == nullptr))); // must be a 'normal node'
             if (N->isLeaf()) // we have a leaf
                 {
                 _recountLeaf((_pleafFactor)N); // we recount it
+                return;
                 }
-            else
-                { // we have a node
-                for (size_t i = 0; i < metaprog::power<3, D>::value; ++i) // we iterate over the children
+            // we have a node
+            for (size_t i = 0; i < metaprog::power<3, D>::value; ++i) // we iterate over the children
+                {
+                const _pbox b = ((_pnode)N)->tab[i];
+                if ( b != nullptr) // skip null nodes
                     {
-                    _recountBelow(((_pnode)N)->tab[i]); // recount each subtree
+                    if (_getSpecialObject(b) != nullptr)
+                        {
+                        int64 n = 2 * (N->rad) + 1; int64 pow = 1; for (size_t i = 0; i < D; i++) { pow *= n; }
+                        _tabSpecNB[_getSpecialValue(b) - _minSpec] += pow; // add to the correct number of special object to the global counter
+                        }
+                    else
+                        { // normal node
+                        _recountBelow(((_pnode)N)->tab[i]); // we recount it...
+                        }
                     }
                 }
             return;
@@ -1690,6 +1892,25 @@ namespace mtools
 
 
     };
+
+}
+
+/* now we can include grid_basic */
+#include "grid_basic.hpp"
+
+namespace mtools
+{
+
+    /* implementation of the assignement operator from grid_basic */
+    template<size_t D, typename T, size_t NB_SPECIAL, size_t R> Grid_factor<D, T, NB_SPECIAL, R> & Grid_factor<D, T, NB_SPECIAL, R>::operator=(const Grid_basic<D, T, R> & G)
+        {
+        _reset(0,-1, G._callDtors); // reset the grid and set the special range and dtor flag
+        _rangemin = G._rangemin;    // same statistics
+        _rangemax = G._rangemax;    //
+        _pcurrent = _copyTreeFromGridBasic(nullptr, G._getRoot());  // copy the whole tree structure
+        return *this;
+        }
+
 
 
 }
