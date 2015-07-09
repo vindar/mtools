@@ -399,11 +399,11 @@ int main()
 
     Chronometer();
     
-    //testWalk(1000000000);
+    testWalk(10000000);
 
     cout << "\ntime = " << Chronometer() << "\n"; cout << GF.toString(false);
 
-    GF.load("walklong2.ar.gz");
+    //GF.save("walklong2.ar.gz");
 
     GF.callDtors(false);
 
