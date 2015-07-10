@@ -388,6 +388,9 @@ void fillSqr(iRect R, int val)
 
 int main()
     {
+
+
+
     /*
     fillSqr(iRect(-7, 7, -7, 7), 2);
 
@@ -399,7 +402,7 @@ int main()
 
     Chronometer();
     
-    testWalk(10000000);
+    testWalk(100000);
 
     cout << "\ntime = " << Chronometer() << "\n"; cout << GF.toString(false);
 
