@@ -390,8 +390,7 @@ int main()
     {
 
 
-
-    /*
+/*
     fillSqr(iRect(-7, 7, -7, 7), 2);
 
     GF.set({ 3,3 }, 1);
@@ -404,6 +403,9 @@ int main()
     
     testWalk(100000);
 
+
+  
+    
     cout << "\ntime = " << Chronometer() << "\n"; cout << GF.toString(false);
 
     //GF.save("walklong2.ar.gz");

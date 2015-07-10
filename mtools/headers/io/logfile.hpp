@@ -48,14 +48,14 @@ namespace mtools
          * @param   append              True if an already existing file should be appended. False to
          *                              truncate it (default true).
          * @param   writeheader         True to write a header with the date at the beginning of the file
-         *                              (default true). If write header is set to false, then the log file is
-         *                              not created until the first write (and therefore is not create at all
-         *                              if nothing gets written on it).
-         * @param   wenc                (default enc_iso8859). The encoding to use when writing wide
-         *                              chars. Regular char strings are written in raw form without encoding
-         *                              conversion.
+         *                              (default true).
+         * @param   delayfilecreation   True to delay the creation of the logfile until the first time
+         *                              something is written in it (default true).
+         * @param   wenc                The encoding to use when writing wide chars. Regular char strings
+         *                              are written in raw form without encoding conversion (default
+         *                              enc_iso8859).
          **/
-        LogFile(const std::string & fname, bool append = true, bool writeheader = true, StringEncoding wenc = enc_iso8859);
+        LogFile(const std::string & fname, bool append = true, bool writeheader = true, bool delayfilecreation = true, StringEncoding wenc = enc_iso8859);
 
 
         /** Destructor. */
@@ -86,11 +86,7 @@ namespace mtools
 
     private:
 
-
-        /** write the header of the file */
-        void _writeheader();
-
-        /** open the file is not yet done */
+        /** open the file is not yet done and write the header if required */
         void _openfile();
 
 
@@ -104,7 +100,7 @@ namespace mtools
         StringEncoding _m_wenc;             ///< encoding format used for writing wide strings to file.
         std::ofstream * _m_log;             ///< the log file stream.
         bool  _append;                      ///< append to file flag
-    
+        bool  _header;                      ///< add an header
     };
 
 
