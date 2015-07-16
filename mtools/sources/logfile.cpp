@@ -35,32 +35,32 @@ namespace mtools
 {
 
 
-        LogFile::LogFile(const std::string & fname, bool append, bool writeheader, StringEncoding wenc) : _m_filename(fname), _m_wenc(wenc), _m_log(fname, std::ofstream::out | (append ? std::ofstream::app : std::ofstream::trunc))
+        LogFile::LogFile(const std::string & fname, bool append, bool writeheader, bool delayfilecreation, StringEncoding wenc) : _m_filename(fname), _m_wenc(wenc), _m_log(nullptr), _append(append), _header(writeheader)
             {
-            if (writeheader) { _writeheader(); }
+            if (!delayfilecreation) { _openfile(); }
             return;
             }
 
 
-        LogFile::~LogFile() { _m_log.close(); }
+        LogFile::~LogFile() { delete _m_log; }
 
 
-        void LogFile::_writeheader()
+        void LogFile::_openfile()
             {
-            std::time_t result = std::time(nullptr);
-            (*this) << "\n"
-                << "*************************************************************\n"
-                << "Log file [" + _m_filename + "] created "
-                << std::asctime(std::localtime(&result)) 
-                << "*************************************************************\n";
+            if (_m_log != nullptr) return;
+            _m_log = new std::ofstream(_m_filename, std::ofstream::out | (_append ? std::ofstream::app : std::ofstream::trunc));
+            if (_header)
+                {
+                std::time_t result = std::time(nullptr);
+                (*this) << "\n"
+                    << "*************************************************************\n"
+                    << "Log file [" + _m_filename + "] created "
+                    << std::asctime(std::localtime(&result))
+                    << "*************************************************************\n";
+                }
             }
 
-
- 
-
-
-
-
+      
 }
 
 

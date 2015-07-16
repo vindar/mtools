@@ -44,15 +44,18 @@ namespace mtools
         /**
          * Constructor. Creates the log file.
          *
-         * @param   fname       Name of the file.
-         * @param   append      True if an already existing file should be appended. False to truncate it
-         *                      (default true).
-         * @param   writeheader True to write a header with the date at the beginning of the file
-         *                      (default true).
-         * @param   wenc        (default enc_iso8859). The encoding to use when writing wide chars.
-         *                      Regular char strings are written in raw form without encoding conversion.
+         * @param   fname               Name of the file.
+         * @param   append              True if an already existing file should be appended. False to
+         *                              truncate it (default true).
+         * @param   writeheader         True to write a header with the date at the beginning of the file
+         *                              (default true).
+         * @param   delayfilecreation   True to delay the creation of the logfile until the first time
+         *                              something is written in it (default true).
+         * @param   wenc                The encoding to use when writing wide chars. Regular char strings
+         *                              are written in raw form without encoding conversion (default
+         *                              enc_iso8859).
          **/
-        LogFile(const std::string & fname, bool append = true, bool writeheader = true, StringEncoding wenc = enc_iso8859);
+        LogFile(const std::string & fname, bool append = true, bool writeheader = true, bool delayfilecreation = true, StringEncoding wenc = enc_iso8859);
 
 
         /** Destructor. */
@@ -68,8 +71,9 @@ namespace mtools
          **/
         template<class T> LogFile & operator<<(const T & v)
             {
-            _m_log << toString(v, _m_wenc);
-            _m_log.flush();
+            _openfile();
+            (*_m_log) << toString(v, _m_wenc);
+            (*_m_log).flush();
             return(*this);
             }
 
@@ -82,19 +86,21 @@ namespace mtools
 
     private:
 
+        /** open the file is not yet done and write the header if required */
+        void _openfile();
 
-        /** write the header of the file */
-        void _writeheader();
 
         LogFile(const LogFile &) = delete;
         LogFile(LogFile &&) = delete;
         LogFile & operator=(const LogFile &) = delete;
         LogFile & operator=(LogFile &&) = delete;
 
-        std::string _m_filename;        ///< name of the log file.
-        StringEncoding _m_wenc;         ///< encoding format used for writing wide strings to file.
-        std::ofstream _m_log;           ///< the log file stream.
 
+        std::string _m_filename;            ///< name of the log file.
+        StringEncoding _m_wenc;             ///< encoding format used for writing wide strings to file.
+        std::ofstream * _m_log;             ///< the log file stream.
+        bool  _append;                      ///< append to file flag
+        bool  _header;                      ///< add an header
     };
 
 
