@@ -63,7 +63,9 @@ You can try the test program to check that everything is ok.
 8) The example directory contains sample project demonstrating how to use
 the library. Before, compiling the example, you must define yet another 
 environement variable 'MTOOLS_LIB' pointing to the base directory of the 
-library (i.e. the directory containing this file).
+library (i.e. the directory containing this file). You can define the env.
+variable directly or you can run the 'setEnvVar-mtools.bat' script as 
+administrator. 
 
 NOTE: If you use mtools::cout before 'main()' starts, you should probably 
 use the mtools version linked against the DLL version of FLTK as it will 
