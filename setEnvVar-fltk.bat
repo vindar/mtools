@@ -9,11 +9,11 @@ if '%errorlevel%' NEQ '0' (
 
 CD /D "%~dp0"
 
-echo This script must be run from the base directory of the mtools library.
-echo Setting the global environment variables MTOOLS_LIB....
+echo This script must be run from the base directory of the fltk library.
+echo Setting the global environment variable FLTK_LIB....
 echo on
 
-setx /m MTOOLS_LIB "%CD%\\" 
+setx /m FLTK_LIB "%CD%\\" 
 
 echo off
 echo done.
