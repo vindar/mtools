@@ -1,6 +1,6 @@
 /***********************************************
  * Project : demoBM
- * Demo of Brownian motion. 
+ * Demo of a simple simulation of brownian motion. 
  ***********************************************/
 #include "stdafx.h" // pre-compiled header. 
 
