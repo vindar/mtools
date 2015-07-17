@@ -87,14 +87,14 @@ namespace mtools
 
 
         /**
-         * Clears the screen. This does not erase the logfile but it inserts a separator. 
+         * Clears the screen. This does not erase the logfile but it inserts a separator.
          **/
         void clear();
 
 
         /**
          * Print something in the console. Uses the toString() conversion function to convert the object
-         * into a std::string. 
+         * into a std::string.
          *
          * @tparam  T   Type of the object.
          * @param   O   The object to print.
@@ -105,9 +105,9 @@ namespace mtools
 
 
         /**
-         * Get an object from the console. Use the fromString() conversion to convert the std::string into 
-         * an object. 
-         * 
+         * Get an object from the console. Use the fromString() conversion to convert the std::string into
+         * an object.
+         *
          * @tparam  T   Type of the object.
          * @param   O   A reference to store the object into.
          *
@@ -115,10 +115,11 @@ namespace mtools
          **/
         template<typename T> Console & operator>>(T & O)
             {
+            std::string o = (_showDefaultInputValue ? mtools::toString(O) : "");
             std::string s;
             while (1)
                 {
-                s = _getText();
+                s = _getText(o);
                 size_t nb = mtools::fromString(s, O);
                 if ((s.length() != 0) && (nb == s.length())) { return *this; }
                 }
@@ -139,11 +140,31 @@ namespace mtools
         /**
         * Query a char from the console.
         *
-        * @param [in,out]  c   The char to fill. 
+        * @param [in,out]  c   The char to fill.
         *
         * @return  The console for chaining
         **/
         Console & operator>>(char & c);
+
+
+        /**
+         * Determines if we print the default (ie current) value of the object when query of a new value
+         * using the >> operator. By default, the flag is set to false so there is no default value.
+         *
+         * @return  true if we use the current vlaue of the oject as the default value when using the >>
+         *          operator.
+         **/
+        bool useDefaultInputValue() const { return _showDefaultInputValue; }
+
+
+        /**
+         * Choose if we should, from now on, print a default value for the object when a value is
+         * queried via the >> operator.
+         *
+         * @param   newstatus   true to print the current value of the object as default value when using
+         *                      >> operator and false to print nothing.
+         **/
+        void useDefaultInputValue(bool newstatus) { _showDefaultInputValue = newstatus; }
 
 
         /**
@@ -200,8 +221,7 @@ namespace mtools
 
         private:
 
-
-        std::string _getText();
+        std::string _getText(const std::string & initText = "");
         void _disableConsole();
         void _print(const std::string & s);
         void _makeWindow();
@@ -220,11 +240,13 @@ namespace mtools
 
         std::atomic<bool>   _enableLogging;
         std::atomic<bool>   _enableScreen;
+        std::atomic<bool>   _showDefaultInputValue;
 
         std::string         _consoleName;
         mtools::LogFile *   _logfile;
 
         static int          _consoleNumber;
+
 
         friend class mtools::internals_console::CoutConsole;
 
@@ -248,13 +270,16 @@ namespace mtools
             template<typename T> CoutConsole & operator>>(T & O) { _get(0)->operator>>(O); return(*this); }
             void clear() { _get(0)->clear(); }
             int getKey() { return _get(0)->getKey(); }
+            bool useDefaultInputValue() { return _get(0)->useDefaultInputValue(); }
+            void useDefaultInputValue(bool newstatus) { _get(0)->useDefaultInputValue(newstatus); }
             void enableLogFile() { _get(0)->enableLogFile(); }
             void disableLogFile() { _get(0)->disableLogFile(); }
             void enableScreenOutput() { _get(0)->enableScreenOutput(); }
             void disableScreenOutput() { _get(0)->disableScreenOutput(); }
             void resize(int x, int y, int w, int h) { _get(0)->resize(x,y,w,h); }
             void move(int x, int y) { _get(0)->move(x, y); }
-            private:
+
+        private:
             Console * _get(int);
             CoutConsole(const CoutConsole&) = delete;
             CoutConsole & operator=(const CoutConsole&) = delete;

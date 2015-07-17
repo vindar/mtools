@@ -161,11 +161,11 @@ namespace mtools
                 pressText->hide();
                 }
 
-            void startInput()
+            void startInput(const std::string * str)
                 {
                 entered = 0;
                 inputOn = true;
-                input->value("");
+                input->value((str == nullptr) ? "" : str->c_str());
                 subBox->resizable(input);
                 input->resize(0, 0, subBox->w() - 35, 25);
                 input->show();
@@ -274,14 +274,14 @@ namespace mtools
 
 
 
-    Console::Console(const std::string & name, bool showAtCreation) :  _waiting_text(), _tl(0), _CW(nullptr),  _disabled(0), _enableLogging(true), _enableScreen(true), _consoleName(name)
+    Console::Console(const std::string & name, bool showAtCreation) :  _waiting_text(), _tl(0), _CW(nullptr),  _disabled(0), _enableLogging(true), _enableScreen(true), _showDefaultInputValue(false), _consoleName(name)
         {
         _logfile = new LogFile(_consoleName + ".txt");
         if (showAtCreation) { _startProtect(); _endProtect(); }
         }
 
 
-    Console::Console() : _waiting_text(), _tl(0), _CW(nullptr), _disabled(0) , _enableLogging(true), _enableScreen(true)
+    Console::Console() : _waiting_text(), _tl(0), _CW(nullptr), _disabled(0) , _enableLogging(true), _enableScreen(true), _showDefaultInputValue(false)
         {
         ++_consoleNumber;
         _consoleName = std::string("Console-") + toString(_consoleNumber);
@@ -373,11 +373,11 @@ namespace mtools
         _endProtect();
         }
 
-
-    std::string Console::_getText()
+    
+    std::string Console::_getText(const std::string & initText)
         {
         if (!_startProtect()) { return std::string(""); }
-        mtools::IndirectMemberProc<internals_console::ConsoleWidget> proxy1(*_CW, &internals_console::ConsoleWidget::startInput);
+        mtools::IndirectMemberProc<internals_console::ConsoleWidget, const std::string *> proxy1(*_CW, &internals_console::ConsoleWidget::startInput, &initText);
         mtools::runInFLTKThread(proxy1);
         while (((internals_console::ConsoleWidget*)(_CW))->entered == 0)
             {
@@ -390,6 +390,7 @@ namespace mtools
         _endProtect();
         return res;
         }
+
 
 
     Console & Console::operator>>(bool & b)

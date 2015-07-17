@@ -388,7 +388,10 @@ void fillSqr(iRect R, int val)
 
 int main()
     {
-
+    cout.useDefaultInputValue(true);
+    cout << "Hello World\n";
+    int i = 10;
+    cout >> i;
 
 /*
     fillSqr(iRect(-7, 7, -7, 7), 2);
