@@ -53,6 +53,7 @@ before_mtools:
 	@echo
 	@echo "*************************************"
 	@echo "**** Building the mtools library ****"
+	@echo "**** Release version             ****"		
 	@echo "*************************************"
 	@test -d $(OUTDIR_MTOOLS) || mkdir -p $(OUTDIR_MTOOLS)
 	@test -d $(OBJDIR_MTOOLS) || mkdir -p $(OBJDIR_MTOOLS)
@@ -77,6 +78,7 @@ before_test:
 	@echo
 	@echo "****************************************"
 	@echo "**** Building mtools's test program ****"
+	@echo "**** Release version                ****"		
 	@echo "****************************************"
 	@test -d $(OUTDIR_TEST) || mkdir -p $(OUTDIR_TEST)
 	@test -d $(OBJDIR_TEST) || mkdir -p $(OBJDIR_TEST)

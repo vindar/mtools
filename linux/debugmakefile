@@ -11,11 +11,11 @@ OUTDIR = bin
 HEADERDIR_MTOOLS = ../mtools/headers
 
 SRCDIR_MTOOLS = ../mtools/sources
-OBJDIR_MTOOLS = $(OBJDIR)/mtools
+OBJDIR_MTOOLS = $(OBJDIR)/mtoolsd
 OUTDIR_MTOOLS = $(OUTDIR)
 SRC_MTOOLS = $(wildcard $(SRCDIR_MTOOLS)/*.cpp)
 OBJ_MTOOLS = $(addprefix $(OBJDIR_MTOOLS)/, $(notdir $(SRC_MTOOLS:.cpp=.o)))
-OUT_MTOOLS = $(OUTDIR_MTOOLS)/libmtools.a
+OUT_MTOOLS = $(OUTDIR_MTOOLS)/libmtoolsd.a
 PCHDIR_MTOOLS = ../mtools
 PCHFILE_MTOOLS = stdafx_mtools.h
 PCHOBJ_MTOOLS = $(OBJDIR_MTOOLS)/$(PCHFILE_MTOOLS).gch
@@ -23,11 +23,11 @@ INC_MTOOLS = -I$(OBJDIR_MTOOLS) -I$(HEADERDIR_MTOOLS)
 CXXFLAGS_MTOOLS = `fltk-config --cxxflags` -std=c++11 -g -O0
 
 SRCDIR_TEST = ../test/sources
-OBJDIR_TEST = $(OBJDIR)/test
+OBJDIR_TEST = $(OBJDIR)/testd
 OUTDIR_TEST = $(OUTDIR)
 SRC_TEST = $(wildcard $(SRCDIR_TEST)/*.cpp)
 OBJ_TEST = $(addprefix $(OBJDIR_TEST)/, $(notdir $(SRC_TEST:.cpp=.o)))
-OUT_TEST = $(OUTDIR_TEST)/test
+OUT_TEST = $(OUTDIR_TEST)/testd
 PCHDIR_TEST = ../test
 PCHFILE_TEST = stdafx_test.h
 PCHOBJ_TEST = $(OBJDIR_TEST)/$(PCHFILE_TEST).gch
@@ -53,6 +53,7 @@ before_mtools:
 	@echo
 	@echo "*************************************"
 	@echo "**** Building the mtools library ****"
+	@echo "**** Debug version               ****"	
 	@echo "*************************************"
 	@test -d $(OUTDIR_MTOOLS) || mkdir -p $(OUTDIR_MTOOLS)
 	@test -d $(OBJDIR_MTOOLS) || mkdir -p $(OBJDIR_MTOOLS)
@@ -77,6 +78,7 @@ before_test:
 	@echo
 	@echo "****************************************"
 	@echo "**** Building mtools's test program ****"
+	@echo "**** Debug version                  ****"	
 	@echo "****************************************"
 	@test -d $(OUTDIR_TEST) || mkdir -p $(OUTDIR_TEST)
 	@test -d $(OBJDIR_TEST) || mkdir -p $(OBJDIR_TEST)
