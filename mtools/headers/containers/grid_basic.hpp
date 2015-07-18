@@ -130,7 +130,7 @@ namespace mtools
         /**
         * Constructor. Loads a grid from a file. If the loading fails, the grid is constructed empty.
         *
-        * @param   filename    Filename of the file.
+        * @param   str    Filename of the file.
         **/
         Grid_basic(const char * str) : _pcurrent(nullptr), _rangemin(std::numeric_limits<int64>::max()), _rangemax(std::numeric_limits<int64>::min()), _callDtors(true) { load(std::string(str)); } // needed together with the std::string ctor to prevent implicit conversion to bool and call of the wrong ctor.
 
