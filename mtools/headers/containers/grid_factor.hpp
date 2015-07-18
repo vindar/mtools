@@ -722,6 +722,9 @@ namespace mtools
          * Return a pointer to the object at a given position. If the value at the site was not yet
          * created, returns nullptr. This method does not modify the object at all and is particularly
          * suited when drawing the lattice using, for instance, the LatticeDrawer class.
+         * 
+         *  @warning Contrarily to the peek() method for the Grid_basic class, this method is NOT
+         *  threadsafe. No other peek/get/set should occur simultaneously !
          *
          * @param   pos The position to peek.
          *
