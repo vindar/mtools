@@ -43,9 +43,9 @@ namespace mtools
 
 
 /**
- * The plotter2D class. Take an element of type Plotter2DObj and display it.
+ * The plotter2D class. The main plotter window. 
  *
- * Use the following global factory method to construct objects that can be insered in the
+ * Use the following global factory methods to construct objects which can be inserted into the
  * plotter:
  *
  * - FUNCTION:    "auto F = makePlot2DFun(fun,[mindomain],[maxdomain]);"
@@ -79,7 +79,8 @@ class Plotter2D
 
     /**
      * Constructor. Create a plotter and insert a plot object.
-     *
+     * The plotter is not shown on screen. Call `plot()` or `startplot()` to display it.
+	 *
      * @param [in,out]  obj the object to draw or nullptr if there are none right now (default).
      * @param   addAxes     true to add a Plot2DAxes object on top.
      * @param   addGrid     true to add a Plot2DGrid object on top.
@@ -94,6 +95,7 @@ class Plotter2D
 
     /**
      * Constructor. Create an initially empty plotter.
+     * The plotter is not shown on screen. Call `plot()` or `startplot()` to display it.
      *
      * @param   addAxes true to add a Plot2DAxes object on top.
      * @param   addGrid true to add a Plot2DGrid object on top.
@@ -106,23 +108,23 @@ class Plotter2D
 
 
     /**
-     * Destructor. If there is an inserted object, it is removed but it is not deleted.
+     * Destructor. If there are object inserted, they are removed (but not deleted).
      **/
     ~Plotter2D();
 
 
     /**
-     * Insert a Plotter2DObj into the plotter. Remove the current object if there are any. The
-     * inserted object can possibly change the range of the plot.
+     * Insert a Plotter2DObj into the plotter. The object in added at the top of the list 
+	 * of inserted object.
      *
-     * @param [in,out]  obj pointer to the object or nullptr to remove the current object.
+     * @param [in,out]  obj pointer to the object.
      **/
     void add(internals_graphics::Plotter2DObj * obj);
 
 
     /**
-     * Set a Plotter2DObj into the plotter. Remove the current object if there are any. The inserted
-     * object can possibly modify the range of the plot.
+     * Insert a Plotter2DObj into the plotter. The object in added at the top of the list 
+	 * of inserted object.
      *
      * @param [in,out]  obj The object to insert.
      **/
@@ -166,8 +168,7 @@ class Plotter2D
 
 
     /**
-     * Set the Plotter2DObj into the plotter. Remove the current object if there are any. Same as
-     * `set(obj)`. The inserted object can possibly modify the range of the plotter.
+     * Insert an object into the plotter, same as `add()`.
      *
      * @param [in,out]  obj The object to insert.
      *
@@ -177,7 +178,7 @@ class Plotter2D
 
 
     /**
-     * Return the number of object inserted in the plotter.
+     * Return the number of objects currently inserted in the plotter.
      *
      * @return  the number of objects in the plotter
      **/
@@ -288,13 +289,13 @@ class Plotter2D
 
 
     /**
-     * Start the plotter and block until the window is closed.
+     * Start the plotter (ie display it) and block until the window is closed.
      **/
     void plot();
 
 
     /**
-     * Starts the plotter and return immediately.
+     * Starts the plotter (ie display it) and return immediately.
      **/
     void startPlot();
 
@@ -385,7 +386,7 @@ class Plotter2D
     /**
      * Query the view zoom factor: this is the ratio of the view size w.r.t to the size of the image
      * really drawn (i.e. the size of the image that is saved in memory /on file). By default, the
-     * ratio is 1 but can be set higher for purposes of creating high defniton image file on disk.
+     * ratio is 1 but can be set higher for purposes of creating high definiton image to save on disk.
      *
      * @return  The view zoom factor between 1 and 20.
      **/
@@ -395,7 +396,7 @@ class Plotter2D
     /**
      * Set the view zoom factor: this is the ratio of the view size w.r.t to the size of the image
      * really drawn (i.e. the size of the image that is saved in memory /on file). By default, the
-     * ratio is 1 but can be set higher for purposes of creating high defniton image file on disk.
+     * ratio is 1 but can be set higher for purposes of creating high definiton image to save on disk.
      *
      * @param   zoomFactor  The desired zoom factor (between 1 and 20).
      *
