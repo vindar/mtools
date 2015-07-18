@@ -116,7 +116,7 @@ namespace mtools
          *                      is released. Setting this to false can speed up memory relase for basic
          *                      type that do not have 'important' destructors.
          **/
-        Grid_basic(bool callDtors = true) : _pcurrent(nullptr), _rangemin(std::numeric_limits<int64>::max()), _rangemax(std::numeric_limits<int64>::min()), _callDtors(callDtors) { _createBaseNode(); }
+        Grid_basic(bool callDtors = true) : _pcurrent((_pbox)nullptr), _pcurrentpeek((_pbox)nullptr), _rangemin(std::numeric_limits<int64>::max()), _rangemax(std::numeric_limits<int64>::min()), _callDtors(callDtors) { _createBaseNode(); }
 
 
         /**
@@ -124,7 +124,7 @@ namespace mtools
          *
          * @param   filename    Filename of the file.
          **/
-        Grid_basic(const std::string & filename) : _pcurrent(nullptr), _rangemin(std::numeric_limits<int64>::max()), _rangemax(std::numeric_limits<int64>::min()), _callDtors(true) {load(filename);}
+        Grid_basic(const std::string & filename) : _pcurrent((_pbox)nullptr), _pcurrentpeek((_pbox)nullptr), _rangemin(std::numeric_limits<int64>::max()), _rangemax(std::numeric_limits<int64>::min()), _callDtors(true) {load(filename);}
         
         
         /**
@@ -132,7 +132,7 @@ namespace mtools
         *
         * @param   str    Filename of the file.
         **/
-        Grid_basic(const char * str) : _pcurrent(nullptr), _rangemin(std::numeric_limits<int64>::max()), _rangemax(std::numeric_limits<int64>::min()), _callDtors(true) { load(std::string(str)); } // needed together with the std::string ctor to prevent implicit conversion to bool and call of the wrong ctor.
+        Grid_basic(const char * str) : _pcurrent((_pbox)nullptr), _pcurrentpeek((_pbox)nullptr), _rangemin(std::numeric_limits<int64>::max()), _rangemax(std::numeric_limits<int64>::min()), _callDtors(true) { load(std::string(str)); } // needed together with the std::string ctor to prevent implicit conversion to bool and call of the wrong ctor.
 
 
         /**
@@ -149,7 +149,7 @@ namespace mtools
          *
          * @param   G   The const Grid_basic<D,T,R> & to process.
          **/
-        Grid_basic(const Grid_basic<D, T, R> & G) : _pcurrent(nullptr), _rangemin(std::numeric_limits<int64>::max()), _rangemax(std::numeric_limits<int64>::min()), _callDtors(true)
+        Grid_basic(const Grid_basic<D, T, R> & G) : _pcurrent((_pbox)nullptr), _pcurrentpeek((_pbox)nullptr), _rangemin(std::numeric_limits<int64>::max()), _rangemax(std::numeric_limits<int64>::min()), _callDtors(true)
             {
             static_assert(std::is_copy_constructible<T>::value, "The object T must be copy-constructible T(const T&) in order to use the copy constructor of the grid.");
             this->operator=(G);
@@ -163,7 +163,7 @@ namespace mtools
          *
          * @param   G   The source Grid_factor object to copy.
          **/
-        template<size_t NB_SPECIAL> Grid_basic(const Grid_factor<D, T, NB_SPECIAL, R> & G) : _pcurrent(nullptr), _rangemin(std::numeric_limits<int64>::max()), _rangemax(std::numeric_limits<int64>::min()), _callDtors(true)
+        template<size_t NB_SPECIAL> Grid_basic(const Grid_factor<D, T, NB_SPECIAL, R> & G) : _pcurrent((_pbox)nullptr), _pcurrentpeek((_pbox)nullptr), _rangemin(std::numeric_limits<int64>::max()), _rangemax(std::numeric_limits<int64>::min()), _callDtors(true)
             {
             static_assert(std::is_copy_constructible<T>::value, "The object T must be copy-constructible T(const T&) in order to use the copy constructor of the grid.");
             this->operator=(G);
@@ -189,6 +189,7 @@ namespace mtools
             _rangemin = G._rangemin;
             _rangemax = G._rangemax;
             _pcurrent = _copy(G._getRoot(),nullptr);
+            _pcurrentpeek = (_pbox)_pcurrent;
             _callDtors = G._callDtors;
             return(*this);
             }
@@ -224,7 +225,7 @@ namespace mtools
          *
          * @sa  class OArchive, class IArchive
          **/
-        void serialize(OArchive & ar)
+        void serialize(OArchive & ar) const
             {
             ar << "\nBegining of Grid_basic<" << D << " , [" << std::string(typeid(T).name()) << "] , " << R << ">\n";
             ar << "Version";    ar & ((uint64)1); ar.newline();
@@ -274,6 +275,7 @@ namespace mtools
                 int64 maxSpec; ar & maxSpec;
                 if (minSpec <= maxSpec) { MTOOLS_DEBUG("The file contain special objects hence must be opened using a Grid_factor instead of a Grid_basic object"); throw ""; }
                 _pcurrent = _deserializeTree(ar, nullptr);
+                _pcurrentpeek = (_pbox)_pcurrent;
                 }
             catch(...)
                 {
@@ -473,6 +475,15 @@ namespace mtools
          * Return a pointer to the object at a given position. If the value at the site was not yet
          * created, returns nullptr. This method does not create sites and is suited when drawing the
          * lattice using, for instance, the LatticeDrawer class.
+         * 
+         * This method is threadsafe : it is safe to call peek() while accessing the object via a get()
+         * or a set() or one of their operator [], operator() equivalents. It may even be called while
+         * the grid is being modified by assign/load operations. However, peek() should not be called
+         * while another peek() is in progress. To perform multiple simulatneous peek, use the peek
+         * version with hint below.
+         * 
+         * The implementation of this method is lock free hence there is zero penalty to peeking while
+         * still reading/setting the object !
          *
          * @param   pos The position to peek.
          *
@@ -481,31 +492,87 @@ namespace mtools
          **/
         inline const T * peek(const Pos & pos) const
             {
-            MTOOLS_ASSERT(_pcurrent != nullptr);
+            _pbox c = _pcurrentpeek;
+            if (c == nullptr) return nullptr;
             // check if we are at the right leaf
-            if (_pcurrent->isLeaf())
+            if (c->isLeaf())
                 {
-                _pleaf p = (_pleaf)(_pcurrent);
+                _pleaf p = (_pleaf)(c);
                 if (p->isInBox(pos)) return(&(p->get(pos)));
-                if (p->father == nullptr) return nullptr;
-                _pcurrent = p->father;
+                c = p->father;  
+                if (c == nullptr) return nullptr;
                 }
             // no we go up...
-            _pnode q = (_pnode)(_pcurrent);
-            while (!q->isInBox(pos))
+            _pnode q = (_pnode)(c);
+            while(!q->isInBox(pos))
                 {
-                if (q->father == nullptr) { _pcurrent = q; return nullptr; }
+                if (q->father == nullptr) { _pcurrentpeek = q; return nullptr; }
                 q = (_pnode)q->father;
                 }
             // and down...
             while (1)
                 {
                 _pbox b = q->getSubBox(pos);
-                if (b == nullptr) { _pcurrent = q; return nullptr; }
-                if (b->isLeaf())  { _pcurrent = b; return(&(((_pleaf)b)->get(pos))); }
+                if (b == nullptr) { _pcurrentpeek = q; return nullptr; }
+                if (b->isLeaf())  { _pcurrentpeek = b; return(&(((_pleaf)b)->get(pos))); }
                 q = (_pnode)b;
                 }
             }
+
+
+        /**
+         * Return a pointer to the object at a given position. If the value at the site was not yet
+         * created, returns nullptr. This method does not create sites and is suited when drawing the
+         * lattice using, for instance, the LatticeDrawer class.
+         * 
+         * This version is similar to the classical peek version but use an additonal hint parameter
+         * which enable several simultaneous peek. The hint parameter must be set to nullptr for the
+         * first call and then, the value modified after a call to peek must forwarded to the next
+         * peek().
+         * 
+         *  Using this version of peek is perfectly threadsafe. The object can be simultaneously
+         *  modified, peeked (with or without hint) or even assigned/loaded !
+         * 
+         * The implementation of this method is lock free hence there is zero penalty to peeking while
+         * still reading/setting the object !
+         *
+         * @param   pos             The position to peek.
+         * @param [in,out]  hint    the hint pointer. Must be set to nullptr for the first call and then
+         *                          the same variable must be forwarded on each subsequent call.
+         *
+         * @return  nullptr if the value at that site was not yet created. A const pointer to it
+         *          otherwise.
+         **/
+        inline const T * peek(const Pos & pos, void* & hint) const
+            {
+            if (hint == nullptr) { hint = _pcurrentpeek; }
+            _pbox c = (_pbox)hint;
+            if (c == nullptr) return nullptr;
+            // check if we are at the right leaf
+            if (c->isLeaf())
+                {
+                _pleaf p = (_pleaf)(c);
+                if (p->isInBox(pos)) return(&(p->get(pos)));
+                c = p->father;
+                if (c == nullptr) return nullptr;
+                }
+            // no we go up...
+            _pnode q = (_pnode)(c);
+            while (!q->isInBox(pos))
+                {
+                if (q->father == nullptr) { hint = q; return nullptr; }
+                q = (_pnode)q->father;
+                }
+            // and down...
+            while (1)
+                {
+                _pbox b = q->getSubBox(pos);
+                if (b == nullptr) { hint = q; return nullptr; }
+                if (b->isLeaf()) { hint = b; return(&(((_pleaf)b)->get(pos))); }
+                q = (_pnode)b;
+                }
+            }
+
 
 
         /**
@@ -552,6 +619,9 @@ namespace mtools
 
         /**
          * peek at a value at a given position. Dimension 1 specialization.
+         * 
+         * This method is threasafe wrt get/set : see peek() documentation for details.
+         * 
          * Returns nullptr if the object at this position is not created.
          **/
         inline const T * peek(int64 x) const { static_assert(D == 1, "template parameter D must be 1"); return peek(Pos(x)); }
@@ -559,6 +629,9 @@ namespace mtools
 
         /**
          * peek at a value at a given position. Dimension 2 specialization.
+         * 
+         * This method is threasafe wrt get/set : see peek() documentation for details.
+         * 
          * Returns nullptr if the object at this position is not created.
          **/
         inline const T * peek(int64 x, int64 y) const { static_assert(D == 2, "template parameter D must be 2"); return peek(Pos(x, y)); }
@@ -566,6 +639,9 @@ namespace mtools
 
         /**
          * peek at a value at a given position. Dimension 3 specialization.
+         *
+         * This method is threasafe wrt get/set : see peek() documentation for details.
+         *
          * Returns null if the object at this position is not created.
          **/
         inline const T * peek(int64 x, int64 y, int64 z) const { static_assert(D == 3, "template parameter D must be 3"); return peek(Pos(x, y, z)); }
@@ -585,25 +661,24 @@ namespace mtools
         static_assert(std::is_constructible<T>::value || std::is_constructible<T, Pos>::value, "The object T must either be default constructible T() or constructible with T(const Pos &)");
 
 
-        /* get sub method */
+        /* get sub method
+         * the tree is consistent at all time */
         inline T & _get(const Pos & pos) const
             {
-            MTOOLS_ASSERT(_pcurrent != nullptr);
+            MTOOLS_ASSERT(_pcurrent != (_pbox)nullptr);
+            _pbox c = _pcurrent;
             _updaterange(pos);
-            if (_pcurrent->isLeaf())
+            if (c->isLeaf())
                 {
-                if (((_pleaf)_pcurrent)->isInBox(pos)) { return(((_pleaf)_pcurrent)->get(pos)); }
-                MTOOLS_ASSERT(_pcurrent->father != nullptr); // a leaf must always have a father
-                _pcurrent = _pcurrent->father;
+                if (((_pleaf)c)->isInBox(pos)) { return(((_pleaf)c)->get(pos)); }
+                MTOOLS_ASSERT(c->father != nullptr); // a leaf must always have a father
+                c = c->father;
                 }
             // going up...
-            _pnode q = (_pnode)_pcurrent;
+            _pnode q = (_pnode)c;
             while (!q->isInBox(pos))
                 {
-                if (q->father == nullptr)
-                    {
-                    q->father = _allocateNode(q);
-                    }
+                if (q->father == nullptr) { q->father = _allocateNode(q); }
                 q = (_pnode)q->father;
                 }
             // ...and down
@@ -615,15 +690,16 @@ namespace mtools
                     if (q->rad == R)
                         {
                         b = _allocateLeaf(q, q->subBoxCenter(pos));
+                        T & result = ((_pleaf)b)->get(pos);
                         _pcurrent = b;
-                        return(((_pleaf)_pcurrent)->get(pos));
+                        return(result);
                         }
                     q = _allocateNode(q, q->subBoxCenter(pos), nullptr);
                     b = q;
                     }
                 else
                     {
-                    if (b->isLeaf()) { _pcurrent = b; return(((_pleaf)b)->get(pos)); }
+                    if (b->isLeaf()) { T & result = ((_pleaf)b)->get(pos); _pcurrent = b; return(result); }
                     q = (_pnode)b;
                     }
                 }
@@ -640,7 +716,7 @@ namespace mtools
         /* get the root of the tree */
         inline _pbox _getRoot() const
             {
-            if (_pcurrent == nullptr) return nullptr;
+            if (_pcurrent == ((_pbox)nullptr)) return nullptr;
             _pbox p = _pcurrent;
             while (p->father != nullptr) { p = p->father; }
             return p;
@@ -664,7 +740,7 @@ namespace mtools
 
 
         /* recursive method for serialization of the tree */
-        template<typename ARCHIVE> void _serializeTree(ARCHIVE & ar, _pbox p)
+        template<typename ARCHIVE> void _serializeTree(ARCHIVE & ar, _pbox p) const
             {
             if (p == nullptr) { ar & ((char)'V'); return; } // void pointer
             if (p->isLeaf())
@@ -732,18 +808,12 @@ namespace mtools
         /* Release all the allocated  memory and reset the tree */
         void _destroyTree()
             {
-            _poolNode.destroyAll();
-            if (_callDtors)
-                {
-                _poolLeaf.destroyAll();
-                }
-            else
-                {
-                _poolLeaf.deallocateAll();
-                }
+            _pcurrentpeek = nullptr;
             _pcurrent = nullptr;
             _rangemin.clear(std::numeric_limits<int64>::max());
             _rangemax.clear(std::numeric_limits<int64>::min());
+            _poolNode.destroyAll();
+            if (_callDtors) { _poolLeaf.destroyAll(); } else { _poolLeaf.deallocateAll(); }
             return;
             }
 
@@ -808,12 +878,14 @@ namespace mtools
         /* create the base node which centers the tree around the origin */
         inline void _createBaseNode()
             {
-            MTOOLS_ASSERT(_pcurrent == nullptr);   // should only be called when the tree dos not exist.
-            _pcurrent = _poolNode.allocate();
-            for (size_t i = 0; i < metaprog::power<3, D>::value; ++i) { ((_pnode)_pcurrent)->tab[i] = nullptr; }
-            _pcurrent->center = Pos(0);
-            _pcurrent->rad = R;
-            _pcurrent->father = nullptr;
+            MTOOLS_ASSERT(_pcurrent == (_pbox)nullptr);   // should only be called when the tree dos not exist.
+            _pnode p = _poolNode.allocate();
+            for (size_t i = 0; i < metaprog::power<3, D>::value; ++i) { p->tab[i] = nullptr; }
+            p->center = Pos(0);
+            p->rad = R;
+            p->father = nullptr;
+            _pcurrent = p;
+            _pcurrentpeek = p;
             return;
             }
 
@@ -843,7 +915,8 @@ namespace mtools
             }
 
 
-        mutable _pbox _pcurrent;        // pointer to the current box
+        mutable std::atomic<_pbox> _pcurrent;        // pointer to the current box
+        mutable std::atomic<_pbox> _pcurrentpeek;    // pointer to the current box for peek operations
         mutable Pos   _rangemin;        // the minimal range
         mutable Pos   _rangemax;        // the maximal range
         bool _callDtors;                // should we call the destructors
@@ -873,6 +946,7 @@ namespace mtools
         _rangemin = G._rangemin;
         _rangemax = G._rangemax;
         _pcurrent = _copy(G._getRoot(), nullptr);
+        _pcurrentpeek = (_pbox)_pcurrent;
         _callDtors = G._callDtors;
         return(*this);
         }

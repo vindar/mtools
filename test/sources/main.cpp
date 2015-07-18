@@ -393,20 +393,22 @@ int main()
     int i = 10;
     cout >> i;
 
-/*
-    fillSqr(iRect(-7, 7, -7, 7), 2);
+    /*
+        fillSqr(iRect(-7, 7, -7, 7), 2);
 
-    GF.set({ 3,3 }, 1);
-    GF.set({ 8,0 }, 1);
-    GF.set({ 8,0 }, 0);
-    GF.set({ 3,3 }, 2);
-    */
+        GF.set({ 3,3 }, 1);
+        GF.set({ 8,0 }, 1);
+        GF.set({ 8,0 }, 0);
+        GF.set({ 3,3 }, 2);
+        */
 
     Chronometer();
-    
+
     testWalk(100000);
 
-
+    void * p = nullptr;
+    GS.peek(iVec2(0, 0), p);
+    GS.save("hello");
   
     
     cout << "\ntime = " << Chronometer() << "\n"; cout << GF.toString(false);
