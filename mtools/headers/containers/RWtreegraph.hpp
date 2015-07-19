@@ -24,9 +24,9 @@
 /* headers */
 #include <string>
 
-#include "misc/error.hpp"
-#include "misc/misc.hpp"
-#include "misc/stringfct.hpp"
+#include "../misc/error.hpp"
+#include "../misc/misc.hpp"
+#include "../misc/stringfct.hpp"
 
 
 

@@ -20,14 +20,15 @@
 
 #pragma once
 
-#include "misc/error.hpp"
-#include "maths/vec.hpp"
-#include "maths/rect.hpp"
-#include "misc/metaprog.hpp"
-#include "io/serialization.hpp"
+#include "../misc/error.hpp"
+#include "../maths/vec.hpp"
+#include "../maths/rect.hpp"
+#include "../misc/metaprog.hpp"
+#include "../io/serialization.hpp"
 #include "internals_grid.hpp"
 
 #include <string>
+#include <atomic>
 
 
 namespace mtools

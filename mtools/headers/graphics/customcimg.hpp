@@ -25,9 +25,9 @@
 */
 
 
-#include "misc/error.hpp"
-#include "maths/vec.hpp"
-#include "maths/rect.hpp"
+#include "../misc/error.hpp"
+#include "../maths/vec.hpp"
+#include "../maths/rect.hpp"
 #include "rgbc.hpp"
 
 #include <thread>

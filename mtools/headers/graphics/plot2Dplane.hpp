@@ -25,7 +25,7 @@
 #include "drawable2Dobject.hpp"
 #include "planedrawer.hpp"
 #include "rangemanager.hpp"
-#include "misc/indirectcall.hpp"
+#include "../misc/indirectcall.hpp"
 
 #include <atomic>
 

@@ -22,8 +22,8 @@
 
 
 
-#include "maths/vec.hpp"
-#include "maths/rect.hpp"
+#include "../maths/vec.hpp"
+#include "../maths/rect.hpp"
 #include "rgbc.hpp"
 #include "plotter2Dobj.hpp"
 #include "drawable2Dobject.hpp"

@@ -20,8 +20,8 @@
 
 #pragma once
 
-#include "misc/misc.hpp"
-#include "misc/error.hpp"
+#include "../misc/misc.hpp"
+#include "../misc/error.hpp"
 #include "rgbc.hpp"
 
 #include <string>

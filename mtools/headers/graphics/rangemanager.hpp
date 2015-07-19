@@ -21,8 +21,8 @@
 #pragma once
 
 
-#include "maths/rect.hpp"
-#include "maths/vec.hpp"
+#include "../maths/rect.hpp"
+#include "../maths/vec.hpp"
 
 #include <cstdint>
 #include <mutex>

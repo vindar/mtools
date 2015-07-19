@@ -21,9 +21,9 @@
 #pragma once
 
 
-#include "misc/error.hpp"
-#include "misc/misc.hpp"
-#include "misc/stringfct.hpp"
+#include "../misc/error.hpp"
+#include "../misc/misc.hpp"
+#include "../misc/stringfct.hpp"
 #include "vec.hpp"
 
 #include <string>

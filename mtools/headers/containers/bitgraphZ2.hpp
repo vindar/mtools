@@ -25,9 +25,9 @@
 #include <string>
 #include <math.h>
 #include <limits.h>
-#include "misc/error.hpp"
-#include "misc/stringfct.hpp"
-#include "misc/misc.hpp"
+#include "../misc/error.hpp"
+#include "../misc/stringfct.hpp"
+#include "../misc/misc.hpp"
 
 
 

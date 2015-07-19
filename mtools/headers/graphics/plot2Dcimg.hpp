@@ -25,8 +25,8 @@
 #include "drawable2Dobject.hpp"
 #include "latticedrawer.hpp"
 #include "rangemanager.hpp"
-#include "misc/indirectcall.hpp"
-#include "io/fltk_supervisor.hpp"
+#include "../misc/indirectcall.hpp"
+#include "../io/fltk_supervisor.hpp"
 
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Round_Button.H>

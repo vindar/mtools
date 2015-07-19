@@ -22,10 +22,10 @@
 
 #include <string>
 
-#include "misc/error.hpp"
-#include "misc/stringfct.hpp"
-#include "misc/misc.hpp"
-#include "io/serialization.hpp"
+#include "../misc/error.hpp"
+#include "../misc/stringfct.hpp"
+#include "../misc/misc.hpp"
+#include "../io/serialization.hpp"
 
 namespace mtools
 {

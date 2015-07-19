@@ -22,7 +22,7 @@
 
 
 
-#include "misc/stringfct.hpp"
+#include "../misc/stringfct.hpp"
 
 #include <fstream>
 #include <string>

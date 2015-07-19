@@ -23,8 +23,8 @@
 
 /* headers */
 #include <string>
-#include "misc/stringfct.hpp"
-#include "misc/misc.hpp"
+#include "../misc/stringfct.hpp"
+#include "../misc/misc.hpp"
 
 namespace mtools
 {

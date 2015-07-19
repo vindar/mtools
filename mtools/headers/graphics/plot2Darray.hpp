@@ -21,11 +21,11 @@
 #pragma once
 
 
+#include "../maths/vec.hpp"
 #include "plotter2Dobj.hpp"
 #include "drawable2Dobject.hpp"
 #include "rangemanager.hpp"
 #include "interpolation.hpp"
-#include "maths/vec.hpp"
 #include "plot2Dbasegraph.hpp"
 
 

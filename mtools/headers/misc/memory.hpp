@@ -21,7 +21,7 @@
 #pragma once
 
 
-#include "misc/error.hpp"
+#include "error.hpp"
 #include "metaprog.hpp"
 
 #include <utility>

@@ -21,9 +21,9 @@
 #pragma once
 
 
-#include "maths/vec.hpp"
-#include "maths/rect.hpp"
-#include "misc/error.hpp"
+#include "../maths/vec.hpp"
+#include "../maths/rect.hpp"
+#include "../misc/error.hpp"
 #include "customcimg.hpp"
 
 #include <atomic>

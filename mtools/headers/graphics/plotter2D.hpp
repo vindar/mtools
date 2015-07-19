@@ -21,14 +21,13 @@
 #pragma once
 
 
-#include "maths/vec.hpp"
-#include "maths/rect.hpp"
-#include "misc/error.hpp"
+#include "../maths/vec.hpp"
+#include "../maths/rect.hpp"
+#include "../misc/error.hpp"
 #include "customcimg.hpp"
 #include "rangemanager.hpp"
-
-#include "graphics/plot2Daxes.hpp"
-#include "graphics/plot2Dgrid.hpp"
+#include "plot2Daxes.hpp"
+#include "plot2Dgrid.hpp"
 
 
 namespace mtools

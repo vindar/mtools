@@ -23,10 +23,10 @@
 #include "drawable2Dobject.hpp"
 #include "customcimg.hpp"
 #include "rgbc.hpp"
-#include "maths/vec.hpp"
-#include "maths/rect.hpp"
-#include "misc/misc.hpp"
-#include "misc/metaprog.hpp"
+#include "../maths/vec.hpp"
+#include "../maths/rect.hpp"
+#include "../misc/misc.hpp"
+#include "../misc/metaprog.hpp"
 
 #include <algorithm>
 #include <ctime>

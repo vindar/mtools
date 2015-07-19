@@ -60,8 +60,8 @@ int main(int argc, char *argv[])
 
 #include "srwonZ_cdf.hpp"
 
-#include "misc/misc.hpp"
-#include "maths/vec.hpp"
+#include "../misc/misc.hpp"
+#include "../maths/vec.hpp"
 
 
 #include <algorithm>

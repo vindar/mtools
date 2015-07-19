@@ -29,8 +29,8 @@
 * main return. 
 */
 
-#include "misc/error.hpp"
-#include "misc/indirectcall.hpp"
+#include "../misc/error.hpp"
+#include "../misc/indirectcall.hpp"
 
 
 namespace mtools

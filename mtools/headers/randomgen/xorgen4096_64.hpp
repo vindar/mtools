@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "misc/misc.hpp"
+#include "../misc/misc.hpp"
 #include <ctime>
 #include <string>
 

@@ -21,8 +21,8 @@
 #pragma once
 
 
-#include "misc/metaprog.hpp"
-#include "misc/memory.hpp"
+#include "../misc/metaprog.hpp"
+#include "../misc/memory.hpp"
 
 namespace mtools
 {

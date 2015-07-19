@@ -21,8 +21,8 @@
 #pragma once
 
 
-#include "misc//error.hpp"
-#include "maths/vec.hpp"
+#include "../misc/error.hpp"
+#include "../maths/vec.hpp"
 #include "customcimg.hpp"
 
 
