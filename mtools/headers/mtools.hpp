@@ -19,6 +19,16 @@
 
 #pragma once
 
+// plugin for cimg
+#if defined (_MSC_VER) 
+#pragma warning( push )
+#pragma warning( disable : 4312 )
+#pragma warning( disable : 4319 )
+#endif
+#include "graphics/customcimg.hpp"
+#if defined (_MSC_VER) 
+#pragma warning( pop )
+#endif
 
 // containers
 #include "containers/grid_basic.hpp"
@@ -30,7 +40,6 @@
 
 
 // graphics
-#include "graphics/customcimg.hpp"
 #include "graphics/rgbc.hpp"
 #include "graphics/simpleBMP.hpp"
 #include "graphics/edgesiteimage.hpp"
