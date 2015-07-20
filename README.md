@@ -1,13 +1,13 @@
-# mtools: My Maths Toolkit
+# mtools: my maths toolkit
 
 - Author:   [Arvind singh](mailto:arvind.singh@normalesup.org)
-- Licence:  [GPLv3](http://www.gnu.org/licenses/gpl-3.0.html)
+- License:  [GPLv3](http://www.gnu.org/licenses/gpl-3.0.html)
 
 !['Tree' Eden Model](./treeEdenModel.png)
 
 ### About
 
-This repository contain a collection of C++ classes I created for performing simulations and displaying graphics. It consists mostly of code that I accumulated over the years which I finally decided to gather inside a library. I find it quite practical so I am sharing it in the hope that you may also find it useful.
+This repository contain a collection of C++ classes I created for simulations (mostly of exotic stochastic processes) and for displaying graphics. It consists of code that I accumulated over the years which I finally decided to gather inside a library. I find it quite practical so I am sharing it in the hope that you may also find it useful.
 
 I cleaned up and rewrote several part of the library in order to take advantage of some of the new C++11 features. This means that you need a compiler with decent C++11 support to build the library.  
 
