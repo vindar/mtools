@@ -3,6 +3,7 @@
 - Author:   [Arvind singh](mailto:arvind.singh@normalesup.org)
 - Licence:  [GPLv3](http://www.gnu.org/licenses/gpl-3.0.html)
 
+!['Tree' Eden Model](./treeEdenModel.png)
 
 ### About
 
