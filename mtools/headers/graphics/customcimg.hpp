@@ -36,7 +36,7 @@
 #include <algorithm>
 
 //add the plugin to the cimg library
-#define cimg_plugin "graphics/cimg_plugin.hpp"	
+#define cimg_plugin "mtools/graphics/cimg_plugin.hpp"	
 // use libpng
 #define cimg_use_png
 // use libjpeg
