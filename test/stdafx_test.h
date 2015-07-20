@@ -74,15 +74,10 @@
 #include "png.h"        // fltk libpng
 #include "jpeglib.h"    // fltk libjpeg
 
-//
-// CIMG
-//
-#include "graphics/customcimg.hpp"
 
 #if defined (_MSC_VER)
 #pragma warning( pop )
 #endif
-
 
 //
 // MTOOLS
