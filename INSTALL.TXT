@@ -120,27 +120,28 @@ directory).
 ----------------------
 [tested on Linux Mint 17.2 with gcc 5.1]
 
-1) Make sure you use a recent version of gcc. Version 4.8 currently bundled with
-Ubuntu (as of 06/15) does no have support for some of C++11 new features
+1) Make sure you use a recent version of gcc. Version 4.8 currently bundled 
+with Ubuntu (as of 06/15) does no have support for some of C++11 new features
 needed to build the library. Version 5 or later is ok.
 
-2) Make sure that the required libraries fltk, zlib, libpng, libjpeg and CImg are
-installed on the system and up to date. You need FLTK at least version 1.3.3
-(Ubuntu currently bundles the 1.1 version by default...).
+2) Make sure that the libraries fltk, zlib, libpng, libjpeg and CImg are
+installed and up to date. You need FLTK at least version 1.3.3 (Ubuntu 
+currently bundles the 1.1 version by default...).
 
-3) Run 'make' in the linux/ sub-directory of the mtools tree and wait/pray.
-This will build the library and the test program , hopefully without error.
-Resulting binaries are put in the linux/bin/ sub-directory. As always, you can
-use 'make clean' to clean-up prior to rebuilding the whole library.
+3) Run 'make' inside the linux/ sub-directory of the mtools tree and wait/pray.
+This will build the library and the test program, hopefully without error.
+Resulting binaries are located in the linux/bin/ sub-directory. As usual, you 
+can use 'make clean' to clean up temporary object files prior to rebuilding the 
+whole library.
 
 4) Install the library (in '/usr/local') with the command 'sudo make install'.
-You can later on remove the library with 'sudo make uninstall'.
+You can subsequently remove the library with 'sudo make uninstall'.
 
 5) Once the library is built and installed, you can go into the examples/ 
-directory and type 'make' inside each project sub-directories to build and 
-try the examples.
+directory and type 'make' inside each project sub-directories to build the 
+examples.
 
-In order to use the library inside one of your own project, just adapt the
+In order to use the library inside one of your own project, just modify the
 makefile of one of the examples projects to find out the correct include/link
 options.
 
