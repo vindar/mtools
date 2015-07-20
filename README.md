@@ -16,14 +16,14 @@ The library is divided in several parts:
 
   - **randomgen/** : Implementation of some classical random number generators such as the Mersenne Twister, Xorgen... and some methods to generate specific probability distributions such as stable laws,  distribution of SRW...
 
-  - **math/** : Not much in there yet. Classes for rectangles, vectors, matrices and some very elementary linear algebra.
+  - **maths/** : Not much in there yet. Classes for rectangles, vectors, matrices and some very elementary linear algebra.
 
   - **io/** : Contains stuff related to input/output:
     - `IArchive`/`OArchive`. Classes used for serialization of objects in the spirit of boost::serialization but much simpler, without forward serialization of pointer type but with the possibility of including comments to improve the readability of the archive.
     - `Console`. Class which displays a text console that can also log into a file. The console can be used for simple text input/output. A global `mtools::cout` object is defined which can be used as a substitute for std::cout/std::cin.
     - `LogFile`. A very simple class for text logging into a file.
 
-  - **container/** : This directory contain template classes used for holding objects (a little bit like the stl containers).
+  - **containers/** : This directory contain template classes used for holding objects (a little bit like the stl containers).
     - `Grid_basic`/`Grid_factor`. Template classes which simulates an infinite d-dimensional grid Z^d where each vertex of the grid holds an object of the template type. The grid is dynamically constructed when objects are read/accessed and the internal structure is similar to that of an octree with some additional refinements. The whole grid can copied and saved/read from a file. The Grid_factor version also permits 'factorization' of objects (i.e. the same object can be re-used for distinct positions in the grid). I find this class particularly useful when simulating multi-dimensional processes such as random walks, growing domains, percolation processes, interacting particle processes etc... Check it out, I think it is really neat.
     - Other outdated container classes such as `RWtreegraph`, `randomurn` ...  I plan to rewrite them from scratch at some point...
 
