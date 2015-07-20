@@ -21,6 +21,7 @@ PCHFILE_MTOOLS = stdafx_mtools.h
 PCHOBJ_MTOOLS = $(OBJDIR_MTOOLS)/$(PCHFILE_MTOOLS).gch
 INC_MTOOLS = -I$(OBJDIR_MTOOLS) -I$(HEADERDIR_MTOOLS)
 CXXFLAGS_MTOOLS = `fltk-config --cxxflags` -std=c++11 -O2 -Wall -DNDEBUG
+INSTALLDIR_MTOOLS = /usr/local
 
 SRCDIR_TEST = ../test/sources
 OBJDIR_TEST = $(OBJDIR)/test
@@ -37,28 +38,28 @@ LDFLAGS_TEST =  $(OUT_MTOOLS) `fltk-config --ldstaticflags` -lz -lpng -ljpeg -la
 ADDLIBDIR_TEST =
 
 
-.PHONY: all clean before_mtools mtools before_test test
+.PHONY: all clean before_mtools mtools before_test test install uninstall
 
 
 all: mtools test
 
 
-mtools: before_mtools $(PCHOBJ_MTOOLS) $(OBJ_MTOOLS)
-	$(AR) rcs $(OUT_MTOOLS) $(OBJ_MTOOLS)
-	@echo "*************************************"
-	@echo "done. Static library: $(WORKDIR)/$(OUT_MTOOLS)"
-	@echo
-	
 before_mtools:
 	@echo
-	@echo "*************************************"
-	@echo "**** Building the mtools library ****"
-	@echo "**** Release version             ****"		
-	@echo "*************************************"
+	@echo "*************************"
+	@echo "**** Building mtools ****"
+	@echo "*************************"
 	@test -d $(OUTDIR_MTOOLS) || mkdir -p $(OUTDIR_MTOOLS)
 	@test -d $(OBJDIR_MTOOLS) || mkdir -p $(OBJDIR_MTOOLS)
 
+	
+mtools: before_mtools $(PCHOBJ_MTOOLS) $(OBJ_MTOOLS)
+	$(AR) rcs $(OUT_MTOOLS) $(OBJ_MTOOLS)
+	@echo "*************************"
+	@echo "done. Static library: $(WORKDIR)/$(OUT_MTOOLS)"
+	@echo
 
+	
 $(PCHOBJ_MTOOLS): 
 	$(CXX) $(CXXFLAGS_MTOOLS) $(INC_MTOOLS) -x c++-header $(PCHDIR_MTOOLS)/$(PCHFILE_MTOOLS) -o $(PCHOBJ_MTOOLS)
 
@@ -67,21 +68,20 @@ $(OBJ_MTOOLS): $(OBJDIR_MTOOLS)/%.o : $(SRCDIR_MTOOLS)/%.cpp
 	$(CXX) $(CXXFLAGS_MTOOLS) $(INC_MTOOLS) -c $< -o $@
 	
 
+before_test:
+	@echo
+	@echo "****************************************"
+	@echo "**** Building mtools's test program ****"
+	@echo "****************************************"
+	@test -d $(OUTDIR_TEST) || mkdir -p $(OUTDIR_TEST)
+	@test -d $(OBJDIR_TEST) || mkdir -p $(OBJDIR_TEST)
+
+	
 test: before_test $(PCHOBJ_TEST) $(OBJ_TEST)
 	$(LD) $(ADDLIBDIR_TEST) -o $(OUT_TEST) $(OBJ_TEST) $(LDFLAGS_TEST)
 	@echo "****************************************"
 	@echo "done. Test program: $(WORKDIR)/$(OUT_TEST)"
 	@echo
-
-
-before_test:
-	@echo
-	@echo "****************************************"
-	@echo "**** Building mtools's test program ****"
-	@echo "**** Release version                ****"		
-	@echo "****************************************"
-	@test -d $(OUTDIR_TEST) || mkdir -p $(OUTDIR_TEST)
-	@test -d $(OBJDIR_TEST) || mkdir -p $(OBJDIR_TEST)
 
 
 $(PCHOBJ_TEST): 
@@ -100,4 +100,33 @@ clean:
 	@echo
 
 	
+uninstall:
+	@echo
+	@echo "*****************************"
+	@echo "**** Uninstalling mtools ****"
+	@echo "*****************************"
+	@rm -rf $(INSTALLDIR_MTOOLS)/include/mtools
+	@rm -f $(INSTALLDIR_MTOOLS)/include/mtools.hpp
+	@rm -f $(INSTALLDIR_MTOOLS)/lib/libmtools.a
+	@echo "done."
+	@echo
+	
+	
+install:
+	@echo
+	@echo "***************************"
+	@echo "**** Installing mtools ****"
+	@echo "***************************"
+	@rm -rf $(INSTALLDIR_MTOOLS)/include/mtools
+	@rm -f $(INSTALLDIR_MTOOLS)/include/mtools.hpp
+	@rm -f $(INSTALLDIR_MTOOLS)/lib/libmtools.a
+	@printf '#pragma once\n#include "mtools/mtools.hpp"\n' > $(INSTALLDIR_MTOOLS)/include/mtools.hpp
+	@mkdir -p $(INSTALLDIR_MTOOLS)/include/mtools
+	@cp -rf ../mtools/headers/* $(INSTALLDIR_MTOOLS)/include/mtools/
+	@cp -f ./bin/libmtools.a $(INSTALLDIR_MTOOLS)/lib/
+	@chmod -R go+rX,go-w $(INSTALLDIR_MTOOLS)/include/mtools
+	@chmod go+r,go-w,ugo-x $(INSTALLDIR_MTOOLS)/include/mtools.hpp
+	@chmod go+rx,go-w $(INSTALLDIR_MTOOLS)/lib/libmtools.a
+	@echo "done. Installed in $(INSTALLDIR_MTOOLS)"
+	@echo
 
