@@ -46,15 +46,6 @@
 
 
 // *** Library mtools ***
-#if defined (_MSC_VER) 
-#pragma warning( push )
-#pragma warning( disable : 4312 )
-#pragma warning( disable : 4319 )
-#endif
-#include "graphics/customcimg.hpp"
-#if defined (_MSC_VER) 
-#pragma warning( pop )
-#endif
 #include "mtools.hpp"
 
 // *** Library fltk ***
@@ -86,7 +77,6 @@
 #pragma warning( pop )
 #endif
 
-// *** Library fltk ***
 #include "zlib.h"       // fltk zlib
 #include "png.h"        // fltk libpng
 #include "jpeglib.h"    // fltk libjpeg

@@ -10,7 +10,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <ctime>
-#include <cmath>
+#include <cmath>  
 #include <cwchar>
 #include <locale>
 
@@ -46,15 +46,6 @@
 
 
 // *** Library mtools ***
-#if defined (_MSC_VER) 
-#pragma warning( push )
-#pragma warning( disable : 4312 )
-#pragma warning( disable : 4319 )
-#endif
-#include "graphics/customcimg.hpp"
-#if defined (_MSC_VER) 
-#pragma warning( pop )
-#endif
 #include "mtools.hpp"
 
 // *** Library fltk ***

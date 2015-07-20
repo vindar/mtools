@@ -3,6 +3,7 @@
  * date : Sat Jun 20 13:22:29 2015
  ***********************************************/
 
+
 #pragma message("Compiling pre-compiled headers for stdafx.h\n")
 #pragma once
 
@@ -46,15 +47,6 @@
 
 
 // *** Library mtools ***
-#if defined (_MSC_VER) 
-#pragma warning( push )
-#pragma warning( disable : 4312 )
-#pragma warning( disable : 4319 )
-#endif
-#include "graphics/customcimg.hpp"
-#if defined (_MSC_VER) 
-#pragma warning( pop )
-#endif
 #include "mtools.hpp"
 
 // *** Library fltk ***
