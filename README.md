@@ -6,9 +6,9 @@
 
 ### About
 
-This is the collection of C++ classes I use when performing simulations and displaying graphics. It consists mostly of code that I accumulated over the years until I finally decided to put everything inside a library. I find it quite practical so I am sharing it in the hope that you may also find it useful.
+This repository contain a collection of C++ classes I use when performing simulations and displaying graphics. It consists mostly of code that I accumulated over the years which I finally decided to put inside a library. I find it quite practical so I am sharing it in the hope that you may also find it useful.
 
-I cleaned up and rewrote several part of the library in order to take advantage of the new C++11 features. Therefore, you will need a C++ compiler with decent C++11 support to build the library.   
+I cleaned up and rewrote several part of the library in order to take advantage of some of the new C++11 features. Therefore, you will need a C++ compiler with decent C++11 support to build the library.   
 
 Using the library is straightforward. Every class/function is located under the `mtools` namespace. All you need to do is link your program against the binary of the library. Then, make sure mtools's header directory is in the include path and use '#include "mtools.hpp"' (this header includes all the other required headers of the library).
 
@@ -23,7 +23,8 @@ The library itself is divided in several parts:
   - **/container/** : This directory contain template classes for holding objects (a little bit like the stl containers).
     - `Grid_basic`/`Grid_factor`. Template classes which simulate an infinite d-dimensional grid Z^d where each vertex of the grid holds an object of the template type. The grid is dynamically constructed when objects are read/accessed and the internal structure is similar to that of an octree with some additional refinements. The whole grid can copied and saved/read from a file. The Grid_factor version also permits 'factorization' of objects (i.e. the same object can be re-used for distinct positions in the grid). This class is particularly useful when simulating multi-dimensional processes such as random walks, growing domains, percolation processes, interacting particle processes etc... Check it out, it is really neat !
     - Other outdated container classes such as `RWtreegraph`, `randomurn` ...  I plan to rewrite them from scratch at some point...
-  - **/graphics/** This is the biggest (and best!) part of the library. The main class is Plotter2D which creeate a plotter that can print pretty much anything that has a
+  - **/graphics/** This is the biggest (and best!) part of the library. It define a set of class which are use to plot 2D grpahics. Basically, anything that can be embeded in Z^2 can be plotted/manipulated and zoom in&out interactively. The main class is the Ploter2D class wich display the plotter window and enable the user interaction. It is posible to move the center/zomm in/out using the arrow key and or the mouse. It is also posible to set specific options for each drawing and chosoe the drawing order of the plotted object as well as their transparency and refresh rate of the drawing. It is also possible to save the view as a image file  
+  The main class is Plotter2D which creeate a plotter that can print pretty much anything that has a
     - `Plotter2D` : this is the main class. It displays the plotter windows 
   - **/misc/** Contains general purpose code. Some interesting headers:
     - 'timefct.hpp' : Contain methods dealing with time. In particular, class `ProgressBar` display a progress bar window.

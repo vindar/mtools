@@ -2,147 +2,154 @@
          INSTALLATION OF MTOOLS
 ---------------------------------------------
 
-The library uses several C++11 specificities and as some of the new 
-headers in the STL so you need a fairly recent compiler to build it. 
-It also depends a few other libraries:
+The library uses several of C++11 new language features and some of
+the new headers in the STL so you need a fairly recent compiler to
+build it. It also has dependencies on a few other libraries:
 
-	- CImg (http://cimg.eu) [image library]
-	- fltk (http://www.fltk.org) [gui library]
-	- zlib (http://www.zlib.net) [compression library]
-	- libpng (http://www.libpng.org) [for reading/writing png images]
-	- libjpeg (http://sourceforge.net/projects/libjpeg/) [for reading/writing jpeg images]
+    - CImg (http://cimg.eu) [image library]
+    - fltk (http://www.fltk.org) [gui library]
+    - zlib (http://www.zlib.net) [compression library]
+    - libpng (http://www.libpng.org) [for reading/writing png images]
+    - libjpeg (http://sourceforge.net/projects/libjpeg/) [for reading/writing jpeg images]
+
 
 ----------------------
      On windows
 ----------------------
 [tested on Windows 7 with VS2015RC]
 
-You must install the libraries above before building mtools. Since 
-FLTK already bundles zlib, libpng and libjpeg, it suffices to install 
-fltk and CImg. The visual studio solution/project files defines both 
-32bit and 64bit configurations so the libraries should also provide 
-binaries for both platforms if you want to build everything. 
+You must install the libraries above before building mtools. Since
+FLTK already bundles zlib, libpng and libjpeg, it suffices to install
+fltk and CImg. The visual studio solution/project files defines both
+32bit and 64bit configurations so the libraries should also provide
+binaries for both platforms if you want to build everything (it is
+still possible to build only the 32bit or 64bit version if you wish so).
 
-1) Download fltk (http://www.fltk.org), version 1.3.3 or above. 
+1) Download fltk (http://www.fltk.org), version 1.3.3 or above.
 
-2) Go in FLTK's /ide/VisualC2010/ subdirectory and open the fltk.sln 
-solution with VS2015. Convert as VS2015 project and then build the 
-following projects: fltk, fltkdll, fltkimages, fltkzlib, fltkpng, 
-fltkjpeg. Each project should be built for both Release and Debug mode. 
-Once the projects have been built, the binaries are put in FLTK's /lib/ 
-sub-directory except for the .dll files which are put in /test/. 
+2) Go in FLTK's ide/VisualC2010/ sub-directory and open the fltk.sln
+solution file with VS2015. Convert it as VS2015 project and then build
+the following projects: fltk, fltkdll, fltkimages, fltkzlib, fltkpng,
+fltkjpeg. Each project should be built for both Release and Debug mode.
+Once the projects have been built, you can find the binaries in FLTK's
+/lib/ sub-directory except for the .dll files which are found in /test/.
 
-3) Create a new directory lib32/ at the root of the FLTK source tree 
-and move the content of lib/ to this new directory. Add also fltkdll.dll  
-and fltkdlld.dll to lib32/ (these file are found in /test/). The directory 
-/lib32/ should now contain at least: fltk.lib, fltkd.lib, fltkdll.lib, 
-fltkdlld.lib, fltkdll.dll, fltkdlld.dll, fltkimages, fltkimagesd, fltkjpeg.lib, 
-fltkjpegd.lib,  fltkpng.lib, fltkpngd.lib, fltkzlib.lib, fltkzlib
+3) Create a new directory lib32/ at the root of the FLTK source tree
+and move the content of lib/ to this new directory. Add also fltkdll.dll 
+and fltkdlld.dll to lib32/ (these files are in test/). The directory
+/lib32/ should now contain at least: fltk.lib, fltkd.lib, fltkdll.lib,
+fltkdlld.lib, fltkdll.dll, fltkdlld.dll, fltkimages, fltkimagesd, 
+fltkjpeg.lib,fltkjpegd.lib,  fltkpng.lib, fltkpngd.lib, fltkzlib.lib, 
+fltkzlib
 
-4) In order to build mtools for x64, you must also build FLTK for x64
-and then, as in the step before, put all the resulting files in a directory
-called /lib64/ located as the base of the FLTK source tree. 
-Building the 64bit version of FLTK is a bit tricky and it is simpler to use 
-using another clean copy of the FLTK source code since you need to create 
-the x64 configuration in VS2015 and this results in the same temporary 
-directories being shared by the Win32 and x64 configurations which can cause 
-conflicts. [You can skip this step if you only want to use the library in 
-32bit mode]
+4) [You can skip this step if you only want to use the library in 32bit mode]
+In order to build mtools for x64, you must also build FLTK for x64 and then,
+as in the step before, put all the resulting files in a directory called 
+lib64/ located as the base of the FLTK source tree. Building the 64bit version
+of FLTK is a bit tricky and it is simpler to use using another clean copy of 
+the FLTK source code since you need to create the x64 configuration in VS2015
+and this results in the same temporary directories being shared by the Win32 
+and x64 configurations which can cause conflicts.
 
-5) At that point, FLTK's root directory should contain at least the the following 
-sub-directories:
+5) At that point, FLTK's root directory should contain at least the the 
+following sub-directories:
         - /FL/   with the FLTK headers
         - /zlib/ with the zlib headers
         - /png/  with the libpng headers
         - /jpeg/ with the libjpeg headers
-        - /lib32/ with the binaries (32 bit) [required for building for win32]
-        - /lib64/ with the binaries (64 bit) [required for building for x64]
-Now, you must define an global environment variable 'FLTK_LIB' in Windows that 
-will indicate where FLTK can be found. To do so, you can directly set 'FLTK_LIB' 
-to point to fltk's base directory in windows or you can simply copy the script 
-'setEnvVar-fltk.bat' as the base of fltk's root directory  and then run it as 
-administrator. This will create the required env. var. 
+        - /lib32/ with the binaries (32 bit) [required for win32 build]
+        - /lib64/ with the binaries (64 bit) [required for x64 build]
+Now, you must create an global environment variable 'FLTK_LIB' in Windows that
+will indicate where FLTK can be found. To do so, you can directly set 'FLTK_LIB'
+to point to fltk's base directory in windows or you can simply copy the script
+'setEnvVar-fltk.bat' at the base of fltk's root directory  and then run it as
+administrator. This will create the required environment variable.
 
 6) Download CImg (http://cimg.eu) version 1.6.3 or higher. The library is header
-only so there is nothing to build, just put the CImg folder wherever you please. 
-Again, we must indicate where the library can be found by defining a global env. 
-variable called 'CIMG_LIB'. Again ,you can define the env. var. directly or you 
-can simply copy the script 'setEnvVar-cimg.bat' to cimg's root directory (i.e. 
-the directory containing CImg.h) and then run it as administrator. 
+only so there is nothing to build, just put the CImg folder wherever you please.
+Again, we must indicate where the library can be found by defining a global env.
+variable called 'CIMG_LIB'. Again ,you can define this environment variable
+directly or you can simply copy the script 'setEnvVar-cimg.bat' to cimg's root
+directory (i.e. the directory containing CImg.h) and then run it as administrator.
 
-7) Open the mtools.sln file at the root of the mtools source tree with VS2015. 
-The solution contain 2 project: the library itself and a test project which 
-can be used for quick testing the library. First, you must define 'test' to be 
-the start project for theis solution (right click on test in the solution window
-and set it as the start project). You can now build mtools.  There are several 
-build configurations:
-  - debug/release : Build the mtools library for debug or release purpose.
+7) Open the mtools.sln file at the root of the mtools source tree with VS2015.
+The solution contain 2 project: the library itself and a test project which
+can be used for quick tests of the library. First, define 'test' as the start
+project for the solution (right click on test in the solution window and set it
+as the start project). You can now build mtools.  There are several build
+configurations:
+  - debug/release : Build the mtools library for debug or release mode.
   - Win32/x64 : Build for 32 or 64 bits.
   - DLL /(nothing) : link mtools against the DLL (or not) version of FLTK.
-Build the configuration you wish to use (probably release/win32 or release/x64
-if you created the 64bit version of FLTK). Hopefully it should build without 
-errors... You can now use the test program to try the library.
+Build the configuration you wish to use (probably release/win32/(not dll) or
+release/x64/(not dll) if you created the 64bit version of FLTK). Hopefully
+it should compile without errors... You can now run the test program to try
+the library.
 
-9) The examples/ directory contains simple projects demonstrating how to use
-the library. Before, compiling the examples, you must define yet another 
-environment variable called 'MTOOLS_LIB' and pointing to the base directory 
-of the library (i.e. the directory containing this file). As before, you can 
-either define this env. variable directly or alternatively, you can run 
-as administrator the 'setEnvVar-mtools.bat' script located as the base
-of the mtools directory (you do not need to move the file before running it). 
-Then, simply open the sln file in each example subdirectory and build the
-project (with a configuration for which mtools was built).
+8) The examples/ directory contains simple projects demonstrating how to use
+the library. Before, compiling the examples, you must define yet another
+environment variable called 'MTOOLS_LIB' which will indicate where the library
+can be found. As before, you can either define this environment variable directly
+and set it to point to mtools root directory or you can simply run as administrator
+the 'setEnvVar-mtools.bat' script located as the base of the mtools directory.
+Once this is done, simply open the sln files in the examples/ sub directory and
+build the projects with a configuration matching one for which mtools was built.
+[Note: the examples require mtools's version statically linked against FLKT].
 
-10) In order to use the library in your own Visual Studio project, you must 
-add the mtools/headers/, fltk/ and CImg/ directories to the include path and 
-you must also link against the correct binaries of mtools[32/64][d].lib, 
-fltk[d].lib, libjpeg[d].lib, libpng[d].lib and zlib[d].lib. corresponding to the 
-chosen build configuration (ie release/debug, Win32/x64).  The simplest way to 
-set up such a project is imitate/copy the solution and project files from one of 
-the example in the examples/ directory.  
+9) In order to use the library with your own Visual Studio project, you must
+add the mtools/headers/, fltk/ and CImg/ directories to the include path and
+you must link against the correct binaries of mtools[32/64][d].lib, fltk[d].lib,
+libjpeg[d].lib, libpng[d].lib and zlib[d].lib. corresponding to the chosen build
+configuration (ie release/debug, Win32/x64).  The simplest way to set up such a
+project is imitate/copy the solution and project files from one of the example in
+the examples/ directory. 
 
-NOTE: If you use mtools::cout (or any function that display graphics) in a program 
-before 'main()' even starts (e.g. in ctors of global objects), then you should 
-use the mtools version linked against the DLL version of FLTK as it will insure 
-that FLTK  is always properly initialized before it is used. Otherwise, it is simpler
-to just use the mtools version linked against the static version of FLTK. Of course, 
-when linking with the DLL version of fltk, you must link your program against 
-fltkdll.lib/fltkdlld.lib and then make sure that the dlls fltkdll.dll/fltkdlld.dll 
-are in the executable path (ie in the same directory as the .exe file or in a system
-directory). 
+NOTE: If you use mtools::cout (or any function/method that rely on FLTK) before
+'main()' even starts (e.g. in constructors of global objects), then you should use
+mtools's build linked against the DLL version of FLTK as it will insure that
+FLTK is always properly initialized before it is used. Otherwise, it is simpler to
+just use the mtools version linked against the static version of FLTK. Of course, 
+when linking  with the DLL version of fltk, you must link your program against 
+fltkdll.lib /fltkdlld.lib and then make sure that fltkdll.dll/fltkdlld.dll are 
+in the executable path (ie in the same directory as the .exe file or in a system 
+directory).
 
 
 ----------------------
-      On Linux 
+      On Linux
 ----------------------
 [tested on Linux Mint 17.2 with gcc 5.1]
 
-1) Make sure you use a recent version of gcc. Version 4.8 currently bundled with 
-Ubuntu (as of 06/15) does no have support for some of the C++11 specificities 
-needed to build the library... 
+1) Make sure you use a recent version of gcc. Version 4.8 currently bundled with
+Ubuntu (as of 06/15) does no have support for some of C++11 new features
+needed to build the library. Version 5 or later is ok.
 
-2) Make sure that the required library: fltk, zlib, libpng, libjpeg and CImg are 
-installed on the system and up to date. You need FLTK at least version 1.3.3 
+2) Make sure that the required libraries fltk, zlib, libpng, libjpeg and CImg are
+installed on the system and up to date. You need FLTK at least version 1.3.3
 (Ubuntu currently bundles the 1.1 version by default...).
 
-3) Run 'make' in the linux/ sub-directory of the mtools tree and wait/pray. 
-This will build the library and the test program , hopefully without error. 
-Resulting binaries are put in the linux/bin/ sub-directory.
+3) Run 'make' in the linux/ sub-directory of the mtools tree and wait/pray.
+This will build the library and the test program , hopefully without error.
+Resulting binaries are put in the linux/bin/ sub-directory. As always, you can
+use 'make clean' to clean-up prior to rebuilding the whole library.
 
-4) You can install the library in '/usr/local' with the command 'sudo make install'. 
-Conversely, you can remove the library installed with 'sudo make uninstall'
+4) Install the library (in '/usr/local') with the command 'sudo make install'.
+You can later on remove the library with 'sudo make uninstall'.
 
-5) Once the library is built. You can go into the example directory and type 
-'make' inside each project sub-directories to build and try the examples.
+5) Once the library is built and installed, you can go into the examples/ 
+directory and type 'make' inside each project sub-directories to build and 
+try the examples.
 
-5) In order to use the library inside one of your own project, just copy and adapt
-the makefile of one of the example project. 
+In order to use the library inside one of your own project, just adapt the
+makefile of one of the examples projects to find out the correct include/link
+options.
 
 
 ----------------------
      On OS X
 ----------------------
 Good luck to you :-)
-It should 'theorically' work since mtools uses only the C++ standard headers and 
-libraires that are cross platform with OS X support but I have never tried...
+It should 'theoretically' work since mtools uses only the C++ standard headers 
+and libraries that are cross-platform with OS X support but I have never tried...
+
 
