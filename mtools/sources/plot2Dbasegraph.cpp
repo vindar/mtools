@@ -521,7 +521,7 @@ namespace mtools
             _underColorButton->color2(_drawUnderColor);
             _underColorButton->redraw();
             _overSlider->value(_drawOverOpacity);
-            _underSlider->value(_drawOverOpacity);
+            _underSlider->value(_drawUnderOpacity);
             refresh();
             }
 

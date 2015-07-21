@@ -320,6 +320,9 @@ namespace mtools
             /* return the current quality of the complete drawing of all the objects */
             int quality();
 
+            /* reutrn if there is an object that is inserted and suspended at the smae time */
+            bool isSuspendedInserted();
+
         };
 
 
@@ -355,8 +358,15 @@ namespace mtools
                 }
             return q;
             }
-
-
+        /* return true if there is currently an object that is simultaneously enabled yet suspended, */
+        bool Plotter2DWindow::isSuspendedInserted()
+            {
+            for (int i = (int)_vecPlot.size(); i > 0; i--)
+                {
+                if ((_vecPlot[i - 1]->enable()) && (_vecPlot[i - 1]->suspend())) return true;
+                }
+            return false;
+            }
 
         /* add the object in the vector */
         void Plotter2DWindow::add(Plotter2DObj * obj)
@@ -870,10 +880,10 @@ namespace mtools
          * does not update the view if the resulting quality is zero */
         void Plotter2DWindow::updateView(bool withreset)
             {
-            const int maxretry = (withreset ? 20 : 0);
+            int maxretry = (withreset ? 20 : 0);
             int retry = 0;
-            if (withreset) _PW->discardImage();
-            else { _mainImage->checkerboard(); }  // do it now while worker thread continu
+            if (withreset) _PW->discardImage(); else { _mainImage->checkerboard(); }  // do it now while worker thread continu
+            if (isSuspendedInserted()) {maxretry -= 15;} // try only 5 times if there is a suspended object; 
             _mainImageQuality = quality(); // query the current quality
             while ((_mainImageQuality == 0) && (retry < maxretry))
                 { // quality is zero, we wait a little and before retry

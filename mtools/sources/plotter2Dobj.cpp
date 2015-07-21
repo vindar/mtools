@@ -50,6 +50,7 @@ namespace mtools
             _AD(nullptr),
             _opacity(1.0),
             _drawOn(true),
+            _suspended(false),
             _name(name),
             _optionWin(nullptr),
             _extOptionWin(nullptr),
@@ -77,6 +78,7 @@ namespace mtools
             _AD(nullptr),
             _opacity(1.0),
             _drawOn(true),
+            _suspended(false),
             _name(std::move(obj._name)),
             _optionWin(nullptr),
             _extOptionWin(nullptr),
@@ -133,11 +135,7 @@ namespace mtools
             }
 
 
-
-        bool Plotter2DObj::enable() const
-            {
-            return (_drawOn == 0 ? false : true);
-            }
+        bool Plotter2DObj::enable() const { return _drawOn; }
 
 
         void Plotter2DObj::enable(bool status)
@@ -148,7 +146,8 @@ namespace mtools
               runInFLTKThread(proxy);
               return;
               }
-            _drawOn = (status ? 1 : 0);
+            _drawOn = status;
+            _suspended = (_drawOn) ? false : true; // override the suspended flag
             if ((pnot)_ownercb == nullptr) return;  // return if not inserted
             MTOOLS_ASSERT(((AutoDrawable2DObject*)_AD) != nullptr);
             _onOffButton->value(_drawOn);
@@ -177,32 +176,38 @@ namespace mtools
                 if (_progBar != nullptr) _progBar->deactivate();
                 if (_optionWin != nullptr) _optionWin->deactivate();
                 }
-            ((AutoDrawable2DObject*)_AD)->workThread((_drawOn == 0) ? false : true);
+            ((AutoDrawable2DObject*)_AD)->workThread(_drawOn);
             refresh();
             yieldFocus();
             }
 
 
-        void Plotter2DObj::suspend()
+        bool Plotter2DObj::suspend() const { return _suspended; }
+
+
+        void Plotter2DObj::suspend(bool status)
             {
             if (!isFLTKThread()) // run the method in FLTK if not in it
               {
-              IndirectMemberProc<Plotter2DObj> proxy(*this, &Plotter2DObj::suspend); // registers the call
+              IndirectMemberProc<Plotter2DObj,bool> proxy(*this, &Plotter2DObj::suspend,status); // registers the call
               runInFLTKThread(proxy);
               return;
               }
-            if (_drawOn == 0) return;
-            _drawOn = 0;
+            if ((_drawOn == false)||(_suspended == status)) return; // nothing to do
+            _suspended = status;
             if ((pnot)_ownercb == nullptr) return;  // return if not inserted
-            _onOffButton->value(_drawOn);
-            _nameBox->deactivate();
-            _useRangeX->deactivate();
-            _useRangeY->deactivate();
-            _useRangeXY->deactivate();
-            _opacitySlider->deactivate();
-            if (_progBar != nullptr) _progBar->deactivate();
-            if (_optionWin != nullptr) _optionWin->deactivate();
-            ((AutoDrawable2DObject*)_AD)->workThread(false);
+            MTOOLS_ASSERT(((AutoDrawable2DObject*)_AD) != nullptr);
+            ((AutoDrawable2DObject*)_AD)->workThread(!status);
+            if (!status)
+                { // we resume activites
+                if (_missedSetParam)
+                    { 
+                    ((AutoDrawable2DObject*)_AD)->setParam(_crange, _cwinSize);
+                    _missedSetParam = false;
+                    }
+                refresh();
+                yieldFocus();
+                }
             }
 
 
@@ -241,7 +246,7 @@ namespace mtools
         void Plotter2DObj::autorangeX()
             {
             if ((pnot)_ownercb == nullptr) return;  // do nothing if not inserted
-            if (!_drawOn) return; // or not enabled
+            if (_suspended) return; // or not enabled
             MTOOLS_ASSERT(((AutoDrawable2DObject*)_AD) != nullptr);
             _makecallback(_REQUEST_USERANGEX);
             }
@@ -249,7 +254,7 @@ namespace mtools
         void Plotter2DObj::autorangeY()
             {
             if ((pnot)_ownercb == nullptr) return;  // do nothing if not inserted
-            if (!_drawOn) return; // or not enabled
+            if (_suspended) return; // or not enabled
             MTOOLS_ASSERT(((AutoDrawable2DObject*)_AD) != nullptr);
             _makecallback(_REQUEST_USERANGEY);
             }
@@ -257,7 +262,7 @@ namespace mtools
         void Plotter2DObj::autorangeXY()
             {
             if ((pnot)_ownercb == nullptr) return;  // do nothing if not inserted
-            if (!_drawOn) return; // or not enabled
+            if (_suspended) return; // or not enabled
             MTOOLS_ASSERT(((AutoDrawable2DObject*)_AD) != nullptr);
             _makecallback(_REQUEST_USERANGEXY);
             }
@@ -293,6 +298,7 @@ namespace mtools
             {
             if ((pnot)_ownercb == nullptr) return 0;  // 0 if not inserted
             if (!_drawOn) return 100; // and 100 if not enabled.
+            if (_suspended) return 0; // and 0 if enabled but suspended
             MTOOLS_ASSERT(((AutoDrawable2DObject*)_AD) != nullptr);
             return(((AutoDrawable2DObject*)_AD)->quality());
             }
@@ -309,7 +315,7 @@ namespace mtools
         void Plotter2DObj::resetDrawing(bool refresh)
             {
             if ((pnot)_ownercb == nullptr) return;  // do nothing if not inserted
-            if (!_drawOn) return; // or not enabled
+            if (_suspended) return; // or suspended
             MTOOLS_ASSERT(((AutoDrawable2DObject*)_AD) != nullptr);
             ((AutoDrawable2DObject*)_AD)->resetDrawing(); // reset the drawing
             if (refresh) _makecallback(_REQUEST_REFRESH);
@@ -326,7 +332,8 @@ namespace mtools
             {
             if ((pnot)_ownercb == nullptr) return 0;  // do nothing if not inserted
             MTOOLS_ASSERT(((AutoDrawable2DObject*)_AD) != nullptr);
-            if (!_drawOn) return 100;
+            if (!_drawOn) return 100; // 100 if disabled
+            if (_suspended) return 0; // 0 if suspended
             return ((AutoDrawable2DObject*)_AD)->drawOnto(im,_opacity); // reset the drawing
             }
 
@@ -337,7 +344,7 @@ namespace mtools
             MTOOLS_ASSERT(((AutoDrawable2DObject*)_AD) != nullptr);
             _crange = range; // save the range;
             _cwinSize = imageSize; // save the image size
-            if (!_drawOn) { _missedSetParam = true; return; } // disabled so we do not call the underlying object but we remember to update the range when enabled.
+            if (_suspended) { _missedSetParam = true; return; } // disabled so we do not call the underlying object but we remember to update the range when enabled.
             _missedSetParam = false;
             ((AutoDrawable2DObject*)_AD)->setParam(range,imageSize); // set the parameters
             }
@@ -554,7 +561,7 @@ namespace mtools
                 }
 
             setParam(rm->getRange(), rm->getWinSize()); // save the parameters for the range of the drawing which will be applied when we enable the object
-            enable((_drawOn == 0) ? false : true);                            // so maybe right now, or later on...
+            enable(_drawOn);                            // so maybe right now, or later on...
             return;
             }
 

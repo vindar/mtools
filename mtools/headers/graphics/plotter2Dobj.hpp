@@ -146,20 +146,38 @@ namespace mtools
 
 
             /**
-             * Enable/Disable the object and then send a refresh signal to the owner (if any) to redraw. Use
-             * suspend() instead to disable the objet without asking for a refresh.
+             * Enable/Disable the object. When enabling an object, this also send a refresh signal to the
+             * owner (if any) to redraw. This method also enable/disable the option menu associated with the
+             * object.
+             * 
+             * Calling this method override any suspended flag previously set with suspend().              *.
              *
-             * @param   status  true to enable and false to disable it.
-             * @sa suspend
-             **/
+             * @param   status  true to enable and false to disable the object.
+             *
+             * @sa  suspend
+            **/
             void enable(bool status);
 
 
             /**
-             * Disable an object. This is similar to enable(false) but do not request the owner (if any) to
-             * refresh the drawing.
-             **/
-            void suspend();
+             * Suspend/Resume the object. This method is independent of enable(). After suspend(true)
+             * returns, is guaranteed that the underlying drawable object will not be accessed in any way
+             * (in particular, quality() and drawOnto() simply return 0). This permits to safely modify an
+             * underlying object which cannot be concurrently accessed. Then, call suspend(false) when
+             * modification are finished.
+             *
+             * @param   status  true to suspend the object drawing and false to resume it.
+            **/
+            void suspend(bool status);
+
+
+            /**
+             * Query whether the object is currently suspended.
+             *
+             * @return  true if suspended and false otherwise. 
+            **/
+            bool suspend() const;
+            
 
             /**
              * Move the object up in the object list (the topmost object is drawn last). Does nothing if not
@@ -549,7 +567,8 @@ namespace mtools
             std::atomic<RangeManager *> _rm;                // the range manager of the owner or nullptr if not yet inserted.
             std::atomic<AutoDrawable2DObject*> _AD;         // the auto drawable 2D object
             std::atomic<float> _opacity;                    // the opacity for drawing
-            std::atomic<int>   _drawOn;                     // is the object enabled.
+            std::atomic<bool>  _drawOn;                     // is the object enabled.
+            std::atomic<bool>  _suspended;                  // is the object suspended
             std::string _name;                              // the object name
             int _progVal;                                   // the last value of the progress bar, -1 if thread stopped
             Fl_Button *             _nameBox;               // the box with the name of the drawing
