@@ -447,6 +447,92 @@ namespace mtools
 
 
     /**
+     * Zoom inside the rectangle (reduce the radius by 1/10th).
+     *
+     * @param   R   The rectangle to zoom in.
+     *
+     * @return  The zoomed in rectangle.
+    **/
+    template<typename T> inline Rect<T> zoomIn(const Rect<T> & R)
+        {
+        T lx = R.xmax - R.xmin;
+        T ly = R.ymax - R.ymin;
+        return Rect<T>(R.xmin + (lx / 10.0), R.xmax - (lx / 10.0), R.ymin + (ly / 10.0), R.ymax - (ly / 10.0));
+        }
+
+
+    /**
+    * Zoom outside of the rectangle (increase radius by 1/8th).
+    * 
+    * @param   R   The rectangle to zoom out.
+    *
+    * @return  The zoomed out rectangle.
+    **/
+    template<typename T> inline Rect<T> zoomOut(const Rect<T> & R)
+        {
+        T lx = R.xmax - R.xmin;
+        T ly = R.ymax - R.ymin;
+        return Rect<T>(R.xmin - (lx / 8.0), R.xmax + (lx / 8.0), R.ymin - (ly / 8.0), R.ymax + (ly / 8.0));
+        }
+
+
+    /**
+     * Move the rectangle up by 1/20th of its height. 
+     *
+     * @param   R   The rectangle to move up
+     *
+     * @return The same rectangle shifted up by 1/20th of its height. 
+    **/
+    template<typename T> inline Rect<T> up(const Rect<T> & R)
+        {
+        T off = R.ly() / 20;
+        return Rect<T>(R.xmin, R.xmax, R.ymin + off, R.ymax + off);
+        }
+
+
+    /**
+    * Move the rectangle down by 1/20th of its height.
+    *
+    * @param   R   The rectangle to move down
+    *
+    * @return The same rectangle shifted down by 1/20th of its height.
+    **/
+    template<typename T> inline Rect<T> down(const Rect<T> & R)
+        {
+        T off = R.ly() / 20;
+        return Rect<T>(R.xmin, R.xmax, R.ymin - off, R.ymax - off);
+        }
+
+
+    /**
+    * Move the rectangle left by 1/20th of its length.
+    *
+    * @param   R   The rectangle to move left
+    *
+    * @return The same rectangle shifted left by 1/20th of its length.
+    **/
+    template<typename T> inline Rect<T> left(const Rect<T> & R)
+        {
+        T off = R.lx() / 20;
+        return Rect<T>(R.xmin - off, R.xmax - off, R.ymin, R.ymax);
+        }
+
+
+    /**
+    * Move the rectangle right by 1/20th of its length.
+    *
+    * @param   R   The rectangle to move right
+    *
+    * @return The same rectangle shifted right by 1/20th of its length.
+    **/
+    template<typename T> inline Rect<T> right(const Rect<T> & R)
+        {
+        T off = R.lx() / 20;
+        return Rect<T>(R.xmin + off, R.xmax + off, R.ymin, R.ymax);
+        }
+
+
+    /**
      * The rectangle obtained as the intersection of two rectangles.
      *
      * @param   R1  The first rectangle.
@@ -455,7 +541,6 @@ namespace mtools
      * @return  the rectangle obtained as the intersection of R1 and R2. May be an empty rectangle.
      **/
     template<typename T> inline Rect<T> intersectionRect(const Rect<T> & R1, const Rect<T> & R2) {return(Rect<T>(std::max<T>(R1.xmin, R2.xmin), std::min<T>(R1.xmax, R2.xmax), std::max<T>(R1.ymin, R2.ymin), std::min<T>(R1.ymax, R2.ymax)));}
-
 
 
     /**
