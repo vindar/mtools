@@ -339,7 +339,7 @@ Grid_basic<2, int, 2> GS;
 
 RGBc colorGF(iVec2 pos)
     {
-    const int * S = GF.peek(pos);
+    const int * S = GF.safePeek(pos);
     if (S == nullptr) return RGBc::c_TransparentWhite;
     if (*S == 0) return RGBc::c_Cyan;
     if (*S == 1) return RGBc::c_Blue;

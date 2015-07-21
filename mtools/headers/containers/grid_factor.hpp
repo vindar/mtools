@@ -33,6 +33,8 @@
 #include <fstream>
 #include <list>
 #include <vector>
+#include <atomic>
+#include <mutex>
 
 namespace mtools
 {
@@ -133,8 +135,8 @@ namespace mtools
          * @param   maxSpecial  The maximum value of the special objects.
          * @param   callDtors   true to call the destructors of the T objects when destroyed.
          **/
-        Grid_factor(int64 minSpecial = 0, int64 maxSpecial = -1, bool callDtors = true)
-            { 
+        Grid_factor(int64 minSpecial = 0, int64 maxSpecial = -1, bool callDtors = true) : _psafeT(nullptr)
+            {
             reset(minSpecial, maxSpecial, callDtors);
             }
 
@@ -144,7 +146,7 @@ namespace mtools
          *
          * @param   filename    Filename of the file.
          **/
-        Grid_factor(const std::string & filename)
+        Grid_factor(const std::string & filename) : _psafeT(nullptr)
             { 
             reset(0,-1,true);
             load(filename);
@@ -155,7 +157,7 @@ namespace mtools
          * Destructor. Destroys the grid. The destructors of all the T objects in the grid are invoqued
          * if the callDtor flag is set and are dropped into oblivion otherwise.
          **/
-        ~Grid_factor() { _reset(); }
+        ~Grid_factor() { _reset(); if (_callDtors) { delete _psafeT; } }
 
 
         /**
@@ -169,7 +171,7 @@ namespace mtools
          * @tparam  NB_SPECIAL2 the template paramter for the max number of special object of the source.
          * @param   G   the source Grid_factor to copy.
          **/
-        template<size_t NB_SPECIAL2> Grid_factor(const Grid_factor<D, T, NB_SPECIAL2, R> & G)
+        template<size_t NB_SPECIAL2> Grid_factor(const Grid_factor<D, T, NB_SPECIAL2, R> & G) : _psafeT(nullptr)
             {
             MTOOLS_INSURE(((!G._existSpecial()) || (G._specialRange()<= NB_SPECIAL))); // make sure we can hold all the special element of the source.
             reset(0, -1, true);
@@ -186,7 +188,7 @@ namespace mtools
         * 
         * @param   G   the source Grid_factor to copy.
         **/
-        Grid_factor(const Grid_factor<D, T, NB_SPECIAL, R> & G)
+        Grid_factor(const Grid_factor<D, T, NB_SPECIAL, R> & G) : _psafeT(nullptr)
             {
             reset(0, -1, true);
             this->operator=(G);
@@ -199,7 +201,7 @@ namespace mtools
          *
          * @param   G   The basic_grid to process.
          **/
-        Grid_factor(const Grid_basic<D, T, R> & G)
+        Grid_factor(const Grid_basic<D, T, R> & G) : _psafeT(nullptr)
             {
             reset(0, -1, true);
             this->operator=(G);
@@ -226,6 +228,7 @@ namespace mtools
          **/
         template<size_t NB_SPECIAL2> Grid_factor<D, T, NB_SPECIAL, R> & operator=(const Grid_factor<D, T, NB_SPECIAL2, R> & G)
             {
+            std::lock_guard<std::recursive_mutex> lock(_peekmut); // protect from safePeek()
             MTOOLS_INSURE(((!G._existSpecial()) || (G._specialRange() <= NB_SPECIAL))); // make sure we can hold all the special element of the source.
             const void * p1 = (const void *)(&G);
             const void * p2 = (const void *)(this);
@@ -248,7 +251,7 @@ namespace mtools
             _nbNormalObj = G._nbNormalObj;
             // copy the whole tree structure
             _pcurrent = _copyTree<NB_SPECIAL2>(nullptr, G._getRoot(), G);
-       //     simplify(); // make sure the object is in a valid factorized state
+            _pcurrentpeek = (_pbox)_pcurrent;
             return(*this);
             }
 
@@ -270,27 +273,6 @@ namespace mtools
         Grid_factor<D, T, NB_SPECIAL, R> & operator=(const Grid_factor<D, T, NB_SPECIAL, R> & G)
             {
             return operator=<NB_SPECIAL>(G);
-            
-            if (this == (&G)) { return(*this); } // nothing to do
-            _reset(G._minSpec, G._maxSpec, G._callDtors); // reset the grid and set the special range and dtor flag
-            _rangemin = G._rangemin;    // same statistics
-            _rangemax = G._rangemax;    //
-            _minVal = G._minVal;        //
-            _maxVal = G._maxVal;        //
-            for (int64 i = 0; i < _specialRange(); i++)
-                {
-                _tabSpecNB[i] = G._tabSpecNB[i];
-                if (G._tabSpecObj[i] != nullptr)
-                    {
-                    _tabSpecObj[i] = _poolSpec.allocate();
-                    new(_tabSpecObj[i]) T(*(G._tabSpecObj[i]));
-                    }
-                }
-            _nbNormalObj = G._nbNormalObj;
-            // copy the whole tree structure
-            _pcurrent = _copyTree<NB_SPECIAL>(nullptr, G._getRoot(), G);
-   //         simplify(); // make sure the object is in a valid factorized state
-            return(*this);
             }
 
 
@@ -381,7 +363,6 @@ namespace mtools
         **/
         void serialize(OArchive & ar) const
             {
-   //         simplify(); // make sure the object is in a valid factorized state before saving it.
             ar << "\nBegining of Grid_factor<" << D << " , [" << std::string(typeid(T).name()) << "] , " << NB_SPECIAL << " , " << R << ">\n";
             ar << "Version";    ar & ((uint64)1); ar.newline();
             ar << "Template D"; ar & ((uint64)D); ar.newline();
@@ -424,6 +405,7 @@ namespace mtools
             {
             try
                 {
+                std::lock_guard<std::recursive_mutex> lock(_peekmut); // protect from safePeek()
                 _reset(-1, 0, true); // reset the object, do not create the root node
                 uint64 ver;         ar & ver;      if (ver != 1) { MTOOLS_DEBUG("wrong version"); throw ""; }
                 uint64 d;           ar & d;        if (d != D) { MTOOLS_DEBUG("wrong dimension"); throw ""; }
@@ -447,6 +429,7 @@ namespace mtools
                         }
                     }
                 _pcurrent = _deserializeTree(ar, nullptr);
+                _pcurrentpeek = (_pbox)_pcurrent;
                 }
             catch (...)
                 {
@@ -472,6 +455,7 @@ namespace mtools
          **/
         void changeSpecialRange(int64 newMinSpec, int64 newMaxSpec)
             {
+            std::lock_guard<std::recursive_mutex> lock(_peekmut); // protect from safePeek()
             MTOOLS_INSURE(((newMaxSpec < newMinSpec) || ((newMaxSpec - newMinSpec) < ((int64)NB_SPECIAL))));
             _expandTree(); // we expand the whole tree, removing every dummy links
             if (_callDtors) _poolSpec.destroyAll(); else _poolSpec.deallocateAll(); // release the memory for all the special objects saved
@@ -508,7 +492,8 @@ namespace mtools
          * consumming...
          **/
         void simplify() const
-            {                     
+            {   
+            std::lock_guard<std::recursive_mutex> lock(_peekmut); // protect from safePeek()
             if (!_existSpecial()) return; // nothing to do if there is no special objects
             memset(_tabSpecNB, 0, sizeof(_tabSpecNB));   // clear the count for special objects
             _nbNormalObj = 0; // reset the number of normal objects
@@ -523,6 +508,7 @@ namespace mtools
          **/
         void reset()
             {
+            std::lock_guard<std::recursive_mutex> lock(_peekmut); // protect from safePeek()
             _reset();
             _createBaseNode();
             }
@@ -542,6 +528,7 @@ namespace mtools
          **/
         void reset(int64 minSpecial, int64 maxSpecial, bool callDtors = true)
             {
+            std::lock_guard<std::recursive_mutex> lock(_peekmut); // protect from safePeek()
             _reset(minSpecial,maxSpecial,callDtors);
             _createBaseNode();
             }
@@ -723,46 +710,102 @@ namespace mtools
          * created, returns nullptr. This method does not modify the object at all and is particularly
          * suited when drawing the lattice using, for instance, the LatticeDrawer class.
          * 
-         *  @warning Contrarily to the peek() method for the Grid_basic class, this method is NOT
-         *  threadsafe. No other peek/get/set should occur simultaneously !
+         * @warning Contrarily to Grid_Basic::peek(), this method is NOT threadsafe ! It must not be used
+         *          while concurrently accessing the object. See safePeek() for a threadsafe alternative.
          *
          * @param   pos The position to peek.
          *
          * @return  nullptr if the value at that site was not yet created. A const pointer to it
          *          otherwise.
-         **/
+        **/
         inline const T * peek(const Pos & pos) const
             {
-            MTOOLS_ASSERT(_pcurrent != nullptr);
+            _pbox cp = _pcurrentpeek;
+            if (((_pbox)cp) == ((_pbox)nullptr)) return nullptr;
             // check if we are at the right place
-            if (_pcurrent->isLeaf())
+            if (cp->isLeaf())
                 {
-                _pleafFactor p = (_pleafFactor)(_pcurrent);
+                _pleafFactor p = (_pleafFactor)(cp);
                 MTOOLS_ASSERT(_isLeafFull(p) == (_maxSpec + 1)); // the leaf cannot be full
-                if (p->isInBox(pos)) return(&(p->get(pos)));
-                MTOOLS_ASSERT(_pcurrent->father != nullptr); // a leaf must always have a father
-                _pcurrent = p->father;
+                if (p->isInBox(pos)) { return(&(p->get(pos))); }
+                MTOOLS_ASSERT(cp->father != nullptr); // a leaf must always have a father
+                cp = p->father;
                 }
             // no, going up...
-            _pnode q = (_pnode)(_pcurrent);
+            _pnode q = (_pnode)(cp);
             while (!q->isInBox(pos))
                 {
-                if (q->father == nullptr) { _pcurrent = q; return nullptr; }
+                if (q->father == nullptr) { _pcurrentpeek = q; return nullptr; }
                 q = (_pnode)q->father;
                 }
             // and down..
             while (1)
                 {
                 _pbox b = q->getSubBox(pos);
-                if (b == nullptr) { _pcurrent = q; return nullptr; }
+                if (b == nullptr) { _pcurrentpeek = q; return nullptr; }
                 T * obj = _getSpecialObject(b); // check if the link is a special dummy link
-                if (obj != nullptr) { _pcurrent = q; return obj; }
+                if (obj != nullptr) { _pcurrentpeek = q; return obj; }
                 if (b->isLeaf()) 
                     { 
-                    _pcurrent = b; 
-                    MTOOLS_ASSERT(_isLeafFull((_pleafFactor)_pcurrent) == (_maxSpec + 1)); // the leaf cannot be full
+                    _pcurrentpeek = b; 
                     return(&(((_pleafFactor)b)->get(pos))); 
                     }
+                q = (_pnode)b;
+                }
+            }
+
+
+        /**
+         * Return a pointer to the object at a given position. If the value at the site was not yet
+         * created, returns nullptr. This method does not modify the object at all and is particularly
+         * suited when drawing the lattice using, for instance, the LatticeDrawer class.
+         * 
+         * This version is partially threadsafe: it is possible to call safePeek() while reading or
+         * writing or modifiying the object. However, there must be no concurrent access with peek()
+         * or safePeek() (all other public methods are ok). 
+         * 
+         * The pointer returned is copied in a special portion of memory and is safe from any
+         * modification until safePeek() is called again.
+         * 
+         * Implementation of the method uses a lock and a copy so it is slower that the peek()
+         * method. However, it does not affect the speed of the get/set operation (it slows it down only
+         * when factorization takes place, but this take much more time than the safePeek() method
+         * anyway).
+         *
+         * @param   pos The position to peek.
+         *
+         * @return  nullptr if the value at that site was not yet created. A const pointer to it
+         *          otherwise.
+        **/
+        inline const T * safePeek(const Pos & pos) const
+            {
+            std::lock_guard<std::recursive_mutex> lock(_peekmut); // acquire the lock
+            _pbox cp = _pcurrentpeek;
+            if (((_pbox)cp) == ((_pbox)nullptr)) return nullptr;
+            // check if we are at the right place
+            if (cp->isLeaf())
+                {
+                _pleafFactor p = (_pleafFactor)(cp);
+                MTOOLS_ASSERT(_isLeafFull(p) == (_maxSpec + 1)); // the leaf cannot be full
+                if (p->isInBox(pos)) { return _copySafeT(&(p->get(pos))); }
+                MTOOLS_ASSERT(cp->father != nullptr); // a leaf must always have a father
+                cp = p->father;
+                }
+            // no, going up...
+            _pnode q = (_pnode)(cp);
+            while (!q->isInBox(pos))
+                {
+                if (q->father == nullptr) { _pcurrentpeek = q; return nullptr; }
+                q = (_pnode)q->father;
+                }
+            // and down..
+            while (1)
+                {
+                _pbox b = q->getSubBox(pos);
+                if (b == nullptr) { _pcurrentpeek = q; return nullptr; }
+                T * obj = _getSpecialObject(b); // check if the link is a special dummy link
+                if (obj != nullptr) { _pcurrentpeek = q; return _copySafeT(obj); }
+                if (b->isLeaf()) { _pcurrentpeek = b; return _copySafeT(&(((_pleafFactor)b)->get(pos))); }
                 q = (_pnode)b;
                 }
             }
@@ -776,6 +819,13 @@ namespace mtools
 
 
         /**
+        * Safe peek at a value at a given position. Dimension 1 specialization.
+        * Returns nullptr if the object at this position is not created.
+        **/
+        inline const T * safePeek(int64 x) const { static_assert(D == 1, "template parameter D must be 1"); return safePeek(Pos(x)); }
+
+
+        /**
         * peek at a value at a given position. Dimension 2 specialization.
         * Returns nullptr if the object at this position is not created.
         **/
@@ -783,10 +833,24 @@ namespace mtools
 
 
         /**
+        * Safe peek at a value at a given position. Dimension 2 specialization.
+        * Returns nullptr if the object at this position is not created.
+        **/
+        inline const T * safePeek(int64 x, int64 y) const { static_assert(D == 2, "template parameter D must be 2"); return safePeek(Pos(x, y)); }
+
+
+        /**
         * peek at a value at a given position. Dimension 3 specialization.
         * Returns null if the object at this position is not created.
         **/
         inline const T * peek(int64 x, int64 y, int64 z) const { static_assert(D == 3, "template parameter D must be 3"); return peek(Pos(x, y, z)); }
+
+
+        /**
+        * Safe peek at a value at a given position. Dimension 3 specialization.
+        * Returns null if the object at this position is not created.
+        **/
+        inline const T * safePeek(int64 x, int64 y, int64 z) const { static_assert(D == 3, "template parameter D must be 3"); return safePeek(Pos(x, y, z)); }
 
 
         /**
@@ -834,29 +898,29 @@ namespace mtools
          * of the grid. Hence choosing smaller values for the template parameter can R improves the
          * quality of the returned box.
          * 
-         * Same as `peek()`, this method does not create elements. In particular, if the elemnt at pos
-         * is not created, the method simply sets boxMin = boxMax = pos and return nullptr.
+         * @warning This method is NOT threadsafe and uses the same pointer as get() and set().
          *
          * @param   pos             The position.
          * @param [in,out]  boxMin  Vector to put the minimum value of the box in each direction.
          * @param [in,out]  boxMax  Vector to put the maximum value of the box in each direction.
          *
          * @return  A pointer to the element at position pos or nullptr if it does not exist.
-         **/
+        **/
         const T * findFullBox(const Pos & pos, Pos & boxMin, Pos & boxMax) const
             {
-            MTOOLS_ASSERT(_pcurrent != nullptr);
+            _pbox cp = _pcurrent;
+            MTOOLS_ASSERT(cp != nullptr);
             // check if we are at the right place
-            if (_pcurrent->isLeaf())
+            if (cp->isLeaf())
                 {
-                _pleafFactor p = (_pleafFactor)(_pcurrent);
+                _pleafFactor p = (_pleafFactor)(cp);
                 MTOOLS_ASSERT(_isLeafFull(p) == (_maxSpec + 1)); // the leaf cannot be full
                 if (p->isInBox(pos)) { boxMin = pos; boxMax = pos; return(&(p->get(pos))); } // just a singleton...
-                MTOOLS_ASSERT(_pcurrent->father != nullptr); // a leaf must always have a father
-                _pcurrent = p->father;
+                MTOOLS_ASSERT(cp->father != nullptr); // a leaf must always have a father
+                cp = p->father;
                 }
             // no, going up...
-            _pnode q = (_pnode)(_pcurrent);
+            _pnode q = (_pnode)(cp);
             while (!q->isInBox(pos))
                 {
                 if (q->father == nullptr) { boxMin = pos; boxMax = pos; _pcurrent = q; return nullptr; } // just a singleton...
@@ -870,19 +934,18 @@ namespace mtools
                 T * obj = _getSpecialObject(b); // check if the link is a special dummy link
                 if (obj != nullptr) 
                         { // good we have a non trivial box
-                        _pcurrent = q;
                         const int64 rad = q->rad;
                         boxMin = q->subBoxCenter(pos);
                         boxMax = boxMin;
                         boxMin -= rad; 
                         boxMax += rad;
-                        return obj; 
+                        _pcurrent = q;
+                        return obj;
                         }
                 if (b->isLeaf())
                     {
-                    _pcurrent = b;
-                    MTOOLS_ASSERT(_isLeafFull((_pleafFactor)_pcurrent) == (_maxSpec + 1)); // the leaf cannot be full
                     boxMin = pos; boxMax = pos;
+                    _pcurrent = b;
                     return(&(((_pleafFactor)b)->get(pos))); // just a singleton
                     }
                 q = (_pnode)b;
@@ -904,29 +967,29 @@ namespace mtools
          * struture of the grid. Hence choosing smaller values for the template parameter r can improves
          * the quality of the returned box.
          * 
-         * Same as `peek()`, this method does not create elements. In particular, if the element at pos
-         * is not created, the method simply sets r = {pos} and then return nullptr.
+         * @warning This method is NOT threadsafe and uses the same pointer as get() and set().
          *
          * @param   pos         The position.
          * @param [in,out]  r   The iRect & to process.
          *
          * @return  A pointer to the element at position pos or nullptr if it does not exist.
-         **/
+        **/
         const T * findFullBoxiRect(const Pos & pos, iRect & r) const
             {
             static_assert(D == 2, "findFullBoxiRect() method can only be used when the dimension template parameter D is 2");
-            MTOOLS_ASSERT(_pcurrent != nullptr);
+            _pbox cp = _pcurrent;
+            MTOOLS_ASSERT(cp != nullptr);
             // check if we are at the right place
-            if (_pcurrent->isLeaf())
+            if (cp->isLeaf())
                 {
-                _pleafFactor p = (_pleafFactor)(_pcurrent);
+                _pleafFactor p = (_pleafFactor)(cp);
                 MTOOLS_ASSERT(_isLeafFull(p) == (_maxSpec + 1)); // the leaf cannot be full
                 if (p->isInBox(pos)) { r.xmin = pos.X(); r.xmax = pos.X(); r.ymin = pos.Y(); r.ymax = pos.Y(); return(&(p->get(pos))); } // just a singleton...
-                MTOOLS_ASSERT(_pcurrent->father != nullptr); // a leaf must always have a father
-                _pcurrent = p->father;
+                MTOOLS_ASSERT(cp->father != nullptr); // a leaf must always have a father
+                cp = p->father;
                 }
             // no, going up...
-            _pnode q = (_pnode)(_pcurrent);
+            _pnode q = (_pnode)(cp);
             while (!q->isInBox(pos))
                 {
                 if (q->father == nullptr) { r.xmin = pos.X(); r.xmax = pos.X(); r.ymin = pos.Y(); r.ymax = pos.Y(); _pcurrent = q; return nullptr; } // just a singleton...
@@ -940,20 +1003,19 @@ namespace mtools
                 T * obj = _getSpecialObject(b); // check if the link is a special dummy link
                 if (obj != nullptr)
                     { // good we have a non trivial box
-                    _pcurrent = q;
                     const int64 rad = q->rad;
                     Pos center = q->subBoxCenter(pos);
                     r.xmin = center.X() - rad; 
                     r.xmax = center.X() + rad;
                     r.ymin = center.Y() - rad;
                     r.ymax = center.Y() + rad;
+                    _pcurrent = q;
                     return obj;
                     }
                 if (b->isLeaf())
                     {
-                    _pcurrent = b;
-                    MTOOLS_ASSERT(_isLeafFull((_pleafFactor)_pcurrent) == (_maxSpec + 1)); // the leaf cannot be full
                     r.xmin = pos.X(); r.xmax = pos.X(); r.ymin = pos.Y(); r.ymax = pos.Y();
+                    _pcurrent = b;
                     return(&(((_pleafFactor)b)->get(pos))); // just a singleton
                     }
                 q = (_pnode)b;
@@ -1019,20 +1081,21 @@ namespace mtools
         * keep the tree consistent and simplified */
         inline void _set(const Pos & pos, const T * val)
             {
-            MTOOLS_ASSERT(_pcurrent != nullptr);
+            _pbox pc = _pcurrent;
+            MTOOLS_ASSERT(pc != nullptr);
             _updatePosRange(pos);
-            if (_pcurrent->isLeaf())
+            if (pc->isLeaf())
                 {
-                if (((_pleafFactor)_pcurrent)->isInBox(pos)) 
+                if (((_pleafFactor)pc)->isInBox(pos)) 
                     { 
-                    _pcurrent = _setLeafValue(val, pos, (_pleafFactor)_pcurrent); //set the value and then simplify if needed
+                    _pcurrent = _setLeafValue(val, pos, (_pleafFactor)pc); //set the value and then simplify if needed
                     return; 
                     }
-                MTOOLS_ASSERT(_pcurrent->father != nullptr); // a leaf must always have a father
-                _pcurrent = _pcurrent->father;
+                MTOOLS_ASSERT(pc->father != nullptr); // a leaf must always have a father
+                pc = pc->father;
                 }
             // going up...
-            _pnode q = (_pnode)_pcurrent;
+            _pnode q = (_pnode)pc;
             while (!q->isInBox(pos))
                 {
                 if (q->father == nullptr) { q->father = _allocateNode(q); }
@@ -1096,20 +1159,21 @@ namespace mtools
          * the object is created if it does not exist */
         inline T & _get(const Pos & pos) const
             {
-            MTOOLS_ASSERT(_pcurrent != nullptr);
+            _pbox pc = _pcurrent;
+            MTOOLS_ASSERT(pc != nullptr);
             _updatePosRange(pos);
-            if (_pcurrent->isLeaf())
+            if (pc->isLeaf())
                 {
-                if (((_pleafFactor)_pcurrent)->isInBox(pos)) 
+                if (((_pleafFactor)pc)->isInBox(pos)) 
                         { 
-                        MTOOLS_ASSERT(_isLeafFull((_pleafFactor)_pcurrent) == (_maxSpec + 1)); // the leaf cannot be full
-                        return(((_pleafFactor)_pcurrent)->get(pos)); 
+                        MTOOLS_ASSERT(_isLeafFull((_pleafFactor)pc) == (_maxSpec + 1)); // the leaf cannot be full
+                        return(((_pleafFactor)pc)->get(pos)); 
                         }
-                MTOOLS_ASSERT(_pcurrent->father != nullptr); // a leaf must always have a father
-                _pcurrent = _pcurrent->father;
+                MTOOLS_ASSERT(pc->father != nullptr); // a leaf must always have a father
+                pc = pc->father;
                 }
             // going up...
-            _pnode q = (_pnode)_pcurrent;
+            _pnode q = (_pnode)pc;
             while (!q->isInBox(pos))
                 {
                 if (q->father == nullptr) { q->father = _allocateNode(q);}
@@ -1194,6 +1258,7 @@ namespace mtools
                 _poolSpec.deallocateAll();
                 }
             _pcurrent = nullptr;
+            _pcurrentpeek = nullptr;
             _rangemin.clear(std::numeric_limits<int64>::max());
             _rangemax.clear(std::numeric_limits<int64>::min());
             
@@ -1354,6 +1419,7 @@ namespace mtools
         void _expandTree()
             {
             _pcurrent = _getRoot();
+            _pcurrentpeek = _pcurrent;
             MTOOLS_ASSERT(_pcurrent != nullptr);
             _expandBelowNode((_pnode)_pcurrent);
             }
@@ -1393,7 +1459,7 @@ namespace mtools
 
 
         /* Simplify the whole tree. 
-         * _pcurrent is set to the (possibly new) root of the tree */
+         * _pcurrent and _pcurrentpeek are set to the (possibly new) root of the tree */
         void _simplifyTree() const
             {
             _pbox p = _getRoot(); // find the root of the tree
@@ -1409,6 +1475,7 @@ namespace mtools
             B = q; // set the new value
             _releaseBox(p);
             _pcurrent = F;
+            _pcurrentpeek = F;
             }
 
 
@@ -1457,22 +1524,27 @@ namespace mtools
                     }
                 // yes, we can simplify
                 if (N->father == nullptr) { N->father = _allocateNode(N); } // make sure the father exist 
-                _pnode F = (_pnode)(N->father); // the father node
-                _pbox & B = F->getSubBox(N->center); // get the corresponding pointer in the father tab
-                MTOOLS_ASSERT(B == N); // make sure everything is coherent
-                B = p; // set the new value
-                _releaseNode(N);
-                N = F; // go to the father;
+                    { // this part is mutex protected from safePeek()
+                    std::lock_guard<std::recursive_mutex> lock(_peekmut);
+                    _pnode F = (_pnode)(N->father); // the father node
+                    if (_pcurrentpeek == N) { _pcurrentpeek = F; }
+                    _pbox & B = F->getSubBox(N->center); // get the corresponding pointer in the father tab
+                    MTOOLS_ASSERT(B == N); // make sure everything is coherent
+                    B = p; // set the new value
+                    _releaseNode(N);
+                    N = F; // go to the father;
+                    }
                 }
             }
 
 
         /* recount all the leaf in the tree.
         * this method also increase the global counters for special objects and normal objects 
-        * set _pcurrent to the root of the tree */
+        * set _pcurrent and _pcurrentpeek to the root of the tree */
         void _recountTree() const
             {
             _pcurrent = _getRoot();
+            _pcurrentpeek = _pcurrent;
             _recountBelow(_pcurrent);
             }
             
@@ -1560,7 +1632,9 @@ namespace mtools
                     MTOOLS_ASSERT( (leaf->count[value - _minSpec] <= metaprog::power<(2 * R + 1), D>::value) );
                     if (leaf->count[value - _minSpec] == metaprog::power<(2 * R + 1), D>::value) // check if the value is the only one in this leaf
                         { // yes the leaf can be factorized
+                        std::lock_guard<std::recursive_mutex> lock(_peekmut); // protect this part from safePeek()
                         _pnode F = (_pnode)(leaf->father); // the father of the leaf
+                        if (_pcurrentpeek == leaf) { _pcurrentpeek = F; }
                         MTOOLS_ASSERT(F != nullptr);
                         _pbox & B = F->getSubBox(pos); // the pointer to the leaf in the father tab
                         MTOOLS_ASSERT(B == ((_pbox)leaf)); // make sure we are coherent.
@@ -1594,7 +1668,9 @@ namespace mtools
                 MTOOLS_ASSERT( (leaf->count[off] <= metaprog::power<(2 * R + 1), D>::value) );
                 if (leaf->count[off] == metaprog::power<(2 * R + 1), D>::value) 
                     { // ok, we can factorize and remove this leaf.
+                    std::lock_guard<std::recursive_mutex> lock(_peekmut); // protect this part from safePeek()
                     _pnode F = (_pnode)(leaf->father); // the father of the leaf
+                    if (_pcurrentpeek == leaf) { _pcurrentpeek = F; }
                     MTOOLS_ASSERT(F != nullptr);
                     _pbox & B = F->getSubBox(pos); // the pointer to the leaf in the father tab
                     MTOOLS_ASSERT(B == ((_pbox)leaf)); // make sure we are coherent.
@@ -1818,6 +1894,7 @@ namespace mtools
             _pcurrent->center = Pos(0);
             _pcurrent->rad = R;
             _pcurrent->father = nullptr;
+            _pcurrentpeek = (_pbox)_pcurrent;
             return;
             }
 
@@ -1927,11 +2004,23 @@ namespace mtools
             }
 
 
+        /* copy source into _psafeT using either the assignement or copy operator 
+         * used by safePeek() */
+        inline const T * _copySafeT(const T * source) const
+            {
+            if (_psafeT == nullptr) { _psafeT = new T(*source); } else { (*_psafeT) = (*source); }
+            return _psafeT;
+            }
+
 
         /***************************************************************
         * Internal state
         ***************************************************************/
 
+        mutable std::recursive_mutex  _peekmut; // mutex used for safePeek().
+        mutable T *   _psafeT;                  // place to store the safePeeked object
+
+        mutable _pbox _pcurrentpeek;            // pointer to the current box used for peeking
         mutable _pbox _pcurrent;                // pointer to the current box
         mutable Pos   _rangemin;                // the minimal accessed range
         mutable Pos   _rangemax;                // the maximal accessed range
@@ -1941,7 +2030,7 @@ namespace mtools
 
         mutable SingleAllocator<internals_grid::_leafFactor<D, T, NB_SPECIAL, R>, 200>  _poolLeaf;  // pool for leaf objects
         mutable SingleAllocator<internals_grid::_node<D, T, R>, 200 >  _poolNode;                   // pool for node objects
-        mutable SingleAllocator<T, NB_SPECIAL + 1 >  _poolSpec;                                     // pool for special objects
+        mutable SingleAllocator<T, NB_SPECIAL + 2 >  _poolSpec;                                     // pool for special objects
 
         mutable T* _tabSpecObj[NB_SPECIAL];                                                         // array of T pointers to the special objects.
         mutable uint64 _tabSpecNB[NB_SPECIAL];                                                      // total number of special objects of each type. 
@@ -1967,10 +2056,12 @@ namespace mtools
     /* implementation of the assignement operator from grid_basic */
     template<size_t D, typename T, size_t NB_SPECIAL, size_t R> Grid_factor<D, T, NB_SPECIAL, R> & Grid_factor<D, T, NB_SPECIAL, R>::operator=(const Grid_basic<D, T, R> & G)
         {
+        std::lock_guard<std::recursive_mutex> lock(_peekmut); // protect from safePeek()
         _reset(0,-1, G._callDtors); // reset the grid and set the special range and dtor flag
         _rangemin = G._rangemin;    // same statistics
         _rangemax = G._rangemax;    //
         _pcurrent = _copyTreeFromGridBasic(nullptr, G._getRoot());  // copy the whole tree structure
+        _pcurrentpeek = (_pbox)_pcurrent;
         return *this;
         }
 
