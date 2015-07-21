@@ -130,8 +130,7 @@ namespace mtools
             if (!_mut.try_lock_for(std::chrono::milliseconds(MAXLOCKTIME))) return false;
             bool resok = true;
             mtools::fRect oldr = _range;
-            double sh = _range.ly() / 20;
-            _range.ymin += sh; _range.ymax += sh;
+            _range = mtools::up(_range);
             _fixRange();
             if (!_rangeOK(_range)) { _range = oldr; }
             if (_range != oldr) { if (!rangeNotification(true, false, false)) { _range = oldr;  resok = false; } }
@@ -147,8 +146,7 @@ namespace mtools
                 if (!_mut.try_lock_for(std::chrono::milliseconds(MAXLOCKTIME))) return false;
                 bool resok = true;
                 mtools::fRect oldr = _range;
-                double sh = _range.ly() / 20;
-                _range.ymin -= sh; _range.ymax -= sh;
+                _range = mtools::down(_range);
                 _fixRange();
                 if (!_rangeOK(_range)) { _range = oldr; }
                 if (_range != oldr) { if (!rangeNotification(true, false, false)) { _range = oldr;  resok = false; } }
@@ -164,8 +162,7 @@ namespace mtools
                 if (!_mut.try_lock_for(std::chrono::milliseconds(MAXLOCKTIME))) return false;
                 bool resok = true;
                 mtools::fRect oldr = _range;
-                double sh = _range.lx() / 20;
-                _range.xmin -= sh; _range.xmax -= sh;
+                _range = mtools::left(_range);
                 _fixRange();
                 if (!_rangeOK(_range)) { _range = oldr; }
                 if (_range != oldr) { if (!rangeNotification(true, false, false)) { _range = oldr;  resok = false; } }
@@ -181,8 +178,7 @@ namespace mtools
                 if (!_mut.try_lock_for(std::chrono::milliseconds(MAXLOCKTIME))) return false;
                 bool resok = true;
                 mtools::fRect oldr = _range;
-                double sh = _range.lx() / 20;
-                _range.xmin += sh; _range.xmax += sh;
+                _range = mtools::right(_range);
                 _fixRange();
                 if (!_rangeOK(_range)) { _range = oldr; }
                 if (_range != oldr) { if (!rangeNotification(true, false, false)) { _range = oldr;  resok = false; } }
@@ -198,10 +194,7 @@ namespace mtools
                 if (!_mut.try_lock_for(std::chrono::milliseconds(MAXLOCKTIME))) return false;
                 bool resok = true;
                 mtools::fRect oldr = _range;
-                double lx = _range.xmax - _range.xmin;
-                double ly = _range.ymax - _range.ymin;
-                _range.xmin = _range.xmin + (lx / 10.0); _range.xmax = _range.xmax - (lx / 10.0);
-                _range.ymin = _range.ymin + (ly / 10.0); _range.ymax = _range.ymax - (ly / 10.0);
+                _range = mtools::zoomIn(_range);
                 _fixRange();
                 if (!_rangeOK(_range)) { _range = oldr; }
                 if (_range != oldr) { if (!rangeNotification(true, false, false)) { _range = oldr;  resok = false; } }
@@ -216,9 +209,7 @@ namespace mtools
                 if (!_mut.try_lock_for(std::chrono::milliseconds(MAXLOCKTIME))) return false;
                 bool resok = true;
                 mtools::fRect oldr = _range;
-                double lx = _range.xmax - _range.xmin; double ly = _range.ymax - _range.ymin;
-                _range.xmin = _range.xmin - (lx / 8.0); _range.xmax = _range.xmax + (lx / 8.0);
-                _range.ymin = _range.ymin - (ly / 8.0); _range.ymax = _range.ymax + (ly / 8.0);
+                _range = mtools::zoomOut(_range);
                 _fixRange();
                 if (!_rangeOK(_range)) { _range = oldr; }
                 if (_range != oldr) { if (!rangeNotification(true, false, false)) { _range = oldr;  resok = false; } }
