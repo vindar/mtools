@@ -24,6 +24,7 @@
 #include "error.hpp"
 #include "metaprog.hpp"
 
+#include <string>
 #include <utility>
 #include <string>
 #include <type_traits>
@@ -31,6 +32,34 @@
 
 namespace mtools
 {
+
+    /**
+    * Macro that convert KB to bytes
+    **/
+    #define MEM_KB(_nb) (1024*_nb)
+
+    /**
+    * Macro that convert MB to bytes
+    **/
+    #define MEM_MB(_nb) (1048576*_nb)
+
+    /**
+    * Macro that convert GB to bytes
+    **/
+    #define MEM_GB(_nb) (1073741824*_nb)
+
+    /**
+    * Macro which compute how many object can fit in a given portion of memory
+    * (return at least 1 even if its size is larger than the memory size).
+    **/
+    #define NB_FOR_SIZE(t,s) ((s/sizeof(t)) + 1)
+    
+    /**
+     * Macro which compute the number of bytes taken by _nb object of type _type
+     **/
+    #define MEM_FOR_OBJ(_type, _nb) (sizeof(_type)*_nb)
+
+
         /**
          * A simple (but pretty fast) memory allocator for serving one element of type T at a time.
          * 
@@ -56,7 +85,8 @@ namespace mtools
          * hence distinct instances will not conflict with each other).  
          *
          * @tparam  T                   Type of objects to allocate.
-         * @tparam  POOLSIZE            Number of T object per memory pool (default = 1000).
+         * @tparam  POOLSIZE            Number of T object per memory pool (default = such that the memory 
+         *                              pool is around 100MB).
          * @tparam  DELETEOBJECTSONEXIT Set this to true (default) to call the destructors of all
          *                              remaining objects when the allocator is deleted. If set to false,
          *                              the memory is released but the objects are simply dumped wihout
@@ -65,7 +95,7 @@ namespace mtools
          *                              (the code calling ~T() is not generated as long as the methods
          *                              destroy() and destroyAll() are not called).
          **/
-        template<typename T, size_t POOLSIZE = 1000,bool DELETEOBJECTSONEXIT = true> class SingleAllocator
+        template<typename T, size_t POOLSIZE = NB_FOR_SIZE(T,MEM_MB(100)), bool DELETEOBJECTSONEXIT = true> class SingleAllocator
         {
         public:
 
