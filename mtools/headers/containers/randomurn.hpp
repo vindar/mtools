@@ -44,6 +44,47 @@ namespace mtools
     public:
 
         /**
+         * Default constructor. An empty urn
+         **/
+        RandomUrn() {}
+
+
+        /**
+         * Constructor. Load the urn from a file. Throw if error.
+         * Throws if error.
+         * 
+         * @param   filename    name of the file.
+         **/
+        RandomUrn(const std::string & filename) { load(filename); }
+
+
+        /**
+         * Loads from a file. The current content of the urn is discarded. Throws if eror.
+         *
+         * @param   filename    name o the file.
+         **/
+        void load(const std::string & filename)
+            {
+            _tab.clear();
+            IArchive ar(filename);
+            ar & (*this);
+            }
+
+
+        /**
+         * Saves the urn into a file. Throws if error.
+         * Use .z or .gz to save in compressed format.
+         * 
+         * @param   filename    name of the file.
+         **/
+        void save(const std::string & filename)
+            {
+            OArchive ar(filename);
+            ar & (*this);
+            }
+
+
+        /**
          * Number of elements in the urn.
          *
          * @return  The current number of elements in the urn
@@ -127,19 +168,34 @@ namespace mtools
          **/
         std::string toString(bool debug = false) const
             {
-            return std::string("RandomUrn<") + typeid(T).name() + "> size : " + mtools::toString(size()) + " (" + toStringMemSize(memory()) + ")" + (debug ? std::string("\n") + mtools::toString(_tab) : std::string(""));
+            return std::string("RandomUrn<") + typeid(T).name() + "> size: " + mtools::toString(size()) + " (" + toStringMemSize(memoryUsed()) + " / " + toStringMemSize(memoryAllocated())  + ")" + (debug ? std::string("\n") + mtools::toString(_tab) : std::string(""));
             }
 
 
         /**
-         * Memory consumed by the urn.
+         * Memory used by the urn.
          *
          * @return  The number of byte used by the urn (does not count memory dynamiccally allocate by T
          *          objects).
          **/
-        size_t memory() const
+        size_t memoryUsed() const { return MEM_FOR_OBJ(T, _tab.size()) + sizeof(*this); }
+
+        /**
+        * Memory allocated by the urn.
+        *
+        * @return  The number of byte used by the urn (does not count memory dynamiccally allocate by T
+        *          objects).
+        **/
+        size_t memoryAllocated() const { return MEM_FOR_OBJ(T, _tab.capacity()) + sizeof(*this); }
+
+
+        /**
+        * serialise/deserialize the urn. Works with boost and with the custom serialization classes
+        * OArchive and IArchive. the method performs both serialization and deserialization.
+        **/
+        template<typename U> void serialize(U & Archive, const int version = 0)
             {
-            return MEM_FOR_OBJ(T, _tab.size());
+            Archive & _tab;
             }
 
 
