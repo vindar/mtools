@@ -723,6 +723,30 @@ namespace mtools
     bool isValidUtf8(const std::string & s);
 
 
+
+
+        /**
+     * Print a given number of bytes in nice form (ex: 10523 yields "10KB")
+     *
+     * @param   nb  The number of bytes.
+     *
+     * @return  A string representing this memory size
+     **/
+    inline std::string toStringMemSize(size_t nb)
+        {
+        int res;
+        std::string unit;
+        if (nb < 1024) { unit = "B"; nb *= 1024; } else {
+        if (nb < 1024*1024) { unit = "KB"; } else { nb /= 1024;
+        if (nb < 1024*1024) { unit = "MB"; } else { nb /= 1024;
+        if (nb < 1024*1024) { unit = "GB"; } else { nb /= 1024;
+        if (nb < 1024*1024) { unit = "TB"; } else { nb /= 1024;
+        if (nb < 1024*1024) { unit = "PB"; } else { nb /= 1024; }}}}}}
+        res = ((nb % 1024) * 100) / 1024;
+        return toString(nb / 1024) + ((res == 0) ? std::string("") : (std::string(".") + toString(res))) + unit;
+        }
+
+
     /**
      * Convert an object into an std::string.
      *
