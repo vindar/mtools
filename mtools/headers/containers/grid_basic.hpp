@@ -396,6 +396,18 @@ namespace mtools
 
 
         /**
+        * Return the memory currently allocated by the grid (in bytes).
+        **/
+        size_t memoryAllocated() const { return sizeof(*this) + _poolLeaf.footprint() + _poolNode.footprint(); }
+
+
+        /**
+        * Return the memory currently used by the grid (in bytes).
+        **/
+        size_t memoryUsed() const { return sizeof(*this) + _poolLeaf.used() + _poolNode.used(); } 
+
+
+        /**
         * Returns a string with some information concerning the object.
         *
         * @param   debug   Set this flag to true to enable the debug mode where the whole tree structure
@@ -407,7 +419,7 @@ namespace mtools
             {
             std::string s;
             s += std::string("Grid_basic<") + mtools::toString(D) + " , " + typeid(T).name() + " , " + mtools::toString(R) + ">\n";
-            s += std::string(" - Memory used : ") + mtools::toString((_poolLeaf.footprint() + _poolNode.footprint()) / (1024 * 1024)) + "MB\n";
+            s += std::string(" - Memory : ") + mtools::toStringMemSize(memoryUsed()) + " / " + mtools::toStringMemSize(memoryAllocated()) + "\n";
             s += std::string(" - Range min = ") + _rangemin.toString(false) + "\n";
             s += std::string(" - Range max = ") + _rangemax.toString(false) + "\n";
             if (debug) { s += "\n" + _printTree(_getRoot(), ""); }
@@ -442,7 +454,6 @@ namespace mtools
 
         /**
          * Get a value at a given position. If the T object at that site does not exist, it is created.
-         *
          *
          * @param   pos The position.
          *
@@ -574,6 +585,27 @@ namespace mtools
                 }
             }
 
+
+        /**
+         * Get a value at a given position. If the T object at that site does not exist, it is created
+         * Same as the get() method. (const version).
+         *
+         * @param   pos The position.
+         *
+         * @return  A reference to the value.
+         **/
+        inline const T & operator()(const Pos & pos) const { return _get(pos); }
+
+
+        /**
+         * Get a value at a given position. If the T object at that site does not exist, it is created.
+         * Same as the get() method.
+         * 
+         * @param   pos The position.
+         *
+         * @return  A reference to the value.
+         **/
+        inline T & operator()(const Pos & pos) { return _get(pos); }
 
 
         /**
@@ -922,8 +954,8 @@ namespace mtools
         mutable Pos   _rangemax;        // the maximal range
         bool _callDtors;                // should we call the destructors
 
-        mutable SingleAllocator<internals_grid::_leaf<D, T, R>,200>  _poolLeaf;       // the two memory pools
-        mutable SingleAllocator<internals_grid::_node<D, T, R>,200>  _poolNode;       //
+        mutable SingleAllocator<internals_grid::_leaf<D, T, R> >  _poolLeaf;       // the two memory pools
+        mutable SingleAllocator<internals_grid::_node<D, T, R> >  _poolNode;       //
 
     };
 

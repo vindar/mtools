@@ -854,6 +854,18 @@ namespace mtools
 
 
         /**
+        * Return the memory currently allocated by the grid (in bytes).
+        **/
+        size_t memoryAllocated() const { return sizeof(*this) + _poolLeaf.footprint() + _poolNode.footprint() + _poolSpec.footprint() + ((_psafeT == nullptr) ? 0 : sizeof(T)); }
+
+
+        /**
+        * Return the memory currently used by the grid (in bytes).
+        **/
+        size_t memoryUsed() const { return sizeof(*this) + _poolLeaf.used() + _poolNode.used() + _poolSpec.used() + ((_psafeT == nullptr) ? 0 : sizeof(T)); }
+        
+
+        /**
         * Returns a string with some information concerning the object.
         *
         * @param   debug   Set this flag to true to enable the debug mode where the whole tree structure
@@ -865,7 +877,7 @@ namespace mtools
             {
             std::string s;
             s += std::string("Grid_factor<") + mtools::toString(D) + " , " + typeid(T).name() + " , " + mtools::toString(NB_SPECIAL) + " , " + mtools::toString(R)  + ">\n";
-            s += std::string(" - Memory used : ") + mtools::toString((_poolLeaf.footprint() + _poolNode.footprint() + _poolSpec.footprint()) / (1024 * 1024)) + "MB\n";
+            s += std::string(" - Memory : ") + mtools::toStringMemSize(memoryUsed()) + " / " + mtools::toStringMemSize(memoryAllocated()) + "\n";
             s += std::string(" - Min position accessed = ") + _rangemin.toString(false) + "\n";
             s += std::string(" - Max position accessed = ") + _rangemax.toString(false) + "\n";
             s += std::string(" - Min value created = ") + mtools::toString(_minVal) + "\n";
@@ -2028,9 +2040,9 @@ namespace mtools
         mutable int64 _minVal;                  // current minimum value in the grid
         mutable int64 _maxVal;                  // current maximum value in the grid
 
-        mutable SingleAllocator<internals_grid::_leafFactor<D, T, NB_SPECIAL, R>, 200>  _poolLeaf;  // pool for leaf objects
-        mutable SingleAllocator<internals_grid::_node<D, T, R>, 200 >  _poolNode;                   // pool for node objects
-        mutable SingleAllocator<T, NB_SPECIAL + 2 >  _poolSpec;                                     // pool for special objects
+        mutable SingleAllocator<internals_grid::_leafFactor<D, T, NB_SPECIAL, R> >  _poolLeaf;      // pool for leaf objects
+        mutable SingleAllocator<internals_grid::_node<D, T, R> >  _poolNode;                        // pool for node objects
+        mutable SingleAllocator<T, NB_SPECIAL + 1 >  _poolSpec;                                     // pool for special objects
 
         mutable T* _tabSpecObj[NB_SPECIAL];                                                         // array of T pointers to the special objects.
         mutable uint64 _tabSpecNB[NB_SPECIAL];                                                      // total number of special objects of each type. 
