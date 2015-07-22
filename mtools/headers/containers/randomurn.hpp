@@ -23,198 +23,128 @@
 
 /* headers */
 #include <string>
+#include <vector>
+
 #include "../misc/stringfct.hpp"
 #include "../misc/misc.hpp"
+#include "../misc/error.hpp"
 
 namespace mtools
 {
+
+
     /**
-     * A random urn containing element of type T. Element can be added and drawn from the urn with
-     * or without putting them back.
-     * 
-     * @code{.cpp}
-     * int main()
-     * {
-     * RandomUrn<int> Urn(20);
-     * cout << Urn.toString(true);
-     * for (int i = 0;i<9;i++) { Urn.Add(i); } // add 9 elements
-     * cout << Urn.toString(true);
-     * cout << "Get: " << Urn.Retrieve(0.5) << "\n\n";
-     * cout << Urn.toString(true);
-     * cout << "Get (and put back): " << Urn.PickAndPutBack(0.5) << "\n\n";
-     * cout << Urn.toString(true);
-     * cout << "Get: " << Urn.Retrieve(0.5) << "\n\n";
-     * cout << Urn.toString(true);
-     * cout << "Adding element 9.\n\n";
-     * Urn.Add(9);
-     * cout << Urn.toString(true);
-     * cout.getKey();
-     * return 0;
-     * }
-     * @endcode.
+     * A random urn container. Element can be added and removed from the urn. It is possible to pick
+     * an element at random via operator() by providing a uniform random number in [0,1[.
      *
-     * @tparam  T   must implement, default constructor, copy constructor, assignement operator=.
-    **/
+     * @tparam  T   Type of object that the urn contains.
+     **/
     template<typename T> class RandomUrn
     {
-    public: 
+    public:
 
         /**
-         * Constructor.
+         * Number of elements in the urn.
          *
-         * @param   size    Max number of item in the urn.
-        **/
-        RandomUrn(uint32 size) : maxsize(size)
-        { 
-            tab = new T[maxsize];
-            Clear();
-        }
-       
-
-        /**
-         * Destructor.
-        **/
-        ~RandomUrn() {delete [] tab;}
+         * @return  The current number of elements in the urn
+         **/
+        inline size_t size() const { return _tab.size(); }
 
 
         /**
-         *  Remove all the elments in the Urn
-        **/
-        inline void Clear() {nb=0;}
-
-
-        /**
-         * Return the number of elements the urn contains
-        **/
-        inline uint64 NbElements() const {return (uint64)nb;}
-
-
-        /**
-         * Return the maximum number of element the urn can contain
-        **/
-        inline uint64 UrnSize() const {return (uint64)maxsize;}
-
-
-        /**
-         * Retrieve a random element from the urn AND REMOVE IT FROM THE URN
+         * Access an element according to its index in the urn.
+         * 
+         * @warning The reference is invalidated after a call to insert(), remove() or clear().
          *
-         * @param   a   a random number in [0,1).
+         * @param   pos The position between 0 and Urn.size()-1.
          *
-         * @return  the element removed.
-        **/
-        inline T Retrieve(double a)
+         * @return  A reference to the corresponding element.
+         **/
+        inline T & operator[](size_t pos)
             {
-            if (nb == 0) MTOOLS_ERROR("Urn empty.");
-            size_t p = (size_t)(nb*a);
-            if (p >= nb)  { MTOOLS_ERROR("Invalid random number."); }
-            T val = tab[p]; if (p!= (nb-1)) {tab[p] = tab[nb-1];}
-            nb--;
-            return val;
+            MTOOLS_ASSERT(pos < Urn.size());
+            return _tab[pos];
             }
 
 
         /**
-         * Retrieves the elepment at position pos. return element at position 0 if out of bound.
+         * Access the element associated with a value in [0,1[. Useful for choosing an element a random
+         * given a uniform random number.
+         * 
+         * @warning The reference is invalidated after a call to insert(), remove() or clear().
          *
-         * @param   pos The position.
+         * @param   v   The double in [0,1[.
          *
-         * @return  the element at position pos.
-        **/
-		inline T RetrieveAtPos(size_t pos)
-			{
-            if (pos >= nb) { return tab[0]; }
-			return tab[pos];
-			}
-
-
-        /**
-         * Remove the element located at position pos in the urn
-         *
-         * @param   pos The position.
-        **/
-		inline void RemoveAtPos(size_t pos)
-			{
-            if (pos >= nb) { return; }
-            T val = tab[pos]; if (pos != (nb-1)) {tab[pos] = tab[nb-1];}
-            nb--;
-			}
-
-
-  
-        /**
-         * Retrieve a random element from the urn AND PUT IT BACK IN THE URN
-         *
-         * @param   a random number in [0,1).  
-         *
-         * @return  A the element.
-        **/
-        inline T PickAndPutBack(double a) const
+         * @return  The corresponding element obtained by linear interpolation.
+         **/
+        inline T & operator()(double v)
             {
-            if (nb == 0) { MTOOLS_ERROR("Empty urn"); }
-            size_t p = (size_t)(nb*a);
-            if (p >= nb)  { MTOOLS_ERROR("RandomUrn::PickAndPutBack(), invalid random number a !"); }
-            return tab[p];
+            MTOOLS_ASSERT(((v >= 0.0) && (v<1.0)));
+            size_t n = (size_t)(v*_tab.size());
+            MTOOLS_ASSERT(n < _tab.size());
+            return _tab[n];
             }
 
 
         /**
-         * Add a new element in the Urn.
+         * Inserts an element in the Urn.
          *
-         * @param   val The value to add.
-        **/
-        inline void Add(const T & val)
+         * @param   obj The object to insert
+         *
+         * @return  A reference to the object inside the urn.
+         **/
+        inline T & insert(const T & obj)
             {
-            if (nb == maxsize) { MTOOLS_ERROR("RandomUrn::Add(), Urn is full !");}
-            tab[nb] = val; 
-            nb++;
-            return;
+            _tab.emplace_back(obj);
+            return _tab.back();
             }
 
 
         /**
-         * Get some stats about the object.
-        **/
-        std::string toString(bool debug = false)
+         * Removes an element from the urn.
+         *
+         * @param   obj The object to remove.
+         **/
+        inline void remove(const T & obj)
             {
-            std::string s;
-            s += "*****************************************************\n";
-            s += "Random Urn object statistics\n\n";
-            s += "- memory size : " + mtools::toString((maxsize*sizeof(T))/(1024*1024)) + "Mb\n";
-            s += "- Size of each Element : " + mtools::toString(sizeof(T)) + " octets\n";
-            s += "- maximal number of elements : " + mtools::toString(maxsize) + "\n";
-            s += "- actual number of elements  : " + mtools::toString(nb) + "  (" + mtools::toString((int)(100.0*((double)nb)/((double)maxsize))) + "% occupied)\n";
-            s += "*****************************************************\n";
-            if (debug) { s += printDebug(); }
-            return s;
+            auto index = (&obj) - _tab.data();
+            MTOOLS_ASSERT(((index >= 0) && (index < (int64)_tab.size())));
+            if ((size_t)(index + 1) < _tab.size()) { _tab[index] = _tab.back(); }
+            _tab.pop_back();
             }
-
 
 
         /**
-         * Print the content of the urn in a std::tring. For debugging purpose only.
-        **/
-        std::string printDebug()
+         * Remove every elements in the urn, leaving it empty.
+         **/
+        void clear() { _tab.clear(); }
+
+
+        /**
+         * Print information about the urn into a string.
+         *
+         * @return  A std::string that represents this object.
+         **/
+        std::string toString(bool debug = false) const
             {
-                std::string s;
-                if (nb == 0) {s+= "The urn is empty !\n"; return s;}
-                s += "The Urn contains " + mtools::toString(nb) + " elements:\n[";
-               for(size_t i =0; i<nb;i++) { if (i!=0) {s+=",";} s += mtools::toString(tab[i]);}
-                s+= "]\n";
-                return s;
+            return std::string("RandomUrn<") + typeid(T).name() + "> size : " + mtools::toString(size()) + " (" + toStringMemSize(memory()) + ")" + (debug ? std::string("\n") + mtools::toString(_tab) : std::string(""));
             }
 
 
-    /* private member */
-    private:
+        /**
+         * Memory consumed by the urn.
+         *
+         * @return  The number of byte used by the urn (does not count memory dynamiccally allocate by T
+         *          objects).
+         **/
+        size_t memory() const
+            {
+            return MEM_FOR_OBJ(T, _tab.size());
+            }
 
-        T *     tab;     // the tab containing the elements of the urn
-        size_t  nb;      // number of elements in the urn
-        size_t  maxsize; // maximum number of elements the urn can contain
 
-        /* no copy */
-        RandomUrn(const RandomUrn &);
-        RandomUrn & operator=(const RandomUrn &);
-
+    private: 
+        std::vector<T> _tab;
     };
 
 
