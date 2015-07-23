@@ -402,9 +402,8 @@ void fillSqr(iRect R, int val)
 
 /* Eden model : FPP with exp. weights */
 class EdenCluster
-{
+    {
     public:
-
         /* construct, initially empty cluster */
         EdenCluster() : N(0), Grid(5, 5, false), Urn(), gen() { clear(); }
 
@@ -417,19 +416,18 @@ class EdenCluster
         /* restart from scratch */
         void clear()
             {
-            Grid.reset(); Grid.set({ 0,0 }, 4); // 4 imaginary neighour
-            Urn.clear(); Urn.insert({ 0,0 });   // of the origin so that it is infected at the first step.
-            N = 0;
+            Grid.reset(); Grid.set({ 0,0 }, 4); Urn.clear(); Urn.insert({ 0,0 });   // 4 imaginary neighours of the origin so that it is infected at the first step.
+            N = 0; // no particle in the cluster yet.
             }
 
         /* grow the cluster by a given number of particles */
         void simulate(size_t steps)
             {
-            for (size_t k = 0;k < steps;k++)
+            int64 finalN = N + steps;
+            while (N < finalN )
                 {
                 iVec2 & rpos = Urn(gen.rand_double0()); // pick a border site
-                char n = Grid(rpos); // number of neighour inside the cluster
-                if (gen.rand_double0() * 4 >= (4 - n))
+                if (gen.rand_double0() * 4 >= (4 - Grid(rpos)))
                     { // ok, new point in the cluster
                     iVec2 pos = rpos; // save the position 
                     Urn.remove(rpos); // remove it from the urn
@@ -447,30 +445,27 @@ class EdenCluster
         inline int64 size() { return N; }
 
         /* range of the cluster */
-        inline fRect range() { iRect R = Grid.getPosRangeiRect(); return fRect(R.xmin,R.xmax,R.ymin,R.ymax); }
+        inline fRect range() { return fRect(Grid.getPosRangeiRect()); }
 
         /* print some info */
-        std::string toString() const { return std::string("Eden Model\nNumber of particles in the cluster: ") + mtools::toString(N) + "\nBoundary: " + mtools::toString(Urn) + "\nGrid: " + mtools::toString(Grid) + "\n"; }
+        std::string toString() const { return std::string("Number of particles in the cluster: ") + mtools::toString(N) + "\nBoundary: " + mtools::toString(Urn) + "\nGrid: " + mtools::toString(Grid) + "\n"; }
 
         /* serialize/deserialize */
-        void serialize(OArchive & ar) { ar << "Eden Model\n"; ar & N & Urn & Grid; }
+        template<typename Archive> void serialize(Archive & ar)  { ar << "Eden Model\n"; ar & N & Urn & Grid; }
 
         /* color function for the cluster */
         RGBc getColor(iVec2 pos)
             {
-            const char * v = Grid.safePeek(pos);
+            auto v = Grid.safePeek(pos);
             if ((v == nullptr) || ((*v) == 0)) return RGBc::c_TransparentWhite; else return RGBc::jetPalette(*v, 1, 5);
             }
 
-
     private:
-
         int64 N;                                     // number of particles in the cluster
         Grid_factor<2, char, 2> Grid;                // the 2D grid. 0 if no particle, 1-4 = nb of neighour, 5 = in the cluster
         RandomUrn<iVec2> Urn;                        // list of neighour sites of the current domain
         MT2004_64 gen;                               // random number generator
-
-};
+    };
 
 
 EdenCluster EC; // the Eden cluster object
@@ -492,36 +487,39 @@ void run()
     Plotter2D Plotter;
     Plotter[P2][P1];
     Plotter.startPlot();
-    fRect R = mtools::zoomOut((mtools::zoomOut(EC.range())));
-    R.xmin = std::min<double>(R.xmin, -10000); R.xmax = std::max<double>(R.xmax, 10000);
-    R.ymin = std::min<double>(R.ymin, -10000); R.ymax = std::max<double>(R.ymax, 10000);
+    Plotter.range().setRange(unionRect(mtools::zoomOut(EC.range()),fRect(-5000,5000,-5000,5000)));
     Plotter.autoredraw(300);
-    int i=0;
     cout << EC.toString();
     while (Plotter.shown())
         {
+        if (EC.size() % 10000000 == 0) cout << EC.toString();
         EC.simulate(1000000);
-        if (i % 10 == 0) { cout << EC.toString(); } i++;
         }
     return;
     }
 
+
 int main(int argc, char *argv[])
     {
-    cout << "Eden mode (FPP with exp weights on edges)\n";
-    cout << "'Infinite simulation'\n\n";
+    cout << "Eden mode (FPP with exp weights on edges)\n'Infinite simulation'\n\n";
     while(1)
         {
-        cout << "\n\n(L) Load a simulation.\n";         
-        cout     << "(S) Save the simulation.\n";
-        cout     << "(R) Run the simulation.\n";
-        cout     << "(Q) Quit.\n";
+        cout << "\n\n-----------------------------\n";
+        cout << "Number of particles in the cluster : " << EC.size() << "\n";
+        cout << "(L) Load a simulation.\n";         
+        cout << "(S) Save the simulation.\n";
+        cout << "(N) New simulation.\n";
+        cout << "(R) Run the simulation.\n";
+        cout << "(Q) Quit.\n";
         char c = cout.getKey();
-        if ((c == 'L') || (c == 'l')) { cout << "Name of the file to load : "; std::string filename; cout >> filename; cout << filename << "\n"; EC.load(filename); }
-        if ((c == 'S') || (c == 's')) { cout << "Name of the file to save : "; std::string filename; cout >> filename; cout << filename << "\n"; EC.save(filename); }
+        if ((c == 'L') || (c == 'l')) { cout << "Name of the file to load : "; std::string filename; cout >> filename; cout << filename << "\n"; try { EC.load(filename); } catch (...) { cout << "*** ERROR ***"; EC.clear(); } }
+        if ((c == 'S') || (c == 's')) { cout << "Name of the file to save (.gz to compress): "; std::string filename; cout >> filename; cout << filename << "\n"; try { EC.save(filename); } catch (...) { cout << "*** ERROR ***"; } }
         if ((c == 'R') || (c == 'r')) { run(); }
+        if ((c == 'N') || (c == 'n')) { EC.clear(); }
         if ((c == 'Q') || (c == 'q')) { return 0; }
         }
+
+
 
     cout.useDefaultInputValue(true);
     cout << "Hello World\n";
