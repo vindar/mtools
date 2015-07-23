@@ -100,17 +100,32 @@ namespace mtools
 
 
         /**
+         * Copy constructor from another template parameter.
+         **/
+        template<typename U> Rect(const Rect<U> & R) : xmin((T)R.xmin), xmax((T)R.xmax), ymin((T)R.ymin), ymax((T)R.ymax) {}
+
+
+        /**
          * Default assignment operator.
          **/
         Rect & operator=(const Rect<T> & R) = default;
 
 
         /**
+        * Assignment operator from another type.
+        **/
+        template<typename U> Rect & operator=(const Rect<U> & R)
+            {
+            xmin = (T)R.xmin; xmax = (T)R.xmax;
+            ymin = (T)R.ymin; ymax = (T)R.ymax;
+            return(*this);
+            }
+
+
+        /**
          * Default destructor.
          **/
         ~Rect() = default;
-
-
 
 
         /**
