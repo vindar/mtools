@@ -1,6 +1,6 @@
 /***********************************************
- * Project : MandelbrotDemo
- * date : Tue Jun 23 11:23:45 2015
+ * Project : Mandelbrot
+ * date : Sat Jul 25 10:23:13 2015
  ***********************************************/
 
 #pragma message("Compiling pre-compiled headers for stdafx.h\n")
@@ -77,6 +77,7 @@
 #pragma warning( pop )
 #endif
 
+// *** Library fltk ***
 #include "zlib.h"       // fltk zlib
 #include "png.h"        // fltk libpng
 #include "jpeglib.h"    // fltk libjpeg

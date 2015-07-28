@@ -1,4 +1,4 @@
-OUTFILE = demoEden
+OUTFILE = Eden
 
 OUTDIR = bin
 SOURCE = main.cpp

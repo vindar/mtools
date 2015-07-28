@@ -1,6 +1,6 @@
 /***********************************************
- * Project : MandelbrotDemo
- * date : Tue Jun 23 11:23:45 2015
+ * Project : Eden
+ * date : Sat Jul 25 10:27:42 2015
  ***********************************************/
 
 // precompiled headers.

@@ -1,4 +1,4 @@
-OUTFILE = demoBM
+OUTFILE = SRW_1D
 
 OUTDIR = bin
 SOURCE = main.cpp

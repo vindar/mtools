@@ -1,4 +1,4 @@
-OUTFILE = MandelbrotDemo
+OUTFILE = Mandelbrot
 
 OUTDIR = bin
 SOURCE = main.cpp

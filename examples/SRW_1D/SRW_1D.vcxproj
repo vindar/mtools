@@ -19,9 +19,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{72C47A09-F696-49BC-96D7-3AEFB311ACC1}</ProjectGuid>
+    <ProjectGuid>{B3107314-F1D4-4B60-A077-CED29EC2B0CB}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>demoEden</RootNamespace>
+    <RootNamespace>SRW_1D</RootNamespace>
     <TargetPlatformVersion>8.1</TargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />

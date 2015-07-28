@@ -1,7 +1,6 @@
 /***********************************************
- * Project : demoEden
+ * Project : Eden
  * date : Tue Jul 21 18:06:26 2015
- * created via Vindar's libwizard.
  ***********************************************/
 #include "stdafx.h" // pre-compiled header. 
 
@@ -79,7 +78,7 @@ class EdenCluster
 
 EdenCluster EC; // the Eden cluster object
 
-                /* perfect circle with same volume as the random cluster */
+/* Circle with same volume as the random cluster */
 RGBc colorCircle(iVec2 pos)
     {
     const double Pi = 3.14159265358979;
@@ -110,7 +109,7 @@ void run()
 
 int main(int argc, char *argv[])
     {
-    cout << "Eden mode (FPP with exp weights on edges)\n'Infinite simulation'\n\n";
+    cout << "Eden model (FPP with exp weights on edges). 'Infinite simulation'\n\n";
     while (1)
         {
         cout << "\n\n-----------------------------\n";

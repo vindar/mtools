@@ -19,9 +19,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{DFC937BC-00D1-4506-BB28-973FD43E5F10}</ProjectGuid>
+    <ProjectGuid>{EF28CF67-28DE-4B69-AF40-612AA955F751}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>MandelbrotDemo</RootNamespace>
+    <RootNamespace>Mandelbrot</RootNamespace>
     <TargetPlatformVersion>8.1</TargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
