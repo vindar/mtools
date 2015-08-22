@@ -44,7 +44,7 @@ namespace mtools
         static const uint8 DEFAULTALPHA = 255; ///< default value for transparency : fully opaque
 
         /**
-         * Default constructor. Color black with default transparency.
+         * Default constructor. Create an instance in Color black with default transparency.
          **/
         RGBc() : R(0), G(0), B(0), A(DEFAULTALPHA) {}
 
