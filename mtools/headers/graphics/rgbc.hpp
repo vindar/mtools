@@ -231,7 +231,7 @@ namespace mtools
             const int nR = (int)((R*op + coulB.R*opB*po) / nop);
             const int nG = (int)((G*op + coulB.G*opB*po) / nop);
             const int nB = (int)((B*op + coulB.B*opB*po) / nop);
-            return RGBc(R, G, B, (int)(255*nop));
+            return RGBc(nR, nG, nB, (int)(255*nop));
             }
 
 
