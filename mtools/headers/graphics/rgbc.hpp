@@ -216,6 +216,26 @@ namespace mtools
 
 
         /**
+        * Create a blending with another background color using the 'over' operator.
+        *
+        * @param   B       The color to blend over (background color)
+        *
+        * @return the 'this over B' color
+        **/
+        inline RGBc over(RGBc coulB) const
+            {
+            const float op = opacity();
+            const float po = 1.0f - op;
+            const float opB = coulB.opacity();
+            const float nop = op + opB*po;
+            const int nR = (int)((R*op + coulB.R*opB*po) / nop);
+            const int nG = (int)((G*op + coulB.G*opB*po) / nop);
+            const int nB = (int)((B*op + coulB.B*opB*po) / nop);
+            return RGBc(R, G, B, (int)(255*nop));
+            }
+
+
+        /**
          * A color of the palette in linear scale for a value between
          * 0 and 1.
          *
@@ -394,6 +414,28 @@ namespace mtools
      **/
     inline RGBc opaque(mtools::RGBc color) { return color.getOpaque(); }
 
+
+    /**
+    * Helper function. Return the same color with a given opacity.
+    *
+    * @param   color   The color.
+    * @param   op      The new opacity between 0.0f and 1.0f
+    *
+    * @return the same color with the new opacity
+    **/
+    inline RGBc opacity(mtools::RGBc color, float op) { return color.getOpacity(op); }
+
+
+
+    /**
+    * Return the blended color using the 'A over B' operator.
+    *
+    * @param   A       The first color.
+    * @param   B       The secodn color 
+    *
+    * @return the 'A over B' color
+    **/
+    inline RGBc blendOver(RGBc A, RGBc B) { return A.over(B); }
 
 }
 
