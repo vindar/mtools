@@ -280,314 +280,43 @@ void makeLERRW(uint64 steps, double delta)
 
 
 
-void load(uint64 steps, double delta)
+
+int wmain(int argc, wchar_t *argv[], wchar_t *envp[])
     {
-    siteInfo::maxV = 45663;
-    Chronometer();
-    std::string fn = std::string("LERRW-N") + mtools::toString(steps) + "-d" + mtools::doubleToStringNice(delta) + ".grid.gz";
-    cout << "loading " << fn << " ..";
-    G.load(fn);
-    cout << " done in " << (double)Chronometer() / 1000 << "sec.\n";
-    Plotter2D Plotter;
-    auto L = makePlot2DLattice(LatticeObjImage<colorLERRW, imageLERRW>::get());
-    Plotter[L];
-    Plotter.gridObject(true)->setUnitCells();
-    Plotter.plot();
-    return;
-    }
-
-
-
-class A
-    {
-    public:
-        int * getColor(iVec2 & pos) { return 0; }
-
-    };
-
-
-
-
-
-int nbIter;
-
-/* return the color associated with point pos in the mandelbrot set 
-by calculating at most nbIter iteration */
-RGBc mandelbrot(fVec2 pos)
-    {
-    const double cx = pos.X();
-    const double cy = pos.Y();
-    double X = 0.0;
-    double Y = 0.0;
-    for(int i = 0; i < nbIter; i++)
+    //cout.disableScreenOutput();
+    if (argc != 2)
         {
-        const double sX = X;
-        const double sY = Y;
-        X = sX*sX - sY*sY + cx;
-        Y = 2*sX*sY + cy;
-        if ((X*X + Y*Y) > 4) { return RGBc::jetPalette(i, 1, nbIter); }
+        MessageBox(0, "The viewer must be called with the image file as its unique argument.", "Image Viewer", MB_OK | MB_ICONEXCLAMATION);
+        return 0;
         }
-    return RGBc::c_Black;
-    }
+    std::wstring filename(argv[1]); // the image to load
+    std::wstring path(mtools::extractPath(filename, true)); // the directory we are working in
+    std::wstring name(mtools::extractName(filename)); // the name of the image
 
-
-
-Grid_factor<2, int, 10> GF(0, 3, true);
-
-Grid_basic<2, int, 2> GS;
-
-
-RGBc colorGF(iVec2 pos)
-    {
-    const int * S = GF.safePeek(pos);
-    if (S == nullptr) return RGBc::c_TransparentWhite;
-    if (*S == 0) return RGBc::c_Cyan;
-    if (*S == 1) return RGBc::c_Blue;
-    if (*S == 2) return RGBc::c_Green;
-    if (*S == 3) return RGBc::c_Red;
-    return RGBc::c_Orange;
-    }
-
-void testWalk(int64 N)
-    {
-    iVec2 pos = { 0,0 };
-    for (int64 i = 0;i < N/2;i++)
+    std::vector<std::wstring> imageVec;
+    mtools::getFileList(path, std::wstring(L"*.jpg|*.jpeg|*.bmp|*.gif|*.png|*.cimg|*.cimgz"), false,imageVec, false, true, false);
+    int index = -1;
+    for (int i = 0; i<imageVec.size(); i++)
         {
-        GF.set(pos, 1);
-        double a = gen.rand_double0();
-        if (a < 0.25) pos.X()--; else
-        if (a < 0.5) pos.X()++; else
-        if (a < 0.75) pos.Y()--; else pos.Y()++;
+        if (imageVec[i] == name) { index = i; break; }
         }
-    for (int64 i = 0;i < N / 2;i++)
-        {
-        GF.set(pos, 3);
-        iRect R;
-        GF.findFullBoxiRect(pos, R);
-
-        if (R.lx()*R.ly() >0)
-            {
-       //     cout << R << "\n";
-        //    cout << pos << "\n\n";
-            }
-        double a = gen.rand_double0();
-        if (a < 0.25) pos.X()--; else
-        if (a < 0.5) pos.X()++; else
-        if (a < 0.75) pos.Y()--; else pos.Y()++;
-        }
-}
+    if (index == -1) imageVec.push_back(name); else { imageVec[index] = imageVec.back(); imageVec.back() = name; }
 
 
+    CImg<unsigned char> im;
 
-void fillSqr(iRect R, int val)
     {
-    for (int64 j = R.ymin; j <= R.ymax; j++)
-        for (int64 i = R.xmin; i <= R.xmax; i++)
-        GF.set({ i,j }, val);
+    mtools::ProgressBar<int> PB(0, 1, std::string("Loading file [") + toString(name) + "]", true);
+    PB.update(1);
+    im.load(mtools::toString(path + name).c_str());
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* Eden model : FPP with exp. weights */
-class EdenCluster
-    {
-    public:
-        /* construct, initially empty cluster */
-        EdenCluster() : N(0), Grid(5, 5, false), Urn(), gen() { clear(); }
-
-        /* load from a file */
-        void load(const std::string & filename) { IArchive ar(filename); ar & (*this); }
-
-        /* save into a file */
-        void save(const std::string & filename) { OArchive ar(filename); ar & (*this); }
-
-        /* restart from scratch */
-        void clear()
-            {
-            Grid.reset(); Grid.set({ 0,0 }, 4); Urn.clear(); Urn.insert({ 0,0 });   // 4 imaginary neighours of the origin so that it is infected at the first step.
-            N = 0; // no particle in the cluster yet.
-            }
-
-        /* grow the cluster by a given number of particles */
-        void simulate(size_t steps)
-            {
-            int64 finalN = N + steps;
-            while (N < finalN )
-                {
-                iVec2 & rpos = Urn(gen.rand_double0()); // pick a border site
-                if (gen.rand_double0() * 4 >= (4 - Grid(rpos)))
-                    { // ok, new point in the cluster
-                    iVec2 pos = rpos; // save the position 
-                    Urn.remove(rpos); // remove it from the urn
-                    Grid.set(pos, 5); // mark as belonging to the cluster
-                    iVec2 upPos(pos.X(), pos.Y() + 1); char up = Grid(upPos); if (up == 0) { Urn.insert(upPos); } if (up != 5) { Grid.set(upPos, up + 1); }
-                    iVec2 downPos(pos.X(), pos.Y() - 1); char down = Grid(downPos); if (down == 0) { Urn.insert(downPos); } if (down != 5) { Grid.set(downPos, down + 1); }
-                    iVec2 leftPos(pos.X() + 1, pos.Y()); char left = Grid(leftPos); if (left == 0) { Urn.insert(leftPos); } if (left != 5) { Grid.set(leftPos, left + 1); }
-                    iVec2 rightPos(pos.X() - 1, pos.Y()); char right = Grid(rightPos); if (right == 0) { Urn.insert(rightPos); } if (right != 5) { Grid.set(rightPos, right + 1); }
-                    N++;
-                    }
-                }
-            }
-
-        /* size of the cluster */
-        inline int64 size() { return N; }
-
-        /* range of the cluster */
-        inline fRect range() { return fRect(Grid.getPosRangeiRect()); }
-
-        /* print some info */
-        std::string toString() const { return std::string("Number of particles in the cluster: ") + mtools::toString(N) + "\nBoundary: " + mtools::toString(Urn) + "\nGrid: " + mtools::toString(Grid) + "\n"; }
-
-        /* serialize/deserialize */
-        template<typename Archive> void serialize(Archive & ar)  { ar << "Eden Model\n"; ar & N & Urn & Grid; }
-
-        /* color function for the cluster */
-        RGBc getColor(iVec2 pos)
-            {
-            auto v = Grid.safePeek(pos);
-            if ((v == nullptr) || ((*v) == 0)) return RGBc::c_TransparentWhite; else return RGBc::jetPalette(*v, 1, 5);
-            }
-
-    private:
-        int64 N;                                     // number of particles in the cluster
-        Grid_factor<2, char, 2> Grid;                // the 2D grid. 0 if no particle, 1-4 = nb of neighour, 5 = in the cluster
-        RandomUrn<iVec2> Urn;                        // list of neighour sites of the current domain
-        MT2004_64 gen;                               // random number generator
-    };
-
-
-EdenCluster EC; // the Eden cluster object
-
-/* perfect circle with same volume as the random cluster */
-RGBc colorCircle(iVec2 pos)
-    {
-    const double Pi = 3.14159265358979;
-    if (pos.X()*pos.X() + pos.Y()*pos.Y() <= EC.size()/Pi) return RGBc::c_Cyan; else return RGBc::c_TransparentWhite;
-    }
-
-
-/* run the simulation */
-void run()
-    {
-    cout << "\nSimulating (close the plotter window to stop)...\n";
-    auto P1 = makePlot2DLattice(EC, "Eden model"); P1.opacity(0.5);
-    auto P2 = makePlot2DLattice(LatticeObj<colorCircle>::get(), "Perfect circle"); P2.opacity(0.5);
-    Plotter2D Plotter;
-    Plotter[P2][P1];
-    Plotter.startPlot();
-    Plotter.range().setRange(unionRect(mtools::zoomOut(EC.range()),fRect(-5000,5000,-5000,5000)));
-    Plotter.autoredraw(300);
-    cout << EC.toString();
-    while (Plotter.shown())
-        {
-        if (EC.size() % 10000000 == 0) cout << EC.toString();
-        EC.simulate(1000000);
-        }
-    return;
-    }
-
-
-int main(int argc, char *argv[])
-    {
-    cout << "Eden mode (FPP with exp weights on edges)\n'Infinite simulation'\n\n";
-    while(1)
-        {
-        cout << "\n\n-----------------------------\n";
-        cout << "Number of particles in the cluster : " << EC.size() << "\n";
-        cout << "(L) Load a simulation.\n";         
-        cout << "(S) Save the simulation.\n";
-        cout << "(N) New simulation.\n";
-        cout << "(R) Run the simulation.\n";
-        cout << "(Q) Quit.\n";
-        char c = cout.getKey();
-        if ((c == 'L') || (c == 'l')) { cout << "Name of the file to load : "; std::string filename; cout >> filename; cout << filename << "\n"; try { EC.load(filename); } catch (...) { cout << "*** ERROR ***"; EC.clear(); } }
-        if ((c == 'S') || (c == 's')) { cout << "Name of the file to save (.gz to compress): "; std::string filename; cout >> filename; cout << filename << "\n"; try { EC.save(filename); } catch (...) { cout << "*** ERROR ***"; } }
-        if ((c == 'R') || (c == 'r')) { run(); }
-        if ((c == 'N') || (c == 'n')) { EC.clear(); }
-        if ((c == 'Q') || (c == 'q')) { return 0; }
-        }
-
-
-
-    cout.useDefaultInputValue(true);
-    cout << "Hello World\n";
-    int i = 10;
-    cout >> i;
-
-    /*
-        fillSqr(iRect(-7, 7, -7, 7), 2);
-
-        GF.set({ 3,3 }, 1);
-        GF.set({ 8,0 }, 1);
-        GF.set({ 8,0 }, 0);
-        GF.set({ 3,3 }, 2);
-        */
-
-    Chronometer();
-
-    testWalk(100000);
-
-    void * p = nullptr;
-    GS.peek(iVec2(0, 0), p);
-    GS.save("hello");
-  
-    
-    cout << "\ntime = " << Chronometer() << "\n"; cout << GF.toString(false);
-
-    //GF.save("walklong2.ar.gz");
-
-    GF.callDtors(false);
-
-    cout << "\ntime = " << Chronometer() << "\n"; cout << GF.toString(false);
+    auto image = makePlot2DCImg(im, mtools::toString(name));
 
     Plotter2D Plotter;
-
-    Plotter.gridObject(true)->setUnitCells();
-    auto PGF = makePlot2DLattice<colorGF>("Grid factor");
-    Plotter[PGF];
+    Plotter.useSolidBackground(false);
+    Plotter[image];
+    image.autorangeXY();
     Plotter.plot();
-
-
-    return 0;
-
-    /*
-    cout << "Mandelbrot set demo.\n";
-    cout << "Max number of iteration (1-1024) ? ";
-    cout >> nbIter;
-    if (nbIter < 1) nbIter = 1; else if (nbIter >104) nbIter = 1024;
-    cout << nbIter << "\n"; 
-    Plotter2D Plotter;  // create the plotter
-    auto PD = makePlot2DPlane<mandelbrot>("Mandelbrot Set");
-    
-    
-    Plotter[PD];
-    Plotter.range().setRange(fRect(-2, 2, -2, 2));
-
-
-    Plotter.startPlot();
-    cout.getKey();
-    PD.domain(fRect(-2, 0.5, -0.3, 1.2));
-    cout.getKey();
-    PD.domainEmpty();
-    cout.getKey();
-    PD.domainFull();
-    Plotter.plot();
-    return 0;
-  */
-
-  //  load(100000000, 0.5);
-    makeLERRW(1000000, 0.5);
     return 0;
     }
