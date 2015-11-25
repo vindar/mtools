@@ -149,7 +149,7 @@ struct SiteZ2Box : public CMPHook<SiteZ2Box, NBCOLOR>
 
 
 /**
-* Creates a torus with given dimension
+* Creates a box with given dimension
 **/
 template<typename RandomGen> SiteZ2Box * createBox(int LX, int LY, double a, RandomGen & rgen)
     {
@@ -166,7 +166,7 @@ template<typename RandomGen> SiteZ2Box * createBox(int LX, int LY, double a, Ran
 
 
 /**
-* Deletes a torus
+* Deletes a boxs
 **/
 void deleteBox(SiteZ2Box * root) { delete[] root; }
 
@@ -319,68 +319,3 @@ int main(int argc, char *argv[])
 
 /* end of file main.cpp */
 
-
-
-
-
-
-/*
-Plotter2D P;
-P.viewZoomFactor(7);
-auto L = makePlot2DLattice(LatticeObjImage<colorFct,imageFct>::get());
-P[L];
-L.setImageType(L.TYPEIMAGE);
-P.setDrawingSize(1000, 1000);
-P.range().setRange(fRect(0, 1000, 0, 1000));
-P.plot();
-
-cout.getKey();
-//deleteTorus();
-return;
-*/
-
-/*
-CImg<unsigned char> siteIm;
-
-const CImg<unsigned char> * imageFct(mtools::iVec2 pos, mtools::iVec2 size)
-{
-if ((pos.X() < 0) || (pos.X() >= LX)) return nullptr;
-if ((pos.Y() < 0) || (pos.Y() >= LY)) return nullptr;
-
-SiteZ2torus & site = Torus[pos.X() + pos.Y()*LX];
-siteIm.resize(size.X(), size.Y(), 1, 4);
-
-if (site.CMP_color() == RGBc::c_TransparentWhite) {
-site.CMP_color() = RGBc::jetPalette(maxH, 0, maxH);
-site.CMP_color().opacity(0.15);
-site.CMP_color() = site.CMP_color().over(RGBc(255,255,255));
-}
-siteIm.clear(site.CMP_color());
-if ((site.radius() > 0.0)&&(site.CMP_cluster()->listFathers.size() == 0))
-{
-siteIm.drawPointSquarePen({ size.X() / 2,size.Y() / 2 }, size.X() / 3, RGBc::jetPalette(site.CMP_cluster()->height, 0, maxH), 1);
-//siteIm.clear(RGBc::jetPalette(site._cmp_cluster->height, 0, maxH));
-//RGBc coul = RGBc::jetPalette(site._cmp_cluster->height, 0, maxH);
-//siteIm.drawPointCirclePen({ size.X() / 2,size.Y() / 2 }, size.X() / 3, coul);
-}
-
-
-//left right down up
-auto coul = RGBc(0, 0, 0);
-
-if (site.CMP_edge(0) != 0) {
-coul  = RGBc::jetPalette(site.CMP_edge(0), 0, maxH); siteIm.drawVerticalLine(0, coul ); //siteIm.drawVerticalLine(1, coul);
-}
-if (site.CMP_edge(1) != 0) {
-coul = RGBc::jetPalette(site.CMP_edge(1), 0, maxH); siteIm.drawVerticalLine(size.X()-1, coul); //siteIm.drawVerticalLine(size.X() - 2, coul);
-}
-if (site.CMP_edge(2) != 0) {
-coul = RGBc::jetPalette(site.CMP_edge(2), 0, maxH); siteIm.drawHorizontalLine(size.Y()-1, coul); //siteIm.drawHorizontalLine(size.Y() - 2, coul);
-}
-if (site.CMP_edge(3) != 0) {
-coul = RGBc::jetPalette(site.CMP_edge(3), 0, maxH); siteIm.drawHorizontalLine(0, coul);// siteIm.drawHorizontalLine(1, coul);
-}
-
-return &siteIm;
-}
-*/
