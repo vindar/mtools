@@ -34,7 +34,7 @@ class longOERRW
             N = 0;
             step = 0;
             pos = { 0,0 };
-            G.reset(0, 3, false);
+            G.reset(maskfull, maskfull, false);
             im.resize(1, 1, 1, 3);
             }
 
@@ -87,26 +87,24 @@ class longOERRW
             while (N < nb)
                 {
                 char v = G(pos);		         // current site
-                char vd = G(pos.X(),pos.Y()-1);	 // down site
-                char vg = G(pos.X()-1, pos.Y()); // left site
-                if ((v == (maskup | maskright)) && (vg & maskright) && (vd & maskup)) 
+                if (isFull(v)) 
                     { // the four edge around the site are set, do simple rw
                     if (step - lastcheck > 50) // we try to move fast inside the set of visited sites and away from the origin
                         { // we make several step at once
                         lastcheck = step;
                         iRect fullR;
                         G.findFullBoxiRect(pos, fullR);
-                        fullR.xmin++; fullR.xmax--; fullR.ymin++; fullR.ymax--; // remove the border
-                        if ((fullR.xmax - pos.X() > 1) && (fullR.ymax - pos.Y() > 1) && (pos.X() - fullR.xmin > 1) && (pos.Y() - fullR.ymin > 1))
+                      //  if ((fullR.xmax - pos.X() > 1) && (fullR.ymax - pos.Y() > 1) && (pos.X() - fullR.xmin > 1) && (pos.Y() - fullR.ymin > 1))
                             {
                             auto a = SRW_Z2_exitRectangle<MT2004_64>(pos, fullR, gen);
                             step += a;
+                            //if (a > 10000) { cout << a << "\n"; }
                             }
-                        else
+                 /*       else
                             {
                             SRW_Z2_make1step(pos.X(), pos.Y(), gen.rand_double0());
                             step++;
-                            }
+                            }*/
                         }
                     else 
                         { // make only one step of the srw
@@ -117,31 +115,55 @@ class longOERRW
                 else
                     { // not all egdes are set, do ERRW
                     if (PB != nullptr) { PB->update(N - startN); }
-                    double up = ((v & maskup) ? delta : 1.0);
+                    double up    = ((v & maskup) ? delta : 1.0);
                     double right = ((v & maskright) ? delta : 1.0);
-                    double down = ((vd & maskup) ? delta : 1.0);
-                    double left = ((vg & maskright) ? delta : 1.0);
+                    double down  = ((v & maskdown) ? delta : 1.0);
+                    double left  = ((v & maskleft) ? delta : 1.0);
                     double a = gen.rand_double0()*(up + right + down + left);
                     if (a < up) 
                         { 
-                        if ((v & maskup) == 0) { if (is_empty({ pos.X(), pos.Y() + 1 })) { N++; } G.set(pos, v | maskup); } 
+                        if ((v & maskup) == 0) 
+                            { 
+                            G.set(pos, v | maskup);
+                            auto npos = iVec2{ pos.X(), pos.Y() + 1 };
+                            const char w = G(npos); if (isEmpty(w)) { N++; }
+                            G.set(npos, w | maskdown);
+                            } 
                         pos.Y()++; 
                         }
                     else {
                         if (a < up + right) 
                             { 
-                            if ((v & maskright) == 0) { if (is_empty({ pos.X() + 1, pos.Y() })) { N++; } G.set(pos, v | maskright); }
-                            pos.X()++; 
+                            if ((v & maskright) == 0)
+                                {
+                                G.set(pos, v | maskright);
+                                auto npos = iVec2{ pos.X() + 1, pos.Y() };
+                                const char w = G(npos); if (isEmpty(w)) { N++; }
+                                G.set(npos, w | maskleft);
+                                }
+                            pos.X()++;
                             }
                         else {
                             if (a < up + right + down) 
                                 {
-                                if ((vd & maskup) == 0) { if (is_empty({ pos.X(), pos.Y() - 1 })) { N++; } G.set({pos.X(),pos.Y()-1},vd | maskup); }
-                                pos.Y()--; 
+                                if ((v & maskdown) == 0)
+                                    {
+                                    G.set(pos, v | maskdown);
+                                    auto npos = iVec2{ pos.X(), pos.Y() - 1 };
+                                    const char w = G(npos); if (isEmpty(w)) { N++; }
+                                    G.set(npos, w | maskup);
+                                    }
+                                pos.Y()--;
                                 }
                             else
                                 {
-                                if ((vg & maskright) == 0) { if (is_empty({ pos.X() - 1, pos.Y() })) { N++; } G.set({ pos.X()-1,pos.Y()},vg | maskright); } 
+                                if ((v & maskleft) == 0)
+                                    {
+                                    G.set(pos, v | maskleft);
+                                    auto npos = iVec2{ pos.X() - 1, pos.Y() };
+                                    const char w = G(npos); if (isEmpty(w)) { N++; }
+                                    G.set(npos, w | maskright);
+                                    }
                                 pos.X()--;
                                 }
                             }
@@ -169,35 +191,34 @@ class longOERRW
         /* for drawing the color of a site */
         inline RGBc getColor(iVec2 p) const
             {
-            if (is_empty(p)) return RGBc::c_TransparentWhite;
+            const char * s = G.peek(p);
+            if ((s == nullptr)||(isEmpty(*s))) return RGBc::c_TransparentWhite;
             return RGBc::c_Red;
             }
 
     private:
 
-        /* Return true if there is no edge around site (i,j) */
-        inline bool is_empty(iVec2 p) const
-            {
-            const char * S = G.peek(p); if ((S != nullptr) && ((*S) != 0)) return false;
-            const char * Sleft = G.peek(p.X()-1,p.Y()); if ((Sleft != nullptr) && (((*Sleft)& maskright) != 0)) return false;
-            const char * Sdown = G.peek(p.X(), p.Y()-1); if ((Sdown != nullptr) && (((*Sdown)& maskup) != 0)) return false;
-            return true;
-            }
+        inline bool isEmpty(char val) const { return (val == 0); }
+        inline bool isFull(char val) const { return (val == maskfull); }
 
 
         longOERRW(const  longOERRW &) = delete;             // no copy
         longOERRW & operator=(const  longOERRW &) = delete; //
 
-        static const int RR = 5;				// size of the subsquare for the edge lattice
+        static const int RR = 2;				// size of the subsquare for the edge lattice
+
         static const char maskup = 1;			// mask for the up edge
         static const char maskright = 2;		// mask for the left edge
+        static const char maskdown = 4;			// mask for the up edge
+        static const char maskleft = 8;		    // mask for the left edge
+        static const char maskfull = (maskup | maskdown | maskleft | maskright); // full mask
 
         double delta;						// reinforcement parameter delta
         iRect R;                            // rectangle containing the trace of the walk
         int64 N;							// size of the current range
         int64 step;							// number of steps performed
         iVec2 pos;							// current position of the walk
-        mtools::Grid_factor<2,char,4,RR> G; // The lattice 
+        mtools::Grid_factor<2,char,1,RR> G; // The lattice 
 
         mutable CImg<unsigned char>  im;	// image for drawing
         mutable MT2004_64  gen;				// the random number generator

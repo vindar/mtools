@@ -19,9 +19,9 @@ using namespace mtools;
 
 int main(int argc, char *argv[])
     {
-    longOERRW simOERRW(15.0);
+    longOERRW simOERRW(5.0);
 
-    simOERRW.makeWalk(1000000);
+    simOERRW.makeWalk(10000000);
     cout << simOERRW << "\n";
     simOERRW.plotWalk();
     return 0;
