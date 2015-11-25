@@ -280,43 +280,9 @@ void makeLERRW(uint64 steps, double delta)
 
 
 
-
-int wmain(int argc, wchar_t *argv[], wchar_t *envp[])
-    {
-    //cout.disableScreenOutput();
-    if (argc != 2)
-        {
-        MessageBox(0, "The viewer must be called with the image file as its unique argument.", "Image Viewer", MB_OK | MB_ICONEXCLAMATION);
-        return 0;
-        }
-    std::wstring filename(argv[1]); // the image to load
-    std::wstring path(mtools::extractPath(filename, true)); // the directory we are working in
-    std::wstring name(mtools::extractName(filename)); // the name of the image
-
-    std::vector<std::wstring> imageVec;
-    mtools::getFileList(path, std::wstring(L"*.jpg|*.jpeg|*.bmp|*.gif|*.png|*.cimg|*.cimgz"), false,imageVec, false, true, false);
-    int index = -1;
-    for (int i = 0; i<imageVec.size(); i++)
-        {
-        if (imageVec[i] == name) { index = i; break; }
-        }
-    if (index == -1) imageVec.push_back(name); else { imageVec[index] = imageVec.back(); imageVec.back() = name; }
-
-
-    CImg<unsigned char> im;
-
-    {
-    mtools::ProgressBar<int> PB(0, 1, std::string("Loading file [") + toString(name) + "]", true);
-    PB.update(1);
-    im.load(mtools::toString(path + name).c_str());
-    }
-
-    auto image = makePlot2DCImg(im, mtools::toString(name));
-
-    Plotter2D Plotter;
-    Plotter.useSolidBackground(false);
-    Plotter[image];
-    image.autorangeXY();
-    Plotter.plot();
-    return 0;
-    }
+	
+int main(int argc, char* argv[])
+{
+	makeLERRW(10000000, 2);
+	return 0;
+}
