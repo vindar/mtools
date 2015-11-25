@@ -192,6 +192,25 @@ namespace mtools
 
 
         /**
+         * Enlarge the rectangle in order to contain a given point. If the rectangle alreasy contain the
+         * point do nothing.
+         *
+         * @param   pos The position of the point to swallow.
+         *
+         * @return  true if the point was swallowed and false if it was already contained in the rectangle.
+         **/
+        inline bool swallowPoint(const Vec<T, 2> pos) 
+            {
+            bool b = false;
+            if (pos.X() < xmin) { xmin = pos.X(); b = true; }
+            if (pos.X() > xmax) { xmax = pos.X(); b = true; }
+            if (pos.Y() < ymin) { ymin = pos.Y(); b = true; }
+            if (pos.Y() > ymax) { ymax = pos.Y(); b = true; }
+            return b;
+            }
+
+
+        /**
         * Query if a point is inside the open rectangle
         *
         * @param   pos The position to check
