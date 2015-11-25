@@ -19,7 +19,7 @@ using namespace mtools;
 
 int main(int argc, char *argv[])
     {
-    longOERRW simOERRW(5.0);
+    longOERRW simOERRW(15.0);
 
     simOERRW.makeWalk(1000000);
     cout << simOERRW << "\n";

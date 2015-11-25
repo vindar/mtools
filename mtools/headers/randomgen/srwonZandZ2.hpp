@@ -147,6 +147,10 @@ namespace mtools
 			return;
 			}
 
+        template<class random_t> inline void SRW_Z2_makesteps(iVec2 & pos, random_t & gen, int64 N)
+            {
+            SRW_Z2_makesteps(pos.X(), pos.Y(), gen, N);
+            }
 
         /**
          * Srw z coordinate 2 makesteps.
@@ -160,7 +164,7 @@ namespace mtools
         template<class random_t> inline iVec2 SRW_Z2_makesteps(random_t & gen, int64 N)
             {
             iVec2 pos(0, 0);
-            SRW_Z2_makesteps(pos.X(), pos.Y(), gen, N);
+            SRW_Z2_makesteps(pos, gen, N);
             return pos;
             }
 
@@ -211,7 +215,7 @@ namespace mtools
 
 
         /**
-         * Perform a SRW on Z^2 until it exits a given rectangle. The walk is stoped when it is OUTSIDE
+         * Perform a SRW on Z^2 until it exits a given rectangle. The walk is stopped when it is OUTSIDE
          * of the rectangle.
          *
          * @param [in,out]  pos The position of the walk.
@@ -252,6 +256,13 @@ namespace mtools
 			}
 
 
+        inline void SRW_Z2_make1step(iVec2 & pos, double a)
+            {
+            SRW_Z2_make1step(pos.X(), pos.Y(), a);
+            }
+
+
+
 		/**
 		* Returns the position of a SRW on Z after 10 steps
 		* a1,a2 = random number in [0,1)
@@ -280,6 +291,11 @@ namespace mtools
 			Y += (A-B)/2;
 			return;
 			}
+
+        inline void SRW_Z2_make10steps(iVec2 & pos, double a1, double a2,double a3)
+            {
+            SRW_Z2_make10steps(pos.X(), pos.Y(), a1, a2, a3);
+            }
 
 
 		/**
@@ -311,6 +327,10 @@ namespace mtools
 			return;
 			}
 
+        inline void SRW_Z2_make20steps(iVec2 & pos, double a1, double a2, double a3)
+            {
+            SRW_Z2_make20steps(pos.X(), pos.Y(), a1, a2, a3);
+            }
 
 
 		/**
@@ -342,6 +362,11 @@ namespace mtools
 			}
 
 
+        inline void SRW_Z2_make50steps(iVec2 & pos, double a1, double a2, double a3)
+            {
+            SRW_Z2_make50steps(pos.X(), pos.Y(), a1, a2, a3);
+            }
+
 
 		/**
 		* Returns the position of a SRW on Z after 100 steps
@@ -370,6 +395,11 @@ namespace mtools
 			Y += (A-B)/2;
 			return;
 			}
+
+        inline void SRW_Z2_make100steps(iVec2 & pos, double a1, double a2, double a3)
+            {
+            SRW_Z2_make100steps(pos.X(), pos.Y(), a1, a2, a3);
+            }
 
 
 		/**
@@ -400,6 +430,11 @@ namespace mtools
 			return;
 			}
 
+        inline void SRW_Z2_make200steps(iVec2 & pos, double a1, double a2, double a3)
+            {
+            SRW_Z2_make200steps(pos.X(), pos.Y(), a1, a2, a3);
+            }
+
 
 
 		/**
@@ -413,6 +448,7 @@ namespace mtools
 			if (a2<0.5) return(-X);
 			return X;
 			}
+
 
 		/**
 		* Returns the position of a SRW on the Z^2 after 500 steps
@@ -430,6 +466,10 @@ namespace mtools
 			return;
 			}
 
+        inline void SRW_Z2_make500steps(iVec2 & pos, double a1, double a2, double a3)
+            {
+            SRW_Z2_make500steps(pos.X(), pos.Y(), a1, a2, a3);
+            }
 
 
 		/**
@@ -460,6 +500,10 @@ namespace mtools
 			return;
 			}
 
+        inline void SRW_Z2_make2000steps(iVec2 & pos, double a1, double a2, double a3)
+            {
+            SRW_Z2_make2000steps(pos.X(), pos.Y(), a1, a2, a3);
+            }
 
 
 		/**
@@ -489,6 +533,11 @@ namespace mtools
 			Y += (A-B)/2;
 			return;
 			}
+
+        inline void SRW_Z2_make5000steps(iVec2 & pos, double a1, double a2, double a3)
+            {
+            SRW_Z2_make5000steps(pos.X(), pos.Y(), a1, a2, a3);
+            }
 
 
 		/**
@@ -521,6 +570,11 @@ namespace mtools
 			}
 
 
+        inline void SRW_Z2_make20000steps(iVec2 & pos, double a1, double a2, double a3)
+            {
+            SRW_Z2_make20000steps(pos.X(), pos.Y(), a1, a2, a3);
+            }
+
 
 		/**
 		* Returns the position of a SRW on Z after 200 000 steps
@@ -551,6 +605,10 @@ namespace mtools
 			return;
 			}
 
+        inline void SRW_Z2_make200000steps(iVec2 & pos, double a1, double a2, double a3)
+            {
+            SRW_Z2_make200000steps(pos.X(), pos.Y(), a1, a2, a3);
+            }
 
 
 		/**
@@ -581,6 +639,12 @@ namespace mtools
 			Y += (A-B)/2;
 			return;
 			}
+
+
+        inline void SRW_Z2_make2000000steps(iVec2 & pos, double a1, double a2, double a3)
+            {
+            SRW_Z2_make2000000steps(pos.X(), pos.Y(), a1, a2, a3);
+            }
 
 
         namespace internals_randomgen

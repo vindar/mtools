@@ -101,12 +101,6 @@ class longOERRW
                             {
                             auto a = SRW_Z2_exitRectangle<MT2004_64>(pos, fullR, gen);
                             step += a;
-                            if (a == 0)
-                                {
-                                cout << a << "\n";
-                                cout << pos << "\n";
-                                cout << fullR << "\n";
-                                }
                             }
                         else
                             {
@@ -119,7 +113,7 @@ class longOERRW
                         SRW_Z2_make1step(pos.X(),pos.Y(), gen.rand_double0()); 
                         step++; 
                         } 
-                    }
+                    } 
                 else
                     { // not all egdes are set, do ERRW
                     if (PB != nullptr) { PB->update(N - startN); }
