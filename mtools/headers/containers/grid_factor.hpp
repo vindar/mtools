@@ -899,26 +899,30 @@ namespace mtools
 
 
         /**
-         * Find a box containing point pos and such that all the elements inside share the same special
-         * value (which is, therefore the special value at pos).
+         * Find a box containing position pos such that all the point inside the (closed) box have the
+         * same special value (or are all undefined). The coordinate of the box are put in boxMin and
+         * boxMax and the function return a pointer to the commun value (or nullptr if no value defined
+         * on this box)
          * 
-         * When the method returns, [boxMin,boxMax] is such that all the elements inside the D-
-         * dimensionnal closed box have the same special value. This method sets boxMin = boxMax = pos
-         * if the site at pos is not special or if no bigger box could be found.
+         * If no such box can be found (for instance if the value at pos is defined but not special)
+         * then the function sets boxMin = boxMax = pos (and returns the value at pos).
          * 
-         * The box returned is not optimal : it is simply the box given by the underlying tree struture
-         * of the grid. Hence choosing smaller values for the template parameter can R improves the
-         * quality of the returned box.
+         * The box returned is not optimal as it is always one of the boxes in the underlying box
+         * structure of the grid. In particular, it is a square !
+         * 
+         * Although the box returned always contain position pos, it can be close (or even on) the
+         * boundary of the box which may be undesired. To get another box where pos is 'more centered',
+         * use the findFullBoxCentered() method instead.
          * 
          * @warning This method is NOT threadsafe and uses the same pointer as get() and set().
          *
-         * @param   pos             The position.
+         * @param   pos             The position to check.
          * @param [in,out]  boxMin  Vector to put the minimum value of the box in each direction.
          * @param [in,out]  boxMax  Vector to put the maximum value of the box in each direction.
          *
          * @return  A pointer to the element at position pos or nullptr if it does not exist.
-        **/
-        const T * findFullBox(const Pos & pos, Pos & boxMin, Pos & boxMax) const
+         **/
+        inline const T * findFullBox(const Pos & pos, Pos & boxMin, Pos & boxMax) const
             {
             _pbox cp = _pcurrent;
             MTOOLS_ASSERT(cp != nullptr);
@@ -927,7 +931,7 @@ namespace mtools
                 {
                 _pleafFactor p = (_pleafFactor)(cp);
                 MTOOLS_ASSERT(_isLeafFull(p) == (_maxSpec + 1)); // the leaf cannot be full
-                if (p->isInBox(pos)) { boxMin = pos; boxMax = pos; return(&(p->get(pos))); } // just a singleton...
+                if (p->isInBox(pos)) { boxMin = pos; boxMax = pos; return(&(p->get(pos))); } // just a singleton, box = [pos,pos]^d
                 MTOOLS_ASSERT(cp->father != nullptr); // a leaf must always have a father
                 cp = p->father;
                 }
@@ -935,17 +939,43 @@ namespace mtools
             _pnode q = (_pnode)(cp);
             while (!q->isInBox(pos))
                 {
-                if (q->father == nullptr) { boxMin = pos; boxMax = pos; _pcurrent = q; return nullptr; } // just a singleton...
+                if (q->father == nullptr) 
+                    { // the point is outside of largest boundary box
+                    int64 R = 3*q->rad + 1; 
+                    for (size_t i = 0; i < D; ++i)
+                        {
+                        int64 u = pos[i]; if (u < 0) {u = -u;}
+                        while (u > R) { R = 3*R + 1;}
+                        }
+                    // R is the radius 
+                    for (size_t i = 0; i < D; i++) 
+                        { 
+                        const int64 a = pos[i]; 
+                        const int64 sb =  ((a < -R) ? (-(2*R + 1)) : ((a > R) ? (2*R + 1) : 0)); 
+                        boxMin[i] = sb - R; boxMax[i] = sb + R;
+                        }
+                    _pcurrent = q; 
+                    return nullptr; 
+                    } 
                 q = (_pnode)q->father;
                 }
             // and down..
             while (1)
                 {
                 _pbox b = q->getSubBox(pos);
-                if (b == nullptr) { boxMin = pos; boxMax = pos; _pcurrent = q; return nullptr; } // just a singleton...
+                if (b == nullptr) 
+                    { // subbox does not exist yet
+                    const int64 rad = q->rad;
+                    boxMin = q->subBoxCenter(pos);
+                    boxMax = boxMin;
+                    boxMin -= rad;
+                    boxMax += rad;
+                    _pcurrent = q; 
+                    return nullptr; 
+                    }
                 T * obj = _getSpecialObject(b); // check if the link is a special dummy link
                 if (obj != nullptr) 
-                        { // good we have a non trivial box
+                        { // good we have full box
                         const int64 rad = q->rad;
                         boxMin = q->subBoxCenter(pos);
                         boxMax = boxMin;
@@ -966,73 +996,68 @@ namespace mtools
 
 
         /**
-         * Find a box containing point pos and such that all the elements inside share the same special
-         * value (which is, therefore the special value at pos).
+         *  Specialization for dimension 2 using an iRect structure.
          * 
-         * Specialization for dimension 2 using an iRect structure.
-         * 
-         * When the method returns, r is such that all the elements inside the closed iRect have the
-         * same special value. This method sets r = {pos} if the site at pos is not special or if no
-         * bigger box could be found.
-         * 
-         * The iRect returned is not optimal : it is simply the box given by the underlying tree
-         * struture of the grid. Hence choosing smaller values for the template parameter r can improves
-         * the quality of the returned box.
-         * 
-         * @warning This method is NOT threadsafe and uses the same pointer as get() and set().
+         *  @warning This method is NOT threadsafe and uses the same pointer as get() and set().
          *
-         * @param   pos         The position.
-         * @param [in,out]  r   The iRect & to process.
+         * @param   pos         The position to check.
+         * @param [in,out]  r   The iRect &amp; to process.
          *
          * @return  A pointer to the element at position pos or nullptr if it does not exist.
-        **/
-        const T * findFullBoxiRect(const Pos & pos, iRect & r) const
+         **/
+        inline const T * findFullBox(const Pos & pos, iRect & r) const
             {
             static_assert(D == 2, "findFullBoxiRect() method can only be used when the dimension template parameter D is 2");
-            _pbox cp = _pcurrent;
-            MTOOLS_ASSERT(cp != nullptr);
-            // check if we are at the right place
-            if (cp->isLeaf())
-                {
-                _pleafFactor p = (_pleafFactor)(cp);
-                MTOOLS_ASSERT(_isLeafFull(p) == (_maxSpec + 1)); // the leaf cannot be full
-                if (p->isInBox(pos)) { r.xmin = pos.X(); r.xmax = pos.X(); r.ymin = pos.Y(); r.ymax = pos.Y(); return(&(p->get(pos))); } // just a singleton...
-                MTOOLS_ASSERT(cp->father != nullptr); // a leaf must always have a father
-                cp = p->father;
-                }
-            // no, going up...
-            _pnode q = (_pnode)(cp);
-            while (!q->isInBox(pos))
-                {
-                if (q->father == nullptr) { r.xmin = pos.X(); r.xmax = pos.X(); r.ymin = pos.Y(); r.ymax = pos.Y(); _pcurrent = q; return nullptr; } // just a singleton...
-                q = (_pnode)q->father;
-                }
-            // and down..
-            while (1)
-                {
-                _pbox b = q->getSubBox(pos);
-                if (b == nullptr) { r.xmin = pos.X(); r.xmax = pos.X(); r.ymin = pos.Y(); r.ymax = pos.Y(); _pcurrent = q; return nullptr; } // just a singleton...
-                T * obj = _getSpecialObject(b); // check if the link is a special dummy link
-                if (obj != nullptr)
-                    { // good we have a non trivial box
-                    const int64 rad = q->rad;
-                    Pos center = q->subBoxCenter(pos);
-                    r.xmin = center.X() - rad; 
-                    r.xmax = center.X() + rad;
-                    r.ymin = center.Y() - rad;
-                    r.ymax = center.Y() + rad;
-                    _pcurrent = q;
-                    return obj;
-                    }
-                if (b->isLeaf())
-                    {
-                    r.xmin = pos.X(); r.xmax = pos.X(); r.ymin = pos.Y(); r.ymax = pos.Y();
-                    _pcurrent = b;
-                    return(&(((_pleafFactor)b)->get(pos))); // just a singleton
-                    }
-                q = (_pnode)b;
-                }
+            Pos boxmin, boxmax;
+            const T * res = findFullBox(pos, boxmin, boxmax);
+            r.xmin = boxmin[0]; r.xmax = boxmax[0];
+            r.ymin = boxmin[1]; r.ymax = boxmax[1];
+            return res;
             }
+
+
+
+        /**
+        * Find a box containing position pos such that all the point inside the (closed) box have the
+        * same special value (or are all undefined). The coordinate of the box are put in boxMin and
+        * boxMax and the function return a pointer to the commun value (or nullptr if no value defined
+        * on this box)
+        *
+        * If no such box can be found (for instance if the value at pos is defined but not special)
+        * then the function sets boxMin = boxMax = pos (and returns the value at pos).
+        *
+        * Compared to findFullBox(), this method tries to find a box for which pos is near the center
+        * of the box. On the other hand, it is therefore a bit slower than findFullBox().
+        *
+        * @warning This method is NOT threadsafe and uses the same pointer as get() and set().
+        *
+        * @param   pos             The position to check.
+        * @param [in,out]  boxMin  Vector to put the minimum value of the box in each direction.
+        * @param [in,out]  boxMax  Vector to put the maximum value of the box in each direction.
+        *
+        * @return  A pointer to the element at position pos or nullptr if it does not exist.
+        **/
+        inline const T * findFullBoxCentered(const Pos & pos, Pos & boxMin, Pos & boxMax) const
+            {
+            return nullptr;
+            }
+
+
+        /**
+        *  Specialization for dimension 2 using an iRect structure.
+        *
+        *  @warning This method is NOT threadsafe and uses the same pointer as get() and set().
+        *
+        * @param   pos         The position to check.
+        * @param [in,out]  r   The iRect &amp; to process.
+        *
+        * @return  A pointer to the element at position pos or nullptr if it does not exist.
+        **/
+        inline const T * findFullBoxCentered(const Pos & pos, iRect & r) const
+            {
+            return nullptr;
+            }
+
 
 
 

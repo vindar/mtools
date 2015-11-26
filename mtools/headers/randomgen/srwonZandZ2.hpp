@@ -484,6 +484,7 @@ namespace mtools
 			return X;
 			}
 
+
 		/**
 		* Return the position of a SRW on the Z^2 after 2000 steps
 		* X,Y are shifted by the new position
