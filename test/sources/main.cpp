@@ -280,9 +280,82 @@ void makeLERRW(uint64 steps, double delta)
 
 
 
+
+
+
+
+
+const int Rs = 3;
+Grid_factor<2, int, 4, Rs> testG;
+
+inline int depth(iRect & r)
+    {
+    int64 rad = (r.xmax - r.xmin) / 2;
+    if (rad == 0) return 0;
+    int i = 1;
+    while (rad > Rs) { i++; rad = (rad - 1) / 3; }
+    return i;
+    }
+
+
+RGBc colorTest(iVec2 pos)
+    {
+    iRect r;
+    const int * p = testG.findFullBox(pos, r);
+    int d = depth(r);
+    if (p == nullptr) { return RGBc::jetPalette(20 - d, 0, 21); }
+    if (d != 0) { return RGBc::jetPalette(d, 0, 21); }
+    if (*p == 0) return RGBc::c_TransparentWhite;
+    return RGBc::c_Black;
+    }
+
+RGBc colorTest2(iVec2 pos)
+    {
+    iRect r, r2;
+    const int * p = testG.findFullBox({ pos.X(), pos.Y() }, r);
+    testG.findFullBox({ pos.X(), pos.Y() + 1 }, r2);  if (r2 != r) return RGBc::c_Red;
+    testG.findFullBox({ pos.X(), pos.Y() - 1 }, r2);  if (r2 != r) return RGBc::c_Red;
+    testG.findFullBox({ pos.X() + 1, pos.Y() }, r2);  if (r2 != r) return RGBc::c_Red;
+    testG.findFullBox({ pos.X() - 1, pos.Y() }, r2);  if (r2 != r) return RGBc::c_Red;
+    return RGBc::c_TransparentWhite;
+    if (p == nullptr) return RGBc::c_Cyan;
+    if (*p == 0) return RGBc::c_TransparentWhite;
+    return RGBc::c_Black;
+    }
+
+
+
+
+
+
+
+
+
 	
 int main(int argc, char* argv[])
 {
-	makeLERRW(10000000, 2);
+
+    testG.reset(0,3,false);
+
+    const int N = 1000;
+
+    for(int i = -N;i < N;i++)
+        for (int j = -N;j < N;j++)
+            {
+            if (i*i + j*j <= N*N) testG.set(i, j, 1);
+
+            }
+
+
+    Plotter2D Plotter;
+    auto L = makePlot2DLattice<colorTest>();
+    auto L2 = makePlot2DLattice<colorTest2>();
+    Plotter[L];
+    Plotter[L2];
+    Plotter.gridObject(true)->setUnitCells();
+
+    Plotter.plot();
+
+
 	return 0;
 }
