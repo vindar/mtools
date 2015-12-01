@@ -69,103 +69,228 @@ int main(int argc, char *argv[])
 namespace mtools
 {
 
-		// forward declarations
+
+
         namespace internals_randomgen
             {
-            unsigned int getValueFromDistrTab(const double * tab, unsigned int N, double a);
-            }
 
-		int SRW_Z_make1step(double a);
-		void SRW_Z2_make1step(int64 & X,int64 & Y,double a);
-		int SRW_Z_make10steps(double a1,double a2);
-		void SRW_Z2_make10steps(int64 & X,int64 & Y,double a1,double a2,double a3);
-		int SRW_Z_make20steps(double a1,double a2);
-		void SRW_Z2_make20steps(int64 & X,int64 & Y,double a1,double a2,double a3);
-		int SRW_Z_make50steps(double a1,double a2);
-		void SRW_Z2_make50steps(int64 & X,int64 & Y,double a1,double a2,double a3);
-		int SRW_Z_make100steps(double a1,double a2);
-		void SRW_Z2_make100steps(int64 & X,int64 & Y,double a1,double a2,double a3);
-		int SRW_Z_make200steps(double a1,double a2);
-		void SRW_Z2_make200steps(int64 & X,int64 & Y,double a1,double a2,double a3);
-		int SRW_Z_make500steps(double a1,double a2);
-		void SRW_Z2_make500steps(int64 & X,int64 & Y,double a1,double a2,double a3);
-		int SRW_Z_make2000steps(double a1,double a2);
-		void SRW_Z2_make2000steps(int64 & X,int64 & Y,double a1,double a2,double a3);
-		int SRW_Z_make5000steps(double a1,double a2);
-		void SRW_Z2_make5000steps(int64 & X,int64 & Y,double a1,double a2,double a3);
-		int SRW_Z_make20000steps(double a1,double a2);
-		void SRW_Z2_make20000steps(int64 & X,int64 & Y,double a1,double a2,double a3);
-		int SRW_Z_make200000steps(double a1,double a2);
-		void SRW_Z2_make200000steps(int64 & X,int64 & Y,double a1,double a2,double a3);
-		int SRW_Z_make2000000steps(double a1,double a2);
-		void SRW_Z2_make2000000steps(int64 & X,int64 & Y,double a1,double a2,double a3);
+
+            /**
+            * Returns a sample of a discrete r.v. X whose CDF is given in tab
+            * N    = size of the tab : [0,...N-1]
+            * a    = random number in [0,1)
+            * tab  = the CDF of X i.e. tab[i] = P( X <= i ) for i = 0.. N-1
+            *
+            * RQ : the function return N if a >= tab[N-1]
+            *      complexity O(log N)
+            **/
+            inline unsigned int getValueFromDistrTab(const double * tab, unsigned int N, double a)
+                {
+                if (a < tab[0]) { return 0; }
+                if (a >= tab[N - 1]) { return N; }
+                unsigned int n1 = 0;	// tab[n1] <= a
+                unsigned int n2 = N - 1;	// tab[n2] >  a
+                while ((n2 - n1)>1)
+                    {
+                    unsigned int g = (n1 + n2) / 2;
+                    if (a >= tab[g]) { n1 = g; }
+                    else { n2 = g; }
+                    }
+                return n2; // on a necessairement tab[n1] <= a, tab[n2] > a
+                }
+
+
+
+            /* make 1 step for the SWR on Z */
+            inline int64 SRW_Z_make1step(double a)
+                {
+                if (a < 0.5) { return 1; }
+                return -1;
+                }
+
+            /* make 1 step for the SWR on Z2 */
+            inline void SRW_Z2_make1step(iVec2 & pos, double a)
+                {
+                if (a < 0.25) { pos.X()++; return; }
+                if (a < 0.5) { pos.X()--; return; }
+                if (a < 0.75) { pos.Y()++; return; }
+                pos.Y()++;
+                return;
+                }
+
+            /* make 2 steps for the SWR on Z */
+            inline int64 SRW_Z_make2steps(double a)
+                {
+                if (a < 0.25) return -2;
+                if (a < 0.5) return 2;
+                return 0;
+                }
+
+            /* make 2 steps for the SWR on Z2 */
+            inline void SRW_Z2_make2steps(iVec2 & pos, double a1, double a2)
+                {
+                int64 A = SRW_Z_make2steps(a1);
+                int64 B = SRW_Z_make2steps(a2);
+                pos.X() += (A + B) / 2;
+                pos.Y() += (A - B) / 2;
+                return;
+                }
+
+            /* make 2^0 = 4 steps for the SWR on Z */
+            inline int64 SRW_Z_make4steps(double a)
+                {
+                if (a < 0.0625) return -4;
+                if (a < 0.125) return 4;
+                if (a < 0.375) return -2;
+                if (a < 0.625) return 2;
+                return 0;
+                }
+
+
+            /* make 2^0 = 4 steps for the SWR on Z2 */
+            inline void SRW_Z2_make4steps(iVec2 & pos, double a1, double a2)
+                {
+                int64 A = SRW_Z_make4steps(a1);
+                int64 B = SRW_Z_make4steps(a2);
+                pos.X() += (A + B) / 2;
+                pos.Y() += (A - B) / 2;
+                return;
+                }
+
+
+            /* make an arbitrary number of steps of the srw on Z */
+            template<class random_t> inline int64 SRW_Z_makesteps(uint64 nbstep, random_t & gen)
+                {
+                int64 x = 0;
+                if ((nbstep & 1) != 0) { x += SRW_Z_make1step(gen());  nbstep -= 1; if (nbstep == 0) return x; }    // one step
+                if ((nbstep & 2) != 0) { x += SRW_Z_make2steps(gen()); nbstep -= 2; if (nbstep == 0) return x; }    // 2 steps
+                if ((nbstep & 4) != 0) { x += SRW_Z_make4steps(gen()); nbstep -= 4; if (nbstep == 0) return x; }    // 4 steps
+                // at least 8 steps must be performed
+                if (nbstep >= (1 << 22))
+                    { // use gaussian approximation
+                    const double s = sqrt((double)nbstep);
+                    const double epsilon = std::numeric_limits<double>::min();
+                    const double two_pi = 2.0*3.14159265358979323846;
+                    double u1; do { u1 = gen(); } while (u1 <= epsilon);
+                    double u2 = gen();
+                    int64 y = (int64)round(s*sqrt(-2.0 * log(u1)) * cos(two_pi * u2));
+                    if ((y & 1) != (nbstep & 1)) { y += ((gen() < 0.5) ? 1 : -1); } // correct parity error
+                    return y;
+                    }
+                // exact sampling for CDF
+                int i = 3;
+                while(1)
+                    {
+                    const int64 v = (((int64)1) << i);
+                    if (nbstep & v) // bit i set
+                        {
+                        int64 y = 2 * getValueFromDistrTab(SRW_CDF_TAB[i - 2], (SRW_CDF_LEN[i - 2] / 2) + 1, gen());
+                        x += ((gen() < 0.5) ? y : -y);
+                        nbstep -= v;
+                        if (nbstep == 0) return x;
+                        }
+                    i++;
+                    }
+                }
+
+
+            /* make an arbitrary number of steps of the srw on Z^2 */
+            template<class random_t> inline void SRW_Z2_makesteps(iVec2 & pos, uint64 nbstep, random_t & gen)
+                {
+                if ((nbstep & 1) != 0) { SRW_Z2_make1step(pos,gen());  nbstep -= 1; if (nbstep == 0) return x; }          // one step
+                if ((nbstep & 2) != 0) { SRW_Z2_make2steps(pos,gen(),gen()); nbstep -= 2; if (nbstep == 0) return x; }    // 2 steps
+                if ((nbstep & 4) != 0) { SRW_Z2_make4steps(pos,gen(), gen()); nbstep -= 4; if (nbstep == 0) return x; }   // 4 steps
+                // at least 8 steps must be performed
+                if (nbstep >= (1 << 22))
+                    { // use gaussian approximation
+                    const double s = sqrt((double)nsteps);
+                    const double epsilon = std::numeric_limits<double>::min();
+                    const double two_pi = 2.0*3.14159265358979323846;
+                    double u1; do { u1 = gen(); } while (u1 <= epsilon);
+                    double u2 = gen();
+                    double c = -1;
+                    int64 A = (int64)round(s*sqrt(-2.0 * log(u1)) * cos(two_pi * u2)); if ((A & 1) != (nbstep & 1)) { c = gen(); A += (((c < 0.25)||(c>=0.75)) ? 1 : -1); }
+                    int64 B = (int64)round(s*sqrt(-2.0 * log(u1)) * sin(two_pi * u2)); if ((B & 1) != (nbstep & 1)) { if (c < 0) { c = gen(); } B += ((c < 0.5) ? 1 : -1); }
+                    pos.X() += (A + B)/2;
+                    pos.Y() += (A - B)/2;
+                    return ;
+                    }
+                // exact sampling for CDF
+                int i = 3;
+                while (1)
+                    {
+                    const int64 v = (1 << i);
+                    if (nbstep & v) // bit i set
+                        {
+                        int64 A += 2 * getValueFromDistrTab(SRW_CDF_TAB[i - 2], (SRW_CDF_LEN[i - 2] / 2) + 1, gen());
+                        int64 B += 2 * getValueFromDistrTab(SRW_CDF_TAB[i - 2], (SRW_CDF_LEN[i - 2] / 2) + 1, gen());
+                        double c = gen();
+                        if ((c < 0.25) || (c >= 0.75)) {A = -A;}
+                        if (c < 0.5) { B = -B };
+                        pos.X() += (A + B) / 2;
+                        pos.Y() += (A - B) / 2;
+                        nbstep -= v;
+                        if (nbstep == 0) return x;
+                        }
+                    i++;
+                    }
+                }
+
+
+
+
+
+            /* make an arbitrary number of step of the srw on Z */
+            template<class random_t> inline void SRW_Z2_make(iVec2 & pos, uint64 nbstep, random_t & gen)
+                {
+                if ((nbstep & 1) != 0) { SRW_Z2_make0(pos, gen()); if (nbstep < 2) return x; }
+                if ((nbstep & 2) != 0) { SRW_Z2_make1(pos, gen(), gen()); if (nbstep < 4) return x; }
+                if ((nbstep & 4) != 0) { SRW_Z2_make2(pos, gen(), gen()); if (nbstep < 8) return x; }
+                if ((nbstep & 8) != 0) { SRW_Z2_make3(pos, gen(), gen()); if (nbstep < 16) return x; }
+                if ((nbstep & 16) != 0) { SRW_Z2_make4(pos, gen(), gen()); if (nbstep < 32) return x; }
+                if ((nbstep & 32) != 0) { SRW_Z2_make5(pos, gen(), gen()); if (nbstep < 64) return x; }
+                if ((nbstep & 64) != 0) { SRW_Z2_make6(pos, gen(), gen()); if (nbstep < 128) return x; }
+                if ((nbstep & 128) != 0) { SRW_Z2_make7(pos, gen(), gen()); if (nbstep < 256) return x; }
+                if ((nbstep & 256) != 0) { SRW_Z2_make8(pos, gen(), gen()); if (nbstep < 512) return x; }
+                if ((nbstep & 512) != 0) { SRW_Z2_make9(pos, gen(), gen()); if (nbstep < 1024) return x; }
+                if ((nbstep & 1024) != 0) { SRW_Z2_make10(pos, gen(), gen()); if (nbstep < 2048) return x; }
+                if ((nbstep & 2048) != 0) { SRW_Z2_make11(pos, gen(), gen(), gen()); if (nbstep < 4096) return x; }
+                if ((nbstep & 4096) != 0) { SRW_Z2_make12(pos, gen(), gen(), gen()); if (nbstep < 8192) return x; }
+                if ((nbstep & 8192) != 0) { SRW_Z2_make13(pos, gen(), gen(), gen()); if (nbstep < 16384) return x; }
+                if ((nbstep & 16384) != 0) { SRW_Z2_make14(pos, gen(), gen(), gen()); if (nbstep < 32768) return x; }
+                if ((nbstep & 32768) != 0) { SRW_Z2_make15(pos, gen(), gen(), gen()); if (nbstep < 65536) return x; }
+                if ((nbstep & 65536) != 0) { SRW_Z2_make16(pos, gen(), gen(), gen()); if (nbstep < 131072) return x; }
+                if ((nbstep & 131072) != 0) { SRW_Z2_make17(pos, gen(), gen(), gen()); if (nbstep < 262144) return x; }
+                if ((nbstep & 262144) != 0) { SRW_Z2_make18(pos, gen(), gen(), gen()); if (nbstep < 524288) return x; }
+                if ((nbstep & 524288) != 0) { SRW_Z2_make19(pos, gen(), gen(), gen()); if (nbstep < 1048576) return x; }
+                if ((nbstep & 1048576) != 0) { SRW_Z2_make20(pos, gen(), gen(), gen()); }
+                nbstep = nbstep / 2097152;
+                for (uint64 i = 0; i < nbstep; i++) { x += SRW_Z2_make21(pos, gen(), gen(), gen()); }
+                }
+
+
 
 
         /**
-         * Returns the position of a SRW on Z after N steps. Particularly efficient for large number of
-         * steps.
-         *
-         * @param [in,out]  gen the random number generator.
-         * @param   N           number of steps to make.
-         *
-         * @return the position after N step starting from the origin.
-        **/
-		template<class random_t> inline int64 SRW_Z_makesteps(random_t & gen,int64 N)
-			{
-			int64 X = 0;
-			while(N>=2000000) {X += SRW_Z_make2000000steps(gen(),gen()); N-= 2000000;}
-			while(N>=200000) {X += SRW_Z_make200000steps(gen(),gen()); N-= 200000;}
-			while(N>=20000) {X += SRW_Z_make20000steps(gen(),gen()); N-= 20000;}
-			while(N>=2000) {X += SRW_Z_make2000steps(gen(),gen()); N-= 2000;}
-			while(N>=200) {X += SRW_Z_make200steps(gen(),gen()); N-= 200;}
-			while(N>=50) {X += SRW_Z_make50steps(gen(),gen()); N-= 50;}
-			while(N>=10) {X += SRW_Z_make10steps(gen(),gen()); N-= 10;}
-			while(N>=1) {X += SRW_Z_make1step(gen()); N--;}
-			return X;
-			}
-
-
-        /**
-         * Returns the position of a SRW on Z2 after N steps. Particularly efficient for large number of
-         * steps. Shift  X and Y by the coordinate of the walk after N steps.
-         *
-         * @param [in,out]  X   The starting X coordinate.
-         * @param [in,out]  Y   The starting Y coordinate.
-         * @param [in,out]  gen the random number generator.
-         * @param   N           number of steps to make.
-        **/
-        template<class random_t> inline void SRW_Z2_makesteps(int64 & X,int64 & Y,random_t & gen,int64 N)
-			{
-			while(N>=2000000) {SRW_Z2_make2000000steps(X,Y,gen(),gen(),gen()); N-= 2000000;}
-			while(N>=200000) {SRW_Z2_make200000steps(X,Y,gen(),gen(),gen()); N-= 200000;}
-			while(N>=20000) {SRW_Z2_make20000steps(X,Y,gen(),gen(),gen()); N-= 20000;}
-			while(N>=2000) {SRW_Z2_make2000steps(X,Y,gen(),gen(),gen()); N-= 2000;}
-			while(N>=200) {SRW_Z2_make200steps(X,Y,gen(),gen(),gen()); N-= 200;}
-			while(N>=50) {SRW_Z2_make50steps(X,Y,gen(),gen(),gen()); N-= 50;}
-			while(N>=10) {SRW_Z2_make10steps(X,Y,gen(),gen(),gen()); N-= 10;}
-			while(N>=1) {SRW_Z2_make1step(X,Y,gen()); N--;}
-			return;
-			}
-
-        template<class random_t> inline void SRW_Z2_makesteps(iVec2 & pos, random_t & gen, int64 N)
-            {
-            SRW_Z2_makesteps(pos.X(), pos.Y(), gen, N);
-            }
-
-        /**
-         * Srw z coordinate 2 makesteps.
+         * Perform some steps of the random walk on Z^2 while insuring that it never exists the closed
+         * ball of radius R around the starting position. The number of step is not determined and neither is the ending position. 
+         * The method is simply optimised to be fast
          *
          * @tparam  random_t    Type of the random t.
+         * @param [in,out]  X   The X coordinate.
+         * @param [in,out]  Y   The Y coordinate.
+         * @param   rad         The xmin.
          * @param [in,out]  gen The generate.
-         * @param   N           The int64 to process.
          *
-         * @return  the position after N step starting from the origin.
-        **/
-        template<class random_t> inline iVec2 SRW_Z2_makesteps(random_t & gen, int64 N)
+         * @return  The number of step performed.
+         **/
+        template<class random_t> inline int64 SRW_Z2_walkInside(int64 & X, int64 & Y, int64 rad, random_t & gen)
             {
-            iVec2 pos(0, 0);
-            SRW_Z2_makesteps(pos, gen, N);
-            return pos;
+            }
+
+
+        template<class random_t> inline int64 SRW_Z2_walkInside(iVec2 & pos, int64 rad, random_t & gen)
+            {
             }
 
 
@@ -183,15 +308,19 @@ namespace mtools
          *
          * @return  The number of step it took to exit the rectangle.
         **/
-		template<class random_t> inline int64 SRW_Z2_exitRectangle(int64 & X,int64 & Y,int64 Xmin,int64 Xmax,int64 Ymin,int64 Ymax,random_t & gen)
+		template<class random_t> inline int64 SRW_Z2_exitRectangle(iVec2 pos, iRect box,random_t & gen)
 			{
             using std::min;
 			int64 N = 0; // number of steps
 			int64 R = min(min(X-Xmin,Y-Ymin),min(Xmax-X,Ymax-Y)) + 1; // R = distance to the boundary of the rectangle
 			while(R > 0) // we are inside the rectangle
 				{
-				// here we use the reflection principle which state that P(sup_{k<=n} |S_k| >= a) \leq 4 P(S_n >= a)  (see my first paper for details)
+				// here we use the reflection principle which state that P(sup_{k<=n} |S_k| >= a) \leq 4 P(S_n >= a)  
 				// this enables to do many steps at one time while insuring that we do not get out of the rectangle
+                //if (R >= SRW_CDF_21maxZ2) { SRW_Z2_make21(pos, gen(), gen(), gen()); N += ; R = min(min(X - Xmin, Y - Ymin), min(Xmax - X, Ymax - Y)) + 1; } else {
+
+
+                /*
 				if (R >= internals_randomgen::SRW_CDF_2000000max) {SRW_Z2_make2000000steps(X,Y,gen(),gen(),gen()); N+= 2000000; R = min(min(X-Xmin,Y-Ymin),min(Xmax-X,Ymax-Y)) + 1;} else {
 				if (R >= internals_randomgen::SRW_CDF_200000max) {SRW_Z2_make200000steps(X,Y,gen(),gen(),gen()); N+= 200000; R = min(min(X-Xmin,Y-Ymin),min(Xmax-X,Ymax-Y)) + 1;} else {
 				if (R >= internals_randomgen::SRW_CDF_20000max) {SRW_Z2_make20000steps(X,Y,gen(),gen(),gen()); N+= 20000; R = min(min(X-Xmin,Y-Ymin),min(Xmax-X,Ymax-Y)) + 1;} else {
@@ -208,7 +337,7 @@ namespace mtools
 						N += R;
 						R = min(min(X-Xmin,Y-Ymin),min(Xmax-X,Ymax-Y)) + 1;
 						}
-					}}}}}}}}}
+					}}}}}}}}}*/
 				}
 			return N;
 			}
@@ -230,454 +359,7 @@ namespace mtools
             }
 
 
-		/**
-		* Returns the position of a SRW on Z after 1 steps
-		* a = random number in [0,1)
-		**/
-		inline int SRW_Z_make1step(double a)
-			{
-			if (a < 0.5) {return 1;}
-			return -1;
-			}
-
-
-		/**
-		* Returns the position of a SRW on the Z^2 after 1 steps
-		* X,Y are shifted by the new position
-		* a = random number in [0,1)
-		**/
-		inline void SRW_Z2_make1step(int64 & X,int64 & Y,double a)
-			{
-			if (a < 0.25) {X++; return;}
-			if (a < 0.5) {X--; return;}
-			if (a < 0.75) {Y++; return;}
-			Y--;
-			return;
-			}
-
-
-        inline void SRW_Z2_make1step(iVec2 & pos, double a)
-            {
-            SRW_Z2_make1step(pos.X(), pos.Y(), a);
-            }
-
-
-
-		/**
-		* Returns the position of a SRW on Z after 10 steps
-		* a1,a2 = random number in [0,1)
-		* note : the  value x returned is such that |x| <= 10
-		**/
-		inline int SRW_Z_make10steps(double a1,double a2)
-			{
-			int X = 2*internals_randomgen::getValueFromDistrTab(internals_randomgen::SRW_CDF_10steps,(internals_randomgen::SRW_CDF_10max/2)+1,a1);
-			if (a2<0.5) return(-X);
-			return X;
-			}
-
-
-		/**
-		* Returns the position of a SRW on the Z^2 after 10 steps
-		* X,Y are shifted by the new position
-		* a1,a2,a3 = random numbers in [0,1)
-		* note : the coordinates (X,Y) returned are such that |X| , |Y| <= 10
-		**/
-		inline void SRW_Z2_make10steps(int64 & X,int64 & Y,double a1,double a2,double a3)
-			{
-			double a4 = (((a3 < 0.25)||(a3 >= 0.75)) ? 0.25 : 0.75);
-			int A = SRW_Z_make10steps(a1,a3);
-			int B = SRW_Z_make10steps(a2,a4);
-			X += (A+B)/2;
-			Y += (A-B)/2;
-			return;
-			}
-
-        inline void SRW_Z2_make10steps(iVec2 & pos, double a1, double a2,double a3)
-            {
-            SRW_Z2_make10steps(pos.X(), pos.Y(), a1, a2, a3);
-            }
-
-
-		/**
-		* Returns the position of a SRW on Z after 20 steps
-		* a1,a2 = random number in [0,1)
-		* note : the  value x returned is such that |x| <= 20
-		**/
-		inline int SRW_Z_make20steps(double a1,double a2)
-			{
-			int X = 2*internals_randomgen::getValueFromDistrTab(internals_randomgen::SRW_CDF_20steps,(internals_randomgen::SRW_CDF_20max/2)+1,a1);
-			if (a2<0.5) return(-X);
-			return X;
-			}
-
-
-		/**
-		* Returns the position of a SRW on the Z^2 after 20 steps
-		* X,Y are shifted by the new position
-		* a1,a2,a3 = random numbers in [0,1)
-		* note : the coordinates (X,Y) returned are such that |X| , |Y| <= 20
-		**/
-		inline void SRW_Z2_make20steps(int64 & X,int64 & Y,double a1,double a2,double a3)
-			{
-			double a4 = (((a3 < 0.25)||(a3 >= 0.75)) ? 0.25 : 0.75);
-			int A = SRW_Z_make20steps(a1,a3);
-			int B = SRW_Z_make20steps(a2,a4);
-			X += (A+B)/2;
-			Y += (A-B)/2;
-			return;
-			}
-
-        inline void SRW_Z2_make20steps(iVec2 & pos, double a1, double a2, double a3)
-            {
-            SRW_Z2_make20steps(pos.X(), pos.Y(), a1, a2, a3);
-            }
-
-
-		/**
-		* Returns the position of a SRW on Z after 50 steps
-		* a1,a2 = random number in [0,1)
-		* note : the  value x returned is such that |x| <= 50
-		**/
-		inline int SRW_Z_make50steps(double a1,double a2)
-			{
-			int X = 2*internals_randomgen::getValueFromDistrTab(internals_randomgen::SRW_CDF_50steps,(internals_randomgen::SRW_CDF_50max/2)+1,a1);
-			if (a2<0.5) return(-X);
-			return X;
-			}
-
-		/**
-		* Returns the position of a SRW on the Z^2 after 50 steps
-		* X,Y are shifted by the new position
-		* a1,a2,a3 = random numbers in [0,1)
-		* note : the coordinates (X,Y) returned are such that |X| , |Y| <= 50
-		**/
-		inline void SRW_Z2_make50steps(int64 & X,int64 & Y,double a1,double a2,double a3)
-			{
-			double a4 = (((a3 < 0.25)||(a3 >= 0.75)) ? 0.25 : 0.75);
-			int A = SRW_Z_make50steps(a1,a3);
-			int B = SRW_Z_make50steps(a2,a4);
-			X += (A+B)/2;
-			Y += (A-B)/2;
-			return;
-			}
-
-
-        inline void SRW_Z2_make50steps(iVec2 & pos, double a1, double a2, double a3)
-            {
-            SRW_Z2_make50steps(pos.X(), pos.Y(), a1, a2, a3);
-            }
-
-
-		/**
-		* Returns the position of a SRW on Z after 100 steps
-		* a1,a2 = random number in [0,1)
-		* note : the  value x returned is such that |x| <= 76
-		**/
-		inline int SRW_Z_make100steps(double a1,double a2)
-			{
-			int X = 2*internals_randomgen::getValueFromDistrTab(internals_randomgen::SRW_CDF_100steps,(internals_randomgen::SRW_CDF_100max/2)+1,a1);
-			if (a2<0.5) return(-X);
-			return X;
-			}
-
-		/**
-		* Returns the position of a SRW on the Z^2 after 100 steps
-		* X,Y are shifted by the new position
-		* a1,a2,a3 = random numbers in [0,1)
-		* note : the coordinates (X,Y) returned are such that |X| , |Y| <= 76
-		**/
-		inline void SRW_Z2_make100steps(int64 & X,int64 & Y,double a1,double a2,double a3)
-			{
-			double a4 = (((a3 < 0.25)||(a3 >= 0.75)) ? 0.25 : 0.75);
-			int A = SRW_Z_make100steps(a1,a3);
-			int B = SRW_Z_make100steps(a2,a4);
-			X += (A+B)/2;
-			Y += (A-B)/2;
-			return;
-			}
-
-        inline void SRW_Z2_make100steps(iVec2 & pos, double a1, double a2, double a3)
-            {
-            SRW_Z2_make100steps(pos.X(), pos.Y(), a1, a2, a3);
-            }
-
-
-		/**
-		* Returns the position of a SRW on Z after 200 steps
-		* a1,a2 = random number in [0,1)
-		* note : the  value x returned is such that |x| <= 112
-		**/
-		inline int SRW_Z_make200steps(double a1,double a2)
-			{
-			int X = 2*internals_randomgen::getValueFromDistrTab(internals_randomgen::SRW_CDF_200steps,(internals_randomgen::SRW_CDF_200max/2)+1,a1);
-			if (a2<0.5) return(-X);
-			return X;
-			}
-
-		/**
-		* Returns the position of a SRW on the Z^2 after 200 steps
-		* X,Y are shifted by the new position
-		* a1,a2,a3 = random numbers in [0,1)
-		* note : the coordinates (X,Y) returned are such that |X| , |Y| <= 112
-		**/
-		inline void SRW_Z2_make200steps(int64 & X,int64 & Y,double a1,double a2,double a3)
-			{
-			double a4 = (((a3 < 0.25)||(a3 >= 0.75)) ? 0.25 : 0.75);
-			int A = SRW_Z_make200steps(a1,a3);
-			int B = SRW_Z_make200steps(a2,a4);
-			X += (A+B)/2;
-			Y += (A-B)/2;
-			return;
-			}
-
-        inline void SRW_Z2_make200steps(iVec2 & pos, double a1, double a2, double a3)
-            {
-            SRW_Z2_make200steps(pos.X(), pos.Y(), a1, a2, a3);
-            }
-
-
-
-		/**
-		* Returns the position of a SRW on Z after 500 steps
-		* a1,a2 = random number in [0,1)
-		* note : the  value x returned is such that |x| <= 182
-		**/
-		inline int SRW_Z_make500steps(double a1,double a2)
-			{
-			int X = 2*internals_randomgen::getValueFromDistrTab(internals_randomgen::SRW_CDF_500steps,(internals_randomgen::SRW_CDF_500max/2)+1,a1);
-			if (a2<0.5) return(-X);
-			return X;
-			}
-
-
-		/**
-		* Returns the position of a SRW on the Z^2 after 500 steps
-		* X,Y are shifted by the new position
-		* a1,a2,a3 = random numbers in [0,1)
-		* note : the coordinates (X,Y) returned are such that |X| , |Y| <= 182
-		**/
-		inline void SRW_Z2_make500steps(int64 & X,int64 & Y,double a1,double a2,double a3)
-			{
-			double a4 = (((a3 < 0.25)||(a3 >= 0.75)) ? 0.25 : 0.75);
-			int A = SRW_Z_make500steps(a1,a3);
-			int B = SRW_Z_make500steps(a2,a4);
-			X += (A+B)/2;
-			Y += (A-B)/2;
-			return;
-			}
-
-        inline void SRW_Z2_make500steps(iVec2 & pos, double a1, double a2, double a3)
-            {
-            SRW_Z2_make500steps(pos.X(), pos.Y(), a1, a2, a3);
-            }
-
-
-		/**
-		* Returns the position of a SRW on Z after 2000 steps
-		* a1,a2 = random number in [0,1)
-		* note : the  value x returned is such that |x| <= 364
-		**/
-		inline int SRW_Z_make2000steps(double a1,double a2)
-			{
-			int X = 2*internals_randomgen::getValueFromDistrTab(internals_randomgen::SRW_CDF_2000steps,(internals_randomgen::SRW_CDF_2000max/2)+1,a1);
-			if (a2<0.5) return(-X);
-			return X;
-			}
-
-
-		/**
-		* Return the position of a SRW on the Z^2 after 2000 steps
-		* X,Y are shifted by the new position
-		* a1,a2,a3 = random number in [0,1)
-		* note : the coordinates (X,Y) returned are such that |X| , |Y| <= 364
-		**/
-		inline void SRW_Z2_make2000steps(int64 & X,int64 & Y,double a1,double a2,double a3)
-			{
-			double a4 = (((a3 < 0.25)||(a3 >= 0.75)) ? 0.25 : 0.75);
-			int A = SRW_Z_make2000steps(a1,a3);
-			int B = SRW_Z_make2000steps(a2,a4);
-			X += (A+B)/2;
-			Y += (A-B)/2;
-			return;
-			}
-
-        inline void SRW_Z2_make2000steps(iVec2 & pos, double a1, double a2, double a3)
-            {
-            SRW_Z2_make2000steps(pos.X(), pos.Y(), a1, a2, a3);
-            }
-
-
-		/**
-		* Returns the position of a SRW on Z after 5000 steps
-		* a1,a2 = random number in [0,1)
-		* note : the  value x returned is such that |x| <= 574
-		**/
-		inline int SRW_Z_make5000steps(double a1,double a2)
-			{
-			int X = 2*internals_randomgen::getValueFromDistrTab(internals_randomgen::SRW_CDF_5000steps,(internals_randomgen::SRW_CDF_5000max/2)+1,a1);
-			if (a2<0.5) return(-X);
-			return X;
-			}
-
-		/**
-		* Return the position of a SRW on the Z^2 after 5000 steps
-		* X,Y are shifted by the new position
-		* a1,a2,a3 = random number in [0,1)
-		* note : the coordinates (X,Y) returned are such that |X| , |Y| <= 574
-		**/
-		inline void SRW_Z2_make5000steps(int64 & X,int64 & Y,double a1,double a2,double a3)
-			{
-			double a4 = (((a3 < 0.25)||(a3 >= 0.75)) ? 0.25 : 0.75);
-			int A = SRW_Z_make5000steps(a1,a3);
-			int B = SRW_Z_make5000steps(a2,a4);
-			X += (A+B)/2;
-			Y += (A-B)/2;
-			return;
-			}
-
-        inline void SRW_Z2_make5000steps(iVec2 & pos, double a1, double a2, double a3)
-            {
-            SRW_Z2_make5000steps(pos.X(), pos.Y(), a1, a2, a3);
-            }
-
-
-		/**
-		* Returns the position of a SRW on Z after 20 000 steps
-		* a1,a2 = random number in [0,1)
-		* note : the  value x returned is such that |x| <= 1134
-		**/
-		inline int SRW_Z_make20000steps(double a1,double a2)
-			{
-			int X = 2*internals_randomgen::getValueFromDistrTab(internals_randomgen::SRW_CDF_20000steps,(internals_randomgen::SRW_CDF_20000max/2)+1,a1);
-			if (a2<0.5) return(-X);
-			return X;
-			}
-
-
-		/**
-		* Returns the position of a SRW on the Z^2 after 20 000 steps
-		* X,Y are shifted by the new position
-		* a1,a2,a3,a4 = random number in [0,1)
-		* note : the coordinates (X,Y) returned are such that |X| , |Y| <= 1134
-		**/
-		inline void SRW_Z2_make20000steps(int64 & X,int64 & Y,double a1,double a2,double a3)
-			{
-			double a4 = (((a3 < 0.25)||(a3 >= 0.75)) ? 0.25 : 0.75);
-			int A = SRW_Z_make20000steps(a1,a3);
-			int B = SRW_Z_make20000steps(a2,a4);
-			X += (A+B)/2;
-			Y += (A-B)/2;
-			return;
-			}
-
-
-        inline void SRW_Z2_make20000steps(iVec2 & pos, double a1, double a2, double a3)
-            {
-            SRW_Z2_make20000steps(pos.X(), pos.Y(), a1, a2, a3);
-            }
-
-
-		/**
-		* Returns the position of a SRW on Z after 200 000 steps
-		* a1,a2 = random number in [0,1)
-		* note : the  value x returned is such that |x| <= 3528
-		**/
-		inline int SRW_Z_make200000steps(double a1,double a2)
-			{
-			int X = 2*internals_randomgen::getValueFromDistrTab(internals_randomgen::SRW_CDF_200000steps,(internals_randomgen::SRW_CDF_200000max/2)+1,a1);
-			if (a2<0.5) return(-X);
-			return X;
-			}
-
-
-		/**
-		* Returns the position of a SRW on the Z^2 after 200 000 steps
-		* X,Y are shifted by the new position
-		* a1,a2,a3,a4 = random number in [0,1)
-		* note : the coordinates (X,Y) returned are such that |X| , |Y| <= 3528
-		**/
-		inline void SRW_Z2_make200000steps(int64 & X,int64 & Y,double a1,double a2,double a3)
-			{
-			double a4 = (((a3 < 0.25)||(a3 >= 0.75)) ? 0.25 : 0.75);
-			int A = SRW_Z_make200000steps(a1,a3);
-			int B = SRW_Z_make200000steps(a2,a4);
-			X += (A+B)/2;
-			Y += (A-B)/2;
-			return;
-			}
-
-        inline void SRW_Z2_make200000steps(iVec2 & pos, double a1, double a2, double a3)
-            {
-            SRW_Z2_make200000steps(pos.X(), pos.Y(), a1, a2, a3);
-            }
-
-
-		/**
-		* Returns the position of a SRW on Z after 2 000 000 steps
-		* a1,a2 = random number in [0,1)
-		* note : the  value x returned is such that |x| <= 10968
-		**/
-		inline int SRW_Z_make2000000steps(double a1,double a2)
-			{
-			int X = 2*internals_randomgen::getValueFromDistrTab(internals_randomgen::SRW_CDF_2000000steps,(internals_randomgen::SRW_CDF_2000000max/2)+1,a1);
-			if (a2<0.5) return(-X);
-			return X;
-			}
-
-
-		/**
-		* Returns the position of a SRW on the Z^2 after 2 000 000 steps
-		* X,Y are shifted by the new position
-		* a1,a2,a3,a4 = random number in [0,1)
-		* note : the coordinates (X,Y) returned are such that |X| , |Y| <= 10968
-		**/
-		inline void SRW_Z2_make2000000steps(int64 & X,int64 & Y,double a1,double a2,double a3)
-			{
-			double a4 = (((a3 < 0.25)||(a3 >= 0.75)) ? 0.25 : 0.75);
-			int A = SRW_Z_make2000000steps(a1,a3);
-			int B = SRW_Z_make2000000steps(a2,a4);
-			X += (A+B)/2;
-			Y += (A-B)/2;
-			return;
-			}
-
-
-        inline void SRW_Z2_make2000000steps(iVec2 & pos, double a1, double a2, double a3)
-            {
-            SRW_Z2_make2000000steps(pos.X(), pos.Y(), a1, a2, a3);
-            }
-
-
-        namespace internals_randomgen
-            {
-
-            /**
-            * Returns a sample of a discrete r.v. X whose CDF is given in tab
-            * N    = size of the tab : [0,...N-1]
-            * a    = random number in [0,1)
-            * tab  = the CDF of X i.e. tab[i] = P( X <= i ) for i = 0.. N-1
-            *
-            * RQ : the function return N if a >= tab[N-1]
-            *      complexity O(log N)
-            *
-            * INTERNAL METHOD, SHOULD NOT BE CALLED FROM OUTSIDE
-            **/
-            inline unsigned int getValueFromDistrTab(const double * tab, unsigned int N, double a)
-                {
-                if (a < tab[0]) { return 0; }
-                if (a >= tab[N - 1]) { return N; }
-                unsigned int n1 = 0;	// tab[n1] <= a
-                unsigned int n2 = N - 1;	// tab[n2] >  a
-                while ((n2 - n1)>1)
-                    {
-                    unsigned int g = (n1 + n2) / 2;
-                    if (a >= tab[g]) { n1 = g; }
-                    else { n2 = g; }
-                    }
-                return n2; // on a necessairement tab[n1] <= a, tab[n2] > a
-                }
-
-            }
+        }
 
 }
 

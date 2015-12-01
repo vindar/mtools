@@ -334,6 +334,44 @@ RGBc colorTest2(iVec2 pos)
 	
 int main(int argc, char* argv[])
 {
+        {
+        const int M = 20000;             // taille du tableau
+        const uint64 NBSIM = 1000000; // nombre de simulation
+        const uint64 Npas = 1000006;    // nombre de pas de la marche
+        const int64 Ndiv = 1;          // nombre de pas de la marche
+
+        int64 tabF[2 * M + 1]; memset(tabF, 0, sizeof(tabF));
+        double repF[2 * M + 1]; memset(tabF, 0, sizeof(repF));
+
+        mtools::MT2004_64 g;
+
+        ProgressBar<uint64> PB(NBSIM, "Simulating..");
+        for (uint64 i = 0;i < NBSIM; i++)
+            {
+            PB.update(i);
+            int64 x = mtools::internals_randomgen::SRW_Z_makesteps(Npas, g);
+          //  cout << x << "\n";
+            if ((x % 1) != (Npas % 1)) cout << "Erreur parite!\n";
+            int64 index = M + (x / Ndiv) + (g()*2);
+
+            if ((index < 0) || (index > 2 * M)) cout << "OUT " << index << "\n";;
+            tabF[index]++;
+            }
+        PB.hide();
+
+        for (uint64 i = 0;i < 2 * M + 1; i++) { repF[i] = (((double)tabF[i]) / ((double)NBSIM)); }
+
+        Plotter2D P;
+        auto T = makePlot2DArray(repF, 2 * M + 1,-1.0,1.0);
+        P[T];
+        T.hypograph(true);
+        P.range().fixedAspectRatio(false);
+        T.autorangeXY();
+        P.range().zoomOut();
+        P.plot();
+        }
+    return 0;
+
 
     testG.reset(0,3,false);
 
