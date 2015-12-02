@@ -369,6 +369,24 @@ namespace mtools
     std::wstring doubleToWStringNice(double val) { return toWString(doubleToStringNice(val)); }
 
 
+    std::string doubleToStringHighPrecision(double val, int precision, bool scientific)
+        {
+        std::stringstream ss;
+        if (scientific) ss << std::scientific; else ss << std::fixed;
+        ss << std::setprecision(precision) << val;
+        return ss.str();
+        }
+
+
+    std::wstring doubleToWStringHighPrecision(double val, int precision, bool scientific)
+        {
+        std::wstringstream ss;
+        if (scientific) ss << std::scientific; else ss << std::fixed;
+        ss << std::setprecision(precision) << val;
+        return ss.str();
+        }
+
+
     std::string utf8ToIso8859(const std::string & s)
         {
         std::wstring ws = toWString(s, enc_utf8);

@@ -334,7 +334,7 @@ namespace mtools
 
 
     /**
-     * Reads a token. Throws an expection if the destination is not long enough to fit the entire
+     * Reads a token. Throws an exception if the destination is not long enough to fit the entire
      * decoded token or if the token is ill-formed.
      *
      * @tparam  inputFun    The function that is called when running out of source input data. This
@@ -841,6 +841,19 @@ namespace mtools
 
 
     /**
+     * Conversion double to a std::string with a given precison (number of digits written) and
+     * chosing if we use scientific notation. 
+     * 
+     * @param   val         The value to convert
+     * @param   precision   Number of digits (default = 15)
+     * @param   scientific  true to use scientific notation
+     *
+     * @return  A std::string representing the value
+     **/
+    std::string doubleToStringHighPrecision(double val, int precision = 15, bool scientific = true);
+
+
+    /**
      * Conversion of a double into a wstring with nice printing. Decrease the number of digits
      * written in order to make it more readable.
      *
@@ -851,6 +864,19 @@ namespace mtools
      * @sa  doubleToStringNice
      **/
     std::wstring doubleToWStringNice(double val);
+
+
+    /**
+    * Conversion double to a std::wstring with a given precison (number of digits written) and
+    * chosing if we use scientific notation.
+    *
+    * @param   val         The value to convert
+    * @param   precision   Number of digits (default = 15)
+    * @param   scientific  true to use scientific notation
+    *
+    * @return  A std::wstring representing the value
+    **/
+    std::wstring doubleToWStringHighPrecision(double val, int precision = 15, bool scientific = true);
 
 
     /**
