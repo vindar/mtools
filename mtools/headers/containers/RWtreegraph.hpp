@@ -76,7 +76,7 @@
                 if (G.Value() == 0) {G.Value() = 1; G.MoveFather();}
                 else
                     {
-                    double a = gen.rand_double0();
+                    double a = Unif(gen);
                     if (a < (1.0-p))  {G.MoveFather();} 
                     else {if (a < ((1-p) + p/2)) {G.MoveSon(0);}  else {G.MoveSon(1);}}
                     }

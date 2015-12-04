@@ -118,7 +118,7 @@ namespace mtools
      * P.range().fixedAspectRatio(false);  // disable the fixed aspect ratio
      * while (P.shown())                   // loop until the plotter window is closed
      *    {
-     *    while(tab.size() < tab.capacity()) { pos += ((gen.rand_double0() < 0.5) ? -1 : 1); tab.push_back(pos); } // fill the vector with new steps of the walk until its capacity()
+     *    while(tab.size() < tab.capacity()) { pos += ((Unif(gen) < 0.5) ? -1 : 1); tab.push_back(pos); } // fill the vector with new steps of the walk until its capacity()
      *    PV.suspend();      // disable the graph since we must reallocate (use suspend() instead of enable(false) flickering by not erasing the drawing).
      *    tab.reserve(tab.capacity() + 100000); // reserve additonnal space
      *    PV.enable(true);   // enable again.
