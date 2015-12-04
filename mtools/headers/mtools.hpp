@@ -67,6 +67,7 @@
 #include "maths/vec.hpp"
 #include "maths/rect.hpp"
 #include "maths/sqrmatrix.hpp"
+#include "maths/specialFunctions.hpp"
 
 //misc
 #include "misc/error.hpp"
