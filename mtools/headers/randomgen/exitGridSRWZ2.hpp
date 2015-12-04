@@ -326,7 +326,7 @@ const double SRWexitGrid_1024_CDF[1024] = {
 
 
 /* array of pointer to the different box size arrays */
-const double * SRWexitGrid_CDF[9] = { SRWexitGrid_4_CDF, SRWexitGrid_8_CDF, SRWexitGrid_16_CDF, SRWexitGrid_32_CDF, SRWexitGrid_64_CDF, SRWexitGrid_128_CDF, SRWexitGrid_256_CDF, SRWexitGrid_512_CDF, SRWexitGrid_1024_CDF };
+const double * const SRWexitGrid_CDF[9] = { SRWexitGrid_4_CDF, SRWexitGrid_8_CDF, SRWexitGrid_16_CDF, SRWexitGrid_32_CDF, SRWexitGrid_64_CDF, SRWexitGrid_128_CDF, SRWexitGrid_256_CDF, SRWexitGrid_512_CDF, SRWexitGrid_1024_CDF };
 
 
 /* end of file */

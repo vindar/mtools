@@ -37,12 +37,39 @@ namespace mtools
          * @param   n   number of step to make
          * @param   gen random generator
          *
-         * @return  A rv distributed as Bin(n,1/2).
+         * @return  A rv distributed as 2 * Bin(n,1/2) - n.
          **/
-        template<class random_t> inline int64 SRW_Z(uint64 n, random_t & gen)
-            { // compute a Binomial(n,1/2)
-           
-            return 0;
+        template<class random_t> inline int SRW_Z(int n, random_t & gen)
+            { 
+            MTOOLS_ASSERT(n > 0);
+            if (n <= 320)
+                { // code the walk from the bits of an uniform uint64.
+                int k = 0;
+                do
+                    {
+                    int m = ((n >= 64) ? 64 : n); n -= 64; k -= m;
+                    uint64 u = Unif_64(gen);
+                    for (int j = 0; j < m; j++) { k += 2 * (u & 1); u >>= 1; }
+                    }
+                while (n > 0);
+                return k;
+                }
+           static const double plog = log(0.5); 
+           int k;
+           for (;;)
+                {
+                double u = 0.645*Unif(gen);
+                double v = -0.63 + 1.25*Unif(gen);
+                double v2 = v*v;
+                if (v >= 0.) { if (v2 > 6.5*u*(0.645 - u)*(u + 0.2)) continue; } else { if (v2 > 8.4*u*(0.645 - u)*(u + 0.1)) continue; }
+                k = int(floor(sqrt(n*0.25)*(v / u) + n*0.5 + 0.5));
+                if ((k < 0) || (k > n)) continue;
+                double u2 = u*u;
+                if (v >= 0.) { if (v2 < 12.25*u2*(0.615 - u)*(0.92 - u)) break; } else { if (v2 < 7.84*u2*(0.615 - u)*(1.2 - u)) break; }
+                double b = sqrt(n*0.25)*exp( gammln(n + 1.) + n*plog - (gammln(k + 1.) + gammln(n - k + 1.)) );
+                if (u2 < b) break;
+                }
+            return (2*k - n);
             }
 
 
@@ -55,7 +82,7 @@ namespace mtools
          *
          **/
         template<class random_t> inline void SRW_Z2(iVec2 & pos, uint64 n, random_t & gen)
-            { // use 45 degree rotation of two indep. SRW on Z
+            { // 45 degree rotation of two indep. SRW on Z
             int64 A = SRW_Z(n,gen);
             int64 B = SRW_Z(n,gen);
             pos.X() += (A + B) / 2;
@@ -70,25 +97,25 @@ namespace mtools
          * returns, the distance to the (inner) boundary of the rectangle has been divided by at least
          * the parameter 'ratio' compared to the initial distance from the boundary.
          *
-         * @tparam  random_t    Type of the random t.
          * @param [in,out]  pos The position of the walk.
          * @param   R           The rectangle.
-         * @param [in,out]  gen The random number generator.
          * @param   ratio       The ratio by which the distance to the (inner) boundary has to decrease
-         *                      before we stop (set to a negative value for infinite ratio = stop at the
-         *                      boundary).
+         *                      before we stop (set to <=0 for infinite ratio = stop at the
+         *                      boundary). 8 is a good choice usually.
+         * @param [in,out]  gen The random number generator.
          *
          * @return  The new distance to the inner boundary.
          **/
-        template<class random_t> int64 SRW_Z2_MoveInRect(iVec2 & pos, iRect R, random_t & gen, uint64 ratio = 8)
+        template<class random_t> int64 SRW_Z2_MoveInRect(iVec2 & pos, iRect R, uint64 ratio, random_t & gen)
             {
             MTOOLS_ASSERT((!R.isEmpty()) && (R.isInside(pos)));
             int64 min_d = ((ratio <= 0) ? 0 : R.boundaryDist(pos)/ratio);
+            int64 d;
             while((d = R.boundaryDist(pos)) >  min_d)
                 { // keep looping while we are striclty inside the rectangle.
                 if (d == 1)
-                    { // one step
-                    switch (Unif_int(0,3,gen))
+                    { // make one step
+                    switch (Unif_2(gen))
                         {
                         case  0: pos.X()++; break;
                         case  1: pos.X()--; break;
@@ -99,7 +126,7 @@ namespace mtools
                     }
                 if (d < 4)
                     { //  square of radius 2
-                    switch(Unif_int(0, 15, gen))
+                    switch(Unif_4(gen))
                         {
                         case  0: pos.X() += 2; break;
                         case  1: pos.X() += 2; break;
@@ -127,13 +154,13 @@ namespace mtools
                     pos.Y() += (int64)round(d*cos(a));
                     continue;
                     }
-                // d is in [4,2048[, use precomputed tables.
+                // d is in [4,2047], use precomputed tables.
                 d >>= 2;
                 int64 l = 4;
                 size_t index = 0;
                 while (d > 1) { index++; l <<= 1; d >>= 1; }
-                int 64 off = sampleDiscreteRVfromCDF(SRWexitGrid_CDF[i], l - 1, gen);
-                switch(Unif_int(0, 7, gen))
+                int64 off = sampleDiscreteRVfromCDF(SRWexitGrid_CDF[index], l - 1, gen);
+                switch(Unif_3(gen))
                     {
                     case  0: pos.X() += l; pos.Y() += off; break;
                     case  1: pos.X() += l; pos.Y() -= off; break;
@@ -154,16 +181,16 @@ namespace mtools
          * Move the SRW starting from pos until it reaches the INNER boudary of the rectangle R.
          * 
          * More precisely, if R = [a,b]x[c,d] and the returned position pos = (x,y) then
-         * either (x is a or b and y in ]c,d[) or (y is c or d and x in ]a,b[) (assuming the 
-         * starting position is indeed in the interior of R
+         * either x = a or b and y in ]c,d[) or y = c or d and x in ]a,b[) (assuming the 
+         * starting position is indeed in the interior of R).
          * 
          * @param [in,out]  pos The position of the walk
          * @param   R           The rectangle
          * @param [in,out]  gen The random number generator
          **/
-        template<class random_t> inline int64 SRW_Z2_ExitRect(iVec2 & pos, iRect R, random_t & gen)
+        template<class random_t> inline void SRW_Z2_ExitRect(iVec2 & pos, iRect R, random_t & gen)
             {
-            int64 d = SRW_Z2_MoveInRect(pos, R, gen,-1); // set ratio to infinity
+            int64 d = SRW_Z2_MoveInRect(pos, R, -1,gen); // set ratio to infinity
             MTOOLS_ASSERT(d == 0);
             return;
             }

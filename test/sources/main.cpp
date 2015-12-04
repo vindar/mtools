@@ -341,19 +341,22 @@ template<class random_t> void testRG()
     Chronometer();
     double s = 0.0;
     double v = 0.0;
-    int GN = 100000000;
+    int GN = 10000000;
 
-    double mu = 7;
-    double s2 = 12;
+    int rr = 500;
 
-    double E = mu;
-    double V = s2;
+    double E = 0;
+    double V = 1;
 
-    NormalLaw B(mu,s2);
+ 
 
     for (int i = 0;i < GN;i++)
         {
-        double  a = B(mte);
+        iVec2 pos(0, 0);
+        iRect R(-rr,rr,-rr,rr);
+        SRW_Z2_MoveInRect(pos, R, 8, mte);
+
+        double  a = pos.X();
         s += a; v += (a - E)*(a - E);
         }
 
@@ -361,7 +364,7 @@ template<class random_t> void testRG()
     double vari = ((double)v) / GN;
 
     cout << "Mean     = " << mean   << "\n";
-    cout << "variance = " << vari << "\n";
+    cout << "variance = " << sqrt(vari) << "\n";
     cout << "Finished in " << Chronometer() << "\n";
     cout << "----------------------\n\n";
 
@@ -375,7 +378,7 @@ int main(int argc, char* argv[])
 
 
     //testRG<std::mt19937>();
-    testRG<std::mt19937_64>();
+    testRG<MT2004_64>();
     //testRG<MT2002_32>();
     //testRG<MT2004_64>();
     //testRG<XorGen4096_64>();
