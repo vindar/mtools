@@ -55,10 +55,11 @@
 
 #include "../misc/misc.hpp"
 #include <ctime>
-#include <string>
+
 
 namespace mtools
 {
+
 
     /**
     * Mersenne twister by Makoto Matsumoto et Takuji Nishimura.
@@ -66,110 +67,54 @@ namespace mtools
     **/
     class MT2004_64
     {
+
+
     public:
 
-    /**
-    * Default constructor. Init with a seed obtained from the internal clock.
-    **/
-    MT2004_64() {mti = NN+1; init_genrand64((uint64)time(NULL));}
+
+        /* type of integer returned by the generator */
+        typedef uint64 result_type;
 
 
-    /**
-    * Constructor with a given seed
-    *
-    * @param   seed    The seed.
-    **/
-    MT2004_64(uint64 seed) {mti = NN+1; init_genrand64(seed);}
+        /* min value */
+        static constexpr result_type min() { return 0; }
 
 
-    /**
-    * Constructor with a given seed aray
-    *
-    * @param   seed_tab    The seed array.
-    * @param   tab_length  Length of the array.
-    **/
-    MT2004_64(uint64 seed_tab[], int tab_length) {mti = NN+1; init_by_array64(seed_tab,tab_length);}
-
-    /**
-    * generates a random number on [0,1)-real-interval. Same as rand_double0()
-    **/
-    inline double operator()() { return rand_double0(); }
+        /* max value */
+        static constexpr result_type max() { return 18446744073709551615; }
 
 
-    /**
-    * generates a random number on [0, 2^32-1]-interval
-    **/
-    inline uint32 rand_uint32(void) {return((uint32)(randproc64() >> 32));}
+        /* return a random number */
+        inline uint64 operator()() { return randproc64(); }
 
 
-    /**
-    * generates a random number on [0, 2^64-1]-interval
-    **/
-    inline uint64 rand_uint64(void) {return randproc64();}
+        /* discard results */
+        void discard(unsigned long long z) { for (unsigned long long i = 0; i < z; i++) operator()(); }
 
 
-    /**
-    * generates a random number on [0,1]-real-interval
-    **/
-    inline double rand_double01(void) {return (randproc64() >> 11) * (1.0/9007199254740991.0);}
+        /* change the seed */
+        void seed(result_type s) { mti = NN + 1; init_genrand64(s); }
 
 
-    /**
-    * generates a random number on [0,1)-real-interval
-    **/
-    inline double rand_double0(void) {return (randproc64() >> 11) * (1.0/9007199254740992.0);}
+        /**
+        * Default constructor. Init with a seed obtained from the internal clock.
+        **/
+        MT2004_64() { seed(time(NULL)); }
 
 
-    /**
-    * generates a random number on (0,1)-real-interval
-    **/
-    inline double rand_double(void) {return ((randproc64() >> 12) + 0.5) * (1.0/4503599627370496.0);}
+        /**
+        * Constructor with a given seed
+        **/
+        MT2004_64(result_type s) { seed(s); }
 
 
-    /**
-    * generate a high precision random number on [0,1) interval It means that when the return value
-    * is very small (close to zero) the number of significative digit stays roughly the same
-    * whereas for rand_double0 the minimal step for each value is 1.0/4503599627370496.0 even for
-    * small value. useful for simulationg unbounded RV via their CDF
-    *
-    * In average, the generation is 1/256 slower than the classic rand_double0()
-    **/
-    inline double rand_double0_highprecision(void)
-		{
-		double b = 1.0, a = rand_double0();
-		while(a * 1024 < 1.0) {b /= 1024; a = rand_double0();}
-		return a*b;
-		}
-
-
-    /**
-    * Test that the implementation is OK.
-    **/
-    static std::string  test()
-        {
-        std::string s;
-        s += "-----------------------------------------------\n";
-        s += "Testing the implementation of MT2004_64\n";
-        s += "Mersenne twister by Matsumoto/Nishimura\n";
-        s += "version 2004 (with 2008 corrections)\n";
-        s += "this is the 64 bits version.\n\n";
-        uint64 init[4]={0x12345ULL, 0x23456ULL, 0x34567ULL, 0x45678ULL};
-        MT2004_64 gen(init,4);
-        uint64 r = gen.rand_uint64();;
-        s += "Generated [" + std::to_string(r) + "] should be [7266447313870364031]\n";
-        for (int i=0; i<995; i++) {gen.rand_uint64();}
-        r = gen.rand_uint64();
-        s += "Generated [" + std::to_string(r) + "] should be [13004818533162292132]\n";
-        gen.rand_uint64(); gen.rand_uint64(); gen.rand_uint64();
-        double f = gen.rand_double0();
-        s += "Generated [" + std::to_string((uint64)(f * 1000000000) ) + "] should be [352520306]\n";
-        for (int i=0; i<998; i++) {gen.rand_double0();}
-        f = gen.rand_double01();
-        s += "Generated [" + std::to_string( (uint64)(f * 1000000000) ) + "] should be [486001416]\n";
-        s += "\nend of test.\n";
-        s += "-----------------------------------------------\n";
-        return s;
-        }
+        /**
+        * Constructor with a given seed aray
+        *
+        * @param   seed_tab    The seed array.
+        * @param   tab_length  Length of the array.
+        **/
+        MT2004_64(result_type seed_tab[], int tab_length) { mti = NN + 1; init_by_array64(seed_tab, tab_length); }
 
 
     private:
@@ -181,6 +126,7 @@ namespace mtools
         mt[0] = seed;
         for (mti=1; mti<NN; mti++) mt[mti] =  (6364136223846793005ULL * (mt[mti-1] ^ (mt[mti-1] >> 62)) + mti);
         }
+
 
     /* initialize by an array with array-length */
     /* init_key is the array for initializing keys */
@@ -206,6 +152,7 @@ namespace mtools
             }
         mt[0] = 1ULL << 63; /* MSB is 1; assuring non-zero initial array */
     }
+
 
     /* generates a random number on [0, 2^64-1]-interval */
     inline uint64 randproc64(void)
