@@ -23,6 +23,7 @@
 
 #include "../misc/misc.hpp" 
 #include "../misc/error.hpp"
+#include "../maths/specialFunctions.hpp"
 
 #include <cmath>
 #include <random>
@@ -108,7 +109,7 @@ namespace mtools
      * minimal step for each value is 1.0/4503599627370496.0 even for small value. useful for
      * simulationg unbounded RV via their CDF
      * 
-     * In average, the generation is 1/256 slower than the classic rand_double0()
+     * In average, the generation is 1/256 slower than the classic operator()
      *
      * @param [in,out]  gen The random number generator.
      *
@@ -117,7 +118,7 @@ namespace mtools
     template<class random_t> inline double Unif_highprecision(random_t & gen) 
         {
         double b = 1.0, a = Unif(gen);
-        while (a*256 < 1.0) { b /= 256; a = rand_double0(); }
+        while (a*256 < 1.0) { b /= 256; a = Unif(gen()); }
         return a*b;
         }
 
@@ -149,121 +150,125 @@ namespace mtools
         }
 
 
+
     /**
     * create a Binomial randon variable.
-    * METHOD: inverse distribution function for n*p < 30 and split in several part if n*p is larger
-    * see the paper for details:
-    *    Kachitvichyanukul, V. and Schmeiser, B. W. (1988).
-    *    Binomial random variate generation
-    *    Communications of the ACM 31, 216-222.
-    *    (Algorithm BTPEC).
-    *
-    * Parameters: 
-    *     - n : number of trials in the binomial distribution.
-    *     - p : probability od success of a trial.
+    * Taken from numerical recipes 
+    * 
     **/
-	class BinomialLaw
-	{
-	public:
+    class BinomialLaw
+        {
+
+
+        public:
 
         /**
          * Constructor. Set the parameters.
          *
-         * @param   n   number of trials.
-         * @param   p   Probability of success of a trial.
-        **/
-		BinomialLaw(uint32 n = 1, double p = 0.5) {setParam(n,p);}
+         * @param   nn  number of trials.
+         * @param   ppp Probability of success of a trial.
+         **/
+        BinomialLaw(int nn, double ppp) { setParam(nn, ppp); }
 
 
         /**
          * Set the parameter of the binomial.
          *
-         * @param   n   number of trials.
-         * @param   p   Probability of success of a trial.
-        **/
-		inline void setParam(uint32 n, double p)
-			{
-			pp = p;
-			sn = n;
-			if (pp>0.5) {pp=1.0-pp; inv = true;} else {inv = false;}
-			if ((pp>0)&&(sn>0))
-				{
-				sN = (uint32)((29.0/pp));	// max number of trial such that  N*p < 30
-				if (n<sN) {sN = n;}			// we do not need to split
-				q = 1-pp;
-				r = pp/q;
-				sqN = pow(q,(double)sN);
-				sg = r*(sN+1);
-				}
-			}
+         * @param   nn  number of trials.
+         * @param   ppp Probability of success of a trial.
+         **/
+        void setParam(int nn, double ppp)
+            {
+            pp = ppp;  
+            n = nn;
+            int j;
+            pb = p = (pp <= 0.5 ? pp : 1.0 - pp);
+            if (n <= 64) 
+                {
+                uz = 0; uo = 0xffffffffffffffffLL; rltp = 0;
+                for (j = 0;j<5;j++) pbits[j] = 1 & ((int)(pb *= 2.));
+                pb -= floor(pb); swch = 0;
+                }
+            else if (n*p < 30.) 
+                {
+                cdf[0] = exp(n*log(1 - p));
+                for (j = 1;j<64;j++) cdf[j] = cdf[j - 1] + exp(gammln(n + 1.) - gammln(j + 1.) - gammln(n - j + 1.) + j*log(p) + (n - j)*log(1. - p));
+                swch = 1;
+                }
+            else 
+                {
+                np = n*p; glnp = gammln(n + 1.); plog = log(p); pclog = log(1. - p); sq = sqrt(np*(1. - p));
+                if (n < 1024) for (j = 0;j <= n;j++) logfact[j] = gammln(j + 1.);
+                swch = 2;
+                }
+            }
 
 
-        /**
-         * Return a Binomial(n,p) distributed random variable.
-         *
-         * @param [in,out]  gen The random generator.
-         *
-         * @return  the random variable obtained.
-        **/
-		template<class random_t> inline uint32 operator()(random_t & gen) const
-			{
-			if (pp == 0) {if (inv) {return(sn);} return 0;} // parameter p = 0 or 1, return 0 or sn
-			if (sn < 2) // 0 or 1 trial
-				{
-				if (sn==0) {return 0;} // 0 trial, return 0;
-				if (Unif(gen) < pp)
-					{
-					if (inv) {return 0;} return 1;
-					}
-				if (inv) {return 1;}
-				return 0;
-				}
-			uint32 x  = 0; 
-			uint32 n  = sn; 
-			uint32 N  = sN;
-			double qN = sqN;
-			double g  = sg;
-			while(n != 0)
-				{
-				if (n < N) // less than N remaining trials to do
-					{
-					N = n;
-					qN = pow(q,(double)N);
-					g = r*(N+1);
-					}
-				// invert the cdf
-				uint32 ix;
-				while(1) 
-					{
-					ix = 0;
-					double f = qN;
-					double u = Unif(gen); // uniform on [0,1)
-					while(1)
-						{
-						if (u < f)		goto doneBinom;
-						if (ix > 110)	break;
-						u -= f;
-						ix++;
-						f *= (g / ix - r);
-						}
-					}
-				doneBinom:
-				x += ix;
-				n -= N;
-				}
-			if (x > sn) {x = sn;}
-			if (inv) {return(sn-x);}
-			return x;
-			}
+            /**
+            * Return a Binomial(n,p) distributed random variable.
+            *
+            * @param [in,out]  gen The random generator.
+            *
+            * @return  the random variable obtained.
+            **/
+            template<class random_t> int operator()(random_t & gen)
+            {
+            int j, k, kl, km;
+            double y, u, v, u2, v2, b;
+            if (swch == 0) 
+                {
+                unfin = uo;
+                for (j = 0;j<5;j++) 
+                    { 
+                    diff = unfin & ( Unif_64(gen) ^ (pbits[j] ? uo : uz));
+                    if (pbits[j]) rltp |= diff; else rltp = rltp & ~diff; unfin = unfin & ~diff;
+                    }
+                k = 0;
+                for (j = 0;j<n;j++) 
+                    {
+                    if (unfin & 1) { if (Unif(gen) < pb) ++k; } else { if (rltp & 1) ++k; }
+                    unfin >>= 1; rltp >>= 1;
+                    }
+                }
+            else if (swch == 1) 
+                {
+                y = Unif(gen); kl = -1; k = 64;
+                while (k - kl>1) 
+                    {
+                    km = (kl + k) / 2;
+                    if (y < cdf[km]) k = km; else kl = km;
+                    }
+                }
+            else {
+                for (;;) 
+                    {
+                    u = 0.645*Unif(gen);
+                    v = -0.63 + 1.25*Unif(gen);
+                    v2 = v*v;
+                    if (v >= 0.) { if (v2 > 6.5*u*(0.645 - u)*(u + 0.2)) continue; } else { if (v2 > 8.4*u*(0.645 - u)*(u + 0.1)) continue; }
+                    k = int(floor(sq*(v / u) + np + 0.5));
+                    if ((k < 0) || (k > n)) continue;
+                    u2 = u*u;
+                    if (v >= 0.) { if (v2 < 12.25*u2*(0.615 - u)*(0.92 - u)) break; } else { if (v2 < 7.84*u2*(0.615 - u)*(1.2 - u)) break; }
+                    b = sq*exp(glnp + k*plog + (n - k)*pclog - (n < 1024 ? logfact[k] + logfact[n - k] : gammln(k + 1.) + gammln(n - k + 1.)));
+                    if (u2 < b) break;
+                    }
+                }
+            if (p != pp) k = n - k;
+            return k;
+            }
 
-	private:
-		uint32 sn;
-		uint32 sN;
-		bool inv;
-		double pp,q,r,sqN,sg;
 
-	};
+        private:
 
+            double pp, p, pb, expnp, np, glnp, plog, pclog, sq;
+            int n, swch;
+            uint64 uz, uo, unfin, diff, rltp;
+            int pbits[5];
+            double cdf[64];
+            double logfact[1024];
+
+     };
 
 
     /**
@@ -292,7 +297,7 @@ namespace mtools
         *
         * @param   lambda  Paramter of the exponential law (inverse of its expectation).
         **/
-        inline void setParam(double lambda = 1.0) {l = lambda; MTOOLS_ASSERT(lambda > 0.0); }
+        void setParam(double lambda = 1.0) {l = lambda; MTOOLS_ASSERT(lambda > 0.0); }
 
 
         /**
@@ -302,7 +307,7 @@ namespace mtools
          *
          * @return  the random variable.
         **/
-		template<class random_t> inline double operator()(random_t & gen) const { return(-log(1- Unif(gen))/l); }
+		template<class random_t> double operator()(random_t & gen) const { return(-log(1- Unif(gen))/l); }
 
 
     private:
@@ -337,7 +342,7 @@ namespace mtools
             *
             * @param   alpha  Parameter of the geometric (probability of success).
             **/
-            inline void setParam(double alpha) { MTOOLS_ASSERT((alpha > 0.0)&(alpha < 1.0)); l = -log(1 - alpha); a = alpha; }
+            void setParam(double alpha) { MTOOLS_ASSERT((alpha > 0.0)&(alpha < 1.0)); l = -log(1 - alpha); a = alpha; }
 
 
             /**
@@ -347,7 +352,7 @@ namespace mtools
             *
             * @return  the random variable.
             **/
-            template<class random_t> inline int64 operator()(random_t & gen) const 
+            template<class random_t> int64 operator()(random_t & gen) const 
                 { 
                 if (a >= 0.6) { uint64 r = 1; while (Unif(gen) >= a) { r++; } return r; }
                 return 1+(int64)floor(-log(1 - Unif(gen)) / l);
@@ -368,6 +373,8 @@ namespace mtools
      * The density of X is P(X in dx) = 1/sqrt(2*pi*sigma2)*exp(-(x-m)^2 /(2*sigma2))dx.
      * 
      * The expectation of X is thus E[X] = m and variance = sigma2.
+     * 
+     * Use numerical recipes rejection method instead of the classic Box-Muller algorithm.
      **/
     class NormalLaw
     {
@@ -379,16 +386,16 @@ namespace mtools
          * @param   m       mean of the r.v.
          * @param   sigma2  variance of the r.v.
         **/
-        NormalLaw(double m = 0.0, double sigma2 = 1.0) : c(m) { MTOOLS_ASSERT(sigma2 > 0.0);  s = sqrt(sigma2); }
+        NormalLaw(double m = 0.0, double sigma2 = 1.0) { setParam(m, sigma2); }
 
 
         /**
-        * Constructor. Set the parameters.
+        * Set the parameters.
         *
         * @param   m       mean of the r.v.
         * @param   sigma2  variance of the r.v.
         **/
-        inline void setParam(double m = 0.0,double sigma2 = 1.0) {c = m; MTOOLS_ASSERT(sigma2 > 0.0);  s = sqrt(sigma2); }
+        inline void setParam(double m = 0.0, double sigma2 = 1.0) { MTOOLS_ASSERT(sigma2 > 0.0); mu = m; sig = sqrt(sigma2); }
 
 
         /**
@@ -398,12 +405,23 @@ namespace mtools
          *
          * @return  A double.
         **/
-		template<class random_t> inline double operator()(random_t & gen) const { return( s*sqrt(-2*log(1- Unif(gen)))*sin(TWOPI*(1- Unif(gen))) + c); }
+		template<class random_t> inline double operator()(random_t & gen) const 
+            {
+            double u, v, x, y, q;
+            do {
+                u = Unif(gen); v = 1.7156*(Unif(gen) - 0.5);
+                x = u - 0.449871; y = abs(v) + 0.386595;
+                q = (x*x) + y*(0.19600*y - 0.25472*x);
+                }
+            while ((q > 0.27597) && (q > 0.27846 || (v*v) > -4.*log(u)*(u*u)));
+            return mu + sig*v/u;
+            }
 
 
     private:
-        double c,s;
+        double mu, sig;
     };
+
 
 
     /**
@@ -435,7 +453,7 @@ namespace mtools
          * @param   C       scaling paramter.
          * @param   m       centering paramter.
         **/
-        StableLaw(double alpha,double beta,double C,double m) : p_alpha(alpha), p_beta(beta), p_C(C), p_m(m) {_createval();}
+        StableLaw(double alpha,double beta,double C,double m) { setParam(alpha, beta, C, m); }
 
         
         /**
@@ -446,8 +464,18 @@ namespace mtools
         * @param   C       scaling paramter.
         * @param   m       centering paramter.
         **/
-        inline void setParam(double alpha,double beta,double C,double m) {p_alpha = alpha; p_beta = beta; p_C = C; p_m = m; _createval();}
-
+        void setParam(double alpha,double beta,double C,double m) 
+            {
+            p_alpha = alpha; p_beta = beta; p_C = C; p_m = m;
+            MTOOLS_ASSERT((p_alpha > 0.0) && (p_alpha < 2.0) && (p_alpha != 1.0));
+            MTOOLS_ASSERT((p_beta > -1.0) && (p_beta < 1.0));
+            MTOOLS_ASSERT(p_C > 0.0);
+            double zeta = -p_beta*tan(PI*p_alpha / 2);
+            S = pow(1 + (zeta*zeta), 1 / (2 * p_alpha));
+            xi = (1 / p_alpha)*atan(-zeta);
+            ialpha = 1 / p_alpha;
+            talpha = (1 - p_alpha) / p_alpha;
+            }
 
 
         /**
@@ -457,7 +485,7 @@ namespace mtools
          *
          * @return  the random variable.
         **/
-		template<class random_t> inline double operator()(random_t & gen) const
+		template<class random_t> double operator()(random_t & gen) const
             {
 			double U1 = Unif(gen);
 			double U2 = Unif(gen);
@@ -470,21 +498,11 @@ namespace mtools
 
     private:
 
-        inline void _createval()
-            {
-            MTOOLS_ASSERT((p_alpha > 0.0) && (p_alpha < 2.0) && (p_alpha != 1.0));
-            MTOOLS_ASSERT((p_beta > -1.0)&& (p_beta < 1.0));
-            MTOOLS_ASSERT(p_C > 0.0);
-            double zeta = -p_beta*tan(PI*p_alpha/2);
-            S = pow(1+(zeta*zeta),1/(2*p_alpha));
-            xi = (1/p_alpha)*atan(-zeta);
-            ialpha = 1/p_alpha;
-            talpha = (1-p_alpha)/p_alpha;
-            }
-
         double p_alpha,p_beta,p_C,p_m;
         double S,xi,ialpha,talpha;
     };
+
+
 
 
 
@@ -498,6 +516,8 @@ namespace mtools
     *     - m     in R                centering paramter
     * 
     * Characteristic function: f(t) = ln E[exp(itX)] = - C.|t|.( 1 + i.beta.sign(t).(2/Pi).ln|t| ) + i.m.t
+    * 
+    * TODO : Replace the code by that of numerical recipe which is faster.
     **/
     class CauchyLaw
     {
@@ -507,30 +527,35 @@ namespace mtools
          * Constructor. Set the parameters
          *
          * @param   beta    symetry parameter.
-         * @param   C       scaling paramter.
-         * @param   m       centering paramter.
+         * @param   C       scaling parameter.
+         * @param   m       centering parameter.
         **/
-        CauchyLaw(double beta,double C,double m) : p_beta(beta), p_C(C), p_m(m) {_createval();}
+        CauchyLaw(double beta, double C, double m)  { setParam(beta, C, m);  }
 
 
         /**
         * Set the parameters
         *
         * @param   beta    symetry parameter.
-        * @param   C       scaling paramter.
-        * @param   m       centering paramter.
+        * @param   C       scaling parameter.
+        * @param   m       centering parameter.
         **/
-        inline void setParam(double beta,double C,double m) {p_beta = beta; p_C = C; p_m = m; _createval();}
+        void setParam(double beta,double C,double m) 
+            {
+            p_beta = beta; p_C = C; p_m = m;
+            MTOOLS_ASSERT((p_beta >= -1.0) && (p_beta <= 1.0) && (p_C> 0.0));
+            mm = (2 / PI)*p_beta*p_C*log(p_C) + p_m; // compute the value of the associated constant
+            }
 
 
         /**
          * Generate a Cauchy random variable.
          *
-         * @param [in,out]  gen The rnadom number generator.
+         * @param [in,out]  gen The random number generator.
          *
          * @return  the random variable
         **/
-		template<class random_t> inline double operator()(random_t & gen) const
+		template<class random_t> double operator()(random_t & gen) const
             {
 			double U1 = Unif(gen);
 			double U2 = Unif(gen);
@@ -541,19 +566,215 @@ namespace mtools
             }
 
 
-
-
     private:
-
-        inline void _createval()
-            {
-            MTOOLS_ASSERT((p_beta >= -1.0) && (p_beta <= 1.0) &&(p_C> 0.0));
-            mm = (2/PI)*p_beta*p_C*log(p_C) + p_m; // compute the value of the associated constant
-            }
 
         double p_beta,p_C,p_m,mm;
     };
 
+
+
+
+    /**
+    * create a Gamma random variable.
+    * The density of the GAMMA(alpha,Beta) on [0,infty) is given by
+    * 
+    * f(x) = beta^alpha * x^(alpha-1) * exp(-beta*x) / Gamma(alpha)
+    * 
+    * paramterization (alpha,beta) is the same as the parametrization (k, theta) with the relation alpha = k and theta = 1/beta.
+    * 
+    * Taken from numerical recipes
+    **/
+    class GammaLaw
+        {
+
+        public:
+
+            /**
+             * Constructor Set the parameters.
+             *
+             * @param   aalph   parameter alpha.
+             * @param   bbet    parameter beta.
+             **/
+            GammaLaw(double aalph, double bbet) : normale() { setParam(aalph, bbet);  }
+
+
+            /**
+            * Set the parameters.
+            *
+            * @param   aalph   parameter alpha.
+            * @param   bbet    parameter beta.
+            **/
+            void setParam(double aalph, double bbet)
+                {
+                alph = aalph;  oalph = aalph;  bet = bbet;
+                MTOOLS_ASSERT(alph > 0);
+                if (alph < 1.) alph += 1.;
+                a1 = alph - 1. / 3.;
+                a2 = 1. / sqrt(9.*a1);
+                }
+
+
+            /**
+            * Generate a Gamma random variable.
+            *
+            * @param [in,out]  gen The random number generator.
+            *
+            * @return  the random variable
+            **/
+            template<class random_t> double operator()(random_t & gen)
+                {
+                double u, v, x;
+                do 
+                    {
+                    do { x = normale(gen); v = 1. + a2*x; }
+                    while (v <= 0.);
+                    v = v*v*v; u = Unif(gen);
+                    }
+                while((u > 1. - 0.331*(x*x*x*x)) && (log(u) > 0.5*(x*x) + a1*(1. - v + log(v))));
+                if (alph == oalph) return a1*v / bet; else { do u = Unif(gen); while (u == 0.); return pow(u, 1. / oalph)*a1*v / bet; }
+                }
+
+
+        private:
+
+            NormalLaw normale;
+            double alph, oalph, bet, a1, a2;
+
+
+        };
+
+
+
+    /**
+    * create a Beta random variable.
+    * The density of the BETA(alpha,Beta) on [0,1] is given by
+    *
+    * f(x) = (1/C) * x^(alpha-1) * (1-x)^(beta-1).
+    *
+    * Taken from numerical recipes
+    **/
+    class BetaLaw
+        {
+
+        public:
+
+            /**
+             * Constructor Set the parameters.
+             *
+             * @param   alpha   parameter alpha.
+             * @param   beta    parameter beta.
+             **/
+            BetaLaw(double alpha, double beta) : G1(alpha,1), G2(beta,1) { }
+
+
+            /**
+             * Set the parameters.
+             *
+             * @param   alpha   parameter alpha.
+             * @param   beta    parameter beta.
+             **/
+            inline void setParam(double alpha, double beta) { G1.setParam(alpha, 1); G2.setParam(beta, 1); }
+
+
+            /**
+            * Generate a Beta random variable.
+            *
+            * @param [in,out]  gen The random number generator.
+            *
+            * @return  the random variable
+            **/
+            template<class random_t> inline double operator()(random_t & gen) { double x = G1(gen); double y = G2(gen); return x / (x + y); }
+
+
+        private:
+
+            GammaLaw G1, G2;
+
+        };
+
+
+
+    /**
+    * create a Poisson random variable.
+    *
+    * Taken from numerical recipes
+    **/
+    class PoissonLaw
+        {
+
+        public:
+
+            /**
+             * Constructor Set the parameters.
+             *
+             * @param   lambdaa parameter lambda.
+             **/
+            PoissonLaw(double lambdaa) : lambold(-1.), logfact(1024, -1.) { setParam(lambdaa); }
+
+
+            /**
+             * Set the parameters.
+             *
+             * @param   lambdaa parameter lambda.
+             **/
+            void setParam(double lambdaa) { lambda = lambdaa; }
+
+
+            /**
+            * Generate a Poisson random variable.
+            *
+            * @param [in,out]  gen The random number generator.
+            *
+            * @return  the random variable
+            **/
+            template<class random_t> double operator()(random_t & gen)
+                {
+                double u, u2, v, v2, p, t, lfac;
+                int k;
+                if (lambda < 5.) 
+                    {
+                    if (lambda != lambold) lamexp = exp(-lambda);
+                    k = -1; t = 1.;
+                    do { ++k; t *= Unif(gen); } while (t > lamexp);
+                    }
+                else 
+                    {
+                    if (lambda != lambold) { sqlam = sqrt(lambda); loglam = log(lambda); }
+                    for (;;) 
+                        {
+                        u = 0.64*Unif(gen); v = -0.68 + 1.28*Unif(gen);
+                        if (lambda > 13.5) 
+                            {
+                            v2 = v*v;
+                            if (v >= 0.) { if (v2 > 6.5*u*(0.64 - u)*(u + 0.2)) continue; } else { if (v2 > 9.6*u*(0.66 - u)*(u + 0.07)) continue; }
+                            }
+                        k = int(floor(sqlam*(v / u) + lambda + 0.5));
+                        if (k < 0) continue;
+                        u2 = u*u;
+                        if (lambda > 13.5) 
+                            {
+                            if (v >= 0.) { if (v2 < 15.2*u2*(0.61 - u)*(0.8 - u)) break; } else { if (v2 < 6.76*u2*(0.62 - u)*(1.4 - u)) break; }
+                            }
+                        if (k < 1024) 
+                            {
+                            if (logfact[k] < 0.) logfact[k] = gammln(k + 1.);
+                            lfac = logfact[k];
+                            }
+                        else lfac = gammln(k + 1.);
+                        p = sqlam*exp(-lambda + k*loglam - lfac);
+                        if (u2 < p) break;
+                        }
+                    }
+                lambold = lambda;
+                return k;
+                }
+
+        private:
+
+            double lambda, sqlam, loglam, lamexp, lambold;
+            std::vector<double> logfact;
+
+        };
 
 
 

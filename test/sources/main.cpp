@@ -340,15 +340,28 @@ template<class random_t> void testRG()
 
     Chronometer();
     double s = 0.0;
-    double var = 0.0;
-    int GN = 300000000;
+    double v = 0.0;
+    int GN = 100000000;
+
+    double mu = 7;
+    double s2 = 12;
+
+    double E = mu;
+    double V = s2;
+
+    NormalLaw B(mu,s2);
+
     for (int i = 0;i < GN;i++)
         {
-        double  a = Unif(mte);
-        s += a; var += (a - 0.5)*(a - 0.5);
+        double  a = B(mte);
+        s += a; v += (a - E)*(a - E);
         }
-    cout << "Mean     = " << 2*((double)s) / GN << "\n";
-    cout << "variance = " << 12*((double)var) / GN << "\n";
+
+    double mean = ((double)s) / GN;
+    double vari = ((double)v) / GN;
+
+    cout << "Mean     = " << mean   << "\n";
+    cout << "variance = " << vari << "\n";
     cout << "Finished in " << Chronometer() << "\n";
     cout << "----------------------\n\n";
 
@@ -360,12 +373,13 @@ template<class random_t> void testRG()
 int main(int argc, char* argv[])
 {
 
-    testRG<std::mt19937>();
+
+    //testRG<std::mt19937>();
     testRG<std::mt19937_64>();
-    testRG<MT2002_32>();
-    testRG<MT2004_64>();
-    testRG<XorGen4096_64>();
-    testRG<FastRNG>();
+    //testRG<MT2002_32>();
+    //testRG<MT2004_64>();
+    //testRG<XorGen4096_64>();
+    //testRG<FastRNG>();
 
 
     cout.getKey();
