@@ -22,6 +22,7 @@
 
 
 #include <cstdint>
+#include <limits>
 
 
 namespace mtools
@@ -53,6 +54,19 @@ namespace mtools
 
    /** Defines an alias to void *. */
    typedef void * p_void;
+
+
+   /** Numeric constants */
+
+   const double PI  = 3.1415926535897932384626433832795;
+
+   const double TWOPI = 6.283185307179586476925286766559;
+
+   const double NaN = std::numeric_limits<double>::quiet_NaN();
+
+   const double INF = std::numeric_limits<double>::infinity();
+
+
 }
 
 
