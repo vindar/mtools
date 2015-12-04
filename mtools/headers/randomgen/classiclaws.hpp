@@ -22,11 +22,14 @@
 
 
 #include "../misc/misc.hpp" 
+#include "../misc/error.hpp"
 
 #include <cmath>
 
 namespace mtools
 {
+
+
 
     /**
     * create a Binomial randon variable.
@@ -157,15 +160,13 @@ namespace mtools
     class ExponentialLaw
     {
     public:
-        /* construct the object and set the lambda parameter */
-
 
         /**
          * Constructor. Set the parameter.
          *
-         * @param   lambda  Paramter of the exponential law (inverse of its expectation).
+         * @param   lambda  Parameter of the exponential law (inverse of its expectation).
         **/
-        ExponentialLaw(double lambda = 1.0) : l(lambda) {if (lambda<=0.0) l=1.0;}
+        ExponentialLaw(double lambda = 1.0) : l(lambda) { MTOOLS_ASSERT(lambda > 0.0); }
 
 
         /**
@@ -173,7 +174,7 @@ namespace mtools
         *
         * @param   lambda  Paramter of the exponential law (inverse of its expectation).
         **/
-        inline void setParam(double lambda = 1.0) {if (lambda<=0.0) l = 1.0; else l = lambda;}
+        inline void setParam(double lambda = 1.0) {l = lambda; MTOOLS_ASSERT(lambda > 0.0); }
 
 
         /**
@@ -183,16 +184,61 @@ namespace mtools
          *
          * @return  the random variable.
         **/
-		template<class CRandomGen> inline double operator()(CRandomGen & gen) const
-			{
-			return(-log(1-gen())/l);
-			}
+		template<class random_t> inline double operator()(random_t & gen) const { return(-log(1-gen())/l); }
 
 
     private:
         double l;
     };
 
+
+
+    /**
+    * Create a geometric random variable.
+    *
+    * Parameter: - alpha \> 0.
+    *
+    * The law is given by P( X = k) = alpha*(1-alpha)^(k-1) pour k = 1,2...
+    *
+    * The expectation of X is thus E[X] = 1/alpha
+    **/
+    class GeometricLaw
+        {
+        public:
+
+            /**
+            * Constructor. Set the parameter.
+            *
+            * @param   alpha  Parameter of the geometric (probability of success).
+            **/
+            GeometricLaw(double alpha) : a(alpha) { MTOOLS_ASSERT((alpha > 0.0)&(alpha<1.0)); l = -log(1 - alpha); }
+
+
+            /**
+            * Set the parameter.
+            *
+            * @param   alpha  Parameter of the geometric (probability of success).
+            **/
+            inline void setParam(double alpha) { MTOOLS_ASSERT((alpha > 0.0)&(alpha < 1.0)); l = -log(1 - alpha); a = alpha; }
+
+
+            /**
+            * Get a random number.
+            *
+            * @param [in,out]  gen The random generator
+            *
+            * @return  the random variable.
+            **/
+            template<class random_t> inline int64 operator()(random_t & gen) const 
+                { 
+                if (a >= 0.6) { uint64 r = 1; while (gen() >= a) { r++; } return r; }
+                return 1+(int64)floor(-log(1 - gen()) / l); 
+                }
+
+
+        private:
+            double a,l;
+        };
 
 
 
@@ -215,7 +261,7 @@ namespace mtools
          * @param   m       mean of the r.v.
          * @param   sigma2  variance of the r.v.
         **/
-        NormalLaw(double m = 0.0,double sigma2 = 1.0) : c(m), twopi(6.283185307179586476925286766559) {if (sigma2<=0.0) s = 1.0; else s = sqrt(sigma2);}
+        NormalLaw(double m = 0.0, double sigma2 = 1.0) : c(m) { MTOOLS_ASSERT(sigma2 > 0.0);  s = sqrt(sigma2); }
 
 
         /**
@@ -224,29 +270,22 @@ namespace mtools
         * @param   m       mean of the r.v.
         * @param   sigma2  variance of the r.v.
         **/
-        inline void setParam(double m = 0.0,double sigma2 = 1.0) {c = m; if (sigma2<=0.0) s = 1.0; else s = sqrt(sigma2);}
+        inline void setParam(double m = 0.0,double sigma2 = 1.0) {c = m; MTOOLS_ASSERT(sigma2 > 0.0);  s = sqrt(sigma2); }
 
 
         /**
          * Generate of normal r.v.
          *
-         * @tparam  CRandomGen  Type of the random generate.
          * @param [in,out]  gen the random number generator.
          *
          * @return  A double.
         **/
-		template<class CRandomGen> inline double operator()(CRandomGen & gen) const
-			{
-			return( s*sqrt(-2*log(1-gen()))*sin(twopi*(1-gen())) + c);
-			}
+		template<class random_t> inline double operator()(random_t & gen) const { return( s*sqrt(-2*log(1-gen()))*sin(TWOPI*(1-gen())) + c); }
+
 
     private:
         double c,s;
-        const double twopi;
     };
-
-
-
 
 
     /**
@@ -270,18 +309,15 @@ namespace mtools
     class StableLaw
     {
     public:
-        /* construct the object and set the parameters */
-
-
         /**
          * Constructor. Set the parameters
          *
-         * @param   alpha   autosimilarity parameter !=1 (for alpha=1 use CauchyLaw)
+         * @param   alpha   autosimilarity parameter in [0,2[ and !=1 (for alpha=1 use CauchyLaw and for alpha = 2 use NormalLaw)
          * @param   beta    symetry parameter
          * @param   C       scaling paramter.
          * @param   m       centering paramter.
         **/
-        StableLaw(double alpha,double beta,double C,double m) : p_alpha(alpha), p_beta(beta), p_C(C), p_m(m) ,pi(3.1415926535897932384626433832795) {createval();}
+        StableLaw(double alpha,double beta,double C,double m) : p_alpha(alpha), p_beta(beta), p_C(C), p_m(m) {_createval();}
 
         
         /**
@@ -292,54 +328,50 @@ namespace mtools
         * @param   C       scaling paramter.
         * @param   m       centering paramter.
         **/
-        inline void setParam(double alpha,double beta,double C,double m) {p_alpha = alpha; p_beta = beta; p_C = C; p_m = m; createval();}
+        inline void setParam(double alpha,double beta,double C,double m) {p_alpha = alpha; p_beta = beta; p_C = C; p_m = m; _createval();}
 
-        /* return a stable(alpha,beta,C,m) distributed number */
 
 
         /**
-         * Randoms a stable random variable.
+         * Return a stable random variable.
          *
          * @param [in,out]  gen the random number generator.
          *
          * @return  the random variable.
         **/
-		template<class CRandomGen> inline double operator()(CRandomGen & gen) const
-        {
+		template<class random_t> inline double operator()(random_t & gen) const
+            {
 			double U1 = gen();
 			double U2 = gen();
-            double U = pi*(U1-0.5); // uniform on [-pi/2,pi/2]
+            double U = PI*(U1-0.5); // uniform on [-pi/2,pi/2]
             double W = -log(1-U2);  // exp of parameter 1
             double X = S*(sin(p_alpha*(U+xi))/pow(cos(U),ialpha))*pow(cos(U - p_alpha*(U+xi))/W,talpha); // normalised
             return(p_C*X + p_m);
-        }
+            }
 
 
     private:
 
-        inline void createval()
-        {
-            /* correct value for the alpha,beta,C and m parameters */
-            if ((p_alpha <= 0.0)||(p_alpha > 2.0)||(p_alpha==1.0)) {p_alpha = 2.0;}
-            if (p_beta< -1.0) {p_beta = -1.0;} else {if (p_beta> 1.0) {p_beta = 1.0;}}
-            if (p_C <= 0.0) {p_C = 1.0;}
-            /* compute the values of the associated constants */
-            double zeta = -p_beta*tan(pi*p_alpha/2);
+        inline void _createval()
+            {
+            MTOOLS_ASSERT((p_alpha > 0.0) && (p_alpha < 2.0) && (p_alpha != 1.0));
+            MTOOLS_ASSERT((p_beta > -1.0)&& (p_beta < 1.0));
+            MTOOLS_ASSERT(p_C > 0.0);
+            double zeta = -p_beta*tan(PI*p_alpha/2);
             S = pow(1+(zeta*zeta),1/(2*p_alpha));
             xi = (1/p_alpha)*atan(-zeta);
             ialpha = 1/p_alpha;
             talpha = (1-p_alpha)/p_alpha;
-        }
+            }
 
         double p_alpha,p_beta,p_C,p_m;
         double S,xi,ialpha,talpha;
-        const double pi;
     };
 
 
 
     /**
-    * create Cauchy rnadom variables. Use the Chambers-Mallows-Stuck method (generalized Box-Muller 
+    * create Cauchy random variables. Use the Chambers-Mallows-Stuck method (generalized Box-Muller 
     * algorithm). cf: http://math.u-bourgogne.fr/monge/bibliotheque/ebooks/csa/htmlbook/node235.html
     * 
     * Parameters: 
@@ -352,8 +384,6 @@ namespace mtools
     class CauchyLaw
     {
     public:
-        /* construct the object and set the parameters */
-
 
         /**
          * Constructor. Set the parameters
@@ -362,7 +392,8 @@ namespace mtools
          * @param   C       scaling paramter.
          * @param   m       centering paramter.
         **/
-        CauchyLaw(double beta,double C,double m) : p_beta(beta), p_C(C), p_m(m), pi(3.1415926535897932384626433832795)  {createval();}
+        CauchyLaw(double beta,double C,double m) : p_beta(beta), p_C(C), p_m(m) {_createval();}
+
 
         /**
         * Set the parameters
@@ -371,8 +402,7 @@ namespace mtools
         * @param   C       scaling paramter.
         * @param   m       centering paramter.
         **/
-        inline void setParam(double beta,double C,double m) {p_beta = beta; p_C = C; p_m = m; createval();}
-
+        inline void setParam(double beta,double C,double m) {p_beta = beta; p_C = C; p_m = m; _createval();}
 
 
         /**
@@ -382,32 +412,57 @@ namespace mtools
          *
          * @return  the random variable
         **/
-		template<class CRandomGen> inline double operator()(CRandomGen & gen) const
-        {
+		template<class random_t> inline double operator()(random_t & gen) const
+            {
 			double U1 = gen();
 			double U2 = gen();
-            double U = pi*(U1-0.5); // uniform on [-pi/2,pi/2]
+            double U = PI*(U1-0.5); // uniform on [-pi/2,pi/2]
             double W = -log(1-U2);  // exp of parameter 1
-            double X = (2/pi)*((pi/2 + p_beta*U)*tan(U) - p_beta*log(((pi/2)*W*cos(U))/(pi/2 + p_beta*U)) ); // normalized
+            double X = (2/PI)*((PI/2 + p_beta*U)*tan(U) - p_beta*log(((PI/2)*W*cos(U))/(PI/2 + p_beta*U)) ); // normalized
             return(p_C*X + mm);
-        }
+            }
+
+
 
 
     private:
 
-        inline void createval()
-        {
-            /* correct value for the beta,C and m parameters */
-            if (p_beta< -1.0) {p_beta = -1.0;} else {if (p_beta> 1.0) {p_beta = 1.0;}}
-            if (p_C <= 0.0) {p_C = 1.0;}
-            /* compute the values of the associated constants */
-            mm = (2/pi)*p_beta*p_C*log(p_C) + p_m;
-        }
+        inline void _createval()
+            {
+            MTOOLS_ASSERT((p_beta >= -1.0) && (p_beta <= 1.0) &&(p_C> 0.0));
+            mm = (2/PI)*p_beta*p_C*log(p_C) + p_m; // compute the value of the associated constant
+            }
 
-        double p_beta,p_C,p_m;
-        double mm;
-        const double pi;
+        double p_beta,p_C,p_m,mm;
     };
+
+
+
+    /**
+    * Sample a discrete random variable X taking value in [0,N] from its CDF distribution.
+    *
+    * @tparam  random_t    Random number generator (such the operator() return a uniform rv in [0,1[).
+    * @param   tab The CDF array such that tab[i] = P(X &lt;= i), it size should be at least N.
+    *              (there is no need to define tab[N] = 1.0).
+    * @param   N   the support of the RV X is [0,N] ir tab is at least N elements long.
+    *
+    * @return  A random position in [0,N] chosing according to the CDF.
+    **/
+    template<class random_t> inline int64 sampleDiscreteRVfromCDF(const double * tab, size_t N, random_t & gen)
+        {
+        double a = gen(); // get a random value in [0,1[
+        if (a < tab[0]) { return 0; }       // extreme value cases
+        if (a >= tab[N - 1]) { return N; }  //
+        size_t n1 = 0;	    // lower bound, we know that tab[n1] <= a
+        size_t n2 = N - 1;	// uppper bound, we know that tab[n2] > a
+        while ((n2 - n1)>1)
+            { // loop until we reduced the interval to size 1
+            const size_t g = (n1 + n2) / 2;
+            if (a >= tab[g]) { n1 = g; }
+            else { n2 = g; }
+            }
+        return n2; // we now have tab[n1 = n2-1] <= a < tab[n2].
+        }
 
 
 }
