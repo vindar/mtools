@@ -354,6 +354,7 @@
     <ClInclude Include="headers\io\logfile.hpp" />
     <ClInclude Include="headers\io\serialization.hpp" />
     <ClInclude Include="headers\maths\rect.hpp" />
+    <ClInclude Include="headers\maths\specialFunctions.hpp" />
     <ClInclude Include="headers\maths\sqrmatrix.hpp" />
     <ClInclude Include="headers\maths\vec.hpp" />
     <ClInclude Include="headers\misc\error.hpp" />

@@ -204,6 +204,9 @@
     <ClInclude Include="headers\randomgen\fastRNG.hpp">
       <Filter>Header Files\randomgen</Filter>
     </ClInclude>
+    <ClInclude Include="headers\maths\specialFunctions.hpp">
+      <Filter>Header Files\maths</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\fltk_supervisor.cpp">
