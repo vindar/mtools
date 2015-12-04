@@ -1,4 +1,4 @@
-/** @fileexitGridSRWZ2.hpp */
+/** @file exitGridSRWZ2.hpp */
 //
 // Copyright 2015 Arvind Singh
 //
@@ -17,6 +17,7 @@
 // You should have received a copy of the GNU General Public License
 // along with mtools  If not, see <http://www.gnu.org/licenses/>.
 
+#pragma once
 
 
 /* this file contain the cumulative distribution for the exit point for the SRW on Z^2 starting from the origin stopped
@@ -325,7 +326,7 @@ const double SRWexitGrid_1024_CDF[1024] = {
 
 
 /* array of pointer to the different box size arrays */
-const double * SRWexitGrid_CDF[9] = { SRWexitGrid_4_CDF, SRWexitGrid_4_CDF, SRWexitGrid_4_CDF, SRWexitGrid_4_CDF, SRWexitGrid_4_CDF, SRWexitGrid_4_CDF, SRWexitGrid_4_CDF, SRWexitGrid_4_CDF, SRWexitGrid_4_CDF };
+const double * SRWexitGrid_CDF[9] = { SRWexitGrid_4_CDF, SRWexitGrid_8_CDF, SRWexitGrid_16_CDF, SRWexitGrid_32_CDF, SRWexitGrid_64_CDF, SRWexitGrid_128_CDF, SRWexitGrid_256_CDF, SRWexitGrid_512_CDF, SRWexitGrid_1024_CDF };
 
 
 /* end of file */

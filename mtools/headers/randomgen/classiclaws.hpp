@@ -25,10 +25,128 @@
 #include "../misc/error.hpp"
 
 #include <cmath>
+#include <random>
 
 namespace mtools
 {
 
+   
+    /**
+    * Construct a uniform unsigned integer value in the range [0,2^64-1] .
+    * This means that every bit is iid bernoulli 1/2.
+    *
+    * @param [in,out]  gen The random number generator
+    *
+    * @return  The uniform random unsinged integer over the entire range.
+    **/
+    template<class random_t> inline uint64 Unif_64(random_t & gen)
+        {
+        if ((random_t::min() == 0)&&(random_t::max() == 4294967295)) return ((uint64)gen() + (((uint64)gen()) << 32));
+        if ((random_t::min() == 0)&&(random_t::max() == 18446744073709551615)) return gen();
+        MTOOLS_ERROR("Unif_64 need the random engine to have packed 32 or 64 bits. Use std::independent_bits_engine to construct a packed engine from an unpacked one.");
+        }
+
+
+    /**
+     * Construct a real-valued uniform number in [0,1[.
+     *
+     * @param [in,out]  gen The random number generator
+     *
+     * @return  A double uniformely distributed in [0,1[. 
+     **/
+    template<class random_t> inline double Unif(random_t & gen) { return ((Unif_64<random_t>(gen) >> 11)) * (1.0 / 9007199254740992.0); }
+
+
+    /**
+    * Construct a real-valued uniform number in the CLOSED interval [0,1].
+    *
+    * @param [in,out]  gen The random number generator
+    *
+    * @return  A double uniformely distributed in [0,1].
+    **/
+    template<class random_t> inline double Unif_01closed(random_t & gen) { return ((Unif_64<random_t>(gen) >> 11)) * (1.0 / 9007199254740991.0); }
+
+
+    /**
+    * Construct a real-valued uniform number in the OPEN interval ]0,1[.
+    *
+    * @param [in,out]  gen The random number generator
+    *
+    * @return  A double uniformely distributed in ]0,1[.
+    **/
+    template<class random_t> inline double Unif_01open(random_t & gen) { return (((Unif_64<random_t>(gen)) >> 12) + 0.5) * (1.0 / 4503599627370496.0); }
+
+
+    /**
+    * Construct a real-valued uniform number in [a,b[.
+    *
+    * @param   a           lower bound (included).
+    * @param   b           upper bound (excluded).
+    * @param [in,out]  gen The random number generator
+    *
+    * @return  A double uniformely distributed in [a,b[.
+    **/
+    template<class random_t> inline double Unif(double a, double b, random_t & gen) { return ((Unif<random_t>(gen))*(b - a) + a); }
+
+
+    /**
+     * Construct a uniform integer valued random variable in the range [A,B].
+     *
+     * @param   A           The minimal value
+     * @param   B           The maximal value
+     * @param [in,out]  gen The random number generator
+     *
+     * @return  A 64bit integer uniformely distributed in [A,B]
+     **/
+    template<class random_t> inline int64 Unif_int(int64 A, int64 B, random_t & gen) { return((int64)((Unif<random_t>(gen))*(B - A + 1)) + A); }
+
+
+    /**
+     * generate a high precision random number on [0,1) interval with high precision in the
+     * neighbourood of zero. This means that when the returned value is very small (close to zero)
+     * the number of significative digit stays roughly the same whereas for normal Unif() the
+     * minimal step for each value is 1.0/4503599627370496.0 even for small value. useful for
+     * simulationg unbounded RV via their CDF
+     * 
+     * In average, the generation is 1/256 slower than the classic rand_double0()
+     *
+     * @param [in,out]  gen The random number generator.
+     *
+     * @return  the random number.
+     **/
+    template<class random_t> inline double Unif_highprecision(random_t & gen) 
+        {
+        double b = 1.0, a = Unif(gen);
+        while (a*256 < 1.0) { b /= 256; a = rand_double0(); }
+        return a*b;
+        }
+
+
+    /**
+    * Sample a discrete random variable X taking value in [0,N] from its CDF distribution.
+    *
+    * @tparam  random_t    Random number generator (such the operator() return a uniform rv in [0,1[).
+    * @param   tab The CDF array such that tab[i] = P(X &lt;= i), it size should be at least N.
+    *              (there is no need to define tab[N] = 1.0).
+    * @param   N   the support of the RV X is [0,N] ir tab is at least N elements long.
+    *
+    * @return  A random position in [0,N] chosing according to the CDF.
+    **/
+    template<class random_t> inline int64 sampleDiscreteRVfromCDF(const double * tab, size_t N, random_t & gen)
+        {
+        double a = Unif(gen); // get a random value in [0,1[
+        if (a < tab[0]) { return 0; }       // extreme value cases
+        if (a >= tab[N - 1]) { return N; }  //
+        size_t n1 = 0;	    // lower bound, we know that tab[n1] <= a
+        size_t n2 = N - 1;	// uppper bound, we know that tab[n2] > a
+        while ((n2 - n1)>1)
+            { // loop until we reduced the interval to size 1
+            const size_t g = (n1 + n2) / 2;
+            if (a >= tab[g]) { n1 = g; }
+            else { n2 = g; }
+            }
+        return n2; // we now have tab[n1 = n2-1] <= a < tab[n2].
+        }
 
 
     /**
@@ -87,13 +205,13 @@ namespace mtools
          *
          * @return  the random variable obtained.
         **/
-		template<class CRandomGen> inline uint32 operator()(CRandomGen & gen) const
+		template<class random_t> inline uint32 operator()(random_t & gen) const
 			{
 			if (pp == 0) {if (inv) {return(sn);} return 0;} // parameter p = 0 or 1, return 0 or sn
 			if (sn < 2) // 0 or 1 trial
 				{
 				if (sn==0) {return 0;} // 0 trial, return 0;
-				if (gen() < pp)
+				if (Unif(gen) < pp)
 					{
 					if (inv) {return 0;} return 1;
 					}
@@ -119,7 +237,7 @@ namespace mtools
 					{
 					ix = 0;
 					double f = qN;
-					double u = gen(); // uniform on [0,1)
+					double u = Unif(gen); // uniform on [0,1)
 					while(1)
 						{
 						if (u < f)		goto doneBinom;
@@ -184,7 +302,7 @@ namespace mtools
          *
          * @return  the random variable.
         **/
-		template<class random_t> inline double operator()(random_t & gen) const { return(-log(1-gen())/l); }
+		template<class random_t> inline double operator()(random_t & gen) const { return(-log(1- Unif(gen))/l); }
 
 
     private:
@@ -231,8 +349,8 @@ namespace mtools
             **/
             template<class random_t> inline int64 operator()(random_t & gen) const 
                 { 
-                if (a >= 0.6) { uint64 r = 1; while (gen() >= a) { r++; } return r; }
-                return 1+(int64)floor(-log(1 - gen()) / l); 
+                if (a >= 0.6) { uint64 r = 1; while (Unif(gen) >= a) { r++; } return r; }
+                return 1+(int64)floor(-log(1 - Unif(gen)) / l);
                 }
 
 
@@ -280,7 +398,7 @@ namespace mtools
          *
          * @return  A double.
         **/
-		template<class random_t> inline double operator()(random_t & gen) const { return( s*sqrt(-2*log(1-gen()))*sin(TWOPI*(1-gen())) + c); }
+		template<class random_t> inline double operator()(random_t & gen) const { return( s*sqrt(-2*log(1- Unif(gen)))*sin(TWOPI*(1- Unif(gen))) + c); }
 
 
     private:
@@ -341,8 +459,8 @@ namespace mtools
         **/
 		template<class random_t> inline double operator()(random_t & gen) const
             {
-			double U1 = gen();
-			double U2 = gen();
+			double U1 = Unif(gen);
+			double U2 = Unif(gen);
             double U = PI*(U1-0.5); // uniform on [-pi/2,pi/2]
             double W = -log(1-U2);  // exp of parameter 1
             double X = S*(sin(p_alpha*(U+xi))/pow(cos(U),ialpha))*pow(cos(U - p_alpha*(U+xi))/W,talpha); // normalised
@@ -414,8 +532,8 @@ namespace mtools
         **/
 		template<class random_t> inline double operator()(random_t & gen) const
             {
-			double U1 = gen();
-			double U2 = gen();
+			double U1 = Unif(gen);
+			double U2 = Unif(gen);
             double U = PI*(U1-0.5); // uniform on [-pi/2,pi/2]
             double W = -log(1-U2);  // exp of parameter 1
             double X = (2/PI)*((PI/2 + p_beta*U)*tan(U) - p_beta*log(((PI/2)*W*cos(U))/(PI/2 + p_beta*U)) ); // normalized
@@ -438,31 +556,6 @@ namespace mtools
 
 
 
-    /**
-    * Sample a discrete random variable X taking value in [0,N] from its CDF distribution.
-    *
-    * @tparam  random_t    Random number generator (such the operator() return a uniform rv in [0,1[).
-    * @param   tab The CDF array such that tab[i] = P(X &lt;= i), it size should be at least N.
-    *              (there is no need to define tab[N] = 1.0).
-    * @param   N   the support of the RV X is [0,N] ir tab is at least N elements long.
-    *
-    * @return  A random position in [0,N] chosing according to the CDF.
-    **/
-    template<class random_t> inline int64 sampleDiscreteRVfromCDF(const double * tab, size_t N, random_t & gen)
-        {
-        double a = gen(); // get a random value in [0,1[
-        if (a < tab[0]) { return 0; }       // extreme value cases
-        if (a >= tab[N - 1]) { return N; }  //
-        size_t n1 = 0;	    // lower bound, we know that tab[n1] <= a
-        size_t n2 = N - 1;	// uppper bound, we know that tab[n2] > a
-        while ((n2 - n1)>1)
-            { // loop until we reduced the interval to size 1
-            const size_t g = (n1 + n2) / 2;
-            if (a >= tab[g]) { n1 = g; }
-            else { n2 = g; }
-            }
-        return n2; // we now have tab[n1 = n2-1] <= a < tab[n2].
-        }
 
 
 }
