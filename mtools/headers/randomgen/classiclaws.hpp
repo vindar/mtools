@@ -49,6 +49,42 @@ namespace mtools
 
 
     /**
+    * Construct a uniform unsigned integer value in the range [0,2^32-1] .
+    * This means that every bit is iid bernoulli 1/2.
+    *
+    * @param [in,out]  gen The random number generator
+    *
+    * @return  The uniform random unsinged integer over the entire range.
+    **/
+    template<class random_t> inline uint32 Unif_32(random_t & gen)
+        {
+        if ((random_t::min() == 0) && (random_t::max() == 4294967295)) return ((uint32)gen());
+        if ((random_t::min() == 0) && (random_t::max() == 18446744073709551615)) return ((uint32)(gen() & 4294967295));
+        MTOOLS_ERROR("Unif_32 need the random engine to have packed 32 or 64 bits. Use std::independent_bits_engine to construct a packed engine from an unpacked one.");
+        }
+
+
+    /* uniform in the range [0,2^16 -1] i.e. the lowest 16 bits are iid bernoulli 1/2 */
+    template<class random_t> inline uint32 Unif_16(random_t & gen) { return (Unif_32(gen) & 65535); }
+
+    /* uniform in the range [0,2^8 -1] i.e. the lowest 8 bits are iid bernoulli 1/2 */
+    template<class random_t> inline uint32 Unif_8(random_t & gen) { return (Unif_32(gen) & 255); }
+
+    /* uniform in the range [0,2^4 -1] i.e. the lowest 4 bits are iid bernoulli 1/2 */
+    template<class random_t> inline uint32 Unif_4(random_t & gen) { return (Unif_32(gen) & 15); }
+
+    /* uniform in the range [0,2^3 -1] i.e. the lowest 3 bits are iid bernoulli 1/2 */
+    template<class random_t> inline uint32 Unif_3(random_t & gen) { return (Unif_32(gen) & 7); }
+
+    /* uniform in the range [0,2^3 -1] i.e. the lowest 2 bits are iid bernoulli 1/2 */
+    template<class random_t> inline uint32 Unif_2(random_t & gen) { return (Unif_32(gen) & 3); }
+
+    /* uniform in the range [0,2^3 -1] i.e. the lowest bit is a bernoulli 1/2 */
+    template<class random_t> inline uint32 Unif_1(random_t & gen) { return (Unif_32(gen) & 1); }
+
+
+
+    /**
      * Construct a real-valued uniform number in [0,1[.
      *
      * @param [in,out]  gen The random number generator
