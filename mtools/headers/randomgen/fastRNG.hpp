@@ -88,16 +88,6 @@ namespace mtools
             uint32 _gen_x, _gen_y, _gen_z;		// state of the generator
 
 
-            /* generate a uniform number in [0,1) */
-            inline double _rand_double0()
-                {
-                uint32 t;
-                _gen_x ^= _gen_x << 16; _gen_x ^= _gen_x >> 5; _gen_x ^= _gen_x << 1;
-                t = _gen_x; _gen_x = _gen_y; _gen_y = _gen_z; _gen_z = t ^ _gen_x ^ _gen_y;
-                return(((double)_gen_z) / (4294967296.0));
-                }
-
-
         };
 
 
