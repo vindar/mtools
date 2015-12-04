@@ -41,6 +41,16 @@ namespace mtools
         }
 
 
+
+    /**
+     * Return a random uint32 taken from the computed clock. Useful for initializing a random number
+     * generator.
+     *
+     * @return  A "random" uint32.
+     **/
+    uint32 randomFromTime32();
+
+
     /**
      * Simple Chronometer. Each call return the number of milliseconds elapsed since the previous
      * call to the Chronometer.
