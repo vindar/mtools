@@ -159,12 +159,6 @@
     <ClInclude Include="headers\randomgen\mt2004_64.hpp">
       <Filter>Header Files\randomgen</Filter>
     </ClInclude>
-    <ClInclude Include="headers\randomgen\srwonZ_cdf.hpp">
-      <Filter>Header Files\randomgen</Filter>
-    </ClInclude>
-    <ClInclude Include="headers\randomgen\srwonZandZ2.hpp">
-      <Filter>Header Files\randomgen</Filter>
-    </ClInclude>
     <ClInclude Include="stdafx_mtools.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -200,6 +194,15 @@
     </ClInclude>
     <ClInclude Include="headers\graphics\plot2Dcimg.hpp">
       <Filter>Header Files\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\randomgen\exitGridSRWZ2.hpp">
+      <Filter>Header Files\randomgen</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\randomgen\SRW.hpp">
+      <Filter>Header Files\randomgen</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\randomgen\fastRNG.hpp">
+      <Filter>Header Files\randomgen</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

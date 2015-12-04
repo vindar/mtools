@@ -32,6 +32,16 @@ namespace mtools
 {
 
 
+    uint32 randomFromTime32()
+        {
+        time_t a = time(NULL);
+        if (sizeof(time_t) == 4) { return((uint32)a); }
+        uint32 r = (uint32)(((uint64)a) >> 32);
+        r += a & 0xffffffffULL;
+        return r;
+        }
+
+
     uint64 Chronometer()
         {
         static std::chrono::high_resolution_clock::time_point prev = std::chrono::high_resolution_clock::now();

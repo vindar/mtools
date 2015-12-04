@@ -22,7 +22,6 @@
 
 #include "../misc/misc.hpp"
 #include <ctime>
-#include <string>
 
 namespace mtools
 {
@@ -36,97 +35,46 @@ namespace mtools
     {
     public:
 
-    /**
-    * construct the generator with random seed obtained from time function
-    **/
-    XorGen4096_64() {zero=0; i=-1; init_gen((uint64)time(NULL));}
+
+    public:
 
 
-    /**
-    * construct the generator with a given seed
-    **/
-    XorGen4096_64(uint64 seed) {zero=0; i=-1; init_gen(seed);}
+        /* type of integer returned by the generator */
+        typedef uint64 result_type;
 
 
-    /**
-    * generates a random number on [0,1)-real-interval. Same as rand_double0()
-    **/
-    inline double operator()() { return rand_double0(); }
+        /* min value */
+        static constexpr result_type min() { return 0; }
 
 
-    /**
-    * generates a random number on [0, 2^32-1]-interval
-    **/
-    inline uint32 rand_uint32(void) {return((uint32)(randproc64() >> 32));}
+        /* max value */
+        static constexpr result_type max() { return 18446744073709551615; }
 
 
-    /**
-    * generates a random number on [0, 2^64-1]-interval
-    **/
-    inline uint64 rand_uint64(void) {return randproc64();}
+        /* return a random number */
+        inline uint64 operator()() { return randproc64(); }
 
 
-    /**
-    *generates a random number on [0,1]-real-interval
-    **/
-    inline double rand_double01(void) {return (randproc64() >> 11) * (1.0/9007199254740991.0);}
+        /* discard results */
+        void discard(unsigned long long z) { for (unsigned long long i = 0; i < z; i++) operator()(); }
 
 
-    /**
-    * generates a random number on [0,1)-real-interval
-    **/
-    inline double rand_double0(void) {return (randproc64() >> 11) * (1.0/9007199254740992.0);}
+        /* change the seed */
+        void seed(result_type s) { zero = 0; i = -1; init_gen(s); }
 
 
-    /**
-    * generates a random number on (0,1)-real-interval
-    **/
-    inline double rand_double(void) {return ((randproc64() >> 12) + 0.5) * (1.0/4503599627370496.0);}
+        /**
+        * Default constructor. Init with a seed obtained from the internal clock.
+        **/
+        XorGen4096_64() { seed((uint64)time(NULL)); }
 
 
-    /**
-    * generate a high precision random number on [0,1) interval It means that when the return value
-    * is very small (close to zero) the number of significative digit stays roughly the same
-    * whereas for rand_double0 the minimal step for each value is 1.0/4503599627370496.0 even for
-    * small value. useful for simulationg unbounded RV via their CDF
-    *
-    * In average, the generation is 1/256 slower than the classic rand_double0()
-    **/
-    inline double rand_double0_highprecision(void)
-		{
-		double b = 1.0, a = rand_double0();
-		while(a * 256 < 1.0) {b /= 256; a = rand_double0();}
-		return a*b;
-		}
+        /**
+        * Constructor with a given seed
+        **/
+        XorGen4096_64(result_type s) { seed(s); }
 
 
-    /**
-    * Test that the implementation is OK.
-    **/
-    static std::string test()
-        {
-        std::string s;
-        s += "-----------------------------------------------\n";
-        s += "Testing the implementation of XorGen4096_64\n";
-        s += "Xor random generator by Richard Brent\n";
-        s += "version 3.05.\n";
-        s += "implementation of the 64 bits version.\n\n";
-        XorGen4096_64 gen(1234777);
-        uint64 r = gen.rand_uint64();
-        s += "Generated [" + std::to_string(r) + "] should be [3381003798738941279]\n";
-        for (int i=0; i<995; i++) {gen.rand_uint64();}
-        r = gen.rand_uint64();
-        s += "Generated [" + std::to_string(r) + "] should be [11234706451175467682]\n";
-        gen.rand_uint64(); gen.rand_uint64(); gen.rand_uint64();
-        double f = gen.rand_double0();;
-        s += "Generated [" + std::to_string((uint64)(f * 1000000000) )+ "] should be [875227214]\n";
-        for (int i=0; i<998; i++) {gen.rand_double0();}
-        f = gen.rand_double01();
-        s += "Generated [" + std::to_string((uint64)(f * 1000000000) )+ "] should be [648574515]\n";
-        s += "\nend of test.\n";
-        s += "-----------------------------------------------\n";
-        return s;
-        }
 
     private:
 
@@ -142,6 +90,7 @@ namespace mtools
         for (i = r-1, k = 4*r; k > 0; k--) { t = x[i = (i+1)&(r-1)];   t ^= t<<a;  t ^= t>>b; v = x[(i+(r-s))&(r-1)];   v ^= v<<c;  v ^= v>>d; x[i] = t^v;}
         }
 
+
     /* return a new 64bit random number */
     inline uint64 randproc64()
         {
@@ -154,6 +103,7 @@ namespace mtools
         w += weyl;
         return (v + (w^(w>>ws)));
         }
+
 
     static const uint64 wlen = 64;
     static const int r = 64;
@@ -171,7 +121,10 @@ namespace mtools
     uint64 zero;
     uint64 x[r];
     int i;
+
     };
+
+
 }
 
 

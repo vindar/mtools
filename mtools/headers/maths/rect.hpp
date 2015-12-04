@@ -223,6 +223,22 @@ namespace mtools
         }
 
 
+        /**
+         * Compute the distance of a point inside the rectangle to its boundary
+         * 
+         * @param   pos The position.
+         *
+         * @return  the distance between the point and the boundary or a negative value if the point is not inside the rectangle.
+         **/
+        inline T boundaryDist(const Vec<T, 2> pos) const
+            {
+            T lx1 = xmax - pos.X();
+            T lx2 = pos.X() - xmin;
+            T ly1 = ymax - pos.Y();
+            T ly2 = pos.Y() - ymin;
+            return std::min<int64>(std::min<int64>(lx1, lx2), std::min<int64>(ly1, ly2)); // distance from the boundary
+            }
+
 
         /**
          * Return the width : max(0,xmax-xmin) of the rectangle.

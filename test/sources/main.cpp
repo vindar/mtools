@@ -211,7 +211,7 @@ void makeLERRW(uint64 steps, double delta)
         double & up = S.up;                             // of the 4 adjacent edges of the
         double & left = G(pos.X() - 1, pos.Y()).right;  // current position.
         double & down = G(pos.X(), pos.Y() - 1).up;     //
-        double e = gen.rand_double0()*(left + right + up + down);
+        double e = Unif(gen)*(left + right + up + down);
         if (e < left) { left += delta; pos.X()--; }
         else {
             if (e < (left + right)) { right += delta; pos.X()++; }
@@ -328,12 +328,53 @@ RGBc colorTest2(iVec2 pos)
 
 
 
+template<class random_t> void testRG()
+    {
+    random_t mte;
+
+    cout << "type return  : " << typeid(random_t::result_type).name() << "\n";
+    cout << "type size : " << sizeof(random_t::result_type) << "\n";
+    cout << "min  : " << mte.min() << "\n";
+    cout << "max  : " << mte.max() << "\n";
+    cout << "random value " << Unif(mte) << "\n\n";
+
+    Chronometer();
+    double s = 0.0;
+    double var = 0.0;
+    int GN = 300000000;
+    for (int i = 0;i < GN;i++)
+        {
+        double  a = Unif(mte);
+        s += a; var += (a - 0.5)*(a - 0.5);
+        }
+    cout << "Mean     = " << 2*((double)s) / GN << "\n";
+    cout << "variance = " << 12*((double)var) / GN << "\n";
+    cout << "Finished in " << Chronometer() << "\n";
+    cout << "----------------------\n\n";
+
+    }
 
 
 
 	
 int main(int argc, char* argv[])
 {
+
+    testRG<std::mt19937>();
+    testRG<std::mt19937_64>();
+    testRG<MT2002_32>();
+    testRG<MT2004_64>();
+    testRG<XorGen4096_64>();
+    testRG<FastRNG>();
+
+
+    cout.getKey();
+    return 0;
+
+
+
+
+
         {
         const int M = 20000;             // taille du tableau
         const uint64 NBSIM = 1000000; // nombre de simulation
@@ -349,10 +390,10 @@ int main(int argc, char* argv[])
         for (uint64 i = 0;i < NBSIM; i++)
             {
             PB.update(i);
-            int64 x = mtools::internals_randomgen::SRW_Z_makesteps(Npas, g);
+            int64 x = 0; //mtools::internals_randomgen::SRW_Z_makesteps(Npas, g);
           //  cout << x << "\n";
             if ((x % 1) != (Npas % 1)) cout << "Erreur parite!\n";
-            int64 index = M + (x / Ndiv) + (g()*2);
+            int64 index = 0;// M + (x / Ndiv) + (g() * 2);
 
             if ((index < 0) || (index > 2 * M)) cout << "OUT " << index << "\n";;
             tabF[index]++;
