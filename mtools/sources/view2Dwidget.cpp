@@ -23,6 +23,7 @@
 
 #include "graphics/view2Dwidget.hpp"
 #include "misc/error.hpp"
+#include "randomgen/fastRNG.hpp"
 
 
 
@@ -44,9 +45,6 @@ namespace mtools
             _notData(nullptr),
             _RM(nullptr),
             _zoomFactor(1),
-            _gen_x(123456789),
-            _gen_y(362436069),
-            _gen_z(521288629),
             _nbRounds(0),
             _discardIm(true)
             {
@@ -197,8 +195,8 @@ namespace mtools
                     {
                     for (int k = 0;k < NBR;k++)
                         {
-                        int rx = (int)floor(_rand_double0()*_zoomFactor);
-                        int ry = (int)floor(_rand_double0()*_zoomFactor);
+                        int rx = (int)floor(_g_fgen.unif()*_zoomFactor);
+                        int ry = (int)floor(_g_fgen.unif()*_zoomFactor);
                         _stocIm->operator()(i, j, 0, 0) += (uint32)(im->operator()(i*_zoomFactor + rx, j*_zoomFactor + ry, 0, 0));
                         _stocIm->operator()(i, j, 0, 1) += (uint32)(im->operator()(i*_zoomFactor + rx, j*_zoomFactor + ry, 0, 1));
                         _stocIm->operator()(i, j, 0, 2) += (uint32)(im->operator()(i*_zoomFactor + rx, j*_zoomFactor + ry, 0, 2));

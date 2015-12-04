@@ -24,6 +24,7 @@
 #include "../maths/vec.hpp"
 #include "cimgwidget.hpp"
 #include "rangemanager.hpp"
+#include "../randomgen/fastRNG.hpp"
 
 
 namespace mtools
@@ -217,17 +218,6 @@ namespace mtools
 
         private:
 
-                                             
-            /* generate a uniform number in [0,1) */
-            inline double _rand_double0()
-                {
-                uint32 t;
-                _gen_x ^= _gen_x << 16; _gen_x ^= _gen_x >> 5; _gen_x ^= _gen_x << 1;
-                t = _gen_x; _gen_x = _gen_y; _gen_y = _gen_z; _gen_z = t ^ _gen_x ^ _gen_y;
-                return(((double)_gen_z) / (4294967296.0));
-                }
-
-
             /* swap the stocIm pointer */
             inline void swapStocIm() {auto tmp = _stocIm; _stocIm = _stocImAlt; _stocImAlt = tmp;}
 
@@ -256,14 +246,14 @@ namespace mtools
 
             std::atomic<int> _zoomFactor; // the zoom factor : the image is ZoomFactor time larger than the view.
 
-            uint32 _gen_x, _gen_y, _gen_z;		// state of the random number generator
-
             int _nbRounds;  // number of round in _stocIm
             bool _discardIm; // true is the next call to improvImagefactor must overwrite the previous image.
 
             cimg_library::CImg<uint32> * _stocIm;     // double image buffer
             cimg_library::CImg<uint32> * _stocImAlt;  //
             fRect _stocR;  // range associated with _stocIm
+
+            FastRNG _g_fgen; // fast RNG
 
         };
 

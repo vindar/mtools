@@ -28,6 +28,7 @@
 #include "../maths/rect.hpp"
 #include "../misc/misc.hpp"
 #include "../misc/metaprog.hpp"
+#include "../randomgen/fastRNG.hpp"
 
 #include <algorithm>
 #include <ctime>
@@ -217,7 +218,6 @@ public:
 		{
         static_assert(mtools::metaprog::has_getColor<LatticeObj, mtools::RGBc, mtools::iVec2>::value, "The object T must be implement a 'RGBc getColor(iVec2 pos)' method.");
         _initInt16Buf();
-		_initRand();
         domainFull();
         }
 
@@ -623,7 +623,7 @@ void _drawPixel_stochastic(int maxtime_ms)
 			uint32 R=0,G=0,B=0,A=0;
  			for(uint32 k=0;k<ndraw;k++)
 				{
-				double x = r.xmin + (i + _rand_double0())*px, y = r.ymax - (j + _rand_double0())*py; 	// pick a point at random inside the pixel
+				double x = r.xmin + (i + _g_fgen.unif())*px, y = r.ymax - (j + _g_fgen.unif())*py; 	// pick a point at random inside the pixel
 				int64 sx = (int64)floor(x + 0.5); int64 sy = (int64)floor(y + 0.5);     			// compute the integer position which covers it
                 RGBc coul = getColor({ sx, sy }); 			                     				// get the color of the site
                 R += coul.R; G += coul.G; B += coul.B; A += coul.A;
@@ -1361,31 +1361,6 @@ inline bool _isTime2(uint32 ms)
     }
 
 
-
-// ****************************************************************
-// RANDOM NUMBER GENERATION : independant of everything else
-// ****************************************************************
-uint32 _gen_x,_gen_y,_gen_z;		// state of the generator
-
-
-/* initialize the random number generator */
-inline void _initRand()
-	{
-	_gen_x = 123456789; 
-	_gen_y = 362436069;
-	_gen_z = 521288629;
-	}
-
-/* generate a uniform number in [0,1) */
-inline double _rand_double0()
-	{
-	uint32 t;
-	_gen_x ^= _gen_x << 16; _gen_x ^= _gen_x >> 5; _gen_x ^= _gen_x << 1;
-	t = _gen_x; _gen_x = _gen_y; _gen_y = _gen_z; _gen_z = t ^ _gen_x ^ _gen_y;
-	return(((double)_gen_z)/(4294967296.0));
-	}
-
-
 // ****************************************************************
 // UTILITY FUNCTION : do not use any class member variable
 // ****************************************************************
@@ -1426,6 +1401,9 @@ inline int _getLinePourcent(int qj,int maxqj,int minv,int maxv) const
 	int p = (int)(minv + v*(maxv-minv));
 	return p;
 	}
+
+
+FastRNG _g_fgen; // fast RNG
 
 
 };

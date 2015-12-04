@@ -20,6 +20,10 @@
 #pragma once
 
 
+
+
+
+
 #include "drawable2Dobject.hpp"
 #include "customcimg.hpp"
 #include "rgbc.hpp"
@@ -27,6 +31,8 @@
 #include "../maths/rect.hpp"
 #include "../misc/misc.hpp"
 #include "../misc/metaprog.hpp"
+#include "../randomgen/fastRNG.hpp"
+
 
 #include <algorithm>
 #include <ctime>
@@ -119,7 +125,6 @@ public:
 		{
         static_assert(((mtools::metaprog::has_getColor<PlaneObj, RGBc, fVec2>::value)|| (mtools::metaprog::has_getColorExt<PlaneObj, RGBc, fVec2, fRect>::value)), "The object T must be implement either a 'RGBc getColor(fVec2 pos)' or 'RGBc getColor(fVec2 pos, fRect R)' method.");
         _initInt16Buf();
-		_initRand();
         domainFull();
         }
 
@@ -360,6 +365,7 @@ private:
 	*                                                                    PRIVATE PART 
 	************************************************************************************************************************************************/
 
+
     std::timed_mutex  _g_lock;             // mutex for locking
     std::atomic<int>  _g_requestAbort;     // flag used for requesting the work() method to abort.
     mutable std::atomic<int> _g_current_quality;  // the current quality of the drawing
@@ -436,8 +442,8 @@ void _drawPixel_stochastic(int maxtime_ms)
             const fRect sR = fRect(xmin, xmax, ymin, ymax);
             for (uint32 k = 0;k<ndraw;k++)
                 {
-                const double x = xmin + _rand_double0()*px;
-                const double y = ymax - _rand_double0()*py;
+                const double x = xmin + _g_fgen.unif()*px;
+                const double y = ymax - _g_fgen.unif()*py;
                 RGBc coul = _getColor(fVec2(x, y), sR);
                 R += coul.R; G += coul.G; B += coul.B; A += coul.A;
                 }
@@ -801,31 +807,6 @@ inline bool _isTime(uint32 ms)
 	}
 
 
-
-// ****************************************************************
-// RANDOM NUMBER GENERATION : independant of everything else
-// ****************************************************************
-uint32 _gen_x,_gen_y,_gen_z;		// state of the generator
-
-
-/* initialize the random number generator */
-inline void _initRand()
-	{
-	_gen_x = 123456789; 
-	_gen_y = 362436069;
-	_gen_z = 521288629;
-	}
-
-/* generate a uniform number in [0,1) */
-inline double _rand_double0()
-	{
-	uint32 t;
-	_gen_x ^= _gen_x << 16; _gen_x ^= _gen_x >> 5; _gen_x ^= _gen_x << 1;
-	t = _gen_x; _gen_x = _gen_y; _gen_y = _gen_z; _gen_z = t ^ _gen_x ^ _gen_y;
-	return(((double)_gen_z)/(4294967296.0));
-	}
-
-
 // ****************************************************************
 // UTILITY FUNCTION : do not use any class member variable
 // ****************************************************************
@@ -847,7 +828,10 @@ inline int _getLinePourcent(int qj,int maxqj,int minv,int maxv) const
 	}
 
 
+FastRNG _g_fgen; // fast RNG
+
 };
+
 
 }
 
