@@ -1040,8 +1040,28 @@ namespace mtools
         **/
         inline const T * findFullBoxCentered(const Pos & pos, Pos & boxMin, Pos & boxMax) const
             {
-            return nullptr;
+            // TO DO ! pffff... 
+            // until then, just return the findFullBox() without improvement
+            return findFullBox(pos, boxMin, boxMax);
             }
+
+
+        /**
+         * Recursive search for findFullBoxCentered in dimension 2.
+         *
+         * @param   pos     The position of the point.
+         * @param   R       The base rectangle to consider.
+         * @param   bestR   The best rectangle yet. updated if we find a better solution.
+         * @param   invX    1 or -1 depending whether we are inverting the X coord. w.r.t. real lattice coord.
+         * @param   invY    1 or -1 depending whether we are inverting the Y coord. w.r.t. real lattice coord.
+         *
+         * @return  The found full box record.
+         **/
+        iRect _findFullBoxRec(const Pos & pos, const iRect & R, const iRect & bestR, int64 invX, int64 invY)
+            {
+
+            }
+
 
 
         /**
@@ -1054,14 +1074,84 @@ namespace mtools
         *
         * @return  A pointer to the element at position pos or nullptr if it does not exist.
         **/
-        inline const T * findFullBoxCentered(const Pos & pos, iRect & r) const
+        inline const T * findFullBoxCentered(const Pos & pos, iRect & R) const
             {
             static_assert(D == 2, "findFullBoxCentered(Pos,iRect) method can only be used when the dimension template parameter D is 2");
-            Pos boxmin, boxmax;
-            const T * res = findFullBoxCentered(pos, boxmin, boxmax);
-            r.xmin = boxmin[0]; r.xmax = boxmax[0];
-            r.ymin = boxmin[1]; r.ymax = boxmax[1];
-            return res;
+
+            T* pv = findFullBox(pos, R); // get the non optimized box.
+            int64 rad = R.lx();
+            if (rad == 0) return pv;  // no full box, so nothing to improve
+            rad = (rad - 1) / 3; // radius of a sub box of the full box
+            // we are indeed in a full box
+            Pos center = R.center(); // center of the box
+            Pos off = pos - center; // offset between the position and the center
+            Pos subcenter;
+            subcenter.X() = center.X() + (off.X() > rad ? (2 * rad + 1) : (off.X() < -rad ? -(2 * rad + 1) : 0));
+            subcenter.Y() = center.Y() + (off.Y() > rad ? (2 * rad + 1) : (off.Y() < -rad ? -(2 * rad + 1) : 0));
+
+            if (subcenter == center) return pv;  // we are in the middle rect, nothing to improve
+
+            if (subcenter.Y() == center.Y())
+                {
+                if (subcenter.X() < center.X())
+                    { // left border
+
+
+                    return pv;
+                    }
+                else
+                    { // right border
+
+
+                    return pv;
+                    }
+                }
+            if (subcenter.X() == center.X())
+                {
+                if (subcenter.Y() < center.Y())
+                    { // bottom border
+
+
+                    return pv;
+                    }
+                else
+                    { // up border
+
+
+                    return pv;
+                    }
+                }
+            // we are on a corner
+            if (subcenter.X() < center.X())
+                {
+                if (subcenter.Y() < center.Y())
+                    { // bottom left corner
+
+
+                    return pv;
+                    }
+                else
+                    { // up left corner
+
+
+                    return pv;
+                    }
+                }
+            else
+                {
+                if (subcenter.Y() < center.Y())
+                    { // bottom right corner
+
+
+                    return pv;
+                    }
+                else
+                    { // up right corner
+
+
+                    return pv;
+                    }
+                }
             }
 
 
