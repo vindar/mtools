@@ -900,7 +900,7 @@ namespace mtools
 
         /**
          * Find a box containing position pos such that all the point inside the (closed) box have the
-         * same special value (or are all undefined). The coordinate of the box are put in boxMin and
+         * same special value (or are all undefined). The coordinates of the box are put in boxMin and
          * boxMax and the function return a pointer to the commun value (or nullptr if no value defined
          * on this box)
          * 
@@ -911,8 +911,8 @@ namespace mtools
          * structure of the grid. In particular, it is a square !
          * 
          * Although the box returned always contain position pos, it can be close (or even on) the
-         * boundary of the box which may be undesired. To get another box where pos is 'more centered',
-         * use the findFullBoxCentered() method instead.
+         * boundary of the box which may be undesired. To get another box where pos is further away 
+         * from the boundary, use the findFullBoxCentered() method instead.
          * 
          * @warning This method is NOT threadsafe and uses the same pointer as get() and set().
          *
@@ -952,7 +952,7 @@ namespace mtools
                         { 
                         const int64 a = pos[i]; 
                         const int64 sb =  ((a < -R) ? (-(2*R + 1)) : ((a > R) ? (2*R + 1) : 0)); 
-                        boxMin[i] = sb - R; boxMax[i] = sb + R;
+                        boxMin[i] = sb - R; boxMax[i] = sb + R; // TODO, we could find bigger if we just want a rectangle and not a square...
                         }
                     _pcurrent = q; 
                     return nullptr; 
@@ -1001,13 +1001,13 @@ namespace mtools
          *  @warning This method is NOT threadsafe and uses the same pointer as get() and set().
          *
          * @param   pos         The position to check.
-         * @param [in,out]  r   The iRect &amp; to process.
+         * @param [in,out]  r   The iRect to put the rectangle found.
          *
          * @return  A pointer to the element at position pos or nullptr if it does not exist.
          **/
         inline const T * findFullBox(const Pos & pos, iRect & r) const
             {
-            static_assert(D == 2, "findFullBoxiRect() method can only be used when the dimension template parameter D is 2");
+            static_assert(D == 2, "findFullBox(Pos,iRect) method can only be used when the dimension template parameter D is 2");
             Pos boxmin, boxmax;
             const T * res = findFullBox(pos, boxmin, boxmax);
             r.xmin = boxmin[0]; r.xmax = boxmax[0];
@@ -1027,7 +1027,8 @@ namespace mtools
         * then the function sets boxMin = boxMax = pos (and returns the value at pos).
         *
         * Compared to findFullBox(), this method tries to find a box for which pos is near the center
-        * of the box. On the other hand, it is therefore a bit slower than findFullBox().
+        * of the box (ie the distance to the boundary is larger). On the other hand, it is a bit slower 
+        * than findFullBox().
         *
         * @warning This method is NOT threadsafe and uses the same pointer as get() and set().
         *
@@ -1049,13 +1050,18 @@ namespace mtools
         *  @warning This method is NOT threadsafe and uses the same pointer as get() and set().
         *
         * @param   pos         The position to check.
-        * @param [in,out]  r   The iRect &amp; to process.
+        * @param [in,out]  r   The iRect to put the rectangle found.
         *
         * @return  A pointer to the element at position pos or nullptr if it does not exist.
         **/
         inline const T * findFullBoxCentered(const Pos & pos, iRect & r) const
             {
-            return nullptr;
+            static_assert(D == 2, "findFullBoxCentered(Pos,iRect) method can only be used when the dimension template parameter D is 2");
+            Pos boxmin, boxmax;
+            const T * res = findFullBoxCentered(pos, boxmin, boxmax);
+            r.xmin = boxmin[0]; r.xmax = boxmax[0];
+            r.ymin = boxmin[1]; r.ymax = boxmax[1];
+            return res;
             }
 
 
