@@ -161,6 +161,14 @@ namespace mtools
 
 
         /**
+        * Query if the rectangle is reduced to a single point.
+        *
+        * @return  true if it is a signle point, false if not.
+        **/
+        inline bool isPoint() const { return ((xmax == xmin) && (ymax == ymin)); }
+
+
+        /**
          * Set the rectangle as completely empty (in both directions).
          **/
         inline void clear() { xmin = 1; xmax = 0; ymin = 1; ymax = 0; }
@@ -192,25 +200,6 @@ namespace mtools
 
 
         /**
-         * Enlarge the rectangle in order to contain a given point. If the rectangle alreasy contain the
-         * point do nothing.
-         *
-         * @param   pos The position of the point to swallow.
-         *
-         * @return  true if the point was swallowed and false if it was already contained in the rectangle.
-         **/
-        inline bool swallowPoint(const Vec<T, 2> pos) 
-            {
-            bool b = false;
-            if (pos.X() < xmin) { xmin = pos.X(); b = true; }
-            if (pos.X() > xmax) { xmax = pos.X(); b = true; }
-            if (pos.Y() < ymin) { ymin = pos.Y(); b = true; }
-            if (pos.Y() > ymax) { ymax = pos.Y(); b = true; }
-            return b;
-            }
-
-
-        /**
         * Query if a point is inside the open rectangle
         *
         * @param   pos The position to check
@@ -221,6 +210,25 @@ namespace mtools
         {
         return ((pos.X() > xmin) && (pos.X() < xmax) && (pos.Y() > ymin) && (pos.Y() < ymax));
         }
+
+
+        /**
+        * Enlarge the rectangle in order to contain a given point. If the rectangle alreasy contain the
+        * point do nothing.
+        *
+        * @param   pos The position of the point to swallow.
+        *
+        * @return  true if the point was swallowed and false if it was already contained in the rectangle.
+        **/
+        inline bool swallowPoint(const Vec<T, 2> pos)
+            {
+            bool b = false;
+            if (pos.X() < xmin) { xmin = pos.X(); b = true; }
+            if (pos.X() > xmax) { xmax = pos.X(); b = true; }
+            if (pos.Y() < ymin) { ymin = pos.Y(); b = true; }
+            if (pos.Y() > ymax) { ymax = pos.Y(); b = true; }
+            return b;
+            }
 
 
         /**
@@ -241,6 +249,14 @@ namespace mtools
 
 
         /**
+         * Compute the center of the rectangle. The position returned has no meaning if the rectangle is
+         * empty.
+         *
+         * @return  The position of the center.
+         **/
+        inline Vec<T, 2> center() const { return Vec<T, 2>((xmax+xmin)/2 , (ymax + ymin)/2); }
+
+        /**
          * Return the width : max(0,xmax-xmin) of the rectangle.
          * (may be 0 even for non empty rectangle or positive even if rectangle is empty).
          **/
@@ -255,11 +271,19 @@ namespace mtools
 
 
         /**
-         * Query if the rectangle is reduced to a single point.
+         * Return the smallest of both length lx() and ly(). 
          *
-         * @return  true if it is a signle point, false if not.
+         * @return  The min length between lx() and ly().
          **/
-        inline bool isPoint() const { return ((xmax == xmin) && (ymax == ymin)); }
+        inline T minlxy() const { return std::min(lx(), ly()); }
+
+
+        /**
+        * Return the largest of both length lx() and ly().
+        *
+        * @return  The max length between lx() and ly().
+        **/
+        inline T maxlxy() const { return std::max(lx(), ly()); }
 
 
         /**
