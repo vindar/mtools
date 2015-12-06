@@ -1017,6 +1017,7 @@ namespace mtools
 
 
 
+
         /**
         * Find a box containing position pos such that all the point inside the (closed) box have the
         * same special value (or are all undefined). The coordinate of the box are put in boxMin and
@@ -1046,21 +1047,216 @@ namespace mtools
             }
 
 
+
+
+
+        /**
+         * Used by findFullBoxCentered. Check if a given border adjacent box of same size is full.
+         **/
+        inline void _checkBorder(int & flag, const int64 diam, const T * pv, const iRect & refRect, const Pos & borderPos, int flagBorder, const Pos & cornerPos1, int flagCorner1, const Pos & cornerPos2, int flagCorner2)
+            {
+            if (refRect.isInside(borderPos)) { flag |= flagBorder; return; } // if borderPos is in the reference rectangle, set to 1 and do not check the corner positions
+            iRect RR;
+            if (findFullBox(borderPos, RR) != pv) { return; } // if the box around pos does not contain the correct value, we quit
+            const int64 rd = RR.lx() + 1; // diameter of the box found
+            if (rd < diam) { return; } // the box is too small, we quit
+            flag |= flagBorder; // ok, the border box is good.
+            if (rd > diam)
+                { // the box is stricly larger than dima so at least one of the border point should be in it
+                if (RR.isInside(cornerPos1)) { flag |= flagCorner1;  } // yes, corner point 1 is in
+                if (RR.isInside(cornerPos2)) { flag |= flagCorner2;  } // yes, corner point 2 is in
+                }
+            return;
+            }
+
+
+        /**
+        * Used by findFullBoxCentered. Check if a given cornder adjacent box of same size is full.
+        **/
+        inline void _checkCorner(int & flag, const int64 diam, const T * pv, const iRect & refRect, const Pos & cornerPos, int flagCorner)
+            {
+            if (flag & flagCorner) return; // alread set, nothing to do
+            if (refRect.isInside(cornerPos)) { flag |= flagCorner; return; } // if pos is in the reference rectangle, set the flag
+            iRect RR;
+            if (findFullBox(cornerPos, RR) != pv) { return; } // if the box around pos does not contain the correct value, we quit
+            if ((RR.lx() + 1) < diam) { return; } // box too small
+            flag |= flagCorner; 
+            return;
+            }
+
+
+
         /**
          * Recursive search for findFullBoxCentered in dimension 2.
          *
-         * @param   pos     The position of the point.
-         * @param   R       The base rectangle to consider.
-         * @param   bestR   The best rectangle yet. updated if we find a better solution.
-         * @param   invX    1 or -1 depending whether we are inverting the X coord. w.r.t. real lattice coord.
-         * @param   invY    1 or -1 depending whether we are inverting the Y coord. w.r.t. real lattice coord.
+         * @param [in,out]  pv          The special value at pos
+         * @param   pos                 The position of the point.
+         * @param   baseRect            The base rectangle to consider.
+         * @param [in,out]  bestRect    The best solution yet.
          *
-         * @return  The found full box record.
+         * ### return   The found full box record.
          **/
-        iRect _findFullBoxRec(const Pos & pos, const iRect & R, const iRect & bestR, int64 invX, int64 invY)
+        void _findFullBoxRec(const T * pv, const Pos & pos, iRect baseRect, iRect & bestRect) const
             {
 
+            const int64 lbase = baseRect.boundaryDist(pos); // distance of the boundary of the base rectangle to pos
+            const int64 lbest = bestRect.boundaryDist(pos); // distance of the boundary of the best rectangle to pos
+            const int64 diambase = baseRect.lx() + 1; // diameter of the base rectangle
+
+            if (lbase + diambase <= lbest) { return; } // we cannot improve the distance to the boundary by using boxes baseRect, we are done !
+
+            // different positions to check
+            const Pos basecenter = baseRect.center();   // center of the base box
+            const Pos borderUp = Pos(basecenter.X(), basecenter.Y() + diambase);
+            const Pos borderDown = Pos(basecenter.X(), basecenter.Y() - diambase);
+            const Pos borderLeft = Pos(basecenter.X() - diambase, basecenter.Y());
+            const Pos borderRight = Pos(basecenter.X() + diambase, basecenter.Y());
+            const Pos cornerUpLeft = Pos(basecenter.X() - diambase, basecenter.Y() + diambase);
+            const Pos cornerUpRight = Pos(basecenter.X() + diambase, basecenter.Y() + diambase);
+            const Pos cornerDownLeft = Pos(basecenter.X() - diambase, basecenter.Y() - diambase);
+            const Pos cornerDownRight = Pos(basecenter.X() + diambase, basecenter.Y() - diambase);
+            // and the associated flags
+            const int flagBorderUp = 2;
+            const int flagBorderDown = 64;
+            const int flagBorderLeft = 8;
+            const int flagBorderRight = 16;
+            const int flagCornerUpLeft = 1;
+            const int flagCornerUpRight = 4;
+            const int flagCorneDownpLeft = 32;
+            const int flagCornerDownRight = 128;
+
+            int flag = 0;   // flag which describe which boundary box is are set.
+
+            // check which border boxes are set 
+            _checkBorder(flag, diambase, pv, bestRect, borderUp, flagBorderUp, cornerUpLeft, flagCornerUpLeft, cornerUpRight, flagCornerUpRight);   // check the up    border and possibly the adjacent corners.
+            _checkBorder(flag, diambase, pv, bestRect, borderDown, flagBorderDown, cornerDownLeft, flagCornerDownLeft, cornerDownRight, flagCornerDownRight); // check the down  border and possibly the adjacent corners.
+            _checkBorder(flag, diambase, pv, bestRect, borderLeft, flagBorderLeft, cornerUpLeft, flagCornerUpLeft, cornerDownLeft, flagCornerDownLeft);  // check the left  border and possibly the adjacent corners.
+            _checkBorder(flag, diambase, pv, bestRect, borderRight, flagBorderRight, cornerUpRight, flagCornerUpRight, cornerDownRight, flagCornerDownRight); // check the right border and possibly the adjacent corners.
+
+            // we switch depending on the number of boxes
+            switch (flag)
+                {
+
+                case 0:
+                    { // nothing more to do at this level, we try at a lower level.
+                    goToNextLevel:
+                    const int64 nrad = (diambase - 3) / 6; // radius of a sub-box of baseRect
+                    Pos newcenter; // compute the new center
+                    const int64 diffX = pos.X() - basecenter.X(); newcenter.X() = basecenter.X() + ((diffX < -nrad) ? -nrad : ((diffX > nrad) ? nrad : 0));
+                    const int64 diffY = pos.Y() - basecenter.Y(); newcenter.Y() = basecenter.Y() + ((diffY < -nrad) ? -nrad : ((diffY > nrad) ? nrad : 0));
+                    if (newcenter == basecenter) { return; } // same center: going further down cannot improve the solution so we stop 
+                    baseRect.xmin = newcenter.X() - nrad; baseRect.xmax = newcenter.X() + nrad; // set the new base
+                    baseRect.ymin = newcenter.Y() - nrad; baseRect.ymax = newcenter.Y() + nrad;
+                    _findFullBoxRec(pv, pos, baseRect, bestRect); // recurse to find a better solution
+                    return;
+                    }
+
+                case flagBorderUp:
+                    { // only the up border
+                    iRect NR(baseRect.xmin, baseRect.xmax, baseRect.ymin, baseRect.ymax + diambase); // the rectangle
+                    extendWith(bestRect, NR); // extend bestRect with NR
+                    goto goToNextLevel; // go to the next level
+                    }
+                case flagBorderDown:
+                    { // only the down border
+                    iRect NR(baseRect.xmin, baseRect.xmax, baseRect.ymin - diambase, baseRect.ymax); // the rectangle
+                    extendWith(bestRect, NR); // extend bestRect with NR
+                    goto goToNextLevel; // go to the next level
+                    }
+                case flagBorderLeft:
+                    { // only the left border
+                    iRect NR(baseRect.xmin - diambase, baseRect.xmax, baseRect.ymin, baseRect.ymax); // the rectangle
+                    extendWith(bestRect, NR); // extend bestRect with NR
+                    goto goToNextLevel; // go to the next level
+                    }
+                case flagBorderRight:
+                    { // only the right border
+                    iRect NR(baseRect.xmin, baseRect.xmax + diambase, baseRect.ymin, baseRect.ymax); // the rectangle
+                    extendWith(bestRect, NR); // extend bestRect with NR
+                    goto goToNextLevel; // go to the next level
+                    }
+
+                case (flagBorderUp & flagBorderDown):
+                    { // only the up and down border
+                    iRect NR(baseRect.xmin, baseRect.xmax, baseRect.ymin - diambase, baseRect.ymax + diambase); // the rectangle
+                    extendWith(bestRect, NR); // extend bestRect with NR
+                    goto goToNextLevel; // go to the next level
+                    }
+                case (flagBorderLeft & flagBorderRight) :
+                    { // only the left and right border
+                    iRect NR(baseRect.xmin - diambase, baseRect.xmax + diambase, baseRect.ymin, baseRect.ymax); // the rectangle
+                    extendWith(bestRect, NR); // extend bestRect with NR
+                    goto goToNextLevel; // go to the next level
+                    }
+
+                case (flagBorderUp & flagBorderLeft) :
+                    { // only the up and left border
+                    _checkCorner(flag, diambase, pv, refRect, cornerUpLeft, flagCornerUpLeft); // check if the corner if set
+                    if (flag & flagCornerUpLeft) 
+                        {
+                        iRect NR(baseRect.xmin - diambase, baseRect.xmax, baseRect.ymin, baseRect.ymax + diambase); extendWith(bestRect, NR); // up left
+                        goto goToNextLevel;
+                        }
+                    iRect NR1(baseRect.xmin, baseRect.xmax, baseRect.ymin, baseRect.ymax + diambase); extendWith(bestRect, NR1); // up
+                    iRect NR2(baseRect.xmin - diambase, baseRect.xmax, baseRect.ymin, baseRect.ymax); extendWith(bestRect, NR2); // left
+                    goto goToNextLevel;
+                    }
+                case (flagBorderUp & flagBorderRight) :
+                    { // only the up and right border
+                    _checkCorner(flag, diambase, pv, refRect, cornerUpRight, flagCornerUpRight); // check if the corner if set
+                    if (flag & flagCornerUpRight)
+                        {
+                        iRect NR(baseRect.xmin, baseRect.xmax + diambase, baseRect.ymin, baseRect.ymax + diambase); extendWith(bestRect, NR); // up right
+                        goto goToNextLevel;
+                        }
+                    iRect NR1(baseRect.xmin, baseRect.xmax, baseRect.ymin, baseRect.ymax + diambase); extendWith(bestRect, NR1); // up
+                    iRect NR2(baseRect.xmin, baseRect.xmax + diambase, baseRect.ymin, baseRect.ymax); extendWith(bestRect, NR2); // right
+                    goto goToNextLevel;
+                    }
+                case (flagBorderDown & flagBorderLeft) :
+                    { // only the down and left border
+                    _checkCorner(flag, diambase, pv, refRect, cornerDownLeft, flagCornerDownLeft); // check if the corner if set
+                    if (flag & flagCornerDownLeft)
+                        {
+                        iRect NR(baseRect.xmin - diambase, baseRect.xmax, baseRect.ymin - diambase, baseRect.ymax); extendWith(bestRect, NR); // down left
+                        goto goToNextLevel;
+                        }
+                    iRect NR1(baseRect.xmin, baseRect.xmax, baseRect.ymin - diambase, baseRect.ymax); extendWith(bestRect, NR1); // down
+                    iRect NR2(baseRect.xmin - diambase, baseRect.xmax, baseRect.ymin, baseRect.ymax); extendWith(bestRect, NR2); // left
+                    goto goToNextLevel;
+                    }
+                case (flagBorderDown & flagBorderRight) :
+                    { // only the down and right border
+                    _checkCorner(flag, diambase, pv, refRect, cornerDownRight, flagCornerDownRight); // check if the corner if set
+                    if (flag & flagCornerDownRight)
+                        {
+                        iRect NR(baseRect.xmin, baseRect.xmax + diambase, baseRect.ymin - diambase, baseRect.ymax); extendWith(bestRect, NR); // down right
+                        goto goToNextLevel;
+                        }
+                    iRect NR1(baseRect.xmin, baseRect.xmax, baseRect.ymin - diambase, baseRect.ymax); extendWith(bestRect, NR1); // down
+                    iRect NR2(baseRect.xmin, baseRect.xmax + diambase, baseRect.ymin, baseRect.ymax); extendWith(bestRect, NR2); // right
+                    goto goToNextLevel;
+                    }
+
+                default: MTOOLS_ERROR("wtf...");
+                }
             }
+
+
+
+
+            // check the remaining corner flag needed
+            
+        /*
+            if ((flag & flagBorderUp)   && (flag & flagBorderLeft))  { bits += _checkCorner(flag, diambase, pv, refRect, cornerUpLeft   , flagCornerUpLeft); }
+            if ((flag & flagBorderUp)   && (flag & flagBorderRight)) { bits += _checkCorner(flag, diambase, pv, refRect, cornerUpRight  , flagCornerUpRight); }
+            if ((flag & flagBorderDown) && (flag & flagBorderLeft))  { bits += _checkCorner(flag, diambase, pv, refRect, cornerDownLeft , flagCornerDownLeft); }
+            if ((flag & flagBorderDown) && (flag & flagBorderRight)) { bits += _checkCorner(flag, diambase, pv, refRect, cornerDownRight, flagCornerDownRight); }
+        */
+
+
+
+
 
 
 
