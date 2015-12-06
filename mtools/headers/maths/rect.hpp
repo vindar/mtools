@@ -232,19 +232,45 @@ namespace mtools
 
 
         /**
+         * Try to enlorge the rectangle using points from another rectangle if possible. By defnition,
+         * the resulting rectangle contain the initial one and is included in the union of the intial
+         * one and the source R used to enlarge.
+         * 
+         * @warning Both rectangles should not be empty.
+         *
+         * @param   R   the rectagle R use form the enlargment.
+         **/
+        inline void enlargeWith(const Rect & R)
+            {
+            const bool containV = ((R.xmin <= xmin) && (xmax <= R.xmax)) ? true : false;
+            const bool containH = ((R.ymin <= ymin) && (ymax <= R.ymax)) ? true : false;
+            if ((!containV) && (!constainH)) return;    // nothing to do
+            if (containV && constainH) { *this = R; return; } // initial rectangle is included in R so we set to R
+            if (containV)
+                { // try to improve horizontally
+                if ((R.ymax > ymax) && (R.ymin <= ymax)) ymax = R.ymax;
+                if ((R.ymin < ymin) && (R.ymax >= ymin)) ymin = R.ymin;
+                return;
+                }
+            // try to improve vertically
+            if ((R.xmax > xmax) && (R.xmin <= xmax)) xmax = R.xmax;
+            if ((R.xmin < xmin) && (R.xmax >= xmin)) xmin = R.xmin;
+            }
+
+        /**
          * Compute the distance of a point inside the rectangle to its boundary
          * 
          * @param   pos The position.
          *
          * @return  the distance between the point and the boundary or a negative value if the point is not inside the rectangle.
          **/
-        inline T boundaryDist(const Vec<T, 2> pos) const
+        inline T boundaryDist(const Vec<T, 2> & pos) const
             {
             T lx1 = xmax - pos.X();
             T lx2 = pos.X() - xmin;
             T ly1 = ymax - pos.Y();
             T ly2 = pos.Y() - ymin;
-            return std::min<int64>(std::min<int64>(lx1, lx2), std::min<int64>(ly1, ly2)); // distance from the boundary
+            return std::min<T>(std::min<T>(lx1, lx2), std::min<T>(ly1, ly2)); // distance from the boundary
             }
 
 
