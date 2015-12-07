@@ -285,8 +285,11 @@ void makeLERRW(uint64 steps, double delta)
 
 
 
-const int Rs = 3;
+const int Rs = 2;
 Grid_factor<2, int, 4, Rs> testG;
+
+int mx = 0;
+
 
 inline int depth(iRect & r)
     {
@@ -353,10 +356,14 @@ RGBc colorTest2B(iVec2 pos)
         }
     int64 v = r.boundaryDist(pos);
     if (v < 0) MTOOLS_ERROR("oups");
+
+
+    return RGBc::jetPaletteLog(v, 0, mx,1.1);
+
     if (p == nullptr)
         {
         if (v == 0) return RGBc::c_Salmon;
-        return RGBc::jetPalette(v, 0, 50);
+        return RGBc::jetPaletteLog(v, 0, mx);
         }
 
     if (v == 0) return RGBc::c_Salmon;
@@ -415,7 +422,13 @@ int main(int argc, char* argv[])
     cout << rr << "\n";
     cout << rr.boundaryDist({ 1059,241 }) << "\n";
 
-    cout.getKey();
+
+    testG.findFullBoxCentered({ 0,0 }, rr);
+    cout << rr << "\n";
+    mx =  rr.boundaryDist({ 0,0 });
+    cout << mx << "\n";
+
+
     //return 0;
 
     Plotter2D Plotter;

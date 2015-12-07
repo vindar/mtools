@@ -1042,7 +1042,7 @@ namespace mtools
         inline const T * findFullBoxCentered(const Pos & pos, Pos & boxMin, Pos & boxMax) const
             {
             // TODO. pfffffff that should be fun... 
-            // until then, just return the findFullBox() without improvement
+            // until then, just return the findFullBox() without any improvement
             return findFullBox(pos, boxMin, boxMax);
             }
 
@@ -1071,35 +1071,19 @@ namespace mtools
             const int64 lbase = baseRect.boundaryDist(pos); // distance from the boundary of the base rectangle to pos
             const int64 diambase = baseRect.lx() + 1; // diameter of the base rectangle
             if (lbase + diambase <= lbest) { return pv; } // we cannot improve the distance to the boundary by using boxes baseRect, we are done !
-
-
-                                                       
-                                                          static const int flagBorderUp = 2;
-                                                          static const int flagBorderDown = 64;
-                                                          static const int flagBorderLeft = 8;
-                                                          static const int flagBorderRight = 16;
-                                                          static const int flagCornerUpLeft = 1;
-                                                          static const int flagCornerUpRight = 4;
-                                                          static const int flagCornerDownLeft = 32;
-                                                          static const int flagCornerDownRight = 128;
-                                                          static const int flagBorder = 2 + 64 + 8 + 16;
-                                                          static const int flagCorner = 1 + 4 + 32 + 128;
+                                                      
+            //  flags
+            static const int flagBorderUp = 2;
+            static const int flagBorderDown = 64;
+            static const int flagBorderLeft = 8;
+            static const int flagBorderRight = 16;
+            static const int flagCornerUpLeft = 1;
+            static const int flagCornerUpRight = 4;
+            static const int flagCornerDownLeft = 32;
+            static const int flagCornerDownRight = 128;
+            static const int flagBorder = 2 + 64 + 8 + 16;
+            static const int flagCorner = 1 + 4 + 32 + 128;
                                                          
-            // and the associated flags
-           
-/*            
-#define flagBorderUp (2) 
-#define flagBorderDown (64) 
-#define flagBorderLeft (8) 
-#define flagBorderRight (16) 
-#define flagCornerUpLeft  (1) 
-#define flagCornerUpRight  (4) 
-#define flagCornerDownLeft  (32) 
-#define flagCornerDownRight  (128) 
-#define flagBorder  (90) 
-#define flagCorner  (165) 
-*/
-
             int flag = 0;   // flag describing which adjacent boxes are set.
 
             //  check which border boxes are set
@@ -1119,47 +1103,25 @@ namespace mtools
 
             const Pos borderDown = Pos(basecenter.X(), basecenter.Y() - diambase);
             _checkBorder(flag, diambase, pv, bestRect, borderDown, flagBorderDown, cornerDownLeft, flagCornerDownLeft, cornerDownRight, flagCornerDownRight); // check the down border and possibly the adjacent corners.
-
+                        
             // possible rectangle extension
-            
-            /*
-            const iRect box1Up(baseRect.xmin, baseRect.xmax, baseRect.ymin, baseRect.ymax + diambase);
-            const iRect box1Down(baseRect.xmin, baseRect.xmax, baseRect.ymin - diambase, baseRect.ymax);
-            const iRect box1Left(baseRect.xmin - diambase, baseRect.xmax, baseRect.ymin, baseRect.ymax);
-            const iRect box1Right(baseRect.xmin, baseRect.xmax + diambase, baseRect.ymin, baseRect.ymax);
-            const iRect line2UpDown(baseRect.xmin, baseRect.xmax, baseRect.ymin - diambase, baseRect.ymax + diambase);
-            const iRect line2LeftRight(baseRect.xmin - diambase, baseRect.xmax + diambase, baseRect.ymin, baseRect.ymax);
-            const iRect box2UpLeft(baseRect.xmin - diambase, baseRect.xmax, baseRect.ymin, baseRect.ymax + diambase);
-            const iRect box2UpRight(baseRect.xmin, baseRect.xmax + diambase, baseRect.ymin, baseRect.ymax + diambase);
-            const iRect box2DownLeft(baseRect.xmin - diambase, baseRect.xmax, baseRect.ymin - diambase, baseRect.ymax);
-            const iRect box2DownRight(baseRect.xmin, baseRect.xmax + diambase, baseRect.ymin - diambase, baseRect.ymax);
-            const iRect rect3Up(baseRect.xmin - diambase, baseRect.xmax + diambase, baseRect.ymin, baseRect.ymax + diambase);
-            const iRect rect3Down(baseRect.xmin - diambase, baseRect.xmax + diambase, baseRect.ymin - diambase, baseRect.ymax);
-            const iRect rect3Left(baseRect.xmin - diambase, baseRect.xmax, baseRect.ymin - diambase, baseRect.ymax + diambase);
-            const iRect rect3Right(baseRect.xmin, baseRect.xmax + diambase, baseRect.ymin - diambase, baseRect.ymax + diambase);
-            const iRect rect4(baseRect.xmin - diambase, baseRect.xmax + diambase, baseRect.ymin - diambase, baseRect.ymax + diambase);
-            */
+            #define box1Up iRect(baseRect.xmin, baseRect.xmax, baseRect.ymin, baseRect.ymax + diambase)
+            #define box1Down iRect(baseRect.xmin, baseRect.xmax, baseRect.ymin - diambase, baseRect.ymax)
+            #define box1Left iRect(baseRect.xmin - diambase, baseRect.xmax, baseRect.ymin, baseRect.ymax)
+            #define box1Right iRect(baseRect.xmin, baseRect.xmax + diambase, baseRect.ymin, baseRect.ymax)
+            #define line2UpDown iRect(baseRect.xmin, baseRect.xmax, baseRect.ymin - diambase, baseRect.ymax + diambase)
+            #define line2LeftRight iRect(baseRect.xmin - diambase, baseRect.xmax + diambase, baseRect.ymin, baseRect.ymax)
+            #define box2UpLeft iRect(baseRect.xmin - diambase, baseRect.xmax, baseRect.ymin, baseRect.ymax + diambase)
+            #define box2UpRight iRect(baseRect.xmin, baseRect.xmax + diambase, baseRect.ymin, baseRect.ymax + diambase)
+            #define box2DownLeft iRect(baseRect.xmin - diambase, baseRect.xmax, baseRect.ymin - diambase, baseRect.ymax)
+            #define box2DownRight iRect(baseRect.xmin, baseRect.xmax + diambase, baseRect.ymin - diambase, baseRect.ymax)
+            #define rect3Up iRect(baseRect.xmin - diambase, baseRect.xmax + diambase, baseRect.ymin, baseRect.ymax + diambase)
+            #define rect3Down iRect(baseRect.xmin - diambase, baseRect.xmax + diambase, baseRect.ymin - diambase, baseRect.ymax)
+            #define rect3Left iRect(baseRect.xmin - diambase, baseRect.xmax, baseRect.ymin - diambase, baseRect.ymax + diambase)
+            #define rect3Right iRect(baseRect.xmin, baseRect.xmax + diambase, baseRect.ymin - diambase, baseRect.ymax + diambase)
+            #define rect4 iRect(baseRect.xmin - diambase, baseRect.xmax + diambase, baseRect.ymin - diambase, baseRect.ymax + diambase)
 
-            
-#define box1Up iRect(baseRect.xmin, baseRect.xmax, baseRect.ymin, baseRect.ymax + diambase)
-#define box1Down iRect(baseRect.xmin, baseRect.xmax, baseRect.ymin - diambase, baseRect.ymax)
-#define box1Left iRect(baseRect.xmin - diambase, baseRect.xmax, baseRect.ymin, baseRect.ymax)
-#define box1Right iRect(baseRect.xmin, baseRect.xmax + diambase, baseRect.ymin, baseRect.ymax)
-#define line2UpDown iRect(baseRect.xmin, baseRect.xmax, baseRect.ymin - diambase, baseRect.ymax + diambase)
-#define line2LeftRight iRect(baseRect.xmin - diambase, baseRect.xmax + diambase, baseRect.ymin, baseRect.ymax)
-#define box2UpLeft iRect(baseRect.xmin - diambase, baseRect.xmax, baseRect.ymin, baseRect.ymax + diambase)
-#define box2UpRight iRect(baseRect.xmin, baseRect.xmax + diambase, baseRect.ymin, baseRect.ymax + diambase)
-#define box2DownLeft iRect(baseRect.xmin - diambase, baseRect.xmax, baseRect.ymin - diambase, baseRect.ymax)
-#define box2DownRight iRect(baseRect.xmin, baseRect.xmax + diambase, baseRect.ymin - diambase, baseRect.ymax)
-#define rect3Up iRect(baseRect.xmin - diambase, baseRect.xmax + diambase, baseRect.ymin, baseRect.ymax + diambase)
-#define rect3Down iRect(baseRect.xmin - diambase, baseRect.xmax + diambase, baseRect.ymin - diambase, baseRect.ymax)
-#define rect3Left iRect(baseRect.xmin - diambase, baseRect.xmax, baseRect.ymin - diambase, baseRect.ymax + diambase)
-#define rect3Right iRect(baseRect.xmin, baseRect.xmax + diambase, baseRect.ymin - diambase, baseRect.ymax + diambase)
-#define rect4 iRect(baseRect.xmin - diambase, baseRect.xmax + diambase, baseRect.ymin - diambase, baseRect.ymax + diambase)
-
-
-
-            // we switch depending on the border box flag
+            // switch depending on the border box flag
             switch (flag & flagBorder)
                 {
                 case 0:
@@ -1171,10 +1133,10 @@ namespace mtools
                     const int64 off = (2 * nrad + 1);
                     const int64 diffX = pos.X() - basecenter.X(); newcenter.X() = basecenter.X() + ((diffX < -nrad) ? -off : ((diffX > nrad) ? off : 0));
                     const int64 diffY = pos.Y() - basecenter.Y(); newcenter.Y() = basecenter.Y() + ((diffY < -nrad) ? -off : ((diffY > nrad) ? off : 0));
-                    if (newcenter == basecenter) { return pv; } // same center: going further down cannot improve the solution so we stop 
+                    if (newcenter == basecenter) { return pv; } // same center: going further down will not improve the solution so we stop 
                     baseRect.xmin = newcenter.X() - nrad; baseRect.xmax = newcenter.X() + nrad; // set the new base
                     baseRect.ymin = newcenter.Y() - nrad; baseRect.ymax = newcenter.Y() + nrad;
-                    goto findFullBoxCentered_loop;
+                    goto findFullBoxCentered_loop; // go to the next level
                     }
                 case flagBorderUp:
                     { // only the up border
@@ -1233,7 +1195,7 @@ namespace mtools
                     goto goToNextLevel;
                     }
                 case (flagBorderLeft | flagBorderUp | flagBorderRight) :
-                    {
+                    { // 3 borders except down
                     _checkCorner(flag, diambase, pv, bestRect, cornerUpRight, flagCornerUpRight);
                     _checkCorner(flag, diambase, pv, bestRect, cornerUpLeft, flagCornerUpLeft);
                     if ((flag & flagCornerUpRight) && (flag & flagCornerUpLeft))
@@ -1259,7 +1221,7 @@ namespace mtools
                     goto goToNextLevel;
                     }
                 case (flagBorderLeft | flagBorderDown | flagBorderRight) :
-                    {
+                    { // 3 borders except up
                     _checkCorner(flag, diambase, pv, bestRect, cornerDownRight, flagCornerDownRight);
                     _checkCorner(flag, diambase, pv, bestRect, cornerDownLeft, flagCornerDownLeft);
                     if ((flag & flagCornerDownRight) && (flag & flagCornerDownLeft))
@@ -1285,7 +1247,7 @@ namespace mtools
                     goto goToNextLevel;
                     }
                 case (flagBorderUp | flagBorderLeft | flagBorderDown) :
-                    {
+                    { // 3 borders except left
                     _checkCorner(flag, diambase, pv, bestRect, cornerUpLeft, flagCornerUpLeft);
                     _checkCorner(flag, diambase, pv, bestRect, cornerDownLeft, flagCornerDownLeft);
                     if ((flag & flagCornerUpLeft) && (flag & flagCornerDownLeft))
@@ -1311,7 +1273,7 @@ namespace mtools
                     goto goToNextLevel;
                     }
                 case (flagBorderUp | flagBorderRight | flagBorderDown) :
-                    {
+                    { // 3 borders except right
                     _checkCorner(flag, diambase, pv, bestRect, cornerUpRight, flagCornerUpRight);
                     _checkCorner(flag, diambase, pv, bestRect, cornerDownRight, flagCornerDownRight);
                     if ((flag & flagCornerUpRight) && (flag & flagCornerDownRight))
@@ -1338,15 +1300,15 @@ namespace mtools
                     }
 
                 case (flagBorderUp | flagBorderDown | flagBorderLeft | flagBorderRight) :
-                    {
+                    { // all four borders are set
                     _checkCorner(flag, diambase, pv, bestRect, cornerUpLeft, flagCornerUpLeft);
                     _checkCorner(flag, diambase, pv, bestRect, cornerUpRight, flagCornerUpRight);
                     _checkCorner(flag, diambase, pv, bestRect, cornerDownLeft, flagCornerDownLeft);
                     _checkCorner(flag, diambase, pv, bestRect, cornerDownRight, flagCornerDownRight);
-                    switch (flag & flagCorner)
+                    switch (flag & flagCorner) // switch depending on the corners set
                         {
                         case 0:
-                            {
+                            { // no corner
                             _extendWith(bestRect, lbest, box1Up, pos);
                             _extendWith(bestRect, lbest, box1Down, pos);
                             _extendWith(bestRect, lbest, box1Left, pos);
@@ -1442,14 +1404,29 @@ namespace mtools
                             goto goToNextLevel;
                             }
                         case (flagCornerUpLeft | flagCornerUpRight | flagCornerDownLeft | flagCornerDownRight) :
-                            {
+                            { // everything is set 
                             _extendWith(bestRect, lbest, rect4, pos);
-                            return pv; //done, we cannot improve on the rectangle so we quit !
+                            return pv; //done, we will not imprve anymore so we quit !
                             }
                         }
                     }
                 }
             MTOOLS_ERROR("wtf...");
+            #undef box1Up
+            #undef box1Down
+            #undef box1Left
+            #undef box1Right
+            #undef line2UpDown
+            #undef line2LeftRight
+            #undef box2UpLeft
+            #undef box2UpRight
+            #undef box2DownLeft
+            #undef box2DownRight
+            #undef rect3Up
+            #undef rect3Down
+            #undef rect3Left
+            #undef rect3Right
+            #undef rect4
             return nullptr;
             }
 
@@ -1486,9 +1463,10 @@ namespace mtools
             if (rd < diam) { return; } // the box is too small, we quit
             flag |= flagBorder; // ok, the border box is good.
             if (rd > diam)
-                { // the box is stricly larger than dima so at least one of the border point should be in it
+                { // the box is stricly larger than diam so at least one of the border point should be in it
                 if (RR.isInside(cornerPos1)) { flag |= flagCorner1; } // yes, corner point 1 is in
                 if (RR.isInside(cornerPos2)) { flag |= flagCorner2; } // yes, corner point 2 is in
+                MTOOLS_ASSERT(flag & (flagCorner1 | flagCorner2));
                 }
             return;
             }
@@ -1518,10 +1496,8 @@ namespace mtools
                 lbest = currentBest.boundaryDist(pos); // save the new distance from the boundary
                 return;
                 }
-            iRect NNR = newRect;
-            currentBest.enlargeWith(newRect); // This is probably useless.. but let it be for the time being...
-            lbest = currentBest.boundaryDist(pos);
-
+            currentBest.enlargeWith(newRect);       // Only useful at the very first level 
+            lbest = currentBest.boundaryDist(pos);  // when newRect contain currentbest
             return;
             }
 
