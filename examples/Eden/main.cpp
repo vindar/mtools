@@ -34,8 +34,8 @@ class EdenCluster
         int64 finalN = N + steps;
         while (N < finalN)
             {
-            iVec2 & rpos = Urn(gen.rand_double0()); // pick a border site
-            if (gen.rand_double0() * 4 >= (4 - Grid(rpos)))
+            iVec2 & rpos = Urn(Unif(gen)); // pick a border site
+            if (Unif(gen) * 4 >= (4 - Grid(rpos)))
                 { // ok, new point in the cluster
                 iVec2 pos = rpos; // save the position 
                 Urn.remove(rpos); // remove it from the urn

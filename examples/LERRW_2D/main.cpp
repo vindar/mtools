@@ -9,12 +9,6 @@
 #include "mtools.hpp"
 using namespace mtools;
 
-// *** Library fltk ***
-#include "FL/Fl.H"      // add fltk headers this way
-#include "GL/glut.h"    // fltk glut
-#include "zlib.h"       // fltk zlib
-#include "png.h"        // fltk libpng
-#include "jpeglib.h"    // fltk libjpeg
 
 
 // structure at each site of Z^2.
@@ -80,7 +74,6 @@ void makeLERRW(uint64 steps, double d)
     G.reset();
     image.resize(1, 1, 1, 3, -1);
     pos = { 0, 0 };
-    uint64 t = 0;
     // main loop
     for (uint64 n = 0; n < steps; n++)
         {
@@ -93,7 +86,7 @@ void makeLERRW(uint64 steps, double d)
         double & up = S.up;                             // of the 4 adjacent edges of the
         double & left = G(pos.X() - 1, pos.Y()).right;  // current position.
         double & down = G(pos.X(), pos.Y() - 1).up;     //
-        double e = gen.rand_double0()*(left + right + up + down);
+        double e = Unif(gen)*(left + right + up + down);
         if (e < left) 
                 { 
                 left += delta; if (left > maxE) { maxE = left; }
@@ -156,9 +149,9 @@ int main(int argc, char *argv[])
     cout << " Simulation of a Linearly Reinforced Random Walk on Z^2\n";
     cout << "*******************************************************\n\n";
     cout << "- Value of the reinforcement parameter delta : ";
-    double delta = 1.0; cout >> delta; cout << delta << "\n";
+    double delta = 2.0; cout >> delta; cout << delta << "\n";
     cout << "- Number of step of the walk : ";
-    int64 N = 10000000; cout >> N; cout << N << "\n\n";
+    int64 N = 50000000; cout >> N; cout << N << "\n\n";
     makeLERRW(N, delta);
     return 0;
 	}
