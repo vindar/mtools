@@ -45,6 +45,7 @@ namespace mtools
         if ((random_t::min() == 0)&&(random_t::max() == 4294967295)) return ((uint64)gen() + (((uint64)gen()) << 32));
         if ((random_t::min() == 0)&&(random_t::max() == 18446744073709551615)) return gen();
         MTOOLS_ERROR("Unif_64 need the random engine to have packed 32 or 64 bits. Use std::independent_bits_engine to construct a packed engine from an unpacked one.");
+        return 0;
         }
 
 
@@ -61,6 +62,7 @@ namespace mtools
         if ((random_t::min() == 0) && (random_t::max() == 4294967295)) return ((uint32)gen());
         if ((random_t::min() == 0) && (random_t::max() == 18446744073709551615)) return ((uint32)(gen() & 4294967295));
         MTOOLS_ERROR("Unif_32 need the random engine to have packed 32 or 64 bits. Use std::independent_bits_engine to construct a packed engine from an unpacked one.");
+        return 0;
         }
 
 
