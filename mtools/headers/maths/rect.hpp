@@ -232,29 +232,29 @@ namespace mtools
 
 
         /**
-         * Try to enlorge the rectangle using points from another rectangle if possible. By defnition,
+         * Try to enlarge the rectangle using points from another rectangle if possible. By defnition,
          * the resulting rectangle contain the initial one and is included in the union of the intial
          * one and the source R used to enlarge.
          * 
          * @warning Both rectangles should not be empty.
          *
-         * @param   R   the rectagle R use form the enlargment.
+         * @param   R   the rectagle R use for the enlargment.
          **/
         inline void enlargeWith(const Rect & R)
             {
             const bool containV = ((R.xmin <= xmin) && (xmax <= R.xmax)) ? true : false;
             const bool containH = ((R.ymin <= ymin) && (ymax <= R.ymax)) ? true : false;
-            if ((!containV) && (!constainH)) return;    // nothing to do
-            if (containV && constainH) { *this = R; return; } // initial rectangle is included in R so we set to R
+            if ((!containV) && (!containH)) return;    // nothing to do
+            if (containV && containH) { *this = R; return; } // initial rectangle is included in R so we set to R
             if (containV)
                 { // try to improve horizontally
-                if ((R.ymax > ymax) && (R.ymin <= ymax)) ymax = R.ymax;
-                if ((R.ymin < ymin) && (R.ymax >= ymin)) ymin = R.ymin;
+                if ((R.ymax > ymax) && (R.ymin <= ymax)) { ymax = R.ymax; }
+                if ((R.ymin < ymin) && (R.ymax >= ymin)) { ymin = R.ymin; }
                 return;
                 }
             // try to improve vertically
-            if ((R.xmax > xmax) && (R.xmin <= xmax)) xmax = R.xmax;
-            if ((R.xmin < xmin) && (R.xmax >= xmin)) xmin = R.xmin;
+            if ((R.xmax > xmax) && (R.xmin <= xmax)) { xmax = R.xmax; }
+            if ((R.xmin < xmin) && (R.xmax >= xmin)) { xmin = R.xmin; }
             }
 
         /**
@@ -266,10 +266,10 @@ namespace mtools
          **/
         inline T boundaryDist(const Vec<T, 2> & pos) const
             {
-            T lx1 = xmax - pos.X();
-            T lx2 = pos.X() - xmin;
-            T ly1 = ymax - pos.Y();
-            T ly2 = pos.Y() - ymin;
+            const T lx1 = xmax - pos.X();
+            const T lx2 = pos.X() - xmin;
+            const T ly1 = ymax - pos.Y();
+            const T ly2 = pos.Y() - ymin;
             return std::min<T>(std::min<T>(lx1, lx2), std::min<T>(ly1, ly2)); // distance from the boundary
             }
 
