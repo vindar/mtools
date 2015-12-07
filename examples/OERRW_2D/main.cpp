@@ -20,8 +20,9 @@ using namespace mtools;
 int main(int argc, char *argv[])
     {
     longOERRW simOERRW(5.0);
-
-    simOERRW.makeWalk(10000000);
+    Chronometer();
+    simOERRW.makeWalk(30000000);
+    cout << "Done in : " << Chronometer() << "ms\n";
     cout << simOERRW << "\n";
     simOERRW.plotWalk();
     return 0;

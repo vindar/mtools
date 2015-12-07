@@ -32,15 +32,10 @@ class longOERRW
             delta = d;
             R.clear();
             N = 0;
-            step = 0;
             pos = { 0,0 };
             G.reset(maskfull, maskfull, false);
             im.resize(1, 1, 1, 3);
             }
-
-
-        /* return the number of step performed by the walk */
-        int64 nbSteps() const { return step; }
 
 
         /* return the number of distinct sites visited by the walk */
@@ -64,7 +59,6 @@ class longOERRW
             {
             std::string s = "Once Edge Reinforced Random Walk ERRW\n";
             s += "  -> reinf. param. delta    = " + mtools::toString(reinfParam()) + "\n";
-            s += "  -> nb of steps            = " + mtools::toString(nbSteps()) + "\n";
             s += "  -> nb of visited sites    = " + mtools::toString(nbVisited()) + "\n";
             s += "  -> current position       = (" + mtools::toString(pos.X()) + "," + mtools::toString(pos.Y()) + ")\n";
             s += "  -> range of the trace     = " + mtools::toString(rangeRect()) + "\n\n";
@@ -83,92 +77,65 @@ class longOERRW
             if (displayProgress) { PB = new ProgressBar<uint64>(nb, "Simulating..."); }
             nb += N;
             auto startN = N;
-            int64 lastcheck = step;
+            int64 lastb = 0;
+            char v = G(pos);		         // current site
             while (N < nb)
                 {
-                char v = G(pos);		         // current site
                 if (isFull(v)) 
                     { // the four edge around the site are set, do simple rw
-                    if (step - lastcheck > 50) // we try to move fast inside the set of visited sites and away from the origin
-                        { // we make several step at once
-                        lastcheck = step;
-                        iRect fullR;
-                        G.findFullBoxiRect(pos, fullR);
-                      //  if ((fullR.xmax - pos.X() > 1) && (fullR.ymax - pos.Y() > 1) && (pos.X() - fullR.xmin > 1) && (pos.Y() - fullR.ymin > 1))
-                            {
-                            auto a = SRW_Z2_exitRectangle<MT2004_64>(pos, fullR, gen);
-                            step += a;
-                            //if (a > 10000) { cout << a << "\n"; }
-                            }
-                 /*       else
-                            {
-                            SRW_Z2_make1step(pos.X(), pos.Y(), gen.rand_double0());
-                            step++;
-                            }*/
+                    if (lastb < 100) 
+                        { // boundary not a long time ago, just one step
+                        SRW_Z2_1step(pos, gen);
+                        lastb++;
                         }
-                    else 
-                        { // make only one step of the srw
-                        SRW_Z2_make1step(pos.X(),pos.Y(), gen.rand_double0()); 
-                        step++; 
-                        } 
+                    else
+                        {
+                        int64 d;
+                        do
+                            {
+                            iRect fullR;
+                            G.findFullBoxCentered(pos, fullR);  // find a full box
+                            fullR.xmin--; fullR.xmax++; fullR.ymin--; fullR.ymax++;
+                            d = SRW_Z2_MoveInRect(pos, fullR, 8, gen); // move in the rectangle 
+                            }
+                        while (d > 0);
+                        }
+                    v = G(pos);
                     } 
-                else
+                else 
                     { // not all egdes are set, do ERRW
-                    if (PB != nullptr) { PB->update(N - startN); }
-                    double up    = ((v & maskup) ? delta : 1.0);
-                    double right = ((v & maskright) ? delta : 1.0);
-                    double down  = ((v & maskdown) ? delta : 1.0);
-                    double left  = ((v & maskleft) ? delta : 1.0);
-                    double a = gen.rand_double0()*(up + right + down + left);
-                    if (a < up) 
+                    lastb = 0; // reset the last visit to boundary
+                    const double up    = ((v & maskup) ? delta : 1.0);
+                    const double right = ((v & maskright) ? delta : 1.0);
+                    const double down  = ((v & maskdown) ? delta : 1.0);
+                    const double left  = ((v & maskleft) ? delta : 1.0);
+                    const double a = Unif(gen)*(up + right + down + left);
+                    if (a < up + right) 
                         { 
-                        if ((v & maskup) == 0) 
-                            { 
-                            G.set(pos, v | maskup);
-                            auto npos = iVec2{ pos.X(), pos.Y() + 1 };
-                            const char w = G(npos); if (isEmpty(w)) { N++; }
-                            G.set(npos, w | maskdown);
-                            } 
-                        pos.Y()++; 
-                        }
-                    else {
-                        if (a < up + right) 
-                            { 
-                            if ((v & maskright) == 0)
-                                {
-                                G.set(pos, v | maskright);
-                                auto npos = iVec2{ pos.X() + 1, pos.Y() };
-                                const char w = G(npos); if (isEmpty(w)) { N++; }
-                                G.set(npos, w | maskleft);
-                                }
-                            pos.X()++;
+                        if (a < up)
+                            {
+                            if ((v & maskup) == 0) { G.set(pos, v | maskup); pos.Y()++; v = G(pos); if (isEmpty(v)) { N++; if (PB != nullptr) { PB->update(N - startN); } } v |= maskdown; G.set(pos, v); }
+                            else { pos.Y()++; v = G(pos); }
                             }
-                        else {
-                            if (a < up + right + down) 
-                                {
-                                if ((v & maskdown) == 0)
-                                    {
-                                    G.set(pos, v | maskdown);
-                                    auto npos = iVec2{ pos.X(), pos.Y() - 1 };
-                                    const char w = G(npos); if (isEmpty(w)) { N++; }
-                                    G.set(npos, w | maskup);
-                                    }
-                                pos.Y()--;
-                                }
-                            else
-                                {
-                                if ((v & maskleft) == 0)
-                                    {
-                                    G.set(pos, v | maskleft);
-                                    auto npos = iVec2{ pos.X() - 1, pos.Y() };
-                                    const char w = G(npos); if (isEmpty(w)) { N++; }
-                                    G.set(npos, w | maskright);
-                                    }
-                                pos.X()--;
-                                }
+                        else
+                            {
+                            if ((v & maskright) == 0) { G.set(pos, v | maskright); pos.X()++; v = G(pos); if (isEmpty(v)) { N++; if (PB != nullptr) { PB->update(N - startN); } } v |= maskleft; G.set(pos, v); }
+                            else { pos.X()++; v = G(pos); }
                             }
                         }
-                    step++;
+                    else
+                        {
+                        if (a < up + right + down)
+                            {
+                            if ((v & maskdown) == 0) { G.set(pos, v | maskdown); pos.Y()--; v = G(pos); if (isEmpty(v)) { N++; if (PB != nullptr) { PB->update(N - startN); } }  v |= maskup; G.set(pos, v); }
+                            else { pos.Y()--;  v = G(pos); }
+                            }
+                        else
+                            {
+                            if ((v & maskleft) == 0) { G.set(pos, v | maskleft); pos.X()--; v = G(pos); if (isEmpty(v)) { N++; if (PB != nullptr) { PB->update(N - startN); } }  v |= maskright; G.set(pos, v); }
+                            else { pos.X()--;  v = G(pos); }
+                            }
+                        }
                     }
                 }
             delete PB;
@@ -205,7 +172,7 @@ class longOERRW
         longOERRW(const  longOERRW &) = delete;             // no copy
         longOERRW & operator=(const  longOERRW &) = delete; //
 
-        static const int RR = 2;				// size of the subsquare for the edge lattice
+        static const int RR = 5;				// size of the subsquare for the edge lattice
 
         static const char maskup = 1;			// mask for the up edge
         static const char maskright = 2;		// mask for the left edge
@@ -216,7 +183,6 @@ class longOERRW
         double delta;						// reinforcement parameter delta
         iRect R;                            // rectangle containing the trace of the walk
         int64 N;							// size of the current range
-        int64 step;							// number of steps performed
         iVec2 pos;							// current position of the walk
         mtools::Grid_factor<2,char,1,RR> G; // The lattice 
 
