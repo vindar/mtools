@@ -361,6 +361,10 @@ RGBc colorTest2B(iVec2 pos)
 
     if (v == 0) return RGBc::c_Salmon;
     if (v > 100) return RGBc::c_Red;
+    if (v > 50) return RGBc::c_Yellow;
+    if (v > 20) return RGBc::c_Green;
+    if (v > 10) return RGBc::c_Purple;
+    if (v > 5) return RGBc::c_Olive;
     return RGBc::c_Blue;
     }
 

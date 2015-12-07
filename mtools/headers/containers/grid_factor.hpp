@@ -1072,37 +1072,57 @@ namespace mtools
             const int64 diambase = baseRect.lx() + 1; // diameter of the base rectangle
             if (lbase + diambase <= lbest) { return pv; } // we cannot improve the distance to the boundary by using boxes baseRect, we are done !
 
-            // different positions to check
-            const Pos basecenter = baseRect.center();   // center of the base box
-            const Pos borderUp = Pos(basecenter.X(), basecenter.Y() + diambase);
-            const Pos borderDown = Pos(basecenter.X(), basecenter.Y() - diambase);
-            const Pos borderLeft = Pos(basecenter.X() - diambase, basecenter.Y());
-            const Pos borderRight = Pos(basecenter.X() + diambase, basecenter.Y());
-            const Pos cornerUpLeft = Pos(basecenter.X() - diambase, basecenter.Y() + diambase);
-            const Pos cornerUpRight = Pos(basecenter.X() + diambase, basecenter.Y() + diambase);
-            const Pos cornerDownLeft = Pos(basecenter.X() - diambase, basecenter.Y() - diambase);
-            const Pos cornerDownRight = Pos(basecenter.X() + diambase, basecenter.Y() - diambase);
+
+                                                       
+                                                          static const int flagBorderUp = 2;
+                                                          static const int flagBorderDown = 64;
+                                                          static const int flagBorderLeft = 8;
+                                                          static const int flagBorderRight = 16;
+                                                          static const int flagCornerUpLeft = 1;
+                                                          static const int flagCornerUpRight = 4;
+                                                          static const int flagCornerDownLeft = 32;
+                                                          static const int flagCornerDownRight = 128;
+                                                          static const int flagBorder = 2 + 64 + 8 + 16;
+                                                          static const int flagCorner = 1 + 4 + 32 + 128;
+                                                         
             // and the associated flags
-            const int flagBorderUp = 2;
-            const int flagBorderDown = 64;
-            const int flagBorderLeft = 8;
-            const int flagBorderRight = 16;
-            const int flagCornerUpLeft = 1;
-            const int flagCornerUpRight = 4;
-            const int flagCornerDownLeft = 32;
-            const int flagCornerDownRight = 128;
-            const int flagBorder = 2 + 64 + 8 + 16;
-            const int flagCorner = 1 + 4 + 32 + 128;
+           
+/*            
+#define flagBorderUp (2) 
+#define flagBorderDown (64) 
+#define flagBorderLeft (8) 
+#define flagBorderRight (16) 
+#define flagCornerUpLeft  (1) 
+#define flagCornerUpRight  (4) 
+#define flagCornerDownLeft  (32) 
+#define flagCornerDownRight  (128) 
+#define flagBorder  (90) 
+#define flagCorner  (165) 
+*/
 
             int flag = 0;   // flag describing which adjacent boxes are set.
 
-            // check which border boxes are set 
+            //  check which border boxes are set
+            const Pos basecenter = baseRect.center();   // center of the base box            
+            const Pos borderUp = Pos(basecenter.X(), basecenter.Y() + diambase);
+            const Pos cornerUpLeft = Pos(basecenter.X() - diambase, basecenter.Y() + diambase);
+            const Pos cornerUpRight = Pos(basecenter.X() + diambase, basecenter.Y() + diambase);
             _checkBorder(flag, diambase, pv, bestRect, borderUp, flagBorderUp, cornerUpLeft, flagCornerUpLeft, cornerUpRight, flagCornerUpRight);   // check the up border and possibly the adjacent corners.
-            _checkBorder(flag, diambase, pv, bestRect, borderDown, flagBorderDown, cornerDownLeft, flagCornerDownLeft, cornerDownRight, flagCornerDownRight); // check the down border and possibly the adjacent corners.
+
+            const Pos borderLeft = Pos(basecenter.X() - diambase, basecenter.Y());
+            const Pos cornerDownLeft = Pos(basecenter.X() - diambase, basecenter.Y() - diambase);
             _checkBorder(flag, diambase, pv, bestRect, borderLeft, flagBorderLeft, cornerUpLeft, flagCornerUpLeft, cornerDownLeft, flagCornerDownLeft);  // check the left border and possibly the adjacent corners.
+
+            const Pos borderRight = Pos(basecenter.X() + diambase, basecenter.Y());
+            const Pos cornerDownRight = Pos(basecenter.X() + diambase, basecenter.Y() - diambase);
             _checkBorder(flag, diambase, pv, bestRect, borderRight, flagBorderRight, cornerUpRight, flagCornerUpRight, cornerDownRight, flagCornerDownRight); // check the right border and possibly the adjacent corners.
 
+            const Pos borderDown = Pos(basecenter.X(), basecenter.Y() - diambase);
+            _checkBorder(flag, diambase, pv, bestRect, borderDown, flagBorderDown, cornerDownLeft, flagCornerDownLeft, cornerDownRight, flagCornerDownRight); // check the down border and possibly the adjacent corners.
+
             // possible rectangle extension
+            
+            /*
             const iRect box1Up(baseRect.xmin, baseRect.xmax, baseRect.ymin, baseRect.ymax + diambase);
             const iRect box1Down(baseRect.xmin, baseRect.xmax, baseRect.ymin - diambase, baseRect.ymax);
             const iRect box1Left(baseRect.xmin - diambase, baseRect.xmax, baseRect.ymin, baseRect.ymax);
@@ -1118,6 +1138,26 @@ namespace mtools
             const iRect rect3Left(baseRect.xmin - diambase, baseRect.xmax, baseRect.ymin - diambase, baseRect.ymax + diambase);
             const iRect rect3Right(baseRect.xmin, baseRect.xmax + diambase, baseRect.ymin - diambase, baseRect.ymax + diambase);
             const iRect rect4(baseRect.xmin - diambase, baseRect.xmax + diambase, baseRect.ymin - diambase, baseRect.ymax + diambase);
+            */
+
+            
+#define box1Up iRect(baseRect.xmin, baseRect.xmax, baseRect.ymin, baseRect.ymax + diambase)
+#define box1Down iRect(baseRect.xmin, baseRect.xmax, baseRect.ymin - diambase, baseRect.ymax)
+#define box1Left iRect(baseRect.xmin - diambase, baseRect.xmax, baseRect.ymin, baseRect.ymax)
+#define box1Right iRect(baseRect.xmin, baseRect.xmax + diambase, baseRect.ymin, baseRect.ymax)
+#define line2UpDown iRect(baseRect.xmin, baseRect.xmax, baseRect.ymin - diambase, baseRect.ymax + diambase)
+#define line2LeftRight iRect(baseRect.xmin - diambase, baseRect.xmax + diambase, baseRect.ymin, baseRect.ymax)
+#define box2UpLeft iRect(baseRect.xmin - diambase, baseRect.xmax, baseRect.ymin, baseRect.ymax + diambase)
+#define box2UpRight iRect(baseRect.xmin, baseRect.xmax + diambase, baseRect.ymin, baseRect.ymax + diambase)
+#define box2DownLeft iRect(baseRect.xmin - diambase, baseRect.xmax, baseRect.ymin - diambase, baseRect.ymax)
+#define box2DownRight iRect(baseRect.xmin, baseRect.xmax + diambase, baseRect.ymin - diambase, baseRect.ymax)
+#define rect3Up iRect(baseRect.xmin - diambase, baseRect.xmax + diambase, baseRect.ymin, baseRect.ymax + diambase)
+#define rect3Down iRect(baseRect.xmin - diambase, baseRect.xmax + diambase, baseRect.ymin - diambase, baseRect.ymax)
+#define rect3Left iRect(baseRect.xmin - diambase, baseRect.xmax, baseRect.ymin - diambase, baseRect.ymax + diambase)
+#define rect3Right iRect(baseRect.xmin, baseRect.xmax + diambase, baseRect.ymin - diambase, baseRect.ymax + diambase)
+#define rect4 iRect(baseRect.xmin - diambase, baseRect.xmax + diambase, baseRect.ymin - diambase, baseRect.ymax + diambase)
+
+
 
             // we switch depending on the border box flag
             switch (flag & flagBorder)
@@ -1475,10 +1515,13 @@ namespace mtools
                 { // improvement
                 newRect.enlargeWith(currentBest); // try to enlarge newrect is possible
                 currentBest = newRect;  // then set it as the new solution
-                lbest = lnew;           //
+                lbest = currentBest.boundaryDist(pos); // save the new distance from the boundary
                 return;
                 }
-            //currentBest.enlargeWith(newRect); // This is probably useless.. but let it be for the time being...
+            iRect NNR = newRect;
+            currentBest.enlargeWith(newRect); // This is probably useless.. but let it be for the time being...
+            lbest = currentBest.boundaryDist(pos);
+
             return;
             }
 
