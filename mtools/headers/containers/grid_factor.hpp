@@ -899,20 +899,20 @@ namespace mtools
 
 
         /**
-         * Find a box containing position pos such that all the point inside the (closed) box have the
+         * Find a box containing position pos such that all the points inside the (closed) box have the
          * same special value (or are all undefined). The coordinates of the box are put in boxMin and
          * boxMax and the function return a pointer to the commun value (or nullptr if no value defined
          * on this box)
          * 
-         * If no such box can be found (for instance if the value at pos is defined but not special)
-         * then the function sets boxMin = boxMax = pos (and returns the value at pos).
+         * If no such box can be found, the method sets boxMin = boxMax = pos (but still return a 
+         * pointer to the value et pos).
          * 
-         * The box returned is not optimal as it is always one of the boxes in the underlying box
-         * structure of the grid. In particular, it is a square !
+         * The box returned is always a square and correspond to the largest full box containing pos
+         * in the "quadtree-like" grid structure.
          * 
          * Although the box returned always contain position pos, it can be close (or even on) the
          * boundary of the box which may be undesired. To get another box where pos is further away 
-         * from the boundary, use the findFullBoxCentered() method instead.
+         * from the boundary, use findFullBoxCentered() instead.
          * 
          * @warning This method is NOT threadsafe and uses the same pointer as get() and set().
          *
@@ -941,18 +941,19 @@ namespace mtools
                 {
                 if (q->father == nullptr) 
                     { // the point is outside of largest boundary box
-                    int64 R = 3*q->rad + 1; 
+                    int64 r = 3*q->rad + 1; 
                     for (size_t i = 0; i < D; ++i)
                         {
                         int64 u = pos[i]; if (u < 0) {u = -u;}
-                        while (u > R) { R = 3*R + 1;}
+                        while(u > r) { r = 3*r + 1; }
                         }
-                    // R is the radius 
+                    // r is the radius of the box containing pos
+                    r = (r - 1) / 3;
                     for (size_t i = 0; i < D; i++) 
                         { 
                         const int64 a = pos[i]; 
-                        const int64 sb =  ((a < -R) ? (-(2*R + 1)) : ((a > R) ? (2*R + 1) : 0)); 
-                        boxMin[i] = sb - R; boxMax[i] = sb + R; // TODO, we could find bigger if we just want a rectangle and not a square...
+                        const int64 sb =  ((a < -r) ? (-(2*r + 1)) : ((a > r) ? (2*r + 1) : 0)); 
+                        boxMin[i] = sb - r; boxMax[i] = sb + r; // TODO, we could find bigger if we just want a rectangle and not a square...
                         }
                     _pcurrent = q; 
                     return nullptr; 
@@ -1016,8 +1017,6 @@ namespace mtools
             }
 
 
-
-
         /**
         * Find a box containing position pos such that all the point inside the (closed) box have the
         * same special value (or are all undefined). The coordinate of the box are put in boxMin and
@@ -1028,8 +1027,12 @@ namespace mtools
         * then the function sets boxMin = boxMax = pos (and returns the value at pos).
         *
         * Compared to findFullBox(), this method tries to find a box for which pos is near the center
-        * of the box (ie the distance to the boundary is larger). On the other hand, it is a bit slower 
-        * than findFullBox().
+        * of the box (i.e. the distance to the boundary is larger):
+        * 
+        * - The method is slower than findFullBox() but always returns a box where the distance of pos  
+        * to the boundary is at least that returned by findFullBox() yet the volume of the box may be   
+        * smaller.
+        * - The box returned need not be a square (as in findFullBox()).
         *
         * @warning This method is NOT threadsafe and uses the same pointer as get() and set().
         *
@@ -1298,7 +1301,6 @@ namespace mtools
                     _extendWith(bestRect, lbest, box1Down, pos);
                     goto goToNextLevel;
                     }
-
                 case (flagBorderUp | flagBorderDown | flagBorderLeft | flagBorderRight) :
                     { // all four borders are set
                     _checkCorner(flag, diambase, pv, bestRect, cornerUpLeft, flagCornerUpLeft);
