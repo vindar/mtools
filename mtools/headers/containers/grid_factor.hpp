@@ -524,7 +524,7 @@ namespace mtools
          *
          * @param   minSpecial  the new minimum value for the special parameters.
          * @param   maxSpecial  the new maximum value for the special parameters.
-         * @param   callDtors   true to call dthe destructors of the object when they are destroyed.
+         * @param   callDtors   true to call the destructors of the object when they are destroyed.
          **/
         void reset(int64 minSpecial, int64 maxSpecial, bool callDtors = true)
             {
@@ -653,6 +653,24 @@ namespace mtools
 
 
         /**
+        * Get the value at a given position (creates it if it does not exist). Dimension 1 specialization.
+        **/
+        inline const T & get(int64 x) const { static_assert(D == 1, "template parameter D must be 1"); return _get(Pos(x)); }
+
+
+        /**
+        * Get the value at a given position (creates it if it does not exist). Dimension 2 specialization.
+        **/
+        inline const T & get(int64 x, int64 y) const { static_assert(D == 2, "template parameter D must be 2"); return _get(Pos(x, y)); }
+
+
+        /**
+        * Get the value at a given position (creates it if it does not exist). Dimension 3 specialization.
+        **/
+        inline const T & get(int64 x, int64 y, int64 z) const { static_assert(D == 3, "template parameter D must be 3"); return _get(Pos(x, y, z)); }
+
+
+        /**
         * get a value at a given position. Same as the get() method.
         * This creates the object if it does not exist yet.
         **/
@@ -689,10 +707,10 @@ namespace mtools
 
         /**
          * Access the element at a given position. If the element does not exist, it is created first.
-         * The refrence returned is non const hence may be modified.
+         * The reference returned is non const hence may be modified.
          * 
          * @warning NEVER EVER MODIFY THE VALUE OF A SPECIAL ELEMENT AS IT MAY BE SHARED BY MANY OTHER
-         * SITES (BUT PROBABLY NOT ALL OF THEM EITHER). It is safe to change the value of a 'normal'
+         * SITES (STILL PROBABLY NOT ALL OF THEM EITHER). It is safe to change the value of a 'normal'
          * element to that of another 'normal' element. It is also possible to change the value of a
          * normal element to that of a special element but in this case you should call 'simplify()'
          * afterward to insure that the whole grid goes back in its fully factorized state. Otherwise,

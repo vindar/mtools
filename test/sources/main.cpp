@@ -286,8 +286,8 @@ void makeLERRW(uint64 steps, double delta)
 
 
 const int Rs = 2;
-//Grid_factor<2, int, 4, Rs> testG;
-Grid_basic<2, int,  Rs> testG;
+Grid_factor<2, int, 4, Rs> testG;
+//Grid_basic<2, int,  Rs> testG;
 
 int mx = 0;
 
@@ -360,10 +360,15 @@ RGBc colorTest2B(iVec2 pos)
 
     if (v < 0) MTOOLS_ERROR("oups");
 
+    /*
     if (p != nullptr)
         {
         return RGBc::jetPaletteLog(v, 0, 100, 1.1);
         }
+        */
+
+    if (v<6) return RGBc::c_Salmon;
+
     return RGBc::jetPaletteLog(v, 0, 7000, 1.1);
 
     if (p == nullptr)
@@ -406,25 +411,27 @@ RGBc colorTest2(iVec2 pos)
 int main(int argc, char* argv[])
 {
 
-    //testG.reset(0,3,false);
-    testG.reset();
+    testG.reset(0,3,false);
+    //testG.reset();
 
     const int N = 1000;
 
     for(int i = -N;i < N;i++)
         for (int j = -N;j < N;j++)
             {
-            if ((i*i + j*j <= N*N) && (i*i + j*j >= 3 * N*N / 4)) testG.set({ i, j }, 1);
+            if ((i*i + j*j <= N*N) 
+                && (i*i + j*j >= 3 * N*N / 4)
+                ) testG.set({ i, j }, 1);
             }
 
 
-    testG.set({ 0, 0 }, 1);
+    testG.set({ 0, 0 }, 2);
     iRect rr;
 
-    testG.findFullBoxCentered({ 0,0 }, rr);
-//    cout << rr << "\n";
-//    mx =  rr.boundaryDist({ 0,0 });
-//    cout << mx << "\n";
+    testG.findFullBoxCentered({ 13,13 }, rr);
+    cout << rr << "\n";
+    mx =  rr.boundaryDist({ 13,13 });
+    cout << mx << "\n";
 
 
     //return 0;

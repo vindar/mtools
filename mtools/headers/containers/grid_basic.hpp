@@ -445,26 +445,15 @@ namespace mtools
 
 
         /**
-        * Set a value at a given position. Dimension 1 specialization.
+        * Set a value at a given position. Dimension 2 specialization.
         **/
         inline void set(int64 x, int64 y, const T & val) { static_assert(D == 2, "template parameter D must be 2"); return _set(Pos(x, y), &val); }
 
 
         /**
-        * Set a value at a given position. Dimension 1 specialization.
+        * Set a value at a given position. Dimension 3 specialization.
         **/
         inline void set(int64 x, int64 y, int64 z, const T & val) { static_assert(D == 3, "template parameter D must be 3"); return _set(Pos(x, y, z), &val); }
-
-
-        /**
-         * Get a value at a given position. If the T object at that site does not exist, it is created.
-         * (const version)
-         *
-         * @param   pos The position.
-         *
-         * @return  A const reference to the value.
-         **/
-        inline const T & get(const Pos & pos) const { return _get(pos); }
 
 
         /**
@@ -483,9 +472,44 @@ namespace mtools
          *
          * @param   pos The position.
          *
-         * @return  A const reference to the value
+         * @return  A const reference to the value.
          **/
-        inline const T & operator[](const Pos & pos) const { return _get(pos); }
+        inline const T & get(const Pos & pos) const { return _get(pos); }
+
+
+        /**
+        * Get a value at a given position. If the T object at that site does not exist, it is created. Dimension 1 specialization.
+        **/
+        inline T & get(int64 x) { static_assert(D == 1, "template parameter D must be 1"); return _get(Pos(x)); }
+
+        /**
+        * Get a value at a given position. If the T object at that site does not exist, it is created. Dimension 1 specialization. (const version)
+        **/
+        inline const T & get(int64 x) const { static_assert(D == 1, "template parameter D must be 1"); return _get(Pos(x)); }
+
+
+        /**
+        * Get a value at a given position. If the T object at that site does not exist, it is created. Dimension 2 specialization.
+        **/
+        inline T & get(int64 x, int64 y) { static_assert(D == 2, "template parameter D must be 2"); return _get(Pos(x, y)); }
+
+
+        /**
+        * Get a value at a given position. If the T object at that site does not exist, it is created. Dimension 2 specialization. (const version)
+        **/
+        inline const T & get(int64 x, int64 y) const { static_assert(D == 2, "template parameter D must be 2"); return _get(Pos(x, y)); }
+
+
+        /**
+        * Get a value at a given position. If the T object at that site does not exist, it is created. Dimension 3 specialization.
+        **/
+        inline T & get(int64 x, int64 y, int64 z) { static_assert(D == 3, "template parameter D must be 3"); return _get(Pos(x, y, z)); }
+
+
+        /**
+        * Get a value at a given position. If the T object at that site does not exist, it is created. Dimension 3 specialization. (const version)
+        **/
+        inline const T & get(int64 x, int64 y, int64 z) const { static_assert(D == 3, "template parameter D must be 3"); return _get(Pos(x, y, z)); }
 
 
         /**
@@ -499,24 +523,98 @@ namespace mtools
 
 
         /**
-         * Return a pointer to the object at a given position. If the value at the site was not yet
-         * created, returns nullptr. This method does not create sites and is suited when drawing the
-         * lattice using, for instance, the LatticeDrawer class.
-         * 
-         * This method is threadsafe : it is safe to call peek() while accessing the object via a get()
-         * or a set() or one of their operator [], operator() equivalents. It may even be called while
-         * the grid is being modified by assign/load operations. However, peek() should not be called
-         * while another peek() is in progress. To perform multiple simulatneous peek, use the peek
-         * version with hint below.
-         * 
-         * The implementation of this method is lock free hence there is zero penalty to peeking while
-         * still reading/setting the object !
+         * Get a value at a given position. If the T object at that site does not exist, it is created.
+         * (const version)
          *
-         * @param   pos The position to peek.
+         * @param   pos The position.
          *
-         * @return  nullptr if the value at that site was not yet created. A const pointer to it
-         *          otherwise.
+         * @return  A const reference to the value.
          **/
+        inline const T & operator[](const Pos & pos) const { return _get(pos); }
+
+
+        /**
+        * Get a value at a given position. If the T object at that site does not exist, it is created.
+        * Same as the get() method.
+        *
+        * @param   pos The position.
+        *
+        * @return  A reference to the value.
+        **/
+        inline T & operator()(const Pos & pos) { return _get(pos); }
+
+
+        /**
+         * Get a value at a given position. If the T object at that site does not exist, it is created
+         * Same as the get() method. (const version).
+         *
+         * @param   pos The position.
+         *
+         * @return  A reference to the value.
+         **/
+        inline const T & operator()(const Pos & pos) const { return _get(pos); }
+
+
+        /**
+        * get a value at a given position. Dimension 1 specialization.
+        * This creates the object if it does not exist yet.
+        **/
+        inline T & operator()(int64 x) { static_assert(D == 1, "template parameter D must be 1"); return _get(Pos(x)); }
+
+        /**
+         * get a value at a given position. Dimension 1 specialization. (const version)
+         * This creates the object if it does not exist yet.
+         **/
+        inline const T & operator()(int64 x) const { static_assert(D == 1, "template parameter D must be 1"); return _get(Pos(x)); }
+
+
+        /**
+        * get a value at a given position. Dimension 2 specialization.
+        * This creates the object if it does not exist yet.
+        **/
+        inline T & operator()(int64 x, int64 y) { static_assert(D == 2, "template parameter D must be 2"); return _get(Pos(x, y)); }
+
+
+        /**
+         * get a value at a given position. Dimension 2 specialization. (const version)
+         * This creates the object if it does not exist yet.
+         **/
+        inline const T & operator()(int64 x, int64 y) const { static_assert(D == 2, "template parameter D must be 2"); return _get(Pos(x, y)); }
+
+
+        /**
+        * get a value at a given position. Dimension 3 specialization.
+        * This creates the object if it does not exist yet.
+        **/
+        inline T & operator()(int64 x, int64 y, int64 z) { static_assert(D == 3, "template parameter D must be 3"); return _get(Pos(x, y, z)); }
+
+
+        /**
+         * get a value at a given position. Dimension 3 specialization. (const version)
+         * This creates the object if it does not exist yet.
+         **/
+        inline const T & operator()(int64 x, int64 y, int64 z) const { static_assert(D == 3, "template parameter D must be 3"); return _get(Pos(x, y, z)); }
+
+
+        /**
+        * Return a pointer to the object at a given position. If the value at the site was not yet
+        * created, returns nullptr. This method does not create sites and is suited when drawing the
+        * lattice using, for instance, the LatticeDrawer class.
+        *
+        * This method is threadsafe : it is safe to call peek() while accessing the object via a get()
+        * or a set() or one of their operator [], operator() equivalents. It may even be called while
+        * the grid is being modified by assign/load operations. However, peek() should not be called
+        * while another peek() is in progress. To perform multiple simulatneous peek, use the peek
+        * version with hint below.
+        *
+        * The implementation of this method is lock free hence there is zero penalty to peeking while
+        * still reading/setting the object !
+        *
+        * @param   pos The position to peek.
+        *
+        * @return  nullptr if the value at that site was not yet created. A const pointer to it
+        *          otherwise.
+        **/
         inline const T * peek(const Pos & pos) const
             {
             _pbox c = _pcurrentpeek;
@@ -526,12 +624,12 @@ namespace mtools
                 {
                 _pleaf p = (_pleaf)(c);
                 if (p->isInBox(pos)) return(&(p->get(pos)));
-                c = p->father;  
+                c = p->father;
                 if (c == nullptr) return nullptr;
                 }
             // no we go up...
             _pnode q = (_pnode)(c);
-            while(!q->isInBox(pos))
+            while (!q->isInBox(pos))
                 {
                 if (q->father == nullptr) { _pcurrentpeek = q; return nullptr; }
                 q = (_pnode)q->father;
@@ -541,35 +639,35 @@ namespace mtools
                 {
                 _pbox b = q->getSubBox(pos);
                 if (b == nullptr) { _pcurrentpeek = q; return nullptr; }
-                if (b->isLeaf())  { _pcurrentpeek = b; return(&(((_pleaf)b)->get(pos))); }
+                if (b->isLeaf()) { _pcurrentpeek = b; return(&(((_pleaf)b)->get(pos))); }
                 q = (_pnode)b;
                 }
             }
 
 
         /**
-         * Return a pointer to the object at a given position. If the value at the site was not yet
-         * created, returns nullptr. This method does not create sites and is suited when drawing the
-         * lattice using, for instance, the LatticeDrawer class.
-         * 
-         * This version is similar to the classical peek version but use an additonal hint parameter
-         * which enable several simultaneous peek. The hint parameter must be set to nullptr for the
-         * first call and then, the value modified after a call to peek must forwarded to the next
-         * peek().
-         * 
-         *  Using this version of peek is perfectly threadsafe. The object can be simultaneously
-         *  modified, peeked (with or without hint) or even assigned/loaded !
-         * 
-         * The implementation of this method is lock free hence there is zero penalty to peeking while
-         * still reading/setting the object !
-         *
-         * @param   pos             The position to peek.
-         * @param [in,out]  hint    the hint pointer. Must be set to nullptr for the first call and then
-         *                          the same variable must be forwarded on each subsequent call.
-         *
-         * @return  nullptr if the value at that site was not yet created. A const pointer to it
-         *          otherwise.
-         **/
+        * Return a pointer to the object at a given position. If the value at the site was not yet
+        * created, returns nullptr. This method does not create sites and is suited when drawing the
+        * lattice using, for instance, the LatticeDrawer class.
+        *
+        * This version is similar to the classical peek version but use an additonal hint parameter
+        * which enable several simultaneous peek. The hint parameter must be set to nullptr for the
+        * first call and then, the value modified after a call to peek must forwarded to the next
+        * peek().
+        *
+        *  Using this version of peek is perfectly threadsafe. The object can be simultaneously
+        *  modified, peeked (with or without hint) or even assigned/loaded !
+        *
+        * The implementation of this method is lock free hence there is zero penalty to peeking while
+        * still reading/setting the object !
+        *
+        * @param   pos             The position to peek.
+        * @param [in,out]  hint    the hint pointer. Must be set to nullptr for the first call and then
+        *                          the same variable must be forwarded on each subsequent call.
+        *
+        * @return  nullptr if the value at that site was not yet created. A const pointer to it
+        *          otherwise.
+        **/
         inline const T * peek(const Pos & pos, void* & hint) const
             {
             if (hint == nullptr) { hint = _pcurrentpeek; }
@@ -599,70 +697,6 @@ namespace mtools
                 q = (_pnode)b;
                 }
             }
-
-
-        /**
-         * Get a value at a given position. If the T object at that site does not exist, it is created
-         * Same as the get() method. (const version).
-         *
-         * @param   pos The position.
-         *
-         * @return  A reference to the value.
-         **/
-        inline const T & operator()(const Pos & pos) const { return _get(pos); }
-
-
-        /**
-         * Get a value at a given position. If the T object at that site does not exist, it is created.
-         * Same as the get() method.
-         * 
-         * @param   pos The position.
-         *
-         * @return  A reference to the value.
-         **/
-        inline T & operator()(const Pos & pos) { return _get(pos); }
-
-
-        /**
-         * get a value at a given position. Dimension 1 specialization. (const version)
-         * This creates the object if it does not exist yet.
-         **/
-        inline const T & operator()(int64 x) const { static_assert(D == 1, "template parameter D must be 1"); return _get(Pos(x)); }
-
-
-        /**
-         * get a value at a given position. Dimension 2 specialization. (const version)
-         * This creates the object if it does not exist yet.
-         **/
-        inline const T & operator()(int64 x, int64 y) const { static_assert(D == 2, "template parameter D must be 2"); return _get(Pos(x, y)); }
-
-
-        /**
-         * get a value at a given position. Dimension 3 specialization. (const version)
-         * This creates the object if it does not exist yet.
-         **/
-        inline const T & operator()(int64 x, int64 y, int64 z) const { static_assert(D == 3, "template parameter D must be 3"); return _get(Pos(x, y, z)); }
-
-
-        /**
-         * get a value at a given position. Dimension 1 specialization.
-         * This creates the object if it does not exist yet.
-         **/
-        inline T & operator()(int64 x) { static_assert(D == 1, "template parameter D must be 1"); return _get(Pos(x)); }
-
-
-        /**
-         * get a value at a given position. Dimension 2 specialization.
-         * This creates the object if it does not exist yet.
-         **/
-        inline T & operator()(int64 x, int64 y) { static_assert(D == 2, "template parameter D must be 2"); return _get(Pos(x, y)); }
-
-
-        /**
-         * get a value at a given position. Dimension 3 specialization.
-         * This creates the object if it does not exist yet.
-         **/
-        inline T & operator()(int64 x, int64 y, int64 z)  { static_assert(D == 3, "template parameter D must be 3"); return _get(Pos(x, y, z)); }
 
 
         /**
