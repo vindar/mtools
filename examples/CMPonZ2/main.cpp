@@ -158,7 +158,7 @@ template<typename RandomGen> SiteZ2Box * createBox(int LX, int LY, double a, Ran
         {
         for (int i = 0;i < LX; i++)
             {
-            tab[i + j*LX].set(i, j, LX, LY, ((rgen.rand_double0() < a) ? 1.0 : 0.0));
+            tab[i + j*LX].set(i, j, LX, LY, ((Unif(rgen) < a) ? 1.0 : 0.0));
             }
         }
     return tab;
@@ -175,7 +175,7 @@ void deleteBox(SiteZ2Box * root) { delete[] root; }
 
 
 
-MT2004_64 gen;
+MT2004_64 gen(0);
 
 SiteZ2Box * Torus;
 
@@ -274,9 +274,11 @@ void test()
     cout << "done in " << Chronometer() << "ms\n\n";
 
     cout << "\n\nColoring the top Stabilizers..."; Chronometer();
+
+    bool isMC = cmpMerger.isMasterCluster();
     CMP_CLUSTERLOOP_UP(cmpMerger, it, true, true, true)
         {
-        if (cmpMerger.isMasterCluster())
+        if (isMC)
             {
             if ((*it)->listFathers.size() == 1) cmpMerger.colorStabilizer(*it, opacity(cmpMerger.rgbHeight(*it), 1), true, 3);
             }

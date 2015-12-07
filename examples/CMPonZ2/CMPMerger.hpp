@@ -89,8 +89,10 @@ template<typename T,int NBCOLOR = 1> struct CMPHook
         /**
         * Constructor
         **/
-        CMPHook() : _cmp_tag(0), _cmp_next(nullptr), _cmp_prev(nullptr), _cmp_color{ RGBc::c_TransparentWhite } //,_frontierTab(nullptr) 
-        {}
+        CMPHook() : _cmp_tag(0), _cmp_next(nullptr), _cmp_prev(nullptr)
+            {
+            for (int i = 0;i < NBCOLOR; i++) {_cmp_color[i] = RGBc::c_TransparentWhite;}
+            }
 
         /**
         * Destructor
@@ -144,7 +146,7 @@ template<typename T,int NBCOLOR = 1> struct CMPHook
 
     private:
 
-        uint64          _cmp_tag;       // used for the exploration trail
+        int64           _cmp_tag;       // used for the exploration trail
         T *             _cmp_next;	    // previous site in the cluster
         T *             _cmp_prev;	    // next site in the cluster
         cmpit<T>        _cmp_cluster;   // pointer to the cluster structure    
@@ -487,28 +489,6 @@ template<typename T> class CMPMerger
                     p = p->_cmp_next; 
                     } 
                 }
-            /*
-            // ok, the whole stabilizer is tagged with ctag1
-            ctag1++; // next tag
-            boundary1->clear();     // clear the vector
-            T * p = Cit->first;  p->_cmp_tag = ctag1; boundary1->push_back(p); // starting point of exploration
-            while (boundary1->size() > 0)
-                {
-                boundary2->clear(); // clear the vector in which we save the next boundary
-                for (size_t i = 0; i < boundary1->size(); i++) // iterate over all those sites
-                    {
-                    T * q = (*boundary1)[i]; // the current site
-                    q->_cmp_color = (blendover ? color.over(q->_cmp_color) : color);   // set the color
-                    for (int j = 0;j < q->nbneighbour(); j++)
-                        {
-                        T * N = q->neighbour(j);
-                        if (N->_cmp_tag < (ctag1 - 1)) { if (q->CMP_edge(j) < edgeval) q->CMP_edge(j) = edgeval; } // set the edges values
-                        else if (N->_cmp_tag == (ctag1 - 1)) { N->_cmp_tag = ctag1; boundary2->push_back(N); } // not yet explored so we add it
-                        }
-                    }
-                swapBoundaries();
-                }
-            */
             }
 
 
