@@ -49,7 +49,7 @@ namespace mtools
 
 
         /* max value */
-        static constexpr result_type max() { return 18446744073709551615; }
+        static constexpr result_type max() { return 18446744073709551615ULL; }
 
 
         /* return a random number */

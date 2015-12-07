@@ -42,8 +42,8 @@ namespace mtools
     **/
     template<class random_t> inline uint64 Unif_64(random_t & gen)
         {
-        if ((random_t::min() == 0)&&(random_t::max() == 4294967295)) return ((uint64)gen() + (((uint64)gen()) << 32));
-        if ((random_t::min() == 0)&&(random_t::max() == 18446744073709551615)) return gen();
+        if ((random_t::min() == 0)&&(random_t::max() == 4294967295UL)) return ((uint64)gen() + (((uint64)gen()) << 32));
+        if ((random_t::min() == 0)&&(random_t::max() == 18446744073709551615ULL)) return gen();
         MTOOLS_ERROR("Unif_64 need the random engine to have packed 32 or 64 bits. Use std::independent_bits_engine to construct a packed engine from an unpacked one.");
         return 0;
         }
@@ -59,8 +59,8 @@ namespace mtools
     **/
     template<class random_t> inline uint32 Unif_32(random_t & gen)
         {
-        if ((random_t::min() == 0) && (random_t::max() == 4294967295)) return ((uint32)gen());
-        if ((random_t::min() == 0) && (random_t::max() == 18446744073709551615)) return ((uint32)(gen() & 4294967295));
+        if ((random_t::min() == 0) && (random_t::max() == 4294967295UL)) return ((uint32)gen());
+        if ((random_t::min() == 0) && (random_t::max() == 18446744073709551615ULL)) return ((uint32)(gen() & 4294967295));
         MTOOLS_ERROR("Unif_32 need the random engine to have packed 32 or 64 bits. Use std::independent_bits_engine to construct a packed engine from an unpacked one.");
         return 0;
         }

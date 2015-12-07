@@ -79,7 +79,7 @@ namespace mtools
 
 
         /* max value */
-        static constexpr result_type max() { return 4294967295; }
+        static constexpr result_type max() { return 4294967295UL; }
 
 
         /* return a random number */
