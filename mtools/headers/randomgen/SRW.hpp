@@ -32,6 +32,19 @@ namespace mtools
 
 
         /**
+         * Make a single step for the SRW on Z.
+         *
+         * @param [in,out]  gen random generator
+         *
+         * @return  +/-1 with equal probability. 
+         **/
+        template<class random_t> inline int SRW_Z_1step(random_t & gen)
+            {
+            return ((Unif_1(gen) == 0) ? -1 : 1);
+            }
+
+
+        /**
          * Make a given number of step for the simple random walk in Z 
          *
          * @param   n   number of step to make
@@ -70,6 +83,25 @@ namespace mtools
                 if (u2 < b) break;
                 }
             return (2*k - n);
+            }
+
+
+        /**
+         * Make a single step for the SRW on Z^2.
+         *
+         * @param [in,out]  gen random generator.
+         *
+         **/
+        template<class random_t> inline void SRW_Z2_1step(iVec2 & pos, random_t & gen)
+            {
+            switch(Unif_2(gen))
+                {
+                case 0: pos.X()--; return;
+                case 1: pos.X()++; return;
+                case 2: pos.Y()--; return;
+                case 3: pos.Y()++; return;
+                }
+            MTOOLS_ERROR("wtf...");
             }
 
 
