@@ -48,7 +48,7 @@ public:
         int64 finalN = N + steps;
         while (N < finalN)
             {
-            iVec2 & rpos = Urn(gen.rand_double0()); // pick a border site
+            iVec2 & rpos = Urn(Unif(gen)); // pick a border site
             iVec2 pos = rpos; // save the position 
             Urn.remove(rpos); // remove it from the urn
             auto & S = Grid(pos);

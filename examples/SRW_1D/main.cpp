@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
     P.startPlot();                      // display the plotter
     while (P.shown())                   // loop until the plotter window is closed
         {
-        while (tab.size() < tab.capacity()) { pos += ((gen.rand_double0() < 0.5) ? -1 : 1); tab.push_back(pos); } // fill the vector with new steps of the walk until its capacity()
+        while (tab.size() < tab.capacity()) { pos += ((Unif(gen) < 0.5) ? -1 : 1); tab.push_back(pos); } // fill the vector with new steps of the walk until its capacity()
         PV.suspend(true);      // suspend access to PV while we reallocate the vector memory.
         tab.reserve(tab.capacity() + 1000000); // reserve more space
         PV.suspend(false);     // resume access to the graph.
