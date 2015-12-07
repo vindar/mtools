@@ -298,7 +298,7 @@ inline int depth(iRect & r)
     }
 
 
-RGBc colorTest(iVec2 pos)
+RGBc colorTest1A(iVec2 pos)
     {
     iRect r;
     const int * p = testG.findFullBox(pos, r);
@@ -308,6 +308,62 @@ RGBc colorTest(iVec2 pos)
     if (*p == 0) return RGBc::c_TransparentWhite;
     return RGBc::c_Black;
     }
+
+RGBc colorTest1B(iVec2 pos)
+    {
+    iRect r;
+    const int * p = testG.findFullBoxCentered(pos, r);
+    int d = depth(r);
+    if (p == nullptr) { return RGBc::jetPalette(20 - d, 0, 21); }
+    if (d != 0) { return RGBc::jetPalette(d, 0, 21); }
+    if (*p == 0) return RGBc::c_TransparentWhite;
+    return RGBc::c_Black;
+    }
+
+
+
+RGBc colorTest2A(iVec2 pos)
+    {
+    iRect r;
+    const int * p = testG.findFullBox(pos, r);
+    if (r.lx() == 0)
+        { // nothing
+        if (*p == 0) return RGBc::c_TransparentWhite;
+        return RGBc::c_Black;
+        }
+    int64 v = r.boundaryDist(pos);
+    if (v < 0) MTOOLS_ERROR("oups");
+    if (p == nullptr)
+        { 
+        if (v == 0) return RGBc::c_Salmon;
+        return RGBc::jetPalette(v, 0, 100); 
+        }
+    if (v == 0) return RGBc::c_Salmon;
+    return RGBc::jetPalette(v, 0, 100);
+    }
+
+RGBc colorTest2B(iVec2 pos)
+    {
+    iRect r;
+    const int * p = testG.findFullBoxCentered(pos, r);
+    if (r.lx() == 0)
+        { // nothing
+        if (*p == 0) return RGBc::c_TransparentWhite;
+        return RGBc::c_Black;
+        }
+    int64 v = r.boundaryDist(pos);
+    if (v < 0) MTOOLS_ERROR("oups");
+    if (p == nullptr)
+        {
+        if (v == 0) return RGBc::c_Salmon;
+        return RGBc::jetPalette(v, 0, 50);
+        }
+
+    if (v == 0) return RGBc::c_Salmon;
+    if (v > 100) return RGBc::c_Red;
+    return RGBc::c_Blue;
+    }
+
 
 RGBc colorTest2(iVec2 pos)
     {
@@ -328,108 +384,10 @@ RGBc colorTest2(iVec2 pos)
 
 
 
-template<class random_t> void testRG()
-    {
-    random_t mte;
-
-    cout << "type return  : " << typeid(random_t::result_type).name() << "\n";
-    cout << "type size : " << sizeof(random_t::result_type) << "\n";
-    cout << "min  : " << mte.min() << "\n";
-    cout << "max  : " << mte.max() << "\n";
-    cout << "random value " << Unif(mte) << "\n\n";
-
-    Chronometer();
-    double s = 0.0;
-    double v = 0.0;
-    int GN = 10000000;
-
-    int rr = 500;
-
-    double E = 0;
-    double V = 1;
-
- 
-
-    for (int i = 0;i < GN;i++)
-        {
-        iVec2 pos(0, 0);
-        iRect R(-rr,rr,-rr,rr);
-        SRW_Z2_MoveInRect(pos, R, 8, mte);
-
-        double  a = pos.X();
-        s += a; v += (a - E)*(a - E);
-        }
-
-    double mean = ((double)s) / GN;
-    double vari = ((double)v) / GN;
-
-    cout << "Mean     = " << mean   << "\n";
-    cout << "variance = " << sqrt(vari) << "\n";
-    cout << "Finished in " << Chronometer() << "\n";
-    cout << "----------------------\n\n";
-
-    }
-
-
 
 	
 int main(int argc, char* argv[])
 {
-
-
-    //testRG<std::mt19937>();
-    testRG<MT2004_64>();
-    //testRG<MT2002_32>();
-    //testRG<MT2004_64>();
-    //testRG<XorGen4096_64>();
-    //testRG<FastRNG>();
-
-
-    cout.getKey();
-    return 0;
-
-
-
-
-
-        {
-        const int M = 20000;             // taille du tableau
-        const uint64 NBSIM = 1000000; // nombre de simulation
-        const uint64 Npas = 1000006;    // nombre de pas de la marche
-        const int64 Ndiv = 1;          // nombre de pas de la marche
-
-        int64 tabF[2 * M + 1]; memset(tabF, 0, sizeof(tabF));
-        double repF[2 * M + 1]; memset(tabF, 0, sizeof(repF));
-
-        mtools::MT2004_64 g;
-
-        ProgressBar<uint64> PB(NBSIM, "Simulating..");
-        for (uint64 i = 0;i < NBSIM; i++)
-            {
-            PB.update(i);
-            int64 x = 0; //mtools::internals_randomgen::SRW_Z_makesteps(Npas, g);
-          //  cout << x << "\n";
-            if ((x % 1) != (Npas % 1)) cout << "Erreur parite!\n";
-            int64 index = 0;// M + (x / Ndiv) + (g() * 2);
-
-            if ((index < 0) || (index > 2 * M)) cout << "OUT " << index << "\n";;
-            tabF[index]++;
-            }
-        PB.hide();
-
-        for (uint64 i = 0;i < 2 * M + 1; i++) { repF[i] = (((double)tabF[i]) / ((double)NBSIM)); }
-
-        Plotter2D P;
-        auto T = makePlot2DArray(repF, 2 * M + 1,-1.0,1.0);
-        P[T];
-        T.hypograph(true);
-        P.range().fixedAspectRatio(false);
-        T.autorangeXY();
-        P.range().zoomOut();
-        P.plot();
-        }
-    return 0;
-
 
     testG.reset(0,3,false);
 
@@ -439,19 +397,38 @@ int main(int argc, char* argv[])
         for (int j = -N;j < N;j++)
             {
             if (i*i + j*j <= N*N) testG.set(i, j, 1);
-
             }
 
 
+    iRect rr;
+
+    testG.findFullBoxCentered({ 1060,241 }, rr);
+    cout << rr << "\n";
+    cout << rr.boundaryDist({ 1060,241 }) << "\n";
+
+
+    testG.findFullBoxCentered({ 1059,241 }, rr);
+    cout << rr << "\n";
+    cout << rr.boundaryDist({ 1059,241 }) << "\n";
+
+    cout.getKey();
+    //return 0;
+
     Plotter2D Plotter;
-    auto L = makePlot2DLattice<colorTest>();
-    auto L2 = makePlot2DLattice<colorTest2>();
-    Plotter[L];
-    Plotter[L2];
+    auto L1A = makePlot2DLattice<colorTest1A>();
+    auto L1B = makePlot2DLattice<colorTest1B>();
+
+    auto L2A = makePlot2DLattice<colorTest2A>("normal");
+    auto L2B = makePlot2DLattice<colorTest2B>("centered");
+    //    auto L3 = makePlot2DLattice<colorTest3>();
+//    auto L4 = makePlot2DLattice<colorTest4>();
+    Plotter[L2A];
+    Plotter[L2B];
+//    Plotter[L2];
+//    Plotter[L3];
+//    Plotter[L4];
     Plotter.gridObject(true)->setUnitCells();
-
     Plotter.plot();
-
 
 	return 0;
 }
