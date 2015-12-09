@@ -38,7 +38,9 @@ namespace mtools
         bool _insures(const std::string & file, int line, const std::string & s);
         bool _assert(const std::string & file, int line, const std::string & s);
         void _debugs(const std::string & file, int line, const std::string & s);
-    }
+        void _throws_debug(const std::string & file, int line, const std::string & s);
+        void _throws_nodebug(const std::string & file, int line, const std::string & s);
+        }
 }
 
 
@@ -75,8 +77,10 @@ namespace mtools
  * DEBUG macro for printing out info on clog
  **/
 #define MTOOLS_DEBUG(_ex) mtools::internals_error::_debugs(__FILE__ , __LINE__,(std::string("") + (_ex)))
+#define MTOOLS_THROW(_ex) mtools::internals_error::_throws_debug(__FILE__ , __LINE__,(std::string("") + (_ex)))
 #else
 #define MTOOLS_DEBUG(_ex) ((void)0)
+#define MTOOLS_THROW(_ex) mtools::internals_error::_throws_nodebug(__FILE__ , __LINE__,(std::string("") + (_ex)))
 #endif
 
 

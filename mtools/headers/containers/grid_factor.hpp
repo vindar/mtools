@@ -407,17 +407,17 @@ namespace mtools
                 {
                 std::lock_guard<std::recursive_mutex> lock(_peekmut); // protect from safePeek()
                 _reset(-1, 0, true); // reset the object, do not create the root node
-                uint64 ver;         ar & ver;      if (ver != 1) { MTOOLS_DEBUG("wrong version"); throw ""; }
-                uint64 d;           ar & d;        if (d != D) { MTOOLS_DEBUG("wrong dimension"); throw ""; }
-                uint64 r;           ar & r;        if (r != R) { MTOOLS_DEBUG("wrong R parameter"); throw ""; }
+                uint64 ver;         ar & ver;      if (ver != 1) { MTOOLS_THROW("wrong version");}
+                uint64 d;           ar & d;        if (d != D) { MTOOLS_THROW("wrong dimension");}
+                uint64 r;           ar & r;        if (r != R) { MTOOLS_THROW("wrong R parameter");}
                 std::string stype;  ar & stype;
-                uint64 sizeofT;     ar & sizeofT;  if (sizeofT != sizeof(T)) { MTOOLS_DEBUG("wrong sizeof(T)"); throw ""; }
+                uint64 sizeofT;     ar & sizeofT;  if (sizeofT != sizeof(T)) { MTOOLS_THROW("wrong sizeof(T)");}
                 ar & _callDtors;
                 ar & _rangemin;
                 ar & _rangemax;
                 ar & _minSpec;
                 ar & _maxSpec;
-                if (((int64)NB_SPECIAL) < _specialRange()) { MTOOLS_DEBUG("NB_SPECIAL too small to fit all special values"); throw ""; }
+                if (((int64)NB_SPECIAL) < _specialRange()) { MTOOLS_THROW("NB_SPECIAL too small to fit all special values");}
                 for (int64 i = 0; i < _specialRange(); i++)
                     {
                     bool b; ar & b;
@@ -435,8 +435,7 @@ namespace mtools
                 {
                 callDtors(false); // prevent calling the destructor of object when we release memory (since we do not know whch one may be in an invalid state)
                 reset(0, -1, true); // put the object in a valid state
-                MTOOLS_DEBUG("Aborting deserialization of Grid_factor object");
-                throw; // rethrow
+                MTOOLS_THROW("Aborting deserialization of Grid_factor object");
                 }
             }
 
@@ -1821,8 +1820,7 @@ namespace mtools
                 for (size_t i = 0; i < metaprog::power<3, D>::value; ++i) { p->tab[i] = _deserializeTree(ar, p); }
                 return p;
                 }
-            MTOOLS_DEBUG(std::string("Unknown tag [") + std::string(1,c) + "]");
-            throw "";
+            MTOOLS_THROW(std::string("Unknown tag [") + std::string(1,c) + "]");
             }
 
 

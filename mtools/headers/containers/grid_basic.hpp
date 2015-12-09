@@ -264,17 +264,17 @@ namespace mtools
             try
                 {
                 _destroyTree();
-                uint64 ver;         ar & ver;      if (ver != 1) { MTOOLS_DEBUG("wrong version"); throw ""; }
-                uint64 d;           ar & d;        if (d != D) { MTOOLS_DEBUG("wrong dimension"); throw ""; }
-                uint64 r;           ar & r;        if (r != R) { MTOOLS_DEBUG("wrong R parameter"); throw ""; }
+                uint64 ver;         ar & ver;      if (ver != 1) { MTOOLS_THROW("wrong version");}
+                uint64 d;           ar & d;        if (d != D) { MTOOLS_THROW("wrong dimension");}
+                uint64 r;           ar & r;        if (r != R) { MTOOLS_THROW("wrong R parameter");}
                 std::string stype;  ar & stype;
-                uint64 sizeofT;     ar & sizeofT;  if (sizeofT != sizeof(T)) { MTOOLS_DEBUG("wrong sizeof(T)"); throw ""; }
+                uint64 sizeofT;     ar & sizeofT;  if (sizeofT != sizeof(T)) { MTOOLS_THROW("wrong sizeof(T)");}
                 ar & _callDtors;
                 ar & _rangemin;
                 ar & _rangemax;
                 int64 minSpec; ar & minSpec;
                 int64 maxSpec; ar & maxSpec;
-                if (minSpec <= maxSpec) { MTOOLS_DEBUG("The file contain special objects hence must be opened using a Grid_factor instead of a Grid_basic object"); throw ""; }
+                if (minSpec <= maxSpec) { MTOOLS_THROW("The file contain special objects hence must be opened using a Grid_factor instead of a Grid_basic object"); }
                 _pcurrent = _deserializeTree(ar, nullptr);
                 _pcurrentpeek = (_pbox)_pcurrent;
                 }
@@ -284,8 +284,7 @@ namespace mtools
                 _destroyTree();    // object are dumped into oblivion, may result in a memory leak.
                 _callDtors = true;
                 _createBaseNode();
-                MTOOLS_DEBUG("Aborting deserialization of Grid_basic object");
-                throw; // rethrow
+                MTOOLS_THROW("Aborting deserialization of Grid_basic object");
                 }
             }
 
@@ -1444,8 +1443,7 @@ namespace mtools
                 for (size_t i = 0; i < metaprog::power<3, D>::value; ++i) { p->tab[i] = _deserializeTree(ar, p); }
                 return p;
                 }
-            MTOOLS_DEBUG(std::string("Unknown tag [") + std::string(1, c) + "]");
-            throw "";
+            MTOOLS_THROW(std::string("Unknown tag [") + std::string(1, c) + "]");
             }
 
 

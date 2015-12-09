@@ -390,12 +390,12 @@ namespace mtools
                 if (_compress)
                     {
                     _gzhandle = gzopen(_filename.c_str(), "wb4");
-                    if (_gzhandle == nullptr) throw "OArchive error";
-                    if (gzbuffer(_gzhandle, GZIPBUFFERSIZE) != 0) throw "OArchive error";
+                    if (_gzhandle == nullptr) { MTOOLS_THROW("OArchive error (openfile 1)"); }
+                    if (gzbuffer(_gzhandle, GZIPBUFFERSIZE) != 0) { MTOOLS_THROW("OArchive error (openfile 2)");}
                     return;
                     }
                 _handle = fopen(_filename.c_str(), "wb");
-                if (_handle == nullptr) throw "OArchive error";
+                if (_handle == nullptr) { MTOOLS_THROW("OArchive error (openfile 3)");}
                 return;
                 }
 
@@ -405,8 +405,8 @@ namespace mtools
                 {
                 newline();
                 _flush(true);
-                if (_compress) { if (gzclose(_gzhandle) != Z_OK) throw "OArchive error"; return; }
-                if (fclose(_handle) != 0) throw "OArchive error";
+                if (_compress) { if (gzclose(_gzhandle) != Z_OK) { MTOOLS_THROW("OArchive error (closefile 1)"); } return; }
+                if (fclose(_handle) != 0) { MTOOLS_THROW("OArchive error (closefile 2)"); }
                 return;
                 }
 
@@ -437,11 +437,11 @@ namespace mtools
                     { // ok we do flush
                     if (_compress)
                         {
-                        if ((unsigned int)gzwrite(_gzhandle, _writeBuffer.c_str(), (unsigned int)_writeBuffer.length()) != _writeBuffer.length()) throw "OArchive error";
+                        if ((unsigned int)gzwrite(_gzhandle, _writeBuffer.c_str(), (unsigned int)_writeBuffer.length()) != _writeBuffer.length()) { MTOOLS_THROW("OArchive error (_flush 1)"); }
                         }
                     else
                         {
-                        if (fwrite(_writeBuffer.c_str(), 1, _writeBuffer.length(), _handle) != _writeBuffer.length()) throw "OArchive error";
+                        if (fwrite(_writeBuffer.c_str(), 1, _writeBuffer.length(), _handle) != _writeBuffer.length()) { MTOOLS_THROW("OArchive error (_flush 2)"); }
                         }
                     _writeBuffer.clear();
                     }
@@ -544,7 +544,7 @@ namespace mtools
                 {
                 if (sizeof(T) == 0) return(*this);
                 _nbitem++;
-                if (readTokenFromArchive(&obj, sizeof(T)) != sizeof(obj)) { throw "IArchive error"; }
+                if (readTokenFromArchive(&obj, sizeof(T)) != sizeof(obj)) { MTOOLS_THROW("IArchive error (opaque)"); }
                 return(*this);
                 }
 
@@ -584,7 +584,7 @@ namespace mtools
                 MTOOLS_ASSERT(p != nullptr);
                 if (len*sizeof(T) == 0) return(*this);
                 _nbitem++;
-                if (readTokenFromArchive(p, sizeof(T)*len) != (sizeof(T)*len)) { throw "IArchive error"; }
+                if (readTokenFromArchive(p, sizeof(T)*len) != (sizeof(T)*len)) { MTOOLS_THROW("IArchive error (opaquearray)"); }
                 return(*this);
                 }
 
@@ -628,7 +628,7 @@ namespace mtools
                 const char * buf = _readBuffer + _readPos; // compute the position of the first char available in the buffer
                 size_t nb = _readSize - _readPos;          // number of chars available starting from this position
                 bool found = findNextToken<IArchive::_refillStatic>(buf, nb, this); // find the beginning of the next token
-                if (!found) throw "IArchive error"; // no more token found
+                if (!found) { MTOOLS_THROW("IArchive error"); } // no more token found
                 const char * buf2 = buf + nb; // ok, token found at buf2 = buf + nb
                 size_t nb2 = (_readBuffer + _readSize) - buf2; // number of byte remaining in the buffer starting at buf2
                 size_t l = readToken<IArchive::_refillStatic>(dest_buffer, dest_len, buf2, nb2, this); // read the token
@@ -645,7 +645,7 @@ namespace mtools
                 const char * buf = _readBuffer + _readPos; // compute the position of the first char available in the buffer
                 size_t nb = _readSize - _readPos;          // number of chars available starting from this position
                 bool found = findNextToken<IArchive::_refillStatic>(buf, nb, this); // find the beginning of the next token
-                if (!found) throw "IArchive error"; // no more token found
+                if (!found) { MTOOLS_THROW("IArchive error"); } // no more token found
                 const char * buf2 = buf + nb; // ok, token found at buf2 = buf + nb
                 size_t nb2 = (_readBuffer + _readSize) - buf2; // number of byte remaining in the buffer starting at buf2
                 size_t l = readToken<IArchive::_refillStatic>(dest, buf2, nb2, this); // read the token
@@ -662,7 +662,7 @@ namespace mtools
             const char * refill(size_t & len)
                 {
                 int l = gzread(_gzhandle, _readBuffer, READBUFFERSIZE);
-                if (l < 0) throw "IArchive error"; // something went wrong
+                if (l < 0) { MTOOLS_THROW("IArchive error"); } // something went wrong
                 _readSize = (size_t)l; // save the new number of char in the buffer
                 len = _readSize;
                 if (l == 0) { return nullptr; } // end of file
@@ -673,15 +673,15 @@ namespace mtools
             inline void _openFile()
                 {
                 _gzhandle = gzopen(_filename.c_str(), "rb");
-                if (_gzhandle == nullptr) throw "IArchive error";
-                if (gzbuffer(_gzhandle, GZIPBUFFERSIZE) != 0) throw "IArchive error";
+                if (_gzhandle == nullptr) { MTOOLS_THROW("IArchive error"); }
+                if (gzbuffer(_gzhandle, GZIPBUFFERSIZE) != 0) { MTOOLS_THROW("IArchive error"); }
                 return;
                 }
 
             /* close the archive file */
             inline void _closeFile()
                 {
-                if (gzclose(_gzhandle) != Z_OK) throw "IArchive error";
+                if (gzclose(_gzhandle) != Z_OK) { MTOOLS_THROW("IArchive error"); }
                 return;
                 }
 

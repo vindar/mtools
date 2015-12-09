@@ -252,7 +252,7 @@ namespace mtools
         inline const char* readNoMore(size_t & len, void * data) { return ((const char*)nullptr); }
 
         /* write a char in the output buffer */
-        inline void _readToken_put(unsigned char * dest, size_t dest_len, size_t & m, unsigned char c) { if (m >= dest_len) throw "destination buffer too small"; dest[m++] = c; }
+        inline void _readToken_put(unsigned char * dest, size_t dest_len, size_t & m, unsigned char c) { if (m >= dest_len) MTOOLS_THROW("destination buffer too small"); dest[m++] = c; }
 
         /* write a char in the output buffer */
         inline void _readToken_put(std::string & dest, size_t & m, unsigned char c) { dest.push_back(c); m++; }
@@ -273,7 +273,7 @@ namespace mtools
                 {
                 auto old_source = source; auto old_len = source_len; n = 0;
                 source = (const unsigned char *)inputFun(source_len, data);
-                if (source == nullptr) { if (usequote) throw "parse error"; source = old_source; source_len = old_len; eof = true; return 0; }
+                if (source == nullptr) { if (usequote) MTOOLS_THROW("parse error"); source = old_source; source_len = old_len; eof = true; return 0; }
 				MTOOLS_ASSERT(source_len > 0); // when a non null pointer is returned, there should always be at least one byte to read...
                 }
             return source[n++];
@@ -389,7 +389,7 @@ namespace mtools
                 {
                 // special escape sequence
                 c = internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof);
-                if (eof) throw "parse error";
+                if (eof) MTOOLS_THROW("parse error");
                 if (c == 'a') { internals_stringfct::_readToken_put(dest, dest_len, m, '\a'); continue; } // predefined escape sequences
                 if (c == 'b') { internals_stringfct::_readToken_put(dest, dest_len, m, '\b'); continue; } //
                 if (c == 'f') { internals_stringfct::_readToken_put(dest, dest_len, m, '\f'); continue; } //
@@ -418,31 +418,31 @@ namespace mtools
                 if (c == 'u')
                     { // 16bit unicode sequence
                     char16_t code, w;
-                    code = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (code > 15)  throw "parse error";
-                    w = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (w > 15)  throw "parse error"; code *= 16; code += w;
-                    w = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (w > 15)  throw "parse error"; code *= 16; code += w;
-                    w = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (w > 15)  throw "parse error"; code *= 16; code += w;
+                    code = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (code > 15)  MTOOLS_THROW("parse error");
+                    w = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (w > 15)  MTOOLS_THROW("parse error"); code *= 16; code += w;
+                    w = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (w > 15)  MTOOLS_THROW("parse error"); code *= 16; code += w;
+                    w = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (w > 15)  MTOOLS_THROW("parse error"); code *= 16; code += w;
                     // TODO: fix this
                     //   std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> convert;
                     //   std::string res = convert.to_bytes(std::u16string(1, code));
-                    //   for (size_t i = 0;i < res.length(); i++) { if (m >= dest_len) { throw "buffer too small"; } dest[m] = res[i]; m++;}
+                    //   for (size_t i = 0;i < res.length(); i++) { if (m >= dest_len) { MTOOLS_THROW("buffer too small"); } dest[m] = res[i]; m++;}
                     continue;
                     }
                 if (c == 'U')
                     { // 32 bit unicode sequence
                     char16_t code, w;
-                    code = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (code > 15)  throw "parse error";
-                    w = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (w > 15)  throw "parse error"; code *= 16; code += w;
-                    w = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (w > 15)  throw "parse error"; code *= 16; code += w;
-                    w = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (w > 15)  throw "parse error"; code *= 16; code += w;
-                    w = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (w > 15)  throw "parse error"; code *= 16; code += w;
-                    w = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (w > 15)  throw "parse error"; code *= 16; code += w;
-                    w = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (w > 15)  throw "parse error"; code *= 16; code += w;
-                    w = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (w > 15)  throw "parse error"; code *= 16; code += w;
+                    code = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (code > 15)  MTOOLS_THROW("parse error");
+                    w = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (w > 15)  MTOOLS_THROW("parse error"); code *= 16; code += w;
+                    w = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (w > 15)  MTOOLS_THROW("parse error"); code *= 16; code += w;
+                    w = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (w > 15)  MTOOLS_THROW("parse error"); code *= 16; code += w;
+                    w = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (w > 15)  MTOOLS_THROW("parse error"); code *= 16; code += w;
+                    w = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (w > 15)  MTOOLS_THROW("parse error"); code *= 16; code += w;
+                    w = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (w > 15)  MTOOLS_THROW("parse error"); code *= 16; code += w;
+                    w = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (w > 15)  MTOOLS_THROW("parse error"); code *= 16; code += w;
                     // TODO: fix this
                     // std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> convert;
                     //   std::string res = convert.to_bytes(std::u32string(1, code));
-                    //   for (size_t i = 0;i < res.length(); i++) { if (m >= dest_len) { throw "buffer too small"; } dest[m] = res[i]; m++; }
+                    //   for (size_t i = 0;i < res.length(); i++) { if (m >= dest_len) { MTOOLS_THROW("buffer too small"); } dest[m] = res[i]; m++; }
                     continue;
                     }
                 if ((c >= '0') && (c <= '7'))
@@ -457,7 +457,7 @@ namespace mtools
                     internals_stringfct::_readToken_put(dest, dest_len, m, v);
                     continue;
                     }
-                throw "parse error"; // wrong escaped sequence
+                MTOOLS_THROW("parse error"); // wrong escaped sequence
                 }
             // normal char
             internals_stringfct::_readToken_put(dest, dest_len, m, c);
@@ -520,7 +520,7 @@ namespace mtools
                 {
                 // special escape sequence
                 c = internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof);
-                if (eof) throw "parse error";
+                if (eof) MTOOLS_THROW("parse error");
                 if (c == 'a') { internals_stringfct::_readToken_put(dest, m, '\a'); continue; } // predefined escape sequences
                 if (c == 'b') { internals_stringfct::_readToken_put(dest, m, '\b'); continue; } //
                 if (c == 'f') { internals_stringfct::_readToken_put(dest, m, '\f'); continue; } //
@@ -549,31 +549,31 @@ namespace mtools
                 if (c == 'u')
                     { // 16bit unicode sequence
                     char16_t code, w;
-                    code = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (code > 15)  throw "parse error";
-                    w = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (w > 15)  throw "parse error"; code *= 16; code += w;
-                    w = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (w > 15)  throw "parse error"; code *= 16; code += w;
-                    w = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (w > 15)  throw "parse error"; code *= 16; code += w;
+                    code = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (code > 15)  MTOOLS_THROW("parse error");
+                    w = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (w > 15)  MTOOLS_THROW("parse error"); code *= 16; code += w;
+                    w = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (w > 15)  MTOOLS_THROW("parse error"); code *= 16; code += w;
+                    w = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (w > 15)  MTOOLS_THROW("parse error"); code *= 16; code += w;
                     // TODO: fix this
                     //   std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> convert;
                     //   std::string res = convert.to_bytes(std::u16string(1, code));
-                    //   for (size_t i = 0;i < res.length(); i++) { if (m >= dest_len) { throw "buffer too small"; } dest[m] = res[i]; m++;}
+                    //   for (size_t i = 0;i < res.length(); i++) { if (m >= dest_len) { MTOOLS_THROW("buffer too small"); } dest[m] = res[i]; m++;}
                     continue;
                     }
                 if (c == 'U')
                     { // 32 bit unicode sequence
                     char16_t code, w;
-                    code = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (code > 15)  throw "parse error";
-                    w = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (w > 15)  throw "parse error"; code *= 16; code += w;
-                    w = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (w > 15)  throw "parse error"; code *= 16; code += w;
-                    w = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (w > 15)  throw "parse error"; code *= 16; code += w;
-                    w = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (w > 15)  throw "parse error"; code *= 16; code += w;
-                    w = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (w > 15)  throw "parse error"; code *= 16; code += w;
-                    w = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (w > 15)  throw "parse error"; code *= 16; code += w;
-                    w = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (w > 15)  throw "parse error"; code *= 16; code += w;
+                    code = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (code > 15)  MTOOLS_THROW("parse error");
+                    w = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (w > 15)  MTOOLS_THROW("parse error"); code *= 16; code += w;
+                    w = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (w > 15)  MTOOLS_THROW("parse error"); code *= 16; code += w;
+                    w = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (w > 15)  MTOOLS_THROW("parse error"); code *= 16; code += w;
+                    w = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (w > 15)  MTOOLS_THROW("parse error"); code *= 16; code += w;
+                    w = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (w > 15)  MTOOLS_THROW("parse error"); code *= 16; code += w;
+                    w = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (w > 15)  MTOOLS_THROW("parse error"); code *= 16; code += w;
+                    w = (char16_t)internals_stringfct::_readToken_hexValue(internals_stringfct::_readToken_get<inputFun>(source, source_len, n, usequote, data, eof)); if (w > 15)  MTOOLS_THROW("parse error"); code *= 16; code += w;
                     // TODO: fix this
                     // std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> convert;
                     //   std::string res = convert.to_bytes(std::u32string(1, code));
-                    //   for (size_t i = 0;i < res.length(); i++) { if (m >= dest_len) { throw "buffer too small"; } dest[m] = res[i]; m++; }
+                    //   for (size_t i = 0;i < res.length(); i++) { if (m >= dest_len) { MTOOLS_THROW("buffer too small"); } dest[m] = res[i]; m++; }
                     continue;
                     }
                 if ((c >= '0') && (c <= '7'))
@@ -588,7 +588,7 @@ namespace mtools
                     internals_stringfct::_readToken_put(dest, m, v);
                     continue;
                     }
-                throw "parse error"; // wrong escaped sequence
+                MTOOLS_THROW("parse error"); // wrong escaped sequence
                 }
             // normal char
             internals_stringfct::_readToken_put(dest, m, c);

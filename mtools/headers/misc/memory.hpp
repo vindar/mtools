@@ -138,7 +138,7 @@ namespace mtools
                     if (_m_currentpool == nullptr)
                         {
                         _m_currentpool = (_pool*)malloc(sizeof(_pool));
-                        if (_m_currentpool == nullptr) { throw std::bad_alloc(); }
+                        if (_m_currentpool == nullptr) { MTOOLS_DEBUG("SingleAllocator, bad_alloc"); throw std::bad_alloc(); }
                         MTOOLS_ASSERT(((size_t)_m_currentpool) % 2 == 0); // alignement is at least mod 2
                         _m_totmem += sizeof(_pool);
                         _m_firstpool = _m_currentpool;
@@ -149,7 +149,7 @@ namespace mtools
                         if (_m_currentpool->next == nullptr)
                             {
                             _m_currentpool->next = (_pool*)malloc(sizeof(_pool));
-                            if (_m_currentpool == nullptr) { throw std::bad_alloc(); }
+                            if (_m_currentpool == nullptr) { MTOOLS_DEBUG("SingleAllocator, bad_alloc"); throw std::bad_alloc(); }
                             MTOOLS_ASSERT(((size_t)_m_currentpool->next) % 2 == 0); // alignement is at least mod 2
                             _m_totmem += sizeof(_pool);
                             _m_currentpool->next->next = nullptr;

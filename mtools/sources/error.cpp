@@ -25,7 +25,7 @@
 #include "graphics/customcimg.hpp"
 #include "io/logfile.hpp"
 
-
+#include <iostream>
 
 namespace mtools
 {
@@ -47,6 +47,8 @@ namespace mtools
         void _error(const std::string & file, int line,const std::string & s)
         {
             std::string msg = std::string("File : ") + truncateFilename(file) + "\nLine : " + std::to_string(line) + "\nMessage : " + s;
+            {mtools::LogFile lf("abort.txt"); lf << "MTOOLS_ERROR : " << msg.c_str() << "\n\n";}
+            std::cerr << "MTOOLS_ERROR : " << msg.c_str() << "\n\n";
             cimg_library::cimg::dialog("*** MTOOLS ERROR *** ", msg.c_str());
             exit(EXIT_FAILURE);
         }
@@ -55,6 +57,8 @@ namespace mtools
         bool _insures(const std::string & file, int line, const std::string & s)
         {
             std::string msg = std::string("File : ") + truncateFilename(file) + "\nLine : " + std::to_string(line) + "\nCondition : " + s;
+            {mtools::LogFile lf("abort.txt"); lf << "MTOOLS_INSURE FAILURE : " << msg.c_str() << "\n\n";}
+            std::cerr << "MTOOLS_INSURE FAILURE : " << msg.c_str() << "\n\n";
             cimg_library::cimg::dialog("*** MTOOLS INSURE FAILURE *** ", msg.c_str());
             exit(EXIT_FAILURE);
             return true;
@@ -64,6 +68,8 @@ namespace mtools
         bool _assert(const std::string & file, int line, const std::string & s)
         {
             std::string msg = std::string("File : ") + truncateFilename(file) + "\nLine : " + std::to_string(line) + "\nCondition : " + s;
+            {mtools::LogFile lf("abort.txt"); lf << "MTOOLS_ASSERT FAILURE : " << msg.c_str() << "\n\n";}
+            std::cerr << "MTOOLS_ASSERT FAILURE : " << msg.c_str() << "\n\n";
             cimg_library::cimg::dialog("*** MTOOLS ASSERT FAILURE *** ", msg.c_str());
             exit(EXIT_FAILURE);
             return true;
@@ -78,7 +84,20 @@ namespace mtools
             return;
         }
 
-        
+     
+        void _throws_debug(const std::string & file, int line, const std::string & s)
+            {
+            _debugs(file, line, s);
+            throw s.c_str();
+            }
+
+
+        void _throws_nodebug(const std::string & file, int line, const std::string & s)
+            {
+            throw s.c_str();
+            }
+
+
     }
 
 }

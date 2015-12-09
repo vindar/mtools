@@ -488,7 +488,7 @@ private:
     static inline void _read(uint64 & nbitem, IArchive & ar, typeT & obj, mtools::metaprog::dummint<mtools::metaprog::is_serializable<int>::FUNCTION_DESERIALIZE> dum) { typeT * po = &obj; deserialize(ar, *po); return; }
     static inline void _read(uint64 & nbitem, IArchive & ar, typeT & obj, mtools::metaprog::dummint<mtools::metaprog::is_serializable<int>::METHOD_SERIALIZE> dum) { typeT * po = &obj; po->serialize(ar); return; }
     static inline void _read(uint64 & nbitem, IArchive & ar, typeT & obj, mtools::metaprog::dummint<mtools::metaprog::is_serializable<int>::FUNCTION_SERIALIZE> dum) { typeT * po = &obj; serialize(ar, *po); return; }
-    static inline void _read(uint64 & nbitem, IArchive & ar, typeT & obj, mtools::metaprog::dummint<mtools::metaprog::is_serializable<int>::NONE> dum)  { nbitem++; if (ar.readTokenFromArchive(&obj, sizeof(obj)) != sizeof(obj)) throw "IArchive error"; }
+    static inline void _read(uint64 & nbitem, IArchive & ar, typeT & obj, mtools::metaprog::dummint<mtools::metaprog::is_serializable<int>::NONE> dum) { nbitem++; if (ar.readTokenFromArchive(&obj, sizeof(obj)) != sizeof(obj)) { MTOOLS_THROW("IArchive error"); } }
 
     IArchiveHelper() = delete;                  // cannot be created, static methods only.
     ~IArchiveHelper() = delete;                 //
@@ -501,7 +501,7 @@ template<> class IArchiveHelper < char >
 {
 public:
     typedef char typeT;
-    static inline void read(uint64 & nbitem, IArchive & ar, typeT & obj) {if (ar.readTokenFromArchive(&obj, 1) != 1) throw "IArchive error"; nbitem++; return;}
+    static inline void read(uint64 & nbitem, IArchive & ar, typeT & obj) { if (ar.readTokenFromArchive(&obj, 1) != 1) { MTOOLS_THROW("IArchive error (char)");} nbitem++; return; }
 };
 
 /* specialization for signed char */
@@ -509,7 +509,7 @@ template<> class IArchiveHelper < signed char >
 {
 public:
     typedef signed char typeT;
-    static inline void read(uint64 & nbitem, IArchive & ar, typeT & obj) { int64 v; ar._tempstr.clear(); ar.readTokenFromArchive(ar._tempstr); if (readTokenI(ar._tempstr, v) != ar._tempstr.length()) {throw "IArchive error"; } obj = (typeT)v; nbitem++; }
+    static inline void read(uint64 & nbitem, IArchive & ar, typeT & obj) { int64 v; ar._tempstr.clear(); ar.readTokenFromArchive(ar._tempstr); if (readTokenI(ar._tempstr, v) != ar._tempstr.length()) { MTOOLS_THROW("IArchive error (signed char)"); } obj = (typeT)v; nbitem++; }
 };
 
 /* specialization for unsigned char */
@@ -517,7 +517,7 @@ template<> class IArchiveHelper < unsigned char >
 {
 public:
     typedef unsigned char typeT;
-    static inline void read(uint64 & nbitem, IArchive & ar, typeT & obj) { uint64 v; ar._tempstr.clear(); ar.readTokenFromArchive(ar._tempstr); if (readTokenI(ar._tempstr, v) != ar._tempstr.length()) {throw "IArchive error"; } obj = (typeT)v; nbitem++; }
+    static inline void read(uint64 & nbitem, IArchive & ar, typeT & obj) { uint64 v; ar._tempstr.clear(); ar.readTokenFromArchive(ar._tempstr); if (readTokenI(ar._tempstr, v) != ar._tempstr.length()) { MTOOLS_THROW("IArchive error (unsigned char)"); } obj = (typeT)v; nbitem++; }
 };
 
 /* specialization for short int */
@@ -525,7 +525,7 @@ template<> class IArchiveHelper < short int >
 {
 public:
     typedef short int typeT;
-    static inline void read(uint64 & nbitem, IArchive & ar, typeT & obj) { int64 v; ar._tempstr.clear(); ar.readTokenFromArchive(ar._tempstr); if (readTokenI(ar._tempstr, v) != ar._tempstr.length()) {throw "IArchive error"; } obj = (typeT)v; nbitem++; }
+    static inline void read(uint64 & nbitem, IArchive & ar, typeT & obj) { int64 v; ar._tempstr.clear(); ar.readTokenFromArchive(ar._tempstr); if (readTokenI(ar._tempstr, v) != ar._tempstr.length()) { MTOOLS_THROW("IArchive error (short)");  } obj = (typeT)v; nbitem++; }
 };
 
 /* specialization for unsigned short int */
@@ -533,7 +533,7 @@ template<> class IArchiveHelper < unsigned short int >
 {
 public:
     typedef unsigned short int typeT;
-    static inline void read(uint64 & nbitem, IArchive & ar, typeT & obj) { uint64 v; ar._tempstr.clear(); ar.readTokenFromArchive(ar._tempstr); if (readTokenI(ar._tempstr, v) != ar._tempstr.length()) {throw "IArchive error"; } obj = (typeT)v; nbitem++; }
+    static inline void read(uint64 & nbitem, IArchive & ar, typeT & obj) { uint64 v; ar._tempstr.clear(); ar.readTokenFromArchive(ar._tempstr); if (readTokenI(ar._tempstr, v) != ar._tempstr.length()) { MTOOLS_THROW("IArchive error (unsigned short)"); } obj = (typeT)v; nbitem++; }
 };
 
 /* specialization for int */
@@ -541,7 +541,7 @@ template<> class IArchiveHelper < int >
 {
 public:
     typedef int typeT;
-    static inline void read(uint64 & nbitem, IArchive & ar, typeT & obj) { int64 v; ar._tempstr.clear(); ar.readTokenFromArchive(ar._tempstr); if (readTokenI(ar._tempstr, v) != ar._tempstr.length()) {throw "IArchive error"; } obj = (typeT)v; nbitem++; }
+    static inline void read(uint64 & nbitem, IArchive & ar, typeT & obj) { int64 v; ar._tempstr.clear(); ar.readTokenFromArchive(ar._tempstr); if (readTokenI(ar._tempstr, v) != ar._tempstr.length()) { MTOOLS_THROW("IArchive error (int)"); } obj = (typeT)v; nbitem++; }
 };
 
 /* specialization for unsigned int */
@@ -549,7 +549,7 @@ template<> class IArchiveHelper < unsigned int >
 {
 public:
     typedef unsigned int typeT;
-    static inline void read(uint64 & nbitem, IArchive & ar, typeT & obj) { uint64 v; ar._tempstr.clear(); ar.readTokenFromArchive(ar._tempstr); if (readTokenI(ar._tempstr, v) != ar._tempstr.length()) {throw "IArchive error"; } obj = (typeT)v; nbitem++; }
+    static inline void read(uint64 & nbitem, IArchive & ar, typeT & obj) { uint64 v; ar._tempstr.clear(); ar.readTokenFromArchive(ar._tempstr); if (readTokenI(ar._tempstr, v) != ar._tempstr.length()) { MTOOLS_THROW("IArchive error (unsigned int)"); } obj = (typeT)v; nbitem++; }
 };
 
 /* specialization for long int */
@@ -557,7 +557,7 @@ template<> class IArchiveHelper < long int >
 {
 public:
     typedef long int typeT;
-    static inline void read(uint64 & nbitem, IArchive & ar, typeT & obj) { int64 v; ar._tempstr.clear(); ar.readTokenFromArchive(ar._tempstr); if (readTokenI(ar._tempstr, v) != ar._tempstr.length()) {throw "IArchive error"; } obj = (typeT)v; nbitem++; }
+    static inline void read(uint64 & nbitem, IArchive & ar, typeT & obj) { int64 v; ar._tempstr.clear(); ar.readTokenFromArchive(ar._tempstr); if (readTokenI(ar._tempstr, v) != ar._tempstr.length()) { MTOOLS_THROW("IArchive error (long int)"); } obj = (typeT)v; nbitem++; }
 };
 
 /* specialization for unsigned long int */
@@ -565,7 +565,7 @@ template<> class IArchiveHelper < unsigned long int >
 {
 public:
     typedef unsigned long int typeT;
-    static inline void read(uint64 & nbitem, IArchive & ar, typeT & obj) { uint64 v; ar._tempstr.clear(); ar.readTokenFromArchive(ar._tempstr); if (readTokenI(ar._tempstr, v) != ar._tempstr.length()) {throw "IArchive error"; } obj = (typeT)v; nbitem++; }
+    static inline void read(uint64 & nbitem, IArchive & ar, typeT & obj) { uint64 v; ar._tempstr.clear(); ar.readTokenFromArchive(ar._tempstr); if (readTokenI(ar._tempstr, v) != ar._tempstr.length()) { MTOOLS_THROW("IArchive error (unsigned long int)"); } obj = (typeT)v; nbitem++; }
 };
 
 /* specialization for long long int */
@@ -573,7 +573,7 @@ template<> class IArchiveHelper < long long int >
 {
 public:
     typedef long long int typeT;
-    static inline void read(uint64 & nbitem, IArchive & ar, typeT & obj) { int64 v; ar._tempstr.clear(); ar.readTokenFromArchive(ar._tempstr); if (readTokenI(ar._tempstr, v) != ar._tempstr.length()) {throw "IArchive error"; } obj = (typeT)v; nbitem++; }
+    static inline void read(uint64 & nbitem, IArchive & ar, typeT & obj) { int64 v; ar._tempstr.clear(); ar.readTokenFromArchive(ar._tempstr); if (readTokenI(ar._tempstr, v) != ar._tempstr.length()) { MTOOLS_THROW("IArchive error (long long int)"); } obj = (typeT)v; nbitem++; }
 };
 
 /* specialization for unsigned long long int */
@@ -581,7 +581,7 @@ template<> class IArchiveHelper < unsigned long long int >
 {
 public:
     typedef unsigned long long int typeT;
-    static inline void read(uint64 & nbitem, IArchive & ar, typeT & obj) { uint64 v; ar._tempstr.clear(); ar.readTokenFromArchive(ar._tempstr); if (readTokenI(ar._tempstr, v) != ar._tempstr.length()) {throw "IArchive error"; } obj = (typeT)v; nbitem++; }
+    static inline void read(uint64 & nbitem, IArchive & ar, typeT & obj) { uint64 v; ar._tempstr.clear(); ar.readTokenFromArchive(ar._tempstr); if (readTokenI(ar._tempstr, v) != ar._tempstr.length()) { MTOOLS_THROW("IArchive error (unsigned long long int)"); } obj = (typeT)v; nbitem++; }
 };
 
 
@@ -590,7 +590,7 @@ template<> class IArchiveHelper < float >
 {
 public:
     typedef float typeT;
-    static inline void read(uint64 & nbitem, IArchive & ar, typeT & obj) { ar._tempstr.clear(); ar.readTokenFromArchive(ar._tempstr); if (readTokenFP(ar._tempstr, obj) != ar._tempstr.length()) {throw "IArchive error"; }  nbitem++;}
+    static inline void read(uint64 & nbitem, IArchive & ar, typeT & obj) { ar._tempstr.clear(); ar.readTokenFromArchive(ar._tempstr); if (readTokenFP(ar._tempstr, obj) != ar._tempstr.length()) { MTOOLS_THROW("IArchive error (float)"); }  nbitem++;}
 };
 
 /* specialization for double */
@@ -598,7 +598,7 @@ template<> class IArchiveHelper < double >
 {
 public:
     typedef double typeT;
-    static inline void read(uint64 & nbitem, IArchive & ar, typeT & obj) { ar._tempstr.clear(); ar.readTokenFromArchive(ar._tempstr); if (readTokenFP(ar._tempstr, obj) != ar._tempstr.length()) { throw "IArchive error"; }  nbitem++; }
+    static inline void read(uint64 & nbitem, IArchive & ar, typeT & obj) { ar._tempstr.clear(); ar.readTokenFromArchive(ar._tempstr); if (readTokenFP(ar._tempstr, obj) != ar._tempstr.length()) { MTOOLS_THROW("IArchive error (double)"); }  nbitem++; }
 };
 
 /* specialization for long double */
@@ -606,7 +606,7 @@ template<> class IArchiveHelper < long double >
 {
 public:
     typedef long double typeT;
-    static inline void read(uint64 & nbitem, IArchive & ar, typeT & obj) { ar._tempstr.clear(); ar.readTokenFromArchive(ar._tempstr); if (readTokenFP(ar._tempstr, obj) != ar._tempstr.length()) { throw "IArchive error"; }  nbitem++; }
+    static inline void read(uint64 & nbitem, IArchive & ar, typeT & obj) { ar._tempstr.clear(); ar.readTokenFromArchive(ar._tempstr); if (readTokenFP(ar._tempstr, obj) != ar._tempstr.length()) { MTOOLS_THROW("IArchive error (long double)"); }  nbitem++; }
 };
 
 /* specialization for bool */
@@ -614,7 +614,7 @@ template<> class IArchiveHelper < bool >
     {
     public:
         typedef bool typeT;
-        static inline void read(uint64 & nbitem, IArchive & ar, typeT & obj) { int64 v; ar._tempstr.clear(); ar.readTokenFromArchive(ar._tempstr); if (readTokenI(ar._tempstr, v) != ar._tempstr.length()) { throw "IArchive error"; } obj = ((v == 0) ? false : true); nbitem++; }
+        static inline void read(uint64 & nbitem, IArchive & ar, typeT & obj) { int64 v; ar._tempstr.clear(); ar.readTokenFromArchive(ar._tempstr); if (readTokenI(ar._tempstr, v) != ar._tempstr.length()) { MTOOLS_THROW("IArchive error (bool)"); } obj = ((v == 0) ? false : true); nbitem++; }
     };
 
 /* specialization for fixed size C-arrays */
@@ -634,7 +634,7 @@ public:
     static inline void read(uint64 & nbitem, IArchive & ar, typeT & obj)
         {
         MTOOLS_ASSERT(obj != nullptr);
-        if (ar.readTokenFromArchive(obj, sizeof(obj)) != sizeof(obj)) throw "IArchive error";
+        if (ar.readTokenFromArchive(obj, sizeof(obj)) != sizeof(obj)) { MTOOLS_THROW("IArchive error (char[N])"); }
         nbitem++;
         }
 };
@@ -647,7 +647,7 @@ public:
     static inline void read(uint64 & nbitem, IArchive & ar, typeT & obj)
         {
         MTOOLS_ASSERT(obj != nullptr);
-        if (ar.readTokenFromArchive(obj, sizeof(obj)) != sizeof(obj)) throw "IArchive error";
+        if (ar.readTokenFromArchive(obj, sizeof(obj)) != sizeof(obj)) { MTOOLS_THROW("IArchive error (wchar_t[N])"); }
         nbitem++;
         }
 };
