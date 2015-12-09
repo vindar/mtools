@@ -20,7 +20,6 @@
 
 #include "stdafx_mtools.h"
 
-
 #include "misc/stringfct.hpp"
 #include "misc/indirectcall.hpp"
 #include "io/fltk_supervisor.hpp"
@@ -28,10 +27,20 @@
 #include "io/console.hpp"
 
 
+#if defined(_WIN32)
+#define MTOOLS_HASCONIO
+#elif defined(__linux__) || defined((__unix__) || defined(_POSIX_VERSION)
+#define MTOOLS_HASUNISTD
+#endif
 
 
-#if defined (_MSC_VER)
+#include <cstdio>
+#ifdef MTOOLS_HASCONIO
+#include <conio.h>
 #include <windows.h>
+#elif MTOOLS_HASUNISTD
+#include <termios.h>
+#include <unistd.h>
 #endif
 
 
@@ -471,6 +480,83 @@ namespace mtools
     namespace internals_console
     {
 
+    ConsoleBasic::ConsoleBasic(const std::string & name) : _enableLogging(true), _enableScreen(true), _showDefaultInputValue(false)
+        {
+        _logfile = new LogFile(name + ".txt");
+        }
+
+    ConsoleBasic::~ConsoleBasic()
+        {
+        delete _logfile;
+        }
+
+    ConsoleBasic & ConsoleBasic::operator>>(bool & b)
+        {
+        while (1)
+            {
+            int k = getKey();
+            if ((k == 'O') || (k == 'o') || (k == 'Y') || (k == 'y') || (k == '1')) { b = true; return *this;; }
+            if ((k == 'N') || (k == 'n') || (k == 27)) { b = false; return *this;; }
+            }
+        }
+
+    ConsoleBasic & ConsoleBasic::operator>>(char & c)
+        {
+        while (1)
+            {
+            int k = getKey();
+            if (k < 256) { c = (char)k; return(*this); }
+            }
+        }
+
+    /* get a char without echo (if possible) */ 
+    int ConsoleBasic::getKey()
+        {
+        int ch = 0;
+        #if defined(MTOOLS_HASUNISTD)
+        struct termios oldt, newt;
+        tcgetattr(STDIN_FILENO, &oldt);
+        newt = oldt; newt.c_lflag &= ~(ICANON | ECHO);
+        tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+        ch = getchar();
+        if (ch == 27) { ch = getchar() + 65536; }
+        tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+        #elif defined(MTOOLS_HASCONIO)
+        ch = _getch();
+        if ((ch == 0) || (ch == 0xE0)) { return(_getch() + 66536); }
+        #elif
+        ch = std::getchar(); // fallback
+        #endif
+        if (ch == 10) { ch = 13; }  // map 10 and 13 to 13 (enter key)
+        if (ch == 127) { ch = 8; }  // map 8 and 127 to 8 (backspace key)
+        return ch;
+        }
+
+    /* get a text without and remove it afterward */
+    std::string ConsoleBasic::_getText(const std::string & initText)
+        {
+        std::string s(initText);
+        if (s.length() > 0) { std::cout << s; }
+        int ch;
+        do
+            {
+            ch = getKey();
+            if ((ch >= 32) && (ch <= 126)) {s+=(char)ch; std::cout << (char)ch;}
+            if ((ch == 8) || (ch == 127)) {if (s.length()>0) {s.resize(s.length()-1); std::cout << "\b \b";}}
+            }
+        while ((ch != 10) && (ch != 13));
+        for(size_t i=0;i< s.length(); i++) {std::cout << "\b \b";}
+        return s;
+        }
+
+
+    void ConsoleBasic::_print(const std::string & s)
+        {
+        if (_enableLogging) { _logfile->operator<<(s); }
+        if (_enableScreen) { std::cout << s; }
+        }
+
+
         /* keep tracks of the number of CoutConsole objects, create the one and only "cout" Console
          * when the first CoutConsole object is created and delete it when the last CoutConsole is deleted. */
         Console * CoutConsole::_get(int mode)
@@ -484,6 +570,22 @@ namespace mtools
             if (mode < 0)
                 {
                     if (--init == 0)  { MTOOLS_DEBUG("Destroying the global FLTK cout console."); pcout->_disableConsole(); } // last one, do not delete but disable it...
+                }
+            return pcout; // mode = 0, just return a pointer to cout
+            }
+
+
+        ConsoleBasic * CoutConsoleBasic::_get(int mode)
+            {
+            static std::atomic<int> init((int)0);  // using local static variables : no initialization problem !
+            static ConsoleBasic * pcout = nullptr;
+            if (mode > 0)
+                {
+                if (init++ == 0) { MTOOLS_DEBUG("Creating the global FLTK cout console (basic)."); pcout = new ConsoleBasic("cout"); } // first time, create the console
+                }
+            if (mode < 0)
+                {
+                if (--init == 0) { MTOOLS_DEBUG("Destroying the global FLTK cout console (basic)."); delete pcout; pcout = nullptr; } // last one, delete the console
                 }
             return pcout; // mode = 0, just return a pointer to cout
             }

@@ -75,8 +75,9 @@ return 0;
 
 
 
-
 #include "stdafx_test.h"
+
+#include "io/console.hpp"
 
 
 using namespace mtools;
@@ -406,10 +407,23 @@ RGBc colorTest2(iVec2 pos)
 
 
 
-
 	
 int main(int argc, char* argv[])
 {
+
+        {
+        cout << "*** test *** \n";
+        cout << " Press a key... ";
+        char c;
+        cout >> c;
+        cout << "[" << c << "]\n";
+        int val;
+        cout << "a value: ";
+        cout >> val;
+        cout << val << "\n";
+        int a = cout.getKey();
+        if (a == 'a') return 0;
+        }
 
     testG.reset(0,3,false);
     //testG.reset();

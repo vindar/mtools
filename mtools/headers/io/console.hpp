@@ -18,11 +18,20 @@
 // along with mtools  If not, see <http://www.gnu.org/licenses/>.
 
 
+/**************************************************************************
+*
+* Define the preprocessor directive MTOOLS_BASIC_CONSOLE to disable FLTK's 
+* cout console and fall back on using stdout.
+*
+* 
+* !!! When using precompiled header, put #define MTOOLS_BASIC_CONSOLE
+* inside the stdafx.h file otherwise the directive is overwritten. !!!
+* 
+***************************************************************************/
+
 #pragma once
 
-
 #include "logfile.hpp"
-
 #include <mutex>
 #include <atomic>
 #include <string>
@@ -253,16 +262,91 @@ namespace mtools
     };
 
 
-
     namespace internals_console
-    {
-
-
-    /**
-     * Wrapper class for the global "cout" console.
-     **/
-    class CoutConsole
         {
+
+
+
+
+
+        /**
+        * Replaces the Console class when MTOOLS_BASIC_CONSOLE is set.
+        **/
+        class ConsoleBasic
+            {
+
+            public:
+                ConsoleBasic(const std::string & name);
+                ~ConsoleBasic();
+                template<typename T> ConsoleBasic & operator<<(const T & O) { _print(mtools::toString(O)); return(*this); }
+                template<typename T> ConsoleBasic & operator>>(T & O)
+                    {
+                    std::string s , o = (_showDefaultInputValue ? mtools::toString(O) : "");
+                    while (1) { s = _getText(o); size_t nb = mtools::fromString(s, O); if ((s.length() != 0) && (nb == s.length())) { return *this; } }
+                    }
+                ConsoleBasic & operator>>(bool & b);
+                ConsoleBasic & operator>>(char & c);
+                bool useDefaultInputValue() const { return _showDefaultInputValue; }
+                void useDefaultInputValue(bool newstatus) { _showDefaultInputValue = newstatus; }
+                int getKey();
+                void enableLogFile() { _enableLogging = true; }
+                void disableLogFile() { _enableLogging = false; }
+                void enableScreenOutput() { _enableScreen = true; }
+                void disableScreenOutput() { _enableScreen = false; }
+                void clear() {}                             // for compatibility with Console, does nothing
+                void resize(int x, int y, int w, int h) {}  // for compatibility with Console, does nothing
+                void move(int x, int y) {}                  // for compatibility with Console, does nothing
+
+
+            private:
+
+                std::string _getText(const std::string & initText = "");
+                void _print(const std::string & s);
+
+                ConsoleBasic(const ConsoleBasic &) = delete;
+                ConsoleBasic & operator=(ConsoleBasic &) = delete;
+
+                std::atomic<bool>   _enableLogging;
+                std::atomic<bool>   _enableScreen;
+                std::atomic<bool>   _showDefaultInputValue;
+                mtools::LogFile *   _logfile;
+            };
+
+
+
+        /**
+        * Wrapper class for the global "cout" console when MTOOLS_NO_GRAPHICS is set
+        **/
+        class CoutConsoleBasic
+            {
+            public:
+                CoutConsoleBasic() { _get(1); }
+                ~CoutConsoleBasic() { _get(-1); }
+                template<typename T> CoutConsoleBasic & operator<<(const T & O) { _get(0)->operator<<(O); return(*this); }
+                template<typename T> CoutConsoleBasic & operator>>(T & O) { _get(0)->operator>>(O); return(*this); }
+                void clear() { _get(0)->clear(); }
+                int getKey() { return _get(0)->getKey(); }
+                bool useDefaultInputValue() { return _get(0)->useDefaultInputValue(); }
+                void useDefaultInputValue(bool newstatus) { _get(0)->useDefaultInputValue(newstatus); }
+                void enableLogFile() { _get(0)->enableLogFile(); }
+                void disableLogFile() { _get(0)->disableLogFile(); }
+                void enableScreenOutput() { _get(0)->enableScreenOutput(); }
+                void disableScreenOutput() { _get(0)->disableScreenOutput(); }
+                void resize(int x, int y, int w, int h) { _get(0)->resize(x, y, w, h); }
+                void move(int x, int y) { _get(0)->move(x, y); }
+
+            private:
+                ConsoleBasic * _get(int);
+                CoutConsoleBasic(const CoutConsoleBasic&) = delete;
+                CoutConsoleBasic & operator=(const CoutConsoleBasic&) = delete;
+            };
+
+
+        /**
+         * Wrapper class for the global "cout" console. Normal version
+        **/
+        class CoutConsole
+            {
             public:
             CoutConsole()  { _get(1); }
             ~CoutConsole() { _get(-1); }
@@ -279,16 +363,23 @@ namespace mtools
             void resize(int x, int y, int w, int h) { _get(0)->resize(x,y,w,h); }
             void move(int x, int y) { _get(0)->move(x, y); }
 
-        private:
+            private:
             Console * _get(int);
             CoutConsole(const CoutConsole&) = delete;
             CoutConsole & operator=(const CoutConsole&) = delete;
-        };
+            };
 
-    }
 
+        }
+
+  
+#ifndef MTOOLS_BASIC_CONSOLE
+    /* 'advanced' FLTK cout console */
     static internals_console::CoutConsole cout; ///< static object redirecting to the "cout" Console present in each compilation unit containing console.hpp. 
-
+#else
+    /* 'basic' default stdout console */
+    static internals_console::CoutConsoleBasic cout; ///< static object redirecting to the "cout" Console present in each compilation unit containing console.hpp. 
+#endif
 
 
 }
