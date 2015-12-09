@@ -1821,6 +1821,7 @@ namespace mtools
                 return p;
                 }
             MTOOLS_THROW(std::string("Unknown tag [") + std::string(1,c) + "]");
+            return nullptr;
             }
 
 

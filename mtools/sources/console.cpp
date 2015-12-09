@@ -29,16 +29,16 @@
 
 #if defined(_WIN32)
 #define MTOOLS_HASCONIO
-#elif defined(__linux__) || defined((__unix__) || defined(_POSIX_VERSION)
+#elif defined(__linux__) || defined(__unix__) || defined(_POSIX_VERSION)
 #define MTOOLS_HASUNISTD
 #endif
 
 
 #include <cstdio>
-#ifdef MTOOLS_HASCONIO
+#if defined(MTOOLS_HASCONIO)
 #include <conio.h>
 #include <windows.h>
-#elif MTOOLS_HASUNISTD
+#elif defined(MTOOLS_HASUNISTD)
 #include <termios.h>
 #include <unistd.h>
 #endif
