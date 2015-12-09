@@ -11,7 +11,7 @@ HEADERDIR_MTOOLS = ../../mtools/headers
 LIBDIR_MTOOLS = ../../linux/bin/
 
 CXXFLAGS = `fltk-config --cxxflags` -std=c++11 -O2 -Wall -DNDEBUG
-LDFLAGS =  -lmtools `fltk-config --ldstaticflags` -lz -lpng -ljpeg -latomic 
+LDFLAGS =  -lmtools `fltk-config --ldstaticflags` -lz  -lpng -ljpeg -latomic 
 
 $(OUTFILE): $(SOURCE)
 	@test -d $(OUTDIR) || mkdir -p $(OUTDIR)
