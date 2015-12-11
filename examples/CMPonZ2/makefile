@@ -7,8 +7,8 @@ WORKDIR = `pwd`
 CXX = g++
 
 # Add include directory and library directory in case the mtools was not installed in /usr/local/ 
-HEADERDIR_MTOOLS = ../../mtools/headers
-LIBDIR_MTOOLS = ../../linux/bin/
+#HEADERDIR_MTOOLS = ../../mtools/headers
+#LIBDIR_MTOOLS = ../../linux/bin/
 
 CXXFLAGS = `fltk-config --cxxflags` -std=c++11 -O2 -Wall -DNDEBUG
 LDFLAGS =  -lmtools `fltk-config --ldstaticflags` -lz -lpng -ljpeg -latomic 
