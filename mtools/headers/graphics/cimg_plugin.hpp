@@ -188,7 +188,6 @@
         MTOOLS_ASSERT((spectrum() == 3) || (spectrum() == 4));
         const int lx = width();
         const int ly = height();
-        CImg<T> & im = *this;
         MTOOLS_ASSERT(lx*ly > 0);
         int nx = 0, ny = 0, cy = 0, cx = 0;
         if (color1 == color2) 
