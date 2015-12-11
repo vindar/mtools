@@ -527,7 +527,7 @@
         if (text.length() == 0) {return mtools::iVec2(0,0); }
         const CImgList<floatT> & ff = getFont(font_height, variable_width);
         int x = 0, y = 0, w = 0;
-        unsigned char c;
+        unsigned char c = 0;
         for (size_t i = 0; i < text.length(); ++i)
             {
             c = text[i];
@@ -560,7 +560,7 @@
      **/
     CImg<T>& drawText(const std::string & text, mtools::iVec2 Pos, char xcentering, char ycentering, int fontsize, bool variable_width, mtools::RGBc color, double opacity = 1.0)
     {
-        mtools::iVec2 TS;
+        mtools::iVec2 TS(0,0);
         if (((xcentering == 'c') || (xcentering == 'C')) || ((xcentering == 'r') || (xcentering == 'R')) || ((ycentering == 'c') || (ycentering == 'C')) || ((ycentering == 'b') || (ycentering == 'B'))) {TS = getTextDimensions(text, fontsize, variable_width);}
         if ((xcentering == 'c') || (xcentering == 'C')) { Pos.X() -= TS.X() / 2; }
         if ((xcentering == 'r') || (xcentering == 'R')) { Pos.X() -= TS.X(); }
