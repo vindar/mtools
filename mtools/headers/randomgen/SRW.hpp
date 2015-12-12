@@ -156,17 +156,17 @@ namespace mtools
                         }
                     continue;
                     }
-                if (d < 4)
+                if (d == 2)
                     { //  square of radius 2
                     switch(Unif_4(gen))
                         {
-                        case  0: pos.X() += 2; break;
+                        case  0: 
                         case  1: pos.X() += 2; break;
-                        case  2: pos.X() -= 2; break;
+                        case  2: 
                         case  3: pos.X() -= 2; break;
-                        case  4: pos.Y() += 2; break;
+                        case  4: 
                         case  5: pos.Y() += 2; break;
-                        case  6: pos.Y() -= 2; break;
+                        case  6: 
                         case  7: pos.Y() -= 2; break;
                         case  8: pos.X() += 2; pos.Y()++; break;
                         case  9: pos.X() += 2; pos.Y()--; break;
@@ -179,30 +179,44 @@ namespace mtools
                         }
                     continue;
                     }
-                if (d > 2047)
-                    { // use a uniformly distributed point on the circle of radius d
-                    double a = Unif(gen)*TWOPI;
-                    pos.X() += (int64)round(d*sin(a));
-                    pos.Y() += (int64)round(d*cos(a));
+                if (d < 128)
+                    { // 2 < d < 128 : we use the exact CDF from the small grid array
+                    int64 off = sampleDiscreteRVfromCDF(internals_random::_srwExitGridSmallR[d], d-1, gen);
+                    switch (Unif_3(gen))
+                        {
+                        case  0: pos.X() += d; pos.Y() += off; break;
+                        case  1: pos.X() += d; pos.Y() -= off; break;
+                        case  2: pos.X() -= d; pos.Y() += off; break;
+                        case  3: pos.X() -= d; pos.Y() -= off; break;
+                        case  4: pos.Y() += d; pos.X() += off; break;
+                        case  5: pos.Y() += d; pos.X() -= off; break;
+                        case  6: pos.Y() -= d; pos.X() += off; break;
+                        case  7: pos.Y() -= d; pos.X() -= off; break;
+                        }
                     continue;
                     }
-                // d is in [4,2047], use precomputed tables.
-                d >>= 2;
-                int64 l = 4;
-                size_t index = 0;
-                while (d > 1) { index++; l <<= 1; d >>= 1; }
-                int64 off = sampleDiscreteRVfromCDF(SRWexitGrid_CDF[index], l - 1, gen);
-                switch(Unif_3(gen))
-                    {
-                    case  0: pos.X() += l; pos.Y() += off; break;
-                    case  1: pos.X() += l; pos.Y() -= off; break;
-                    case  2: pos.X() -= l; pos.Y() += off; break;
-                    case  3: pos.X() -= l; pos.Y() -= off; break;
-                    case  4: pos.Y() += l; pos.X() += off; break;
-                    case  5: pos.Y() += l; pos.X() -= off; break;
-                    case  6: pos.Y() -= l; pos.X() += off; break;
-                    case  7: pos.Y() -= l; pos.X() -= off; break;
+                if (d < 1152)
+                    { // 128 <= d < 1152 : use the neareset 128 multiple and exact CDF from the large grid array
+                    int64 b = (d >> 7);  // divide by 128
+                    int64 l = (b << 7); // get the nearest lower multiple of 128
+                    int64 off = sampleDiscreteRVfromCDF(internals_random::_srwExitGridLargeR[b], l-1, gen);
+                    switch (Unif_3(gen))
+                        {
+                        case  0: pos.X() += l; pos.Y() += off; break;
+                        case  1: pos.X() += l; pos.Y() -= off; break;
+                        case  2: pos.X() -= l; pos.Y() += off; break;
+                        case  3: pos.X() -= l; pos.Y() -= off; break;
+                        case  4: pos.Y() += l; pos.X() += off; break;
+                        case  5: pos.Y() += l; pos.X() -= off; break;
+                        case  6: pos.Y() -= l; pos.X() += off; break;
+                        case  7: pos.Y() -= l; pos.X() -= off; break;
+                        }
+                    continue;
                     }
+                // d >= 1152 We choose a point uniformly on the circle of radius d
+                double a = Unif(gen)*TWOPI;
+                pos.X() += (int64)round(d*sin(a));
+                pos.Y() += (int64)round(d*cos(a));
                 }
             MTOOLS_ASSERT(d >= 0);
             return d;

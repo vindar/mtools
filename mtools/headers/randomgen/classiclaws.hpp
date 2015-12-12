@@ -167,7 +167,7 @@ namespace mtools
     * @tparam  random_t    Random number generator (such the operator() return a uniform rv in [0,1[).
     * @param   tab The CDF array such that tab[i] = P(X &lt;= i), it size should be at least N.
     *              (there is no need to define tab[N] = 1.0).
-    * @param   N   the support of the RV X is [0,N] ir tab is at least N elements long.
+    * @param   N   the support of the RV X is [0,N] ie tab is at least N elements long.
     *
     * @return  A random position in [0,N] chosing according to the CDF.
     **/

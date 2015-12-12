@@ -34,6 +34,11 @@
    See program 'RWExitProblem'
 */
 
+namespace mtools
+    {
+
+    namespace internals_random
+        {
 
 // Exit Problem for a grid of radius R=3
 const double _srwExitGridCDF3[3] = { 3.076923076923077e-01, 7.6923076923076927e-01, 1.0 };
@@ -1953,6 +1958,12 @@ _srwExitGridCDF121, _srwExitGridCDF122, _srwExitGridCDF123, _srwExitGridCDF124, 
 
 /* array of pointers to the CDF distribution arrays for grids of radius N*128 for N = 1 to 8 */
 const double * const _srwExitGridLargeR[9] = { nullptr, _srwExitGridCDF128, _srwExitGridCDF256, _srwExitGridCDF384, _srwExitGridCDF512, _srwExitGridCDF640, _srwExitGridCDF768, _srwExitGridCDF896, _srwExitGridCDF1024 };
+
+
+}
+
+}
+
 
 /* end of file */
 
