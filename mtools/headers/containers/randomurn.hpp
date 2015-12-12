@@ -103,7 +103,7 @@ namespace mtools
          **/
         inline T & operator[](size_t pos)
             {
-            MTOOLS_ASSERT(pos < Urn.size());
+            MTOOLS_ASSERT(pos < size());
             return _tab[pos];
             }
 
