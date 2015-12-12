@@ -10,7 +10,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <ctime>
-#include <cmath>  
+#include <cmath>
 #include <cwchar>
 #include <locale>
 
