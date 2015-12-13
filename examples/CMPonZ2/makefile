@@ -7,9 +7,11 @@ CPP_FILES := $(wildcard *.cpp)
 WORKDIR = `pwd`
 CXX = g++
 
-# Add include directory and library directory in case the mtools was not installed in /usr/local/ 
-HEADERDIR_MTOOLS = ../../mtools/headers/
-LIBDIR_MTOOLS = ../../linux/bin/
+# Add include directory and library directory in case the mtools
+# librarie is not in a standard directory. (or add the path to 
+# mtools in LIBRARY_PATH and CPATH env. var.)
+#HEADERDIR_MTOOLS = ../../mtools/headers/
+#LIBDIR_MTOOLS = ../../linux/bin/
 
 CXXFLAGS = `fltk-config --cxxflags` -std=c++11 -Wall
 LDFLAGS =  -lmtools `fltk-config --ldstaticflags` -lz -lpng -ljpeg -latomic 
