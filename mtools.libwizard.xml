@@ -9,6 +9,7 @@
 
 <!-- here, we really install the library -->
 <YESNO text = "Do you want to install mtools locally ?" name = "MTOOLS_LOCAL_INSTALL" />
+<LDFLAGS flag = "-lmtools -latomic" />
 <IFEQUAL expr1 = "%MTOOLS_LOCAL_INSTALL%" expr2 = "yes" > 
 	<!-- local installation of the library -->
 	<COPY source = "%LibDir%/mtools/headers/*" dest ="%ProjectDir%/mtools/*" />
@@ -41,8 +42,6 @@
 </IFNOTEQUAL>
 
 <MISC_COMPILER_OPTION option = "/Zm400" config = "all" />
-<CXXFLAGS flag = "`fltk-config --cxxflags`" />
-<LDFLAGS flag = "-lmtools `fltk-config --ldstaticflags` -lz -lpng -ljpeg -latomic" />
 <MAIN_CPP>
 // Uncomment 'define MTOOLS_BASIC_CONSOLE' in stdafx.h to disable mtools's console
 #include "mtools.hpp"  
