@@ -20,7 +20,7 @@ PCHDIR_MTOOLS = ../mtools
 PCHFILE_MTOOLS = stdafx_mtools.h
 PCHOBJ_MTOOLS = $(OBJDIR_MTOOLS)/$(PCHFILE_MTOOLS).gch
 INC_MTOOLS = -I$(OBJDIR_MTOOLS) -I$(HEADERDIR_MTOOLS)
-CXXFLAGS_MTOOLS = `fltk-config --cxxflags` -std=c++11 -DNDEBUG
+CXXFLAGS_MTOOLS = `fltk-config --cxxflags` -std=c++11 -Wall
 INSTALLDIR_MTOOLS = /usr/local
 
 SRCDIR_TEST = ../test/sources
