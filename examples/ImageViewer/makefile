@@ -1,4 +1,4 @@
-OUTFILE = demoImage
+OUTFILE = ImageViewer
 
 OUTDIR = bin
 
