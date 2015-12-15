@@ -414,17 +414,6 @@ namespace mtools
 
 
 
-        template<typename T> inline CoutProxy::operator T()
-            {
-            auto status = cout.useDefaultInputValue();  // save the way cout display input values
-            cout << _question << " : "; // display the question 
-            T val;
-            if (_hasdefaultvalue) { fromString(_defaultvalue, val); cout.useDefaultInputValue(true); }
-            else { cout.useDefaultInputValue(false); } // load the default value if any 
-            cout >> val; cout << toString(val) << "\n"; // query and display the value
-            cout.useDefaultInputValue(status);  // restore the way cout display input values
-            return val;
-            }
 
 
         }
@@ -439,6 +428,23 @@ namespace mtools
     static internals_console::CoutConsoleBasic cout; ///< static object redirecting to the "cout" Console present in each compilation unit containing console.hpp. 
 #endif
 
+
+    namespace internals_console
+        {
+
+        template<typename T> inline CoutProxy::operator T()
+            {
+            auto status = cout.useDefaultInputValue();  // save the way cout display input values
+            cout << _question << " : "; // display the question 
+            T val;
+            if (_hasdefaultvalue) { fromString(_defaultvalue, val); cout.useDefaultInputValue(true); }
+            else { cout.useDefaultInputValue(false); } // load the default value if any 
+            cout >> val; cout << toString(val) << "\n"; // query and display the value
+            cout.useDefaultInputValue(status);  // restore the way cout display input values
+            return val;
+            }
+
+        }
 
 }
 
