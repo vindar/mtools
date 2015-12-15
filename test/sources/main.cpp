@@ -411,6 +411,11 @@ RGBc colorTest2(iVec2 pos)
 int main(int argc, char* argv[])
 {
 
+
+        bool B = cout.ask("valeur de B",345);
+
+        cout.getKey();
+        return 0;
         {
         cout << "*** test *** \n";
         cout << " Press a key... ";
