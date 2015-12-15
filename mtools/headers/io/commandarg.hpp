@@ -64,7 +64,7 @@ namespace mtools
 
                                                         /* Remove the '-' at the beginning of str.
                                                         * Return true if there was at least one */
-        bool removeMinus(std::string & str)
+        inline bool removeMinus(std::string & str)
             {
             size_t i = 0;
             while ((i < str.length()) && (str[i] == '-')) { i++; }
@@ -76,7 +76,7 @@ namespace mtools
 
         /* Parse an string of the form "name[=value]"
         * @return  true if the option has a value and false otherwise. */
-        bool parseArg(const std::string & str, std::string & name, std::string & value)
+        inline bool parseArg(const std::string & str, std::string & name, std::string & value)
             {
             size_t p = str.find('=');
             if (p == str.npos) { name = str; value.clear(); if (name.length() == 0) { MTOOLS_ERROR("parseArg: no name"); } return false; }
@@ -87,7 +87,7 @@ namespace mtools
 
 
         /* return the option name  */
-        std::string optName(std::string str)
+        inline std::string optName(std::string str)
             {
             std::string name, value;
             str = removeMinus(str);
@@ -259,7 +259,7 @@ namespace mtools
     * @param   interactive     true to query missing paramter on the lfy using cout.
     * @param   display         true to display information about each paramter used using cout.
     **/
-    void parseCommandLine(int argc, char** argv, bool interactive = true, bool display = true)
+    inline void parseCommandLine(int argc, char** argv, bool interactive = true, bool display = true)
         {
         if (internals_commandarg::parsed) { MTOOLS_ERROR("parseCommandLine() method was already called."); }
         else { internals_commandarg::parsed = true; }
