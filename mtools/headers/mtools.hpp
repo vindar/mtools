@@ -62,6 +62,7 @@
 #include "io/fileio.hpp"
 #include "io/logfile.hpp"
 #include "io/serialization.hpp"
+#include "io/commandarg.hpp"
 
 // maths
 #include "maths/vec.hpp"
