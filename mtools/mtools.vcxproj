@@ -347,6 +347,7 @@
     <ClInclude Include="headers\graphics\rangemanager.hpp" />
     <ClInclude Include="headers\graphics\rgbc.hpp" />
     <ClInclude Include="headers\graphics\simpleBMP.hpp" />
+    <ClInclude Include="headers\io\commandarg.hpp" />
     <ClInclude Include="headers\io\console.hpp" />
     <ClInclude Include="headers\io\fileio.hpp" />
     <ClInclude Include="headers\io\fltk_supervisor.hpp" />
