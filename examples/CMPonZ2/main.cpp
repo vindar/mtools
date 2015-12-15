@@ -182,20 +182,6 @@ SiteZ2Box * Torus;
 int LX, LY;
 
 
-
-
-void displayIm()
-    {
-    Plotter2D P;
-    CImg<unsigned char> imz("image8.png");
-    auto I = makePlot2DCImg(imz, "CMP");
-    P[I];
-    I.position(I.TYPECENTER);
-    P.plot();
-    }
-
-
-
 RGBc color0(iVec2 pos)
     {
     if ((pos.X() < 0) || (pos.X() >= LX)) return RGBc::c_Cyan;
@@ -240,9 +226,9 @@ RGBc color4(iVec2 pos)
 void test()
     {
 
-    LX = 1000;
-    LY = 1000;
-    double a = 0.12;
+    LX = arg("LX", 1000).info("boxe size");
+    LY = arg("LY", 1000).info("boxe size");
+    double a = arg('a',0.12).info("percolation paramter");
         
     cout << "Creating the torus... ";
     Torus = createBox(LX, LY, a,gen);
@@ -313,8 +299,8 @@ void test()
 
 int main(int argc, char *argv[]) 
     {
-  // displayIm();
-   test();
+    parseCommandLine(argc, argv,true);
+    test();
     return 0;
 	}
 

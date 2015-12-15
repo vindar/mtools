@@ -144,14 +144,12 @@ void makeLERRW(uint64 steps, double d)
 
 int main(int argc, char *argv[]) 
     {
-    cout.useDefaultInputValue(true);
+    parseCommandLine(argc, argv, true);
     cout << "*******************************************************\n";
     cout << " Simulation of a Linearly Reinforced Random Walk on Z^2\n";
     cout << "*******************************************************\n\n";
-    cout << "- Value of the reinforcement parameter delta : ";
-    double delta = 2.0; cout >> delta; cout << delta << "\n";
-    cout << "- Number of step of the walk : ";
-    int64 N = 50000000; cout >> N; cout << N << "\n\n";
+    double delta = arg('d', 2.0).info("reinforcement parameter");
+    int64 N = arg('N', 50000000).info("number of steps of the walk");
     makeLERRW(N, delta);
     return 0;
 	}

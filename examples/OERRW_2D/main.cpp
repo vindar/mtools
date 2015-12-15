@@ -12,9 +12,15 @@ using namespace mtools;
 
 int main(int argc, char *argv[])
     {
-    longOERRW simOERRW(5.0);
+    parseCommandLine(argc, argv, true);
+    cout << "**************************************\n";
+    cout << "Simulation of a OnceERRW.\n";
+    cout << "**************************************\n";
+    double d = arg('d', 5.0).info("reinforcement paramter");
+    int64 N = arg('N', 1000000).info("size of trace");
+    longOERRW simOERRW(d);
     Chronometer();
-    simOERRW.makeWalk(30000000);
+    simOERRW.makeWalk(N);
     cout << "Done in : " << Chronometer() << "ms\n";
     cout << simOERRW << "\n";
     simOERRW.plotWalk();

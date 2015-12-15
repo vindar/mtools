@@ -13,9 +13,11 @@ double f2(double x) { return ((x<=1.0) ? 0 : -sqrt(2*x*log(log(x)))); }  // for 
 
 int main(int argc, char *argv[]) 
     {
+    parseCommandLine(argc, argv, true);
+    cout << "**************************************\n";
     cout << "Simulation of a 1D simple random walk.\n";
-    cout << "Do you want to update the plotter's range automatically ?";
-    bool autorange; cout >> autorange;
+    cout << "**************************************\n";
+    bool autorange = arg("auto").info("update the plotter's range automatically"); 
     cout << "\nSimulating...\n";
     MT2004_64 gen;                      // the RNG
     std::vector<int>  tab;              // the vector containing the positions

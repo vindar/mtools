@@ -7,7 +7,7 @@
 #include "mtools.hpp"
 using namespace mtools;
 
-int nbIter = 64; // number of iterations to use when computing the fractal sets. 
+int nbIter = 64; // number of iterations 
 
 RGBc mandelbrot(fVec2 pos)
     {
@@ -47,12 +47,12 @@ RGBc rabbit(fVec2 pos)
 
 int main(int argc, char *argv[]) 
     {
-	cout << "Drawing Mandelbrot + Douady's rabbit.\n";
-    cout << "Maximum number of iterations (1-1024) ? "; 
-    cout.useDefaultInputValue(true); // so that we use the current value of nbIter (ie 64) as the default value. 
-    cout >> nbIter;
+    parseCommandLine(argc, argv, true);
+    cout << "**************************************\n";
+    cout << "Drawing Mandelbrot + Douady's rabbit.\n";
+    cout << "**************************************\n";
+    nbIter = arg('n', 64).info("number of iterations");
     if (nbIter < 1) nbIter = 1; else if (nbIter >1024) nbIter = 1024;
-    cout << nbIter << "\n"; 
     Plotter2D Plotter;  // create the plotter
     auto M = makePlot2DPlane<mandelbrot>("Mandelbrot Set"); // the mandelbrot set
     auto D = makePlot2DPlane<rabbit>("Douady's rabbit"); // the mandelbrot set
