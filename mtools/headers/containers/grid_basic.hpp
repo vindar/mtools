@@ -440,19 +440,19 @@ namespace mtools
         /**
         * Set a value at a given position. Dimension 1 specialization.
         **/
-        inline void set(int64 x, const T & val) { static_assert(D == 1, "template parameter D must be 1"); return _set(Pos(x), &val); }
+        inline void set(int64 x, const T & val) { static_assert(D == 1, "template parameter D must be 1"); _get(Pos(x)) = val; return; }
 
 
         /**
         * Set a value at a given position. Dimension 2 specialization.
         **/
-        inline void set(int64 x, int64 y, const T & val) { static_assert(D == 2, "template parameter D must be 2"); return _set(Pos(x, y), &val); }
+        inline void set(int64 x, int64 y, const T & val) { static_assert(D == 2, "template parameter D must be 2"); _get(Pos(x,y)) = val; return; }
 
 
         /**
         * Set a value at a given position. Dimension 3 specialization.
         **/
-        inline void set(int64 x, int64 y, int64 z, const T & val) { static_assert(D == 3, "template parameter D must be 3"); return _set(Pos(x, y, z), &val); }
+        inline void set(int64 x, int64 y, int64 z, const T & val) { static_assert(D == 3, "template parameter D must be 3"); _get(Pos(x,y,z)) = val; return; }
 
 
         /**
