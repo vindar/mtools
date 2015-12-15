@@ -13,8 +13,8 @@ CXX = g++
 #HEADERDIR_MTOOLS = ../../mtools/headers/
 #LIBDIR_MTOOLS = ../../linux/bin/
 
-CXXFLAGS = `fltk-config --cxxflags` -std=c++11 -Wall
-LDFLAGS =  -lmtools `fltk-config --ldstaticflags` -lz -lpng -ljpeg -latomic 
+CXXFLAGS = -std=c++11 -Wall  `fltk-config --cxxflags`
+LDFLAGS =   -lmtools -latomic `fltk-config --ldstaticflags` -lz -lpng -ljpeg
 
 .PHONY: release nographics debug debug_nographics buildprog clean
 

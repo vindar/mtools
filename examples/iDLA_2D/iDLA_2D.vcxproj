@@ -19,7 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{892E4E09-0C02-4B5A-A103-65AAE0ADE9E5}</ProjectGuid>
+    <ProjectGuid>{F008A68B-B0FB-4FA4-96D9-B7ECB919833C}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>iDLA_2D</RootNamespace>
     <TargetPlatformVersion>8.1</TargetPlatformVersion>

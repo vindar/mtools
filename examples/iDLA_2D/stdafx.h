@@ -1,6 +1,6 @@
 /***********************************************
  * Project : iDLA_2D
- * date : Fri Jul 17 11:07:29 2015
+ * date : Wed Dec 16 00:01:14 2015
  ***********************************************/
 
 #pragma message("Compiling pre-compiled headers for stdafx.h\n")
@@ -46,6 +46,8 @@
 
 
 // *** Library mtools ***
+// Uncomment the following line to disable mtools console and use stdout instead
+// #define MTOOLS_BASIC_CONSOLE
 #include "mtools.hpp"
 
 // *** Library fltk ***
@@ -77,6 +79,7 @@
 #pragma warning( pop )
 #endif
 
+// *** Library fltk ***
 #include "zlib.h"       // fltk zlib
 #include "png.h"        // fltk libpng
 #include "jpeglib.h"    // fltk libjpeg
