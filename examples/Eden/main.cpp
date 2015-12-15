@@ -120,8 +120,8 @@ int main(int argc, char *argv[])
         cout << "(R) Run the simulation.\n";
         cout << "(Q) Quit.\n";
         char c = cout.getKey();
-        if ((c == 'L') || (c == 'l')) { cout << "Name of the file to load : "; std::string filename; cout >> filename; cout << filename << "\n"; try { EC.load(filename); } catch (...) { cout << "*** ERROR ***"; EC.clear(); } }
-        if ((c == 'S') || (c == 's')) { cout << "Name of the file to save (.gz to compress): "; std::string filename; cout >> filename; cout << filename << "\n"; try { EC.save(filename); } catch (...) { cout << "*** ERROR ***"; } }
+        if ((c == 'L') || (c == 'l')) { std::string filename = cout.ask("Name of the file to load"); try { EC.load(filename); } catch (...) { cout << "*** ERROR ***"; EC.clear(); } }
+        if ((c == 'S') || (c == 's')) { std::string filename = cout.ask("Name of the file to save (.gz to compress)");  try { EC.save(filename); } catch (...) { cout << "*** ERROR ***"; } }
         if ((c == 'R') || (c == 'r')) { run(); }
         if ((c == 'N') || (c == 'n')) { EC.clear(); }
         if ((c == 'Q') || (c == 'q')) { return 0; }
