@@ -237,7 +237,7 @@ namespace mtools
     /**
     * Return the number of free arguments in the command line (ie arguments that are not options).
     **/
-    inline int freearg() { return internals_commandarg::freeArgsVec.size(); }
+    inline size_t freearg() { return internals_commandarg::freeArgsVec.size(); }
 
 
     /**
