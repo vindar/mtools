@@ -20,27 +20,71 @@
 
 #pragma once
 
-
 #include <string>
+
+
 
 /* uncomment the next line to enable MTOOLS_DEBUG even in release mode */
 //#define MTOOLS_DEBUG_IN_RELEASEMODE
 
 
-
-/* forward declaration */
 namespace mtools
 {
     namespace internals_error
     {
 
-        void _error(const std::string & file, int line, const std::string & s);
-        bool _insures(const std::string & file, int line, const std::string & s);
-        bool _assert(const std::string & file, int line, const std::string & s);
-        void _debugs(const std::string & file, int line, const std::string & s);
-        void _throws_debug(const std::string & file, int line, const std::string & s);
-        void _throws_nodebug(const std::string & file, int line, const std::string & s);
+    std::string truncateFilename(std::string s);
+
+    void display(const std::string & title, const std::string & msg);
+
+    void displayGraphics(const std::string & title, const std::string & msg);
+
+    inline void _stopWithMsg(const std::string & title, const std::string & msg)
+        {
+        display(title, msg);
+        #ifndef MTOOLS_BASIC_CONSOLE
+        displayGraphics(title, msg);
+        #endif
+        exit(EXIT_FAILURE);
         }
+
+    inline void _error(const std::string & file, int line, const std::string & s)
+        {
+        std::string msg = std::string("File : ") + truncateFilename(file) + "\nLine : " + std::to_string(line) + "\nMessage : " + s;
+        _stopWithMsg("MTOOLS_ERROR",msg);
+        }
+
+    inline bool _insures(const std::string & file, int line, const std::string & s)
+        {
+        std::string msg = std::string("File : ") + truncateFilename(file) + "\nLine : " + std::to_string(line) + "\nCondition : " + s;
+        _stopWithMsg("MTOOLS_INSURE FAILURE", msg);
+        return true;
+        }
+
+    inline bool _assert(const std::string & file, int line, const std::string & s)
+        {
+        std::string msg = std::string("File : ") + truncateFilename(file) + "\nLine : " + std::to_string(line) + "\nCondition : " + s;
+        _stopWithMsg("MTOOLS_ASSERT FAILURE", msg);
+        return true;
+        }
+
+
+    void _debugs(const std::string & file, int line, const std::string & s);
+
+
+    inline void _throws_debug(const std::string & file, int line, const std::string & s)
+        {
+        _debugs(file, line, s);
+        throw s.c_str();
+        }
+
+
+    inline void _throws_nodebug(const std::string & file, int line, const std::string & s)
+        {
+        throw s.c_str();
+        }
+
+    }
 }
 
 
@@ -82,6 +126,7 @@ namespace mtools
 #define MTOOLS_DEBUG(_ex) ((void)0)
 #define MTOOLS_THROW(_ex) mtools::internals_error::_throws_nodebug(__FILE__ , __LINE__,(std::string("") + (_ex)))
 #endif
+
 
 
 /* end of file */
