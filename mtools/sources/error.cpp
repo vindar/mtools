@@ -42,7 +42,7 @@ namespace mtools
 
         void display(const std::string & title, const std::string & msg)
             {
-            std::string msg2 = std::string("*** ") + title + " ***\n" + msg.c_str() + "*********************************\n\n";
+            std::string msg2 = std::string("*** ") + title + " ***\n" + msg.c_str() + "\n*********************************\n\n";
             mtools::LogFile lf("abort.txt"); lf << msg2; // log to abort.txt
             std::cerr << "\n\n" << msg2;   // send to std::cerr
             }
