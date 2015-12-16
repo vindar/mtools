@@ -13,7 +13,7 @@ using namespace mtools;
 
 MT2004_64  gen;	// the random number generator
 
-Grid_factor<2, char, 2,10> Grid;   // the grid
+Grid_factor<2, char, 2,5> Grid;   // the grid
 
 int64 N; //number of walkers sent
 
@@ -30,7 +30,12 @@ void makeCluster(int nb)
             if (k > 100) {
                 iRect fullR;
                 Grid.findFullBoxCentered(pos, fullR);
-                if (fullR.boundaryDist(pos) == 0) { SRW_Z2_1step(pos, gen); k = 0; } else  { SRW_Z2_MoveInRect(pos, fullR, 16, gen); }
+                if (fullR.xmin == fullR.xmax) { SRW_Z2_1step(pos, gen); k = 0; } 
+                else 
+                    {
+                    fullR.xmin--; fullR.xmax++; fullR.ymin--; fullR.ymax++; 
+                    SRW_Z2_MoveInRect(pos, fullR, 16, gen);
+                    }
                 }
             else  { 
                 SRW_Z2_1step(pos, gen); k++; 
