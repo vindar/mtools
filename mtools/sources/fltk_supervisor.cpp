@@ -285,7 +285,7 @@ namespace mtools
                 Fl::awake();      // and send a message to wake up the thread
                 while (!_stopped) { (void)0; }
                 MTOOLS_DEBUG(" ...FLTK Thread stopped.");
-            }
+                }
 
             std::condition_variable _cv;    // condition variable used for signaling the completion of an operation
             SimpleMsgList _thMsgList;       // th message list itself
@@ -327,21 +327,29 @@ namespace mtools
             /* the FLTK thread procedure */
             void _threadProc()
                 {
-                _thid = std::this_thread::get_id(); // get the thread id
-                MTOOLS_DEBUG("[FLTK Thread " + toString(_thid) + "] started." );
-                Fl::lock();             // lock FLTK for multithread use.
-                Fl::args(0, nullptr);   // seems to help, don't know why...
-                while (!_exitloop)
+                try
                     {
-                    Fl::wait(0.1);
-                    _processMsg(); // check for messages
+                    _thid = std::this_thread::get_id(); // get the thread id
+                    MTOOLS_DEBUG("[FLTK Thread " + toString(_thid) + "] started.");
+                    Fl::lock();             // lock FLTK for multithread use.
+                    Fl::args(0, nullptr);   // seems to help, don't know why...
+                    while (!_exitloop)
+                        {
+                        Fl::wait(0.1);
+                        _processMsg(); // check for messages
+                        }
+                    Fl::unlock(); // seems to do nothing but cannot hurt....
+                    MTOOLS_DEBUG("[FLTK THREAD " + toString(_thid) + "] stopped.");
+                    _exitloop = false;
+                    _active = false;
+                    _stopped = true;    // ok, pretend that we stopped.
+                    while (1) { (void)0; }    // but do not really stop otherwise we sometime get a "mutex destroyed while busy" from FLTK
                     }
-                Fl::unlock(); // seems to do nothing but cannot hurt....
-                MTOOLS_DEBUG("[FLTK THREAD " + toString(_thid) + "] stopped.");
-                _exitloop = false;
-                _active = false;
-                _stopped = true;    // ok, pretend that we stopped.
-                while (1) { (void)0; }    // but do not really stop otherwise we sometime get a "mutex destroyed while busy" from FLTK
+                catch (std::exception & exc)
+                    {
+                    std::string msg = std::string("Exception caught in the FLTK Thread : [") + exc.what() + "].";
+                    MTOOLS_ERROR(msg.c_str());
+                    }
                 }
 
 
