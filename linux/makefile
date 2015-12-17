@@ -5,14 +5,13 @@ CXX = g++
 AR = ar
 LD = g++
 
-OBJDIR = obj
-OUTDIR = bin
-
 HEADERDIR_MTOOLS = ../mtools/headers
+
+OBJDIR = obj
 
 SRCDIR_MTOOLS = ../mtools/sources
 OBJDIR_MTOOLS = $(OBJDIR)/mtools
-OUTDIR_MTOOLS = $(OUTDIR)
+OUTDIR_MTOOLS = lib
 SRC_MTOOLS = $(wildcard $(SRCDIR_MTOOLS)/*.cpp)
 OBJ_MTOOLS = $(addprefix $(OBJDIR_MTOOLS)/, $(notdir $(SRC_MTOOLS:.cpp=.o)))
 OUT_MTOOLS = $(OUTDIR_MTOOLS)/libmtools.a
@@ -21,11 +20,10 @@ PCHFILE_MTOOLS = stdafx_mtools.h
 PCHOBJ_MTOOLS = $(OBJDIR_MTOOLS)/$(PCHFILE_MTOOLS).gch
 INC_MTOOLS = -I$(OBJDIR_MTOOLS) -I$(HEADERDIR_MTOOLS)
 CXXFLAGS_MTOOLS = `fltk-config --cxxflags` -std=c++11 -Wall
-INSTALLDIR_MTOOLS = /usr/local
 
 SRCDIR_TEST = ../test/sources
 OBJDIR_TEST = $(OBJDIR)/test
-OUTDIR_TEST = $(OUTDIR)
+OUTDIR_TEST = bin
 SRC_TEST = $(wildcard $(SRCDIR_TEST)/*.cpp)
 OBJ_TEST = $(addprefix $(OBJDIR_TEST)/, $(notdir $(SRC_TEST:.cpp=.o)))
 OUT_TEST = $(OUTDIR_TEST)/test
@@ -83,8 +81,6 @@ $(PCHOBJ_MTOOLS):
 $(OBJ_MTOOLS): $(OBJDIR_MTOOLS)/%.o : $(SRCDIR_MTOOLS)/%.cpp
 	$(CXX) $(CXXFLAGS_MTOOLS) $(INC_MTOOLS) -c $< -o $@
 	
-
-
 before_test: 
 	@echo
 	@echo "****************************************"
@@ -120,7 +116,8 @@ $(OBJ_TEST): $(OBJDIR_TEST)/%.o : $(SRCDIR_TEST)/%.cpp
 	$(CXX) $(CXXFLAGS_TEST) $(INC_TEST) -c $< -o $@
 
 clean: 
-	@rm -rf $(OUTDIR)
+	@rm -rf $(OUTDIR_MTOOLS)
+	@rm -rf $(OUTDIR_TEST)
 	@rm -rf $(OBJDIR)
 	@echo
 	@echo "**** Cleaned ****"
