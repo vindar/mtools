@@ -114,6 +114,7 @@ struct PPPCompareTime
         if (P1.t < P2.t) return true;
         if (P1.t > P2.t) return false;
         MTOOLS_ERROR("should not happen");
+	return false;
         }
 
     bool  operator()(const pPoissonPoint & P1, const pPoissonPoint & P2)
@@ -121,6 +122,7 @@ struct PPPCompareTime
         if (P1->t < P2->t) return true;
         if (P1->t > P2->t) return false;
         MTOOLS_ERROR("should not happen");
+	return false;
         }
     };
 
@@ -133,6 +135,7 @@ struct PPPCompareSpace
         if (P1.x < P2.x) return true;
         if (P1.x > P2.x) return false;
         MTOOLS_ERROR("should not happen");
+	return false;
         }
 
     bool  operator()(const pPoissonPoint & P1, const pPoissonPoint & P2)
@@ -140,6 +143,7 @@ struct PPPCompareSpace
         if (P1->x < P2->x) return true;
         if (P1->x > P2->x) return false;
         MTOOLS_ERROR("should not happen");
+	return false;
         }
     };
 
