@@ -767,7 +767,8 @@ namespace mtools
             **/
             template<class random_t> double operator()(random_t & gen)
                 {
-                double u, u2, v, v2, p, t, lfac;
+                double u, u2, v, v2=0;
+				double p, t, lfac;
                 int k;
                 if (lambda < 5.) 
                     {
