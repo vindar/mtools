@@ -354,6 +354,7 @@
     <ClInclude Include="headers\io\internals_serialization.hpp" />
     <ClInclude Include="headers\io\logfile.hpp" />
     <ClInclude Include="headers\io\serialization.hpp" />
+    <ClInclude Include="headers\io\watch.hpp" />
     <ClInclude Include="headers\maths\rect.hpp" />
     <ClInclude Include="headers\maths\specialFunctions.hpp" />
     <ClInclude Include="headers\maths\sqrmatrix.hpp" />
@@ -399,6 +400,7 @@
     <ClCompile Include="sources\simpleBMP.cpp" />
     <ClCompile Include="sources\stringfct.cpp" />
     <ClCompile Include="sources\timefct.cpp" />
+    <ClCompile Include="sources\watch.cpp" />
     <ClCompile Include="stdafx_mtools.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>

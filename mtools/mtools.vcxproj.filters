@@ -210,6 +210,9 @@
     <ClInclude Include="headers\io\commandarg.hpp">
       <Filter>Header Files\io</Filter>
     </ClInclude>
+    <ClInclude Include="headers\io\watch.hpp">
+      <Filter>Header Files\io</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\fltk_supervisor.cpp">
@@ -276,6 +279,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="sources\error.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\watch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

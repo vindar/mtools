@@ -63,6 +63,7 @@
 #include "io/logfile.hpp"
 #include "io/serialization.hpp"
 #include "io/commandarg.hpp"
+#include "io/watch.hpp"
 
 // maths
 #include "maths/vec.hpp"
