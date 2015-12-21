@@ -215,12 +215,34 @@ namespace mtools
             {
             template<typename U> static decltype((((*((::std::ostringstream*)0)) << (*((U*)0))))) test(int);
             template<typename U> static no test(...);
+            template<typename U> static decltype((((*((::std::wostringstream*)0)) << (*((U*)0))))) testW(int);
+            template<typename U> static no testW(...);
             public:
-                static const bool value = !(std::is_same< decltype(test<T>(0)), no>::value);
+                static const bool value_ostream  = !(std::is_same< decltype(test<T>(0)), no>::value);
+                static const bool value_wostream = !(std::is_same< decltype(testW<T>(0)), no>::value);
+                static const bool value = (value_ostream || value_wostream);
             };
 
 
-        
+        /**
+        * has_from_istream::value = true if T can be obtained via `std::istringstream >> T`
+        *
+        * @tparam  T   Generic type parameter.
+        **/
+        template<typename T> class has_from_istream
+            {
+            template<typename U> static decltype((((*((::std::istringstream*)0)) >> (*((U*)0))))) test(int);
+            template<typename U> static no test(...);
+            template<typename U> static decltype((((*((::std::wistringstream*)0)) >> (*((U*)0))))) testW(int);
+            template<typename U> static no testW(...);
+            public:
+                static const bool value_istream = !(std::is_same< decltype(test<T>(0)), no>::value);
+                static const bool value_wistream = !(std::is_same< decltype(testW<T>(0)), no>::value);
+                static const bool value = (value_istream || value_wistream);
+            };
+
+
+
         /**
         * Internal namespace with helper class for computing the GCD/LCM of two integer at compile time
         * 
