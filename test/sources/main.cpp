@@ -75,8 +75,31 @@ public:
     };
 
 
+
+
+
+
+
+
 void inFLTK()
     {
+
+    /*
+
+    WatchWindow W;
+
+
+
+    W.spy("name",n,[true]);       // spy on type, edit is disallowed
+    W.spy()
+
+    W.spyfun(fout, [fin]);
+
+    */
+
+
+
+
     
     Fl_Double_Window *  win = new Fl_Double_Window(720, 486);
     RateTable *  rate = new RateTable(10, 10, 720 - 20, 486 - 20);
@@ -90,13 +113,32 @@ void inFLTK()
 
 
 
+class foo
+    {
+    public:
+    int r;
+    };
+
+
 int main(int argc, char* argv[])
 {
 
+
     mtools::cout << "test\n";
 
+    foo FF;
+    std::ostringstream s;
+
+    mtools::iRect R; 
+    mtools::cout << R << "\n"; 
+
+    std::string str = "azerty";
+    //mtools::fromString(str, FF);
+    mtools::cout << mtools::metaprog::has_to_ostream<mtools::iRect>::value << "\n";;
+
+    //mtools::cout << FF << "\n";
     mtools::IndirectProc<> proxy(&inFLTK); // registers the call
-    runInFLTKThread(proxy);
+   // runInFLTKThread(proxy);
 
     mtools::cout << "This is a test...\n";
     mtools::cout.getKey();

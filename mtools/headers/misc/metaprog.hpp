@@ -44,7 +44,7 @@ namespace mtools
         template<int K> class dummint {};       ///< dummy class, useful for method overload depending on template parameter. 
 
         struct yes { bool _yes; };
-        struct no { bool _no[77]; };
+        struct no { bool _no[7]; };
 
 
         /**
@@ -212,16 +212,15 @@ namespace mtools
          * @tparam  T   Generic type parameter.
          **/
         template<typename T> class has_to_ostream
-        {
-            template<typename U> static decltype((operator<<(::std::ostringstream(), (*((U*)0)))), yes()) test(int); 
-            template<typename> static no test(...);                                                                    
-
-        public:
-            static const bool value = std::is_same< decltype(test<T>(0)), yes >::value;
-        };
-
+            {
+            template<typename U> static decltype((((*((::std::ostringstream*)0)) << (*((U*)0))))) test(int);
+            template<typename U> static no test(...);
+            public:
+                static const bool value = !(std::is_same< decltype(test<T>(0)), no>::value);
+            };
 
 
+        
         /**
         * Internal namespace with helper class for computing the GCD/LCM of two integer at compile time
         * 
