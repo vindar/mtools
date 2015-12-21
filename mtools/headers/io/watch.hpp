@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "../misc/metaprog.hpp""
+#include "../misc/metaprog.hpp"
 
 #include <mutex>
 #include <atomic>
@@ -35,56 +35,57 @@ namespace mtools
     namespace internals_watch
         {
 
+        /* forward declaration */
+        class FltkWatchWin;
 
 
         /** Pure virtual base class for a watchable object */
-        class WatchObj
+        struct WatchObj
             {
-            public:
-
-                WatchObj(int rate);
+                WatchObj(const std::string & name, int rate);
                 virtual ~WatchObj();
-                virtual std::string get() const;
-                virtual size_t set(const std::string & value);
+                std::string get(bool & changed) const;
+                bool set(const std::string & value);
                 virtual bool writable() const;
                 int refreshRate() const;
                 int refreshRate(int newrate);
+                void assignFltkWin(FltkWatchWin * p);
 
-            private:
-                int _rate;   // refresh rate (number of time per minutes)
+                virtual std::string _get() const;
+                virtual size_t _set(const std::string & value);
 
+                int _rate;                          // refresh rate (number of time per minutes)
+                mutable std::string _prev_value;    // previous value
+                FltkWatchWin * _fltkwin;            // the associated watch window
+                std::string _name;                  // identifier name of the variable
             };
 
 
         /**
         * A watch object containing a variable of type T
         **/
-        template<typename T, bool allowWrite> class WatchObjVar : public WatchObj
+        template<typename T, bool allowWrite> struct WatchObjVar : public WatchObj
             {
-            public:
-
                 /** Constructor **/
-                WatchObjVar(const T & val, int rate) : WatchObj(rate), _p(const_cast<T*>(&val)) {}
+                WatchObjVar(const std::string & name, const T & val, int rate) : WatchObj(name, rate), _p(const_cast<T*>(&val)) {}
 
                 /** Destructor. */
                 virtual ~WatchObjVar() override {}
-
-                /** Gets the string representing the object  **/
-                virtual std::string get() const override { return mtools::toString(*_p); }
-
-                /**
-                * Sets the given value and return the number of character read from the input.
-                * Do nothing and return 0 if if writable is false or if the object cannot
-                * be set using mtools::fromString().
-                **/
-                virtual size_t set(const std::string & str) override { return _set(str, mtools::metaprog::dummy<_writable>()); }
 
                 /**
                 * Return true if the object is writable and false otherwise.
                 **/
                 virtual bool writable() const override { return _writable; }
 
-            public:
+                /** Gets the string representing the object  **/
+                virtual std::string _get() const override { return mtools::toString(*_p); }
+
+                /**
+                * Sets the given value and return the number of character read from the input.
+                * Do nothing and return 0 if if writable is false or if the object cannot
+                * be set using mtools::fromString().
+                **/
+                virtual size_t _set(const std::string & str) override { return _set(str, mtools::metaprog::dummy<_writable>()); }
 
                 size_t _set(const std::string & str, mtools::metaprog::dummy<true> dum) { return mtools::fromString(str, *_p); } // set value using fromString()
                 size_t _set(const std::string & str, mtools::metaprog::dummy<false> dum) { return 0; } // do nothing
@@ -98,32 +99,28 @@ namespace mtools
         /**
         * A watch object containing a variable of type T, use a function/functor for output
         **/
-        template<typename T, typename OutFun, bool allowWrite> class WatchObjVarOut : public WatchObj
+        template<typename T, typename OutFun, bool allowWrite> struct WatchObjVarOut : public WatchObj
             {
-            public:
-
                 /** Constructor **/
-                WatchObjVarOut(const T & val, OutFun & outfun, int rate) : WatchObj(rate), _p(const_cast<T*>(&val)), _outfun(&outfun) {}
+                WatchObjVarOut(const std::string & name, const T & val, OutFun & outfun, int rate) : WatchObj(name, rate), _p(const_cast<T*>(&val)), _outfun(&outfun) {}
 
                 /** Destructor. */
                 ~WatchObjVarOut() override {}
-
-                /** Gets the string representing the object  **/
-                std::string get() const override { return mtools::toString((*_outfun)(*_p)); }
-
-                /**
-                * Sets the given value and return the number of character read from the input.
-                * Do nothing and return 0 if if writable is false or if the object cannot
-                * be set using mtools::fromString().
-                **/
-                virtual size_t set(const std::string & str) override { return _set(str, mtools::metaprog::dummy<_writable>()); }
 
                 /**
                 * Return true if the object is writable and false otherwise.
                 **/
                 virtual bool writable() const override { return _writable; }
 
-            public:
+                /** Gets the string representing the object  **/
+                virtual std::string _get() const override { return mtools::toString((*_outfun)(*_p)); }
+
+                /**
+                * Sets the given value and return the number of character read from the input.
+                * Do nothing and return 0 if if writable is false or if the object cannot
+                * be set using mtools::fromString().
+                **/
+                virtual size_t _set(const std::string & str) override { return _set(str, mtools::metaprog::dummy<_writable>()); }
 
                 size_t _set(const std::string & str, mtools::metaprog::dummy<true> dum) { return mtools::fromString(str, *_p); } // set value using fromString()
                 size_t _set(const std::string & str, mtools::metaprog::dummy<false> dum) { return 0; } // do nothing
@@ -137,30 +134,26 @@ namespace mtools
         /**
         * A watch object containing a variable of type T, use functions/functors for output and input
         **/
-        template<typename T, typename OutFun, typename InFun, bool allowWrite> class WatchObjVarOutIn : public WatchObj
+        template<typename T, typename OutFun, typename InFun, bool allowWrite> struct WatchObjVarOutIn : public WatchObj
             {
-            public:
-
                 /** Constructor **/
-                WatchObjVarOutIn(const T & val, OutFun & outfun, InFun & infun, int rate) : WatchObj(rate), _p(const_cast<T*>(&val)), _outfun(&outfun), _infun(&infun) {}
+                WatchObjVarOutIn(const std::string & name, const T & val, OutFun & outfun, InFun & infun, int rate) : WatchObj(name, rate), _p(const_cast<T*>(&val)), _outfun(&outfun), _infun(&infun) {}
 
                 /** Destructor. */
                 ~WatchObjVarOutIn() override {}
-
-                /** Gets the string representing the object  **/
-                std::string get() const override { return mtools::toString((*_outfun)(*_p)); }
-
-                /**
-                * Sets the given value (if writable, otherwise do nothing), then return 0.
-                **/
-                virtual size_t set(const std::string & str) override { return _set(str, mtools::metaprog::dummy<allowWrite>()); }
 
                 /**
                 * Return true if the object is writable and false otherwise (ie if allowWrite was set to false)
                 **/
                 virtual bool writable() const override { return allowWrite; }
 
-            public:
+                /** Gets the string representing the object  **/
+                virtual std::string _get() const override { return mtools::toString((*_outfun)(*_p)); }
+
+                /**
+                * Sets the given value (if writable, otherwise do nothing), then return 0.
+                **/
+                virtual size_t _set(const std::string & str) override { return _set(str, mtools::metaprog::dummy<allowWrite>()); }
 
                 size_t _set(const std::string & str, mtools::metaprog::dummy<true> dum) { (*_infun)(str, *_p); return 0; } // set value using infun
                 size_t _set(const std::string & str, mtools::metaprog::dummy<false> dum) { return 0; } // do nothing
@@ -228,7 +221,7 @@ namespace mtools
                 template<bool allowWrite = true, typename T> void spy(const std::string & name, T & val)
                     {
                     createIfNeeded();
-                    internals_watch::WatchObjVar<T, allowWrite> * p = new internals_watch::WatchObjVar<T, allowWrite>(val, DEFAULT_REFRESHRATE);
+                    internals_watch::WatchObjVar<T, allowWrite> * p = new internals_watch::WatchObjVar<T, allowWrite>(name, val, DEFAULT_REFRESHRATE);
                     transmit(name,p);
                     }
 
@@ -246,7 +239,7 @@ namespace mtools
                 template<bool allowWrite = true, typename T, typename OutFun> void spy(const std::string & name, T & val, OutFun & outfun)
                     {
                     createIfNeeded();
-                    internals_watch::WatchObjVarOut<T, OutFun, allowWrite> * p = new internals_watch::WatchObjVarOut<T, OutFun, allowWrite>(val, outfun, DEFAULT_REFRESHRATE);
+                    internals_watch::WatchObjVarOut<T, OutFun, allowWrite> * p = new internals_watch::WatchObjVarOut<T, OutFun, allowWrite>(name, val, outfun, DEFAULT_REFRESHRATE);
                     transmit(name, p);
                     }
 
@@ -268,7 +261,7 @@ namespace mtools
                 template<bool allowWrite = true, typename T, typename OutFun, typename InFun> void spy(const std::string & name, T & val, OutFun & outfun, InFun & infun)
                     {
                     createIfNeeded();
-                    internals_watch::WatchObjVarOutIn<T, OutFun, InFun, allowWrite> * p = new internals_watch::WatchObjVarOutIn<T, OutFun, InFun, allowWrite>(val, outfun, infun, DEFAULT_REFRESHRATE);
+                    internals_watch::WatchObjVarOutIn<T, OutFun, InFun, allowWrite> * p = new internals_watch::WatchObjVarOutIn<T, OutFun, InFun, allowWrite>(name, val, outfun, infun, DEFAULT_REFRESHRATE);
                     transmit(name, p);
                     }
 
