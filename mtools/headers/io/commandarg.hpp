@@ -61,9 +61,10 @@ namespace mtools
         static std::string command;                     // the command used to run the program
 
 
-
-                                                        /* Remove the '-' at the beginning of str.
-                                                        * Return true if there was at least one */
+        /** 
+         * Remove the '-' at the beginning of str.
+         * Return true if there was at least one 
+         **/
         inline bool removeMinus(std::string & str)
             {
             size_t i = 0;
@@ -74,8 +75,10 @@ namespace mtools
             }
 
 
-        /* Parse an string of the form "name[=value]"
-        * @return  true if the option has a value and false otherwise. */
+        /**
+        * Parse an string of the form "name[=value]"
+        * @return  true if the option has a value and false otherwise. 
+        **/
         inline bool parseArg(const std::string & str, std::string & name, std::string & value)
             {
             size_t p = str.find('=');
@@ -86,7 +89,9 @@ namespace mtools
             }
 
 
-        /* return the option name  */
+        /**
+         * Return the option name
+         **/
         inline std::string optName(std::string str)
             {
             std::string name, value;
@@ -94,6 +99,7 @@ namespace mtools
             parseArg(str, name, value);
             return name;
             }
+
 
 
         /** A proxy class used from simulating return type template deduction */
@@ -104,8 +110,16 @@ namespace mtools
 
                 /**
                 * Implicit conversion from argument to type T
+                * Uses some dark magic to prevent template deduction ambiguities with std::string... (cf http://stackoverflow.com/questions/7741531/conversion-operator-template-specialization).
+                * 
+                * @note Invoquing copy ctor for string works correctly (i.e. 'std::string s = arg("-s");' is valid) but assignement to std::string is still ambiguous
+                *       i.e. asignement of the form 'str = arg("-s")'  should be explicitly casted as 'str = (std::string)arg("-s");'.
                 **/
-                template<typename T> operator T()
+                template < typename T,
+                           typename Decayed = typename std::decay<T>::type, 
+                           typename NotUsed = typename std::enable_if< !(std::is_same<const char*, Decayed>::value) 
+                                                                    && !(std::is_same<std::allocator<char>, Decayed>::value) 
+                                                                    && !(std::is_same<std::initializer_list<char>, Decayed>::value) >::type > operator T() const
                     {
                     OptObj & opt = mapOpt[_name];
                     if (!opt.hasvalue)
@@ -140,6 +154,47 @@ namespace mtools
                     }
 
 
+                /** specialization of the conversion operator for std::string **/
+                operator std::string() const { return str(); }
+
+
+                /**
+                * Return a std::string. Used to bypass std::string conversion imbroglio...
+                **/
+                 std::string str() const
+                    {
+                    OptObj & opt = mapOpt[_name];
+                    if (!opt.hasvalue)
+                        { // no value yet. 
+                        if (!interactive)
+                            {
+                            if (!opt.hasdefaultvalue) { MTOOLS_ERROR(std::string("Error : command line argument [") + _name + "] has neither value nor default value..."); }
+                            opt.value = opt.defaultvalue;
+                            }
+                        else
+                            {
+                            // interactive mode : query the value
+                            auto status = cout.useDefaultInputValue();  // save the way cout display input values
+                            cout << ((opt.info.length() > 0) ? opt.info : std::string("Parameter")) << " [" << _name << "] : "; // display the question 
+                            std::string val;
+                            if (opt.hasdefaultvalue) { fromString(opt.defaultvalue, val); cout.useDefaultInputValue(true); }
+                            else { cout.useDefaultInputValue(false); } // load the default value if any 
+                            cout >> val; opt.value = val; cout << opt.value << "\n"; // query, save and display the value
+                            opt.displayed = true; // set as already displayed
+                            cout.useDefaultInputValue(status);  // restore the way cout display input values
+                            }
+                        opt.hasvalue = true;
+                        }
+                    std::string val = opt.value;
+                    if ((display) && (!opt.displayed))
+                        { // display on the console if required
+                        cout << ((opt.info.length() > 0) ? opt.info : std::string("Parameter")) << " [" << _name << "] : " << val << "\n";
+                        opt.displayed = true;
+                        }
+                    return val; // return the value
+                    }
+
+
                 /**
                 * Associate/update the info string of the option
                 **/
@@ -150,7 +205,7 @@ namespace mtools
                     }
 
 
-                /* return a proxy to a given option, create the option if it does not exist yet */
+                /** return a proxy to a given option, create the option if it does not exist yet **/
                 static ProxyArg _get(std::string  str, std::string defaultvalue, bool hasdefaultvalue)
                     {
                     if (!internals_commandarg::parsed) { MTOOLS_ERROR(std::string("The command line was not yet parsed using parseCommandine().")); }
@@ -185,6 +240,7 @@ namespace mtools
 
                 const std::string _name;    // the option name
             };
+
 
         }
 
@@ -241,7 +297,7 @@ namespace mtools
 
 
     /**
-    * Return a given (zero indexed) free argument from the command line.
+    * Return a given (zero-indexed) free argument from the command line.
     **/
     inline std::string freearg(size_t index)
         {
@@ -256,7 +312,7 @@ namespace mtools
     *
     * @param   argc            The argc passed to main
     * @param [in,out]  argv    The argv passed to main
-    * @param   interactive     true to query missing paramter on the lfy using cout.
+    * @param   interactive     true to query missing paramter on the fly using cout.
     * @param   display         true to display information about each paramter used using cout.
     **/
     inline void parseCommandLine(int argc, char** argv, bool interactive = true, bool display = true)
