@@ -195,7 +195,7 @@ namespace mtools
             /* ask whether we should force quit the program */
             void window_callback(Fl_Widget* W)
                 {
-                if (fl_choice("Do you want to quit?\n Choosing YES will abort the process...", "YES", "NO", nullptr) == 0)
+                if (fl_choice("Do you want to quit?\n Choosing [Yes] will abort the process...", "No", "Yes", nullptr) == 1)
                     {
                     internals_fltk_supervisor::exitFLTK();
                     }
