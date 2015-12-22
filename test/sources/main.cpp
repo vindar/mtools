@@ -126,73 +126,48 @@ struct ttcc
 
 int ttff(int v) { return v + 2; }
 
-volatile mtools::int64 n = 0;
-volatile mtools::int64 m = 1;
-
+using namespace mtools;
 
 int main(int argc, char* argv[])
 {
+ 
+volatile mtools::int64 n = 0;
+mtools::int64 m = 1;
 
 
-    double x = 156.889;
-    foo FF;
-    mtools::iRect R;
-//    ttcc z;
+    watch("n", n); cout.getKey();
 
-    mtools::WatchWindow watch;
+    watch("n2", n); cout.getKey();
 
-    mtools::cout << "n";
+    watch.move(1000, 0); cout.getKey();
 
-    watch("n", n);//mtools::cout.getKey();
-    watch("m", m);//mtools::cout.getKey();
+    watch.clear(); cout.getKey();
 
-    watch("n2", n);//mtools::cout.getKey();
-    watch("n3", x);//mtools::cout.getKey();
-    watch("n4", FF);//mtools::cout.getKey();
-    watch("n5", R);//mtools::cout.getKey();
-    watch("n6", n);//mtools::cout.getKey();
+    watch("n3", n); cout.getKey();
+
+    watch("n4", n); cout.getKey();
+
+    watch.move(0, 500);
     
-    watch("n7", n);//mtools::cout.getKey();
-    watch("n8", n);//mtools::cout.getKey();
+    watch.remove("n3"); cout.getKey();
+    watch.remove("n4"); cout.getKey();
 
+    watch.move(200, 200);
 
-    watch("n9", n);//mtools::cout.getKey();
-    watch("n10", n);//mtools::cout.getKey();
-    watch("n11", n);//mtools::cout.getKey();
-    watch("n12", n);//mtools::cout.getKey();
-    watch("n13", n);//mtools::cout.getKey();
-    watch("n14", n);//mtools::cout.getKey();
-    watch("n15", n);//mtools::cout.getKey();
-    watch("n16", n);//mtools::cout.getKey();
-    watch("n17", n);//mtools::cout.getKey();
+    watch("n5", n); cout.getKey();
 
-    
-    watch.refreshRate("n2", 600);
-    watch.refreshRate("n3", 600);
-    watch.refreshRate("n4", 600);
-    watch.refreshRate("n5", 600);
-    watch.refreshRate("n6", 600);
-    watch.refreshRate("n7", 600);
-    watch.refreshRate("n8", 600);
-    watch.refreshRate("n9", 600);
-    watch.refreshRate("n10", 600);
-    watch.refreshRate("n11", 600);
-    watch.refreshRate("n12", 600);
-    watch.refreshRate("n13", 600);
-    watch.refreshRate("n14", 600);
+    int64 nmax = 10000000000;
 
-    while (1)
+   while(n < nmax)
         {
         n++;
+        m = 2*m  + 7;
 
-        m = 2*m;
-
-      //  mtools::cout.getKey();
-
+        //watch[n];
         }
         
-
-    mtools::cout << "This is a test...\n";
+    mtools::cout << "res = " << m << "\n";
+    mtools::cout << "Done in " << mtools::Chronometer() << "\n";;
     mtools::cout.getKey();
 
    
