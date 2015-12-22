@@ -65,12 +65,14 @@ namespace mtools
             };
 
 
+        /* emulate std::remove_cv_t in case compiler doesn't support C++14 */
+        template< class T > using remove_cv_tt = typename std::remove_cv<T>::type; 
+
         /**
         * A watch object containing a variable of type T
         **/
         template<typename T, bool allowWrite> struct WatchObjVar : public WatchObj
             {
-            template< class T > using remove_cv_tt = typename std::remove_cv<T>::type; // in case compiler doesn't know remove_cv_t 
             typedef remove_cv_tt<T> cvT;
 
                 /** Constructor **/
@@ -105,13 +107,11 @@ namespace mtools
             };
 
 
-
         /**
         * A watch object containing a variable of type T, use a function/functor for output
         **/
         template<typename T, typename OutFun, bool allowWrite> struct WatchObjVarOut : public WatchObj
             {
-            template< class T > using remove_cv_tt = typename std::remove_cv<T>::type; // in case compiler doesn't know remove_cv_t 
             typedef remove_cv_tt<T> cvT;
                 
                 /** Constructor **/
@@ -152,7 +152,6 @@ namespace mtools
         **/
         template<typename T, typename OutFun, typename InFun, bool allowWrite> struct WatchObjVarOutIn : public WatchObj
             {
-            template< class T > using remove_cv_tt = typename std::remove_cv<T>::type; // in case compiler doesn't know remove_cv_t 
             typedef remove_cv_tt<T> cvT;
 
                 /** Constructor **/
