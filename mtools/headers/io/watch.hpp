@@ -26,6 +26,7 @@
 #include <atomic>
 #include <string>
 
+#include <FL/Fl_Button.H>
 
 namespace mtools
     {
@@ -49,7 +50,7 @@ namespace mtools
                 virtual bool writable() const;
                 int refreshRate() const;
                 int refreshRate(int newrate);
-                void assignFltkWin(FltkWatchWin * p);
+                void assignFltkWin(FltkWatchWin * p, Fl_Button * nameButton, Fl_Button * valueButton);
 
                 virtual std::string _get() const;
                 virtual size_t _set(const std::string & value);
@@ -57,6 +58,8 @@ namespace mtools
                 int _rate;                          // refresh rate (number of time per minutes)
                 mutable std::string _prev_value;    // previous value
                 FltkWatchWin * _fltkwin;            // the associated watch window
+                Fl_Button * _name_button;           // fltk button with the name
+                Fl_Button * _value_button;          // fltk button with the value
                 std::string _name;                  // identifier name of the variable
             };
 
@@ -87,10 +90,10 @@ namespace mtools
                 **/
                 virtual size_t _set(const std::string & str) override { return _set(str, mtools::metaprog::dummy<_writable>()); }
 
-                size_t _set(const std::string & str, mtools::metaprog::dummy<true> dum) { return mtools::fromString(str, *_p); } // set value using fromString()
+                size_t _set(const std::string & str, mtools::metaprog::dummy<true> dum) { return mtools::fromString(str, *(const_cast<T*>(_p))); } // set value using fromString()
                 size_t _set(const std::string & str, mtools::metaprog::dummy<false> dum) { return 0; } // do nothing
 
-                T * _p;      // pointer to the watched object
+                mutable volatile T * _p;      // pointer to the watched object
                 static const bool _writable = (allowWrite && mtools::metaprog::has_from_istream<T>::value);  // true if the object is writable and false otherwise
             };
 
@@ -122,10 +125,10 @@ namespace mtools
                 **/
                 virtual size_t _set(const std::string & str) override { return _set(str, mtools::metaprog::dummy<_writable>()); }
 
-                size_t _set(const std::string & str, mtools::metaprog::dummy<true> dum) { return mtools::fromString(str, *_p); } // set value using fromString()
+                size_t _set(const std::string & str, mtools::metaprog::dummy<true> dum) { return mtools::fromString(str, *(const_cast<T*>(_p))); } // set value using fromString()
                 size_t _set(const std::string & str, mtools::metaprog::dummy<false> dum) { return 0; } // do nothing
 
-                T * _p;                 // pointer to the watched object
+                mutable volatile T * _p;                 // pointer to the watched object
                 OutFun * _outfun;       // pointer to the output functor
                 static const bool _writable = (allowWrite && mtools::metaprog::has_from_istream<T>::value);  // true if the object is writable and false otherwise
             };
@@ -155,10 +158,10 @@ namespace mtools
                 **/
                 virtual size_t _set(const std::string & str) override { return _set(str, mtools::metaprog::dummy<allowWrite>()); }
 
-                size_t _set(const std::string & str, mtools::metaprog::dummy<true> dum) { (*_infun)(str, *_p); return 0; } // set value using infun
+                size_t _set(const std::string & str, mtools::metaprog::dummy<true> dum) { (*_infun)(str, *(const_cast<T*>(_p))); return 0; } // set value using infun
                 size_t _set(const std::string & str, mtools::metaprog::dummy<false> dum) { return 0; } // do nothing
 
-                T * _p;                 // pointer to the watched object
+                mutable volatile T * _p;                 // pointer to the watched object
                 OutFun * _outfun;       // pointer to the output functor
                 InFun *  _infun;        // pointer to the output functor
             };

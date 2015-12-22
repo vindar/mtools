@@ -126,33 +126,71 @@ struct ttcc
 
 int ttff(int v) { return v + 2; }
 
+volatile mtools::int64 n = 0;
+volatile mtools::int64 m = 1;
 
 
 int main(int argc, char* argv[])
 {
 
-    int n = 12345;
+
     double x = 156.889;
     foo FF;
     mtools::iRect R;
-    ttcc z;
-
+//    ttcc z;
 
     mtools::WatchWindow watch;
 
-    watch.remove("hello");
+    mtools::cout << "n";
 
-    watch("n",n);
-    watch("n1", n,z);
-    watch("n2", n,ttff, mtools::fromString<int>);
-    watch("x", x);
-    watch("FF", FF);
-    watch("R", R);
+    watch("n", n);//mtools::cout.getKey();
+    watch("m", m);//mtools::cout.getKey();
+
+    watch("n2", n);//mtools::cout.getKey();
+    watch("n3", x);//mtools::cout.getKey();
+    watch("n4", FF);//mtools::cout.getKey();
+    watch("n5", R);//mtools::cout.getKey();
+    watch("n6", n);//mtools::cout.getKey();
+    
+    watch("n7", n);//mtools::cout.getKey();
+    watch("n8", n);//mtools::cout.getKey();
 
 
+    watch("n9", n);//mtools::cout.getKey();
+    watch("n10", n);//mtools::cout.getKey();
+    watch("n11", n);//mtools::cout.getKey();
+    watch("n12", n);//mtools::cout.getKey();
+    watch("n13", n);//mtools::cout.getKey();
+    watch("n14", n);//mtools::cout.getKey();
+    watch("n15", n);//mtools::cout.getKey();
+    watch("n16", n);//mtools::cout.getKey();
+    watch("n17", n);//mtools::cout.getKey();
 
-    mtools::cout.getKey();
+    
+    watch.refreshRate("n2", 600);
+    watch.refreshRate("n3", 600);
+    watch.refreshRate("n4", 600);
+    watch.refreshRate("n5", 600);
+    watch.refreshRate("n6", 600);
+    watch.refreshRate("n7", 600);
+    watch.refreshRate("n8", 600);
+    watch.refreshRate("n9", 600);
+    watch.refreshRate("n10", 600);
+    watch.refreshRate("n11", 600);
+    watch.refreshRate("n12", 600);
+    watch.refreshRate("n13", 600);
+    watch.refreshRate("n14", 600);
 
+    while (1)
+        {
+        n++;
+
+        m = 2*m;
+
+      //  mtools::cout.getKey();
+
+        }
+        
 
     mtools::cout << "This is a test...\n";
     mtools::cout.getKey();
