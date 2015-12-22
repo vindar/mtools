@@ -70,7 +70,8 @@ namespace mtools
         **/
         template<typename T, bool allowWrite> struct WatchObjVar : public WatchObj
             {
-            typedef std::remove_cv_t<T> cvT;
+            template< class T > using remove_cv_tt = typename std::remove_cv<T>::type; // in case compiler doesn't know remove_cv_t 
+            typedef remove_cv_tt<T> cvT;
 
                 /** Constructor **/
                 WatchObjVar(const std::string & name, const T & val, int rate) : WatchObj(name, rate), _p(const_cast<T*>(&val)) {}
@@ -110,7 +111,8 @@ namespace mtools
         **/
         template<typename T, typename OutFun, bool allowWrite> struct WatchObjVarOut : public WatchObj
             {
-            typedef std::remove_cv_t<T> cvT;
+            template< class T > using remove_cv_tt = typename std::remove_cv<T>::type; // in case compiler doesn't know remove_cv_t 
+            typedef remove_cv_tt<T> cvT;
                 
                 /** Constructor **/
                 WatchObjVarOut(const std::string & name, const T & val, OutFun & outfun, int rate) : WatchObj(name, rate), _p(const_cast<T*>(&val)), _outfun(&outfun) {}
@@ -150,8 +152,9 @@ namespace mtools
         **/
         template<typename T, typename OutFun, typename InFun, bool allowWrite> struct WatchObjVarOutIn : public WatchObj
             {
-            typedef std::remove_cv_t<T> cvT;
-            
+            template< class T > using remove_cv_tt = typename std::remove_cv<T>::type; // in case compiler doesn't know remove_cv_t 
+            typedef remove_cv_tt<T> cvT;
+
                 /** Constructor **/
                 WatchObjVarOutIn(const std::string & name, const T & val, OutFun & outfun, InFun & infun, int rate) : WatchObj(name, rate), _p(const_cast<T*>(&val)), _outfun(&outfun), _infun(&infun) {}
 

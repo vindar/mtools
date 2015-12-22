@@ -21,10 +21,6 @@ int main(int argc, char* argv[])
     
     s = (std::string)arg("-str");
 
-
-    /*
-    s  = cout.ask("valeur de s");
-
     cout << "n=" << m << "\n";
 
     watch("n", n); cout.getKey();
@@ -59,8 +55,6 @@ int main(int argc, char* argv[])
 
         //watch[n];
         }
-        
-        */
     mtools::cout << "res = " << s << "\n";
     mtools::cout << "Done in " << mtools::Chronometer() << "\n";;
     mtools::cout.getKey();
