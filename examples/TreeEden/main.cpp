@@ -116,6 +116,7 @@ private:
 
 TreeEdenCluster EC; // the main TreeEden cluster object
 
+int64 printSize(TreeEdenCluster & EC) { return EC.size(); }
 
 /* run the simulation */
 void run()
@@ -129,11 +130,13 @@ void run()
     Plotter.range().setRange(unionRect(mtools::zoomOut(EC.range()), fRect(-5000, 5000, -5000, 5000)));
     Plotter.autoredraw(300);
     cout << EC.toString();
+    watch("Cluster size", EC, printSize);
     while (Plotter.shown())
         {
         if (EC.size() % 10000000 == 0) cout << EC.toString();
         EC.simulate(1000000);
         }
+    watch.remove("Cluster size");
     return;
 }
 

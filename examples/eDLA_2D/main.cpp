@@ -16,7 +16,7 @@ MT2004_64 gen; // RNG
 Grid_basic<2, int64,2> Grid; // the 2D grid
 
 double radius = 1000.0; // radius of the cluster
-int64 N = 1;            // number of particules in the cluster
+volatile int64 N = 1;            // number of particules in the cluster
 
 void* peekhint = nullptr;
 
@@ -96,10 +96,11 @@ int main(int argc, char *argv[])
     P.autoredraw(autoredraw);
     P.solidBackGroundColor(RGBc::c_Black);
     P.startPlot();
+
+    watch("# of particles",N);
     while (P.shown())
         {
         addParticule(stepBetweenInfo);
-        cout << "\nnumber of particles " << N;
         }
 
     return 0;

@@ -15,7 +15,7 @@ MT2004_64  gen;	// the random number generator
 
 Grid_factor<2, char, 2,5> Grid;   // the grid
 
-int64 N; //number of walkers sent
+volatile int64 N; //number of walkers sent
 
 
 /* send a given number of walkers */
@@ -79,10 +79,10 @@ int main(int argc, char *argv[])
     P.autoredraw(autoredraw);
     P.startPlot();
     Chronometer();
+    watch("# of particles", N);
     while (P.shown())
         {
         makeCluster(1000);
-        if (N % 100000 == 0) { cout << "\n" << Chronometer() << " ms. Number of particles " << N; }
         }
     return 0;
 	}

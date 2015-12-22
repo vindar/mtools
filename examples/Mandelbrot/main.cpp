@@ -7,15 +7,16 @@
 #include "mtools.hpp"
 using namespace mtools;
 
-int nbIter = 64; // number of iterations 
+volatile int nbIter = 64; // number of iterations 
 
 RGBc mandelbrot(fVec2 pos)
     {
+    const int nbi = nbIter;
     const double cx = pos.X();
     const double cy = pos.Y();
     double X = 0.0;
     double Y = 0.0;
-    for(int i = 0; i < nbIter; i++)
+    for(int i = 0; i < nbi; i++)
         {
         const double sX = X;
         const double sY = Y;
@@ -29,11 +30,12 @@ RGBc mandelbrot(fVec2 pos)
 
 RGBc rabbit(fVec2 pos)
     {
+    const int nbi = nbIter;
     const double cx = -0.122561;
     const double cy = 0.744862;
     double X = pos.X();
     double Y = pos.Y();
-    for (int i = 0; i < nbIter; i++)
+    for (int i = 0; i < nbi; i++)
         {
         const double sX = X;
         const double sY = Y;
@@ -60,7 +62,9 @@ int main(int argc, char *argv[])
     M.opacity(0.5);
     D.opacity(0.5);
     Plotter.range().setRange(fRect(-0.65,-0.15,0.4,0.8));
+    watch("Nb of iterations", nbIter);
     Plotter.plot();
+    watch.remove("Nb of iterations");
     return 0;
 	}
 	
