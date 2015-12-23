@@ -65,15 +65,13 @@ namespace mtools
             };
 
 
-        /* emulate std::remove_cv_t in case compiler doesn't support C++14 */
-        template< class T > using remove_cv_tt = typename std::remove_cv<T>::type; 
 
         /**
         * A watch object containing a variable of type T
         **/
         template<typename T, bool allowWrite> struct WatchObjVar : public WatchObj
             {
-            typedef remove_cv_tt<T> cvT;
+            typedef mtools::remove_cv_t<T> cvT;
 
                 /** Constructor **/
                 WatchObjVar(const std::string & name, const T & val, int rate) : WatchObj(name, rate), _p(const_cast<T*>(&val)) {}
@@ -112,7 +110,7 @@ namespace mtools
         **/
         template<typename T, typename OutFun, bool allowWrite> struct WatchObjVarOut : public WatchObj
             {
-            typedef remove_cv_tt<T> cvT;
+            typedef mtools::remove_cv_t<T> cvT;
                 
                 /** Constructor **/
                 WatchObjVarOut(const std::string & name, const T & val, OutFun & outfun, int rate) : WatchObj(name, rate), _p(const_cast<T*>(&val)), _outfun(&outfun) {}
@@ -152,7 +150,7 @@ namespace mtools
         **/
         template<typename T, typename OutFun, typename InFun, bool allowWrite> struct WatchObjVarOutIn : public WatchObj
             {
-            typedef remove_cv_tt<T> cvT;
+            typedef mtools::remove_cv_t<T> cvT;
 
                 /** Constructor **/
                 WatchObjVarOutIn(const std::string & name, const T & val, OutFun & outfun, InFun & infun, int rate) : WatchObj(name, rate), _p(const_cast<T*>(&val)), _outfun(&outfun), _infun(&infun) {}

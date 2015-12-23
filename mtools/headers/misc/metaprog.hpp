@@ -29,6 +29,9 @@ namespace mtools
 {
 
 
+    /* emulate std::remove_cv_t in case compiler doesn't support C++14 */
+    template< class T > using remove_cv_t = typename std::remove_cv<T>::type;
+
 
 	/* forward declaration */
 	class IArchive;
