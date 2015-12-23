@@ -10,7 +10,7 @@ for d in */ ; do
 	echo "Project $d"
 	cd $d
 	make $1
-	cd $DIR
+	cd "$DIR"
 done
 
 
