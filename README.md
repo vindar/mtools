@@ -58,5 +58,5 @@ The library is cross-platform (at least, it works under Linux and Windows) but i
 
 
 ### What else...
-If you are looking for a nice C++ library that you can use to create simulation and graphics, I strongly recommend that you look at Vincent Beffara's simulation library (http://github.com/vbeffara/Simulations). It is very similar to mine and does pretty much the same things. If I had known about it a few years ago, I would probably now just use it and would never have written this one... In fact, while putting this library together, I borrowed the ideas of 'watch windows' and simple command-line parser from Vincent's library. There are many other neat features that you like so go have a look at it.
+If you are looking for a nice C++ library that you can use to create simulation and graphics, I strongly recommend that you look at Vincent Beffara's simulation library (http://github.com/vbeffara/Simulations). It is very similar to mine and does pretty much the same things. If I had known about it a few years ago, I would probably now just use it and would never have written this one... In fact, while putting this library together, I borrowed the ideas of 'watch windows' and simple command-line parser from Vincent's library. There are many other neat features so go have a look at it.
 
