@@ -16,6 +16,9 @@ int main(int argc, char* argv[])
     volatile mtools::int64 n = 0;
     volatile mtools::int64 m = 1;
 
+    const int c = 0;
+    const volatile std::string sss("a");
+
 
     std::string s = arg("-str"); //(arg('r'));
     
@@ -47,6 +50,22 @@ int main(int argc, char* argv[])
     int64 nmax = 10000000000;
 
     Chronometer();
+
+
+    OArchive OA("a");
+
+    OA & n;
+    OA & m;
+    OA & c;
+    OA & sss;
+
+    IArchive IA("a");
+
+    IA & n;
+    IA & m;
+    IA & c;
+    IA & sss;
+
 
    while(n < nmax)
         {
