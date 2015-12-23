@@ -239,10 +239,12 @@ namespace mtools
              **/
             template<typename T> OArchive & opaque(const T & obj)
                 {
+                typedef mtools::remove_cv_t<T> cvT; // type T but without qualifiers
+                cvT * p = const_cast<cvT*>(&obj); // pointer to obj without qualifiers
                 _makeSpace(); if (_comment) { _writeBuffer.append("% "); _comment = false; } // exit comment mode if needed
                 if (sizeof(T) == 0) return(*this);
                 _nbitem++;
-                createToken(_writeBuffer, &obj, sizeof(obj), true, false);
+                createToken(_writeBuffer, p, sizeof(obj), true, false);
                 _flush();
                 return(*this);
                 }
@@ -258,8 +260,10 @@ namespace mtools
              *
              * @return  The archive for chaining.
              **/
-            template<typename T> OArchive & array(const T * p, size_t len)
+            template<typename T> OArchive & array(const T * pp, size_t len)
                 {
+                typedef mtools::remove_cv_t<T> cvT; // type T but without qualifiers
+                cvT * p = const_cast<cvT*>(pp); // pointer without qualifiers
                 MTOOLS_ASSERT(p != nullptr);
                 _makeSpace(); if (_comment) { _writeBuffer.append("% "); _comment = false; } // exit comment mode if needed
                 if (len == 0) return(*this);
@@ -281,8 +285,10 @@ namespace mtools
              *
              * @return  The archive for chaining.
              **/
-            template<typename T> OArchive & opaqueArray(const T * p, size_t len)
+            template<typename T> OArchive & opaqueArray(const T * pp, size_t len)
                 {
+                typedef mtools::remove_cv_t<T> cvT; // type T but without qualifiers
+                cvT * p = const_cast<cvT*>(pp); // pointer without qualifiers
                 MTOOLS_ASSERT(p != nullptr);
                 _makeSpace(); if (_comment) { _writeBuffer.append("% "); _comment = false; }
                 if (len*sizeof(T) == 0) return(*this);
@@ -301,7 +307,12 @@ namespace mtools
              *
              * @return  The archive for chaining.
              **/
-            template<typename T> OArchive & operator<<(const T & obj) { _insertComment(toString(obj)); return(*this); }
+            template<typename T> OArchive & operator<<(const T & obj) 
+                { 
+                typedef mtools::remove_cv_t<T> cvT; // type T but without qualifiers
+                cvT * p = const_cast<cvT*>(&obj); // pointer to obj without qualifiers
+                _insertComment(toString(*p)); return(*this); 
+                }
 
 
             /**
@@ -542,9 +553,11 @@ namespace mtools
              **/
             template<typename T> IArchive & opaque(T & obj)
                 {
+                typedef mtools::remove_cv_t<T> cvT; // type T but without qualifiers
+                cvT * p = const_cast<cvT*>(&obj); // pointer to obj without qualifiers
                 if (sizeof(T) == 0) return(*this);
                 _nbitem++;
-                if (readTokenFromArchive(&obj, sizeof(T)) != sizeof(obj)) { MTOOLS_THROW("IArchive error (opaque)"); }
+                if (readTokenFromArchive(p, sizeof(T)) != sizeof(obj)) { MTOOLS_THROW("IArchive error (opaque)"); }
                 return(*this);
                 }
 
@@ -559,8 +572,10 @@ namespace mtools
              *
              * @return  The archive for chaining.
              **/
-            template<typename T> IArchive & array(T * p, size_t len)
+            template<typename T> IArchive & array(T * pp, size_t len)
                 {
+                typedef mtools::remove_cv_t<T> cvT; // type T but without qualifiers
+                cvT * p = const_cast<cvT*>(pp); // pointer without qualifiers
                 MTOOLS_ASSERT(p != nullptr);
                 if (len == 0) return(*this);
                 for (size_t i = 0; i < len; i++) { operator&(p[i]); } // unserialize each element of the array.
@@ -579,8 +594,10 @@ namespace mtools
              *
              * @return  The archive for chaining.
              **/
-            template<typename T> IArchive & opaqueArray(T * p, size_t len)
+            template<typename T> IArchive & opaqueArray(T * pp, size_t len)
                 {
+                typedef mtools::remove_cv_t<T> cvT; // type T but without qualifiers
+                cvT * p = const_cast<cvT*>(pp); // pointer without qualifiers
                 MTOOLS_ASSERT(p != nullptr);
                 if (len*sizeof(T) == 0) return(*this);
                 _nbitem++;
@@ -709,8 +726,10 @@ namespace mtools
 
     template<typename T> OArchive & OArchive::operator&(const T & obj)
         {
+        typedef mtools::remove_cv_t<T> cvT; // type T but without qualifiers
+        cvT * p = const_cast<cvT*>(&obj); // pointer to obj without qualifiers
         _makeSpace(); if (_comment) { _writeBuffer.append("% "); _comment = false; } // exit comment mode if needed
-        internals_serialization::OArchiveHelper<T>::write(_nbitem, *this, obj, _writeBuffer); // serialize the object into the archive using the helper class
+        internals_serialization::OArchiveHelper<cvT>::write(_nbitem, *this, (*p), _writeBuffer); // serialize the object into the archive using the helper class
         _flush();
         return(*this);
         }
@@ -718,7 +737,9 @@ namespace mtools
 
     template<typename T> IArchive & IArchive::operator&(T & obj)
         {
-        internals_serialization::IArchiveHelper<T>::read(_nbitem, *this, obj); // deserialize the object into the archive using the helper class
+        typedef mtools::remove_cv_t<T> cvT; // type T but without qualifiers
+        cvT * p = const_cast<cvT*>(&obj); // pointer to obj without qualifiers
+        internals_serialization::IArchiveHelper<cvT>::read(_nbitem, *this, (*p)); // deserialize the object into the archive using the helper class
         return(*this);
         }
 
