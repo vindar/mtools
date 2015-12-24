@@ -101,6 +101,35 @@ namespace mtools
         Vec(const T & x, const T & y, const T & z) { static_assert(N == 3, "template parameter N must be 3");  _m_tab[0] = x; _m_tab[1] = y; _m_tab[2] = z;  return; }
 
 
+        /**
+        * Default copy constructor.
+        **/
+        Vec(const Vec & V) = default;
+
+
+        /**
+        * Copy constructor from another template parameter.
+        **/
+        template<typename U> Vec(const Vec<U, N> & V) { for (size_t i = 0; i < N; i++) { _m_tab[i] = (T)V._m_tab[i]; } }
+
+
+        /**
+        * Default assignment operator.
+        **/
+        Vec & operator=(const Vec & R) = default;
+
+
+        /**
+        * Assignment operator from another type.
+        **/
+        template<typename U> Vec<U,N> & operator=(const Vec<U,N> & V)  { for (size_t i = 0; i < N; i++) { _m_tab[i] = (T)V._m_tab[i]; } return(*this); }
+
+
+        /**
+        * Assignment operator from constant value.
+        **/
+        Vec & operator=(const T & x) { for (size_t i = 0; i < N; i++) { _m_tab[i] = x; } return(*this); }
+
 
         /**
          * Equality operator.
