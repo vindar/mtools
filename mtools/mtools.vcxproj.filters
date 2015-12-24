@@ -213,6 +213,9 @@
     <ClInclude Include="headers\io\watch.hpp">
       <Filter>Header Files\io</Filter>
     </ClInclude>
+    <ClInclude Include="headers\maths\box.hpp">
+      <Filter>Header Files\maths</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\fltk_supervisor.cpp">
