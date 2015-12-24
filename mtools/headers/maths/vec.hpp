@@ -252,9 +252,9 @@ namespace mtools
 
 
          /**
-         * Normalise the vecotr so that its norm is 1, does nothing if the vecotr is 0.
+         * Normalise the vector so that its norm is 1, does nothing if the vector is 0.
          **/
-         inline void normalize() { double a = norm(); if (a>0) { for (int n = 0; n<N; n++) _m_tab[n] /= ((T)a); } }
+         inline void normalize() { double a = norm(); if (a>0) { for (int n = 0; n<N; n++) _m_tab[n] = (T)(_m_tab[n]/a); } }
 
 
          /**
@@ -327,38 +327,49 @@ namespace mtools
 
 
     /**
-     * Compute the distance between two vectors
+    * Compute the square of the euclidian distance between two vectors
+    *
+    * @param   V1  The first vector
+    * @param   V2  The second vector
+    *
+    * @return  The square of the euclidian distance.
+    **/
+    template<typename T, size_t N> inline T dist2(const Vec<T, N> & V1, const Vec<T, N> & V2) { T v = 0; for (size_t i = 0; i < N; i++) { const T a = (V1._m_tab[i] - V2._m_tab[i])   v += (a*a); } return v; }
+
+
+    /**
+     * Compute the euclidian distance between two vectors
      *
      * @param   V1  The first vector
      * @param   V2  The second vector
      *
      * @return  The distance as a double.
      **/
-    template<typename T, size_t N> inline double dist(const Vec<T, N> & V1, const Vec<T, N> & V2) { return((V2 - V1).norm()); };
+    template<typename T, size_t N> inline double dist(Vec<T, N> V1, const Vec<T, N> & V2) { return(sqrt((double)dist2(V1,V2))); }
 
 
     /**
      * Addition operator. Coordinates by coordinates
      **/
-    template<typename T, size_t N> inline Vec<T, N> operator+(const Vec<T, N> & V1, const Vec<T, N> & V2) { Vec<T, N> V(V1); V += V2; return V;}
+    template<typename T, size_t N> inline Vec<T, N> operator+(Vec<T, N> V1, const Vec<T, N> & V2) { V1 += V2; return V1;}
 
 
     /**
      * Substraction operator. Coordinates by coordinates
      **/
-    template<typename T, size_t N> inline Vec<T, N> operator-(const Vec<T, N> & V1, const Vec<T, N> & V2) { Vec<T, N> V(V1); V -= V2; return V; }
+    template<typename T, size_t N> inline Vec<T, N> operator-(Vec<T, N> V1, const Vec<T, N> & V2) { V1 -= V2; return V1; }
 
 
     /**
      * Multiplication operator. Coordinates by coordinates
      **/
-    template<typename T, size_t N> inline Vec<T, N> operator*(const Vec<T, N> & V1, const Vec<T, N> & V2) { Vec<T, N> V(V1); V *= V2; return V; }
+    template<typename T, size_t N> inline Vec<T, N> operator*(Vec<T, N> V1, const Vec<T, N> & V2) { V1 *= V2; return V1; }
 
 
     /**
      * Division operator. Coordinates by coordinates
      **/
-    template<typename T, size_t N> inline Vec<T, N> operator/(const Vec<T, N> & V1, const Vec<T, N> & V2) { Vec<T, N> V(V1); V /= V2; return V; }
+    template<typename T, size_t N> inline Vec<T, N> operator/(Vec<T, N> V1, const Vec<T, N> & V2) { V1 /= V2; return V1; }
 
 
     /**
@@ -371,8 +382,8 @@ namespace mtools
     /**
      * Scalar substraction operator.
      **/
-    template<typename T, size_t N> inline Vec<T, N> operator-(const T & a, Vec<T, N> V) { V -= a; return V; }
-    template<typename T, size_t N> inline Vec<T, N> operator-(Vec<T, N> V,const T & a) { V -= a; return V; }
+    template<typename T, size_t N> inline Vec<T, N> operator-(const T & a, Vec<T, N> V) { for (int i = 0; i < N; i++) { V1._m_tab[i] = a - V1._m_tab[i]; } return V; }
+    template<typename T, size_t N> inline Vec<T, N> operator-(Vec<T, N> V,const T & a)  { V -= a; return V; }
 
 
     /**
@@ -409,8 +420,7 @@ namespace mtools
      *
      * @return  the cross product UxV.
      **/
-    template<typename T, size_t N> inline T crossProduct(const Vec<T, N> & U, const Vec<T, N> & V) { static_assert(N==3,"dimension must be 3 for croos product.");
-    return Vec<T, N>(U[1]*V[2] - U[2]*V[1], U[2]*V[0] - U[0]*V[2], U[0]*V[1] - U[1]*V[0]); }
+    template<typename T, size_t N> inline T crossProduct(const Vec<T, N> & U, const Vec<T, N> & V) { static_assert(N==3,"dimension must be 3 for croos product."); return Vec<T, N>(U[1]*V[2] - U[2]*V[1], U[2]*V[0] - U[0]*V[2], U[0]*V[1] - U[1]*V[0]); }
 
 
     /**
@@ -420,10 +430,7 @@ namespace mtools
      *
      * @return  The square norm.
      **/
-    template<typename T, size_t N> inline  T norm2(const Vec<T, N> & V)
-        {
-        return V.norm2();
-        }
+    template<typename T, size_t N> inline  T norm2(const Vec<T, N> & V) { return V.norm2(); }
 
 
     /**
@@ -431,12 +438,9 @@ namespace mtools
     *
     * @param   V   The vector.
     *
-    * @return  The L2 norm.
+    * @return  The L2 norm as a double
     **/
-    template<class T, size_t N> inline  T norm(const Vec<T, N> & V)
-        {
-        return V.norm();
-        }
+    template<class T, size_t N> inline  double norm(const Vec<T, N> & V) { return V.norm(); }
 
 
     /**
