@@ -86,14 +86,19 @@ namespace mtools
             /**
             * Default constructor. Create a completely empty box.
             **/
-            Box() : min(1), max(0), xmin(min[0]), xmax(max[0]), ymin(min[1]), ymax(max[1]) { return; }
+            Box() : min(1), max(0) { return; }
+
+
+            /**
+            * Constructor. minV and maxV are the value in each directions.
+            **/
+            Box(const T & minV, const T & maxV) : min(minV), max(maxV) { return; }
 
 
             /**
             * Constructor from min and max points.
-            * (no reordering)
             **/
-            Box(const Vec<T, N> & minVec, const Vec<T, N> & maxVec, bool reorderIfNeeded = true) : min(minVec), max(maxVec), xmin(min[0]), xmax(max[0]), ymin(min[1]), ymax(max[1])
+            Box(const Vec<T, N> & minVec, const Vec<T, N> & maxVec, bool reorderIfNeeded = true) : min(minVec), max(maxVec)
                 {
                 if (reorderIfNeeded) MTOOLS_ERROR("old version, should be changed...");
                 }
@@ -102,7 +107,7 @@ namespace mtools
             /**
             * Constructor. Specific for dimension 2.
             **/
-            Box(const T & xmin, const T & xmax, const T & ymin, const T & ymax) : min(xmin,ymin) , max(xmax,ymax), xmin(min[0]), xmax(max[0]), ymin(min[1]), ymax(max[1])
+            Box(const T & xmin, const T & xmax, const T & ymin, const T & ymax) : min(xmin,ymin) , max(xmax,ymax)
                 {
                 static_assert(N == 2, "dimension must be equal to 2");
                 }
@@ -111,25 +116,25 @@ namespace mtools
            /**
             * Default copy constructor.
             **/
-            Box(const Box & B) : min(B.min), max(B.max), xmin(min[0]), xmax(max[0]), ymin(min[1]), ymax(max[1]) {}
+            Box(const Box & B) = default;
 
 
             /**
             * Copy constructor from another template parameter.
             **/
-            template<typename U> Box(const Box<U> & B) : min(B.min), max(B.max), xmin(min[0]), xmax(max[0]), ymin(min[1]), ymax(max[1]) {}
+            template<typename U> Box(const Box<U,N> & B) : min(B.min), max(B.max) {}
 
 
             /**
             * Default assignment operator.
             **/
-            Box & operator=(const Box<T> & B) = default;
+            Box & operator=(const Box & B) = default;
 
 
             /**
             * Assignment operator from another type.
             **/
-            template<typename U> Box & operator=(const Box<U> & B) { min = B.min; max = B.max; return(*this); }
+            template<typename U> Box & operator=(const Box<U,N> & B) { min = B.min; max = B.max; return(*this); }
 
 
             /**
@@ -193,7 +198,7 @@ namespace mtools
             /**
             * Set the rectangle as vertically empty (ie coord with index 1).
             **/
-            inline void clearVertically() { min[1] = 1; max[1] = 0; }
+            inline void clearVertically() { static_assert(N >= 2, "dimension N must be at least 2"); min[1] = 1; max[1] = 0; }
 
 
             /**
@@ -237,7 +242,7 @@ namespace mtools
 
 
             /**
-            * Try to enlarge the rectangle using points from another rectangle if possible. By defnition,
+            * Try to enlarge the rectangle using points from another rectangle if possible. By definition,
             * the resulting rectangle contain the initial one and is included in the union of the intial
             * one and the source R used to enlarge.
             *
@@ -273,7 +278,7 @@ namespace mtools
             **/
             inline T boundaryDist(const Vec<T, N> & pos) const
                 {
-                const T l = max[0] - pos[0]; l = std::min<T>(l, pos[0] - min[0]);
+                T l = max[0] - pos[0]; l = std::min<T>(l, pos[0] - min[0]);
                 for (size_t i = 1; i < N; i++) { l = std::min<T>(std::min<T>(l , max[i] - pos[i]), pos[i] - min[i]); }
                 return l;
                 }
@@ -285,7 +290,7 @@ namespace mtools
             *
             * @return  The position of the center.
             **/
-            inline Vec<T, N> center() const { Vec<T, N> V; for (size_t i = 0; i < N; i++) { V[i] = (min[i] + max[i]) / 2; } return V; }
+            inline Vec<T, N> center() const { Vec<T, N> V; for (size_t i = 0; i < N; i++) { V[i] = (min[i] + max[i])/2; } return V; }
 
 
             /**
@@ -298,12 +303,6 @@ namespace mtools
             * Return the height : lenght in direction 1.
             **/
             inline T ly() const { static_assert(N >= 2, "dimension N must be at least 2..."); return std::max<T>(0, max[1] - min[1]); }
-
-
-            /**
-            * Return the depth : lenght in direction 2.
-            **/
-            inline T lz() const { static_assert(N >= 3, "dimension N must be at least 3..."); return std::max<T>(0, max[2] - min[2]); }
 
 
             /**
@@ -421,10 +420,10 @@ namespace mtools
             *
             * @return  The intersection rectangle seen as a sub rectangle of *this.
             **/
-            Rect<T> relativeSubRect(const Box & B) const
+            Box relativeSubRect(const Box & B) const
                 {
+                if (isEmpty() || B.isEmpty()) { return Box(1,0); }
                 Box S;
-                if (isEmpty() || B.isEmpty()) { return S; }
                 for (size_t i = 0; i < N; i++)
                     {
                     S.min[i] = std::max<T>(min[i], B.min[i]) - min[i];
@@ -443,7 +442,7 @@ namespace mtools
                 {
                 T a = max[0] - min[0];
                 if (a <= 0) return 0;
-                for (size_t i = 1; i < N; i++) { const T v = max[i] - min[i]; if (v <= 0) return 0; a *= m; }
+                for (size_t i = 1; i < N; i++) { const T v = max[i] - min[i]; if (v <= 0) { return 0; } a *= m; }
                 return a;
                 }
 
@@ -472,13 +471,13 @@ namespace mtools
             **/
             inline iBox<N> integerEnclosingRect() const 
                 { 
-                iVec<N> imin, imax;
+                iBox<N> B;
                 for (size_t i = 0; i < N; i++)
                     {
-                    imin[i] = (int64)floor(min[i] + 0.5);
-                    imax[i] = (int64)ceil(max[i] - 0.5);
+                    B.min[i] = (int64)floor(min[i] + 0.5);
+                    B.max[i] = (int64)ceil(max[i] - 0.5);
                     }
-                return iBox(imin,imax);
+                return B;
                 }
 
 
@@ -489,12 +488,15 @@ namespace mtools
             *
             * @return  the enclosing rectangle with this ratio.
             **/
-            inline fRect fixedRatioEnclosingRect(double lxperly) const
+            inline fBox2 fixedRatioEnclosingRect(double lxperly) const
                 {
-                if ((lx() <= 0) || (ly() <= 0)) return fRect();
-                double rat = ((double)lx()) / ((double)ly());
-                if (rat < lxperly) { return fRect(((double)(xmin + xmax)) / 2.0 - ly()*lxperly / 2.0, ((double)(xmin + xmax)) / 2.0 + ly()*lxperly / 2.0, (double)ymin, (double)ymax); }
-                return fRect((double)xmin, (double)xmax, ((double)(ymin + ymax)) / 2.0 - (lx() / lxperly) / 2.0, ((double)(ymin + ymax)) / 2.0 + (lx() / lxperly) / 2.0);
+                static_assert(N == 2, "dimension N must be exactly 2.");
+                double lx = (double)(max[0] - min[0]);
+                double ly = (double)(max[1] - min[1]);
+                if ((lx <= 0.0) || (ly <= 0.0)) return fBox2(1.0,0.0);
+                double rat = lx/ly;
+                if (rat < lxperly) { return fBox2( ((double)(min[0] + max[0]))/2.0 - ly*lxperly/2.0, ((double)(min[0] + max[0]))/2.0 + ly*lxperly/2.0, (double)min[1], (double)max[1]); }
+                return fBox2( (double)min[0], (double)max[0], ((double)(min[1] + max[1]))/2.0 - (lx/lxperly)/2.0, ((double)(min[1] + max[1]))/2.0 + (lx/lxperly)/2.0);
                 }
 
 
@@ -505,12 +507,15 @@ namespace mtools
             *
             * @return  the enclosed rectangle with this ratio.
             **/
-            inline fRect fixedRatioEnclosedRect(double lxperly) const
+            inline fBox2 fixedRatioEnclosedRect(double lxperly) const
                 {
-                if ((lx() <= 0) || (ly() <= 0)) return fRect();
-                double rat = ((double)lx()) / ((double)ly());
-                if (rat < lxperly) { return fRect((double)xmin, (double)xmax, ((double)(ymin + ymax)) / 2.0 - ((double)lx() / lxperly) / 2.0, ((double)(ymin + ymax)) / 2.0 + ((double)lx() / lxperly) / 2.0); }
-                return fRect(((double)(xmin + xmax)) / 2.0 - ((double)ly())*lxperly / 2.0, ((double)(xmin + xmax)) / 2.0 + ((double)ly())*lxperly / 2.0, (double)ymin, (double)ymax);
+                static_assert(N == 2, "dimension N must be exactly 2.");
+                double lx = (double)(max[0] - min[0]);
+                double ly = (double)(max[1] - min[1]);
+                if ((lx <= 0.0) || (ly <= 0.0)) return fBox2(1.0, 0.0);
+                double rat = lx/ly;
+                if (rat < lxperly) { return fBox2((double)min[0], (double)max[0], ((double)(min[1] + max[1]))/2.0 - (lx/lxperly)/2.0, ((double)(min[1] + max[1]))/2.0 + (lx/lxperly)/2.0); }
+                return fBox2(((double)(min[0] + max[0]))/2.0 - ly*lxperly/2.0, ((double)(min[0] + max[0])) / 2.0 + ly*lxperly/2.0, (double)min[1], (double)max[1]);
                 }
 
 
@@ -526,13 +531,12 @@ namespace mtools
             **/
             iVec2 absToPixel(const fVec2 & absCoord, const iVec2 & scrSize) const
                 {
-                MTOOLS_ASSERT(!isEmpty());
-                double x = floor((((absCoord.X() - xmin) / lx())*scrSize.X()) + 0.5);
-                if (x < -2000000000) { x = -2000000000; }
-                else if (x > +2000000000) { x = +2000000000; } // dirty, for overflow
-                double y = floor((((absCoord.Y() - ymin) / ly())*scrSize.Y()) + 0.5);
-                if (y < -2000000000) { y = -2000000000; }
-                else if (y > +2000000000) { y = +2000000000; } // dirty, for overflow
+                static_assert(N == 2, "dimension N must be exactly 2.");
+                double lx = (double)(max[0] - min[0]);
+                double ly = (double)(max[1] - min[1]);
+                MTOOLS_ASSERT((lx > 0.0) && (ly > 0.0));
+                double x = floor((((absCoord.X() - min[0]) / lx)*scrSize.X()) + 0.5); if (x < -2000000000) { x = -2000000000; } else if (x > +2000000000) { x = +2000000000; } // dirty, for overflow
+                double y = floor((((absCoord.Y() - min[1]) / ly)*scrSize.Y()) + 0.5); if (y < -2000000000) { y = -2000000000; } else if (y > +2000000000) { y = +2000000000; } // dirty, for overflow
                 return iVec2((int64)x, scrSize.Y() - 1 - (int64)(y));
                 }
 
@@ -547,9 +551,12 @@ namespace mtools
             **/
             fVec2 pixelToAbs(const iVec2 & pixCoord, const iVec2 & scrSize) const
                 {
-                MTOOLS_ASSERT(!isEmpty());
-                double x = xmin + (xmax - xmin)*((double)(2 * pixCoord.X() + 1) / ((double)(2 * scrSize.X())));
-                double y = ymin + (ymax - ymin)*((double)(2 * (scrSize.Y() - 1 - pixCoord.Y()) + 1) / ((double)(2 * scrSize.Y())));
+                static_assert(N == 2, "dimension N must be exactly 2.");
+                double lx = (double)(max[0] - min[0]);
+                double ly = (double)(max[1] - min[1]);
+                MTOOLS_ASSERT((lx > 0.0) && (ly > 0.0));
+                double x = min[0] + (max[0] - min[0])*((double)(2 * pixCoord.X() + 1) / ((double)(2 * scrSize.X())));
+                double y = min[1] + (max[1] - min[1])*((double)(2 * (scrSize.Y() - 1 - pixCoord.Y()) + 1) / ((double)(2 * scrSize.Y())));
                 return fVec2(x, y);
                 }
 
@@ -567,126 +574,113 @@ namespace mtools
         Vec<T, N> min; // vector with the min coordinates in each directions
         Vec<T, N> max; // vector with the max coordinates in each directions
 
-        // reference for retro compatibility with old Rect class
-        T & xmin;
-        T & xmax;
-        T & ymin;
-        T & ymax;
         };
 
 
     /**
     * Zoom inside the rectangle (reduce the radius by 1/10th).
-    *
-    * @param   R   The rectangle to zoom in.
-    *
-    * @return  The zoomed in rectangle.
     **/
-    template<typename T> inline Rect<T> zoomIn(const Rect<T> & R)
+    template<typename T, size_t N> inline Box<T,N> zoomIn(Box<T,N> B)
         {
-        T lx = R.xmax - R.xmin;
-        T ly = R.ymax - R.ymin;
-        return Rect<T>(R.xmin + (lx / 10.0), R.xmax - (lx / 10.0), R.ymin + (ly / 10.0), R.ymax - (ly / 10.0));
+        for (size_t i = 0; i < N; i++)
+            {
+            T l = (B.max[i] - B.min[i])/10;
+            B.min[i] += l; B.max[i] -= l;
+            }
+        return B;
         }
 
 
     /**
     * Zoom outside of the rectangle (increase radius by 1/8th).
-    *
-    * @param   R   The rectangle to zoom out.
-    *
-    * @return  The zoomed out rectangle.
     **/
-    template<typename T> inline Rect<T> zoomOut(const Rect<T> & R)
+    template<typename T, size_t N> inline Box<T,N> zoomOut(Box<T,N> B)
         {
-        T lx = R.xmax - R.xmin;
-        T ly = R.ymax - R.ymin;
-        return Rect<T>(R.xmin - (lx / 8.0), R.xmax + (lx / 8.0), R.ymin - (ly / 8.0), R.ymax + (ly / 8.0));
+        for (size_t i = 0; i < N; i++)
+            {
+            T l = (B.max[i] - B.min[i])/8;
+            B.min[i] -= l; B.max[i] += l;
+            }
+        return B;
         }
 
 
     /**
-    * Move the rectangle up by 1/20th of its height.
-    *
-    * @param   R   The rectangle to move up
-    *
-    * @return The same rectangle shifted up by 1/20th of its height.
+    * Move the rectangle left by 1/20th of its length (coord of index 0)
     **/
-    template<typename T> inline Rect<T> up(const Rect<T> & R)
+    template<typename T, size_t N> inline Box<T, N> left(Box<T, N> B)
         {
-        T off = R.ly() / 20;
-        return Rect<T>(R.xmin, R.xmax, R.ymin + off, R.ymax + off);
+        T off = (B.max[0] - B.min[0])/20;
+        B.min[0] -= off; B.max[0] -= off;
+        return B;
         }
 
 
     /**
-    * Move the rectangle down by 1/20th of its height.
-    *
-    * @param   R   The rectangle to move down
-    *
-    * @return The same rectangle shifted down by 1/20th of its height.
+    * Move the rectangle right by 1/20th of its length (coord of index 0)
     **/
-    template<typename T> inline Rect<T> down(const Rect<T> & R)
+    template<typename T, size_t N> inline Box<T, N> right(Box<T, N> B)
         {
-        T off = R.ly() / 20;
-        return Rect<T>(R.xmin, R.xmax, R.ymin - off, R.ymax - off);
+        T off = (B.max[0] - B.min[0])/20;
+        B.min[0] += off; B.max[0] += off;
+        return B;
         }
 
 
     /**
-    * Move the rectangle left by 1/20th of its length.
-    *
-    * @param   R   The rectangle to move left
-    *
-    * @return The same rectangle shifted left by 1/20th of its length.
+    * Move the rectangle up by 1/20th of its height (coord of index 1)
     **/
-    template<typename T> inline Rect<T> left(const Rect<T> & R)
+    template<typename T, size_t N> inline Box<T, N> up(Box<T, N> B)
         {
-        T off = R.lx() / 20;
-        return Rect<T>(R.xmin - off, R.xmax - off, R.ymin, R.ymax);
+        static_assert(N >= 2, "dimension N must be at least 2.");
+        T off = (B.max[1] - B.min[1])/20;
+        B.min[1] += off; B.max[1] += off;
+        return B;
         }
 
 
     /**
-    * Move the rectangle right by 1/20th of its length.
-    *
-    * @param   R   The rectangle to move right
-    *
-    * @return The same rectangle shifted right by 1/20th of its length.
+    * Move the rectangle down by 1/20th of its height (coord of index 1)
     **/
-    template<typename T> inline Rect<T> right(const Rect<T> & R)
+    template<typename T, size_t N> inline Box<T, N> down(Box<T, N> B)
         {
-        T off = R.lx() / 20;
-        return Rect<T>(R.xmin + off, R.xmax + off, R.ymin, R.ymax);
+        static_assert(N >= 2, "dimension N must be at least 2.");
+        T off = (B.max[1] - B.min[1])/20;
+        B.min[1] -= off; B.max[1] -= off;
+        return B;
         }
 
 
     /**
-    * The rectangle obtained as the intersection of two rectangles.
-    *
-    * @param   R1  The first rectangle.
-    * @param   R2  The second rectangle.
-    *
-    * @return  the rectangle obtained as the intersection of R1 and R2. May be an empty rectangle.
+    * The rectangle obtained as the intersection of two rectangles. May be an empty rectangle.
     **/
-    template<typename T> inline Rect<T> intersectionRect(const Rect<T> & R1, const Rect<T> & R2) { return(Rect<T>(std::max<T>(R1.xmin, R2.xmin), std::min<T>(R1.xmax, R2.xmax), std::max<T>(R1.ymin, R2.ymin), std::min<T>(R1.ymax, R2.ymax))); }
+    template<typename T, size_t N> inline Box<T,N> intersectionRect(const Box<T,N> & B1, const Box<T, N> & B2)
+        { 
+        Box<T, N> S;
+        for (size_t i = 0; i < N; i++)
+            {
+            S.min[i] = std::max<T>(B1.min[i], B2.min[i]);
+            S.max[i] = std::min<T>(B1.max[i], B2.max[i]);
+            }
+        return S;
+        }
 
 
     /**
-    * The rectangle obtained as the smallest rectangle containing R1 and R2.
-    *
-    * @param   R1  The first rectangle.
-    * @param   R2  The second rectangle.
-    *
-    * @return  the rectangle that contain R1 and R2.
+    * The rectangle obtained as the smallest rectangle containing B1 and B2.
     **/
-    template<typename T> inline Rect<T> unionRect(const Rect<T> & R1, const Rect<T> & R2)
+    template<typename T, size_t N> inline Box<T, N> unionRect(const Box<T, N> & B1, const Box<T, N> & B2)
         {
-        if (R1.isEmpty()) { return R2; }
-        if (R2.isEmpty()) { return R1; }
-        return(Rect<T>(std::min<T>(R1.xmin, R2.xmin), std::max<T>(R1.xmax, R2.xmax), std::min<T>(R1.ymin, R2.ymin), std::max<T>(R1.ymax, R2.ymax)));
+        if (B1.isEmpty()) { return B2; }
+        if (B2.isEmpty()) { return B1; }
+        Box<T, N> S;
+        for (size_t i = 0; i < N; i++)
+            {
+            S.min[i] = std::min<T>(B1.min[i], B2.min[i]);
+            S.max[i] = std::max<T>(B1.max[i], B2.max[i]);
+            }
+        return S;
         }
-
 
 
     }
