@@ -9,77 +9,40 @@ using namespace mtools;
 
 
 
-int main(int argc, char* argv[])
-{
+double f1(double x) { return ((x <= 1.0) ? 0 : sqrt(2 * x*log(log(x)))); }   // upper and lower bound
+double f2(double x) { return ((x <= 1.0) ? 0 : -sqrt(2 * x*log(log(x)))); }  // for the LIL
 
-    mtools::parseCommandLine(argc, argv);
- 
-    volatile mtools::int64 n = 0;
-    volatile mtools::int64 m = 1;
-
-    const int c = 0;
-    const volatile std::string sss("a");
-
-
-    std::string s = arg("-str"); //(arg('r'));
-    
-    s = (std::string)arg("-str");
-
-    cout << "n=" << m << "\n";
-
-    watch("n", n); cout.getKey();
-
-    watch("n2", n); cout.getKey();
-
-    watch.move(1000, 0); cout.getKey();
-
-    watch.clear(); cout.getKey();
-
-    watch("n3", n); cout.getKey();
-
-    watch("n4", n); cout.getKey();
-
-    watch.move(0, 500);
-    
-    watch.remove("n3"); cout.getKey();
-    watch.remove("n4"); cout.getKey();
-
-    watch.move(200, 200);
-
-    watch("n5", n); cout.getKey();
-
-    int64 nmax = 10000000000;
-
-    Chronometer();
-
-
-    OArchive OA("a");
-
-    OA & n;
-    OA & m;
-    OA & c;
-    OA & sss;
-
-    IArchive IA("a");
-
-    IA & n;
-    IA & m;
-    IA & c;
-    IA & sss;
-
-
-   while(n < nmax)
+int main(int argc, char *argv[])
+    {
+    parseCommandLine(argc, argv, true);
+    cout << "**************************************\n";
+    cout << "Simulation of a 1D simple random walk.\n";
+    cout << "**************************************\n";
+    bool autorange = arg("auto").info("update the plotter's range automatically");
+    cout << "\nSimulating...\n";
+    MT2004_64 gen;                      // the RNG
+    std::vector<int>  tab;              // the vector containing the positions
+    int pos = 0;                        // current position
+    Plotter2D P;                        // the plotter object
+    auto PF1 = makePlot2DFun(f1);       // the first function plot object
+    auto PF2 = makePlot2DFun(f2);       // the second function plot object
+    auto PV = makePlot2DVector(tab);    // the vector plot, use natural dynamically growing range.
+    P[PV][PF1][PF2];                    // insert everything in the plotter
+    PV.interpolationLinear();           // use linear interpolation
+    PV.hypograph(true);                 // fill the hypograph
+    PV.hypographOpacity(0.3f);          // but make it half transparent
+    P.autoredraw(60);                   // the plotter window should redraw itself at least every second (more in fact since it redraws after unsuspending)
+    P.range().fixedAspectRatio(false);  // disable the fixed aspect ratio
+    if (!autorange) P.range().setRange(fBox2(-1.0e7, 5.0e8, -60000, 60000)); // set the range (if not automatic adjustment)
+    P.startPlot();                      // display the plotter
+    while (P.shown())                   // loop until the plotter window is closed
         {
-        n++;
-        m = 2*m  + 7;
-
-        //watch[n];
+        while (tab.size() < tab.capacity()) { pos += ((Unif(gen) < 0.5) ? -1 : 1); tab.push_back(pos); } // fill the vector with new steps of the walk until its capacity()
+        PV.suspend(true);      // suspend access to PV while we reallocate the vector memory.
+        tab.reserve(tab.capacity() + 1000000); // reserve more space
+        PV.suspend(false);     // resume access to the graph.
+        if (autorange) P.autorangeXY(); // autorange (causes a redraw)
         }
-    mtools::cout << "res = " << s << "\n";
-    mtools::cout << "Done in " << mtools::Chronometer() << "\n";;
-    mtools::cout.getKey();
+    return 0;
+    }
 
-   
-   
-	return 0;
-}

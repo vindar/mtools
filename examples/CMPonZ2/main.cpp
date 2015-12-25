@@ -288,7 +288,7 @@ void test()
 
     int m = std::max<int>((LX / 1000), (LY / 1000));
     if (m > 1) { P.setDrawingSize(LX/m, LY/m); P.viewZoomFactor(m); } else { P.setDrawingSize(LX, LY); }
-    P.range().setRange(fRect(0, LX, 0, LY));
+    P.range().setRange(fBox2(0, LX, 0, LY));
     P.range().set1to1();
     P.gridObject(true)->setUnitCells();
     P.axesObject(false);
