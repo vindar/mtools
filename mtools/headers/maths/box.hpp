@@ -103,7 +103,7 @@ namespace mtools
             **/
             Box(const Vec<T, N> & minVec, const Vec<T, N> & maxVec, bool reorderIfNeeded) : min(minVec), max(maxVec)
                 {
-          //      if (reorderIfNeeded)
+                if (reorderIfNeeded)
                     {
                     for (size_t i = 0; i < N; i++) { if (min[i] > max[i]) { auto temp = min[i]; min[i] = max[i]; max[i] = temp; } }
                     }
@@ -214,7 +214,14 @@ namespace mtools
             *
             * @return  true if the point is in the closed box and false otherwise
             **/
-            inline bool isInside(const Vec<T, N> & pos) const { return ((min <= pos) && (pos <= max)); }
+            inline bool isInside(const Vec<T, N> & pos) const 
+                { 
+                for (size_t i = 0; i < N; i++)
+                    {
+                    if ((pos[i] < min[i]) || (max[i] < pos[i])) return false;
+                    }
+                return true; 
+                }
 
 
             /**
@@ -224,7 +231,14 @@ namespace mtools
             *
             * @return  true if the point is in the closed box and false otherwise
             **/
-            inline bool isStrictlyInside(const Vec<T, N> & pos) const { return ((min < pos) && (pos < max)); }
+            inline bool isStrictlyInside(const Vec<T, N> & pos) const
+                {
+                for (size_t i = 0; i < N; i++)
+                    {
+                    if ((pos[i] <= min[i]) || (max[i] <= pos[i])) return false;
+                    }
+                return true;
+                }
 
 
             /**
@@ -359,7 +373,11 @@ namespace mtools
                 {
                 if (B.isEmpty()) return false;
                 if (isEmpty()) return true;
-                return((B.min <= min) && (B.max >= max));
+                for (size_t i = 0; i < N; i++)
+                    {
+                    if ((min[i] < B.min[i]) || (B.max[i] < max[i])) return false;
+                    }
+                return true;
                 }
 
 
@@ -379,29 +397,33 @@ namespace mtools
             * Strictly less-than comparison operator. Check if the rectangle is strictly included in
             * another rectangle (for the inclusion partial order).
             *
-            * @param   B   The rectangle to check if it strictly contains this.
+            * @param   B   The rectangle to check if it strictly contains this in each direction.
             *
             * @return  true if R strictly contains this, false otherwise. An empty rectangle contains
             *          nothing but is strictly contained in every non empty rectangle.
             **/
-            bool operator<(const Box & B) const 
+        /*    bool operator<(const Box & B) const 
                 {
                 if (B.isEmpty()) return false;
                 if (isEmpty()) return true;
-                return((B.min < min) && (B.max > max));
+                for (size_t i = 0; i < N; i++)
+                    {
+                    if ((min[i] <= B.min[i]) || (B.max[i] <= max[i])) return false;
+                    }
+                return true;
                 }
-
+         */
 
             /**
             * Strictly greater-than comparison operator. Check if the rectangle contains striclty another
             * rectangle (for the inclusion partial order).
             *
-            * @param   B   The rectangle to check if it is strictly contained in this.
+            * @param   B   The rectangle to check if it is strictly contained in this in each directions.
             *
             * @return  true if R is striclty contained in this, false otherwise. An empty rectangle contains
             *          nothing but is striclty contained in every non empty rectangle.
             **/
-            bool operator>(const Box & B) const { return(B.operator<(*this)); }
+         /*   bool operator>(const Box & B) const { return(B.operator<(*this)); } */
 
 
             /**

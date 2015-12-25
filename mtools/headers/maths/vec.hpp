@@ -144,25 +144,25 @@ namespace mtools
 
 
         /**
-         * Less-than comparison operator.
+         * Less-than comparison operator. Lexicographical order.
          **/
         inline bool operator<(const Vec<T, N> & V) const { for (size_t i = 0; i < N; i++) { if (_m_tab[i] < V._m_tab[i]) { return true; } else if (_m_tab[i] > V._m_tab[i]) { return false; } } return false; }
 
 
         /**
-         * Less-than-or-equal comparison operator.
+         * Less-than-or-equal comparison operator. Lexicographical order.
          **/
         inline bool operator<=(const Vec<T, N> & V) const { for (size_t i = 0; i < N; i++) {if (_m_tab[i] < V._m_tab[i]) { return true; } else if (_m_tab[i] > V._m_tab[i]) { return false; } } return true; }
 
 
          /**
-          * Greater-than comparison operator.
+          * Greater-than comparison operator. Lexicographical order.
           **/
          inline bool operator>(const Vec<T, N> & V) const { return(!(operator<=(V))); }
 
 
          /**
-          * Greater-than-or-equal comparison operator.
+          * Greater-than-or-equal comparison operator. Lexicographical order.
           * @return true if the first parameter is greater than or equal to the second.
           **/
          inline bool operator>=(const Vec<T, N> & V) const { return(!(operator<(V))); }
