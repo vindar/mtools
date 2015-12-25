@@ -110,7 +110,7 @@ namespace mtools
         /**
         * Copy constructor from another template parameter.
         **/
-        template<typename U> Vec(const Vec<U, N> & V) { for (size_t i = 0; i < N; i++) { _m_tab[i] = (T)V._m_tab[i]; } }
+        template<typename U> Vec(const Vec<U, N> & V) { for (size_t i = 0; i < N; i++) { _m_tab[i] = (T)(V[i]); } }
 
 
         /**

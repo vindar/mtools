@@ -320,11 +320,11 @@ namespace mtools
                         int button = Fl::event_button();
                         if (button == FL_LEFT_MOUSE)
                             {
-                            iBox2 R(_zoom1, _currentMouse);
+                            iBox2 R(_zoom1, _currentMouse,true);
                             if ((R.lx() > 10) && (R.ly() > 10))
                                 {
                                 fBox2 range = _RM->getRange();
-                                fBox2 R(_RM->pixelToAbs(((int64)_zoomFactor)*_zoom1), _RM->pixelToAbs(((int64)_zoomFactor)*_currentMouse)); // absolute rectangle
+                                fBox2 R(_RM->pixelToAbs(((int64)_zoomFactor)*_zoom1), _RM->pixelToAbs(((int64)_zoomFactor)*_currentMouse), true); // absolute rectangle
                                 if (fixedRatio()) { R = R.fixedRatioEnclosedRect(range.lx() / range.ly()); }
                                 _RM->setRange(R);
                                 redrawView();
@@ -450,7 +450,7 @@ namespace mtools
                     }
                 if (_isIn(_zoom2)) // erase the rectangles if previously drawn
                     {
-                    iBox2 R(_zoom1, _zoom2);
+                    iBox2 R(_zoom1, _zoom2, true);
                     partDraw(iBox2(R.min[0], R.min[0], R.min[1], R.max[1]));
                     partDraw(iBox2(R.max[0], R.max[0], R.min[1], R.max[1]));
                     partDraw(iBox2(R.min[0], R.max[0], R.min[1], R.min[1]));
@@ -494,7 +494,7 @@ namespace mtools
                 if (_zoomOn)
                     {
                     _zoom2 = _currentMouse;
-                    iBox2 R(_zoom1, _zoom2);
+                    iBox2 R(_zoom1, _zoom2, true);
                     if (fixedRatio()) fl_color(FL_GRAY); else fl_color(FL_RED);
                     fl_line((int)R.min[0], (int)R.min[1], (int)R.min[0], (int)R.max[1]);
                     fl_line((int)R.max[0], (int)R.min[1], (int)R.max[0], (int)R.max[1]);
@@ -503,11 +503,11 @@ namespace mtools
                     if (fixedRatio())
                         {
                         fBox2 range = _RM->getRange();
-                        fBox2 aR(_RM->pixelToAbs(((int64)_zoomFactor)*_zoom1), _RM->pixelToAbs(((int64)_zoomFactor)*_zoom2)); // absolute rectangle
+                        fBox2 aR(_RM->pixelToAbs(((int64)_zoomFactor)*_zoom1), _RM->pixelToAbs(((int64)_zoomFactor)*_zoom2), true); // absolute rectangle
                         fBox2 bR = aR.fixedRatioEnclosedRect(range.lx() / range.ly());
                         auto v1 = _RM->absToPix(fVec2{ bR.min[0], bR.min[1] }); v1 /= ((int64)_zoomFactor);
                         auto v2 = _RM->absToPix(fVec2{ bR.max[0], bR.max[1] }); v2 /= ((int64)_zoomFactor);
-                        _encR = iBox2( v1, v2 );
+                        _encR = iBox2( v1, v2, true );
                         fl_color(FL_RED);
                         fl_line((int)_encR.min[0], (int)_encR.min[1], (int)_encR.min[0], (int)_encR.max[1]);
                         fl_line((int)_encR.max[0], (int)_encR.min[1], (int)_encR.max[0], (int)_encR.max[1]);

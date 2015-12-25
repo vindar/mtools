@@ -28,12 +28,12 @@ void makeCluster(int nb)
         while(Grid.get(pos) == 1) 
             {
             if (k > 100) {
-                iRect fullR;
-                Grid.findFullBoxCentered(pos, fullR);
-                if (fullR.xmin == fullR.xmax) { SRW_Z2_1step(pos, gen); k = 0; } 
+                iBox2 fullR;
+                Grid.findFullBox(pos, fullR);
+                if (fullR.min[0] == fullR.max[0]) { SRW_Z2_1step(pos, gen); k = 0; }
                 else 
                     {
-                    fullR.xmin--; fullR.xmax++; fullR.ymin--; fullR.ymax++; 
+                    fullR.min[0]--; fullR.max[0]++; fullR.min[1]--; fullR.max[1]++;
                     SRW_Z2_MoveInRect(pos, fullR, 16, gen);
                     }
                 }

@@ -53,7 +53,7 @@ class EdenCluster
     inline int64 size() { return N; }
 
     /* range of the cluster */
-    inline fRect range() { return fRect(Grid.getPosRangeiRect()); }
+    inline fBox2 range() { return fBox2(Grid.getPosRangeiBox2()); }
 
     /* print some info */
     std::string toString() const { return std::string("Number of particles in the cluster: ") + mtools::toString(N) + "\nBoundary: " + mtools::toString(Urn) + "\nGrid: " + mtools::toString(Grid) + "\n"; }
@@ -98,7 +98,7 @@ void run()
     Plotter2D Plotter;
     Plotter[P2][P1];
     Plotter.startPlot();
-    Plotter.range().setRange(unionRect(mtools::zoomOut(EC.range()), fRect(-5000, 5000, -5000, 5000)));
+    Plotter.range().setRange(unionRect(mtools::zoomOut(EC.range()), fBox2(-5000, 5000, -5000, 5000)));
     Plotter.autoredraw(300);
     cout << EC.toString();
     watch("Cluster size", EC, printSize);

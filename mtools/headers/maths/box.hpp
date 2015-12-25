@@ -35,7 +35,7 @@
 
 namespace mtools
     {
-
+ 
     // forward declaration
     template<typename T, size_t N> class Box;
 
@@ -89,23 +89,26 @@ namespace mtools
             /**
             * Default constructor. Create a completely empty box.
             **/
-            Box() : min(1), max(0) { return; }
+            Box() : min(1), max(0)  { }
 
 
             /**
             * Constructor. minV and maxV are the value in each directions.
             **/
-            Box(const T & minV, const T & maxV) : min(minV), max(maxV) { return; }
+     //       Box(const T & minV, const T & maxV) : min(minV), max(maxV) { return; }
 
 
             /**
             * Constructor from min and max points.
             **/
-            Box(const Vec<T, N> & minVec, const Vec<T, N> & maxVec, bool reorderIfNeeded = true) : min(minVec), max(maxVec)
+            Box(const Vec<T, N> & minVec, const Vec<T, N> & maxVec, bool reorderIfNeeded) : min(minVec), max(maxVec)
                 {
-                if (reorderIfNeeded) MTOOLS_ERROR("old version, should be changed...");
+          //      if (reorderIfNeeded)
+                    {
+                    for (size_t i = 0; i < N; i++) { if (min[i] > max[i]) { auto temp = min[i]; min[i] = max[i]; max[i] = temp; } }
+                    }
                 }
-
+                
 
             /**
             * Constructor. Specific for dimension 2.
@@ -428,7 +431,7 @@ namespace mtools
             **/
             Box relativeSubRect(const Box & B) const
                 {
-                if (isEmpty() || B.isEmpty()) { return Box(1,0); }
+                if (isEmpty() || B.isEmpty()) { return Box(); }
                 Box S;
                 for (size_t i = 0; i < N; i++)
                     {
@@ -499,7 +502,7 @@ namespace mtools
                 static_assert(N == 2, "dimension N must be exactly 2.");
                 double lx = (double)(max[0] - min[0]);
                 double ly = (double)(max[1] - min[1]);
-                if ((lx <= 0.0) || (ly <= 0.0)) return fBox2(1.0,0.0);
+                if ((lx <= 0.0) || (ly <= 0.0)) return fBox2();
                 double rat = lx/ly;
                 if (rat < lxperly) { return fBox2( ((double)(min[0] + max[0]))/2.0 - ly*lxperly/2.0, ((double)(min[0] + max[0]))/2.0 + ly*lxperly/2.0, (double)min[1], (double)max[1]); }
                 return fBox2( (double)min[0], (double)max[0], ((double)(min[1] + max[1]))/2.0 - (lx/lxperly)/2.0, ((double)(min[1] + max[1]))/2.0 + (lx/lxperly)/2.0);
@@ -518,7 +521,7 @@ namespace mtools
                 static_assert(N == 2, "dimension N must be exactly 2.");
                 double lx = (double)(max[0] - min[0]);
                 double ly = (double)(max[1] - min[1]);
-                if ((lx <= 0.0) || (ly <= 0.0)) return fBox2(1.0, 0.0);
+                if ((lx <= 0.0) || (ly <= 0.0)) return fBox2();
                 double rat = lx/ly;
                 if (rat < lxperly) { return fBox2((double)min[0], (double)max[0], ((double)(min[1] + max[1]))/2.0 - (lx/lxperly)/2.0, ((double)(min[1] + max[1]))/2.0 + (lx/lxperly)/2.0); }
                 return fBox2(((double)(min[0] + max[0]))/2.0 - ly*lxperly/2.0, ((double)(min[0] + max[0])) / 2.0 + ly*lxperly/2.0, (double)min[1], (double)max[1]);
