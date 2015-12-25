@@ -11,7 +11,7 @@
 using namespace mtools;
 
 
-MT2004_64 gen; // RNG
+MT2004_64 gen(1); // RNG
 
 Grid_basic<2, int64,2> Grid; // the 2D grid
 
@@ -57,9 +57,9 @@ inline void addParticule(int64 nb)
             do
                 {
                 if (pos.norm2() > L) { pos /= 2; }
-                iRect fullR;
+                iBox2 fullR;
                 Grid.findFullBoxCentered(pos, fullR);
-                d = SRW_Z2_MoveInRect(pos, fullR, 16, gen);
+                d = SRW_Z2_MoveInRect(pos, fullR, 0, gen);
                 }
             while (d > 0);
             }
