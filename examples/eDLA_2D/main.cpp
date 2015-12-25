@@ -59,7 +59,7 @@ inline void addParticule(int64 nb)
                 if (pos.norm2() > L) { pos /= 2; }
                 iBox2 fullR;
                 Grid.findFullBoxCentered(pos, fullR);
-                d = SRW_Z2_MoveInRect(pos, fullR, 0, gen);
+                d = SRW_Z2_MoveInRect(pos, fullR, 16, gen);
                 }
             while (d > 0);
             }

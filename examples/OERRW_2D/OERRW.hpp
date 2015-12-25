@@ -42,7 +42,7 @@ class longOERRW
 
 
         /* return the range of the walk (useful for plotting the graph) */
-        fRect rangeRect() const { return R; }
+        fBox2 rangeRect() const { return R; }
 
 
         /* return the actual coordinates of the walk */
@@ -92,9 +92,9 @@ class longOERRW
                         int64 d;
                         do
                             {
-                            iRect fullR;
+                            iBox2 fullR;
                             G.findFullBoxCentered(pos, fullR);  // find a full box
-                            fullR.xmin--; fullR.xmax++; fullR.ymin--; fullR.ymax++;
+                            fullR.min[0]--; fullR.max[0]++; fullR.min[1]--; fullR.max[1]++;
                             d = SRW_Z2_MoveInRect(pos, fullR, 8, gen); // move in the rectangle 
                             }
                         while (d > 0);
@@ -149,7 +149,7 @@ class longOERRW
             L.setImageType(L.TYPEIMAGE);
             Plotter[L];
             Plotter.gridObject(true)->setUnitCells();
-            Plotter.range().setRange(zoomOut(fRect(R)));
+            Plotter.range().setRange(zoomOut(fBox2(R)));
             Plotter.plot();
             }
 
@@ -180,7 +180,7 @@ class longOERRW
         static const char maskfull = (maskup | maskdown | maskleft | maskright); // full mask
 
         double delta;						// reinforcement parameter delta
-        iRect R;                            // rectangle containing the trace of the walk
+        iBox2 R;                            // rectangle containing the trace of the walk
         int64 N;							// size of the current range
         iVec2 pos;							// current position of the walk
         mtools::Grid_factor<2,char,1,RR> G; // The lattice 

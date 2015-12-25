@@ -258,20 +258,20 @@ void createTree()
 
 
 /* convert a coord to an image pixel */
-iVec2 toImage(double x, double t, cimg_library::CImg<unsigned char> & image) { fRect R(0, X, 0, T); iVec2 pos = image.getImageCoord(R, { x,t }); pos.Y() = LY-1 - pos.Y(); return pos; }
+iVec2 toImage(double x, double t, cimg_library::CImg<unsigned char> & image) { fBox2 R(0, X, 0, T); iVec2 pos = image.getImageCoord(R, { x,t }); pos.Y() = LY-1 - pos.Y(); return pos; }
 
 
 /* draw the hammersley lines */
 void drawPoints(cimg_library::CImg<unsigned char> & image, float op = 1.0)
     {
     cout << "drawing the points... ";
-    fRect R(0, X, 0, T);
+    fBox2 R(0, X, 0, T);
     for (auto it = PPPSet.begin(); it != PPPSet.end(); it++)
         {
         pPoissonPoint pp = it->adr();
         RGBc coul = RGBc::c_Black;
         MTOOLS_ASSERT(pp->_treeindex > 0);
-        image.frect_draw_circle(R, { pp->x, pp->t }, T / 1000, coul,op);   // draw the points
+        image.fBox2_draw_circle(R, { pp->x, pp->t }, T / 1000, coul,op);   // draw the points
         }
     cout << "ok!\n\n";
     }
@@ -280,19 +280,19 @@ void drawPoints(cimg_library::CImg<unsigned char> & image, float op = 1.0)
 void drawLines(cimg_library::CImg<unsigned char> & image, float op = 0.8)
     {
     cout << "drawing the lines... ";
-    fRect R(0, X, 0, T);
+    fBox2 R(0, X, 0, T);
     for (auto it = PPPSet.begin(); it != PPPSet.end(); it++)
         {
         pPoissonPoint pp = it->adr();
         RGBc coul = RGBc::c_Black;
         MTOOLS_ASSERT(pp->_treeindex > 0);
         // horizontal lines
-        if (pp->father() == nullptr) { image.fRect_drawLine(R, { 0.0, pp->t }, { pp->x, pp->t }, coul,op); } // line going to the left border
-        else { image.fRect_drawLine(R, { pp->father()->x, pp->t }, { pp->x, pp->t }, coul,op); } // normal horizontal line
+        if (pp->father() == nullptr) { image.fBox2_drawLine(R, { 0.0, pp->t }, { pp->x, pp->t }, coul,op); } // line going to the left border
+        else { image.fBox2_drawLine(R, { pp->father()->x, pp->t }, { pp->x, pp->t }, coul,op); } // normal horizontal line
         // vertical lines
-        if (pp->remaining() > 0) { image.fRect_drawLine(R, { pp->x, pp->t }, { pp->x, T }, coul,op); } // line going to the top
-        else { image.fRect_drawLine(R, { pp->x, pp->t }, { pp->x, pp->lastused()->t }, coul,op); } // normal vertical line
-        image.frect_draw_circle(R, { pp->x, pp->t }, T/1000, coul);   // draw the points
+        if (pp->remaining() > 0) { image.fBox2_drawLine(R, { pp->x, pp->t }, { pp->x, T }, coul,op); } // line going to the top
+        else { image.fBox2_drawLine(R, { pp->x, pp->t }, { pp->x, pp->lastused()->t }, coul,op); } // normal vertical line
+        image.fBox2_draw_circle(R, { pp->x, pp->t }, T/1000, coul);   // draw the points
         }
     cout << "ok!\n\n";
     }

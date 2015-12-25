@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
     PV.hypographOpacity(0.3f);          // but make it half transparent
     P.autoredraw(60);                   // the plotter window should redraw itself at least every second (more in fact since it redraws after unsuspending)
     P.range().fixedAspectRatio(false);  // disable the fixed aspect ratio
-    if (!autorange) P.range().setRange(fRect(-1.0e7, 5.0e8, -60000, 60000)); // set the range (if not automatic adjustment)
+    if (!autorange) P.range().setRange(fBox2(-1.0e7, 5.0e8, -60000, 60000)); // set the range (if not automatic adjustment)
     P.startPlot();                      // display the plotter
     while (P.shown())                   // loop until the plotter window is closed
         {

@@ -24,7 +24,7 @@ double delta = 1.0;             // reinf param
 int64 maxV = 0;                 // max local time on site
 double maxE = 1.0;              // max weight on edges 
 int64 range = 1;                // number of distincts site visited. 
-iRect R;                        // rectangle enclosing the trace of the walk
+iBox2 R;                        // rectangle enclosing the trace of the walk
 Grid_basic<2, siteInfo> G;      // the grid
 MT2004_64 gen;                  // random generator
 CImg<unsigned char> image;      // image for detailled plot
@@ -134,7 +134,7 @@ void makeLERRW(uint64 steps, double d)
     L.setImageType(L.TYPEIMAGE);
     Plotter[L];
     Plotter.gridObject(true)->setUnitCells();
-    Plotter.range().setRange(zoomOut(fRect(R)));
+    Plotter.range().setRange(zoomOut(fBox2(R)));
     Plotter.plot();
     return;
     }

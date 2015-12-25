@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
     Plotter[M][D];
     M.opacity(0.5);
     D.opacity(0.5);
-    Plotter.range().setRange(fRect(-0.65,-0.15,0.4,0.8));
+    Plotter.range().setRange(fBox2(-0.65,-0.15,0.4,0.8));
     watch("Nb of iterations", nbIter);
     Plotter.plot();
     watch.remove("Nb of iterations");
