@@ -211,32 +211,32 @@ namespace mtools
 
         void View2DWidget::displayMovedImage(RGBc bkColor)
         {
-            fRect _stocRalt = _RM->getRange(); // current range
+            fBox2 _stocRalt = _RM->getRange(); // current range
             if ((_stocRalt == _stocR) && (_stocIm->width() == w()) && (_stocIm->height() == h())) { return; } // nothing to do
             _stocImAlt->resize(w(),h(), 1, 3, -1); // make the alt image to the current view size
             _stocImAlt->clear(bkColor); // clear to the correct bk
-            fRect subR = mtools::intersectionRect(_stocRalt, _stocR); // the intersection rectangle
+            fBox2 subR = mtools::intersectionRect(_stocRalt, _stocR); // the intersection rectangle
             if ((!subR.isEmpty())&&(_nbRounds >0))
                 {
-                iVec2 mR1 = _stocR.absToPixel(fVec2(subR.xmin, subR.ymax), iVec2(_stocIm->width(), _stocIm->height()));
-                iVec2 MR1 = _stocR.absToPixel(fVec2(subR.xmax, subR.ymin), iVec2(_stocIm->width(), _stocIm->height()));
-                iRect iR1 = iRect(mR1.X(), MR1.X(), mR1.Y(), MR1.Y()); // the rectangle inside the stocIm image 
-                iVec2 mR2 = _stocRalt.absToPixel(fVec2(subR.xmin, subR.ymax), iVec2(_stocImAlt->width(), _stocImAlt->height()));
-                iVec2 MR2 = _stocRalt.absToPixel(fVec2(subR.xmax, subR.ymin), iVec2(_stocImAlt->width(), _stocImAlt->height()));
-                iRect iR2 = iRect(mR2.X(), MR2.X(), mR2.Y(), MR2.Y()); // the rectangle inside the the stocImAlt image
-                iR1.ymin++; iR1.ymax++; iR2.ymin++; iR2.ymax++; // correct the range so that the index are non negative
+                iVec2 mR1 = _stocR.absToPixel(fVec2(subR.min[0], subR.max[1]), iVec2(_stocIm->width(), _stocIm->height()));
+                iVec2 MR1 = _stocR.absToPixel(fVec2(subR.max[0], subR.min[1]), iVec2(_stocIm->width(), _stocIm->height()));
+                iBox2 iR1 = iBox2(mR1.X(), MR1.X(), mR1.Y(), MR1.Y()); // the rectangle inside the stocIm image 
+                iVec2 mR2 = _stocRalt.absToPixel(fVec2(subR.min[0], subR.max[1]), iVec2(_stocImAlt->width(), _stocImAlt->height()));
+                iVec2 MR2 = _stocRalt.absToPixel(fVec2(subR.max[0], subR.min[1]), iVec2(_stocImAlt->width(), _stocImAlt->height()));
+                iBox2 iR2 = iBox2(mR2.X(), MR2.X(), mR2.Y(), MR2.Y()); // the rectangle inside the the stocImAlt image
+                iR1.min[1]++; iR1.max[1]++; iR2.min[1]++; iR2.max[1]++; // correct the range so that the index are non negative
                 if ((!iR1.isEmpty()) && (!iR2.isEmpty()) && (iR1.lx()*iR1.ly()*iR2.lx()*iR2.ly() > 0)) // redundant, check again is not empty
                     {
-                    const double stx = ((double)(iR1.xmax - iR1.xmin)) / ((double)(iR2.xmax - iR2.xmin));
-                    const double sty = ((double)(iR1.ymax - iR1.ymin)) / ((double)(iR2.ymax - iR2.ymin));
-                    const int j1 = (int)iR2.ymin; const int j2 = (int)iR2.ymax;
-                    const int i1 = (int)iR2.xmin; const int i2 = (int)iR2.xmax;
+                    const double stx = ((double)(iR1.max[0] - iR1.min[0])) / ((double)(iR2.max[0] - iR2.min[0]));
+                    const double sty = ((double)(iR1.max[1] - iR1.min[1])) / ((double)(iR2.max[1] - iR2.min[1]));
+                    const int j1 = (int)iR2.min[1]; const int j2 = (int)iR2.max[1];
+                    const int i1 = (int)iR2.min[0]; const int i2 = (int)iR2.max[0];
                         for (int j = j1; j < j2; j++)
                         {
-                        int y = (int)(iR1.ymin + (int)floor((j - iR2.ymin)*sty));
+                        int y = (int)(iR1.min[1] + (int)floor((j - iR2.min[1])*sty));
                         for (int i = i1; i < i2; i++)
                             {
-                            int x = (int)(iR1.xmin + (int)floor((i - iR2.xmin)*stx));
+                            int x = (int)(iR1.min[0] + (int)floor((i - iR2.min[0])*stx));
                             _stocImAlt->operator()(i, j, 0, 0) = _stocIm->operator()(x, y, 0, 0)/_nbRounds;
                             _stocImAlt->operator()(i, j, 0, 1) = _stocIm->operator()(x, y, 0, 1)/_nbRounds;
                             _stocImAlt->operator()(i, j, 0, 2) = _stocIm->operator()(x, y, 0, 2)/_nbRounds;
@@ -320,11 +320,11 @@ namespace mtools
                         int button = Fl::event_button();
                         if (button == FL_LEFT_MOUSE)
                             {
-                            iRect R(_zoom1, _currentMouse);
+                            iBox2 R(_zoom1, _currentMouse);
                             if ((R.lx() > 10) && (R.ly() > 10))
                                 {
-                                fRect range = _RM->getRange();
-                                fRect R(_RM->pixelToAbs(((int64)_zoomFactor)*_zoom1), _RM->pixelToAbs(((int64)_zoomFactor)*_currentMouse)); // absolute rectangle
+                                fBox2 range = _RM->getRange();
+                                fBox2 R(_RM->pixelToAbs(((int64)_zoomFactor)*_zoom1), _RM->pixelToAbs(((int64)_zoomFactor)*_currentMouse)); // absolute rectangle
                                 if (fixedRatio()) { R = R.fixedRatioEnclosedRect(range.lx() / range.ly()); }
                                 _RM->setRange(R);
                                 redrawView();
@@ -445,22 +445,22 @@ namespace mtools
                 {
                 if (_isIn(_prevMouse)) // erase the cross if it was previously drawn
                     {
-                    partDraw(iRect(0, w()-1, _prevMouse.Y(), _prevMouse.Y()));
-                    partDraw(iRect(_prevMouse.X(), _prevMouse.X(), 0, h()-1));
+                    partDraw(iBox2(0, w()-1, _prevMouse.Y(), _prevMouse.Y()));
+                    partDraw(iBox2(_prevMouse.X(), _prevMouse.X(), 0, h()-1));
                     }
                 if (_isIn(_zoom2)) // erase the rectangles if previously drawn
                     {
-                    iRect R(_zoom1, _zoom2);
-                    partDraw(iRect(R.xmin, R.xmin, R.ymin, R.ymax));
-                    partDraw(iRect(R.xmax, R.xmax, R.ymin, R.ymax));
-                    partDraw(iRect(R.xmin, R.xmax, R.ymin, R.ymin));
-                    partDraw(iRect(R.xmin, R.xmax, R.ymax, R.ymax));
+                    iBox2 R(_zoom1, _zoom2);
+                    partDraw(iBox2(R.min[0], R.min[0], R.min[1], R.max[1]));
+                    partDraw(iBox2(R.max[0], R.max[0], R.min[1], R.max[1]));
+                    partDraw(iBox2(R.min[0], R.max[0], R.min[1], R.min[1]));
+                    partDraw(iBox2(R.min[0], R.max[0], R.max[1], R.max[1]));
                     if (fixedRatio())
                         {
-                        partDraw(iRect(_encR.xmin, _encR.xmin, _encR.ymin, _encR.ymax));
-                        partDraw(iRect(_encR.xmax, _encR.xmax, _encR.ymin, _encR.ymax));
-                        partDraw(iRect(_encR.xmin, _encR.xmax, _encR.ymin, _encR.ymin));
-                        partDraw(iRect(_encR.xmin, _encR.xmax, _encR.ymax, _encR.ymax));
+                        partDraw(iBox2(_encR.min[0], _encR.min[0], _encR.min[1], _encR.max[1]));
+                        partDraw(iBox2(_encR.max[0], _encR.max[0], _encR.min[1], _encR.max[1]));
+                        partDraw(iBox2(_encR.min[0], _encR.max[0], _encR.min[1], _encR.min[1]));
+                        partDraw(iBox2(_encR.min[0], _encR.max[0], _encR.max[1], _encR.max[1]));
                         }
                     }
                 }
@@ -494,25 +494,25 @@ namespace mtools
                 if (_zoomOn)
                     {
                     _zoom2 = _currentMouse;
-                    iRect R(_zoom1, _zoom2);
+                    iBox2 R(_zoom1, _zoom2);
                     if (fixedRatio()) fl_color(FL_GRAY); else fl_color(FL_RED);
-                    fl_line((int)R.xmin, (int)R.ymin, (int)R.xmin, (int)R.ymax);
-                    fl_line((int)R.xmax, (int)R.ymin, (int)R.xmax, (int)R.ymax);
-                    fl_line((int)R.xmin, (int)R.ymin, (int)R.xmax, (int)R.ymin);
-                    fl_line((int)R.xmin, (int)R.ymax, (int)R.xmax, (int)R.ymax);
+                    fl_line((int)R.min[0], (int)R.min[1], (int)R.min[0], (int)R.max[1]);
+                    fl_line((int)R.max[0], (int)R.min[1], (int)R.max[0], (int)R.max[1]);
+                    fl_line((int)R.min[0], (int)R.min[1], (int)R.max[0], (int)R.min[1]);
+                    fl_line((int)R.min[0], (int)R.max[1], (int)R.max[0], (int)R.max[1]);
                     if (fixedRatio())
                         {
-                        fRect range = _RM->getRange();
-                        fRect aR(_RM->pixelToAbs(((int64)_zoomFactor)*_zoom1), _RM->pixelToAbs(((int64)_zoomFactor)*_zoom2)); // absolute rectangle
-                        fRect bR = aR.fixedRatioEnclosedRect(range.lx() / range.ly());
-                        auto v1 = _RM->absToPix(fVec2{ bR.xmin, bR.ymin }); v1 /= ((int64)_zoomFactor);
-                        auto v2 = _RM->absToPix(fVec2{ bR.xmax, bR.ymax }); v2 /= ((int64)_zoomFactor);
-                        _encR = iRect( v1, v2 );
+                        fBox2 range = _RM->getRange();
+                        fBox2 aR(_RM->pixelToAbs(((int64)_zoomFactor)*_zoom1), _RM->pixelToAbs(((int64)_zoomFactor)*_zoom2)); // absolute rectangle
+                        fBox2 bR = aR.fixedRatioEnclosedRect(range.lx() / range.ly());
+                        auto v1 = _RM->absToPix(fVec2{ bR.min[0], bR.min[1] }); v1 /= ((int64)_zoomFactor);
+                        auto v2 = _RM->absToPix(fVec2{ bR.max[0], bR.max[1] }); v2 /= ((int64)_zoomFactor);
+                        _encR = iBox2( v1, v2 );
                         fl_color(FL_RED);
-                        fl_line((int)_encR.xmin, (int)_encR.ymin, (int)_encR.xmin, (int)_encR.ymax);
-                        fl_line((int)_encR.xmax, (int)_encR.ymin, (int)_encR.xmax, (int)_encR.ymax);
-                        fl_line((int)_encR.xmin, (int)_encR.ymin, (int)_encR.xmax, (int)_encR.ymin);
-                        fl_line((int)_encR.xmin, (int)_encR.ymax, (int)_encR.xmax, (int)_encR.ymax);
+                        fl_line((int)_encR.min[0], (int)_encR.min[1], (int)_encR.min[0], (int)_encR.max[1]);
+                        fl_line((int)_encR.max[0], (int)_encR.min[1], (int)_encR.max[0], (int)_encR.max[1]);
+                        fl_line((int)_encR.min[0], (int)_encR.min[1], (int)_encR.max[0], (int)_encR.min[1]);
+                        fl_line((int)_encR.min[0], (int)_encR.max[1], (int)_encR.max[0], (int)_encR.max[1]);
                         }
                     }
                 }

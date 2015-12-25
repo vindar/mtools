@@ -47,7 +47,7 @@ namespace internals_graphics
             }
 
 
-        void AutoDrawable2DObject::setParam(mtools::fRect range, mtools::iVec2 imageSize)
+        void AutoDrawable2DObject::setParam(mtools::fBox2 range, mtools::iVec2 imageSize)
             {
             std::lock_guard<std::mutex> lg(_mut);
             _obj->setParam(range, imageSize);

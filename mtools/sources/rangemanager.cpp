@@ -38,7 +38,7 @@ namespace mtools
         const int RangeManager::MAXLOCKTIME = 1000;
 
 
-        RangeManager::RangeManager(mtools::fRect startRange, mtools::iVec2 winSize, bool fixedAspectRatio, double minValue, double maxValue, double precision) :
+        RangeManager::RangeManager(mtools::fBox2 startRange, mtools::iVec2 winSize, bool fixedAspectRatio, double minValue, double maxValue, double precision) :
         _cbfun(nullptr), _data(nullptr), _data2(nullptr), _startRange(startRange), _range(startRange), _startWin(winSize), _winSize(winSize), _minValue(minValue), _maxValue(maxValue), _precision(precision), _fixedAR(fixedAspectRatio)
             {
                 MTOOLS_ASSERT((winSize.X() > 0) && (winSize.Y() > 0));
@@ -101,7 +101,7 @@ namespace mtools
             }
 
 
-        mtools::fRect RangeManager::getRange() const
+        mtools::fBox2 RangeManager::getRange() const
             {
             return _range;
             }
@@ -113,7 +113,7 @@ namespace mtools
             }
 
 
-        mtools::fRect RangeManager::getDefaultRange() const
+        mtools::fBox2 RangeManager::getDefaultRange() const
             {
             return _startRange;
             }
@@ -129,7 +129,7 @@ namespace mtools
             {
             if (!_mut.try_lock_for(std::chrono::milliseconds(MAXLOCKTIME))) return false;
             bool resok = true;
-            mtools::fRect oldr = _range;
+            mtools::fBox2 oldr = _range;
             _range = mtools::up(_range);
             _fixRange();
             if (!_rangeOK(_range)) { _range = oldr; }
@@ -145,7 +145,7 @@ namespace mtools
             {
                 if (!_mut.try_lock_for(std::chrono::milliseconds(MAXLOCKTIME))) return false;
                 bool resok = true;
-                mtools::fRect oldr = _range;
+                mtools::fBox2 oldr = _range;
                 _range = mtools::down(_range);
                 _fixRange();
                 if (!_rangeOK(_range)) { _range = oldr; }
@@ -161,7 +161,7 @@ namespace mtools
             {
                 if (!_mut.try_lock_for(std::chrono::milliseconds(MAXLOCKTIME))) return false;
                 bool resok = true;
-                mtools::fRect oldr = _range;
+                mtools::fBox2 oldr = _range;
                 _range = mtools::left(_range);
                 _fixRange();
                 if (!_rangeOK(_range)) { _range = oldr; }
@@ -177,7 +177,7 @@ namespace mtools
             {
                 if (!_mut.try_lock_for(std::chrono::milliseconds(MAXLOCKTIME))) return false;
                 bool resok = true;
-                mtools::fRect oldr = _range;
+                mtools::fBox2 oldr = _range;
                 _range = mtools::right(_range);
                 _fixRange();
                 if (!_rangeOK(_range)) { _range = oldr; }
@@ -193,7 +193,7 @@ namespace mtools
             {
                 if (!_mut.try_lock_for(std::chrono::milliseconds(MAXLOCKTIME))) return false;
                 bool resok = true;
-                mtools::fRect oldr = _range;
+                mtools::fBox2 oldr = _range;
                 _range = mtools::zoomIn(_range);
                 _fixRange();
                 if (!_rangeOK(_range)) { _range = oldr; }
@@ -208,7 +208,7 @@ namespace mtools
             {
                 if (!_mut.try_lock_for(std::chrono::milliseconds(MAXLOCKTIME))) return false;
                 bool resok = true;
-                mtools::fRect oldr = _range;
+                mtools::fBox2 oldr = _range;
                 _range = mtools::zoomOut(_range);
                 _fixRange();
                 if (!_rangeOK(_range)) { _range = oldr; }
@@ -225,15 +225,15 @@ namespace mtools
                 if (!_mut.try_lock_for(std::chrono::milliseconds(MAXLOCKTIME))) return false;
                 bool resok = true;
                 iVec2 oldsize = _winSize;
-                mtools::fRect oldr = _range;
+                mtools::fBox2 oldr = _range;
                 double rx = (_range.lx()*newWinSize.X()) / (_winSize.X()*2);
                 double ry = (_range.ly()*newWinSize.Y()) / (_winSize.Y()*2);
-                double cx = (_range.xmin + _range.xmax) / 2;
-                double cy = (_range.ymin + _range.ymax) / 2;
-                _range.xmin = cx - rx;
-                _range.xmax = cx + rx;
-                _range.ymin = cy - ry;
-                _range.ymax = cy + ry;
+                double cx = (_range.min[0] + _range.max[0]) / 2;
+                double cy = (_range.min[1] + _range.max[1]) / 2;
+                _range.min[0] = cx - rx;
+                _range.max[0] = cx + rx;
+                _range.min[1] = cy - ry;
+                _range.max[1] = cy + ry;
                 _winSize = newWinSize;
                 if (!_rangeOK(_range)) { _range = oldr; }
                 _fixRange();
@@ -248,11 +248,11 @@ namespace mtools
 
 
 
-        bool RangeManager::setRange(mtools::fRect newRange)
+        bool RangeManager::setRange(mtools::fBox2 newRange)
             {
                 if (!_mut.try_lock_for(std::chrono::milliseconds(MAXLOCKTIME))) return false;
                 bool resok = true;
-                mtools::fRect oldr = _range;
+                mtools::fBox2 oldr = _range;
                 if (_fixedAR)
                     {
                     _range = newRange.fixedRatioEnclosingRect(_range.lx() / _range.ly());
@@ -270,10 +270,10 @@ namespace mtools
             }
 
 
-        bool RangeManager::setRangeSilently(mtools::fRect newRange, bool keepAspectRatio)
+        bool RangeManager::setRangeSilently(mtools::fBox2 newRange, bool keepAspectRatio)
             {
                 if (!_mut.try_lock_for(std::chrono::milliseconds(MAXLOCKTIME))) return false;
-                mtools::fRect oldr = _range;
+                mtools::fBox2 oldr = _range;
                 if (keepAspectRatio)
                     {
                     _range = newRange.fixedRatioEnclosingRect(_range.lx() / _range.ly());
@@ -294,11 +294,11 @@ namespace mtools
             {
                 if (!_mut.try_lock_for(std::chrono::milliseconds(MAXLOCKTIME))) return false;
                 bool resok = true;
-                mtools::fRect oldr = _range;
+                mtools::fBox2 oldr = _range;
                 double lx = _range.lx();
                 double ly = _range.ly();
-                _range.xmin = center.X() - lx / 2.0; _range.xmax = center.X() + lx / 2.0;
-                _range.ymin = center.Y() - ly / 2.0; _range.ymax = center.Y() + ly / 2.0;
+                _range.min[0] = center.X() - lx / 2.0; _range.max[0] = center.X() + lx / 2.0;
+                _range.min[1] = center.Y() - ly / 2.0; _range.max[1] = center.Y() + ly / 2.0;
                 _fixRange();
                 if (!_rangeOK(_range)) { _range = oldr; }
                 if (_range != oldr) { if (!rangeNotification(true, false, false)) { _range = oldr;  resok = false; } }
@@ -335,13 +335,13 @@ namespace mtools
             {
                 if (!_mut.try_lock_for(std::chrono::milliseconds(MAXLOCKTIME))) return false;
                 bool resok = true;
-                mtools::fRect oldr = _range;
-                double xc = floor((_range.xmin + _range.xmax) / 2) + ((_winSize.X() % 2 == 0) ? 0.5 : 0.0);
-                double yc = floor((_range.ymin + _range.ymax) / 2) + ((_winSize.Y() % 2 == 0) ? 0.5 : 0.0);
+                mtools::fBox2 oldr = _range;
+                double xc = floor((_range.min[0] + _range.max[0]) / 2) + ((_winSize.X() % 2 == 0) ? 0.5 : 0.0);
+                double yc = floor((_range.min[1] + _range.max[1]) / 2) + ((_winSize.Y() % 2 == 0) ? 0.5 : 0.0);
                 double lx = ((double)_winSize.X());
                 double ly = ((double)_winSize.Y());
-                _range.xmin = xc - lx / 2.0; _range.xmax = xc + lx / 2.0;
-                _range.ymin = yc - ly / 2.0; _range.ymax = yc + ly / 2.0;
+                _range.min[0] = xc - lx / 2.0; _range.max[0] = xc + lx / 2.0;
+                _range.min[1] = yc - ly / 2.0; _range.max[1] = yc + ly / 2.0;
                 if (!_rangeOK(_range)) { _range = oldr; }
                 if (_range != oldr) { if (!rangeNotification(true, false, false)) { _range = oldr;  resok = false; } }
                 MTOOLS_ASSERT(_rangeOK(_range));
@@ -355,8 +355,8 @@ namespace mtools
             {
                 if (!_mut.try_lock_for(std::chrono::milliseconds(MAXLOCKTIME))) return false;
                 bool resok = true;
-                mtools::fRect oldr = _range;
-                mtools::fRect newr = _range.fixedRatioEnclosingRect(((double)_winSize.X()) / ((double)_winSize.Y()));
+                mtools::fBox2 oldr = _range;
+                mtools::fBox2 newr = _range.fixedRatioEnclosingRect(((double)_winSize.X()) / ((double)_winSize.Y()));
                 if (_rangeOK(newr)) _range = newr;
                 if (_range != oldr) { if (!rangeNotification(true, false, false)) { _range = oldr;  resok = false; } }
                 MTOOLS_ASSERT(_rangeOK(_range));
@@ -370,12 +370,12 @@ namespace mtools
             {
                 if (!_mut.try_lock_for(std::chrono::milliseconds(MAXLOCKTIME))) return false;
                 bool resok = true;
-                mtools::fRect oldr = _range;
+                mtools::fBox2 oldr = _range;
                 _range = _startRange;
                 double rx = (_range.lx()*_winSize.X()) / _startWin.X();
                 double ry = (_range.ly()*_winSize.Y()) / _startWin.Y();
-                _range.xmax = _range.xmin + rx;
-                _range.ymin = _range.ymax - ry;
+                _range.max[0] = _range.min[0] + rx;
+                _range.min[1] = _range.max[1] - ry;
                 _fixRange();
                 if (!_rangeOK(_range)) { _range = oldr; }
                 if (_range != oldr) { if (!rangeNotification(true, false, false)) { _range = oldr; resok = false; } }
@@ -390,7 +390,7 @@ namespace mtools
             {
                 if (!_mut.try_lock_for(std::chrono::milliseconds(MAXLOCKTIME))) return false;
                 bool resok = true;
-                mtools::fRect oldr = _range;
+                mtools::fBox2 oldr = _range;
                 _defaultrange();
                 if (_range != oldr) { if (!rangeNotification(true, false, false)) { _range = oldr; resok = false; } }
                 MTOOLS_ASSERT(_rangeOK(_range));
@@ -406,15 +406,15 @@ namespace mtools
         iVec2 RangeManager::absToPix(fVec2 abspos) const { return _range.absToPixel(abspos, _winSize); }
 
 
-        bool RangeManager::_rangeOK(mtools::fRect r)
+        bool RangeManager::_rangeOK(mtools::fBox2 r)
             {
-            if ((std::isnan(r.xmin)) || (std::isnan(r.xmax)) || (std::isnan(r.ymin)) || (std::isnan(r.ymax))) return false;
-            if ((r.xmin <= -_maxValue) || (r.ymin <= -_maxValue) || (r.xmax >= _maxValue) || (r.ymax >= _maxValue)) return false;
+            if ((std::isnan(r.min[0])) || (std::isnan(r.max[0])) || (std::isnan(r.min[1])) || (std::isnan(r.max[1]))) return false;
+            if ((r.min[0] <= -_maxValue) || (r.min[1] <= -_maxValue) || (r.max[0] >= _maxValue) || (r.max[1] >= _maxValue)) return false;
             if ((r.lx() <= _minValue) || (r.lx() >= _maxValue)) return false;
             if ((r.ly() <= _minValue) || (r.ly() >= _maxValue)) return false;
-            double vx = std::abs(r.xmin) + std::abs(r.xmax);
+            double vx = std::abs(r.min[0]) + std::abs(r.max[0]);
             if ((r.lx() / vx) < _precision) return false;
-            double vy = std::abs(r.ymin) + std::abs(r.ymax);
+            double vy = std::abs(r.min[1]) + std::abs(r.max[1]);
             if ((r.ly() / vy) < _precision) return false;
             return true;
             }
@@ -424,20 +424,20 @@ namespace mtools
             {
             double ratio = (_range.lx()*_winSize.Y()) / (_range.ly()*_winSize.X());
             if ((ratio == 1.0) || (ratio<0.99) || (ratio>1.01)) return;
-            mtools::fRect newr = _range.fixedRatioEnclosingRect(((double)_winSize.X()) / ((double)_winSize.Y()));
+            mtools::fBox2 newr = _range.fixedRatioEnclosingRect(((double)_winSize.X()) / ((double)_winSize.Y()));
             if (_rangeOK(newr)) _range = newr;
             }
 
 
         void RangeManager::_defaultrange()
             {
-            mtools::fRect oldr = _range;
+            mtools::fBox2 oldr = _range;
             double xc = ((_winSize.X() % 2 == 0) ? 0.5 : 0.0);
             double yc = ((_winSize.Y() % 2 == 0) ? 0.5 : 0.0);
             double lx = ((double)_winSize.X());
             double ly = ((double)_winSize.Y());
-            _range.xmin = xc - lx / 2.0; _range.xmax = xc + lx / 2.0;
-            _range.ymin = yc - ly / 2.0; _range.ymax = yc + ly / 2.0;
+            _range.min[0] = xc - lx / 2.0; _range.max[0] = xc + lx / 2.0;
+            _range.min[1] = yc - ly / 2.0; _range.max[1] = yc + ly / 2.0;
             if (!_rangeOK(_range)) { _range = oldr; }
             }
 

@@ -141,7 +141,7 @@ namespace mtools
      *    Strip strip; // strip object
      *    Plot2DLattice< Strip> L2(&strip, "Strip"); // the second lattice object. This one has getColor() has a non-static member and no getImage method.
      *    P[L1][L2]; // insert both objects in the plotter.
-     *    P.range().setRange(mtools::fRect(-150, 150, -150, 150)); // change the range
+     *    P.range().setRange(mtools::fBox2(-150, 150, -150, 150)); // change the range
      *    P.range().setRatio1(); // we want a 1:1 aspect ratio.
      *    P.fourChannelImage(true); // use four channel image for better handling of transparency (in particular for the transparent white when there is nothing in the lattice).
      *    L2.opacity(0.5); //make the strip half transparent.
@@ -235,7 +235,7 @@ namespace mtools
              *
              * @return  The current definition domain.
              **/
-            iRect domain() const
+            iBox2 domain() const
                 {
                 return _LD->domain();
                 }
@@ -268,7 +268,7 @@ namespace mtools
             *
             * @param   R   The new definition domain
             **/
-            void domain(mtools::iRect R)
+            void domain(mtools::iBox2 R)
                 {
                 if (R == domain()) return;
                 _LD->domain(R);
@@ -309,19 +309,19 @@ namespace mtools
 
 
 
-            virtual fRect favouriteRangeX(fRect R) override
+            virtual fBox2 favouriteRangeX(fBox2 R) override
                 {
-                if ((_LD->isDomainEmpty() || _LD->isDomainFull())) return fRect(); // no favourite range
-                iRect D = _LD->domain();
-                return fRect((double)D.xmin - 0.5, (double)D.xmax + 0.5, (double)D.ymin - 0.5, (double)D.ymax + 0.5);
+                if ((_LD->isDomainEmpty() || _LD->isDomainFull())) return fBox2(); // no favourite range
+                iBox2 D = _LD->domain();
+                return fBox2((double)D.min[0] - 0.5, (double)D.max[0] + 0.5, (double)D.min[1] - 0.5, (double)D.max[1] + 0.5);
                 }
 
 
-            virtual fRect favouriteRangeY(fRect R) override
+            virtual fBox2 favouriteRangeY(fBox2 R) override
                 {
-                if ((_LD->isDomainEmpty() || _LD->isDomainFull())) return fRect(); // no favourite range
-                iRect D = _LD->domain();
-                return fRect((double)D.xmin - 0.5, (double)D.xmax + 0.5, (double)D.ymin - 0.5, (double)D.ymax + 0.5);
+                if ((_LD->isDomainEmpty() || _LD->isDomainFull())) return fBox2(); // no favourite range
+                iBox2 D = _LD->domain();
+                return fBox2((double)D.min[0] - 0.5, (double)D.max[0] + 0.5, (double)D.min[1] - 0.5, (double)D.max[1] + 0.5);
                 }
 
 

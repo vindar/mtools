@@ -168,10 +168,10 @@ namespace mtools
             }
 
 
-        virtual fRect favouriteRangeX(fRect R) override;
+        virtual fBox2 favouriteRangeX(fBox2 R) override;
 
 
-        virtual fRect favouriteRangeY(fRect R) override;
+        virtual fBox2 favouriteRangeY(fBox2 R) override;
 
 
         virtual bool hasFavouriteRangeX() override;

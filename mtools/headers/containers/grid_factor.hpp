@@ -584,12 +584,12 @@ namespace mtools
          * 
          * This method is specific for dimension D = 2.
          *
-         * @return  an iRect containing the spacial range of element accessed.
+         * @return  an iBox2 containing the spacial range of element accessed.
          **/
-        inline iRect getPosRangeiRect() const 
+        inline iBox2 getPosRangeiBox2() const 
             {
-            static_assert(D == 2, "getRangeiRect() method can only be used when the dimension template parameter D is 2");
-            return mtools::iRect(_rangemin.X(), _rangemax.X(), _rangemin.Y(), _rangemax.Y());
+            static_assert(D == 2, "getRangeiBox2() method can only be used when the dimension template parameter D is 2");
+            return mtools::iBox2(_rangemin.X(), _rangemax.X(), _rangemin.Y(), _rangemax.Y());
             }
 
 
@@ -1014,22 +1014,22 @@ namespace mtools
 
 
         /**
-         *  Specialization for dimension 2 using an iRect structure.
+         *  Specialization for dimension 2 using an iBox2 structure.
          * 
          *  @warning This method is NOT threadsafe and uses the same pointer as get() and set().
          *
          * @param   pos         The position to check.
-         * @param [in,out]  r   The iRect to put the rectangle found.
+         * @param [in,out]  r   The iBox2 to put the rectangle found.
          *
          * @return  A pointer to the element at position pos or nullptr if it does not exist.
          **/
-        inline const T * findFullBox(const Pos & pos, iRect & r) const
+        inline const T * findFullBox(const Pos & pos, iBox2 & r) const
             {
-            static_assert(D == 2, "findFullBox(Pos,iRect) method can only be used when the dimension template parameter D is 2");
+            static_assert(D == 2, "findFullBox(Pos,iBox2) method can only be used when the dimension template parameter D is 2");
             Pos boxmin, boxmax;
             const T * res = findFullBox(pos, boxmin, boxmax);
-            r.xmin = boxmin[0]; r.xmax = boxmax[0];
-            r.ymin = boxmin[1]; r.ymax = boxmax[1];
+            r.min[0] = boxmin[0]; r.max[0] = boxmax[0];
+            r.min[1] = boxmin[1]; r.max[1] = boxmax[1];
             return res;
             }
 
@@ -1068,22 +1068,22 @@ namespace mtools
 
 
          /**
-         *  Specialization for dimension 2 using an iRect structure.
+         *  Specialization for dimension 2 using an iBox2 structure.
          *
          *  @warning This method is NOT threadsafe and uses the same pointer as get() and set().
          *
          * @param   pos         The position to check.
-         * @param [in,out]  r   The iRect to put the rectangle found.
+         * @param [in,out]  r   The iBox2 to put the rectangle found.
          *
          * @return  A pointer to the element at position pos or nullptr if it does not exist.
          **/
-        inline const T * findFullBoxCentered(const Pos & pos, iRect & bestRect) const
+        inline const T * findFullBoxCentered(const Pos & pos, iBox2 & bestRect) const
             {
-            static_assert(D == 2, "findFullBoxCentered(Pos,iRect) method can only be used when the dimension template parameter D is 2");
+            static_assert(D == 2, "findFullBoxCentered(Pos,iBox2) method can only be used when the dimension template parameter D is 2");
             const T* pv = findFullBox(pos, bestRect); // get the non optimized box.
             if (bestRect.lx() == 0) return pv;   // no box found, nothing more to do.
 
-            iRect baseRect = bestRect;                  // the base rectangle is the best rectangle.
+            iBox2 baseRect = bestRect;                  // the base rectangle is the best rectangle.
             int64 lbest = bestRect.boundaryDist(pos);   // current distance to the boundary
 
         findFullBoxCentered_loop: // beginning of a loop at a given scale.
@@ -1125,21 +1125,21 @@ namespace mtools
             _checkBorder(flag, diambase, pv, bestRect, borderDown, flagBorderDown, cornerDownLeft, flagCornerDownLeft, cornerDownRight, flagCornerDownRight); // check the down border and possibly the adjacent corners.
                         
             // possible rectangle extension
-            #define box1Up iRect(baseRect.xmin, baseRect.xmax, baseRect.ymin, baseRect.ymax + diambase)
-            #define box1Down iRect(baseRect.xmin, baseRect.xmax, baseRect.ymin - diambase, baseRect.ymax)
-            #define box1Left iRect(baseRect.xmin - diambase, baseRect.xmax, baseRect.ymin, baseRect.ymax)
-            #define box1Right iRect(baseRect.xmin, baseRect.xmax + diambase, baseRect.ymin, baseRect.ymax)
-            #define line2UpDown iRect(baseRect.xmin, baseRect.xmax, baseRect.ymin - diambase, baseRect.ymax + diambase)
-            #define line2LeftRight iRect(baseRect.xmin - diambase, baseRect.xmax + diambase, baseRect.ymin, baseRect.ymax)
-            #define box2UpLeft iRect(baseRect.xmin - diambase, baseRect.xmax, baseRect.ymin, baseRect.ymax + diambase)
-            #define box2UpRight iRect(baseRect.xmin, baseRect.xmax + diambase, baseRect.ymin, baseRect.ymax + diambase)
-            #define box2DownLeft iRect(baseRect.xmin - diambase, baseRect.xmax, baseRect.ymin - diambase, baseRect.ymax)
-            #define box2DownRight iRect(baseRect.xmin, baseRect.xmax + diambase, baseRect.ymin - diambase, baseRect.ymax)
-            #define rect3Up iRect(baseRect.xmin - diambase, baseRect.xmax + diambase, baseRect.ymin, baseRect.ymax + diambase)
-            #define rect3Down iRect(baseRect.xmin - diambase, baseRect.xmax + diambase, baseRect.ymin - diambase, baseRect.ymax)
-            #define rect3Left iRect(baseRect.xmin - diambase, baseRect.xmax, baseRect.ymin - diambase, baseRect.ymax + diambase)
-            #define rect3Right iRect(baseRect.xmin, baseRect.xmax + diambase, baseRect.ymin - diambase, baseRect.ymax + diambase)
-            #define rect4 iRect(baseRect.xmin - diambase, baseRect.xmax + diambase, baseRect.ymin - diambase, baseRect.ymax + diambase)
+            #define box1Up iBox2(baseRect.min[0], baseRect.max[0], baseRect.min[1], baseRect.max[1] + diambase)
+            #define box1Down iBox2(baseRect.min[0], baseRect.max[0], baseRect.min[1] - diambase, baseRect.max[1])
+            #define box1Left iBox2(baseRect.min[0] - diambase, baseRect.max[0], baseRect.min[1], baseRect.max[1])
+            #define box1Right iBox2(baseRect.min[0], baseRect.max[0] + diambase, baseRect.min[1], baseRect.max[1])
+            #define line2UpDown iBox2(baseRect.min[0], baseRect.max[0], baseRect.min[1] - diambase, baseRect.max[1] + diambase)
+            #define line2LeftRight iBox2(baseRect.min[0] - diambase, baseRect.max[0] + diambase, baseRect.min[1], baseRect.max[1])
+            #define box2UpLeft iBox2(baseRect.min[0] - diambase, baseRect.max[0], baseRect.min[1], baseRect.max[1] + diambase)
+            #define box2UpRight iBox2(baseRect.min[0], baseRect.max[0] + diambase, baseRect.min[1], baseRect.max[1] + diambase)
+            #define box2DownLeft iBox2(baseRect.min[0] - diambase, baseRect.max[0], baseRect.min[1] - diambase, baseRect.max[1])
+            #define box2DownRight iBox2(baseRect.min[0], baseRect.max[0] + diambase, baseRect.min[1] - diambase, baseRect.max[1])
+            #define rect3Up iBox2(baseRect.min[0] - diambase, baseRect.max[0] + diambase, baseRect.min[1], baseRect.max[1] + diambase)
+            #define rect3Down iBox2(baseRect.min[0] - diambase, baseRect.max[0] + diambase, baseRect.min[1] - diambase, baseRect.max[1])
+            #define rect3Left iBox2(baseRect.min[0] - diambase, baseRect.max[0], baseRect.min[1] - diambase, baseRect.max[1] + diambase)
+            #define rect3Right iBox2(baseRect.min[0], baseRect.max[0] + diambase, baseRect.min[1] - diambase, baseRect.max[1] + diambase)
+            #define rect4 iBox2(baseRect.min[0] - diambase, baseRect.max[0] + diambase, baseRect.min[1] - diambase, baseRect.max[1] + diambase)
 
             // switch depending on the border box flag
             switch (flag & flagBorder)
@@ -1154,8 +1154,8 @@ namespace mtools
                     const int64 diffX = pos.X() - basecenter.X(); newcenter.X() = basecenter.X() + ((diffX < -nrad) ? -off : ((diffX > nrad) ? off : 0));
                     const int64 diffY = pos.Y() - basecenter.Y(); newcenter.Y() = basecenter.Y() + ((diffY < -nrad) ? -off : ((diffY > nrad) ? off : 0));
                     if (newcenter == basecenter) { return pv; } // same center: going further down will not improve the solution so we stop 
-                    baseRect.xmin = newcenter.X() - nrad; baseRect.xmax = newcenter.X() + nrad; // set the new base
-                    baseRect.ymin = newcenter.Y() - nrad; baseRect.ymax = newcenter.Y() + nrad;
+                    baseRect.min[0] = newcenter.X() - nrad; baseRect.max[0] = newcenter.X() + nrad; // set the new base
+                    baseRect.min[1] = newcenter.Y() - nrad; baseRect.max[1] = newcenter.Y() + nrad;
                     goto findFullBoxCentered_loop; // go to the next level
                     }
                 case flagBorderUp:
@@ -1473,10 +1473,10 @@ namespace mtools
 
 
         /* Used by findFullBoxCentered (2D specialization). Check if a given border adjacent box of same size is full. */
-        inline void _checkBorder(int & flag, const int64 diam, const T * pv, const iRect & refRect, const Pos & borderPos, int flagBorder, const Pos & cornerPos1, int flagCorner1, const Pos & cornerPos2, int flagCorner2) const
+        inline void _checkBorder(int & flag, const int64 diam, const T * pv, const iBox2 & refBox2, const Pos & borderPos, int flagBorder, const Pos & cornerPos1, int flagCorner1, const Pos & cornerPos2, int flagCorner2) const
             {
-            if (refRect.isInside(borderPos)) { flag |= flagBorder; return; } // if borderPos is in the reference rectangle, set to 1 and do not check the corner positions
-            iRect RR;
+            if (refBox2.isInside(borderPos)) { flag |= flagBorder; return; } // if borderPos is in the reference rectangle, set to 1 and do not check the corner positions
+            iBox2 RR;
             if ((findFullBox(borderPos, RR) != pv)||(RR.lx() == 0)) { return; } // if the box is a singleton or does not contain the correct value, we quit
             const int64 rd = RR.lx() + 1; // diameter of the box found
             if (rd < diam) { return; } // the box is too small, we quit
@@ -1492,11 +1492,11 @@ namespace mtools
 
 
         /* Used by findFullBoxCentered (2D specialization). Check if a given cornder adjacent box of same size is full. */
-        inline void _checkCorner(int & flag, const int64 diam, const T * pv, const iRect & refRect, const Pos & cornerPos, int flagCorner) const
+        inline void _checkCorner(int & flag, const int64 diam, const T * pv, const iBox2 & refBox2, const Pos & cornerPos, int flagCorner) const
             {
             if (flag & flagCorner) return; // alread set, nothing to do
-            if (refRect.isInside(cornerPos)) { flag |= flagCorner; return; } // if pos is in the reference rectangle, set the flag
-            iRect RR;
+            if (refBox2.isInside(cornerPos)) { flag |= flagCorner; return; } // if pos is in the reference rectangle, set the flag
+            iBox2 RR;
             if ((findFullBox(cornerPos, RR) != pv) || (RR.lx() == 0)) { return; } // if the box is a singleton or does not contain the correct value, we quit
             if ((RR.lx() + 1) < diam) { return; } // box too small
             flag |= flagCorner;
@@ -1505,7 +1505,7 @@ namespace mtools
 
 
         /* Used by findFullBoxCentered (2D specialization). Compute the new best rectangle */
-        inline void _extendWith(iRect & currentBest, int64 & lbest, iRect newRect, const Pos & pos) const
+        inline void _extendWith(iBox2 & currentBest, int64 & lbest, iBox2 newRect, const Pos & pos) const
             {
             const int64 lnew = newRect.boundaryDist(pos);
             if (lnew > lbest)

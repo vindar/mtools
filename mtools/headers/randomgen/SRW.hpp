@@ -138,7 +138,7 @@ namespace mtools
          *
          * @return  The new distance to the inner boundary.
          **/
-        template<class random_t> int64 SRW_Z2_MoveInRect(iVec2 & pos, iRect R, uint64 ratio, random_t & gen)
+        template<class random_t> int64 SRW_Z2_MoveInRect(iVec2 & pos, iBox2 R, uint64 ratio, random_t & gen)
             {
             MTOOLS_ASSERT((!R.isEmpty()) && (R.isInside(pos)));
             int64 min_d = ((ratio <= 0) ? 0 : R.boundaryDist(pos)/ratio);
@@ -234,7 +234,7 @@ namespace mtools
          * @param   R           The rectangle
          * @param [in,out]  gen The random number generator
          **/
-        template<class random_t> inline void SRW_Z2_ExitRect(iVec2 & pos, iRect R, random_t & gen)
+        template<class random_t> inline void SRW_Z2_ExitRect(iVec2 & pos, iBox2 R, random_t & gen)
             {
             int64 d = SRW_Z2_MoveInRect(pos, R, -1,gen); // set ratio to infinity
             MTOOLS_ASSERT(d == 0);

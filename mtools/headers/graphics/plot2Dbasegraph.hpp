@@ -159,7 +159,7 @@ namespace mtools
          * Favourite horizontal range. Return the definition domain if it is bounded or an empty range
          * otherwise.
          **/
-        virtual fRect favouriteRangeX(fRect R) override;
+        virtual fBox2 favouriteRangeX(fBox2 R) override;
 
 
         /**
@@ -169,7 +169,7 @@ namespace mtools
          * is horizontally empty and the definition domain of the function is unbounded, return an empty
          * vertical range.
          **/
-        virtual fRect favouriteRangeY(fRect R) override;
+        virtual fBox2 favouriteRangeY(fBox2 R) override;
 
 
         /**
@@ -198,7 +198,7 @@ namespace mtools
         /**
          * Override of the setParam method
          **/
-        virtual void setParam(mtools::fRect range, mtools::iVec2 imageSize) override;
+        virtual void setParam(mtools::fBox2 range, mtools::iVec2 imageSize) override;
              
 
         /**
@@ -232,8 +232,8 @@ namespace mtools
 
 
             /* Estimate the range of the function by sampling over 10000 points and return the min/max value found.
-            modify R.ymin and R.ymax. The range returned is vertically empty if no point could be sampled. */
-            void estimateYRange(fRect & R) const;
+            modify R.min[1] and R.max[1]. The range returned is vertically empty if no point could be sampled. */
+            void estimateYRange(fBox2 & R) const;
            
 
 
@@ -270,16 +270,16 @@ namespace mtools
             /* utility methods used for the drawing*/
             void _drawPoint(int i, int j, cimg_library::CImg<unsigned char> & im, const RGBc & coul, const float opacity, const int tickness);
             void _drawLine(int i, int j1, int j2, cimg_library::CImg<unsigned char> & im, const RGBc & coul, const float opacity, const int tickness);
-            void _dicho(int j0, int i1, int i2, int j3, double x0, double x3, int depth, cimg_library::CImg<unsigned char> & im, const fRect & R, const RGBc & coul, const float & opacity, const int & tickness);
+            void _dicho(int j0, int i1, int i2, int j3, double x0, double x3, int depth, cimg_library::CImg<unsigned char> & im, const fBox2 & R, const RGBc & coul, const float & opacity, const int & tickness);
 
             /* make the drawing with dichotomy */
-            void _drawWithDicho(int depth, cimg_library::CImg<unsigned char> & im, const fRect & R, const RGBc coul, const float opacity, const int tickness);
+            void _drawWithDicho(int depth, cimg_library::CImg<unsigned char> & im, const fBox2 & R, const RGBc coul, const float opacity, const int tickness);
 
             /* make the drawing with linear interpolation */
-            void _drawWithInterpolation(int depth, cimg_library::CImg<unsigned char> & im, const fRect & R, const RGBc coul, const float opacity, const int tickness);
+            void _drawWithInterpolation(int depth, cimg_library::CImg<unsigned char> & im, const fBox2 & R, const RGBc coul, const float opacity, const int tickness);
 
             /* fill below or over */
-             void _drawOverOrBelow(bool over, cimg_library::CImg<unsigned char> & im, const fRect & R, RGBc coul, const float opacity);
+             void _drawOverOrBelow(bool over, cimg_library::CImg<unsigned char> & im, const fBox2 & R, RGBc coul, const float opacity);
             
              /* update all widget */
              void _updateWidgets();
@@ -302,7 +302,7 @@ namespace mtools
             virtual void optionalPanelRemoved(Fl_Group * opt);
 
 
-            fRect _range;               
+            fBox2 _range;               
             iVec2 _imageSize;           
 
             mutable double _minDomain;          // the definition domain

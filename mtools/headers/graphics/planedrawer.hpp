@@ -69,13 +69,13 @@ namespace mtools
      *
      * @tparam  getColorFun The getColor method that will be called when querying the color of a
      *                      point. The signature must match `mtools::RGBc getColor(mtools::fVec2 pos,
-     *                      fRect R)` (here R contain pos and represent the pixel containing the
+     *                      fBox2 R)` (here R contain pos and represent the pixel containing the
      *                      point at pos.
      **/
-    template<mtools::RGBc(*getColorFun)(mtools::fVec2 pos, fRect R)> class PlaneObjExt
+    template<mtools::RGBc(*getColorFun)(mtools::fVec2 pos, fBox2 R)> class PlaneObjExt
         {
         public:
-            inline static RGBc getColor(mtools::fVec2 pos, fRect R) { return getColorFun(pos, R); }
+            inline static RGBc getColor(mtools::fVec2 pos, fBox2 R) { return getColorFun(pos, R); }
             inline static PlaneObjExt<getColorFun> * get() { return(nullptr); }
         };
 
@@ -94,7 +94,7 @@ namespace mtools
  * class for a generic implementation.
  * 
  * - The template PlaneObj must implement a method `RGBc getColor(fVec2 pos)` or `RGBc
- * getColor(fVec2 pos, fRect R)` which must return the color associated with a given point. In
+ * getColor(fVec2 pos, fBox2 R)` which must return the color associated with a given point. In
  * the seocnd version, the rectangle R contain the point pos and represent the aera of the
  * pixel drawn. The method should be made as fast as possible.
  * 
@@ -102,7 +102,7 @@ namespace mtools
  * ignored when drawing on 3 channel images.
  *
  * @tparam  PlaneObj    Type of the lattice object. Can be any class which define the method
- *                      `RGBc getColor(fVec2 pos)` or `RGBc getColor(fVec2 pos, fRect R)`. If both
+ *                      `RGBc getColor(fVec2 pos)` or `RGBc getColor(fVec2 pos, fBox2 R)`. If both
  *                      method are defined, the extended method is used.
  **/
 template<class PlaneObj> class PlaneDrawer : public mtools::internals_graphics::Drawable2DObject
@@ -123,7 +123,7 @@ public:
 		_g_r(-100.5, 100.5, -100.5, 100.5), 
 		_g_redraw(true)
 		{
-        static_assert(((mtools::metaprog::has_getColor<PlaneObj, RGBc, fVec2>::value)|| (mtools::metaprog::has_getColorExt<PlaneObj, RGBc, fVec2, fRect>::value)), "The object T must be implement either a 'RGBc getColor(fVec2 pos)' or 'RGBc getColor(fVec2 pos, fRect R)' method.");
+        static_assert(((mtools::metaprog::has_getColor<PlaneObj, RGBc, fVec2>::value)|| (mtools::metaprog::has_getColorExt<PlaneObj, RGBc, fVec2, fBox2>::value)), "The object T must be implement either a 'RGBc getColor(fVec2 pos)' or 'RGBc getColor(fVec2 pos, fBox2 R)' method.");
         _initInt16Buf();
         domainFull();
         }
@@ -145,9 +145,9 @@ public:
     * Get the definiton domain of the plane (does not interrupt any computation in progress).
     * By default this is everything.
     *
-    * @return  An fRect.
+    * @return  An fBox2.
     **/
-    mtools::fRect domain() const
+    mtools::fBox2 domain() const
         {
         return _g_domR;
         }
@@ -160,7 +160,7 @@ public:
      **/
     bool isDomainFull() const
         {
-        return ((_g_domR.xmin <= -DBL_MAX / 2) && (_g_domR.xmax >= DBL_MAX / 2) && (_g_domR.ymin <= -DBL_MAX / 2) && (_g_domR.ymax >= DBL_MAX / 2));
+        return ((_g_domR.min[0] <= -DBL_MAX / 2) && (_g_domR.max[0] >= DBL_MAX / 2) && (_g_domR.min[1] <= -DBL_MAX / 2) && (_g_domR.max[1] >= DBL_MAX / 2));
         }
 
 
@@ -181,7 +181,7 @@ public:
      *
      * @param   R   The new definition domain.
      **/
-    void domain(mtools::fRect R)
+    void domain(mtools::fBox2 R)
     {
         ++_g_requestAbort; // request immediate stop of the work method if active.
         {
@@ -202,10 +202,10 @@ public:
         {
             std::lock_guard<std::timed_mutex> lg(_g_lock); // and wait until we aquire the lock 
             --_g_requestAbort; // and then remove the stop request
-            _g_domR.xmin = - DBL_MAX/2;
-            _g_domR.xmax = DBL_MAX / 2;
-            _g_domR.ymin = -DBL_MAX / 2;
-            _g_domR.ymax = DBL_MAX / 2;
+            _g_domR.min[0] = - DBL_MAX/2;
+            _g_domR.max[0] = DBL_MAX / 2;
+            _g_domR.min[1] = -DBL_MAX / 2;
+            _g_domR.max[1] = DBL_MAX / 2;
             _g_redraw = true;   // request redraw
         }
     }
@@ -231,7 +231,7 @@ public:
     * Set the parameters of the drawing. Calling this method interrupt any work() in progress. 
     * This method is fast, it does not draw anything.
     **/
-    virtual void setParam(mtools::fRect range, mtools::iVec2 imageSize) override
+    virtual void setParam(mtools::fBox2 range, mtools::iVec2 imageSize) override
         {
         MTOOLS_ASSERT(!range.isEmpty());
         MTOOLS_ASSERT((imageSize.X() >0) && (imageSize.Y()>0));
@@ -371,9 +371,9 @@ private:
     mutable std::atomic<int> _g_current_quality;  // the current quality of the drawing
     PlaneObj *        _g_obj;               // the object to draw
     iVec2             _g_imSize;            // size of the drawing
-    fRect             _g_r;                 // current range
+    fBox2             _g_r;                 // current range
     std::atomic<bool> _g_redraw;            // true if we should redraw from scratch
-    fRect           _g_domR;                // the definition domain
+    fBox2           _g_domR;                // the definition domain
 
     uint32 			_counter1,_counter2;	// counter for the number of pixel added in each cell: counter1 for cells < (_qi,_qj) and counter2 for cells >= (_qi,qj)
     uint32 			_qi,_qj;		        // position where we stopped previously
@@ -396,7 +396,7 @@ void _qualityPixelDraw() const
 /* draw as much as possible of a fast drawing  */
 void _drawPixel_fast(int maxtime_ms)
 	{
-    const fRect r = _g_r;
+    const fBox2 r = _g_r;
     const double px = ((double)r.lx()) / ((double)_int16_buffer_dim.X())  // size of a pixel
                , py = ((double)r.ly()) / ((double)_int16_buffer_dim.Y()); 
     _counter1 = 1;
@@ -407,9 +407,9 @@ void _drawPixel_fast(int maxtime_ms)
 		{
 		if (fixstart) {i = _qi; j = _qj; fixstart=false;}					        // fix the position of thestarting pixel 
 		if (_isTime(maxtime_ms)) {_qi = i; _qj = j; return;}	                    // time's up : we quit
-        const double xmin = r.xmin + i*px; const double xmax = xmin + px; const double x = xmin + 0.5*px;
-        const double ymax = r.ymax - j*py; const double ymin = ymax - py; const double y = ymax - 0.5*py;
-        const fRect sR = fRect(xmin, xmax, ymin, ymax);
+        const double xmin = r.min[0] + i*px; const double xmax = xmin + px; const double x = xmin + 0.5*px;
+        const double ymax = r.max[1] - j*py; const double ymin = ymax - py; const double y = ymax - 0.5*py;
+        const fBox2 sR = fBox2(xmin, xmax, ymin, ymax);
         const RGBc coul = _getColor(fVec2(x,y),sR);
         _setInt16Buf(i, j, coul);
 		}
@@ -423,7 +423,7 @@ void _drawPixel_fast(int maxtime_ms)
 /* draw as using random points */
 void _drawPixel_stochastic(int maxtime_ms)
 	{
-    const fRect r = _g_r;
+    const fBox2 r = _g_r;
     const double px = ((double)r.lx()) / ((double)_int16_buffer_dim.X())  // size of a pixel
                , py = ((double)r.ly()) / ((double)_int16_buffer_dim.Y());
     const uint32 ndraw = _nbDrawPerTurn(r, _int16_buffer_dim);
@@ -437,9 +437,9 @@ void _drawPixel_stochastic(int maxtime_ms)
             if (fixstart) { i = _qi; j = _qj; fixstart = false; }		// fix the position of thestarting pixel
             if (_isTime(maxtime_ms)) { _qi = i; _qj = j; return; }	// time's up : we quit
             uint32 R = 0, G = 0, B = 0, A = 0;
-            const double xmin = r.xmin + i*px; const double xmax = xmin + px;
-            const double ymax = r.ymax - j*py; const double ymin = ymax - py;
-            const fRect sR = fRect(xmin, xmax, ymin, ymax);
+            const double xmin = r.min[0] + i*px; const double xmax = xmin + px;
+            const double ymax = r.max[1] - j*py; const double ymin = ymax - py;
+            const fBox2 sR = fBox2(xmin, xmax, ymin, ymax);
             for (uint32 k = 0;k<ndraw;k++)
                 {
                 const double x = xmin + _g_fgen.unif()*px;
@@ -498,16 +498,16 @@ void _work(int maxtime_ms)
 
 
 /* used when there is an extended getColor() method */
-inline RGBc _getColor(fVec2 pos, fRect R, mtools::metaprog::dummy<true> D) { return _g_obj->getColor(pos, R); }
+inline RGBc _getColor(fVec2 pos, fBox2 R, mtools::metaprog::dummy<true> D) { return _g_obj->getColor(pos, R); }
 
 /* used when there is only a regular getColor() method */
-inline RGBc _getColor(fVec2 pos, fRect R, mtools::metaprog::dummy<false> D) { return _g_obj->getColor(pos); }
+inline RGBc _getColor(fVec2 pos, fBox2 R, mtools::metaprog::dummy<false> D) { return _g_obj->getColor(pos); }
 
 /* return the color of a given point, use either the object getColor or "extended" getColor method depending on the method detected */
-inline RGBc _getColor(fVec2 pos, fRect R) 
+inline RGBc _getColor(fVec2 pos, fBox2 R) 
     {
     if (!_g_domR.isInside(pos)) return RGBc::c_TransparentWhite;
-    return _getColor(pos, R, mtools::metaprog::dummy<mtools::metaprog::has_getColorExt<PlaneObj, RGBc, fVec2, fRect>::value>()); 
+    return _getColor(pos, R, mtools::metaprog::dummy<mtools::metaprog::has_getColorExt<PlaneObj, RGBc, fVec2, fBox2>::value>()); 
     }
 
 
@@ -813,7 +813,7 @@ inline bool _isTime(uint32 ms)
 
 
 /* return the number of stochastic draw per pixel per turn */
-inline uint32 _nbDrawPerTurn(const fRect & r,const iVec2 & sizeIm) const
+inline uint32 _nbDrawPerTurn(const fBox2 & r,const iVec2 & sizeIm) const
 	{
 	return 3;
 	}

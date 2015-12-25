@@ -233,7 +233,7 @@ namespace mtools
             bool _zoomOn;       // true if we are in the process of selecting a region to zoom in.
             iVec2 _zoom1;
             iVec2 _zoom2;
-            iRect _encR;
+            iBox2 _encR;
 
 
             pcrosscb        _crossCB;       // cross callback
@@ -251,7 +251,7 @@ namespace mtools
 
             cimg_library::CImg<uint32> * _stocIm;     // double image buffer
             cimg_library::CImg<uint32> * _stocImAlt;  //
-            fRect _stocR;  // range associated with _stocIm
+            fBox2 _stocR;  // range associated with _stocIm
 
             FastRNG _g_fgen; // fast RNG
 

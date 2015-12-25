@@ -247,7 +247,7 @@ namespace mtools
              * @return  the horizontal part of the rectange must contain the prefered horizontal range. This
              *          vertical part is irrelevant.
              **/
-            virtual fRect favouriteRangeX(fRect R);
+            virtual fBox2 favouriteRangeX(fBox2 R);
 
 
             /**
@@ -266,7 +266,7 @@ namespace mtools
              * @return  the vertical part of the rectange must contain the prefered vertical range. The
              *          horizontal part is irrelevant.
              **/
-            virtual fRect favouriteRangeY(fRect R);
+            virtual fBox2 favouriteRangeY(fBox2 R);
 
 
             /**
@@ -349,7 +349,7 @@ namespace mtools
              * @param   range       The range to draw.
              * @param   imageSize   The size of the image to draw onto.
              **/
-            void setParam(mtools::fRect range, mtools::iVec2 imageSize);
+            void setParam(mtools::fBox2 range, mtools::iVec2 imageSize);
 
 
             /**
@@ -557,7 +557,7 @@ namespace mtools
             Plotter2DObj & operator=(const Plotter2DObj &) = delete;    //
 
 
-            std::atomic<fRect> _crange;                     // the last range given via setParam
+            std::atomic<fBox2> _crange;                     // the last range given via setParam
             std::atomic<iVec2> _cwinSize;                   // the last window size given by setParam
             std::atomic<bool>  _missedSetParam;             // true if we did not inform the drawableObject the last time around.
 

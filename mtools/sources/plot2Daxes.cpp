@@ -157,7 +157,7 @@ namespace mtools
             }
 
 
-        void Plot2DAxes::setParam(mtools::fRect range, mtools::iVec2 imageSize)
+        void Plot2DAxes::setParam(mtools::fBox2 range, mtools::iVec2 imageSize)
             {
             _range = range;
             _imageSize = imageSize;
@@ -166,9 +166,9 @@ namespace mtools
 
         int Plot2DAxes::drawOnto(cimg_library::CImg<unsigned char> & im, float opacity)
             {
-            im.fRect_drawAxes(_range, _gradColor, opacity);
-            if (_gradStatus) im.fRect_drawGraduations(_range, _scaling, _gradColor, opacity);
-            if (_numStatus) im.fRect_drawNumbers(_range, _scaling, _numColor, opacity);
+            im.fBox2_drawAxes(_range, _gradColor, opacity);
+            if (_gradStatus) im.fBox2_drawGraduations(_range, _scaling, _gradColor, opacity);
+            if (_numStatus) im.fBox2_drawNumbers(_range, _scaling, _numColor, opacity);
             return 100;
             }
 

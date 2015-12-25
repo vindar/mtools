@@ -138,15 +138,15 @@ namespace mtools
 
 
 
-        void CImgWidget::partDraw(iRect r)
+        void CImgWidget::partDraw(iBox2 r)
             {
             if (!_initdraw) { draw(); return; }
             else
                 {
                 std::lock_guard<std::recursive_mutex> lock(_mutim);
-                iRect rr = mtools::intersectionRect(r, iRect(0, _ox - 1, 0, _oy - 1));
+                iBox2 rr = mtools::intersectionRect(r, iBox2(0, _ox - 1, 0, _oy - 1));
                 if ((_offbuf == ((Fl_Offscreen)0))||(rr.lx() < 0) || (rr.ly() < 0)) return;
-                fl_copy_offscreen((int)rr.xmin, (int)rr.ymin, (int)rr.lx() + 1, (int)rr.ly() + 1, (Fl_Offscreen)_offbuf, (int)rr.xmin, (int)rr.ymin);
+                fl_copy_offscreen((int)rr.min[0], (int)rr.min[1], (int)rr.lx() + 1, (int)rr.ly() + 1, (Fl_Offscreen)_offbuf, (int)rr.min[0], (int)rr.min[1]);
                 }
             }
 

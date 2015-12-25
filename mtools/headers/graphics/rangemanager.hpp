@@ -43,7 +43,7 @@ namespace mtools
         /**
          * Class for keeping track of the displayed range of a 2D region into a given window.
          * 
-         * The object manages an fRect rectangle describing the 2D region that should be drawn as well
+         * The object manages an fBox2 rectangle describing the 2D region that should be drawn as well
          * as an iVec2 vector that describe the width/height of the associated window.
          * 
          * When a change is made to the range or the window size, the virtual method rangeNotification()
@@ -71,7 +71,7 @@ namespace mtools
              * @param   maxValue            The maximum value allowed (default = MAXDOUBLE = 1.0e300).
              * @param   precision           The precision (default = PRECISIONDOUBLE = 1.0e-12).
              **/
-            RangeManager(mtools::fRect startRange, mtools::iVec2 winSize, bool fixedAspectRatio = true, double minValue = MINDOUBLE, double maxValue = MAXDOUBLE, double precision = PRECISIONDOUBLE);
+            RangeManager(mtools::fBox2 startRange, mtools::iVec2 winSize, bool fixedAspectRatio = true, double minValue = MINDOUBLE, double maxValue = MAXDOUBLE, double precision = PRECISIONDOUBLE);
 
 
             /**
@@ -121,7 +121,7 @@ namespace mtools
             /**
              * Return the current range.
              **/
-            mtools::fRect getRange() const;
+            mtools::fBox2 getRange() const;
 
 
             /**
@@ -133,7 +133,7 @@ namespace mtools
             /**
              * Return the default range.
              **/
-            mtools::fRect getDefaultRange() const;
+            mtools::fBox2 getDefaultRange() const;
 
 
             /**
@@ -218,7 +218,7 @@ namespace mtools
              * @return  true if the operation succeded and false if its failed (the lock could not be aquired
              *          in time).
              **/
-            bool setRangeSilently(mtools::fRect newRange, bool keepAspectRatio = false);
+            bool setRangeSilently(mtools::fBox2 newRange, bool keepAspectRatio = false);
 
     public:
 
@@ -231,7 +231,7 @@ namespace mtools
              * @return  true if the operation succeded and false if its failed (either the lock could not be
              *          aquired in time or the notification callback rejected the range).
              **/
-            bool setRange(mtools::fRect newRange);
+            bool setRange(mtools::fBox2 newRange);
 
 
             /**
@@ -369,7 +369,7 @@ namespace mtools
             static const int MAXLOCKTIME; // maximum time we can wait for aquiring a lock, otherwise the method fails.
 
             /* return true if the range is Ok */
-            bool _rangeOK(mtools::fRect r);
+            bool _rangeOK(mtools::fBox2 r);
 
             /* fix the range if the aspect ratio is close but not equal to 1:1 */
             void _fixRange();
@@ -380,8 +380,8 @@ namespace mtools
             pnotif _cbfun;              // the callback function
             void * _data;               // the data to pass to the callback
             void * _data2;              // the data to pass to the callback
-            mtools::fRect _startRange;  // initial starting range
-            mtools::fRect _range;       // current range
+            mtools::fBox2 _startRange;  // initial starting range
+            mtools::fBox2 _range;       // current range
             mtools::iVec2 _startWin;    //initial window size
             mtools::iVec2 _winSize;     // window size
             double _minValue, _maxValue, _precision; // the extremal admissible values

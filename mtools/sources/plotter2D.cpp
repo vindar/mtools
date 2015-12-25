@@ -87,7 +87,7 @@ namespace mtools
             /* callback for the range manager */
             static bool rangeManagerCB_static(void * data, void * data2, bool changedRange, bool changedWinSize, bool changedFixAspectRatio);
             bool rangeManagerCB(bool changedRange, bool changedWinSize, bool changedFixAspectRatio);
-            void rangeManagerCB2(fRect R, iVec2 winSize, bool fixedAR, bool changedRange, bool changedWinSize, bool changedFixAspectRatio);
+            void rangeManagerCB2(fBox2 R, iVec2 winSize, bool fixedAR, bool changedRange, bool changedWinSize, bool changedFixAspectRatio);
 
             /* callback for the Plotter2Dobj object */
             static void objectCB_static(void * data, void * data2, void * obj, int code);
@@ -206,25 +206,25 @@ namespace mtools
             void refresh_timer2();
 
             /* set the value of the range in the 4 input control*/
-            void setRangeInput(fRect R);
+            void setRangeInput(fBox2 R);
 
-            fRect getNewRange();
+            fBox2 getNewRange();
 
             /* change the range to the union of the obejct prefered ranges*/
             void useCommonRangeX();
             void useCommonRangeY();
             void useCommonRangeXY();
 
-            fRect getAutoRangeX(fRect CR, bool keepAR);
-            fRect getAutoRangeY(fRect CR, bool keepAR);
+            fBox2 getAutoRangeX(fBox2 CR, bool keepAR);
+            fBox2 getAutoRangeY(fBox2 CR, bool keepAR);
 
             /* change the range to the object preferred range */
             void useRangeX(Plotter2DObj * obj);
             void useRangeY(Plotter2DObj * obj);
             void useRangeXY(Plotter2DObj * obj);
 
-            fRect findRangeX(Plotter2DObj * obj, fRect CR, bool keepAR);
-            fRect findRangeY(Plotter2DObj * obj, fRect CR, bool keepAR);
+            fBox2 findRangeX(Plotter2DObj * obj, fBox2 CR, bool keepAR);
+            fBox2 findRangeY(Plotter2DObj * obj, fBox2 CR, bool keepAR);
 
             /* convert the windows coordinates */
             void convertWindowCoord(int & W, int & H, int & X, int & Y);
@@ -979,7 +979,7 @@ namespace mtools
         bool Plotter2DWindow::rangeManagerCB(bool changedRange, bool changedWinSize, bool changedFixAspectRatio)
             {
             // here, we may, or may not, be in the fltk thread.
-            fRect R = ((RangeManager*)_RM)->getRange();             // get the new range
+            fBox2 R = ((RangeManager*)_RM)->getRange();             // get the new range
             iVec2 winSize = ((RangeManager*)_RM)->getWinSize();     // get the new window size
             bool fixedAR = ((RangeManager*)_RM)->fixedAspectRatio();  // get the fixed aspect ratio status
             for (int i = 0; i < (int)_vecPlot.size(); i++)
@@ -989,7 +989,7 @@ namespace mtools
             // we run rangeManagerCB2 in fltk
             if (isFLTKThread()) { rangeManagerCB2(R, winSize, fixedAR, changedRange, changedWinSize, changedFixAspectRatio); }
             else {
-                 mtools::IndirectMemberProc<internals_graphics::Plotter2DWindow, fRect, iVec2, bool, bool, bool, bool> proxy(*this, &Plotter2DWindow::rangeManagerCB2, R, winSize, fixedAR, changedRange, changedWinSize, changedFixAspectRatio);
+                 mtools::IndirectMemberProc<internals_graphics::Plotter2DWindow, fBox2, iVec2, bool, bool, bool, bool> proxy(*this, &Plotter2DWindow::rangeManagerCB2, R, winSize, fixedAR, changedRange, changedWinSize, changedFixAspectRatio);
                  mtools::runInFLTKThread(proxy);
                  }
             // back to our original thread.
@@ -998,7 +998,7 @@ namespace mtools
 
 
         /* this part is run in fltk */
-        void Plotter2DWindow::rangeManagerCB2(fRect R, iVec2 winSize,bool fixedAR, bool changedRange, bool changedWinSize, bool changedFixAspectRatio)
+        void Plotter2DWindow::rangeManagerCB2(fBox2 R, iVec2 winSize,bool fixedAR, bool changedRange, bool changedWinSize, bool changedFixAspectRatio)
             {
             setImageSize((int)winSize.X(), (int)winSize.Y(), _nbchannels);    // resize the image if needed
             updateView();                                           // update the view
@@ -1386,7 +1386,7 @@ namespace mtools
         void Plotter2DWindow::applyrangeCB_static(Fl_Widget* W, void* p) { MTOOLS_ASSERT(p != nullptr); ((Plotter2DWindow *)p)->applyrangeCB(W); }
         void Plotter2DWindow::applyrangeCB(Fl_Widget* W)
         {
-            fRect R = getNewRange();
+            fBox2 R = getNewRange();
             if (R.isEmpty())
                 {
                 setRangeInput(((RangeManager*)_RM)->getRange());
@@ -1408,29 +1408,29 @@ namespace mtools
 
 
         /* change the value of the four insert buttons to reflect the current range */
-        void Plotter2DWindow::setRangeInput(fRect R)
+        void Plotter2DWindow::setRangeInput(fBox2 R)
         {
-            _w_xmin->value(mtools::doubleToStringNice(R.xmin).c_str());
-            _w_xmax->value(mtools::doubleToStringNice(R.xmax).c_str());
-            _w_ymin->value(mtools::doubleToStringNice(R.ymin).c_str());
-            _w_ymax->value(mtools::doubleToStringNice(R.ymax).c_str());
+            _w_xmin->value(mtools::doubleToStringNice(R.min[0]).c_str());
+            _w_xmax->value(mtools::doubleToStringNice(R.max[0]).c_str());
+            _w_ymin->value(mtools::doubleToStringNice(R.min[1]).c_str());
+            _w_ymax->value(mtools::doubleToStringNice(R.max[1]).c_str());
             _PW->take_focus();
         }
 
 
         /* Compute the new range looking a the value inside the xmin, xmax, ymin ymax widgets.*/
-        fRect Plotter2DWindow::getNewRange()
+        fBox2 Plotter2DWindow::getNewRange()
         {
             double xmin; mtools::fromString<double>(_w_xmin->value(), xmin);
             double xmax; mtools::fromString<double>(_w_xmax->value(), xmax);
             double ymin; mtools::fromString<double>(_w_ymin->value(), ymin);
             double ymax; mtools::fromString<double>(_w_ymax->value(), ymax);
-            fRect R(xmin, xmax, ymin, ymax);
+            fBox2 R(xmin, xmax, ymin, ymax);
 
 
             if ((!R.isEmpty()) && (((RangeManager*)_RM)->fixedAspectRatio()))
             {
-                fRect aR = ((RangeManager*)_RM)->getRange();
+                fBox2 aR = ((RangeManager*)_RM)->getRange();
                 R = R.fixedRatioEnclosingRect(aR.lx() / aR.ly());
             }
             return R;
@@ -1438,32 +1438,32 @@ namespace mtools
 
 
 
-        fRect Plotter2DWindow::findRangeX(Plotter2DObj * obj, fRect CR, bool keepAR)
+        fBox2 Plotter2DWindow::findRangeX(Plotter2DObj * obj, fBox2 CR, bool keepAR)
             {
-            fRect R = obj->favouriteRangeX(CR);
-            if (R.isHorizontallyEmpty()) return fRect(); // nothing to do in this case
+            fBox2 R = obj->favouriteRangeX(CR);
+            if (R.isHorizontallyEmpty()) return fBox2(); // nothing to do in this case
             if (!keepAR)
                 {
-                R.ymin = CR.ymin;
-                R.ymax = CR.ymax;
+                R.min[1] = CR.min[1];
+                R.max[1] = CR.max[1];
                 }
             else
                 {
-                double c = (CR.ymin + CR.ymax) / 2;
+                double c = (CR.min[1] + CR.max[1]) / 2;
                 double r = CR.ly()*R.lx() / (2 * CR.lx());
-                R.ymin = c - r;
-                R.ymax = c + r;
+                R.min[1] = c - r;
+                R.max[1] = c + r;
                 }
             return R;
             }
 
 
-        fRect Plotter2DWindow::findRangeY(Plotter2DObj * obj, fRect CR, bool keepAR)
+        fBox2 Plotter2DWindow::findRangeY(Plotter2DObj * obj, fBox2 CR, bool keepAR)
             {
-            fRect R = obj->favouriteRangeY(CR);
-            if (R.isVerticallyEmpty()) return  fRect(); // nothing to do in this case
-            R.xmin = CR.xmin;
-            R.xmax = CR.xmax;
+            fBox2 R = obj->favouriteRangeY(CR);
+            if (R.isVerticallyEmpty()) return  fBox2(); // nothing to do in this case
+            R.min[0] = CR.min[0];
+            R.max[0] = CR.max[0];
             if (!keepAR) { return R; }
             R = R.fixedRatioEnclosingRect(CR.lx() / CR.ly());
             return R;
@@ -1471,60 +1471,60 @@ namespace mtools
             }
 
 
-        fRect Plotter2DWindow::getAutoRangeX(fRect CR,bool keepAR)
+        fBox2 Plotter2DWindow::getAutoRangeX(fBox2 CR,bool keepAR)
             {
-            fRect NR;
+            fBox2 NR;
             for (int i = 0; i < (int)_vecPlot.size(); i++)
                 {
                 if ((_vecPlot[i]->enable()) && (_vecPlot[i]->hasFavouriteRangeX()))
                     {
-                    fRect R = _vecPlot[i]->favouriteRangeX(CR);
+                    fBox2 R = _vecPlot[i]->favouriteRangeX(CR);
                     if (!R.isHorizontallyEmpty())
                         {
                         if (NR.isHorizontallyEmpty()) { NR = R; } else
                             {
-                            if (R.xmin < NR.xmin) { NR.xmin = R.xmin; }
-                            if (NR.xmax < R.xmax) { NR.xmax = R.xmax; }
+                            if (R.min[0] < NR.min[0]) { NR.min[0] = R.min[0]; }
+                            if (NR.max[0] < R.max[0]) { NR.max[0] = R.max[0]; }
                             }
                         }
                     }
                 }
-            if (NR.isHorizontallyEmpty()) return fRect();
+            if (NR.isHorizontallyEmpty()) return fBox2();
             if (!keepAR)
                 {
-                NR.ymin = CR.ymin;
-                NR.ymax = CR.ymax;
+                NR.min[1] = CR.min[1];
+                NR.max[1] = CR.max[1];
                 return NR;
                 }
-            double c = (CR.ymin + CR.ymax) / 2;
+            double c = (CR.min[1] + CR.max[1]) / 2;
             double r = CR.ly()*NR.lx() / (2 * CR.lx());
-            NR.ymin = c - r;
-            NR.ymax = c + r;
+            NR.min[1] = c - r;
+            NR.max[1] = c + r;
             return NR;
             }
 
 
-        fRect Plotter2DWindow::getAutoRangeY(fRect CR,bool keepAR)
+        fBox2 Plotter2DWindow::getAutoRangeY(fBox2 CR,bool keepAR)
             {
-            fRect NR;
+            fBox2 NR;
             for (int i = 0; i < (int)_vecPlot.size(); i++)
                 {
                 if ((_vecPlot[i]->enable()) && (_vecPlot[i]->hasFavouriteRangeY()))
                     {
-                    fRect R = _vecPlot[i]->favouriteRangeY(CR);
+                    fBox2 R = _vecPlot[i]->favouriteRangeY(CR);
                     if (!R.isVerticallyEmpty())
                         {
                         if (NR.isVerticallyEmpty()) { NR = R; } else
                             {
-                            if (R.ymin < NR.ymin) { NR.ymin = R.ymin; }
-                            if (NR.ymax < R.ymax) { NR.ymax = R.ymax; }
+                            if (R.min[1] < NR.min[1]) { NR.min[1] = R.min[1]; }
+                            if (NR.max[1] < R.max[1]) { NR.max[1] = R.max[1]; }
                             }
                         }
                     }
                 }
-            if (NR.isHorizontallyEmpty()) return fRect();
-            NR.xmin = CR.xmin;
-            NR.xmax = CR.xmax;
+            if (NR.isHorizontallyEmpty()) return fBox2();
+            NR.min[0] = CR.min[0];
+            NR.max[0] = CR.max[0];
             if (!keepAR) { return NR; }
             NR = NR.fixedRatioEnclosingRect(CR.lx() / CR.ly());
             return NR;
@@ -1533,9 +1533,9 @@ namespace mtools
 
         void Plotter2DWindow::useCommonRangeX()
             {
-            fRect CR = ((RangeManager*)_RM)->getRange();                // current range
+            fBox2 CR = ((RangeManager*)_RM)->getRange();                // current range
             bool keepAR = ((RangeManager*)_RM)->fixedAspectRatio();     // do we keep the aspect ratio
-            fRect R = getAutoRangeX(CR, keepAR);
+            fBox2 R = getAutoRangeX(CR, keepAR);
             if (R.isEmpty()) return;
             ((RangeManager*)_RM)->setRange(R);
             }
@@ -1543,9 +1543,9 @@ namespace mtools
 
         void Plotter2DWindow::useCommonRangeY()
             {
-            fRect CR = ((RangeManager*)_RM)->getRange();                // current range
+            fBox2 CR = ((RangeManager*)_RM)->getRange();                // current range
             bool keepAR = ((RangeManager*)_RM)->fixedAspectRatio();     // do we keep the aspect ratio
-            fRect R = getAutoRangeY(CR, keepAR);
+            fBox2 R = getAutoRangeY(CR, keepAR);
             if (R.isEmpty()) return;
             ((RangeManager*)_RM)->setRange(R);
             }
@@ -1553,9 +1553,9 @@ namespace mtools
 
         void Plotter2DWindow::useCommonRangeXY()
             {
-            fRect CR = ((RangeManager*)_RM)->getRange();                // current range
+            fBox2 CR = ((RangeManager*)_RM)->getRange();                // current range
             bool keepAR = ((RangeManager*)_RM)->fixedAspectRatio();     // do we keep the aspect ratio
-            fRect R = getAutoRangeX(CR, keepAR);
+            fBox2 R = getAutoRangeX(CR, keepAR);
             if (R.isEmpty()) return;
             R = getAutoRangeY(R, keepAR);
             if (R.isEmpty()) return;
@@ -1565,27 +1565,27 @@ namespace mtools
 
         void Plotter2DWindow::useRangeX(Plotter2DObj * obj)
             {
-            fRect CR = ((RangeManager*)_RM)->getRange();                 // current range
+            fBox2 CR = ((RangeManager*)_RM)->getRange();                 // current range
             bool keepAR = ((RangeManager*)_RM)->fixedAspectRatio();      // do we keep the aspect ratio
-            fRect R = findRangeX(obj, CR, keepAR);
+            fBox2 R = findRangeX(obj, CR, keepAR);
             if (!R.isEmpty()) ((RangeManager*)_RM)->setRange(R);
             }
 
 
         void Plotter2DWindow::useRangeY(Plotter2DObj * obj)
             {
-            fRect CR = ((RangeManager*)_RM)->getRange();                 // current range
+            fBox2 CR = ((RangeManager*)_RM)->getRange();                 // current range
             bool keepAR = ((RangeManager*)_RM)->fixedAspectRatio();      // do we keep the aspect ratio
-            fRect R = findRangeY(obj, CR, keepAR);
+            fBox2 R = findRangeY(obj, CR, keepAR);
             if (!R.isEmpty()) ((RangeManager*)_RM)->setRange(R);
             }
 
 
         void Plotter2DWindow::useRangeXY(Plotter2DObj * obj)
             {
-            fRect CR = ((RangeManager*)_RM)->getRange();                 // current range
+            fBox2 CR = ((RangeManager*)_RM)->getRange();                 // current range
             bool keepAR = ((RangeManager*)_RM)->fixedAspectRatio();      // do we keep the aspect ratio
-            fRect R = findRangeX(obj, CR, keepAR);
+            fBox2 R = findRangeX(obj, CR, keepAR);
             if (R.isEmpty()) return;
             R = findRangeY(obj, R, keepAR);
             if (R.isEmpty()) return;

@@ -51,7 +51,7 @@ namespace mtools
      * Plotter2D PS;                                 // the plotter
      * PS.gridObject(true)->setUnitCells();          // use the grid to draw unit cells
      * PS[Grid];                                     // insert the first grid inside the plotter
-     * PS.range().setRange(fRect(-10, 10, -20, 20)); // set the range to be [-10,10]x[-20x20] (for fun)
+     * PS.range().setRange(fBox2(-10, 10, -20, 20)); // set the range to be [-10,10]x[-20x20] (for fun)
      * PS.range().setRatio1();                       // rectify to keep a 1:1 aspect ratio (for fun)
      * PS.plot();                                    // make the plot
      * }
@@ -199,7 +199,7 @@ namespace mtools
         /**
          * Override of the setParam method from the Drawable2DObject interface
          **/
-        virtual void setParam(mtools::fRect range, mtools::iVec2 imageSize);
+        virtual void setParam(mtools::fBox2 range, mtools::iVec2 imageSize);
 
 
         /**
@@ -280,7 +280,7 @@ namespace mtools
             std::atomic<double> _voffset;
             std::atomic<bool>   _fittoaxes;
 
-            fRect _range;           // the range we should use to draw the axes
+            fBox2 _range;           // the range we should use to draw the axes
             iVec2 _imageSize;       // the requested size of the image. 
         };
 

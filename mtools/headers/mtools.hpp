@@ -89,6 +89,9 @@
 #include "randomgen/krikunlaw.hpp"
 #include "randomgen/SRW.hpp"
 
+// just in case...
+#undef min
+#undef max
 
 /* end of file */
 

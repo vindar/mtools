@@ -107,7 +107,7 @@ namespace mtools
              *
              * @param   r   The portion to redraw
              **/
-            void partDraw(iRect r);
+            void partDraw(iBox2 r);
 
 
             /* draw the widget */

@@ -37,9 +37,9 @@ namespace mtools
 
     /**
     * Factory function for a constructing a plot2DPlane object from a global extended getColor() function.
-    * The signature of the template function must match 'RGBc getColor(fVec2 pos, fRect R)'.
+    * The signature of the template function must match 'RGBc getColor(fVec2 pos, fBox2 R)'.
     **/
-    template<mtools::RGBc(*getColorFun)(mtools::fVec2 pos, fRect R)> auto makePlot2DPlane(std::string name = "Plane") -> decltype(Plot2DPlane<PlaneObjExt<getColorFun> >(PlaneObjExt<getColorFun>::get()))
+    template<mtools::RGBc(*getColorFun)(mtools::fVec2 pos, fBox2 R)> auto makePlot2DPlane(std::string name = "Plane") -> decltype(Plot2DPlane<PlaneObjExt<getColorFun> >(PlaneObjExt<getColorFun>::get()))
         {
         return Plot2DPlane<PlaneObjExt<getColorFun> >(PlaneObjExt<getColorFun>::get(), name);
         }
@@ -149,7 +149,7 @@ namespace mtools
             *
             * @return  The current definition domain.
             **/
-            fRect domain() const
+            fBox2 domain() const
                 {
                 return _LD->domain();
                 }
@@ -181,7 +181,7 @@ namespace mtools
             *
             * @param   R   The new definition domain
             **/
-            void domain(mtools::fRect R)
+            void domain(mtools::fBox2 R)
                 {
                 if (R == domain()) return;
                 _LD->domain(R);
@@ -221,16 +221,16 @@ namespace mtools
 
 
 
-            virtual fRect favouriteRangeX(fRect R) override
+            virtual fBox2 favouriteRangeX(fBox2 R) override
                 {
-                if ((_LD->isDomainEmpty() || _LD->isDomainFull())) return fRect(); // no favourite range
+                if ((_LD->isDomainEmpty() || _LD->isDomainFull())) return fBox2(); // no favourite range
                 return _LD->domain();
                 }
 
 
-            virtual fRect favouriteRangeY(fRect R) override
+            virtual fBox2 favouriteRangeY(fBox2 R) override
                 {
-                if ((_LD->isDomainEmpty() || _LD->isDomainFull())) return fRect(); // no favourite range
+                if ((_LD->isDomainEmpty() || _LD->isDomainFull())) return fBox2(); // no favourite range
                 return _LD->domain();
                 }
 

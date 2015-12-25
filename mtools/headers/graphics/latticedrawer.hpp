@@ -165,7 +165,7 @@ const CImg<unsigned char> * imageCircle(iVec2 pos, iVec2 size)
 
 int main()
     {
-    fRect r(-200, 200, -200, 200);						        // the range displayed
+    fBox2 r(-200, 200, -200, 200);						        // the range displayed
     CImg<unsigned char> image(1000, 800, 1, 4, false);	// the image, use only 4 channels for trnasparency
     LatticeDrawer<LatticeObjImage<colorCircle, imageCircle> > LD(nullptr); // create the drawer
     LD.setParam(r, iVec2(1000, 800));                           // set the parameters
@@ -178,18 +178,18 @@ int main()
         if ((DD.is_key(cimg_library::cimg::keyC))) { iscell = 1 - iscell; std::this_thread::sleep_for(std::chrono::milliseconds(50)); } // type C for toggle cell
         if (DD.is_key(cimg_library::cimg::keyESC)) { LD.resetDrawing(); } // [ESC] to force complete redraw
         if (DD.is_key(cimg_library::cimg::keyENTER)) { drawtype = 1 - drawtype; LD.setImageType(drawtype); std::this_thread::sleep_for(std::chrono::milliseconds(50)); } // enter to change the type of drawing
-        if (DD.is_key(cimg_library::cimg::keyARROWUP)) { double sh = r.ly() / 20; r.ymin += sh; r.ymax += sh; LD.setParam(r, iVec2(1000, 800)); } // move n the four directions
-        if (DD.is_key(cimg_library::cimg::keyARROWDOWN)) { double sh = r.ly() / 20; r.ymin -= sh; r.ymax -= sh; LD.setParam(r, iVec2(1000, 800)); } //
-        if (DD.is_key(cimg_library::cimg::keyARROWLEFT)) { double sh = r.lx() / 20; r.xmin -= sh; r.xmax -= sh; LD.setParam(r, iVec2(1000, 800)); } //
-        if (DD.is_key(cimg_library::cimg::keyARROWRIGHT)) { double sh = r.lx() / 20; r.xmin += sh; r.xmax += sh; LD.setParam(r, iVec2(1000, 800)); } //
-        if (DD.is_key(cimg_library::cimg::keyPAGEDOWN)) { double lx = r.xmax - r.xmin; double ly = r.ymax - r.ymin; r.xmin = r.xmin - (lx / 8.0); r.xmax = r.xmax + (lx / 8.0); r.ymin = r.ymin - (ly / 8.0);  r.ymax = r.ymax + (ly / 8.0); LD.setParam(r, iVec2(1000, 800)); }
-        if (DD.is_key(cimg_library::cimg::keyPAGEUP)) { if ((r.lx()>0.5) && (r.ly()>0.5)) { double lx = r.xmax - r.xmin; double ly = r.ymax - r.ymin; r.xmin = r.xmin + (lx / 10.0); r.xmax = r.xmax - (lx / 10.0); r.ymin = r.ymin + (ly / 10.0); r.ymax = r.ymax - (ly / 10.0); } LD.setParam(r, iVec2(1000, 800)); }
+        if (DD.is_key(cimg_library::cimg::keyARROWUP)) { double sh = r.ly() / 20; r.min[1] += sh; r.max[1] += sh; LD.setParam(r, iVec2(1000, 800)); } // move n the four directions
+        if (DD.is_key(cimg_library::cimg::keyARROWDOWN)) { double sh = r.ly() / 20; r.min[1] -= sh; r.max[1] -= sh; LD.setParam(r, iVec2(1000, 800)); } //
+        if (DD.is_key(cimg_library::cimg::keyARROWLEFT)) { double sh = r.lx() / 20; r.min[0] -= sh; r.max[0] -= sh; LD.setParam(r, iVec2(1000, 800)); } //
+        if (DD.is_key(cimg_library::cimg::keyARROWRIGHT)) { double sh = r.lx() / 20; r.min[0] += sh; r.max[0] += sh; LD.setParam(r, iVec2(1000, 800)); } //
+        if (DD.is_key(cimg_library::cimg::keyPAGEDOWN)) { double lx = r.max[0] - r.min[0]; double ly = r.max[1] - r.min[1]; r.min[0] = r.min[0] - (lx / 8.0); r.max[0] = r.max[0] + (lx / 8.0); r.min[1] = r.min[1] - (ly / 8.0);  r.max[1] = r.max[1] + (ly / 8.0); LD.setParam(r, iVec2(1000, 800)); }
+        if (DD.is_key(cimg_library::cimg::keyPAGEUP)) { if ((r.lx()>0.5) && (r.ly()>0.5)) { double lx = r.max[0] - r.min[0]; double ly = r.max[1] - r.min[1]; r.min[0] = r.min[0] + (lx / 10.0); r.max[0] = r.max[0] - (lx / 10.0); r.min[1] = r.min[1] + (ly / 10.0); r.max[1] = r.max[1] - (ly / 10.0); } LD.setParam(r, iVec2(1000, 800)); }
         std::cout << "quality = " << LD.work(50) << "\n"; // work a little bit
         image.checkerboard(); // draw a gray checker board so we can see the "transparency !"
         LD.drawOnto(image, 1.0); // draw onto the image with full opacity
-        if (isaxe) { image.fRect_drawAxes(r).fRect_drawGraduations(r).fRect_drawNumbers(r); }
-        if (isgrid) { image.fRect_drawGrid(r); }
-        if (iscell) { image.fRect_drawCells(r); }
+        if (isaxe) { image.fBox2_drawAxes(r).fBox2_drawGraduations(r).fBox2_drawNumbers(r); }
+        if (isgrid) { image.fBox2_drawGrid(r); }
+        if (iscell) { image.fBox2_drawCells(r); }
         DD.display(image);
         }
     return 0;
@@ -287,9 +287,9 @@ public:
      * Get the definition domain of the lattice (does not interrupt any computation in progress).
      * By default this is everything.
      *
-     * @return  An iRect.
+     * @return  An iBox2.
      **/
-    mtools::iRect domain() const 
+    mtools::iBox2 domain() const 
         {
         return _g_domR;
         }
@@ -301,7 +301,7 @@ public:
     **/
     bool isDomainFull() const
         {
-        return ((_g_domR.xmin == std::numeric_limits<int64>::min()) && (_g_domR.xmax == std::numeric_limits<int64>::max()) && (_g_domR.ymin == std::numeric_limits<int64>::min()) && (_g_domR.ymax == std::numeric_limits<int64>::max()));
+        return ((_g_domR.min[0] == std::numeric_limits<int64>::min()) && (_g_domR.max[0] == std::numeric_limits<int64>::max()) && (_g_domR.min[1] == std::numeric_limits<int64>::min()) && (_g_domR.max[1] == std::numeric_limits<int64>::max()));
         }
 
 
@@ -322,7 +322,7 @@ public:
      *
      * @param   R   The new definition domain.
      **/
-    void domain(mtools::iRect R)
+    void domain(mtools::iBox2 R)
         {
         ++_g_requestAbort; // request immediate stop of the work method if active.
             {
@@ -344,10 +344,10 @@ public:
             {
             std::lock_guard<std::timed_mutex> lg(_g_lock); // and wait until we aquire the lock 
             --_g_requestAbort; // and then remove the stop request
-            _g_domR.xmin = std::numeric_limits<int64>::min();
-            _g_domR.xmax = std::numeric_limits<int64>::max();
-            _g_domR.ymin = std::numeric_limits<int64>::min();
-            _g_domR.ymax = std::numeric_limits<int64>::max();
+            _g_domR.min[0] = std::numeric_limits<int64>::min();
+            _g_domR.max[0] = std::numeric_limits<int64>::max();
+            _g_domR.min[1] = std::numeric_limits<int64>::min();
+            _g_domR.max[1] = std::numeric_limits<int64>::max();
             _g_redraw_im = true;   // request redraw
             _g_redraw_pix = true;  //
             }
@@ -374,7 +374,7 @@ public:
     * Set the parameters of the drawing. Calling this method interrupt any work() in progress. 
     * This method is fast, it does not draw anything.
     **/
-    virtual void setParam(mtools::fRect range, mtools::iVec2 imageSize) override
+    virtual void setParam(mtools::fBox2 range, mtools::iVec2 imageSize) override
         {
         MTOOLS_ASSERT(!range.isEmpty());
         MTOOLS_ASSERT((imageSize.X() >0) && (imageSize.Y()>0));     // make sure the image not empty.
@@ -518,10 +518,10 @@ private:
     std::atomic<int>  _g_drawingtype;       // type of the current drawing
     std::atomic<int>  _g_reqdrawtype;       // last requested drawing type
     iVec2             _g_imSize;            // size of the drawing
-    fRect             _g_r;                 // current range.
+    fBox2             _g_r;                 // current range.
     std::atomic<bool> _g_redraw_im;         // true if we should redraw from scratch the pixel image
     std::atomic<bool> _g_redraw_pix;        // true if we should redraw from scratch the sprite image
-    iRect             _g_domR;              // definition domain of the object 
+    iBox2             _g_domR;              // definition domain of the object 
 
 
     /* set the new drawing mode to imageType (but silently change it if needed) */
@@ -540,7 +540,7 @@ private:
 // THE PIXEL DRAWER
 // ****************************************************************
 
-fRect           _pr;                    // the current range
+fBox2           _pr;                    // the current range
 uint32 			_counter1,_counter2;	// counter for the number of pixel added in each cell: counter1 for cells < (_qi,_qj) and counter2 for cells >= (_qi,qj)
 uint32 			_qi,_qj;		        // position where we stopped previously
 int 			_phase;			        // the current phase of the drawing
@@ -574,20 +574,20 @@ inline RGBc getColor(iVec2 pos)
   if finished, then _qi,_qj are set to zero and counter1 = counter2 has the correct value */
 void _drawPixel_fast(int maxtime_ms)
 	{
-    const fRect r = _pr;
+    const fBox2 r = _pr;
     const double px = ((double)r.lx()) / ((double)_int16_buffer_dim.X())  // size of a pixel
                , py = ((double)r.ly()) / ((double)_int16_buffer_dim.Y()); 
 	_counter1 = 1;
 	bool fixstart = true; 
     RGBc coul;
-    int64 prevsx = (int64)floor(r.xmin) - 2;
-    int64 prevsy = (int64)floor(r.ymax) + 2;
+    int64 prevsx = (int64)floor(r.min[0]) - 2;
+    int64 prevsy = (int64)floor(r.max[1]) + 2;
     for (int j = 0; j < _int16_buffer_dim.Y(); j++)
     for (int i = 0; i < _int16_buffer_dim.X(); i++)
 		{
 		if (fixstart) {i = _qi; j = _qj; fixstart=false;}					        // fix the position of thestarting pixel 
 		if (_isTime(maxtime_ms)) {_qi = i; _qj = j; return;}	                    // time's up : we quit
-		double x = r.xmin + (i + 0.5)*px, y = r.ymax - (j + 0.5)*py;            	// pick the center point inside the pixel
+		double x = r.min[0] + (i + 0.5)*px, y = r.max[1] - (j + 0.5)*py;            	// pick the center point inside the pixel
 		int64 sx = (int64)floor(x + 0.5); int64 sy = (int64)floor(y + 0.5); 		// compute the integer position which covers it
         if ((prevsx != sx) || (prevsy != sy)) 
             { // not the same point as before
@@ -607,7 +607,7 @@ void _drawPixel_fast(int maxtime_ms)
   if finished, then _qi,_qj are set to zero and counter1 = counter2 has the correct value */
 void _drawPixel_stochastic(int maxtime_ms)
 	{
-    const fRect r = _pr;
+    const fBox2 r = _pr;
     const double px = ((double)r.lx()) / ((double)_int16_buffer_dim.X())  // size of a pixel
                , py = ((double)r.ly()) / ((double)_int16_buffer_dim.Y());
     uint32 ndraw = _nbDrawPerTurn(r, _int16_buffer_dim);
@@ -623,7 +623,7 @@ void _drawPixel_stochastic(int maxtime_ms)
 			uint32 R=0,G=0,B=0,A=0;
  			for(uint32 k=0;k<ndraw;k++)
 				{
-				double x = r.xmin + (i + _g_fgen.unif())*px, y = r.ymax - (j + _g_fgen.unif())*py; 	// pick a point at random inside the pixel
+				double x = r.min[0] + (i + _g_fgen.unif())*px, y = r.max[1] - (j + _g_fgen.unif())*py; 	// pick a point at random inside the pixel
 				int64 sx = (int64)floor(x + 0.5); int64 sy = (int64)floor(y + 0.5);     			// compute the integer position which covers it
                 RGBc coul = getColor({ sx, sy }); 			                     				// get the color of the site
                 R += coul.R; G += coul.G; B += coul.B; A += coul.A;
@@ -642,25 +642,25 @@ void _drawPixel_stochastic(int maxtime_ms)
   if finished, then _qi,_qj are set to zero and counter1 = counter2 has the correct value */
 void _drawPixel_perfect(int maxtime_ms)
 	{
-    const fRect r = _pr;
+    const fBox2 r = _pr;
     const double px = ((double)r.lx()) / ((double)_int16_buffer_dim.X())  // size of a pixel
                , py = ((double)r.ly()) / ((double)_int16_buffer_dim.Y());
 	_counter1 = 1; // counter1 must be 1
 	bool fixstart = true; 
     RGBc coul;
-    int64 pk = (int64)floor(r.xmin) - 2;
-    int64 pl = (int64)floor(r.ymax) + 2;
+    int64 pk = (int64)floor(r.min[0]) - 2;
+    int64 pl = (int64)floor(r.max[1]) + 2;
     for (int j = 0; j < _int16_buffer_dim.Y(); j++)
     for (int i = 0; i < _int16_buffer_dim.X(); i++)
 		{
 		if (fixstart) {i = _qi; j = _qj; fixstart=false;}	// fix the position of thestarting pixel 
-		fRect pixr(r.xmin + i*px,r.xmin + (i+1)*px,r.ymax - (j+1)*py,r.ymax - j*py); // the rectangle corresponding to pixel (i,j)
-		iRect ipixr = pixr.integerEnclosingRect(); // the integer sites whose square intersect the pixel square
+		fBox2 pixr(r.min[0] + i*px,r.min[0] + (i+1)*px,r.max[1] - (j+1)*py,r.max[1] - j*py); // the rectangle corresponding to pixel (i,j)
+		iBox2 ipixr = pixr.integerEnclosingRect(); // the integer sites whose square intersect the pixel square
 		double cr=0.0 ,cg=0.0, cb=0.0, ca=0.0, tot=0.0;
-		for(int64 k=ipixr.xmin;k<=ipixr.xmax;k++) for(int64 l=ipixr.ymin;l<=ipixr.ymax;l++) // iterate over all those points
+		for(int64 k=ipixr.min[0];k<=ipixr.max[0];k++) for(int64 l=ipixr.min[1];l<=ipixr.max[1];l++) // iterate over all those points
 			{
             if (_isTime(maxtime_ms)) { _qi = i; _qj = j; return; } // time's up : we quit and abandon this pixel
-			double a = pixr.pointArea((double)k,(double)l); // get the surface of the intersection
+            double a = pixr.pointArea( fVec2((double)k,(double)l) ); // get the surface of the intersection
             if ((k != pk) || (l != pl))
                 {
                 coul = getColor({ k, l });
@@ -1015,7 +1015,7 @@ inline void _warpInt16Buf_3channel(CImg<unsigned char> & im, float op) const
 CImg<unsigned char> _exact_qbuf;			// quality buffer of the same size as exact_im: 0 = not drawn. 1 = dirty. 2 = clean 
 CImg<unsigned char> _exact_im;		    	// the non-rescaled image of size (_wr.lx()*_exact_sx , _wr.ly()*_exact_sy)
 int					_exact_sx,_exact_sy;	// size of a site image in the exact image
-iRect				_exact_r;				// the rectangle describing the sites in the exact_image
+iBox2				_exact_r;				// the rectangle describing the sites in the exact_image
 int					_exact_qi,_exact_qj;	// position we continue from for improving quality
 int					_exact_phase;			// 0 = remain undrawn sites, 1 = remain dirty site, 2 = finished
 uint32              _exact_Q0;              // number of images not drawn 
@@ -1056,7 +1056,7 @@ void _improveImage(int maxtime_ms)
 					if (_exact_qbuf(i,j) == 0) // site must be redrawn
 						{
                         --_exact_Q0;
-                        const CImg<unsigned char>  * spr = _getimage(_exact_r.xmin + i, _exact_r.ymin + j, _exact_sx, _exact_sy, metaprog::dummy< metaprog::has_getImage<LatticeObj, const cimg_library::CImg<unsigned char>*, mtools::iVec2, mtools::iVec2>::value >());
+                        const CImg<unsigned char>  * spr = _getimage(_exact_r.min[0] + i, _exact_r.min[1] + j, _exact_sx, _exact_sy, metaprog::dummy< metaprog::has_getImage<LatticeObj, const cimg_library::CImg<unsigned char>*, mtools::iVec2, mtools::iVec2>::value >());
                         if (spr == nullptr) { _exact_qbuf(i, j) = 3; ++_exact_Q23; } // no image, don't do anything
                         else
                             {
@@ -1099,7 +1099,7 @@ void _improveImage(int maxtime_ms)
 					if (_exact_qbuf(i,j) == 1) // site must be redrawn
 						{
                         _exact_Q23++;
-                        const CImg<unsigned char>  * spr = _getimage(_exact_r.xmin + i, _exact_r.ymin + j, _exact_sx, _exact_sy, metaprog::dummy< metaprog::has_getImage<LatticeObj, const cimg_library::CImg<unsigned char>*, mtools::iVec2, mtools::iVec2>::value >());
+                        const CImg<unsigned char>  * spr = _getimage(_exact_r.min[0] + i, _exact_r.min[1] + j, _exact_sx, _exact_sy, metaprog::dummy< metaprog::has_getImage<LatticeObj, const cimg_library::CImg<unsigned char>*, mtools::iVec2, mtools::iVec2>::value >());
                         if (spr == nullptr) { _exact_qbuf(i, j) = 3; } // no image (a change in the lattice occured betwen phase 0 and 1) don't do anything
                         else
                             {
@@ -1154,7 +1154,7 @@ inline bool _keepOldImage(int newim_lx,int newim_ly) const
 
 
 /* redraw the _exact_im image */
-void _redrawImage(iRect new_wr, int new_sx, int new_sy, int maxtime_ms)
+void _redrawImage(iBox2 new_wr, int new_sx, int new_sy, int maxtime_ms)
 {
     if ((!_g_redraw_im) && (new_wr == _exact_r) && (_exact_sx == new_sx) && (_exact_sy == new_sy)) { _improveImage(maxtime_ms); return; } //ok, we can keep previous work and we continu from there on
     if (maxtime_ms == 0) { _g_current_quality = 0;  return; }; // nothing to show.
@@ -1172,28 +1172,28 @@ void _redrawImage(iRect new_wr, int new_sx, int new_sy, int maxtime_ms)
         //const int32 im_x = _exact_im.width();   // size of the current image
         //const int32 im_y = _exact_im.height();	//
         bool samescale = ((new_sx == _exact_sx) && (new_sy == _exact_sy)); // true if we are on the same scale as before
-        iRect in_newR = new_wr.relativeSubRect(_exact_r); // the intersection rectangle seen as a sub rectangle of the new site rectangle
-        iRect in_oldR = _exact_r.relativeSubRect(new_wr); // the intersection rectangle seen as a sub rectangle of the old site rectangle
+        iBox2 in_newR = new_wr.relativeSubRect(_exact_r); // the intersection rectangle seen as a sub rectangle of the new site rectangle
+        iBox2 in_oldR = _exact_r.relativeSubRect(new_wr); // the intersection rectangle seen as a sub rectangle of the old site rectangle
         if (!in_newR.isEmpty()) // intersection is not empty, we fill the new quality with what we keep from the old image
             {
             for (int i = 0; i < (in_newR.lx() + 1); i++)  for (int j = 0; j < (in_newR.ly() + 1); j++)
                 {
-                unsigned char v = _exact_qbuf((int32)in_oldR.xmin + i, (int32)in_oldR.ymin + j); // get the quality of the site
+                unsigned char v = _exact_qbuf((int32)in_oldR.min[0] + i, (int32)in_oldR.min[1] + j); // get the quality of the site
                 if ((v == 2) && (!samescale)) { v = 1; } // downgrade quality if we are changing scale
                 if (v != 0) { --_exact_Q0; if (v >= 2) { ++_exact_Q23; } }
-                new_qbuf((int32)in_newR.xmin + i, (int32)in_newR.ymin + j) = v; // save the quality in the new quality buffer
+                new_qbuf((int32)in_newR.min[0] + i, (int32)in_newR.min[1] + j) = v; // save the quality in the new quality buffer
                 }
             if (!samescale)
                 {
-                _exact_im.crop((int32)in_oldR.xmin*_exact_sx, (int32)(_exact_r.ly() - in_oldR.ymax)*_exact_sy, 0, 0, (int32)(in_oldR.xmax + 1)*_exact_sx - 1, (int32)(_exact_r.ly() - in_oldR.ymin + 1)*_exact_sy - 1, 0, 3); // crop the old image keeping only the part we reuse  
+                _exact_im.crop((int32)in_oldR.min[0]*_exact_sx, (int32)(_exact_r.ly() - in_oldR.max[1])*_exact_sy, 0, 0, (int32)(in_oldR.max[0] + 1)*_exact_sx - 1, (int32)(_exact_r.ly() - in_oldR.min[1] + 1)*_exact_sy - 1, 0, 3); // crop the old image keeping only the part we reuse  
                 _exact_im.resize((int32)(in_newR.lx() + 1)*new_sx, (int32)(in_newR.ly() + 1)*new_sy, 1, 4, 1); // resize quickly (bad quality resizing)
-                new_im.draw_image((int32)in_newR.xmin*new_sx, new_im.height() - _exact_im.height() - (int32)in_newR.ymin*new_sy, 0, 0, _exact_im); // copy it at the right position in the new image
+                new_im.draw_image((int32)in_newR.min[0]*new_sx, new_im.height() - _exact_im.height() - (int32)in_newR.min[1]*new_sy, 0, 0, _exact_im); // copy it at the right position in the new image
                 }
             else
                 {
-                _exact_im.crop((int32)in_oldR.xmin*_exact_sx, (int32)(_exact_r.ly() - in_oldR.ymax)*_exact_sy, 0, 0, (int32)(in_oldR.xmax + 1)*_exact_sx - 1, (int32)(_exact_r.ly() - in_oldR.ymin + 1)*_exact_sy - 1, 0, 3); // crop the old image keeping only the part we reuse
-                //const int Z = new_im.height() - _exact_im.height() - (int32)in_newR.ymin*new_sy;
-                new_im.draw_image((int32)in_newR.xmin*new_sx, new_im.height() - _exact_im.height() - (int32)in_newR.ymin*new_sy, 0, 0, _exact_im); // copy it at the right position in the new image
+                _exact_im.crop((int32)in_oldR.min[0]*_exact_sx, (int32)(_exact_r.ly() - in_oldR.max[1])*_exact_sy, 0, 0, (int32)(in_oldR.max[0] + 1)*_exact_sx - 1, (int32)(_exact_r.ly() - in_oldR.min[1] + 1)*_exact_sy - 1, 0, 3); // crop the old image keeping only the part we reuse
+                //const int Z = new_im.height() - _exact_im.height() - (int32)in_newR.min[1]*new_sy;
+                new_im.draw_image((int32)in_newR.min[0]*new_sx, new_im.height() - _exact_im.height() - (int32)in_newR.min[1]*new_sy, 0, 0, _exact_im); // copy it at the right position in the new image
                 }
             }
         new_qbuf.move_to(_exact_qbuf);
@@ -1222,7 +1222,7 @@ void _redrawImage(iRect new_wr, int new_sx, int new_sy, int maxtime_ms)
 
 
 /* compute the size of an image site, try to keep the same as before */
-void _adjustSiteImageSize(int & sx,int & sy,int winx,int winy,const fRect & pr) const
+void _adjustSiteImageSize(int & sx,int & sy,int winx,int winy,const fBox2 & pr) const
 	{
 	double fsx = ((double)winx)/((double)pr.lx());
 	double fsy = ((double)winy)/((double)pr.ly());
@@ -1236,7 +1236,7 @@ void _workImage(int maxtime_ms)
 {
     _startTimer();
     if (_exact_r.isEmpty()) { _g_redraw_im = true; } // just to be on the safe side..
-    iRect ir = _g_r.integerEnclosingRect(); // compute the enclosing integer rectangle	
+    iBox2 ir = _g_r.integerEnclosingRect(); // compute the enclosing integer rectangle	
     int sx, sy;
     _adjustSiteImageSize(sx, sy, (int)_g_imSize.X(), (int)_g_imSize.Y(), _g_r); // compute the size of a site (sx,sy) (trying to keep the previous scaling (_exact_sx,_exact_sy) is possible)
     _redrawImage(ir, sx, sy, maxtime_ms); // redraw/improve the image on exact_im
@@ -1263,13 +1263,13 @@ inline void _drawOntoImage(cimg_library::CImg<unsigned char> & im, float op)
     _workImage(0); // make sure everything is in sync. 
         if (_g_current_quality > 0)
         {
-        iRect ir = _g_r.integerEnclosingRect(); // compute the enclosing integer rectangle	
-        fRect fir(ir.xmin - 0.5, ir.xmax + 0.5, ir.ymin - 0.5, ir.ymax + 0.5); // this is exactly the region drawn by _exact_im
-        fRect rr = fir.relativeSubRect(_g_r);
-        const int pxmin = (int)(((rr.xmin) / fir.lx())*_exact_im.width());
-        const int pxmax = (int)(((rr.xmax) / fir.lx())*_exact_im.width());
-        const int pymin = (int)(((rr.ymin) / fir.ly())*_exact_im.height());
-        const int pymax = (int)(((rr.ymax) / fir.ly())*_exact_im.height());
+        iBox2 ir = _g_r.integerEnclosingRect(); // compute the enclosing integer rectangle	
+        fBox2 fir(ir.min[0] - 0.5, ir.max[0] + 0.5, ir.min[1] - 0.5, ir.max[1] + 0.5); // this is exactly the region drawn by _exact_im
+        fBox2 rr = fir.relativeSubRect(_g_r);
+        const int pxmin = (int)(((rr.min[0]) / fir.lx())*_exact_im.width());
+        const int pxmax = (int)(((rr.max[0]) / fir.lx())*_exact_im.width());
+        const int pymin = (int)(((rr.min[1]) / fir.ly())*_exact_im.height());
+        const int pymax = (int)(((rr.max[1]) / fir.ly())*_exact_im.height());
         const int ax = pxmin;
         const int bx = pxmax - 1;
         const int ay = _exact_im.height() - pymax;
@@ -1367,11 +1367,11 @@ inline bool _isTime2(uint32 ms)
 
 
 /* return the average number of site per pixel */
-inline double _sitePerPixel(const fRect & r,const iVec2 & sizeIm) const {return (r.lx()/sizeIm.X())*(r.ly()/sizeIm.Y());}
+inline double _sitePerPixel(const fBox2 & r,const iVec2 & sizeIm) const {return (r.lx()/sizeIm.X())*(r.ly()/sizeIm.Y());}
 
 
 /* return true if we should not use stochastic drawing */
-inline bool _skipStochastic(const fRect & r, const iVec2 & sizeIm) const
+inline bool _skipStochastic(const fBox2 & r, const iVec2 & sizeIm) const
 	{
 	if (_sitePerPixel(r,sizeIm) < 6) {return true;}
 	return false;
@@ -1379,14 +1379,14 @@ inline bool _skipStochastic(const fRect & r, const iVec2 & sizeIm) const
 
 
 /* return the number of stochastic draw per pixel per turn */
-inline uint32 _nbDrawPerTurn(const fRect & r,const iVec2 & sizeIm) const
+inline uint32 _nbDrawPerTurn(const fBox2 & r,const iVec2 & sizeIm) const
 	{
 	return 5;
 	}
 
 
 /* return the number of stochastic turn to do */
-inline uint32 _nbPointToDraw(const fRect & r,const iVec2 & sizeIm) const
+inline uint32 _nbPointToDraw(const fBox2 & r,const iVec2 & sizeIm) const
 	{
 	int v = (int)_sitePerPixel(r,sizeIm)/20;
 	if (v>254) {return 254;}

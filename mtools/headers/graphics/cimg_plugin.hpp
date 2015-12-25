@@ -86,7 +86,7 @@
      *
      * @return  the associated pixel the image (no clipping, may be outside of the image).
      **/
-	inline mtools::iVec2 getImageCoord(const mtools::fRect & R,const mtools::fVec2 & coord) const {return R.absToPixel(coord,imageSize());}
+	inline mtools::iVec2 getImageCoord(const mtools::fBox2 & R,const mtools::fVec2 & coord) const {return R.absToPixel(coord,imageSize());}
 
 
     /**
@@ -97,7 +97,7 @@
      *
      * @return  the associated absolute coordinate.
      **/
-    inline mtools::fVec2 getAbsCoord(const mtools::fRect & R, const mtools::iVec2 & pixpos) const {return R.pixelToAbs(pixpos, imageSize());}
+    inline mtools::fVec2 getAbsCoord(const mtools::fBox2 & R, const mtools::iVec2 & pixpos) const {return R.pixelToAbs(pixpos, imageSize());}
 
 
     /**
@@ -109,13 +109,13 @@
      * @return  A possibly enlarged rectangle (with same centering) with same aspect ratio as the
      *          image.
      **/
-	inline mtools::fRect respectImageAspectRatio(const mtools::fRect & R) const {return(R.fixedRatioEnclosingRect(imageAspectRatio()));}
+	inline mtools::fBox2 respectImageAspectRatio(const mtools::fBox2 & R) const {return(R.fixedRatioEnclosingRect(imageAspectRatio()));}
 	
 
     /**
      * The canonical range rectangle corresponding to the image size
      **/
-    inline mtools::fRect canonicalRange() const { MTOOLS_ASSERT((this->width() > 0) && (this->height() > 0)); mtools::fRect r(0, (double)width(), 0, (double)height()); return r; }
+    inline mtools::fBox2 canonicalRange() const { MTOOLS_ASSERT((this->width() > 0) && (this->height() > 0)); mtools::fBox2 r(0, (double)width(), 0, (double)height()); return r; }
 
 
     /**
@@ -588,7 +588,7 @@
      *
      * @return  the image for chaining.
      **/
-     CImg<T>& fRect_drawText(const mtools::fRect & R,const std::string & text, mtools::fVec2 Pos, char xcentering, char ycentering, int fontsize, bool variable_width, mtools::RGBc color, double opacity = 1.0)
+     CImg<T>& fBox2_drawText(const mtools::fBox2 & R,const std::string & text, mtools::fVec2 Pos, char xcentering, char ycentering, int fontsize, bool variable_width, mtools::RGBc color, double opacity = 1.0)
         {
         drawText(text, getImageCoord(R,Pos), xcentering, ycentering, fontsize, variable_width, color, opacity);
         return(*this);
@@ -610,7 +610,7 @@
      *
      * @return  the font height.
      **/
-     unsigned int fRect_computeFontSize(const mtools::fRect & R,const std::string & text, mtools::fVec2 boxsize, bool variable_width = true, unsigned int minheight = 5, unsigned int maxheight = 256)
+     unsigned int fBox2_computeFontSize(const mtools::fBox2 & R,const std::string & text, mtools::fVec2 boxsize, bool variable_width = true, unsigned int minheight = 5, unsigned int maxheight = 256)
         {
         return computeFontSize(text, getImageCoord(R, boxsize) - getImageCoord(R, { 0, 0 }), variable_width, minheight, maxheight);
         }
@@ -628,7 +628,7 @@
       *
       * @return The image for chaining.
       **/
-     CImg<T>& fRect_floodFill(const mtools::fRect & R, mtools::fVec2 Pos, mtools::RGBc color, const float opacity = 1, const float sigma = 0, const bool is_high_connexity = false)
+     CImg<T>& fBox2_floodFill(const mtools::fBox2 & R, mtools::fVec2 Pos, mtools::RGBc color, const float opacity = 1, const float sigma = 0, const bool is_high_connexity = false)
         {
          mtools::iVec2 P = getImageCoord(R, Pos);
          draw_fill((int)P.X(), (int)P.Y(), color.buf(), opacity, sigma, false);
@@ -646,7 +646,7 @@
       *
       * @return the image for chaining.
       **/
-     CImg<T>& fRect_drawPoint(const mtools::fRect & R, mtools::fVec2 P, mtools::RGBc color, const float opacity = 1)
+     CImg<T>& fBox2_drawPoint(const mtools::fBox2 & R, mtools::fVec2 P, mtools::RGBc color, const float opacity = 1)
         {
         drawPoint(getImageCoord(R,P), color, opacity);
         return(*this);
@@ -664,7 +664,7 @@
       *
       * @return the image for chaining.
       **/
-     CImg<T>& fRect_drawPointCirclePen(const mtools::fRect & R, mtools::fVec2 P, int rad, mtools::RGBc color, const float opacity = 1)
+     CImg<T>& fBox2_drawPointCirclePen(const mtools::fBox2 & R, mtools::fVec2 P, int rad, mtools::RGBc color, const float opacity = 1)
         {
         drawPointCirclePen(getImageCoord(R, P), rad, color, opacity);
         return(*this);
@@ -682,7 +682,7 @@
       *
       * @return the image for chaining.
       **/
-     CImg<T>& fRect_drawPointSquarePen(const mtools::fRect & R, mtools::fVec2 P, int rad, mtools::RGBc color, const float opacity = 1)
+     CImg<T>& fBox2_drawPointSquarePen(const mtools::fBox2 & R, mtools::fVec2 P, int rad, mtools::RGBc color, const float opacity = 1)
         {     
         drawPointSquarePen(getImageCoord(R, P), rad, color, opacity);
         return(*this);
@@ -700,7 +700,7 @@
       *
       * @return The image for chaining.
       **/
-     CImg<T>& fRect_drawLine(const mtools::fRect & R, mtools::fVec2 P1, mtools::fVec2 P2, mtools::RGBc color, float opacity = 1)
+     CImg<T>& fBox2_drawLine(const mtools::fBox2 & R, mtools::fVec2 P1, mtools::fVec2 P2, mtools::RGBc color, float opacity = 1)
         {
         drawLine(getImageCoord(R, P1), getImageCoord(R, P2), color, opacity);
         return(*this);
@@ -717,7 +717,7 @@
       *
       * @return The image for chaining.
       **/
-     CImg<T>& fRect_drawHorizontalLine(const mtools::fRect & R, double y, mtools::RGBc color, float opacity = 1)
+     CImg<T>& fBox2_drawHorizontalLine(const mtools::fBox2 & R, double y, mtools::RGBc color, float opacity = 1)
         {
         drawHorizontalLine((int)getImageCoord(R, { 0, y }).Y(), color, opacity);
         return(*this);
@@ -734,7 +734,7 @@
       *
       * @return The image for chaining.
       **/
-     CImg<T>& fRect_drawVerticalLine(const mtools::fRect & R, double x, mtools::RGBc color, float opacity = 1)
+     CImg<T>& fBox2_drawVerticalLine(const mtools::fBox2 & R, double x, mtools::RGBc color, float opacity = 1)
         {
         drawVerticalLine((int)getImageCoord(R, { x, 0 }).X(), color, opacity);
         return(*this);
@@ -753,7 +753,7 @@
       *
       * @return The image for chaining.
       **/
-     CImg<T>& fRect_drawLineCirclePen(const mtools::fRect & R, mtools::fVec2 P1, mtools::fVec2 P2, int rad, mtools::RGBc color, float opacity = 1)
+     CImg<T>& fBox2_drawLineCirclePen(const mtools::fBox2 & R, mtools::fVec2 P1, mtools::fVec2 P2, int rad, mtools::RGBc color, float opacity = 1)
         {
         drawLineCirclePen(getImageCoord(R, P1), getImageCoord(R, P2), rad, color, opacity);
         return(*this);
@@ -772,7 +772,7 @@
       *
       * @return The image for chaining.
       **/
-     CImg<T>& fRect_drawLineSquarePen(const mtools::fRect & R, mtools::fVec2 P1, mtools::fVec2 P2, int rad, mtools::RGBc color, float opacity = 1)
+     CImg<T>& fBox2_drawLineSquarePen(const mtools::fBox2 & R, mtools::fVec2 P1, mtools::fVec2 P2, int rad, mtools::RGBc color, float opacity = 1)
         {
         drawLineSquarePen(getImageCoord(R, P1), getImageCoord(R, P2), rad, color, opacity);
         return(*this);
@@ -793,7 +793,7 @@
      *
      * @return  The image for chaining.
      **/
-	CImg<T>& frect_draw_spline(const mtools::fRect & R, mtools::fVec2 P1, mtools::fVec2 PA, mtools::fVec2 PB, mtools::fVec2 P2,mtools::RGBc color,float opacity = 1, float precision = 0.25)
+	CImg<T>& fBox2_draw_spline(const mtools::fBox2 & R, mtools::fVec2 P1, mtools::fVec2 PA, mtools::fVec2 PB, mtools::fVec2 P2,mtools::RGBc color,float opacity = 1, float precision = 0.25)
 		{
         mtools::iVec2 Q1 = getImageCoord(R, P1);
         mtools::iVec2 QA = getImageCoord(R, PA);
@@ -819,7 +819,7 @@
      *
      * @return  The image for chaining.
      **/
-    CImg<T>& frect_draw_triangle(const mtools::fRect & R, mtools::fVec2 P1, mtools::fVec2 P2, mtools::fVec2 P3, mtools::RGBc color, float opacity = 1.0, bool filled = true)
+    CImg<T>& fBox2_draw_triangle(const mtools::fBox2 & R, mtools::fVec2 P1, mtools::fVec2 P2, mtools::fVec2 P3, mtools::RGBc color, float opacity = 1.0, bool filled = true)
 		{
         mtools::iVec2 Q1 = getImageCoord(R, P1);
         mtools::iVec2 Q2 = getImageCoord(R, P2);
@@ -847,7 +847,7 @@
      *
      * @return  The image for chaining.
      **/
-    CImg<T>& frect_draw_rectangle(const mtools::fRect & R, mtools::fVec2 P1, mtools::fVec2 P2, mtools::RGBc color, float opacity = 1.0,bool filled = true)
+    CImg<T>& fBox2_draw_rectangle(const mtools::fBox2 & R, mtools::fVec2 P1, mtools::fVec2 P2, mtools::RGBc color, float opacity = 1.0,bool filled = true)
 		{
         mtools::iVec2 Q1 = getImageCoord(R, P1);
         mtools::iVec2 Q2 = getImageCoord(R, P2);
@@ -875,7 +875,7 @@
      *
      * @return  The image for chaining.
      **/
-	CImg<T>& frect_draw_circle(const mtools::fRect & R,mtools::fVec2 C,double rad,mtools::RGBc color,float opacity = 1,bool filled = true)
+	CImg<T>& fBox2_draw_circle(const mtools::fBox2 & R,mtools::fVec2 C,double rad,mtools::RGBc color,float opacity = 1,bool filled = true)
 		{
         mtools::iVec2 Q = getImageCoord(R, C);
         float rx = (float)((getImageCoord(R, { rad, 0 }) - getImageCoord(R, { 0, 0 })).X());
@@ -901,10 +901,10 @@
      *
      * @return  the image for chaining.
      **/
-    CImg<T>& fRect_drawAxes(const mtools::fRect & R, mtools::RGBc color = mtools::RGBc::c_Black,float opacity = 1.0)
+    CImg<T>& fBox2_drawAxes(const mtools::fBox2 & R, mtools::RGBc color = mtools::RGBc::c_Black,float opacity = 1.0)
 		{
-		fRect_drawHorizontalLine(R,0,color,opacity);
-		fRect_drawVerticalLine(R,0,color,opacity);
+		fBox2_drawHorizontalLine(R,0,color,opacity);
+		fBox2_drawVerticalLine(R,0,color,opacity);
 		return(*this);
 		}
 
@@ -918,10 +918,10 @@
      *
      * @return  the image for chaining.
      **/
-    CImg<T>& fRect_drawGrid(const mtools::fRect & R, mtools::RGBc color = mtools::RGBc::c_Gray, float opacity = 0.5)
+    CImg<T>& fBox2_drawGrid(const mtools::fBox2 & R, mtools::RGBc color = mtools::RGBc::c_Gray, float opacity = 0.5)
 		{
-		if (R.lx() <=  width()/2)   {mtools::int64 i= (mtools::int64)R.xmin - 2; while(i < (mtools::int64)R.xmax + 2) {fRect_drawVerticalLine(R,(double)i,color,opacity); i++;}}
-		if (R.ly() <=  height()/2)  {mtools::int64 j= (mtools::int64)R.ymin - 2; while(j < (mtools::int64)R.ymax + 2) {fRect_drawHorizontalLine(R,(double)j,color,opacity); j++;}}
+		if (R.lx() <=  width()/2)   {mtools::int64 i= (mtools::int64)R.min[0] - 2; while(i < (mtools::int64)R.max[0] + 2) {fBox2_drawVerticalLine(R,(double)i,color,opacity); i++;}}
+		if (R.ly() <=  height()/2)  {mtools::int64 j= (mtools::int64)R.min[1] - 2; while(j < (mtools::int64)R.max[1] + 2) {fBox2_drawHorizontalLine(R,(double)j,color,opacity); j++;}}
 		return(*this);
 		}
 
@@ -935,10 +935,10 @@
      *
      * @return  the image for chaining.
      **/
-    CImg<T>& fRect_drawCells(const mtools::fRect & R, mtools::RGBc color = mtools::RGBc::c_Gray, float opacity = 0.5)
+    CImg<T>& fBox2_drawCells(const mtools::fBox2 & R, mtools::RGBc color = mtools::RGBc::c_Gray, float opacity = 0.5)
 		{
-		if (R.lx() <=  width()/2)  {mtools::int64 i= (mtools::int64)R.xmin-2; while(i < (mtools::int64)R.xmax+2) {fRect_drawVerticalLine(R,i-0.5,color,opacity); i++;}}
-		if (R.ly() <=  height()/2) {mtools::int64 j= (mtools::int64)R.ymin-2; while(j < (mtools::int64)R.ymax+2) {fRect_drawHorizontalLine(R,j-0.5,color,opacity); j++;}}
+		if (R.lx() <=  width()/2)  {mtools::int64 i= (mtools::int64)R.min[0]-2; while(i < (mtools::int64)R.max[0]+2) {fBox2_drawVerticalLine(R,i-0.5,color,opacity); i++;}}
+		if (R.ly() <=  height()/2) {mtools::int64 j= (mtools::int64)R.min[1]-2; while(j < (mtools::int64)R.max[1]+2) {fBox2_drawHorizontalLine(R,j-0.5,color,opacity); j++;}}
 		return(*this);
 		}
 
@@ -955,24 +955,24 @@
      *
      * @return  the image for chaining.
      **/
-    CImg<T>& fRect_drawGraduations(const mtools::fRect & R, float scaling = 1.0, mtools::RGBc color = mtools::RGBc::c_Black, float opacity = 0.7)
+    CImg<T>& fBox2_drawGraduations(const mtools::fBox2 & R, float scaling = 1.0, mtools::RGBc color = mtools::RGBc::c_Black, float opacity = 0.7)
 		{
         scaling = scaling*((float)(std::sqrt(width()*height()) / 1000.0));
         int gradsize = (int)(3 * scaling); if (gradsize == 0) { gradsize = 1; }
 		const int winx = width(), winy = height();
-		int py = winy-1 - (int)ceil(((-R.ymin)/(R.ymax-R.ymin))*winy - ((double)1.0/2.0));
-		int px = (int)ceil(((-R.xmin)/(R.xmax-R.xmin))*winx - ((double)1.0/2.0));
+		int py = winy-1 - (int)ceil(((-R.min[1])/(R.max[1]-R.min[1]))*winy - ((double)1.0/2.0));
+		int px = (int)ceil(((-R.min[0])/(R.max[0]-R.min[0]))*winx - ((double)1.0/2.0));
 		if ((px > -1) && (px < winx)) 
 			{
 			int l,zz; double k,xx,kk,pp,xx2,op,v1,v2; 
 			op = ::log10(R.ly()); if (op<0) {l = ((int)(op))-1;} else {l = ((int)(op));}
 			k = ::pow(10.0,(double)(l));
-			v1 = floor(R.ymin/k); v1 = v1 - 1; v2 = floor(R.ymax/k); 
+			v1 = floor(R.min[1]/k); v1 = v1 - 1; v2 = floor(R.max[1]/k); 
 			v2 = v2 + 1;
 			kk = k; pp = kk/5;
 			if ((v2 - v1) < 5) {kk = k/2; pp = kk/5;} else {if ((v2 - v1) > 8) {kk = k*2; pp = kk/2; v1 = ((v1/2)*2) - 2;}}
 			xx =k*v1; xx2 = k*v1;
-			while(xx2 <= (R.ymax + 2*k))
+			while(xx2 <= (R.max[1] + 2*k))
 				{
                 xx = xx + kk; xx2 = xx2 + pp; 
                 zz = (int)R.absToPixel(mtools::fVec2(0, xx),mtools::iVec2(winx, winy)).Y();
@@ -986,11 +986,11 @@
 		    int l,zz; double k,xx,kk,pp,xx2,op,v1,v2;
             op = ::log10(R.lx()); if (op<0) {l = ((int)op)-1;} else {l = (int)op;}
 			k = ::pow(10.0,(double)(l));
-			v1 = floor(R.xmin/k);  v1 = v1 - 1; v2 = floor(R.xmax/k);  v2 = v2 + 1;
+			v1 = floor(R.min[0]/k);  v1 = v1 - 1; v2 = floor(R.max[0]/k);  v2 = v2 + 1;
 			kk = k; pp = kk/5;
 			if ((v2 - v1) < 5) {kk = k/2; pp = kk/5;} else {if ((v2 - v1) > 8) {kk = k*2; pp = kk/2; v1 = ((v1/2)*2) - 2;}}
 			xx =k*v1; xx2 = k*v1;
-			while(xx2 <= (R.xmax + 2*k))
+			while(xx2 <= (R.max[0] + 2*k))
 				{
 			    xx = xx + kk; xx2 = xx2 + pp; 
                 zz = (int)R.absToPixel(mtools::fVec2(xx, 0), mtools::iVec2(winx, winy)).X();
@@ -1015,25 +1015,25 @@
      *
      * @return  the image for chaining.
      **/
-    CImg<T>& fRect_drawNumbers(const mtools::fRect & R, float scaling = 1.0, mtools::RGBc color = mtools::RGBc::c_Black, float opacity = 0.7)
+    CImg<T>& fBox2_drawNumbers(const mtools::fBox2 & R, float scaling = 1.0, mtools::RGBc color = mtools::RGBc::c_Black, float opacity = 0.7)
 		{
         scaling = scaling*((float)(std::sqrt(width()*height()) / 1000.0));
         int gradsize = (int)(3 * scaling); if (gradsize == 0) { gradsize = 1; }
         int fontsize = 5 + (int)(10 * scaling);
 		const int winx = width(), winy = height();
-		int py = winy-1 - (int)ceil(((-R.ymin)/(R.ymax-R.ymin))*winy - ((double)1.0/2.0));
-		int px = (int)ceil(((-R.xmin)/(R.xmax-R.xmin))*winx - ((double)1.0/2.0));
+		int py = winy-1 - (int)ceil(((-R.min[1])/(R.max[1]-R.min[1]))*winy - ((double)1.0/2.0));
+		int px = (int)ceil(((-R.min[0])/(R.max[0]-R.min[0]))*winx - ((double)1.0/2.0));
 		if ((px > -1) && (px < winx)) 
 			{
 			int l,zz; double k,xx,kk,pp,xx2,op,v1,v2; 
 			op = ::log10(R.ly()); if (op<0) {l = ((int)(op))-1;} else {l = ((int)(op));}
 			k = ::pow(10.0,(double)(l));
-			v1 = floor(R.ymin/k); v1 = v1 - 1; v2 = floor(R.ymax/k); 
+			v1 = floor(R.min[1]/k); v1 = v1 - 1; v2 = floor(R.max[1]/k); 
 			v2 = v2 + 1;
 			kk = k; pp = kk/5;
 			if ((v2 - v1) < 5) {kk = k/2; pp = kk/5;} else {if ((v2 - v1) > 8) {kk = k*2; pp = kk/2; v1 = ((v1/2)*2) - 2;}}
 			xx =k*v1; xx2 = k*v1;
-			while(xx2 <= (R.ymax + 2*k))
+			while(xx2 <= (R.max[1] + 2*k))
 				{
 				xx = xx + kk; xx2 = xx2 + pp; 
                 zz = (int)R.absToPixel(mtools::fVec2(0, xx), mtools::iVec2(winx, winy)).Y();
@@ -1052,11 +1052,11 @@
 			int l,zz; double k,xx,kk,pp,xx2,op,v1,v2;
             op = ::log10(R.lx()); if (op<0) {l = ((int)op)-1;} else {l = (int)op;}
 			k = ::pow(10.0,(double)(l));
-			v1 = floor(R.xmin/k);  v1 = v1 - 1; v2 = floor(R.xmax/k);  v2 = v2 + 1;
+			v1 = floor(R.min[0]/k);  v1 = v1 - 1; v2 = floor(R.max[0]/k);  v2 = v2 + 1;
 			kk = k; pp = kk/5;
 			if ((v2 - v1) < 5) {kk = k/2; pp = kk/5;} else {if ((v2 - v1) > 8) {kk = k*2; pp = kk/2; v1 = ((v1/2)*2) - 2;}}
 			xx =k*v1; xx2 = k*v1;
-			while(xx2 <= (R.xmax + 2*k))
+			while(xx2 <= (R.max[0] + 2*k))
 				{
 			    xx = xx + kk; xx2 = xx2 + pp; 
                 zz = (int)R.absToPixel(mtools::fVec2(xx, 0), mtools::iVec2(winx, winy)).X();

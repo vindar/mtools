@@ -213,9 +213,6 @@
     <ClInclude Include="headers\maths\box.hpp">
       <Filter>Header Files\maths</Filter>
     </ClInclude>
-    <ClInclude Include="headers\maths\old_rect.hpp">
-      <Filter>Header Files\maths</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\fltk_supervisor.cpp">

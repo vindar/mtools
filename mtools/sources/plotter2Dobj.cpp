@@ -40,7 +40,7 @@ namespace mtools
 
 
         Plotter2DObj::Plotter2DObj(const std::string & name) :
-            _crange(fRect()),
+            _crange(fBox2()),
             _cwinSize(iVec2()),
             _missedSetParam(false),
             _ownercb(nullptr),
@@ -68,7 +68,7 @@ namespace mtools
 
 
         Plotter2DObj::Plotter2DObj(Plotter2DObj && obj) :
-            _crange(fRect()),
+            _crange(fBox2()),
             _cwinSize(iVec2()),
             _missedSetParam(false),
             _ownercb(nullptr),
@@ -268,15 +268,15 @@ namespace mtools
             }
 
 
-        fRect Plotter2DObj::favouriteRangeX(fRect R)
+        fBox2 Plotter2DObj::favouriteRangeX(fBox2 R)
             {
-            return fRect(); // completely empty rectangle.
+            return fBox2(); // completely empty rectangle.
             }
 
 
-        fRect Plotter2DObj::favouriteRangeY(fRect R)
+        fBox2 Plotter2DObj::favouriteRangeY(fBox2 R)
             {
-            return fRect(); // completely empty rectangle.
+            return fBox2(); // completely empty rectangle.
             }
 
 
@@ -338,7 +338,7 @@ namespace mtools
             }
 
 
-        void Plotter2DObj::setParam(mtools::fRect range, mtools::iVec2 imageSize)
+        void Plotter2DObj::setParam(mtools::fBox2 range, mtools::iVec2 imageSize)
             {
             if ((pnot)_ownercb == nullptr) return;  // do nothing if not inserted
             MTOOLS_ASSERT(((AutoDrawable2DObject*)_AD) != nullptr);

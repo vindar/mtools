@@ -63,7 +63,7 @@ namespace internals_graphics
          * @param   range       The range to draw.
          * @param   imageSize   Size of the desired picture.
          **/
-        virtual void setParam(mtools::fRect range, mtools::iVec2 imageSize) = 0;
+        virtual void setParam(mtools::fBox2 range, mtools::iVec2 imageSize) = 0;
 
 
         /**
@@ -171,7 +171,7 @@ namespace internals_graphics
          * @param   range       The range to draw.
          * @param   imageSize   The size of the desired picture.
          **/
-        void setParam(mtools::fRect range, mtools::iVec2 imageSize);
+        void setParam(mtools::fBox2 range, mtools::iVec2 imageSize);
 
 
         /**

@@ -110,19 +110,19 @@ namespace mtools
         }
 
 
-    fRect Plot2DCImg::favouriteRangeX(fRect R)
+    fBox2 Plot2DCImg::favouriteRangeX(fBox2 R)
         {
-        if ((_LD->isDomainEmpty() || _LD->isDomainFull())) return fRect(); // no favourite range
-        iRect D = _LD->domain();
-        return fRect((double)D.xmin - 0.5, (double)D.xmax + 0.5, (double)D.ymin - 0.5, (double)D.ymax + 0.5);
+        if ((_LD->isDomainEmpty() || _LD->isDomainFull())) return fBox2(); // no favourite range
+        iBox2 D = _LD->domain();
+        return fBox2((double)D.min[0] - 0.5, (double)D.max[0] + 0.5, (double)D.min[1] - 0.5, (double)D.max[1] + 0.5);
         }
 
 
-    fRect Plot2DCImg::favouriteRangeY(fRect R)
+    fBox2 Plot2DCImg::favouriteRangeY(fBox2 R)
         {
-        if ((_LD->isDomainEmpty() || _LD->isDomainFull())) return fRect(); // no favourite range
-        iRect D = _LD->domain();
-        return fRect((double)D.xmin - 0.5, (double)D.xmax + 0.5, (double)D.ymin - 0.5, (double)D.ymax + 0.5);
+        if ((_LD->isDomainEmpty() || _LD->isDomainFull())) return fBox2(); // no favourite range
+        iBox2 D = _LD->domain();
+        return fBox2((double)D.min[0] - 0.5, (double)D.max[0] + 0.5, (double)D.min[1] - 0.5, (double)D.max[1] + 0.5);
         }
 
 
@@ -176,9 +176,9 @@ namespace mtools
         if (_im == nullptr) { _LD->domainEmpty(); return; }
         if (_typepos == TYPECENTER)
             {
-            _LD->domain(iRect(-_im->width() / 2, _im->width() - 1 - _im->width() / 2, _im->height() / 2 - _im->height(), _im->height() / 2 - 1)); return;
+            _LD->domain(iBox2(-_im->width() / 2, _im->width() - 1 - _im->width() / 2, _im->height() / 2 - _im->height(), _im->height() / 2 - 1)); return;
             }
-        _LD->domain(iRect(0, _im->width() - 1, 0, _im->height() - 1));
+        _LD->domain(iBox2(0, _im->width() - 1, 0, _im->height() - 1));
         }
 
 

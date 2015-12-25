@@ -11,6 +11,7 @@ using namespace mtools;
 
 int main(int argc, char* argv[])
 {
+
     mtools::parseCommandLine(argc, argv);
  
     volatile mtools::int64 n = 0;

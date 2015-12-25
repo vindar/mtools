@@ -185,13 +185,13 @@ namespace mtools
             }
 
 
-        fRect Plot2DBaseGraph::favouriteRangeX(fRect R)
+        fBox2 Plot2DBaseGraph::favouriteRangeX(fBox2 R)
             {
             double l = _maxDomain - _minDomain;
             if ((l > 2 * DBL_MIN) && (l < DBL_MAX / 2))
                 {
-                R.xmin = _minDomain;
-                R.xmax = _maxDomain;
+                R.min[0] = _minDomain;
+                R.max[0] = _maxDomain;
                 }
             else
                 {
@@ -201,16 +201,16 @@ namespace mtools
             }
 
 
-        fRect Plot2DBaseGraph::favouriteRangeY(fRect R)
+        fBox2 Plot2DBaseGraph::favouriteRangeY(fBox2 R)
             {
             if ((R.lx() < DBL_MIN * 2) || (R.lx() > DBL_MAX / 2))
                 {
                 R = favouriteRangeX(R);
-                if (R.isHorizontallyEmpty()) return fRect();
+                if (R.isHorizontallyEmpty()) return fBox2();
                 }
             R.clearVertically();
             estimateYRange(R);
-            if ((R.ymin > -DBL_MAX / 2) && (R.ymax < DBL_MAX / 2)) return R;
+            if ((R.min[1] > -DBL_MAX / 2) && (R.max[1] < DBL_MAX / 2)) return R;
             R.clearVertically();
             return R;
             }
@@ -218,7 +218,7 @@ namespace mtools
 
         bool Plot2DBaseGraph::hasFavouriteRangeX()
             {
-            return (!favouriteRangeX(fRect()).isHorizontallyEmpty());
+            return (!favouriteRangeX(fBox2()).isHorizontallyEmpty());
             }
 
 
@@ -228,7 +228,7 @@ namespace mtools
             }
 
 
-        void Plot2DBaseGraph::setParam(mtools::fRect range, mtools::iVec2 imageSize)
+        void Plot2DBaseGraph::setParam(mtools::fBox2 range, mtools::iVec2 imageSize)
             {
             _range = range;
             _imageSize = imageSize;
@@ -398,19 +398,19 @@ namespace mtools
                 }
 
 
-        void Plot2DBaseGraph::estimateYRange(fRect & R) const
+        void Plot2DBaseGraph::estimateYRange(fBox2 & R) const
             {
-                R.ymin = 1.0;
-                R.ymax = -1.0;
-                if (R.xmax < R.xmin) { return; }
+                R.min[1] = 1.0;
+                R.max[1] = -1.0;
+                if (R.max[0] < R.min[0]) { return; }
                 for (int i = 0; i < RANGE_SAMPLE_SIZE + 1; i++)
                 {
-                    double y = _function(R.xmin + (R.lx() / RANGE_SAMPLE_SIZE)*i);
+                    double y = _function(R.min[0] + (R.lx() / RANGE_SAMPLE_SIZE)*i);
                     if (!std::isnan(y))
                     {
-                        if (R.ymin > R.ymax) { R.ymin = y; R.ymax = y; } else
+                        if (R.min[1] > R.max[1]) { R.min[1] = y; R.max[1] = y; } else
                         {
-                        if (y < R.ymin) R.ymin = y; else  if (y > R.ymax) R.ymax = y;
+                        if (y < R.min[1]) R.min[1] = y; else  if (y > R.max[1]) R.max[1] = y;
                         }
                     }
                 }
@@ -538,7 +538,7 @@ namespace mtools
             }
 
 
-        void Plot2DBaseGraph::_dicho(int j0, int i1, int i2, int j3, double x0, double x3, int depth, cimg_library::CImg<unsigned char> & im, const fRect & R, const RGBc & coul, const float & opacity, const int & tickness)
+        void Plot2DBaseGraph::_dicho(int j0, int i1, int i2, int j3, double x0, double x3, int depth, cimg_library::CImg<unsigned char> & im, const fBox2 & R, const RGBc & coul, const float & opacity, const int & tickness)
             {
                 if (depth <= 0) return;
                 double esp = (x3 - x0)/3.0;
@@ -547,8 +547,8 @@ namespace mtools
                 double y1 = _function(x1);
                 double y2 = _function(x2);
 
-                int j1 = ((y1 >= R.ymin) && (y1 <= R.ymax)) ? (im.height() - 1 - (int)floor((y1 - R.ymin) / R.ly()*im.height() + 0.5)) : ((y1 >= R.ymax) ? -tickness - 1 : im.height() + tickness);
-                int j2 = ((y2 >= R.ymin) && (y2 <= R.ymax)) ? (im.height() - 1 - (int)floor((y2 - R.ymin) / R.ly()*im.height() + 0.5)) : ((y2 >= R.ymax) ? -tickness - 1 : im.height() + tickness);
+                int j1 = ((y1 >= R.min[1]) && (y1 <= R.max[1])) ? (im.height() - 1 - (int)floor((y1 - R.min[1]) / R.ly()*im.height() + 0.5)) : ((y1 >= R.max[1]) ? -tickness - 1 : im.height() + tickness);
+                int j2 = ((y2 >= R.min[1]) && (y2 <= R.max[1])) ? (im.height() - 1 - (int)floor((y2 - R.min[1]) / R.ly()*im.height() + 0.5)) : ((y2 >= R.max[1]) ? -tickness - 1 : im.height() + tickness);
 
                 if (j1 != j0) _drawPoint(i1, j1, im, coul, opacity,tickness);
                 if (j2 != j3)
@@ -571,18 +571,18 @@ namespace mtools
             }
 
 
-        void Plot2DBaseGraph::_drawWithDicho(int depth, cimg_library::CImg<unsigned char> & im, const fRect & R, const RGBc coul, const float opacity, const int tickness)
+        void Plot2DBaseGraph::_drawWithDicho(int depth, cimg_library::CImg<unsigned char> & im, const fBox2 & R, const RGBc coul, const float opacity, const int tickness)
             {
             double eps = R.lx() / im.width();
-            double x1 = R.xmin + (eps / 2.0);
+            double x1 = R.min[0] + (eps / 2.0);
             double y1 = _function(x1);
-            int j1 = ((y1 >= R.ymin) && (y1 <= R.ymax)) ? (im.height() - 1 - (int)floor((y1 - R.ymin) / R.ly()*im.height() + 0.5)) : ((y1 >= R.ymax) ? -1 - tickness : im.height()+tickness);
+            int j1 = ((y1 >= R.min[1]) && (y1 <= R.max[1])) ? (im.height() - 1 - (int)floor((y1 - R.min[1]) / R.ly()*im.height() + 0.5)) : ((y1 >= R.max[1]) ? -1 - tickness : im.height()+tickness);
             _drawPoint(0, j1, im, coul, opacity, tickness);
             for (int i = 1; i < im.width(); i++)
                 {
                 double x2 = x1 + eps;
                 double y2 = _function(x2);
-                int j2 = ((y2 >= R.ymin) && (y2 <= R.ymax)) ? (im.height() - 1 - (int)floor((y2 - R.ymin) / R.ly()*im.height() + 0.5)) : ((y2 >= R.ymax) ? -1 - tickness : im.height() + tickness);
+                int j2 = ((y2 >= R.min[1]) && (y2 <= R.max[1])) ? (im.height() - 1 - (int)floor((y2 - R.min[1]) / R.ly()*im.height() + 0.5)) : ((y2 >= R.max[1]) ? -1 - tickness : im.height() + tickness);
                 _drawPoint(i, j2, im, coul, opacity, tickness);
                 if ((j2 - j1 > 1) || (j2 - j1 < -1))
                     {
@@ -595,18 +595,18 @@ namespace mtools
             }
 
 
-        void Plot2DBaseGraph::_drawWithInterpolation(int depth, cimg_library::CImg<unsigned char> & im, const fRect & R, const RGBc coul, const float opacity, const int tickness)
+        void Plot2DBaseGraph::_drawWithInterpolation(int depth, cimg_library::CImg<unsigned char> & im, const fBox2 & R, const RGBc coul, const float opacity, const int tickness)
             {
                 double eps = R.lx() / im.width();
-                double x1 = R.xmin + (eps / 2.0);
+                double x1 = R.min[0] + (eps / 2.0);
                 double y1 = _function(x1);
-                int j1 = ((y1 >= R.ymin) && (y1 <= R.ymax)) ? (im.height() - 1 - (int)floor((y1 - R.ymin) / R.ly()*im.height() + 0.5)) : ((y1 >= R.ymax) ? -1 - tickness : im.height() + tickness);
+                int j1 = ((y1 >= R.min[1]) && (y1 <= R.max[1])) ? (im.height() - 1 - (int)floor((y1 - R.min[1]) / R.ly()*im.height() + 0.5)) : ((y1 >= R.max[1]) ? -1 - tickness : im.height() + tickness);
                 _drawPoint(0, j1, im, coul, opacity, tickness);
                 for (int i = 1; i < im.width(); i++)
                 {
                     double x2 = x1 + eps;
                     double y2 = _function(x2);
-                    int j2 = ((y2 >= R.ymin) && (y2 <= R.ymax)) ? (im.height() - 1 - (int)floor((y2 - R.ymin) / R.ly()*im.height() + 0.5)) : ((y2 >= R.ymax) ? -1-tickness : im.height() + tickness);
+                    int j2 = ((y2 >= R.min[1]) && (y2 <= R.max[1])) ? (im.height() - 1 - (int)floor((y2 - R.min[1]) / R.ly()*im.height() + 0.5)) : ((y2 >= R.max[1]) ? -1-tickness : im.height() + tickness);
                     if ((!std::isnan(y1)) && (!std::isnan(y2))) _drawLine(i - 1, j1, j2, im, coul, opacity, tickness);
                     x1 = x2;
                     y1 = y2;
@@ -615,14 +615,14 @@ namespace mtools
             }
 
 
-        void Plot2DBaseGraph::_drawOverOrBelow(bool over, cimg_library::CImg<unsigned char> & im, const fRect & R, RGBc coul, const float opacity)
+        void Plot2DBaseGraph::_drawOverOrBelow(bool over, cimg_library::CImg<unsigned char> & im, const fBox2 & R, RGBc coul, const float opacity)
             {
             double eps = R.lx() / im.width();
-            double x = R.xmin + (eps / 2.0);
+            double x = R.min[0] + (eps / 2.0);
             for (int i = 0; i < im.width(); i++)
                 {
                 double y = _function(x);
-                int j = ((y >= R.ymin) && (y <= R.ymax)) ? (im.height() - 1 - (int)floor((y - R.ymin) / R.ly()*im.height() + 0.5)) : ((y >= R.ymax) ? -1 : im.height());
+                int j = ((y >= R.min[1]) && (y <= R.max[1])) ? (im.height() - 1 - (int)floor((y - R.min[1]) / R.ly()*im.height() + 0.5)) : ((y >= R.max[1]) ? -1 : im.height());
                 if (!std::isnan(y))
                     {
                     if (over) im.drawLine(iVec2(i, -1), iVec2(i, j - 1), coul, opacity); else im.drawLine(iVec2(i, im.height()), iVec2(i, j + 1), coul, opacity);

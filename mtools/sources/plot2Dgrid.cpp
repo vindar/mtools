@@ -204,7 +204,7 @@ namespace mtools
 
 
 
-        void Plot2DGrid::setParam(mtools::fRect range, mtools::iVec2 imageSize)
+        void Plot2DGrid::setParam(mtools::fBox2 range, mtools::iVec2 imageSize)
         {
         _range = range;
         _imageSize = imageSize;
@@ -219,7 +219,7 @@ namespace mtools
 
         op = ::log10(_range.ly()); if (op < 0) { l = ((int)(op)) - 1; } else { l = ((int)(op)); }
         k = ::pow(10.0, (double)(l));
-        v1 = floor(_range.ymin / k); v1 = v1 - 1; v2 = floor(_range.ymax / k); v2 = v2 + 1;
+        v1 = floor(_range.min[1] / k); v1 = v1 - 1; v2 = floor(_range.max[1] / k); v2 = v2 + 1;
         kk = k; pp = kk / 5;
         if ((v2 - v1) < 5) { kk = k / 2; pp = kk / 5; } else { if ((v2 - v1) > 8) { kk = k * 2; pp = kk / 2; v1 = ((v1 / 2) * 2) - 2; } }
         _vspace = ((pp < kk) ? pp : kk);
@@ -227,7 +227,7 @@ namespace mtools
 
         op = ::log10(_range.lx()); if (op < 0) { l = ((int)op) - 1; } else { l = (int)op; }
         k = ::pow(10.0, (double)(l));
-        v1 = floor(_range.xmin / k);  v1 = v1 - 1; v2 = floor(_range.xmax / k);  v2 = v2 + 1;
+        v1 = floor(_range.min[0] / k);  v1 = v1 - 1; v2 = floor(_range.max[0] / k);  v2 = v2 + 1;
         kk = k; pp = kk / 5;
         if ((v2 - v1) < 5) { kk = k / 2; pp = kk / 5; } else { if ((v2 - v1) > 8) { kk = k * 2; pp = kk / 2; v1 = ((v1 / 2) * 2) - 2; } }
         _hspace = ((pp < kk) ? pp : kk);

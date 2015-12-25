@@ -168,7 +168,7 @@ namespace mtools
         /**
          * Override of the setParam method from the Drawable2DObject interface
          **/
-        virtual void setParam(mtools::fRect range, mtools::iVec2 imageSize) override;
+        virtual void setParam(mtools::fBox2 range, mtools::iVec2 imageSize) override;
 
 
         /**
@@ -223,7 +223,7 @@ namespace mtools
             RGBc _numColor;         // numbers color
             float _scaling;         // scaling
 
-            fRect _range;           // the range we should use to draw the axes
+            fBox2 _range;           // the range we should use to draw the axes
             iVec2 _imageSize;       // the requested size of the image. 
         };
 
