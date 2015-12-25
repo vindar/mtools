@@ -327,7 +327,10 @@ namespace mtools
             *
             * @return  true if both rectangle are either equal or both empty.
             **/
-            inline bool operator==(const Box & B) const { return(((isEmpty())&&(B.isEmpty()))||(this->operator==(B))); }
+            inline bool operator==(const Box & B) const 
+                {
+                return(((isEmpty()) && (B.isEmpty())) || ((min == B.min) && (max == B.max))); 
+                }
 
 
             /**
