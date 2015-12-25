@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "../maths/rect.hpp"
+#include "../maths/box.hpp"
 #include "../maths/vec.hpp"
 #include "cimgwidget.hpp"
 #include "rangemanager.hpp"

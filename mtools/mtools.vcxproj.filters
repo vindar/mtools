@@ -63,9 +63,6 @@
     <ClInclude Include="headers\io\logfile.hpp">
       <Filter>Header Files\io</Filter>
     </ClInclude>
-    <ClInclude Include="headers\maths\rect.hpp">
-      <Filter>Header Files\maths</Filter>
-    </ClInclude>
     <ClInclude Include="headers\maths\vec.hpp">
       <Filter>Header Files\maths</Filter>
     </ClInclude>
@@ -214,6 +211,9 @@
       <Filter>Header Files\io</Filter>
     </ClInclude>
     <ClInclude Include="headers\maths\box.hpp">
+      <Filter>Header Files\maths</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\maths\old_rect.hpp">
       <Filter>Header Files\maths</Filter>
     </ClInclude>
   </ItemGroup>

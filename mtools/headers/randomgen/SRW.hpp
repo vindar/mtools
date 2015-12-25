@@ -21,7 +21,7 @@
 
 #include "../misc/misc.hpp"
 #include "../maths/vec.hpp"
-#include "../maths/rect.hpp"
+#include "../maths/box.hpp"
 #include "exitGridSRWZ2.hpp"
 #include "classiclaws.hpp"
 

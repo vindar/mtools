@@ -356,7 +356,7 @@
     <ClInclude Include="headers\io\serialization.hpp" />
     <ClInclude Include="headers\io\watch.hpp" />
     <ClInclude Include="headers\maths\box.hpp" />
-    <ClInclude Include="headers\maths\rect.hpp" />
+    <ClInclude Include="headers\maths\old_rect.hpp" />
     <ClInclude Include="headers\maths\specialFunctions.hpp" />
     <ClInclude Include="headers\maths\sqrmatrix.hpp" />
     <ClInclude Include="headers\maths\vec.hpp" />

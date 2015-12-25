@@ -27,7 +27,7 @@
 
 #include "../misc/error.hpp"
 #include "../maths/vec.hpp"
-#include "../maths/rect.hpp"
+#include "../maths/box.hpp"
 #include "rgbc.hpp"
 
 #include <thread>

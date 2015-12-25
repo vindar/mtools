@@ -21,7 +21,7 @@
 #pragma once
 
 #include "../maths/vec.hpp"
-#include "../maths/rect.hpp"
+#include "../maths/box.hpp"
 #include "customcimg.hpp"
 #include "drawable2Dobject.hpp"
 #include "rangemanager.hpp"

@@ -22,7 +22,7 @@
 
 
 #include "../maths/vec.hpp"
-#include "../maths/rect.hpp"
+#include "../maths/box.hpp"
 #include "../misc/error.hpp"
 #include "customcimg.hpp"
 

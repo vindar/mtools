@@ -25,7 +25,7 @@
 #include "customcimg.hpp"
 #include "rgbc.hpp"
 #include "../maths/vec.hpp"
-#include "../maths/rect.hpp"
+#include "../maths/box.hpp"
 #include "../misc/misc.hpp"
 #include "../misc/metaprog.hpp"
 #include "../randomgen/fastRNG.hpp"
