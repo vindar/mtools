@@ -572,7 +572,7 @@ namespace mtools
          *
          * @param [in,out]  rangeBox    Box to put the range into.
          **/
-        inline void getPosRange(Box<T, D> & rangeBox) const { rangeBox.min = _rangemin; rangeBox.max = _rangemax; }
+        inline void getPosRange(iBox<D> & rangeBox) const { rangeBox.min = _rangemin; rangeBox.max = _rangemax; }
 
 
         /**
@@ -919,7 +919,7 @@ namespace mtools
          *
          *  @return  A pointer to the element at position pos or nullptr if it does not exist.
          **/
-        inline const T * findFullBox(const Pos & pos, Box<T,D> & outBox) const
+        inline const T * findFullBox(const Pos & pos, iBox<D> & outBox) const
             {
             Pos & boxMin = outBox.min;
             Pos & boxMax = outBox.max;
@@ -1018,7 +1018,7 @@ namespace mtools
         *
         * @return  A pointer to the element at position pos or nullptr if it does not exist.
         **/
-        inline const T * findFullBoxCentered(const Pos & pos, Box<T, D> & bestRect) const
+        inline const T * findFullBoxCentered(const Pos & pos, iBox<D> & bestRect) const
             {
             static_assert(D == 2, "findFullBoxCentered() only implemented for dimension 2 yet...");
             const T* pv = findFullBox(pos, bestRect); // get the non optimized box.
@@ -1484,10 +1484,15 @@ namespace mtools
             }
 
 
-        /* update the _rangemin and _rangemax member */
+        /* update _rangemin and _rangemax */
         inline void _updatePosRange(const Pos & pos) const
             {
-            for (size_t i = 0; i < D; i++) { if (pos[i] < _rangemin[i]) { _rangemin[i] = pos[i]; } else if (pos[i] > _rangemax[i]) { _rangemax[i] = pos[i]; } }
+            for (size_t i = 0; i < D; i++) 
+                {
+                const int64 x = pos[i];
+                if (x < _rangemin[i]) { _rangemin[i] = x; }  
+                if (x > _rangemax[i]) { _rangemax[i] = x; }
+                }
             }
 
 
