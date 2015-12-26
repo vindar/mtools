@@ -355,26 +355,12 @@ namespace mtools
 
 
         /**
-         * Return the range of elements accessed. The method returns maxpos<minpos if no element have
-         * ever been accessed.
+         * Return the range of elements accessed. The method returns an empty box if no element 
+         * was ever accessed.
          *
-         * @param [in,out]  minpos  a vector with the minimal coord. in each direction.
-         * @param [in,out]  maxpos  a vector with the maximal coord. in each direction.
+         * @param [in,out]  rangeBox    Box to put the range into.
          **/
-        inline void getPosRange(Pos & minpos, Pos & maxpos) const { minpos = _rangemin; maxpos = _rangemax;}
-
-
-        /**
-        * Return the spacial range of elements accessed in an iBox2 structure. The rectangle is empty
-        * if no elements have ever been accessed. Specific to dimension D = 2.
-        *
-        * @return  an iBox2 containing the spacial range of element accessed.
-        **/
-        inline iBox2 getPosRangeiBox2() const
-            {
-            static_assert(D == 2, "getRangeiBox2() method can only be used when the dimension template parameter D is 2");
-            return mtools::iBox2(_rangemin.X(), _rangemax.X(), _rangemin.Y(), _rangemax.Y());
-            }
+        inline void getPosRange(Box<T,D> & rangeBox) const { rangeBox.min = _rangemin; rangeBox.max = _rangemax;}
 
 
         /**
@@ -734,9 +720,9 @@ namespace mtools
          * have no NO special value so this method is useful only for finding empty boxes where all the
          * elements have not yet been defined.
          * 
-         * The coordinates of the resulting box are put in boxMin and boxMax and the function return
-         * nullptr if an empty box was found or a pointer to the element at pos otherwise. If it does
-         * not return nullptr, then no box was found and the method sets boxMin = boxMax = pos.
+         * The coordinates of the resulting box are put in outBox and the function return nullptr if an 
+         * empty box was found or a pointer to the element at pos otherwise. If it does not return nullptr, 
+         * then no box was found and the method sets outBox to the single point pos.
          * 
          * The box returned is always a square and correspond to the largest empty box containing pos in
          * the "quadtree-like" grid structure.
@@ -748,13 +734,14 @@ namespace mtools
          * @warning This method is NOT threadsafe and uses the same pointer as get() and set().
          *
          * @param   pos             The position to check.
-         * @param [in,out]  boxMin  Vector to put the minimum value of the box in each direction.
-         * @param [in,out]  boxMax  Vector to put the maximum value of the box in each direction.
-         *
+         * @param [in,out]  outBox  The box to put the solution.
+         * 
          * @return  A pointer to the element at position pos or nullptr if it does not exist.
          **/
-        inline const T * findFullBox(const Pos & pos, Pos & boxMin, Pos & boxMax) const
+        inline const T * findFullBox(const Pos & pos, Box<T,D> & outBox) const
             {
+            Pos & boxMin = outBox.min;
+            Pos & boxMax = outBox.max;
             _pbox cp = _pcurrent;
             MTOOLS_ASSERT(cp != nullptr);
             // check if we are at the right place
@@ -816,61 +803,21 @@ namespace mtools
 
 
         /**
-         * Specialization for dimension 2 using an iBox2 structure.
-         * 
-         * @warning This method is NOT threadsafe and uses the same pointer as get() and set().
-         *
-         * @param   pos         The position to check.
-         * @param [in,out]  r   The iBox2 to put the rectangle found.
-         *
-         * @return  Nullptr if the element at pos is not yet defined, a pointer to it otherwise.
-         **/
-        inline const T * findFullBox(const Pos & pos, iBox2 & r) const
-            {
-            static_assert(D == 2, "findFullBox(Pos,iBox2) method can only be used when the dimension template parameter D is 2");
-            Pos boxmin, boxmax;
-            const T * res = findFullBox(pos, boxmin, boxmax);
-            r.min[0] = boxmin[0]; r.max[0] = boxmax[0];
-            r.min[1] = boxmin[1]; r.max[1] = boxmax[1];
-            return res;
-            }
-
-
-        /**
-         * Improve findFullBox() by trying to find a (larger empty) box where position pos is further
-         * away from its boundary. As for findFullBox(), this method only finds boxes in which no
-         * element have been defined yet (since there is no special objects). See the eponym method of
-         * the grid Grid_factor class for additionnal details.
-         * 
-         * @warning This method is NOT threadsafe and uses the same pointer as get() and set().
-         *
-         * @param   pos             The position to check.
-         * @param [in,out]  boxMin  Vector to put the minimum value of the box in each direction.
-         * @param [in,out]  boxMax  Vector to put the maximum value of the box in each direction.
-         *
-         * @return  Nullptr if the element at pos is not yet defined, a pointer to it otherwise.
-         **/
-        inline const T * findFullBoxCentered(const Pos & pos, Pos & boxMin, Pos & boxMax) const
-            {
-            // TODO. pfffffff that should be fun... 
-            // until then, just return the findFullBox() without any improvement
-            return findFullBox(pos, boxMin, boxMax);
-            }
-
-
-        /**
-        *  Specialization for dimension 2 using an iBox2 structure.
+        * Improve findFullBox() by trying to find an empty box where position pos is further away 
+        * from its boundary. As for findFullBox(), this method only finds boxes in which no
+        * element have been defined yet (since there is no special objects). See the eponym method 
+        * of the grid Grid_factor class for additionnal details.
         *
         *  @warning This method is NOT threadsafe and uses the same pointer as get() and set().
         *
         * @param   pos         The position to check.
-        * @param [in,out]  r   The iBox2 to put the rectangle found.
+        * @param [in,out]  bestRect   The box to put the solution.
         *
         * @return  Nullptr if the element at pos is not yet defined, a pointer to it otherwise.
         **/
-        inline const T * findFullBoxCentered(const Pos & pos, iBox2 & bestRect) const
+        inline const T * findFullBoxCentered(const Pos & pos, Box<T,D> & bestRect) const
             {
-            static_assert(D == 2, "findFullBoxCentered(Pos,iBox2) method can only be used when the dimension template parameter D is 2");
+            static_assert(D == 2, "findFullBoxCentered() only implemented for dimension 2 yet...");
             const T* pv = findFullBox(pos, bestRect); // get the non optimized box.
             if ((pv != nullptr)||(bestRect.lx() == 0)) return pv;   // no box found, nothing more to do.
 
