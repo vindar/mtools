@@ -70,7 +70,7 @@ public:
     inline int64 size() { return N; }
 
     /* range of the cluster */
-    inline fBox2 range() { return fBox2(Grid.getPosRangeiBox2()); }
+    inline fBox2 range() { iBox2 B; Grid.getPosRange(B); return fBox2(B); }
 
     /* print some info */
     std::string toString() const { return std::string("Number of particles in the cluster: ") + mtools::toString(N) + "\nBoundary: " + mtools::toString(Urn) + "\nGrid: " + mtools::toString(Grid) + "\n"; }
@@ -143,7 +143,7 @@ void run()
 
 int main(int argc, char *argv[])
 {
-    cout << "Tree Eden model\n";
+cout << "Tree Eden model\n";
     while (1)
     {
         cout << "\n\n-----------------------------\n";
