@@ -363,7 +363,7 @@ namespace mtools
     *
     * @return  The square of the euclidian distance.
     **/
-    template<typename T, size_t N> inline T dist2(const Vec<T, N> & V1, const Vec<T, N> & V2) { T v = 0; for (size_t i = 0; i < N; i++) { const T a = (V1._m_tab[i] - V2._m_tab[i])   v += (a*a); } return v; }
+    template<typename T, size_t N> inline T dist2(const Vec<T, N> & V1, const Vec<T, N> & V2) { T v = 0; for (size_t i = 0; i < N; i++) { const T a = (V1[i] - V2[i]);   v += (a*a); } return v; }
 
 
     /**
