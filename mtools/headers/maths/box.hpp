@@ -262,8 +262,29 @@ namespace mtools
 
 
             /**
+            * Enlarge the rectangle in order to contain a given box. If the rectangle already contain the
+            * box do nothing.
+            *
+            * @param   B    The box to swallow.
+            *
+            * @return  true if the point was swallowed and false if it was already contained in the rectangle.
+            **/
+            inline bool swallowBox(const Box<T,N> & B)
+                {
+                bool b = false;
+                for (size_t i = 0; i < N; i++)
+                    {
+                    if (B.min[i] < min[i]) { min[i] = B.min[i]; b = true; }
+                    if (B.max[i] > max[i]) { max[i] = B.max[i]; b = true; }
+                    }
+                return b;
+                }
+
+
+
+            /**
             * Try to enlarge the rectangle using points from another rectangle if possible. By definition,
-            * the resulting rectangle contain the initial one and is included in the union of the intial
+            * the resulting rectangle contain the initial one and is included in the union of the initial
             * one and the source R used to enlarge.
             *
             * @warning Both rectangles should not be empty.
@@ -314,6 +335,12 @@ namespace mtools
 
 
             /**
+            * Return the length in direction i. May be negatice if empty.
+            **/
+            inline T l(size_t d) const { return(max[i] - min[i]); }
+
+
+            /**
             * Return the width : lenght in direction 0.
             **/
             inline T lx() const { return std::max<T>(0, max[0] - min[0]); }
@@ -361,13 +388,13 @@ namespace mtools
 
 
             /**
-            * Less-than-or-equal comparison operator. Check if the rectangle is included in another
-            * rectangle (for the inclusion partial order).
+            * Less-than-or-equal comparison operator. 
+            * Check if the rectangle is included in another rectangle (for the inclusion partial order).
             *
             * @param   B   The rectangle to check if it contains this.
             *
             * @return  true if R contains this, false otherwise. An empty rectangle contains nothing but is
-            *          contained in every non empty rectangle.
+            *          contained in every non-empty rectangle.
             **/
             bool operator<=(const Box & B) const
                 {
@@ -382,8 +409,8 @@ namespace mtools
 
 
             /**
-            * Greater-than-or-equal comparison operator. Check if the rectangle contains another rectangle
-            * (for the inclusion partial order).
+            * Greater-than-or-equal comparison operator. 
+            * Check if the rectangle contains another rectangle (for the inclusion partial order).
             *
             * @param   B   The rectangle to check if it is contained in this.
             *
@@ -391,39 +418,6 @@ namespace mtools
             *          but is contained in every non empty rectangle.
             **/
             bool operator>=(const Box & B) const { return(B.operator<=(*this)); }
-
-
-            /**
-            * Strictly less-than comparison operator. Check if the rectangle is strictly included in
-            * another rectangle (for the inclusion partial order).
-            *
-            * @param   B   The rectangle to check if it strictly contains this in each direction.
-            *
-            * @return  true if R strictly contains this, false otherwise. An empty rectangle contains
-            *          nothing but is strictly contained in every non empty rectangle.
-            **/
-        /*    bool operator<(const Box & B) const 
-                {
-                if (B.isEmpty()) return false;
-                if (isEmpty()) return true;
-                for (size_t i = 0; i < N; i++)
-                    {
-                    if ((min[i] <= B.min[i]) || (B.max[i] <= max[i])) return false;
-                    }
-                return true;
-                }
-         */
-
-            /**
-            * Strictly greater-than comparison operator. Check if the rectangle contains striclty another
-            * rectangle (for the inclusion partial order).
-            *
-            * @param   B   The rectangle to check if it is strictly contained in this in each directions.
-            *
-            * @return  true if R is striclty contained in this, false otherwise. An empty rectangle contains
-            *          nothing but is striclty contained in every non empty rectangle.
-            **/
-         /*   bool operator>(const Box & B) const { return(B.operator<(*this)); } */
 
 
             /**
@@ -465,18 +459,17 @@ namespace mtools
 
 
             /**
-            * Returns the area inside the rectangle.
+            * Returns the area inside the rectangle. Do not check that the rectangle is non-empty.
             *
             * @return  The area is 0 if the rectangle is empty or flat.
             **/
             inline T area() const
                 {
-                T a = max[0] - min[0];
-                if (a <= 0) return 0;
-                for (size_t i = 1; i < N; i++) { const T v = max[i] - min[i]; if (v <= 0) { return 0; } a *= m; }
+                T a = 1;
+                for (size_t i = 0; i < N; i++) { a *= (max[i] - min[i]); }
                 return a;
                 }
-
+                
 
             /**
              * Returns the area of the intersection of the rectangle with the square [x-0.5,x+0.5]*[y-0.5,y+0.5]*...
@@ -493,6 +486,21 @@ namespace mtools
                     a *= std::min<double>(max[i], pos[i] + 0.5) - std::max<double>(min[i], pos[i] - 0.5); if (a <= 0.0) return 0.0;
                     }
                 return a;
+                }
+
+
+            /**
+            * Intersect the box with another one. Return true if the box was modified.
+            **/
+            inline bool intersectionBox(const Box<T, N> & B)
+                {
+                bool b = false;
+                for (size_t i = 0; i < N; i++)
+                    {
+                    if (B.min[i] > min[i]) { min[i] = B.min[i]; b = true; }
+                    if (B.max[i] < max[i]) { max[i] = B.max[i]; b = true; }
+                    }
+                return b;
                 }
 
 
