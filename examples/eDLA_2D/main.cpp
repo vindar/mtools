@@ -11,15 +11,14 @@
 using namespace mtools;
 
 
-MT2004_64 gen(1); // RNG
+MT2004_64 gen; // RNG
 
 Grid_basic<2, int64,2> Grid; // the 2D grid
 
-double radius = 1000.0; // radius of the cluster
+double maxrad = 1;               // radius of the cluster
 volatile int64 N = 1;            // number of particules in the cluster
 
 void* peekhint = nullptr;
-
 
 bool eight_neighbour = false;
 
@@ -42,32 +41,41 @@ inline bool hasNeighbour(const iVec2 & pos)
     }
 
 /* add particules to the cluster */
-inline void addParticule(int64 nb)
+inline void addParticules(int64 nb)
     {
-    int64 L = (int64)(radius*radius) * 1000;
     for (int64 i = 0; i < nb;i++)
         {
+        double radius = ((maxrad < 1000) ? 1000 : maxrad);
         double a = Unif(gen);
-        iVec2 pos = { (int64)round(sin(TWOPI*a)*(2*radius + 1000)) , (int64)round(cos(TWOPI*a)*(2*radius + 1000)) }; // random starting position
-        label:
-        const int64 * p = Grid.peek(pos, peekhint); //value at the position 
-        if (p == nullptr)
-            { // we are away from the cluster
-            int64 d;
-            do
-                {
-                if (pos.norm2() > L) { pos /= 2; }
-                iBox2 fullR;
-                Grid.findFullBoxCentered(pos, fullR);
-                d = SRW_Z2_MoveInRect(pos, fullR, 16, gen);
+        iVec2 pos = { (int64)round(sin(TWOPI*a)*3*radius) , (int64)round(cos(TWOPI*a)*3*radius) }; // random starting position
+        do
+            {
+            double v;
+            while((v = pos.norm()) > radius + 100)
+                { // out of the ball that contain the cluster, we can move fast
+                if (v > 100 * radius) { pos *= 9; pos /= 10; } // too far away, we drift back...
+                else
+                    { // make a large step
+                    int64 l = (int64)((v - radius - 10)*2.0 / 3.0);
+                    SRW_Z2_MoveInRect(pos, iBox2(pos.X() - l, pos.X() + l, pos.Y() - l, pos.Y() + l), 16, gen);
+                    }
                 }
-            while (d > 0);
+            iBox2 fullR;
+            const int64 * p = Grid.findFullBoxCentered(pos, fullR);
+            if (fullR.boundaryDist(pos) == 0)
+                { // we only move by a single step
+                SRW_Z2_1step(pos, gen);
+                }
+            else
+                { // we are away from the cluster so we can make larger moves
+                SRW_Z2_MoveInRect(pos, fullR, 16, gen);
+                }
             }
-        if (!hasNeighbour(pos)) { SRW_Z2_1step(pos,gen); goto label; }
+        while(!hasNeighbour(pos));
         Grid(pos) = N;
         N++;
         double r = pos.norm();
-        if (r > radius) { radius = r; }
+        if (r > maxrad) { maxrad = r; }
         }
     }
 
@@ -85,24 +93,32 @@ RGBc colorFct(iVec2 pos)
 int main(int argc, char *argv[]) 
     {
 	parseCommandLine(argc,argv,false,true);
-	
-	int64 stepBetweenInfo = arg('S',10000).info("steps between information");
+    int64 maxNN = arg("N", 10000000).info("total number of particles in the simulation");
 	int autoredraw = arg('a', 180).info("autoredraw per minutes");
 	eight_neighbour = arg('e',false).info("use 8 neighbour adjacency");
-	
     Grid({ 0,0 }) = N; N++; // initial particle 
     Plotter2D P;
     auto L = makePlot2DLattice(LatticeObj<colorFct>::get(), "external DLA 2D"); P[L]; 
     P.autoredraw(autoredraw);
     P.solidBackGroundColor(RGBc::c_Black);
     P.startPlot();
-
     watch("# of particles",N);
+    watch("cluster radius", maxrad);
     while (P.shown())
         {
-        addParticule(stepBetweenInfo);
+        if (maxNN - N > 1000) { addParticules(1000); }
+        else
+            {
+            addParticules(maxNN - N);
+            cout << "Simulation completed ! \n";
+            P.autoredraw(0);
+            int64 l = (int64)maxrad + 1;
+            P.range().setRange(iBox2(-l, l, -l, l));
+            P.redraw();
+            while (P.shown()) {}
+            return 0;
+            }
         }
-
     return 0;
 	}
 	
