@@ -182,12 +182,20 @@ int main(int argc, char *argv[])
     Grid(0, 0).N[0] = 1;  Grid(0, 0).pos[0] = { 0.0,0.0 }; // initial particle in the cluster
     Plotter2D P;
     auto L = makePlot2DLattice(LatticeObjImage<getColor, getImage>::get(), "non-Lattice eDLA");
+
+
     P[L];
+
+
     P.autoredraw(autoredraw);
     //P.solidBackGroundColor(RGBc::c_Black);
     P.startPlot();
     watch("# of particles", NN);
     watch("cluster radius", maxd);
+
+    L.opacify(1.77);
+    L.transparentColor(L.REMOVE_BLACK);
+
     while (P.shown())
         {
         if (maxNN - NN > 1000) { addParticules(1000); }
