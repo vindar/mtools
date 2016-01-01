@@ -28,7 +28,13 @@
 #include "../misc/indirectcall.hpp"
 
 #include <FL/Fl_Group.H>
+#include <FL/Fl_Box.H>
 #include <FL/Fl_Round_Button.H>
+#include <FL/Fl_Check_Button.H>
+#include <FL/Fl_Value_Slider.H>
+
+
+
 #include <atomic>
 
 namespace mtools
@@ -170,7 +176,7 @@ namespace mtools
              *                      lattice object must survive the plot.
              * @param   name        The name of the plot.
              **/
-            Plot2DLattice(T * obj, std::string name = "Lattice") : internals_graphics::Plotter2DObj(name), _checkButtonImage(nullptr), _checkButtonColor(nullptr)
+            Plot2DLattice(T * obj, std::string name = "Lattice") : internals_graphics::Plotter2DObj(name), _checkButtonImage(nullptr), _checkButtonColor(nullptr), _opacifySlider(nullptr), _checkBlack(nullptr), _checkWhite(nullptr)
                 {
                 _LD = new LatticeDrawer<T>(obj);
                 }
@@ -185,7 +191,7 @@ namespace mtools
              *                      lattice object must survive the plot.
              * @param   name        The name of the plot.
              **/
-            Plot2DLattice(T & obj, std::string name = "Lattice") : internals_graphics::Plotter2DObj(name), _checkButtonImage(nullptr), _checkButtonColor(nullptr)
+            Plot2DLattice(T & obj, std::string name = "Lattice") : internals_graphics::Plotter2DObj(name), _checkButtonImage(nullptr), _checkButtonColor(nullptr), _opacifySlider(nullptr), _checkBlack(nullptr), _checkWhite(nullptr)
             {
                 _LD = new LatticeDrawer<T>(&obj);
             }
@@ -194,7 +200,7 @@ namespace mtools
             /**
              * Move constructor.
              **/
-            Plot2DLattice(Plot2DLattice && o) : internals_graphics::Plotter2DObj(std::move(o)), _checkButtonImage(nullptr), _checkButtonColor(nullptr), _LD((LatticeDrawer<T>*)o._LD)
+            Plot2DLattice(Plot2DLattice && o) : internals_graphics::Plotter2DObj(std::move(o)), _checkButtonImage(nullptr), _checkButtonColor(nullptr), _opacifySlider(nullptr), _checkBlack(nullptr), _checkWhite(nullptr), _LD((LatticeDrawer<T>*)o._LD)
                 {
                 o._LD = nullptr; // so that the Latice drawer is not destroyed when the first object goes out of scope.
                 }
@@ -226,9 +232,45 @@ namespace mtools
                 }
 
 
+            /**
+             * Set the 'opacification factor' used when drawing pixel-type images.
+             *
+             * @param   o   The new value in [1.0,4.0] (1.0 to disable opacification).
+             **/
+            void opacify(float o)
+                {
+                if (o < 1.0f) { o = 1.0f; } else if (o > 4.0f) { o = 4.0f; }
+                _LD->opacify(o);
+                if (isInserted())
+                    {
+                    IndirectMemberProc<Plot2DLattice> proxy(*this, &Plot2DLattice::_updateImageTypeInFLTK); // update the status of the button in the fltk thread
+                    runInFLTKThread(proxy); // and also refresh the drawing if needed
+                    }
+                }
+            
+
+            /**
+            * Set how transparent color are handled when drawing pixel-type images.
+            *
+            * @param   type    The new type: one of REMOVE_NOTHING, REMOVE_WHITE, REMOVE_BLACK.
+            **/
+            void transparentColor(int type) 
+                { 
+                _LD->transparentColor(type);
+                if (isInserted())
+                    {
+                    IndirectMemberProc<Plot2DLattice> proxy(*this, &Plot2DLattice::_updateImageTypeInFLTK); // update the status of the button in the fltk thread
+                    runInFLTKThread(proxy); // and also refresh the drawing if needed
+                    }
+                }
+
+
             static const int TYPEPIXEL = LatticeDrawer<T>::TYPEPIXEL; ///< draw each site with a square of a given color (0)
             static const int TYPEIMAGE = LatticeDrawer<T>::TYPEIMAGE; ///< draw (if possible) each site using an image for the site (1)
 
+            static const int REMOVE_NOTHING = LatticeDrawer<T>::REMOVE_NOTHING; ///< do not remove transparent sites when drawing pixel images
+            static const int REMOVE_BLACK = LatticeDrawer<T>::REMOVE_BLACK;     ///< transparent sites (assumed black) when drawing pixel images
+            static const int REMOVE_WHITE = LatticeDrawer<T>::REMOVE_WHITE;     ///< transparent sites (assumed white) when drawing pixel images
 
             /**
              * Query the definition domain.
@@ -358,15 +400,19 @@ namespace mtools
             virtual internals_graphics::Drawable2DObject * inserted(Fl_Group * & optionWin, int reqWidth)
                 {
                 /* create the option window */
-                optionWin = new Fl_Group(0, 0, reqWidth,60); // create the option group
-                _checkButtonColor = new Fl_Round_Button(15, 10, reqWidth - 20, 15, "Use the getColor() method.");
+                optionWin = new Fl_Group(0, 0, reqWidth, 110); // create the option group
+                Fl_Group * gr1 = new Fl_Group(0, 0, reqWidth, 110); // create the option group
+                _checkButtonColor = new Fl_Round_Button(10, 5, reqWidth - 20, 15, "Use the getColor() method.");
+                _checkButtonColor->align(Fl_Align(FL_ALIGN_INSIDE | FL_ALIGN_LEFT));
                 _checkButtonColor->labelfont(0);
                 _checkButtonColor->labelsize(11);
                 _checkButtonColor->color2(FL_RED);
                 _checkButtonColor->type(102);
                 _checkButtonColor->callback(_roundButtonCB_static, this);
                 _checkButtonColor->when(FL_WHEN_CHANGED);
-                _checkButtonImage = new Fl_Round_Button(15, 35, reqWidth - 20, 15, "Use the getImage() method.");
+
+                _checkButtonImage = new Fl_Round_Button(10, 85, reqWidth - 20, 15, "Use the getImage() method.");
+                _checkButtonImage->align(Fl_Align(FL_ALIGN_INSIDE | FL_ALIGN_LEFT));
                 _checkButtonImage->labelfont(0);
                 _checkButtonImage->labelsize(11);
                 _checkButtonImage->color2(FL_RED);
@@ -375,6 +421,40 @@ namespace mtools
                 _checkButtonImage->when(FL_WHEN_CHANGED);
                 if (_LD->imageType() == _LD->TYPEIMAGE) { _checkButtonImage->setonly(); } else { _checkButtonColor->setonly();  }
                 if (!_LD->hasImage()) _checkButtonImage->deactivate();
+                gr1->end();
+
+                auto label1 = new Fl_Box(30, 25, 50, 15, "Opacify");
+                label1->align(Fl_Align(FL_ALIGN_INSIDE | FL_ALIGN_LEFT));
+                label1->labelfont(0);
+                label1->labelsize(11);
+                _opacifySlider = new Fl_Value_Slider(80, 25, reqWidth - 80 - 30, 15, nullptr);
+                _opacifySlider->labelfont(0);
+                _opacifySlider->labelsize(11);
+                _opacifySlider->align(Fl_Align(FL_ALIGN_RIGHT));
+                _opacifySlider->box(FL_FLAT_BOX);
+                _opacifySlider->type(FL_HOR_NICE_SLIDER);
+                _opacifySlider->range(1.0, 4.0);
+                _opacifySlider->step(0.05);
+                _opacifySlider->value(_LD->opacify());
+                _opacifySlider->color2(FL_RED);
+                _opacifySlider->callback(_opacifySliderCB_static, this);
+                auto label2 = new Fl_Box(30, 45, 145, 15, "Remove transparent pixels :");
+                label2->align(Fl_Align(FL_ALIGN_INSIDE | FL_ALIGN_LEFT));
+                label2->labelfont(0);
+                label2->labelsize(11);
+                int rem = _LD->transparentColor();
+                _checkWhite = new Fl_Check_Button(180, 45, reqWidth - 175 - 30, 15, "white");
+                _checkWhite->align(Fl_Align(FL_ALIGN_INSIDE | FL_ALIGN_LEFT));
+                _checkWhite->labelfont(0);
+                _checkWhite->labelsize(11);
+                _checkWhite->value((rem == REMOVE_WHITE) ? 1 : 0);
+                _checkWhite->callback(_checkWhiteCB_static, this);
+                _checkBlack = new Fl_Check_Button(180, 65, reqWidth - 175 - 30, 15, "black");
+                _checkBlack->align(Fl_Align(FL_ALIGN_INSIDE | FL_ALIGN_LEFT));
+                _checkBlack->labelfont(0);
+                _checkBlack->labelsize(11);
+                _checkBlack->value((rem == REMOVE_BLACK) ? 1 : 0);
+                _checkBlack->callback(_checkBlackCB_static, this);
                 optionWin->end();
                 return _LD;
                 }
@@ -386,8 +466,16 @@ namespace mtools
             /* update the state of the round button and request a redraw */
             void _updateImageTypeInFLTK()
                 {
-                if (_LD->imageType() == _LD->TYPEIMAGE) { _checkButtonImage->setonly(); }
-                else { _checkButtonColor->setonly(); }
+                if (_LD->imageType() == _LD->TYPEIMAGE) { _checkButtonImage->setonly(); } else { _checkButtonColor->setonly(); }
+                _opacifySlider->value(_LD->opacify());
+                int rem = _LD->transparentColor();
+                switch (rem)
+                    {
+                    case REMOVE_WHITE:   { _checkWhite->value(1); _checkBlack->value(0); break; }
+                    case REMOVE_BLACK:   { _checkWhite->value(0); _checkBlack->value(1); break; }
+                    case REMOVE_NOTHING: { _checkWhite->value(0); _checkBlack->value(0); break; }
+                    default: MTOOLS_ERROR("wtf...");
+                    }
                 refresh();
                 }
 
@@ -401,8 +489,56 @@ namespace mtools
                 }
 
 
+            /* callback for the opacify slider */
+            static void _opacifySliderCB_static(Fl_Widget * W, void * data) { MTOOLS_ASSERT(data != nullptr); ((Plot2DLattice*)data)->_opacifySliderCB(W); }
+            void _opacifySliderCB(Fl_Widget * W)
+                {
+                _LD->opacify((float)_opacifySlider->value());
+                refresh();
+                }
+
+
+            /* callback for the "black" check button */
+            static void _checkBlackCB_static(Fl_Widget * W, void * data) { MTOOLS_ASSERT(data != nullptr); ((Plot2DLattice*)data)->_checkBlackCB(W); }
+            void _checkBlackCB(Fl_Widget * W)
+                {
+                if ((_checkWhite->value() == 0) && (_checkBlack->value() == 0))
+                    {
+                    _LD->transparentColor(REMOVE_NOTHING);
+                    }
+                else
+                    {
+                    _checkWhite->value(0);
+                    _checkWhite->redraw();
+                    _LD->transparentColor(REMOVE_BLACK);
+                    }
+                refresh();
+                }
+
+
+            /* callback for the "white" check button */
+            static void _checkWhiteCB_static(Fl_Widget * W, void * data) { MTOOLS_ASSERT(data != nullptr); ((Plot2DLattice*)data)->_checkWhiteCB(W); }
+            void _checkWhiteCB(Fl_Widget * W)
+                {
+                if ((_checkWhite->value() == 0) && (_checkBlack->value() == 0))
+                    {
+                    _LD->transparentColor(REMOVE_NOTHING);
+                    }
+                else
+                    {
+                    _checkBlack->value(0);
+                    _checkBlack->redraw();
+                    _LD->transparentColor(REMOVE_WHITE);
+                    }
+                refresh();
+                }
+
             Fl_Round_Button * _checkButtonImage;    // the "use getImage" button
             Fl_Round_Button * _checkButtonColor;    // the "use getColor" button
+            Fl_Value_Slider * _opacifySlider;       // the opacify slider ctrl
+            Fl_Check_Button * _checkBlack;          // the "black" check button 
+            Fl_Check_Button * _checkWhite;          // the "white" check button 
+
             LatticeDrawer<T> * _LD;                 // the lattice drawer
 
         };
