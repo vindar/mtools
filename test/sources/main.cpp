@@ -183,7 +183,6 @@ int main(int argc, char *argv[])
     Plotter2D P;
     auto L = makePlot2DLattice(LatticeObjImage<getColor, getImage>::get(), "non-Lattice eDLA");
     P[L];
-    L.setImageType(L.TYPEIMAGE);
     P.autoredraw(autoredraw);
     //P.solidBackGroundColor(RGBc::c_Black);
     P.startPlot();

@@ -223,6 +223,7 @@ public:
         static_assert(mtools::metaprog::has_getColor<LatticeObj, mtools::RGBc, mtools::iVec2>::value, "The object T must be implement a 'RGBc getColor(iVec2 pos)' method.");
         _initInt16Buf();
         domainFull();
+        if (hasImage()) { setImageType(TYPEIMAGE); } // use images by default if available.
         }
 
 
