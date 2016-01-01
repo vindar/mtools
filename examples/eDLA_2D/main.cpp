@@ -83,9 +83,8 @@ inline void addParticules(int64 nb)
 RGBc colorFct(iVec2 pos)
     {
     auto p = Grid.peek(pos);
-    if (p == nullptr) return RGBc::c_TransparentWhite;
-    if (*p == 0) return RGBc::c_TransparentWhite;
-    //return RGBc::c_Black;
+    if (p == nullptr) return RGBc::c_TransparentBlack;
+    if (*p == 0) return RGBc::c_TransparentBlack;
     return RGBc::jetPalette(*p, 0, N);
     }
 
@@ -94,13 +93,12 @@ int main(int argc, char *argv[])
     {
 	parseCommandLine(argc,argv,false,true);
     int64 maxNN = arg("N", 10000000).info("total number of particles in the simulation");
-	int autoredraw = arg('a', 180).info("autoredraw per minutes");
+	int autoredraw = arg('a', 10).info("autoredraw per minutes");
 	eight_neighbour = arg('e',false).info("use 8 neighbour adjacency");
     Grid({ 0,0 }) = N; N++; // initial particle 
     Plotter2D P;
     auto L = makePlot2DLattice(LatticeObj<colorFct>::get(), "external DLA 2D"); P[L]; 
     P.autoredraw(autoredraw);
-    P.solidBackGroundColor(RGBc::c_Black);
     P.startPlot();
     watch("# of particles",N);
     watch("cluster radius", maxrad);
