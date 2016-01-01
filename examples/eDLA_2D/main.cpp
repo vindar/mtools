@@ -91,10 +91,10 @@ RGBc colorFct(iVec2 pos)
 
 int main(int argc, char *argv[]) 
     {
-	parseCommandLine(argc,argv,false,true);
+	parseCommandLine(argc,argv);
     int64 maxNN = arg("N", 10000000).info("total number of particles in the simulation");
 	int autoredraw = arg('a', 10).info("autoredraw per minutes");
-	eight_neighbour = arg('e',false).info("use 8 neighbour adjacency");
+	eight_neighbour = arg('e',false).info("use 8 neighbours adjacency");
     Grid({ 0,0 }) = N; N++; // initial particle 
     Plotter2D P;
     auto L = makePlot2DLattice(LatticeObj<colorFct>::get(), "external DLA 2D"); P[L]; 
