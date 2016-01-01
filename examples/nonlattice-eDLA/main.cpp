@@ -151,9 +151,9 @@ inline double neighbour(const fVec2 & pos)
 
 
 /* add a given number of particles to the cluster */
-void addParticules(int nb)
+void addParticules(int64 nb)
     {
-    for (int n = 0; n < nb; n++)
+    for (int64 n = 0; n < nb; n++)
         {
         fVec2 pos(0.0, 0.0); // start from the origine but directly
         double e = maxd + 2; // go at distance  maxd + 2
@@ -220,7 +220,7 @@ int main(int argc, char *argv[])
             int64 l = (int64)maxd + 1;
             P.range().setRange(iBox2(-l, l, -l, l));
             P.redraw();
-            while (P.shown()) {}
+            P.plot();
             return 0;
             }
         }

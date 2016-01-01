@@ -113,7 +113,7 @@ int main(int argc, char *argv[])
             int64 l = (int64)maxrad + 1;
             P.range().setRange(iBox2(-l, l, -l, l));
             P.redraw();
-            while (P.shown()) {}
+            P.plot();
             return 0;
             }
         }
