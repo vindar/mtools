@@ -293,7 +293,7 @@ public:
     *
     * @return  true the opacification factor, larger or equal to 1.(1.0 = no opacification). 
     **/
-    float opacify() const { return _g_opacify = o; }
+    float opacify() const { return _g_opacify; }
 
 
     /**
@@ -317,7 +317,7 @@ public:
      *
      * @param   type    The new type: one of REMOVE_NOTHING, REMOVE_WHITE, REMOVE_BLACK.
      **/
-    void transparentColor(int type) { _g_removeColor = type; }
+    void transparentColor(int type) { MTOOLS_ASSERT((type == REMOVE_BLACK)|| (type == REMOVE_WHITE)|| (type == REMOVE_NOTHING)); _g_removeColor = type; }
 
 
     /**
