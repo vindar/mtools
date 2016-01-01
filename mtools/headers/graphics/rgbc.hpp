@@ -384,6 +384,10 @@ namespace mtools
         static const RGBc c_Silver;           ///< color silver
         static const RGBc c_Navy;             ///< color navy blue
         static const RGBc c_TransparentWhite; ///< transparent white color
+        static const RGBc c_TransparentBlack; ///< transparent white color
+        static const RGBc c_TransparentRed;   ///< transparent white color
+        static const RGBc c_TransparentGreen; ///< transparent white color
+        static const RGBc c_TransparentBlue;  ///< transparent white color
 
 
         uint8 R;        ///< the Red component

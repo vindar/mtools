@@ -46,6 +46,10 @@ namespace mtools
     const RGBc RGBc::c_Silver = RGBc(192, 192, 192);    
     const RGBc RGBc::c_Navy = RGBc(0, 0, 128);          
     const RGBc RGBc::c_TransparentWhite = RGBc(255, 255, 255,0);
+    const RGBc RGBc::c_TransparentBlack = RGBc(0, 0, 0, 0);
+    const RGBc RGBc::c_TransparentRed   = RGBc(255, 0, 0, 0);
+    const RGBc RGBc::c_TransparentGreen = RGBc(0, 255, 0, 0);
+    const RGBc RGBc::c_TransparentBlue  = RGBc(0, 0 ,255, 0);
 
 }
 
