@@ -208,13 +208,17 @@ public:
 	static const int TYPEPIXEL		= 0; ///< draw each site with a square of a given color (0)
 	static const int TYPEIMAGE		= 1; ///< draw (if possible) each site using an image for the site (1)
 
+    static const int REMOVE_NOTHING = 0;     ///< do not remove the transparent color
+    static const int REMOVE_WHITE = 1;       ///< remove transparent color treated as transparent white
+    static const int REMOVE_BLACK = 2;       ///< remove transparent color treated as transparent black
+
 
     /**
      * Constructor. Set the lattice object that will be drawn. 
      *
      * @param [in,out]  obj The object to draw, it must survive the drawer.
      **/
-    LatticeDrawer(LatticeObj * obj) : _g_requestAbort(0), _g_current_quality(0), _g_obj(obj), _g_drawingtype(TYPEPIXEL), _g_reqdrawtype(TYPEPIXEL), _g_imSize(201, 201), _g_r(-100.5, 100.5, -100.5, 100.5), _g_redraw_im(true), _g_redraw_pix(true)
+    LatticeDrawer(LatticeObj * obj) : _g_requestAbort(0), _g_current_quality(0), _g_obj(obj), _g_drawingtype(TYPEPIXEL), _g_reqdrawtype(TYPEPIXEL), _g_imSize(201, 201), _g_r(-100.5, 100.5, -100.5, 100.5), _g_redraw_im(true), _g_redraw_pix(true), _g_removeColor(REMOVE_NOTHING), _g_opacify(1.0f)
 		{
         static_assert(mtools::metaprog::has_getColor<LatticeObj, mtools::RGBc, mtools::iVec2>::value, "The object T must be implement a 'RGBc getColor(iVec2 pos)' method.");
         _initInt16Buf();
@@ -281,6 +285,38 @@ public:
         {
         return metaprog::has_getImage<LatticeObj, const cimg_library::CImg<unsigned char>*, mtools::iVec2, mtools::iVec2>::value;
         }
+
+
+    /**
+    * Query the 'opacification factor' used when drawing pixel-type images.
+    *
+    * @return  true the opacification factor, larger or equal to 1.(1.0 = no opacification). 
+    **/
+    float opacify() const { return _g_opacify = o; }
+
+
+    /**
+     * Set the 'opacification factor' used when drawing pixel-type images.
+     *
+     * @param   o   The new opacification factor larger or equal to 1.0 (set 1.0 to disable opacification).
+     **/
+    void opacify(float o) { MTOOLS_ASSERT(o >= 1.0); _g_opacify = o; }
+
+
+    /**
+     * Query how transparent color are handled when drawing pixel-type images.
+     *
+     * @return  One of REMOVE_NOTHING, REMOVE_WHITE, REMOVE_BLACK.
+     **/
+    int transparentColor() const { return _g_removeColor; }
+
+
+    /**
+     * Set how transparent color are handled when drawing pixel-type images.
+     *
+     * @param   type    The new type: one of REMOVE_NOTHING, REMOVE_WHITE, REMOVE_BLACK.
+     **/
+    void transparentColor(int type) { _g_removeColor = type; }
 
 
     /**
@@ -521,7 +557,10 @@ private:
     fBox2             _g_r;                 // current range.
     std::atomic<bool> _g_redraw_im;         // true if we should redraw from scratch the pixel image
     std::atomic<bool> _g_redraw_pix;        // true if we should redraw from scratch the sprite image
+    std::atomic<int>  _g_removeColor;       // one of REMOVE_NOTHING, REMOVE_WHITE, REMOVE_BLACK
+    std::atomic<float> _g_opacify;          // opacification ratio for pixel drawing
     iBox2             _g_domR;              // definition domain of the object 
+
 
 
     /* set the new drawing mode to imageType (but silently change it if needed) */
@@ -799,8 +838,6 @@ void _drawOntoPixel(cimg_library::CImg<unsigned char> & im, float opacity)
     }
 
 
-
-
 /* make B -> A and return the resulting opacity */
 inline unsigned char _blendcolor4(unsigned char & A, float opA, unsigned char B, float opB ) const
     {
@@ -810,13 +847,37 @@ inline unsigned char _blendcolor4(unsigned char & A, float opA, unsigned char B,
     return (unsigned char)(255 * o);
     }
 
-/* warp the buffer onto an image using _qi,_qj,_counter1 and _counter2 : 
+
+/* make B -> A and return the resulting opacity
+ * modify the opacity and artificialy remove transparent white/black */
+inline unsigned char  _blendcolor4(unsigned char & A, float opA, unsigned char B, float opB,float op, float opacify, int removeColor) const
+    {
+    if (opB <= 0.0f) return (unsigned char)(255 * opA);
+    opB = 1.0f - (1.0f - opB)/opacify;
+    float C;
+    switch(removeColor)
+        {
+        case REMOVE_WHITE: { C = (1.0f/opB)*(B - 255) + 255; break; }
+        case REMOVE_BLACK: { C = (1.0f/opB)*B; break; }
+        default: { C = (float)B; break; }
+        }
+    opB *=op;
+    float o = opB + opA*(1 - opB); //resulting opacity
+    A = (unsigned char)((C*opB + A*opA*(1 - opB))/o);
+    return (unsigned char)(255 * o);
+    }
+
+
+/* warp the buffer onto an image using _qi,_qj,_counter1 and _counter2 
    method when im has four channels : use transparency and A over B operation 
  */
 inline void _warpInt16Buf_4channel(CImg<unsigned char> & im, float op) const
 {
     MTOOLS_ASSERT(im.spectrum() == 4);
-    const float po = 1.0;
+    MTOOLS_ASSERT(op > 0.0f);
+    const int removeColor = _g_removeColor;
+    const float opacify = _g_opacify;
+    const float po = 1.0f;
     const size_t dx = (size_t)_int16_buffer_dim.X();
     const size_t dxy = (size_t)(dx * _int16_buffer_dim.Y());
     const size_t l1 = _qi + (dx*_qj);
@@ -837,11 +898,11 @@ inline void _warpInt16Buf_4channel(CImg<unsigned char> & im, float op) const
                 { 
                 for (size_t i = 0; i < l1; i++) 
                     { 
-                    const float g = ((op*(*psource_opb)) / 255);
+                    const float g = (((float)(*psource_opb)) / 255);
                     const float h = ((po*(*pdest_opa)) / 255);
-                    _blendcolor4((*pdest0), h, (unsigned char)(*psource0), g);
-                    _blendcolor4((*pdest1), h, (unsigned char)(*psource1), g);
-                    (*pdest_opa) = _blendcolor4((*pdest2), h, (unsigned char)(*psource2), g);
+                    _blendcolor4((*pdest0), h, (unsigned char)(*psource0), g, op,opacify,removeColor);
+                    _blendcolor4((*pdest1), h, (unsigned char)(*psource1), g, op,opacify,removeColor);
+                    (*pdest_opa) = _blendcolor4((*pdest2), h, (unsigned char)(*psource2), g, op,opacify,removeColor);
                     ++pdest0; ++pdest1; ++pdest2; ++pdest_opa;
                     ++psource0; ++psource1; ++psource2; ++psource_opb;
                     } 
@@ -850,11 +911,11 @@ inline void _warpInt16Buf_4channel(CImg<unsigned char> & im, float op) const
                { 
                for (size_t i = 0; i < l1; i++) 
                     { 
-                    const float g = ((op*(*psource_opb) / _counter1) / 255);
+                    const float g = (((float)(*psource_opb) / _counter1) / 255);
                     const float h = ((po*(*pdest_opa)) / 255);
-                    _blendcolor4((*pdest0), h, (unsigned char)((*psource0) / _counter1), g);
-                    _blendcolor4((*pdest1), h, (unsigned char)((*psource1) / _counter1), g);
-                    (*pdest_opa) = _blendcolor4((*pdest2), h, (unsigned char)((*psource2) / _counter1), g);
+                    _blendcolor4((*pdest0), h, (unsigned char)((*psource0) / _counter1), g, op,opacify,removeColor);
+                    _blendcolor4((*pdest1), h, (unsigned char)((*psource1) / _counter1), g, op,opacify,removeColor);
+                    (*pdest_opa) = _blendcolor4((*pdest2), h, (unsigned char)((*psource2) / _counter1), g, op,opacify,removeColor);
                     ++pdest0; ++pdest1; ++pdest2; ++pdest_opa;
                     ++psource0; ++psource1; ++psource2; ++psource_opb;
                     } 
@@ -877,11 +938,11 @@ inline void _warpInt16Buf_4channel(CImg<unsigned char> & im, float op) const
                 {
                 for (size_t i = 0; i<l2; i++) 
                     { 
-                    const float g = (op*(*psource_opb)) / 255;
+                    const float g = ((float)(*psource_opb)) / 255;
                     const float h = (po*(*pdest_opa)) / 255;
-                    _blendcolor4((*pdest0), h , (unsigned char)(*psource0), g);
-                    _blendcolor4((*pdest1), h, (unsigned char)(*psource1), g);
-                    (*pdest_opa) = _blendcolor4((*pdest2), h, (unsigned char)(*psource2), g);
+                    _blendcolor4((*pdest0), h , (unsigned char)(*psource0), g, op,opacify,removeColor);
+                    _blendcolor4((*pdest1), h, (unsigned char)(*psource1), g, op,opacify,removeColor);
+                    (*pdest_opa) = _blendcolor4((*pdest2), h, (unsigned char)(*psource2), g, op,opacify,removeColor);
                     ++pdest0; ++pdest1; ++pdest2; ++pdest_opa;
                     ++psource0; ++psource1; ++psource2; ++psource_opb;
                     }
@@ -890,11 +951,11 @@ inline void _warpInt16Buf_4channel(CImg<unsigned char> & im, float op) const
                 { 
                 for (size_t i = 0; i<l2; i++) 
                     { 
-                    const float g = (op*(*psource_opb) / _counter2) / 255;
+                    const float g = ((float)(*psource_opb) / _counter2) / 255;
                     const float h = (po*(*pdest_opa)) / 255;
-                    _blendcolor4((*pdest0), h , (unsigned char)((*psource0) / _counter2), g);
-                    _blendcolor4((*pdest1), h , (unsigned char)((*psource1) / _counter2), g);
-                    (*pdest_opa) = _blendcolor4((*pdest2), h , (unsigned char)((*psource2) / _counter2), g);
+                    _blendcolor4((*pdest0), h , (unsigned char)((*psource0) / _counter2), g, op,opacify,removeColor);
+                    _blendcolor4((*pdest1), h , (unsigned char)((*psource1) / _counter2), g, op,opacify,removeColor);
+                    (*pdest_opa) = _blendcolor4((*pdest2), h , (unsigned char)((*psource2) / _counter2), g, op,opacify,removeColor);
                     ++pdest0; ++pdest1; ++pdest2; ++pdest_opa;
                     ++psource0; ++psource1; ++psource2; ++psource_opb;
                     }
@@ -912,12 +973,32 @@ inline void _blendcolor3(unsigned char & A, unsigned char B, float opB) const
     }
 
 
+/* make B -> A when A has full opacity
+ * modify the opacity and artificialy remove transparent white/black */
+inline void _blendcolor3(unsigned char & A, unsigned char B, float opB,float op, float opacify, int removeColor) const
+    {
+    if (opB > 0)
+        {
+        opB = 1.0f - (1.0f - opB)/opacify;
+        switch(removeColor)
+            {
+            case REMOVE_WHITE: { float C = (1.0f/opB)*(B - 255) + 255; A = (unsigned char)(C*op*opB + A*(1.0f - op*opB)); return; }
+            case REMOVE_BLACK: { float C = (1.0f/opB)*B; A = (unsigned char)(C*op*opB + A*(1.0f - op*opB)); return; }
+            default: { A = (unsigned char)(B*op*opB + A*(1.0f - op*opB)); return; }
+            }
+        }
+    }
+
+
 /* warp the buffer onto an image using _qi,_qj,_counter1 and _counter2 :
 method when im has 3 channels (same as if the fourth channel was completely opaque)
 */
 inline void _warpInt16Buf_3channel(CImg<unsigned char> & im, float op) const
 {
     MTOOLS_ASSERT(im.spectrum() == 3);
+    MTOOLS_ASSERT(op > 0.0f);
+    const int removeColor = _g_removeColor;
+    const float opacify = _g_opacify;
     const size_t dx = (size_t)_int16_buffer_dim.X();
     const size_t dxy = (size_t)(dx * _int16_buffer_dim.Y());
     const size_t l1 = _qi + (dx*_qj);
@@ -938,10 +1019,10 @@ inline void _warpInt16Buf_3channel(CImg<unsigned char> & im, float op) const
             {
             for (size_t i = 0; i < l1; i++)
                 {
-                    const float g = ((op*(*psource_opb)) / 255);
-                    _blendcolor3((*pdest0), (unsigned char)(*psource0), g);
-                    _blendcolor3((*pdest1), (unsigned char)(*psource1), g);
-                    _blendcolor3((*pdest2), (unsigned char)(*psource2), g);
+                    const float g = (((float)(*psource_opb)) / 255);
+                    _blendcolor3((*pdest0), (unsigned char)(*psource0), g, op,opacify,removeColor);
+                    _blendcolor3((*pdest1), (unsigned char)(*psource1), g, op,opacify,removeColor);
+                    _blendcolor3((*pdest2), (unsigned char)(*psource2), g, op,opacify,removeColor);
                     ++pdest0; ++pdest1; ++pdest2;
                     ++psource0; ++psource1; ++psource2; ++psource_opb;
                 }
@@ -950,10 +1031,10 @@ inline void _warpInt16Buf_3channel(CImg<unsigned char> & im, float op) const
             {
                 for (size_t i = 0; i < l1; i++)
                 {
-                    const float g = ((op*(*psource_opb) / _counter1) / 255);
-                    _blendcolor3((*pdest0), (unsigned char)((*psource0) / _counter1), g);
-                    _blendcolor3((*pdest1), (unsigned char)((*psource1) / _counter1), g);
-                    _blendcolor3((*pdest2), (unsigned char)((*psource2) / _counter1), g);
+                    const float g = (((float)(*psource_opb) / _counter1) / 255);
+                    _blendcolor3((*pdest0), (unsigned char)((*psource0) / _counter1), g, op,opacify,removeColor);
+                    _blendcolor3((*pdest1), (unsigned char)((*psource1) / _counter1), g, op,opacify,removeColor);
+                    _blendcolor3((*pdest2), (unsigned char)((*psource2) / _counter1), g, op,opacify,removeColor);
                     ++pdest0; ++pdest1; ++pdest2;
                     ++psource0; ++psource1; ++psource2; ++psource_opb;
                 }
@@ -976,10 +1057,10 @@ inline void _warpInt16Buf_3channel(CImg<unsigned char> & im, float op) const
             {
                 for (size_t i = 0; i<l2; i++)
                 {
-                    const float g = (op*(*psource_opb)) / 255;
-                    _blendcolor3((*pdest0), (unsigned char)(*psource0), g);
-                    _blendcolor3((*pdest1), (unsigned char)(*psource1), g);
-                    _blendcolor3((*pdest2), (unsigned char)(*psource2), g);
+                    const float g = ((float)(*psource_opb)) / 255;
+                    _blendcolor3((*pdest0), (unsigned char)(*psource0), g, op,opacify,removeColor);
+                    _blendcolor3((*pdest1), (unsigned char)(*psource1), g, op,opacify,removeColor);
+                    _blendcolor3((*pdest2), (unsigned char)(*psource2), g, op,opacify,removeColor);
                     ++pdest0; ++pdest1; ++pdest2;
                     ++psource0; ++psource1; ++psource2; ++psource_opb;
                 }
@@ -988,10 +1069,10 @@ inline void _warpInt16Buf_3channel(CImg<unsigned char> & im, float op) const
             {
                 for (size_t i = 0; i<l2; i++)
                 {
-                    const float g = (op*(*psource_opb) / _counter2) / 255;
-                    _blendcolor3((*pdest0), (unsigned char)((*psource0) / _counter2), g);
-                    _blendcolor3((*pdest1), (unsigned char)((*psource1) / _counter2), g);
-                    _blendcolor3((*pdest2), (unsigned char)((*psource2) / _counter2), g);
+                    const float g = ((float)(*psource_opb) / _counter2) / 255;
+                    _blendcolor3((*pdest0), (unsigned char)((*psource0) / _counter2), g, op,opacify,removeColor);
+                    _blendcolor3((*pdest1), (unsigned char)((*psource1) / _counter2), g, op,opacify,removeColor);
+                    _blendcolor3((*pdest2), (unsigned char)((*psource2) / _counter2), g, op,opacify,removeColor);
                     ++pdest0; ++pdest1; ++pdest2;
                     ++psource0; ++psource1; ++psource2; ++psource_opb;
                 }
