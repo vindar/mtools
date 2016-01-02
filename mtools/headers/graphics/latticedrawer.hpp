@@ -1463,7 +1463,7 @@ inline bool _skipStochastic(const fBox2 & r, const iVec2 & sizeIm) const
 /* return the number of stochastic draw per pixel per turn */
 inline uint32 _nbDrawPerTurn(const fBox2 & r,const iVec2 & sizeIm) const
 	{
-	return 5;
+	return 2;
 	}
 
 
@@ -1472,7 +1472,7 @@ inline uint32 _nbPointToDraw(const fBox2 & r,const iVec2 & sizeIm) const
 	{
 	int v = (int)_sitePerPixel(r,sizeIm)/20;
 	if (v>254) {return 254;}
-	if (v < 2) {return 2;}
+	if (v < 3) {return 3;}
 	return v;
 	}
 

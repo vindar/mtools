@@ -193,9 +193,7 @@ int main(int argc, char *argv[])
     watch("# of particles", NN);
     watch("cluster radius", maxd);
 
-    L.opacify(1.77);
-    L.transparentColor(L.REMOVE_BLACK);
-
+   
     while (P.shown())
         {
         if (maxNN - NN > 1000) { addParticules(1000); }
