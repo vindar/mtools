@@ -3,7 +3,7 @@
 - Author:   Arvind Singh ([mail](mailto:arvind.singh@math.u-psud.fr) , [www](http://www.math.u-psud.fr/~singh/))
 - License:  [GPLv3](http://www.gnu.org/licenses/gpl-3.0.html)
 
-!['Tree' Eden Model](./treeEdenModel.png)
+!['Tree' Eden Model](./mtools.png)
 
 ### About
 
