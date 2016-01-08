@@ -23,12 +23,14 @@
 #include "../misc/misc.hpp"
 #include "../misc/error.hpp"
 
+namespace mtools
+    {
 
-/**
- * Compute the logarithm of the gamma function.
- * Taken from numerical recipes.
- **/
-inline double gammln(const double xx) 
+    /**
+     * Compute the logarithm of the gamma function.
+     * Taken from numerical recipes.
+     **/
+    inline double gammln(const double xx)
         {
         int j;
         double x, tmp, y, ser;
@@ -38,65 +40,64 @@ inline double gammln(const double xx)
         tmp = x + 5.24218750000000000;
         tmp = (x + 0.5)*log(tmp) - tmp;
         ser = 0.999999999999997092;
-        for (j = 0;j<14;j++) ser += cof[j] / ++y;
+        for (j = 0;j < 14;j++) ser += cof[j] / ++y;
         return tmp + log(2.5066282746310005*ser / x);
         }
 
 
-/**
- * Compute the factorial for n in [0,170]
- * Taken from numerical recipes, (well, this one I could have written myself :-))
- **/
-inline double factrl(const int n) 
-    {
-    static double a[171];
-    static bool init = true;
-    if (init) { init = false; a[0] = 1.; for (int i = 1;i<171;i++) a[i] = i*a[i - 1]; }
-    MTOOLS_ASSERT((n >= 0 || n <= 170));
-    return a[n];
+    /**
+     * Compute the factorial for n in [0,170]
+     * Taken from numerical recipes, (well, this one I could have written myself :-))
+     **/
+    inline double factrl(int64 n)
+        {
+        static double a[171];
+        static bool init = true;
+        if (init) { init = false; a[0] = 1.; for (int i = 1;i < 171;i++) a[i] = i*a[i - 1]; }
+        MTOOLS_ASSERT((n >= 0 || n <= 170));
+        return a[n];
+        }
+
+
+    /**
+     * Compute the logarithm of a factorial.
+     * Taken from numerical recipes.
+     **/
+    inline double factln(int64 n)
+        {
+        static const int64 NTOP = 2000;
+        static double a[NTOP];
+        static bool init = true;
+        if (init) { init = false; for (int64 i = 0;i < NTOP;i++) a[i] = gammln(i + 1.); }
+        MTOOLS_ASSERT(n >= 0);
+        if (n < NTOP) return a[n];
+        return gammln(n + 1.);
+        }
+
+
+    /**
+     * Compute the binomial coefficient (n,k)
+     * Taken from numerical recipes.
+     **/
+    inline double bico(const int64 n, const int64 k)
+        {
+        MTOOLS_ASSERT((n >= 0) || (k >= 0) || (k <= n));
+        if (n < 171) return floor(0.5 + factrl(n) / (factrl(k)*factrl(n - k)));
+        return floor(0.5 + exp(factln(n) - factln(k) - factln(n - k)));
+        }
+
+
+    /**
+     * Compute the value of the Beta(z,w) function
+     * Taken from numerical recipes.
+     **/
+    inline double beta(const double z, const double w)
+        {
+        return exp(gammln(z) + gammln(w) - gammln(z + w));
+        }
+
+
     }
-
-
-/**
- * Compute the logarithm of a factorial.
- * Taken from numerical recipes.
- **/
-inline double factln(const int n) 
-    {
-    static const int NTOP = 2000;
-    static double a[NTOP];
-    static bool init = true;
-    if (init) { init = false; for (int i = 0;i<NTOP;i++) a[i] = gammln(i + 1.); }
-    MTOOLS_ASSERT(n >= 0);
-    if (n < NTOP) return a[n];
-    return gammln(n + 1.);
-    }
-
-
-/**
- * Compute the binomial coefficient (n,k)
- * Taken from numerical recipes.
- **/
-inline double bico(const int n, const int k) 
-    {
-    MTOOLS_ASSERT((n >= 0) || (k >= 0) || (k <= n));
-    if (n<171) return floor(0.5 + factrl(n) / (factrl(k)*factrl(n - k)));
-    return floor(0.5 + exp(factln(n) - factln(k) - factln(n - k)));
-    }
-
-
-/**
- * Compute the value of the Beta(z,w) function
- * Taken from numerical recipes.
- **/
-inline double beta(const double z, const double w) 
-    {
-    return exp(gammln(z) + gammln(w) - gammln(z + w));
-    }
-
-
-
-
 
 /* end of file */
 
