@@ -411,7 +411,7 @@ namespace mtools
     /**
      * Scalar substraction operator.
      **/
-    template<typename T, size_t N> inline Vec<T, N> operator-(const T & a, Vec<T, N> V) { for (int i = 0; i < N; i++) { V1._m_tab[i] = a - V1._m_tab[i]; } return V; }
+    template<typename T, size_t N> inline Vec<T, N> operator-(const T & a, Vec<T, N> V) { for (int i = 0; i < N; i++) { V._m_tab[i] = a - V._m_tab[i]; } return V; }
     template<typename T, size_t N> inline Vec<T, N> operator-(Vec<T, N> V,const T & a)  { V -= a; return V; }
 
 

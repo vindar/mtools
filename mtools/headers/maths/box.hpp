@@ -337,7 +337,7 @@ namespace mtools
             /**
             * Return the length in direction i. May be negatice if empty.
             **/
-            inline T l(size_t d) const { return(max[i] - min[i]); }
+            inline T l(size_t i) const { return(max[i] - min[i]); }
 
 
             /**
