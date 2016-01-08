@@ -171,45 +171,53 @@ void addParticules(int64 nb)
     }
 
 
+
+
+
+
+
+
+double test0(int64 v)
+    {
+    return 0.0;
+    }
+
+double test1(int64 v)
+    {
+    return 1.0;
+    }
+
+
+void espp(int64 N)
+    {
+    Chronometer();
+    int64 tot = 0;
+    double var = 0.0;
+    for (int i = 0;i < N; i++)
+        {
+        int64 h = UIHPTpeelLaw(gen);
+        tot += h;
+        var += h*h;
+        }
+    cout << "esp = " << ((double)tot) / N << " in " << Chronometer() << "\n";
+    cout << "var = " << ((double)var) / N << "\n\n";
+    }
+
+
 int main(int argc, char *argv[])
     {
-    parseCommandLine(argc, argv, false, true); // parse the command line, interactive mode
-    int64 maxNN = arg("N", 10000000).info("total number of particles in the simulation");
-    eps = arg("eps", 0.00001).info("distance under which particles stick together");
-    int autoredraw = arg('a', 180).info("autoredraw per minutes");
-    cout << "Radius of a particle : " << RAD << "\n";
-    NN = 1;
-    Grid(0, 0).N[0] = 1;  Grid(0, 0).pos[0] = { 0.0,0.0 }; // initial particle in the cluster
-    Plotter2D P;
-    auto L = makePlot2DLattice(LatticeObjImage<getColor, getImage>::get(), "non-Lattice eDLA");
+    espp(100);
+    espp(1000);
+    espp(10000);
+    espp(100000);
+    espp(1000000);
+    espp(10000000);
+    espp(100000000);
+    espp(1000000000);
 
-
-    P[L];
-
-
-    P.autoredraw(autoredraw);
-    //P.solidBackGroundColor(RGBc::c_Black);
-    P.startPlot();
-    watch("# of particles", NN);
-    watch("cluster radius", maxd);
-
-   
-    while (P.shown())
-        {
-        if (maxNN - NN > 1000) { addParticules(1000); }
-        else
-            {
-            addParticules(maxNN - NN);
-            cout << "Simulation completed ! \n";
-            P.autoredraw(0);
-            int64 l = (int64)maxd + 1;
-            P.range().setRange(iBox2(-l, l, -l, l));
-            P.redraw();
-            while (P.shown()) {}
-            return 0;
-            }
-        }
+    cout.getKey();
     return 0;
+
     }
 
 /* end of file main.cpp */
