@@ -195,7 +195,7 @@ void espp(int64 N)
     double var = 0.0;
     for (int i = 0;i < N; i++)
         {
-        int64 h = UIHPTpeelLaw(gen);
+        int64 h = UIPTpeelLaw(100,gen);
         tot += h;
         var += h*h;
         }
@@ -206,6 +206,15 @@ void espp(int64 N)
 
 int main(int argc, char *argv[])
     {
+
+    int m = 7;
+
+    for (int k = -1; k <= m; k++)
+        {
+        cout << k << "  \t  " << mtools::doubleToStringHighPrecision(UIPTpeelCDF(k, m) - UIPTpeelCDF(k-1, m)) << "\n";
+        }
+
+    /*
     espp(100);
     espp(1000);
     espp(10000);
@@ -214,7 +223,7 @@ int main(int argc, char *argv[])
     espp(10000000);
     espp(100000000);
     espp(1000000000);
-
+    */
     cout.getKey();
     return 0;
 

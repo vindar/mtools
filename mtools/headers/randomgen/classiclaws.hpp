@@ -912,16 +912,72 @@ namespace mtools
 
 
     /**
-     * Sample a random variable according to the law of the walk associated with the peeling process
-     * of the Infinite Uniform Half plane Triangulation (cf UIHPTpeelCDF()).
-     *
-     * @tparam  random_t    Type of the random t.
-     * @param [in,out]  gen The generate.
-     **/
+    * Sample a random variable according to the law of the walk associated with the peeling process
+    * of the Infinite Uniform Half plane Triangulation (cf UIHPTpeelCDF()).
+    *
+    * @param [in,out]  gen the random number generator
+    **/
     template<class random_t> inline int64 UIHPTpeelLaw(random_t & gen)
         {
         return sampleDiscreteRVfromCDF(UIHPTpeelCDF, gen);
         }
+
+
+    /**
+     * Cumulative distribution of the random variables associated with the peeling of the Infinite
+     * Uniform Triangulation.
+     * 
+     * c.f. Angel (2002) Growth and Percolation on the Uniform Infinite Planar Triangulation, p15.
+     * 
+     * Compute the CDF of the markov chain describing the size of the boundary when peeling a
+     * uniform infinite planar triangulation.
+     * 
+     * This correspond to applying the doob h-transform with h(x) = Gamma(x + 3/2) / Gamma(x + 1/2)
+     * i.e. p_{k,m} = (h(m-k)/h(m))p_k  (where p_k is distributed as UIHPTpeelCDF()).
+     * 
+     * (p_k and p_{k,m} are the same as in Angel (2002)).
+     *
+     * @param   k   number of vertice to remove (k &lt;= m and k =-1 for adding one).
+     * @param   m   number of vertice on the boundary is m + 2.
+     *
+     * @return  The value of sum( p_{i,m}, i = -1..k) which is the probability that we remove at most k
+     *          vertices from a peeling step when the boundary has m+2 vertices.
+     **/
+    inline double UIPTpeelCDF(int64 k, int64 m)
+        {
+        if (k < -1) return 0;
+        if (k >= m) return 1.0;
+        if (k < 1) return (2 * m + 3.0)/(3 * m + 3.0);
+        // we have 1 <= k < m
+        return (1 - (2.0*(m - k + 0.5)*m/(3.0*(m + 1.0)*(k + 1.0)*(2*m+1.0)))*exp( factln(2*k) + 2.0*factln(m-1) + factln(2*m - 2*k -1) - 2.0*factln(k) -2.0*factln(m-k-1) - factln(2*m-1) ));               
+        }
+
+
+    /* Proxy object acting as a functor for the CDF of  UIPTpeelCDF(k,m) for a given m */
+    struct UIPTpeelCDFobj
+        {
+        UIPTpeelCDFobj(int64 m) : _m(m) {}
+        inline double operator()(int64 k) { return UIPTpeelCDF(k, _m); }
+        private: int64 _m;
+        };
+
+
+    /**
+     * Sample a random variable according to increment of the size of the boundary when peeling to
+     * UIPT. with a boundary of (m+2) vertices ie sampled from the CDF UIPTpeelCDF(.,m).
+     *
+     * @param   m           the size of the boudary is m+2. 
+     * @param [in,out]  gen the random number generator.
+     *
+     * @return  The number of vertices removed from the boundary (or -1 if one was added). 
+     **/
+    template<class random_t> inline int64 UIPTpeelLaw(int64 m, random_t & gen)
+        {
+        UIPTpeelCDFobj O(m);
+        return sampleDiscreteRVfromCDF(O, gen);
+        }
+
+
 
 
 
