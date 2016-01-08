@@ -188,6 +188,52 @@ namespace mtools
         }
 
 
+    /**
+    * Sample a discrete random variable X taking value in Z from its cumulatice distribution
+    * function.
+    *
+    * @param   cdf         CDF functor such that cdf(i) = P(S <= i) for any int64
+    * @param [in,out]  gen the random number generator.
+    *
+    * @return  a value in [-4611686018427387904, 4611686018427387904] (truncate the rv if out of these bounds).
+    **/
+    template<class random_t, class CDF> inline int64 sampleDiscreteRVfromCDF(CDF cdf, random_t & gen)
+        {
+        double a = Unif(gen); // uniform value in [0,1[
+        int64 i, j;
+        if (cdf(0) <= a)
+            { // value is strictly positive
+            if (cdf(1) > a) return 1;
+            j = 2;
+            while (cdf(j) <= a)
+                {
+                if (j >= 4611686018427387904) return 4611686018427387904;   // out of bounds
+                j *= 2;
+                }
+            i = j / 2;
+            }
+        else
+            { // value is negative or zero
+            if (cdf(-1) <= a) return 0;
+            i = -2;
+            while (cdf(i) > a)
+                {
+                if (i <= -4611686018427387904) return -4611686018427387904;   // out of bounds
+                i *= 2;
+                }
+            j = i / 2;
+            }
+        // cdf(i) <= a < cdf(j)
+        while ((j - i)>1)
+            { //  dichotomy until j = i+1
+            int64 g = (i + j) / 2;
+            if (a >= cdf(g)) { i = g; }
+            else { j = g; }
+            }
+        return j;
+        }
+
+
 
     /**
     * create a Binomial randon variable.
@@ -815,6 +861,67 @@ namespace mtools
 
         };
 
+
+
+    /**
+    * Cumulative distribution of the random variable associated with the peeling of the Infinite Uniform
+    * Half plane Triangulation.
+    *
+    * c.f. Angel (2002) Growth and Percolation on the Uniform Infinite Planar Triangulation, p15.
+    *
+    * The random variable S takes value in {-1}U{1,2,3,...} with distribution:
+    *    - P(S = -1) = 2/3
+    *    - P(S = k) = 2*(2k-2)! /((k-1)!*(k+1)!*4^k) pour k = 1,2,3,...
+    *
+    * The CDF is explicit:
+    *
+    * P(S <= k) = 0                                   if k < -1
+    *           = 2/3                                 if k < 1
+    *           = 1 - (k+1)*(2k)!/(3*4^k*(k+1)!^2)    if k >= 1
+    *
+    * @param   k   The value to query
+    *
+    * @return  the probability P(S <= k) exact up to double precision.
+    **/
+    inline double UIHPTpeelCDF(int64 k)
+        {
+        if (k < -1) return 0;
+        switch(k)
+            {
+            case -1: return (2.0 / 3.0);
+            case 0 : return (2.0 / 3.0);
+            case 1 : return (11.0 / 12.0);
+            case 2 : return (23.0 / 24.0);
+            case 3 : return (187.0 / 192.0);
+            case 4 : return (377.0 / 384.0);
+            case 5 : return (505.0 / 512.0);
+            case 6 : return (1013.0 / 1024.0);
+            case 7 : return (16241.0 / 16384.0);
+            case 8 : return (97589.0 / 98304.0);
+            case 9 : return (390785.0 / 393216.0);
+            case 10: return (782233.0 / 786432.0);
+            case 11: return (6262063.0 / 6291456.0);
+            case 12: return (12530909.0 / 12582912.0);
+            case 13: return (50145923.0 / 50331648.0);
+            case 14: return (33442997.0 / 33554432.0);
+            case 15: return (1070510209.0 / 1073741824.0);
+            case 16: return (2141590703.0 / 2147483648.0);
+            }
+        return 1.0 - ((k + 1) / 3.0)*exp(factln(2 * k) - k*log(4.0) - 2 * factln(k + 1));
+        }
+
+
+    /**
+     * Sample a random variable according to the law of the walk associated with the peeling process
+     * of the Infinite Uniform Half plane Triangulation (cf UIHPTpeelCDF()).
+     *
+     * @tparam  random_t    Type of the random t.
+     * @param [in,out]  gen The generate.
+     **/
+    template<class random_t> inline int64 UIHPTpeelLaw(random_t & gen)
+        {
+        return sampleDiscreteRVfromCDF(UIHPTpeelCDF, gen);
+        }
 
 
 
