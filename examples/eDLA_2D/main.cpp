@@ -61,7 +61,6 @@ inline void addParticules(int64 nb)
                     }
                 }
             iBox2 fullR;
-            const int64 * p = Grid.findFullBoxCentered(pos, fullR);
             if (fullR.boundaryDist(pos) == 0)
                 { // we only move by a single step
                 SRW_Z2_1step(pos, gen);
