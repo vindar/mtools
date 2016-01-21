@@ -586,7 +586,7 @@ namespace mtools
             * @param   pixCoord    The pixel coordinate (i,j)
             * @param   scrSize     Size of the screen in pixel (lx,ly).
             *
-            * @return  A fVec2 containing the aboslute position of this pixel.
+            * @return  A fVec2 containing the absolute position of this pixel.
             **/
             fVec2 pixelToAbs(const iVec2 & pixCoord, const iVec2 & scrSize) const
                 {
@@ -594,8 +594,8 @@ namespace mtools
                 double lx = (double)(max[0] - min[0]);
                 double ly = (double)(max[1] - min[1]);
                 MTOOLS_ASSERT((lx > 0.0) && (ly > 0.0));
-                double x = min[0] + (max[0] - min[0])*((double)(2 * pixCoord.X() + 1) / ((double)(2 * scrSize.X())));
-                double y = min[1] + (max[1] - min[1])*((double)(2 * (scrSize.Y() - 1 - pixCoord.Y()) + 1) / ((double)(2 * scrSize.Y())));
+                double x = min[0] + lx*((double)(2 * pixCoord.X() + 1) / ((double)(2 * scrSize.X())));
+                double y = min[1] + ly*((double)(2 * (scrSize.Y() - 1 - pixCoord.Y()) + 1) / ((double)(2 * scrSize.Y())));
                 return fVec2(x, y);
                 }
 
