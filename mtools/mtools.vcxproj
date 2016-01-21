@@ -121,49 +121,49 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>./;./headers/;$(CIMG_LIB)/;$(FLTK_LIB)/;$(FLTK_LIB)/zlib/;$(FLTK_LIB)/png/;$(FLTK_LIB)/jpeg/;$(IncludePath)</IncludePath>
+    <IncludePath>./;./headers/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(ZLIB_LIB)/source/;$(LIBPNG_LIB)/source/;$(LIBJPEG_LIB)/source/;$(CAIRO_LIB)/source/;$(PIXMAN_LIB)/source/pixman/;$(FREETYPE_LIB)/source/include/freetype/;$(IncludePath)</IncludePath>
     <OutDir>./lib/</OutDir>
     <IntDir>./lib/temp32d/</IntDir>
     <TargetName>mtools32d</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>./;./headers/;$(CIMG_LIB)/;$(FLTK_LIB)/;$(FLTK_LIB)/zlib/;$(FLTK_LIB)/png/;$(FLTK_LIB)/jpeg/;$(IncludePath)</IncludePath>
+    <IncludePath>./;./headers/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(ZLIB_LIB)/source/;$(LIBPNG_LIB)/source/;$(LIBJPEG_LIB)/source/;$(CAIRO_LIB)/source/;$(PIXMAN_LIB)/source/pixman/;$(FREETYPE_LIB)/source/include/freetype/;$(IncludePath)</IncludePath>
     <OutDir>./lib/</OutDir>
     <IntDir>./lib/temp32/</IntDir>
     <TargetName>mtools32</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>./;./headers/;$(CIMG_LIB)/;$(FLTK_LIB)/;$(FLTK_LIB)/zlib/;$(FLTK_LIB)/png/;$(FLTK_LIB)/jpeg/;$(IncludePath)</IncludePath>
+    <IncludePath>./;./headers/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(ZLIB_LIB)/source/;$(LIBPNG_LIB)/source/;$(LIBJPEG_LIB)/source/;$(CAIRO_LIB)/source/;$(PIXMAN_LIB)/source/pixman/;$(FREETYPE_LIB)/source/include/freetype/;$(IncludePath)</IncludePath>
     <OutDir>./lib/</OutDir>
     <IntDir>./lib/temp64d/</IntDir>
     <TargetName>mtools64d</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>./;./headers/;$(CIMG_LIB)/;$(FLTK_LIB)/;$(FLTK_LIB)/zlib/;$(FLTK_LIB)/png/;$(FLTK_LIB)/jpeg/;$(IncludePath)</IncludePath>
+    <IncludePath>./;./headers/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(ZLIB_LIB)/source/;$(LIBPNG_LIB)/source/;$(LIBJPEG_LIB)/source/;$(CAIRO_LIB)/source/;$(PIXMAN_LIB)/source/pixman/;$(FREETYPE_LIB)/source/include/freetype/;$(IncludePath)</IncludePath>
     <OutDir>./lib/</OutDir>
     <IntDir>./lib/temp64/</IntDir>
     <TargetName>mtools64</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-DLL|Win32'">
-    <IncludePath>./;./headers/;$(CIMG_LIB)/;$(FLTK_LIB)/;$(FLTK_LIB)/zlib/;$(FLTK_LIB)/png/;$(FLTK_LIB)/jpeg/;$(IncludePath)</IncludePath>
+    <IncludePath>./;./headers/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(ZLIB_LIB)/source/;$(LIBPNG_LIB)/source/;$(LIBJPEG_LIB)/source/;$(CAIRO_LIB)/source/;$(PIXMAN_LIB)/source/pixman/;$(FREETYPE_LIB)/source/include/freetype/;$(IncludePath)</IncludePath>
     <OutDir>./lib/</OutDir>
     <IntDir>./lib/temp32d-fltkdll/</IntDir>
     <TargetName>mtools32d-fltkdll</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-DLL|Win32'">
-    <IncludePath>./;./headers/;$(CIMG_LIB)/;$(FLTK_LIB)/;$(FLTK_LIB)/zlib/;$(FLTK_LIB)/png/;$(FLTK_LIB)/jpeg/;$(IncludePath)</IncludePath>
+    <IncludePath>./;./headers/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(ZLIB_LIB)/source/;$(LIBPNG_LIB)/source/;$(LIBJPEG_LIB)/source/;$(CAIRO_LIB)/source/;$(PIXMAN_LIB)/source/pixman/;$(FREETYPE_LIB)/source/include/freetype/;$(IncludePath)</IncludePath>
     <OutDir>./lib/</OutDir>
     <IntDir>./lib/temp32-fltkdll/</IntDir>
     <TargetName>mtools32-fltkdll</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-DLL|x64'">
-    <IncludePath>./;./headers/;$(CIMG_LIB)/;$(FLTK_LIB)/;$(FLTK_LIB)/zlib/;$(FLTK_LIB)/png/;$(FLTK_LIB)/jpeg/;$(IncludePath)</IncludePath>
+    <IncludePath>./;./headers/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(ZLIB_LIB)/source/;$(LIBPNG_LIB)/source/;$(LIBJPEG_LIB)/source/;$(CAIRO_LIB)/source/;$(PIXMAN_LIB)/source/pixman/;$(FREETYPE_LIB)/source/include/freetype/;$(IncludePath)</IncludePath>
     <OutDir>./lib/</OutDir>
     <IntDir>./lib/temp64d-fltkdll/</IntDir>
     <TargetName>mtools64d-fltkdll</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-DLL|x64'">
-    <IncludePath>./;./headers/;$(CIMG_LIB)/;$(FLTK_LIB)/;$(FLTK_LIB)/zlib/;$(FLTK_LIB)/png/;$(FLTK_LIB)/jpeg/;$(IncludePath)</IncludePath>
+    <IncludePath>./;./headers/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(ZLIB_LIB)/source/;$(LIBPNG_LIB)/source/;$(LIBJPEG_LIB)/source/;$(CAIRO_LIB)/source/;$(PIXMAN_LIB)/source/pixman/;$(FREETYPE_LIB)/source/include/freetype/;$(IncludePath)</IncludePath>
     <OutDir>./lib/</OutDir>
     <IntDir>./lib/temp64-fltkdll/</IntDir>
     <TargetName>mtools64-fltkdll</TargetName>
