@@ -1,6 +1,6 @@
 /***********************************************
  * Project : Mandelbrot
- * date : Sat Jul 25 10:23:13 2015
+ * date : Fri Jan 22 00:00:47 2016
  ***********************************************/
 
 #pragma message("Compiling pre-compiled headers for stdafx.h\n")
@@ -46,6 +46,8 @@
 
 
 // *** Library mtools ***
+// Uncomment the following line to disable mtools console and use stdout instead
+// #define MTOOLS_BASIC_CONSOLE
 #include "mtools.hpp"
 
 // *** Library fltk ***
@@ -77,10 +79,23 @@
 #pragma warning( pop )
 #endif
 
-// *** Library fltk ***
-#include "zlib.h"       // fltk zlib
-#include "png.h"        // fltk libpng
-#include "jpeglib.h"    // fltk libjpeg
+// *** Library cairo ***
+#include "cairo.h"
+
+// *** Library freetype ***
+//#include "freetype.h"
+
+// *** Library libjpeg ***
+#include "jpeglib.h"
+
+// *** Library libpng ***
+#include "png.h"
+
+// *** Library pixman ***
+#include "pixman.h"
+
+// *** Library zlib ***
+#include "zlib.h"
 
 
 

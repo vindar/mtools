@@ -1,6 +1,6 @@
 /***********************************************
- * Project : nonlattice-eDLA
- * date : Wed Dec 30 14:46:18 2015
+ * Project : offlatttice-eDLA
+ * date : Fri Jan 22 00:01:13 2016
  ***********************************************/
 
 #pragma message("Compiling pre-compiled headers for stdafx.h\n")
@@ -79,10 +79,23 @@
 #pragma warning( pop )
 #endif
 
-// *** Library fltk ***
-#include "zlib.h"       // fltk zlib
-#include "png.h"        // fltk libpng
-#include "jpeglib.h"    // fltk libjpeg
+// *** Library cairo ***
+#include "cairo.h"
+
+// *** Library freetype ***
+//#include "freetype.h"
+
+// *** Library libjpeg ***
+#include "jpeglib.h"
+
+// *** Library libpng ***
+#include "png.h"
+
+// *** Library pixman ***
+#include "pixman.h"
+
+// *** Library zlib ***
+#include "zlib.h"
 
 
 

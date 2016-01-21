@@ -1,6 +1,6 @@
 /***********************************************
  * Project : eDLA_2D
- * date : Tue Dec 15 17:09:44 2015
+ * date : Thu Jan 21 23:06:23 2016
  ***********************************************/
 
 #pragma message("Compiling pre-compiled headers for stdafx.h\n")
@@ -79,10 +79,23 @@
 #pragma warning( pop )
 #endif
 
-// *** Library fltk ***
-#include "zlib.h"       // fltk zlib
-#include "png.h"        // fltk libpng
-#include "jpeglib.h"    // fltk libjpeg
+// *** Library cairo ***
+#include "cairo.h"
+
+// *** Library freetype ***
+//#include "freetype.h"
+
+// *** Library libjpeg ***
+#include "jpeglib.h"
+
+// *** Library libpng ***
+#include "png.h"
+
+// *** Library pixman ***
+#include "pixman.h"
+
+// *** Library zlib ***
+#include "zlib.h"
 
 
 
