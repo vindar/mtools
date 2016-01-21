@@ -1,6 +1,6 @@
 /***********************************************
  * Project : CMPonZ2
- * date : Sat Aug 15 14:30:08 2015
+ * date : Thu Jan 21 22:23:30 2016
  ***********************************************/
 
 #pragma message("Compiling pre-compiled headers for stdafx.h\n")
@@ -10,7 +10,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <ctime>
-#include <cmath>
+#include <cmath>  
 #include <cwchar>
 #include <locale>
 
@@ -46,7 +46,12 @@
 
 
 // *** Library mtools ***
+// Uncomment the following line to disable mtools console and use stdout instead
+// #define MTOOLS_BASIC_CONSOLE
 #include "mtools.hpp"
+
+// *** Library cairo ***
+#include "cairo.h"
 
 // *** Library fltk ***
 #if defined (_MSC_VER) 
@@ -77,10 +82,20 @@
 #pragma warning( pop )
 #endif
 
-// *** Library fltk ***
-#include "zlib.h"       // fltk zlib
-#include "png.h"        // fltk libpng
-#include "jpeglib.h"    // fltk libjpeg
+// *** Library freetype ***
+//#include "freetype.h"
+
+// *** Library libjpeg ***
+#include "jpeglib.h"
+
+// *** Library libpng ***
+#include "png.h"
+
+// *** Library pixman ***
+#include "pixman.h"
+
+// *** Library zlib ***
+#include "zlib.h"
 
 
 
