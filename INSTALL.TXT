@@ -22,7 +22,7 @@ The library depend on a few external libraries:
 The repository 'https://github.com/vindar/mtools-dependencies' contain VS2015 
 builds of all the required library making the process straighforward with Visual
 Studio. Just put the 'mtools-dependencies/' folder where you want and then run 
-the  'setEnvVar-mtools-dependencies.bat' script with admin. rights to create 
+the 'setEnvVar-mtools-dependencies.bat' script with admin. rights to create 
 the environment variables indicating where the librairies are located. 
 
 
@@ -40,7 +40,7 @@ project). There are several build configurations:
   - debug/release : Build the mtools library for debug or release mode.
   - Win32/x64 : Build for 32 or 64 bits.
 
-Build all the configurations taht you wish to use. Hopefully it should compile 
+Build all the configurations that you wish to use. Hopefully it should compile 
 without  errors... You can now run the test program to try the library.
 
 
@@ -53,8 +53,10 @@ problem for every configuration for which mtools was build.
 
 4) Using mtools in a project.
 
-The example directory also contain the emptyProject.zip template file which 
-may be used as a starting project using mtools. 
+The script 'create-mtools-project.bat' create a new empty project with a given name
+already setup to use mtools (with a VS2015 solution and a basic makefile). You can 
+move this batch script around as it create projects in the current directory where 
+it is called.
 
 
 
