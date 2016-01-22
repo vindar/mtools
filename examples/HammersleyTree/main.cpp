@@ -270,7 +270,6 @@ void drawPoints(cimg_library::CImg<unsigned char> & image, float op = 1.0)
         {
         pPoissonPoint pp = it->adr();
         RGBc coul = RGBc::c_Black;
-        MTOOLS_ASSERT(pp->_treeindex > 0);
         image.fBox2_draw_circle(R, { pp->x, pp->t }, T / 1000, coul,op);   // draw the points
         }
     cout << "ok!\n\n";
@@ -285,7 +284,6 @@ void drawLines(cimg_library::CImg<unsigned char> & image, float op = 0.8)
         {
         pPoissonPoint pp = it->adr();
         RGBc coul = RGBc::c_Black;
-        MTOOLS_ASSERT(pp->_treeindex > 0);
         // horizontal lines
         if (pp->father() == nullptr) { image.fBox2_drawLine(R, { 0.0, pp->t }, { pp->x, pp->t }, coul,op); } // line going to the left border
         else { image.fBox2_drawLine(R, { pp->father()->x, pp->t }, { pp->x, pp->t }, coul,op); } // normal horizontal line
