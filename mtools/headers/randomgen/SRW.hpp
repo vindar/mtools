@@ -181,7 +181,7 @@ namespace mtools
                     }
                 if (d < 128)
                     { // 2 < d < 128 : we use the exact CDF from the small grid array
-                    int64 off = sampleDiscreteRVfromCDF(internals_random::_srwExitGridSmallR[d], d-1, gen);
+                    int64 off = sampleDiscreteRVfromCDF(internals_random::_srwExitGridSmallR[d], (size_t)(d-1), gen);
                     switch (Unif_3(gen))
                         {
                         case  0: pos.X() += d; pos.Y() += off; break;
@@ -199,7 +199,7 @@ namespace mtools
                     { // 128 <= d < 1152 : use the neareset 128 multiple and exact CDF from the large grid array
                     int64 b = (d >> 7);  // divide by 128
                     int64 l = (b << 7); // get the nearest lower multiple of 128
-                    int64 off = sampleDiscreteRVfromCDF(internals_random::_srwExitGridLargeR[b], l-1, gen);
+                    int64 off = sampleDiscreteRVfromCDF(internals_random::_srwExitGridLargeR[b], (size_t)(l-1), gen);
                     switch (Unif_3(gen))
                         {
                         case  0: pos.X() += l; pos.Y() += off; break;
