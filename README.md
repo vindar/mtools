@@ -1,19 +1,16 @@
 # mtools: my maths toolkit
 
 - Author:   Arvind Singh ([mail](mailto:arvind.singh@math.u-psud.fr) , [www](http://www.math.u-psud.fr/~singh/))
+- git repo: https://github.com/vindar/mtools
 - License:  [GPLv3](http://www.gnu.org/licenses/gpl-3.0.html)
 
 !['Tree' Eden Model](./mtools.png)
 
 ### About
 
-This repository contain a collection of C++ classes I created for simulations (mostly of exotic stochastic processes) and for displaying graphics. It consists of code that I accumulated over the years which I decided to gather inside a library. 
+This repository contain a collection of C++ classes I created for simulations (mostly of exotic stochastic processes) and for displaying graphics. It consists of code that I accumulated over the years which I finally decided to gather inside a library. 
 
-I cleaned up and rewrote several part of the library in order to take advantage of some C++11 new features. This means that you need a compiler with decent C++ support to build the library.  
-
-Using the library is straightforward. Every class/function is located under the `mtools` namespace. All you need to do is link your program against the binary of the library. Make sure mtools's header directory is in the include path and use '#include "mtools.hpp"'. This header includes all other required headers of the library.
-
-The library is divided in several components:
+Using the library is straightforward. Every class/function is located under the `mtools` namespace. The `#include "mtools.hpp"` directive includes all other required headers of the library which, itself, is divided in several components:
 
   - **randomgen/** : Implementation of some classical random number generators such as the Mersenne Twister, Xorgen... and some classes to generate specific probability distributions such as stable laws, distribution of SRW...
 
@@ -50,13 +47,17 @@ The library is divided in several components:
 
 
 ### Documentation
-I try to keep the documentation fairly up to date. Information about a class or a method is located in the corresponding header file, above its declaration. Comments are, more or less, in doxygen format: you can use the 'Doxyfile' configuration file to build the documentation for the whole library using doxygen. It is also worth looking at the examples directory which contain code demonstrating how to use the library.
+I try to keep the documentation fairly up to date (hum...). Information about a class or a method should be located in the corresponding header file, above its declaration. Comments are, more or less, in doxygen format: you can use the `Doxyfile` configuration file to build the documentation for the whole library using doxygen.
+
+
+### Examples
+The directory contain standalone projects demonstrating how to use the library. It mostly consist of simple simulations of stochastic processes such as interacting particle systems, percolation, DLA, interacting random walks...
 
 
 ### Building the library
-The library is cross-platform (at least, it works under Linux and Windows) but it depends on other libraries, mainly [CImg](http://cimg.eu/) and [FLTK](http://www.fltk.org). See the file '[INSTALL.TXT](https://github.com/vindar/mtools/blob/master/INSTALL.TXT)' for detailed instructions about the build procedure depending on the platform.
+The library is cross-platform. At least, it works under Linux and Windows but it depends on other libraries, mainly [CImg](http://cimg.eu/) and [FLTK](http://www.fltk.org). The library uses several C++11 features. Hence a (fairly) up to date compiler is required to build it. To simplify the build procedure with Visual Studio, the repository [mtools-dependencies](https://github.com/vindar/mtools-dependencies) contain VS2015 builds of all the required libraries. See the file '[INSTALL.TXT](https://github.com/vindar/mtools/blob/master/INSTALL.TXT)' for detailed instructions.
 
 
 ### What else...
-If you are looking for a nice C++ library that you can use to create simulation and graphics, I strongly recommend that you look at Vincent Beffara's simulation library (http://github.com/vbeffara/Simulations). It is very similar to mine and does pretty much the same things. If I had known about it a few years ago, I would probably now just use it and would never have written this one... In fact, while putting this library together, I borrowed the ideas of 'watch windows' and simple command-line parser from Vincent's library. There are many other neat features so go have a look at it.
+If you are looking for a nice C++ library that you can use to create simulation and graphics, I strongly recommend that you look at [Vincent Beffara's simulation library](http://github.com/vbeffara/Simulations). It is very similar to mine and does pretty much the same things. If I had known about it a few years ago, I would probably now just use it and would never have written this one... In fact, while putting this library together, I borrowed the ideas of 'watch windows' and simple command-line parser from Vincent's library. There are many other neat features so go have a look at it.
 
