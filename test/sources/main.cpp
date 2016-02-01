@@ -204,8 +204,46 @@ void espp(int64 N)
     }
 
 
+std::map<double, double> fmap;
+
+double testLin(double x)
+    {
+    return mtools::linearInterpolation(x, fmap);
+    }
+
+double testCub(double x)
+    {
+    return mtools::cubicInterpolation(x, fmap);
+    }
+
+double testMon(double x)
+    {
+    return mtools::monotoneCubicInterpolation(x, fmap);
+    }
+
+
 int main(int argc, char *argv[])
     {
+
+
+    for (int i = 0;i < 100;i++)
+        {
+        double x = Unif(gen)*TWOPI;
+        fmap[x] = sin(x);
+        }
+
+    Plotter2D PL;
+
+    auto P1 = makePlot2DFun(testLin, -1,8, "linear");
+    auto P2 = makePlot2DFun(testCub, -1, 8, "cubic");
+    auto P3 = makePlot2DFun(testMon, -1, 8, "monotone");
+
+    PL[P1][P2][P3];
+
+    PL.plot();
+
+    return 0;
+
 
     int m = 7;
 

@@ -42,6 +42,17 @@ namespace mtools
 
 
     /**
+     * Linear interpolation from a map.
+     *
+     * @param   x   The x coordinate.
+     * @param   map The map containing the points.
+     *
+     * @return  the interpolated value at x. Return Nan if outside or the map is empty.
+     **/
+    double linearInterpolation(double x, const std::map<double, double> & map);
+
+
+    /**
      * Compute the cubic inteprolation. The points must be in increasing X order. Takes care of NaNs
      * and infinities.
      *
@@ -57,6 +68,17 @@ namespace mtools
 
 
     /**
+    * Cubic interpolation from a map.
+    *
+    * @param   x   The x coordinate.
+    * @param   map The map containing the points.
+    *
+    * @return  the interpolated value at x. Return Nan if outside or the map is empty.
+    **/
+    double cubicInterpolation(double x, const std::map<double, double> & map);
+
+
+    /**
      * Compute the monotone cubic inteprolation. The points must be in increasing X order. Takes
      * care of NaNs and infinities.
      *
@@ -69,6 +91,22 @@ namespace mtools
      * @return  the cubic interpolated value.
      **/
     double monotoneCubicInterpolation(double x, fVec2 P0, fVec2 P1, fVec2 P2, fVec2 P3);
+
+    
+    /**
+    * Monotone cubic interpolation from a map.
+    *
+    * @param   x   The x coordinate.
+    * @param   map The map containing the points.
+    *
+    * @return  the interpolated value at x. Return Nan if outside or the map is empty.
+    **/
+    double monotoneCubicInterpolation(double x, const std::map<double, double> & map);
+
+
+
+
+
 }
 
 

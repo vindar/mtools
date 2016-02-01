@@ -29,8 +29,8 @@ namespace mtools
 
     double linearInterpolation(double x, fVec2 P1, fVec2 P2)
         {
-        if (std::isnan(P1.X()) || std::isnan(P1.Y()))  return std::numeric_limits<double>::quiet_NaN();
-        if (std::isnan(P2.X()) || std::isnan(P2.Y()))  return std::numeric_limits<double>::quiet_NaN();
+        if (std::isnan(P1.X()) || std::isnan(P1.Y()))  return mtools::NaN;
+        if (std::isnan(P2.X()) || std::isnan(P2.Y()))  return mtools::NaN;
         if (P2.X() < P1.X()) { fVec2 temp = P1; P1 = P2; P2 = temp; }
         double delta = P2.X() - P1.X();
         if (delta <= 0.0) 
@@ -39,12 +39,26 @@ namespace mtools
             if (x > P2.X()) return P2.Y();
             return (P1.Y() + P2.Y()) / 2; 
             }
-        if ((P1.Y() > DBL_MAX) && (P2.Y() < -DBL_MAX))  return std::numeric_limits<double>::quiet_NaN();
-        if ((P2.Y() > DBL_MAX) && (P1.Y() < -DBL_MAX))  return std::numeric_limits<double>::quiet_NaN();
-        if ((P1.Y() > DBL_MAX) || (P2.Y() > DBL_MAX))   return std::numeric_limits<double>::infinity();
-        if ((P1.Y() < -DBL_MAX) || (P2.Y() < -DBL_MAX)) return -std::numeric_limits<double>::infinity();
+        if ((P1.Y() > DBL_MAX) && (P2.Y() < -DBL_MAX))  return mtools::NaN;
+        if ((P2.Y() > DBL_MAX) && (P1.Y() < -DBL_MAX))  return mtools::NaN;
+        if ((P1.Y() > DBL_MAX) || (P2.Y() > DBL_MAX))   return mtools::INF; 
+        if ((P1.Y() < -DBL_MAX) || (P2.Y() < -DBL_MAX)) return -mtools::INF;
         return P1.Y() + ((x - P1.X())/delta)*(P2.Y() - P1.Y());
         }
+
+
+    double linearInterpolation(double x, const std::map<double, double> & map)
+        {
+        auto it = map.lower_bound(x);
+        if (it == map.end()) return mtools::NaN;
+        fVec2 P1(it->first,it->second); // left point
+        if (P1.X() == x) return P1.Y();
+        it++;
+        if (it == map.end()) return mtools::NaN;
+        fVec2 P2(it->first, it->second); // right point
+        return linearInterpolation(x, P1, P2);
+        }
+
 
 
     namespace internals_graphics
@@ -83,10 +97,10 @@ namespace mtools
 
     double cubicInterpolation(double x, fVec2 P0, fVec2 P1, fVec2 P2, fVec2 P3)
         {
-        if (std::isnan(P1.X()) || std::isnan(P1.Y()))  return std::numeric_limits<double>::quiet_NaN();
-        if (std::isnan(P2.X()) || std::isnan(P2.Y()))  return std::numeric_limits<double>::quiet_NaN();
-        if (std::isnan(P0.X()))  return std::numeric_limits<double>::quiet_NaN();
-        if (std::isnan(P3.X()))  return std::numeric_limits<double>::quiet_NaN();
+        if (std::isnan(P1.X()) || std::isnan(P1.Y()))  return mtools::NaN;
+        if (std::isnan(P2.X()) || std::isnan(P2.Y()))  return mtools::NaN;
+        if (std::isnan(P0.X()))  return mtools::NaN;
+        if (std::isnan(P3.X()))  return mtools::NaN;
 
         const double D1 = (P2.Y() - P1.Y()) / (P2.X() - P1.X());
         const double D0 = (std::isnan(P0.Y())) ? D1 : (P1.Y() - P0.Y()) / (P1.X() - P0.X());
@@ -99,12 +113,30 @@ namespace mtools
         }
 
 
+    double cubicInterpolation(double x, const std::map<double, double> & fmap)
+        {
+        auto it = fmap.lower_bound(x);
+        if (it == fmap.end()) return mtools::NaN;
+        fVec2 P1(it->first, it->second); // left point
+        if (P1.X() == x) return P1.Y();
+        fVec2 P0(mtools::NaN,mtools::NaN); 
+        if (it != fmap.begin()) { auto pit = it; pit--; P0.X() = pit->first; P0.Y() = pit->second; }// left border point
+        it++;
+        if (it == fmap.end()) return mtools::NaN;
+        fVec2 P2(it->first, it->second); // right point
+        it++;
+        fVec2 P3(mtools::NaN, mtools::NaN); 
+        if (it != fmap.end()) { P3.X() = it->first; P3.Y() = it->second; }// left border point
+        return cubicInterpolation(x,P0, P1, P2, P3);
+        }
+
+
     double monotoneCubicInterpolation(double x, fVec2 P0, fVec2 P1, fVec2 P2, fVec2 P3)
     {
-        if (std::isnan(P1.X()) || std::isnan(P1.Y()))  return std::numeric_limits<double>::quiet_NaN();
-        if (std::isnan(P2.X()) || std::isnan(P2.Y()))  return std::numeric_limits<double>::quiet_NaN();
-        if (std::isnan(P0.X()))  return std::numeric_limits<double>::quiet_NaN();
-        if (std::isnan(P3.X()))  return std::numeric_limits<double>::quiet_NaN();
+        if (std::isnan(P1.X()) || std::isnan(P1.Y()))  return mtools::NaN;
+        if (std::isnan(P2.X()) || std::isnan(P2.Y()))  return mtools::NaN;
+        if (std::isnan(P0.X()))  return mtools::NaN;
+        if (std::isnan(P3.X()))  return mtools::NaN;
 
         const double D1 = (P2.Y() - P1.Y()) / (P2.X() - P1.X());
         const double D0 = (std::isnan(P0.Y())) ? D1 : (P1.Y() - P0.Y()) / (P1.X() - P0.X());
@@ -133,6 +165,25 @@ namespace mtools
 
         return internals_graphics::_cubicInterpolation(x, P1, P2, m1, m2);
     }
+
+
+    double monotoneCubicInterpolation(double x, const std::map<double, double> & fmap)
+        {
+        auto it = fmap.lower_bound(x);
+        if (it == fmap.end()) return mtools::NaN;
+        fVec2 P1(it->first, it->second); // left point
+        if (P1.X() == x) return P1.Y();
+        fVec2 P0(mtools::NaN, mtools::NaN);
+        if (it != fmap.begin()) { auto pit = it; pit--; P0.X() = pit->first; P0.Y() = pit->second; }// left border point
+        it++;
+        if (it == fmap.end()) return mtools::NaN;
+        fVec2 P2(it->first, it->second); // right point
+        it++;
+        fVec2 P3(mtools::NaN, mtools::NaN);
+        if (it != fmap.end()) { P3.X() = it->first; P3.Y() = it->second; }// left border point
+        return monotoneCubicInterpolation(x, P0, P1, P2, P3);
+        }
+
 
 
 }
