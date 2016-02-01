@@ -23,7 +23,7 @@ struct siteInfo
 
 
 double eps;                         // distance under which particles stick together
-MT2004_64 gen;                      // random number generator
+MT2004_64 gen(0);                      // random number generator
 Grid_basic<2, siteInfo, 2> Grid;    // the main grid 
 int64 NN = 0;                       // current number of particles
 CImg<unsigned char> im;             // image for drawing
@@ -226,10 +226,11 @@ int main(int argc, char *argv[])
     {
 
 
-    for (int i = 0;i < 100;i++)
+    for (int i = 0;i < 10000;i++)
         {
         double x = Unif(gen)*TWOPI;
         fmap[x] = sin(x);
+        cout << x << "    \t" << fmap[x] << "\n";
         }
 
     Plotter2D PL;

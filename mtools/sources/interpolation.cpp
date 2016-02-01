@@ -51,11 +51,11 @@ namespace mtools
         {
         auto it = map.lower_bound(x);
         if (it == map.end()) return mtools::NaN;
-        fVec2 P1(it->first,it->second); // left point
-        if (P1.X() == x) return P1.Y();
-        it++;
-        if (it == map.end()) return mtools::NaN;
-        fVec2 P2(it->first, it->second); // right point
+        fVec2 P2(it->first,it->second);
+        if (P2.X() == x) return P2.Y();
+        if (it == map.begin()) return mtools::NaN;
+        it--;
+        fVec2 P1(it->first, it->second);
         return linearInterpolation(x, P1, P2);
         }
 
@@ -117,16 +117,16 @@ namespace mtools
         {
         auto it = fmap.lower_bound(x);
         if (it == fmap.end()) return mtools::NaN;
-        fVec2 P1(it->first, it->second); // left point
-        if (P1.X() == x) return P1.Y();
-        fVec2 P0(mtools::NaN,mtools::NaN); 
-        if (it != fmap.begin()) { auto pit = it; pit--; P0.X() = pit->first; P0.Y() = pit->second; }// left border point
-        it++;
-        if (it == fmap.end()) return mtools::NaN;
-        fVec2 P2(it->first, it->second); // right point
-        it++;
-        fVec2 P3(mtools::NaN, mtools::NaN); 
-        if (it != fmap.end()) { P3.X() = it->first; P3.Y() = it->second; }// left border point
+        fVec2 P2(it->first, it->second); 
+        if (P2.X() == x) return P2.Y();
+        fVec2 P3(mtools::NaN,mtools::NaN); 
+        auto pit = it; pit++;
+        if (pit != fmap.end()) { P3.X() = pit->first; P3.Y() = pit->second; }
+        if (it == fmap.begin()) return mtools::NaN;
+        it--;
+        fVec2 P1(it->first, it->second);
+        fVec2 P0(mtools::NaN, mtools::NaN);
+        if (it != fmap.begin()) { it--; P0.X() = it->first; P0.Y() = it->second; }
         return cubicInterpolation(x,P0, P1, P2, P3);
         }
 
@@ -171,16 +171,16 @@ namespace mtools
         {
         auto it = fmap.lower_bound(x);
         if (it == fmap.end()) return mtools::NaN;
-        fVec2 P1(it->first, it->second); // left point
-        if (P1.X() == x) return P1.Y();
-        fVec2 P0(mtools::NaN, mtools::NaN);
-        if (it != fmap.begin()) { auto pit = it; pit--; P0.X() = pit->first; P0.Y() = pit->second; }// left border point
-        it++;
-        if (it == fmap.end()) return mtools::NaN;
-        fVec2 P2(it->first, it->second); // right point
-        it++;
+        fVec2 P2(it->first, it->second);
+        if (P2.X() == x) return P2.Y();
         fVec2 P3(mtools::NaN, mtools::NaN);
-        if (it != fmap.end()) { P3.X() = it->first; P3.Y() = it->second; }// left border point
+        auto pit = it; pit++;
+        if (pit != fmap.end()) { P3.X() = pit->first; P3.Y() = pit->second; }
+        if (it == fmap.begin()) return mtools::NaN;
+        it--;
+        fVec2 P1(it->first, it->second);
+        fVec2 P0(mtools::NaN, mtools::NaN);
+        if (it != fmap.begin()) { it--; P0.X() = it->first; P0.Y() = it->second; }
         return monotoneCubicInterpolation(x, P0, P1, P2, P3);
         }
 
