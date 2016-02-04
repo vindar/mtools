@@ -222,9 +222,22 @@ double testMon(double x)
     }
 
 
+MT2004_64 g1;
+MT2002_32 g2;
+XorGen4096_64 g3;
+
+
+
+/* Return a "real" random number suite for initializing a pseudo-RNG */
+
 int main(int argc, char *argv[])
     {
 
+    cout << (int32)randomID() << "\n";
+    cout << (int32)randomID() << "\n";
+    cout << (int32)randomID() << "\n";
+    cout.getKey();
+    return 0;
 
     for (int i = 0;i < 10000;i++)
         {
