@@ -95,9 +95,9 @@ namespace mtools
 
 
         /**
-        * Default constructor. Init with a seed obtained from the internal clock.
+        * Default constructor. Init with a unique random seed.
         **/
-        MT2002_32() {seed(randomFromTime32());}
+        MT2002_32() {seed((int32)randomID());}
 
 
         /**

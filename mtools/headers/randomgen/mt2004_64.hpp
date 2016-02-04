@@ -54,7 +54,7 @@
 #pragma once
 
 #include "../misc/misc.hpp"
-#include <ctime>
+#include "../misc/timefct.hpp"
 
 
 namespace mtools
@@ -97,9 +97,9 @@ namespace mtools
 
 
         /**
-        * Default constructor. Init with a seed obtained from the internal clock.
+        * Default constructor. Init with a unique random seed.
         **/
-        MT2004_64() { seed(time(NULL)); }
+        MT2004_64() { seed((uint64)(randomID())); }
 
 
         /**
