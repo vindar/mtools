@@ -233,10 +233,10 @@ XorGen4096_64 g3;
 int main(int argc, char *argv[])
     {
 
-    cout << (int32)randomID() << "\n";
-    cout << (int32)randomID() << "\n";
-    cout << (int32)randomID() << "\n";
-    cout.getKey();
+    std::cout << (int32)randomID() << "\n";
+    std::cout << (int32)randomID() << "\n";
+    std::cout << (int32)randomID() << "\n";
+    //cout.getKey();
     return 0;
 
     for (int i = 0;i < 10000;i++)
