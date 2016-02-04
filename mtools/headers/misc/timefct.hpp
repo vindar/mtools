@@ -41,14 +41,13 @@ namespace mtools
         }
 
 
-
     /**
-     * Return a random uint32 taken from the computed clock. Useful for initializing a random number
-     * generator.
+     * Return a unique identifier based on the current time, thread id and process id and other
+     * randomness if possible. the value returned is suited for initialization of an RNG.
      *
-     * @return  A "random" uint32.
+     * @return  A "random" uint32 that should be truly unique even among different thread/processes.
      **/
-    uint32 randomFromTime32();
+    size_t randomID();
 
 
     /**

@@ -20,6 +20,15 @@
 
 #include "stdafx_mtools.h"
 
+#include <random>
+
+#ifdef __linux__ 
+#include <sys/types.h>
+#include <unistd.h>
+#elif _WIN32
+#include <windows.h>
+#endif
+
 
 #include "misc/timefct.hpp"
 #include "misc/indirectcall.hpp"
@@ -32,14 +41,30 @@ namespace mtools
 {
 
 
-    uint32 randomFromTime32()
+    size_t randomID()
         {
-        time_t a = time(NULL);
-        if (sizeof(time_t) == 4) { return((uint32)a); }
-        uint32 r = (uint32)(((uint64)a) >> 32);
-        r += a & 0xffffffffULL;
-        return r;
+        static size_t h[5];
+        std::random_device rd;
+        std::hash<std::random_device::result_type> hash_rd;
+        h[0] = hash_rd(rd());      // try to get a real random number 
+        std::hash<std::time_t> hash_time;
+        h[1] = hash_time(time(nullptr));  // number of seconds since 1970
+        std::hash<std::thread::id> hash_thread;
+        h[2] = hash_thread(std::this_thread::get_id());  // the thread id
+        h[3]++; // increase counter
+    #ifdef __linux__ 
+        auto pid = getpid();  // process id on linux
+    #elif _WIN32
+        auto pid = GetCurrentProcessId();   // process id on windows
+    #endif
+        std::hash<decltype(pid)> hash_pid;
+        h[4] = hash_pid(pid);  // process id
+        std::string str = toString(h[0]) + "_" + toString(h[1]) + "_" + toString(h[2]) + "_" + toString(h[3]) + "_" + toString(h[4]);
+        std::hash<std::string> hash_str;
+        return hash_str(str);
         }
+
+
 
 
     uint64 Chronometer()
