@@ -283,10 +283,9 @@ namespace mtools
 
 
 
-    Console::Console(const std::string & name, bool showAtCreation) :  _waiting_text(), _tl(0), _CW(nullptr),  _disabled(0), _enableLogging(true), _enableScreen(true), _showDefaultInputValue(false), _consoleName(name)
-        {
-        _logfile = new LogFile(_consoleName + ".txt");
-        if (showAtCreation) { _startProtect(); _endProtect(); }
+    Console::Console(const std::string & name, bool showAtCreation) :  _waiting_text(), _tl(0), _CW(nullptr),  _disabled(0), _enableLogging(true), _enableScreen(true), _showDefaultInputValue(false), _consoleName(name), _logfile(nullptr)
+        {        
+        if (showAtCreation) { _logfile = new LogFile(_consoleName + ".txt"); _startProtect(); _endProtect(); }
         }
 
 
@@ -336,6 +335,7 @@ namespace mtools
             }
         if (_enableLogging)
             {
+            if (_logfile == nullptr) _logfile = new LogFile(_consoleName + ".txt");
             _logfile->operator<<("\n\n************************** CLEAR ****************************\n\n");
             }
         _endProtect();
@@ -374,6 +374,7 @@ namespace mtools
                 }
             if (_enableLogging)
                 {
+                if (_logfile == nullptr) _logfile = new LogFile(_consoleName + ".txt");
                 _logfile->operator<<(us);
                 }
             }
@@ -480,9 +481,8 @@ namespace mtools
     namespace internals_console
     {
 
-    ConsoleBasic::ConsoleBasic(const std::string & name) : _enableLogging(true), _enableScreen(true), _showDefaultInputValue(false)
+    ConsoleBasic::ConsoleBasic(const std::string & name) : _enableLogging(true), _enableScreen(true), _showDefaultInputValue(false), _consoleName(name), _logfile(nullptr)
         {
-        _logfile = new LogFile(name + ".txt");
         }
 
     ConsoleBasic::~ConsoleBasic()
@@ -552,7 +552,11 @@ namespace mtools
 
     void ConsoleBasic::_print(const std::string & s)
         {
-        if (_enableLogging) { _logfile->operator<<(s); }
+        if (_enableLogging) 
+            { 
+            if (_logfile == nullptr) _logfile = new LogFile(_consoleName + ".txt");
+            _logfile->operator<<(s); 
+            }
         if (_enableScreen) { std::cout << s; }
         }
 
@@ -565,11 +569,11 @@ namespace mtools
             static Console * pcout = nullptr;
             if (mode > 0)
                 {
-                    if (init++ == 0) { MTOOLS_DEBUG("Creating the global FLTK cout console."); pcout = new mtools::Console("cout", false); } // first time, create the console
+                if (init++ == 0) { MTOOLS_DEBUG("Creating the global FLTK cout console."); pcout = new mtools::Console("cout", false); } // first time, create the console
                 }
             if (mode < 0)
                 {
-                    if (--init == 0)  { MTOOLS_DEBUG("Destroying the global FLTK cout console."); pcout->_disableConsole(); } // last one, do not delete but disable it...
+                if (--init == 0)  { MTOOLS_DEBUG("Destroying the global FLTK cout console."); pcout->_disableConsole(); } // last one, do not delete but disable it...
                 }
             return pcout; // mode = 0, just return a pointer to cout
             }

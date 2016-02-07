@@ -105,6 +105,14 @@ namespace mtools
 
 
             /**
+             * Sets a new name for the console / log file, this has no effect if the console is already displayed.
+             *
+             * @param   filename    new console name / log file name (without extension).
+             **/
+            void setName(const std::string & filename) { _consoleName = filename; }
+
+
+            /**
              * Destructor.Flushed all streams.
              **/
             ~Console();
@@ -316,6 +324,7 @@ namespace mtools
             public:
                 ConsoleBasic(const std::string & name);
                 ~ConsoleBasic();
+                void setName(const std::string & filename) { _consoleName = filename; }
                 template<typename T> ConsoleBasic & operator<<(const T & O) { _print(mtools::toString(O)); return(*this); }
                 template<typename T> ConsoleBasic & operator>>(T & O)
                     {
@@ -348,6 +357,7 @@ namespace mtools
                 std::atomic<bool>   _enableLogging;
                 std::atomic<bool>   _enableScreen;
                 std::atomic<bool>   _showDefaultInputValue;
+                std::string         _consoleName;
                 mtools::LogFile *   _logfile;
             };
 
@@ -361,6 +371,7 @@ namespace mtools
             public:
                 CoutConsoleBasic() { _get(1); }
                 ~CoutConsoleBasic() { _get(-1); }
+                void setName(const std::string & filename) { _get(0)->setName(filename); }
                 template<typename T> CoutConsoleBasic & operator<<(const T & O) { _get(0)->operator<<(O); return(*this); }
                 template<typename T> CoutConsoleBasic & operator>>(T & O) { _get(0)->operator>>(O); return(*this); }
                 CoutProxy ask(const std::string & question) { return _get(0)->ask(question); }
@@ -391,6 +402,7 @@ namespace mtools
             public:
                 CoutConsole() { _get(1); }
                 ~CoutConsole() { _get(-1); }
+                void setName(const std::string & filename) { _get(0)->setName(filename); }
                 template<typename T> CoutConsole & operator<<(const T & O) { _get(0)->operator<<(O); return(*this); }
                 template<typename T> CoutConsole & operator>>(T & O) { _get(0)->operator>>(O); return(*this); }
                 CoutProxy ask(const std::string & question) { return _get(0)->ask(question); }
