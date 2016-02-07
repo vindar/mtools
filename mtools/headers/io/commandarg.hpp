@@ -342,6 +342,20 @@ namespace mtools
         return;
         }
 
+
+    /**
+     * Modify the way command line options are queried/displayed from now on.
+     *
+     * @param   interactive     true to query missing paramter on the fly using cout.
+     * @param   display         true to display information about each paramter used using cout.
+     **/
+    inline void commandLineOption(bool interactive, bool display)
+        {
+        internals_commandarg::interactive = interactive;    // set the flags
+        internals_commandarg::display = display;            //
+        }
+
+
     }
 
 	
