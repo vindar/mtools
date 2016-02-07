@@ -232,11 +232,15 @@ XorGen4096_64 g3;
 
 int main(int argc, char *argv[])
     {
+    parseCommandLine(argc, argv, false, false);
+    cout.setName(std::string("cout") + (std::string)arg("id", "12"));
+    commandLineOption(true, true);
+    int KK = arg("K");
 
     std::cout << (int32)randomID() << "\n";
     std::cout << (int32)randomID() << "\n";
     std::cout << (int32)randomID() << "\n";
-    //cout.getKey();
+    cout.getKey();
     return 0;
 
     for (int i = 0;i < 10000;i++)
