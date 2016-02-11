@@ -31,8 +31,16 @@ PCHDIR_TEST = ../test
 PCHFILE_TEST = stdafx_test.h
 PCHOBJ_TEST = $(OBJDIR_TEST)/$(PCHFILE_TEST).gch
 INC_TEST = -I$(OBJDIR_TEST) -I$(HEADERDIR_MTOOLS)
+
 CXXFLAGS_TEST = `fltk-config --cxxflags` -std=c++11 -Wall -I../test -Dcimg_display=0
+
 LDFLAGS_TEST =  $(OUT_MTOOLS) `fltk-config --ldstaticflags` -lcairo -lfreetype -ljpeg -lpng -lpixman-1 -lz
+CHECKCOMPILER = $(shell $(CXX) --version | grep LLVM)
+ifeq ("$(CHECKCOMPILER)","")
+# using gcc
+    LDFLAGS_TEST += -latomic
+endif
+
 ADDLIBDIR_TEST =
 
 
