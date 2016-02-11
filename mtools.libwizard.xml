@@ -7,7 +7,7 @@
 <IFEQUAL expr1 = "%%LIB_INSTALL%%" expr2 = "" > <YESNO text = "Do you want to install the %LibName% library ?" name = "%LIB_INSTALL%" /> </IFEQUAL> <!-- Query whether we hould install the library -->
 <IFNOTEQUAL expr1 = "%%LIB_INSTALL%%" expr2 = "yes" > <EXIT/>  </IFNOTEQUAL> <!-- quit if we should not install the library -->
 <!-- here, we really install the library -->
-<LDFLAGS flag = "-lmtools -latomic" />
+<LDFLAGS flag = "-lmtools" />
 <INCLUDE_PATH path = "%LibDir%/mtools/headers/" config = "all" /> 
 <LIB_PATH path = "%LibDir%/mtools/lib/" config = "all" />
 <LIB filename = "mtools32.lib" config = "win32" />
