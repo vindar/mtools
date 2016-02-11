@@ -359,11 +359,11 @@
         // Bresenham's line algorithm, see wikipedia
         int x1 = (int)P1.X(), y1 = (int)P1.Y();
         int x2 = (int)P2.X(), y2 = (int)P2.Y();
-        const bool steep = (fabs((double)(y2 - y1)) > fabs((double)(x2 - x1)));
+        const bool steep = (std::abs((double)(y2 - y1)) > std::abs((double)(x2 - x1)));
         if (steep) { std::swap(x1, y1); std::swap(x2, y2); }
         if (x1 > x2) { std::swap(x1, x2); std::swap(y1, y2); }
         const double dx = x2 - x1;
-        const double dy = fabs((double)(y2 - y1));
+        const double dy = std::abs((double)(y2 - y1));
         double error = dx / 2.0f;
         const int ystep = (y1 < y2) ? 1 : -1;
         int y = (int)y1;
@@ -395,11 +395,11 @@
         // Bresenham's line algorithm, see wikipedia
         int x1 = (int)P1.X(), y1 = (int)P1.Y();
         int x2 = (int)P2.X(), y2 = (int)P2.Y();
-        const bool steep = (fabs((double)(y2 - y1)) > fabs((double)(x2 - x1)));
+        const bool steep = (std::abs((double)(y2 - y1)) > std::abs((double)(x2 - x1)));
         if (steep) { std::swap(x1, y1); std::swap(x2, y2); }
         if (x1 > x2) { std::swap(x1, x2); std::swap(y1, y2); }
         const double dx = x2 - x1;
-        const double dy = fabs((double)(y2 - y1));
+        const double dy = std::abs((double)(y2 - y1));
         double error = dx / 2.0f;
         const int ystep = (y1 < y2) ? 1 : -1;
         int y = (int)y1;
