@@ -26,7 +26,6 @@
 #include "graphics/rgbc.hpp"
 #include "io/console.hpp"
 
-
 #if defined(_WIN32)
 #define MTOOLS_HASCONIO
 #elif defined(__linux__) || defined(__unix__) || defined(_POSIX_VERSION)

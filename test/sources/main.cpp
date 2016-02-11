@@ -232,6 +232,8 @@ int main(int argc, char *argv[])
     {
     MTOOLS_SWAP_THREADS(argc, argv);
 
+    MTOOLS_INSURE(1==2);
+
     parseCommandLine(argc, argv, false, false);
     cout.setName(std::string("cout") + (std::string)arg("id", "12"));
     commandLineOption(true, true);
