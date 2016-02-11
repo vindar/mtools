@@ -2,7 +2,6 @@
 /** pre-compiled header */
 
 //#pragma message("Compiling precompiled headers for stdafx_mtools.h.\n")
-#pragma once
 
 #include <cstdlib>
 #include <cstdio>

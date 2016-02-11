@@ -127,7 +127,7 @@ namespace mtools
                 virtual std::string _get() const override { return mtools::toString((*_outfun)(*(const_cast<cvT*>(_p)))); }
 
                 /* return the type of T */
-                virtual std::string type() const { return  typeid(T).name(); }
+                virtual std::string type() const override { return  typeid(T).name(); }
 
                 /**
                 * Sets the given value and return the number of character read from the input.

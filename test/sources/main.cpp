@@ -235,7 +235,6 @@ int main(int argc, char *argv[])
     parseCommandLine(argc, argv, false, false);
     cout.setName(std::string("cout") + (std::string)arg("id", "12"));
     commandLineOption(true, true);
-    int KK = arg("K");
 
     cout << (int32)randomID() << "\n";
     cout << (int32)randomID() << "\n";

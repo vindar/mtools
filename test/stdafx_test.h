@@ -2,7 +2,7 @@
 /** pre-compiled header */
 
 //#pragma message("Compiling precompiled headers for stdafx_test.h\n")
-#pragma once
+
 //
 // STL
 //
