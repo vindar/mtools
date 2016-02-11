@@ -3,7 +3,7 @@
  * date : Thu Jan 21 23:05:58 2016
  ***********************************************/
 
-#pragma message("Compiling pre-compiled headers for stdafx.h\n")
+//#pragma message("Compiling pre-compiled headers for stdafx.h\n")
 #pragma once
 
 // STL
