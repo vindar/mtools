@@ -236,8 +236,7 @@ namespace mtools
          **/
         template<class random_t> inline void SRW_Z2_ExitRect(iVec2 & pos, iBox2 R, random_t & gen)
             {
-            int64 d = SRW_Z2_MoveInRect(pos, R, -1,gen); // set ratio to infinity
-            MTOOLS_ASSERT(d == 0);
+            SRW_Z2_MoveInRect(pos, R, -1,gen); // set ratio to infinity
             return;
             }
 

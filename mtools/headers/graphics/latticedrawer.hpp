@@ -1194,7 +1194,7 @@ void _improveImage(int maxtime_ms)
                                 }
                             else
                                 { // still not at the right dimension, we resize before blitting
-                                CImg<unsigned char> sprite = (*spr).get_resize(_exact_sx, _exact_sy, 1, sprite.spectrum(), 5); //quality resizing
+                                CImg<unsigned char> sprite = (*spr).get_resize(_exact_sx, _exact_sy, 1, (*spr).spectrum(), 5); //quality resizing
                                 _exact_im.draw_image(_exact_sx*i, _exact_sy*(_exact_qbuf.height() - 1 - j), 0, 0, sprite); // copy
                                 }
                             if (spr->spectrum() == 3) // fill the last channel with 255 (opaque) if the sprite only has 3 channel

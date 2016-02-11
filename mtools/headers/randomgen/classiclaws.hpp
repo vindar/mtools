@@ -345,7 +345,7 @@ namespace mtools
 
         private:
 
-            double pp, p, pb, expnp, np, glnp, plog, pclog, sq;
+            double pp, p, pb, np, glnp, plog, pclog, sq;
             int n, swch;
             uint64 uz, uo, unfin, diff, rltp;
             int pbits[5];

@@ -385,7 +385,7 @@ namespace mtools
             /**
              * Override of the removed method
              **/
-            virtual void removed(Fl_Group * optionWin)
+            virtual void removed(Fl_Group * optionWin) override
                 {
                 Fl::delete_widget(optionWin);
                 _checkButtonColor = nullptr;
@@ -397,7 +397,7 @@ namespace mtools
             /**
              * Override of the inserted method
              **/
-            virtual internals_graphics::Drawable2DObject * inserted(Fl_Group * & optionWin, int reqWidth)
+            virtual internals_graphics::Drawable2DObject * inserted(Fl_Group * & optionWin, int reqWidth) override
                 {
                 /* create the option window */
                 optionWin = new Fl_Group(0, 0, reqWidth, 110); // create the option group
