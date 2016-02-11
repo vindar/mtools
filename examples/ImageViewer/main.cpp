@@ -47,6 +47,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
 int main(int argc, char ** argv)
     {
+    MTOOLS_SWAP_THREADS(argc, argv);
     parseCommandLine(argc, argv);
     if (argc < 2) { MTOOLS_ERROR("ImageViewer : the image to open must be passed from the command line"); }
     display(argv[1]);

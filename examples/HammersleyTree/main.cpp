@@ -367,6 +367,7 @@ void drawTrees(cimg_library::CImg<unsigned char> & image, float op = 0.3)
 
 int main(int argc, char *argv[])
     {
+    MTOOLS_SWAP_THREADS(argc, argv);
     parseCommandLine(argc, argv, true); // parse the command line, interactive mode
 
     typelaw = arg("distr").info("Offspring distribution (1=unary, 2=binary, other=geometric)");

@@ -49,6 +49,7 @@ RGBc rabbit(fVec2 pos)
 
 int main(int argc, char *argv[]) 
     {
+    MTOOLS_SWAP_THREADS(argc, argv);		
     parseCommandLine(argc, argv, true);
     cout << "**************************************\n";
     cout << "Drawing Mandelbrot + Douady's rabbit.\n";

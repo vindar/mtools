@@ -144,6 +144,7 @@ void makeLERRW(uint64 steps, double d)
 
 int main(int argc, char *argv[]) 
     {
+    MTOOLS_SWAP_THREADS(argc, argv);		
     parseCommandLine(argc, argv, true);
     cout << "*******************************************************\n";
     cout << " Simulation of a Linearly Reinforced Random Walk on Z^2\n";

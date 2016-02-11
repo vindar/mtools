@@ -66,6 +66,7 @@ RGBc colorCircle(iVec2 pos)
 
 int main(int argc, char *argv[]) 
     {
+    MTOOLS_SWAP_THREADS(argc, argv);		
 	parseCommandLine(argc,argv,false);
     cout << "******************************\n";
     cout << "internal DLA on Z2\n";

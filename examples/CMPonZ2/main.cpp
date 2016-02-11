@@ -299,6 +299,7 @@ void test()
 
 int main(int argc, char *argv[]) 
     {
+    MTOOLS_SWAP_THREADS(argc, argv);
     parseCommandLine(argc, argv,true);
     test();
     return 0;

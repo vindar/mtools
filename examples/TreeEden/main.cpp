@@ -143,7 +143,8 @@ void run()
 
 int main(int argc, char *argv[])
 {
-cout << "Tree Eden model\n";
+	MTOOLS_SWAP_THREADS(argc, argv);	
+	cout << "Tree Eden model\n";
     while (1)
     {
         cout << "\n\n-----------------------------\n";

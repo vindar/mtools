@@ -91,6 +91,7 @@ RGBc colorFct(iVec2 pos)
 
 int main(int argc, char *argv[]) 
     {
+    MTOOLS_SWAP_THREADS(argc, argv);
 	parseCommandLine(argc,argv);
     int64 maxNN = arg("N", 10000000).info("total number of particles in the simulation");
 	int autoredraw = arg('a', 10).info("autoredraw per minutes");

@@ -195,6 +195,7 @@ void addParticules(int64 nb)
 
 int main(int argc, char *argv[]) 
     {
+    MTOOLS_SWAP_THREADS(argc, argv);		
 	parseCommandLine(argc,argv); // parse the command line, interactive mode
     int64 maxNN = arg("N", 10000000).info("total number of particles in the simulation");
     eps = arg("eps", 0.00001).info("distance under which particles stick together");

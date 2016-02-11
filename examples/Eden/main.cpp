@@ -114,6 +114,7 @@ void run()
 
 int main(int argc, char *argv[])
     {
+    MTOOLS_SWAP_THREADS(argc, argv);
     cout << "Eden model (FPP with exp weights on edges). 'Infinite simulation'\n\n";
     while (1)
         {

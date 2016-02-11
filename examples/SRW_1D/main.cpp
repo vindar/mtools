@@ -13,6 +13,7 @@ double f2(double x) { return ((x<=1.0) ? 0 : -sqrt(2*x*log(log(x)))); }  // for 
 
 int main(int argc, char *argv[]) 
     {
+    MTOOLS_SWAP_THREADS(argc, argv);		
     parseCommandLine(argc, argv, true);
     cout << "**************************************\n";
     cout << "Simulation of a 1D simple random walk.\n";

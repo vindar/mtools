@@ -12,6 +12,7 @@ using namespace mtools;
 
 int main(int argc, char *argv[])
     {
+    MTOOLS_SWAP_THREADS(argc, argv);
     parseCommandLine(argc, argv, true);
     cout << "**************************************\n";
     cout << "Simulation of a OnceERRW.\n";
