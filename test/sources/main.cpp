@@ -111,8 +111,8 @@ inline double neighbour(const fVec2 & pos)
     {
     int64 i = (int64)floor(pos.X() + 0.5);
     int64 j = (int64)floor(pos.Y() + 0.5);
-    const double r1 = 0.5 - abs(pos.X() - (double)i);
-    const double r2 = 0.5 - abs(pos.Y() - (double)j);
+    const double r1 = 0.5 - std::abs(pos.X() - (double)i);
+    const double r2 = 0.5 - std::abs(pos.Y() - (double)j);
     double r = 1.0 + std::min(r1, r2); r *= r;
     _neighbour(r, i, j, pos);
     _neighbour(r, i, j - 1, pos);
@@ -241,7 +241,7 @@ int main(int argc, char *argv[])
     cout << (int32)randomID() << "\n";
     cout << (int32)randomID() << "\n";
     cout.getKey();
-    return 0;
+    // return 0;
 
     for (int i = 0;i < 10000;i++)
         {

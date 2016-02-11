@@ -22,7 +22,7 @@
 
 #include <random>
 
-#ifdef __linux__ 
+#if defined(__linux__) || defined(__APPLE__)
 #include <sys/types.h>
 #include <unistd.h>
 #elif _WIN32
@@ -52,7 +52,7 @@ namespace mtools
         std::hash<std::thread::id> hash_thread;
         h[2] = hash_thread(std::this_thread::get_id());  // the thread id
         h[3]++; // increase counter
-    #ifdef __linux__ 
+    #if defined(__linux__) || defined(__APPLE__)
         auto pid = getpid();  // process id on linux
     #elif _WIN32
         auto pid = GetCurrentProcessId();   // process id on windows

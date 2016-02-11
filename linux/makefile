@@ -19,7 +19,7 @@ PCHDIR_MTOOLS = ../mtools
 PCHFILE_MTOOLS = stdafx_mtools.h
 PCHOBJ_MTOOLS = $(OBJDIR_MTOOLS)/$(PCHFILE_MTOOLS).gch
 INC_MTOOLS = -I$(OBJDIR_MTOOLS) -I$(HEADERDIR_MTOOLS)
-CXXFLAGS_MTOOLS = `fltk-config --cxxflags` -std=c++11 -Wall
+CXXFLAGS_MTOOLS = `fltk-config --cxxflags` -std=c++11 -Wall -I../mtools -Dcimg_display=0
 
 SRCDIR_TEST = ../test/sources
 OBJDIR_TEST = $(OBJDIR)/test
@@ -31,8 +31,8 @@ PCHDIR_TEST = ../test
 PCHFILE_TEST = stdafx_test.h
 PCHOBJ_TEST = $(OBJDIR_TEST)/$(PCHFILE_TEST).gch
 INC_TEST = -I$(OBJDIR_TEST) -I$(HEADERDIR_MTOOLS)
-CXXFLAGS_TEST = `fltk-config --cxxflags` -std=c++11 -Wall
-LDFLAGS_TEST =  $(OUT_MTOOLS) `fltk-config --ldstaticflags` -lz -lpng -ljpeg -latomic
+CXXFLAGS_TEST = `fltk-config --cxxflags` -std=c++11 -Wall -I../test -Dcimg_display=0
+LDFLAGS_TEST =  $(OUT_MTOOLS) `fltk-config --ldstaticflags` -lz -lpng -ljpeg
 ADDLIBDIR_TEST =
 
 
