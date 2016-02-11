@@ -111,6 +111,9 @@ namespace mtools
             /* return true is the current thread is the calling thread */
             static bool isFLTKThread() { return getInst()->_isFLTKThread();}
 
+            /* return the current status of the fltk thread */
+            static int FLTKThreadStatus() { return getInst()->_FLTKThreadStatus(); }
+
             /* construct the object in the FLTK thread
              * should not be called from the FLTK thread */
             static void newInFLTKThread(IndirectCtor * proxy) { getInst()->_newInFLTKThread(proxy); }
@@ -130,18 +133,31 @@ namespace mtools
             /* return the number of object currently active in the FLTK thread */
             static int nbObject() { return getInst()->_nbObject(); }
 
+            /* run the fltk loop in the current thread, do not return until the 
+               fltk loop finishes */
+            static void runFLTKloop() { return getInst()->_runFLTKloop(); }
+
+            /* stop the fltk loop started by runFLTKloop(); */
+            static void stopFLTKloop() { return getInst()->_stopFLTKloop(); }
+
 
         private:
 
 
-
             bool _isFLTKThread()
                 {
-                if (_stopped)    return false;
-                if (_init == 0)  return false;
-                if (!_active)    return false;
+                if (_FLTKThreadStatus() != 2) return false;
                 if (_thid != std::this_thread::get_id()) return false;
                 return true;
+                }
+
+
+            int _FLTKThreadStatus()
+                {
+                if (_stopped)    return -1; // thread was stopped
+                if (_init == 0)  return 0;  // thread never started
+                if (!_active)    return 1; // started but not ready
+                return 2; // ready
                 }
 
 
@@ -198,7 +214,9 @@ namespace mtools
                 if (_stopped)
                     {
                     MTOOLS_DEBUG("!!!! Destruction failed : the FLTK thread is stopped !!!!");
-                    return;   // do nothing it the thread was already stopped
+                    //proxy->destroy();                             // Is it better to destroy in another thread or not destroy at all ?
+                    //MTOOLS_DEBUG("Destruction completed.");       // THAT IS THE QUESTION...
+                    return;
                     }
                 MTOOLS_ASSERT(_active);
                 MTOOLS_ASSERT(_init > 0);
@@ -263,7 +281,7 @@ namespace mtools
                 MTOOLS_DEBUG("Starting the FLTK Thread...");
                 MTOOLS_ASSERT(_active == false);
                 MTOOLS_ASSERT(_stopped == false);
-                std::thread th(&FLTK_Supervisor::_threadProc, this); // start the FLTK thread
+                std::thread th(&FLTK_Supervisor::_threadProc, this, true); // start the FLTK thread
                 th.detach(); // detach it.
                 while (!_active)
                     {
@@ -323,9 +341,30 @@ namespace mtools
 
 
 
+            /* run the fltk loop in the current thread, do not return until the fltk loop finishes */
+            void _runFLTKloop()
+                {
+                MTOOLS_DEBUG("Calling runFLTKloop()...");
+                MTOOLS_ASSERT(FLTKThreadStatus() == 0);
+                _counter++;         // increase the counter so the thread will never stop even when the number of object reaches zero
+                _init++;
+                _threadProc(false); // run the thread procedure
+                MTOOLS_DEBUG("finished runFLTKloop().");
+                }
+
+
+            /* stop the fltk loop started by runFLTKloop() */
+            void _stopFLTKloop()
+                {
+                MTOOLS_DEBUG("Calling stopFLTKloop()...");
+                MTOOLS_ASSERT(FLTKThreadStatus() == 2);
+                _stopThread();
+                MTOOLS_DEBUG("finished stopFLTKloop().");
+                }
+
 
             /* the FLTK thread procedure */
-            void _threadProc()
+            void _threadProc(bool donotreallystop)
                 {
                 try
                     {
@@ -336,14 +375,15 @@ namespace mtools
                     while (!_exitloop)
                         {
                         Fl::wait(0.1);
-                        _processMsg(); // check for messages
+                        _processMsg();  // check for messages                        
+                        if (!_active) Fl::awake(&FLTK_Supervisor::test_init_callback, nullptr); // send awake message to itself !
                         }
                     Fl::unlock(); // seems to do nothing but cannot hurt....
                     MTOOLS_DEBUG("[FLTK THREAD " + toString(_thid) + "] stopped.");
                     _exitloop = false;
                     _active = false;
                     _stopped = true;    // ok, pretend that we stopped.
-                    while (1) { (void)0; }    // but do not really stop otherwise we sometime get a "mutex destroyed while busy" from FLTK
+                    if (donotreallystop) { while (1) { (void)0; } }    // but do not really stop otherwise we sometime get a "mutex destroyed while busy" from FLTK
                     }
                 catch (std::exception & exc)
                     {
@@ -415,9 +455,11 @@ namespace mtools
             std::atomic<int>   _counter;  // number of object currently "alive" in thread
             std::atomic<bool>  _active;   // true is the thread is alive and ready to process requests.
             std::atomic<bool>  _stopped;  // true if the thread was stopped (hence, it was started at some point before).
-            std::atomic<bool>  _exitloop; // true when we want to exit the thred loop
+            std::atomic<bool>  _exitloop; // true when we want to exit the thread loop
             std::atomic<bool>  _startrace;// used for synchronizing both exit thread
             std::atomic<std::thread::id> _thid; // id of the FLTK thread
+
+
         };
 
 
@@ -433,6 +475,12 @@ namespace mtools
 
         bool isFLTKThread() { return FLTK_Supervisor::isFLTKThread(); }
 
+        int FLTKThreadStatus() { return FLTK_Supervisor::FLTKThreadStatus(); }
+        
+        void runFLTKloop() { return FLTK_Supervisor::runFLTKloop(); }
+
+        void stopFLTKloop() { return FLTK_Supervisor::stopFLTKloop(); }
+
 
         /* Request the FLTK thread to perform program termination with cleanup the best it can.
          * Should only be called from within the FLTK thread.
@@ -446,6 +494,58 @@ namespace mtools
     }
 
 }
+
+
+
+/* forward declaration of main */
+int main(int argc, char *argv[]);
+
+namespace mtools
+    {
+
+    namespace internals_switchthread
+        {
+
+        int result(bool setresult, int val)
+            {
+            static std::atomic<int> res(0);
+            if (setresult) res = val;
+            return val;
+            }
+
+
+        void newMainThread(int argc, char * argv[])
+            {
+            MTOOLS_DEBUG("starting the 'main' replacement thread");
+            while (mtools::internals_fltk_supervisor::FLTKThreadStatus() != 2) { std::this_thread::sleep_for(std::chrono::milliseconds(1)); }
+            result(true, main(argc, argv));
+            mtools::internals_fltk_supervisor::stopFLTKloop();
+            MTOOLS_DEBUG("'main' replacement thread stopped");
+            }
+
+
+        bool barrier(int argc, char * argv[])
+            {
+            MTOOLS_DEBUG("barrier start");
+            static std::atomic<int> nb(0);
+            nb++;
+            if (nb > 1) { return false; }
+            if (mtools::internals_fltk_supervisor::FLTKThreadStatus() != 0)
+                {
+                MTOOLS_ERROR("MTOOLS_SWITCH_THREADS() macro called when the FLTK thread is already running !");
+                }
+            std::thread th(&newMainThread, argc, argv); // start the new 'main' thread
+            mtools::internals_fltk_supervisor::runFLTKloop(); // start the fltk loop
+            th.join(); // wait for the main thread to complete
+            MTOOLS_DEBUG("barrier end");
+            return true;
+            }
+
+        }
+
+    }
+
+
 /* end of file */
 
 

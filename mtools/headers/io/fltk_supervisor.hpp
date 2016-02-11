@@ -34,7 +34,7 @@
 
 
 namespace mtools
-{
+    {
 
     namespace internals_fltk_supervisor
         {
@@ -45,6 +45,9 @@ namespace mtools
         void exitFLTK();                                //
         int nbObjectInFLTK();                           //
         bool isFLTKThread();                            //
+        int FLTKThreadStatus();                         //
+        void runFLTKloop();                             //
+        void stopFLTKloop();                            //
 
         }
 
@@ -57,6 +60,14 @@ namespace mtools
     inline bool isFLTKThread() { return internals_fltk_supervisor::isFLTKThread(); }
 
 
+    /**
+     * Determines the current status of the FLTK thread.
+     *
+     * @return  -1 if stopped, 0 if never started, 1 if started but not active, 2 if thread is
+     *          running and ready.
+     **/
+    inline int FLTKThreadStatus() { return internals_fltk_supervisor::FLTKThreadStatus(); }
+
 
     /**
      * Create an object of type T with constructor argument args within the FLTK thread. The object
@@ -64,9 +75,9 @@ namespace mtools
      * delete the object call the `deleteInFLTKThread()` function. Every object created in the FLTK
      * thread should be properly deleted at some point otherwise it will prevent the thread to stop
      * properly.
-     * 
+     *
      * @code{.cpp}
-     * 
+     *
      * class test
      *     {
      *     public:
@@ -74,14 +85,14 @@ namespace mtools
      *     ~test() { mtools::cout << "dtor " << r << "\n"; }
      *     int r;
      *     };
-     * 
+     *
      * int main()
      *     {
      *     test * p = mtools::newInFLTKThread<test,int>(7); // create the object in the FLTK thread
      *     mtools::deleteInFLTKThread(p); // and then delete it
      *     return 0;
      *     }
-     * 
+     *
      * @endcode.
      *
      * @tparam  T           Type of object to construct.
@@ -124,29 +135,52 @@ namespace mtools
         internals_fltk_supervisor::runInFLTKThread(&proxycall);
         }
 
-
-    namespace internals_fltk_supervisor
-    {
-
-        /* A static object which insures that the FLTK thread starts, at the latest, 
-         * when this object is constructed i.e. before main() and does not end
-         * before it is destructed (after main() exit). */
-        static class _dummyFLTKobject 
-            {
-            public:
-            _dummyFLTKobject() : p(nullptr) { if (nbObjectInFLTK() == 0) { MTOOLS_DEBUG("Creating the first FLTK (dummy) object.");  p = mtools::newInFLTKThread<int>(); } }
-            ~_dummyFLTKobject() { if (p != nullptr) { MTOOLS_DEBUG("Destroying the first FLTK (dummy) object."); mtools::deleteInFLTKThread<int>(p); } }
-            private: 
-            _dummyFLTKobject(const _dummyFLTKobject &) = delete;
-            _dummyFLTKobject & operator=(const _dummyFLTKobject &) = delete;
-            int * p;
-            } _obj; 
-
     }
 
 
 
-}
+//#ifdef __APPLE__
+#define MTOOLS_SWAP_THREADS_FLAG
+//#endif
+
+#ifdef MTOOLS_SWAP_THREADS_FLAG
+
+    namespace mtools
+        {
+        namespace internals_switchthread
+            {
+            int result(bool setresult, int val = 0);
+            bool barrier(int argc, char * argv[]);
+            }
+        }
+
+#define MTOOLS_SWAP_THREADS(argc,argv) { if (mtools::internals_switchthread::barrier(argc, argv)) return mtools::internals_switchthread::result(false); }
+
+#else 
+
+    namespace mtools
+        {
+        namespace internals_fltk_supervisor
+            {
+            /* A static object which insures that the FLTK thread starts, at the latest,
+            * when this object is constructed i.e. before main() and does not end
+            * before it is destructed (after main() exit). */
+            static class _dummyFLTKobject
+                {
+                public:
+                _dummyFLTKobject() : p(nullptr) { if (nbObjectInFLTK() == 0) { MTOOLS_DEBUG("Creating the first FLTK (dummy) object.");  p = mtools::newInFLTKThread<int>(); } }
+                ~_dummyFLTKobject() { if (p != nullptr) { MTOOLS_DEBUG("Destroying the first FLTK (dummy) object."); mtools::deleteInFLTKThread<int>(p); } }
+                private:
+                _dummyFLTKobject(const _dummyFLTKobject &) = delete;
+                _dummyFLTKobject & operator=(const _dummyFLTKobject &) = delete;
+                int * p;
+                } _obj;
+            }
+        }
+
+#define MTOOLS_SWAP_THREADS(argc,argv) ((void)0)
+
+#endif
 
 
 /* end of file */

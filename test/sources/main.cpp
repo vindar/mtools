@@ -228,18 +228,18 @@ XorGen4096_64 g3;
 
 
 
-/* Return a "real" random number suite for initializing a pseudo-RNG */
-
 int main(int argc, char *argv[])
     {
+    MTOOLS_SWAP_THREADS(argc, argv);
+
     parseCommandLine(argc, argv, false, false);
     cout.setName(std::string("cout") + (std::string)arg("id", "12"));
     commandLineOption(true, true);
     int KK = arg("K");
 
-    std::cout << (int32)randomID() << "\n";
-    std::cout << (int32)randomID() << "\n";
-    std::cout << (int32)randomID() << "\n";
+    cout << (int32)randomID() << "\n";
+    cout << (int32)randomID() << "\n";
+    cout << (int32)randomID() << "\n";
     cout.getKey();
     return 0;
 
