@@ -210,7 +210,6 @@ namespace mtools
             Plot2DAxes(const Plot2DAxes &) = delete;                    // no copy
             Plot2DAxes & operator=(const Plot2DAxes &) = delete;        //
 
-            Fl_Group *          _optionWin;
             Fl_Check_Button *   _gradButton;
             Fl_Check_Button *   _numButton;
             Fl_Button *         _gradColorButton;
