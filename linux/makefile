@@ -1,9 +1,11 @@
 # makefile for the mtools library
 
-WORKDIR = `pwd`
+WORKDIR := $(shell pwd)
 CXX = g++
 AR = ar
 LD = g++
+
+BASE_DIR := $(shell dirname $(WORKDIR))
 
 HEADERDIR_MTOOLS = ../mtools/headers
 
@@ -43,7 +45,7 @@ endif
 
 ADDLIBDIR_TEST =
 
-prefix = ./testinst
+prefix = /usr/local
 
 .PHONY: all clean before_mtools before_mtools_debug mtools mtools_debug before_test before_test_debug test test_debug install uninstall msg
 
@@ -86,9 +88,24 @@ mtools_debug: before_mtools_debug $(PCHOBJ_MTOOLS) $(OBJ_MTOOLS)
 	
 msg:
 	@echo
-	@echo "You can now run 'sudo make install (prefix=/usr/local/)' to install the library"
-	@echo "Alternatively, you can set the following paths in your .bash_profile : "
-	@echo "         export CPATH=$CPATH:$(HEADERDIR_MTOOLS)"
+	@echo "****************************************"
+	@echo "****************************************"
+	@echo
+	@echo "You can now install the library with"
+	@echo
+	@echo "         sudo make install [prefix=/usr/local]"
+	@echo
+	@echo "or, if you do not wish to install the library, add the following lines to .bash_profile"
+	@echo
+	@echo '         export CPATH="$$(CPATH):$(BASE_DIR)/mtools/headers/"'
+	@echo '         export PATH="$$(PATH):$(BASE_DIR)"'
+	@echo '         export LIBRARY_PATH="$$(LIBRARY_PATH):$(BASE_DIR)linux/lib"'
+	@echo
+	@echo "Subsequently, you can:"
+	@echo
+	@echo "   - Build the examples with '../examples/makeall.sh'."
+	@echo "   - Create a new empty project with the python script '../mtoolsproject.py'."
+	@echo
 
 
 $(PCHOBJ_MTOOLS): 
@@ -141,11 +158,15 @@ clean:
 	
 install:
 	@echo
-	@echo "**** Installing mtools in $(prefix) ****"
+	@echo "****************************************"
+	@echo "****       Installing mtools        ****"
+	@echo "****************************************"
 	@echo
-	@echo " Make sure that: $(prefix)/bin is in PATH"
-	@echo "                 $(prefix)/lib is in LIBRARY_PATH"
-	@echo "                 $(prefix)/include is in CPATH"	
+	@echo "Installation in $(prefix)"
+	@echo
+	@echo "Make sure that: $(prefix)/bin is in PATH"
+	@echo "                $(prefix)/lib is in LIBRARY_PATH"
+	@echo "                $(prefix)/include is in CPATH"	
 	@echo
 	@test -d $(prefix)/bin || mkdir -p $(prefix)/bin
 	@test -d $(prefix)/lib || mkdir -p $(prefix)/lib
@@ -156,15 +177,19 @@ install:
 	@cp -r $(HEADERDIR_MTOOLS) $(prefix)/include/mtools
 	@echo "#include\"mtools/mtools.hpp\" // redirection" > $(prefix)/include/mtools.hpp
 	@echo "Installation complete !"
-	@echo	
-	@echo " - Use  'make uninstall' to remove the library"
-	@echo " - The examples can be built by running '/examples/makeall.sh'."
-	@echo " - Run 'mtoolsproject.py [projectname]' to create a new project."
+	@echo
+	@echo "Now, you can"
+	@echo
+	@echo "    - Run 'make uninstall' to remove the library"
+	@echo "    - Build the example with '../examples/makeall.sh'"
+	@echo "    - Create an empty project with '../mtoolsproject.py'"
 	@echo
 	
 uninstall:	
 	@echo
-	@echo "**** Removing mtools from $(prefix) ****"
+	@echo "****************************************"
+	@echo "****        Removing mtools         ****"
+	@echo "****************************************"
 	@echo
 	@rm $(prefix)/bin/mtoolsproject.py
 	@rm $(prefix)/lib/libmtools.a
