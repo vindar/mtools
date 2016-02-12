@@ -50,9 +50,7 @@ namespace mtools
 
         void displayGraphics(const std::string & title, const std::string & msg)
             {
-
-//            cimg_library::cimg::dialog(title.c_str(), msg.c_str()); // display with cimg
-            fl_alert((title + "\n" + msg).c_str());
+            fl_alert("%s",(title + "\n" + msg).c_str());
             }
 
 
