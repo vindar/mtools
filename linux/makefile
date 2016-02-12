@@ -45,11 +45,11 @@ ADDLIBDIR_TEST =
 
 prefix = ./testinst
 
-.PHONY: all clean before_mtools before_mtools_debug mtools mtools_debug before_test before_test_debug test test_debug install uninstall
+.PHONY: all clean before_mtools before_mtools_debug mtools mtools_debug before_test before_test_debug test test_debug install uninstall msg
 
 all: CXXFLAGS_MTOOLS += -O2 -DNDEBUG
 all: CXXFLAGS_TEST += -O2 -DNDEBUG
-all: mtools test
+all: mtools test msg
 
 debug: CXXFLAGS_MTOOLS += -g -DDEBUG
 debug: CXXFLAGS_TEST += -g -DDEBUG
@@ -84,6 +84,13 @@ mtools_debug: before_mtools_debug $(PCHOBJ_MTOOLS) $(OBJ_MTOOLS)
 	@echo "done. Static library: $(WORKDIR)/$(OUT_MTOOLS)"
 	@echo
 	
+msg:
+	@echo
+	@echo "You can now run 'sudo make install (prefix=/usr/local/)' to install the library"
+	@echo "Alternatively, you can set the following paths in your .bash_profile : "
+	@echo "         export CPATH=$CPATH:$(HEADERDIR_MTOOLS)"
+
+
 $(PCHOBJ_MTOOLS): 
 	$(CXX) $(CXXFLAGS_MTOOLS) $(INC_MTOOLS) -x c++-header $(PCHDIR_MTOOLS)/$(PCHFILE_MTOOLS) -o $(PCHOBJ_MTOOLS)
 	
@@ -135,6 +142,7 @@ clean:
 install:
 	@echo
 	@echo "**** Installing mtools in $(prefix) ****"
+	@echo
 	@echo " Make sure that: $(prefix)/bin is in PATH"
 	@echo "                 $(prefix)/lib is in LIBRARY_PATH"
 	@echo "                 $(prefix)/include is in CPATH"	
@@ -144,15 +152,13 @@ install:
 	@test -d $(prefix)/include || mkdir -p $(prefix)/include
 	@test -d $(prefix)/include/mtools || mkdir -p $(prefix)/include/mtools
 	@install -m 0755 ../mtoolsproject.py $(prefix)/bin
-	@install -m 0755 OUT_MTOOLS $(prefix)/lib
-	@cp -r HEADERDIR_MTOOLS $(prefix)/include/mtools
-	@chmod -R 644 $(prefix)/include/mtools
+	@install -m 0755 $(OUT_MTOOLS) $(prefix)/lib
+	@cp -r $(HEADERDIR_MTOOLS) $(prefix)/include/mtools
 	@echo "#include\"mtools/mtools.hpp\" // redirection" > $(prefix)/include/mtools.hpp
-	@chmod 644 a.txt
 	@echo "Installation complete !"
 	@echo	
-	@echo " - use 'make uninstall' to remove the library"
-	@echo " - The examples can be built with the script '/examples/makeall.sh'."
+	@echo " - Use  'make uninstall' to remove the library"
+	@echo " - The examples can be built by running '/examples/makeall.sh'."
 	@echo " - Run 'mtoolsproject.py [projectname]' to create a new project."
 	@echo
 	
