@@ -48,7 +48,7 @@ using namespace mtools;
 #include "png.h"
 #include "pixman.h"
 #include "FL/Fl.H"      // add fltk headers this way
-#include "FL/glut.h"    // fltk glut
+#include "FL/glut.H"    // fltk glut
 
 
 int main(int argc, char *argv[]) 
