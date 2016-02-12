@@ -43,8 +43,9 @@ endif
 
 ADDLIBDIR_TEST =
 
+prefix = ./testinst
 
-.PHONY: all clean before_mtools before_mtools_debug mtools mtools_debug before_test before_test_debug test test_debug
+.PHONY: all clean before_mtools before_mtools_debug mtools mtools_debug before_test before_test_debug test test_debug install uninstall
 
 all: CXXFLAGS_MTOOLS += -O2 -DNDEBUG
 all: CXXFLAGS_TEST += -O2 -DNDEBUG
@@ -131,4 +132,39 @@ clean:
 	@echo "**** Cleaned ****"
 	@echo
 	
-
+install:
+	@echo
+	@echo "**** Installing mtools in $(prefix) ****"
+	@echo " Make sure that: $(prefix)/bin is in PATH"
+	@echo "                 $(prefix)/lib is in LIBRARY_PATH"
+	@echo "                 $(prefix)/include is in CPATH"	
+	@echo
+	@test -d $(prefix)/bin || mkdir -p $(prefix)/bin
+	@test -d $(prefix)/lib || mkdir -p $(prefix)/lib
+	@test -d $(prefix)/include || mkdir -p $(prefix)/include
+	@test -d $(prefix)/include/mtools || mkdir -p $(prefix)/include/mtools
+	@install -m 0755 ../mtoolsproject.py $(prefix)/bin
+	@install -m 0755 OUT_MTOOLS $(prefix)/lib
+	@cp -r HEADERDIR_MTOOLS $(prefix)/include/mtools
+	@chmod -R 644 $(prefix)/include/mtools
+	@echo "#include\"mtools/mtools.hpp\" // redirection" > $(prefix)/include/mtools.hpp
+	@chmod 644 a.txt
+	@echo "Installation complete !"
+	@echo	
+	@echo " - use 'make uninstall' to remove the library"
+	@echo " - The examples can be built with the script '/examples/makeall.sh'."
+	@echo " - Run 'mtoolsproject.py [projectname]' to create a new project."
+	@echo
+	
+uninstall:	
+	@echo
+	@echo "**** Removing mtools from $(prefix) ****"
+	@echo
+	@rm $(prefix)/bin/mtoolsproject.py
+	@rm $(prefix)/lib/libmtools.a
+	@rm $(prefix)/include/mtools.hpp
+	@rm -rf $(prefix)/mtools	
+	@echo "done !"
+	@echo
+	
+	
