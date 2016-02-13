@@ -171,11 +171,11 @@ install:
 	@test -d $(prefix)/bin || mkdir -p $(prefix)/bin
 	@test -d $(prefix)/lib || mkdir -p $(prefix)/lib
 	@test -d $(prefix)/include || mkdir -p $(prefix)/include
-	@test -d $(prefix)/include/mtools || mkdir -p $(prefix)/include/mtools
+	@test -d $(prefix)/include/mtools/headers || mkdir -p $(prefix)/include/mtools
 	@install -m 0755 ../mtoolsproject.py $(prefix)/bin
 	@install -m 0755 $(OUT_MTOOLS) $(prefix)/lib
 	@cp -r $(HEADERDIR_MTOOLS) $(prefix)/include/mtools
-	@echo "#include\"mtools/mtools.hpp\" // redirection" > $(prefix)/include/mtools.hpp
+	@echo "#include \"mtools/mtools.hpp\" // redirection" > $(prefix)/include/mtools.hpp
 	@echo "Installation complete !"
 	@echo
 	@echo "Now, you can"
