@@ -60,29 +60,29 @@ debug: mtools_debug test_debug
 
 before_mtools:
 	@echo
-	@echo "*************************"
-	@echo "**** Building mtools ****"
-	@echo "*************************"
+	@echo "****************************************"
+	@echo "****        Building mtools         ****"
+	@echo "****************************************"
 	@test -d $(OUTDIR_MTOOLS) || mkdir -p $(OUTDIR_MTOOLS)
 	@test -d $(OBJDIR_MTOOLS) || mkdir -p $(OBJDIR_MTOOLS)
 
 before_mtools_debug: 
 	@echo
-	@echo "*********************************"
-	@echo "**** Building mtools (debug) ****"
-	@echo "*********************************"
+	@echo "****************************************"
+	@echo "****    Building mtools (debug)     ****"
+	@echo "****************************************"
 	@test -d $(OUTDIR_MTOOLS) || mkdir -p $(OUTDIR_MTOOLS)
 	@test -d $(OBJDIR_MTOOLS) || mkdir -p $(OBJDIR_MTOOLS)
 	
 mtools: before_mtools $(PCHOBJ_MTOOLS) $(OBJ_MTOOLS)
 	$(AR) rcs $(OUT_MTOOLS) $(OBJ_MTOOLS)
-	@echo "*************************"
+	@echo "****************************************"
 	@echo "done. Static library: $(WORKDIR)/$(OUT_MTOOLS)"
 	@echo
 
 mtools_debug: before_mtools_debug $(PCHOBJ_MTOOLS) $(OBJ_MTOOLS)
 	$(AR) rcs $(OUT_MTOOLS) $(OBJ_MTOOLS)
-	@echo "*************************"
+	@echo "****************************************"
 	@echo "done. Static library: $(WORKDIR)/$(OUT_MTOOLS)"
 	@echo
 	
@@ -171,10 +171,10 @@ install:
 	@test -d $(prefix)/bin || mkdir -p $(prefix)/bin
 	@test -d $(prefix)/lib || mkdir -p $(prefix)/lib
 	@test -d $(prefix)/include || mkdir -p $(prefix)/include
-	@test -d $(prefix)/include/mtools/headers || mkdir -p $(prefix)/include/mtools
+	@test -d $(prefix)/include/mtools || mkdir -p $(prefix)/include/mtools
 	@install -m 0755 ../mtoolsproject.py $(prefix)/bin
 	@install -m 0755 $(OUT_MTOOLS) $(prefix)/lib
-	@cp -r $(HEADERDIR_MTOOLS) $(prefix)/include/mtools
+	@cp -r $(HEADERDIR_MTOOLS)/* $(prefix)/include/mtools
 	@echo "#include \"mtools/mtools.hpp\" // redirection" > $(prefix)/include/mtools.hpp
 	@echo "Installation complete !"
 	@echo
@@ -194,7 +194,7 @@ uninstall:
 	@rm $(prefix)/bin/mtoolsproject.py
 	@rm $(prefix)/lib/libmtools.a
 	@rm $(prefix)/include/mtools.hpp
-	@rm -rf $(prefix)/mtools	
+	@rm -rf $(prefix)/include/mtools	
 	@echo "done !"
 	@echo
 	
