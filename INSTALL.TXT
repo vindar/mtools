@@ -51,8 +51,9 @@ without errors... You can now run the test program to test the library.
 3) Building the examples.
 
 The examples/ directory contains simple projects demonstrating how to use the
-library. Each example has its own VS solution file and should compile for every
-configuration for which mtools was build.
+library. The solution file Examples.sln contain all the example projects and 
+should compile without trouble for every configuration for which mtools was 
+build.
 
 
 
@@ -61,9 +62,9 @@ configuration for which mtools was build.
 *****************************************************
 [tested on Linux Mint 17.3 with GCC >= 5.1]
 
-1) Make sure you use a recent version of gcc. Version 5 or later is ok.
-   The current version of GCC on Linux Mint is 4.8. You can install the 
-   lastest version with:
+1) Make sure you use a recent version of gcc. Version 5 or later is needed.
+   Unfortunately, the current version of GCC on Linux Mint is 4.8. You can 
+   install the lastest version with:
    
         sudo add-apt-repository ppa:ubuntu-toolchain-r/test
         sudo apt-get update
@@ -84,28 +85,41 @@ configuration for which mtools was build.
    
         ./configure --enable-threads --enable-cairo
         make
-        make install
+        sudo make install
 
-   The version of CImg installed via apt-get is also outdated. However, the library
+		
+4) The version of CImg installed via apt-get is also outdated. However, the library
    consist of a single header. Just download the latest version from http://cimg.eu 
    and copy the file 'CImg.h' to /usr/local/include.
-           
-4) cd into mtools's /linux directory and then run 'make'. this will build the library 
-   and the test program.
   
-5) You can now install the library in /usr/local with 'sudo make install'
-   or you can install it somewhere else with 'make install prefix=/my/path'.
+  
+5) cd into mtools's /linux directory and then run 
+   
+        make
+		
+   this will build the library and the test program.
+  
+  
+6) You can now install the library in /usr/local with the command 
+
+       sudo make install
+	   
+   or you can install it somewhere else by specifying the install dir with
+   
+       [sudo] make install prefix=/my/path
+	   
    Alternatively, if you do not wish to install the library, you can just
-   add the following 3 lines to your .bash_profile/.profile/.bashrc : 
+   add the following 3 lines to your .bash_profile/.bashrc : 
    
        export CPATH="$CPATH:MTOOLSDIR/mtools/headers"
        export PATH="$PATH:MTOOLSDIR/mtools"
        export LIBRARY_PATH="$LIBRARY_PATH:MTOOLSDIR/mtools/linux/lib"
   
-  where MTOOLSDIR is the main mtools directory. 
+  where MTOOLSDIR is mtools's directory. 
   
-6) Once the library is installed, you can build each example separately
-   with the 'make' command inside each sud-directory or all the examples 
+  
+7) Once the library is installed, you can build each example separately
+   with the 'make' command inside its sud-directory or all the examples 
    simultaneously using the './makeall.sh' command located in the root 
    example/ sub-directory. Use './makeall.sh clean' to clean up everything 
    at once.
@@ -116,14 +130,13 @@ configuration for which mtools was build.
 *                     On OSX                        *
 *****************************************************
 [tested on OSX Yosemite with Clang]
-
 I do not know OSX very well but the following steps worked for me...
 
 1) Make sure Xcode is installed with Clang and the corresponding toolchain.
 
 
-2) Install the libraries mtools depends on: I used homebrew (http://brew.sh)
-   to do it and it worked nicely. I used the following command:
+2) Install the libraries mtools depends on. I used homebrew (http://brew.sh)
+   to do it and it worked nicely. The following command install everything:
    
        brew install python pkg-config glib libpng libjpeg freetype cimg pixman cairo fltk
 
@@ -136,8 +149,10 @@ I do not know OSX very well but the following steps worked for me...
        export LIBRARY_PATH="$LIBRARY_PATH:/usr/local/lib"
        
     
-4) Open a new terminal and go to step 4) of the linux build procedure and 
-   follow the same steps...
+4) Open a new terminal to reload .bash_profile. 
+
+
+5) Goto step 5 of the linux installation procedure...
 
 
   
@@ -147,7 +162,7 @@ I do not know OSX very well but the following steps worked for me...
 
 The python script 'mtoolsproject.py' located at the base of the mtools directory
 can be used to create an empty project with the correct options. The project
-created contain minimal 'main.cpp' file as well as a VS2015 solution for windows
+created contain a minimal 'main.cpp' file as well as a VS2015 solution for windows
 and a makefile for Linux and OSX.
 
 
