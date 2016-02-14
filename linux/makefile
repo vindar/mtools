@@ -101,7 +101,7 @@ msg:
 	@echo
 	@echo '         export CPATH="$$CPATH:$(BASE_DIR)/mtools/headers/"'
 	@echo '         export PATH="$$PATH:$(BASE_DIR)"'
-	@echo '         export LIBRARY_PATH="$$LIBRARY_PATH:$(BASE_DIR)linux/lib"'
+	@echo '         export LIBRARY_PATH="$$LIBRARY_PATH:$(BASE_DIR)/linux/lib"'
 	@echo
 	@echo "Subsequently, you can:"
 	@echo
