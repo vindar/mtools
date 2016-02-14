@@ -96,11 +96,12 @@ msg:
 	@echo
 	@echo "         sudo make install [prefix=/usr/local]"
 	@echo
-	@echo "or, if you do not wish to install the library, add the following lines to .bash_profile"
+	@echo "or, if you do not wish to install the library, add the following"
+	@echo "lines to your .profile / .bash_profile / .bashrc"
 	@echo
-	@echo '         export CPATH="$$(CPATH):$(BASE_DIR)/mtools/headers/"'
-	@echo '         export PATH="$$(PATH):$(BASE_DIR)"'
-	@echo '         export LIBRARY_PATH="$$(LIBRARY_PATH):$(BASE_DIR)linux/lib"'
+	@echo '         export CPATH="$$CPATH:$(BASE_DIR)/mtools/headers/"'
+	@echo '         export PATH="$$PATH:$(BASE_DIR)"'
+	@echo '         export LIBRARY_PATH="$$LIBRARY_PATH:$(BASE_DIR)linux/lib"'
 	@echo
 	@echo "Subsequently, you can:"
 	@echo
