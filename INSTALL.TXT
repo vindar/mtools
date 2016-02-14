@@ -1,8 +1,10 @@
----------------------------------------------
-         INSTALLATION OF MTOOLS
----------------------------------------------
+*******************************************************************
+*                                                                 *
+*                    INSTALLATION OF MTOOLS                       *
+*                                                                 *
+*******************************************************************
 
-The library depend on a few external libraries:
+The library depend on a few external libraries which are readily available:
 
     - CImg (http://cimg.eu) [image library]
     - fltk (http://www.fltk.org) [gui library]
@@ -11,104 +13,132 @@ The library depend on a few external libraries:
     - libjpeg (http://www.ijg.org/) [reading/writing jpeg images]
     - cairo (http://cairographics.org/) [2D graphics library]
 
+	
 
-----------------------
-     On windows
-----------------------
+
+*****************************************************
+*                    On Windows                     *
+*****************************************************
 [tested on Windows 7/10 with VS2015 Community]
 
 1) Installation of the external libraries
 
-The repository 'https://github.com/vindar/mtools-dependencies' contain VS2015 
+The repository 'https://github.com/vindar/mtools-dependencies' contain VS2015
 builds of all the required library making the process straighforward with Visual
-Studio. Just put the 'mtools-dependencies/' folder where you want and then run 
-the 'setEnvVar-mtools-dependencies.bat' script with admin. rights to create 
-the environment variables indicating where the librairies are located. 
+Studio. Just put the 'mtools-dependencies/' folder where you want and then run
+the 'setEnvVar-mtools-dependencies.bat' script with admin. rights to create
+the environment variables indicating where the librairies are located.
 
 
 2) Building mtools
 
-First, you must run the 'setEnvVar-mtools.bat'script with admin. rights to 
-indicate where mtools will be located. 
+First, you must run the 'setEnvVar-mtools.bat'script with admin. rights to
+indicate where mtools will be located.
 
 Open the mtools.sln file at the root of the mtools source tree with VS2015.
 The solution contain two projects: the library itself and a test project which
-can be used for testing the library. Set 'test' as the start project for the 
-solution (right click on test in the solution window and set it as the start 
+can be used for testing the library. Set 'test' as the start project for the
+solution (right click on test in the solution window and set it as the start
 project). There are several build configurations:
 
   - debug/release : Build the mtools library for debug or release mode.
   - Win32/x64 : Build for 32 or 64 bits.
 
-Build all the configurations that you wish to use. Hopefully it should compile 
-without  errors... You can now run the test program to try the library.
+Build all the configurations that you wish to use. Hopefully it should compile
+without errors... You can now run the test program to test the library.
 
 
 3) Building the examples.
 
-The examples/ directory contains simple projects demonstrating how to use the 
-library. Each example has its own VS solution file and should compile without 
-problem for every configuration for which mtools was build.
-
-
-4) Using mtools in a project.
-
-The script 'create-mtools-project.bat' create a new empty project with a given name
-already setup to use mtools (with a VS2015 solution and a basic makefile). You can 
-move this batch script around as it create projects in the current directory where 
-it is called.
+The examples/ directory contains simple projects demonstrating how to use the
+library. Each example has its own VS solution file and should compile for every
+configuration for which mtools was build.
 
 
 
-----------------------
-      On Linux
-----------------------
-[tested on several distribs. with gcc >= 5.1]
+*****************************************************
+*                     On Linux                      *
+*****************************************************
+[tested on several distribs. with GCC >= 5.1]
 
 1) Make sure you use a recent version of gcc. Version 5 or later is ok.
 
-2) Make sure that the following libraries are installed and accessible:
+2) Make sure that pkg-config and the following libraries are installed
+   and are accessible (i.e. can found in gcc search paths for include
+   and libraries)
 
-	- fltk (version 1.3.3 or later, built with --enable-threads and --enable-cairo). 
-	- CImg (version 1.6.8). Header only library. 
-	- zlib
-	- libpng
-	- libjpeg
-	- cairo (hence also pixman-1)
+    - fltk (version 1.3.3 or later, built with --enable-threads and --enable-cairo).
+    - CImg (version 1.6.8 or later). Header only library.
+    - zlib
+    - libpng
+    - libjpeg
+    - cairo (hence also pixman-1)
 
-3) Run 'make' inside the linux/ sub-directory of mtools and wait... This will
-build the library and the test program. Use 'make clean' to clean up temporary 
-object files prior to rebuilding the whole library.
-
-4) Once the library is built, you must make it itself accessible. 
-
-     - linux/lib/ 	contain the static library.
-     - mtools/headers/ 	contain the include files.
-
-You can either add 'linux/lib' directory to LIBRARY_PATH and 'mtools/headers/' to 
-CPATH or move both directories to default places in your system (e.g. /usr/local/lib/
-and /usr/local/include/). 
-
-5) Once mtools is available, you can build each example separately with the 'make' 
-command or all the examples simultaneously using the './makeall.sh' command located 
-in the root example/ sub-directory. You can also use './makeall.sh clean' to clean 
-all the examples builds. 
-
-6) In order to use mtools in a new project and find the correct configuration flags, 
-just adapt the makefile of one of the examples.
+3) cd into mtools's /linux directory and then run 'make'.
+   this will build the library and the test program.
+  
+4) You can now install the library in /usr/local with 'sudo make install'.
+   You can install it somewhere else with 'make install prefix=/my/path'.
+  
+5) Once the library is installed, you can build each example separately
+   with the 'make' command or all the examples  simultaneously using the
+   './makeall.sh' command located in the root example/ sub-directory.
+   Use './makeall.sh clean' to clean up everything at once.
 
 
+   
+*****************************************************
+*                     On OSX                        *
+*****************************************************
+[tested on OSX Yosemite with Clang]
 
-----------------------
-     On OS X
-----------------------
+1) Make sure Xcode is installed with Clang and the corresponding toolchain.
 
-Good luck to you :-) 
+2) Install the libraries mtools depends on: I used homebrew (http://brew.sh)
+   to do it and it worked nicely. The formula I used are:
+        pkg-config
+        fltk
+        cimg
+        libpng
+        libjpeg
+        pixman
+        cairo
 
-It should theoretically work since mtools relies only on the C++  standard headers 
-and cross-platform libraries with OS X support but I have never tried so chances 
-are something will go wrong...
+3) Go to step 3) of the linux build procedure and follow the same steps...
+
+
+  
+*****************************************************
+*        Using mtools in a new project              *
+*****************************************************
+
+The python script 'mtoolsproject.py' located at the base of the mtools directory
+can be used to create an empty project with the correct options. The project
+created contain minimal 'main.cpp' file as well as a VS2015 solution for windows
+and a makefile for Linux and OSX.
 
 
 
+                        *************************
+                        ******* WARNING *********
+                        *************************
+						
+When using mtools on OSX, the programm MUST an entry use the main entry point with 
+signature:
+                     int main(int argc, char *argv[])
+
+and the first instruction of main() MUST be:
+
+                     MTOOLS_SWAP_THREADS(argc,argv).
+                 
+Otherwise, no graphics will be displayed. This macro make it so that main() is
+now run on an auxiliary thread (the main thread being used by fltk for displaying
+graphics). This means in particular that global objects constructors are not called
+with the same thread that run main(). Be careful...
+
+On Windows and Linux, inverting thread is not needed as child threads are allowed
+to use the system resources. Therefore, the macro is disabled and does nothing. It
+can be omitted but keeping it make the program compatible also with OSX.
+
+                        *************************
 
