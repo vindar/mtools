@@ -2,6 +2,7 @@
 #
 # Run the make command on all the sub-directories
 
+cd "${0%/*}"
 DIR=$PWD
 
 for d in */ ; do
