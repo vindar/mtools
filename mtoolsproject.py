@@ -46,9 +46,8 @@ using namespace mtools;
 #include "cairo.h"
 #include "jpeglib.h"
 #include "png.h"
-#include "pixman.h"
 #include "FL/Fl.H"      // add fltk headers this way
-#include "FL/glut.H"    // fltk glut
+#include "FL/glut.H"    // fltk glut...
 
 
 int main(int argc, char *argv[]) 
@@ -81,8 +80,8 @@ CPP_FILES := $(filter-out stdafx.cpp,$(ALL_FILES))
 WORKDIR = `pwd`
 CXX = g++
 
-CXXFLAGS = -std=c++11 -Wall  `fltk-config --cxxflags` -Dcimg_display=0
-LDFLAGS =   -lmtools `fltk-config --ldstaticflags` -lcairo -lfreetype -ljpeg -lpng -lpixman-1 -lz
+CXXFLAGS = -std=c++11 -Wall `fltk-config --cxxflags` `pkg-config cairo --cflags` `pkg-config pixman-1 --cflags` -Dcimg_display=0
+LDFLAGS =   -lmtools `fltk-config --ldstaticflags` `pkg-config cairo --libs` -lfreetype -ljpeg -lpng `pkg-config pixman-1 --libs` -lz
 COMPILER = $(shell $(CXX) --version | grep LLVM)
 ifeq ("$(COMPILER)","")
 # using gcc
@@ -369,9 +368,6 @@ stdafxhFile = r"""
 
 // *** libpng ***
 #include "png.h"
-
-// *** freetype ***
-//#include "freetype.h"
 
 // *** pixman ***
 #include "pixman.h"
