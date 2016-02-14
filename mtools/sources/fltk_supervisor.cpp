@@ -497,12 +497,14 @@ namespace mtools
 
 
 
+
+#ifdef MTOOLS_SWAP_THREADS_FLAG
+
 /* forward declaration of main */
 int main(int argc, char *argv[]);
 
 namespace mtools
     {
-
     namespace internals_switchthread
         {
 
@@ -544,6 +546,8 @@ namespace mtools
         }
 
     }
+
+#endif
 
 
 /* end of file */
