@@ -75,12 +75,13 @@ configuration for which mtools was build.
 2) Make sure that pkg-config and the following libraries are installed: libmesa, 
    libpng, libjpeg,pixman-1, cairo. You can use the following command:
     
-       sudo apt-get install pkg-config libglu1-mesa-dev libpng12-dev libjpeg-dev libpixman-1-dev libcairo2-dev
+        sudo apt-get install python pkg-config libglu1-mesa-dev libpng12-dev libjpeg-dev libpixman-1-dev libcairo2-dev
        
        
 3) The version of fltk installed via apt-get is outdated. It is best to build it 
    directly from the sources which can be download at: http://www.fltk.org/. The
    build steps are:
+   
         ./configure --enable-threads --enable-cairo
         make
         make install
