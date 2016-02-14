@@ -379,7 +379,6 @@ stdafxhFile = r"""
 #pragma warning( disable : 4319 )
 #endif
 #include "FL/Fl.H"
-#include "FL/glut.H"
 #include "FL/Fl_Window.H"
 #include "FL/Fl_Double_Window.H"
 #include "FL/Fl_Box.H"
