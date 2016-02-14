@@ -55,7 +55,8 @@ The directory contain standalone projects demonstrating how to use the library. 
 
 
 ### Building the library
-The library is cross-platform. At least, it works under Linux and Windows but it depends on other libraries, mainly [CImg](http://cimg.eu/) and [FLTK](http://www.fltk.org). The library uses several C++11 features. Hence a (fairly) up to date compiler is required to build it. To simplify the build procedure with Visual Studio, the repository [mtools-dependencies](https://github.com/vindar/mtools-dependencies) contain VS2015 builds of all the required libraries. See the file '[INSTALL.TXT](https://github.com/vindar/mtools/blob/master/INSTALL.TXT)' for detailed instructions.
+The library is cross-platform. At least, it works under Linux (GCC) and Windows (VS2015) and OSX (Clang) but it depends on a few other libraries, mainly [CImg](http://cimg.eu/) and [FLTK](http://www.fltk.org). The library uses several C++11 features. Hence a (fairly) up to date compiler is required to build it. To simplify the build procedure with Visual Studio, the repository [mtools-dependencies](https://github.com/vindar/mtools-dependencies) contain VS2015 builds of all the required libraries. See the file '[INSTALL.TXT](https://github.com/vindar/mtools/blob/master/INSTALL.TXT)' for detailed instructions.
+Once the library is installed, the python script `mtoolsproject.py` can be used to created new projects set up to use the library.
 
 
 ### What else...
