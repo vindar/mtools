@@ -1,12 +1,8 @@
-/***********************************************
- * Project : SRW_1D
- * date : Fri Jan 22 00:01:55 2016
- ***********************************************/
 
-//#pragma message("Compiling pre-compiled headers for stdafx.h\n")
+// precompiled header
 #pragma once
 
-// STL
+// *** STL ***
 #include <cstdlib>
 #include <cstdio>
 #include <ctime>
@@ -45,12 +41,7 @@
 #include <unordered_map>
 
 
-// *** Library mtools ***
-// Uncomment the following line to disable mtools console and use stdout instead
-// #define MTOOLS_BASIC_CONSOLE
-#include "mtools.hpp"
-
-// *** Library fltk ***
+// *** fltk ***
 #if defined (_MSC_VER) 
 #pragma warning( push )
 #pragma warning( disable : 4312 )
@@ -79,25 +70,22 @@
 #pragma warning( pop )
 #endif
 
-// *** Library cairo ***
-#include "cairo.h"
-
-// *** Library freetype ***
-//#include "freetype.h"
-
-// *** Library libjpeg ***
-#include "jpeglib.h"
-
-// *** Library libpng ***
+// *** libpng ***
 #include "png.h"
 
-// *** Library pixman ***
+// *** pixman ***
 #include "pixman.h"
 
-// *** Library zlib ***
+// *** cairo ***
+#include "cairo.h"
+
+// *** zlib ***
 #include "zlib.h"
 
+// *** libjpeg ***
+#include "jpeglib.h"
 
+// *** mtools ***
+#include "mtools.hpp"
 
 /* end of file stdafx.h */
-

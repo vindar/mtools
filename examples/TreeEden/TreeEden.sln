@@ -1,9 +1,8 @@
-﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TreeEden", "TreeEden.vcxproj", "{92184EFA-CAC1-495C-BF93-F30AF94D53F5}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TreeEden", "TreeEden.vcxproj", "{7B787B92-8840-4D3D-8A36-65079C98F3A9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -13,14 +12,14 @@ Global
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{92184EFA-CAC1-495C-BF93-F30AF94D53F5}.Debug|Win32.ActiveCfg = Debug|Win32
-		{92184EFA-CAC1-495C-BF93-F30AF94D53F5}.Debug|Win32.Build.0 = Debug|Win32
-		{92184EFA-CAC1-495C-BF93-F30AF94D53F5}.Debug|x64.ActiveCfg = Debug|x64
-		{92184EFA-CAC1-495C-BF93-F30AF94D53F5}.Debug|x64.Build.0 = Debug|x64
-		{92184EFA-CAC1-495C-BF93-F30AF94D53F5}.Release|Win32.ActiveCfg = Release|Win32
-		{92184EFA-CAC1-495C-BF93-F30AF94D53F5}.Release|Win32.Build.0 = Release|Win32
-		{92184EFA-CAC1-495C-BF93-F30AF94D53F5}.Release|x64.ActiveCfg = Release|x64
-		{92184EFA-CAC1-495C-BF93-F30AF94D53F5}.Release|x64.Build.0 = Release|x64
+		{7B787B92-8840-4D3D-8A36-65079C98F3A9}.Debug|Win32.ActiveCfg = Debug|Win32
+		{7B787B92-8840-4D3D-8A36-65079C98F3A9}.Debug|Win32.Build.0 = Debug|Win32
+		{7B787B92-8840-4D3D-8A36-65079C98F3A9}.Debug|x64.ActiveCfg = Debug|x64
+		{7B787B92-8840-4D3D-8A36-65079C98F3A9}.Debug|x64.Build.0 = Debug|x64
+		{7B787B92-8840-4D3D-8A36-65079C98F3A9}.Release|Win32.ActiveCfg = Release|Win32
+		{7B787B92-8840-4D3D-8A36-65079C98F3A9}.Release|Win32.Build.0 = Release|Win32
+		{7B787B92-8840-4D3D-8A36-65079C98F3A9}.Release|x64.ActiveCfg = Release|x64
+		{7B787B92-8840-4D3D-8A36-65079C98F3A9}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

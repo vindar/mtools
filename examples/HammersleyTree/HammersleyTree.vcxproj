@@ -1,176 +1,96 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
-    <ProjectConfiguration Include="Debug|Win32">
-      <Configuration>Debug</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Debug|x64">
-      <Configuration>Debug</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Release|Win32">
-      <Configuration>Release</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Release|x64">
-      <Configuration>Release</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|Win32"> <Configuration>Debug</Configuration> <Platform>Win32</Platform> </ProjectConfiguration> 
+	<ProjectConfiguration Include="Debug|x64"> <Configuration>Debug</Configuration> <Platform>x64</Platform> </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32"> <Configuration>Release</Configuration> <Platform>Win32</Platform> </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64"> <Configuration>Release</Configuration> <Platform>x64</Platform> </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{A8AA7462-031D-4C7A-B9DE-F61DD4F68E98}</ProjectGuid>
-    <Keyword>Win32Proj</Keyword>
-    <RootNamespace>HammersleyTree</RootNamespace>
-    <TargetPlatformVersion>8.1</TargetPlatformVersion>
+    <ProjectGuid>{88f70c8f-85ec-4a60-af37-66046b7963b6}</ProjectGuid> <Keyword>Win32Proj</Keyword> <RootNamespace>HammersleyTree</RootNamespace> <TargetPlatformVersion>8.1</TargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
-    <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
-    <CharacterSet>NotSet</CharacterSet>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
-    <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
-    <CharacterSet>NotSet</CharacterSet>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
-    <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>NotSet</CharacterSet>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
-    <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>NotSet</CharacterSet>
-  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration"> <ConfigurationType>Application</ConfigurationType> <UseDebugLibraries>true</UseDebugLibraries> <PlatformToolset>v140</PlatformToolset> <CharacterSet>NotSet</CharacterSet> </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration"> <ConfigurationType>Application</ConfigurationType> <UseDebugLibraries>true</UseDebugLibraries> <PlatformToolset>v140</PlatformToolset> <CharacterSet>NotSet</CharacterSet> </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration"> <ConfigurationType>Application</ConfigurationType> <UseDebugLibraries>false</UseDebugLibraries> <PlatformToolset>v140</PlatformToolset> <WholeProgramOptimization>true</WholeProgramOptimization> <CharacterSet>NotSet</CharacterSet> </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration"> <ConfigurationType>Application</ConfigurationType> <UseDebugLibraries>false</UseDebugLibraries> <PlatformToolset>v140</PlatformToolset> <WholeProgramOptimization>true</WholeProgramOptimization> <CharacterSet>NotSet</CharacterSet> </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-  <ImportGroup Label="ExtensionSettings">
-  </ImportGroup>
-  <ImportGroup Label="Shared">
-  </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
+  <ImportGroup Label="ExtensionSettings"> </ImportGroup>
+  <ImportGroup Label="Shared"> </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'"> <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" /> </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets"> <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" /> </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'"> <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" /> </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets"> <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" /> </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(SolutionDir)build\$(Platform)\</OutDir>
-    <IntDir>$(SolutionDir)build\$(Platform)\temp\$(Configuration)\</IntDir>
-    <TargetName>$(ProjectName)-debug</TargetName>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(SolutionDir)build\$(Platform)\</OutDir>
-    <IntDir>$(SolutionDir)build\$(Platform)\temp\$(Configuration)\</IntDir>
-    <TargetName>$(ProjectName)-debug</TargetName>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(SolutionDir)build\$(Platform)\</OutDir>
-    <IntDir>$(SolutionDir)build\$(Platform)\temp\$(Configuration)\</IntDir>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(SolutionDir)build\$(Platform)\</OutDir>
-    <IntDir>$(SolutionDir)build\$(Platform)\temp\$(Configuration)\</IntDir>
-  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'"> <LinkIncremental>true</LinkIncremental> <OutDir>$(SolutionDir)build\$(Platform)\</OutDir> <IntDir>$(SolutionDir)build\$(Platform)\temp\$(Configuration)\</IntDir> <TargetName>$(ProjectName)-debug</TargetName> </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'"> <LinkIncremental>true</LinkIncremental> <OutDir>$(SolutionDir)build\$(Platform)\</OutDir> <IntDir>$(SolutionDir)build\$(Platform)\temp\$(Configuration)\</IntDir> <TargetName>$(ProjectName)-debug</TargetName> </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'"> <LinkIncremental>false</LinkIncremental> <OutDir>$(SolutionDir)build\$(Platform)\</OutDir> <IntDir>$(SolutionDir)build\$(Platform)\temp\$(Configuration)\</IntDir> </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'"> <LinkIncremental>false</LinkIncremental> <OutDir>$(SolutionDir)build\$(Platform)\</OutDir> <IntDir>$(SolutionDir)build\$(Platform)\temp\$(Configuration)\</IntDir> </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
-      <Optimization>Disabled</Optimization>
+      <PrecompiledHeader>Use</PrecompiledHeader> <WarningLevel>Level3</WarningLevel> <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CAIRO_LIB)/source/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(FREETYPE_LIB)/source/include/freetype/;$(LIBJPEG_LIB)/source/;$(LIBPNG_LIB)/source/;$(MTOOLS_LIB)/mtools/headers/;$(PIXMAN_LIB)/source/pixman/;$(ZLIB_LIB)/source/</AdditionalIncludeDirectories>
-      <AdditionalOptions>/Zm400 %(AdditionalOptions)</AdditionalOptions>
+	  <AdditionalOptions>/Zm400 %(AdditionalOptions)</AdditionalOptions>	  	  
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem> <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(CAIRO_LIB)/win32/;$(FLTK_LIB)/win32/;$(FREETYPE_LIB)/win32/;$(LIBJPEG_LIB)/win32/;$(LIBPNG_LIB)/win32/;$(MTOOLS_LIB)/mtools/lib/;$(PIXMAN_LIB)/win32/;$(ZLIB_LIB)/win32/</AdditionalLibraryDirectories>
       <AdditionalDependencies>cairod.lib;fltkd.lib;fltkgld.lib;fltkimagesd.lib;fltkjpegd.lib;freetyped.lib;libpngd.lib;mtools32d.lib;pixmand.lib;zlibd.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
+	  <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>	  	  
     </Link>
+	
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
-      <Optimization>Disabled</Optimization>
+      <PrecompiledHeader>Use</PrecompiledHeader> <WarningLevel>Level3</WarningLevel> <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CAIRO_LIB)/source/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(FREETYPE_LIB)/source/include/freetype/;$(LIBJPEG_LIB)/source/;$(LIBPNG_LIB)/source/;$(MTOOLS_LIB)/mtools/headers/;$(PIXMAN_LIB)/source/pixman/;$(ZLIB_LIB)/source/</AdditionalIncludeDirectories>
-      <AdditionalOptions>/Zm400 %(AdditionalOptions)</AdditionalOptions>
+	  <AdditionalOptions>/Zm400 %(AdditionalOptions)</AdditionalOptions>	  	  	  
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem> <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(CAIRO_LIB)/x64/;$(FLTK_LIB)/x64/;$(FREETYPE_LIB)/x64/;$(LIBJPEG_LIB)/x64/;$(LIBPNG_LIB)/x64/;$(MTOOLS_LIB)/mtools/lib/;$(PIXMAN_LIB)/x64/;$(ZLIB_LIB)/x64/</AdditionalLibraryDirectories>
       <AdditionalDependencies>cairod.lib;fltkd.lib;fltkgld.lib;fltkimagesd.lib;fltkjpegd.lib;freetyped.lib;libpngd.lib;mtools64d.lib;pixmand.lib;zlibd.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
+	  <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>	  	  
     </Link>
+	
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <Optimization>MaxSpeed</Optimization>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <WarningLevel>Level3</WarningLevel> <PrecompiledHeader>Use</PrecompiledHeader> <Optimization>MaxSpeed</Optimization> <FunctionLevelLinking>true</FunctionLevelLinking> <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CAIRO_LIB)/source/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(FREETYPE_LIB)/source/include/freetype/;$(LIBJPEG_LIB)/source/;$(LIBPNG_LIB)/source/;$(MTOOLS_LIB)/mtools/headers/;$(PIXMAN_LIB)/source/pixman/;$(ZLIB_LIB)/source/</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
-      <AdditionalOptions>/Zm400 %(AdditionalOptions)</AdditionalOptions>
+	  <AdditionalOptions>/Zm400 %(AdditionalOptions)</AdditionalOptions>	  	  	  	  
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <OptimizeReferences>true</OptimizeReferences>
+      <SubSystem>Console</SubSystem> <GenerateDebugInformation>true</GenerateDebugInformation> <EnableCOMDATFolding>true</EnableCOMDATFolding> <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(CAIRO_LIB)/win32/;$(FLTK_LIB)/win32/;$(FREETYPE_LIB)/win32/;$(LIBJPEG_LIB)/win32/;$(LIBPNG_LIB)/win32/;$(MTOOLS_LIB)/mtools/lib/;$(PIXMAN_LIB)/win32/;$(ZLIB_LIB)/win32/</AdditionalLibraryDirectories>
       <AdditionalDependencies>cairo.lib;fltk.lib;fltkgl.lib;fltkimages.lib;fltkjpeg.lib;freetype.lib;libpng.lib;mtools32.lib;pixman.lib;zlib.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
+	  <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>	  
     </Link>
+	
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <Optimization>MaxSpeed</Optimization>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <WarningLevel>Level3</WarningLevel> <PrecompiledHeader>Use</PrecompiledHeader> <Optimization>MaxSpeed</Optimization> <FunctionLevelLinking>true</FunctionLevelLinking> <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CAIRO_LIB)/source/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(FREETYPE_LIB)/source/include/freetype/;$(LIBJPEG_LIB)/source/;$(LIBPNG_LIB)/source/;$(MTOOLS_LIB)/mtools/headers/;$(PIXMAN_LIB)/source/pixman/;$(ZLIB_LIB)/source/</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
-      <AdditionalOptions>/Zm400 %(AdditionalOptions)</AdditionalOptions>
+	  <AdditionalOptions>/Zm400 %(AdditionalOptions)</AdditionalOptions>	  	  	  	  	  
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <OptimizeReferences>true</OptimizeReferences>
+      <SubSystem>Console</SubSystem> <GenerateDebugInformation>true</GenerateDebugInformation> <EnableCOMDATFolding>true</EnableCOMDATFolding> <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(CAIRO_LIB)/x64/;$(FLTK_LIB)/x64/;$(FREETYPE_LIB)/x64/;$(LIBJPEG_LIB)/x64/;$(LIBPNG_LIB)/x64/;$(MTOOLS_LIB)/mtools/lib/;$(PIXMAN_LIB)/x64/;$(ZLIB_LIB)/x64/</AdditionalLibraryDirectories>
       <AdditionalDependencies>cairo.lib;fltk.lib;fltkgl.lib;fltkimages.lib;fltkjpeg.lib;freetype.lib;libpng.lib;mtools64.lib;pixman.lib;zlib.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
+	  <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>	  
     </Link>
+	
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
+
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -180,6 +100,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+	
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

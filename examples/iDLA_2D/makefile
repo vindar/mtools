@@ -1,24 +1,26 @@
+
 OUTFILE = iDLA_2D
 
 OUTDIR = bin
 
-CPP_FILES := $(wildcard *.cpp)
+ALL_FILES := $(wildcard *.cpp)
+CPP_FILES := $(filter-out stdafx.cpp,$(ALL_FILES))
 
 WORKDIR = `pwd`
 CXX = g++
 
-# Add include directory and library directory in case the mtools
-# librarie is not in a standard directory. (or add the path to 
-# mtools in LIBRARY_PATH and CPATH env. var.)
-#HEADERDIR_MTOOLS = ../../mtools/headers/
-#LIBDIR_MTOOLS = ../../linux/bin/
+CXXFLAGS = -std=c++11 -Wall `fltk-config --cxxflags` `pkg-config cairo --cflags` `pkg-config pixman-1 --cflags` -Dcimg_display=0
+LDFLAGS =   -lmtools `fltk-config --ldstaticflags` `pkg-config cairo --libs` -lfreetype -ljpeg -lpng `pkg-config pixman-1 --libs` -lz
 
-CXXFLAGS = -std=c++11 -Wall  `fltk-config --cxxflags` -Dcimg_display=0
-LDFLAGS =   -lmtools `fltk-config --ldstaticflags` -lcairo -lfreetype -ljpeg -lpng -lpixman-1 -lz
-COMPILER = $(shell $(CXX) --version | grep LLVM)
-ifeq ("$(COMPILER)","")
-# using gcc
-	LDFLAGS += -latomic
+CHECKCOMPILERGCC = $(shell $(CXX) --version | grep GCC)
+ifneq ("$(CHECKCOMPILERGCC)","")
+# gcc specific options
+    LDFLAGS += -latomic
+endif
+
+CHECKCOMPILERLLVM = $(shell $(CXX) --version | grep LLVM)
+ifneq ("$(CHECKCOMPILERLLVM)","")
+# clang specific options
 endif
 
 .PHONY: release nographics debug debug_nographics buildprog clean
@@ -39,9 +41,7 @@ buildprog: $(OUTFILE)
 
 $(OUTFILE): $(CPP_FILES)
 	@test -d $(OUTDIR) || mkdir -p $(OUTDIR)
-	$(CXX) -I$(HEADERDIR_MTOOLS) -L$(LIBDIR_MTOOLS) $(CPP_FILES) $(CXXFLAGS) $(LDFLAGS) -o $(OUTDIR)/$(OUTFILE)
+	$(CXX) $(CPP_FILES) $(CXXFLAGS) $(LDFLAGS) -o $(OUTDIR)/$(OUTFILE)
 
 clean: 
 	@rm -rf $(OUTDIR)
-
-

@@ -1,5 +1,5 @@
 
-OUTFILE = TreeEden
+OUTFILE = offlattice-eDLA_2D
 
 OUTDIR = bin
 

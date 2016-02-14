@@ -1,7 +1,3 @@
-/***********************************************
- * Project : HammersleyTree
- * date : Thu Jan 21 23:06:40 2016
- ***********************************************/
 
-// precompiled headers.
+// precompiled header file.
 #include "stdafx.h"

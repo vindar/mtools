@@ -7,7 +7,7 @@
     <ProjectConfiguration Include="Release|x64"> <Configuration>Release</Configuration> <Platform>x64</Platform> </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{2634914b-7b9c-4f05-b426-66c993f835ce}</ProjectGuid> <Keyword>Win32Proj</Keyword> <RootNamespace>Eden</RootNamespace> <TargetPlatformVersion>8.1</TargetPlatformVersion>
+    <ProjectGuid>{0ae36196-7237-4216-ae8d-4c0da9f84dcb}</ProjectGuid> <Keyword>Win32Proj</Keyword> <RootNamespace>lattice-eDLA_2D</RootNamespace> <TargetPlatformVersion>8.1</TargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration"> <ConfigurationType>Application</ConfigurationType> <UseDebugLibraries>true</UseDebugLibraries> <PlatformToolset>v140</PlatformToolset> <CharacterSet>NotSet</CharacterSet> </PropertyGroup>

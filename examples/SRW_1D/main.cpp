@@ -3,7 +3,6 @@
  ***********************************************/
 #include "stdafx.h" // pre-compiled header. 
 
-// *** Library mtools ***
 #include "mtools.hpp"
 using namespace mtools;
 

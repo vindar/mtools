@@ -1,9 +1,8 @@
-﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "iDLA_2D", "iDLA_2D.vcxproj", "{BB6B068F-6F31-4D3D-B3ED-7D9FC30BB21C}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "iDLA_2D", "iDLA_2D.vcxproj", "{A5F19014-1203-4D0E-A19F-CBB688010BFB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -13,14 +12,14 @@ Global
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{BB6B068F-6F31-4D3D-B3ED-7D9FC30BB21C}.Debug|Win32.ActiveCfg = Debug|Win32
-		{BB6B068F-6F31-4D3D-B3ED-7D9FC30BB21C}.Debug|Win32.Build.0 = Debug|Win32
-		{BB6B068F-6F31-4D3D-B3ED-7D9FC30BB21C}.Debug|x64.ActiveCfg = Debug|x64
-		{BB6B068F-6F31-4D3D-B3ED-7D9FC30BB21C}.Debug|x64.Build.0 = Debug|x64
-		{BB6B068F-6F31-4D3D-B3ED-7D9FC30BB21C}.Release|Win32.ActiveCfg = Release|Win32
-		{BB6B068F-6F31-4D3D-B3ED-7D9FC30BB21C}.Release|Win32.Build.0 = Release|Win32
-		{BB6B068F-6F31-4D3D-B3ED-7D9FC30BB21C}.Release|x64.ActiveCfg = Release|x64
-		{BB6B068F-6F31-4D3D-B3ED-7D9FC30BB21C}.Release|x64.Build.0 = Release|x64
+		{A5F19014-1203-4D0E-A19F-CBB688010BFB}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A5F19014-1203-4D0E-A19F-CBB688010BFB}.Debug|Win32.Build.0 = Debug|Win32
+		{A5F19014-1203-4D0E-A19F-CBB688010BFB}.Debug|x64.ActiveCfg = Debug|x64
+		{A5F19014-1203-4D0E-A19F-CBB688010BFB}.Debug|x64.Build.0 = Debug|x64
+		{A5F19014-1203-4D0E-A19F-CBB688010BFB}.Release|Win32.ActiveCfg = Release|Win32
+		{A5F19014-1203-4D0E-A19F-CBB688010BFB}.Release|Win32.Build.0 = Release|Win32
+		{A5F19014-1203-4D0E-A19F-CBB688010BFB}.Release|x64.ActiveCfg = Release|x64
+		{A5F19014-1203-4D0E-A19F-CBB688010BFB}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

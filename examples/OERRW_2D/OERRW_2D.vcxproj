@@ -19,7 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{02BF6604-55FD-467B-A1DA-7BAF32B52A99}</ProjectGuid>
+    <ProjectGuid>{c0315ec5-9afc-4b0f-8104-e025efb96bd4}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>OERRW_2D</RootNamespace>
     <TargetPlatformVersion>8.1</TargetPlatformVersion>

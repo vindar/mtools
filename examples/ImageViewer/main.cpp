@@ -1,10 +1,8 @@
 /***********************************************
  * Project : ImageViewer
- * date : Wed Nov  4 15:54:26 2015
  ***********************************************/
 #include "stdafx.h" // pre-compiled header. 
 
-// *** Library mtools ***
 #include "mtools.hpp"
 using namespace mtools;
 

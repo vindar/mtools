@@ -1,16 +1,11 @@
 /***********************************************
  * Project : offlattice-eDLA
- * date : Wed Dec 30 14:46:18 2015
  ***********************************************/
 
 #include "stdafx.h"
 
-// *** Library mtools ***
-// Uncomment 'define MTOOLS_BASIC_CONSOLE' in stdafx.h to disable mtools's console
 #include "mtools.hpp"  
 using namespace mtools;
-
-
 
 
 /* The two constants below must be chosen such that there can be at most NBPARTICLESPERBOX

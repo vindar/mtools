@@ -1,12 +1,9 @@
 /***********************************************
  * Project : HammersleyTree
- * date : Thu Dec 17 00:59:35 2015
  ***********************************************/
 
 #include "stdafx.h"
 
-// *** Library mtools ***
-// Uncomment 'define MTOOLS_BASIC_CONSOLE' in stdafx.h to disable mtools's console
 #include "mtools.hpp"  
 using namespace mtools;
 

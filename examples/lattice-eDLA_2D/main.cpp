@@ -1,12 +1,9 @@
 /***********************************************
  * Project : eDLA_2D
- * date : Tue Dec 15 17:09:44 2015
  ***********************************************/
 
 #include "stdafx.h"
 
-
-// *** Library mtools ***
 #include "mtools.hpp"
 using namespace mtools;
 

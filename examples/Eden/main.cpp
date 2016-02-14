@@ -1,10 +1,8 @@
 /***********************************************
  * Project : Eden
- * date : Tue Jul 21 18:06:26 2015
  ***********************************************/
 #include "stdafx.h" // pre-compiled header. 
 
-// *** Library mtools ***
 #include "mtools.hpp"
 using namespace mtools;
 

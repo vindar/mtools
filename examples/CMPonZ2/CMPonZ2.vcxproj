@@ -19,7 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{82632D3A-C0E1-4BD2-9E42-164A9612153B}</ProjectGuid>
+    <ProjectGuid>{67560ac1-ed05-421e-a3e0-faf02c350e1a}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>CMPonZ2</RootNamespace>
     <TargetPlatformVersion>8.1</TargetPlatformVersion>
