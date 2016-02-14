@@ -39,26 +39,17 @@ mainFile = r"""
 
 // mtools main header, define MTOOLS_BASIC_CONSOLE to disable mtools's graphic console
 #include "mtools.hpp" 
-using namespace mtools;
-
-// other libs...
-#include "zlib.h"
-#include "cairo.h"
-#include "jpeglib.h"
-#include "png.h"
-#include "FL/Fl.H"      // add fltk headers this way
-#include "FL/glut.H"    // fltk glut...
 
 
 int main(int argc, char *argv[]) 
     {
-	MTOOLS_SWAP_THREADS(argc,argv);   // required on OSX, does nothing on Linux/Windows
-	parseCommandLine(argc,argv,true); // parse the command line, interactive mode
+    MTOOLS_SWAP_THREADS(argc,argv);   // required on OSX, does nothing on Linux/Windows
+    mtools::parseCommandLine(argc,argv,true); // parse the command line, interactive mode
 	
-	cout << "Hello World\n"; 
-	cout.getKey();	
+    mtools::cout << "Hello World\n"; 
+    mtools::cout.getKey();	
     return 0;
-	}
+    }
 	
 /* end of file main.cpp */
 """
@@ -82,10 +73,16 @@ CXX = g++
 
 CXXFLAGS = -std=c++11 -Wall `fltk-config --cxxflags` `pkg-config cairo --cflags` `pkg-config pixman-1 --cflags` -Dcimg_display=0
 LDFLAGS =   -lmtools `fltk-config --ldstaticflags` `pkg-config cairo --libs` -lfreetype -ljpeg -lpng `pkg-config pixman-1 --libs` -lz
-COMPILER = $(shell $(CXX) --version | grep LLVM)
-ifeq ("$(COMPILER)","")
-# using gcc
+
+CHECKCOMPILERGCC = $(shell $(CXX) --version | grep GCC)
+ifneq ("$(CHECKCOMPILERGCC)","")
+# gcc specific options
     LDFLAGS += -latomic
+endif
+
+CHECKCOMPILERLLVM = $(shell $(CXX) --version | grep LLVM)
+ifneq ("$(CHECKCOMPILERLLVM)","")
+# clang specific options
 endif
 
 .PHONY: release nographics debug debug_nographics buildprog clean

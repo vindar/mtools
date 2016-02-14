@@ -37,9 +37,10 @@ INC_TEST = -I$(OBJDIR_TEST) -I$(HEADERDIR_MTOOLS)
 CXXFLAGS_TEST = `fltk-config --cxxflags` `pkg-config cairo --cflags` `pkg-config pixman-1 --cflags` -std=c++11 -Wall -I../test -Dcimg_display=0
 
 LDFLAGS_TEST =  $(OUT_MTOOLS) `fltk-config --ldstaticflags` `pkg-config cairo --libs` `pkg-config pixman-1 --libs` -lfreetype -ljpeg -lpng -lz
-CHECKCOMPILER = $(shell $(CXX) --version | grep LLVM)
-ifeq ("$(CHECKCOMPILER)","")
-# using gcc
+
+CHECKCOMPILERGCC = $(shell $(CXX) --version | grep GCC)
+ifneq ("$(CHECKCOMPILERGCC)","")
+# gcc specific options
     LDFLAGS_TEST += -latomic
 endif
 
