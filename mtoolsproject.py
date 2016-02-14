@@ -115,8 +115,7 @@ clean:
 # [project].sln                                 #
 #                                               #
 #################################################
-slnFile = r"""
-Microsoft Visual Studio Solution File, Format Version 12.00
+slnFile = r"""Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.22823.1
 MinimumVisualStudioVersion = 10.0.40219.1
@@ -151,8 +150,7 @@ EndGlobal
 # [project].vcxproj                             #
 #                                               #
 #################################################
-vcxprojFile = r"""
-<?xml version="1.0" encoding="utf-8"?>
+vcxprojFile = r"""<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32"> <Configuration>Debug</Configuration> <Platform>Win32</Platform> </ProjectConfiguration> 
@@ -268,8 +266,7 @@ vcxprojFile = r"""
 # [project].vcxproj.filters                     #
 #                                               #
 #################################################
-vcxfiltersFile = r"""
-<?xml version="1.0" encoding="utf-8"?>
+vcxfiltersFile = r"""<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Source Files">
@@ -357,20 +354,6 @@ stdafxhFile = r"""
 #include <unordered_set>
 #include <unordered_map>
 
-// *** zlib ***
-#include "zlib.h"
-
-// *** libjpeg ***
-#include "jpeglib.h"
-
-// *** libpng ***
-#include "png.h"
-
-// *** pixman ***
-#include "pixman.h"
-
-// *** cairo ***
-#include "cairo.h"
 
 // *** fltk ***
 #if defined (_MSC_VER) 
@@ -400,6 +383,21 @@ stdafxhFile = r"""
 #if defined (_MSC_VER) 
 #pragma warning( pop )
 #endif
+
+// *** libpng ***
+#include "png.h"
+
+// *** pixman ***
+#include "pixman.h"
+
+// *** cairo ***
+#include "cairo.h"
+
+// *** zlib ***
+#include "zlib.h"
+
+// *** libjpeg ***
+#include "jpeglib.h"
 
 // *** mtools ***
 #include "mtools.hpp"
