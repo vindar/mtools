@@ -38,7 +38,7 @@ CXXFLAGS_TEST = `fltk-config --cxxflags` `pkg-config cairo --cflags` `pkg-config
 
 LDFLAGS_TEST =  $(OUT_MTOOLS) `fltk-config --ldstaticflags` `pkg-config cairo --libs` `pkg-config pixman-1 --libs` -lfreetype -ljpeg -lpng -lz
 
-CHECKCOMPILERGCC = $(shell $(CXX) --version | grep GCC)
+CHECKCOMPILERGCC = $(shell $(CXX) --version | grep 'GCC\|gcc\|g++')
 ifneq ("$(CHECKCOMPILERGCC)","")
 # gcc specific options
     LDFLAGS_TEST += -latomic
