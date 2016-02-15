@@ -20,9 +20,9 @@
 
 #include "stdafx_mtools.h"
 
+#include "io/fltkSupervisor.hpp"
 #include "misc/stringfct.hpp"
 #include "misc/indirectcall.hpp"
-#include "io/fltk_supervisor.hpp"
 #include "graphics/rgbc.hpp"
 #include "io/console.hpp"
 
@@ -196,7 +196,7 @@ namespace mtools
                 {
                 if (fl_choice("Do you want to quit?\n Choosing [Yes] will abort the process...", "No", "Yes", nullptr) == 1)
                     {
-                    internals_fltk_supervisor::exitFLTK();
+                    mtools::fltkExit();
                     }
                 return;
                 }
@@ -309,7 +309,7 @@ namespace mtools
         ((internals_console::ConsoleWidget *)_CW)->removeTimer(); // remove the timer
         _disabled = 2;
         _mustop.lock();
-        mtools::deleteInFLTKThread<internals_console::ConsoleWidget>(_CW);
+        mtools::deleteInFltkThread<internals_console::ConsoleWidget>(_CW);
         _CW = nullptr;
         delete _logfile;
         _logfile = nullptr;
@@ -320,7 +320,7 @@ namespace mtools
 
     inline void Console::_makeWindow()
         {
-        if (_CW == (internals_console::ConsoleWidget *)nullptr)  { _CW = mtools::newInFLTKThread<internals_console::ConsoleWidget, int, int, int, int, std::string *, std::string *, std::mutex *, std::atomic<size_t> *>(0, 0, 650, 400, &_consoleName, &_waiting_text, &_mutext, &_tl); }
+        if (_CW == (internals_console::ConsoleWidget *)nullptr)  { _CW = mtools::newInFltkThread<internals_console::ConsoleWidget, int, int, int, int, std::string *, std::string *, std::mutex *, std::atomic<size_t> *>(0, 0, 650, 400, &_consoleName, &_waiting_text, &_mutext, &_tl); }
         }
 
 
@@ -330,7 +330,7 @@ namespace mtools
         if (_enableScreen)
             {
             mtools::IndirectMemberProc<internals_console::ConsoleWidget> proxy(*_CW, &internals_console::ConsoleWidget::clearScreen);
-            mtools::runInFLTKThread(proxy);
+            mtools::runInFltkThread(proxy);
             }
         if (_enableLogging)
             {
@@ -345,7 +345,7 @@ namespace mtools
         {
         if (!_startProtect()) { return; }
         mtools::IndirectMemberProc<internals_console::ConsoleWidget,int,int,int,int> proxy(*_CW, &internals_console::ConsoleWidget::chsize,x,y,w,h);
-        mtools::runInFLTKThread(proxy);
+        mtools::runInFltkThread(proxy);
         _endProtect();
         }
 
@@ -354,7 +354,7 @@ namespace mtools
         {
         if (!_startProtect()) { return; }
         mtools::IndirectMemberProc<internals_console::ConsoleWidget,int,int> proxy(*_CW, &internals_console::ConsoleWidget::chpos,x,y);
-        mtools::runInFLTKThread(proxy);
+        mtools::runInFltkThread(proxy);
         _endProtect();
         }
 
@@ -387,7 +387,7 @@ namespace mtools
         {
         if (!_startProtect()) { return std::string(""); }
         mtools::IndirectMemberProc<internals_console::ConsoleWidget, const std::string *> proxy1(*_CW, &internals_console::ConsoleWidget::startInput, &initText);
-        mtools::runInFLTKThread(proxy1);
+        mtools::runInFltkThread(proxy1);
         while (((internals_console::ConsoleWidget*)(_CW))->entered == 0)
             {
             if (_disabled > 0) { _endProtect(); std::this_thread::sleep_for(std::chrono::milliseconds(50)); return std::string(""); }
@@ -395,7 +395,7 @@ namespace mtools
             }
         std::string res = ((internals_console::ConsoleWidget*)(_CW))->inputText;
         mtools::IndirectMemberProc<internals_console::ConsoleWidget> proxy2(*_CW, &internals_console::ConsoleWidget::endInput);
-        mtools::runInFLTKThread(proxy2);
+        mtools::runInFltkThread(proxy2);
         _endProtect();
         return res;
         }
@@ -427,7 +427,7 @@ namespace mtools
     {
         if (!_startProtect()) { return 0; }
         mtools::IndirectMemberProc<internals_console::ConsoleWidget> proxy1(*_CW, &internals_console::ConsoleWidget::startGetKey);
-        mtools::runInFLTKThread(proxy1);
+        mtools::runInFltkThread(proxy1);
         while (((internals_console::ConsoleWidget*)(_CW))->keyed == 0)
             {
             if (_disabled > 0) { _endProtect(); std::this_thread::sleep_for(std::chrono::milliseconds(50)); return 0; }
@@ -435,7 +435,7 @@ namespace mtools
             }
         int res = ((internals_console::ConsoleWidget*)(_CW))->keyed;
         mtools::IndirectMemberProc<internals_console::ConsoleWidget> proxy2(*_CW, &internals_console::ConsoleWidget::endGetKey);
-        mtools::runInFLTKThread(proxy2);
+        mtools::runInFltkThread(proxy2);
         _endProtect();
         return res;
 

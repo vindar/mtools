@@ -23,7 +23,7 @@
 #include "graphics/plotter2Dobj.hpp"
 #include "misc/error.hpp"
 #include "misc/indirectcall.hpp"
-#include "io/fltk_supervisor.hpp"
+#include "io/fltkSupervisor.hpp"
 #include "graphics/customcimg.hpp"
 #include "graphics/drawable2Dobject.hpp"
 #include "graphics/rangemanager.hpp"
@@ -100,10 +100,10 @@ namespace mtools
 
         void Plotter2DObj::name(const std::string & newname)
             {
-            if (!isFLTKThread()) // we need to run the method in FLTK
+            if (!isFltkThread()) // we need to run the method in FLTK
                 {
                 IndirectMemberProc<Plotter2DObj, const std::string & > proxy(*this, &Plotter2DObj::name, newname); // registers the call
-                runInFLTKThread(proxy);
+                runInFltkThread(proxy);
                 return;
                 }
             _name = newname;
@@ -121,10 +121,10 @@ namespace mtools
 
         void Plotter2DObj::opacity(float op)
             {
-            if (!isFLTKThread()) // run the method in FLTK if not in it
+            if (!isFltkThread()) // run the method in FLTK if not in it
                 {
                 IndirectMemberProc<Plotter2DObj,float> proxy(*this, &Plotter2DObj::opacity, op); // registers the call
-                runInFLTKThread(proxy);
+                runInFltkThread(proxy);
                 return;
                 }
             if (op <= 0.0) op = 0.0; else if (op >= 1.0) op = 1.0;
@@ -140,10 +140,10 @@ namespace mtools
 
         void Plotter2DObj::enable(bool status)
             {
-            if (!isFLTKThread()) // run the method in FLTK if not in it
+            if (!isFltkThread()) // run the method in FLTK if not in it
               {
               IndirectMemberProc<Plotter2DObj, bool> proxy(*this, &Plotter2DObj::enable, status); // registers the call
-              runInFLTKThread(proxy);
+              runInFltkThread(proxy);
               return;
               }
             _drawOn = status;
@@ -187,10 +187,10 @@ namespace mtools
 
         void Plotter2DObj::suspend(bool status)
             {
-            if (!isFLTKThread()) // run the method in FLTK if not in it
+            if (!isFltkThread()) // run the method in FLTK if not in it
               {
               IndirectMemberProc<Plotter2DObj,bool> proxy(*this, &Plotter2DObj::suspend,status); // registers the call
-              runInFLTKThread(proxy);
+              runInFltkThread(proxy);
               return;
               }
             if ((_drawOn == false)||(_suspended == status)) return; // nothing to do
@@ -372,10 +372,10 @@ namespace mtools
 
         void Plotter2DObj::setNameWidgetColor()
             {
-            if (!isFLTKThread()) // run the method in FLTK if not in it
+            if (!isFltkThread()) // run the method in FLTK if not in it
                 {
                 IndirectMemberProc<Plotter2DObj> proxy(*this, &Plotter2DObj::setNameWidgetColor); // registers the call
-                runInFLTKThread(proxy);
+                runInFltkThread(proxy);
                 return;
                 }
             if ((pnot)_ownercb == nullptr) return;  // return if not inserted
@@ -429,7 +429,7 @@ namespace mtools
         /* called when we are inserted */
         void Plotter2DObj::_inserted(pnot cb, RangeManager * rm, void * data, void * data2, int hintWidth)
         {
-            MTOOLS_ASSERT(isFLTKThread()); // the owner should be calling from the fltk thread !
+            MTOOLS_ASSERT(isFltkThread()); // the owner should be calling from the fltk thread !
             if (((pnot)_ownercb) != nullptr) // we are already inserted, detach before going further
                {
                MTOOLS_DEBUG("Plotter2DObj::_inserted, already inserted, we detach before going any further");
@@ -604,7 +604,7 @@ namespace mtools
         /* called by the owner when detached */
         void Plotter2DObj::_removed()
             {
-            MTOOLS_ASSERT(isFLTKThread()); // we should be in the fltk thread
+            MTOOLS_ASSERT(isFltkThread()); // we should be in the fltk thread
             MTOOLS_ASSERT(((pnot)_ownercb) != nullptr); // check that we are indeed inserted.
             MTOOLS_ASSERT(((Fl_Group *)_extOptionWin) != nullptr); // cannnot be null
             Fl::remove_timeout(_timerCB_static, this); // remove the timer for the progress bar if there is one.
@@ -625,14 +625,14 @@ namespace mtools
         void Plotter2DObj::_makecallback(int code)
             {
             if (((pnot)_ownercb) == nullptr) return; // does nothing if not inserted.
-            if (isFLTKThread())
+            if (isFltkThread())
                 {
                 ((pnot)_ownercb)(_data,_data2, this, code); // inside FLTK, we call directly
                 }
             else
                 {
                 IndirectProc<void *, void *, void *, int> proxy((pnot)_ownercb, (void *)_data, (void*)_data2, (void*)this, code); // registers the call
-                runInFLTKThread(proxy); // make the call to the owner indicating we are de-inserting ourselves.
+                runInFltkThread(proxy); // make the call to the owner indicating we are de-inserting ourselves.
                 }
             }
 

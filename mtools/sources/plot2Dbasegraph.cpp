@@ -22,7 +22,7 @@
 
 #include "graphics/plot2Dbasegraph.hpp"
 #include "misc/indirectcall.hpp"
-#include "io/fltk_supervisor.hpp"
+#include "io/fltkSupervisor.hpp"
 
 
 namespace mtools
@@ -67,10 +67,10 @@ namespace mtools
 
         void Plot2DBaseGraph::drawLines()
             {
-            if (!isFLTKThread()) // we need to run the method in FLTK
+            if (!isFltkThread()) // we need to run the method in FLTK
                 {
                 IndirectMemberProc<Plot2DBaseGraph> proxy(*this, &Plot2DBaseGraph::drawLines); // registers the call
-                runInFLTKThread(proxy);
+                runInFltkThread(proxy);
                 return;
                 }
             _drawMethod = true;
@@ -80,10 +80,10 @@ namespace mtools
 
         void Plot2DBaseGraph::drawDots(int quality)
             {
-            if (!isFLTKThread()) // we need to run the method in FLTK
+            if (!isFltkThread()) // we need to run the method in FLTK
                 {
                 IndirectMemberProc<Plot2DBaseGraph, int> proxy(*this, &Plot2DBaseGraph::drawDots, quality); // registers the call
-                runInFLTKThread(proxy);
+                runInFltkThread(proxy);
                 return;
                 }
             if (quality < 0) quality = 0; else if (quality > 30) quality = 30;
@@ -95,10 +95,10 @@ namespace mtools
 
         void Plot2DBaseGraph::tickness(int tick)
             {
-            if (!isFLTKThread()) // we need to run the method in FLTK
+            if (!isFltkThread()) // we need to run the method in FLTK
                 {
                 IndirectMemberProc<Plot2DBaseGraph,int> proxy(*this, &Plot2DBaseGraph::tickness,tick); // registers the call
-                runInFLTKThread(proxy);
+                runInFltkThread(proxy);
                 return;
                 }
             if (tick < 1) tick = 1; else if (tick>20) tick = 20;
@@ -109,10 +109,10 @@ namespace mtools
 
         void Plot2DBaseGraph::epigraph(bool status)
             {
-            if (!isFLTKThread()) // we need to run the method in FLTK
+            if (!isFltkThread()) // we need to run the method in FLTK
                 {
                 IndirectMemberProc<Plot2DBaseGraph, bool> proxy(*this, &Plot2DBaseGraph::epigraph, status); // registers the call
-                runInFLTKThread(proxy);
+                runInFltkThread(proxy);
                 return;
                 }
             _drawOver = status;
@@ -122,10 +122,10 @@ namespace mtools
 
         void Plot2DBaseGraph::epigraphColor(RGBc color)
             {
-            if (!isFLTKThread()) // we need to run the method in FLTK
+            if (!isFltkThread()) // we need to run the method in FLTK
                 {
                 IndirectMemberProc<Plot2DBaseGraph, RGBc> proxy(*this, &Plot2DBaseGraph::epigraphColor, color); // registers the call
-                runInFLTKThread(proxy);
+                runInFltkThread(proxy);
                 return;
                 }
             _drawOverColor = color;
@@ -135,10 +135,10 @@ namespace mtools
 
         void Plot2DBaseGraph::epigraphOpacity(float opacity)
             {
-            if (!isFLTKThread()) // we need to run the method in FLTK
+            if (!isFltkThread()) // we need to run the method in FLTK
                 {
                 IndirectMemberProc<Plot2DBaseGraph, float> proxy(*this, &Plot2DBaseGraph::epigraphOpacity, opacity); // registers the call
-                runInFLTKThread(proxy);
+                runInFltkThread(proxy);
                 return;
                 }
             _drawOverOpacity = opacity;
@@ -148,10 +148,10 @@ namespace mtools
 
         void Plot2DBaseGraph::hypograph(bool status)
             {
-            if (!isFLTKThread()) // we need to run the method in FLTK
+            if (!isFltkThread()) // we need to run the method in FLTK
                 {
                 IndirectMemberProc<Plot2DBaseGraph, bool> proxy(*this, &Plot2DBaseGraph::hypograph, status); // registers the call
-                runInFLTKThread(proxy);
+                runInFltkThread(proxy);
                 return;
                 }
             _drawUnder = status;
@@ -161,10 +161,10 @@ namespace mtools
 
         void Plot2DBaseGraph::hypographColor(RGBc color)
             {
-            if (!isFLTKThread()) // we need to run the method in FLTK
+            if (!isFltkThread()) // we need to run the method in FLTK
                 {
                 IndirectMemberProc<Plot2DBaseGraph, RGBc> proxy(*this, &Plot2DBaseGraph::hypographColor, color); // registers the call
-                runInFLTKThread(proxy);
+                runInFltkThread(proxy);
                 return;
                 }
             _drawUnderColor = color;
@@ -174,10 +174,10 @@ namespace mtools
 
         void Plot2DBaseGraph::hypographOpacity(float opacity)
             {
-            if (!isFLTKThread()) // we need to run the method in FLTK
+            if (!isFltkThread()) // we need to run the method in FLTK
                 {
                 IndirectMemberProc<Plot2DBaseGraph, float> proxy(*this, &Plot2DBaseGraph::hypographOpacity, opacity); // registers the call
-                runInFLTKThread(proxy);
+                runInFltkThread(proxy);
                 return;
                 }
             _drawUnderOpacity = opacity;
@@ -666,10 +666,10 @@ namespace mtools
 
         void Plot2DBaseGraphWithInterpolation::interpolationMethod(int type)
             {
-            if (!isFLTKThread()) // we need to run the method in FLTK
+            if (!isFltkThread()) // we need to run the method in FLTK
                 {
                 IndirectMemberProc<Plot2DBaseGraphWithInterpolation, int> proxy(*this, &Plot2DBaseGraphWithInterpolation::interpolationMethod, type); // registers the call
-                runInFLTKThread(proxy);
+                runInFltkThread(proxy);
                 return;
                 }
             if ((_interpolationType < 0) || (_interpolationType > 3)) _interpolationType = INTERPOLATION_NONE; else _interpolationType = type;

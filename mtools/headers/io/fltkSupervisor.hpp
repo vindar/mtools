@@ -69,7 +69,7 @@ namespace mtools
     /**
     * Create an object of type T with constructor argument args within the FLTK thread. The object
     * is constructed on the heap via new. Do not call delete on the returned pointer! In order to
-    * delete the object call the `deleteInFLTKThread()` function. Every object created in the FLTK
+    * delete the object call the `deleteInFltkThread()` function. Every object created in the FLTK
     * thread should be properly deleted at some point otherwise it will prevent the thread to stop
     * properly.
     *
@@ -79,7 +79,7 @@ namespace mtools
     *
     * @return  a pointer to the constucted object or nullptr in case of failure.
     **/
-    template<typename T, typename ...Params> inline T * newInFLTKThread(Params&&... args)
+    template<typename T, typename ...Params> inline T * newInFltkThread(Params&&... args)
         {
         IndirectConstructor<T, Params...> IC(std::forward<Params>(args)...);
         internals_fltkSupervisor::newInFltk(&IC);
@@ -88,12 +88,12 @@ namespace mtools
 
     /**
     * Call the destructor of an object within the FLTK Thread. The object MUST have been created
-    * with the `newInFLTKThread()` method.
+    * with the `newInFltkThread()` method.
     *
     * @tparam  T   type of the object to delete.
     * @param [in,out]  adress  pointer to the object to delete.
     **/
-    template<typename T> inline bool deleteInFltkThread(T * adress, bool deleteAlways)
+    template<typename T> inline bool deleteInFltkThread(T * adress, bool deleteAlways = false)
         {
         IndirectDestructor<T> ID(adress);
         return internals_fltkSupervisor::deleteInFltk(&ID, deleteAlways);
@@ -112,8 +112,7 @@ namespace mtools
         internals_fltkSupervisor::runInFltk(&proxycall);
         }
 
-
-
+    
 
     namespace internals_fltkSupervisor
         {
@@ -122,35 +121,58 @@ namespace mtools
         *  Sentinel for the fltk thread in each compilation unit that includes fltkSupervisor.hpp. The
         *  last one makes sure the thread is stopped.
         **/
-        static class FltkThreadSentinel
+        class FltkThreadSentinel
             {
             public:
 
-                FltkThreadSentinel() : _master(instInit()) { }
+                FltkThreadSentinel() : _master(instInit()) 
+                    {
+                    if ((bool)_master) MTOOLS_DEBUG("FltkThreadSentinel ctor: Master"); else MTOOLS_DEBUG("FltkThreadSentinel ctor.");
+                    }
+
                 ~FltkThreadSentinel()
                     {
                     if ((bool)_master == true)
                         {
-                        MTOOLS_DEBUG("FltkThreadSentinel request FLTK thread stop");
+                        MTOOLS_DEBUG("FltkThreadSentinel dtor Master: request thread stop");
                         stopThread();
                         }
                     }
+
+                bool isMaster() { return (bool)_master; }
 
             private:
 
                 FltkThreadSentinel(const FltkThreadSentinel &) = delete;
                 FltkThreadSentinel & operator=(const FltkThreadSentinel &) = delete;
                 std::atomic<bool> _master;
-            } _fltkSentinel;
+
+            };
+        
+        static FltkThreadSentinel _fltkSentinel;
+
+        /**
+         * force the sentinel to be instanciated before any object that calls this function.
+         **/
+        inline bool insureFltkSentinel()
+            {
+            MTOOLS_DEBUG("insureFltkSentinel()");
+            static std::atomic<bool> dummy(false);
+            dummy = _fltkSentinel.isMaster();
+            return dummy;
+            }
 
         }
 
     }
 
 
-//#ifdef __APPLE__
+#ifdef __APPLE__
 #define MTOOLS_SWAP_THREADS_FLAG
-//#endif
+#endif
+
+#define MTOOLS_SWAP_THREADS_FLAG
+
 
 #ifdef MTOOLS_SWAP_THREADS_FLAG
 
@@ -164,6 +186,10 @@ namespace mtools
         }
 
 #define MTOOLS_SWAP_THREADS(argc,argv) { if (mtools::internals_switchthread::barrier(argc, argv)) return mtools::internals_switchthread::result(); }
+
+#else
+
+#define MTOOLS_SWAP_THREADS(argc,argv) ((void)0)
 
 #endif 
 

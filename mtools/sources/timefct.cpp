@@ -32,7 +32,7 @@
 
 #include "misc/timefct.hpp"
 #include "misc/indirectcall.hpp"
-#include "io/fltk_supervisor.hpp"
+#include "io/fltkSupervisor.hpp"
 #include "misc/stringfct.hpp"
 
 
@@ -161,7 +161,7 @@ namespace mtools
                 {
                 if (fl_choice("Do you want to quit?\n Choosing YES will abort the process...", "YES", "NO", nullptr) == 0)
                     {
-                    internals_fltk_supervisor::exitFLTK();
+                    mtools::fltkExit();
                     }
                 return;
                 }
@@ -221,7 +221,7 @@ namespace mtools
 
         ProgressWidget * makeProgressWidget(bool sh, const std::string & name)
             {
-             return newInFLTKThread<ProgressWidget, bool&, const char *>(sh, name.c_str());
+             return newInFltkThread<ProgressWidget, bool&, const char *>(sh, name.c_str());
             }
 
 
@@ -233,7 +233,7 @@ namespace mtools
 
         void deleteProgressWidget(ProgressWidget * PW)
             {
-            deleteInFLTKThread<ProgressWidget>(PW);
+            deleteInFltkThread<ProgressWidget>(PW);
             }
 
 

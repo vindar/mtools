@@ -167,6 +167,7 @@ namespace mtools
                     MTOOLS_DEBUG("run completed.");
                     }
 
+
                 /* create an object in fltk, start the thread if needed */
                 void newInFltk(IndirectCtor * proxy)
                     {
@@ -197,7 +198,6 @@ namespace mtools
                     MTOOLS_DEBUG("Construction completed.");
                     return;
                     }
-
 
 
                 /* delete an object in fltk, if deleteAlways is set, deltee the object
@@ -261,8 +261,11 @@ namespace mtools
                     if (status() != THREAD_ON) { MTOOLS_DEBUG(std::string("Calling FltkSupervisor::stopThread() while thread has status ") + mtools::toString(status())); return; }
                     MTOOLS_DEBUG("Stopping the FLTK thread...");
                     _status = THREAD_STOPPING;
+#ifdef MTOOLS_SWAP_THREADS_FLAG
+                    while (status() == THREAD_STOPPING) { std::this_thread::yield(); }
+#else
                     ((std::thread *)_th)->join();
-                    _status = THREAD_STOPPED;
+#endif                   
                     MTOOLS_DEBUG("...FLTK thread stopped.");
                     }
 
@@ -334,7 +337,7 @@ namespace mtools
                     try
                         {
                         _fltkid = std::this_thread::get_id();
-                        MTOOLS_DEBUG(" **** START: FLTK Thread " + toString(_thid) + " ****.");
+                        MTOOLS_DEBUG(" **** START: FLTK Thread " + toString(_fltkid) + " ****.");
                         Fl::lock();
                         Fl::args(0, nullptr);
                         while (status() != THREAD_STOPPING)
@@ -344,7 +347,8 @@ namespace mtools
                             if (status() == THREAD_NOT_STARTED) Fl::awake(&FltkSupervisor::_initCB, nullptr);
                             }
                         Fl::unlock();
-                        MTOOLS_DEBUG(" **** STOP: FLTK Thread " + toString(_thid) + " ****.");
+                        MTOOLS_DEBUG(" **** STOP: FLTK Thread " + toString(_fltkid) + " ****.");
+                        _status = THREAD_STOPPED;
                         return;
                         }
                     catch (std::exception & exc)
@@ -408,7 +412,17 @@ namespace mtools
 
         void stopThread() { internals_fltkSupervisor::FltkSupervisor::getInst().first->stopThread(); }
 
-        bool instInit() { return internals_fltkSupervisor::FltkSupervisor::getInst().second; }
+        bool instInit() { return internals_fltkSupervisor::FltkSupervisor::getInst(true).second; }
+
+        /*
+        bool insureFltkSentinel()
+            {
+            MTOOLS_DEBUG("insureFltkSentinel()");
+            static std::atomic<bool> dummy(false);
+            dummy = _fltkSentinel.isMaster();
+            return dummy;
+            }
+            */
 
         }
 
@@ -453,6 +467,7 @@ namespace mtools
             bool barrier(int argc, char * argv[])
                 {
                 MTOOLS_DEBUG("barrier start");
+                mtools::internals_fltkSupervisor::instInit();
                 static std::atomic<int> nb(0);
                 if (nb++ > 0) { return false; }
                 if (fltkThreadStatus() != mtools::internals_fltkSupervisor::FltkSupervisor::THREAD_NOT_STARTED)
@@ -461,7 +476,7 @@ namespace mtools
                     }
                 std::thread th(&newMainThread, argc, argv); // start the new 'main' thread
                 mtools::internals_fltkSupervisor::FltkSupervisor::getInst(true).first->threadProc(); // start the fltk loop
-                th.join(); // wait for the main thread to complete
+                th.join(); // wait for the 'main' thread to complete
                 MTOOLS_DEBUG("barrier end");
                 return true;
                 }

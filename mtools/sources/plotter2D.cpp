@@ -25,7 +25,7 @@
 #include "graphics/plotter2D.hpp"
 #include "graphics/plotter2Dobj.hpp"
 #include "graphics/view2Dwidget.hpp"
-#include "io/fltk_supervisor.hpp"
+#include "io/fltkSupervisor.hpp"
 #include "misc/error.hpp"
 
 #include "io/fileio.hpp"
@@ -987,10 +987,10 @@ namespace mtools
                 _vecPlot[i]->setParam(R, winSize); // set the parameters for all the object in the plotter
                 }
             // we run rangeManagerCB2 in fltk
-            if (isFLTKThread()) { rangeManagerCB2(R, winSize, fixedAR, changedRange, changedWinSize, changedFixAspectRatio); }
+            if (isFltkThread()) { rangeManagerCB2(R, winSize, fixedAR, changedRange, changedWinSize, changedFixAspectRatio); }
             else {
                  mtools::IndirectMemberProc<internals_graphics::Plotter2DWindow, fBox2, iVec2, bool, bool, bool, bool> proxy(*this, &Plotter2DWindow::rangeManagerCB2, R, winSize, fixedAR, changedRange, changedWinSize, changedFixAspectRatio);
-                 mtools::runInFLTKThread(proxy);
+                 mtools::runInFltkThread(proxy);
                  }
             // back to our original thread.
             return true; // accept the change
@@ -1015,7 +1015,7 @@ namespace mtools
         void Plotter2DWindow::objectCB_static(void * data, void * data2, void * obj, int code) { MTOOLS_ASSERT(data != nullptr); ((Plotter2DWindow *)data)->objectCB(obj, code); }
         void Plotter2DWindow::objectCB(void * obj, int code)
             {
-            MTOOLS_ASSERT(isFLTKThread());
+            MTOOLS_ASSERT(isFltkThread());
             switch (code)
                 {
                 case Plotter2DObj::_REQUEST_DETACH:
@@ -1790,7 +1790,7 @@ namespace mtools
 
     Plotter2D::Plotter2D(internals_graphics::Plotter2DObj & obj, bool addAxes, bool addGrid, int W, int H, int X, int Y)
         {
-        _plotterWin = mtools::newInFLTKThread<internals_graphics::Plotter2DWindow, bool, bool, int, int, int, int>(std::move(addAxes), std::move(addGrid), std::move(X), std::move(Y), std::move(W), std::move(H)); // create the plotter window if FLTK
+        _plotterWin = mtools::newInFltkThread<internals_graphics::Plotter2DWindow, bool, bool, int, int, int, int>(std::move(addAxes), std::move(addGrid), std::move(X), std::move(Y), std::move(W), std::move(H)); // create the plotter window if FLTK
         MTOOLS_INSURE(_plotterWin != nullptr);
         add(obj);
         }
@@ -1798,7 +1798,7 @@ namespace mtools
 
     Plotter2D::Plotter2D(bool addAxes, bool addGrid, int W, int H, int X, int Y)
         {
-            _plotterWin = mtools::newInFLTKThread<internals_graphics::Plotter2DWindow, bool, bool, int, int, int, int>(std::move(addAxes), std::move(addGrid), std::move(X), std::move(Y), std::move(W), std::move(H)); // create the plotter window if FLTK
+            _plotterWin = mtools::newInFltkThread<internals_graphics::Plotter2DWindow, bool, bool, int, int, int, int>(std::move(addAxes), std::move(addGrid), std::move(X), std::move(Y), std::move(W), std::move(H)); // create the plotter window if FLTK
         MTOOLS_INSURE(_plotterWin != nullptr);
         }
 
@@ -1806,7 +1806,7 @@ namespace mtools
     Plotter2D::~Plotter2D()
         {
         endPlot(); // end the plot just in case.
-        mtools::deleteInFLTKThread<internals_graphics::Plotter2DWindow>(_plotterWin); // delete the plotter window
+        mtools::deleteInFltkThread<internals_graphics::Plotter2DWindow>(_plotterWin); // delete the plotter window
         }
 
 
@@ -1816,7 +1816,7 @@ namespace mtools
     Plot2DAxes * Plotter2D::axesObject(bool status)
         {
         mtools::IndirectMemberProc<internals_graphics::Plotter2DWindow, bool> proxy(*_plotterWin, &internals_graphics::Plotter2DWindow::_insertAxesObject, status);
-        mtools::runInFLTKThread(proxy);
+        mtools::runInFltkThread(proxy);
         return axesObject();
         }
 
@@ -1827,7 +1827,7 @@ namespace mtools
     Plot2DGrid * Plotter2D::gridObject(bool status)
         {
         mtools::IndirectMemberProc<internals_graphics::Plotter2DWindow, bool> proxy(*_plotterWin, &internals_graphics::Plotter2DWindow::_insertGridObject, status);
-        mtools::runInFLTKThread(proxy);
+        mtools::runInFltkThread(proxy);
         return gridObject();
         }
 
@@ -1835,7 +1835,7 @@ namespace mtools
     void Plotter2D::add(internals_graphics::Plotter2DObj * obj)
         {
         mtools::IndirectMemberProc<internals_graphics::Plotter2DWindow, internals_graphics::Plotter2DObj *> proxy(*_plotterWin, &internals_graphics::Plotter2DWindow::add, std::move(obj)); // call _plotterWin.insert(obj) in FLTK
-        mtools::runInFLTKThread(proxy);                                                                                                                                                        //
+        mtools::runInFltkThread(proxy);                                                                                                                                                        //
         }
 
 
@@ -1858,7 +1858,7 @@ namespace mtools
     void Plotter2D::remove(internals_graphics::Plotter2DObj * obj)
         {
         mtools::IndirectMemberProc<internals_graphics::Plotter2DWindow, internals_graphics::Plotter2DObj *> proxy(*_plotterWin, &internals_graphics::Plotter2DWindow::remove, std::move(obj)); // call _plotterWin.insert(obj) in FLTK
-        mtools::runInFLTKThread(proxy);                                                                                                                                                        //
+        mtools::runInFltkThread(proxy);                                                                                                                                                        //
         }
 
 
@@ -1874,7 +1874,7 @@ namespace mtools
     void Plotter2D::fourChannelImage(bool use4)
         {
         mtools::IndirectMemberProc<internals_graphics::Plotter2DWindow, bool> proxy(*_plotterWin, &internals_graphics::Plotter2DWindow::fourChannelImage, use4);
-        mtools::runInFLTKThread(proxy);
+        mtools::runInFltkThread(proxy);
         }
 
 
@@ -1882,7 +1882,7 @@ namespace mtools
         {
         _plotterWin->_usesolidBK = use;
         mtools::IndirectMemberProc<internals_graphics::Plotter2DWindow> proxy(*_plotterWin, &internals_graphics::Plotter2DWindow::updatesolidback);
-        mtools::runInFLTKThread(proxy);
+        mtools::runInFltkThread(proxy);
         }
 
 
@@ -1896,7 +1896,7 @@ namespace mtools
         {
         _plotterWin->_solidBKcolor = color.getOpaque();
         mtools::IndirectMemberProc<internals_graphics::Plotter2DWindow> proxy(*_plotterWin, &internals_graphics::Plotter2DWindow::updatesolidback);
-        mtools::runInFLTKThread(proxy);
+        mtools::runInFltkThread(proxy);
         }
 
 
@@ -1912,14 +1912,14 @@ namespace mtools
     void Plotter2D::autoredraw(unsigned int rate)
         {
         mtools::IndirectMemberProc<internals_graphics::Plotter2DWindow,int> proxy(*_plotterWin, &internals_graphics::Plotter2DWindow::setRefreshRate,rate);
-        mtools::runInFLTKThread(proxy);
+        mtools::runInFltkThread(proxy);
         }
 
 
     void Plotter2D::redraw()
         {
         mtools::IndirectMemberProc<internals_graphics::Plotter2DWindow> proxy(*_plotterWin, &internals_graphics::Plotter2DWindow::doRedraw);
-        mtools::runInFLTKThread(proxy);
+        mtools::runInFltkThread(proxy);
         }
 
 
@@ -1936,14 +1936,14 @@ namespace mtools
     void Plotter2D::startPlot()
         {
         mtools::IndirectMemberProc<internals_graphics::Plotter2DWindow> proxy(*_plotterWin, &internals_graphics::Plotter2DWindow::startPlot); // call _plotterWin.startPlot() in FLTK
-        mtools::runInFLTKThread(proxy);                                                                                                       //
+        mtools::runInFltkThread(proxy);                                                                                                       //
         }
 
 
     void Plotter2D::endPlot()
         {
         mtools::IndirectMemberProc<internals_graphics::Plotter2DWindow> proxy(*_plotterWin, &internals_graphics::Plotter2DWindow::endPlot); // call _plotterWin.endPlot() in FLTK
-        mtools::runInFLTKThread(proxy);                                                                                                       //
+        mtools::runInFltkThread(proxy);                                                                                                       //
         }
 
     bool Plotter2D::shown() const
@@ -1955,28 +1955,28 @@ namespace mtools
     void Plotter2D::setWindowPos(int X, int Y)
         {
         mtools::IndirectMemberProc<internals_graphics::Plotter2DWindow,int,int> proxy(*_plotterWin, &internals_graphics::Plotter2DWindow::setWindowPos,X,Y);
-        mtools::runInFLTKThread(proxy);
+        mtools::runInFltkThread(proxy);
         }
 
 
     void Plotter2D::setDrawingSize(int W, int H)
         {
         mtools::IndirectMemberProc<internals_graphics::Plotter2DWindow, int, int> proxy(*_plotterWin, &internals_graphics::Plotter2DWindow::setDrawingSize, W, H);
-        mtools::runInFLTKThread(proxy);
+        mtools::runInFltkThread(proxy);
         }
 
 
     void Plotter2D::setWindowSize(int W, int H)
         {
         mtools::IndirectMemberProc<internals_graphics::Plotter2DWindow, int, int> proxy(*_plotterWin, &internals_graphics::Plotter2DWindow::setWindowSize, W, H);
-        mtools::runInFLTKThread(proxy);
+        mtools::runInFltkThread(proxy);
         }
 
 
     void Plotter2D::autorangeX()
         {
         mtools::IndirectMemberProc<internals_graphics::Plotter2DWindow> proxy(*_plotterWin, &internals_graphics::Plotter2DWindow::useCommonRangeX);
-        mtools::runInFLTKThread(proxy);
+        mtools::runInFltkThread(proxy);
         }
 
 
@@ -1990,7 +1990,7 @@ namespace mtools
     void Plotter2D::autorangeY()
         {
         mtools::IndirectMemberProc<internals_graphics::Plotter2DWindow> proxy(*_plotterWin, &internals_graphics::Plotter2DWindow::useCommonRangeY);
-        mtools::runInFLTKThread(proxy);
+        mtools::runInFltkThread(proxy);
         }
 
 
@@ -2004,7 +2004,7 @@ namespace mtools
     void Plotter2D::autorangeXY()
         {
         mtools::IndirectMemberProc<internals_graphics::Plotter2DWindow> proxy(*_plotterWin, &internals_graphics::Plotter2DWindow::useCommonRangeXY);
-        mtools::runInFLTKThread(proxy);
+        mtools::runInFltkThread(proxy);
         }
 
 
@@ -2021,7 +2021,7 @@ namespace mtools
     int Plotter2D::viewZoomFactor(int zoomFactor)
         {
         mtools::IndirectMemberProc<internals_graphics::Plotter2DWindow, int> proxy(*_plotterWin, &internals_graphics::Plotter2DWindow::setZoomFactor, zoomFactor);
-        mtools::runInFLTKThread(proxy);
+        mtools::runInFltkThread(proxy);
         return viewZoomFactor();
         }
 

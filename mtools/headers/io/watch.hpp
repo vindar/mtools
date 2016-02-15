@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "fltkSupervisor.hpp" // make sure sentnel object for fltk thread created before the global watch object
 #include "../misc/metaprog.hpp"
 
 #include <mutex>
@@ -410,7 +411,7 @@ namespace mtools
 
                 public:
 
-                    GlobalWatchWindow() { _get(1); }
+                    GlobalWatchWindow() { internals_fltkSupervisor::insureFltkSentinel(); _get(1); }
                     ~GlobalWatchWindow() { _get(-1); }
                     void move(int X, int Y) { NOBASICWATCH(_get(0)->move(X,Y)); }
                     void remove(const std::string & name) { NOBASICWATCH(_get(0)->remove(name)); }

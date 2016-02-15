@@ -20,7 +20,7 @@
 #pragma once
 
 
-#include "../io/fltk_supervisor.hpp"
+#include "../io/fltkSupervisor.hpp"
 #include "misc.hpp"
 
 #include <chrono>

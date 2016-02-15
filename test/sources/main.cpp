@@ -18,12 +18,20 @@ int main(int argc, char *argv[])
     MTOOLS_SWAP_THREADS(argc, argv);
     parseCommandLine(argc, argv, false, false);
 
+    int B = 12;
+
+    cout << "yoyo !\n";
+
+    watch("b", B);
+
+
+    
     Plotter2D PL;
     auto P1 = makePlot2DFun(sinus, -1,5, "sinus");
     PL[P1];
     PL.autorangeXY();
     PL.plot();
-
+    
     return 0;
 
     }

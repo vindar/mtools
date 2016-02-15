@@ -227,7 +227,7 @@ namespace mtools
                 if (isInserted())
                     {
                     IndirectMemberProc<Plot2DLattice> proxy(*this, &Plot2DLattice::_updateImageTypeInFLTK); // update the status of the button in the fltk thread
-                    runInFLTKThread(proxy); // and also refresh the drawing if needed
+                    runInFltkThread(proxy); // and also refresh the drawing if needed
                     }
                 }
 
@@ -244,7 +244,7 @@ namespace mtools
                 if (isInserted())
                     {
                     IndirectMemberProc<Plot2DLattice> proxy(*this, &Plot2DLattice::_updateImageTypeInFLTK); // update the status of the button in the fltk thread
-                    runInFLTKThread(proxy); // and also refresh the drawing if needed
+                    runInFltkThread(proxy); // and also refresh the drawing if needed
                     }
                 }
             
@@ -260,7 +260,7 @@ namespace mtools
                 if (isInserted())
                     {
                     IndirectMemberProc<Plot2DLattice> proxy(*this, &Plot2DLattice::_updateImageTypeInFLTK); // update the status of the button in the fltk thread
-                    runInFLTKThread(proxy); // and also refresh the drawing if needed
+                    runInFltkThread(proxy); // and also refresh the drawing if needed
                     }
                 }
 

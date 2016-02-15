@@ -24,7 +24,7 @@
 #include "misc/timefct.hpp"
 #include "misc/stringfct.hpp"
 #include "misc/indirectcall.hpp"
-#include "io/fltk_supervisor.hpp"
+#include "io/fltkSupervisor.hpp"
 #include "graphics/rgbc.hpp"
 
 #include <time.h>
@@ -346,7 +346,7 @@ namespace mtools
                     if ((Fl::event() == FL_SHORTCUT) && Fl::event_key() == FL_Escape) { return; } // dont use escape to quit the window
                     if (fl_choice("Do you want to quit?\n Choosing [Yes] will abort the process...", "No", "Yes", nullptr) == 1)
                         {
-                        internals_fltk_supervisor::exitFLTK();
+                        mtools::fltkExit();
                         }
                     return;
                     }
@@ -545,7 +545,7 @@ namespace mtools
             _X = X; _Y = Y;
             if (_fltkobj == nullptr) { return; }
             mtools::IndirectMemberProc<FltkWatchWin, int , int> proxy((*_fltkobj), &FltkWatchWin::move, _X, _Y);
-            mtools::runInFLTKThread(proxy);
+            mtools::runInFltkThread(proxy);
             }
 
 
@@ -559,7 +559,7 @@ namespace mtools
             {
             createIfNeeded();
             mtools::IndirectMemberProc<FltkWatchWin, const std::string &, bool> proxy((*_fltkobj), &FltkWatchWin::remove, name,true);
-            mtools::runInFLTKThread(proxy);
+            mtools::runInFltkThread(proxy);
             _nb--;
             if (_nb == 0) { clear(); }
             }
@@ -569,7 +569,7 @@ namespace mtools
             {
             if (_fltkobj != nullptr) 
                 { 
-                mtools::deleteInFLTKThread(_fltkobj); 
+                mtools::deleteInFltkThread(_fltkobj); 
                 _fltkobj = nullptr; 
                 }
             _nb = 0;
@@ -580,13 +580,13 @@ namespace mtools
             {
             createIfNeeded();
             mtools::IndirectMemberProc<FltkWatchWin, const std::string &, int> proxy((*_fltkobj), &FltkWatchWin::refreshRate, name, newrate);
-            mtools::runInFLTKThread(proxy);
+            mtools::runInFltkThread(proxy);
             }
 
 
         void WatchWindow::createIfNeeded() 
             { 
-            if (_fltkobj == nullptr) { _fltkobj = mtools::newInFLTKThread<internals_watch::FltkWatchWin,const std::string &, int &,int &>(_name, _X,_Y); } 
+            if (_fltkobj == nullptr) { _fltkobj = mtools::newInFltkThread<internals_watch::FltkWatchWin,const std::string &, int &,int &>(_name, _X,_Y); } 
             }
 
 
@@ -594,7 +594,7 @@ namespace mtools
             {
             _nb++;
             mtools::IndirectMemberProc<FltkWatchWin, const std::string &, WatchObj* > proxy((*_fltkobj), &FltkWatchWin::add, name, p);
-            mtools::runInFLTKThread(proxy);
+            mtools::runInFltkThread(proxy);
             }
 
 

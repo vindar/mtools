@@ -93,9 +93,6 @@
     <ClInclude Include="headers\misc\indirectcall.hpp">
       <Filter>Header Files\misc</Filter>
     </ClInclude>
-    <ClInclude Include="headers\io\fltk_supervisor.hpp">
-      <Filter>Header Files\io</Filter>
-    </ClInclude>
     <ClInclude Include="headers\io\console.hpp">
       <Filter>Header Files\io</Filter>
     </ClInclude>
@@ -218,9 +215,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="sources\fltk_supervisor.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="sources\console.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

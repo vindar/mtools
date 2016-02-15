@@ -23,7 +23,7 @@
 
 #include "graphics/plot2Daxes.hpp"
 #include "misc/indirectcall.hpp"
-#include "io/fltk_supervisor.hpp"
+#include "io/fltkSupervisor.hpp"
 
  
 
@@ -65,10 +65,10 @@ namespace mtools
 
         void Plot2DAxes::scaling(float scaling)
             {
-            if (!isFLTKThread()) // run the method in FLTK if not in it
+            if (!isFltkThread()) // run the method in FLTK if not in it
                 {
                 IndirectMemberProc<Plot2DAxes, float> proxy(*this, &Plot2DAxes::scaling, scaling); // registers the call
-                runInFLTKThread(proxy);
+                runInFltkThread(proxy);
                 return;
                 }
             if (scaling < 0.1) { scaling = 0.1f; } else if (scaling >= 5.0f) scaling = 5.0f;
@@ -81,10 +81,10 @@ namespace mtools
 
         void Plot2DAxes::graduations(bool show, RGBc color)
             {
-            if (!isFLTKThread()) // run the method in FLTK if not in it
+            if (!isFltkThread()) // run the method in FLTK if not in it
                 {
                 IndirectMemberProc<Plot2DAxes, bool, RGBc> proxy(*this, &Plot2DAxes::graduations, show, color); // registers the call
-                runInFLTKThread(proxy);
+                runInFltkThread(proxy);
                 return;
                 }
             _gradStatus = show;
@@ -115,10 +115,10 @@ namespace mtools
 
         void Plot2DAxes::numbers(bool show, RGBc color)
             {
-            if (!isFLTKThread()) // run the method in FLTK if not in it
+            if (!isFltkThread()) // run the method in FLTK if not in it
                 {
                 IndirectMemberProc<Plot2DAxes, bool, RGBc> proxy(*this, &Plot2DAxes::numbers, show,color); // registers the call
-                runInFLTKThread(proxy);
+                runInFltkThread(proxy);
                 return;
                 }
             _numStatus = show;

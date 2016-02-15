@@ -98,7 +98,7 @@ namespace mtools
         if (isInserted())
             {
             IndirectMemberProc<Plot2DCImg> proxy(*this, &Plot2DCImg::_updatePosTypeInFLTK); // update the status of the button in the fltk thread
-            runInFLTKThread(proxy); // and also refresh the drawing if needed
+            runInFltkThread(proxy); // and also refresh the drawing if needed
             resetDrawing();
             }
         }

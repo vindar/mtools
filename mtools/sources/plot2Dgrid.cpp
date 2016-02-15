@@ -22,7 +22,7 @@
 
 #include "graphics/plot2Dgrid.hpp"
 #include "misc/indirectcall.hpp"
-#include "io/fltk_supervisor.hpp"
+#include "io/fltkSupervisor.hpp"
 
 
 namespace mtools
@@ -52,10 +52,10 @@ namespace mtools
 
     void Plot2DGrid::fitToAxes(bool fit)
         {
-        if (!isFLTKThread()) // run the method in FLTK if not in it
+        if (!isFltkThread()) // run the method in FLTK if not in it
             {
             IndirectMemberProc<Plot2DGrid,bool> proxy(*this, &Plot2DGrid::fitToAxes,fit); // registers the call
-            runInFLTKThread(proxy);
+            runInFltkThread(proxy);
             return;
             }
         _fittoaxes = fit;
@@ -66,10 +66,10 @@ namespace mtools
 
     void Plot2DGrid::setUnitGrid()
         {
-        if (!isFLTKThread()) // run the method in FLTK if not in it
+        if (!isFltkThread()) // run the method in FLTK if not in it
             {
             IndirectMemberProc<Plot2DGrid> proxy(*this, &Plot2DGrid::setUnitGrid); // registers the call
-            runInFLTKThread(proxy);
+            runInFltkThread(proxy);
             return;
             }
         _fittoaxes = false;
@@ -82,10 +82,10 @@ namespace mtools
 
     void Plot2DGrid::setUnitCells()
         {
-        if (!isFLTKThread()) // run the method in FLTK if not in it
+        if (!isFltkThread()) // run the method in FLTK if not in it
             {
             IndirectMemberProc<Plot2DGrid> proxy(*this, &Plot2DGrid::setUnitCells); // registers the call
-            runInFLTKThread(proxy);
+            runInFltkThread(proxy);
             return;
             }
         _fittoaxes = false;
@@ -103,10 +103,10 @@ namespace mtools
     void Plot2DGrid::horizontalSpacing(double val)
         {
         if (std::isnan(val)) val = -1.0;
-        if (!isFLTKThread()) // run the method in FLTK if not in it
+        if (!isFltkThread()) // run the method in FLTK if not in it
             {
             IndirectMemberProc<Plot2DGrid, double> proxy(*this, &Plot2DGrid::horizontalSpacing, val); // registers the call
-            runInFLTKThread(proxy);
+            runInFltkThread(proxy);
             return;
             }
         if (val <= 0.0) { _hspace = 0.0; } else { _hspace = val; }
@@ -125,10 +125,10 @@ namespace mtools
     void Plot2DGrid::horizontalOffset(double offset)
     {
         if (std::isnan(offset)) offset = 0.0;
-        if (!isFLTKThread()) // run the method in FLTK if not in it
+        if (!isFltkThread()) // run the method in FLTK if not in it
             {
             IndirectMemberProc<Plot2DGrid, double> proxy(*this, &Plot2DGrid::horizontalOffset, offset); // registers the call
-            runInFLTKThread(proxy);
+            runInFltkThread(proxy);
             return;
             }
         if (_hspace > 0.0) { _hoffset = offset; }
@@ -147,10 +147,10 @@ namespace mtools
     void Plot2DGrid::verticalSpacing(double val)
         {
         if (std::isnan(val)) val = -1.0;
-        if (!isFLTKThread()) // run the method in FLTK if not in it
+        if (!isFltkThread()) // run the method in FLTK if not in it
             {
             IndirectMemberProc<Plot2DGrid, double> proxy(*this, &Plot2DGrid::verticalSpacing, val); // registers the call
-            runInFLTKThread(proxy);
+            runInFltkThread(proxy);
             return;
             }
         if (val <= 0.0) { _vspace = 0.0; } else { _vspace = val; }
@@ -169,10 +169,10 @@ namespace mtools
     void Plot2DGrid::verticalOffset(double offset)
         {
         if (std::isnan(offset)) offset = 0.0;
-        if (!isFLTKThread()) // run the method in FLTK if not in it
+        if (!isFltkThread()) // run the method in FLTK if not in it
             {
             IndirectMemberProc<Plot2DGrid, double> proxy(*this, &Plot2DGrid::verticalOffset, offset); // registers the call
-            runInFLTKThread(proxy);
+            runInFltkThread(proxy);
             return;
             }
         if (_vspace > 0.0) { _voffset = offset; }  // nothing to do
@@ -190,10 +190,10 @@ namespace mtools
 
     void Plot2DGrid::color(RGBc col)
         {
-        if (!isFLTKThread()) // run the method in FLTK if not in it
+        if (!isFltkThread()) // run the method in FLTK if not in it
             {
             IndirectMemberProc<Plot2DGrid, RGBc> proxy(*this, &Plot2DGrid::color, std::move(col)); // registers the call
-            runInFLTKThread(proxy);
+            runInFltkThread(proxy);
             return;
             }
         _color = col;

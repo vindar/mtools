@@ -31,6 +31,7 @@
 
 #pragma once
 
+#include "fltkSupervisor.hpp" // make sure sentnel object for fltk thread created before the global watch object
 #include "logfile.hpp"
 #include <mutex>
 #include <atomic>
@@ -369,7 +370,7 @@ namespace mtools
         class CoutConsoleBasic
             {
             public:
-                CoutConsoleBasic() { _get(1); }
+                CoutConsoleBasic() { internals_fltkSupervisor::insureFltkSentinel(); _get(1); }
                 ~CoutConsoleBasic() { _get(-1); }
                 void setName(const std::string & filename) { _get(0)->setName(filename); }
                 template<typename T> CoutConsoleBasic & operator<<(const T & O) { _get(0)->operator<<(O); return(*this); }
@@ -400,7 +401,7 @@ namespace mtools
         class CoutConsole
             {
             public:
-                CoutConsole() { _get(1); }
+                CoutConsole() { internals_fltkSupervisor::insureFltkSentinel(); _get(1); }
                 ~CoutConsole() { _get(-1); }
                 void setName(const std::string & filename) { _get(0)->setName(filename); }
                 template<typename T> CoutConsole & operator<<(const T & O) { _get(0)->operator<<(O); return(*this); }

@@ -57,7 +57,7 @@ namespace mtools
         void _debugs(const std::string & file, int line, const std::string & s)
             {
             static mtools::LogFile lf("debug.txt");
-            std::string msg = std::string("[DEBUG ") + truncateFilename(file) + " (" + std::to_string(line) + ")] " + s + "\n";
+            std::string msg = std::string("[DEBUG ") + truncateFilename(file) + " (" + std::to_string(line) + ") th=" + std::to_string(std::hash<std::thread::id>()(std::this_thread::get_id())) + "] " + s + "\n";
             std::clog << msg;
             lf << msg;
             return;
