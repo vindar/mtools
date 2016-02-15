@@ -213,6 +213,9 @@
     <ClInclude Include="headers\maths\box.hpp">
       <Filter>Header Files\maths</Filter>
     </ClInclude>
+    <ClInclude Include="headers\io\fltkSupervisor.hpp">
+      <Filter>Header Files\io</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\fltk_supervisor.cpp">
@@ -282,6 +285,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="sources\watch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\fltkSupervisor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

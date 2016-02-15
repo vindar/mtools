@@ -350,6 +350,7 @@
     <ClInclude Include="headers\io\commandarg.hpp" />
     <ClInclude Include="headers\io\console.hpp" />
     <ClInclude Include="headers\io\fileio.hpp" />
+    <ClInclude Include="headers\io\fltkSupervisor.hpp" />
     <ClInclude Include="headers\io\fltk_supervisor.hpp" />
     <ClInclude Include="headers\io\internals_serialization.hpp" />
     <ClInclude Include="headers\io\logfile.hpp" />
@@ -385,6 +386,7 @@
     <ClCompile Include="sources\edgesiteimage.cpp" />
     <ClCompile Include="sources\error.cpp" />
     <ClCompile Include="sources\fileio.cpp" />
+    <ClCompile Include="sources\fltkSupervisor.cpp" />
     <ClCompile Include="sources\fltk_supervisor.cpp" />
     <ClCompile Include="sources\interpolation.cpp" />
     <ClCompile Include="sources\logfile.cpp" />
