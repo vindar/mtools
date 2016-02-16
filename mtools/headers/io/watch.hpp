@@ -192,8 +192,6 @@ namespace mtools
 
 
 
-        /** Form for viewing the watch. */
-
 
         /**
          * Class defining a watch window.
@@ -279,6 +277,7 @@ namespace mtools
                  **/
                 template<bool allowWrite = true, typename T> void spy(const std::string & name, T & val)
                     {
+                    if (fltkThreadStopped()) return;
                     createIfNeeded();
                     internals_watch::WatchObjVar<T, allowWrite> * p = new internals_watch::WatchObjVar<T, allowWrite>(name, val, DEFAULT_REFRESHRATE);
                     transmit(name,p);
@@ -297,6 +296,7 @@ namespace mtools
                 **/
                 template<bool allowWrite = true, typename T, typename OutFun> void spy(const std::string & name, T & val, OutFun & outfun)
                     {
+                    if (fltkThreadStopped()) return;
                     createIfNeeded();
                     internals_watch::WatchObjVarOut<T, OutFun, allowWrite> * p = new internals_watch::WatchObjVarOut<T, OutFun, allowWrite>(name, val, outfun, DEFAULT_REFRESHRATE);
                     transmit(name, p);
@@ -319,6 +319,7 @@ namespace mtools
                 **/
                 template<bool allowWrite = true, typename T, typename OutFun, typename InFun> void spy(const std::string & name, T & val, OutFun & outfun, InFun & infun)
                     {
+                    if (fltkThreadStopped()) return;
                     createIfNeeded();
                     internals_watch::WatchObjVarOutIn<T, OutFun, InFun, allowWrite> * p = new internals_watch::WatchObjVarOutIn<T, OutFun, InFun, allowWrite>(name, val, outfun, infun, DEFAULT_REFRESHRATE);
                     transmit(name, p);
@@ -345,10 +346,11 @@ namespace mtools
                  *
                  * @param   v       The variable to flush to memory.
                  * @param   tick    define how often the flush must be performed (usually, 100 is usually enough
-                 *                  for maximum performance). Set to zero to flush every time the methos is called.
+                 *                  for maximum performance). Set to zero to flush every time the method is called.
                  **/
                 template<typename T> inline void flush(const T & v, const size_t tick = 100) 
                     { 
+                    if (fltkThreadStopped()) return;
                     MTOOLS_ASSERT(sizeof(v) > 0); 
                     static size_t counter = 0;
                     if (counter >= tick) { _nc = *((char*)((&v) + _ind)); counter = 0; } else { counter++; }
@@ -400,9 +402,9 @@ namespace mtools
             {
 
 #ifndef MTOOLS_BASIC_CONSOLE
-    #define NOBASICWATCH(_ex) _ex
+    #define NOBASICWATCH() ((void)0)
 #else 
-    #define NOBASICWATCH(_ex) ((void)0)
+    #define NOBASICWATCH() return
 #endif
 
             /* used to create the global singleton watch window */
@@ -413,20 +415,26 @@ namespace mtools
 
                     GlobalWatchWindow() { internals_fltkSupervisor::insureFltkSentinel(); _get(1); }
                     ~GlobalWatchWindow() { _get(-1); }
-                    void move(int X, int Y) { NOBASICWATCH(_get(0)->move(X,Y)); }
-                    void remove(const std::string & name) { NOBASICWATCH(_get(0)->remove(name)); }
-                    void clear() { NOBASICWATCH(_get(0)->clear()); }                    
-                    void refreshRate(const std::string & name, int newrate) { NOBASICWATCH(_get(0)->refreshRate(name,newrate)); }
-                    template<bool allowWrite = true, typename T> void spy(const std::string & name, T & val) { NOBASICWATCH(_get(0)->spy(name,val)); }                 
-                    template<bool allowWrite = true, typename T, typename OutFun> void spy(const std::string & name, T & val, OutFun & outfun) { NOBASICWATCH(_get(0)->spy(name,val,outfun)); }
-                    template<bool allowWrite = true, typename T, typename OutFun, typename InFun> void spy(const std::string & name, T & val, OutFun & outfun, InFun & infun) { NOBASICWATCH(_get(0)->spy(name,val,outfun,infun)); }                 
-                    template<bool allowWrite = true, typename T> void operator()(const std::string & name, T & val) { NOBASICWATCH(_get(0)->operator()(name,val)); }                 
-                    template<bool allowWrite = true, typename T, typename OutFun> void operator()(const std::string & name, T & val, OutFun & outfun) { NOBASICWATCH(_get(0)->operator()(name, val,outfun)); }                 
-                    template<bool allowWrite = true, typename T, typename OutFun, typename InFun> void operator()(const std::string & name, T & val, OutFun & outfun, InFun & infun) { NOBASICWATCH(_get(0)->operator()(name, val,outfun,infun)); }                 
-                    template<typename T> inline void flush(const T & v, const size_t tick = 100) { NOBASICWATCH(_get(0)->flush(v,tick));  }
-                    template<typename T> inline void operator[](const T & v) { NOBASICWATCH(_get(0)->operator[](v)); }
+                    void move(int X, int Y) { NOBASICWATCH(); if (!_exist()) return; _get(0)->move(X, Y); }
+                    void remove(const std::string & name) { NOBASICWATCH(); if (!_exist()) return; _get(0)->remove(name); }
+                    void clear() { NOBASICWATCH(); if (!_exist()) return; _get(0)->clear(); }
+                    void refreshRate(const std::string & name, int newrate) { NOBASICWATCH(); if (!_exist()) return; _get(0)->refreshRate(name, newrate); }
+                    template<bool allowWrite = true, typename T> void spy(const std::string & name, T & val) { NOBASICWATCH(); if (!_exist()) return; _get(0)->spy(name,val); }
+                    template<bool allowWrite = true, typename T, typename OutFun> void spy(const std::string & name, T & val, OutFun & outfun) { NOBASICWATCH(); if (!_exist()) return; _get(0)->spy(name,val,outfun); }
+                    template<bool allowWrite = true, typename T, typename OutFun, typename InFun> void spy(const std::string & name, T & val, OutFun & outfun, InFun & infun) { NOBASICWATCH(); if (!_exist()) return; _get(0)->spy(name,val,outfun,infun); }
+                    template<bool allowWrite = true, typename T> void operator()(const std::string & name, T & val) { NOBASICWATCH(); if (!_exist()) return; _get(0)->operator()(name,val); }
+                    template<bool allowWrite = true, typename T, typename OutFun> void operator()(const std::string & name, T & val, OutFun & outfun) { NOBASICWATCH(); if (!_exist()) return; _get(0)->operator()(name, val,outfun); }
+                    template<bool allowWrite = true, typename T, typename OutFun, typename InFun> void operator()(const std::string & name, T & val, OutFun & outfun, InFun & infun) { NOBASICWATCH(); if (!_exist()) return; _get(0)->operator()(name, val,outfun,infun); }
+                    template<typename T> inline void flush(const T & v, const size_t tick = 100) { NOBASICWATCH(); if (!_exist()) return; _get(0)->flush(v,tick); }
+                    template<typename T> inline void operator[](const T & v) { NOBASICWATCH(); if (!_exist()) return; _get(0)->operator[](v); }
 
                 private:
+
+                    bool _exist() 
+                        {
+                        if (_get(0) == nullptr) { MTOOLS_DEBUG("GlobalWatchWindow method called after object was destroyed!"); return false; }
+                        return true;
+                        }
 
                     WatchWindow * _get(int);
                     GlobalWatchWindow(const GlobalWatchWindow &) = delete;              // no copy

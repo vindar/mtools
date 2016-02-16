@@ -47,15 +47,28 @@ namespace mtools
         class ConsoleWidget;
         class CoutConsole;
 
-        class CoutProxy
+        template<typename ConsoleClass> class CoutProxy
             {
             public:
-                template<typename T> inline operator T(); // ask the question
-                static CoutProxy _get(const std::string & question, const std::string & defaultvalue, bool hasdefaultvalue) { return CoutProxy(question, defaultvalue, hasdefaultvalue); } // return an instance of the proxy
-                CoutProxy(const CoutProxy &) = default; // default copy ctor
-                CoutProxy & operator=(const CoutProxy &) = default; // and assignement operator
+                template<typename T> inline operator T()
+                    {
+                    if (_cons == nullptr) return T();
+                    auto status = (*_cons).useDefaultInputValue();
+                    (*_cons) << _question << " : ";
+                    T val;
+                    if (_hasdefaultvalue) { fromString(_defaultvalue, val); (*_cons).useDefaultInputValue(true); } else { (*_cons).useDefaultInputValue(false); }
+                    (*_cons) >> val; (*_cons) << toString(val) << "\n"; 
+                    (*_cons).useDefaultInputValue(status);
+                    return val;
+                    }                
+              
+                static CoutProxy _get(ConsoleClass * console, const std::string & question, const std::string & defaultvalue, bool hasdefaultvalue) { return CoutProxy(console, question, defaultvalue, hasdefaultvalue); }
+                CoutProxy(const CoutProxy &) = default;
+                CoutProxy & operator=(const CoutProxy &) = default;
+
             private:
-                CoutProxy(const std::string & question, const std::string & defaultvalue, bool hasdefaultvalue) : _question(question), _defaultvalue(defaultvalue), _hasdefaultvalue(hasdefaultvalue) {}; // private ctor
+                CoutProxy(ConsoleClass * console, const std::string & question, const std::string & defaultvalue, bool hasdefaultvalue) : _cons(console), _question(question), _defaultvalue(defaultvalue), _hasdefaultvalue(hasdefaultvalue) {};
+                ConsoleClass * _cons;
                 std::string _question, _defaultvalue;
                 bool _hasdefaultvalue;
             };
@@ -187,9 +200,9 @@ namespace mtools
              *
              * @return  A proxy object which can be implicitly casted to the desired type.
              **/
-            internals_console::CoutProxy ask(const std::string & question)
+            internals_console::CoutProxy<Console> ask(const std::string & question)
                 {
-                return internals_console::CoutProxy::_get(question, "", false);
+                return internals_console::CoutProxy<Console>::_get(this, question, "", false);
                 }
 
 
@@ -201,9 +214,9 @@ namespace mtools
              *
              * @return  A proxy object which can be implicitly casted to the desired type.
              **/
-            template<typename T> internals_console::CoutProxy ask(const std::string & question, const T & defaultValue)
+            template<typename T> internals_console::CoutProxy<Console> ask(const std::string & question, const T & defaultValue)
                 {
-                return internals_console::CoutProxy::_get(question, mtools::toString(defaultValue), true);
+                return internals_console::CoutProxy<Console>::_get(this, question, mtools::toString(defaultValue), true);
                 }
 
 
@@ -334,8 +347,8 @@ namespace mtools
                     }
                 ConsoleBasic & operator>>(bool & b);
                 ConsoleBasic & operator>>(char & c);
-                internals_console::CoutProxy ask(const std::string & question) { return internals_console::CoutProxy::_get(question, "", false); }
-                template<typename T> internals_console::CoutProxy ask(const std::string & question, const T & defaultValue) { return internals_console::CoutProxy::_get(question, mtools::toString(defaultValue), true); }
+                internals_console::CoutProxy<ConsoleBasic> ask(const std::string & question) { return internals_console::CoutProxy<ConsoleBasic>::_get(this, question, "", false); }
+                template<typename T> internals_console::CoutProxy<ConsoleBasic> ask(const std::string & question, const T & defaultValue) { return internals_console::CoutProxy<ConsoleBasic>::_get(this, question, mtools::toString(defaultValue), true); }
                 bool useDefaultInputValue() const { return _showDefaultInputValue; }
                 void useDefaultInputValue(bool newstatus) { _showDefaultInputValue = newstatus; }
                 int getKey();
@@ -372,23 +385,30 @@ namespace mtools
             public:
                 CoutConsoleBasic() { internals_fltkSupervisor::insureFltkSentinel(); _get(1); }
                 ~CoutConsoleBasic() { _get(-1); }
-                void setName(const std::string & filename) { _get(0)->setName(filename); }
-                template<typename T> CoutConsoleBasic & operator<<(const T & O) { _get(0)->operator<<(O); return(*this); }
-                template<typename T> CoutConsoleBasic & operator>>(T & O) { _get(0)->operator>>(O); return(*this); }
-                CoutProxy ask(const std::string & question) { return _get(0)->ask(question); }
-                template<typename T> CoutProxy ask(const std::string & question, const T & defaultValue) { return _get(0)->ask(question,defaultValue); }
-                void clear() { _get(0)->clear(); }
-                int getKey() { return _get(0)->getKey(); }
-                bool useDefaultInputValue() { return _get(0)->useDefaultInputValue(); }
-                void useDefaultInputValue(bool newstatus) { _get(0)->useDefaultInputValue(newstatus); }
-                void enableLogFile() { _get(0)->enableLogFile(); }
-                void disableLogFile() { _get(0)->disableLogFile(); }
-                void enableScreenOutput() { _get(0)->enableScreenOutput(); }
-                void disableScreenOutput() { _get(0)->disableScreenOutput(); }
-                void resize(int x, int y, int w, int h) { _get(0)->resize(x, y, w, h); }
-                void move(int x, int y) { _get(0)->move(x, y); }
+                void setName(const std::string & filename) { if (!_exist()) return; _get(0)->setName(filename); }
+                template<typename T> CoutConsoleBasic & operator<<(const T & O) { if (!_exist()) return(*this);  _get(0)->operator<<(O); return(*this); }
+                template<typename T> CoutConsoleBasic & operator>>(T & O) { if (!_exist()) return(*this); _get(0)->operator>>(O); return(*this); }
+                CoutProxy<CoutConsoleBasic> ask(const std::string & question) { return CoutProxy<CoutConsoleBasic>::_get(this, question, "", false); }
+                template<typename T> CoutProxy<CoutConsoleBasic> ask(const std::string & question, const T & defaultValue) { return CoutProxy<CoutConsoleBasic>::_get(this, question, mtools::toString(defaultValue), true); }
+                void clear() { if (!_exist()) return; _get(0)->clear(); }
+                int getKey() { if (!_exist()) return 0; return _get(0)->getKey(); }
+                bool useDefaultInputValue() { if (!_exist()) return false; return _get(0)->useDefaultInputValue(); }
+                void useDefaultInputValue(bool newstatus) { if (!_exist()) return; _get(0)->useDefaultInputValue(newstatus); }
+                void enableLogFile() { if (!_exist()) return; _get(0)->enableLogFile(); }
+                void disableLogFile() { if (!_exist()) return; _get(0)->disableLogFile(); }
+                void enableScreenOutput() { if (!_exist()) return; _get(0)->enableScreenOutput(); }
+                void disableScreenOutput() { if (!_exist()) return; _get(0)->disableScreenOutput(); }
+                void resize(int x, int y, int w, int h) { if (!_exist()) return; _get(0)->resize(x, y, w, h); }
+                void move(int x, int y) { if (!_exist()) return; _get(0)->move(x, y); }
 
             private:
+
+                bool _exist()
+                    {
+                    if (_get(0) == nullptr) { MTOOLS_DEBUG("CoutConsoleBasic method called after object was destroyed!"); return false; }
+                    return true;
+                    }
+
                 ConsoleBasic * _get(int);
                 CoutConsoleBasic(const CoutConsoleBasic&) = delete;
                 CoutConsoleBasic & operator=(const CoutConsoleBasic&) = delete;
@@ -403,23 +423,30 @@ namespace mtools
             public:
                 CoutConsole() { internals_fltkSupervisor::insureFltkSentinel(); _get(1); }
                 ~CoutConsole() { _get(-1); }
-                void setName(const std::string & filename) { _get(0)->setName(filename); }
-                template<typename T> CoutConsole & operator<<(const T & O) { _get(0)->operator<<(O); return(*this); }
-                template<typename T> CoutConsole & operator>>(T & O) { _get(0)->operator>>(O); return(*this); }
-                CoutProxy ask(const std::string & question) { return _get(0)->ask(question); }
-                template<typename T> CoutProxy ask(const std::string & question, const T & defaultValue) { return _get(0)->ask(question, defaultValue); }
-                void clear() { _get(0)->clear(); }
-                int getKey() { return _get(0)->getKey(); }
-                bool useDefaultInputValue() { return _get(0)->useDefaultInputValue(); }
-                void useDefaultInputValue(bool newstatus) { _get(0)->useDefaultInputValue(newstatus); }
-                void enableLogFile() { _get(0)->enableLogFile(); }
-                void disableLogFile() { _get(0)->disableLogFile(); }
-                void enableScreenOutput() { _get(0)->enableScreenOutput(); }
-                void disableScreenOutput() { _get(0)->disableScreenOutput(); }
-                void resize(int x, int y, int w, int h) { _get(0)->resize(x, y, w, h); }
-                void move(int x, int y) { _get(0)->move(x, y); }
+                void setName(const std::string & filename) { if (!_exist()) return; _get(0)->setName(filename); }
+                template<typename T> CoutConsole & operator<<(const T & O) { if (!_exist()) return (*this); _get(0)->operator<<(O); return(*this); }
+                template<typename T> CoutConsole & operator>>(T & O) { if (!_exist()) return (*this); _get(0)->operator>>(O); return(*this); }
+                CoutProxy<CoutConsole> ask(const std::string & question) { return CoutProxy<CoutConsole>::_get(this, question, "", false); }
+                template<typename T> CoutProxy<CoutConsole> ask(const std::string & question, const T & defaultValue) { return CoutProxy<CoutConsole>::_get(this, question, mtools::toString(defaultValue), true); }
+                void clear() { if (!_exist()) return; _get(0)->clear(); }
+                int getKey() { if (!_exist()) return 0; return _get(0)->getKey(); }
+                bool useDefaultInputValue() { if (!_exist()) return false; return _get(0)->useDefaultInputValue(); }
+                void useDefaultInputValue(bool newstatus) { if (!_exist()) return; _get(0)->useDefaultInputValue(newstatus); }
+                void enableLogFile() { if (!_exist()) return; _get(0)->enableLogFile(); }
+                void disableLogFile() { if (!_exist()) return; _get(0)->disableLogFile(); }
+                void enableScreenOutput() { if (!_exist()) return; _get(0)->enableScreenOutput(); }
+                void disableScreenOutput() { if (!_exist()) return; _get(0)->disableScreenOutput(); }
+                void resize(int x, int y, int w, int h) { if (!_exist()) return; _get(0)->resize(x, y, w, h); }
+                void move(int x, int y) { if (!_exist()) return; _get(0)->move(x, y); }
 
             private:
+
+                bool _exist()
+                    {
+                    if (_get(0) == nullptr) { MTOOLS_DEBUG("CoutConsole method called after object was destroyed!"); return false; }
+                    return true;
+                    }
+
                 Console * _get(int);
                 CoutConsole(const CoutConsole&) = delete;
                 CoutConsole & operator=(const CoutConsole&) = delete;
@@ -441,23 +468,6 @@ namespace mtools
     static internals_console::CoutConsoleBasic cout; ///< static object redirecting to the "cout" Console present in each compilation unit containing console.hpp. 
 #endif
 
-
-    namespace internals_console
-        {
-
-        template<typename T> inline CoutProxy::operator T()
-            {
-            auto status = cout.useDefaultInputValue();  // save the way cout display input values
-            cout << _question << " : "; // display the question 
-            T val;
-            if (_hasdefaultvalue) { fromString(_defaultvalue, val); cout.useDefaultInputValue(true); }
-            else { cout.useDefaultInputValue(false); } // load the default value if any 
-            cout >> val; cout << toString(val) << "\n"; // query and display the value
-            cout.useDefaultInputValue(status);  // restore the way cout display input values
-            return val;
-            }
-
-        }
 
 }
 

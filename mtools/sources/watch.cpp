@@ -578,6 +578,7 @@ namespace mtools
 
         void WatchWindow::refreshRate(const std::string & name, int newrate)
             {
+            if (fltkThreadStopped()) return;
             createIfNeeded();
             mtools::IndirectMemberProc<FltkWatchWin, const std::string &, int> proxy((*_fltkobj), &FltkWatchWin::refreshRate, name, newrate);
             mtools::runInFltkThread(proxy);
@@ -592,6 +593,7 @@ namespace mtools
 
         void WatchWindow::transmit(const std::string & name, internals_watch::WatchObj * p)
             {
+            if (fltkThreadStopped()) return;
             _nb++;
             mtools::IndirectMemberProc<FltkWatchWin, const std::string &, WatchObj* > proxy((*_fltkobj), &FltkWatchWin::add, name, p);
             mtools::runInFltkThread(proxy);
@@ -605,14 +607,14 @@ namespace mtools
             WatchWindow * GlobalWatchWindow::_get(int mode)
                 {
                 static std::atomic<int> init((int)0);  // using local static variables : no initialization problem !
-                static WatchWindow * pwatch = nullptr;
+                static std::atomic<WatchWindow *> pwatch((WatchWindow *)nullptr);
                 if (mode > 0)
                     {
                     if (init++ == 0) { MTOOLS_DEBUG("Creating the global watch window."); pwatch = new WatchWindow("Global Watch"); } // first time, create the console
                     }
                 if (mode < 0)
                     {
-                    if (--init == 0) { MTOOLS_DEBUG("Destroying the global watch window."); delete pwatch; pwatch = nullptr; } // last one, delete the console
+                    if (--init == 0) { MTOOLS_DEBUG("Destroying the global watch window."); WatchWindow * p = pwatch; pwatch = (WatchWindow *)nullptr; std::this_thread::yield(); delete p;  } // last one, delete the console
                     }
                 return pwatch; // mode = 0, just return a pointer to the Watch window object
                 }

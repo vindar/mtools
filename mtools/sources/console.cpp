@@ -314,7 +314,7 @@ namespace mtools
         delete _logfile;
         _logfile = nullptr;
         _mustop.unlock();
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
         }
 
 
@@ -326,7 +326,7 @@ namespace mtools
 
     void Console::clear()
         {
-        if (!_startProtect()) { return; }
+        if ((fltkThreadStopped()) || (!_startProtect())) { return; }
         if (_enableScreen)
             {
             mtools::IndirectMemberProc<internals_console::ConsoleWidget> proxy(*_CW, &internals_console::ConsoleWidget::clearScreen);
@@ -343,7 +343,7 @@ namespace mtools
 
     void Console::resize(int x, int y, int w, int h)
         {
-        if (!_startProtect()) { return; }
+        if ((fltkThreadStopped()) || (!_startProtect())) { return; }
         mtools::IndirectMemberProc<internals_console::ConsoleWidget,int,int,int,int> proxy(*_CW, &internals_console::ConsoleWidget::chsize,x,y,w,h);
         mtools::runInFltkThread(proxy);
         _endProtect();
@@ -352,7 +352,7 @@ namespace mtools
 
     void Console::move(int x, int y)
         {
-        if (!_startProtect()) { return; }
+        if ((fltkThreadStopped()) || (!_startProtect())) { return; }
         mtools::IndirectMemberProc<internals_console::ConsoleWidget,int,int> proxy(*_CW, &internals_console::ConsoleWidget::chpos,x,y);
         mtools::runInFltkThread(proxy);
         _endProtect();
@@ -361,7 +361,7 @@ namespace mtools
 
     void Console::_print(const std::string & s)
         {
-        if (!_startProtect()) { return; }
+        if ((fltkThreadStopped()) || (!_startProtect())) { return; }
         std::string us = mtools::toUtf8(s);
         if (us.length() != 0)
             {
@@ -385,7 +385,7 @@ namespace mtools
     
     std::string Console::_getText(const std::string & initText)
         {
-        if (!_startProtect()) { return std::string(""); }
+        if ((fltkThreadStopped())||(!_startProtect())) { return std::string(""); }
         mtools::IndirectMemberProc<internals_console::ConsoleWidget, const std::string *> proxy1(*_CW, &internals_console::ConsoleWidget::startInput, &initText);
         mtools::runInFltkThread(proxy1);
         while (((internals_console::ConsoleWidget*)(_CW))->entered == 0)
@@ -406,6 +406,7 @@ namespace mtools
         {
         while (1)
             {
+            if (fltkThreadStopped()) { return (*this); }
             int k = getKey();
             if ((k == 'O') || (k == 'o') || (k == 'Y') || (k == 'y') || (k == '1')) { b = true; return *this;; }
             if ((k == 'N') || (k == 'n') || (k == 27)) { b = false; return *this;; }
@@ -417,6 +418,7 @@ namespace mtools
         {
         while(1)
             {
+            if (fltkThreadStopped()) { return (*this); }
             int k = getKey();
             if (k < 256) { c = (char)k; return(*this); }
             }
@@ -424,8 +426,8 @@ namespace mtools
 
 
     int Console::getKey()
-    {
-        if (!_startProtect()) { return 0; }
+        {
+        if ((fltkThreadStopped()) || (!_startProtect())) { return 0; }
         mtools::IndirectMemberProc<internals_console::ConsoleWidget> proxy1(*_CW, &internals_console::ConsoleWidget::startGetKey);
         mtools::runInFltkThread(proxy1);
         while (((internals_console::ConsoleWidget*)(_CW))->keyed == 0)
@@ -438,8 +440,7 @@ namespace mtools
         mtools::runInFltkThread(proxy2);
         _endProtect();
         return res;
-
-    }
+        }
 
 
     inline bool Console::_startProtect()
@@ -572,7 +573,7 @@ namespace mtools
                 }
             if (mode < 0)
                 {
-                if (--init == 0)  { MTOOLS_DEBUG("Destroying the global FLTK cout console."); pcout->_disableConsole(); } // last one, do not delete but disable it...
+                if (--init == 0) { MTOOLS_DEBUG("Destroying the global FLTK cout console."); pcout->_disableConsole(); pcout = nullptr;  } // last one, do not delete but disable it...
                 }
             return pcout; // mode = 0, just return a pointer to cout
             }
@@ -581,14 +582,14 @@ namespace mtools
         ConsoleBasic * CoutConsoleBasic::_get(int mode)
             {
             static std::atomic<int> init((int)0);  // using local static variables : no initialization problem !
-            static ConsoleBasic * pcout = nullptr;
+            static std::atomic<ConsoleBasic *> pcout((ConsoleBasic *)nullptr);
             if (mode > 0)
                 {
                 if (init++ == 0) { MTOOLS_DEBUG("Creating the global FLTK cout console (basic)."); pcout = new ConsoleBasic("cout"); } // first time, create the console
                 }
             if (mode < 0)
                 {
-                if (--init == 0) { MTOOLS_DEBUG("Destroying the global FLTK cout console (basic)."); delete pcout; pcout = nullptr; } // last one, delete the console
+                if (--init == 0) { MTOOLS_DEBUG("Destroying the global FLTK cout console (basic)."); ConsoleBasic * p = pcout; pcout = (ConsoleBasic *)nullptr; std::this_thread::yield(); delete p; } // last one, delete the console
                 }
             return pcout; // mode = 0, just return a pointer to cout
             }
