@@ -42,6 +42,13 @@ namespace mtools
 
         void stopThread();
 
+
+        /* possible thread status */
+        static const int THREAD_NOT_STARTED = 0;
+        static const int THREAD_ON = 1;
+        static const int THREAD_STOPPING = 2;
+        static const int THREAD_STOPPED = 3;
+
         }
 
 
@@ -64,6 +71,13 @@ namespace mtools
     * Determines the current status of the FLTK thread.
     **/
     int fltkThreadStatus();
+
+
+    /**
+     * Determines the fltk thread is ready. Return no if it is either not yet started or already
+     * stopped.
+     **/
+    bool fltkThreadStopped();
 
 
     /**

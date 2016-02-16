@@ -98,13 +98,6 @@ namespace mtools
 
                 static const int MAX_PROCESS_MSG = 20; // max number of messages processed in each iteration of the fltk
 
-                /* possible thread status */
-                static const int THREAD_NOT_STARTED = 0;
-                static const int THREAD_ON = 1;
-                static const int THREAD_STOPPING = 2;
-                static const int THREAD_STOPPED = 3;
-
-
                 /**
                 * Return a pointer to the singleton instance and a boolean
                 * indicating whether the instance was just constructed.
@@ -431,6 +424,8 @@ namespace mtools
 
     int fltkThreadStatus() { return internals_fltkSupervisor::FltkSupervisor::getInst().first->status(); }
 
+    bool fltkThreadStopped() { return ((internals_fltkSupervisor::FltkSupervisor::getInst().first->status() == internals_fltkSupervisor::THREAD_STOPPED)|| (internals_fltkSupervisor::FltkSupervisor::getInst().first->status() == internals_fltkSupervisor::THREAD_STOPPING)); }
+
     void fltkExit() { internals_fltkSupervisor::FltkSupervisor::getInst().first->fltkExit(); }
 
     }
@@ -470,7 +465,7 @@ namespace mtools
                 mtools::internals_fltkSupervisor::instInit();
                 static std::atomic<int> nb(0);
                 if (nb++ > 0) { return false; }
-                if (fltkThreadStatus() != mtools::internals_fltkSupervisor::FltkSupervisor::THREAD_NOT_STARTED)
+                if (fltkThreadStatus() != mtools::internals_fltkSupervisor::THREAD_NOT_STARTED)
                     {
                     MTOOLS_ERROR("MTOOLS_SWITCH_THREADS() macro called when the FLTK thread is already running !");
                     }
