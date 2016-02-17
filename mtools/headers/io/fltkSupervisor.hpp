@@ -184,6 +184,7 @@ namespace mtools
 #ifdef __APPLE__
 #define MTOOLS_SWAP_THREADS_FLAG
 #endif
+#define MTOOLS_SWAP_THREADS_FLAG
 
 
 #ifdef MTOOLS_SWAP_THREADS_FLAG

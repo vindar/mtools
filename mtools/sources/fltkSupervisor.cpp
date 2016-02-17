@@ -193,7 +193,7 @@ namespace mtools
                     }
 
 
-                /* delete an object in fltk, if deleteAlways is set, deltee the object
+                /* delete an object in fltk, if deleteAlways is set, delete the object
                 in the current thread if the fltk thread is already stopped
                 return if success (ie if the thread was on and the deletion took place inside the
                 fltk thread. */
@@ -207,7 +207,9 @@ namespace mtools
                         MTOOLS_DEBUG("Destruction completed.");
                         return true;
                         }
+                    MTOOLS_DEBUG("A");
                     std::lock_guard<std::recursive_mutex> lock(_muthread);
+                    MTOOLS_DEBUG("B");
                     if (status() != THREAD_ON)
                         {
                         MTOOLS_DEBUG(std::string("Calling FltkSupervisor::deleteInFltk() while thread has status ") + mtools::toString(status()));
