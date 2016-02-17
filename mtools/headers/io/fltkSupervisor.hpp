@@ -25,6 +25,73 @@
 #include "../misc/indirectcall.hpp"
 
 
+// If we are on OSX, we must swap threads as only the master thread is allowed to
+// allocate graphic resources
+#ifdef __APPLE__
+#define MTOOLS_SWAP_THREADS_FLAG
+#endif
+
+
+/* CONTROL FLOW OF A PROGRAM
+
+When MTOOLS_SWAP_THREADS_FLAG is NOT set 
+----------------------------------------    
+(normal setting on Windows and Linux)
+
+    - a global static 'fltkSentinel' object is constructed in each compilation unit which use the supervisor.
+      These sentinel are constructed before any other global object (provided that the include "fltkSupervisor" 
+      appear before a global object is defined). These sentinel does not created anything !
+
+    - The fltk loop (and all graphic related function) are performed in another thread: the fltk thread. 
+      This thread created 'on first use' i.e. only when newInFltkThread() or runInFltkThread() is called. 
+
+    - The fltk thread stops automatically when the last sentinel is destroyed (ie after all other global objects). 
+
+    BRUTAL SHUTDOWN:
+
+        - from the main thread: just call std::exit() or mtools::exit(). this calls the dtor of global object and 
+          stops the fltk thread when the sentinel is destroyed. 
+
+        - from the fltk thread: call fltkExit() : this stops the fltk thread and then call exit() from within
+          the fltk thread. This behavior as 2 important consequences:
+
+              1) destructor of global objects are called from the fltk Thread and NOT from the main thread 
+                 that was used to create them.
+
+              2) after fltkExit() is called, any call to newInFltkThread(),runInFltkThread(), deleteInFltkThread()
+                will fail (return false). In particular, any of these method placed in dtor global objects will fail.
+
+
+When MTOOLS_SWAP_THREADS_FLAG is set
+----------------------------------------
+(OSX setting)
+
+    - The main() function must be guarded by MTOOLS_SWAP_THREADS(argc, argv) 
+      (at least until the --wrap option is supported by Clang...)
+
+    - fltkSentinel object do not play any role. 
+
+    - global objects are created by the usual 'master' thread but the main() procedure itself is run in another thread called 'main thread'. 
+      The master thread is used to run the fltk loop. 
+
+    - the fltk loop is started at the begining of main et stops when main returns. This main that supervisor methods newInFltkThread()
+      runInFltkThread(), deleteInFltkThread() can only be called while the main() proc is running. In particular, any call of these
+      method in constructor or destructor of global object will fail.
+
+    - when the program finishes, dtors of global object are again called with the master thread (the same used to construct them). 
+      
+      BRUTAL SHUTDOWN:
+
+          - from the main thread: calling std::exit() is NOT recommended as destructor of global object would be run by the main thread 
+            and not the master thread. Call mtools::exit() instead which insure that the fltk loop stops and then the master thread call
+            the destructor of global objects 
+
+          - from the master fltk thread. Call fltkExit(), this stops the fltk loop, detach the main() thread and then run the destructor 
+            of global object (in the master thread). 
+      
+      */
+
+
 namespace mtools
     {
 
@@ -54,10 +121,20 @@ namespace mtools
 
 
     /**
-    * Request the process to terminate in the near futur and return. 
-    * This method must only be called from within the fltk thread.  
+    * Request the process to terminate in the near futur and return.
+    * MUST ONLY BE CALLED FROM THE FLTK THREAD.
     **/
     void fltkExit();
+
+
+    /**
+     * Replacement for std::exit(). Should be prefered to the std version as it
+     * insure destructor are called nicely in any cases.
+     *
+     * @param   code    The exit code.
+     **/
+    void exit(int code);
+
 
     /**
     * Query if the calling thread is the fltk thread.
@@ -66,7 +143,7 @@ namespace mtools
     **/
     bool isFltkThread();
 
-            
+
     /**
     * Determines the current status of the FLTK thread.
     **/
@@ -128,82 +205,88 @@ namespace mtools
         return internals_fltkSupervisor::runInFltk(&proxycall);
         }
 
+
+
+    }
     
 
-    namespace internals_fltkSupervisor
+#ifndef MTOOLS_SWAP_THREADS_FLAG
+
+    #define MTOOLS_SWAP_THREADS(argc,argv) ((void)0)
+
+    namespace mtools
         {
-
-        /**
-        *  Sentinel for the fltk thread in each compilation unit that includes fltkSupervisor.hpp. The
-        *  last one makes sure the thread is stopped.
-        **/
-        class FltkThreadSentinel
+        namespace internals_fltkSupervisor
             {
-            public:
 
-                FltkThreadSentinel() : _master(instInit()) 
-                    {
-                    if ((bool)_master) MTOOLS_DEBUG("FltkThreadSentinel ctor: Master"); else MTOOLS_DEBUG("FltkThreadSentinel ctor.");
-                    }
+            /**
+            *  Sentinel for the fltk thread in each compilation unit that includes fltkSupervisor.hpp. The
+            *  last one makes sure the thread is stopped.
+            **/
+            class FltkThreadSentinel
+                {
+                public:
 
-                ~FltkThreadSentinel()
-                    {
-                    if ((bool)_master == true)
+                    FltkThreadSentinel() : _master(instInit())
                         {
-                        MTOOLS_DEBUG("FltkThreadSentinel dtor Master: request thread stop");
-                        stopThread();
+                        if ((bool)_master) MTOOLS_DEBUG("Master FltkThreadSentinel created.");
                         }
-                    }
 
-                bool isMaster() { return (bool)_master; }
+                    ~FltkThreadSentinel()
+                        {
+                        if ((bool)_master == true)
+                            {
+                            MTOOLS_DEBUG("destroying FltkThreadSentinel : request thread stop.");
+                            stopThread();
+                            }
+                        }
 
-            private:
+                    bool isMaster() { return (bool)_master; }
 
-                FltkThreadSentinel(const FltkThreadSentinel &) = delete;
-                FltkThreadSentinel & operator=(const FltkThreadSentinel &) = delete;
-                std::atomic<bool> _master;
+                private:
 
-            };
-        
-        static FltkThreadSentinel _fltkSentinel;
+                    FltkThreadSentinel(const FltkThreadSentinel &) = delete;
+                    FltkThreadSentinel & operator=(const FltkThreadSentinel &) = delete;
+                    std::atomic<bool> _master;
 
-        /**
-         * force the sentinel to be instanciated before any object that calls this function.
-         **/
-        inline bool insureFltkSentinel()
-            {
-            MTOOLS_DEBUG("insureFltkSentinel()");
-            static std::atomic<bool> dummy(false);
-            dummy = _fltkSentinel.isMaster();
-            return dummy;
+                };
+
+            static FltkThreadSentinel _fltkSentinel;
+
+            /**
+            * force the sentinel to be instanciated before any object that calls this function.
+            **/
+            inline bool insureFltkSentinel()
+                {
+                static std::atomic<bool> dummy(false);
+                dummy = _fltkSentinel.isMaster();
+                return dummy;
+                }
+
             }
 
         }
 
-    }
+#else
 
-
-#ifdef __APPLE__
-#define MTOOLS_SWAP_THREADS_FLAG
-#endif
-
-
-#ifdef MTOOLS_SWAP_THREADS_FLAG
+    #define MTOOLS_SWAP_THREADS(argc,argv) { if (mtools::internals_switchthread::barrier(argc, argv)) return mtools::internals_switchthread::result(); }
 
     namespace mtools
         {
+
+        namespace internals_fltkSupervisor
+            {
+
+            inline bool insureFltkSentinel() { return false; }
+
+            }
+
         namespace internals_switchthread
             {
             int result(bool setresult = false, int val = 0);
             bool barrier(int argc, char * argv[]);
             }
         }
-
-#define MTOOLS_SWAP_THREADS(argc,argv) { if (mtools::internals_switchthread::barrier(argc, argv)) return mtools::internals_switchthread::result(); }
-
-#else
-
-#define MTOOLS_SWAP_THREADS(argc,argv) ((void)0)
 
 #endif 
 
