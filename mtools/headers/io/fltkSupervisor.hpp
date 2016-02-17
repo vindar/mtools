@@ -32,9 +32,9 @@ namespace mtools
     namespace internals_fltkSupervisor
         {
 
-        void runInFltk(IndirectCall * proxycall);
+        bool runInFltk(IndirectCall * proxycall);
 
-        void newInFltk(IndirectCtor * proxy);
+        bool newInFltk(IndirectCtor * proxy);
 
         bool deleteInFltk(IndirectDtor * proxy, bool deleteAlways);
 
@@ -55,7 +55,7 @@ namespace mtools
 
     /**
     * Request the process to terminate in the near futur and return. 
-    * This method should only be called from within the fltk thread.  
+    * This method must only be called from within the fltk thread.  
     **/
     void fltkExit();
 
@@ -96,8 +96,8 @@ namespace mtools
     template<typename T, typename ...Params> inline T * newInFltkThread(Params&&... args)
         {
         IndirectConstructor<T, Params...> IC(std::forward<Params>(args)...);
-        internals_fltkSupervisor::newInFltk(&IC);
-        return (T*)IC.adress();
+        if (internals_fltkSupervisor::newInFltk(&IC)) return (T*)IC.adress();
+        return nullptr;
         }
 
     /**
@@ -115,15 +115,17 @@ namespace mtools
 
 
     /**
-    * Execute a method/function inside the FLTK thread. The function returns only when the command
-    * has finish executing (and then the result may be queried via the result() method of the
-    * proxycall object).
-    *
-    * @param [in,out]  proxycall   The proxy object containing the call to make.
-    **/
-    inline void runInFltkThread(IndirectCall & proxycall)
+     * Execute a method/function inside the FLTK thread. The function returns only when the command
+     * has finish executing (and then the result may be queried via the result() method of the
+     * proxycall object).
+     *
+     * @param [in,out]  proxycall   The proxy object containing the call to make.
+     *
+     * @return  true if it succeeds, false operation failed.
+     **/
+    inline bool runInFltkThread(IndirectCall & proxycall)
         {
-        internals_fltkSupervisor::runInFltk(&proxycall);
+        return internals_fltkSupervisor::runInFltk(&proxycall);
         }
 
     
@@ -184,7 +186,6 @@ namespace mtools
 #ifdef __APPLE__
 #define MTOOLS_SWAP_THREADS_FLAG
 #endif
-#define MTOOLS_SWAP_THREADS_FLAG
 
 
 #ifdef MTOOLS_SWAP_THREADS_FLAG
