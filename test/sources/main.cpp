@@ -18,7 +18,11 @@ void stupidTest()
     auto P1 = makePlot2DFun(sinus, -10, 10, "sinus");
     PL[P1];
     PL.autorangeXY();
-    PL.startPlot();
+    PL.plot();
+
+    //mtools::exit(5);
+
+
     while (PL.shown())
         {
         v += Unif_1(gen);

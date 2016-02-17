@@ -161,7 +161,7 @@ namespace mtools
                 {
                 if (fl_choice("Do you want to quit?\n Choosing YES will abort the process...", "YES", "NO", nullptr) == 0)
                     {
-                    mtools::fltkExit();
+                    mtools::fltkExit(0);
                     }
                 return;
                 }

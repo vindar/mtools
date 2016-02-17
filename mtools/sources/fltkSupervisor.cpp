@@ -282,14 +282,6 @@ namespace mtools
                     }
 
 
-                /* Exit the process. Does nothing if not called from the fltk thread */
-                void fltkExit()
-                    {
-                    MTOOLS_DEBUG("Calling FltkSupervisor::fltkExit() to force program stop.");
-                    if (!isFltkThread()) { MTOOLS_DEBUG("Calling FltkSupervisor::fltkExit() from outside of the fltk thread itself : do nothing !"); return; }
-                    _forcedExit = true;
-                    _status = THREAD_STOPPING;
-                    }
 
 
                 /* return when the thread is active 
@@ -310,10 +302,48 @@ namespace mtools
                     }
 
 
+                /* Exit the process. Does nothing if not called from the fltk thread */
+                void fltkExit(int code)
+                    {
+                    MTOOLS_DEBUG("Calling FltkSupervisor::fltkExit() to force program stop.");
+                    if (!isFltkThread()) { MTOOLS_DEBUG("Calling FltkSupervisor::fltkExit() from outside of the fltk thread itself : do nothing !"); return; }
+                #ifdef MTOOLS_SWAP_THREADS_FLAG
+                    _exitCode = code;
+                    _forcedExit = true;
+                    _status = THREAD_STOPPING;
+                #else
+                    MTOOLS_DEBUG("Creating an exit thread.");
+                    std::thread th(&FltkSupervisor::_exitThread, this,code);
+                    th.detach(); 
+                #endif                   
+                    }
+
+
+                /* Exit the process and does not return. Does nothing and return immediatly if called from the fltk thread. */
+                void exit(int code)
+                    {
+                    MTOOLS_DEBUG("Calling FltkSupervisor::exit() to stop program.");
+                    if (isFltkThread()) { MTOOLS_DEBUG("Calling FltkSupervisor::exit() from within the fltk thread itself : do nothing !"); return; }
+                #ifdef MTOOLS_SWAP_THREADS_FLAG
+                    _exitCode = code;
+                    _forcedExit = true;
+                    _status = THREAD_STOPPING;
+                    while (1) { std::this_thread::sleep_for(std::chrono::seconds(1)); }
+                #else
+                    std::exit(code);
+                #endif                   
+                    }
+
                 /**
                  * Check whether the _forcedExit flag is set.
                  **/
                 bool forcedExit() { return _forcedExit; }
+
+
+                /**
+                 * Return the exit code.
+                 **/
+                int exitCode() { return _exitCode; }
 
 
                 /**
@@ -350,7 +380,7 @@ namespace mtools
             private:
 
                 /** Private Constructor. */
-                FltkSupervisor() : _status(THREAD_NOT_STARTED), _forcedExit(false), _th((std::thread *)nullptr) {}
+                FltkSupervisor() : _status(THREAD_NOT_STARTED), _forcedExit(false), _exitCode(0), _th((std::thread *)nullptr) {}
 
                 /* no copy */
                 FltkSupervisor(const FltkSupervisor &) = delete;
@@ -377,6 +407,13 @@ namespace mtools
                     return;
                     }
 
+                /* run the exit method in another thread */
+                void _exitThread(int code)
+                    {
+                    std::this_thread::yield();
+                    MTOOLS_DEBUG("Exit thread, calling std::exit()");
+                    exit(code);
+                    }
 
                 /** The FLTK Thread procedure. **/
                 void _threadProc()
@@ -386,7 +423,7 @@ namespace mtools
                     if (forcedExit())
                         {
                         MTOOLS_DEBUG("Forced Exit. calling std::exit()");
-                        std::exit(0);
+                        std::exit(exitCode());
                         }
                     MTOOLS_DEBUG("End of the FLTK thread procedure");
                     }
@@ -430,6 +467,7 @@ namespace mtools
                 MsgQueue _msgQueue;                          // message queue
                 std::atomic<int>                _status;     // thread status
                 std::atomic<bool>               _forcedExit; // flag indicating if exit was forced with fltkExit()
+                std::atomic<int>                _exitCode;   // the exit code
                 std::atomic<std::thread *>      _th;         // pointer to the thread object
                 std::recursive_mutex            _muthread;   // mutex for thread operation
                 std::atomic<std::thread::id>    _fltkid;     // id of the FLTK thread
@@ -456,7 +494,9 @@ namespace mtools
 
     bool fltkThreadStopped() { return ((internals_fltkSupervisor::FltkSupervisor::getInst().first->status() == internals_fltkSupervisor::THREAD_STOPPED)|| (internals_fltkSupervisor::FltkSupervisor::getInst().first->status() == internals_fltkSupervisor::THREAD_STOPPING)); }
 
-    void fltkExit() { internals_fltkSupervisor::FltkSupervisor::getInst().first->fltkExit(); }
+    void fltkExit(int code) { internals_fltkSupervisor::FltkSupervisor::getInst().first->fltkExit(code); }
+
+    void exit(int code) { internals_fltkSupervisor::FltkSupervisor::getInst().first->exit(code); }
 
     }
 
@@ -502,7 +542,8 @@ namespace mtools
                 std::thread th(&newMainThread, argc, argv); // start the new 'main' thread
                 mtools::internals_fltkSupervisor::FltkSupervisor::getInst(true).first->fltkLoop(); // start the fltk loop                
                 if (mtools::internals_fltkSupervisor::FltkSupervisor::getInst(true).first->forcedExit())
-                    { // forced exit, we detach 'alternate main thread' since we do not know when it will stop. 
+                    { // forced exit, save exit code and detach 'alternate main thread' since we do not know when it will stop. 
+                    result(true, mtools::internals_fltkSupervisor::FltkSupervisor::getInst(true).first->exitCode());
                     th.detach();
                     }
                 else

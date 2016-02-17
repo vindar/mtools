@@ -32,64 +32,55 @@
 #endif
 
 
-/* CONTROL FLOW OF A PROGRAM
+/* 
+
+*************************
+CONTROL FLOW OF A PROGRAM
+*************************
 
 When MTOOLS_SWAP_THREADS_FLAG is NOT set 
 ----------------------------------------    
 (normal setting on Windows and Linux)
 
-    - a global static 'fltkSentinel' object is constructed in each compilation unit which use the supervisor.
+    - A global static 'fltkSentinel' object is constructed in each compilation unit which use the supervisor.
       These sentinel are constructed before any other global object (provided that the include "fltkSupervisor" 
-      appear before a global object is defined). These sentinel does not created anything !
+      appear before a global object is defined). These sentinels do not create anything.
 
-    - The fltk loop (and all graphic related function) are performed in another thread: the fltk thread. 
-      This thread created 'on first use' i.e. only when newInFltkThread() or runInFltkThread() is called. 
+    - The fltk loop (and graphic related functions) are performed in another thread: the 'fltk thread'. 
+    
+    - The fltk thread is created on first use when newInFltkThread() or runInFltkThread() is called for the 
+      first time. It stops automatically when the last sentinel is destroyed hence:
+      -> The FLTK thread is available for the entire life of every objects (even gloabl ones).
 
-    - The fltk thread stops automatically when the last sentinel is destroyed (ie after all other global objects). 
+    - NORMAL PROGRAM TERMINATION: returning from main() or calling mtools:exit().
+      -> Global objects are constructed and destroyed by the main thread. 
 
-    BRUTAL SHUTDOWN:
-
-        - from the main thread: just call std::exit() or mtools::exit(). this calls the dtor of global object and 
-          stops the fltk thread when the sentinel is destroyed. 
-
-        - from the fltk thread: call fltkExit() : this stops the fltk thread and then call exit() from within
-          the fltk thread. This behavior as 2 important consequences:
-
-              1) destructor of global objects are called from the fltk Thread and NOT from the main thread 
-                 that was used to create them.
-
-              2) after fltkExit() is called, any call to newInFltkThread(),runInFltkThread(), deleteInFltkThread()
-                will fail (return false). In particular, any of these method placed in dtor global objects will fail.
+    - BRUTAL SHUTDOWN: calling fltkExit() from the fltk thread.
+      -> Global objects are constructed by the main thread but are destroyed by another 'helper' thread.
 
 
 When MTOOLS_SWAP_THREADS_FLAG is set
 ----------------------------------------
 (OSX setting)
 
-    - The main() function must be guarded by MTOOLS_SWAP_THREADS(argc, argv) 
-      (at least until the --wrap option is supported by Clang...)
+    - The main() function must be guarded by MTOOLS_SWAP_THREADS(argc, argv), at least until the --wrap option is supported by Clang...
 
-    - fltkSentinel object do not play any role. 
+    - There are no fltkSentinel objects. 
+    
+    - function main() is run in an 'alternate main thread' whereas the fltk loop is run in the 'master thread'. 
 
-    - global objects are created by the usual 'master' thread but the main() procedure itself is run in another thread called 'main thread'. 
-      The master thread is used to run the fltk loop. 
+    - The fltk loops only starts with main() and ends when main() returns. Hence, the fltk thread is NOT available in constructor and destructor
+      of global objects. Any call to newInFltkThread(), runInFltkThread(), deleteInFltkThread() before or after main() will fail
+      and return false.
+      -> The FLTK thread is available only for main but not for ctor and dtor of global objects.
+      -> global objects are created by the usual 'master' thread but the main() proc is run in another alternate thread.
 
-    - the fltk loop is started at the begining of main et stops when main returns. This main that supervisor methods newInFltkThread()
-      runInFltkThread(), deleteInFltkThread() can only be called while the main() proc is running. In particular, any call of these
-      method in constructor or destructor of global object will fail.
+    - SHUTDOWN: with fltkExit(), return from main() or mtools::exit()
+      -> Global objects are constructed and destroyed by the master thread (NOT the one running main). 
+      -> Do not use std::exit() otherwise the global objects will be destroyed by the calling 'alternate main' thread which is not the same
+         as the master thread used to create them.
 
-    - when the program finishes, dtors of global object are again called with the master thread (the same used to construct them). 
-      
-      BRUTAL SHUTDOWN:
-
-          - from the main thread: calling std::exit() is NOT recommended as destructor of global object would be run by the main thread 
-            and not the master thread. Call mtools::exit() instead which insure that the fltk loop stops and then the master thread call
-            the destructor of global objects 
-
-          - from the master fltk thread. Call fltkExit(), this stops the fltk loop, detach the main() thread and then run the destructor 
-            of global object (in the master thread). 
-      
-      */
+*/
 
 
 namespace mtools
@@ -109,7 +100,6 @@ namespace mtools
 
         void stopThread();
 
-
         /* possible thread status */
         static const int THREAD_NOT_STARTED = 0;
         static const int THREAD_ON = 1;
@@ -119,17 +109,23 @@ namespace mtools
         }
 
 
+    /**
+     * Request the process to terminate in the near futur and then return.
+     * 
+     * This method must be called from within the FLTK thread. If called from another thread, the
+     * method does nothing and returns immediatly. Use exit() in this case.
+     *
+     * @param   code    The exit code.
+     **/
+    void fltkExit(int code);
+
 
     /**
-    * Request the process to terminate in the near futur and return.
-    * MUST ONLY BE CALLED FROM THE FLTK THREAD.
-    **/
-    void fltkExit();
-
-
-    /**
-     * Replacement for std::exit(). Should be prefered to the std version as it
-     * insure destructor are called nicely in any cases.
+     * Replacement for std::exit(). Should be prefered to the std version as it insure destructor
+     * are called nicely in any cases. This method never returns.
+     * 
+     * This method must NOT be called from the fltk thread. If called from the FLTK thread, the
+     * method does nothing and returns immediatly. Use fltkExit() in this case.
      *
      * @param   code    The exit code.
      **/
@@ -158,18 +154,15 @@ namespace mtools
 
 
     /**
-    * Create an object of type T with constructor argument args within the FLTK thread. The object
-    * is constructed on the heap via new. Do not call delete on the returned pointer! In order to
-    * delete the object call the `deleteInFltkThread()` function. Every object created in the FLTK
-    * thread should be properly deleted at some point otherwise it will prevent the thread to stop
-    * properly.
-    *
-    * @tparam  T           Type of object to construct.
-    * @tparam  ...Params   Types of the parameters of the constructor of T.
-    * @param   args    The arguments to passed to the constructor.
-    *
-    * @return  a pointer to the constucted object or nullptr in case of failure.
-    **/
+     * Create an object of type T with constructor argument args within the FLTK thread. The object
+     * is constructed on the heap via new. Call the `deleteInFltkThread()` to delete the function.
+     *
+     * @tparam  ...Params   Types of the parameters of the constructor of T.
+     * @param   args    The arguments to passed to the constructor.
+     *
+     * @return  a pointer to the constucted object or nullptr in case of failure (for instance if the
+     *          fltk thread is not available).
+     **/
     template<typename T, typename ...Params> inline T * newInFltkThread(Params&&... args)
         {
         IndirectConstructor<T, Params...> IC(std::forward<Params>(args)...);
@@ -177,13 +170,16 @@ namespace mtools
         return nullptr;
         }
 
+
     /**
-    * Call the destructor of an object within the FLTK Thread. The object MUST have been created
-    * with the `newInFltkThread()` method.
-    *
-    * @tparam  T   type of the object to delete.
-    * @param [in,out]  adress  pointer to the object to delete.
-    **/
+     * Call the destructor of an object within the FLTK Thread.
+     *
+     * @param [in,out]  adress  pointer to the object to delete.
+     * @param   deleteAlways    true to delete the object from the calling thread if the fltk thread
+     *                          is not available.
+     *
+     * @return  true if deletion occured inside the fltk thread, false otherwise.
+     **/
     template<typename T> inline bool deleteInFltkThread(T * adress, bool deleteAlways = false)
         {
         IndirectDestructor<T> ID(adress);
@@ -198,7 +194,8 @@ namespace mtools
      *
      * @param [in,out]  proxycall   The proxy object containing the call to make.
      *
-     * @return  true if it succeeds, false operation failed.
+     * @return  true if the call was made and false if it fail (i.e. if the fltk thread was not
+     *          available).
      **/
     inline bool runInFltkThread(IndirectCall & proxycall)
         {
