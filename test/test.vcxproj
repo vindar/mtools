@@ -204,6 +204,9 @@
 
 </Command>
     </PostBuildEvent>
+    <Manifest>
+      <EnableDpiAwareness>true</EnableDpiAwareness>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug-DLL|Win32'">
     <ClCompile>
@@ -225,6 +228,9 @@
 
 xcopy /y  "$(FLTK_LIB)\lib32\*.dll" "$(ProjectDir)exe\"</Command>
     </PostBuildEvent>
+    <Manifest>
+      <EnableDpiAwareness>true</EnableDpiAwareness>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -246,6 +252,9 @@ xcopy /y  "$(FLTK_LIB)\lib32\*.dll" "$(ProjectDir)exe\"</Command>
 
 </Command>
     </PostBuildEvent>
+    <Manifest>
+      <EnableDpiAwareness>true</EnableDpiAwareness>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug-DLL|x64'">
     <ClCompile>
@@ -267,6 +276,9 @@ xcopy /y  "$(FLTK_LIB)\lib32\*.dll" "$(ProjectDir)exe\"</Command>
 
 xcopy /y  "$(FLTK_LIB)\lib64\*.dll" "$(ProjectDir)exe\"</Command>
     </PostBuildEvent>
+    <Manifest>
+      <EnableDpiAwareness>true</EnableDpiAwareness>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -290,6 +302,9 @@ xcopy /y  "$(FLTK_LIB)\lib64\*.dll" "$(ProjectDir)exe\"</Command>
     <PostBuildEvent>
       <Command>if not exist "$(ProjectDir)exe\" mkdir "$(ProjectDir)exe\"</Command>
     </PostBuildEvent>
+    <Manifest>
+      <EnableDpiAwareness>true</EnableDpiAwareness>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release-DLL|Win32'">
     <ClCompile>
@@ -315,6 +330,9 @@ xcopy /y  "$(FLTK_LIB)\lib64\*.dll" "$(ProjectDir)exe\"</Command>
 
 xcopy /y  "$(FLTK_LIB)\lib32\*.dll" "$(ProjectDir)exe\"</Command>
     </PostBuildEvent>
+    <Manifest>
+      <EnableDpiAwareness>true</EnableDpiAwareness>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -338,6 +356,9 @@ xcopy /y  "$(FLTK_LIB)\lib32\*.dll" "$(ProjectDir)exe\"</Command>
     <PostBuildEvent>
       <Command>if not exist "$(ProjectDir)exe\" mkdir "$(ProjectDir)exe\"</Command>
     </PostBuildEvent>
+    <Manifest>
+      <EnableDpiAwareness>true</EnableDpiAwareness>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release-DLL|x64'">
     <ClCompile>
@@ -363,6 +384,9 @@ xcopy /y  "$(FLTK_LIB)\lib32\*.dll" "$(ProjectDir)exe\"</Command>
 
 xcopy /y  "$(FLTK_LIB)\lib64\*.dll" "$(ProjectDir)exe\"</Command>
     </PostBuildEvent>
+    <Manifest>
+      <EnableDpiAwareness>true</EnableDpiAwareness>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="sources\main.cpp" />
