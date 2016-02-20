@@ -154,7 +154,7 @@ namespace mtools
          *
          * @return  A std::string that represent the color in the form "RGB(rrr,ggg,bbb)".
          **/
-        std::string toString() const { return std::string("RGB(") + mtools::toString(R) + "," + mtools::toString(G) + "," + mtools::toString(B) + ":", mtools::toString(opacity()) + ")"; }
+        std::string toString() const { return std::string("RGB(") + mtools::toString(R) + "," + mtools::toString(G) + "," + mtools::toString(B) + ":" + mtools::toString(opacity()) + ")"; }
 
 
         /**
