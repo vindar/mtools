@@ -45,7 +45,7 @@ namespace mtools
             }
 
 
-        void CImgWidget::setImage(cimg_library::CImg<unsigned char> * im)
+        void CImgWidget::setImage(Img<unsigned char> * im)
         {
             std::lock_guard<std::recursive_mutex> lock(_mutim);
             if ((im == nullptr) || (im->width() == 0) || (im->height() == 0)||(im->spectrum()<3))
@@ -60,7 +60,7 @@ namespace mtools
                 {
                 delete _saved_im; _saved_im = nullptr;
                 delete _saved_im32; _saved_im32 = nullptr;
-                _saved_im = new cimg_library::CImg<unsigned char>(*im, false);
+                _saved_im = new Img<unsigned char>(*im, false);
                 return;
                 }
             const int nox = im->width();
@@ -80,13 +80,13 @@ namespace mtools
 
         void CImgWidget::_drawLine_callback(void * data, int x, int y, int w, uchar *buf)
             {
-            cimg_library::CImg<unsigned char> * im = (cimg_library::CImg<unsigned char>*)data;
+            Img<unsigned char> * im = (Img<unsigned char>*)data;
             unsigned char *pR = im->data(x, y, 0, 0), *pG = im->data(x, y, 0, 1), *pB = im->data(x, y, 0, 2);
             for (int l = 0; l < w; l++) { buf[3 * l + 0] = *pR; ++pR; buf[3 * l + 1] = *pG; ++pG; buf[3 * l + 2] = *pB; ++pB; }
             }
 
 
-        void CImgWidget::setImage32(cimg_library::CImg<uint32> * im,int nbRounds)
+        void CImgWidget::setImage32(Img<uint32> * im,int nbRounds)
             {
             std::lock_guard<std::recursive_mutex> lock(_mutim);
             if ((nbRounds<=0)||(im == nullptr) || (im->width() == 0) || (im->height() == 0) || (im->spectrum()<3))
@@ -101,7 +101,7 @@ namespace mtools
                 {
                 delete _saved_im; _saved_im = nullptr;
                 delete _saved_im32; _saved_im32 = nullptr;
-                _saved_im32 = new cimg_library::CImg<uint32>(*im, false);
+                _saved_im32 = new Img<uint32>(*im, false);
                 _saved_nbRounds = nbRounds;
                 return;
                 }
@@ -115,7 +115,7 @@ namespace mtools
                 MTOOLS_ASSERT(_offbuf != ((Fl_Offscreen)0));
                 }
             fl_begin_offscreen((Fl_Offscreen)(_offbuf));
-            auto data = std::pair<cimg_library::CImg<uint32>*, int>(im, nbRounds);
+            auto data = std::pair<Img<uint32>*, int>(im, nbRounds);
             fl_draw_image(_drawLine_callback32, &data, 0, 0, (int)_ox, (int)_oy, 3);
             fl_end_offscreen();
             return;
@@ -124,8 +124,8 @@ namespace mtools
 
         void CImgWidget::_drawLine_callback32(void * data, int x, int y, int w, uchar *buf)
             {
-            std::pair<cimg_library::CImg<uint32>*, int> * p = (std::pair<cimg_library::CImg<uint32>*, int> *)data;
-            cimg_library::CImg<uint32> * im = p->first;
+            std::pair<Img<uint32>*, int> * p = (std::pair<Img<uint32>*, int> *)data;
+            Img<uint32> * im = p->first;
             int nb = p->second;
             uint32 *pR = im->data(x, y, 0, 0), *pG = im->data(x, y, 0, 1), *pB = im->data(x, y, 0, 2);
             for (int l = 0; l < w; l++) 

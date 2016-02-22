@@ -328,7 +328,7 @@ namespace mtools
             }
 
 
-        int Plotter2DObj::drawOnto(cimg_library::CImg<unsigned char> & im)
+        int Plotter2DObj::drawOnto(Img<unsigned char> & im)
             {
             if ((pnot)_ownercb == nullptr) return 0;  // do nothing if not inserted
             MTOOLS_ASSERT(((AutoDrawable2DObject*)_AD) != nullptr);

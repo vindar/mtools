@@ -27,7 +27,7 @@ int64 range = 1;                // number of distincts site visited.
 iBox2 R;                        // rectangle enclosing the trace of the walk
 Grid_basic<2, siteInfo> G;      // the grid
 MT2004_64 gen;                  // random generator
-CImg<unsigned char> image;      // image for detailled plot
+Img<unsigned char> image;       // image for detailled plot
 
 // site are colored w.r.t. the local time of the walk.
 RGBc colorLERRW(iVec2 pos)
@@ -39,7 +39,7 @@ RGBc colorLERRW(iVec2 pos)
 
 
 /* detail : image associated with a site */
-const CImg<unsigned char> * imageLERRW(mtools::iVec2 p, mtools::iVec2 size)
+const Img<unsigned char> * imageLERRW(mtools::iVec2 p, mtools::iVec2 size)
     {
     const siteInfo * S = G.peek(p);
     if ((S == nullptr) || (S->V == 0)) return nullptr;

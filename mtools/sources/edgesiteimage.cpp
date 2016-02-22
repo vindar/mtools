@@ -26,7 +26,7 @@
 namespace mtools
 {
 	
-    cimg_library::CImg<unsigned char> & EdgeSiteImage::makeImage(cimg_library::CImg<unsigned char> & im) const
+    Img<unsigned char> & EdgeSiteImage::makeImage(Img<unsigned char> & im) const
 		{
 		if ((im.width() <1)||(im.height() <1)) {return(im);}
         return makeImage(im, { im.width(), im.height() });
@@ -34,7 +34,7 @@ namespace mtools
 
 
 
-    cimg_library::CImg<unsigned char> & EdgeSiteImage::makeImage(cimg_library::CImg<unsigned char> & im, iVec2 size) const
+    Img<unsigned char> & EdgeSiteImage::makeImage(Img<unsigned char> & im, iVec2 size) const
 		{	
         const int sx = (int)size.X();
         const int sy = (int)size.Y();
@@ -110,7 +110,7 @@ namespace mtools
 
 
 	/* method for drawing an edge arrow according to specified model */
-    void EdgeSiteImage::_drawArrow(RGBc coul, TypeEdge type, int direction, cimg_library::CImg<unsigned char> & im, double kx, double ky) const
+    void EdgeSiteImage::_drawArrow(RGBc coul, TypeEdge type, int direction, Img<unsigned char> & im, double kx, double ky) const
 		{
 		switch(type)
 			{
@@ -150,21 +150,21 @@ namespace mtools
 		return;
 		}
 
-    void EdgeSiteImage::_draw_extArrow(RGBc coul, int direction, cimg_library::CImg<unsigned char> & im, double kx, double ky) const { _draw_triangle(50, 0, 35, 15, 65, 15, coul, direction, im, kx, ky); }
-    void EdgeSiteImage::_draw_intArrowSite(RGBc coul, int direction, cimg_library::CImg<unsigned char> & im, double kx, double ky) const { _draw_triangle(35, 10, 50, 25, 65, 10, coul, direction, im, kx, ky); }
-    void EdgeSiteImage::_draw_intArrow(RGBc coul, int direction, cimg_library::CImg<unsigned char> & im, double kx, double ky) const { _draw_triangle(35, 30, 50, 45, 65, 30, coul, direction, im, kx, ky); }
-    void EdgeSiteImage::_draw_extEdge(RGBc coul, int direction, cimg_library::CImg<unsigned char> & im, double kx, double ky) const { _draw_rect(45, 0, 55, 15, coul, direction, im, kx, ky); }
-    void EdgeSiteImage::_draw_centerEdge(RGBc coul, int direction, cimg_library::CImg<unsigned char> & im, double kx, double ky) const { _draw_rect(45, 15, 55, 30, coul, direction, im, kx, ky); }
-    void EdgeSiteImage::_draw_insideEdge(RGBc coul, int direction, cimg_library::CImg<unsigned char> & im, double kx, double ky) const { _draw_rect(45, 29, 55, 45, coul, direction, im, kx, ky); }
-    void EdgeSiteImage::_draw_centerNoSite(RGBc coul, cimg_library::CImg<unsigned char> & im, double kx, double ky) const { im.draw_rectangle((int)(kx * 45), (int)(ky * 45), (int)(kx * 55), (int)(ky * 55), coul.buf(), 1.0); }
-    void EdgeSiteImage::_draw_centerSite(RGBc coul, cimg_library::CImg<unsigned char> & im, double kx, double ky) const
+    void EdgeSiteImage::_draw_extArrow(RGBc coul, int direction, Img<unsigned char> & im, double kx, double ky) const { _draw_triangle(50, 0, 35, 15, 65, 15, coul, direction, im, kx, ky); }
+    void EdgeSiteImage::_draw_intArrowSite(RGBc coul, int direction, Img<unsigned char> & im, double kx, double ky) const { _draw_triangle(35, 10, 50, 25, 65, 10, coul, direction, im, kx, ky); }
+    void EdgeSiteImage::_draw_intArrow(RGBc coul, int direction, Img<unsigned char> & im, double kx, double ky) const { _draw_triangle(35, 30, 50, 45, 65, 30, coul, direction, im, kx, ky); }
+    void EdgeSiteImage::_draw_extEdge(RGBc coul, int direction, Img<unsigned char> & im, double kx, double ky) const { _draw_rect(45, 0, 55, 15, coul, direction, im, kx, ky); }
+    void EdgeSiteImage::_draw_centerEdge(RGBc coul, int direction, Img<unsigned char> & im, double kx, double ky) const { _draw_rect(45, 15, 55, 30, coul, direction, im, kx, ky); }
+    void EdgeSiteImage::_draw_insideEdge(RGBc coul, int direction, Img<unsigned char> & im, double kx, double ky) const { _draw_rect(45, 29, 55, 45, coul, direction, im, kx, ky); }
+    void EdgeSiteImage::_draw_centerNoSite(RGBc coul, Img<unsigned char> & im, double kx, double ky) const { im.draw_rectangle((int)(kx * 45), (int)(ky * 45), (int)(kx * 55), (int)(ky * 55), coul.buf(), 1.0); }
+    void EdgeSiteImage::_draw_centerSite(RGBc coul, Img<unsigned char> & im, double kx, double ky) const
 		{
         if ((int)(kx * 100) == (int)(ky * 100)) im.draw_circle((int)(kx * 50), (int)(ky * 50), (int)(kx * 25), coul.buf(), 1.0);
         else { im.draw_ellipse((int)(kx * 50), (int)(ky * 50), (float)(kx * 25), (float)(ky * 25), 0.0, coul.buf(), 1.0); }
 		}
 
 	/* draw a rectangle */
-    void EdgeSiteImage::_draw_rect(double x0, double y0, double x1, double y1, RGBc coul, int direction, cimg_library::CImg<unsigned char> & im, double kx, double ky)  const
+    void EdgeSiteImage::_draw_rect(double x0, double y0, double x1, double y1, RGBc coul, int direction, Img<unsigned char> & im, double kx, double ky)  const
 		{
 		switch(direction)
 			{
@@ -177,7 +177,7 @@ namespace mtools
 		}
 
 	/* draw a triangle */
-    void EdgeSiteImage::_draw_triangle(double x0, double y0, double x1, double y1, double x2, double y2, RGBc coul, int direction, cimg_library::CImg<unsigned char> & im, double kx, double ky) const
+    void EdgeSiteImage::_draw_triangle(double x0, double y0, double x1, double y1, double x2, double y2, RGBc coul, int direction, Img<unsigned char> & im, double kx, double ky) const
 		{
 		switch(direction)
 			{

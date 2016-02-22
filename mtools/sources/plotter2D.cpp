@@ -247,7 +247,7 @@ namespace mtools
             Plotter2DWindow(const Plotter2DWindow &) = delete;              // no copy
             Plotter2DWindow & operator=(const Plotter2DWindow &) = delete;  //
 
-            CImg<unsigned char> * _mainImage;           // the view image
+            Img<unsigned char> * _mainImage;           // the view image
             std::atomic<int>      _mainImageQuality; // the quality of this image.
 
             std::atomic<RangeManager*> _RM;        // the associated range manager. Constructed in ctor and destroyed in dtor
@@ -548,7 +548,7 @@ namespace mtools
         void Plotter2DWindow::setImageSize(int lx, int ly, int ch)
         {
             if (lx*ly*ch == 0) { if (_mainImage != nullptr) { delete _mainImage; _mainImage = nullptr; } return; }
-            if (_mainImage == nullptr) { _mainImage = new CImg<unsigned char>(lx, ly, 1, ch); } else { _mainImage->resize(lx, ly, 1, ch, -1); }
+            if (_mainImage == nullptr) { _mainImage = new Img<unsigned char>(lx, ly, 1, ch); } else { _mainImage->resize(lx, ly, 1, ch, -1); }
         }
 
 

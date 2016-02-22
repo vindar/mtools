@@ -53,9 +53,9 @@ namespace mtools
      *  ES.textup("up text");					   // up text (black)
      *  ES.textleft("left text");				   // left text (black)
      *  ES.textdown("this is my\ntext :-)");       // another text down
-     *  cimg_library::CImg<unsigned char> image;   // the cim image to draw into
+     *  Img<unsigned char> image;   // the cim image to draw into
      *  ES.makeImage(image, 200, 300);			   // draw it with size (200x300)
-     *  cimg_library::CImgDisplay Disp(image); while (!Disp.is_closed()) { Sleep(1); }	// display on the screen
+     *  CImgDisplay Disp(image); while (!Disp.is_closed()) { Sleep(1); }	// display on the screen
      *  return 0
      *  }
      * @endcode.
@@ -296,7 +296,7 @@ namespace mtools
      *
      * @return  a reference to im.
      **/
-    cimg_library::CImg<unsigned char> & makeImage(cimg_library::CImg<unsigned char> & im) const;
+    Img<unsigned char> & makeImage(Img<unsigned char> & im) const;
 
 
     /**
@@ -308,7 +308,7 @@ namespace mtools
      *
      * @return  a reference to im.
      **/
-    cimg_library::CImg<unsigned char> & makeImage(cimg_library::CImg<unsigned char> & im, iVec2 size) const;
+    Img<unsigned char> & makeImage(Img<unsigned char> & im, iVec2 size) const;
 
 
 	private:
@@ -317,17 +317,17 @@ namespace mtools
     // PRIVATE PART
     //
     //
-    inline void _drawArrow(RGBc coul, TypeEdge type, int direction, cimg_library::CImg<unsigned char> & im, double kx, double ky) const;
-    inline void _draw_extArrow(RGBc coul, int direction, cimg_library::CImg<unsigned char> & im, double kx, double ky) const;
-    inline void _draw_intArrowSite(RGBc coul, int direction, cimg_library::CImg<unsigned char> & im, double kx, double ky) const;
-    inline void _draw_intArrow(RGBc coul, int direction, cimg_library::CImg<unsigned char> & im, double kx, double ky) const;
-    inline void _draw_extEdge(RGBc coul, int direction, cimg_library::CImg<unsigned char> & im, double kx, double ky) const;
-    inline void _draw_centerEdge(RGBc coul, int direction, cimg_library::CImg<unsigned char> & im, double kx, double ky) const;
-    inline void _draw_insideEdge(RGBc coul, int direction, cimg_library::CImg<unsigned char> & im, double kx, double ky) const;
-    inline void _draw_centerNoSite(RGBc coul, cimg_library::CImg<unsigned char> & im, double kx, double ky) const;
-    inline void _draw_centerSite(RGBc coul, cimg_library::CImg<unsigned char> & im, double kx, double ky) const;
-    inline void _draw_rect(double x0, double y0, double x1, double y1, RGBc coul, int direction, cimg_library::CImg<unsigned char> & im, double kx, double ky)  const;
-    inline void _draw_triangle(double x0, double y0, double x1, double y1, double x2, double y2, RGBc coul, int direction, cimg_library::CImg<unsigned char> & im, double kx, double ky) const;
+    inline void _drawArrow(RGBc coul, TypeEdge type, int direction, Img<unsigned char> & im, double kx, double ky) const;
+    inline void _draw_extArrow(RGBc coul, int direction, Img<unsigned char> & im, double kx, double ky) const;
+    inline void _draw_intArrowSite(RGBc coul, int direction, Img<unsigned char> & im, double kx, double ky) const;
+    inline void _draw_intArrow(RGBc coul, int direction, Img<unsigned char> & im, double kx, double ky) const;
+    inline void _draw_extEdge(RGBc coul, int direction, Img<unsigned char> & im, double kx, double ky) const;
+    inline void _draw_centerEdge(RGBc coul, int direction, Img<unsigned char> & im, double kx, double ky) const;
+    inline void _draw_insideEdge(RGBc coul, int direction, Img<unsigned char> & im, double kx, double ky) const;
+    inline void _draw_centerNoSite(RGBc coul, Img<unsigned char> & im, double kx, double ky) const;
+    inline void _draw_centerSite(RGBc coul, Img<unsigned char> & im, double kx, double ky) const;
+    inline void _draw_rect(double x0, double y0, double x1, double y1, RGBc coul, int direction, Img<unsigned char> & im, double kx, double ky)  const;
+    inline void _draw_triangle(double x0, double y0, double x1, double y1, double x2, double y2, RGBc coul, int direction, Img<unsigned char> & im, double kx, double ky) const;
 
     TypeEdge    _up, _down, _left, _right;                      // type of edges.
 	bool        _site;                                          // is there a central site.

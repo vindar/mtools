@@ -164,7 +164,7 @@ namespace mtools
             }
 
 
-        int Plot2DAxes::drawOnto(cimg_library::CImg<unsigned char> & im, float opacity)
+        int Plot2DAxes::drawOnto(Img<unsigned char> & im, float opacity)
             {
             im.fBox2_drawAxes(_range, _gradColor, opacity);
             if (_gradStatus) im.fBox2_drawGraduations(_range, _scaling, _gradColor, opacity);

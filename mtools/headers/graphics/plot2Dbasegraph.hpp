@@ -204,7 +204,7 @@ namespace mtools
         /**
          * Override of the drawOnto method
          **/
-        virtual int drawOnto(cimg_library::CImg<unsigned char> & im, float opacity = 1.0) override;
+        virtual int drawOnto(Img<unsigned char> & im, float opacity = 1.0) override;
 
 
             /***** Override of methods from Plotter2DObject ******/
@@ -268,18 +268,18 @@ namespace mtools
 
 
             /* utility methods used for the drawing*/
-            void _drawPoint(int i, int j, cimg_library::CImg<unsigned char> & im, const RGBc & coul, const float opacity, const int tickness);
-            void _drawLine(int i, int j1, int j2, cimg_library::CImg<unsigned char> & im, const RGBc & coul, const float opacity, const int tickness);
-            void _dicho(int j0, int i1, int i2, int j3, double x0, double x3, int depth, cimg_library::CImg<unsigned char> & im, const fBox2 & R, const RGBc & coul, const float & opacity, const int & tickness);
+            void _drawPoint(int i, int j, Img<unsigned char> & im, const RGBc & coul, const float opacity, const int tickness);
+            void _drawLine(int i, int j1, int j2, Img<unsigned char> & im, const RGBc & coul, const float opacity, const int tickness);
+            void _dicho(int j0, int i1, int i2, int j3, double x0, double x3, int depth, Img<unsigned char> & im, const fBox2 & R, const RGBc & coul, const float & opacity, const int & tickness);
 
             /* make the drawing with dichotomy */
-            void _drawWithDicho(int depth, cimg_library::CImg<unsigned char> & im, const fBox2 & R, const RGBc coul, const float opacity, const int tickness);
+            void _drawWithDicho(int depth, Img<unsigned char> & im, const fBox2 & R, const RGBc coul, const float opacity, const int tickness);
 
             /* make the drawing with linear interpolation */
-            void _drawWithInterpolation(int depth, cimg_library::CImg<unsigned char> & im, const fBox2 & R, const RGBc coul, const float opacity, const int tickness);
+            void _drawWithInterpolation(int depth, Img<unsigned char> & im, const fBox2 & R, const RGBc coul, const float opacity, const int tickness);
 
             /* fill below or over */
-             void _drawOverOrBelow(bool over, cimg_library::CImg<unsigned char> & im, const fBox2 & R, RGBc coul, const float opacity);
+             void _drawOverOrBelow(bool over, Img<unsigned char> & im, const fBox2 & R, RGBc coul, const float opacity);
             
              /* update all widget */
              void _updateWidgets();

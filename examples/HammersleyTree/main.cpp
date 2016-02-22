@@ -255,11 +255,11 @@ void createTree()
 
 
 /* convert a coord to an image pixel */
-iVec2 toImage(double x, double t, cimg_library::CImg<unsigned char> & image) { fBox2 R(0, X, 0, T); iVec2 pos = image.getImageCoord(R, { x,t }); pos.Y() = LY-1 - pos.Y(); return pos; }
+iVec2 toImage(double x, double t, Img<unsigned char> & image) { fBox2 R(0, X, 0, T); iVec2 pos = image.getImageCoord(R, { x,t }); pos.Y() = LY-1 - pos.Y(); return pos; }
 
 
 /* draw the hammersley lines */
-void drawPoints(cimg_library::CImg<unsigned char> & image, float op = 1.0)
+void drawPoints(Img<unsigned char> & image, float op = 1.0)
     {
     cout << "drawing the points... ";
     fBox2 R(0, X, 0, T);
@@ -273,7 +273,7 @@ void drawPoints(cimg_library::CImg<unsigned char> & image, float op = 1.0)
     }
 
 /* draw the hammersley lines */
-void drawLines(cimg_library::CImg<unsigned char> & image, float op = 0.8)
+void drawLines(Img<unsigned char> & image, float op = 0.8)
     {
     cout << "drawing the lines... ";
     fBox2 R(0, X, 0, T);
@@ -293,7 +293,7 @@ void drawLines(cimg_library::CImg<unsigned char> & image, float op = 0.8)
     }
 
 /* color the trees */
-void drawTrees(cimg_library::CImg<unsigned char> & image, float op = 0.3)
+void drawTrees(Img<unsigned char> & image, float op = 0.3)
     {
     cout << "drawing the trees... ";
     std::vector<double> mintab,maxtab;
@@ -389,8 +389,8 @@ int main(int argc, char *argv[])
     createSink();       // create the sink points
     createTree();       // construct the genealogy 
 
-    cimg_library::CImg<unsigned char> image(LX, LY, 1, 4); image.clear(RGBc::c_White);
-    cimg_library::CImg<unsigned char> image_trees(LX, LY, 1, 4); image_trees.clear(RGBc::c_TransparentWhite);
+    Img<unsigned char> image(LX, LY, 1, 4); image.clear(RGBc::c_White);
+    Img<unsigned char> image_trees(LX, LY, 1, 4); image_trees.clear(RGBc::c_TransparentWhite);
 
     drawLines(image);
     drawPoints(image);

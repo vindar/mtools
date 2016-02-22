@@ -39,7 +39,151 @@
 namespace mtools
 {
 
-    using cimg_library::CImg;
+
+
+
+
+    /**
+    * GetImage method selector.
+    * Detect if a type (or function) contain a method compatible with getImage().
+    * The method can be called via call().
+    **/
+    template<typename T, typename Tim> class GetImageSelector
+        {
+        using im = Img<Tim>;
+        static void * dumptr;
+
+        template<typename U> static decltype((*(U*)(0)).getImage(iVec2{ 0,0 }, dumptr)) vers1(int);
+        template<typename> static metaprog::no vers1(...);
+        static const bool version1 = std::is_same<std::decay<decltype(vers1<T>(0))>, std::decay<im*> >::value;
+
+        template<typename U> static decltype((*(U*)(0)).getImage(iVec2{ 0,0 })) vers2(int);
+        template<typename> static metaprog::no vers2(...);
+        static const bool version2 = std::is_same<std::decay<decltype(vers2<T>(0))>, std::decay<im*> >::value;
+
+        template<typename U> static decltype((*(U*)(0)).getImage(0, 0, dumptr)) vers3(int);
+        template<typename> static metaprog::no vers3(...);
+        static const bool version3 = std::is_same<std::decay<decltype(vers3<T>(0))>, std::decay<im*> >::value;
+
+        template<typename U> static decltype((*(U*)(0)).getImage(0, 0)) vers4(int);
+        template<typename> static metaprog::no vers4(...);
+        static const bool version4 = std::is_same<std::decay<decltype(vers4<T>(0))>, std::decay<im*> >::value;
+
+        template<typename U> static decltype((*(U*)(0))(iVec2{ 0,0 }, dumptr)) vers5(int);
+        template<typename> static metaprog::no vers5(...);
+        static const bool version5 = std::is_same<std::decay<decltype(vers5<T>(0))>, std::decay<im*> >::value;
+
+        template<typename U> static decltype((*(U*)(0))(iVec2{ 0,0 })) vers6(int);
+        template<typename> static metaprog::no vers6(...);
+        static const bool version6 = std::is_same<std::decay<decltype(vers6<T>(0))>, std::decay<im*> >::value;
+
+        template<typename U> static decltype((*(U*)(0))(0, 0, dumptr)) vers7(int);
+        template<typename> static metaprog::no vers7(...);
+        static const bool version7 = std::is_same<std::decay<decltype(vers7<T>(0))>, std::decay<im*> >::value;
+
+        template<typename U> static decltype((*(U*)(0))(0, 0)) vers8(int);
+        template<typename> static metaprog::no vers8(...);
+        static const bool version8 = std::is_same<std::decay<decltype(vers8<T>(0))>, std::decay<im*> >::value;
+
+        static im * call1(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<true> D) { return obj.getImage(pos, data); }
+        static im * call2(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<true> D) { return obj.getImage(pos); }
+        static im * call3(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<true> D) { return obj.getImage(pos.X(), pos.Y(), data); }
+        static im * call4(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<true> D) { return obj.getImage(pos.X(), pos.Y()); }
+        static im * call5(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<true> D) { return obj(pos, data); }
+        static im * call6(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<true> D) { return obj(pos); }
+        static im * call7(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<true> D) { return obj(pos.X(), pos.Y(), data); }
+        static im * call8(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<true> D) { return obj(pos.X(), pos.Y()); }
+
+        static im * call1(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<false> D) { return call2(obj, pos, data, mtools::metaprog::dummy<version2>()); }
+        static im * call2(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<false> D) { return call3(obj, pos, data, mtools::metaprog::dummy<version3>()); }
+        static im * call3(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<false> D) { return call4(obj, pos, data, mtools::metaprog::dummy<version4>()); }
+        static im * call4(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<false> D) { return call5(obj, pos, data, mtools::metaprog::dummy<version5>()); }
+        static im * call5(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<false> D) { return call6(obj, pos, data, mtools::metaprog::dummy<version6>()); }
+        static im * call6(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<false> D) { return call7(obj, pos, data, mtools::metaprog::dummy<version7>()); }
+        static im * call7(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<false> D) { return call8(obj, pos, data, mtools::metaprog::dummy<version8>()); }
+        static im * call8(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<false> D) { MTOOLS_ERROR("No getImage() found"); return nullptr; }
+
+        public:
+
+            static const bool has_getImage = version1 | version2 | version3 | version4 | version5 | version6 | version7 | version8;
+
+            static im * call(T & obj, const iVec2 & pos, void * data) { return call1(obj, pos, data, mtools::metaprog::dummy<version1>()); }
+        };
+
+
+    /**
+    * GetColor method selector.
+    * Detect if a type (or function) contain a method compatible with getColor().
+    * The method is called via call().
+    **/
+    template<typename T> class GetColorSelector
+        {
+        static void * dumptr;
+
+        template<typename U> static decltype((*(U*)(0)).getColor(iVec2{ 0,0 }, dumptr)) vers1(int);
+        template<typename> static metaprog::no vers1(...);
+        static const bool version1 = std::is_same<std::decay<decltype(vers1<T>(0))>, std::decay<mtools::RGBc> >::value;
+
+        template<typename U> static decltype((*(U*)(0)).getColor(iVec2{ 0,0 })) vers2(int);
+        template<typename> static metaprog::no vers2(...);
+        static const bool version2 = std::is_same<std::decay<decltype(vers2<T>(0))>, std::decay<mtools::RGBc> >::value;
+
+        template<typename U> static decltype((*(U*)(0)).getColor(0, 0, dumptr)) vers3(int);
+        template<typename> static metaprog::no vers3(...);
+        static const bool version3 = std::is_same<std::decay<decltype(vers3<T>(0))>, std::decay<mtools::RGBc> >::value;
+
+        template<typename U> static decltype((*(U*)(0)).getColor(0, 0)) vers4(int);
+        template<typename> static metaprog::no vers4(...);
+        static const bool version4 = std::is_same<std::decay<decltype(vers4<T>(0))>, std::decay<mtools::RGBc> >::value;
+
+        template<typename U> static decltype((*(U*)(0))(iVec2{ 0,0 }, dumptr)) vers5(int);
+        template<typename> static metaprog::no vers5(...);
+        static const bool version5 = std::is_same<std::decay<decltype(vers5<T>(0))>, std::decay<mtools::RGBc> >::value;
+
+        template<typename U> static decltype((*(U*)(0))(iVec2{ 0,0 })) vers6(int);
+        template<typename> static metaprog::no vers6(...);
+        static const bool version6 = std::is_same<std::decay<decltype(vers6<T>(0))>, std::decay<mtools::RGBc> >::value;
+
+        template<typename U> static decltype((*(U*)(0))(0, 0, dumptr)) vers7(int);
+        template<typename> static metaprog::no vers7(...);
+        static const bool version7 = std::is_same<std::decay<decltype(vers7<T>(0))>, std::decay<mtools::RGBc> >::value;
+
+        template<typename U> static decltype((*(U*)(0))(0, 0)) vers8(int);
+        template<typename> static metaprog::no vers8(...);
+        static const bool version8 = std::is_same<std::decay<decltype(vers8<T>(0))>, std::decay<mtools::RGBc> >::value;
+
+        static mtools::RGBc call1(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<true> D) { return obj.getColor(pos, data); }
+        static mtools::RGBc call2(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<true> D) { return obj.getColor(pos); }
+        static mtools::RGBc call3(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<true> D) { return obj.getColor(pos.X(), pos.Y(), data); }
+        static mtools::RGBc call4(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<true> D) { return obj.getColor(pos.X(), pos.Y()); }
+        static mtools::RGBc call5(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<true> D) { return obj(pos, data); }
+        static mtools::RGBc call6(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<true> D) { return obj(pos); }
+        static mtools::RGBc call7(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<true> D) { return obj(pos.X(), pos.Y(), data); }
+        static mtools::RGBc call8(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<true> D) { return obj(pos.X(), pos.Y()); }
+        static mtools::RGBc call9(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<true> D) { return (GetImageSelector<T, unsigned char>::call(obj, pos, data))->toRGBc(); }
+
+        static mtools::RGBc call1(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<false> D) { return call2(obj, pos, data, mtools::metaprog::dummy<version2>()); }
+        static mtools::RGBc call2(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<false> D) { return call3(obj, pos, data, mtools::metaprog::dummy<version3>()); }
+        static mtools::RGBc call3(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<false> D) { return call4(obj, pos, data, mtools::metaprog::dummy<version4>()); }
+        static mtools::RGBc call4(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<false> D) { return call5(obj, pos, data, mtools::metaprog::dummy<version5>()); }
+        static mtools::RGBc call5(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<false> D) { return call6(obj, pos, data, mtools::metaprog::dummy<version6>()); }
+        static mtools::RGBc call6(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<false> D) { return call7(obj, pos, data, mtools::metaprog::dummy<version7>()); }
+        static mtools::RGBc call7(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<false> D) { return call8(obj, pos, data, mtools::metaprog::dummy<version8>()); }
+        static mtools::RGBc call8(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<false> D) { return call9(obj, pos, data, mtools::metaprog::dummy<GetImageSelector<T, unsigned char>::has_getImage>()); }
+        static mtools::RGBc call9(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<false> D) { static_assert(has_getColor, "No method found for getColor()"); return RGBc(); }
+
+        public:
+
+            static const bool has_getColor = version1 | version2 | version3 | version4 | version5 | version6 | version7 | version8;
+
+            static RGBc call(T & obj, const iVec2 & pos, void * data) { return call1(obj, pos, data, mtools::metaprog::dummy<version1>()); }
+
+
+        };
+
+
+
+
 
 
     /**
@@ -75,7 +219,7 @@ namespace mtools
      * @par Example
      * @code{.cpp}
      * RGBc myColorFun(iVec2 pos)  {...}
-     * const CImg<unsigned char> myImageFun(iVec2 pos,iVec2 size)  {...}
+     * const Img<unsigned char> myImageFun(iVec2 pos,iVec2 size)  {...}
      *
      * LatticeDrawer<LatticeObj<myColorFct, myImageFun> >(nullptr); // create a Lattice drawer associated with myColorFun and myImageFun functions
      * @endcode
@@ -84,7 +228,7 @@ namespace mtools
      *                      site. It signature must be exactly `mtools::RGBc getColor(mtools::iVec2
      *                      pos)`.
      * @tparam  getImageFun The getImage method that will be called when querying the image of a
-     *                      site. It signature must be exactly `const CImg<unsigned char> *
+     *                      site. It signature must be exactly `const Img<unsigned char> *
      *                      getColor(mtools::iVec2 pos, mtools::iVec2 size)`. The pointer to the
      *                      image returned by this function must either be null or point to a 3 or 4
      *                      channel image. The image is not modified and can be disposed of
@@ -95,12 +239,12 @@ namespace mtools
      * @param   pos     The position.
      * @param   size    The size.
      **/
-    template<mtools::RGBc(*getColorFun)(mtools::iVec2 pos), const cimg_library::CImg<unsigned char>* (*getImageFun)(mtools::iVec2 pos, mtools::iVec2 size) > class LatticeObjImage
+    template<mtools::RGBc(*getColorFun)(mtools::iVec2 pos), const Img<unsigned char>* (*getImageFun)(mtools::iVec2 pos, mtools::iVec2 size) > class LatticeObjImage
         {
         public:
 
         inline static RGBc getColor(mtools::iVec2 pos) { return getColorFun(pos); }
-        inline static const cimg_library::CImg<unsigned char> * getImage(mtools::iVec2 pos, mtools::iVec2 size) { return getImageFun(pos,size); }
+        inline static const Img<unsigned char> * getImage(mtools::iVec2 pos, mtools::iVec2 size) { return getImageFun(pos,size); }
         inline static LatticeObjImage<getColorFun, getImageFun> * get() { return(nullptr); }
 
         };
@@ -125,7 +269,7 @@ namespace mtools
  * drawing on 3 channel images.
  * 
  * - If TYPEIMAGE is selected, the plotter can request an image of the sites by calling the
- * object method `const CImg<unsigned char> * getImage(iVec pos,iVec size)` if it is present.
+ * object method `const Img<unsigned char> * getImage(iVec pos,iVec size)` if it is present.
  * The presence of this method is automatically detected by the drawer. If it cannot find it, if
  * falls back using the `getColor` method and simply draw a square of the given color.
  * 
@@ -153,9 +297,9 @@ RGBc colorCircle(iVec2 pos)
     return RGBc::c_TransparentWhite;
     }
 
-const CImg<unsigned char> * imageCircle(iVec2 pos, iVec2 size)
+const Img<unsigned char> * imageCircle(iVec2 pos, iVec2 size)
     { // no image outside of the circle. Small red 'site circle' inside with transprent background
-    static CImg<unsigned char>  im;
+    static Img<unsigned char>  im;
     im.resize((int)size.X(), (int)size.Y(), 1, 4, -1); // resize if needed, we just use 4 channel so we can use transparency
     EdgeSiteImage ES;
     if (pos.norm() < 100) { ES.site(true).makeImage(im, size); }
@@ -166,11 +310,11 @@ const CImg<unsigned char> * imageCircle(iVec2 pos, iVec2 size)
 int main()
     {
     fBox2 r(-200, 200, -200, 200);						        // the range displayed
-    CImg<unsigned char> image(1000, 800, 1, 4, false);	// the image, use only 4 channels for trnasparency
+    Img<unsigned char> image(1000, 800, 1, 4, false);	// the image, use only 4 channels for trnasparency
     LatticeDrawer<LatticeObjImage<colorCircle, imageCircle> > LD(nullptr); // create the drawer
     LD.setParam(r, iVec2(1000, 800));                           // set the parameters
     int drawtype = 0, isaxe = 1, isgrid = 0, iscell = 1; // flags
-    cimg_library::CImgDisplay DD(image); // display
+    CImgDisplay DD(image); // display
     while ((!DD.is_closed())) {
         uint32 k = DD.key();
         if ((DD.is_key(cimg_library::cimg::keyA))) { isaxe = 1 - isaxe; std::this_thread::sleep_for(std::chrono::milliseconds(50)); }   // type A for toggle axe (with graduations)
@@ -198,7 +342,7 @@ int main()
  *        
  * @tparam  LatticeObj  Type of the lattice object. Can be any class provided that it defines the 
  *                      method `RGBc getColor(iVec2 pos)` method and possibly (but not necessary) a 
- *                      method `const CImg<unsigned char> * getImage(iVec2 pos,iVec2 size)`.
+ *                      method `const Img<unsigned char> * getImage(iVec2 pos,iVec2 size)`.
  **/
 template<class LatticeObj> class LatticeDrawer : public mtools::internals_graphics::Drawable2DObject
 {
@@ -284,7 +428,7 @@ public:
      **/
     bool hasImage() const
         {
-        return metaprog::has_getImage<LatticeObj, const cimg_library::CImg<unsigned char>*, mtools::iVec2, mtools::iVec2>::value;
+        return metaprog::has_getImage<LatticeObj, const Img<unsigned char>*, mtools::iVec2, mtools::iVec2>::value;
         }
 
 
@@ -460,7 +604,7 @@ public:
      *
      * @return  The quality of the drawing performed (0 = nothing drawn, 100 = perfect drawing).
      **/
-    virtual int drawOnto(cimg_library::CImg<unsigned char> & im, float opacity = 1.0) override
+    virtual int drawOnto(Img<unsigned char> & im, float opacity = 1.0) override
         {
         MTOOLS_ASSERT((im.width() == _g_imSize.X()) && (im.height() == _g_imSize.Y()));
         MTOOLS_ASSERT((im.spectrum() == 3) || (im.spectrum() == 4));
@@ -827,7 +971,7 @@ inline void _addInt16Buf(uint32 x,uint32 y,uint32 R,uint32 G,uint32 B,uint32 A)
 
 
 /* the main method for warping the pixel image to the cimg image*/
-void _drawOntoPixel(cimg_library::CImg<unsigned char> & im, float opacity)
+void _drawOntoPixel(Img<unsigned char> & im, float opacity)
     {
     MTOOLS_ASSERT((im.spectrum() == 3) || (im.spectrum() == 4));
     _workPixel(0); // make sure everything is in sync. 
@@ -872,7 +1016,7 @@ inline unsigned char  _blendcolor4(unsigned char & A, float opA, unsigned char B
 /* warp the buffer onto an image using _qi,_qj,_counter1 and _counter2 
    method when im has four channels : use transparency and A over B operation 
  */
-inline void _warpInt16Buf_4channel(CImg<unsigned char> & im, float op) const
+inline void _warpInt16Buf_4channel(Img<unsigned char> & im, float op) const
 {
     MTOOLS_ASSERT(im.spectrum() == 4);
     MTOOLS_ASSERT(op > 0.0f);
@@ -994,7 +1138,7 @@ inline void _blendcolor3(unsigned char & A, unsigned char B, float opB,float op,
 /* warp the buffer onto an image using _qi,_qj,_counter1 and _counter2 :
 method when im has 3 channels (same as if the fourth channel was completely opaque)
 */
-inline void _warpInt16Buf_3channel(CImg<unsigned char> & im, float op) const
+inline void _warpInt16Buf_3channel(Img<unsigned char> & im, float op) const
 {
     MTOOLS_ASSERT(im.spectrum() == 3);
     MTOOLS_ASSERT(op > 0.0f);
@@ -1094,8 +1238,8 @@ inline void _warpInt16Buf_3channel(CImg<unsigned char> & im, float op) const
 // ****************************************************************
 
 /* for the image drawer */
-CImg<unsigned char> _exact_qbuf;			// quality buffer of the same size as exact_im: 0 = not drawn. 1 = dirty. 2 = clean 
-CImg<unsigned char> _exact_im;		    	// the non-rescaled image of size (_wr.lx()*_exact_sx , _wr.ly()*_exact_sy)
+Img<unsigned char> _exact_qbuf;			// quality buffer of the same size as exact_im: 0 = not drawn. 1 = dirty. 2 = clean 
+Img<unsigned char> _exact_im;		    	// the non-rescaled image of size (_wr.lx()*_exact_sx , _wr.ly()*_exact_sy)
 int					_exact_sx,_exact_sy;	// size of a site image in the exact image
 iBox2				_exact_r;				// the rectangle describing the sites in the exact_image
 int					_exact_qi,_exact_qj;	// position we continue from for improving quality
@@ -1105,7 +1249,7 @@ uint32              _exact_Q23;             // number of images of good quality
 
 
 /* version when LatticeObj implement the getImage method */
-inline const CImg<unsigned char > * _getimage(int64 i, int64 j, int lx, int ly, mtools::metaprog::dummy<true> D)
+inline const Img<unsigned char > * _getimage(int64 i, int64 j, int lx, int ly, mtools::metaprog::dummy<true> D)
     {
     const iVec2 pos(i, j);
     if (!_g_domR.isInside(pos)) return nullptr;
@@ -1113,7 +1257,7 @@ inline const CImg<unsigned char > * _getimage(int64 i, int64 j, int lx, int ly, 
     }
 
 /* fallback method when LatticeObj does not implement getImage() method */
-inline const CImg<unsigned char> * _getimage(int64 i, int64 j, int lx, int ly, mtools::metaprog::dummy<false> D)
+inline const Img<unsigned char> * _getimage(int64 i, int64 j, int lx, int ly, mtools::metaprog::dummy<false> D)
     {
     MTOOLS_INSURE(false);
     return(nullptr);
@@ -1138,7 +1282,7 @@ void _improveImage(int maxtime_ms)
 					if (_exact_qbuf(i,j) == 0) // site must be redrawn
 						{
                         --_exact_Q0;
-                        const CImg<unsigned char>  * spr = _getimage(_exact_r.min[0] + i, _exact_r.min[1] + j, _exact_sx, _exact_sy, metaprog::dummy< metaprog::has_getImage<LatticeObj, const cimg_library::CImg<unsigned char>*, mtools::iVec2, mtools::iVec2>::value >());
+                        const Img<unsigned char>  * spr = _getimage(_exact_r.min[0] + i, _exact_r.min[1] + j, _exact_sx, _exact_sy, metaprog::dummy< metaprog::has_getImage<LatticeObj, const Img<unsigned char>*, mtools::iVec2, mtools::iVec2>::value >());
                         if (spr == nullptr) { _exact_qbuf(i, j) = 3; ++_exact_Q23; } // no image, don't do anything
                         else
                             {
@@ -1152,7 +1296,7 @@ void _improveImage(int maxtime_ms)
                             else
                                 { // not at the right dimension, we resize before blitting
                                 _exact_qbuf(i, j) = 1;
-                                CImg<unsigned char> sprite = (*spr).get_resize(_exact_sx, _exact_sy, 1, spr->spectrum(), 1); //fast resizing
+                                Img<unsigned char> sprite = (*spr).get_resize(_exact_sx, _exact_sy, 1, spr->spectrum(), 1); //fast resizing
                                 _exact_im.draw_image(_exact_sx*i, _exact_sy*(_exact_qbuf.height() - 1 - j), 0, 0, sprite); // copy
                                 }
                             if (spr->spectrum() == 3) // fill the last channel with 255 (opaque) if the sprite only has 3 channel
@@ -1181,7 +1325,7 @@ void _improveImage(int maxtime_ms)
 					if (_exact_qbuf(i,j) == 1) // site must be redrawn
 						{
                         _exact_Q23++;
-                        const CImg<unsigned char>  * spr = _getimage(_exact_r.min[0] + i, _exact_r.min[1] + j, _exact_sx, _exact_sy, metaprog::dummy< metaprog::has_getImage<LatticeObj, const cimg_library::CImg<unsigned char>*, mtools::iVec2, mtools::iVec2>::value >());
+                        const Img<unsigned char>  * spr = _getimage(_exact_r.min[0] + i, _exact_r.min[1] + j, _exact_sx, _exact_sy, metaprog::dummy< metaprog::has_getImage<LatticeObj, const Img<unsigned char>*, mtools::iVec2, mtools::iVec2>::value >());
                         if (spr == nullptr) { _exact_qbuf(i, j) = 3; } // no image (a change in the lattice occured betwen phase 0 and 1) don't do anything
                         else
                             {
@@ -1194,7 +1338,7 @@ void _improveImage(int maxtime_ms)
                                 }
                             else
                                 { // still not at the right dimension, we resize before blitting
-                                CImg<unsigned char> sprite = (*spr).get_resize(_exact_sx, _exact_sy, 1, (*spr).spectrum(), 5); //quality resizing
+                                Img<unsigned char> sprite = (*spr).get_resize(_exact_sx, _exact_sy, 1, (*spr).spectrum(), 5); //quality resizing
                                 _exact_im.draw_image(_exact_sx*i, _exact_sy*(_exact_qbuf.height() - 1 - j), 0, 0, sprite); // copy
                                 }
                             if (spr->spectrum() == 3) // fill the last channel with 255 (opaque) if the sprite only has 3 channel
@@ -1248,8 +1392,8 @@ void _redrawImage(iBox2 new_wr, int new_sx, int new_sy, int maxtime_ms)
     _exact_phase = 0;
     if ((!_g_redraw_im) && (_keepOldImage(new_im_x, new_im_y)) && (prevphase >= 1))
         { // we try to keep something from the previous image
-        CImg<unsigned char> new_im(new_im_x, new_im_y, 1, 4, 255);
-        CImg<unsigned char> new_qbuf((int32)new_wr.lx() + 1, (int32)new_wr.ly() + 1, 1, 1, 0);  // create buffer with zeros
+        Img<unsigned char> new_im(new_im_x, new_im_y, 1, 4, 255);
+        Img<unsigned char> new_qbuf((int32)new_wr.lx() + 1, (int32)new_wr.ly() + 1, 1, 1, 0);  // create buffer with zeros
         // there has been some change but we may be able to keep something
         //const int32 im_x = _exact_im.width();   // size of the current image
         //const int32 im_y = _exact_im.height();	//
@@ -1338,7 +1482,7 @@ void _qualityImageDraw() const
 
 
 
-inline void _drawOntoImage(cimg_library::CImg<unsigned char> & im, float op) 
+inline void _drawOntoImage(Img<unsigned char> & im, float op) 
 {
     MTOOLS_ASSERT((im.spectrum() == 3) || (im.spectrum() == 4));
     MTOOLS_ASSERT((im.width() == _g_imSize.X()) && (im.height() == _g_imSize.Y()));

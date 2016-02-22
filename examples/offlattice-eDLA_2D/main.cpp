@@ -44,7 +44,7 @@ double eps;                         // distance under which particles stick toge
 MT2004_64 gen;                      // random number generator
 Grid_basic<2, siteInfo, 2> Grid;    // the main grid 
 int64 NN = 0;                       // current number of particles
-CImg<unsigned char> im;             // image for drawing
+Img<unsigned char> im;              // image for drawing
 void * hintpeek = nullptr;          // used for safe peeking of the grid.
 double maxd = 0.0;                  // current maximal distance from the origin of any particule center.
 
@@ -80,7 +80,7 @@ inline void _drawBalls(int64 i, int64 j, const fBox2 & R, const iVec2 & size, bo
     }
 
 /* draw a site */
-inline const CImg<unsigned char> * getImage(mtools::iVec2 pos, mtools::iVec2 size)
+inline const Img<unsigned char> * getImage(mtools::iVec2 pos, mtools::iVec2 size)
     {
     bool b = false;
     fBox2 R((double)pos.X() - 0.5, (double)pos.X() + 0.5, (double)pos.Y() - 0.5, (double)pos.Y() + 0.5);

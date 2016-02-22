@@ -185,7 +185,7 @@ class longOERRW
         iVec2 pos;							// current position of the walk
         mtools::Grid_factor<2,char,1,RR> G; // The lattice 
 
-        mutable CImg<unsigned char>  im;	// image for drawing
+        mutable Img<unsigned char>  im;	    // image for drawing
         mutable MT2004_64  gen;				// the random number generator
     };
 

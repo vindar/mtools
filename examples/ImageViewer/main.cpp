@@ -10,7 +10,7 @@ using namespace mtools;
 /* display the image in filename */
 void display(const std::string & filename)
     {
-    CImg<unsigned char> im;
+    Img<unsigned char> im;
     try
         {
         mtools::ProgressBar<int> PB(0, 1, std::string("Loading file [") + toString(filename) + "]", true);

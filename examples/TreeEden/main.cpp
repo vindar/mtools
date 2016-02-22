@@ -83,7 +83,7 @@ public:
         }
 
     /* detail : image associated with a site */
-    const CImg<unsigned char> * getImage(mtools::iVec2 pos, mtools::iVec2 size)
+    const Img<unsigned char> * getImage(mtools::iVec2 pos, mtools::iVec2 size)
         {
         auto v = Grid.peek(pos);
         if ((v == nullptr) || ((*v).N == 0)) return nullptr;
@@ -107,7 +107,7 @@ private:
     Grid_basic<2,siteInfo> Grid;                 // the 2D grid
     RandomUrn<iVec2> Urn;                        // list of neighour sites of the current domain
     MT2004_64 gen;                               // random number generator
-    CImg<unsigned char> image;                   // the cimg image to draw sites
+    Img<unsigned char> image;                    // the cimg image to draw sites
 };
 
 

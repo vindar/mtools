@@ -62,7 +62,7 @@ namespace internals_graphics
 
 
    
-        int AutoDrawable2DObject::drawOnto(cimg_library::CImg<unsigned char> & im, float opacity)
+        int AutoDrawable2DObject::drawOnto(Img<unsigned char> & im, float opacity)
             {
             std::lock_guard<std::mutex> lg(_mut);
             return _obj->drawOnto(im,opacity);

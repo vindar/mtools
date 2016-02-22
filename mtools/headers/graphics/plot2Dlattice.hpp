@@ -55,9 +55,9 @@ namespace mtools
         /**
         * Factory function for a constructing a plot2DLattice object from global getColor() and getImage() functions.
         * the signatures of the template functions must match 'RGBc getColor(iVec2 pos)' and 
-        * 'const CImg<unsigned char>* getImage(iVec2 pos, iVec2 size)'.
+        * 'const Img<unsigned char>* getImage(iVec2 pos, iVec2 size)'.
         **/
-        template<mtools::RGBc(*getColorFun)(mtools::iVec2 pos), const cimg_library::CImg<unsigned char>* (*getImageFun)(mtools::iVec2 pos, mtools::iVec2 size)> 
+        template<mtools::RGBc(*getColorFun)(mtools::iVec2 pos), const Img<unsigned char>* (*getImageFun)(mtools::iVec2 pos, mtools::iVec2 size)> 
         auto makePlot2DLattice(std::string name = "Lattice") -> decltype(Plot2DLattice<LatticeObjImage<getColorFun, getImageFun> >(LatticeObjImage<getColorFun, getImageFun>::get(), name))
             {
             return Plot2DLattice<LatticeObjImage<getColorFun, getImageFun> >(LatticeObjImage<getColorFun, getImageFun>::get(), name);
@@ -123,9 +123,9 @@ namespace mtools
      *    return mtools::RGBc::c_TransparentWhite;
      *    }
      *
-     * const cimg_library::CImg<unsigned char> * imageBigCircle(mtools::iVec2 pos, mtools::iVec2 size)
+     * const Img<unsigned char> * imageBigCircle(mtools::iVec2 pos, mtools::iVec2 size)
      *    {
-     *    static cimg_library::CImg<unsigned char>  im; mtools::EdgeSiteImage ES;
+     *    static Img<unsigned char>  im; mtools::EdgeSiteImage ES;
      *    if (pos.norm() < 100) { mtools::EdgeSiteImage ES; ES.site(true, mtools::RGBc::jetPalette(pos.norm() / 100)).text("A").makeImage(im, size); return &im; }
      *    return nullptr;
      *    }
@@ -159,7 +159,7 @@ namespace mtools
      *
      * @tparam  T   Object which fulfills the same requirements as those needed by the LatticeDrawer
      *              class. it must implement the `RGBc getColor(iVec2 pos)` method and possibly the
-     *              `const CImg<unsigned char> * getImage(iVec2 pos, iVec2 size)` methods (in staitc
+     *              `const Img<unsigned char> * getImage(iVec2 pos, iVec2 size)` methods (in staitc
      *              or non-static form).
      **/
     template< typename T > class  Plot2DLattice : public internals_graphics::Plotter2DObj
@@ -172,7 +172,7 @@ namespace mtools
              *
              * @param [in,out]  obj The lattice object that must fullfill the requirement of LatticeDrawer :
              *                      it must implement the `RGBc getColor(iVec2 pos)` method and possibly the
-             *                      `const CImg<unsigned char> * getImage(iVec2 pos, iVec2 size)` method. The
+             *                      `const Img<unsigned char> * getImage(iVec2 pos, iVec2 size)` method. The
              *                      lattice object must survive the plot.
              * @param   name        The name of the plot.
              **/
@@ -187,7 +187,7 @@ namespace mtools
              *
              * @param [in,out]  obj The lattice object that must fullfill the requirement of LatticeDrawer :
              *                      it must implement the `RGBc getColor(iVec2 pos)` method and possibly the
-             *                      `const CImg<unsigned char> * getImage(iVec2 pos, iVec2 size)` method. The
+             *                      `const Img<unsigned char> * getImage(iVec2 pos, iVec2 size)` method. The
              *                      lattice object must survive the plot.
              * @param   name        The name of the plot.
              **/

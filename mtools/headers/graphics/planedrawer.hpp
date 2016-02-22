@@ -43,7 +43,6 @@
 namespace mtools
 {
 
-    using cimg_library::CImg;
 
     /**
      * Encapsulate a `getColor()` function into a plane object that can be used with the PlaneDrawer
@@ -279,7 +278,7 @@ public:
     *
     * @return  The quality of the drawing performed (0 = nothing drawn, 100 = perfect drawing).
     **/
-    virtual int drawOnto(cimg_library::CImg<unsigned char> & im, float opacity = 1.0) override
+    virtual int drawOnto(Img<unsigned char> & im, float opacity = 1.0) override
         {
         MTOOLS_ASSERT((im.width() == _g_imSize.X()) && (im.height() == _g_imSize.Y()));
         MTOOLS_ASSERT((im.spectrum() == 3) || (im.spectrum() == 4));
@@ -569,7 +568,7 @@ inline void _addInt16Buf(uint32 x,uint32 y,uint32 R,uint32 G,uint32 B,uint32 A)
 
 
 /* the main method for warping the pixel image to the cimg image*/
-void _warp(cimg_library::CImg<unsigned char> & im, float opacity)
+void _warp(Img<unsigned char> & im, float opacity)
     {
     MTOOLS_ASSERT((im.spectrum() == 3) || (im.spectrum() == 4));
     _work(0); // make sure everything is in sync. 
@@ -595,7 +594,7 @@ inline unsigned char _blendcolor4(unsigned char & A, float opA, unsigned char B,
 /* warp the buffer onto an image using _qi,_qj,_counter1 and _counter2 :
 method when im has four channels : use transparency and A over B operation
 */
-inline void _warpInt16Buf_4channel(CImg<unsigned char> & im, float op) const
+inline void _warpInt16Buf_4channel(Img<unsigned char> & im, float op) const
 {
     MTOOLS_ASSERT(im.spectrum() == 4);
     const float po = 1.0;
@@ -695,7 +694,7 @@ inline void _blendcolor3(unsigned char & A, unsigned char B, float opB) const
 /* warp the buffer onto an image using _qi,_qj,_counter1 and _counter2 :
 method when im has 3 channels (same as if the fourth channel was completely opaque)
 */
-inline void _warpInt16Buf_3channel(CImg<unsigned char> & im, float op) const
+inline void _warpInt16Buf_3channel(Img<unsigned char> & im, float op) const
 {
     MTOOLS_ASSERT(im.spectrum() == 3);
     const size_t dx = (size_t)_int16_buffer_dim.X();

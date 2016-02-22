@@ -339,7 +339,7 @@ namespace mtools
              * @return  the quality of the drawing between 0 (nothing drawn) and 100 (perfect drawing).
              *          Return 100 if we did not draw anything because the object is disabled.
              **/
-            int drawOnto(cimg_library::CImg<unsigned char> & im);
+            int drawOnto(Img<unsigned char> & im);
 
 
             /**

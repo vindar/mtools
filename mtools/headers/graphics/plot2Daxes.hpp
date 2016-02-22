@@ -174,7 +174,7 @@ namespace mtools
         /**
          * Override of the drawOnto() method from the Drawable2DObject interface
          **/
-        virtual int drawOnto(cimg_library::CImg<unsigned char> & im, float opacity = 1.0) override;
+        virtual int drawOnto(Img<unsigned char> & im, float opacity = 1.0) override;
 
 
         /**

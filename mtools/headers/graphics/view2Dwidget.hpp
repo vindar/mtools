@@ -177,7 +177,7 @@ namespace mtools
              *
              * @param [in,out]  im  the image.
              **/
-            void improveImageFactor(cimg_library::CImg<unsigned char> * im);
+            void improveImageFactor(Img<unsigned char> * im);
 
 
             /**
@@ -249,8 +249,8 @@ namespace mtools
             int _nbRounds;  // number of round in _stocIm
             bool _discardIm; // true is the next call to improvImagefactor must overwrite the previous image.
 
-            cimg_library::CImg<uint32> * _stocIm;     // double image buffer
-            cimg_library::CImg<uint32> * _stocImAlt;  //
+            Img<uint32> * _stocIm;     // double image buffer
+            Img<uint32> * _stocImAlt;  //
             fBox2 _stocR;  // range associated with _stocIm
 
             FastRNG _g_fgen; // fast RNG

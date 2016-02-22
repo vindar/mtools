@@ -41,18 +41,18 @@ namespace mtools
     /**
     * Factory function for a constructing a plot2DCImg image from a CImg object. Reference version
     **/
-    Plot2DCImg makePlot2DCImg(CImg<unsigned char> & im, std::string name = "CImg image");
+    Plot2DCImg makePlot2DCImg(Img<unsigned char> & im, std::string name = "CImg image");
 
 
     /**
     * Factory function for a constructing a plot2DCImg image from a CImg object. Pointer version
     **/
-    Plot2DCImg makePlot2DCImg(CImg<unsigned char> * im, std::string name = "CImg image");
+    Plot2DCImg makePlot2DCImg(Img<unsigned char> * im, std::string name = "CImg image");
 
 
 
     /**
-     * Plot Object which encapsulate a CImg<unsigned char> image. The image is either centered at
+     * Plot Object which encapsulate a Img<unsigned char> image. The image is either centered at
      * the origin or such that its bottom left corner is at the origin.
      * It is possible to change the image even while being displayed or to remove it by passing nullptr.
      **/
@@ -71,7 +71,7 @@ namespace mtools
          * @param [in,out]  im  Pointer to the CImg image to draw, must be 3 or 4 channels (otherwise nothing is shown). nullptr to draw nothing.
          * @param   name        The name of the plot
          **/
-        Plot2DCImg(CImg<unsigned char> * im, std::string name = "CImg image");
+        Plot2DCImg(Img<unsigned char> * im, std::string name = "CImg image");
 
 
         /**
@@ -80,7 +80,7 @@ namespace mtools
         * @param [in,out]  im  The CImg image to draw, must be 3 or 4 channels (otherwise nothing is shown)
         * @param   name        The name of the plot
         **/
-        Plot2DCImg(CImg<unsigned char> & im, std::string name = "CImg image");
+        Plot2DCImg(Img<unsigned char> & im, std::string name = "CImg image");
 
 
         /**
@@ -101,7 +101,7 @@ namespace mtools
          * @param [in,out]  im  The new image or nullptr if there is none. The previous image (if any) is
          *                      NOT deleted.
          **/
-        void image(CImg<unsigned char> * im);
+        void image(Img<unsigned char> * im);
 
 
         /**
@@ -109,7 +109,7 @@ namespace mtools
         *
         * @param [in,out]  im  The new image.
         **/
-        void image(CImg<unsigned char> & im);
+        void image(Img<unsigned char> & im);
 
 
         /**
@@ -117,7 +117,7 @@ namespace mtools
          *
          * @return  a pointer to the current image or nullptr it there is none.
          **/
-        CImg<unsigned char> * image() const;
+        Img<unsigned char> * image() const;
 
 
         /**
@@ -210,7 +210,7 @@ namespace mtools
         void _roundButtonCB(Fl_Widget * W);
 
         std::atomic<int>  _typepos;                      // position of the image wrt the origin
-        CImg<unsigned char> * _im;                       // the image
+        Img<unsigned char> * _im;                       // the image
         LatticeDrawer<Plot2DCImg> * _LD;                 // the lattice drawer used for drawing the image
 
         Fl_Round_Button * _checkButtonCenter;

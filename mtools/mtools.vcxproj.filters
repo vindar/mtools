@@ -42,9 +42,6 @@
     <ClInclude Include="headers\containers\internals_grid.hpp">
       <Filter>Header Files\containers</Filter>
     </ClInclude>
-    <ClInclude Include="headers\graphics\cimg_plugin.hpp">
-      <Filter>Header Files\graphics</Filter>
-    </ClInclude>
     <ClInclude Include="headers\graphics\customcimg.hpp">
       <Filter>Header Files\graphics</Filter>
     </ClInclude>

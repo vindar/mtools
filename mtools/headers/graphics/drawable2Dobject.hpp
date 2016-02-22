@@ -84,7 +84,7 @@ namespace internals_graphics
          *
          * @return  The quality of the drawing made (0 = nothing drawn, 100 = perfect drawing).
          **/
-        virtual int drawOnto(cimg_library::CImg<unsigned char> & im, float opacity = 1.0) = 0;
+        virtual int drawOnto(Img<unsigned char> & im, float opacity = 1.0) = 0;
 
 
         /**
@@ -192,7 +192,7 @@ namespace internals_graphics
          *
          * @return  The quality of the drawing made (0 = nothing drawn, 100 = perfect drawing).
          **/
-        int drawOnto(cimg_library::CImg<unsigned char> & im, float opacity = 1.0);
+        int drawOnto(Img<unsigned char> & im, float opacity = 1.0);
 
 
         /**

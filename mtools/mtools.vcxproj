@@ -325,7 +325,6 @@
     <ClInclude Include="headers\containers\randomurn.hpp" />
     <ClInclude Include="headers\containers\RWtreegraph.hpp" />
     <ClInclude Include="headers\graphics\cimgwidget.hpp" />
-    <ClInclude Include="headers\graphics\cimg_plugin.hpp" />
     <ClInclude Include="headers\graphics\customcimg.hpp" />
     <ClInclude Include="headers\graphics\drawable2Dobject.hpp" />
     <ClInclude Include="headers\graphics\edgesiteimage.hpp" />

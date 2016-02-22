@@ -27,25 +27,25 @@ namespace mtools
 {
 
 
-    Plot2DCImg makePlot2DCImg(CImg<unsigned char> & im, std::string name)
+    Plot2DCImg makePlot2DCImg(Img<unsigned char> & im, std::string name)
         {
         return Plot2DCImg(im, name);
         }
 
 
-    Plot2DCImg makePlot2DCImg(CImg<unsigned char> * im, std::string name)
+    Plot2DCImg makePlot2DCImg(Img<unsigned char> * im, std::string name)
         {
         return Plot2DCImg(im, name);
         }
 
 
-    Plot2DCImg::Plot2DCImg(CImg<unsigned char> * im, std::string name) : internals_graphics::Plotter2DObj(name), _typepos(TYPEBOTTOMLEFT), _im(im)
+    Plot2DCImg::Plot2DCImg(Img<unsigned char> * im, std::string name) : internals_graphics::Plotter2DObj(name), _typepos(TYPEBOTTOMLEFT), _im(im)
         {
         _LD = new LatticeDrawer<Plot2DCImg>(this);
         _setDomain();
         }
 
-    Plot2DCImg::Plot2DCImg(CImg<unsigned char> & im, std::string name) : internals_graphics::Plotter2DObj(name), _typepos(TYPEBOTTOMLEFT), _im(&im)
+    Plot2DCImg::Plot2DCImg(Img<unsigned char> & im, std::string name) : internals_graphics::Plotter2DObj(name), _typepos(TYPEBOTTOMLEFT), _im(&im)
         {
         _LD = new LatticeDrawer<Plot2DCImg>(this);
         _setDomain();
@@ -67,7 +67,7 @@ namespace mtools
         }
 
 
-    void Plot2DCImg::image(CImg<unsigned char> * im)
+    void Plot2DCImg::image(Img<unsigned char> * im)
         {
         enable(false);
         _im = im;
@@ -77,7 +77,7 @@ namespace mtools
         }
 
 
-    void Plot2DCImg::image(CImg<unsigned char> & im)
+    void Plot2DCImg::image(Img<unsigned char> & im)
         {
         enable(false);
         _im = &im;
@@ -87,7 +87,7 @@ namespace mtools
         }
 
 
-    CImg<unsigned char> * Plot2DCImg::image() const { return _im; }
+    Img<unsigned char> * Plot2DCImg::image() const { return _im; }
 
 
     void Plot2DCImg::position(int posType)

@@ -48,8 +48,8 @@ namespace mtools
             _nbRounds(0),
             _discardIm(true)
             {
-            _stocIm = new cimg_library::CImg<uint32>(1, 1, 1, 3);
-            _stocImAlt = new cimg_library::CImg<uint32>(1, 1, 1, 3);
+            _stocIm = new Img<uint32>(1, 1, 1, 3);
+            _stocImAlt = new Img<uint32>(1, 1, 1, 3);
             }
 
 
@@ -146,7 +146,7 @@ namespace mtools
         void View2DWidget::discardImage() { _discardIm = true; }
 
 
-        void View2DWidget::improveImageFactor(cimg_library::CImg<unsigned char> * im)
+        void View2DWidget::improveImageFactor(Img<unsigned char> * im)
             {
             if ((im == nullptr) || (im->width() <= 0) || (im->height() <= 0) || (im->spectrum() < 3)) { setImage(nullptr); _stocR.clear(); _nbRounds = 0; _discardIm = false; return; }
             _stocR = _RM->getRange(); // save the range for this image

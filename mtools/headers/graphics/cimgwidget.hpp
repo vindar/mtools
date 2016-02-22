@@ -75,7 +75,7 @@ namespace mtools
              *
              * @param   im  the new image to display, nullptr for no image at all.
              **/
-            void setImage(cimg_library::CImg<unsigned char> * im = nullptr);
+            void setImage(Img<unsigned char> * im = nullptr);
 
 
             /**
@@ -86,7 +86,7 @@ namespace mtools
              *                      divided by nbRound to get the value of the color displayed on the screen.
              * @param   nbRounds    The number of rounds for each pixel.
              **/
-            void setImage32(cimg_library::CImg<uint32> * im =nullptr, int nbRounds = 0);
+            void setImage32(Img<uint32> * im =nullptr, int nbRounds = 0);
 
 
             /**
@@ -126,8 +126,8 @@ namespace mtools
             std::atomic<int>  _ox;              // size of the offscreen buffer
             std::atomic<int>  _oy;              //
             bool _initdraw;                     // to make sure we call the draw method of the base class at least once.
-            cimg_library::CImg<unsigned char> * _saved_im;  // used for saving the image prior to the first drawing
-            cimg_library::CImg<uint32> * _saved_im32;       // of the window in order to avoid a seg fault with X11
+            Img<unsigned char> * _saved_im;  // used for saving the image prior to the first drawing
+            Img<uint32> * _saved_im32;       // of the window in order to avoid a seg fault with X11
             int _saved_nbRounds;                            // 
 
 
