@@ -187,7 +187,7 @@ namespace mtools
 
     template<typename tc> Img<T> & draw_triangle(const int x0, const int y0, const int x1, const int y1, const int x2, const int y2, const tc *const color, const float opacity = 1)
         {
-        cimg_library::CImg<T>::draw_triangle<tc>(x0, y0, x1, y1, x2, y2, color, opacity);
+        cimg_library::CImg<T>::draw_triangle(x0, y0, x1, y1, x2, y2, color, opacity);
         return *this;
         }
 
@@ -202,16 +202,29 @@ namespace mtools
         cimg_library::CImg<T>::draw_circle(x0, y0, radius, color, opacity);
         return *this;
         }
-
+    
     template<typename tc> Img<T>& draw_ellipse(const int x0, const int y0, const float r1, const float r2, const float angle, const tc *const color, const float opacity = 1)
         {
         cimg_library::CImg<T>::draw_ellipse(x0, y0, r1, r2, angle, color, opacity);
         return *this;
         }
+        
+    template<typename tc> Img<T>& draw_ellipse(const int x0, const int y0, const float r1, const float r2, const float angle, const tc *const color, const float opacity, const unsigned int pattern) 
+        {
+        cimg_library::CImg<T>::draw_ellipse(x0, y0, r1, r2, angle, color, opacity, pattern);
+        return *this;
+        }
+
 
     const Img<T>& save(const char *const filename, const int number = -1, const unsigned int digits = 6) const
         {
         cimg_library::CImg<T>::save(filename, number, digits);
+        return *this;
+        }
+
+    Img<T>& load(const char *const filename) 
+        {
+        cimg_library::CImg<T>::load(filename);
         return *this;
         }
 
@@ -1096,11 +1109,11 @@ namespace mtools
         float ry = (float)((getImageCoord(R, { 0,0 }) - getImageCoord(R, { 0, rad })).Y());
         if (filled)
             {
-            this->draw_ellipse((int)Q.X(), (int)Q.Y(), rx, ry, 0, color.buf(), opacity);
+            cimg_library::CImg<T>::draw_ellipse((int)Q.X(), (int)Q.Y(), rx, ry, 0, color.buf(), opacity);
             }
         else
             {
-            this->draw_ellipse((int)Q.X(), (int)Q.Y(), rx, ry, 0, color.buf(), opacity, -1);
+            cimg_library::CImg<T>::draw_ellipse((int)Q.X(), (int)Q.Y(), rx, ry, 0, color.buf(), opacity, -1);
             }
         return(*this);
         }
