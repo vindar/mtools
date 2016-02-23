@@ -69,7 +69,7 @@ namespace mtools
      *
      * @tparam  T   type of pixels.
      **/
-    template<class T > struct Img : public cimg_library::CImg<T>
+    template<class T > struct Img : private cimg_library::CImg<T>
     {
 
     typedef T* iterator;
@@ -98,39 +98,124 @@ namespace mtools
     typedef typename cimg_library::cimg::last<T, float>::type floatT;
     typedef typename cimg_library::cimg::last<T, double>::type doubleT;
 
+    /**************** FORWARD TO CIMG ********************/
 
-    /** Default constructor. Forward to CImg. */
+    /** Constructors */
     Img() : cimg_library::CImg<T>() {}
-
-
-    /**
-     * Constructor. Forward to CImg.
-     **/
     Img(int x, int y, int z, int c) : cimg_library::CImg<T>(x,y,z,c) {}
-
-
-    /**
-     * Constructor. Forward to CImg.
-     **/
     Img(int x, int y,int z, int c, const T & v) : cimg_library::CImg<T>(x, y, z, c, v) {}
-
-
-    /**
-     * Constructor. Forward to CImg.
-     **/
     template<typename t> Img(const Img<t> &img, const bool is_shared) : cimg_library::CImg<T>(img, is_shared) {}
 
+    Img<T>& move_to(Img<T>& img) 
+        {
+        cimg_library::CImg<T>::move_to(img);
+        return img;
+        }
 
-    /**
-     * Get a resized image. Forward to CImg.
-     **/
+    Img<T>& assign(const unsigned int size_x, const unsigned int size_y = 1, const unsigned int size_z = 1, const unsigned int size_c = 1)
+        {
+        cimg_library::CImg<T>::assign(size_x, size_y, size_z, size_c);
+        return(*this);
+        }
+
+    Img<T>& assign(const unsigned int size_x, const unsigned int size_y, const unsigned int size_z, const unsigned int size_c, const T& value) 
+        {
+        cimg_library::CImg<T>::assign(size_x, size_y, size_z, size_c,value);
+        return(*this);
+        }
+
     Img<T> get_resize(const int size_x, const int size_y = -100, const int size_z = -100, const int size_c = -100, const int interpolation_type = 1, const unsigned int boundary_conditions = 0, const float centering_x = 0, const float centering_y = 0, const float centering_z = 0, const float centering_c = 0) const
-            {
-            Img<T> im;
-            cimg_library::CImg<T>::get_resize(size_x, size_y, size_z, size_c, interpolation_type, boundary_conditions, 
-                                              centering_x, centering_y, centering_z, centering_c).move_to(im);
-            return im;
-            }
+        {
+        Img<T> im;
+        cimg_library::CImg<T>::get_resize(size_x, size_y, size_z, size_c, interpolation_type, boundary_conditions, centering_x, centering_y, centering_z, centering_c).move_to(im);
+        return im;
+        }
+
+    Img<T>& resize(const int size_x, const int size_y = -100, const int size_z = -100, const int size_c = -100, const int interpolation_type = 1, const unsigned int boundary_conditions = 0, const float centering_x = 0, const float centering_y = 0, const float centering_z = 0, const float centering_c = 0)
+        {
+        cimg_library::CImg<T>::resize(size_x, size_y, size_z, size_c, interpolation_type, boundary_conditions, centering_x, centering_y, centering_z, centering_c);
+        return(*this);
+        }
+
+    Img<T>& crop(const int x0, const int y0, const int z0, const int c0, const int x1, const int y1, const int z1, const int c1, const bool boundary_conditions = false) 
+        {
+        cimg_library::CImg<T>::crop(x0, y0, z0, c0, x1, y1, z1, c1, boundary_conditions);
+        return(*this);
+        }
+
+    template<typename t> Img<T>& draw_image(const int x0, const int y0, const int z0, const int c0, const Img<t>& sprite, const float opacity = 1) 
+        {
+        cimg_library::CImg<T>::draw_image(x0, y0, z0, c0, sprite, opacity);
+        return(*this);
+        }
+
+    T& operator()(const unsigned int x) { return cimg_library::CImg<T>::operator()(x); }
+
+    const T& operator()(const unsigned int x) const { return cimg_library::CImg<T>::operator()(x); }
+
+    T& operator()(const unsigned int x, const unsigned int y) { return cimg_library::CImg<T>::operator()(x,y); }
+
+    const T& operator()(const unsigned int x, const unsigned int y) const { return cimg_library::CImg<T>::operator()(x, y); }
+
+    T& operator()(const unsigned int x, const unsigned int y, const unsigned int z) { return cimg_library::CImg<T>::operator()(x, y, z); }
+
+    const T& operator()(const unsigned int x, const unsigned int y, const unsigned int z) const { return cimg_library::CImg<T>::operator()(x, y, z); }
+
+    T& operator()(const unsigned int x, const unsigned int y, const unsigned int z, const unsigned int c) { return cimg_library::CImg<T>::operator()(x, y, z, c); }
+
+    const T& operator()(const unsigned int x, const unsigned int y, const unsigned int z, const unsigned int c) const { return cimg_library::CImg<T>::operator()(x, y, z, c); }             
+
+    int width() const { return cimg_library::CImg<T>::width(); }
+    
+    int height() const { return cimg_library::CImg<T>::height(); }
+  
+    int depth() const { return cimg_library::CImg<T>::depth(); }
+ 
+    int spectrum() const { return cimg_library::CImg<T>::spectrum(); }
+
+    unsigned long size() const { return cimg_library::CImg<T>::size(); }
+
+    T* data() { return cimg_library::CImg<T>::data(); }
+
+    const T* data() const { return cimg_library::CImg<T>::data(); }
+
+    T* data(const unsigned int x, const unsigned int y = 0, const unsigned int z = 0, const unsigned int c = 0) { return cimg_library::CImg<T>::data(x, y, z, c); }
+
+    const T* data(const unsigned int x, const unsigned int y = 0, const unsigned int z = 0, const unsigned int c = 0) const { return cimg_library::CImg<T>::data(x, y, z, c); }
+
+    long offset(const int x, const int y = 0, const int z = 0, const int c = 0) const { return cimg_library::CImg<T>::offset(x, y, z, c); }
+
+    template<typename tc> Img<T> & draw_triangle(const int x0, const int y0, const int x1, const int y1, const int x2, const int y2, const tc *const color, const float opacity = 1)
+        {
+        cimg_library::CImg<T>::draw_triangle<tc>(x0, y0, x1, y1, x2, y2, color, opacity);
+        return *this;
+        }
+
+    template<typename tc> Img<T>& draw_rectangle(const int x0, const int y0, const int x1, const int y1, const tc *const color, const float opacity = 1)
+        {
+        cimg_library::CImg<T>::draw_rectangle(x0, y0, x1, y1, color, opacity);
+        return *this;
+        }
+
+    template<typename tc> Img<T>& draw_circle(const int x0, const int y0, int radius, const tc *const color, const float opacity = 1)
+        {
+        cimg_library::CImg<T>::draw_circle(x0, y0, radius, color, opacity);
+        return *this;
+        }
+
+    template<typename tc> Img<T>& draw_ellipse(const int x0, const int y0, const float r1, const float r2, const float angle, const tc *const color, const float opacity = 1)
+        {
+        cimg_library::CImg<T>::draw_ellipse(x0, y0, r1, r2, angle, color, opacity);
+        return *this;
+        }
+
+    const Img<T>& save(const char *const filename, const int number = -1, const unsigned int digits = 6) const
+        {
+        cimg_library::CImg<T>::save(filename, number, digits);
+        return *this;
+        }
+
+    /**************************************************************************************************************************************************/
 
 
     /**
