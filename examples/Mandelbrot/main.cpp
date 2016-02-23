@@ -7,7 +7,7 @@
 using namespace mtools;
 
 
-volatile int inIt = 64; // initial number of iterations 
+volatile int inIt = 256; // initial number of iterations 
 
 /* Mandelbrot
 simple RGBc return type : multiple call for the same pixel are blended together
@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
     cout << "**************************************\n";
     cout << "Drawing Mandelbrot + Douady's rabbit.\n";
     cout << "**************************************\n";
-    inIt = arg('n', 64).info("initial number of iterations");
+    inIt = arg('n', 256).info("initial number of iterations");
     Plotter2D Plotter;  // create the plotter
     auto M = makePlot2DPlane(mandelbrot, "Mandelbrot Set"); // the mandelbrot set
     auto D = makePlot2DPlane(rabbit, "Douady's rabbit"); // the mandelbrot set
