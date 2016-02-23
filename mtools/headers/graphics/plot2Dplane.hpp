@@ -35,25 +35,6 @@ namespace mtools
     template< typename T > class  Plot2DPlane;
 
 
-    /**
-    * Factory function for a constructing a plot2DPlane object from a global extended getColor() function.
-    * The signature of the template function must match 'RGBc getColor(fVec2 pos, fBox2 R)'.
-    **/
-    template<mtools::RGBc(*getColorFun)(mtools::fVec2 pos, fBox2 R)> auto makePlot2DPlane(std::string name = "Plane") -> decltype(Plot2DPlane<PlaneObjExt<getColorFun> >(PlaneObjExt<getColorFun>::get()))
-        {
-        return Plot2DPlane<PlaneObjExt<getColorFun> >(PlaneObjExt<getColorFun>::get(), name);
-        }
-
-
-    /**
-    * Factory function for a constructing a plot2DPlane object from a global getColor() function.
-    * The signature of the template function must match 'RGBc getColor(fVec2 pos)'
-    **/
-    template<mtools::RGBc(*getColorFun)(mtools::fVec2 pos)> auto makePlot2DPlane(std::string name = "Plane") -> decltype(Plot2DPlane<PlaneObj<getColorFun> >(PlaneObj<getColorFun>::get()))
-        {
-        return Plot2DPlane<PlaneObj<getColorFun> >(PlaneObj<getColorFun>::get(), name);
-        }
-
 
     /**
     * Factory function for creating a plot2DPlane (reference version).

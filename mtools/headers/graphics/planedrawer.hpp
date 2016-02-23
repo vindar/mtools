@@ -44,39 +44,163 @@ namespace mtools
 {
 
 
-    /**
-     * Encapsulate a `getColor()` function into a plane object that can be used with the PlaneDrawer
-     * class. This wrapper class contain no data and just a static method, therefore, there is no need 
-     * to create an instance and one can just pass nullptr to the LatticeDrawer as the associated object.
-     * 
-     * @tparam  getColorFun The getColor method that will be called when querying the color of a
-     *                      point. The signature must match `mtools::RGBc getColor(mtools::fVec2 pos)`.
-     **/
-    template<mtools::RGBc (*getColorFun)(mtools::fVec2 pos)> class PlaneObj
-        {
-        public:
-       inline static RGBc getColor(mtools::fVec2 pos) { return getColorFun(pos); }
-       inline static PlaneObj<getColorFun> * get() { return(nullptr); }
-        };
+
+/**
+* GetColor Plane method selector.
+*
+* Detect if a type (or function) contain a method compatible with getColor() used by the PlaneDrawer class.
+* The method can be called with call(). (if no method found, return RGBc::c_TransparentWhite).
+*
+* - fVec2 pos or (int64 x,int64 y) : the coordinate of the point to draw  
+* 
+* - int32 iter : number of time this pixel was queried. Increased by one after each to the method (until the drawing is resetted, moved...).   
+* - 
+* - fBox2 box : a box describing the aera covered by the pixel.
+*
+* - void* & data : reference to an opaque value that identify the thread drawing. Set to nullptr intially, the reference may
+*                  be modified by the function and the same value will be returned at the next call
+*                  from the same thread.
+*
+* - return value : - RGBc : the color at the position. The color is blended with the values previously obtained. If you want to overwrite  
+* -                         the previous value, use the second return type below.
+* - 
+*                  - std::pair<RGBc, bool > : The color at the position and a flag to indicate if the color should be reset:  
+*                                             false : do not reset and use simple blending like in the RGBc return type.  
+*                                             true  : the return color should overwrite the current color (but this does not 
+*                                                     reset the iter counter which is still increased by 1 after that call)
+*                                             
+* The signature below are recognized with the following order:
+*
+*  std::pair<RGBc,bool> getImage([const] fVec2 [&] pos, [const] fBox2 [&] box, int32 nbiter, void* & data)
+*  std::pair<RGBc,bool> getImage([const] fVec2 [&] pos, [const] fBox2 [&] box, void* & data)
+*  std::pair<RGBc,bool> getImage([const] fVec2 [&] pos, [const] fBox2 [&] box)
+*  std::pair<RGBc,bool> getImage([const] fVec2 [&] pos)
+*  std::pair<RGBc,bool> operator()([const] fVec2 [&] pos, [const] fBox2 [&] box, int32 nbiter, void* & data)
+*  std::pair<RGBc,bool> operator()([const] fVec2 [&] pos, [const] fBox2 [&] box, void* & data)
+*  std::pair<RGBc,bool> operator()([const] fVec2 [&] pos, [const] fBox2 [&] box)
+*  std::pair<RGBc,bool> operator()([const] fVec2 [&] pos)
+*  std::pair<RGBc,bool> getImage([const] double [&] x, [const] double [&] y)
+*  std::pair<RGBc,bool> operator()([const] double [&] x, [const] double [&] y)
+*
+*  RGBc getImage([const] fVec2 [&] pos, [const] fBox2 [&] box, int32 nbiter, void* & data)
+*  RGBc getImage([const] fVec2 [&] pos, [const] fBox2 [&] box, void* & data)
+*  RGBc getImage([const] fVec2 [&] pos, [const] fBox2 [&] box)
+*  RGBc getImage([const] fVec2 [&] pos)
+*  RGBc operator()([const] fVec2 [&] pos, [const] fBox2 [&] box, int32 nbiter, void* & data)
+*  RGBc operator()([const] fVec2 [&] pos, [const] fBox2 [&] box, void* & data)
+*  RGBc operator()([const] fVec2 [&] pos, [const] fBox2 [&] box)
+*  RGBc operator()([const] fVec2 [&] pos)  
+*  RGBc getImage([const] double [&] x, [const] double [&] y)
+*  RGBc operator()([const] double [&] x, [const] double [&] y)
+*  
+**/
+template<typename T> class GetColorPlaneSelector
+    {
+    static void * dumptr;
+    typedef typename std::decay<mtools::RGBc>::type decayrgb;
+    typedef typename std::decay<std::pair<mtools::RGBc, bool> >::type decaypair;
+
+    template<typename U> static decltype((*(U*)(0)).getColor(fVec2(), fBox2(), 0, dumptr)) vers1(int);
+    template<typename> static metaprog::no vers1(...);
+    static const bool version1 = std::is_same<typename std::decay<decltype(vers1<T>(0))>::type, decaypair>::value;
+    static const bool version11 = std::is_same<typename std::decay<decltype(vers1<T>(0))>::type, decayrgb >::value;
+
+    template<typename U> static decltype((*(U*)(0)).getColor(fVec2(), fBox2(), 0)) vers2(int);
+    template<typename> static metaprog::no vers2(...);
+    static const bool version2 = std::is_same<typename std::decay<decltype(vers2<T>(0))>::type, decaypair >::value;
+    static const bool version12 = std::is_same<typename std::decay<decltype(vers2<T>(0))>::type, decayrgb >::value;
+
+    template<typename U> static decltype((*(U*)(0)).getColor(fVec2(), fBox2())) vers3(int);
+    template<typename> static metaprog::no vers3(...);
+    static const bool version3 = std::is_same<typename std::decay<decltype(vers3<T>(0))>::type, decaypair >::value;
+    static const bool version13 = std::is_same<typename std::decay<decltype(vers3<T>(0))>::type, decayrgb >::value;
+
+    template<typename U> static decltype((*(U*)(0)).getColor(fVec2())) vers4(int);
+    template<typename> static metaprog::no vers4(...);
+    static const bool version4 = std::is_same<typename std::decay<decltype(vers4<T>(0))>::type, decaypair >::value;
+    static const bool version14 = std::is_same<typename std::decay<decltype(vers4<T>(0))>::type, decayrgb >::value;
+
+    template<typename U> static decltype((*(U*)(0))(fVec2(), fBox2(), 0, dumptr)) vers5(int);
+    template<typename> static metaprog::no vers5(...);
+    static const bool version5 = std::is_same<typename std::decay<decltype(vers5<T>(0))>::type, decaypair >::value;
+    static const bool version15 = std::is_same<typename std::decay<decltype(vers5<T>(0))>::type, decayrgb >::value;
+
+    template<typename U> static decltype((*(U*)(0))(fVec2(), fBox2(), 0)) vers6(int);
+    template<typename> static metaprog::no vers6(...);
+    static const bool version6 = std::is_same<typename std::decay<decltype(vers6<T>(0))>::type, decaypair >::value;
+    static const bool version16 = std::is_same<typename std::decay<decltype(vers6<T>(0))>::type, decayrgb >::value;
+
+    template<typename U> static decltype((*(U*)(0))(fVec2(), fBox2())) vers7(int);
+    template<typename> static metaprog::no vers7(...);
+    static const bool version7 = std::is_same<typename std::decay<decltype(vers7<T>(0))>::type, decaypair >::value;
+    static const bool version17 = std::is_same<typename std::decay<decltype(vers7<T>(0))>::type, decayrgb >::value;
+
+    template<typename U> static decltype((*(U*)(0))(fVec2())) vers8(int);
+    template<typename> static metaprog::no vers8(...);
+    static const bool version8 = std::is_same<typename std::decay<decltype(vers8<T>(0))>::type, decaypair >::value;
+    static const bool version18 = std::is_same<typename std::decay<decltype(vers8<T>(0))>::type, decayrgb >::value;
+
+    template<typename U> static decltype((*(U*)(0)).getColor(0.0,0.0)) vers9(int);
+    template<typename> static metaprog::no vers9(...);
+    static const bool version9 = std::is_same<typename std::decay<decltype(vers9<T>(0))>::type, decaypair >::value;
+    static const bool version19 = std::is_same<typename std::decay<decltype(vers9<T>(0))>::type, decayrgb >::value;
+
+    template<typename U> static decltype((*(U*)(0))(0.0,0.0)) vers10(int);
+    template<typename> static metaprog::no vers10(...);
+    static const bool version10 = std::is_same<typename std::decay<decltype(vers10<T>(0))>::type, decaypair >::value;
+    static const bool version20 = std::is_same<typename std::decay<decltype(vers10<T>(0))>::type, decayrgb >::value;
 
 
-    /**
-     * Encapsulate an extended `getColor()` function into a plane object that can be used with the
-     * PlaneDrawer class. This wrapper class contain no data and just a static method, therefore,
-     * there is no need to create an instance and one can just pass nullptr to the LatticeDrawer as
-     * the associated object.
-     *
-     * @tparam  getColorFun The getColor method that will be called when querying the color of a
-     *                      point. The signature must match `mtools::RGBc getColor(mtools::fVec2 pos,
-     *                      fBox2 R)` (here R contain pos and represent the pixel containing the
-     *                      point at pos.
-     **/
-    template<mtools::RGBc(*getColorFun)(mtools::fVec2 pos, fBox2 R)> class PlaneObjExt
-        {
-        public:
-            inline static RGBc getColor(mtools::fVec2 pos, fBox2 R) { return getColorFun(pos, R); }
-            inline static PlaneObjExt<getColorFun> * get() { return(nullptr); }
-        };
+    static std::pair<mtools::RGBc, bool> call1(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<true> D) { return obj.getColor(pos, box, nbiter, data); }
+    static std::pair<mtools::RGBc, bool> call2(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<true> D) { return obj.getColor(pos, box, nbiter); }
+    static std::pair<mtools::RGBc, bool> call3(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<true> D) { return obj.getColor(pos, box); }
+    static std::pair<mtools::RGBc, bool> call4(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<true> D) { return obj.getColor(pos); }
+    static std::pair<mtools::RGBc, bool> call5(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<true> D) { return obj(pos, box, nbiter, data); }
+    static std::pair<mtools::RGBc, bool> call6(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<true> D) { return obj(pos, box, nbiter); }
+    static std::pair<mtools::RGBc, bool> call7(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<true> D) { return obj(pos, box); }
+    static std::pair<mtools::RGBc, bool> call8(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<true> D) { return obj(pos); }
+    static std::pair<mtools::RGBc, bool> call9(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<true> D) { return obj.getColor(pos.X(),pos.Y()); }
+    static std::pair<mtools::RGBc, bool> call10(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<true> D) { return obj(pos.X(), pos.Y()); }
+    static std::pair<mtools::RGBc, bool> call11(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<true> D) { return std::pair<mtools::RGBc, bool>(obj.getColor(pos, box, nbiter, data), false); }
+    static std::pair<mtools::RGBc, bool> call12(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<true> D) { return std::pair<mtools::RGBc, bool>(obj.getColor(pos, box, nbiter), false); }
+    static std::pair<mtools::RGBc, bool> call13(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<true> D) { return std::pair<mtools::RGBc, bool>(obj.getColor(pos, box), false); }
+    static std::pair<mtools::RGBc, bool> call14(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<true> D) { return std::pair<mtools::RGBc, bool>(obj.getColor(pos), false); }
+    static std::pair<mtools::RGBc, bool> call15(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<true> D) { return std::pair<mtools::RGBc, bool>(obj(pos, box, nbiter, data), false); }
+    static std::pair<mtools::RGBc, bool> call16(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<true> D) { return std::pair<mtools::RGBc, bool>(obj(pos, box, nbiter), false); }
+    static std::pair<mtools::RGBc, bool> call17(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<true> D) { return std::pair<mtools::RGBc, bool>(obj(pos, box), false); }
+    static std::pair<mtools::RGBc, bool> call18(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<true> D) { return std::pair<mtools::RGBc, bool>(obj(pos), false); }
+    static std::pair<mtools::RGBc, bool> call19(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<true> D) { return std::pair<mtools::RGBc, bool>(obj.getColor(pos.X(), pos.Y()), false); }
+    static std::pair<mtools::RGBc, bool> call20(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<true> D) { return std::pair<mtools::RGBc, bool>(obj(pos.X(), pos.Y()), false); }
+
+    static std::pair<mtools::RGBc, bool> call1(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<false> D) { return call2(obj, pos, box, nbiter, data, mtools::metaprog::dummy<version2>()); }
+    static std::pair<mtools::RGBc, bool> call2(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<false> D) { return call3(obj, pos, box, nbiter, data, mtools::metaprog::dummy<version3>()); }
+    static std::pair<mtools::RGBc, bool> call3(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<false> D) { return call4(obj, pos, box, nbiter, data, mtools::metaprog::dummy<version4>()); }
+    static std::pair<mtools::RGBc, bool> call4(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<false> D) { return call5(obj, pos, box, nbiter, data, mtools::metaprog::dummy<version5>()); }
+    static std::pair<mtools::RGBc, bool> call5(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<false> D) { return call6(obj, pos, box, nbiter, data, mtools::metaprog::dummy<version6>()); }
+    static std::pair<mtools::RGBc, bool> call6(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<false> D) { return call7(obj, pos, box, nbiter, data, mtools::metaprog::dummy<version7>()); }
+    static std::pair<mtools::RGBc, bool> call7(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<false> D) { return call8(obj, pos, box, nbiter, data, mtools::metaprog::dummy<version8>()); }
+    static std::pair<mtools::RGBc, bool> call8(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<false> D) { return call9(obj, pos, box, nbiter, data, mtools::metaprog::dummy<version9>()); }
+    static std::pair<mtools::RGBc, bool> call9(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<false> D) { return call10(obj, pos, box, nbiter, data, mtools::metaprog::dummy<version10>()); }
+    static std::pair<mtools::RGBc, bool> call10(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<false> D) { return call11(obj, pos, box, nbiter, data, mtools::metaprog::dummy<version11>()); }
+    static std::pair<mtools::RGBc, bool> call11(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<false> D) { return call12(obj, pos, box, nbiter, data, mtools::metaprog::dummy<version12>()); }
+    static std::pair<mtools::RGBc, bool> call12(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<false> D) { return call13(obj, pos, box, nbiter, data, mtools::metaprog::dummy<version13>()); }
+    static std::pair<mtools::RGBc, bool> call13(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<false> D) { return call14(obj, pos, box, nbiter, data, mtools::metaprog::dummy<version14>()); }
+    static std::pair<mtools::RGBc, bool> call14(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<false> D) { return call15(obj, pos, box, nbiter, data, mtools::metaprog::dummy<version15>()); }
+    static std::pair<mtools::RGBc, bool> call15(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<false> D) { return call16(obj, pos, box, nbiter, data, mtools::metaprog::dummy<version16>()); }
+    static std::pair<mtools::RGBc, bool> call16(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<false> D) { return call17(obj, pos, box, nbiter, data, mtools::metaprog::dummy<version17>()); }
+    static std::pair<mtools::RGBc, bool> call17(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<false> D) { return call18(obj, pos, box, nbiter, data, mtools::metaprog::dummy<version18>()); }
+    static std::pair<mtools::RGBc, bool> call18(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<false> D) { return call19(obj, pos, box, nbiter, data, mtools::metaprog::dummy<version19>()); }
+    static std::pair<mtools::RGBc, bool> call19(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<false> D) { return call20(obj, pos, box, nbiter, data, mtools::metaprog::dummy<version20>()); }
+    static std::pair<mtools::RGBc, bool> call20(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<false> D) { MTOOLS_DEBUG("GetColorPlaneSelector: no getColor() found."); return std::pair<mtools::RGBc, bool>(RGBc::c_TransparentWhite,false); }
+
+    public:
+
+        static const bool has_getColor = version1 | version2 | version3 | version4 | version5 | version6 | version7 | version8 | version9 | version10 |
+                                         version11 | version12 | version13 | version14 | version15 | version16 | version17 | version18 | version19 | version20;
+
+        static std::pair<mtools::RGBc,bool> call(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data) { return call1(obj, pos, box, nbiter, data, mtools::metaprog::dummy<version1>()); }
+
+    };
 
 
 /**
@@ -122,7 +246,7 @@ public:
 		_g_r(-100.5, 100.5, -100.5, 100.5), 
 		_g_redraw(true)
 		{
-        static_assert(((mtools::metaprog::has_getColor<PlaneObj, RGBc, fVec2>::value)|| (mtools::metaprog::has_getColorExt<PlaneObj, RGBc, fVec2, fBox2>::value)), "The object T must be implement either a 'RGBc getColor(fVec2 pos)' or 'RGBc getColor(fVec2 pos, fBox2 R)' method.");
+        static_assert(mtools::GetColorPlaneSelector<PlaneObj>::has_getColor, "The object T must be implement one of the getColor method recognized by GetColorPlaneSelector.");
         _initInt16Buf();
         domainFull();
         }
@@ -409,8 +533,8 @@ void _drawPixel_fast(int maxtime_ms)
         const double xmin = r.min[0] + i*px; const double xmax = xmin + px; const double x = xmin + 0.5*px;
         const double ymax = r.max[1] - j*py; const double ymin = ymax - py; const double y = ymax - 0.5*py;
         const fBox2 sR = fBox2(xmin, xmax, ymin, ymax);
-        const RGBc coul = _getColor(fVec2(x,y),sR);
-        _setInt16Buf(i, j, coul);
+        auto cp = _getColor(fVec2(x, y), sR, 1);
+        _setInt16Buf(i, j, cp.first);
 		}
 	// we are done
 	_counter2 = 1; _qi=0; _qj=0; 
@@ -425,7 +549,6 @@ void _drawPixel_stochastic(int maxtime_ms)
     const fBox2 r = _g_r;
     const double px = ((double)r.lx()) / ((double)_int16_buffer_dim.X())  // size of a pixel
                , py = ((double)r.ly()) / ((double)_int16_buffer_dim.Y());
-    const uint32 ndraw = _nbDrawPerTurn(r, _int16_buffer_dim);
     while (_counter2 < 255)
         {
         if (_counter2 == _counter1) { ++_counter1; } // start of a loop: we increase counter1 
@@ -435,18 +558,20 @@ void _drawPixel_stochastic(int maxtime_ms)
             {
             if (fixstart) { i = _qi; j = _qj; fixstart = false; }		// fix the position of thestarting pixel
             if (_isTime(maxtime_ms)) { _qi = i; _qj = j; return; }	// time's up : we quit
-            uint32 R = 0, G = 0, B = 0, A = 0;
             const double xmin = r.min[0] + i*px; const double xmax = xmin + px;
             const double ymax = r.max[1] - j*py; const double ymin = ymax - py;
             const fBox2 sR = fBox2(xmin, xmax, ymin, ymax);
-            for (uint32 k = 0;k<ndraw;k++)
+            const double x = xmin + _g_fgen.unif()*px;
+            const double y = ymax - _g_fgen.unif()*py;
+            auto cp = _getColor(fVec2(x, y), sR, _counter1);
+            if (cp.second)
                 {
-                const double x = xmin + _g_fgen.unif()*px;
-                const double y = ymax - _g_fgen.unif()*py;
-                RGBc coul = _getColor(fVec2(x, y), sR);
-                R += coul.R; G += coul.G; B += coul.B; A += coul.A;
+                _setInt16Buf(i, j, cp.first, _counter1);
                 }
-            _addInt16Buf(i, j, R / ndraw, G / ndraw, B / ndraw, A / ndraw);
+            else
+                {
+                _addInt16Buf(i, j, cp.first);
+                }
             }
         // we finished a loop
         _counter2 = _counter1;	_qi = 0; _qj = 0;
@@ -496,17 +621,13 @@ void _work(int maxtime_ms)
     }
 
 
-/* used when there is an extended getColor() method */
-inline RGBc _getColor(fVec2 pos, fBox2 R, mtools::metaprog::dummy<true> D) { return _g_obj->getColor(pos, R); }
-
-/* used when there is only a regular getColor() method */
-inline RGBc _getColor(fVec2 pos, fBox2 R, mtools::metaprog::dummy<false> D) { return _g_obj->getColor(pos); }
 
 /* return the color of a given point, use either the object getColor or "extended" getColor method depending on the method detected */
-inline RGBc _getColor(fVec2 pos, fBox2 R) 
+inline std::pair<mtools::RGBc,bool> _getColor(fVec2 pos, fBox2 R, int32 nbiter) 
     {
-    if (!_g_domR.isInside(pos)) return RGBc::c_TransparentWhite;
-    return _getColor(pos, R, mtools::metaprog::dummy<mtools::metaprog::has_getColorExt<PlaneObj, RGBc, fVec2, fBox2>::value>()); 
+    if (!_g_domR.isInside(pos)) return std::pair<mtools::RGBc, bool>(RGBc::c_TransparentWhite, false);
+    void * data = nullptr;
+    return mtools::GetColorPlaneSelector<PlaneObj>::call(*_g_obj, pos, R, nbiter, data);
     }
 
 
@@ -543,21 +664,32 @@ inline void _setInt16Buf(uint32 x,uint32 y,const RGBc & color)
 	{
     const size_t dx = (size_t)_int16_buffer_dim.X();
     const size_t dxy = (size_t)(dx * _int16_buffer_dim.Y());
-    _int16_buffer[x + y*dx] = color.R;
-    _int16_buffer[x + y*dx + dxy] = color.G;
-    _int16_buffer[x + y*dx + 2 * dxy] = color.B;
-    _int16_buffer[x + y*dx + 3 * dxy] = color.A;
+    _int16_buffer[x + y*dx] = (uint16)color.R;
+    _int16_buffer[x + y*dx + dxy] = (uint16)color.G;
+    _int16_buffer[x + y*dx + 2 * dxy] = (uint16)color.B;
+    _int16_buffer[x + y*dx + 3 * dxy] = (uint16)color.A;
+    }
+
+/* set a color at position (i,j), with a multiplier */
+inline void _setInt16Buf(uint32 x, uint32 y, const RGBc & color, uint32 mul)
+    {
+    const size_t dx = (size_t)_int16_buffer_dim.X();
+    const size_t dxy = (size_t)(dx * _int16_buffer_dim.Y());
+    _int16_buffer[x + y*dx] = (uint16)(color.R * mul);
+    _int16_buffer[x + y*dx + dxy] = (uint16)(color.G * mul);
+    _int16_buffer[x + y*dx + 2 * dxy] = (uint16)(color.B * mul);
+    _int16_buffer[x + y*dx + 3 * dxy] = (uint16)(color.A * mul);
     }
 
 /* add a color at position (i,j) */
-inline void _addInt16Buf(uint32 x,uint32 y,uint32 R,uint32 G,uint32 B,uint32 A)
+inline void _addInt16Buf(uint32 x,uint32 y, const RGBc & color)
 	{
     const size_t dx = (size_t)_int16_buffer_dim.X();
     const size_t dxy = (size_t)(dx * _int16_buffer_dim.Y());
-    _int16_buffer[x + y*dx] += R;
-	_int16_buffer[x + y*dx + dxy] += G;
-	_int16_buffer[x + y*dx + 2*dxy] += B;
-    _int16_buffer[x + y*dx + 3*dxy] += A;
+    _int16_buffer[x + y*dx] += (uint16)color.R;
+	_int16_buffer[x + y*dx + dxy] += (uint16)color.G;
+	_int16_buffer[x + y*dx + 2*dxy] += (uint16)color.B;
+    _int16_buffer[x + y*dx + 3*dxy] += (uint16)color.A;
     }
 
 
@@ -809,13 +941,6 @@ inline bool _isTime(uint32 ms)
 // ****************************************************************
 // UTILITY FUNCTION : do not use any class member variable
 // ****************************************************************
-
-
-/* return the number of stochastic draw per pixel per turn */
-inline uint32 _nbDrawPerTurn(const fBox2 & r,const iVec2 & sizeIm) const
-	{
-	return 3;
-	}
 
 
 /* return the pourcentage according to the line number of _qj */
