@@ -61,6 +61,7 @@ class Plotter2D
 {
     public:
 
+
     static const int POS_TOP = 0;           ///< the top of the screen
     static const int POS_BOTTOM = -1;       ///< the bottom of the screen
     static const int POS_LEFT = 0;          ///< the left of the screen
@@ -74,6 +75,8 @@ class Plotter2D
 
     static const int MIN_W = 600;           ///< min width of the plotter window
     static const int MIN_H = 600;           ///< min height of the plotter window
+
+    static const int DEFAULT_SENSIBILITY = 5; ///< default delta in quality needed to trigger an update of the window.
 
 
     /**
@@ -276,6 +279,24 @@ class Plotter2D
      * Request that the plotter start a redraw of the image.
      **/
     void redraw();
+
+
+    /**
+     * Return the delta in quality needed to trigger an update of the window. 
+     * (default = DEFAULT_SENSIBILITY).
+     *
+     * @return  The delta in image quality needed to trigger a redraw (between 1 and 99).
+     **/
+    unsigned int sensibility() const;
+
+
+    /**
+     * Set the delta in quality needed to trigger an update of the window. 
+     * (default = DEFAULT_SENSIBILITY).
+     *
+     * @param   delta   The new delta in image quality needed to trigger a redraw (in 1 and 99).
+     **/
+    void sensibility(unsigned int delta);
 
 
     /**

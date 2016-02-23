@@ -260,6 +260,8 @@ namespace mtools
 
             std::atomic<int> _refreshrate;    // the refresh rate (number of refresh per minute).
 
+            std::atomic<unsigned int> _sensibility; // the delta in image quality needed to trigger a redraw
+
             Fl_Double_Window * _w_mainWin;     // the main window.
             Fl_Group * _w_menuGroup;           // the option window
             Fl_Group * _w_viewGroup;           // the view group
@@ -297,7 +299,6 @@ namespace mtools
 
             Plot2DAxes * _axePlot;              // the axes plot
             Plot2DGrid * _gridPlot;             // the grid plot
-
 
             /********************************************************************************************************************************/
 
@@ -357,6 +358,8 @@ namespace mtools
                 }
             return q;
             }
+
+
         /* return true if there is currently an object that is simultaneously enabled yet suspended, */
         bool Plotter2DWindow::isSuspendedInserted()
             {
@@ -555,7 +558,7 @@ namespace mtools
 
 
         /* Constructor : Construct the plotter window but do not show it */
-        Plotter2DWindow::Plotter2DWindow(bool addAxes, bool addGrid, int X, int Y, int W, int H) : _mainImage(nullptr), _mainImageQuality(0), _RM(nullptr), _shown(false), _nbchannels(3), _usesolidBK(true), _solidBKcolor(RGBc::c_White), _refreshrate(0), _axePlot(nullptr), _gridPlot(nullptr)
+        Plotter2DWindow::Plotter2DWindow(bool addAxes, bool addGrid, int X, int Y, int W, int H) : _mainImage(nullptr), _mainImageQuality(0), _RM(nullptr), _shown(false), _nbchannels(3), _usesolidBK(true), _solidBKcolor(RGBc::c_White), _refreshrate(0), _sensibility(Plotter2D::DEFAULT_SENSIBILITY), _axePlot(nullptr), _gridPlot(nullptr)
         {
             convertWindowCoord(W, H, X, Y);
 
@@ -879,14 +882,14 @@ namespace mtools
          * does not update the view if the resulting quality is zero */
         void Plotter2DWindow::updateView(bool withreset)
             {
-            int maxretry = (withreset ? 20 : 0);
+            int maxretry = (withreset ? 25 : 0);
             int retry = 0;
             if (withreset) _PW->discardImage(); else { _mainImage->checkerboard(); }  // do it now while worker thread continu
-            if (isSuspendedInserted()) {maxretry -= 15;} // try only 5 times if there is a suspended object; 
+            if (isSuspendedInserted()) {maxretry -= 20;} // try only 5 times if there is a suspended object; 
             _mainImageQuality = quality(); // query the current quality
             while ((_mainImageQuality == 0) && (retry < maxretry))
                 { // quality is zero, we wait a little and before retry
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
                 retry++;
                 _mainImageQuality = quality();
                 }
@@ -926,7 +929,7 @@ namespace mtools
                 {
                 if (q != (int)_mainImageQuality)
                     {
-                    if ((q == 100) || (q<_mainImageQuality) || (_mainImageQuality == 0) || (q >= _mainImageQuality + 10))
+                    if ((q == 100) || (q<_mainImageQuality) || (_mainImageQuality == 0) || (q >= _mainImageQuality + (int)_sensibility))
                         {
                         updateView(false);
                         Fl::add_timeout(0.1, static_updateViewTimer, this);
@@ -1924,6 +1927,16 @@ namespace mtools
 
 
     internals_graphics::RangeManager & Plotter2D::range() { return *((internals_graphics::RangeManager*)(_plotterWin->_RM)); }
+
+
+    unsigned int Plotter2D::sensibility() const { return _plotterWin->_sensibility; }
+
+
+    void Plotter2D::sensibility(unsigned int delta)
+        {
+        _plotterWin->_sensibility = (delta < 1) ? 1 : ((delta > 99) ? 99 : delta);
+        }
+
 
 
     void Plotter2D::plot()
