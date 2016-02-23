@@ -1264,7 +1264,11 @@ void _improveImage(int maxtime_ms)
 			case 0:
 				{
 				bool fixstart = true;
-				cimg_forXY(_exact_qbuf,i,j)
+
+                const int _exact_qbuf_width = _exact_qbuf.width();
+                const int _exact_qbuf_height = _exact_qbuf.height();
+                for (int j = 0; j<_exact_qbuf_height; ++j)
+                    for (int i = 0; i<_exact_qbuf_width; ++i)
 					{
 					if (fixstart) {i = _exact_qi; j= _exact_qj; fixstart = false;}
                     if (_isTime2(maxtime_ms)) { _exact_qi = i; _exact_qj = j; _qualityImageDraw();  return; }
@@ -1307,7 +1311,10 @@ void _improveImage(int maxtime_ms)
 			case 1:
                 {
 				bool fixstart = true;
-				cimg_forXY(_exact_qbuf,i,j)
+                const int _exact_qbuf_width = _exact_qbuf.width();
+                const int _exact_qbuf_height = _exact_qbuf.height();
+                for (int j = 0; j<_exact_qbuf_height; ++j)
+                    for (int i = 0; i<_exact_qbuf_width; ++i)
 					{
 					if (fixstart) {i = _exact_qi; j= _exact_qj; fixstart = false;}
                     if (_isTime2(maxtime_ms)) { _exact_qi = i; _exact_qj = j; _qualityImageDraw();  return; }
@@ -1499,7 +1506,10 @@ inline void _drawOntoImage(Img<unsigned char> & im, float op)
         // iterate over the pixels of im
         if (im.spectrum() == 3)
             { // 3 channel image.
-                cimg_forXY(im, i, j)
+            const int _im_width = im.width(); 
+            const int _im_height = im.height();
+            for(int j = 0; j<_im_height; ++j)
+                for (int i = 0; i<_im_width; ++i)
                     {
                     const int x = ax + (int)(stepx*i);  // the corresponding pixel in exactim 
                     const int y = ay + (int)(stepy*j);  //
@@ -1517,7 +1527,10 @@ inline void _drawOntoImage(Img<unsigned char> & im, float op)
         else
             { // 4 channel image.
                 const float po = 1;
-                cimg_forXY(im, i, j)
+                const int _im_width = im.width();
+                const int _im_height = im.height();
+                for (int j = 0; j<_im_height; ++j)
+                    for (int i = 0; i<_im_width; ++i)
                     {
                     const int x = ax + (int)(stepx*i);  // the corresponding pixel in exactim 
                     const int y = ay + (int)(stepy*j);  //
