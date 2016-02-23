@@ -52,6 +52,15 @@ namespace mtools
     * Detect if a type (or function) contain a method compatible with getImage() used by the LatticeDrawer class.
     * The method can be called with call(). (if no method found, return nullptr). 
     * 
+    * - iVec2 pos or (int64 x,int64 y) : the coordinate of the point to draw      
+    * 
+    * - iVec2 imSize or (int64 imLX, int64 imLY) : preferred dimension of the image. Need not be respected but   
+    *                                              faster if the returned image is of that size
+    *                                              
+    * - void* & data : reference to an opaque value that identify the thread drawing. Set to nullptr intially, the reference may  
+    *                  be modified by the getImage()/getColor() function and the same value will be returned at the next call 
+    *                  from the same thread.
+    * 
     * The signature below are recognized with the following order:
     * 
     *  [const] Im<Tim> * getImage([const]iVec2 [&] pos, const iVec2 [&] imSize, void* & data)
@@ -118,7 +127,7 @@ namespace mtools
         static const im * call5(T & obj, const iVec2 & pos, const iVec2 & imSize, void * &data, mtools::metaprog::dummy<false> D) { return call6(obj, pos, imSize, data, mtools::metaprog::dummy<version6>()); }
         static const im * call6(T & obj, const iVec2 & pos, const iVec2 & imSize, void * &data, mtools::metaprog::dummy<false> D) { return call7(obj, pos, imSize, data, mtools::metaprog::dummy<version7>()); }
         static const im * call7(T & obj, const iVec2 & pos, const iVec2 & imSize, void * &data, mtools::metaprog::dummy<false> D) { return call8(obj, pos, imSize, data, mtools::metaprog::dummy<version8>()); }
-        static const im * call8(T & obj, const iVec2 & pos, const iVec2 & imSize, void * &data, mtools::metaprog::dummy<false> D) { MTOOLS_DEBUG("No getImage() found."); return nullptr; }
+        static const im * call8(T & obj, const iVec2 & pos, const iVec2 & imSize, void * &data, mtools::metaprog::dummy<false> D) { MTOOLS_DEBUG("GetImageSelector: No getImage() found."); return nullptr; }
 
         public:
 
@@ -133,6 +142,12 @@ namespace mtools
     *
     * Detect if a type (or function) contain a method compatible with getColor() used by the LatticeDrawer class.
     * The method can be called with call(). (if no method found, return RGBc::c_TransparentWhite).
+    *
+    * - iVec2 pos or (int64 x,int64 y) : the coordinate of the point to draw
+    *
+    * - void* & data : reference to an opaque value that identify the thread drawing. Set to nullptr intially, the reference may
+    *                  be modified by the getImage()/getColor() function and the same value will be returned at the next call
+    *                  from the same thread.
     *
     * The signature below are recognized with the following order:
     *
@@ -204,7 +219,7 @@ namespace mtools
         static mtools::RGBc call6(T & obj, const iVec2 & pos, void * &data, mtools::metaprog::dummy<false> D) { return call7(obj, pos, data, mtools::metaprog::dummy<version7>()); }
         static mtools::RGBc call7(T & obj, const iVec2 & pos, void * &data, mtools::metaprog::dummy<false> D) { return call8(obj, pos, data, mtools::metaprog::dummy<version8>()); }
         static mtools::RGBc call8(T & obj, const iVec2 & pos, void * &data, mtools::metaprog::dummy<false> D) { return call9(obj, pos, data, mtools::metaprog::dummy<GetImageSelector<T, unsigned char>::has_getImage>()); }
-        static mtools::RGBc call9(T & obj, const iVec2 & pos, void * &data, mtools::metaprog::dummy<false> D) { MTOOLS_DEBUG("No getImage()/getColor() found."); return RGBc::c_TransparentWhite; }
+        static mtools::RGBc call9(T & obj, const iVec2 & pos, void * &data, mtools::metaprog::dummy<false> D) { MTOOLS_DEBUG("GetColorSelector: No getImage()/getColor() found."); return RGBc::c_TransparentWhite; }
 
         public:
 
@@ -216,29 +231,6 @@ namespace mtools
         };
 
 
-
-
-    /*
-
-
-    template<mtools::RGBc(*getColorFun)(mtools::iVec2 pos), const cimg_library::CImg<unsigned char>* (*getImageFun)(mtools::iVec2 pos, mtools::iVec2 size) > 
-    
-    template<typename ColorObj, typename ImageObj> struct PackColorImage
-        {
-        static const bool HAS_GETCOLOR = mtools::GetColorSelector<ColorObj>::has_getColor;
-        static const bool HAS_GETIMAGE = mtools::GetImageSelector<ImageObj, unsigned char>::has_getImage;
-        static_assert((HAS_GETCOLOR&&HAS_GETIMAGE),"The pack objects do not define  getColor() and getImage() methods")
-
-        public:
-
-            inline static RGBc getColor(mtools::iVec2 pos, void * & data) { return getColorFun(pos); }
-            inline static RGBc getColor(mtools::iVec2 pos, void * & data) { return getColorFun(pos); }
-
-            inline static const cimg_library::CImg<unsigned char> * getImage(mtools::iVec2 pos, mtools::iVec2 size) { return getImageFun(pos, size); }
-            inline static LatticeObjImage<getColorFun, getImageFun> * get() { return(nullptr); }
-
-        };
-        */
 
 /**
  * Draws part of a lattice object into into a CImg image. This class implement the
@@ -253,7 +245,7 @@ namespace mtools
  * expensive and might be better called from a worker thread : see the `AutoDrawable2DObject`
  * class for a generic implementation.
  * 
- * - The template LatticeObj must implement a method `RGBc getColor(iVec2 pos)` which return the
+ * - The template LatticeObj must implement a method `getColor()` which return the
  * color associated with a given site. The method should be made as fast as possible. The fourth
  * channel of the returned color will be used when drawing on 4 channel images and ignored when
  * drawing on 3 channel images.
