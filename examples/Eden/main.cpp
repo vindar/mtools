@@ -92,7 +92,7 @@ void run()
     {
     cout << "\nSimulating (close the plotter window to stop)...\n";
     auto P1 = makePlot2DLattice(EC, "Eden model"); P1.opacity(0.5);
-    auto P2 = makePlot2DLattice(LatticeObj<colorCircle>::get(), "Perfect circle"); P2.opacity(0.5);
+    auto P2 = makePlot2DLattice(colorCircle, "Perfect circle"); P2.opacity(0.5);
     Plotter2D Plotter;
     Plotter[P2][P1];
     Plotter.startPlot();

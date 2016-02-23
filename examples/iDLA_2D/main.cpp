@@ -72,8 +72,8 @@ int main(int argc, char *argv[])
     Grid.reset(0, 1, false);
     Grid.set(0, 0, 1); // initial cluster. 
     Plotter2D P;
-    auto Cl = makePlot2DLattice(LatticeObj<colorCluster>::get(), "iDLA cluster"); P[Cl]; Cl.opacity(0.5);
-    auto Ci = makePlot2DLattice(LatticeObj<colorCircle>::get(), "Circle"); P[Ci]; Ci.opacity(0.5);
+    auto Cl = makePlot2DLattice(colorCluster, "iDLA cluster"); P[Cl]; Cl.opacity(0.5);
+    auto Ci = makePlot2DLattice(colorCircle, "Circle"); P[Ci]; Ci.opacity(0.5);
     P.autoredraw(autoredraw);
     P.startPlot();
     Chronometer();

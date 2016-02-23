@@ -43,140 +43,174 @@ namespace mtools
 
 
 
+
+
+
     /**
     * GetImage method selector.
-    * Detect if a type (or function) contain a method compatible with getImage().
-    * The method can be called via call().
+    * 
+    * Detect if a type (or function) contain a method compatible with getImage() used by the LatticeDrawer class.
+    * The method can be called with call(). (if no method found, return nullptr). 
+    * 
+    * The signature below are recognized with the following order:
+    * 
+    *  [const] Im<Tim> * getImage([const]iVec2 [&] pos, const iVec2 [&] imSize, void* & data)
+    *  [const] Im<Tim> * getImage([const]iVec2 [&] pos, const iVec2 [&] imSize)
+    *  [const] Im<Tim> * getImage([const] int64 [&] x,[const] int64 [&] y,[const] int64 [&] imLX,[const] int64 [&] imLY, void* & data)
+    *  [const] Im<Tim> * getImage([const] int64 [&] x,[const] int64 [&] y,[const] int64 [&] imLX,[const] int64 [&] imLY)
+    *  [const] Im<Tim> * operator()([const]iVec2 [&] pos, const iVec2 [&] imSize, void* & data)
+    *  [const] Im<Tim> * operator()([const]iVec2 [&] pos, const iVec2 [&] imSize)
+    *  [const] Im<Tim> * operator()([const] int64 [&] x,[const] int64 [&] y,[const] int64 [&] imLX,[const] int64 [&] imLY, void* & data)
+    *  [const] Im<Tim> * operator()([const] int64 [&] x,[const] int64 [&] y,[const] int64 [&] imLX,[const] int64 [&] imLY)
     **/
     template<typename T, typename Tim> class GetImageSelector
         {
         using im = Img<Tim>;
+        typedef typename std::decay<im>::type decayim;
+
         static void * dumptr;
 
-        template<typename U> static decltype((*(U*)(0)).getImage(iVec2{ 0,0 }, dumptr)) vers1(int);
+        template<typename U> static decltype(*((*(U*)(0)).getImage(iVec2{ 0,0 }, iVec2{ 0,0 }, dumptr))) vers1(int);
         template<typename> static metaprog::no vers1(...);
-        static const bool version1 = std::is_same<std::decay<decltype(vers1<T>(0))>, std::decay<im*> >::value;
+        static const bool version1 = std::is_same<typename std::decay<decltype(vers1<T>(0))>::type, decayim >::value;
 
-        template<typename U> static decltype((*(U*)(0)).getImage(iVec2{ 0,0 })) vers2(int);
+        template<typename U> static decltype(*((*(U*)(0)).getImage(iVec2{ 0,0 }, iVec2{ 0,0 }))) vers2(int);
         template<typename> static metaprog::no vers2(...);
-        static const bool version2 = std::is_same<std::decay<decltype(vers2<T>(0))>, std::decay<im*> >::value;
+        static const bool version2 = std::is_same<typename std::decay<decltype(vers2<T>(0))>::type, decayim >::value;
 
-        template<typename U> static decltype((*(U*)(0)).getImage(0, 0, dumptr)) vers3(int);
+        template<typename U> static decltype(*((*(U*)(0)).getImage(0, 0, 0, 0, dumptr))) vers3(int);
         template<typename> static metaprog::no vers3(...);
-        static const bool version3 = std::is_same<std::decay<decltype(vers3<T>(0))>, std::decay<im*> >::value;
+        static const bool version3 = std::is_same<typename std::decay<decltype(vers3<T>(0))>::type, decayim >::value;
 
-        template<typename U> static decltype((*(U*)(0)).getImage(0, 0)) vers4(int);
+        template<typename U> static decltype(*((*(U*)(0)).getImage(0, 0, 0, 0))) vers4(int);
         template<typename> static metaprog::no vers4(...);
-        static const bool version4 = std::is_same<std::decay<decltype(vers4<T>(0))>, std::decay<im*> >::value;
+        static const bool version4 = std::is_same<typename std::decay<decltype(vers4<T>(0))>::type, decayim >::value;
 
-        template<typename U> static decltype((*(U*)(0))(iVec2{ 0,0 }, dumptr)) vers5(int);
+        template<typename U> static decltype(*((*(U*)(0))(iVec2{ 0,0 }, iVec2{ 0,0 }, dumptr))) vers5(int);
         template<typename> static metaprog::no vers5(...);
-        static const bool version5 = std::is_same<std::decay<decltype(vers5<T>(0))>, std::decay<im*> >::value;
+        static const bool version5 = std::is_same<typename std::decay<decltype(vers5<T>(0))>::type, decayim >::value;
 
-        template<typename U> static decltype((*(U*)(0))(iVec2{ 0,0 })) vers6(int);
+        template<typename U> static decltype(*((*(U*)(0))(iVec2{ 0,0 }, iVec2{ 0,0 }))) vers6(int);
         template<typename> static metaprog::no vers6(...);
-        static const bool version6 = std::is_same<std::decay<decltype(vers6<T>(0))>, std::decay<im*> >::value;
+        static const bool version6 = std::is_same<typename std::decay<decltype(vers6<T>(0))>::type, decayim >::value;
 
-        template<typename U> static decltype((*(U*)(0))(0, 0, dumptr)) vers7(int);
+        template<typename U> static decltype(*((*(U*)(0))(0, 0, 0, 0, dumptr))) vers7(int);
         template<typename> static metaprog::no vers7(...);
-        static const bool version7 = std::is_same<std::decay<decltype(vers7<T>(0))>, std::decay<im*> >::value;
+        static const bool version7 = std::is_same<typename std::decay<decltype(vers7<T>(0))>::type, decayim >::value;
 
-        template<typename U> static decltype((*(U*)(0))(0, 0)) vers8(int);
+        template<typename U> static decltype(*((*(U*)(0))(0, 0, 0, 0))) vers8(int);
         template<typename> static metaprog::no vers8(...);
-        static const bool version8 = std::is_same<std::decay<decltype(vers8<T>(0))>, std::decay<im*> >::value;
+        static const bool version8 = std::is_same<typename std::decay<decltype(vers8<T>(0))>::type, decayim >::value;
 
-        static im * call1(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<true> D) { return obj.getImage(pos, data); }
-        static im * call2(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<true> D) { return obj.getImage(pos); }
-        static im * call3(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<true> D) { return obj.getImage(pos.X(), pos.Y(), data); }
-        static im * call4(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<true> D) { return obj.getImage(pos.X(), pos.Y()); }
-        static im * call5(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<true> D) { return obj(pos, data); }
-        static im * call6(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<true> D) { return obj(pos); }
-        static im * call7(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<true> D) { return obj(pos.X(), pos.Y(), data); }
-        static im * call8(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<true> D) { return obj(pos.X(), pos.Y()); }
+        static const im * call1(T & obj, const iVec2 & pos, const iVec2 & imSize, void * &data, mtools::metaprog::dummy<true> D) { return obj.getImage(pos, imSize, data); }
+        static const im * call2(T & obj, const iVec2 & pos, const iVec2 & imSize, void * &data, mtools::metaprog::dummy<true> D) { return obj.getImage(pos, imSize); }
+        static const im * call3(T & obj, const iVec2 & pos, const iVec2 & imSize, void * &data, mtools::metaprog::dummy<true> D) { return obj.getImage(pos.X(), pos.Y(), imSize.X(), imSize.Y(), data); }
+        static const im * call4(T & obj, const iVec2 & pos, const iVec2 & imSize, void * &data, mtools::metaprog::dummy<true> D) { return obj.getImage(pos.X(), pos.Y(), imSize.X(), imSize.Y()); }
+        static const im * call5(T & obj, const iVec2 & pos, const iVec2 & imSize, void * &data, mtools::metaprog::dummy<true> D) { return obj(pos, imSize, data); }
+        static const im * call6(T & obj, const iVec2 & pos, const iVec2 & imSize, void * &data, mtools::metaprog::dummy<true> D) { return obj(pos, imSize); }
+        static const im * call7(T & obj, const iVec2 & pos, const iVec2 & imSize, void * &data, mtools::metaprog::dummy<true> D) { return obj(pos.X(), pos.Y(), imSize.X(), imSize.Y(), data); }
+        static const im * call8(T & obj, const iVec2 & pos, const iVec2 & imSize, void * &data, mtools::metaprog::dummy<true> D) { return obj(pos.X(), pos.Y(), imSize.X(), imSize.Y()); }
 
-        static im * call1(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<false> D) { return call2(obj, pos, data, mtools::metaprog::dummy<version2>()); }
-        static im * call2(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<false> D) { return call3(obj, pos, data, mtools::metaprog::dummy<version3>()); }
-        static im * call3(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<false> D) { return call4(obj, pos, data, mtools::metaprog::dummy<version4>()); }
-        static im * call4(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<false> D) { return call5(obj, pos, data, mtools::metaprog::dummy<version5>()); }
-        static im * call5(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<false> D) { return call6(obj, pos, data, mtools::metaprog::dummy<version6>()); }
-        static im * call6(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<false> D) { return call7(obj, pos, data, mtools::metaprog::dummy<version7>()); }
-        static im * call7(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<false> D) { return call8(obj, pos, data, mtools::metaprog::dummy<version8>()); }
-        static im * call8(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<false> D) { MTOOLS_ERROR("No getImage() found"); return nullptr; }
+        static const im * call1(T & obj, const iVec2 & pos, const iVec2 & imSize, void * &data, mtools::metaprog::dummy<false> D) { return call2(obj, pos, imSize, data, mtools::metaprog::dummy<version2>()); }
+        static const im * call2(T & obj, const iVec2 & pos, const iVec2 & imSize, void * &data, mtools::metaprog::dummy<false> D) { return call3(obj, pos, imSize, data, mtools::metaprog::dummy<version3>()); }
+        static const im * call3(T & obj, const iVec2 & pos, const iVec2 & imSize, void * &data, mtools::metaprog::dummy<false> D) { return call4(obj, pos, imSize, data, mtools::metaprog::dummy<version4>()); }
+        static const im * call4(T & obj, const iVec2 & pos, const iVec2 & imSize, void * &data, mtools::metaprog::dummy<false> D) { return call5(obj, pos, imSize, data, mtools::metaprog::dummy<version5>()); }
+        static const im * call5(T & obj, const iVec2 & pos, const iVec2 & imSize, void * &data, mtools::metaprog::dummy<false> D) { return call6(obj, pos, imSize, data, mtools::metaprog::dummy<version6>()); }
+        static const im * call6(T & obj, const iVec2 & pos, const iVec2 & imSize, void * &data, mtools::metaprog::dummy<false> D) { return call7(obj, pos, imSize, data, mtools::metaprog::dummy<version7>()); }
+        static const im * call7(T & obj, const iVec2 & pos, const iVec2 & imSize, void * &data, mtools::metaprog::dummy<false> D) { return call8(obj, pos, imSize, data, mtools::metaprog::dummy<version8>()); }
+        static const im * call8(T & obj, const iVec2 & pos, const iVec2 & imSize, void * &data, mtools::metaprog::dummy<false> D) { MTOOLS_DEBUG("No getImage() found."); return nullptr; }
 
         public:
 
             static const bool has_getImage = version1 | version2 | version3 | version4 | version5 | version6 | version7 | version8;
 
-            static im * call(T & obj, const iVec2 & pos, void * data) { return call1(obj, pos, data, mtools::metaprog::dummy<version1>()); }
+            static const im * call(T & obj, const iVec2 & pos, const iVec2 & imSize, void * &data) { return call1(obj, pos, imSize, data, mtools::metaprog::dummy<version1>()); }
         };
 
 
     /**
     * GetColor method selector.
-    * Detect if a type (or function) contain a method compatible with getColor().
-    * The method is called via call().
+    *
+    * Detect if a type (or function) contain a method compatible with getColor() used by the LatticeDrawer class.
+    * The method can be called with call(). (if no method found, return RGBc::c_TransparentWhite).
+    *
+    * The signature below are recognized with the following order:
+    *
+    *  RGBc getImage([const]iVec2 [&] pos, void* & data)
+    *  RGBc getImage([const]iVec2 [&] pos)
+    *  RGBc getImage([const] int64 [&] x,[const] int64 [&] y, void* & data)
+    *  RGBc getImage([const] int64 [&] x,[const] int64 [&] y)
+    *  RGBc operator()([const]iVec2 [&] pos, void* & data)
+    *  RGBc operator()([const]iVec2 [&] pos)
+    *  RGBc operator()([const] int64 [&] x,[const] int64 [&] y, void* & data)
+    *  RGBc operator()([const] int64 [&] x,[const] int64 [&] y)
+    *  
+    *  If none if the method above are found, try to find a getImage() method GetImageSelector<T,unsigned char> 
+    *  and convert to resulting image to a single color using the Img<unsigned char>::toRGBc() method
     **/
     template<typename T> class GetColorSelector
         {
         static void * dumptr;
+        typedef typename std::decay<mtools::RGBc>::type decayrgb;
 
         template<typename U> static decltype((*(U*)(0)).getColor(iVec2{ 0,0 }, dumptr)) vers1(int);
         template<typename> static metaprog::no vers1(...);
-        static const bool version1 = std::is_same<std::decay<decltype(vers1<T>(0))>, std::decay<mtools::RGBc> >::value;
+        static const bool version1 = std::is_same<typename std::decay<decltype(vers1<T>(0))>::type, decayrgb>::value;
 
         template<typename U> static decltype((*(U*)(0)).getColor(iVec2{ 0,0 })) vers2(int);
         template<typename> static metaprog::no vers2(...);
-        static const bool version2 = std::is_same<std::decay<decltype(vers2<T>(0))>, std::decay<mtools::RGBc> >::value;
+        static const bool version2 = std::is_same<typename std::decay<decltype(vers2<T>(0))>::type, decayrgb >::value;
 
         template<typename U> static decltype((*(U*)(0)).getColor(0, 0, dumptr)) vers3(int);
         template<typename> static metaprog::no vers3(...);
-        static const bool version3 = std::is_same<std::decay<decltype(vers3<T>(0))>, std::decay<mtools::RGBc> >::value;
+        static const bool version3 = std::is_same<typename std::decay<decltype(vers3<T>(0))>::type, decayrgb >::value;
 
         template<typename U> static decltype((*(U*)(0)).getColor(0, 0)) vers4(int);
         template<typename> static metaprog::no vers4(...);
-        static const bool version4 = std::is_same<std::decay<decltype(vers4<T>(0))>, std::decay<mtools::RGBc> >::value;
+        static const bool version4 = std::is_same<typename std::decay<decltype(vers4<T>(0))>::type, decayrgb >::value;
 
         template<typename U> static decltype((*(U*)(0))(iVec2{ 0,0 }, dumptr)) vers5(int);
         template<typename> static metaprog::no vers5(...);
-        static const bool version5 = std::is_same<std::decay<decltype(vers5<T>(0))>, std::decay<mtools::RGBc> >::value;
+        static const bool version5 = std::is_same<typename std::decay<decltype(vers5<T>(0))>::type, decayrgb >::value;
 
         template<typename U> static decltype((*(U*)(0))(iVec2{ 0,0 })) vers6(int);
         template<typename> static metaprog::no vers6(...);
-        static const bool version6 = std::is_same<std::decay<decltype(vers6<T>(0))>, std::decay<mtools::RGBc> >::value;
+        static const bool version6 = std::is_same<typename std::decay<decltype(vers6<T>(0))>::type, decayrgb >::value;
 
         template<typename U> static decltype((*(U*)(0))(0, 0, dumptr)) vers7(int);
         template<typename> static metaprog::no vers7(...);
-        static const bool version7 = std::is_same<std::decay<decltype(vers7<T>(0))>, std::decay<mtools::RGBc> >::value;
+        static const bool version7 = std::is_same<typename std::decay<decltype(vers7<T>(0))>::type, decayrgb >::value;
 
         template<typename U> static decltype((*(U*)(0))(0, 0)) vers8(int);
         template<typename> static metaprog::no vers8(...);
-        static const bool version8 = std::is_same<std::decay<decltype(vers8<T>(0))>, std::decay<mtools::RGBc> >::value;
+        static const bool version8 = std::is_same<typename std::decay<decltype(vers8<T>(0))>::type, decayrgb >::value;
 
-        static mtools::RGBc call1(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<true> D) { return obj.getColor(pos, data); }
-        static mtools::RGBc call2(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<true> D) { return obj.getColor(pos); }
-        static mtools::RGBc call3(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<true> D) { return obj.getColor(pos.X(), pos.Y(), data); }
-        static mtools::RGBc call4(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<true> D) { return obj.getColor(pos.X(), pos.Y()); }
-        static mtools::RGBc call5(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<true> D) { return obj(pos, data); }
-        static mtools::RGBc call6(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<true> D) { return obj(pos); }
-        static mtools::RGBc call7(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<true> D) { return obj(pos.X(), pos.Y(), data); }
-        static mtools::RGBc call8(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<true> D) { return obj(pos.X(), pos.Y()); }
-        static mtools::RGBc call9(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<true> D) { return (GetImageSelector<T, unsigned char>::call(obj, pos, data))->toRGBc(); }
+        static mtools::RGBc call1(T & obj, const iVec2 & pos, void * &data, mtools::metaprog::dummy<true> D) { return obj.getColor(pos, data); }
+        static mtools::RGBc call2(T & obj, const iVec2 & pos, void * &data, mtools::metaprog::dummy<true> D) { return obj.getColor(pos); }
+        static mtools::RGBc call3(T & obj, const iVec2 & pos, void * &data, mtools::metaprog::dummy<true> D) { return obj.getColor(pos.X(), pos.Y(), data); }
+        static mtools::RGBc call4(T & obj, const iVec2 & pos, void * &data, mtools::metaprog::dummy<true> D) { return obj.getColor(pos.X(), pos.Y()); }
+        static mtools::RGBc call5(T & obj, const iVec2 & pos, void * &data, mtools::metaprog::dummy<true> D) { return obj(pos, data); }
+        static mtools::RGBc call6(T & obj, const iVec2 & pos, void * &data, mtools::metaprog::dummy<true> D) { return obj(pos); }
+        static mtools::RGBc call7(T & obj, const iVec2 & pos, void * &data, mtools::metaprog::dummy<true> D) { return obj(pos.X(), pos.Y(), data); }
+        static mtools::RGBc call8(T & obj, const iVec2 & pos, void * &data, mtools::metaprog::dummy<true> D) { return obj(pos.X(), pos.Y()); }
+        static mtools::RGBc call9(T & obj, const iVec2 & pos, void * &data, mtools::metaprog::dummy<true> D) { const mtools::Img<unsigned char> * im = GetImageSelector<T, unsigned char>::call(obj, pos, { 1,1 }, data);
+                                                                                                               return ((im == nullptr) ? RGBc::c_TransparentWhite : im->toRGBc()); }
 
-        static mtools::RGBc call1(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<false> D) { return call2(obj, pos, data, mtools::metaprog::dummy<version2>()); }
-        static mtools::RGBc call2(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<false> D) { return call3(obj, pos, data, mtools::metaprog::dummy<version3>()); }
-        static mtools::RGBc call3(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<false> D) { return call4(obj, pos, data, mtools::metaprog::dummy<version4>()); }
-        static mtools::RGBc call4(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<false> D) { return call5(obj, pos, data, mtools::metaprog::dummy<version5>()); }
-        static mtools::RGBc call5(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<false> D) { return call6(obj, pos, data, mtools::metaprog::dummy<version6>()); }
-        static mtools::RGBc call6(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<false> D) { return call7(obj, pos, data, mtools::metaprog::dummy<version7>()); }
-        static mtools::RGBc call7(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<false> D) { return call8(obj, pos, data, mtools::metaprog::dummy<version8>()); }
-        static mtools::RGBc call8(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<false> D) { return call9(obj, pos, data, mtools::metaprog::dummy<GetImageSelector<T, unsigned char>::has_getImage>()); }
-        static mtools::RGBc call9(T & obj, const iVec2 & pos, void * data, mtools::metaprog::dummy<false> D) { static_assert(has_getColor, "No method found for getColor()"); return RGBc(); }
+        static mtools::RGBc call1(T & obj, const iVec2 & pos, void * &data, mtools::metaprog::dummy<false> D) { return call2(obj, pos, data, mtools::metaprog::dummy<version2>()); }
+        static mtools::RGBc call2(T & obj, const iVec2 & pos, void * &data, mtools::metaprog::dummy<false> D) { return call3(obj, pos, data, mtools::metaprog::dummy<version3>()); }
+        static mtools::RGBc call3(T & obj, const iVec2 & pos, void * &data, mtools::metaprog::dummy<false> D) { return call4(obj, pos, data, mtools::metaprog::dummy<version4>()); }
+        static mtools::RGBc call4(T & obj, const iVec2 & pos, void * &data, mtools::metaprog::dummy<false> D) { return call5(obj, pos, data, mtools::metaprog::dummy<version5>()); }
+        static mtools::RGBc call5(T & obj, const iVec2 & pos, void * &data, mtools::metaprog::dummy<false> D) { return call6(obj, pos, data, mtools::metaprog::dummy<version6>()); }
+        static mtools::RGBc call6(T & obj, const iVec2 & pos, void * &data, mtools::metaprog::dummy<false> D) { return call7(obj, pos, data, mtools::metaprog::dummy<version7>()); }
+        static mtools::RGBc call7(T & obj, const iVec2 & pos, void * &data, mtools::metaprog::dummy<false> D) { return call8(obj, pos, data, mtools::metaprog::dummy<version8>()); }
+        static mtools::RGBc call8(T & obj, const iVec2 & pos, void * &data, mtools::metaprog::dummy<false> D) { return call9(obj, pos, data, mtools::metaprog::dummy<GetImageSelector<T, unsigned char>::has_getImage>()); }
+        static mtools::RGBc call9(T & obj, const iVec2 & pos, void * &data, mtools::metaprog::dummy<false> D) { MTOOLS_DEBUG("No getImage()/getColor() found."); return RGBc::c_TransparentWhite; }
 
         public:
 
             static const bool has_getColor = version1 | version2 | version3 | version4 | version5 | version6 | version7 | version8;
 
-            static RGBc call(T & obj, const iVec2 & pos, void * data) { return call1(obj, pos, data, mtools::metaprog::dummy<version1>()); }
+            static RGBc call(T & obj, const iVec2 & pos, void * &data) { return call1(obj, pos, data, mtools::metaprog::dummy<version1>()); }
 
 
         };
@@ -184,71 +218,27 @@ namespace mtools
 
 
 
+    /*
 
 
-    /**
-     * Encapsulate a `getColor()` function into a lattice object that can be used with the LatticeDrawer
-     * class. This wrapper class contain no data and just a static method, therefore, there is no need 
-     * to create an instance one can just pass nullptr to the LatticeDrawer as the associated object.
-     * 
-     * @par Example
-     * @code{.cpp}
-     * RGBc myColorFun(iVec2 pos)  {...}
-     * 
-     * LatticeDrawer<LatticeObj<myColorFct> >(nullptr); // create a Lattice drawer associated with myColorFun function
-     * @endcode
-     * 
-     * @tparam  getColorFun The getColor method that will be called when queriyng the color of a
-     *                      site. It signature must be exactly `mtools::RGBc getColor(mtools::iVec2 pos)`.
-     **/
-    template<mtools::RGBc (*getColorFun)(mtools::iVec2 pos)> class LatticeObj
+    template<mtools::RGBc(*getColorFun)(mtools::iVec2 pos), const cimg_library::CImg<unsigned char>* (*getImageFun)(mtools::iVec2 pos, mtools::iVec2 size) > 
+    
+    template<typename ColorObj, typename ImageObj> struct PackColorImage
         {
-        public:
-       inline static RGBc getColor(mtools::iVec2 pos) { return getColorFun(pos); }
-       inline static LatticeObj<getColorFun> * get() { return(nullptr); }
-        };
+        static const bool HAS_GETCOLOR = mtools::GetColorSelector<ColorObj>::has_getColor;
+        static const bool HAS_GETIMAGE = mtools::GetImageSelector<ImageObj, unsigned char>::has_getImage;
+        static_assert((HAS_GETCOLOR&&HAS_GETIMAGE),"The pack objects do not define  getColor() and getImage() methods")
 
-
-
-    /**
-     * Encapsulate both a `getColor()` and a `getImage()` function into a lattice object that can be
-     * used with the LatticeDrawer class. This wrapper class contain no data and just a static method, 
-     * therefore, there is no need to create an instance one can just pass nullptr to the LatticeDrawer 
-     * as the associated object.
-     *
-     * @par Example
-     * @code{.cpp}
-     * RGBc myColorFun(iVec2 pos)  {...}
-     * const Img<unsigned char> myImageFun(iVec2 pos,iVec2 size)  {...}
-     *
-     * LatticeDrawer<LatticeObj<myColorFct, myImageFun> >(nullptr); // create a Lattice drawer associated with myColorFun and myImageFun functions
-     * @endcode
-     *
-     * @tparam  getColorFun The getColor method that will be called when queriyng the color of a
-     *                      site. It signature must be exactly `mtools::RGBc getColor(mtools::iVec2
-     *                      pos)`.
-     * @tparam  getImageFun The getImage method that will be called when querying the image of a
-     *                      site. It signature must be exactly `const Img<unsigned char> *
-     *                      getColor(mtools::iVec2 pos, mtools::iVec2 size)`. The pointer to the
-     *                      image returned by this function must either be null or point to a 3 or 4
-     *                      channel image. The image is not modified and can be disposed of
-     *                      afterward. If the method returns nullptr, then the site is completely
-     *                      transparent. The parameter size is an indication of the preferred size be
-     *                      images of any size can be returned (although the quality will be less and
-     *                      more time expensive).
-     * @param   pos     The position.
-     * @param   size    The size.
-     **/
-    template<mtools::RGBc(*getColorFun)(mtools::iVec2 pos), const Img<unsigned char>* (*getImageFun)(mtools::iVec2 pos, mtools::iVec2 size) > class LatticeObjImage
-        {
         public:
 
-        inline static RGBc getColor(mtools::iVec2 pos) { return getColorFun(pos); }
-        inline static const Img<unsigned char> * getImage(mtools::iVec2 pos, mtools::iVec2 size) { return getImageFun(pos,size); }
-        inline static LatticeObjImage<getColorFun, getImageFun> * get() { return(nullptr); }
+            inline static RGBc getColor(mtools::iVec2 pos, void * & data) { return getColorFun(pos); }
+            inline static RGBc getColor(mtools::iVec2 pos, void * & data) { return getColorFun(pos); }
+
+            inline static const cimg_library::CImg<unsigned char> * getImage(mtools::iVec2 pos, mtools::iVec2 size) { return getImageFun(pos, size); }
+            inline static LatticeObjImage<getColorFun, getImageFun> * get() { return(nullptr); }
 
         };
-
+        */
 
 /**
  * Draws part of a lattice object into into a CImg image. This class implement the
@@ -356,6 +346,8 @@ public:
     static const int REMOVE_WHITE = 1;       ///< remove transparent color treated as transparent white
     static const int REMOVE_BLACK = 2;       ///< remove transparent color treated as transparent black
 
+    static const bool HAS_GETCOLOR = mtools::GetColorSelector<LatticeObj>::has_getColor;
+    static const bool HAS_GETIMAGE = mtools::GetImageSelector<LatticeObj, unsigned char>::has_getImage;
 
     /**
      * Constructor. Set the lattice object that will be drawn. 
@@ -364,7 +356,7 @@ public:
      **/
     LatticeDrawer(LatticeObj * obj) : _g_requestAbort(0), _g_current_quality(0), _g_obj(obj), _g_drawingtype(TYPEPIXEL), _g_reqdrawtype(TYPEPIXEL), _g_imSize(201, 201), _g_r(-100.5, 100.5, -100.5, 100.5), _g_redraw_im(true), _g_redraw_pix(true), _g_removeColor(REMOVE_NOTHING), _g_opacify(1.0f)
 		{
-        static_assert(mtools::metaprog::has_getColor<LatticeObj, mtools::RGBc, mtools::iVec2>::value, "The object T must be implement a 'RGBc getColor(iVec2 pos)' method.");
+        static_assert((HAS_GETCOLOR || HAS_GETIMAGE), "No compatible getColor / getImage / operator() method found...");
         _initInt16Buf();
         domainFull();
         if (hasImage()) { setImageType(TYPEIMAGE); } // use images by default if available.
@@ -428,7 +420,7 @@ public:
      **/
     bool hasImage() const
         {
-        return metaprog::has_getImage<LatticeObj, const Img<unsigned char>*, mtools::iVec2, mtools::iVec2>::value;
+        return HAS_GETIMAGE;
         }
 
 
@@ -750,7 +742,8 @@ void _qualityPixelDraw() const
 inline RGBc getColor(iVec2 pos)
     {
     if (!_g_domR.isInside(pos)) return RGBc::c_TransparentWhite;
-    return _g_obj->getColor(pos);
+    void * data = nullptr;
+    return mtools::GetColorSelector<LatticeObj>::call(*_g_obj, pos, data);
     }
 
 
@@ -1253,8 +1246,10 @@ inline const Img<unsigned char > * _getimage(int64 i, int64 j, int lx, int ly, m
     {
     const iVec2 pos(i, j);
     if (!_g_domR.isInside(pos)) return nullptr;
-    return _g_obj->getImage(pos, { lx, ly });
+    void * data = nullptr;
+    return mtools::GetImageSelector<LatticeObj, unsigned char>::call(*_g_obj, pos, { lx, ly }, data);
     }
+
 
 /* fallback method when LatticeObj does not implement getImage() method */
 inline const Img<unsigned char> * _getimage(int64 i, int64 j, int lx, int ly, mtools::metaprog::dummy<false> D)
@@ -1262,6 +1257,8 @@ inline const Img<unsigned char> * _getimage(int64 i, int64 j, int lx, int ly, mt
     MTOOLS_INSURE(false);
     return(nullptr);
     }
+
+
 
 
 /* improve the quality of the image */
@@ -1282,7 +1279,7 @@ void _improveImage(int maxtime_ms)
 					if (_exact_qbuf(i,j) == 0) // site must be redrawn
 						{
                         --_exact_Q0;
-                        const Img<unsigned char>  * spr = _getimage(_exact_r.min[0] + i, _exact_r.min[1] + j, _exact_sx, _exact_sy, metaprog::dummy< metaprog::has_getImage<LatticeObj, const Img<unsigned char>*, mtools::iVec2, mtools::iVec2>::value >());
+                        const Img<unsigned char>  * spr = _getimage(_exact_r.min[0] + i, _exact_r.min[1] + j, _exact_sx, _exact_sy, metaprog::dummy< HAS_GETIMAGE >());
                         if (spr == nullptr) { _exact_qbuf(i, j) = 3; ++_exact_Q23; } // no image, don't do anything
                         else
                             {
@@ -1325,7 +1322,7 @@ void _improveImage(int maxtime_ms)
 					if (_exact_qbuf(i,j) == 1) // site must be redrawn
 						{
                         _exact_Q23++;
-                        const Img<unsigned char>  * spr = _getimage(_exact_r.min[0] + i, _exact_r.min[1] + j, _exact_sx, _exact_sy, metaprog::dummy< metaprog::has_getImage<LatticeObj, const Img<unsigned char>*, mtools::iVec2, mtools::iVec2>::value >());
+                        const Img<unsigned char>  * spr = _getimage(_exact_r.min[0] + i, _exact_r.min[1] + j, _exact_sx, _exact_sy, metaprog::dummy< HAS_GETIMAGE >());
                         if (spr == nullptr) { _exact_qbuf(i, j) = 3; } // no image (a change in the lattice occured betwen phase 0 and 1) don't do anything
                         else
                             {

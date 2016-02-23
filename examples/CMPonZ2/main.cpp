@@ -173,7 +173,7 @@ void deleteBox(SiteZ2Box * root) { delete[] root; }
 
 
 
-MT2004_64 gen(0);
+MT2004_64 gen;
 
 SiteZ2Box * Torus;
 
@@ -278,11 +278,11 @@ void test()
     cout << "done in " << Chronometer() << "ms\n\n";
 
     Plotter2D P;
-    auto L4 = makePlot2DLattice(LatticeObj<color4>::get(), "Largest Stabilizer"); P[L4]; L4.opacity(0.8f);
-    auto L3 = makePlot2DLattice(LatticeObj<color3>::get(), "Top Stabilizers"); P[L3]; L3.opacity(0.8f);
-    auto L2 = makePlot2DLattice(LatticeObj<color2>::get(), "Stabilizers"); P[L2]; L2.opacity(0.8f);
-    auto L1 = makePlot2DLattice(LatticeObj<color1>::get(), "Largest cluster"); P[L1];
-    auto L0 = makePlot2DLattice(LatticeObj<color0>::get(), "Clusters"); P[L0];
+    auto L4 = makePlot2DLattice(color4, "Largest Stabilizer"); P[L4]; L4.opacity(0.8f);
+    auto L3 = makePlot2DLattice(color3, "Top Stabilizers"); P[L3]; L3.opacity(0.8f);
+    auto L2 = makePlot2DLattice(color2, "Stabilizers"); P[L2]; L2.opacity(0.8f);
+    auto L1 = makePlot2DLattice(color1, "Largest cluster"); P[L1];
+    auto L0 = makePlot2DLattice(color0, "Clusters"); P[L0];
 
     int m = std::max<int>((LX / 1000), (LY / 1000));
     if (m > 1) { P.setDrawingSize(LX/m, LY/m); P.viewZoomFactor(m); } else { P.setDrawingSize(LX, LY); }

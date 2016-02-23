@@ -29,36 +29,41 @@ Grid_basic<2, siteInfo> G;      // the grid
 MT2004_64 gen;                  // random generator
 Img<unsigned char> image;       // image for detailled plot
 
-// site are colored w.r.t. the local time of the walk.
-RGBc colorLERRW(iVec2 pos)
+
+
+struct LERRWPlot
     {
-    const siteInfo * S = G.peek(pos);
-    if ((S == nullptr) || (S->V == 0)) return RGBc::c_TransparentWhite;
-    return RGBc::jetPaletteLog(S->V, 0, maxV, 1.2); // light logarithmic scale
-    }
+    // site are colored w.r.t. the local time of the walk.
+    static RGBc getColor(iVec2 pos)
+        {
+        const siteInfo * S = G.peek(pos);
+        if ((S == nullptr) || (S->V == 0)) return RGBc::c_TransparentWhite;
+        return RGBc::jetPaletteLog(S->V, 0, maxV, 1.2); // light logarithmic scale
+        }
 
 
-/* detail : image associated with a site */
-const Img<unsigned char> * imageLERRW(mtools::iVec2 p, mtools::iVec2 size)
-    {
-    const siteInfo * S = G.peek(p);
-    if ((S == nullptr) || (S->V == 0)) return nullptr;
-    EdgeSiteImage ES;
-    if (pos == p) { ES.bkColor(RGBc::c_Black.getOpacity(0.5));  }
-    ES.site(true, RGBc::jetPaletteLog(S->V, 0, maxV, 1.2));
-    ES.text(mtools::toString(S->V)).textColor(RGBc::c_White);
-    double right = S->right;                       
-    double up = S->up;                            
-    double left = G(p.X() - 1, p.Y()).right; 
-    double down = G(p.X(), p.Y() - 1).up;
-    if (up > 1.0) { ES.up(ES.EDGE, RGBc::jetPaletteLog(up/maxE, 1.2)); ES.textup(mtools::toString((int64)((up-1)/delta))); }
-    if (down > 1.0) { ES.down(ES.EDGE, RGBc::jetPaletteLog(down / maxE, 1.2)); }
-    if (left > 1.0) { ES.left(ES.EDGE, RGBc::jetPaletteLog(left / maxE, 1.2)); ES.textleft(mtools::toString((int64)((left - 1) / delta))); }
-    if (right > 1.0) { ES.right(ES.EDGE, RGBc::jetPaletteLog(right / maxE, 1.2)); }
-    ES.makeImage(image, size);
-    return(&image);
-    }
+    /* detail : image associated with a site */
+    static const Img<unsigned char> * getImage(mtools::iVec2 p, mtools::iVec2 size)
+        {
+        const siteInfo * S = G.peek(p);
+        if ((S == nullptr) || (S->V == 0)) return nullptr;
+        EdgeSiteImage ES;
+        if (pos == p) { ES.bkColor(RGBc::c_Black.getOpacity(0.5)); }
+        ES.site(true, RGBc::jetPaletteLog(S->V, 0, maxV, 1.2));
+        ES.text(mtools::toString(S->V)).textColor(RGBc::c_White);
+        double right = S->right;
+        double up = S->up;
+        double left = G(p.X() - 1, p.Y()).right;
+        double down = G(p.X(), p.Y() - 1).up;
+        if (up > 1.0) { ES.up(ES.EDGE, RGBc::jetPaletteLog(up / maxE, 1.2)); ES.textup(mtools::toString((int64)((up - 1) / delta))); }
+        if (down > 1.0) { ES.down(ES.EDGE, RGBc::jetPaletteLog(down / maxE, 1.2)); }
+        if (left > 1.0) { ES.left(ES.EDGE, RGBc::jetPaletteLog(left / maxE, 1.2)); ES.textleft(mtools::toString((int64)((left - 1) / delta))); }
+        if (right > 1.0) { ES.right(ES.EDGE, RGBc::jetPaletteLog(right / maxE, 1.2)); }
+        ES.makeImage(image, size);
+        return(&image);
+        }
 
+    };
 
 // Simulate the LERRW with reinforcment parameter delta for steps unit of time.
 void makeLERRW(uint64 steps, double d)
@@ -130,7 +135,7 @@ void makeLERRW(uint64 steps, double d)
     //G.save(fn); // save the grid in fn
     //cout << "- saved in file " << fn << "\n";
     Plotter2D Plotter;
-    auto L = makePlot2DLattice(LatticeObjImage<colorLERRW,imageLERRW>::get(),std::string("LERRW-d") + mtools::toString(delta));
+    auto L = makePlot2DLattice((LERRWPlot*)nullptr,std::string("LERRW-d") + mtools::toString(delta));
     L.setImageType(L.TYPEIMAGE);
     Plotter[L];
     Plotter.gridObject(true)->setUnitCells();

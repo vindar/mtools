@@ -49,57 +49,61 @@ void * hintpeek = nullptr;          // used for safe peeking of the grid.
 double maxd = 0.0;                  // current maximal distance from the origin of any particule center.
 
 
-/* return the color of a site : color of the largest index of any particle
-   whose center lie inside that unit square */
-inline RGBc getColor(iVec2 pos)
+struct eDLAPLot
     {
-    auto p = Grid.peek(pos,hintpeek);
-    if (p == nullptr) return RGBc::c_TransparentBlack;
-    int64 maxV = p->N[0];
-    if (maxV == 0) return RGBc::c_TransparentBlack;
-    for(size_t t = 1; t < NBPARTICLESPERBOX; t++)
+
+    
+    /* return the color of a site : color of the largest index of any particle
+       whose center lie inside that unit square */
+    inline RGBc getColor(iVec2 pos)
         {
-        auto V = p->N[t];
-        if (V == 0) return RGBc::jetPalette(maxV, 1, NN); else if (V > maxV) { maxV = V; }
+        auto p = Grid.peek(pos, hintpeek);
+        if (p == nullptr) return RGBc::c_TransparentBlack;
+        int64 maxV = p->N[0];
+        if (maxV == 0) return RGBc::c_TransparentBlack;
+        for (size_t t = 1; t < NBPARTICLESPERBOX; t++)
+            {
+            auto V = p->N[t];
+            if (V == 0) return RGBc::jetPalette(maxV, 1, NN); else if (V > maxV) { maxV = V; }
+            }
+        return RGBc::jetPalette(maxV, 1, NN);
         }
-    return RGBc::jetPalette(maxV, 1, NN);
-    }
 
 
-inline void _drawBalls(int64 i, int64 j, const fBox2 & R, const iVec2 & size, bool & b)
-    {
-    auto p = Grid.peek({i,j}, hintpeek);
-    if ((p == nullptr)||(p->N[0] == 0)) return;
-    if (!b) { b = true; im.resize((int)size.X(), (int)size.Y(), 1, 4); im.clear(RGBc::c_TransparentWhite); }
-    im.fBox2_draw_circle(R, p->pos[0], RAD, RGBc::jetPalette(p->N[0], 1, NN), 1.0, true);
-    for (size_t t = 1; t < NBPARTICLESPERBOX; t++)
+    inline void _drawBalls(int64 i, int64 j, const fBox2 & R, const iVec2 & size, bool & b)
         {
-        if (p->N[t] == 0) return;
-        im.fBox2_draw_circle(R, p->pos[t], RAD, RGBc::jetPalette(p->N[t], 1, NN), 1.0, true);
+        auto p = Grid.peek({ i,j }, hintpeek);
+        if ((p == nullptr) || (p->N[0] == 0)) return;
+        if (!b) { b = true; im.resize((int)size.X(), (int)size.Y(), 1, 4); im.clear(RGBc::c_TransparentWhite); }
+        im.fBox2_draw_circle(R, p->pos[0], RAD, RGBc::jetPalette(p->N[0], 1, NN), 1.0, true);
+        for (size_t t = 1; t < NBPARTICLESPERBOX; t++)
+            {
+            if (p->N[t] == 0) return;
+            im.fBox2_draw_circle(R, p->pos[t], RAD, RGBc::jetPalette(p->N[t], 1, NN), 1.0, true);
+            }
         }
-    }
 
-/* draw a site */
-inline const Img<unsigned char> * getImage(mtools::iVec2 pos, mtools::iVec2 size)
-    {
-    bool b = false;
-    fBox2 R((double)pos.X() - 0.5, (double)pos.X() + 0.5, (double)pos.Y() - 0.5, (double)pos.Y() + 0.5);
-    const int64 i = pos.X();
-    const int64 j = pos.Y();
-    _drawBalls(i, j-1, R,size,b);
-    _drawBalls(i, j, R, size, b);
-    _drawBalls(i, j+1, R, size, b);
-    _drawBalls(i-1, j - 1, R, size, b);
-    _drawBalls(i-1, j, R, size, b);
-    _drawBalls(i-1, j + 1, R, size, b);
-    _drawBalls(i + 1, j - 1, R, size, b);
-    _drawBalls(i + 1, j, R, size, b);
-    _drawBalls(i + 1, j + 1, R, size, b);
-    if (b) return &im;
-    return nullptr;
-    }
+    /* draw a site */
+    inline const Img<unsigned char> * getImage(mtools::iVec2 pos, mtools::iVec2 size)
+        {
+        bool b = false;
+        fBox2 R((double)pos.X() - 0.5, (double)pos.X() + 0.5, (double)pos.Y() - 0.5, (double)pos.Y() + 0.5);
+        const int64 i = pos.X();
+        const int64 j = pos.Y();
+        _drawBalls(i, j - 1, R, size, b);
+        _drawBalls(i, j, R, size, b);
+        _drawBalls(i, j + 1, R, size, b);
+        _drawBalls(i - 1, j - 1, R, size, b);
+        _drawBalls(i - 1, j, R, size, b);
+        _drawBalls(i - 1, j + 1, R, size, b);
+        _drawBalls(i + 1, j - 1, R, size, b);
+        _drawBalls(i + 1, j, R, size, b);
+        _drawBalls(i + 1, j + 1, R, size, b);
+        if (b) return &im;
+        return nullptr;
+        }
 
-
+    };
 
 /* move uniformly on a circle of radius r around of pos */
 inline void move(fVec2 & pos, double r)
@@ -199,7 +203,7 @@ int main(int argc, char *argv[])
     NN = 1;
     Grid(0, 0).N[0] = 1;  Grid(0, 0).pos[0] = { 0.0,0.0 }; // initial particle in the cluster
     Plotter2D P;
-    auto L = makePlot2DLattice(LatticeObjImage<getColor,getImage>::get(), "non-Lattice eDLA"); 
+    auto L = makePlot2DLattice((eDLAPLot*)nullptr, "non-Lattice eDLA");
     P[L];
     P.autoredraw(autoredraw);
     P.startPlot();
