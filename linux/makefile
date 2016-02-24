@@ -42,6 +42,8 @@ CHECKCOMPILERGCC = $(shell $(CXX) --version | grep 'GCC\|gcc\|g++')
 ifneq ("$(CHECKCOMPILERGCC)","")
 # gcc specific options
     LDFLAGS_TEST += -latomic -fopenmp
+    CXXFLAGS_TEST += -fopenmp
+    CXXFLAGS_MTOOLS += -fopenmp
 endif
 
 ADDLIBDIR_TEST =
