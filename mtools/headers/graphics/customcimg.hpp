@@ -38,9 +38,8 @@
 // use libjpeg
 #define cimg_use_jpeg
 
-// use openmp
-//#if defined __GNUC__ || defined __clang__ (does not to work directly with CLANG yet)
-#if defined __GNUC__
+// use openmp (only for GCC for the time being)
+#if defined __GNUC__ && !defined __clang__
 #define cimg_use_openmp
 #endif
 
