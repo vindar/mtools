@@ -150,26 +150,26 @@ namespace mtools
                     std::lock_guard<std::recursive_mutex> lock(_muthread);
                     _startThread(); // try to start the thread if not up
                     if (status() != THREAD_ON) { MTOOLS_DEBUG(std::string("Cannot run the method: thread has status ") + mtools::toString(status())); return false; }
-                    std::mutex tmpmutex;
-                    std::unique_lock<std::mutex> lck(tmpmutex);
+                    std::unique_lock<std::mutex> lck(_cvmut);
                     Msg ms(proxycall, Msg::RUN_MSG);
                     _msgQueue.pushTop(&ms);
                     Fl::awake(&FltkSupervisor::_processMsgCB, nullptr);
                     Fl::awake();
-                    int c = 0;
                     while (!ms.status)
                         {
-                        _cv.wait_for(lck, std::chrono::milliseconds(1));
-                        if (!ms.status) { Fl::awake(); }
-                        if (c++ > 100) { MTOOLS_DEBUG("... runInFltk() hanging ..."); c = 0; }
+                        _cv.wait_for(lck, std::chrono::milliseconds(100));
+                        if (!ms.status) 
+                            { 
+                            Fl::awake(); 
+                            MTOOLS_DEBUG("... runInFltk() hanging ...");
+                            }
                         }
                     MTOOLS_DEBUG("run completed.");
                     return true;
                     }
 
 
-                /* create an object in fltk, start the thread if needed */
-
+              
 
                 /**
                  * Creates an object in the fltk thread.
@@ -191,18 +191,19 @@ namespace mtools
                     std::lock_guard<std::recursive_mutex> lock(_muthread);
                     _startThread(); // try to start the thread if not up
                     if (status() != THREAD_ON) { MTOOLS_DEBUG(std::string("Cannot construct the object: thread has status ") + mtools::toString(status())); return false; }
-                    std::mutex tmpmutex;
-                    std::unique_lock<std::mutex> lck(tmpmutex);
+                    std::unique_lock<std::mutex> lck(_cvmut);
                     Msg ms(proxy, Msg::NEW_MSG); // create the message
                     _msgQueue.pushTop(&ms);
                     Fl::awake(&FltkSupervisor::_processMsgCB, nullptr);
                     Fl::awake();
-                    int c = 0;
                     while(!ms.status)
                         {
-                        _cv.wait_for(lck, std::chrono::milliseconds(1));
-                        if (!ms.status) { Fl::awake(); }
-                        if (c++ > 100) { MTOOLS_DEBUG("... newInFltk() hanging ..."); c = 0; }
+                        _cv.wait_for(lck, std::chrono::milliseconds(100));
+                        if (!ms.status) 
+                            { 
+                            Fl::awake(); 
+                            MTOOLS_DEBUG("... newInFltk() hanging ...");
+                            }
                         }
                     MTOOLS_DEBUG("Construction completed.");
                     return true;
@@ -244,18 +245,19 @@ namespace mtools
                             }
                         return false;
                         }
-                    std::mutex tmpmutex;
-                    std::unique_lock<std::mutex> lck(tmpmutex);
+                    std::unique_lock<std::mutex> lck(_cvmut);
                     Msg ms(proxy, Msg::DELETE_MSG); // create the message                
                     _msgQueue.pushTop(&ms);
                     Fl::awake(&FltkSupervisor::_processMsgCB, nullptr);
                     Fl::awake();
-                    int c = 0;
                     while (!ms.status)
                         {
-                        _cv.wait_for(lck, std::chrono::milliseconds(1));
-                        if (!ms.status) { Fl::awake(); }
-                        if (c++ > 100) { MTOOLS_DEBUG("... deleteInFltk() hanging ..."); c = 0; }
+                        _cv.wait_for(lck, std::chrono::milliseconds(100));
+                        if (!ms.status) 
+                            { 
+                            Fl::awake(); 
+                            MTOOLS_DEBUG("... deleteInFltk() hanging ...");
+                            }
                         }
                     MTOOLS_DEBUG("destruction completed.");
                     return true;
@@ -289,15 +291,18 @@ namespace mtools
                 void waitThreadReady()
                     {
                     std::lock_guard<std::recursive_mutex> lock(_muthread); // only one operation at a time, status() is atomic
-                    std::mutex tmpmutex;
-                    std::unique_lock<std::mutex> lck(tmpmutex);
+                    std::unique_lock<std::mutex> lck(_cvmut);
+                    MTOOLS_DEBUG("Waiting for confirmation...");
                     Fl::awake(&FltkSupervisor::_initCB, nullptr);
                     Fl::awake();
-                    int c = 0;
                     while(status() != THREAD_ON)
                         {
-                        _cv.wait_for(lck, std::chrono::milliseconds(1));
-                        if (c++ > 100) { MTOOLS_DEBUG("...waitThreadReady() hanging ..."); c = 0; }
+                        _cv.wait_for(lck, std::chrono::milliseconds(100));
+                        if (status() != THREAD_ON) 
+                            { 
+                            MTOOLS_DEBUG("confirmation is lagging...");
+                            Fl::awake();
+                            }
                         }
                     }
 
@@ -328,7 +333,7 @@ namespace mtools
                     _exitCode = code;
                     _forcedExit = true;
                     _status = THREAD_STOPPING;
-                    while (1) { std::this_thread::sleep_for(std::chrono::seconds(1)); }
+                    while (1) { std::this_thread::sleep_for(std::chrono::seconds(1)); } // infinite loop
                 #else
                     std::exit(code);
                 #endif                   
@@ -357,11 +362,16 @@ namespace mtools
                         MTOOLS_DEBUG(" **** START: FLTK Loop " + toString(_fltkid) + " ****.");
                         Fl::lock();
                         Fl::args(0, nullptr);
+                        Fl::awake();
                         while (status() != THREAD_STOPPING)
                             {
-                            Fl::wait(0.1);
+                            Fl::wait(1);
                             _processMsg();
-                            if (status() == THREAD_NOT_STARTED) Fl::awake(&FltkSupervisor::_initCB, nullptr);
+                            if (status() == THREAD_NOT_STARTED)
+                                {
+                                MTOOLS_DEBUG("... sending init signal again");
+                                Fl::awake(&FltkSupervisor::_initCB, nullptr);
+                                }
                             }
                         Fl::unlock();
                         MTOOLS_DEBUG(" **** STOP: FLTK Loop " + toString(_fltkid) + " ****.");
@@ -434,6 +444,7 @@ namespace mtools
                 /* set the thread as active */
                 void _init()
                     {
+                    std::unique_lock<std::mutex>(_cvmut);
                     if (status() == THREAD_NOT_STARTED) { _status = THREAD_ON; }
                     _cv.notify_all();
                     }
@@ -457,6 +468,7 @@ namespace mtools
                             case Msg::RUN_MSG: { ((IndirectCall*)q)->call(); break; }
                             default: { MTOOLS_DEBUG("fltkSupervisor::_processMsg, unknown message !"); return; }
                             }
+                        std::unique_lock<std::mutex>(_cvmut);
                         m->status = 1;
                         _cv.notify_all();
                         }
@@ -464,6 +476,7 @@ namespace mtools
 
 
                 std::condition_variable _cv;                 // condition variable used for signaling the completion of an operation
+                std::mutex _cvmut;                           // mutex associated with the condition variable
                 MsgQueue _msgQueue;                          // message queue
                 std::atomic<int>                _status;     // thread status
                 std::atomic<bool>               _forcedExit; // flag indicating if exit was forced with fltkExit()
