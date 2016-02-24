@@ -157,7 +157,7 @@ namespace mtools
                     Fl::awake();
                     while (!ms.status)
                         {
-                        _cv.wait_for(lck, std::chrono::milliseconds(100));
+                        _cv.wait_for(lck, std::chrono::milliseconds(50));
                         if (!ms.status) 
                             { 
                             Fl::awake(); 
@@ -198,7 +198,7 @@ namespace mtools
                     Fl::awake();
                     while(!ms.status)
                         {
-                        _cv.wait_for(lck, std::chrono::milliseconds(100));
+                        _cv.wait_for(lck, std::chrono::milliseconds(50));
                         if (!ms.status) 
                             { 
                             Fl::awake(); 
@@ -252,7 +252,7 @@ namespace mtools
                     Fl::awake();
                     while (!ms.status)
                         {
-                        _cv.wait_for(lck, std::chrono::milliseconds(100));
+                        _cv.wait_for(lck, std::chrono::milliseconds(50));
                         if (!ms.status) 
                             { 
                             Fl::awake(); 
@@ -274,6 +274,7 @@ namespace mtools
                     std::lock_guard<std::recursive_mutex> lock(_muthread);
                     if (status() != THREAD_ON) { MTOOLS_DEBUG(std::string("Calling FltkSupervisor::stopThread() while thread has status ") + mtools::toString(status())); return; }
                     MTOOLS_DEBUG("Stopping the FLTK thread...");
+                    Fl::awake();
                     _status = THREAD_STOPPING;
             #ifdef MTOOLS_SWAP_THREADS_FLAG
                     while (status() == THREAD_STOPPING) { std::this_thread::yield(); }
@@ -297,7 +298,7 @@ namespace mtools
                     Fl::awake();
                     while(status() != THREAD_ON)
                         {
-                        _cv.wait_for(lck, std::chrono::milliseconds(100));
+                        _cv.wait_for(lck, std::chrono::milliseconds(50));
                         if (status() != THREAD_ON) 
                             { 
                             MTOOLS_DEBUG("confirmation is lagging...");
@@ -366,11 +367,14 @@ namespace mtools
                         while (status() != THREAD_STOPPING)
                             {
                             Fl::wait(1);
-                            _processMsg();
-                            if (status() == THREAD_NOT_STARTED)
+                            if (status() != THREAD_STOPPING)
                                 {
-                                MTOOLS_DEBUG("... sending init signal again");
-                                Fl::awake(&FltkSupervisor::_initCB, nullptr);
+                                _processMsg();
+                                if (status() == THREAD_NOT_STARTED)
+                                    {
+                                    MTOOLS_DEBUG("... sending init signal again");
+                                    Fl::awake(&FltkSupervisor::_initCB, nullptr);
+                                    }
                                 }
                             }
                         Fl::unlock();
