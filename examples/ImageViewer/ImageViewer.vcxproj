@@ -99,6 +99,7 @@
       <PreprocessorDefinitions>;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CAIRO_LIB)/source/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(FREETYPE_LIB)/source/include/freetype/;$(LIBJPEG_LIB)/source/;$(LIBPNG_LIB)/source/;$(MTOOLS_LIB)/mtools/headers/;$(PIXMAN_LIB)/source/pixman/;$(ZLIB_LIB)/source/</AdditionalIncludeDirectories>
       <AdditionalOptions>/Zm400 %(AdditionalOptions)</AdditionalOptions>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -107,7 +108,7 @@
       <AdditionalDependencies>cairod.lib;fltkd.lib;fltkgld.lib;fltkimagesd.lib;fltkjpegd.lib;freetyped.lib;libpngd.lib;mtools32d.lib;pixmand.lib;zlibd.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
     </Link>
-	<Manifest>
+    <Manifest>
       <EnableDpiAwareness>true</EnableDpiAwareness>
     </Manifest>
   </ItemDefinitionGroup>
@@ -119,6 +120,7 @@
       <PreprocessorDefinitions>;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CAIRO_LIB)/source/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(FREETYPE_LIB)/source/include/freetype/;$(LIBJPEG_LIB)/source/;$(LIBPNG_LIB)/source/;$(MTOOLS_LIB)/mtools/headers/;$(PIXMAN_LIB)/source/pixman/;$(ZLIB_LIB)/source/</AdditionalIncludeDirectories>
       <AdditionalOptions>/Zm400 %(AdditionalOptions)</AdditionalOptions>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -127,7 +129,7 @@
       <AdditionalDependencies>cairod.lib;fltkd.lib;fltkgld.lib;fltkimagesd.lib;fltkjpegd.lib;freetyped.lib;libpngd.lib;mtools64d.lib;pixmand.lib;zlibd.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
     </Link>
-	<Manifest>
+    <Manifest>
       <EnableDpiAwareness>true</EnableDpiAwareness>
     </Manifest>
   </ItemDefinitionGroup>
@@ -142,6 +144,7 @@
       <AdditionalIncludeDirectories>$(CAIRO_LIB)/source/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(FREETYPE_LIB)/source/include/freetype/;$(LIBJPEG_LIB)/source/;$(LIBPNG_LIB)/source/;$(MTOOLS_LIB)/mtools/headers/;$(PIXMAN_LIB)/source/pixman/;$(ZLIB_LIB)/source/</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
       <AdditionalOptions>/Zm400 %(AdditionalOptions)</AdditionalOptions>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -152,7 +155,7 @@
       <AdditionalDependencies>cairo.lib;fltk.lib;fltkgl.lib;fltkimages.lib;fltkjpeg.lib;freetype.lib;libpng.lib;mtools32.lib;pixman.lib;zlib.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
     </Link>
-	<Manifest>
+    <Manifest>
       <EnableDpiAwareness>true</EnableDpiAwareness>
     </Manifest>
   </ItemDefinitionGroup>
@@ -167,6 +170,7 @@
       <AdditionalIncludeDirectories>$(CAIRO_LIB)/source/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(FREETYPE_LIB)/source/include/freetype/;$(LIBJPEG_LIB)/source/;$(LIBPNG_LIB)/source/;$(MTOOLS_LIB)/mtools/headers/;$(PIXMAN_LIB)/source/pixman/;$(ZLIB_LIB)/source/</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
       <AdditionalOptions>/Zm400 %(AdditionalOptions)</AdditionalOptions>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -177,7 +181,7 @@
       <AdditionalDependencies>cairo.lib;fltk.lib;fltkgl.lib;fltkimages.lib;fltkjpeg.lib;freetype.lib;libpng.lib;mtools64.lib;pixman.lib;zlib.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
     </Link>
-	<Manifest>
+    <Manifest>
       <EnableDpiAwareness>true</EnableDpiAwareness>
     </Manifest>
   </ItemDefinitionGroup>

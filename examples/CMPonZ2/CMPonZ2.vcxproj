@@ -99,6 +99,7 @@
       <PreprocessorDefinitions>;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CAIRO_LIB)/source/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(FREETYPE_LIB)/source/include/freetype/;$(LIBJPEG_LIB)/source/;$(LIBPNG_LIB)/source/;$(MTOOLS_LIB)/mtools/headers/;$(PIXMAN_LIB)/source/pixman/;$(ZLIB_LIB)/source/</AdditionalIncludeDirectories>
       <AdditionalOptions>/Zm400 %(AdditionalOptions)</AdditionalOptions>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -109,7 +110,7 @@
     </Link>
     <Manifest>
       <EnableDpiAwareness>true</EnableDpiAwareness>
-    </Manifest>	
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -119,6 +120,7 @@
       <PreprocessorDefinitions>;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CAIRO_LIB)/source/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(FREETYPE_LIB)/source/include/freetype/;$(LIBJPEG_LIB)/source/;$(LIBPNG_LIB)/source/;$(MTOOLS_LIB)/mtools/headers/;$(PIXMAN_LIB)/source/pixman/;$(ZLIB_LIB)/source/</AdditionalIncludeDirectories>
       <AdditionalOptions>/Zm400 %(AdditionalOptions)</AdditionalOptions>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -129,7 +131,7 @@
     </Link>
     <Manifest>
       <EnableDpiAwareness>true</EnableDpiAwareness>
-    </Manifest>	
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -142,6 +144,7 @@
       <AdditionalIncludeDirectories>$(CAIRO_LIB)/source/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(FREETYPE_LIB)/source/include/freetype/;$(LIBJPEG_LIB)/source/;$(LIBPNG_LIB)/source/;$(MTOOLS_LIB)/mtools/headers/;$(PIXMAN_LIB)/source/pixman/;$(ZLIB_LIB)/source/</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
       <AdditionalOptions>/Zm400 %(AdditionalOptions)</AdditionalOptions>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -167,6 +170,7 @@
       <AdditionalIncludeDirectories>$(CAIRO_LIB)/source/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(FREETYPE_LIB)/source/include/freetype/;$(LIBJPEG_LIB)/source/;$(LIBPNG_LIB)/source/;$(MTOOLS_LIB)/mtools/headers/;$(PIXMAN_LIB)/source/pixman/;$(ZLIB_LIB)/source/</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
       <AdditionalOptions>/Zm400 %(AdditionalOptions)</AdditionalOptions>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

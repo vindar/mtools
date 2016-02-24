@@ -183,7 +183,8 @@ vcxprojFile = r"""<?xml version="1.0" encoding="utf-8"?>
       <PrecompiledHeader>Use</PrecompiledHeader> <WarningLevel>Level3</WarningLevel> <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CAIRO_LIB)/source/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(FREETYPE_LIB)/source/include/freetype/;$(LIBJPEG_LIB)/source/;$(LIBPNG_LIB)/source/;$(MTOOLS_LIB)/mtools/headers/;$(PIXMAN_LIB)/source/pixman/;$(ZLIB_LIB)/source/</AdditionalIncludeDirectories>
-	  <AdditionalOptions>/Zm400 %(AdditionalOptions)</AdditionalOptions>	  	  
+	  <AdditionalOptions>/Zm400 %(AdditionalOptions)</AdditionalOptions>
+	  <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem> <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -200,7 +201,8 @@ vcxprojFile = r"""<?xml version="1.0" encoding="utf-8"?>
       <PrecompiledHeader>Use</PrecompiledHeader> <WarningLevel>Level3</WarningLevel> <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CAIRO_LIB)/source/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(FREETYPE_LIB)/source/include/freetype/;$(LIBJPEG_LIB)/source/;$(LIBPNG_LIB)/source/;$(MTOOLS_LIB)/mtools/headers/;$(PIXMAN_LIB)/source/pixman/;$(ZLIB_LIB)/source/</AdditionalIncludeDirectories>
-	  <AdditionalOptions>/Zm400 %(AdditionalOptions)</AdditionalOptions>	  	  	  
+	  <AdditionalOptions>/Zm400 %(AdditionalOptions)</AdditionalOptions>
+	  <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem> <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -218,7 +220,8 @@ vcxprojFile = r"""<?xml version="1.0" encoding="utf-8"?>
       <PreprocessorDefinitions>;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CAIRO_LIB)/source/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(FREETYPE_LIB)/source/include/freetype/;$(LIBJPEG_LIB)/source/;$(LIBPNG_LIB)/source/;$(MTOOLS_LIB)/mtools/headers/;$(PIXMAN_LIB)/source/pixman/;$(ZLIB_LIB)/source/</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
-	  <AdditionalOptions>/Zm400 %(AdditionalOptions)</AdditionalOptions>	  	  	  	  
+	  <AdditionalOptions>/Zm400 %(AdditionalOptions)</AdditionalOptions>
+	  <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem> <GenerateDebugInformation>true</GenerateDebugInformation> <EnableCOMDATFolding>true</EnableCOMDATFolding> <OptimizeReferences>true</OptimizeReferences>
@@ -236,7 +239,8 @@ vcxprojFile = r"""<?xml version="1.0" encoding="utf-8"?>
       <PreprocessorDefinitions>;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CAIRO_LIB)/source/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(FREETYPE_LIB)/source/include/freetype/;$(LIBJPEG_LIB)/source/;$(LIBPNG_LIB)/source/;$(MTOOLS_LIB)/mtools/headers/;$(PIXMAN_LIB)/source/pixman/;$(ZLIB_LIB)/source/</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
-	  <AdditionalOptions>/Zm400 %(AdditionalOptions)</AdditionalOptions>	  	  	  	  	  
+	  <AdditionalOptions>/Zm400 %(AdditionalOptions)</AdditionalOptions>
+	  <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem> <GenerateDebugInformation>true</GenerateDebugInformation> <EnableCOMDATFolding>true</EnableCOMDATFolding> <OptimizeReferences>true</OptimizeReferences>
