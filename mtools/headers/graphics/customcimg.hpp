@@ -38,6 +38,13 @@
 // use libjpeg
 #define cimg_use_jpeg
 
+// use openmp, but only with GCC or CLANG
+#if defined __GNUC__ || defined __clang__
+#define cimg_use_openmp
+#endif
+
+
+
 #if defined (_MSC_VER) 
 #pragma warning( push )				// disable some warnings
 #pragma warning( disable : 4244 )	//
