@@ -106,6 +106,9 @@ namespace mtools
         static const int THREAD_STOPPING = 2;
         static const int THREAD_STOPPED = 3;
 
+        /* typedef for callback function for registerAtFltkExit() */
+        typedef void (*cbFltkExit)(void * data);
+
         }
 
 
@@ -202,6 +205,33 @@ namespace mtools
         return internals_fltkSupervisor::runInFltk(&proxycall);
         }
 
+
+    /**
+     * Registers a function that should be called when fltk exits().
+     * 
+     * The called are made in the reverse order of registration and they all happen after the fltk
+     * loop ends (i.e. no other fltk calls will be made). To unregister a function, use
+     * unregisterAtFltkExit() with the same arguments.
+     * 
+     * It is possible to register several time the same function with the same argument and it will
+     * be called as many times as it was registered.
+     *
+     * @param   cb              The function to register. Signature: void (*func)(void * data)
+     * @param [in,out]  data    Opaque date transmitted along.
+     **/
+    void registerAtFltkExit(internals_fltkSupervisor::cbFltkExit  cb, void * data);
+
+
+    /**
+     * Unregisters one or more functions previously registered by registerAtFltkExit(). This method
+     * unregister all callbacks with the same function and the same data.
+     *
+     * @param   cb              The function to unregister. Signature: void (*func)(void * data)
+     * @param [in,out]  data    The data that was passed along.
+     *
+     * @return  The number of callbacks successfully removed.
+     **/
+    int unregisterAtFltkExit(internals_fltkSupervisor::cbFltkExit  cb, void * data);
 
 
     }

@@ -129,6 +129,22 @@ namespace mtools
                     return true;
                     }
 
+                /* register a callback at exit */
+                void registerAtFltkExit(cbFltkExit  cb, void * data)
+                    {
+                    MTOOLS_DEBUG("Adding a callback to fltk exit list.");
+                    _exitCbList.push_back(std::pair<cbFltkExit, void *>(cb, data));
+                    }
+
+                int unregisterAtFltkExit(cbFltkExit  cb, void * data)
+                    {
+                    MTOOLS_DEBUG("Removing a callback from fltk exit list.");
+                    size_t s = _exitCbList.size();
+                    _exitCbList.remove(std::pair<cbFltkExit, void*>(cb, data));
+                    int n = (int)(s - _exitCbList.size());
+                    if (n == 0) MTOOLS_DEBUG("No matching call back found."); else MTOOLS_DEBUG(mtools::toString(n) + " matching callbacks removed.");
+                    return n;
+                    }
 
                 /**
                  * Executes a method inside the fltk thread.
@@ -377,8 +393,18 @@ namespace mtools
                                     }
                                 }
                             }
+                        MTOOLS_DEBUG(std::string(" **** fltk exit callback (") + mtools::toString(_exitCbList.size()) + ") ****.");
+                        int icb = 0;
+                        for (auto it = _exitCbList.begin(); it != _exitCbList.end(); ++it)
+                            {
+                            ++icb;
+                            MTOOLS_DEBUG(std::string("Calling callback ") + mtools::toString(icb) + "..." );
+                            (it->first)(it->second);
+                            MTOOLS_DEBUG("... done !");
+                            }
+                        _exitCbList.clear();
                         Fl::unlock();
-                        MTOOLS_DEBUG(" **** STOP: FLTK Loop " + toString(_fltkid) + " ****.");
+                        MTOOLS_DEBUG(" **** STOP: FLTK Loop " + mtools::toString(_fltkid) + " ****.");
                         _status = THREAD_STOPPED;
                         return;
                         }
@@ -489,6 +515,8 @@ namespace mtools
                 std::recursive_mutex            _muthread;   // mutex for thread operation
                 std::atomic<std::thread::id>    _fltkid;     // id of the FLTK thread
 
+                std::list<std::pair<cbFltkExit, void*> > _exitCbList; // list of exit callbacks
+
             };
 
 
@@ -514,6 +542,11 @@ namespace mtools
     void fltkExit(int code) { internals_fltkSupervisor::FltkSupervisor::getInst().first->fltkExit(code); }
 
     void exit(int code) { internals_fltkSupervisor::FltkSupervisor::getInst().first->exit(code); }
+
+    void registerAtFltkExit(internals_fltkSupervisor::cbFltkExit  cb, void * data) { internals_fltkSupervisor::FltkSupervisor::getInst().first->registerAtFltkExit(cb, data); }
+
+    int unregisterAtFltkExit(internals_fltkSupervisor::cbFltkExit  cb, void * data) { return internals_fltkSupervisor::FltkSupervisor::getInst().first->unregisterAtFltkExit(cb, data); }
+
 
     }
 
