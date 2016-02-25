@@ -154,7 +154,7 @@ namespace mtools
             {
             if (this->_len == 0) { return; }
             _e = ((this->_maxDomain - this->_minDomain) / this->_len);
-            if ((_e <= DBL_MIN * 2) || (_e <= DBL_MIN * 2) || (isnan(_e))) _e = 1.0;
+            if ((_e <= DBL_MIN * 2) || (_e <= DBL_MIN * 2) || (std::isnan(_e))) _e = 1.0;
             }
 
 
@@ -172,7 +172,7 @@ namespace mtools
             {
             if (this->_len == 0) { return; }
             _e = ((this->_maxDomain - this->_minDomain) / this->_len);
-            if ((_e <= DBL_MIN * 2) || (_e <= DBL_MIN * 2) || (isnan(_e))) _e = 1.0;
+            if ((_e <= DBL_MIN * 2) || (_e <= DBL_MIN * 2) || (std::isnan(_e))) _e = 1.0;
             }
 
 
@@ -214,7 +214,7 @@ namespace mtools
             if (!status)
                 {
                 double e = ((this->_maxDomain - this->_minDomain) / this->_len);
-                if ((e <= DBL_MIN * 2) || (e <= DBL_MIN * 2) || (isnan(e))) e = 1.0;
+                if ((e <= DBL_MIN * 2) || (e <= DBL_MIN * 2) || (std::isnan(e))) e = 1.0;
                 _e = e;
                 }
             _fd = status;
