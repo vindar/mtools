@@ -156,7 +156,7 @@ class ProgressImg
             }
 
 
-        // blit fast, image must have the exact same size
+        // blit, image must have the exact same size
         void blit(Img<unsigned char> & im)
             {
             size_t N = (size_t)_width*_height;
@@ -201,23 +201,22 @@ template<typename ObjType> class ThreadPixelDrawer
             _keepPrevious(false),
 
             _validParam(false),
-            _range(),
-            _temp_range(),
+            _range(fBox2()),
+            _temp_range(fBox2()),
             _im(nullptr),
             _temp_im(nullptr),
-            _subBox(),
-            _temp_subBox(),
+            _subBox(iBox2()),
+            _temp_subBox(iBox2()),
 
             _dens(0.0),
             _dlx(0.0), _dly(0.0),
             _is1to1(false),
-            _range1to1(),
+            _range1to1(iBox2()),
 
             _workPhase(WORK_NOTHING),
             _beginPhase(true),
 
             _msg(THREAD_READY)
-
             {
             static_assert(mtools::GetColorSelector<ObjType>::has_getColor, "No compatible getColor / getImage / operator() method found...");
             _th = new std::thread(&ThreadPixelDrawer::_threadProc, this);
@@ -387,13 +386,13 @@ template<typename ObjType> class ThreadPixelDrawer
         std::atomic<bool> _validParam;          // indicate if the parameter are valid.
 
         fBox2 _range;                           // the range
-        fBox2 _temp_range;         // and the temporary use to communicate with the thread.
+        std::atomic<fBox2> _temp_range;         // and the temporary use to communicate with the thread.
 
         ProgressImg* _im;                       // the image to draw onto
         std::atomic<ProgressImg*> _temp_im;     // and the temporary use to communicate with the thread.
 
         iBox2 _subBox;                          // part of the image to draw
-        iBox2 _temp_subBox;        // and the temporary use to communicate with the thread.
+        std::atomic<iBox2> _temp_subBox;        // and the temporary use to communicate with the thread.
 
         double _dens;                           // density : average number of sites per pixel
         double _dlx, _dly;                      // horizontal and vertical density (size of image pixel in real coord)
@@ -448,7 +447,9 @@ template<typename ObjType> class ThreadPixelDrawer
             {
             while (1)
                 {
+                std::cout << "thA\n";
                 _sleep();  // sleep until we have a msg to process
+                std::cout << "thB\n";
                 switch ((int)_msg)
                     {
                     case SIGNAL_QUIT: { _threadReady(); return; }
@@ -460,8 +461,11 @@ template<typename ObjType> class ThreadPixelDrawer
                     case SIGNAL_CONTINUOUSDRAWING_OFF: { _continuousDrawing = false; }
                     default: { MTOOLS_ERROR("wtf?"); }
                     }
+                std::cout << "thC\n";
                 _threadReady(); // indicate that the message was processed.
+                std::cout << "thD\n";
                 if (((bool)_active) && ((bool)_validParam)) _work(); // work until finished or we have a message to process
+                std::cout << "thE\n";
                 }
             }
 
@@ -469,6 +473,7 @@ template<typename ObjType> class ThreadPixelDrawer
         /* set the new parameter */
         void _setNewParam()
             {
+            std::cout << "set param\n";
             const int MIN_IMAGE_SIZE = 5;
             const double RANGE_MIN_VALUE = 1.0e-17;
             const double RANGE_MAX_VALUE = 1.0e17;
@@ -478,7 +483,7 @@ template<typename ObjType> class ThreadPixelDrawer
             if ((_im == nullptr) || (_im->width() < MIN_IMAGE_SIZE) || (_im->height() < MIN_IMAGE_SIZE)) { _quality = 0; _validParam = false; return; }   // make sure im is not nullptr and is big enough.
             if (_subBox.isEmpty()) { _subBox = iBox2(0, _im->width() - 1, 0, _im->height() - 1); } // subbox = whole image if empty. 
             if ((_subBox.min[0] < 0) || (_subBox.max[0] >= (int64)_im->width()) || (_subBox.min[1] < 0) || (_subBox.max[1] >= (int64)_im->height())) { _quality = 0; _validParam = false; return; } // make sure _subBox is a proper subbox of im
-            if ((_subBox.lx() < MIN_IMAGE_SIZE) || (_subBox.ly() >= MIN_IMAGE_SIZE)) { _quality = 0; _validParam = false; return; } // make sure _subBox is a proper subbox of im
+            if ((_subBox.lx() < MIN_IMAGE_SIZE) || (_subBox.ly() < MIN_IMAGE_SIZE)) { _quality = 0; _validParam = false; return; } // make sure _subBox is a proper subbox of im
             const double rlx = _range.lx();
             const double rly = _range.ly();
             if ((rlx < RANGE_MIN_VALUE) || (rly < RANGE_MIN_VALUE)) { _quality = 0; _validParam = false; return; } // prevent zooming in too far
@@ -499,6 +504,10 @@ template<typename ObjType> class ThreadPixelDrawer
                 _range1to1.min[0] = (int64)std::ceil(_range.min[0]); _range1to1.max[0] = (int64)std::floor(_range.max[0]);
                 _range1to1.min[1] = (int64)std::ceil(_range.min[1]); _range1to1.max[1] = (int64)std::floor(_range.max[1]);
                 }
+            else
+                {
+                _is1to1 = false;
+                }
             _quality = 0;
             _workPhase = WORK_NOTHING;
             _assignWork();
@@ -508,6 +517,7 @@ template<typename ObjType> class ThreadPixelDrawer
         /* trigger a redraw */
         void _redraw()
             {
+            std::cout << "redraw\n";
             _workPhase = WORK_NOTHING;
             _assignWork();
             if (((int)_quality > 0) && ((bool)_keepPrevious))
@@ -527,6 +537,7 @@ template<typename ObjType> class ThreadPixelDrawer
         /* set the next type of work to perform */
         void _assignWork()
             {
+            std::cout << "assign work\n";
             static const double DENSITY_SKIP_FAST = 1.0;
             static const double DENSITY_SKIP_STOCHASTIC = 4.0;
             _beginPhase = true;
@@ -577,6 +588,7 @@ template<typename ObjType> class ThreadPixelDrawer
         /* work on the image */
         void _work()
             {
+            std::cout << "work\n";
             while (_msg == THREAD_READY)
                 {
                 switch (_workPhase)
@@ -590,31 +602,29 @@ template<typename ObjType> class ThreadPixelDrawer
                     default: { MTOOLS_ERROR("wtf?"); }
                     }
                 }
+            std::cout << "end work\n";
             }
 
 
 
 
         // used for saving current state of drawing */
-        int64    _saved_i;                    // current i position to draw
         int64    _saved_j;                    // current j position to draw
-        int64    _saved_strip;                // previous strip line value
-        RGBc     _saved_prev_coul;            // previous color;
-        int64    _saved_stoc_mult;            // current stochastic multiplier
-        int64    _saved_stoc_total;           // current stochastic total
 
 
 
-        /* fastest perfect drawing : one to correspondance !
+        /* perfect 1 to 1 drawing
          * may be interrupted at each line */
         void _draw_1to1()
             {
+            std::cout << "draw 1 on 1 \n"; mtools::Chronometer();
+
             const int64 xmin = _range1to1.min[0];
             const int64 xmax = _range1to1.max[0];
             const int64 ymin = _range1to1.min[1];
             const int64 ymax = _range1to1.max[1];
             RGBc64 * imData = _im->imData();
-            unsigned char * normData = _im->normData();
+            uint8 * normData = _im->normData();
             if (_beginPhase)
                 {
                 _beginPhase = false;
@@ -622,54 +632,134 @@ template<typename ObjType> class ThreadPixelDrawer
                 }
             size_t off = _subBox.min[0] + _im->width()*(_subBox.min[1] + (_saved_j - ymin)); // offset of the first point in the image
             size_t pa = (size_t)(_im->width() - (_subBox.lx() + 1)); // padding needed to get to the next line
-            for (int64 j = _saved_j; j <= ymax; j++)
+            if (pa != 0)
                 {
-                if (_msg != THREAD_READY) { _saved_j = j; return; }
-                for (int64 i = xmin; i <= xmax; i++)
+                for (int64 j = _saved_j; j <= ymax; j++)
                     {
-                    imData[off] = mtools::GetColorSelector<ObjType>::call(*_obj, { i , j }, _opaque);
-                    normData[off] = 1;
-                    off++;
+                    if (_msg != THREAD_READY) { _saved_j = j; return; }
+                    for (int64 i = xmin; i <= xmax; i++)
+                        {
+                        imData[off] = mtools::GetColorSelector<ObjType>::call(*_obj, { i , j }, _opaque);
+                        normData[off] = 1;
+                        off++;
+                        }
+                    off += pa;
                     }
-                off += pa;
                 }
+            else
+                {
+                for (int64 j = _saved_j; j <= ymax; j++)
+                    {
+                    if (_msg != THREAD_READY) { _saved_j = j; return; }
+                    for (int64 i = xmin; i <= xmax; i++)
+                        {
+                        imData[off] = mtools::GetColorSelector<ObjType>::call(*_obj, { i , j }, _opaque);
+                        normData[off] = 1;
+                        off++;
+                        }
+                    }
+                }
+
+            uint64 tim = mtools::Chronometer(); std::cout << "finished in " << tim << " ms\n";
+
             _quality = 100;
             _assignWork();
             }
 
 
 
-        /* fast drawing, site color per pixel,
+        /* fast drawing
         * may be interrupted at each line */
         void _draw_fast()
             {
-            int64  i = 0;
-            int64  j = 0;
-            int64  strip = _noLineStrip();
-            RGBc prev_coul = RGBc::c_Black;
-            int64  stoc_mult = 0;
-            int64  stoc_total = 0;
-            if (!_beginPhase)
+            std::cout << "draw fast \n";  mtools::Chronometer();
+
+            if (_beginPhase)
                 {
-                i = _saved_i;
-                j = _saved_j;
-                strip = _saved_strip;
-                prev_coul = _saved_prev_coul;
-                stoc_mult = _saved_stoc_mult;
-                stoc_total = _saved_stoc_total;
+                _saved_j = 0;
                 _beginPhase = false;
                 }
-            /* remeber x value to prevent multiple horizontal queries */
-            /* try to skip similar vertical lines */
+
+            RGBc64 * imData = _im->imData();
+            uint8 * normData = _im->normData();
+            const double px = _dlx;
+            const double py = _dly;
+            const int64 ilx = _subBox.lx() + 1;
+            const int64 ily = _subBox.ly() + 1;
+            const fBox2 r = _range;
+            const int64 width = _im->width();
+
+            size_t off = _subBox.min[0] + _im->width()*(_subBox.min[1] + _saved_j);
+            size_t pa = (size_t)(width - ilx);
+
+            if (_dens < 0.5)
+                { // low density, try to reduce color queries
+                int64  prevsy = (int64)r.min[1] - 3; // cannot match anything
+                for (int64 j = _saved_j; j < ily; j++)
+                    {
+                    if (_msg != THREAD_READY) { _saved_j = j; return; }
+                    const double y = r.min[1] + (j + 0.5)*py;
+                    const int64 sy = (int64)floor(y + 0.5);
+                    if (sy == prevsy)
+                        {
+                        std::memcpy((imData + off), (imData + off) - width, ilx*sizeof(RGBc64));
+                        std::memset((normData + off), 1, ilx);
+                        off += width;
+                        }
+                    else
+                        {
+                        prevsy = sy;
+                        RGBc64 coul;
+                        int64 prevsx = (int64)r.min[0] - 3; // cannot match anything
+                        for (int64 i = 0; i < ilx; i++)
+                            {
+                            const double x = r.min[0] + (i + 0.5)*px;
+                            const int64 sx = (int64)floor(x + 0.5);
+                            if (prevsx != sx) // use for _dlx < 0.5  
+                                {
+                                coul = mtools::GetColorSelector<ObjType>::call(*_obj, { sx , sy }, _opaque);
+                                prevsx = sx;
+                                }
+                            imData[off] = coul;
+                            normData[off] = 1;
+                            off++;
+                            }
+                        off += pa;
+                        }
+                    }
+                }
+            else
+                { // high density, do not try to re-use color
+                for (int64 j = _saved_j; j < ily; j++)
+                    {
+                    if (_msg != THREAD_READY) { _saved_j = j; return; }
+                    const double y = r.min[1] + (j + 0.5)*py;
+                    const int64 sy = (int64)floor(y + 0.5);
+                    for (int64 i = 0; i < ilx; i++)
+                        {
+                        const double x = r.min[0] + (i + 0.5)*px;
+                        const int64 sx = (int64)floor(x + 0.5);
+                        imData[off] = mtools::GetColorSelector<ObjType>::call(*_obj, { sx , sy }, _opaque);
+                        normData[off] = 1;
+                        off++;
+                        }
+                    off += pa;
+                    }
+                }
+            uint64 tim = mtools::Chronometer(); std::cout << "finished in " << tim << " ms\n";
+
+            _quality = 1;
             _assignWork();
             }
 
 
         /* stochastic drawing sample a pixel
-        * may be interrupted at each line if create by bunch <= 255
-        * and at each pixel otherwise. */
+        * may be interrupted at each line */
         void _draw_stochastic()
             {
+            return _draw_fast();
+
+            std::cout << "draw stochastic \n";
             if (_beginPhase)
                 {
                 _beginPhase = false;
@@ -688,10 +778,63 @@ template<typename ObjType> class ThreadPixelDrawer
         * pixel if density > 255*/
         void _draw_perfect()
             {
+            return _draw_fast();
+
+            std::cout << "draw perfect \n";
             if (_beginPhase)
                 {
                 _beginPhase = false;
                 }
+
+
+
+    const fBox2 r = _pr;
+    const double px = _dlx;
+    const double py = _dly;
+
+	
+    RGBc coul;
+    int64 pk = (int64)floor(r.min[0]) - 2;
+    int64 pl = (int64)floor(r.max[1]) + 2;
+    for (int j = 0; j < _int16_buffer_dim.Y(); j++)
+    for (int i = 0; i < _int16_buffer_dim.X(); i++)
+		{
+		if (fixstart) {i = _qi; j = _qj; fixstart=false;}	// fix the position of thestarting pixel 
+		
+        fBox2 pixr(
+            r.min[0] + i*px,
+            r.min[0] + (i+1)*px,
+            r.max[1] - (j+1)*py,
+            r.max[1] - j*py); // the rectangle corresponding to pixel (i,j)
+		iBox2 ipixr = pixr.integerEnclosingRect(); // the integer sites whose square intersect the pixel square
+		double cr=0.0 ,cg=0.0, cb=0.0, ca=0.0, tot=0.0;
+		for(int64 k=ipixr.min[0];k<=ipixr.max[0];k++) for(int64 l=ipixr.min[1];l<=ipixr.max[1];l++) // iterate over all those points
+			{
+            if (_isTime(maxtime_ms)) { _qi = i; _qj = j; return; } // time's up : we quit and abandon this pixel
+            double a = pixr.pointArea( fVec2((double)k,(double)l) ); // get the surface of the intersection
+            if ((k != pk) || (l != pl))
+                {
+                coul = getColor({ k, l });
+                pk = k; pl = l;
+                }
+            cr += (coul.comp.R*a); cg += (coul.comp.G*a); cb += (coul.comp.B*a); ca += (coul.comp.A*a); // get the color and add it proportionally to the intersection
+			tot+=a;
+			}
+		_setInt16Buf(i,j,cr/tot,cg/tot,cb/tot,ca/tot);
+		}
+	_qi=0; _qj=0; _counter2 = _counter1;
+
+
+
+
+
+
+
+
+
+
+
+
             /* remeber x value to prevent multiple horizontal queries */
             /* try to skip similar vertical lines */
             _assignWork();
@@ -707,14 +850,14 @@ template<typename ObjType> class ThreadPixelDrawer
             const double m = _range.min[1];
             const double a = m + _dly*j;
             const double z = std::floor(a + 0.5);
-            return((a + _dly <= z + 0.5) ? ((int64)z) : ((int64)m - j - 8));
+            return((a + _dly <= z + 0.5) ? ((int64)z) : ((int64)m - j - 10));
             }
 
 
         /* return a value that will not match any returned by _findLineStrip */
         int64 _noLineStrip()
             {
-            return ((int64)_range.min[1] - 7);
+            return ((int64)_range.min[1] - 10);
             }
 
 
@@ -756,9 +899,9 @@ template<typename ObjType> class ThreadPixelDrawer
     mtools::Img<unsigned char> lenna;
     int64 lenx, leny;
 
-    RGBc colorImage(int64 x, int64 y)
+    inline RGBc colorImage(int64 x, int64 y)
         {
-        if ((x < 0) || (x >= lenx)) return RGBc::c_Cyan;
+        if ((x < 0) || (x >= lenx)) return RGBc::c_Maroon;
         if ((y < 0) || (y >= leny)) return RGBc::c_Green;
         return lenna.getPixel({ x, leny - 1 - y });
         }
@@ -777,44 +920,50 @@ template<typename ObjType> class ThreadPixelDrawer
 
     void test()
         {
-        const int LLX = 800;
-        const int LLY = 600;
+        loadImage();
+        const int LLX = 2200;
+        const int LLY = 1400;
+        const int UX = 2000;
+        const int UY = 1300;
 
         ProgressImg progIm(LLX, LLY);
-        progIm.clear((RGBc64)RGBc::c_Cyan);
+        progIm.clear((RGBc64)RGBc::c_Red);
         
         mtools::Img<unsigned char> dispIm(LLX, LLY, 1, 3);
         cimg_library::CImg<unsigned char> * cim = (cimg_library::CImg<unsigned char> *)&dispIm;
-        progIm.blit(dispIm);
 
-        fBox2 r(-0.5, 799.5, 0.5, 599.5);	// the range displayed
+        fBox2 r(-0.5, UX-0.5, -0.5, UY-0.5);
 
         ThreadPixelDrawer<decltype(colorImage)> TPD(colorImage, nullptr);
 
-        TPD.setParameters(r, &progIm, iBox2());
+        iBox2 SubB(50, 50 + UX - 1, 20, 20 + UY - 1);
 
+        TPD.setParameters(r, &progIm, SubB);
+        TPD.sync();
+        TPD.active(true);
+        TPD.sync();
         int drawtype = 0, isaxe = 1, isgrid = 0, iscell = 1; // flags
         cimg_library::CImgDisplay DD(*cim); // display
         while ((!DD.is_closed())) 
             {
             uint32 k = DD.key();
-            if ((DD.is_key(cimg_library::cimg::keyA))) { isaxe = 1 - isaxe; std::this_thread::sleep_for(std::chrono::milliseconds(50)); }   // type A for toggle axe (with graduations)
+            if ((DD.is_key(cimg_library::cimg::keyA))) { TPD.active(!TPD.active()); std::this_thread::sleep_for(std::chrono::milliseconds(50)); }   // type A for toggle axe (with graduations)
             if ((DD.is_key(cimg_library::cimg::keyG))) { isgrid = 1 - isgrid; std::this_thread::sleep_for(std::chrono::milliseconds(50)); } // type G for toggle grid
             if ((DD.is_key(cimg_library::cimg::keyC))) { iscell = 1 - iscell; std::this_thread::sleep_for(std::chrono::milliseconds(50)); } // type C for toggle cell
             if (DD.is_key(cimg_library::cimg::keyESC)) { TPD.redraw(); } // [ESC] to force complete redraw
-            if (DD.is_key(cimg_library::cimg::keyARROWUP)) { double sh = r.ly() / 20; r.min[1] += sh; r.max[1] += sh; TPD.setParameters(r, &progIm, iBox2()); } // move n the four directions
-            if (DD.is_key(cimg_library::cimg::keyARROWDOWN)) { double sh = r.ly() / 20; r.min[1] -= sh; r.max[1] -= sh; TPD.setParameters(r, &progIm, iBox2());} //
-            if (DD.is_key(cimg_library::cimg::keyARROWLEFT)) { double sh = r.lx() / 20; r.min[0] -= sh; r.max[0] -= sh; TPD.setParameters(r, &progIm, iBox2()); } //
-            if (DD.is_key(cimg_library::cimg::keyARROWRIGHT)) { double sh = r.lx() / 20; r.min[0] += sh; r.max[0] += sh; TPD.setParameters(r, &progIm, iBox2()); } //
-            if (DD.is_key(cimg_library::cimg::keyPAGEDOWN)) { double lx = r.max[0] - r.min[0]; double ly = r.max[1] - r.min[1]; r.min[0] = r.min[0] - (lx / 8.0); r.max[0] = r.max[0] + (lx / 8.0); r.min[1] = r.min[1] - (ly / 8.0);  r.max[1] = r.max[1] + (ly / 8.0); TPD.setParameters(r, &progIm, iBox2()); }
-            if (DD.is_key(cimg_library::cimg::keyPAGEUP)) { if ((r.lx()>0.5) && (r.ly()>0.5)) { double lx = r.max[0] - r.min[0]; double ly = r.max[1] - r.min[1]; r.min[0] = r.min[0] + (lx / 10.0); r.max[0] = r.max[0] - (lx / 10.0); r.min[1] = r.min[1] + (ly / 10.0); r.max[1] = r.max[1] - (ly / 10.0); } TPD.setParameters(r, &progIm, iBox2()); }
+            if (DD.is_key(cimg_library::cimg::keyARROWUP)) { double sh = r.ly() / 20; r.min[1] += sh; r.max[1] += sh; TPD.setParameters(r, &progIm, SubB); } // move n the four directions
+            if (DD.is_key(cimg_library::cimg::keyARROWDOWN)) { double sh = r.ly() / 20; r.min[1] -= sh; r.max[1] -= sh; TPD.setParameters(r, &progIm, SubB);} //
+            if (DD.is_key(cimg_library::cimg::keyARROWLEFT)) { double sh = r.lx() / 20; r.min[0] -= sh; r.max[0] -= sh; TPD.setParameters(r, &progIm, SubB); } //
+            if (DD.is_key(cimg_library::cimg::keyARROWRIGHT)) { double sh = r.lx() / 20; r.min[0] += sh; r.max[0] += sh; TPD.setParameters(r, &progIm, SubB); } //
+            if (DD.is_key(cimg_library::cimg::keyPAGEDOWN)) { double lx = r.max[0] - r.min[0]; double ly = r.max[1] - r.min[1]; r.min[0] = r.min[0] - (lx / 8.0); r.max[0] = r.max[0] + (lx / 8.0); r.min[1] = r.min[1] - (ly / 8.0);  r.max[1] = r.max[1] + (ly / 8.0); TPD.setParameters(r, &progIm, SubB); }
+            if (DD.is_key(cimg_library::cimg::keyPAGEUP)) { if ((r.lx()>0.5) && (r.ly()>0.5)) { double lx = r.max[0] - r.min[0]; double ly = r.max[1] - r.min[1]; r.min[0] = r.min[0] + (lx / 10.0); r.max[0] = r.max[0] - (lx / 10.0); r.min[1] = r.min[1] + (ly / 10.0); r.max[1] = r.max[1] - (ly / 10.0); } TPD.setParameters(r, &progIm, SubB); }
        
             TPD.sync();
-            std::cout << "quality = " << TPD.quality() << "\n";
+  //          std::cout << "quality = " << TPD.quality() << "\n";
             progIm.blit(dispIm);
-            if (isaxe) { dispIm.fBox2_drawAxes(r).fBox2_drawGraduations(r).fBox2_drawNumbers(r); }
-            if (isgrid) { dispIm.fBox2_drawGrid(r); }
-            if (iscell) { dispIm.fBox2_drawCells(r); }
+//            if (isaxe) { dispIm.fBox2_drawAxes(r).fBox2_drawGraduations(r).fBox2_drawNumbers(r); }
+//            if (isgrid) { dispIm.fBox2_drawGrid(r); }
+//            if (iscell) { dispIm.fBox2_drawCells(r); }
             DD.display(*cim);
             }
         return;
@@ -827,7 +976,7 @@ template<typename ObjType> class ThreadPixelDrawer
         {
 
         test(); 
-
+        /*
         cout << sizeof(RGBc);
         cout.getKey();
 
@@ -837,6 +986,7 @@ template<typename ObjType> class ThreadPixelDrawer
         auto P = mtools::makePlot2DLattice(colorImage, "test");
         plotter[P];
         plotter.plot();
+        */
         return 0;
         }
 
