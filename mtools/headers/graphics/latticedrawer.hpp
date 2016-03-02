@@ -795,7 +795,7 @@ void _drawPixel_stochastic(int maxtime_ms)
 				double x = r.min[0] + (i + _g_fgen.unif())*px, y = r.max[1] - (j + _g_fgen.unif())*py; 	// pick a point at random inside the pixel
 				int64 sx = (int64)floor(x + 0.5); int64 sy = (int64)floor(y + 0.5);     			// compute the integer position which covers it
                 RGBc coul = getColor({ sx, sy }); 			                     				// get the color of the site
-                R += coul.R; G += coul.G; B += coul.B; A += coul.A;
+                R += coul.comp.R; G += coul.comp.G; B += coul.comp.B; A += coul.comp.A;
 				}
 			_addInt16Buf(i,j,R/ndraw,G/ndraw,B/ndraw,A/ndraw);
 			}
@@ -835,7 +835,7 @@ void _drawPixel_perfect(int maxtime_ms)
                 coul = getColor({ k, l });
                 pk = k; pl = l;
                 }
-            cr += (coul.R*a); cg += (coul.G*a); cb += (coul.B*a); ca += (coul.A*a); // get the color and add it proportionally to the intersection
+            cr += (coul.comp.R*a); cg += (coul.comp.G*a); cb += (coul.comp.B*a); ca += (coul.comp.A*a); // get the color and add it proportionally to the intersection
 			tot+=a;
 			}
 		_setInt16Buf(i,j,cr/tot,cg/tot,cb/tot,ca/tot);
@@ -924,10 +924,10 @@ inline void _setInt16Buf(uint32 x,uint32 y,const RGBc & color)
 	{
     const size_t dx = (size_t)_int16_buffer_dim.X();
     const size_t dxy = (size_t)(dx * _int16_buffer_dim.Y());
-    _int16_buffer[x + y*dx] = color.R;
-    _int16_buffer[x + y*dx + dxy] = color.G;
-    _int16_buffer[x + y*dx + 2 * dxy] = color.B;
-    _int16_buffer[x + y*dx + 3 * dxy] = color.A;
+    _int16_buffer[x + y*dx] = color.comp.R;
+    _int16_buffer[x + y*dx + dxy] = color.comp.G;
+    _int16_buffer[x + y*dx + 2 * dxy] = color.comp.B;
+    _int16_buffer[x + y*dx + 3 * dxy] = color.comp.A;
 
     }
 

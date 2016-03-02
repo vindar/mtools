@@ -199,12 +199,12 @@ namespace mtools
                         }
                     Fl_Button * nameButton  = new Fl_Button(nameCol->x(), Y, nameCol->w(), ENTRY_H); 
                     nameButton->box(FL_BORDER_BOX); 
-                    nameButton->color(RGBc::c_White);
+                    nameButton->color((Fl_Color)RGBc::c_White);
                     nameButton->copy_label(obj->_name.c_str());
                     Fl_Button * valueButton = new Fl_Button(valueCol->x(), Y, valueCol->w(), ENTRY_H); 
                     valueButton->box(FL_BORDER_BOX); 
-                    valueButton->color(RGBc::c_White);
-                    valueButton->labelcolor(RGBc::c_Red);
+                    valueButton->color((Fl_Color)RGBc::c_White);
+                    valueButton->labelcolor((Fl_Color)RGBc::c_Red);
                     valueButton->align(FL_ALIGN_INSIDE|FL_ALIGN_LEFT);
                     valueButton->labelfont(FL_COURIER_BOLD);
                     valueButton->copy_label(obj->get().c_str());
@@ -369,7 +369,7 @@ namespace mtools
                     auto txt4 = new Fl_Box(0, 100, 80, 25, "Rate : "); txt4->align(FL_ALIGN_INSIDE | FL_ALIGN_RIGHT);
                     auto txt5 = new Fl_Box(80, 20, DIALOG_VALUE_W - 100, 25);  txt5->copy_label(obj->_name.c_str()); txt5->align(FL_ALIGN_INSIDE | FL_ALIGN_LEFT);  txt5->box(FL_FLAT_BOX); txt5->color(fl_lighter(FL_BACKGROUND_COLOR));
                     auto txt6 = new Fl_Box(80, 50, DIALOG_VALUE_W - 100, 25);  txt6->copy_label(obj->type().c_str()); txt6->align(FL_ALIGN_INSIDE | FL_ALIGN_LEFT); txt6->box(FL_FLAT_BOX); txt6->color(fl_lighter(FL_BACKGROUND_COLOR));
-                    button_Ok = new Fl_Button(DIALOG_VALUE_W / 3 - 80 / 2, DIALOG_VALUE_H - 45, 80, 35, "Set!"); button_Ok->labelcolor(RGBc::c_Red);
+                    button_Ok = new Fl_Button(DIALOG_VALUE_W / 3 - 80 / 2, DIALOG_VALUE_H - 45, 80, 35, "Set!"); button_Ok->labelcolor((Fl_Color)RGBc::c_Red);
                     button_Cancel = new Fl_Button(2 * DIALOG_VALUE_W / 3 - 80 / 2, DIALOG_VALUE_H - 45, 80, 35, "Cancel");
                     button_Ok->callback(static_dialname_ok, obj);
                     button_Cancel->callback(static_dialname_cancel, obj);
@@ -443,14 +443,14 @@ namespace mtools
                     int Y = win->y() + win->h() / 2 - DIALOG_VALUE_H / 2;
                     dialogWin = new Fl_Double_Window(X,Y,DIALOG_VALUE_W, DIALOG_VALUE_H, "Change Value");
                     dialogWin->begin();
-                    auto txt1 = new Fl_Box(0, 0, DIALOG_VALUE_W, 40, "!!! Danger zone: use at your own risk !!!"); txt1->labelcolor(RGBc::c_Red);
+                    auto txt1 = new Fl_Box(0, 0, DIALOG_VALUE_W, 40, "!!! Danger zone: use at your own risk !!!"); txt1->labelcolor((Fl_Color)RGBc::c_Red);
                     auto txt2 = new Fl_Box(0, 50, 80, 25, "Variable : "); txt2->align(FL_ALIGN_INSIDE | FL_ALIGN_RIGHT);
                     auto txt3 = new Fl_Box(0, 80, 80, 25, "Type : "); txt3->align(FL_ALIGN_INSIDE | FL_ALIGN_RIGHT);
                     auto txt4 = new Fl_Box(0, 110, 80, 25, "Value : "); txt4->align(FL_ALIGN_INSIDE | FL_ALIGN_RIGHT);
                     auto txt5 = new Fl_Box(80, 50, DIALOG_VALUE_W - 100, 25);  txt5->copy_label(obj->_name.c_str()); txt5->align(FL_ALIGN_INSIDE | FL_ALIGN_LEFT);  txt5->box(FL_FLAT_BOX); txt5->color(fl_lighter(FL_BACKGROUND_COLOR));
                     auto txt6 = new Fl_Box(80, 80, DIALOG_VALUE_W - 100, 25);  txt6->copy_label(obj->type().c_str()); txt6->align(FL_ALIGN_INSIDE | FL_ALIGN_LEFT); txt6->box(FL_FLAT_BOX); txt6->color(fl_lighter(FL_BACKGROUND_COLOR));
                     input_widget = new Fl_Input(80, 110, DIALOG_VALUE_W - 100, 25); input_widget->align(FL_ALIGN_INSIDE | FL_ALIGN_LEFT); input_widget->box(FL_FLAT_BOX); input_widget->color(FL_BACKGROUND2_COLOR); input_widget->value(obj->get().c_str());
-                    button_Ok = new Fl_Button(DIALOG_VALUE_W/3 - 80/2, DIALOG_VALUE_H -45 , 80, 35, "Set!"); button_Ok->labelcolor(RGBc::c_Red);
+                    button_Ok = new Fl_Button(DIALOG_VALUE_W/3 - 80/2, DIALOG_VALUE_H -45 , 80, 35, "Set!"); button_Ok->labelcolor((Fl_Color)RGBc::c_Red);
                     button_Cancel = new Fl_Button(2*DIALOG_VALUE_W / 3 - 80/2, DIALOG_VALUE_H - 45, 80, 35, "Cancel");
                     button_Ok->callback(static_dialvalue_ok, obj);
                     button_Cancel->callback(static_dialvalue_cancel, obj);

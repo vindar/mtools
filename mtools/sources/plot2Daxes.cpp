@@ -93,8 +93,8 @@ namespace mtools
             if (!isInserted()) return; // not inserted, we are done
             _gradButton->value(_gradStatus ? 1 : 0);
             _numButton->value(_numStatus ? 1 : 0);
-            _gradColorButton->color(_gradColor);
-            _gradColorButton->color2(_gradColor);
+            _gradColorButton->color((Fl_Color)_gradColor);
+            _gradColorButton->color2((Fl_Color)_gradColor);
             _gradColorButton->redraw();
             refresh();
             yieldFocus();
@@ -127,8 +127,8 @@ namespace mtools
             if (!isInserted()) return; // not inserted, we are done
             _gradButton->value(_gradStatus ? 1 : 0);
             _numButton->value(_numStatus ? 1 : 0);
-            _numColorButton->color(_numColor);
-            _numColorButton->color2(_numColor);
+            _numColorButton->color((Fl_Color)_numColor);
+            _numColorButton->color2((Fl_Color)_numColor);
             _numColorButton->redraw();
             refresh();
             yieldFocus();
@@ -201,13 +201,13 @@ namespace mtools
             _numButton->value(_numStatus ? 1 : 0);
 
             _gradColorButton = new Fl_Button(10, 10, 15, 15);
-            _gradColorButton->color2(_gradColor);
-            _gradColorButton->color(_gradColor);
+            _gradColorButton->color2((Fl_Color)_gradColor);
+            _gradColorButton->color((Fl_Color)_gradColor);
             _gradColorButton->callback(_gradColorButtonCB_static, this);
 
             _numColorButton = new Fl_Button(10, 35, 15, 15);
-            _numColorButton->color2(_numColor);
-            _numColorButton->color(_numColor);
+            _numColorButton->color2((Fl_Color)_numColor);
+            _numColorButton->color((Fl_Color)_numColor);
             _numColorButton->callback(_numColorButtonCB_static, this);
 
             _scaleSlider = new Fl_Value_Slider(reqWidth - 150, 30, 140, 15);
@@ -246,18 +246,18 @@ namespace mtools
             void Plot2DAxes::_gradColorButtonCB_static(Fl_Widget * W, void * data) { MTOOLS_ASSERT(data != nullptr); ((Plot2DAxes*)data)->_gradColorButtonCB(W); }
             void Plot2DAxes::_gradColorButtonCB(Fl_Widget * W)
                 {
-                unsigned char R = _gradColor.R;
-                unsigned char G = _gradColor.G;
-                unsigned char B = _gradColor.B;
+                unsigned char R = _gradColor.comp.R;
+                unsigned char G = _gradColor.comp.G;
+                unsigned char B = _gradColor.comp.B;
                 if (fl_color_chooser("Axes Color", R, G, B, 1) != 0) { graduations(RGBc(R, G, B)); }
                 }
 
             void Plot2DAxes::_numColorButtonCB_static(Fl_Widget * W, void * data) { MTOOLS_ASSERT(data != nullptr); ((Plot2DAxes*)data)->_numColorButtonCB(W); }
             void Plot2DAxes::_numColorButtonCB(Fl_Widget * W)
                 {
-                unsigned char R = _numColor.R;
-                unsigned char G = _numColor.G;
-                unsigned char B = _numColor.B;
+                unsigned char R = _numColor.comp.R;
+                unsigned char G = _numColor.comp.G;
+                unsigned char B = _numColor.comp.B;
                 if (fl_color_chooser("Numbers Color", R, G, B, 1) != 0) { numbers(RGBc(R, G, B)); }
                 }
 

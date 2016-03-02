@@ -280,10 +280,10 @@ namespace mtools
         {
         const int x = (int)pos.X();
         const int y = (int)pos.Y();
-        this->operator()(x, y, 0, 0) = color.R;
-        this->operator()(x, y, 0, 1) = color.G;
-        this->operator()(x, y, 0, 2) = color.B;
-        if (this->spectrum() >= 4) { this->operator()(x, y, 0, 3) = color.A; }
+        this->operator()(x, y, 0, 0) = color.comp.R;
+        this->operator()(x, y, 0, 1) = color.comp.G;
+        this->operator()(x, y, 0, 2) = color.comp.B;
+        if (this->spectrum() >= 4) { this->operator()(x, y, 0, 3) = color.comp.A; }
         }
 
 
@@ -376,20 +376,20 @@ namespace mtools
     **/
     inline Img<T> & clear(mtools::RGBc color)
         {
-        if ((color.R == color.G) && (color.G == color.B))
+        if ((color.comp.R == color.comp.G) && (color.comp.G == color.comp.B))
             {
-            if ((this->spectrum() <= 3) || ((this->spectrum() == 4) && (color.A == color.R))) { this->fill(color.R); return(*this); }
+            if ((this->spectrum() <= 3) || ((this->spectrum() == 4) && (color.comp.A == color.comp.R))) { this->fill(color.comp.R); return(*this); }
             }
         if (this->spectrum() > 0)
             {
-            this->get_shared_channel(0).fill(color.R);
+            this->get_shared_channel(0).fill(color.comp.R);
             if (this->spectrum() > 1)
                 {
-                this->get_shared_channel(1).fill(color.G);
+                this->get_shared_channel(1).fill(color.comp.G);
                 if (this->spectrum() > 2)
                     {
-                    this->get_shared_channel(2).fill(color.B);
-                    for (int c = 3; c < this->spectrum(); c++) this->get_shared_channel(c).fill(color.A);
+                    this->get_shared_channel(2).fill(color.comp.B);
+                    for (int c = 3; c < this->spectrum(); c++) this->get_shared_channel(c).fill(color.comp.A);
                     }
                 }
             }
@@ -429,8 +429,8 @@ namespace mtools
                 cx = cy; nx = 0;
                 for (int i = 0; i < lx; i++)
                     {
-                    if (cx == 0) { (*p0) = color1.R; (*p1) = color1.G; (*p2) = color1.B; }
-                    else { (*p0) = color2.R; (*p1) = color2.G; (*p2) = color2.B; }
+                    if (cx == 0) { (*p0) = color1.comp.R; (*p1) = color1.comp.G; (*p2) = color1.comp.B; }
+                    else { (*p0) = color2.comp.R; (*p1) = color2.comp.G; (*p2) = color2.comp.B; }
                     if ((++nx) == sizeSquare) { cx = 1 - cx; nx = 0; }
                     ++p0; ++p1; ++p2;
                     }
@@ -448,8 +448,8 @@ namespace mtools
                 cx = cy; nx = 0;
                 for (int i = 0; i < lx; i++)
                     {
-                    if (cx == 0) { (*p0) = color1.R; (*p1) = color1.G; (*p2) = color1.B; (*p3) = color1.A; }
-                    else { (*p0) = color2.R; (*p1) = color2.G; (*p2) = color2.B; (*p3) = color1.A; }
+                    if (cx == 0) { (*p0) = color1.comp.R; (*p1) = color1.comp.G; (*p2) = color1.comp.B; (*p3) = color1.comp.A; }
+                    else { (*p0) = color2.comp.R; (*p1) = color2.comp.G; (*p2) = color2.comp.B; (*p3) = color1.comp.A; }
                     if ((++nx) == sizeSquare) { cx = 1 - cx; nx = 0; }
                     ++p0; ++p1; ++p2; ++p3;
                     }

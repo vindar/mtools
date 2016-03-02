@@ -66,7 +66,7 @@ namespace mtools
     void SimpleBMP::Add(const mtools::RGBc & coul)
     {
         if (bufline == NULL) { MTOOLS_ERROR("ImageSave::Add(), too many points for file"); }
-        bufline[3 * LXdone] = coul.B; bufline[3 * LXdone + 1] = coul.G; bufline[3 * LXdone + 2] = coul.R;
+        bufline[3 * LXdone] = coul.comp.B; bufline[3 * LXdone + 1] = coul.comp.G; bufline[3 * LXdone + 2] = coul.comp.R;
         LXdone++;
         if (LXdone == LX)
         {

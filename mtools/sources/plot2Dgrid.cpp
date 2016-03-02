@@ -317,8 +317,8 @@ namespace mtools
             optionWin = _win;
 
             _colorButton = new Fl_Button(5, 5, 15, 15);
-            _colorButton->color2((RGBc)_color);
-            _colorButton->color((RGBc)_color);
+            _colorButton->color2((Fl_Color)((RGBc)_color));
+            _colorButton->color((Fl_Color)((RGBc)_color));
             _colorButton->callback(_colorCB_static, this);
 
             auto colorText = new Fl_Box(20, 5, 100, 15, "Color of the grid.");
@@ -455,8 +455,8 @@ namespace mtools
                 _hspaceInput->value(doubleToStringNice(_hspace).c_str());
                 _hoffsetInput->value(doubleToStringNice(_hoffset).c_str());
                 }
-            _colorButton->color((RGBc)_color);
-            _colorButton->color2((RGBc)_color);
+            _colorButton->color((Fl_Color)((RGBc)_color));
+            _colorButton->color2((Fl_Color)((RGBc)_color));
             _colorButton->redraw();
             }
 
@@ -504,7 +504,7 @@ namespace mtools
         void Plot2DGrid::_colorCB(Fl_Widget * W)
             {
             RGBc coul = _color;
-            if (fl_color_chooser("Axes Color", coul.R, coul.G, coul.B, 1) != 0)
+            if (fl_color_chooser("Axes Color", coul.comp.R, coul.comp.G, coul.comp.B, 1) != 0)
                 {
                 color(coul);
                 }

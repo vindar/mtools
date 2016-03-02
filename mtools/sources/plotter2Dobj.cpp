@@ -381,14 +381,14 @@ namespace mtools
             if ((pnot)_ownercb == nullptr) return;  // return if not inserted
             RGBc coul = nameWidgetColor();
             if (coul == RGBc::c_TransparentWhite) { return; }
-            _nameBox->color(coul);
-            if ((int)coul.R + (int)coul.G + (int)coul.B < 300)
+            _nameBox->color((Fl_Color)coul);
+            if ((int)coul.comp.R + (int)coul.comp.G + (int)coul.comp.B < 300)
                 {
-                _nameBox->labelcolor(RGBc(230, 230, 230));
+                _nameBox->labelcolor((Fl_Color)RGBc(230, 230, 230));
                 }
             else
                 {
-                _nameBox->labelcolor(RGBc::c_Black);
+                _nameBox->labelcolor((Fl_Color)RGBc::c_Black);
                 }
             _nameBox->redraw();
             refresh();
@@ -786,7 +786,7 @@ namespace mtools
         void Plotter2DObjWithColor::colorCB(Fl_Widget * W)
             {
             RGBc coul = _color;
-            if (fl_color_chooser("Plot color", coul.R, coul.G, coul.B, 1) != 0) { color(coul); } else { yieldFocus(); }
+            if (fl_color_chooser("Plot color", coul.comp.R, coul.comp.G, coul.comp.B, 1) != 0) { color(coul); } else { yieldFocus(); }
             }
 
 

@@ -330,13 +330,13 @@ namespace mtools
                 _underButton->value(_drawUnder ? 1 : 0);
 
                 _overColorButton = new Fl_Button(10, 70 + 5, 15, 15);
-                _overColorButton->color2(_drawOverColor);
-                _overColorButton->color(_drawOverColor);
+                _overColorButton->color2((Fl_Color)_drawOverColor);
+                _overColorButton->color((Fl_Color)_drawOverColor);
                 _overColorButton->callback(_overColorButtonCB_static, this);
 
                 _underColorButton = new Fl_Button(10, 90 + 5, 15, 15);
-                _underColorButton->color2(_drawUnderColor);
-                _underColorButton->color(_drawUnderColor);
+                _underColorButton->color2((Fl_Color)_drawUnderColor);
+                _underColorButton->color((Fl_Color)_drawUnderColor);
                 _underColorButton->callback(_underColorButtonCB_static, this);
 
                 _overSlider = new Fl_Value_Slider(145, 70 + 1 + 5, 80, 14);
@@ -454,11 +454,11 @@ namespace mtools
         void Plot2DBaseGraph::_overColorButtonCB(Fl_Widget * W)
                 {
                 RGBc coul = _drawOverColor;
-                if (fl_color_chooser("Color to use", coul.R , coul.G, coul.B, 1) != 0)
+                if (fl_color_chooser("Color to use", coul.comp.R , coul.comp.G, coul.comp.B, 1) != 0)
                     {
                     _drawOverColor = coul;
-                    _overColorButton->color(coul);
-                    _overColorButton->color2(coul);
+                    _overColorButton->color((Fl_Color)coul);
+                    _overColorButton->color2((Fl_Color)coul);
                     _overColorButton->redraw();
                     refresh();
                     }
@@ -469,11 +469,11 @@ namespace mtools
         void Plot2DBaseGraph::_underColorButtonCB(Fl_Widget * W)
                 {
                 RGBc coul = _drawUnderColor;
-                if (fl_color_chooser("Color to use", coul.R , coul.G, coul.B, 1) != 0)
+                if (fl_color_chooser("Color to use", coul.comp.R , coul.comp.G, coul.comp.B, 1) != 0)
                     {
                     _drawUnderColor = coul;
-                    _underColorButton->color(coul);
-                    _underColorButton->color2(coul);
+                    _underColorButton->color((Fl_Color)coul);
+                    _underColorButton->color2((Fl_Color)coul);
                     _underColorButton->redraw();
                     refresh();
                     }
@@ -514,11 +514,11 @@ namespace mtools
             _dichoQualitySlider->value(_dichoQuality);
             _overButton->value(_drawOver ? 1 : 0);
             _underButton->value(_drawUnder ? 1 : 0);
-            _overColorButton->color(_drawOverColor);
-            _overColorButton->color2(_drawOverColor);
+            _overColorButton->color((Fl_Color)_drawOverColor);
+            _overColorButton->color2((Fl_Color)_drawOverColor);
             _overColorButton->redraw();
-            _underColorButton->color(_drawUnderColor);
-            _underColorButton->color2(_drawUnderColor);
+            _underColorButton->color((Fl_Color)_drawUnderColor);
+            _underColorButton->color2((Fl_Color)_drawUnderColor);
             _underColorButton->redraw();
             _overSlider->value(_drawOverOpacity);
             _underSlider->value(_drawUnderOpacity);

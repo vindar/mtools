@@ -1102,8 +1102,8 @@ namespace mtools
         /* update the widget for the solid bk color */
         void Plotter2DWindow::updatesolidback()
         {
-        _w_solidbackColor->color2((RGBc)_solidBKcolor);
-        _w_solidbackColor->color((RGBc)_solidBKcolor);
+        _w_solidbackColor->color2((Fl_Color)((RGBc)_solidBKcolor));
+        _w_solidbackColor->color((Fl_Color)((RGBc)_solidBKcolor));
         if ((bool)_usesolidBK)
             {
             _w_solidback->value(1);
@@ -1135,7 +1135,7 @@ namespace mtools
         void Plotter2DWindow::solidbackColorCB(Fl_Widget* W)
         {
         RGBc Coul = ((RGBc)_solidBKcolor);
-        if (fl_color_chooser("Axes Color", Coul.R, Coul.G, Coul.B, 1) != 0)
+        if (fl_color_chooser("Axes Color", Coul.comp.R, Coul.comp.G, Coul.comp.B, 1) != 0)
             {
             _solidBKcolor = Coul.getOpaque();
             updatesolidback();
