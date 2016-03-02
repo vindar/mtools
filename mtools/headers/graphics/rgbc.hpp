@@ -33,20 +33,37 @@
 namespace mtools
 {
 
+    /* forward definition */
+    union RGBc64;
+
     /**
      * A color in (R,G,B,A) format.
      **/
-    class RGBc
+    union RGBc
     {
 
     public:
 
+        /*
+         * Color is ordered in RGBA layout : Reversed compared with Fl_Color ! 
+         */
+        uint32 color;       // color seen as a uint32 : low byte is R, high byte is A      
+
+        struct _RGBc_component   // color seen as 4 unsigned char in RGBA layout 
+            {
+            uint8 R;    // byte 1 : Red.  (low byte in uint32)
+            uint8 G;    // byte 2 : Green.
+            uint8 B;    // byte 3 : Blue
+            uint8 A;    // byte 4 : alpha. (high byte in uint32)
+            } comp;
+
+
         static const uint8 DEFAULTALPHA = 255; ///< default value for transparency : fully opaque
 
         /**
-         * Default constructor. Create an instance in Color black with default transparency.
+         * Default constructor.
          **/
-        RGBc() : R(0), G(0), B(0), A(DEFAULTALPHA) {}
+        RGBc() = default;
 
 
         /**
@@ -57,37 +74,49 @@ namespace mtools
          * @param   b   color black.
          * @param   a   alpha channel (DEFAULTALPHA)
          **/
-        RGBc(int r, int g, int b, int a = DEFAULTALPHA) : R(r), G(g), B(b), A(a) {}
+        RGBc(uint8 r, uint8 g, uint8 b, uint8 a = DEFAULTALPHA) : comp{r,g,b,a} {}
+
+
+        /**
+        * Default copy constructor.
+        **/
+        RGBc(const RGBc & c) = default;
+
+
+        /**
+         * Constructor from a RGBc64.
+         *
+         * \param   c   The color.
+         **/
+        inline RGBc(const RGBc64 & c);
 
 
         /**
          * Constructor from a Fl_Color type.
          *
          * @param   c   the color.
-         * @param   a   the transparency (DEFAULTALPHA)
+         * @param   a   the transparency
          **/
-        RGBc(Fl_Color c, int a = DEFAULTALPHA) { operator=(c); A = a; }
-
-
-        /**
-         * Constructor from a buffer.
-         *
-         * @param   p               the buffer of sizeat least  3 with p[0] = RED p[1] = GREEN, p[2] =
-         *                          BLUE and eventually p[3] = alpha.
-         * @param   useDefaultAlpha true to use the default alpha value DEFAULTALPHA (in this case, the
-         *                          buffer need only to have size >=3). If flase, the buffer must have
-         *                          size at least 4 and p[3] contain the alpha value.
-         **/
-        RGBc(const unsigned char * p, bool useDefaultAlpha = true) : R(p[0]), G(p[1]), B(p[2]) 
+        RGBc(Fl_Color c, int a = DEFAULTALPHA) 
             {
-            if (useDefaultAlpha) A = DEFAULTALPHA; else A = p[3];
+            Fl::get_color(c, comp.R, comp.G, comp.B);
+            comp.A = a;
             }
 
 
         /**
-         * Default copy constructor.
+         * Constructor from a buffer. Use all 4 bytes.
          **/
-        RGBc(const RGBc & c) = default;
+        RGBc(const unsigned char * p) : color(*((uint32*)p)) {}
+        
+
+        /**
+         * Constructor from a buffer. Use only 3 bytes and set the alpha value separately
+         **/
+        RGBc(const unsigned char * p, unsigned char a) : comp{ p[0], p[1], p[2], 0 }
+            {
+            comp.A = a;
+            }
 
 
         /**
@@ -97,56 +126,65 @@ namespace mtools
 
 
         /**
+        * assignment operator from RGBc64.
+        **/
+        RGBc & operator=(const RGBc64 & c);
+
+
+        /**
          * Assignment operator from a Fl_Color, alpha value set to DEFAULTALPHA.
          **/
         RGBc & operator=(Fl_Color c) 
             {
-            if (c % 256 != 0) { Fl::get_color(c, R, G, B); return(*this); };
-            c = c >> 8; B = c % 256;
-            c = c >> 8; G = c % 256;
-            c = c >> 8; R = c % 256;
-            A = DEFAULTALPHA;
+            Fl::get_color(c, comp.R, comp.G, comp.B);
+            comp.A = DEFAULTALPHA;
             return(*this);
             }
 
 
         /**
-         * Assignment operator from a buffer. 
+         * Assignment operator from a buffer. Use all 4 bytes.
          *
          * @warning The buffer must have size at least 4 !
          * @param   p   The buffer of size 3 with p[0] = red, p[1] = green, p[2] = blue, p[3] = alpha.
          **/
-        RGBc & operator=(const unsigned char * p) { R = p[0]; G = p[1]; B = p[2]; A = p[3];  return(*this); }
+        RGBc & operator=(const unsigned char * p) { color = *((uint32*)p);  return(*this); }
+
+
+        /**
+        * Converts the color into a RGBc64.
+        **/
+        explicit operator RGBc64() const;
 
 
         /**
          * Converts the color into a Fl_Color type (ignore the alpha channel).
          **/
-        operator Fl_Color() const { return fl_rgb_color(R, G, B); }
+        explicit operator Fl_Color() const { return fl_rgb_color(comp.R, comp.G, comp.B); }
 
 
         /**
          * The buffer for the R G B A color.
          **/
-        unsigned char* buf() { return(&R); }
+        unsigned char* buf() { return((unsigned char *)&color); }
 
 
         /**
          * The buffer for the R G B A color (const version).
          **/
-        const unsigned char* buf() const { return(&R); }
+        const unsigned char* buf() const { return((unsigned char *)&color); }
 
 
         /**
          * Equality operator.
          **/
-        bool operator==(const RGBc & c) const { return(((R == c.R) && (G == c.G) && (B == c.B)) && (A == c.A)); }
+        bool operator==(const RGBc & c) const { return (color == c.color); }
 
 
         /**
          * Inequality operator.
          **/
-        bool operator!=(const RGBc & c) const { return (!(this->operator==(c))); }
+        bool operator!=(const RGBc & c) const { return (color != c.color); }
 
 
         /**
@@ -154,13 +192,13 @@ namespace mtools
          *
          * @return  A std::string that represent the color in the form "RGB(rrr,ggg,bbb)".
          **/
-        std::string toString() const { return std::string("RGB(") + mtools::toString(R) + "," + mtools::toString(G) + "," + mtools::toString(B) + ":" + mtools::toString(opacity()) + ")"; }
+        std::string toString() const { return std::string("RGBc(") + mtools::toString(comp.R) + "," + mtools::toString(comp.G) + "," + mtools::toString(comp.B) + ":" + mtools::toString(opacity()) + ")"; }
 
 
         /**
          * Makes the color fully transparent.
          **/
-        inline void makeTransparent() { A = 0; }
+        inline void makeTransparent() { comp.A = 0; }
 
 
         /**
@@ -168,13 +206,13 @@ namespace mtools
          *
          * @return  The same color but with its alpha channel set to 0.
          **/
-        inline RGBc getTransparent() const { RGBc c(*this); c.A = 0; return c; }
+        inline RGBc getTransparent() const { RGBc c(*this); c.comp.A = 0; return c; }
 
 
         /**
          * Makes the color fully opaque.
          **/
-        inline void makeOpaque() { A = 255; }
+        inline void makeOpaque() { comp.A = 255; }
 
 
         /**
@@ -182,13 +220,13 @@ namespace mtools
          *
          * @return  The same color but with its alpha channel set to 255.
          **/
-        inline RGBc getOpaque() const { RGBc c(*this); c.A = 255; return c; }
+        inline RGBc getOpaque() const { RGBc c(*this); c.comp.A = 255; return c; }
 
 
         /**
          * Give the color the default transparency (DEFAULTALPHA).
          **/
-        inline void makeDefaultTransparency() { A = DEFAULTALPHA; }
+        inline void makeDefaultTransparency() { comp.A = DEFAULTALPHA; }
 
 
         /**
@@ -196,7 +234,7 @@ namespace mtools
          *
          * @return  The opacity between 0.0 (fully transparent) and 1.0 (fully opaque). 
          **/
-        inline float opacity() const { return(((float)A) / ((float)255.0)); }
+        inline float opacity() const { return(((float)comp.A) / ((float)255.0)); }
 
 
         /**
@@ -204,7 +242,7 @@ namespace mtools
          *
          * @param   o   the opacity between 0.0 (transparent) and 1.0 (opaque)
          **/
-        inline void opacity(float o) { MTOOLS_ASSERT((o >= 0.0) && (o <= 1.0)); A = (uint8)(o * 255); }
+        inline void opacity(float o) { MTOOLS_ASSERT((o >= 0.0) && (o <= 1.0)); comp.A = (uint8)(o * 255); }
 
 
         /**
@@ -212,7 +250,7 @@ namespace mtools
          *
          * @param   o   the opacity between 0.0 (transparent) and 1.0 (opaque)
          **/
-        inline RGBc getOpacity(float o) const { MTOOLS_ASSERT((o >= 0.0) && (o <= 1.0));  RGBc c(*this); c.A = (uint8)(o * 255); return c; }
+        inline RGBc getOpacity(float o) const { MTOOLS_ASSERT((o >= 0.0) && (o <= 1.0));  RGBc c(*this); c.comp.A = (uint8)(o * 255); return c; }
 
 
         /**
@@ -221,6 +259,9 @@ namespace mtools
         * @param   B       The color to blend over (background color)
         *
         * @return the 'this over B' color
+        *
+        * TODO : make it faster !!!! 
+        *
         **/
         inline RGBc over(RGBc coulB) const
             {
@@ -228,11 +269,12 @@ namespace mtools
             const float po = 1.0f - op;
             const float opB = coulB.opacity();
             const float nop = op + opB*po;
-            const int nR = (int)((R*op + coulB.R*opB*po) / nop);
-            const int nG = (int)((G*op + coulB.G*opB*po) / nop);
-            const int nB = (int)((B*op + coulB.B*opB*po) / nop);
+            const int nR = (int)((comp.R*op + coulB.comp.R*opB*po) / nop);
+            const int nG = (int)((comp.G*op + coulB.comp.G*opB*po) / nop);
+            const int nB = (int)((comp.B*op + coulB.comp.B*opB*po) / nop);
             return RGBc(nR, nG, nB, (int)(255*nop));
             }
+
 
 
         /**
@@ -356,12 +398,12 @@ namespace mtools
          * Serialize/deserialize the object. The method work for boost and the custom serialization classe. 
          * (the method is used for both serialization and deserialization).
          **/
-        template<typename ARCHIVE> void serialize(ARCHIVE & ar, const int version = 0)
+        template<typename ARCHIVE> void serialize(ARCHIVE & ar, const int version = 0) const
             {
-            ar & R;
-            ar & G;
-            ar & B; 
-            ar & A;
+            ar & comp.R;
+            ar & comp.G;
+            ar & comp.B;
+            ar & comp.A;
             }
 
 
@@ -388,13 +430,6 @@ namespace mtools
         static const RGBc c_TransparentRed;   ///< transparent white color
         static const RGBc c_TransparentGreen; ///< transparent white color
         static const RGBc c_TransparentBlue;  ///< transparent white color
-
-
-        uint8 R;        ///< the Red component
-        uint8 G;        ///< the Green component
-        uint8 B;        ///< the Blue component
-        uint8 A;        ///< the alpha channel
-
 
     };
 
@@ -441,7 +476,236 @@ namespace mtools
     **/
     inline RGBc blendOver(RGBc A, RGBc B) { return A.over(B); }
 
+
+
+
+
+
+
+
+
+
+/**
+* A color in (R,G,B,A,N) format with 14 bit precision per channel.
+**/
+union RGBc64
+    {
+
+    public:
+
+        /*
+        * Color ordered in RGBA layout
+        */
+        uint64 color;
+        struct _RGBc64_component   // color seen as 4 unsigned char in RGBA layout 
+            {
+            uint16 R;    // byte 1 : Red.  (low byte in uint32)
+            uint16 G;    // byte 2 : Green.
+            uint16 B;    // byte 3 : Blue
+            uint16 A;    // byte 4 : alpha. (high byte in uint32)
+            } comp;
+
+        static const uint8 DEFAULTALPHA = 255; ///< default value for transparency : fully opaque
+
+
+        /** Default constructor. */
+        RGBc64() = default;
+
+        /**
+        * Constructor.
+        *
+        * @param   r   color red.
+        * @param   g   color green.
+        * @param   b   color black.
+        * @param   a   alpha channel (DEFAULTALPHA)
+        **/
+        RGBc64(uint16 r, uint16 g, uint16 b, uint16 a = DEFAULTALPHA)
+            {
+            color = ((uint64)r) + (((uint64)g) << 16) + (((uint64)b) << 32) + (((uint64)a) << 48);
+            }
+
+
+        /**
+        * Default copy constructor.
+        **/
+        RGBc64(const RGBc64 & c) = default;
+
+
+        /**
+        * Constructor from a RGBc
+        **/
+        RGBc64(const RGBc & c) 
+            {
+            const uint64 v = c.color;
+            color = (v & 255) +
+                ((v & (((uint64)255) << 8)) << 8) +
+                ((v & (((uint64)255) << 16)) << 16) +
+                ((v & (((uint64)255) << 24)) << 24);
+            }
+
+
+        /**
+        * Default assignment operator.
+        **/
+        RGBc64 & operator=(const RGBc64 & c) = default;
+
+
+        /**
+        * assignment from RGBc.
+        **/
+        inline RGBc64 & operator=(const RGBc & c)
+            {
+            const uint64 v = c.color;
+            color = (v & 255) +
+                ((v & (((uint64)255) << 8)) << 8) +
+                ((v & (((uint64)255) << 16)) << 16) +
+                ((v & (((uint64)255) << 24)) << 24);
+            return(*this);
+            }
+
+
+        /**
+         * Converts the color into a RGBc. Truncate all bits over the 8 first bits of each component.
+         **/
+        explicit inline operator RGBc() const 
+            {
+            return RGBc(*this);
+            }
+
+
+        /**
+        * The buffer for the R G B A color.
+        **/
+        inline unsigned char* buf() { return((unsigned char *)&color); }
+
+
+        /**
+        * The buffer for the R G B A color (const version).
+        **/
+        inline const unsigned char* buf() const { return((unsigned char *)&color); }
+
+
+        /**
+        * Equality operator.
+        **/
+        inline bool operator==(const RGBc & c) const { return (color == c.color); }
+
+
+        /**
+        * Inequality operator.
+        **/
+        inline bool operator!=(const RGBc & c) const { return (color != c.color); }
+
+
+        /**
+        * Convert the RGBc64 object into a std::string.
+        **/
+        std::string toString() const { return std::string("RGBc64(") + mtools::toString(comp.R) + "," + mtools::toString(comp.G) + "," + mtools::toString(comp.B) + "," + mtools::toString(comp.A) + ")"; }
+
+
+        /**
+        * Sum of color. Each component is summed. Do not check for overflow.
+        **/
+        inline void add(const RGBc & c)
+            {
+            const uint64 v = c.color;
+            color += (v & 255) +
+                ((v & (((uint64)255)<< 8 )) << 8) +
+                ((v & (((uint64)255)<< 16)) << 16) +
+                ((v & (((uint64)255)<< 24)) << 24); 
+            }
+
+
+        /**
+         * Sum of color. Each component is summed. Do not check for overflow.
+         **/
+        inline void add(const RGBc64 & c)
+            {
+            color += c.color;
+            }
+
+
+        /**
+         * Normalizes the color
+         **/
+        inline void normalize(int n)
+            {
+            comp.R /= n;
+            comp.G /= n;
+            comp.B /= n;
+            comp.A /= n;
+            }
+
+        /**
+        * Get the color in RGBc format without normalization.
+        **/
+        inline RGBc getRGBc()
+            {
+            return RGBc(*this);
+            }
+
+        /**
+         * Get the color in RGBc format and normalize it with a given multiplier n. 
+         **/
+        inline RGBc getRGBc(int n)
+            {
+            RGBc64 c(*this);
+            c.normalize(n);
+            return RGBc(c);
+            }
+
+
+        /**
+        * Serialize/deserialize the object. The method work for boost and the custom serialization classe.
+        * (the method is used for both serialization and deserialization).
+        **/
+        template<typename ARCHIVE> void serialize(ARCHIVE & ar, const int version = 0) const
+            {
+            ar & comp.R;
+            ar & comp.G;
+            ar & comp.B;
+            ar & comp.A;
+            }
+
+    };
+
+
+
+    inline RGBc::RGBc(const RGBc64 & c)
+        {
+        const uint64 cc = c.color;
+        const uint64 r = (cc & ((uint64)255)) + 
+                         ((cc >> 8)  & (((uint64)255) << 8)) + 
+                         ((cc >> 16) & (((uint64)255) << 16)) + 
+                         ((cc >> 24) & (((uint64)255) << 24));
+        color = (uint32)(r);
+        }
+
+
+    inline RGBc & RGBc::operator=(const RGBc64 & c)
+        {
+        const uint64 cc = c.color;
+        const uint64 r = (cc & ((uint64)255)) +
+            ((cc >> 8)  & (((uint64)255) << 8)) +
+            ((cc >> 16) & (((uint64)255) << 16)) +
+            ((cc >> 24) & (((uint64)255) << 24));
+        color = (uint32)(r);
+        return(*this);
+        }
+
+
+    inline RGBc::operator RGBc64() const
+        {
+        return RGBc64(*this);
+        }
+
+
 }
+
+
+
+
+
 
 
 /* end of file */
