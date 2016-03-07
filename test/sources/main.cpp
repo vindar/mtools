@@ -787,7 +787,7 @@ template<typename ObjType> class ThreadPixelDrawer
                 }
 
 
-
+/*
     const fBox2 r = _pr;
     const double px = _dlx;
     const double py = _dly;
@@ -823,7 +823,7 @@ template<typename ObjType> class ThreadPixelDrawer
 		_setInt16Buf(i,j,cr/tot,cg/tot,cb/tot,ca/tot);
 		}
 	_qi=0; _qj=0; _counter2 = _counter1;
-
+    */
 
 
 
