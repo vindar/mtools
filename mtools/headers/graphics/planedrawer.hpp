@@ -664,10 +664,10 @@ inline void _setInt16Buf(uint32 x,uint32 y,const RGBc & color)
 	{
     const size_t dx = (size_t)_int16_buffer_dim.X();
     const size_t dxy = (size_t)(dx * _int16_buffer_dim.Y());
-    _int16_buffer[x + y*dx] = (uint16)color.R;
-    _int16_buffer[x + y*dx + dxy] = (uint16)color.G;
-    _int16_buffer[x + y*dx + 2 * dxy] = (uint16)color.B;
-    _int16_buffer[x + y*dx + 3 * dxy] = (uint16)color.A;
+    _int16_buffer[x + y*dx] = (uint16)color.comp.R;
+    _int16_buffer[x + y*dx + dxy] = (uint16)color.comp.G;
+    _int16_buffer[x + y*dx + 2 * dxy] = (uint16)color.comp.B;
+    _int16_buffer[x + y*dx + 3 * dxy] = (uint16)color.comp.A;
     }
 
 /* set a color at position (i,j), with a multiplier */
@@ -675,10 +675,10 @@ inline void _setInt16Buf(uint32 x, uint32 y, const RGBc & color, uint32 mul)
     {
     const size_t dx = (size_t)_int16_buffer_dim.X();
     const size_t dxy = (size_t)(dx * _int16_buffer_dim.Y());
-    _int16_buffer[x + y*dx] = (uint16)(color.R * mul);
-    _int16_buffer[x + y*dx + dxy] = (uint16)(color.G * mul);
-    _int16_buffer[x + y*dx + 2 * dxy] = (uint16)(color.B * mul);
-    _int16_buffer[x + y*dx + 3 * dxy] = (uint16)(color.A * mul);
+    _int16_buffer[x + y*dx] = (uint16)(color.comp.R * mul);
+    _int16_buffer[x + y*dx + dxy] = (uint16)(color.comp.G * mul);
+    _int16_buffer[x + y*dx + 2 * dxy] = (uint16)(color.comp.B * mul);
+    _int16_buffer[x + y*dx + 3 * dxy] = (uint16)(color.comp.A * mul);
     }
 
 /* add a color at position (i,j) */
@@ -686,10 +686,10 @@ inline void _addInt16Buf(uint32 x,uint32 y, const RGBc & color)
 	{
     const size_t dx = (size_t)_int16_buffer_dim.X();
     const size_t dxy = (size_t)(dx * _int16_buffer_dim.Y());
-    _int16_buffer[x + y*dx] += (uint16)color.R;
-	_int16_buffer[x + y*dx + dxy] += (uint16)color.G;
-	_int16_buffer[x + y*dx + 2*dxy] += (uint16)color.B;
-    _int16_buffer[x + y*dx + 3*dxy] += (uint16)color.A;
+    _int16_buffer[x + y*dx] += (uint16)color.comp.R;
+	_int16_buffer[x + y*dx + dxy] += (uint16)color.comp.G;
+	_int16_buffer[x + y*dx + 2*dxy] += (uint16)color.comp.B;
+    _int16_buffer[x + y*dx + 3*dxy] += (uint16)color.comp.A;
     }
 
 
