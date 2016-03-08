@@ -58,7 +58,9 @@ namespace mtools
             } comp;
 
 
-        static const uint8 DEFAULTALPHA = 255; ///< default value for transparency : fully opaque
+        static const uint8 DEFAULTALPHA = 255;      ///< default value for transparency : fully opaque
+        static const uint8 OPAQUEALPHA = 255;       ///< fully opaque
+        static const uint8 TRANSPARENTALPHA = 0;    ///< fully transparent
 
         /**
          * Default constructor.
@@ -92,12 +94,24 @@ namespace mtools
 
 
         /**
+         * Raw constructor from int32
+         **/
+        RGBc(int32 c)  { color = (uint32)c; }
+
+
+        /**
+        * Raw constructor from uint32
+        **/
+        RGBc(uint32 c) { color = (uint32)c; }
+
+
+        /**
          * Constructor from a Fl_Color type.
          *
          * @param   c   the color.
          * @param   a   the transparency
          **/
-        RGBc(Fl_Color c, int a = DEFAULTALPHA) 
+        RGBc(Fl_Color c, uint8 a) 
             {
             Fl::get_color(c, comp.R, comp.G, comp.B);
             comp.A = a;
@@ -134,13 +148,14 @@ namespace mtools
         /**
          * Assignment operator from a Fl_Color, alpha value set to DEFAULTALPHA.
          **/
+        /*
         RGBc & operator=(Fl_Color c) 
             {
             Fl::get_color(c, comp.R, comp.G, comp.B);
             comp.A = DEFAULTALPHA;
             return(*this);
             }
-
+            */
 
         /**
          * Assignment operator from a buffer. Use all 4 bytes.
@@ -185,6 +200,65 @@ namespace mtools
          * Inequality operator.
          **/
         bool operator!=(const RGBc & c) const { return (color != c.color); }
+
+
+        /**
+        * Unary plus operator.
+        **/
+        inline RGBc operator+()
+            {
+            return (*this);
+            }
+
+        /**
+        * Unary minus operator.
+        **/
+        inline RGBc operator-()
+            {
+            return RGBc(-comp.R, -comp.G, -comp.B, -comp.A);
+            }
+
+
+        /**
+        * Addition operator. Component per component.
+        **/
+        inline RGBc operator+(RGBc coul)
+            {
+            //return RGBc(comp.R + coul.comp.R, comp.G + coul.comp.G, comp.B + coul.comp.B, comp.A + coul.comp.A); // slow
+            return RGBc(coul.color + color);
+            }
+
+
+        /**
+        * Addition assignment operator. Component per component.
+        **/
+        inline RGBc & operator+=(RGBc coul)
+            {
+            //comp.R += coul.comp.R; comp.G += coul.comp.G; comp.B += coul.comp.B; comp.A += coul.comp.A; // slow
+            color += coul.color;
+            return *this;
+            }
+
+
+        /**
+        * Subtraction operator. Component per component.
+        **/
+        inline RGBc operator-(RGBc coul)
+            {
+            //return RGBc(comp.R - coul.comp.R, comp.G - coul.comp.G, comp.B - coul.comp.B, comp.A - coul.comp.A); // slow
+            return RGBc(coul.color - color);
+            }
+
+
+        /**
+        * Subtraction assignment operator. Component per component.
+        **/
+        inline RGBc & operator-=(RGBc coul)
+            {
+            //comp.R -= coul.comp.R; comp.G -= coul.comp.G; comp.B -= coul.comp.B; comp.A -= coul.comp.A; // slow
+            color -= coul.color;
+            return *this;
+            }
 
 
         /**
@@ -431,6 +505,11 @@ namespace mtools
         static const RGBc c_TransparentGreen; ///< transparent white color
         static const RGBc c_TransparentBlue;  ///< transparent white color
 
+
+
+
+
+
     };
 
 
@@ -480,6 +559,13 @@ namespace mtools
 
 
 
+    /**
+    * Addition operator. Component per component.
+    **/
+    inline RGBc operator*(float f, RGBc coul)
+        {
+        return RGBc((uint8)(coul.comp.R * f), (uint8)(coul.comp.G * f), (uint8)(coul.comp.B * f), (uint8)(coul.comp.A * f));
+        }
 
 
 
