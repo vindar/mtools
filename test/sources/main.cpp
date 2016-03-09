@@ -526,7 +526,7 @@ using namespace mtools;
         ProgressImg progIm(LLX, LLY);
         progIm.clear((RGBc64)RGBc::c_Red);
         
-        mtools::Img<unsigned char> dispIm(LLX, LLY, 1, 3);
+        mtools::Img<unsigned char> dispIm(LLX, LLY, 1, 4);
         cimg_library::CImg<unsigned char> * cim = (cimg_library::CImg<unsigned char> *)&dispIm;
 
         fBox2 r(-0.5, UX-0.5, -0.5, UY-0.5);
