@@ -1,17 +1,19 @@
 #include "stdafx_test.h"
 
 #include "mtools.hpp"
-
 #include "misc/threadworker.hpp"
+
+#include <limits>
 
 using namespace mtools;
 
 
-
-
-
-
-        template<typename ObjType> class ThreadPixelDrawer : public ThreadWorker
+        /**
+         * ThreadPlaneDrawer class
+         *
+         * Use a single thread to draw from a getColor function into a progressImg
+         **/
+        template<typename ObjType> class ThreadPlaneDrawer : public ThreadWorker
             {
 
             public:
@@ -20,34 +22,29 @@ using namespace mtools;
                 * Constructor. Associate the object. The thread is initially suspended.
                 *
                 * @param [in,out]  obj     pointer to the object to be drawn. Must implement a method recognized
-                *                          by GetColorSelector().
+                *                          by GetColorPlaneSelector
                 * @param [in,out]  opaque  (Optional) The opaque data to passed to getColor(), nullptr if not
                 *                          specified.
                 **/
-                ThreadPixelDrawer(ObjType * obj, void * opaque = nullptr) : ThreadWorker(),
+                ThreadPlaneDrawer(ObjType * obj, void * opaque = nullptr) : ThreadWorker(),
                     _obj(obj),
                     _opaque(opaque),
-                    _keepPrevious(false),
                     _validParam(false),
                     _range(fBox2()),
                     _temp_range(fBox2()),
                     _im(nullptr),
                     _temp_im(nullptr),
                     _subBox(iBox2()),
-                    _temp_subBox(iBox2()),
-                    _dens(0.0),
-                    _dlx(0.0), _dly(0.0),
-                    _is1to1(false),
-                    _range1to1(iBox2()),
-                    _workPhase(WORK_NOTHING)
+                    _temp_subBox(iBox2())
                     {
+                    static_assert(mtools::GetColorPlaneSelector<ObjType>::has_getColor, "The object must be implement one of the getColor() method recognized by GetColorPlaneSelector.");
                     }
 
 
                 /**
                 * Destructor. Stop the thread.
                 **/
-                virtual ~ThreadPixelDrawer()
+                virtual ~ThreadPlaneDrawer()
                     {
                     }
 
@@ -94,35 +91,11 @@ using namespace mtools;
                 void redraw(bool keepPrevious = true)
                     {
                     sync();
-                    _keepPrevious = keepPrevious;
                     signal(SIGNAL_REDRAW);
                     }
 
 
             private:
-
-                /**
-                * The main 'work' method
-                **/
-                virtual void work() override
-                    {
-                    MTOOLS_INSURE((bool)_validParam);
-                    std::cout << "work\n";                    
-                    while (1)
-                        {
-                        switch (_workPhase)
-                            {
-                            case WORK_1TO1:         { _draw_1to1(); break; }
-                            case WORK_FAST:         { _draw_fast(); break; }
-                            case WORK_STOCHASTIC:   { _draw_stochastic(); break; }
-                            case WORK_PERFECT:      { _draw_perfect(); break; }
-                            case WORK_FINISHED:     { return; }
-                            case WORK_NOTHING:      { MTOOLS_ERROR("hum..."); }
-                            default: { MTOOLS_ERROR("wtf?"); }
-                            }
-                        _assignWork();
-                        }
-                    }
 
 
                 /**
@@ -139,13 +112,12 @@ using namespace mtools;
                     }
 
 
-       
                 /* set the new parameter */
                 int _setNewParam()
                     {
-                    const int MIN_IMAGE_SIZE = 5;
-                    const double RANGE_MIN_VALUE = 1.0e-17;
-                    const double RANGE_MAX_VALUE = 1.0e17;
+                    const int MIN_IMAGE_SIZE = 2;
+                    const double RANGE_MIN_VALUE = std::numeric_limits<double>::min()*100000;
+                    const double RANGE_MAX_VALUE = std::numeric_limits<double>::max()/100000;
                     _range = _temp_range;
                     _im = _temp_im;
                     _subBox = _temp_subBox;
@@ -157,29 +129,8 @@ using namespace mtools;
                     const double rly = _range.ly();
                     if ((rlx < RANGE_MIN_VALUE) || (rly < RANGE_MIN_VALUE)) { setProgress(0); _validParam = false; return THREAD_RESET_AND_WAIT; } // prevent zooming in too far
                     if ((std::abs(_range.min[0]) > RANGE_MAX_VALUE) || (std::abs(_range.max[0]) > RANGE_MAX_VALUE) || (std::abs(_range.min[1]) > RANGE_MAX_VALUE) || (std::abs(_range.max[1]) > RANGE_MAX_VALUE)) { setProgress(0); _validParam = false; return THREAD_RESET_AND_WAIT; } // prevent zooming out too far
-                    _validParam = true;
-                    const int64 ilx = _subBox.lx() + 1;
-                    const int64 ily = _subBox.ly() + 1;
-                    _dlx = rlx / ilx;
-                    _dly = rly / ily;
-                    _dens = _dlx*_dly;
-                    const double epsx = rlx - ilx;
-                    const double epsy = rly - ily;
-                    if ((std::abs(epsx) < 1.0) && (std::abs(epsy) < 1.0))
-                        {// do 1 to 1 drawing;
-                        _is1to1 = true;
-                        _range.min[0] += epsx / 2.0; _range.max[0] -= epsx / 2.0;
-                        _range.min[1] += epsy / 2.0; _range.max[1] -= epsy / 2.0;
-                        _range1to1.min[0] = (int64)std::ceil(_range.min[0]); _range1to1.max[0] = (int64)std::floor(_range.max[0]);
-                        _range1to1.min[1] = (int64)std::ceil(_range.min[1]); _range1to1.max[1] = (int64)std::floor(_range.max[1]);
-                        }
-                    else
-                        {
-                        _is1to1 = false;
-                        }
                     setProgress(0);
-                    _workPhase = WORK_NOTHING;
-                    _assignWork();
+                    _validParam = true;
                     return THREAD_RESET;
                     }
 
@@ -189,252 +140,115 @@ using namespace mtools;
                 int _setRedraw()
                     {
                     if (!((bool)_validParam)) return THREAD_RESET_AND_WAIT;
-                    _workPhase = WORK_NOTHING;
-                    _assignWork();
-                    if ((progress() > 0) && ((bool)_keepPrevious))
-                        {
-                        setProgress(1);
-                        if (_workPhase == WORK_FAST) 
-                            {
-                            _im->normalize(_subBox); _assignWork();
-                            }
-                        return THREAD_RESET;
-                        }
-                    else
-                        {
-                        setProgress(0);
-                        }
+                    setProgress(0);
                     return THREAD_RESET;
                     }
 
 
 
-                /* set the next type of work to perform */
-                void _assignWork()
+                /**
+                * The main 'work' method
+                **/
+                virtual void work() override
                     {
-                    std::cout << "assign work\n";
-                    static const double DENSITY_SKIP_FAST = 1.0;
-                    static const double DENSITY_SKIP_STOCHASTIC = 4.0;
-                    while (1)
+                    MTOOLS_INSURE((bool)_validParam);
+                    _drawFast();
+                    setProgress(1);
+                    for (int i = 0; i < 254;i++)
                         {
-                        switch (_workPhase)
-                            {
-                            case WORK_NOTHING:
-                                {
-                                if (_is1to1) { _workPhase = WORK_1TO1; return; }
-                                _workPhase = ((_dens < DENSITY_SKIP_FAST) ? WORK_PERFECT : WORK_FAST);
-                                return;
-                                }
-                            case WORK_1TO1:
-                                {
-                                _workPhase = WORK_FINISHED;
-                                break;
-                                }
-                            case WORK_FAST:
-                                {
-                                _workPhase = ((_dens < DENSITY_SKIP_STOCHASTIC) ? WORK_PERFECT : WORK_STOCHASTIC);
-                                return;
-                                }
-                            case WORK_STOCHASTIC:
-                                {
-                                _workPhase = WORK_PERFECT;
-                                return;
-                                }
-                            case WORK_PERFECT:
-                                {
-                                _workPhase = WORK_FINISHED;
-                                break;
-                                }
-                            case WORK_FINISHED:
-                                {
-                                return;
-                                }
-                            default:
-                                {
-                                MTOOLS_ERROR("wtf...");
-                                }
-                            }
-                        }
-                    }
-
-
-
-                /* perfect 1 to 1 drawing */
-                void _draw_1to1()
-                    {
-                    std::cout << "draw 1 on 1 \n"; mtools::Chronometer();
-                    const int64 xmin = _range1to1.min[0];
-                    const int64 xmax = _range1to1.max[0];
-                    const int64 ymin = _range1to1.min[1];
-                    const int64 ymax = _range1to1.max[1];
-                    RGBc64 * imData = _im->imData();
-                    uint8 * normData = _im->normData();
-                    size_t off = (size_t)(_subBox.min[0] + _im->width()*(_subBox.min[1])); // offset of the first point in the image
-                    size_t pa = (size_t)(_im->width() - (_subBox.lx() + 1)); // padding needed to get to the next line
-                    if (pa != 0)
-                        {
-                        for (int64 j = ymin; j <= ymax; j++)
-                            {
-                            check();
-                            for (int64 i = xmin; i <= xmax; i++)
-                                {
-                                imData[off] = mtools::GetColorSelector<ObjType>::call(*_obj, { i , j }, _opaque);
-                                normData[off] = 1;
-                                off++;
-                                }
-                            off += pa;
-                            }
-                        }
-                    else
-                        {
-                        for (int64 j = ymin; j <= ymax; j++)
-                            {
-                            check();
-                            for (int64 i = xmin; i <= xmax; i++)
-                                {
-                                imData[off] = mtools::GetColorSelector<ObjType>::call(*_obj, { i , j }, _opaque);
-                                normData[off] = 1;
-                                off++;
-                                }
-                            }
+                        _drawStochastic();
+                        setProgress((i * 100) / 255);
                         }
                     setProgress(100);
-                    uint64 tim = mtools::Chronometer(); std::cout << "finished in " << tim << " ms\n";
                     }
 
 
 
-                /* fast drawing */
-                void _draw_fast()
+                /* draw by sampling the color at the center of each pixel */
+                void _drawFast()
                     {
-                    std::cout << "draw fast \n";  mtools::Chronometer();
                     RGBc64 * imData = _im->imData();
                     uint8 * normData = _im->normData();
-                    const double px = _dlx;
-                    const double py = _dly;
+                    const fBox2 r = _range;
                     const int64 ilx = _subBox.lx() + 1;
                     const int64 ily = _subBox.ly() + 1;
-                    const fBox2 r = _range;
-                    const int64 width = _im->width();
+                    const double px = r.lx() / ilx;
+                    const double py = r.ly() / ily;
+                    const double px2 = px/2;
+                    const double py2 = py/2;
                     size_t off = (size_t)(_subBox.min[0] + _im->width()*(_subBox.min[1]));
-                    size_t pa = (size_t)(width - ilx);
-                    if (_dens < 0.5)
-                        { // low density, try to reduce color queries
-                        int64  prevsy = (int64)r.min[1] - 3; // cannot match anything
-                        for (int64 j = 0; j < ily; j++)
+                    const size_t pa = (size_t)(_im->width() - ilx);
+                    fBox2 cbox(r.min[0], r.min[0] + px, r.min[1], r.min[1] + py);
+                    for (int64 j = 0; j < ily; j++)
+                        {
+                        check();
+                        for (int64 i = 0; i < ilx; i++)
                             {
-                            check();
-                            const double y = r.min[1] + (j + 0.5)*py;
-                            const int64 sy = (int64)floor(y + 0.5);
-                            if (sy == prevsy)
+                            imData[off] = (mtools::GetColorPlaneSelector<ObjType>::call(*_obj, fVec2{ cbox.min[0] + px2 , cbox.min[1] + py2 }, cbox, 1, _opaque)).first;
+                            normData[off] = 1;
+                            off++;
+                            cbox.min[0] += px;
+                            cbox.max[0] += px;
+                            }
+                        off += pa;
+                        cbox.min[1] += py; 
+                        cbox.max[1] += py;
+                        cbox.min[0] = r.min[0];
+                        cbox.max[0] = r.min[0] + px;
+                        }
+                    setProgress(1);
+                    }
+
+
+
+                void _drawStochastic()
+                    {
+                    RGBc64 * imData = _im->imData();
+                    uint8 * normData = _im->normData();
+                    const fBox2 r = _range;
+                    const int64 ilx = _subBox.lx() + 1;
+                    const int64 ily = _subBox.ly() + 1;
+                    const double px = r.lx() / ilx;
+                    const double py = r.ly() / ily;
+                    size_t off = (size_t)(_subBox.min[0] + _im->width()*(_subBox.min[1]));
+                    const size_t pa = (size_t)(_im->width() - ilx);
+                    fBox2 cbox(r.min[0], r.min[0] + px, r.min[1], r.min[1] + py);
+                    for (int64 j = 0; j < ily; j++)
+                        {
+                        check();
+                        for (int64 i = 0; i < ilx; i++)
+                            {
+                            std::pair<RGBc,bool> P = mtools::GetColorPlaneSelector<ObjType>::call(*_obj, fVec2{ cbox.min[0] + _fastgen.unif()*px , cbox.min[1] + _fastgen.unif()*py }, cbox, 1, _opaque);
+                            if (P.second)
                                 {
-                                std::memcpy((imData + off), (imData + off) - width, (size_t)ilx*sizeof(RGBc64));
-                                std::memset((normData + off), 1, (size_t)ilx);
-                                off += (size_t)width;
+                                imData[off] = P.first;
+                                normData[off] = 1;
                                 }
                             else
                                 {
-                                prevsy = sy;
-                                RGBc64 coul;
-                                int64 prevsx = (int64)r.min[0] - 3; // cannot match anything
-                                for (int64 i = 0; i < ilx; i++)
-                                    {
-                                    const double x = r.min[0] + (i + 0.5)*px;
-                                    const int64 sx = (int64)floor(x + 0.5);
-                                    if (prevsx != sx) // use for _dlx < 0.5  
-                                        {
-                                        coul = mtools::GetColorSelector<ObjType>::call(*_obj, { sx , sy }, _opaque);
-                                        prevsx = sx;
-                                        }
-                                    imData[off] = coul;
-                                    normData[off] = 1;
-                                    off++;
-                                    }
-                                off += pa;
+                                imData[off].add(P.first);
+                                normData[off]++;
                                 }
+                            off++;
+                            cbox.min[0] += px;
+                            cbox.max[0] += px;
                             }
-                        }
-                    else
-                        { // high density, do not try to re-use color
-                        for(int64 j = 0; j < ily; j++)
-                            {
-                            check();
-                            const double y = r.min[1] + (j + 0.5)*py;
-                            const int64 sy = (int64)floor(y + 0.5);
-                            for (int64 i = 0; i < ilx; i++)
-                                {
-                                const double x = r.min[0] + (i + 0.5)*px;
-                                const int64 sx = (int64)floor(x + 0.5);
-                                imData[off] = mtools::GetColorSelector<ObjType>::call(*_obj, { sx , sy }, _opaque);
-                                normData[off] = 1;
-                                off++;
-                                }
-                            off += pa;
-                            }
+                        off += pa;
+                        cbox.min[1] += py;
+                        cbox.max[1] += py;
+                        cbox.min[0] = r.min[0];
+                        cbox.max[0] = r.min[0] + px;
                         }
                     setProgress(1);
-                    uint64 tim = mtools::Chronometer(); std::cout << "finished in " << tim << " ms\n";
                     }
 
-
-                /* stochastic drawing sample a pixel
-                * may be interrupted at each line */
-                void _draw_stochastic()
-                    {
-                    std::cout << "draw stochastic \n";
-                    return _draw_fast();
-                    // two case : add only a single sample or add multiple samples
-                    /* remeber x value to prevent multiple horizontal queries */
-                    /* try to skip similar vertical lines */
-
-                    }
-
-
-                /* perfect drawing by computing the average color at each pixel
-                * may be interrupted at each line if density <= 255 and at each
-                * pixel if density > 255*/
-                void _draw_perfect()
-                    {
-                    std::cout << "draw perfect \n";
-                    return _draw_fast();
-                    }
-
-
-
-                /* return the y value of the integer strip containing the pixel at coord j
-                if indeed contained in such a strip, otherwise, return distinct values < _range.min[1] */
-                int64 _findLineStrip(int j)
-                    {
-                    const double m = _range.min[1];
-                    const double a = m + _dly*j;
-                    const double z = std::floor(a + 0.5);
-                    return((a + _dly <= z + 0.5) ? ((int64)z) : ((int64)m - j - 10));
-                    }
-
-
-                /* return a value that will not match any returned by _findLineStrip */
-                int64 _noLineStrip()
-                    {
-                    return ((int64)_range.min[1] - 10);
-                    }
-
-
-
-                static const int WORK_NOTHING = 100;
-                static const int WORK_1TO1 = 101;
-                static const int WORK_FAST = 102;
-                static const int WORK_STOCHASTIC = 103;
-                static const int WORK_PERFECT = 104;
-                static const int WORK_FINISHED = 105;
 
                 static const int SIGNAL_NEWPARAM = 4;
                 static const int SIGNAL_REDRAW = 5;
 
-
                 ObjType * _obj;                         // the object to draw.
                 void * _opaque;                         // opaque data passed to _obj;
 
-                std::atomic<bool> _keepPrevious;        // do we keep something from the previous drawing
                 std::atomic<bool> _validParam;          // indicate if the parameter are valid.
 
                 fBox2 _range;                           // the range
@@ -444,14 +258,190 @@ using namespace mtools;
                 iBox2 _subBox;                          // part of the image to draw
                 std::atomic<iBox2> _temp_subBox;        // and the temporary use to communicate with the thread.
 
-                double _dens;                           // density : average number of sites per pixel
-                double _dlx, _dly;                      // horizontal and vertical density (size of image pixel in real coord)
-                bool _is1to1;                           // true if we have a 1 to 1 drawing
-                iBox2 _range1to1;                       // integer range box in the case of 1 to 1 drawing
-
-                int _workPhase;                         // current work phase
-
                 FastRNG _fastgen;                       // fast RNG
+
+            };
+
+
+            /**
+             * MultiThreadPlaneDrawer class
+             * 
+             * Use several threads to draw from a getColor function into a progressImg.
+             *
+             * @tparam  ObjType Type of the object type.
+             **/
+            template<typename ObjType> class MultiThreadPlaneDrawer
+            {
+
+            public:
+
+            /**
+             * Constructor.
+             *
+             * @param [in,out]  obj The object to draw
+             **/
+            MultiThreadPlaneDrawer(ObjType * obj, int nbthread = 1) : _obj(obj), _vecThread()
+                {
+                nbThread(nbthread);
+                }
+
+
+            /** Destructor. */
+            ~MultiThreadPlaneDrawer()
+                {
+                _deleteAllThread();
+                }
+
+
+            /**
+             * Return the current number of threads.
+             **/
+            int nbThread() const { return _vecThread.size(); }
+
+
+            /**
+             * Change the number of thread.
+             * 
+             * All threads are disabled and setParam must be called again to set the parameters.
+             **/
+            void nbThread(int nb)
+                { 
+                _deleteAllThread();
+                _vecThread.resize(nb);
+                for (size_t i = 0; i < nb; i++) { _vecThread[i] = new ThreadPlaneDrawer<ObjType>(_obj); }
+                }
+
+
+            /**
+            * Determines if the drawing parameter are valid.
+            **/
+            inline bool validParam()  const 
+                { 
+                if (_vecThread.size() == 0) return false;
+                sync();
+                for (size_t i = 0; i < _vecThread.size(); i++) { if (!((_vecThread[i])->validParam())) return false; }                
+                return true;
+                }
+
+
+            /** Synchronises all threads */
+            void sync()
+                {
+                for (size_t i = 0; i < _vecThread.size(); i++) { (_vecThread[i])->sync(); }
+                }
+
+
+            /**
+             * Get the curent progress value (which is the min of the progress of all the threads).
+             **/
+            inline int progress() const
+                {
+                if (_vecThread.size() == 0) return 0;
+                int pr = (_vecThread[0])->progress();
+                for (size_t i = 1; i < _vecThread.size(); i++) 
+                    {
+                    const int q = (_vecThread[i])->progress();
+                    if (q < pr) { pr = q; }
+                    }
+                return pr;
+                }
+
+            /**
+            * Enables/Disable all the threads.
+            **/
+            void enable(bool newstatus)
+                {
+                if (_vecThread.size() == 0) return;
+                _vecThread[0]->sync();
+                if (newstatus == _vecThread[0]->enable()) return;
+                for (size_t i = 0; i < _vecThread.size(); i++) { _vecThread[i]->enable(newstatus); }
+                }
+
+
+            /**
+            * Query if the threads are currently enabled.
+            **/
+            inline bool enable() 
+                { 
+                if (_vecThread.size() == 0) return false;
+                sync();
+                return _vecThread[0]->enable();
+                }
+
+
+            /**
+            * Sets the drawing parameters.
+            *
+            * Returns immediately, use sync() to wait for the operation to complete.
+            *
+            * @param   range       The range to draw.
+            * @param [in,out]  im  The image to draw into.
+            * @param   subBox      The part of the image to draw (border inclusive). If empty, use the whole
+            *                      image.
+            **/
+            void setParameters(const fBox2 & range, ProgressImg * im, iBox2 subBox = iBox2())
+                {
+                if (subBox.isEmpty()) { subBox = iBox2(0, im->width() - 1, 0, im->height() - 1); }
+                const size_t nt = _vecThread.size();
+                const int64 H = subBox.ly() + 1;
+                if ((nt==0)||(H < (int64)(3 * nt))) return;
+                int64 h = H/nt;
+                size_t m = (size_t)(H % nt);
+                iBox2 cbox(subBox.min[0], subBox.max[0], subBox.min[1], subBox.min[1] + h - 1);
+                for (size_t i = 0; i < (nt - m); i++)
+                    {
+                    _vecThread[i]->setParameters(_computeRange(range, subBox, cbox), im, cbox);
+                    cbox.min[1] += h; cbox.max[1] += h;
+                    }
+                cbox.max[1]++;
+                for (size_t i = (nt - m); i < nt; i++)
+                    {
+                    _vecThread[i]->setParameters(_computeRange(range, subBox, cbox), im, cbox);
+                    cbox.min[1] += (h+1); cbox.max[1] += (h+1);
+                    }
+                MTOOLS_INSURE(cbox.min[1] == 1 + subBox.max[1]);
+                }
+
+
+            fBox2 _computeRange(fBox2 range, iBox2 subBox, iBox2 cBox)
+                {
+                const double px = range.lx() / (subBox.lx() + 1);
+                const double py = range.ly() / (subBox.ly() + 1);
+                const double xmin = range.min[0] + px*(cBox.min[0] - subBox.min[0]);
+                const double xmax = range.max[0] - px*(subBox.max[0] - cBox.max[0]);
+                const double ymin = range.min[1] + py*(cBox.min[1] - subBox.min[1]);
+                const double ymax = range.max[1] - py*(subBox.max[1] - cBox.max[1]);
+                return fBox2(xmin, xmax, ymin, ymax);
+                }
+
+
+            /**
+             * Force a redraw.
+             * 
+             * Returns immediately, use sync() to wait for the operation to complete.
+             **/
+            void redraw()
+                {
+                for (size_t i = 0; i < _vecThread.size(); i++) { (_vecThread[i])->redraw(); }
+                }
+
+
+            private:
+
+
+                /* delete all worker thread */
+                void _deleteAllThread()
+                    {
+                    for (size_t i = 0; i < _vecThread.size(); i++) { delete(_vecThread[i]); }
+                    _vecThread.clear();
+                    }
+
+
+                
+
+                ObjType * _obj;                                             // the object to draw.
+                std::vector< ThreadPlaneDrawer<ObjType>*  > _vecThread;     // vector of all the threads. 
+
 
             };
 
@@ -461,67 +451,65 @@ using namespace mtools;
 
 
 
+volatile int inIt = 256; // initial number of iterations 
 
-
-
-
-
-    
-    MT2004_64 gen;
-    double sinus(double x) { return sin(x); }
-
-    double square(double x) { return (x*x); }
-
-    void stupidTest()
+/* Mandelbrot
+simple RGBc return type : multiple call for the same pixel are blended together
+*/
+RGBc mandelbrot(const fVec2 & pos, const fBox2 & R, int32 nbiter)
+    {
+    int nbi = inIt + nbiter * (inIt/10);
+    const double cx = pos.X();
+    const double cy = pos.Y();
+    double X = 0.0;
+    double Y = 0.0;
+    for (int i = 0; i < nbi; i++)
         {
-        cout << "Hello World\n";
-        int64 v = cout.ask("Give me a number", 0);
-        watch("your number", v);
-        cout << "Terminate the program gracefully by closing the plotter window\n";
-        cout << "or forcefully by closing the cout or watch window\n";
-        Plotter2D PL;
-        auto P1 = makePlot2DFun(sinus, -2, 2, "sinus");
-        auto P2 = makePlot2DFun(square, -2, 2, "square");
-        PL[P1][P2];
-        PL.autorangeXY();
-        PL.plot();
-
+        const double sX = X;
+        const double sY = Y;
+        X = sX*sX - sY*sY + cx;
+        Y = 2 * sX*sY + cy;
+        if ((X*X + Y*Y) > 4) { return RGBc::jetPalette(i, 1, nbi); }
         }
+    return RGBc::c_Black;
+    }
 
 
-
-
-
-
-    mtools::Img<unsigned char> lenna;
-    int64 lenx, leny;
-
-    inline RGBc colorImage(int64 x, int64 y)
+/* Douady's rabbit
+return type std::pair<RGBc,bool> : setting the bool to true force color returned to overwrite previous color at the same pixel. 
+*/
+std::pair<RGBc,bool> rabbit(const fVec2 & pos, const fBox2 & R, int32 nbiter)
+    {
+    const int nbi = 64;
+    const double cx = -0.122561;
+    const double cy = 0.744862;
+    double X = pos.X();
+    double Y = pos.Y();
+    for (int i = 0; i < nbi; i++)
         {
-        if ((x < 0) || (x >= lenx)) return RGBc::c_Maroon;
-        if ((y < 0) || (y >= leny)) return RGBc::c_Green;
-        return lenna.getPixel({ x, leny - 1 - y });
+        const double sX = X;
+        const double sY = Y;
+        X = sX*sX - sY*sY + cx;
+        Y = 2 * sX*sY + cy;
+        if ((X*X + Y*Y) > 4) { return std::pair<RGBc,bool>(RGBc::jetPalette(i, 1,64),true); }
         }
+    return std::pair<RGBc, bool>(RGBc::c_Black,true);
+    }
 
-    void loadImage()
-        {
-        lenna.load("lenna.jpg");
-        lenx = lenna.width();
-        leny = lenna.height();
-        cout << "LX = " << lenx << "\n";
-        cout << "LY = " << leny << "\n";
-        }
+
+
+
+
 
 
 
 
     void test()
         {
-        loadImage();
         const int LLX = 2200;
         const int LLY = 1400;
         const int UX = 2000;
-        const int UY = 1300;
+        const int UY = 1000;
 
         ProgressImg progIm(LLX, LLY);
         progIm.clear((RGBc64)RGBc::c_Red);
@@ -529,11 +517,13 @@ using namespace mtools;
         mtools::Img<unsigned char> dispIm(LLX, LLY, 1, 4);
         cimg_library::CImg<unsigned char> * cim = (cimg_library::CImg<unsigned char> *)&dispIm;
 
-        fBox2 r(-0.5, UX-0.5, -0.5, UY-0.5);
+        fBox2 r(-2.0, 2.0, -1.0, 1.0);
 
-        ThreadPixelDrawer<decltype(colorImage)> TPD(colorImage, nullptr);
+        MultiThreadPlaneDrawer<decltype(mandelbrot)> TPD(mandelbrot, 4);
 
         iBox2 SubB(50, 50 + UX - 1, 20, 20 + UY - 1);
+
+        SubB.clear(); 
 
         TPD.setParameters(r, &progIm, SubB);
         TPD.sync();
@@ -553,10 +543,10 @@ using namespace mtools;
             if (DD.is_key(cimg_library::cimg::keyARROWLEFT)) { double sh = r.lx() / 20; r.min[0] -= sh; r.max[0] -= sh; TPD.setParameters(r, &progIm, SubB); } //
             if (DD.is_key(cimg_library::cimg::keyARROWRIGHT)) { double sh = r.lx() / 20; r.min[0] += sh; r.max[0] += sh; TPD.setParameters(r, &progIm, SubB); } //
             if (DD.is_key(cimg_library::cimg::keyPAGEDOWN)) { double lx = r.max[0] - r.min[0]; double ly = r.max[1] - r.min[1]; r.min[0] = r.min[0] - (lx / 8.0); r.max[0] = r.max[0] + (lx / 8.0); r.min[1] = r.min[1] - (ly / 8.0);  r.max[1] = r.max[1] + (ly / 8.0); TPD.setParameters(r, &progIm, SubB); }
-            if (DD.is_key(cimg_library::cimg::keyPAGEUP)) { if ((r.lx()>0.5) && (r.ly()>0.5)) { double lx = r.max[0] - r.min[0]; double ly = r.max[1] - r.min[1]; r.min[0] = r.min[0] + (lx / 10.0); r.max[0] = r.max[0] - (lx / 10.0); r.min[1] = r.min[1] + (ly / 10.0); r.max[1] = r.max[1] - (ly / 10.0); } TPD.setParameters(r, &progIm, SubB); }
+            if (DD.is_key(cimg_library::cimg::keyPAGEUP)) { double lx = r.max[0] - r.min[0]; double ly = r.max[1] - r.min[1]; r.min[0] = r.min[0] + (lx / 10.0); r.max[0] = r.max[0] - (lx / 10.0); r.min[1] = r.min[1] + (ly / 10.0); r.max[1] = r.max[1] - (ly / 10.0); TPD.setParameters(r, &progIm, SubB); }
        
             TPD.sync();
-  //          std::cout << "quality = " << TPD.quality() << "\n";
+            std::cout << "quality = " << TPD.progress() << "\n";
             progIm.blit(dispIm);
 //            if (isaxe) { dispIm.fBox2_drawAxes(r).fBox2_drawGraduations(r).fBox2_drawNumbers(r); }
 //            if (isgrid) { dispIm.fBox2_drawGrid(r); }
@@ -568,33 +558,9 @@ using namespace mtools;
 
 
 
-
-
-
-
     int main(int argc, char * argv[])
         {
-
-        /*
-        cimg_library::CImg<mtools::RGBc> imrgbc;
-
-        imrgbc.resize(100, 100, 1, 1);
-        */
-     //   RGBc * p = 0;
-     //   imrgbc.draw_circle(50, 50, 10,p, 1.0);
-
         test(); 
-        /*
-        cout << sizeof(RGBc);
-        cout.getKey();
-
-        loadImage();
-
-        Plotter2D plotter;
-        auto P = mtools::makePlot2DLattice(colorImage, "test");
-        plotter[P];
-        plotter.plot();
-        */
         return 0;
         }
 
