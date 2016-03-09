@@ -22,6 +22,7 @@
 
 #include "../misc/misc.hpp"
 #include "../misc/error.hpp"
+#include "../maths/vec.hpp"
 #include "rgbc.hpp"
 #include "customcimg.hpp"
 
@@ -252,24 +253,60 @@ namespace mtools
 
 
             /**
-             * Raw blitting onto a Img image. 
+             * Blit the progressImg onto a Img image (use normalization).
              * 
-             * Fastest method but both images must have the same size.
-             **/            
-            void blit(Img<unsigned char> & im)
+             * Clips the image if necessar but fastest when offsetPos = {0,0} and when both images have the
+             * same size.
+             **/
+            void blit(Img<unsigned char> & im, iVec2 offsetPos = iVec2{ 0,0 })
                 {
-                const size_t l = (size_t)_width*_height;
-                MTOOLS_ASSERT(im.width()*im.height() == l);
+                const size_t lx = (size_t)im.width();
+                const size_t ly = (size_t)im.height();
+                if (((_width <= 0) || (_height <= 0))||((lx <= 0)||(ly <= 0))) return;
+                MTOOLS_ASSERT(im.spectrum() == 4);
+                const size_t l = (size_t)lx*ly;
                 unsigned char * p1 = im.data();
                 unsigned char * p2 = im.data() + l;
-                unsigned char * p3 = im.data() + 2*l;
-                for (size_t z = 0; z < l; z++)
-                    {
-                    RGBc coul = _imData[z].getRGBc(_normData[z] + 1);
-                    p1[z] = coul.comp.R;
-                    p2[z] = coul.comp.G;
-                    p3[z] = coul.comp.B;
+                unsigned char * p3 = im.data() + 2 * l;
+                unsigned char * p4 = im.data() + 3 * l;
+                if ((_width == lx) && (_height == lx) && (offsetPos == iVec2{0,0}))
+                    { // same size and no offset, fast...
+                    for (size_t z = 0; z < l; z++)
+                        {
+                        RGBc coul = _imData[z].getRGBc(_normData[z] + 1);
+                        p1[z] = coul.comp.R;
+                        p2[z] = coul.comp.G;
+                        p3[z] = coul.comp.B;
+                        p4[z] = coul.comp.A;
+                        }
+                    return;
                     }
+                iBox2 dstBox(0, lx - 1, 0, ly - 1);
+                iBox2 srcBox(offsetPos.X(), offsetPos.X() + _width - 1, offsetPos.Y(), offsetPos.Y() + _height - 1);
+                auto interBox = mtools::intersectionRect(dstBox, srcBox);
+                if (interBox.isEmpty()) return; // nothing to blit
+                const size_t LX = (size_t)interBox.lx() + 1;
+                const size_t LY = (size_t)interBox.ly() + 1;
+                const size_t pas = (size_t)(_width - LX);
+                const size_t pad = (size_t)(lx - LX);
+                size_t os = 0;
+                size_t od = (size_t)(offsetPos.X() + lx*offsetPos.Y());
+                for (size_t j = 0; j < LY; j++)
+                    {
+                    for (size_t i = 0; i < LX; i++)
+                        {
+                        RGBc coul = _imData[os].getRGBc(_normData[os] + 1);
+                        p1[od] = coul.comp.R;
+                        p2[od] = coul.comp.G;
+                        p3[od] = coul.comp.B;
+                        p4[od] = coul.comp.A;
+                        os++;
+                        od++;
+                        }
+                    os += pas;
+                    od += pad;
+                    }
+
                 }
 
 
