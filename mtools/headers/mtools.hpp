@@ -41,6 +41,7 @@
 
 // graphics
 #include "graphics/rgbc.hpp"
+#include "graphics/progressimg.hpp"
 #include "graphics/simpleBMP.hpp"
 #include "graphics/edgesiteimage.hpp"
 #include "graphics/interpolation.hpp"
