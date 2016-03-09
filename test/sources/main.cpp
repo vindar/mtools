@@ -49,6 +49,8 @@ using namespace mtools;
                     }
 
 
+
+
                 /**
                 * Determines if the drawing parameter are valid. Return false if for example, the image is set
                 * to nullptr, or the subbox is incorrect, or if the range is too small, or too large, or empty.
@@ -241,6 +243,11 @@ using namespace mtools;
                         }
                     setProgress(1);
                     }
+
+
+                // no copy
+                ThreadPlaneDrawer(const ThreadPlaneDrawer &) = delete;
+                ThreadPlaneDrawer & operator=(const ThreadPlaneDrawer &) = delete;
 
 
                 static const int SIGNAL_NEWPARAM = 4;
@@ -437,7 +444,10 @@ using namespace mtools;
                     }
 
 
-                
+                // no copy
+                MultiThreadPlaneDrawer(const MultiThreadPlaneDrawer &) = delete;
+                MultiThreadPlaneDrawer & operator=(const MultiThreadPlaneDrawer &) = delete;
+
 
                 ObjType * _obj;                                             // the object to draw.
                 std::vector< ThreadPlaneDrawer<ObjType>*  > _vecThread;     // vector of all the threads. 

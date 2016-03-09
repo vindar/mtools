@@ -182,6 +182,11 @@ namespace mtools
 
         private:
 
+
+            // no copy
+            ThreadWorker(const ThreadWorker &) = delete;
+            ThreadWorker & operator=(const ThreadWorker &) = delete;
+
             std::atomic<int>    _progress;          // progress indicator
             std::atomic<bool>   _thread_status;     // true id the thread is enabled and false otherwise
             std::atomic<bool>   _work_status;       // true if work on and false if waiting
