@@ -334,6 +334,7 @@
     <ClInclude Include="headers\containers\RWtreegraph.hpp" />
     <ClInclude Include="headers\graphics\cimgwidget.hpp" />
     <ClInclude Include="headers\graphics\customcimg.hpp" />
+    <ClInclude Include="headers\graphics\drawable2DInterface.hpp" />
     <ClInclude Include="headers\graphics\drawable2Dobject.hpp" />
     <ClInclude Include="headers\graphics\edgesiteimage.hpp" />
     <ClInclude Include="headers\graphics\interpolation.hpp" />
