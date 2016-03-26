@@ -23,7 +23,7 @@
 
 
 #include "plotter2Dobj.hpp"
-#include "drawable2Dobject.hpp"
+#include "drawable2DInterface.hpp"
 
 #include <atomic>
 #include <limits>
@@ -50,7 +50,7 @@ namespace mtools
      * overriden.
      * @sa Plot2DFun
      **/
-    class  Plot2DBaseGraph : public internals_graphics::Plotter2DObjWithColor, protected internals_graphics::Drawable2DObject
+    class  Plot2DBaseGraph : public internals_graphics::Plotter2DObjWithColor, protected internals_graphics::Drawable2DInterface
         {
 
         public:
@@ -213,7 +213,7 @@ namespace mtools
         /**
          * Override of the inserted method
          **/
-        virtual internals_graphics::Drawable2DObject * inserted(Fl_Group * & optionWin, int reqWidth) override;
+        virtual internals_graphics::Drawable2DInterface * inserted(Fl_Group * & optionWin, int reqWidth) override;
 
 
         /**

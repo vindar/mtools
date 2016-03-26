@@ -36,7 +36,6 @@ namespace internals_graphics
 {
 
 
-
     /**
      * Interface describing a drawable 2D object.
      * 
@@ -47,6 +46,10 @@ namespace internals_graphics
      **/
     class Drawable2DObject
     {
+    // **************************************
+    // DEPRECATED: Will be replaced by 
+    // Drawable2DInterface at some point...
+    // **************************************
 
         public:
 
@@ -134,6 +137,7 @@ namespace internals_graphics
     };
 
 
+
     /**
      * Class which automates the `work()` method of a `Drawable2DObject`. This class creates an
      * independent thread which keep the drawing of the underlying Drawable2DObject updated.
@@ -145,6 +149,10 @@ namespace internals_graphics
      **/
     class AutoDrawable2DObject
     {
+    // **************************************
+    // DEPRECATED: Will be replaced by 
+    // Drawable2DInterface at some point...
+    // **************************************
 
     public:
 

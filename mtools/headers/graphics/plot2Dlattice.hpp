@@ -156,7 +156,7 @@ namespace mtools
              *                      lattice object must survive the plot.
              * @param   name        The name of the plot.
              **/
-            Plot2DLattice(T * obj, std::string name = "Lattice") : internals_graphics::Plotter2DObj(name), _checkButtonImage(nullptr), _checkButtonColor(nullptr), _opacifySlider(nullptr), _checkBlack(nullptr), _checkWhite(nullptr)
+            Plot2DLattice(T * obj, std::string name = "Lattice") : internals_graphics::Plotter2DObj(name), _checkButtonImage(nullptr), _checkButtonColor(nullptr), _opacifySlider(nullptr), _checkBlack(nullptr), _checkWhite(nullptr), _LD(nullptr), _encD(nullptr)
                 {
                 _LD = new LatticeDrawer<T>(obj);
                 }
@@ -171,18 +171,19 @@ namespace mtools
              *                      lattice object must survive the plot.
              * @param   name        The name of the plot.
              **/
-            Plot2DLattice(T & obj, std::string name = "Lattice") : internals_graphics::Plotter2DObj(name), _checkButtonImage(nullptr), _checkButtonColor(nullptr), _opacifySlider(nullptr), _checkBlack(nullptr), _checkWhite(nullptr)
-            {
+            Plot2DLattice(T & obj, std::string name = "Lattice") : internals_graphics::Plotter2DObj(name), _checkButtonImage(nullptr), _checkButtonColor(nullptr), _opacifySlider(nullptr), _checkBlack(nullptr), _checkWhite(nullptr), _LD(nullptr), _encD(nullptr)
+                {
                 _LD = new LatticeDrawer<T>(&obj);
-            }
+                }
 
 
             /**
              * Move constructor.
              **/
-            Plot2DLattice(Plot2DLattice && o) : internals_graphics::Plotter2DObj(std::move(o)), _checkButtonImage(nullptr), _checkButtonColor(nullptr), _opacifySlider(nullptr), _checkBlack(nullptr), _checkWhite(nullptr), _LD((LatticeDrawer<T>*)o._LD)
+            Plot2DLattice(Plot2DLattice && o) : internals_graphics::Plotter2DObj(std::move(o)), _checkButtonImage(nullptr), _checkButtonColor(nullptr), _opacifySlider(nullptr), _checkBlack(nullptr), _checkWhite(nullptr), _LD((LatticeDrawer<T>*)o._LD), _encD(nullptr)
                 {
                 o._LD = nullptr; // so that the Latice drawer is not destroyed when the first object goes out of scope.
+                o._encD = nullptr;
                 }
 
             /**
@@ -368,6 +369,8 @@ namespace mtools
             virtual void removed(Fl_Group * optionWin) override
                 {
                 Fl::delete_widget(optionWin);
+                delete _encD;
+                _encD = nullptr;
                 _checkButtonColor = nullptr;
                 _checkButtonImage = nullptr;
                 }
@@ -377,7 +380,7 @@ namespace mtools
             /**
              * Override of the inserted method
              **/
-            virtual internals_graphics::Drawable2DObject * inserted(Fl_Group * & optionWin, int reqWidth) override
+            virtual internals_graphics::Drawable2DInterface * inserted(Fl_Group * & optionWin, int reqWidth) override
                 {
                 /* create the option window */
                 optionWin = new Fl_Group(0, 0, reqWidth, 110); // create the option group
@@ -436,7 +439,8 @@ namespace mtools
                 _checkBlack->value((rem == REMOVE_BLACK) ? 1 : 0);
                 _checkBlack->callback(_checkBlackCB_static, this);
                 optionWin->end();
-                return _LD;
+                _encD = new internals_graphics::EncapsulateDrawable2DObject(_LD, false);
+                return _encD;
                 }
 
 
@@ -520,6 +524,8 @@ namespace mtools
             Fl_Check_Button * _checkWhite;          // the "white" check button 
 
             LatticeDrawer<T> * _LD;                 // the lattice drawer
+            internals_graphics::EncapsulateDrawable2DObject * _encD;
+
 
         };
 

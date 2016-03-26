@@ -179,7 +179,7 @@ namespace mtools
             }
 
 
-        internals_graphics::Drawable2DObject * Plot2DAxes::inserted(Fl_Group * & optionWin, int reqWidth)
+        internals_graphics::Drawable2DInterface * Plot2DAxes::inserted(Fl_Group * & optionWin, int reqWidth)
             {
             /* create the option window */
             optionWin = new Fl_Group(0, 0, reqWidth,60); // create the option group

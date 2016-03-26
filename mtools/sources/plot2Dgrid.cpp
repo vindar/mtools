@@ -309,7 +309,7 @@ namespace mtools
 
 
 
-        internals_graphics::Drawable2DObject * Plot2DGrid::inserted(Fl_Group * & optionWin, int reqWidth)
+        internals_graphics::Drawable2DInterface * Plot2DGrid::inserted(Fl_Group * & optionWin, int reqWidth)
         {
 
             /* create the option window */

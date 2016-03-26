@@ -258,7 +258,7 @@ namespace mtools
 
 
 
-        internals_graphics::Drawable2DObject * Plot2DBaseGraph::inserted(Fl_Group * & optionWin, int reqWidth)
+        internals_graphics::Drawable2DInterface * Plot2DBaseGraph::inserted(Fl_Group * & optionWin, int reqWidth)
                 {
 
                 auto gr = new Fl_Group(0, 0, reqWidth, 125); // create the option group

@@ -22,7 +22,7 @@
 
 
 #include "plotter2Dobj.hpp"
-#include "drawable2Dobject.hpp"
+#include "drawable2DInterface.hpp"
 #include "latticedrawer.hpp"
 #include "rangemanager.hpp"
 #include "../misc/indirectcall.hpp"
@@ -192,7 +192,7 @@ namespace mtools
         /**
         * Override of the inserted method
         **/
-        virtual internals_graphics::Drawable2DObject * inserted(Fl_Group * & optionWin, int reqWidth) override;
+        virtual internals_graphics::Drawable2DInterface * inserted(Fl_Group * & optionWin, int reqWidth) override;
 
 
     private:
@@ -212,7 +212,8 @@ namespace mtools
         std::atomic<int>  _typepos;                      // position of the image wrt the origin
         Img<unsigned char> * _im;                       // the image
         LatticeDrawer<Plot2DCImg> * _LD;                 // the lattice drawer used for drawing the image
-
+        internals_graphics::EncapsulateDrawable2DObject * _encD;
+        
         Fl_Round_Button * _checkButtonCenter;
         Fl_Round_Button * _checkButtonBottomLeft;
 

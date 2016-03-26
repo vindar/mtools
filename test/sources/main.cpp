@@ -567,10 +567,49 @@ std::pair<RGBc,bool> rabbit(const fVec2 & pos, const fBox2 & R, int32 nbiter)
         }
 
 
+    double ff(double x) { return -x; }
+
+    RGBc colorLattice(iVec2 pos) 
+        {
+        if (pos.norm() < 100) return (RGBc::c_Green).getOpacity(0.5);
+        return (RGBc::c_Lime).getOpacity(0.5);
+        }
+
+    RGBc colorPlane(fVec2 pos)
+        {
+        if (pos.norm() < 50) return (RGBc::c_Red).getOpacity(0.5);
+        return RGBc::c_TransparentWhite;
+        }
+
+    std::vector<double> vv1;
+
+    int * vv2;
+
+    mtools::Img<unsigned char> imm;
+
 
     int main(int argc, char * argv[])
         {
-        test(); 
+        imm.load("lenna.jpg");
+        vv2 = new int[1000];
+
+        for (int i = 0;i < 1000; i++) { vv1.push_back(i - 50); vv2[i] = i - 100; }
+
+        Plotter2D Pl;
+
+        auto P1 = makePlot2DFun(ff, "function");
+        auto P2 = makePlot2DLattice(colorLattice, "lattice");
+        auto P3 = makePlot2DPlane(colorPlane, "plane");
+        auto P4 = makePlot2DCImg(imm, "image");
+        auto P5 = makePlot2DVector(vv1, true, "vector");
+        auto P6 = makePlot2DArray(vv2, 1000, "array");
+
+        Pl.gridObject(true);
+        Pl[P1][P2][P3][P4][P5][P6];
+        Pl.plot();
+
+
+        //test(); 
         return 0;
         }
 

@@ -26,7 +26,7 @@
 #include "../maths/box.hpp"
 #include "rgbc.hpp"
 #include "plotter2Dobj.hpp"
-#include "drawable2Dobject.hpp"
+#include "drawable2DInterface.hpp"
 
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Value_Slider.H>
@@ -54,7 +54,7 @@ namespace mtools
      * }
      * @endcode.
      **/
-    class Plot2DAxes : public internals_graphics::Plotter2DObj, protected internals_graphics::Drawable2DObject
+    class Plot2DAxes : public internals_graphics::Plotter2DObj, protected internals_graphics::Drawable2DInterface
     {
 
     public:
@@ -166,13 +166,13 @@ namespace mtools
 
 
         /**
-         * Override of the setParam method from the Drawable2DObject interface
+         * Override of the setParam method from the Drawable2DInterface
          **/
         virtual void setParam(mtools::fBox2 range, mtools::iVec2 imageSize) override;
 
 
         /**
-         * Override of the drawOnto() method from the Drawable2DObject interface
+         * Override of the drawOnto() method from the Drawable2DInterface
          **/
         virtual int drawOnto(Img<unsigned char> & im, float opacity = 1.0) override;
 
@@ -186,7 +186,7 @@ namespace mtools
         /**
          * Override of the inserted method from the Plotter2DObj base class
          **/
-        virtual internals_graphics::Drawable2DObject * inserted(Fl_Group * & optionWin, int reqWidth) override;
+        virtual internals_graphics::Drawable2DInterface * inserted(Fl_Group * & optionWin, int reqWidth) override;
 
 
         private:

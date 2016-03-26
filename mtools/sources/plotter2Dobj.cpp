@@ -47,7 +47,7 @@ namespace mtools
             _data(nullptr),
             _data2(nullptr),
             _rm(nullptr),
-            _AD(nullptr),
+            _di(nullptr),
             _opacity(1.0),
             _drawOn(true),
             _suspended(false),
@@ -75,7 +75,7 @@ namespace mtools
             _data(nullptr),
             _data2(nullptr),
             _rm(nullptr),
-            _AD(nullptr),
+            _di(nullptr),
             _opacity(1.0),
             _drawOn(true),
             _suspended(false),
@@ -149,13 +149,13 @@ namespace mtools
             _drawOn = status;
             _suspended = (_drawOn) ? false : true; // override the suspended flag
             if ((pnot)_ownercb == nullptr) return;  // return if not inserted
-            MTOOLS_ASSERT(((AutoDrawable2DObject*)_AD) != nullptr);
+            MTOOLS_ASSERT(((Drawable2DInterface*)_di) != nullptr);
             _onOffButton->value(_drawOn);
             if (_drawOn)
                 {
                 if (_missedSetParam)
                     {
-                    ((AutoDrawable2DObject*)_AD)->setParam(_crange, _cwinSize);
+                    ((Drawable2DInterface*)_di)->setParam(_crange, _cwinSize);
                     _missedSetParam = false;
                     }
                 _nameBox->activate();
@@ -176,7 +176,7 @@ namespace mtools
                 if (_progBar != nullptr) _progBar->deactivate();
                 if (_optionWin != nullptr) _optionWin->deactivate();
                 }
-            ((AutoDrawable2DObject*)_AD)->workThread(_drawOn);
+            ((Drawable2DInterface*)_di)->enableThreads(_drawOn);
             refresh();
             yieldFocus();
             }
@@ -196,13 +196,13 @@ namespace mtools
             if ((_drawOn == false)||(_suspended == status)) return; // nothing to do
             _suspended = status;
             if ((pnot)_ownercb == nullptr) return;  // return if not inserted
-            MTOOLS_ASSERT(((AutoDrawable2DObject*)_AD) != nullptr);
-            ((AutoDrawable2DObject*)_AD)->workThread(!status);
+            MTOOLS_ASSERT(((Drawable2DInterface*)_di) != nullptr);
+            ((Drawable2DInterface*)_di)->enableThreads(!status);
             if (!status)
                 { // we resume activites
                 if (_missedSetParam)
                     { 
-                    ((AutoDrawable2DObject*)_AD)->setParam(_crange, _cwinSize);
+                    ((Drawable2DInterface*)_di)->setParam(_crange, _cwinSize);
                     _missedSetParam = false;
                     }
                 refresh();
@@ -214,7 +214,7 @@ namespace mtools
         void Plotter2DObj::moveUp()
             {
             if ((pnot)_ownercb == nullptr) return;  // do nothing if not inserted
-            MTOOLS_ASSERT(((AutoDrawable2DObject*)_AD) != nullptr);
+            MTOOLS_ASSERT(((Drawable2DInterface*)_di) != nullptr);
             _makecallback(_REQUEST_UP);
             }
 
@@ -222,7 +222,7 @@ namespace mtools
         void Plotter2DObj::moveDown()
             {
             if ((pnot)_ownercb == nullptr) return;  // do nothing if not inserted
-            MTOOLS_ASSERT(((AutoDrawable2DObject*)_AD) != nullptr);
+            MTOOLS_ASSERT(((Drawable2DInterface*)_di) != nullptr);
             _makecallback(_REQUEST_DOWN);
             }
 
@@ -230,7 +230,7 @@ namespace mtools
         void Plotter2DObj::moveTop()
             {
             if ((pnot)_ownercb == nullptr) return;  // do nothing if not inserted
-            MTOOLS_ASSERT(((AutoDrawable2DObject*)_AD) != nullptr);
+            MTOOLS_ASSERT(((Drawable2DInterface*)_di) != nullptr);
             _makecallback(_REQUEST_TOP);
             }
 
@@ -238,7 +238,7 @@ namespace mtools
         void Plotter2DObj::moveBottom()
             {
             if ((pnot)_ownercb == nullptr) return;  // do nothing if not inserted
-            MTOOLS_ASSERT(((AutoDrawable2DObject*)_AD) != nullptr);
+            MTOOLS_ASSERT(((Drawable2DInterface*)_di) != nullptr);
             _makecallback(_REQUEST_BOTTOM);
             }
 
@@ -247,7 +247,7 @@ namespace mtools
             {
             if ((pnot)_ownercb == nullptr) return;  // do nothing if not inserted
             if (_suspended) return; // or not enabled
-            MTOOLS_ASSERT(((AutoDrawable2DObject*)_AD) != nullptr);
+            MTOOLS_ASSERT(((Drawable2DInterface*)_di) != nullptr);
             _makecallback(_REQUEST_USERANGEX);
             }
 
@@ -255,7 +255,7 @@ namespace mtools
             {
             if ((pnot)_ownercb == nullptr) return;  // do nothing if not inserted
             if (_suspended) return; // or not enabled
-            MTOOLS_ASSERT(((AutoDrawable2DObject*)_AD) != nullptr);
+            MTOOLS_ASSERT(((Drawable2DInterface*)_di) != nullptr);
             _makecallback(_REQUEST_USERANGEY);
             }
 
@@ -263,7 +263,7 @@ namespace mtools
             {
             if ((pnot)_ownercb == nullptr) return;  // do nothing if not inserted
             if (_suspended) return; // or not enabled
-            MTOOLS_ASSERT(((AutoDrawable2DObject*)_AD) != nullptr);
+            MTOOLS_ASSERT(((Drawable2DInterface*)_di) != nullptr);
             _makecallback(_REQUEST_USERANGEXY);
             }
 
@@ -289,7 +289,7 @@ namespace mtools
         void Plotter2DObj::refresh()
             {
             if ((pnot)_ownercb == nullptr) return;  // do nothing if not inserted
-            MTOOLS_ASSERT(((AutoDrawable2DObject*)_AD) != nullptr);
+            MTOOLS_ASSERT(((Drawable2DInterface*)_di) != nullptr);
             _makecallback(_REQUEST_REFRESH);
             }
 
@@ -299,16 +299,16 @@ namespace mtools
             if ((pnot)_ownercb == nullptr) return 0;  // 0 if not inserted
             if (!_drawOn) return 100; // and 100 if not enabled.
             if (_suspended) return 0; // and 0 if enabled but suspended
-            MTOOLS_ASSERT(((AutoDrawable2DObject*)_AD) != nullptr);
-            return(((AutoDrawable2DObject*)_AD)->quality());
+            MTOOLS_ASSERT(((Drawable2DInterface*)_di) != nullptr);
+            return(((Drawable2DInterface*)_di)->quality());
             }
 
 
         bool Plotter2DObj::needWork() const
             {
             if ((pnot)_ownercb == nullptr) return false;  // do nothing if not inserted
-            MTOOLS_ASSERT(((AutoDrawable2DObject*)_AD) != nullptr);
-            return ((AutoDrawable2DObject*)_AD)->needWork();
+            MTOOLS_ASSERT(((Drawable2DInterface*)_di) != nullptr);
+            return(((Drawable2DInterface*)_di)->nbThreads() > 0);
             }
 
 
@@ -316,8 +316,8 @@ namespace mtools
             {
             if ((pnot)_ownercb == nullptr) return;  // do nothing if not inserted
             if (_suspended) return; // or suspended
-            MTOOLS_ASSERT(((AutoDrawable2DObject*)_AD) != nullptr);
-            ((AutoDrawable2DObject*)_AD)->resetDrawing(); // reset the drawing
+            MTOOLS_ASSERT(((Drawable2DInterface*)_di) != nullptr);
+            ((Drawable2DInterface*)_di)->resetDrawing(); // reset the drawing
             if (refresh) _makecallback(_REQUEST_REFRESH);
             }
 
@@ -331,27 +331,27 @@ namespace mtools
         int Plotter2DObj::drawOnto(Img<unsigned char> & im)
             {
             if ((pnot)_ownercb == nullptr) return 0;  // do nothing if not inserted
-            MTOOLS_ASSERT(((AutoDrawable2DObject*)_AD) != nullptr);
+            MTOOLS_ASSERT(((Drawable2DInterface*)_di) != nullptr);
             if (!_drawOn) return 100; // 100 if disabled
             if (_suspended) return 0; // 0 if suspended
-            return ((AutoDrawable2DObject*)_AD)->drawOnto(im,_opacity); // reset the drawing
+            return ((Drawable2DInterface*)_di)->drawOnto(im,_opacity); // reset the drawing
             }
 
 
         void Plotter2DObj::setParam(mtools::fBox2 range, mtools::iVec2 imageSize)
             {
             if ((pnot)_ownercb == nullptr) return;  // do nothing if not inserted
-            MTOOLS_ASSERT(((AutoDrawable2DObject*)_AD) != nullptr);
+            MTOOLS_ASSERT(((Drawable2DInterface*)_di) != nullptr);
             _crange = range; // save the range;
             _cwinSize = imageSize; // save the image size
             if (_suspended) { _missedSetParam = true; return; } // disabled so we do not call the underlying object but we remember to update the range when enabled.
             _missedSetParam = false;
-            ((AutoDrawable2DObject*)_AD)->setParam(range,imageSize); // set the parameters
+            ((Drawable2DInterface*)_di)->setParam(range,imageSize); // set the parameters
             }
 
 
         /* to override */
-        Drawable2DObject * Plotter2DObj::inserted(Fl_Group * & optionWin, int reqWidth)
+        Drawable2DInterface * Plotter2DObj::inserted(Fl_Group * & optionWin, int reqWidth)
             {
             MTOOLS_ERROR("Plotter2DObj::inserted must be overriden !"); return nullptr;
             }
@@ -400,9 +400,9 @@ namespace mtools
             {
             if ((pnot)_ownercb == nullptr) return;  // do nothing if not inserted
             _makecallback(_REQUEST_DETACH);
-            MTOOLS_ASSERT(((AutoDrawable2DObject*)_AD) == nullptr); // did we really get our call to  _removed() ?
+            MTOOLS_ASSERT(((Drawable2DInterface*)_di) == nullptr); // did we really get our call to  _removed() ?
             MTOOLS_ASSERT(((pnot)_ownercb) == nullptr);             // if so, these should already be set to nullptr.
-            _AD = nullptr;
+            _di = nullptr;
             _ownercb = nullptr;
             _data = nullptr;
             _data2 = nullptr;
@@ -442,10 +442,10 @@ namespace mtools
             _rm = rm;      //save the range manager
             Fl_Group::current(0); // prevent adding to option window to some other window.
             _extOptionWin = nullptr;
-            Drawable2DObject * D = inserted(_optionWin, hintWidth); // get the drawable object and the option window
+            _di = inserted(_optionWin, hintWidth); // get the drawable object and the option window
+            MTOOLS_ASSERT((Drawable2DInterface*)_di != nullptr); // the drawable object should exist.
+
             Fl_Group::current(0); // close the FL_group if needed.
-            MTOOLS_ASSERT(D != nullptr); // the drawable object should exist.
-            _AD = new AutoDrawable2DObject(D,false); // create the auto drawable object, we do not start the thread yet so there is no access for the moment.
 
             /* we create the window */
             int ow = (_optionWin == nullptr) ? hintWidth : _optionWin->w();
@@ -524,7 +524,7 @@ namespace mtools
             _opacitySlider->callback(_opacitySliderCB_static, this);
 
             _progBar = nullptr;
-            if (((AutoDrawable2DObject*)_AD)->needWork()) // check if the object need work
+            if (((Drawable2DInterface*)_di)->nbThreads()>0) // check if the object uses threads
                 {
                 _progBar = new Fl_Progress(ow - 105, 22, 84, 16);
                 _progBar->minimum(0.0);
@@ -608,8 +608,8 @@ namespace mtools
             MTOOLS_ASSERT(((pnot)_ownercb) != nullptr); // check that we are indeed inserted.
             MTOOLS_ASSERT(((Fl_Group *)_extOptionWin) != nullptr); // cannnot be null
             Fl::remove_timeout(_timerCB_static, this); // remove the timer for the progress bar if there is one.
-            delete ((AutoDrawable2DObject*)_AD); // delete the auto drawer, this stops the worker thread if there is one.
-            _AD = nullptr;
+            ((Drawable2DInterface*)_di)->enableThreads(false);
+            _di = nullptr;
             _insertOptionWin(false); // make the optionWin group stand alone.
             removed(_optionWin); // call the virtual function that takes care of deleting _optionWin
             _optionWin = nullptr; // mark as deleted
@@ -708,8 +708,8 @@ namespace mtools
         void Plotter2DObj::_timerCB_static(void * data) { MTOOLS_ASSERT(data != nullptr); ((Plotter2DObj*)data)->_timerCB(); }
         void Plotter2DObj::_timerCB()
             {
-            MTOOLS_ASSERT(((AutoDrawable2DObject*)_AD) != nullptr); // check that the auto drawer still exist
-            bool thron = ((AutoDrawable2DObject*)_AD)->workThread(); // thread status
+            MTOOLS_ASSERT(((Drawable2DInterface*)_di) != nullptr); // check that the auto drawer still exist
+            bool thron = ((Drawable2DInterface*)_di)->enableThreads(); // thread status
             if (thron == 0) // thread is off
                 {
                 if (_progVal != -1)
@@ -724,7 +724,7 @@ namespace mtools
                 }
             else
                 {
-                int q = ((AutoDrawable2DObject*)_AD)->quality();
+                int q = ((Drawable2DInterface*)_di)->quality();
                 if (_progVal != q)
                     {
                     _progVal = q;

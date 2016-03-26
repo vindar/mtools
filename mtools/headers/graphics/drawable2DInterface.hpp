@@ -26,6 +26,8 @@
 #include "../misc/error.hpp"
 #include "customcimg.hpp"
 
+#include "drawable2Dobject.hpp"
+
 #include <atomic>
 
 namespace mtools
@@ -68,7 +70,7 @@ namespace internals_graphics
          * Request a reset of the drawing. This method is called to indicate that the underlying object
          * drawn may have changed, previous drawing should be discarded and redrawn.
          **/
-        virtual void resetDrawing() { if (useThreads() { MTOOLS_ERROR("resetDrawing should be overriden."); } return; }
+        virtual void resetDrawing() { if (nbThreads()>0) { MTOOLS_ERROR("resetDrawing should be overriden."); } return; }
 
 
         /**
@@ -92,7 +94,7 @@ namespace internals_graphics
          * @return  A lower bound on the quality of the current drawing. Should return >0 has soon has
          *          the image is worth drawing and 100 when the drawing is perfect.
          **/
-        virtual int quality() const { if (nbWorkThreads() != 0) { MTOOLS_ERROR("quality() should be overriden."); } return 100;  }
+        virtual int quality() const { if (nbThreads()>0) { MTOOLS_ERROR("quality() should be overriden."); } return 100;  }
 
 		
         /**
@@ -122,58 +124,83 @@ namespace internals_graphics
 
 	
 	
-		
+
+
+
+    /**
+    * FOR COMPATIBILITY
+    * Convert a old 'Drawable2DObject' into a new 'Drawable2DInterface'
+    **/
+    class EncapsulateDrawable2DObject : public Drawable2DInterface
+        {
+
+        public:
+
+            EncapsulateDrawable2DObject(Drawable2DObject * obj, bool startThread = true) : Drawable2DInterface(), _obj(new AutoDrawable2DObject(obj,startThread)) {}
+
+            virtual ~EncapsulateDrawable2DObject() { delete _obj; }
+
+            virtual void setParam(mtools::fBox2 range, mtools::iVec2 imageSize) override { _obj->setParam(range, imageSize); }
+
+            virtual void resetDrawing() override { _obj->resetDrawing(); }
+
+            virtual int drawOnto(Img<unsigned char> & im, float opacity = 1.0) override { return _obj->drawOnto(im, opacity); };
+
+            virtual int quality() const override { return _obj->quality(); }
+
+            virtual int nbThreads() const override { return (_obj->needWork() ? 1 : 0); }
+
+            void enableThreads(bool status) override { _obj->workThread(status); }
+
+            bool enableThreads() const override { return _obj->workThread(); }
+
+        private:
+
+            EncapsulateDrawable2DObject(const EncapsulateDrawable2DObject &) = delete;
+            EncapsulateDrawable2DObject& operator=(const EncapsulateDrawable2DObject &) = delete;
+
+            AutoDrawable2DObject * _obj;
+
+        };
+
+
+
     /**
 	* FOR COMPATIBILITY
-	* Use to convert a old 'AutoDrawable2DObject' into a 'Drawable2DInterface'
+	* Convert a old 'AutoDrawable2DObject' into a new 'Drawable2DInterface'
     **/
-	class EncapsulateOldAutoDrawable2DObject : public Drawable2DInterface
-	{
-		
+	class EncapsulateAutoDrawable2DObject : public Drawable2DInterface
+	{		
 	public:
 		
-        EncapsulateOldAutoDrawable2DObject(AutoDrawable2DObject * obj) : Drawable2DInterface(), _obj(obj)  {}
-
+        EncapsulateAutoDrawable2DObject(AutoDrawable2DObject * obj) : Drawable2DInterface(), _obj(obj)  {}
 	
-        virtual ~EncapsulateOldAutoDrawable2DObject() {}
+        virtual ~EncapsulateAutoDrawable2DObject() {}
 
-
-        virtual void setParam(mtools::fBox2 range, mtools::iVec2 imageSize) override
-			{
-			_obj->setParam(range, imageSize);
-			}
-
+        virtual void setParam(mtools::fBox2 range, mtools::iVec2 imageSize) override { _obj->setParam(range, imageSize); }
 			
-		virtual void resetDrawing() override
-			{ 
-			_obj->resetDrawing()
-			}
-
+		virtual void resetDrawing() override { _obj->resetDrawing(); }
 			
-        virtual int drawOnto( Img<unsigned char> & im, float opacity = 1.0) override
-			{
-			return _obj->drawOnto(im, opacity);
-			};
-
+        virtual int drawOnto( Img<unsigned char> & im, float opacity = 1.0) override { return _obj->drawOnto(im, opacity);};
 
         virtual int quality() const override { return _obj->quality(); }
 			
-
         virtual int nbThreads() const override { return (_obj->needWork() ? 1 : 0); }
-
 		
         void enableThreads(bool status) override { _obj->workThread(status); }
 
-
         bool enableThreads() const override { return _obj->workThread(); }
-
 		
 	private:
+
+        EncapsulateAutoDrawable2DObject(const EncapsulateAutoDrawable2DObject &) = delete;
+        EncapsulateAutoDrawable2DObject& operator=(const EncapsulateAutoDrawable2DObject &) = delete;
 			
 		AutoDrawable2DObject * _obj;
 
 	};
 	
+
 
 }
 

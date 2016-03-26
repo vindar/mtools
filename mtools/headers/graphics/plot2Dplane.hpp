@@ -87,7 +87,7 @@ namespace mtools
              *                      object must survive the plot.
              * @param   name        The name of the plot.
              **/
-            Plot2DPlane(T * obj, std::string name = "Plane") : internals_graphics::Plotter2DObj(name)
+            Plot2DPlane(T * obj, std::string name = "Plane") : internals_graphics::Plotter2DObj(name), _LD(nullptr), _encD(nullptr)
                 {
                 _LD = new PlaneDrawer<T>(obj);
                 }
@@ -100,7 +100,7 @@ namespace mtools
             *                      object must survive the plot.
             * @param   name        The name of the plot.
             **/
-            Plot2DPlane(T & obj, std::string name = "Plane") : internals_graphics::Plotter2DObj(name)
+            Plot2DPlane(T & obj, std::string name = "Plane") : internals_graphics::Plotter2DObj(name), _LD(nullptr), _encD(nullptr)
                 {
                 _LD = new PlaneDrawer<T>(&obj);
                 }
@@ -109,9 +109,10 @@ namespace mtools
             /**
             * Move constructor.
             **/
-            Plot2DPlane(Plot2DPlane && o) : internals_graphics::Plotter2DObj(std::move(o)), _LD((PlaneDrawer<T>*)o._LD)
+            Plot2DPlane(Plot2DPlane && o) : internals_graphics::Plotter2DObj(std::move(o)), _LD((PlaneDrawer<T>*)o._LD), _LD(nullptr), _encD(nullptr)
                 {
                 o._LD = nullptr; // so that the plane drawer is not destroyed when the first object goes out of scope.
+                o._encD = nullptr;
                 }
 
 
@@ -237,22 +238,26 @@ namespace mtools
             **/
             virtual void removed(Fl_Group * optionWin) override
                 {
+                delete _encD;
+                _encD = nullptr;
                 }
 
 
             /**
             * Override of the inserted method. There is no option window for a plane object...
             **/
-            virtual internals_graphics::Drawable2DObject * inserted(Fl_Group * & optionWin, int reqWidth) override
+            virtual internals_graphics::Drawable2DInterface * inserted(Fl_Group * & optionWin, int reqWidth) override
                 {
                 optionWin = nullptr;
-                return _LD;
+                _encD = new internals_graphics::EncapsulateDrawable2DObject(_LD, false);
+                return _encD;
                 }
 
 
         private:
 
             PlaneDrawer<T> * _LD;                 // the plane drawer object
+            internals_graphics::EncapsulateDrawable2DObject * _encD;
 
         };
 

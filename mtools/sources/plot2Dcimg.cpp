@@ -39,20 +39,20 @@ namespace mtools
         }
 
 
-    Plot2DCImg::Plot2DCImg(Img<unsigned char> * im, std::string name) : internals_graphics::Plotter2DObj(name), _typepos(TYPEBOTTOMLEFT), _im(im)
+    Plot2DCImg::Plot2DCImg(Img<unsigned char> * im, std::string name) : internals_graphics::Plotter2DObj(name), _typepos(TYPEBOTTOMLEFT), _im(im), _LD(nullptr), _encD(nullptr)
         {
         _LD = new LatticeDrawer<Plot2DCImg>(this);
         _setDomain();
         }
 
-    Plot2DCImg::Plot2DCImg(Img<unsigned char> & im, std::string name) : internals_graphics::Plotter2DObj(name), _typepos(TYPEBOTTOMLEFT), _im(&im)
+    Plot2DCImg::Plot2DCImg(Img<unsigned char> & im, std::string name) : internals_graphics::Plotter2DObj(name), _typepos(TYPEBOTTOMLEFT), _im(&im), _LD(nullptr), _encD(nullptr)
         {
         _LD = new LatticeDrawer<Plot2DCImg>(this);
         _setDomain();
         }
 
 
-    Plot2DCImg::Plot2DCImg(Plot2DCImg && o) : internals_graphics::Plotter2DObj(std::move(o)), _typepos((int)o._typepos), _im(o._im)
+    Plot2DCImg::Plot2DCImg(Plot2DCImg && o) : internals_graphics::Plotter2DObj(std::move(o)), _typepos((int)o._typepos), _im(o._im), _LD(nullptr), _encD(nullptr)
         {
         _LD = new LatticeDrawer<Plot2DCImg>(this);
         _setDomain();
@@ -141,12 +141,14 @@ namespace mtools
     void Plot2DCImg::removed(Fl_Group * optionWin)
         {
         Fl::delete_widget(optionWin);
+        delete _encD;
+        _encD = nullptr;
         _checkButtonCenter = nullptr;
         _checkButtonBottomLeft = nullptr;
         }
 
 
-    internals_graphics::Drawable2DObject * Plot2DCImg::inserted(Fl_Group * & optionWin, int reqWidth)
+    internals_graphics::Drawable2DInterface * Plot2DCImg::inserted(Fl_Group * & optionWin, int reqWidth)
         {
         /* create the option window */
         optionWin = new Fl_Group(0, 0, reqWidth, 60); // create the option group
@@ -166,8 +168,9 @@ namespace mtools
         _checkButtonBottomLeft->when(FL_WHEN_CHANGED);
         if (_typepos == TYPECENTER) { _checkButtonCenter->setonly(); }
         else { _checkButtonBottomLeft->setonly(); }
-        optionWin->end();
-        return _LD;
+        optionWin->end();        
+        _encD = new internals_graphics::EncapsulateDrawable2DObject(_LD, false);
+        return _encD;
         }
 
 

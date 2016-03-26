@@ -23,7 +23,7 @@
 #include "../maths/vec.hpp"
 #include "../maths/box.hpp"
 #include "customcimg.hpp"
-#include "drawable2Dobject.hpp"
+#include "drawable2DInterface.hpp"
 #include "rangemanager.hpp"
 
 #include <FL/Fl_Group.H>
@@ -84,7 +84,7 @@ namespace mtools
 
             /**
              * Virtual destructor. The derived class MUST override the destructor and call `detach()` to
-             * make sure hat proper destruction occurs when the object is destroyed while still inserted.
+             * make sure that proper destruction occurs when the object is destroyed while still inserted.
              *
              * ! MUST BE OVERRIDEN IN THE DERIVED CLASS !
              **/
@@ -374,7 +374,7 @@ namespace mtools
              *
              * @return  a pointer to the Drawable2DObject that is to be drawn.
              **/
-            virtual Drawable2DObject * inserted(Fl_Group * & optionWin, int reqWidth);
+            virtual Drawable2DInterface * inserted(Fl_Group * & optionWin, int reqWidth);
 
 
             /**
@@ -565,7 +565,7 @@ namespace mtools
             std::atomic<void*> _data;                       // data supplied by the owner to pass along when using the callback.
             std::atomic<void*> _data2;                      // additional data.
             std::atomic<RangeManager *> _rm;                // the range manager of the owner or nullptr if not yet inserted.
-            std::atomic<AutoDrawable2DObject*> _AD;         // the auto drawable 2D object
+            std::atomic<Drawable2DInterface*> _di;          // the auto drawable 2D object
             std::atomic<float> _opacity;                    // the opacity for drawing
             std::atomic<bool>  _drawOn;                     // is the object enabled.
             std::atomic<bool>  _suspended;                  // is the object suspended
