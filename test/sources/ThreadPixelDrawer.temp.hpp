@@ -8,11 +8,6 @@ using namespace mtools;
 
 
 
-
-
-
-
-
         template<typename ObjType> class ThreadPixelDrawer : public ThreadWorker
             {
 
