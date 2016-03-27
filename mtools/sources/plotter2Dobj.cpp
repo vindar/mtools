@@ -52,8 +52,11 @@ namespace mtools
             _drawOn(true),
             _suspended(false),
             _name(name),
+            _nbth(-1),
             _optionWin(nullptr),
             _extOptionWin(nullptr),
+            _progBar(nullptr),
+            _nbthl(nullptr),
             _plotNB((int)_totPlotNB)
             {
             _totPlotNB++;
@@ -80,8 +83,11 @@ namespace mtools
             _drawOn(true),
             _suspended(false),
             _name(std::move(obj._name)),
+            _nbth(-1),
             _optionWin(nullptr),
             _extOptionWin(nullptr),
+            _progBar(nullptr),
+            _nbthl(nullptr),
             _plotNB((int)_totPlotNB)
                 {
                 if (obj.isInserted()) MTOOLS_DEBUG("move ctor on an inserted plotter2DObj");
@@ -164,6 +170,7 @@ namespace mtools
                 if (!((hasFavouriteRangeX())&&(hasFavouriteRangeY()))) { _useRangeXY->deactivate(); } else { _useRangeXY->activate(); }
                 _opacitySlider->activate();
                 if (_progBar != nullptr) _progBar->activate();
+                if (_nbthl != nullptr) _nbthl->activate();
                 if (_optionWin != nullptr) _optionWin->activate();
                 }
             else
@@ -174,6 +181,7 @@ namespace mtools
                 _useRangeXY->deactivate();
                 _opacitySlider->deactivate();
                 if (_progBar != nullptr) _progBar->deactivate();
+                if (_nbthl != nullptr) _nbthl->deactivate();
                 if (_optionWin != nullptr) _optionWin->deactivate();
                 }
             ((Drawable2DInterface*)_di)->enableThreads(_drawOn);
@@ -510,7 +518,7 @@ namespace mtools
             _useRangeXY->callback(_useRangeXYCB_static, this);
             if (!(hasFavouriteRangeX() && hasFavouriteRangeY())) { _useRangeXY->deactivate(); }
 
-            _opacitySlider = new Fl_Value_Slider(60, 23, ow - 105 - 65, 14);
+            _opacitySlider = new Fl_Value_Slider(60, 23, ow - 105 - 80, 14);
             _opacitySlider->labelfont(0);
             _opacitySlider->labelsize(11);
             _opacitySlider->color(fl_lighter(FL_BACKGROUND_COLOR));
@@ -524,8 +532,16 @@ namespace mtools
             _opacitySlider->callback(_opacitySliderCB_static, this);
 
             _progBar = nullptr;
+            _nbthl = nullptr;
             if (((Drawable2DInterface*)_di)->nbThreads()>0) // check if the object uses threads
                 {
+                _nbth = ((Drawable2DInterface*)_di)->nbThreads();
+                _nbthl = new Fl_Box(ow - 105 - 15, 23, 14, 14);
+                _nbthl->labelsize(10);
+                _nbthl->box(FL_FLAT_BOX);
+                _nbthl->color(fl_darker(FL_GRAY));
+                _nbthl->copy_label(mtools::toString(_nbth).c_str());
+
                 _progBar = new Fl_Progress(ow - 105, 22, 84, 16);
                 _progBar->minimum(0.0);
                 _progBar->maximum(100.0);
@@ -710,6 +726,14 @@ namespace mtools
             {
             MTOOLS_ASSERT(((Drawable2DInterface*)_di) != nullptr); // check that the auto drawer still exist
             bool thron = ((Drawable2DInterface*)_di)->enableThreads(); // thread status
+            
+            int nn = ((Drawable2DInterface*)_di)->nbThreads();
+            if (nn != _nbth)
+                { // update the number of thread is different from the last query
+                _nbth = nn;
+                _nbthl->copy_label(mtools::toString(nn).c_str());
+                }
+
             if (thron == 0) // thread is off
                 {
                 if (_progVal != -1)

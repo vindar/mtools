@@ -571,6 +571,7 @@ namespace mtools
             std::atomic<bool>  _suspended;                  // is the object suspended
             std::string _name;                              // the object name
             int _progVal;                                   // the last value of the progress bar, -1 if thread stopped
+            int _nbth;                                      // last number of thread queried.
             Fl_Button *             _nameBox;               // the box with the name of the drawing
             Fl_Group *              _optionWin;             // the option window
             Fl_Group *              _extOptionWin;          // the additionnal option window
@@ -584,6 +585,7 @@ namespace mtools
             Fl_Value_Slider *       _opacitySlider;         // the opacity slider
             Fl_Box *                _titleBox;              // the title box
             Fl_Button *             _unrollButton;          // the unroll button
+            Fl_Box *                _nbthl;                 // number of thread
             const std::atomic<int>  _plotNB;                // the plot Number
             static std::atomic<int> _totPlotNB;             // the total number of plot object created.
         };
