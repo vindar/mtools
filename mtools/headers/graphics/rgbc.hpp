@@ -333,9 +333,6 @@ namespace mtools
         * @param   B       The color to blend over (background color)
         *
         * @return the 'this over B' color
-        *
-        * TODO : make it faster !!!! 
-        *
         **/
         inline RGBc over(RGBc coulB) const
             {
@@ -347,6 +344,28 @@ namespace mtools
             const int nG = (int)((comp.G*op + coulB.comp.G*opB*po) / nop);
             const int nB = (int)((comp.B*op + coulB.comp.B*opB*po) / nop);
             return RGBc(nR, nG, nB, (int)(255*nop));
+            }
+
+
+
+            /**
+            * Create a blending with another background color using the 'over' operator.
+            *
+            * @param   B       The color to blend over (background color)
+            * @param   opa     The opacity to mutiply the color with before blending.
+            *
+            * @return the 'this over B' color
+            **/
+            inline RGBc over(RGBc coulB, float opa) const
+            {
+            const float op = opacity()*opa;
+            const float po = 1.0f - op;
+            const float opB = coulB.opacity();
+            const float nop = op + opB*po;
+            const int nR = (int)((comp.R*op + coulB.comp.R*opB*po) / nop);
+            const int nG = (int)((comp.G*op + coulB.comp.G*opB*po) / nop);
+            const int nB = (int)((comp.B*op + coulB.comp.B*opB*po) / nop);
+            return RGBc(nR, nG, nB, (int)(255 * nop));
             }
 
 
@@ -549,12 +568,23 @@ namespace mtools
     * Return the blended color using the 'A over B' operator.
     *
     * @param   A       The first color.
-    * @param   B       The secodn color 
+    * @param   B       The second color 
     *
     * @return the 'A over B' color
     **/
     inline RGBc blendOver(RGBc A, RGBc B) { return A.over(B); }
 
+
+    /**
+     * Return the blended color using the 'A over B' operator.
+     *
+     * @param   A   The first color.
+     * @param   B   The second color.
+     * @param   op  The opacity to mutiply color A with before blending.
+     *
+     * @return  the 'A over B' color.
+     **/
+    inline RGBc blendOver(RGBc A, RGBc B, float op) { return A.over(B,op); }
 
 
 
