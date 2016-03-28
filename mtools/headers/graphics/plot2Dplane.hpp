@@ -71,55 +71,6 @@ namespace mtools
 
 
 
-
-
-    /*
-
-    Drawable2DInterface() {}
-    virtual ~Drawable2DInterface() {}
-    virtual void setParam(mtools::fBox2 range, mtools::iVec2 imageSize) = 0;
-    virtual void resetDrawing() { if (nbThreads()>0) { MTOOLS_ERROR("resetDrawing should be overriden."); } return; }
-    virtual int drawOnto(Img<unsigned char> & im, float opacity = 1.0) = 0;
-    virtual int quality() const { if (nbThreads()>0) { MTOOLS_ERROR("quality() should be overriden."); } return 100; }
-    virtual void enableThreads(bool status) { return; }
-    virtual bool enableThreads() const { return false; }
-
-
-
-
-    virtual Drawable2DInterface * inserted(Fl_Group * & optionWin, int reqWidth);
-
-
-    /**
-    * This method is called when the owner of the widget removes it. This is the place where the
-    * option window should be deleted. The default implementation of this method simply calls
-    * "delete_widget(optionWin)" or does nothing if no option window was created and should suffice
-    * when using only simple fltk widgets (i.e. no timer or other thing that must be removed before
-    * the object goes out of scope).
-    * This method is called by the owner from the fltk thread.
-    *
-    * CAN BE OVERRIDEN IN DERIVED CLASS.
-    *
-    * @param [in,out]  optionWin   A pointer to the same option window that was given when inserted
-    *                              was called.
-    **/
-    //virtual void removed(Fl_Group * optionWin);
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     /**
     * Plot Object which encapsulate a Plane object.
     *
