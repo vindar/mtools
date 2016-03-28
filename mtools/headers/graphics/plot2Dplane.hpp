@@ -174,7 +174,7 @@ namespace mtools
 
             virtual bool enableThreads() const override { return _LD->enable(); }
 
-            virtual int nbThreads() const { return _LD->nbThreads(); }
+            virtual int nbThreads() const override { return _LD->nbThreads(); }
 
 
 
