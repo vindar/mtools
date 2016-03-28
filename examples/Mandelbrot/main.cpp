@@ -62,8 +62,8 @@ int main(int argc, char *argv[])
     cout << "**************************************\n";
     inIt = arg('n', 256).info("initial number of iterations");
     Plotter2D Plotter;  // create the plotter
-    auto M = makePlot2DPlane(mandelbrot, "Mandelbrot Set"); // the mandelbrot set
-    auto D = makePlot2DPlane(rabbit, "Douady's rabbit"); // the mandelbrot set
+    auto M = makePlot2DPlane(mandelbrot, 1, "Mandelbrot Set"); // the mandelbrot set
+    auto D = makePlot2DPlane(rabbit, 1, "Douady's rabbit"); // the mandelbrot set
     Plotter[M][D];
     Plotter.sensibility(1);
     M.opacity(1.0);
