@@ -502,7 +502,7 @@ template<typename T> class GetColorPlaneSelector
             /**
             * Return the current number of threads.
             **/
-            virtual int nbThreads() const { return (int)_vecThread.size(); }
+            int nbThreads() const { return (int)_vecThread.size(); }
 
 
             /**
