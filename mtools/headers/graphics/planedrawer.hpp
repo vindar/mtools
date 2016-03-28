@@ -23,8 +23,8 @@
 
 
 
-
-#include "drawable2Dobject.hpp"
+#include "../misc/threadworker.hpp"
+#include "drawable2DInterface.hpp"
 #include "customcimg.hpp"
 #include "rgbc.hpp"
 #include "../maths/vec.hpp"
@@ -203,758 +203,482 @@ template<typename T> class GetColorPlaneSelector
     };
 
 
-/**
- * Draws part of a plane into into a CImg image. This class implement the Drawable2DObject
- * interface.
- * 
- * - The parameters of the drawing are set using the `setParam`  method. The method `work` is
- * used to create the drawing itself. The actual warping of the image onto a given CImg image is
- * performed using the `drawOnto` method.
- * 
- * - All the public methods of this class are thread-safe : they can be called simultaneously
- * from any thread and the call are lined up. In particular, the `work` method can be time
- * expensive and might be better called from a worker thread : see the `AutoDrawable2DObject`
- * class for a generic implementation.
- * 
- * - The template PlaneObj must implement a method `RGBc getColor(fVec2 pos)` or `RGBc
- * getColor(fVec2 pos, fBox2 R)` which must return the color associated with a given point. In
- * the seocnd version, the rectangle R contain the point pos and represent the aera of the
- * pixel drawn. The method should be made as fast as possible.
- * 
- * - The fourth channel of the returned color will be used when drawing on 4 channel images and
- * ignored when drawing on 3 channel images.
- *
- * @tparam  PlaneObj    Type of the lattice object. Can be any class which define the method
- *                      `RGBc getColor(fVec2 pos)` or `RGBc getColor(fVec2 pos, fBox2 R)`. If both
- *                      method are defined, the extended method is used.
- **/
-template<class PlaneObj> class PlaneDrawer : public mtools::internals_graphics::Drawable2DObject
-{
-  
-public:
 
-    /**
-     * Constructor. Set the plane object that will be drawn. 
-     *
-     * @param [in,out]  obj The planar object to draw, it must survive the drawer.
-     **/
-    PlaneDrawer(PlaneObj * obj) : 
-		_g_requestAbort(0), 
-		_g_current_quality(0), 
-		_g_obj(obj), 
-		_g_imSize(201, 201), 
-		_g_r(-100.5, 100.5, -100.5, 100.5), 
-		_g_redraw(true)
-		{
-        static_assert(mtools::GetColorPlaneSelector<PlaneObj>::has_getColor, "The object T must be implement one of the getColor method recognized by GetColorPlaneSelector.");
-        _initInt16Buf();
-        domainFull();
-        }
 
 
     /**
-     * Destructor.
-     **/
-	~PlaneDrawer()
-		{
-        _g_requestAbort++; // request immediate stop of the work method if active.
-            {
-            std::lock_guard<std::timed_mutex> lg(_g_lock); // and wait until we acquire the lock 
-            _removeInt16Buf(); // remove the int16 buffer
-            }
-        }
-
-    /**
-    * Get the definiton domain of the plane (does not interrupt any computation in progress).
-    * By default this is everything.
+    * ThreadPlaneDrawer class
     *
-    * @return  An fBox2.
+    * Use a single thread to draw from a getColor function into a progressImg
     **/
-    mtools::fBox2 domain() const
+    template<typename ObjType> class ThreadPlaneDrawer : public ThreadWorker
         {
-        return _g_domR;
-        }
 
 
-    /**
-     * Query if the domain is the whole plane (does not interrupt any computation in progress).
-     *
-     * @return  true if the domain is full, false if not.
-     **/
-    bool isDomainFull() const
-        {
-        return ((_g_domR.min[0] <= -DBL_MAX / 2) && (_g_domR.max[0] >= DBL_MAX / 2) && (_g_domR.min[1] <= -DBL_MAX / 2) && (_g_domR.max[1] >= DBL_MAX / 2));
-        }
+        public:
 
-
-    /**
-     * Queries if the domain is empty (does not interrupt any computation in progress).
-     *
-     * @return  true if the domain is empty, false if not.
-     **/
-    bool isDomainEmpty() const
-        {
-        return _g_domR.isEmpty();
-        }
-
-
-    /**
-     * Set the definition domain. It is guaranted that no point outside of the domain are never
-     * queried via getColor().
-     *
-     * @param   R   The new definition domain.
-     **/
-    void domain(mtools::fBox2 R)
-    {
-        ++_g_requestAbort; // request immediate stop of the work method if active.
-        {
-            std::lock_guard<std::timed_mutex> lg(_g_lock); // and wait until we aquire the lock 
-            --_g_requestAbort; // and then remove the stop request
-            _g_domR = R;
-            _g_redraw = true;   // request redraw
-        }
-    }
-
-
-    /**
-    * Set a full definition Domain.
-    **/
-    void domainFull()
-    {
-        ++_g_requestAbort; // request immediate stop of the work method if active.
-        {
-            std::lock_guard<std::timed_mutex> lg(_g_lock); // and wait until we aquire the lock 
-            --_g_requestAbort; // and then remove the stop request
-            _g_domR.min[0] = - DBL_MAX/2;
-            _g_domR.max[0] = DBL_MAX / 2;
-            _g_domR.min[1] = -DBL_MAX / 2;
-            _g_domR.max[1] = DBL_MAX / 2;
-            _g_redraw = true;   // request redraw
-        }
-    }
-
-
-    /**
-    * Set an empty definition Domain.
-    **/
-    void domainEmpty()
-    {
-        ++_g_requestAbort; // request immediate stop of the work method if active.
-        {
-            std::lock_guard<std::timed_mutex> lg(_g_lock); // and wait until we aquire the lock 
-            --_g_requestAbort; // and then remove the stop request
-            _g_domR.clear(); // clear the domain
-            _g_redraw = true;   // request redraw
-        }
-    }
-
-
-
-    /**
-    * Set the parameters of the drawing. Calling this method interrupt any work() in progress. 
-    * This method is fast, it does not draw anything.
-    **/
-    virtual void setParam(mtools::fBox2 range, mtools::iVec2 imageSize) override
-        {
-        MTOOLS_ASSERT(!range.isEmpty());
-        MTOOLS_ASSERT((imageSize.X() >0) && (imageSize.Y()>0));
-        ++_g_requestAbort; // request immediate stop of the work method if active.
-            {
-            std::lock_guard<std::timed_mutex> lg(_g_lock); // and wait until we acquire the lock 
-            --_g_requestAbort; // and then remove the stop request
-            _g_imSize = imageSize; // set the new image size
-            _g_r = range; // and the new range
-			_g_current_quality = 0; // 0 quality
-			_g_redraw = true; // we should start over
-            }
-        }
-
-
-    /**
-     * Force a reset of the drawing. Calling this method interrupt any work() is progress. This
-     * method is fast, it does not draw anything.
-     **/
-    virtual void resetDrawing() override
-        {
-        ++_g_requestAbort; // request immediate stop of the work method if active.
-            {
-            std::lock_guard<std::timed_mutex> lg(_g_lock); // and wait until we acquire the lock 
-            --_g_requestAbort; // and then remove the stop request
-			_g_current_quality = 0; // 0 quality
-			_g_redraw = true; // we should start over
-            }
-        }
-
-
-    /**
-    * Draw onto a given image. This method does not "compute" anything. It simply warp the current
-    * drawing onto a given cimg image.
-    *
-    * The provided cimg image must have 3 or 4 channel and the same size as that set via
-    * setParam(). The current drawing of the plane has its opacity channel multiplied by the
-    * opacity parameter and is then superposed with the current content of im using the A over B
-    * operation. If im has only 3 channel, it is considered as having full opacity.
-    *
-    * @param [in,out]  im  The image to draw onto (must be a 3 or 4 channel image and it size must
-    *                      be equal to the size previously set via the setParam() method.
-    * @param   opacity     The opacity that should be applied to the picture prior to drawing onto
-    *                      im. If set to 0.0, then the method returns without drawing anything.
-    *
-    * @return  The quality of the drawing performed (0 = nothing drawn, 100 = perfect drawing).
-    **/
-    virtual int drawOnto(Img<unsigned char> & im, float opacity = 1.0) override
-        {
-        MTOOLS_ASSERT((im.width() == _g_imSize.X()) && (im.height() == _g_imSize.Y()));
-        MTOOLS_ASSERT((im.spectrum() == 3) || (im.spectrum() == 4));
-        ++_g_requestAbort; // request immediate stop of the work method if active.
-            {
-            std::lock_guard<std::timed_mutex> lg(_g_lock); // and wait until we aquire the lock 
-            --_g_requestAbort; // and then remove the stop request
-            if (opacity > 0.0)
+            /**
+            * Constructor. Associate the object. The thread is initially suspended.
+            *
+            * @param [in,out]  obj     pointer to the object to be drawn. Must implement a method recognized
+            *                          by GetColorPlaneSelector
+            * @param [in,out]  opaque  (Optional) The opaque data to passed to getColor(), nullptr if not
+            *                          specified.
+            **/
+            ThreadPlaneDrawer(ObjType * obj, void * opaque = nullptr) : ThreadWorker(),
+                _obj(obj),
+                _opaque(opaque),
+                _validParam(false),
+                _range(fBox2()),
+                _temp_range(fBox2()),
+                _im(nullptr),
+                _temp_im(nullptr),
+                _subBox(iBox2()),
+                _temp_subBox(iBox2())
                 {
-                _warp(im, opacity); 
+                static_assert(mtools::GetColorPlaneSelector<ObjType>::has_getColor, "The object must be implement one of the getColor() method recognized by GetColorPlaneSelector.");
                 }
-            return _g_current_quality; // return the quality of the drawing
-            }
-        }
 
 
-    /**
-     * Return the quality of the current drawing. Very fast and does not interrupt any other
-     * method/work that might be in progress.
-     *
-     * @return  The current quality between 0 (nothing to show) and 100 (perfect drawing).
-     **/
-    virtual int quality() const  override {return _g_current_quality;}
-
-
-    /**
-     * Works on the drawing for a maximum specified period of time.
-     * 
-     * The function has the lowest priority of all the public methods and may be interrupted (hence
-     * returning early) if another method such as drawOnto(),setParam()... is accessed by another
-     * thread.
-     * 
-     * If another thread already launched some work, this method will wait until the lock is
-     * released (but will return if the time allowed is exceeded).
-     * 
-     * If maxtime_ms = 0, then the function return immediately (with the current quality of the
-     * drawing).
-     *
-     * @param   maxtime_ms  The maximum time in millisecond allowed for drawing.
-     *
-     * @return  The quality of the current drawing:  0 = nothing to show, 100 = perfect drawing.
-     **/
-    virtual int work(int maxtime_ms) override
-        {
-        MTOOLS_ASSERT(maxtime_ms >= 0);
-        if (((int)_g_requestAbort > 0) || (maxtime_ms <= 0)) { return _g_current_quality; } // do not even try to work if the flag is set
-        if (!_g_lock.try_lock_for(std::chrono::milliseconds((maxtime_ms/2)+1))) { return _g_current_quality; } // could not lock the mutex, we return without doing anything
-        if ((int)_g_requestAbort > 0) { _g_lock.unlock(); return _g_current_quality; } // do not even try to work if the flag is set
-        _work(maxtime_ms); // go to work...
-        _g_lock.unlock(); // release mutex
-        return _g_current_quality; // ..and return quality
-        }
-
-
-    /**
-     * This object need work to construct a drawing. Returns true without interrupting anything.
-     *
-     * @return  true.
-     **/
-    virtual bool needWork() const  override { return true; }
-
-
-
-    /**
-     * Stop any ongoing work and then return
-     **/
-    virtual void stopWork() override
-        {
-        ++_g_requestAbort; // request immediate stop of the work method if active.
-            {
-            std::lock_guard<std::timed_mutex> lg(_g_lock); // and wait until we aquire the lock 
-            --_g_requestAbort; // and then remove the stop request
-            }
-        }
-
-
-
-private:
-
-
-
-	/**************************************************************************************************************************************************
-	*                                                                    PRIVATE PART 
-	************************************************************************************************************************************************/
-
-
-    std::timed_mutex  _g_lock;             // mutex for locking
-    std::atomic<int>  _g_requestAbort;     // flag used for requesting the work() method to abort.
-    mutable std::atomic<int> _g_current_quality;  // the current quality of the drawing
-    PlaneObj *        _g_obj;               // the object to draw
-    iVec2             _g_imSize;            // size of the drawing
-    fBox2             _g_r;                 // current range
-    std::atomic<bool> _g_redraw;            // true if we should redraw from scratch
-    fBox2           _g_domR;                // the definition domain
-
-    uint32 			_counter1,_counter2;	// counter for the number of pixel added in each cell: counter1 for cells < (_qi,_qj) and counter2 for cells >= (_qi,qj)
-    uint32 			_qi,_qj;		        // position where we stopped previously
-    int 			_phase;			        // the current phase of the drawing
-
-
-/* update the quality of the picture  */
-void _qualityPixelDraw() const
-    {
-    switch (_phase)
-        {
-        case 0: {_g_current_quality = 0; break; }
-        case 1: {_g_current_quality = _getLinePourcent(_counter2, 255, 1, 99); break; }
-        case 2: {_g_current_quality = 100; break; }
-        default: MTOOLS_INSURE(false); // wtf are we doing here
-        }
-    return;
-    }
-
-/* draw as much as possible of a fast drawing  */
-void _drawPixel_fast(int maxtime_ms)
-	{
-    const fBox2 r = _g_r;
-    const double px = ((double)r.lx()) / ((double)_int16_buffer_dim.X())  // size of a pixel
-               , py = ((double)r.ly()) / ((double)_int16_buffer_dim.Y()); 
-    _counter1 = 1;
-	_counter2 = 0;
-	bool fixstart = true; 
-    for (int j = 0; j < _int16_buffer_dim.Y(); j++)
-    for (int i = 0; i < _int16_buffer_dim.X(); i++)
-		{
-		if (fixstart) {i = _qi; j = _qj; fixstart=false;}					        // fix the position of thestarting pixel 
-		if (_isTime(maxtime_ms)) {_qi = i; _qj = j; return;}	                    // time's up : we quit
-        const double xmin = r.min[0] + i*px; const double xmax = xmin + px; const double x = xmin + 0.5*px;
-        const double ymax = r.max[1] - j*py; const double ymin = ymax - py; const double y = ymax - 0.5*py;
-        const fBox2 sR = fBox2(xmin, xmax, ymin, ymax);
-        auto cp = _getColor(fVec2(x, y), sR, 1);
-        _setInt16Buf(i, j, cp.first);
-		}
-	// we are done
-	_counter2 = 1; _qi=0; _qj=0; 
-    _phase = 1;
-	return;
-	}
-
-
-/* draw as using random points */
-void _drawPixel_stochastic(int maxtime_ms)
-	{
-    const fBox2 r = _g_r;
-    const double px = ((double)r.lx()) / ((double)_int16_buffer_dim.X())  // size of a pixel
-               , py = ((double)r.ly()) / ((double)_int16_buffer_dim.Y());
-    while (_counter2 < 255)
-        {
-        if (_counter2 == _counter1) { ++_counter1; } // start of a loop: we increase counter1 
-        bool fixstart = true;
-        for (int j = 0; j < _int16_buffer_dim.Y(); j++)
-        for (int i = 0; i < _int16_buffer_dim.X(); i++)
-            {
-            if (fixstart) { i = _qi; j = _qj; fixstart = false; }		// fix the position of thestarting pixel
-            if (_isTime(maxtime_ms)) { _qi = i; _qj = j; return; }	// time's up : we quit
-            const double xmin = r.min[0] + i*px; const double xmax = xmin + px;
-            const double ymax = r.max[1] - j*py; const double ymin = ymax - py;
-            const fBox2 sR = fBox2(xmin, xmax, ymin, ymax);
-            const double x = xmin + _g_fgen.unif()*px;
-            const double y = ymax - _g_fgen.unif()*py;
-            auto cp = _getColor(fVec2(x, y), sR, _counter1);
-            if (cp.second)
+            /**
+            * Destructor. Stop the thread.
+            **/
+            virtual ~ThreadPlaneDrawer()
                 {
-                _setInt16Buf(i, j, cp.first, _counter1);
                 }
-            else
+
+
+            /**
+            * Determines if the drawing parameter are valid. Return false if for example, the image is set
+            * to nullptr, or the subbox is incorrect, or if the range is too small, or too large, or empty.
+            *
+            * If it return false, nothing will be drawn and the quality will stay 0.
+            *
+            * @return  true if the paramter are valid and flase otherwise.
+            **/
+            inline bool validParam()  const { return (bool)_validParam; }
+
+
+            /**
+            * Sets the drawing parameters.
+            *
+            * Returns immediately, use sync() to wait for the operation to complete.
+            *
+            * @param   range       The range to draw.
+            * @param [in,out]  im  The image to draw into.
+            * @param   subBox      The part of the image to draw (border inclusive). If empty, use the whole
+            *                      image.
+            **/
+            void setParameters(const fBox2 & range, ProgressImg * im, const iBox2 & subBox = iBox2())
                 {
-                _addInt16Buf(i, j, cp.first);
+                sync();
+                _temp_range = range;
+                _temp_im = im;
+                _temp_subBox = subBox;
+                signal(SIGNAL_NEWPARAM);
                 }
-            }
-        // we finished a loop
-        _counter2 = _counter1;	_qi = 0; _qj = 0;
-        }
-    _phase = 2; // we are finished with drawing
-    return;
-	}
 
 
-
-
-/* the main method for drawing a pixel image */
-void _work(int maxtime_ms)
-    {
-    _startTimer();
-    if (_g_imSize != _int16_buffer_dim) { _g_redraw = true; } //set redraw to true if the size of the image changed
-    if (_g_redraw)
-        { // we must completly redraw, initialize everything
-        _g_redraw = false;
-        _qi = 0; _qj = 0;
-        _counter1 = 0; _counter2 = 0;
-        _resizeInt16Buf(_g_imSize);
-        _phase = 0;
-        }
-    if (maxtime_ms > 0) 
-        {
-        while ((_phase != 2) && (!_isTime(maxtime_ms)))
-            {
-            switch (_phase)
+            /**
+            * Force a redraw.
+            *
+            * Returns immediately, use sync() to wait for the operation to complete.
+            *
+            * @param   keepPrevious    If true, keep the previous drawing so that quality starts from 1 and
+            *                          not 0 if possible.
+            **/
+            void redraw(bool keepPrevious = true)
                 {
-                case 0: // fast drawing phase : start from _qi,qj and make the fastest drawing possible
+                sync();
+                signal(SIGNAL_REDRAW);
+                }
+
+
+        private:
+
+
+            /**
+            * Handles the thread messages
+            **/
+            virtual int message(int64 code) override
+                {
+                switch (code)
                     {
-                    _drawPixel_fast(maxtime_ms);
-                    break;
+                    case SIGNAL_NEWPARAM: { return _setNewParam(); }
+                    case SIGNAL_REDRAW: { return _setRedraw(); }
+                    default: { MTOOLS_ERROR("wtf!"); return 0; }
                     }
-                case 1: // stochastic drawing phase : start from _qi,qj and make a stochastic drawing
+                }
+
+
+            /* set the new parameter */
+            int _setNewParam()
+                {
+                const int MIN_IMAGE_SIZE = 2;
+                const double RANGE_MIN_VALUE = std::numeric_limits<double>::min() * 100000;
+                const double RANGE_MAX_VALUE = std::numeric_limits<double>::max() / 100000;
+                _range = _temp_range;
+                _im = _temp_im;
+                _subBox = _temp_subBox;
+                if ((_im == nullptr) || (_im->width() < MIN_IMAGE_SIZE) || (_im->height() < MIN_IMAGE_SIZE)) { setProgress(0); _validParam = false; return THREAD_RESET_AND_WAIT; }   // make sure im is not nullptr and is big enough.
+                if (_subBox.isEmpty()) { _subBox = iBox2(0, _im->width() - 1, 0, _im->height() - 1); } // subbox = whole image if empty. 
+                if ((_subBox.min[0] < 0) || (_subBox.max[0] >= (int64)_im->width()) || (_subBox.min[1] < 0) || (_subBox.max[1] >= (int64)_im->height())) { setProgress(0); _validParam = false; return THREAD_RESET_AND_WAIT; } // make sure _subBox is a proper subbox of im
+                if ((_subBox.lx() < MIN_IMAGE_SIZE) || (_subBox.ly() < MIN_IMAGE_SIZE)) { setProgress(0); _validParam = false; return THREAD_RESET_AND_WAIT; } // make sure _subBox is a proper subbox of im
+                const double rlx = _range.lx();
+                const double rly = _range.ly();
+                if ((rlx < RANGE_MIN_VALUE) || (rly < RANGE_MIN_VALUE)) { setProgress(0); _validParam = false; return THREAD_RESET_AND_WAIT; } // prevent zooming in too far
+                if ((std::abs(_range.min[0]) > RANGE_MAX_VALUE) || (std::abs(_range.max[0]) > RANGE_MAX_VALUE) || (std::abs(_range.min[1]) > RANGE_MAX_VALUE) || (std::abs(_range.max[1]) > RANGE_MAX_VALUE)) { setProgress(0); _validParam = false; return THREAD_RESET_AND_WAIT; } // prevent zooming out too far
+                setProgress(0);
+                _validParam = true;
+                return THREAD_RESET;
+                }
+
+
+
+            /* trigger a redraw */
+            int _setRedraw()
+                {
+                if (!((bool)_validParam)) return THREAD_RESET_AND_WAIT;
+                setProgress(0);
+                return THREAD_RESET;
+                }
+
+
+
+            /**
+            * The main 'work' method
+            **/
+            virtual void work() override
+                {
+                MTOOLS_INSURE((bool)_validParam);
+                _drawFast();
+                setProgress(1);
+                for (int i = 0; i < 254;i++)
                     {
-                    _drawPixel_stochastic(maxtime_ms);
-                    break;
+                    _drawStochastic();
+                    setProgress((i * 100) / 255);
                     }
-                default: MTOOLS_INSURE(false); // wtf are we doing here
+                setProgress(100);
                 }
-            }
-        }
-    _qualityPixelDraw(); // update the quality
-    return;
-    }
 
 
 
-/* return the color of a given point, use either the object getColor or "extended" getColor method depending on the method detected */
-inline std::pair<mtools::RGBc,bool> _getColor(fVec2 pos, fBox2 R, int32 nbiter) 
-    {
-    if (!_g_domR.isInside(pos)) return std::pair<mtools::RGBc, bool>(RGBc::c_TransparentWhite, false);
-    void * data = nullptr;
-    return mtools::GetColorPlaneSelector<PlaneObj>::call(*_g_obj, pos, R, nbiter, data);
-    }
+            /* draw by sampling the color at the center of each pixel */
+            void _drawFast()
+                {
+                RGBc64 * imData = _im->imData();
+                uint8 * normData = _im->normData();
+                const fBox2 r = _range;
+                const int64 ilx = _subBox.lx() + 1;
+                const int64 ily = _subBox.ly() + 1;
+                const double px = r.lx() / ilx;
+                const double py = r.ly() / ily;
+                const double px2 = px / 2;
+                const double py2 = py / 2;
+                size_t off = (size_t)(_subBox.min[0] + _im->width()*(_subBox.min[1]));
+                const size_t pa = (size_t)(_im->width() - ilx);
+                fBox2 cbox(r.min[0], r.min[0] + px, r.min[1], r.min[1] + py);
+                for (int64 j = 0; j < ily; j++)
+                    {
+                    check();
+                    for (int64 i = 0; i < ilx; i++)
+                        {
+                        imData[off] = (mtools::GetColorPlaneSelector<ObjType>::call(*_obj, fVec2{ cbox.min[0] + px2 , cbox.min[1] + py2 }, cbox, 1, _opaque)).first;
+                        normData[off] = 0;
+                        off++;
+                        cbox.min[0] += px;
+                        cbox.max[0] += px;
+                        }
+                    off += pa;
+                    cbox.min[1] += py;
+                    cbox.max[1] += py;
+                    cbox.min[0] = r.min[0];
+                    cbox.max[0] = r.min[0] + px;
+                    }
+                }
 
 
 
-// *****************************
-// Dealing with the int16 buffer 
-// *****************************
-uint16 * _int16_buffer;						// buffer for pixel drawing
-iVec2    _int16_buffer_dim;                 // dimension of the buffer;
-
-/* initialise the buffer */
-inline void _initInt16Buf()
-	{
-	_int16_buffer = nullptr; 
-    _int16_buffer_dim = iVec2(0, 0);
-	}
-
-/* remove the int16 buffer */
-inline void _removeInt16Buf() {_resizeInt16Buf(iVec2(0,0));}
-
-/* resize the buffer to the given dimension */
-inline void _resizeInt16Buf(iVec2 nSize)
-	{
-    const int64 prod = nSize.X()*nSize.Y();
-	if (prod == _int16_buffer_dim.X()*_int16_buffer_dim.Y()) {return;}
-	delete []  _int16_buffer; 
-    if (prod == 0) { _int16_buffer = nullptr; _int16_buffer_dim = iVec2(0, 0); return; }
-	_int16_buffer = new uint16[(size_t)(prod*4)];
-    _int16_buffer_dim = nSize;
-	}
-
-/* set a color at position (i,j) */
-inline void _setInt16Buf(uint32 x,uint32 y,const RGBc & color)
-	{
-    const size_t dx = (size_t)_int16_buffer_dim.X();
-    const size_t dxy = (size_t)(dx * _int16_buffer_dim.Y());
-    _int16_buffer[x + y*dx] = (uint16)color.comp.R;
-    _int16_buffer[x + y*dx + dxy] = (uint16)color.comp.G;
-    _int16_buffer[x + y*dx + 2 * dxy] = (uint16)color.comp.B;
-    _int16_buffer[x + y*dx + 3 * dxy] = (uint16)color.comp.A;
-    }
-
-/* set a color at position (i,j), with a multiplier */
-inline void _setInt16Buf(uint32 x, uint32 y, const RGBc & color, uint32 mul)
-    {
-    const size_t dx = (size_t)_int16_buffer_dim.X();
-    const size_t dxy = (size_t)(dx * _int16_buffer_dim.Y());
-    _int16_buffer[x + y*dx] = (uint16)(color.comp.R * mul);
-    _int16_buffer[x + y*dx + dxy] = (uint16)(color.comp.G * mul);
-    _int16_buffer[x + y*dx + 2 * dxy] = (uint16)(color.comp.B * mul);
-    _int16_buffer[x + y*dx + 3 * dxy] = (uint16)(color.comp.A * mul);
-    }
-
-/* add a color at position (i,j) */
-inline void _addInt16Buf(uint32 x,uint32 y, const RGBc & color)
-	{
-    const size_t dx = (size_t)_int16_buffer_dim.X();
-    const size_t dxy = (size_t)(dx * _int16_buffer_dim.Y());
-    _int16_buffer[x + y*dx] += (uint16)color.comp.R;
-	_int16_buffer[x + y*dx + dxy] += (uint16)color.comp.G;
-	_int16_buffer[x + y*dx + 2*dxy] += (uint16)color.comp.B;
-    _int16_buffer[x + y*dx + 3*dxy] += (uint16)color.comp.A;
-    }
+            void _drawStochastic()
+                {
+                RGBc64 * imData = _im->imData();
+                uint8 * normData = _im->normData();
+                const fBox2 r = _range;
+                const int64 ilx = _subBox.lx() + 1;
+                const int64 ily = _subBox.ly() + 1;
+                const double px = r.lx() / ilx;
+                const double py = r.ly() / ily;
+                size_t off = (size_t)(_subBox.min[0] + _im->width()*(_subBox.min[1]));
+                const size_t pa = (size_t)(_im->width() - ilx);
+                fBox2 cbox(r.min[0], r.min[0] + px, r.min[1], r.min[1] + py);
+                for (int64 j = 0; j < ily; j++)
+                    {
+                    check();
+                    for (int64 i = 0; i < ilx; i++)
+                        {
+                        std::pair<RGBc, bool> P = mtools::GetColorPlaneSelector<ObjType>::call(*_obj, fVec2{ cbox.min[0] + _fastgen.unif()*px , cbox.min[1] + _fastgen.unif()*py }, cbox, 1, _opaque);
+                        if (P.second)
+                            {
+                            imData[off] = P.first;
+                            normData[off] = 0;
+                            }
+                        else
+                            {
+                            imData[off].add(P.first);
+                            normData[off]++;
+                            }
+                        off++;
+                        cbox.min[0] += px;
+                        cbox.max[0] += px;
+                        }
+                    off += pa;
+                    cbox.min[1] += py;
+                    cbox.max[1] += py;
+                    cbox.min[0] = r.min[0];
+                    cbox.max[0] = r.min[0] + px;
+                    }
+                }
 
 
+            // no copy
+            ThreadPlaneDrawer(const ThreadPlaneDrawer &) = delete;
+            ThreadPlaneDrawer & operator=(const ThreadPlaneDrawer &) = delete;
 
-// *****************************
-// Warping the buffer onto the image
-// *****************************
+
+            static const int SIGNAL_NEWPARAM = 4;
+            static const int SIGNAL_REDRAW = 5;
+
+            ObjType * _obj;                         // the object to draw.
+            void * _opaque;                         // opaque data passed to _obj;
+
+            std::atomic<bool> _validParam;          // indicate if the parameter are valid.
+
+            fBox2 _range;                           // the range
+            std::atomic<fBox2> _temp_range;         // and the temporary use to communicate with the thread.
+            ProgressImg* _im;                       // the image to draw onto
+            std::atomic<ProgressImg*> _temp_im;     // and the temporary use to communicate with the thread.
+            iBox2 _subBox;                          // part of the image to draw
+            std::atomic<iBox2> _temp_subBox;        // and the temporary use to communicate with the thread.
+
+            FastRNG _fastgen;                       // fast RNG
+
+        };
 
 
-/* the main method for warping the pixel image to the cimg image*/
-void _warp(Img<unsigned char> & im, float opacity)
-    {
-    MTOOLS_ASSERT((im.spectrum() == 3) || (im.spectrum() == 4));
-    _work(0); // make sure everything is in sync. 
-    if (_g_current_quality > 0)
+
+    /**
+    * PlaneDrawer class
+    *
+    * Use several threads to draw from a getColor function into a progressImg.
+    *
+    * @tparam  ObjType Type of the object type.
+    **/
+
+    template<typename ObjType> class PlaneDrawer
         {
-        if (im.spectrum() == 4) { _warpInt16Buf_4channel(im, opacity); } else { _warpInt16Buf_3channel(im, opacity); }
-        }
-    return;
-    }
 
+        public:
 
-
-/* make B -> A and return the resulting opacity */
-inline unsigned char _blendcolor4(unsigned char & A, float opA, unsigned char B, float opB) const
-{
-    float o = opB + opA*(1 - opB); //resulting opacity
-    if (o == 0)  return 0;
-    A = (unsigned char)((B*opB + A*opA*(1 - opB)) / o);
-    return (unsigned char)(255 * o);
-}
-
-
-/* warp the buffer onto an image using _qi,_qj,_counter1 and _counter2 :
-method when im has four channels : use transparency and A over B operation
-*/
-inline void _warpInt16Buf_4channel(Img<unsigned char> & im, float op) const
-{
-    MTOOLS_ASSERT(im.spectrum() == 4);
-    const float po = 1.0;
-    const size_t dx = (size_t)_int16_buffer_dim.X();
-    const size_t dxy = (size_t)(dx * _int16_buffer_dim.Y());
-    const size_t l1 = _qi + (dx*_qj);
-    const size_t l2 = (dxy)-l1;
-    if (l1>0)
-    {
-        unsigned char * pdest0 = im.data(0, 0, 0, 0);
-        unsigned char * pdest1 = im.data(0, 0, 0, 1);
-        unsigned char * pdest2 = im.data(0, 0, 0, 2);
-        unsigned char * pdest_opa = im.data(0, 0, 0, 3);
-        uint16 * psource0 = _int16_buffer;
-        uint16 * psource1 = _int16_buffer + dxy;
-        uint16 * psource2 = _int16_buffer + 2 * dxy;
-        uint16 * psource_opb = _int16_buffer + 3 * dxy;
-        if (_counter1 == 0) {/* memset(pdest,0,l1); */ }
-        else
-        {
-            if (_counter1 == 1)
-            {
-                for (size_t i = 0; i < l1; i++)
+            /**
+            * Constructor.
+            *
+            * @param [in,out]  obj The object to draw
+            **/
+            PlaneDrawer(ObjType * obj, int nbthread = 1) :  _obj(obj), _vecThread()
                 {
-                    const float g = ((op*(*psource_opb)) / 255);
-                    _blendcolor4((*pdest0), ((po*(*pdest_opa)) / 255), (unsigned char)(*psource0), g);
-                    _blendcolor4((*pdest1), ((po*(*pdest_opa)) / 255), (unsigned char)(*psource1), g);
-                    (*pdest_opa) = _blendcolor4((*pdest2), ((po*(*pdest_opa)) / 255), (unsigned char)(*psource2), g);
-                    ++pdest0; ++pdest1; ++pdest2; ++pdest_opa;
-                    ++psource0; ++psource1; ++psource2; ++psource_opb;
+                static_assert(mtools::GetColorPlaneSelector<ObjType>::has_getColor, "The object must be implement one of the getColor() method recognized by GetColorPlaneSelector.");
+                nbThreads(nbthread);
                 }
-            }
-            else
-            {
-                for (size_t i = 0; i < l1; i++)
+
+
+            /** Destructor. */
+            ~PlaneDrawer()
                 {
-                    const float g = ((op*(*psource_opb) / _counter1) / 255);
-                    _blendcolor4((*pdest0), ((po*(*pdest_opa)) / 255), (unsigned char)((*psource0) / _counter1), g);
-                    _blendcolor4((*pdest1), ((po*(*pdest_opa)) / 255), (unsigned char)((*psource1) / _counter1), g);
-                    (*pdest_opa) = _blendcolor4((*pdest2), ((po*(*pdest_opa)) / 255), (unsigned char)((*psource2) / _counter1), g);
-                    ++pdest0; ++pdest1; ++pdest2; ++pdest_opa;
-                    ++psource0; ++psource1; ++psource2; ++psource_opb;
+                _deleteAllThread();
                 }
-            }
-        }
-    }
-    if (l2>0)
-    {
-        unsigned char * pdest0 = im.data(_qi, _qj, 0, 0);
-        unsigned char * pdest1 = im.data(_qi, _qj, 0, 1);
-        unsigned char * pdest2 = im.data(_qi, _qj, 0, 2);
-        unsigned char * pdest_opa = im.data(_qi, _qj, 0, 3);
-        uint16 * psource0 = _int16_buffer + +l1;
-        uint16 * psource1 = _int16_buffer + dxy + l1;
-        uint16 * psource2 = _int16_buffer + 2 * dxy + l1;
-        uint16 * psource_opb = _int16_buffer + 3 * dxy + l1;
-        if (_counter2 == 0) {/* memset(pdest,0,l2); */ }
-        else
-        {
-            if (_counter2 == 1)
-            {
-                for (size_t i = 0; i<l2; i++)
+
+
+            /**
+            * Return the current number of threads.
+            **/
+            virtual int nbThreads() const { return (int)_vecThread.size(); }
+
+
+            /**
+            * Change the number of thread.
+            *
+            * All threads are disabled and setParam must be called again to set the parameters.
+            **/
+            void nbThreads(int nb)
                 {
-                    const float g = (op*(*psource_opb)) / 255;
-                    _blendcolor4((*pdest0), (po*(*pdest_opa)) / 255, (unsigned char)(*psource0), g);
-                    _blendcolor4((*pdest1), (po*(*pdest_opa)) / 255, (unsigned char)(*psource1), g);
-                    (*pdest_opa) = _blendcolor4((*pdest2), (po*(*pdest_opa)) / 255, (unsigned char)(*psource2), g);
-                    ++pdest0; ++pdest1; ++pdest2; ++pdest_opa;
-                    ++psource0; ++psource1; ++psource2; ++psource_opb;
+                _deleteAllThread();
+                _vecThread.resize(nb);
+                for (size_t i = 0; i < nb; i++) { _vecThread[i] = new ThreadPlaneDrawer<ObjType>(_obj); }
                 }
-            }
-            else
-            {
-                for (size_t i = 0; i<l2; i++)
+
+
+            /**
+            * Determines if the drawing parameters are valid.
+            **/
+            inline bool validParam()  const
                 {
-                    const float g = (op*(*psource_opb) / _counter2) / 255;
-                    _blendcolor4((*pdest0), (po*(*pdest_opa)) / 255, (unsigned char)((*psource0) / _counter2), g);
-                    _blendcolor4((*pdest1), (po*(*pdest_opa)) / 255, (unsigned char)((*psource1) / _counter2), g);
-                    (*pdest_opa) = _blendcolor4((*pdest2), (po*(*pdest_opa)) / 255, (unsigned char)((*psource2) / _counter2), g);
-                    ++pdest0; ++pdest1; ++pdest2; ++pdest_opa;
-                    ++psource0; ++psource1; ++psource2; ++psource_opb;
+                if (_vecThread.size() == 0) return false;
+                sync();
+                for (size_t i = 0; i < _vecThread.size(); i++) { if (!((_vecThread[i])->validParam())) return false; }
+                return true;
                 }
-            }
-        }
-    }
-    return;
-}
 
 
-/* make B -> A when A has full opacity */
-inline void _blendcolor3(unsigned char & A, unsigned char B, float opB) const
-{
-    A = (unsigned char)(B*opB + A*(1.0 - opB));
-}
-
-
-/* warp the buffer onto an image using _qi,_qj,_counter1 and _counter2 :
-method when im has 3 channels (same as if the fourth channel was completely opaque)
-*/
-inline void _warpInt16Buf_3channel(Img<unsigned char> & im, float op) const
-{
-    MTOOLS_ASSERT(im.spectrum() == 3);
-    const size_t dx = (size_t)_int16_buffer_dim.X();
-    const size_t dxy = (size_t)(dx * _int16_buffer_dim.Y());
-    const size_t l1 = _qi + (dx*_qj);
-    const size_t l2 = (dxy)-l1;
-    if (l1>0)
-    {
-        unsigned char * pdest0 = im.data(0, 0, 0, 0);
-        unsigned char * pdest1 = im.data(0, 0, 0, 1);
-        unsigned char * pdest2 = im.data(0, 0, 0, 2);
-        uint16 * psource0 = _int16_buffer;
-        uint16 * psource1 = _int16_buffer + dxy;
-        uint16 * psource2 = _int16_buffer + 2 * dxy;
-        uint16 * psource_opb = _int16_buffer + 3 * dxy;
-        if (_counter1 == 0) {/* memset(pdest,0,l1); */ }
-        else
-        {
-            if (_counter1 == 1)
-            {
-                for (size_t i = 0; i < l1; i++)
+            /** Synchronises all threads */
+            void sync()
                 {
-                    const float g = ((op*(*psource_opb)) / 255);
-                    _blendcolor3((*pdest0), (unsigned char)(*psource0), g);
-                    _blendcolor3((*pdest1), (unsigned char)(*psource1), g);
-                    _blendcolor3((*pdest2), (unsigned char)(*psource2), g);
-                    ++pdest0; ++pdest1; ++pdest2;
-                    ++psource0; ++psource1; ++psource2; ++psource_opb;
+                for (size_t i = 0; i < _vecThread.size(); i++) 
+                    { 
+                    (_vecThread[i])->sync();
+                    }
                 }
-            }
-            else
-            {
-                for (size_t i = 0; i < l1; i++)
+
+
+            /**
+            * Get the current progress value (which is the min of the progress of all the threads).
+            **/
+            inline int progress() const
                 {
-                    const float g = ((op*(*psource_opb) / _counter1) / 255);
-                    _blendcolor3((*pdest0), (unsigned char)((*psource0) / _counter1), g);
-                    _blendcolor3((*pdest1), (unsigned char)((*psource1) / _counter1), g);
-                    _blendcolor3((*pdest2), (unsigned char)((*psource2) / _counter1), g);
-                    ++pdest0; ++pdest1; ++pdest2;
-                    ++psource0; ++psource1; ++psource2; ++psource_opb;
+                if (_vecThread.size() == 0) return 0;
+                int pr = (_vecThread[0])->progress();
+                for (size_t i = 1; i < _vecThread.size(); i++)
+                    {
+                    const int q = (_vecThread[i])->progress();
+                    if (q < pr) { pr = q; }
+                    }
+                return pr;
                 }
-            }
-        }
-    }
-    if (l2>0)
-    {
-        unsigned char * pdest0 = im.data(_qi, _qj, 0, 0);
-        unsigned char * pdest1 = im.data(_qi, _qj, 0, 1);
-        unsigned char * pdest2 = im.data(_qi, _qj, 0, 2);
-        uint16 * psource0 = _int16_buffer + +l1;
-        uint16 * psource1 = _int16_buffer + dxy + l1;
-        uint16 * psource2 = _int16_buffer + 2 * dxy + l1;
-        uint16 * psource_opb = _int16_buffer + 3 * dxy + l1;
-        if (_counter2 == 0) {/* memset(pdest,0,l2); */ }
-        else
-        {
-            if (_counter2 == 1)
-            {
-                for (size_t i = 0; i<l2; i++)
+
+            /**
+            * Enables/Disable all the threads.
+            **/
+            void enable(bool newstatus)
                 {
-                    const float g = (op*(*psource_opb)) / 255;
-                    _blendcolor3((*pdest0), (unsigned char)(*psource0), g);
-                    _blendcolor3((*pdest1), (unsigned char)(*psource1), g);
-                    _blendcolor3((*pdest2), (unsigned char)(*psource2), g);
-                    ++pdest0; ++pdest1; ++pdest2;
-                    ++psource0; ++psource1; ++psource2; ++psource_opb;
+                if (_vecThread.size() == 0) return;
+                sync();
+                if (newstatus == _vecThread[0]->enable()) return;
+                for (size_t i = 0; i < _vecThread.size(); i++) { _vecThread[i]->enable(newstatus); }
                 }
-            }
-            else
-            {
-                for (size_t i = 0; i<l2; i++)
+
+
+            /**
+            * Query if the threads are currently enabled.
+            **/
+            inline bool enable()
                 {
-                    const float g = (op*(*psource_opb) / _counter2) / 255;
-                    _blendcolor3((*pdest0), (unsigned char)((*psource0) / _counter2), g);
-                    _blendcolor3((*pdest1), (unsigned char)((*psource1) / _counter2), g);
-                    _blendcolor3((*pdest2), (unsigned char)((*psource2) / _counter2), g);
-                    ++pdest0; ++pdest1; ++pdest2;
-                    ++psource0; ++psource1; ++psource2; ++psource_opb;
+                if (_vecThread.size() == 0) return false;
+                sync();
+                return _vecThread[0]->enable();
                 }
-            }
-        }
-    }
-    return;
-}
 
 
-// ****************************************************************
-// TIME FUNCTIONS : independant of everything else
-// ****************************************************************
-
-static const int _maxtic = 100;	    // number of tic until we look for time
-int _tic;							// current tic
-clock_t _stime;						// start time
-
-/* start the timer */
-inline void _startTimer() {_stime = clock(); _tic = _maxtic; }
-
-
-/* return true when time ms milliseconds has passed since calling startTimer() */
-inline bool _isTime(uint32 ms)
-	{
-	++_tic;
-    if (_g_requestAbort > 0) {return true; }
-    if (_tic < _maxtic) return false;
-    _qualityPixelDraw(); // update the quality of the drawing
-	if (((clock() - _stime)*1000)/CLOCKS_PER_SEC > (clock_t)ms) {_tic = _maxtic; return true;}
-	_tic = 0;
-	return false;
-	}
-
-
-// ****************************************************************
-// UTILITY FUNCTION : do not use any class member variable
-// ****************************************************************
-
-
-/* return the pourcentage according to the line number of _qj */
-inline int _getLinePourcent(int qj,int maxqj,int minv,int maxv) const
-	{
-	double v= ((double)qj)/((double)maxqj);
-	int p = (int)(minv + v*(maxv-minv));
-	return p;
-	}
+            /**
+            * Sets the drawing parameters.
+            *
+            * Returns immediately, use sync() to wait for the operation to complete.
+            *
+            * @param   range       The range to draw.
+            * @param [in,out]  im  The image to draw into.
+            * @param   subBox      The part of the image to draw (border inclusive). If empty, use the whole
+            *                      image.
+            **/
+            void setParameters(const fBox2 & range, ProgressImg * im, iBox2 subBox = iBox2())
+                {
+                if (subBox.isEmpty()) { subBox = iBox2(0, im->width() - 1, 0, im->height() - 1); }
+                const size_t nt = _vecThread.size();
+                const int64 H = subBox.ly() + 1;
+                if ((nt == 0) || (H < (int64)(3 * nt))) return;
+                int64 h = H / nt;
+                size_t m = (size_t)(H % nt);
+                iBox2 cbox(subBox.min[0], subBox.max[0], subBox.min[1], subBox.min[1] + h - 1);
+                for (size_t i = 0; i < (nt - m); i++)
+                    {
+                    _vecThread[i]->setParameters(_computeRange(range, subBox, cbox), im, cbox);
+                    cbox.min[1] += h; cbox.max[1] += h;
+                    }
+                cbox.max[1]++;
+                for (size_t i = (nt - m); i < nt; i++)
+                    {
+                    _vecThread[i]->setParameters(_computeRange(range, subBox, cbox), im, cbox);
+                    cbox.min[1] += (h + 1); cbox.max[1] += (h + 1);
+                    }
+                MTOOLS_INSURE(cbox.min[1] == 1 + subBox.max[1]);
+                }
 
 
-FastRNG _g_fgen; // fast RNG
+            fBox2 _computeRange(fBox2 range, iBox2 subBox, iBox2 cBox)
+                {
+                const double px = range.lx() / (subBox.lx() + 1);
+                const double py = range.ly() / (subBox.ly() + 1);
+                const double xmin = range.min[0] + px*(cBox.min[0] - subBox.min[0]);
+                const double xmax = range.max[0] - px*(subBox.max[0] - cBox.max[0]);
+                const double ymin = range.min[1] + py*(cBox.min[1] - subBox.min[1]);
+                const double ymax = range.max[1] - py*(subBox.max[1] - cBox.max[1]);
+                return fBox2(xmin, xmax, ymin, ymax);
+                }
 
-};
+
+            /**
+            * Force a redraw.
+            *
+            * Returns immediately, use sync() to wait for the operation to complete.
+            **/
+            void redraw()
+                {
+                for (size_t i = 0; i < _vecThread.size(); i++) { (_vecThread[i])->redraw(); }
+                }
+
+
+        private:
+
+
+            /* delete all worker thread */
+            void _deleteAllThread()
+                {
+                for (size_t i = 0; i < _vecThread.size(); i++) { delete(_vecThread[i]); }
+                _vecThread.clear();
+                }
+
+
+            // no copy
+            PlaneDrawer(const PlaneDrawer &) = delete;
+            PlaneDrawer & operator=(const PlaneDrawer &) = delete;
+
+
+            ObjType * _obj;                                             // the object to draw.
+            std::vector< ThreadPlaneDrawer<ObjType>*  > _vecThread;     // vector of all the threads. 
+
+
+        };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 }
