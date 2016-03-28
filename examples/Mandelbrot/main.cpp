@@ -10,7 +10,8 @@ using namespace mtools;
 volatile int inIt = 256; // initial number of iterations 
 
 /* Mandelbrot
-simple RGBc return type : multiple call for the same pixel are blended together
+simple RGBc return type
+-> multiple call for the same pixel are blended together
 */
 RGBc mandelbrot(const fVec2 & pos, const fBox2 & R, int32 nbiter)
     {
@@ -32,7 +33,8 @@ RGBc mandelbrot(const fVec2 & pos, const fBox2 & R, int32 nbiter)
 
 
 /* Douady's rabbit
-return type std::pair<RGBc,bool> : setting the bool to true force color returned to overwrite previous color at the same pixel. 
+here, the return type is 'std::pair<RGBc,bool>' 
+-> setting the bool to true forces the returned color to overwrite previous color at the same pixel. 
 */
 std::pair<RGBc,bool> rabbit(const fVec2 & pos, const fBox2 & R, int32 nbiter)
     {
@@ -62,8 +64,9 @@ int main(int argc, char *argv[])
     cout << "**************************************\n";
     inIt = arg('n', 256).info("initial number of iterations");
     Plotter2D Plotter;  // create the plotter
-    auto M = makePlot2DPlane(mandelbrot, 1, "Mandelbrot Set"); // the mandelbrot set
-    auto D = makePlot2DPlane(rabbit, 1, "Douady's rabbit"); // the mandelbrot set
+    int nb = nbHardwareThreads(); // total number of thread we can use
+    auto M = makePlot2DPlane(mandelbrot, nb/2, "Mandelbrot Set"); // the mandelbrot set
+    auto D = makePlot2DPlane(rabbit, nb-1 - nb/2, "Douady's rabbit"); // the mandelbrot set
     Plotter[M][D];
     Plotter.sensibility(1);
     M.opacity(1.0);
