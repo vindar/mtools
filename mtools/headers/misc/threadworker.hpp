@@ -59,6 +59,7 @@ namespace mtools
                 _code(0)
                 {
                 _th = new std::thread(&ThreadWorker::_threadProc, this);
+                sync();
                 }
 
 
@@ -115,7 +116,7 @@ namespace mtools
                 {
                 if (((int)_msg) == MSG_NONE) return;
                 std::unique_lock<std::mutex> lock(_mut_wait);
-                while (((int)_msg) != MSG_NONE) { _cv_wait.wait(lock); }
+                while (((int)_msg) != MSG_NONE) { _cv_wait.wait_for(lock,std::chrono::milliseconds(1)); }
                 }
 
 
@@ -228,7 +229,7 @@ namespace mtools
                 {
                 if (((int)_msg) != MSG_NONE) return;
                 std::unique_lock<std::mutex> lock(_mut_wakeup);
-                while (((int)_msg) == MSG_NONE) { _cv_wakeup.wait(lock); }
+                while (((int)_msg) == MSG_NONE) { _cv_wakeup.wait_for(lock, std::chrono::milliseconds(10)); }
                 }
 
 
