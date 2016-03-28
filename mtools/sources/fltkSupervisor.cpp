@@ -382,10 +382,10 @@ namespace mtools
                         Fl::awake();
                         while (status() != THREAD_STOPPING)
                             {
-                            Fl::wait(1);
+                            Fl::wait(1.0);
+                            _processMsg();
                             if (status() != THREAD_STOPPING)
                                 {
-                                _processMsg();
                                 if (status() == THREAD_NOT_STARTED)
                                     {
                                     MTOOLS_DEBUG("... sending init signal again");
