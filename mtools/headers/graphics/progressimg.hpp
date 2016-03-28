@@ -224,7 +224,7 @@ namespace mtools
                 if (subBox.max[1] > (int64)(_height - 1)) { subBox.min[1] = (int64)(_height - 1); }
                 if (subBox.isEmpty()) return;
                 size_t off = (size_t)(subBox.min[0] + _width*subBox.min[1]);
-                const int64 lx = subBox.lx();
+                //const int64 lx = subBox.lx();
                 const int64 ly = subBox.ly();
                 const size_t pa = (size_t)(_width - (subBox.lx() + 1));
                 for (int64 y = 0; y <= ly; y++)
