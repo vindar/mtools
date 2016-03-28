@@ -487,6 +487,7 @@ template<typename T> class GetColorPlaneSelector
             PlaneDrawer(ObjType * obj, int nbthread = 1) :  _obj(obj), _vecThread()
                 {
                 static_assert(mtools::GetColorPlaneSelector<ObjType>::has_getColor, "The object must be implement one of the getColor() method recognized by GetColorPlaneSelector.");
+                if (nbthread < 1) nbthread = 1;
                 nbThreads(nbthread);
                 }
 
@@ -511,6 +512,8 @@ template<typename T> class GetColorPlaneSelector
             **/
             void nbThreads(int nb)
                 {
+                if (nb < 1) nb = 1;
+                if (nb == nbThreads()) return;
                 _deleteAllThread();
                 _vecThread.resize(nb);
                 for (size_t i = 0; i < nb; i++) { _vecThread[i] = new ThreadPlaneDrawer<ObjType>(_obj); }
