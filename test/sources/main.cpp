@@ -169,7 +169,7 @@ std::pair<RGBc,bool> rabbit(const fVec2 & pos, const fBox2 & R, int32 nbiter)
 
         Plotter2D Plotter;  // create the plotter
         //Plotter.fourChannelImage(true);
-        auto M = makePlot2DPlane(mandelbrot, 7, "Mandelbrot Set"); // the mandelbrot set
+        auto M = makePlot2DPlane(mandelbrot, nbHardwareThreads()-9, "Mandelbrot Set"); // the mandelbrot set
         Plotter[M]; 
         M.opacity(1.0);
         Plotter.range().setRange(fBox2(-0.65, -0.15, 0.4, 0.8));
