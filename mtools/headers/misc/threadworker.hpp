@@ -32,6 +32,17 @@
 namespace mtools
 {
 
+    /**
+     * Return the number of hardware threads.
+     *
+     * @return  Number of hardware threads. 1 if not detected. 
+     **/
+    inline int nbHardwareThreads()
+        {
+        unsigned int nb = std::thread::hardware_concurrency();
+        if (nb == 0) return 1;
+        return (int)nb;
+        }
 
     /**
     * Class used for creating a simple worker thread.
