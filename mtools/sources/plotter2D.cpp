@@ -882,14 +882,14 @@ namespace mtools
          * does not update the view if the resulting quality is zero */
         void Plotter2DWindow::updateView(bool withreset)
             {
-            int maxretry = (withreset ? 25 : 0);
+            int maxretry = (withreset ? 12 : 0);
             int retry = 0;
             if (withreset) _PW->discardImage(); else { _mainImage->checkerboard(); }  // do it now while worker thread continu
-            if (isSuspendedInserted()) {maxretry -= 20;} // try only 5 times if there is a suspended object; 
+            if (isSuspendedInserted()) {maxretry -= 10;} // try only 5 times if there is a suspended object; 
             _mainImageQuality = quality(); // query the current quality
             while ((_mainImageQuality == 0) && (retry < maxretry))
                 { // quality is zero, we wait a little and before retry
-                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+                std::this_thread::sleep_for(std::chrono::milliseconds(2));
                 retry++;
                 _mainImageQuality = quality();
                 }
@@ -1668,13 +1668,13 @@ namespace mtools
             _w_refreshscale->redraw();
             Fl::flush();
             Fl::add_timeout(0.1, refresh_timer2_static, this); // one time timeout to stop the blinking
+            updateView(); // better to start be updating so we leave some time to compute the next image
             for (int i = 0; i < (int)_vecPlot.size(); i++)
                 {
                 if (_vecPlot[i]->quality() > 0 ) _vecPlot[i]->resetDrawing(false); // soft reset : reset only the drawing with non zero quality
                 }
             if (_refreshrate > 0) { Fl::repeat_timeout((60.0 / ((double)_refreshrate)), refresh_timer_static, this); } // repeat the timeout
-            //_mainImageQuality = 0; // the display image is outdated so we pretend its quality is zero.
-            updateView(); // this is better
+           //_mainImageQuality = 0; // the display image is outdated so we pretend its quality is zero. (not good).
             }
 
 
