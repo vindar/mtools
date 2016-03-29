@@ -198,7 +198,7 @@ int main(int argc, char *argv[])
 	parseCommandLine(argc,argv); // parse the command line, interactive mode
     int64 maxNN = arg("N", 10000000).info("total number of particles in the simulation");
     eps = arg("eps", 0.00001).info("distance under which particles stick together");
-    int autoredraw = arg('a', 10).info("autoredraw per minutes");
+    int autoredraw = arg('a', 600).info("autoredraw per minutes");
     cout << "Radius of a particle : " << RAD << "\n";
     NN = 1;
     Grid(0, 0).N[0] = 1;  Grid(0, 0).pos[0] = { 0.0,0.0 }; // initial particle in the cluster

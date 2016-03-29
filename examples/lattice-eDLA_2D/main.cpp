@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
     MTOOLS_SWAP_THREADS(argc, argv);
 	parseCommandLine(argc,argv);
     int64 maxNN = arg("N", 10000000).info("total number of particles in the simulation");
-	int autoredraw = arg('a', 10).info("autoredraw per minutes");
+	int autoredraw = arg('a', 600).info("autoredraw per minutes");
 	eight_neighbour = arg('e',false).info("use 8 neighbours adjacency");
     Grid({ 0,0 }) = N; N++; // initial particle 
     Plotter2D P;

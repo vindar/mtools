@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
     cout << "******************************\n";
     cout << "internal DLA on Z2\n";
     cout << "******************************\n";
-    int autoredraw = arg('a', 300).info("autoredraw rate");
+    int autoredraw = arg('a', 600).info("autoredraw rate");
     Grid.reset(0, 1, false);
     Grid.set(0, 0, 1); // initial cluster. 
     Plotter2D P;

@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
     PV.interpolationLinear();           // use linear interpolation
     PV.hypograph(true);                 // fill the hypograph
     PV.hypographOpacity(0.3f);          // but make it half transparent
-    P.autoredraw(60);                   // the plotter window should redraw itself at least every second (more in fact since it redraws after unsuspending)
+    P.autoredraw(600);                  // the plotter window should redraw itself 10 times per seconds
     P.range().fixedAspectRatio(false);  // disable the fixed aspect ratio
     if (!autorange) P.range().setRange(fBox2(-1.0e7, 5.0e8, -60000, 60000)); // set the range (if not automatic adjustment)
     P.startPlot();                      // display the plotter

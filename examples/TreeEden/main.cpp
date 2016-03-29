@@ -125,7 +125,7 @@ void run()
     Plotter[P];
     Plotter.startPlot();
     Plotter.range().setRange(unionRect(mtools::zoomOut(EC.range()), fBox2(-5000, 5000, -5000, 5000)));
-    Plotter.autoredraw(300);
+    Plotter.autoredraw(600);
     cout << EC.toString();
     watch("Cluster size", EC, printSize);
     while (Plotter.shown())
