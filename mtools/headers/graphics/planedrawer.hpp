@@ -72,22 +72,22 @@ namespace mtools
 * The signature below are recognized with the following order:
 *
 *  std::pair<RGBc,bool> getImage([const] fVec2 [&] pos, [const] fBox2 [&] box, int32 nbiter, void* & data)
-*  std::pair<RGBc,bool> getImage([const] fVec2 [&] pos, [const] fBox2 [&] box, void* & data)
+*  std::pair<RGBc,bool> getImage([const] fVec2 [&] pos, [const] fBox2 [&] box, int32 nbiter)
 *  std::pair<RGBc,bool> getImage([const] fVec2 [&] pos, [const] fBox2 [&] box)
 *  std::pair<RGBc,bool> getImage([const] fVec2 [&] pos)
 *  std::pair<RGBc,bool> operator()([const] fVec2 [&] pos, [const] fBox2 [&] box, int32 nbiter, void* & data)
-*  std::pair<RGBc,bool> operator()([const] fVec2 [&] pos, [const] fBox2 [&] box, void* & data)
+*  std::pair<RGBc,bool> operator()([const] fVec2 [&] pos, [const] fBox2 [&] box, int32 nbiter)
 *  std::pair<RGBc,bool> operator()([const] fVec2 [&] pos, [const] fBox2 [&] box)
 *  std::pair<RGBc,bool> operator()([const] fVec2 [&] pos)
 *  std::pair<RGBc,bool> getImage([const] double [&] x, [const] double [&] y)
 *  std::pair<RGBc,bool> operator()([const] double [&] x, [const] double [&] y)
 *
 *  RGBc getImage([const] fVec2 [&] pos, [const] fBox2 [&] box, int32 nbiter, void* & data)
-*  RGBc getImage([const] fVec2 [&] pos, [const] fBox2 [&] box, void* & data)
+*  RGBc getImage([const] fVec2 [&] pos, [const] fBox2 [&] box, int32 nbiter)
 *  RGBc getImage([const] fVec2 [&] pos, [const] fBox2 [&] box)
 *  RGBc getImage([const] fVec2 [&] pos)
 *  RGBc operator()([const] fVec2 [&] pos, [const] fBox2 [&] box, int32 nbiter, void* & data)
-*  RGBc operator()([const] fVec2 [&] pos, [const] fBox2 [&] box, void* & data)
+*  RGBc operator()([const] fVec2 [&] pos, [const] fBox2 [&] box, int32 nbiter)
 *  RGBc operator()([const] fVec2 [&] pos, [const] fBox2 [&] box)
 *  RGBc operator()([const] fVec2 [&] pos)  
 *  RGBc getImage([const] double [&] x, [const] double [&] y)
@@ -486,7 +486,7 @@ template<typename T> class GetColorPlaneSelector
             **/
             PlaneDrawer(ObjType * obj, int nbthread = 1) :  _obj(obj), _vecThread()
                 {
-                static_assert(mtools::GetColorPlaneSelector<ObjType>::has_getColor, "The object must be implement one of the getColor() method recognized by GetColorPlaneSelector.");
+                static_assert(mtools::GetColorPlaneSelector<ObjType>::has_getColor, "The object must be implement one of the getColor() methods recognized by GetColorPlaneSelector.");
                 if (nbthread < 1) nbthread = 1;
                 nbThreads(nbthread);
                 }
