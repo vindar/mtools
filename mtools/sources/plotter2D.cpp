@@ -882,14 +882,23 @@ namespace mtools
          * does not update the view if the resulting quality is zero */
         void Plotter2DWindow::updateView(bool withreset)
             {
-            int maxretry = (withreset ? 12 : 0);
+
+        #ifdef __APPLE__
+        #define PLOTTER2D_NBRETRY 10
+        #define PLOTTER2D_WAITIME 1
+        #else
+        #define PLOTTER2D_NBRETRY 12
+        #define PLOTTER2D_WAITIME 3
+        #endif
+
+            int maxretry = (withreset ? PLOTTER2D_NBRETRY : 0);
             int retry = 0;
             if (withreset) _PW->discardImage(); else { _mainImage->checkerboard(); }  // do it now while worker thread continu
-            if (isSuspendedInserted()) {maxretry -= 10;} // try only 5 times if there is a suspended object; 
+            if (isSuspendedInserted()) {maxretry /= 5;} // try less if there is a suspended object; 
             _mainImageQuality = quality(); // query the current quality
             while ((_mainImageQuality == 0) && (retry < maxretry))
                 { // quality is zero, we wait a little and before retry
-                std::this_thread::sleep_for(std::chrono::milliseconds(2));
+                std::this_thread::sleep_for(std::chrono::milliseconds(PLOTTER2D_WAITIME));
                 retry++;
                 _mainImageQuality = quality();
                 }
@@ -916,6 +925,9 @@ namespace mtools
                 }
                 // no, still nothing, we draw whatever we can from the previously displayed image  
                 _PW->displayMovedImage(RGBc::c_Gray);
+
+        #undef PLOTTER2D_NBRETRY
+        #undef PLOTTER2D_WAITIME
             }
 
 
