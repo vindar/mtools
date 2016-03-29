@@ -71,47 +71,33 @@ std::pair<RGBc,bool> rabbit(const fVec2 & pos, const fBox2 & R, int32 nbiter)
         const int LLY = 1400;
         const int UX = 2000;
         const int UY = 1000;
-
         ProgressImg progIm(LLX, LLY);
-        progIm.clear((RGBc64)RGBc::c_Red);
-        
+        progIm.clear((RGBc64)RGBc::c_Red);        
         mtools::Img<unsigned char> dispIm(LLX, LLY, 1, 4);
         cimg_library::CImg<unsigned char> * cim = (cimg_library::CImg<unsigned char> *)&dispIm;
-
         fBox2 r(-2.0, 2.0, -1.0, 1.0);
-
         PlaneDrawer<decltype(mandelbrot)> TPD(mandelbrot, 6);
-
         iBox2 SubB(50, 50 + UX - 1, 20, 20 + UY - 1);
-
         SubB.clear(); 
-
         TPD.setParameters(r, &progIm, SubB);
         TPD.sync();
         TPD.enable(true);
         TPD.sync();
-        int drawtype = 0, isaxe = 1, isgrid = 0, iscell = 1; // flags
         cimg_library::CImgDisplay DD(*cim); // display
         while ((!DD.is_closed())) 
             {
-            uint32 k = DD.key();
+            DD.key();
             if ((DD.is_key(cimg_library::cimg::keyA))) { TPD.enable(!TPD.enable()); std::this_thread::sleep_for(std::chrono::milliseconds(50)); }   // type A for toggle axe (with graduations)
-            if ((DD.is_key(cimg_library::cimg::keyG))) { isgrid = 1 - isgrid; std::this_thread::sleep_for(std::chrono::milliseconds(50)); } // type G for toggle grid
-            if ((DD.is_key(cimg_library::cimg::keyC))) { iscell = 1 - iscell; std::this_thread::sleep_for(std::chrono::milliseconds(50)); } // type C for toggle cell
             if (DD.is_key(cimg_library::cimg::keyESC)) { TPD.redraw(); } // [ESC] to force complete redraw
             if (DD.is_key(cimg_library::cimg::keyARROWUP)) { double sh = r.ly() / 20; r.min[1] += sh; r.max[1] += sh; TPD.setParameters(r, &progIm, SubB); } // move n the four directions
             if (DD.is_key(cimg_library::cimg::keyARROWDOWN)) { double sh = r.ly() / 20; r.min[1] -= sh; r.max[1] -= sh; TPD.setParameters(r, &progIm, SubB);} //
             if (DD.is_key(cimg_library::cimg::keyARROWLEFT)) { double sh = r.lx() / 20; r.min[0] -= sh; r.max[0] -= sh; TPD.setParameters(r, &progIm, SubB); } //
             if (DD.is_key(cimg_library::cimg::keyARROWRIGHT)) { double sh = r.lx() / 20; r.min[0] += sh; r.max[0] += sh; TPD.setParameters(r, &progIm, SubB); } //
             if (DD.is_key(cimg_library::cimg::keyPAGEDOWN)) { double lx = r.max[0] - r.min[0]; double ly = r.max[1] - r.min[1]; r.min[0] = r.min[0] - (lx / 8.0); r.max[0] = r.max[0] + (lx / 8.0); r.min[1] = r.min[1] - (ly / 8.0);  r.max[1] = r.max[1] + (ly / 8.0); TPD.setParameters(r, &progIm, SubB); }
-            if (DD.is_key(cimg_library::cimg::keyPAGEUP)) { double lx = r.max[0] - r.min[0]; double ly = r.max[1] - r.min[1]; r.min[0] = r.min[0] + (lx / 10.0); r.max[0] = r.max[0] - (lx / 10.0); r.min[1] = r.min[1] + (ly / 10.0); r.max[1] = r.max[1] - (ly / 10.0); TPD.setParameters(r, &progIm, SubB); }
-       
+            if (DD.is_key(cimg_library::cimg::keyPAGEUP)) { double lx = r.max[0] - r.min[0]; double ly = r.max[1] - r.min[1]; r.min[0] = r.min[0] + (lx / 10.0); r.max[0] = r.max[0] - (lx / 10.0); r.min[1] = r.min[1] + (ly / 10.0); r.max[1] = r.max[1] - (ly / 10.0); TPD.setParameters(r, &progIm, SubB); }     
             TPD.sync();
             std::cout << "quality = " << TPD.progress() << "\n";
             progIm.blit(dispIm);
-//            if (isaxe) { dispIm.fBox2_drawAxes(r).fBox2_drawGraduations(r).fBox2_drawNumbers(r); }
-//            if (isgrid) { dispIm.fBox2_drawGrid(r); }
-//            if (iscell) { dispIm.fBox2_drawCells(r); }
             DD.display(*cim);
             }
         return;
@@ -144,6 +130,7 @@ std::pair<RGBc,bool> rabbit(const fVec2 & pos, const fBox2 & R, int32 nbiter)
         MTOOLS_SWAP_THREADS(argc, argv);
         parseCommandLine(argc, argv, true);
 
+        /*
         imm.load("lenna.jpg");
         vv2 = new int[1000];
         for (int i = 0;i < 1000; i++) { vv1.push_back(i - 50); vv2[i] = i - 100; }
@@ -161,6 +148,7 @@ std::pair<RGBc,bool> rabbit(const fVec2 & pos, const fBox2 & R, int32 nbiter)
         Pl.gridObject(true);
         Pl[P1][P2][P3][P4][P5][P6];
         Pl.plot();
+        */
 
         Plotter2D Plotter;  // create the plotter
         //Plotter.fourChannelImage(true);
