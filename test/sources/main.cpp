@@ -12,7 +12,7 @@ using namespace mtools;
 
 
 
-volatile int inIt = 64; // initial number of iterations 
+volatile int inIt = 256; // initial number of iterations 
 
 /* Mandelbrot
 simple RGBc return type : multiple call for the same pixel are blended together
@@ -141,9 +141,9 @@ std::pair<RGBc,bool> rabbit(const fVec2 & pos, const fBox2 & R, int32 nbiter)
 
     int main(int argc, char * argv[])
         {
+        MTOOLS_SWAP_THREADS(argc, argv);
+        parseCommandLine(argc, argv, true);
 
-  
-        /*
         imm.load("lenna.jpg");
         vv2 = new int[1000];
         for (int i = 0;i < 1000; i++) { vv1.push_back(i - 50); vv2[i] = i - 100; }
@@ -153,23 +153,18 @@ std::pair<RGBc,bool> rabbit(const fVec2 & pos, const fBox2 & R, int32 nbiter)
 
         auto P1 = makePlot2DFun(ff, "function");
         auto P2 = makePlot2DLattice(colorLattice, "lattice");
-        auto P3 = makePlot2DPlane(mandelbrot, 6, "plane");
+        auto P3 = makePlot2DPlane(mandelbrot, 3, "plane");
         auto P4 = makePlot2DCImg(imm, "image");
         auto P5 = makePlot2DVector(vv1, true, "vector");
         auto P6 = makePlot2DArray(vv2, 1000, "array");
 
         Pl.gridObject(true);
-        Pl[P3];
-        //Pl[P1][P2][P3][P4][P5][P6];
+        Pl[P1][P2][P3][P4][P5][P6];
         Pl.plot();
-        */
-
-        MTOOLS_SWAP_THREADS(argc, argv);
-        parseCommandLine(argc, argv, true);
 
         Plotter2D Plotter;  // create the plotter
         //Plotter.fourChannelImage(true);
-        auto M = makePlot2DPlane(mandelbrot, nbHardwareThreads()-9, "Mandelbrot Set"); // the mandelbrot set
+        auto M = makePlot2DPlane(mandelbrot, nbHardwareThreads()-1, "Mandelbrot Set"); // the mandelbrot set
         Plotter[M]; 
         M.opacity(1.0);
         Plotter.range().setRange(fBox2(-0.65, -0.15, 0.4, 0.8));
