@@ -125,6 +125,21 @@ std::pair<RGBc,bool> rabbit(const fVec2 & pos, const fBox2 & R, int32 nbiter)
     mtools::Img<unsigned char> imm;
 
 
+
+
+    char tt[100];
+    int nbt = 0;
+    //RGBc mandelbrot(const fVec2 & pos, const fBox2 & R, int32 nbiter);
+
+    RGBc testf(const fVec2 & pos, const fBox2 & R, int32 nbiter, void* & data)
+        {
+        if (data == nullptr) { data = tt + nbt; nbt++; }
+        int i = (int)((char*)data - tt);
+        return RGBc::jetPalette(i, 0, nbt - 1);
+        }
+
+
+
     int main(int argc, char * argv[])
         {
         MTOOLS_SWAP_THREADS(argc, argv);
@@ -152,7 +167,7 @@ std::pair<RGBc,bool> rabbit(const fVec2 & pos, const fBox2 & R, int32 nbiter)
 
         Plotter2D Plotter;  // create the plotter
         //Plotter.fourChannelImage(true);
-        auto M = makePlot2DPlane(mandelbrot, nbHardwareThreads()-1, "Mandelbrot Set"); // the mandelbrot set
+        auto M = makePlot2DPlane(testf, nbHardwareThreads()-1, "Mandelbrot Set"); // the mandelbrot set
         Plotter[M]; 
         M.opacity(1.0);
         Plotter.range().setRange(fBox2(-0.65, -0.15, 0.4, 0.8));
