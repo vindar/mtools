@@ -40,11 +40,6 @@ namespace mtools
     class ProgressImg
         {
 
-        size_t          _width;         // width of the image
-        size_t          _height;        // height of the image
-        RGBc64 *        _imData;        // image buffer
-        uint8 *         _normData;      // normalization buffer (_normData[i] = 0 means already normalized). 
-
         public:
 
             /**
@@ -224,7 +219,6 @@ namespace mtools
                 if (subBox.max[1] > (int64)(_height - 1)) { subBox.min[1] = (int64)(_height - 1); }
                 if (subBox.isEmpty()) return;
                 size_t off = (size_t)(subBox.min[0] + _width*subBox.min[1]);
-                //const int64 lx = subBox.lx();
                 const int64 ly = subBox.ly();
                 const size_t pa = (size_t)(_width - (subBox.lx() + 1));
                 for (int64 y = 0; y <= ly; y++)
@@ -244,11 +238,7 @@ namespace mtools
             void normalize()
                 {
                 const size_t l = _width*_height;
-                for (size_t i = 0; i<l; i++)
-                    {
-                    _imData[i].normalize(_normData[i] + 1);
-                    _normData[i] = 1;
-                    }
+                for (size_t i = 0; i<l; i++) { _imData[i].normalize(_normData[i] + 1); _normData[i] = 1; }
                 }
 
 
@@ -256,12 +246,14 @@ namespace mtools
              * Blit the ProgressImg into a Img. 
              * Both images must have the same size.
              *
-             * @param [in,out]  im  The destination image. Must have the same size as this 
+             * @param [in,out]  im  The destination image. Must have the same size as this. Can be a 3 or 4 channel image. If it exist, the alpha channel is set to full opacity.
              * @param   op          opacity to multiply the progressImg with before blitting.
              * @param   reverse     true to reverse the y axis. 
              **/
             void blit(Img<unsigned char> & im, float op = 1.0, bool reverse = true)
                 {
+                const uint32 op32 = (uint32)(255.0f*op);
+                if (op32 == 0) return;
                 const size_t lx = (size_t)im.width();
                 const size_t ly = (size_t)im.height();
                 if ((lx <= 0) || (ly <= 0)) return;
@@ -276,14 +268,13 @@ namespace mtools
                         unsigned char * p1 = im.data();
                         unsigned char * p2 = im.data() + l;
                         unsigned char * p3 = im.data() + 2 * l;
-                        for (size_t z = 0; z < l; z++)
+                        if (op32 < 255)
                             {
-                            RGBc c2 = _imData[z].getRGBc(_normData[z] + 1);
-                            RGBc c1 = RGBc(p1[z], p2[z], p3[z], 255);
-                            auto c = blendOver(c2, c1, op);
-                            p1[z] = c.comp.R;
-                            p2[z] = c.comp.G;
-                            p3[z] = c.comp.B;
+                            for (size_t z = 0; z < l; z++) { _fastblend(_imData[z], _normData[z] + 1, op32, p1[z], p2[z], p3[z]); }
+                            }
+                        else
+                            {
+                            for (size_t z = 0; z < l; z++) { _fastcopy(_imData[z], _normData[z] + 1, p1[z], p2[z], p3[z]); }
                             }
                         return;
                         }
@@ -293,21 +284,21 @@ namespace mtools
                         unsigned char * p2 = im.data() + (2 * l - lx);
                         unsigned char * p3 = im.data() + (3 * l - lx);
                         size_t z = 0;
-                        for (size_t j = 0;j < ly; j++)
+                        if (op32 < 255)
                             {
-                            for (size_t i = 0; i < lx; i++)
+                            for (size_t j = 0;j < ly; j++)
                                 {
-                                RGBc c2 = _imData[z].getRGBc(_normData[z] + 1);
-                                RGBc c1 = RGBc(p1[i], p2[i], p3[i], 255);
-                                auto c = blendOver(c2, c1, op);
-                                p1[i] = c.comp.R;
-                                p2[i] = c.comp.G;
-                                p3[i] = c.comp.B;
-                                z++;
+                                for (size_t i = 0; i < lx; i++) { _fastblend(_imData[z], _normData[z] + 1, op32, p1[i], p2[i], p3[i]); z++; }
+                                p1 -= lx; p2 -= lx; p3 -= lx;
                                 }
-                            p1 -= lx;
-                            p2 -= lx;
-                            p3 -= lx;
+                            }
+                        else
+                            {
+                            for (size_t j = 0;j < ly; j++)
+                                {
+                                for (size_t i = 0; i < lx; i++) { _fastcopy(_imData[z], _normData[z] + 1, p1[i], p2[i], p3[i]); z++; }
+                                p1 -= lx; p2 -= lx; p3 -= lx;
+                                }
                             }
                         }
                     return;
@@ -320,15 +311,13 @@ namespace mtools
                         unsigned char * p2 = im.data() + l;
                         unsigned char * p3 = im.data() + 2 * l;
                         unsigned char * p4 = im.data() + 3 * l;
-                        for (size_t z = 0; z < l; z++)
+                        if (op32 < 255)
                             {
-                            RGBc c2 = _imData[z].getRGBc(_normData[z] + 1);
-                            RGBc c1 = RGBc(p1[z], p2[z], p3[z], p4[z]);
-                            auto c = blendOver(c2, c1, op);
-                            p1[z] = c.comp.R;
-                            p2[z] = c.comp.G;
-                            p3[z] = c.comp.B;
-                            p4[z] = c.comp.A;
+                            for (size_t z = 0; z < l; z++) { _fastblend(_imData[z], _normData[z] + 1, op32, p1[z], p2[z], p3[z]); p4[z] = 255; }
+                            }
+                        else
+                            {
+                            for (size_t z = 0; z < l; z++) { _fastcopy(_imData[z], _normData[z] + 1, p1[z], p2[z], p3[z]); p4[z] = 255; }
                             }
                         return;
                         }
@@ -339,23 +328,21 @@ namespace mtools
                         unsigned char * p3 = im.data() + (3 * l - lx);
                         unsigned char * p4 = im.data() + (4 * l - lx);
                         size_t z = 0;
-                        for (size_t j = 0;j < ly; j++)
+                        if (op32 < 255)
                             {
-                            for (size_t i = 0; i < lx; i++)
+                            for (size_t j = 0;j < ly; j++)
                                 {
-                                RGBc c2 = _imData[z].getRGBc(_normData[z] + 1);
-                                RGBc c1 = RGBc(p1[i], p2[i], p3[i], p4[i]);
-                                auto c = blendOver(c2, c1, op);
-                                p1[i] = c.comp.R;
-                                p2[i] = c.comp.G;
-                                p3[i] = c.comp.B;
-                                p4[i] = c.comp.A;
-                                z++;
+                                for (size_t i = 0; i < lx; i++) { _fastblend(_imData[z], _normData[z] + 1, op32, p1[i], p2[i], p3[i]); p4[z] = 255; z++; }
+                                p1 -= lx; p2 -= lx; p3 -= lx; p4 -= lx;
                                 }
-                            p1 -= lx;
-                            p2 -= lx;
-                            p3 -= lx;
-                            p4 -= lx;
+                            }
+                        else
+                            {
+                            for (size_t j = 0;j < ly; j++)
+                                {
+                                for (size_t i = 0; i < lx; i++) { _fastcopy(_imData[z], _normData[z] + 1, p1[i], p2[i], p3[i]); p4[z] = 255; z++; }
+                                p1 -= lx; p2 -= lx; p3 -= lx; p4 -= lx;
+                                }
                             }
                         }
                     return;
@@ -363,6 +350,33 @@ namespace mtools
                 MTOOLS_ERROR("incorrect number of channel in the image");
                 }
 
+
+        private:
+
+
+                /* fast alpha blending. Destination is assumed opaque */
+                inline void _fastblend(const RGBc64 & coul, const uint32 N, const uint32 op, uint8 & R, uint8 & G, uint8 & B)
+                    {
+                    const uint32 alpha = (op*coul.comp.A) / N;
+                    const uint32 beta = (255 * 255) - alpha;
+                    R = (beta*R + (alpha*coul.comp.R) / N) / (255 * 255);
+                    G = (beta*G + (alpha*coul.comp.G) / N) / (255 * 255);
+                    B = (beta*B + (alpha*coul.comp.B) / N) / (255 * 255);
+                    }
+
+                /* fast copy */
+                inline void _fastcopy(const RGBc64 & coul, const uint32 N, uint8 & R, uint8 & G, uint8 & B)
+                    {
+                    R = coul.comp.R / N;
+                    G = coul.comp.G / N;
+                    B = coul.comp.B / N;
+                    }
+
+
+                size_t          _width;         // width of the image
+                size_t          _height;        // height of the image
+                RGBc64 *        _imData;        // image buffer
+                uint8 *         _normData;      // normalization buffer (_normData[i] = 0 means already normalized). 
 
         };
 
