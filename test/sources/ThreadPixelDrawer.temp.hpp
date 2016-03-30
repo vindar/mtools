@@ -392,7 +392,86 @@ using namespace mtools;
                 * may be interrupted at each line if density <= 255 and at each
                 * pixel if density > 255*/
                 void _draw_perfect()
-                    {
+                    {						
+                    std::cout << "draw perfect\n";  mtools::Chronometer();
+                    RGBc64 * imData = _im->imData();
+                    uint8 * normData = _im->normData();
+                    const double px = _dlx; // lenght of a screen pixel
+                    const double py = _dly; // height od a screen pixel
+                    const int64 ilx = _subBox.lx() + 1; // number of horiz pixel in dest image
+                    const int64 ily = _subBox.ly() + 1; // number of vert pixel in dest image
+                    const fBox2 r = _range; // corresponding range
+					
+                    const int64 width = _im->width();
+                    size_t off = (size_t)(_subBox.min[0] + _im->width()*(_subBox.min[1]));
+                    size_t pa = (size_t)(width - ilx);
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+                    if (_dens < 0.5)
+                        { // low density, try to reduce color queries
+                        int64  prevsy = (int64)r.min[1] - 3; // cannot match anything
+                        for (int64 j = 0; j < ily; j++)
+                            {
+                            check();
+                            const double y = r.min[1] + (j + 0.5)*py;
+                            const int64 sy = (int64)floor(y + 0.5);
+                            if (sy == prevsy)
+                                {
+                                std::memcpy((imData + off), (imData + off) - width, (size_t)ilx*sizeof(RGBc64));
+                                std::memset((normData + off), 1, (size_t)ilx);
+                                off += (size_t)width;
+                                }
+                            else
+                                {
+                                prevsy = sy;
+                                RGBc64 coul;
+                                int64 prevsx = (int64)r.min[0] - 3; // cannot match anything
+                                for (int64 i = 0; i < ilx; i++)
+                                    {
+                                    const double x = r.min[0] + (i + 0.5)*px;
+                                    const int64 sx = (int64)floor(x + 0.5);
+                                    if (prevsx != sx) // use for _dlx < 0.5  
+                                        {
+                                        coul = mtools::GetColorSelector<ObjType>::call(*_obj, { sx , sy }, _opaque);
+                                        prevsx = sx;
+                                        }
+                                    imData[off] = coul;
+                                    normData[off] = 1;
+                                    off++;
+                                    }
+                                off += pa;
+                                }
+                            }
+                        }
+						
+					//_dens < 1 // try to reduce pixel queries (by remembering last x-position)
+					          // compute exact intersection aera 
+							  
+							 
+						
+
+
+
+
+
+						
+					//1 < _dens < 50  // compute exact intersection aera 
+					//50 <_dens // compute only pixel intersecting the aera
+					
+					_dens > 
+						
                     std::cout << "draw perfect \n";
                     return _draw_fast();
                     }
