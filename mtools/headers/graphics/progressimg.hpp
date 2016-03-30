@@ -257,8 +257,8 @@ namespace mtools
                 const size_t lx = (size_t)im.width();
                 const size_t ly = (size_t)im.height();
                 if ((lx <= 0) || (ly <= 0)) return;
-                MTOOLS_ASSERT(lx == height());
-                MTOOLS_ASSERT(ly == width());
+         //       MTOOLS_ASSERT(lx == height());
+                //MTOOLS_ASSERT(ly == width());
                 const size_t l = (size_t)lx*ly;
 
                 if (im.spectrum() == 3)
