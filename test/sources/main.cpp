@@ -277,7 +277,7 @@ template<typename ObjType> class ThreadPixelDrawer : public ThreadWorker
                     for (int64 i = xmin; i <= xmax; i++)
                         {
                         imData[off] = mtools::GetColorSelector<ObjType>::call(*_obj, { i , j }, _opaque);
-                        normData[off] = 1;
+                        normData[off] = 0;
                         off++;
                         }
                     off += pa;
@@ -291,7 +291,7 @@ template<typename ObjType> class ThreadPixelDrawer : public ThreadWorker
                     for (int64 i = xmin; i <= xmax; i++)
                         {
                         imData[off] = mtools::GetColorSelector<ObjType>::call(*_obj, { i , j }, _opaque);
-                        normData[off] = 1;
+                        normData[off] = 0;
                         off++;
                         }
                     }
@@ -329,7 +329,7 @@ template<typename ObjType> class ThreadPixelDrawer : public ThreadWorker
                     if (sy == prevsy)
                         {
                         std::memcpy((imData + off), (imData + off) - width, (size_t)ilx*sizeof(RGBc64));
-                        std::memset((normData + off), 1, (size_t)ilx);
+                        std::memset((normData + off), 0, (size_t)ilx);
                         off += (size_t)width;
                         }
                     else
@@ -347,7 +347,7 @@ template<typename ObjType> class ThreadPixelDrawer : public ThreadWorker
                                 prevsx = sx;
                                 }
                             imData[off] = coul;
-                            normData[off] = 1;
+                            normData[off] = 0;
                             off++;
                             }
                         off += pa;
@@ -366,30 +366,139 @@ template<typename ObjType> class ThreadPixelDrawer : public ThreadWorker
                         const double x = r.min[0] + (i + 0.5)*px;
                         const int64 sx = (int64)floor(x + 0.5);
                         imData[off] = mtools::GetColorSelector<ObjType>::call(*_obj, { sx , sy }, _opaque);
-                        normData[off] = 1;
+                        normData[off] = 0;
                         off++;
                         }
                     off += pa;
                     }
                 }
             setProgress(1);
-
             uint64 tim = mtools::Chronometer(); std::cout << "finished in " << tim << " ms\n";
             }
+
 
 
         /* stochastic drawing sample a pixel
         * may be interrupted at each line */
         void _draw_stochastic()
             {
-            std::cout << "draw stochastic \n";
-            _draw_fast();
-            return;
-            // two case : add only a single sample or add multiple samples
-            /* remeber x value to prevent multiple horizontal queries */
-            /* try to skip similar vertical lines */
+            std::cout << "draw stochastic \n";  mtools::Chronometer();
+            // compute the number of sample required            
+            int sampleToDo;
+            if (_dens < 10.0) { sampleToDo = (int)_dens/2; } else if (_dens < 20000) { sampleToDo = 5 + ((int)_dens)/20; } else sampleToDo = 1000;
+            std::cout << "number of passes = " << sampleToDo  << "\n";
 
+            int sampleDone = 1; // 1 sample currently done (the fast one)            
+            if ((sampleToDo - sampleDone ) < 199)
+                { // ok, we do everything on a single pass. 
+                _draw_stochastic_batch(1, sampleToDo - sampleDone, sampleDone, sampleToDo);
+                }
+            else
+                { // need multiple passes
+                _draw_stochastic_batch(1, 199, sampleDone, sampleToDo);  // go to 200
+                _progimage_div2(); // go back to 100
+                int batchSize = 2; 
+                while(batchSize*100 < sampleToDo) 
+                    { 
+                    _draw_stochastic_batch(batchSize, 100, sampleDone, sampleToDo); // go from 100 to 200
+                    _progimage_div2(); // back to 100
+                    batchSize *= 2;
+                    }
+                _draw_stochastic_batch(batchSize, sampleToDo/batchSize, sampleDone, sampleToDo); // do the remaining passes
+                }
+            setProgress(50);
+            uint64 tim = mtools::Chronometer(); std::cout << "finished in " << tim << " ms\n";
+            return;
             }
+
+
+
+        /* divide by two the color and number of query in every pixel 
+           of the subbox of the progressimage. */
+        void _progimage_div2()
+            {
+            RGBc64 * imData = _im->imData();
+            uint8 * normData = _im->normData();
+            const int64 ilx = _subBox.lx() + 1;
+            const int64 ily = _subBox.ly() + 1;
+            const int64 width = _im->width();
+            const size_t pa = (size_t)(width - ilx);
+            size_t off = (size_t)(_subBox.min[0] + _im->width()*(_subBox.min[1]));
+            check();
+            for (int64 jj = 0; jj < ily; jj++)
+                {
+                for (int64 ii = 0; ii < ilx; ii++)
+                    {
+                    imData[off].div2();
+                    normData[off] >>= 1;
+                    off++;
+                    }
+                off += pa;
+                }
+            check();
+            return;
+            }
+
+
+
+        void _draw_stochastic_batch(const int batchsize, const int nb, int & sampleDone, const int sampleToDo)
+            {
+            RGBc64 * imData = _im->imData();
+            uint8 * normData = _im->normData();
+            const double px = _dlx; // lenght of a screen pixel
+            const double py = _dly; // height od a screen pixel
+            const int64 ilx = _subBox.lx() + 1; // number of horiz pixel in dest image
+            const int64 ily = _subBox.ly() + 1; // number of vert pixel in dest image
+            const fBox2 r = _range; // corresponding range
+            const int64 width = _im->width();
+            const size_t pa = (size_t)(width - ilx);
+            const int sd = sampleDone;
+            for (int nbb = 0; nbb < nb; nbb++)
+                {
+                size_t off = (size_t)(_subBox.min[0] + _im->width()*(_subBox.min[1]));
+                fBox2 pixBox(r.min[0], r.min[0] + px, r.min[1], r.min[1] + py);
+                for (int64 jj = 0; jj < ily; jj++)
+                    {
+                    check();
+                    for (int64 ii = 0; ii < ilx; ii++)
+                        {
+                        iBox2 siteBox((int64)std::floor(pixBox.min[0] + 0.5), (int64)std::ceil(pixBox.max[0] - 0.5), (int64)std::floor(pixBox.min[1] + 0.5), (int64)std::ceil(pixBox.max[1] - 0.5));                        
+                        if (px > 2.0)
+                            { // adjust horizontal boundary
+                            const double dxmin = pixBox.min[0] + 0.5 - siteBox.min[0]; if (dxmin < 0.5) siteBox.min[0]++;
+                            const double dxmax = siteBox.max[0] + 0.5 - pixBox.max[0]; if (dxmax <= 0.5) siteBox.max[0]--;
+                            }
+                        if (py > 2.0)
+                            {// adjust vertical boundary
+                            const double dymin = pixBox.min[1] + 0.5 - siteBox.min[1]; if (dymin < 0.5) siteBox.min[1]++;
+                            const double dymax = siteBox.max[1] + 0.5 - pixBox.max[1]; if (dymax <= 0.5) siteBox.max[1]--;
+                            }                            
+                        int64 iR = 0, iG = 0, iB = 0, iA = 0;
+                        for (int l = 0;l < batchsize; l++)
+                            {
+                            const int64 i = siteBox.min[0] + (_fastgen() % (siteBox.max[0] - siteBox.min[0] + 1));
+                            const int64 j = siteBox.min[1] + (_fastgen() % (siteBox.max[1] - siteBox.min[1] + 1));
+                            const RGBc c = mtools::GetColorSelector<ObjType>::call(*_obj, { i, j }, _opaque);
+                            iR += c.comp.R; iG += c.comp.G; iB += c.comp.B; iA += c.comp.A;
+                            }
+                        imData[off].add(RGBc64((uint16)(iR / batchsize), (uint16)(iG / batchsize), (uint16)(iB / batchsize), (uint16)(iA / batchsize)));
+                        normData[off]++;
+                        off++;
+                        pixBox.min[0] += px; pixBox.max[0] += px;
+                        }
+                    off += pa;
+                    pixBox.min[1] += py;
+                    pixBox.max[1] += py;
+                    pixBox.min[0] = r.min[0];
+                    pixBox.max[0] = r.min[0] + px;
+                    }
+                setProgress(1 + (49 * sd) / sampleToDo);
+                }
+            sampleDone += (nb*batchsize);
+            }
+
+
+
 
 
         /* perfect drawing by computing the average color at each pixel
@@ -434,8 +543,8 @@ template<typename ObjType> class ThreadPixelDrawer : public ThreadWorker
             const fBox2 r = _range; // corresponding range
 
             const int64 width = _im->width();
+            const size_t pa = (size_t)(width - ilx);
             size_t off = (size_t)(_subBox.min[0] + _im->width()*(_subBox.min[1]));
-            size_t pa = (size_t)(width - ilx);
 
             // initial position of the pixel bounding box (left-bottom)
             fBox2 pixBox(r.min[0], r.min[0] + px, r.min[1], r.min[1] + py);
@@ -473,7 +582,7 @@ template<typename ObjType> class ThreadPixelDrawer : public ThreadWorker
                                 }
                             int64 aera = (siteBox.max[0] - siteBox.min[0] + 1)*(siteBox.max[1] - siteBox.min[1] + 1);
                             imData[off] = RGBc64((uint16)(iR / aera), (uint16)(iG / aera), (uint16)(iB / aera), (uint16)(iA / aera));
-                            normData[off] = 1;
+                            normData[off] = 0;
                             }
                             // ok, next pixel...
                             off++;
@@ -504,8 +613,8 @@ template<typename ObjType> class ThreadPixelDrawer : public ThreadWorker
             const fBox2 r = _range; // corresponding range
 
             const int64 width = _im->width();
+            const size_t pa = (size_t)(width - ilx);
             size_t off = (size_t)(_subBox.min[0] + _im->width()*(_subBox.min[1]));
-            size_t pa = (size_t)(width - ilx);
 
             // for saving the color, cannot match anything initially
             int64  prev_i = (int64)r.min[0] - 3; 
@@ -515,7 +624,7 @@ template<typename ObjType> class ThreadPixelDrawer : public ThreadWorker
             // initial position of the pixel bounding box (left-bottom)
             fBox2 pixBox(r.min[0], r.min[0] + px, r.min[1], r.min[1] + py);
 
-            for (int64 jj = 0; jj < ily; jj++)
+            for(int64 jj = 0; jj < ily; jj++)
                 {
                 check();
                 for (int64 ii = 0; ii < ilx; ii++)
@@ -536,7 +645,7 @@ template<typename ObjType> class ThreadPixelDrawer : public ThreadWorker
                                         prev_i = pix_i; prev_j = pix_j;
                                         }
                                     imData[off] = coul;
-                                    normData[off] = 1;
+                                    normData[off] = 0;
                                     }
                                 else
                                     { // process the vertical line
@@ -563,7 +672,7 @@ template<typename ObjType> class ThreadPixelDrawer : public ThreadWorker
                                     double fA = (dymin*coul_min.comp.A + ((double)iA) + dymax*coul_max.comp.A) / aera;
 
                                     imData[off] = RGBc64((uint16)fR, (uint16)fG, (uint16)fB, (uint16)fA);
-                                    normData[off] = 1;
+                                    normData[off] = 0;
                                     }
                                 }
                             else
@@ -593,7 +702,7 @@ template<typename ObjType> class ThreadPixelDrawer : public ThreadWorker
                                     double fA = (dxmin*coul_min.comp.A + ((double)iA) + dxmax*coul_max.comp.A) / aera;
 
                                     imData[off] = RGBc64((uint16)fR, (uint16)fG, (uint16)fB, (uint16)fA);
-                                    normData[off] = 1;
+                                    normData[off] = 0;
                                     }
                                 else
                                     { // process the whole square
@@ -683,7 +792,7 @@ template<typename ObjType> class ThreadPixelDrawer : public ThreadWorker
 
                                     // compute final color
                                     imData[off] = RGBc64((uint16)(fR / aera), (uint16)(fG / aera), (uint16)(fB / aera), (uint16)(fA / aera));
-                                    normData[off] = 1;
+                                    normData[off] = 0;
                                     }
                                 }
                         }
@@ -775,9 +884,13 @@ inline RGBc colorImage(int64 x, int64 y)
     {
 
     //return RGBc::c_Blue;
-    if ((x < 0) || (x >= lenx)) return RGBc::c_Maroon;
-    if ((y < 0) || (y >= leny)) return RGBc::c_Green;
-    return lenna.getPixel({ x, leny - 1 - y });
+    //if ((x < 0) || (x >= lenx)) return RGBc::c_Maroon;
+    //if ((y < 0) || (y >= leny)) return RGBc::c_Green;
+
+    if (x < 0) return RGBc::c_Maroon;
+    if (y < 0) return RGBc::c_Green;
+
+    return lenna.getPixel({ x % lenx , leny - 1 - (y % leny) });
     }
 
 void loadImage()
