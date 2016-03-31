@@ -752,6 +752,19 @@ union RGBc64
             comp.A /= n;
             }
 
+
+        /**
+        * Divide by two the value of each channel
+        **/
+        inline void div2()
+            {
+            const uint64 mask = (((uint64)32767) | (((uint64)32767) << 16) | (((uint64)32767) << 32) | (((uint64)32767) << 48));
+            color >>= 1;    // divide by 2.
+            color &= mask;  // remove bits that may have overflow 
+            }
+
+
+
         /**
         * Get the color in RGBc format without normalization.
         **/
