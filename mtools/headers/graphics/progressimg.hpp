@@ -226,7 +226,7 @@ namespace mtools
                     for (int64 x = 0; x <= ly; x++)
                         {
                         _imData[off].normalize(_normData[off] + 1);
-                        _normData[off] = 1;
+                        _normData[off] = 0;
                         off++;
                         }
                     off += pa;
@@ -238,7 +238,7 @@ namespace mtools
             void normalize()
                 {
                 const size_t l = _width*_height;
-                for (size_t i = 0; i<l; i++) { _imData[i].normalize(_normData[i] + 1); _normData[i] = 1; }
+                for (size_t i = 0; i<l; i++) { _imData[i].normalize(_normData[i] + 1); _normData[i] = 0; }
                 }
 
 
