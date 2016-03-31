@@ -267,7 +267,10 @@ void drawPoints(Img<unsigned char> & image, float op = 1.0)
         {
         pPoissonPoint pp = it->adr();
         RGBc coul = RGBc::c_Black;
-        image.fBox2_draw_circle(R, { pp->x, pp->t }, T / 1000, coul,op);   // draw the points
+        if ((pp->father() != nullptr)&&(pp->father()->lastused() ==  pp)) image.fBox2_draw_circle(R, { pp->x, pp->t }, T / 1000, RGBc::c_Red, op);
+        else
+        image.fBox2_draw_circle(R, { pp->x, pp->t }, T / 1000, RGBc::c_Blue,op);   // draw the points
+        
         }
     cout << "ok!\n\n";
     }
@@ -287,7 +290,8 @@ void drawLines(Img<unsigned char> & image, float op = 0.8)
         // vertical lines
         if (pp->remaining() > 0) { image.fBox2_drawLine(R, { pp->x, pp->t }, { pp->x, T }, coul,op); } // line going to the top
         else { image.fBox2_drawLine(R, { pp->x, pp->t }, { pp->x, pp->lastused()->t }, coul,op); } // normal vertical line
-        image.fBox2_draw_circle(R, { pp->x, pp->t }, T/1000, coul);   // draw the points
+        
+        image.fBox2_draw_circle(R, { pp->x, pp->t }, T/1000, RGBc::c_Red);   // draw the points
         }
     cout << "ok!\n\n";
     }
@@ -371,16 +375,16 @@ int main(int argc, char *argv[])
     if ((typelaw < 0) || (typelaw > 2)) 
         { 
         typelaw = 3; 
-        pgeom = arg("p", 0.3).info("parameter of the geometric rv");
+        pgeom = arg("p", 1.0/3.0).info("parameter of the geometric rv");
         }
 
     sourcerate = arg("source", 1.0).info("source rate");
     if (sourcerate > 0) { createsink = arg("sink").info("create sinks"); }
 
-    X = arg("X", 40).info("interval length");
-    T = arg("T", 10).info("time length");
+    X = arg("X", 25).info("interval length");
+    T = arg("T", 9).info("time length");
 
-    zoom = arg("zoom", 200).info("zoom (size of image)");
+    zoom = arg("zoom", 100).info("zoom (size of image)");
     LX = (int)(zoom*X);
     LY = (int)(zoom*T);
 
@@ -394,7 +398,7 @@ int main(int argc, char *argv[])
 
     drawLines(image);
     drawPoints(image);
-    drawTrees(image_trees);
+    //drawTrees(image_trees);
 
     auto im = makePlot2DCImg(image, "lines");
     auto imTrees = makePlot2DCImg(image_trees, "trees");
@@ -413,7 +417,7 @@ int main(int argc, char *argv[])
         if (sourcerate > 0.0) { filename += std::string("_source") + toString(sourcerate);  if (createsink) { filename += "_withsink"; } } else { filename += std::string("_nosource"); }
         filename += std::string("_X") + toString(X) + "_T" + toString(T) + ".png";
         cout << "saving " << filename << "...";
-        drawTrees(image); 
+        //drawTrees(image); 
         image.save(filename.c_str());
         cout << "ok!\n\n";
         }
