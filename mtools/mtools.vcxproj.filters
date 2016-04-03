@@ -219,6 +219,9 @@
     <ClInclude Include="headers\graphics\drawable2DInterface.hpp">
       <Filter>Header Files\graphics</Filter>
     </ClInclude>
+    <ClInclude Include="headers\graphics\pixeldrawer.hpp">
+      <Filter>Header Files\graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\console.cpp">

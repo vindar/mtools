@@ -47,6 +47,7 @@
 #include "graphics/interpolation.hpp"
 #include "graphics/latticedrawer.hpp"
 #include "graphics/planedrawer.hpp"
+#include "graphics/pixeldrawer.hpp"
 
 #include "graphics/plotter2D.hpp"
 #include "graphics/plot2Darray.hpp"

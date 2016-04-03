@@ -339,6 +339,7 @@
     <ClInclude Include="headers\graphics\edgesiteimage.hpp" />
     <ClInclude Include="headers\graphics\interpolation.hpp" />
     <ClInclude Include="headers\graphics\latticedrawer.hpp" />
+    <ClInclude Include="headers\graphics\pixeldrawer.hpp" />
     <ClInclude Include="headers\graphics\planedrawer.hpp" />
     <ClInclude Include="headers\graphics\plot2Darray.hpp" />
     <ClInclude Include="headers\graphics\plot2Daxes.hpp" />
