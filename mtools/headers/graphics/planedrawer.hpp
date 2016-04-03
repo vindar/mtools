@@ -356,7 +356,7 @@ template<typename T> class GetColorPlaneSelector
                 for (int i = 0; i < 254;i++)
                     {
                     _drawStochastic();
-                    setProgress((i * 100) / 255);
+                    setProgress(1 + (i*99)/255);
                     }
                 setProgress(100);
                 }
@@ -614,18 +614,6 @@ template<typename T> class GetColorPlaneSelector
                 }
 
 
-            fBox2 _computeRange(fBox2 range, iBox2 subBox, iBox2 cBox)
-                {
-                const double px = range.lx() / (subBox.lx() + 1);
-                const double py = range.ly() / (subBox.ly() + 1);
-                const double xmin = range.min[0] + px*(cBox.min[0] - subBox.min[0]);
-                const double xmax = range.max[0] - px*(subBox.max[0] - cBox.max[0]);
-                const double ymin = range.min[1] + py*(cBox.min[1] - subBox.min[1]);
-                const double ymax = range.max[1] - py*(subBox.max[1] - cBox.max[1]);
-                return fBox2(xmin, xmax, ymin, ymax);
-                }
-
-
             /**
             * Force a redraw.
             *
@@ -638,6 +626,18 @@ template<typename T> class GetColorPlaneSelector
 
 
         private:
+
+
+            fBox2 _computeRange(fBox2 range, iBox2 subBox, iBox2 cBox)
+                {
+                const double px = range.lx() / (subBox.lx() + 1);
+                const double py = range.ly() / (subBox.ly() + 1);
+                const double xmin = range.min[0] + px*(cBox.min[0] - subBox.min[0]);
+                const double xmax = range.max[0] - px*(subBox.max[0] - cBox.max[0]);
+                const double ymin = range.min[1] + py*(cBox.min[1] - subBox.min[1]);
+                const double ymax = range.max[1] - py*(subBox.max[1] - cBox.max[1]);
+                return fBox2(xmin, xmax, ymin, ymax);
+                }
 
 
             /* delete all worker thread */
