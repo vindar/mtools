@@ -35,8 +35,7 @@ template<typename ObjType> class ThreadPixelDrawer : public ThreadWorker
             _dens(0.0),
             _dlx(0.0), _dly(0.0),
             _is1to1(false),
-            _range1to1(iBox2()),
-            _workPhase(WORK_NOTHING)
+            _range1to1(iBox2())
             {
             static_assert(mtools::GetColorSelector<ObjType>::has_getColor, "The object must be implement one of the getColor() method recognized by GetColorSelector.");
             }
@@ -97,7 +96,9 @@ template<typename ObjType> class ThreadPixelDrawer : public ThreadWorker
             }
 
 
+
     private:
+
 
         /**
         * The main 'work' method
@@ -105,21 +106,11 @@ template<typename ObjType> class ThreadPixelDrawer : public ThreadWorker
         virtual void work() override
             {
             MTOOLS_INSURE((bool)_validParam);
-            std::cout << "work\n";
-            while (1)
-                {
-                switch (_workPhase)
-                    {
-                    case WORK_1TO1: { _draw_1to1(); break; }
-                    case WORK_FAST: { _draw_fast(); break; }
-                    case WORK_STOCHASTIC: { _draw_stochastic(); break; }
-                    case WORK_PERFECT: { _draw_perfect(); break; }
-                    case WORK_FINISHED: { return; }
-                    case WORK_NOTHING: { MTOOLS_ERROR("hum..."); }
-                    default: { MTOOLS_ERROR("wtf?"); }
-                    }
-                _assignWork();
-                }
+            if (!((bool)_keepPrevious)) _draw_veryfast(); 
+            if ((bool)_is1to1) { _draw_1to1(); return; }
+            if (!((bool)_keepPrevious)) _draw_fast();
+            _draw_stochastic(); 
+            _draw_perfect(); 
             }
 
 
@@ -137,7 +128,6 @@ template<typename ObjType> class ThreadPixelDrawer : public ThreadWorker
             }
 
 
-
         /* set the new parameter */
         int _setNewParam()
             {
@@ -147,14 +137,16 @@ template<typename ObjType> class ThreadPixelDrawer : public ThreadWorker
             _range = _temp_range;
             _im = _temp_im;
             _subBox = _temp_subBox;
-            if ((_im == nullptr) || (_im->width() < MIN_IMAGE_SIZE) || (_im->height() < MIN_IMAGE_SIZE)) { setProgress(0); _validParam = false; return THREAD_RESET_AND_WAIT; }   // make sure im is not nullptr and is big enough.
+            _keepPrevious = false;
+            setProgress(0);
+            if ((_im == nullptr) || (_im->width() < MIN_IMAGE_SIZE) || (_im->height() < MIN_IMAGE_SIZE)) { _validParam = false; return THREAD_RESET_AND_WAIT; }   // make sure im is not nullptr and is big enough.
             if (_subBox.isEmpty()) { _subBox = iBox2(0, _im->width() - 1, 0, _im->height() - 1); } // subbox = whole image if empty. 
             if ((_subBox.min[0] < 0) || (_subBox.max[0] >= (int64)_im->width()) || (_subBox.min[1] < 0) || (_subBox.max[1] >= (int64)_im->height())) { setProgress(0); _validParam = false; return THREAD_RESET_AND_WAIT; } // make sure _subBox is a proper subbox of im
-            if ((_subBox.lx() < MIN_IMAGE_SIZE) || (_subBox.ly() < MIN_IMAGE_SIZE)) { setProgress(0); _validParam = false; return THREAD_RESET_AND_WAIT; } // make sure _subBox is a proper subbox of im
+            if ((_subBox.lx() < MIN_IMAGE_SIZE) || (_subBox.ly() < MIN_IMAGE_SIZE)) { _validParam = false; return THREAD_RESET_AND_WAIT; } // make sure _subBox is a proper subbox of im
             const double rlx = _range.lx();
             const double rly = _range.ly();
-            if ((rlx < RANGE_MIN_VALUE) || (rly < RANGE_MIN_VALUE)) { setProgress(0); _validParam = false; return THREAD_RESET_AND_WAIT; } // prevent zooming in too far
-            if ((std::abs(_range.min[0]) > RANGE_MAX_VALUE) || (std::abs(_range.max[0]) > RANGE_MAX_VALUE) || (std::abs(_range.min[1]) > RANGE_MAX_VALUE) || (std::abs(_range.max[1]) > RANGE_MAX_VALUE)) { setProgress(0); _validParam = false; return THREAD_RESET_AND_WAIT; } // prevent zooming out too far
+            if ((rlx < RANGE_MIN_VALUE) || (rly < RANGE_MIN_VALUE)) { _validParam = false; return THREAD_RESET_AND_WAIT; } // prevent zooming in too far
+            if ((std::abs(_range.min[0]) > RANGE_MAX_VALUE) || (std::abs(_range.max[0]) > RANGE_MAX_VALUE) || (std::abs(_range.min[1]) > RANGE_MAX_VALUE) || (std::abs(_range.max[1]) > RANGE_MAX_VALUE)) { _validParam = false; return THREAD_RESET_AND_WAIT; } // prevent zooming out too far
             _validParam = true;
             const int64 ilx = _subBox.lx() + 1;
             const int64 ily = _subBox.ly() + 1;
@@ -175,131 +167,43 @@ template<typename ObjType> class ThreadPixelDrawer : public ThreadWorker
                 {
                 _is1to1 = false;
                 }
-            setProgress(0);
-            _workPhase = WORK_NOTHING;
-            _assignWork();
             return THREAD_RESET;
             }
-
 
 
         /* trigger a redraw */
         int _setRedraw()
             {
             if (!((bool)_validParam)) return THREAD_RESET_AND_WAIT;
-            _workPhase = WORK_NOTHING;
-            _assignWork();
-            if ((progress() > 0) && ((bool)_keepPrevious))
+            if ((progress() >= 5) && ((bool)_keepPrevious))
                 {
-                setProgress(1);
-                if (_workPhase == WORK_FAST)
-                    {
-                    _im->normalize(_subBox); _assignWork();
-                    }
+                _im->normalize(_subBox);
+                setProgress(5);
                 return THREAD_RESET;
                 }
-            else
-                {
-                setProgress(0);
-                }
+            setProgress(0);
             return THREAD_RESET;
             }
 
 
-
-        /* set the next type of work to perform */
-        void _assignWork()
+        /* very fast drawing */
+        void _draw_veryfast()
             {
-            std::cout << "assign work\n";
-            static const double DENSITY_SKIP_STOCHASTIC = 5.0;
-            while (1)
-                {
-                switch (_workPhase)
-                    {
-                    case WORK_NOTHING:
-                        {
-                        if (_is1to1) { _workPhase = WORK_1TO1; return; }
-                        _workPhase = WORK_FAST;
-                        return;
-                        }
-                    case WORK_1TO1:
-                        {
-                        _workPhase = WORK_FINISHED;
-                        break;
-                        }
-                    case WORK_FAST:
-                        {
-                        _workPhase = ((_dens < DENSITY_SKIP_STOCHASTIC) ? WORK_PERFECT : WORK_STOCHASTIC);
-                        return;
-                        }
-                    case WORK_STOCHASTIC:
-                        {
-                        _workPhase = WORK_PERFECT;
-                        return;
-                        }
-                    case WORK_PERFECT:
-                        {
-                        _workPhase = WORK_FINISHED;
-                        break;
-                        }
-                    case WORK_FINISHED:
-                        {
-                        return;
-                        }
-                    default:
-                        {
-                        MTOOLS_ERROR("wtf...");
-                        }
-                    }
-                }
-            }
+            std::cout << "draw very fast \n";  mtools::Chronometer();
 
 
-
-        /* perfect 1 to 1 drawing */
-        void _draw_1to1()
-            {
-            std::cout << "draw 1 on 1 \n"; mtools::Chronometer();
-
-            const int64 xmin = _range1to1.min[0];
-            const int64 xmax = _range1to1.max[0];
-            const int64 ymin = _range1to1.min[1];
-            const int64 ymax = _range1to1.max[1];
-            RGBc64 * imData = _im->imData();
-            uint8 * normData = _im->normData();
-            size_t off = (size_t)(_subBox.min[0] + _im->width()*(_subBox.min[1])); // offset of the first point in the image
-            size_t pa = (size_t)(_im->width() - (_subBox.lx() + 1)); // padding needed to get to the next line
-            if (pa != 0)
-                {
-                for (int64 j = ymin; j <= ymax; j++)
-                    {
-                    check();
-                    for (int64 i = xmin; i <= xmax; i++)
-                        {
-                        imData[off] = mtools::GetColorSelector<ObjType>::call(*_obj, { i , j }, _opaque);
-                        normData[off] = 0;
-                        off++;
-                        }
-                    off += pa;
-                    }
-                }
-            else
-                {
-                for (int64 j = ymin; j <= ymax; j++)
-                    {
-                    check();
-                    for (int64 i = xmin; i <= xmax; i++)
-                        {
-                        imData[off] = mtools::GetColorSelector<ObjType>::call(*_obj, { i , j }, _opaque);
-                        normData[off] = 0;
-                        off++;
-                        }
-                    }
-                }
-            setProgress(100);
-
+            setProgress(4);
             uint64 tim = mtools::Chronometer(); std::cout << "finished in " << tim << " ms\n";
+            return;
             }
+
+
+        /* number of pixels in the box to draw */
+        int64 _nbPixels() const
+            {
+            return (_subBox.lx() + 1)*(_subBox.yx() + 1);
+            }
+
 
 
 
@@ -372,16 +276,65 @@ template<typename ObjType> class ThreadPixelDrawer : public ThreadWorker
                     off += pa;
                     }
                 }
-            setProgress(1);
+            setProgress(5);
             uint64 tim = mtools::Chronometer(); std::cout << "finished in " << tim << " ms\n";
             }
 
 
 
-        /* stochastic drawing sample a pixel
-        * may be interrupted at each line */
+        /* perfect 1 to 1 drawing */
+        void _draw_1to1()
+            {
+            std::cout << "draw 1 on 1 \n"; mtools::Chronometer();
+
+            const int64 xmin = _range1to1.min[0];
+            const int64 xmax = _range1to1.max[0];
+            const int64 ymin = _range1to1.min[1];
+            const int64 ymax = _range1to1.max[1];
+            RGBc64 * imData = _im->imData();
+            uint8 * normData = _im->normData();
+            size_t off = (size_t)(_subBox.min[0] + _im->width()*(_subBox.min[1])); // offset of the first point in the image
+            size_t pa = (size_t)(_im->width() - (_subBox.lx() + 1)); // padding needed to get to the next line
+            if (pa != 0)
+                {
+                for (int64 j = ymin; j <= ymax; j++)
+                    {
+                    check();
+                    for (int64 i = xmin; i <= xmax; i++)
+                        {
+                        imData[off] = mtools::GetColorSelector<ObjType>::call(*_obj, { i , j }, _opaque);
+                        normData[off] = 0;
+                        off++;
+                        }
+                    off += pa;
+                    }
+                }
+            else
+                {
+                for (int64 j = ymin; j <= ymax; j++)
+                    {
+                    check();
+                    for (int64 i = xmin; i <= xmax; i++)
+                        {
+                        imData[off] = mtools::GetColorSelector<ObjType>::call(*_obj, { i , j }, _opaque);
+                        normData[off] = 0;
+                        off++;
+                        }
+                    }
+                }
+            setProgress(100);
+
+            uint64 tim = mtools::Chronometer(); std::cout << "finished in " << tim << " ms\n";
+            }
+
+
+        /* stochastic drawing */
         void _draw_stochastic()
             {
+            const double DENSITY_SKIP_STOCHASTIC = 5.0;
+
+            if (_dens < DENSITY_SKIP_STOCHASTIC) return; 
+
             std::cout << "draw stochastic \n";  mtools::Chronometer();
             // compute the number of sample required            
             int sampleToDo;
@@ -410,7 +363,6 @@ template<typename ObjType> class ThreadPixelDrawer : public ThreadWorker
             uint64 tim = mtools::Chronometer(); std::cout << "finished in " << tim << " ms\n";
             return;
             }
-
 
 
         /* divide by two the color and number of query in every pixel 
@@ -474,7 +426,7 @@ template<typename ObjType> class ThreadPixelDrawer : public ThreadWorker
                             const double dymax = siteBox.max[1] + 0.5 - pixBox.max[1]; if (dymax <= 0.5) siteBox.max[1]--;
                             }                            
                         int64 iR = 0, iG = 0, iB = 0, iA = 0;
-                        for (int l = 0;l < batchsize; l++)
+                        for (int l = 0; l < batchsize; l++)
                             {
                             const int64 i = siteBox.min[0] + (_fastgen() % (siteBox.max[0] - siteBox.min[0] + 1));
                             const int64 j = siteBox.min[1] + (_fastgen() % (siteBox.max[1] - siteBox.min[1] + 1));
@@ -492,7 +444,7 @@ template<typename ObjType> class ThreadPixelDrawer : public ThreadWorker
                     pixBox.min[0] = r.min[0];
                     pixBox.max[0] = r.min[0] + px;
                     }
-                setProgress(1 + (49 * sd) / sampleToDo);
+                setProgress(5 + (45 * sd) / sampleToDo);
                 }
             sampleDone += (nb*batchsize);
             }
@@ -501,9 +453,7 @@ template<typename ObjType> class ThreadPixelDrawer : public ThreadWorker
 
 
 
-        /* perfect drawing by computing the average color at each pixel
-        * may be interrupted at each line if density <= 255 and at each
-        * pixel if density > 255*/
+        /* perfect drawing by computing the average color at each pixel */
         void _draw_perfect()
             {
             const double PERFECT_HIGH_DENSITY = 200.0;        // density above which we give weight 1 to all site interecting the pixel (and not weighted by the average of the interesection). 
@@ -523,7 +473,6 @@ template<typename ObjType> class ThreadPixelDrawer : public ThreadWorker
         void _draw_perfect_ultrahighdensity()
             {
             std::cout << "draw perfect  ULTRA HIGH density = " << _dens << "]\n";  mtools::Chronometer();
-      
             // stochastic is good enough, do nothing...
             return;
             }
@@ -812,16 +761,8 @@ template<typename ObjType> class ThreadPixelDrawer : public ThreadWorker
 
 
 
-        static const int WORK_NOTHING = 100;
-        static const int WORK_1TO1 = 101;
-        static const int WORK_FAST = 102;
-        static const int WORK_STOCHASTIC = 103;
-        static const int WORK_PERFECT = 104;
-        static const int WORK_FINISHED = 105;
-
         static const int SIGNAL_NEWPARAM = 4;
         static const int SIGNAL_REDRAW = 5;
-
 
         ObjType * _obj;                         // the object to draw.
         void * _opaque;                         // opaque data passed to _obj;
@@ -840,8 +781,6 @@ template<typename ObjType> class ThreadPixelDrawer : public ThreadWorker
         double _dlx, _dly;                      // horizontal and vertical density (size of image pixel in real coord)
         bool _is1to1;                           // true if we have a 1 to 1 drawing
         iBox2 _range1to1;                       // integer range box in the case of 1 to 1 drawing
-
-        int _workPhase;                         // current work phase
 
         FastRNG _fastgen;                       // fast RNG
 
@@ -925,9 +864,9 @@ void test()
 
     iBox2 SubB(50, 50 + UX - 1, 20, 20 + UY - 1);
 
+    TPD.enable(true);
     TPD.setParameters(r, &progIm, SubB);
     TPD.sync();
-    TPD.enable(true);
     TPD.sync();
     int drawtype = 0, isaxe = 1, isgrid = 0, iscell = 1; // flags
     cimg_library::CImgDisplay DD(*cim); // display
