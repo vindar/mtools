@@ -198,8 +198,8 @@ namespace mtools
                     _is1to1 = true;
                     _range.min[0] += epsx / 2.0; _range.max[0] -= epsx / 2.0;
                     _range.min[1] += epsy / 2.0; _range.max[1] -= epsy / 2.0;
-                    _range1to1.min[0] = (int64)std::ceil(_range.min[0]); _range1to1.max[0] = (int64)std::floor(_range.max[0]);
-                    _range1to1.min[1] = (int64)std::ceil(_range.min[1]); _range1to1.max[1] = (int64)std::floor(_range.max[1]);
+                    _range1to1.min[0] = (int64)std::ceil(_range.min[0]); _range1to1.max[0] = (int64)_range1to1.min[0] + ilx - 1;
+                    _range1to1.min[1] = (int64)std::ceil(_range.min[1]); _range1to1.max[1] = (int64)_range1to1.min[1] + ily - 1;
                     }
                 else
                     {
