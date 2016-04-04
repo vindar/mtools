@@ -44,6 +44,7 @@ namespace mtools
         return (int)nb;
         }
 
+
     /**
     * Class used for creating a simple worker thread.
     *
@@ -51,7 +52,7 @@ namespace mtools
     *
     * - work() : performs the thread's work()
     * - message(int64 code) : process incomming messages and determine how the thread should behave.
-    *
+    * 
     */
     class ThreadWorker
         {
@@ -161,15 +162,17 @@ namespace mtools
 
 
             /**
-            * Checks if there are any pending signal and process it if needed.
-            *
-            * !!! This method must be called regularly inside work() !!!
-            **/
+             * Checks if there are any pending signal and process it if needed.
+             * 
+             * !!! This method is fast. It must be called regularly inside work() to keep the thread
+             * responsive !!!
+             **/
             inline void check() { if (((int)_msg) == MSG_NONE) { return; } _processInside(); }
 
 
             /**
             * Pure virtual method that performs the thread's work.
+            * Must be overloaded in derived class.
             *
             * The method must call check() regularly in order to process messages. The check() method will
             * throw an exception if work must stop. Do not catch it !
@@ -179,6 +182,7 @@ namespace mtools
 
             /**
             * Pure virtual method called when there is a message to process.
+            * Must be overloaded in derived class.
             *
             * @param   code    The message code
             *
