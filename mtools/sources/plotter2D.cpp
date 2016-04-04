@@ -887,7 +887,7 @@ namespace mtools
         #define PLOTTER2D_NBRETRY 10
         #define PLOTTER2D_WAITIME 1
         #else
-        #define PLOTTER2D_NBRETRY 12
+        #define PLOTTER2D_NBRETRY 10
         #define PLOTTER2D_WAITIME 3
         #endif
 
@@ -941,7 +941,8 @@ namespace mtools
                 {
                 if (q != (int)_mainImageQuality)
                     {
-                    if ((q == 100) || (q<_mainImageQuality) || (_mainImageQuality == 0) || (q >= _mainImageQuality + (int)_sensibility))
+                    //if ((q == 100) || (q<_mainImageQuality) || (_mainImageQuality == 0) || (q >= _mainImageQuality + (int)_sensibility)) // redraw when quality is larger OR lower than previous one
+                    if ((q == 100) || (_mainImageQuality == 0) || (q >= _mainImageQuality + (int)_sensibility)) // redraw only when the quality is larger than previous one
                         {
                         updateView(false);
                         Fl::add_timeout(0.1, static_updateViewTimer, this);
@@ -1016,12 +1017,12 @@ namespace mtools
         void Plotter2DWindow::rangeManagerCB2(fBox2 R, iVec2 winSize,bool fixedAR, bool changedRange, bool changedWinSize, bool changedFixAspectRatio)
             {
             setImageSize((int)winSize.X(), (int)winSize.Y(), _nbchannels);    // resize the image if needed
-            updateView();                                           // update the view
             setRangeInput(R);                                       // update the range widgets
             setRatioTextLabel();                                    // and the aspect ratio text
             _w_fixedratio->value(fixedAR ? 1 : 0);                  // update the fixed apsect ratio checkbox
             _w_zoomfactortext->copy_label((std::string("[") + toString(winSize.X()) + "x" + toString(winSize.Y()) + "]").c_str()); // update the View size text
             _w_zoomfactortext->redraw_label();
+            updateView();                                           // finally, we update the view
             }
 
 
