@@ -43,9 +43,15 @@ namespace mtools
 
 
 
-
-
-
+    /**
+     * Thread pixel drawer class.
+     * 
+     * Template class that create a unique thread used to dra inside a progressImg. This class is
+     * used by the PixelDrawer class which combine several threads together for faster drawing.
+     *
+     * @tparam  ObjType Type of object to draw. Must implement a color recognized by the
+     *                  GetColorSelector().
+     **/
     template<typename ObjType> class ThreadPixelDrawer : public ThreadWorker
         {
 
@@ -84,6 +90,8 @@ namespace mtools
             **/
             virtual ~ThreadPixelDrawer()
                 {
+                enable(false);
+                sync();
                 }
 
 
@@ -93,7 +101,7 @@ namespace mtools
             *
             * If it return false, nothing will be drawn and the quality will stay 0.
             *
-            * @return  true if the paramter are valid and flase otherwise.
+            * @return  true if the paramter are valid and false otherwise.
             **/
             inline bool validParam()  const { return (bool)_validParam; }
 
@@ -139,12 +147,13 @@ namespace mtools
 
 
             /**
+            * Override from the ThreadWorker class.
             * The main 'work' method
             **/
             virtual void work() override
                 {
                 MTOOLS_INSURE((bool)_validParam);
-                if (!((bool)_keepPrevious)) _draw_veryfast();
+                // if (!((bool)_keepPrevious)) _draw_veryfast();   // <- Disabled. Not very efficient as is. 
                 if ((bool)_is1to1) { _draw_1to1(); return; }
                 if (!((bool)_keepPrevious)) _draw_fast();
                 _draw_stochastic();
@@ -153,6 +162,7 @@ namespace mtools
 
 
             /**
+            * Override from the ThreadWorker class.
             * Handles the thread messages
             **/
             virtual int message(int64 code) override
@@ -224,32 +234,27 @@ namespace mtools
                 }
 
 
-            /* very fast drawing */
+            /* very fast drawing 
+             * Used when drawing very large image. 
+             * This method first draw by approximation replacing pixels by larger square.
+             */
             void _draw_veryfast()
                 {
-                // not using it right now as it slows down more than it helps
-                /*
-                _draw_veryfast(16);
-                setProgress(1);
-                _draw_veryfast(8);
-                setProgress(2);
-                _draw_veryfast(4);
-                setProgress(3);
-                _draw_veryfast(2);
-                setProgress(4);
-                */
+                const double MAX_WITHOUT_APPROX = 2000*2000;
+                double L = sqrt((double)_nbPixels()/MAX_WITHOUT_APPROX);
+                if (L > 1.0) { _draw_veryfast((int)(2*L)); setProgress(1); }
                 return;
                 }
 
 
-            /* number of pixels in the box to draw */
+            /* Return the total number of pixels the subbox to draw */
             int64 _nbPixels() const
                 {
-                return (_subBox.lx() + 1)*(_subBox.yx() + 1);
+                return (_subBox.lx() + 1)*(_subBox.ly() + 1);
                 }
 
 
-            /* very fast drawing, draw with square of size L */
+            /* very fast drawing, draw with squares of size L */
             void _draw_veryfast(const int64 L)
                 {
                 RGBc64 * imData = _im->imData();
@@ -353,11 +358,6 @@ namespace mtools
                             off += (size_t)width;
                             }
                         }
-
-
-
-                setProgress(1);
-
                 }
 
 
@@ -537,7 +537,7 @@ namespace mtools
                 }
 
 
-
+            /* draw a 'batch' with stochastic drawing. Used by _draw_stochastic() */
             void _draw_stochastic_batch(const int batchsize, const int nb, int & sampleDone, const int sampleToDo)
                 {
                 RGBc64 * imData = _im->imData();
@@ -610,7 +610,7 @@ namespace mtools
                 }
 
 
-            /* draw perfectly, ultra high density : do nothing more than the stochasitc approximation */
+            /* draw perfectly, ultra high density */
             void _draw_perfect_ultrahighdensity()
                 {
                 // stochastic is good enough, do nothing...
@@ -618,7 +618,7 @@ namespace mtools
                 }
 
 
-            /* draw perfectly, hidh density, check() after every pixel */
+            /* draw perfectly, high density, check() after every pixel */
             void _draw_perfect_highdensity()
                 {
                 RGBc64 * imData = _im->imData();
@@ -812,7 +812,7 @@ namespace mtools
                                         const double dymin = pixBox.min[1] + 0.5 - siteBox.min[1];  // how much of the bottom pixels
                                         const double dymax = siteBox.max[1] + 0.5 - pixBox.max[1];  // how much of the top pixels
 
-                                                                                                    // sum over the 4 corners
+                                        // sum over the 4 corners
                                         {
                                         const RGBc c = mtools::GetColorSelector<ObjType>::call(*_obj, { siteBox.min[0], siteBox.min[1] }, _opaque); const double a = dxmin*dymin;
                                         aera += a; fR += a*c.comp.R; fG += a*c.comp.G; fB += a*c.comp.B; fA += a*c.comp.A;
@@ -928,11 +928,11 @@ namespace mtools
     /**
     * PixelDrawer class
     *
-    * Use several threads to draw from a getColor function into a progressImg.
+    * Uses several threads to draw from a getColor function into a progressImg.
     *
-    * @tparam  ObjType Type of the object type.
+    * @tparam  ObjType Type of object to draw. Must implement a color recognized by the
+    *                  GetColorSelector().
     **/
-
     template<typename ObjType> class PixelDrawer
         {
 
@@ -1088,6 +1088,7 @@ namespace mtools
         private:
 
 
+            /* compute the range of a subbox */
             fBox2 _computeRange(fBox2 range, iBox2 subBox, iBox2 cBox)
                 {
                 const double px = range.lx() / (subBox.lx() + 1);
