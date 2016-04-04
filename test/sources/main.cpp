@@ -1,175 +1,126 @@
 #include "stdafx_test.h"
 
 #include "mtools.hpp"
-
-
 using namespace mtools;
 
-MT2004_64 gen;
+
+MT2004_64 gen; // RNG
+
+Grid_basic<2, int64, 2> Grid; // the 2D grid
+
+double maxrad = 1;               // radius of the cluster
+volatile int64 N = 1;            // number of particules in the cluster
+
+void* peekhint = nullptr;
+
+bool eight_neighbour = false;
 
 
-double sinus(double x) { return sin(x); }
-
-double square(double x) { return (x*x); }
-
-void stupidTest()
+/* return true if there is a neighbour */
+inline bool hasNeighbour(const iVec2 & pos)
     {
-    cout << "Hello World\n";
-    int64 v = cout.ask("Give me a number", 0);
-    watch("your number", v);
-    cout << "Terminate the program gracefully by closing the plotter window\n";
-    cout << "or forcefully by closing the cout or watch window\n";
-    Plotter2D PL;
-    auto P1 = makePlot2DFun(sinus, -2, 2, "sinus");
-    auto P2 = makePlot2DFun(square, -2, 2, "square");
-    PL[P1][P2];
-    PL.autorangeXY();
-    PL.plot();
-
+            { const auto p = Grid.peek(iVec2{ pos.X() + 1,pos.Y() }, peekhint); if ((p != nullptr) && (*p != 0)) return true; }
+            { const auto p = Grid.peek(iVec2{ pos.X() - 1,pos.Y() }, peekhint); if ((p != nullptr) && (*p != 0)) return true; }
+            { const auto p = Grid.peek(iVec2{ pos.X(),pos.Y() + 1 }, peekhint); if ((p != nullptr) && (*p != 0)) return true; }
+            { const auto p = Grid.peek(iVec2{ pos.X(),pos.Y() - 1 }, peekhint); if ((p != nullptr) && (*p != 0)) return true; }
+            if (eight_neighbour)
+                {
+                        { const auto p = Grid.peek(iVec2{ pos.X() + 1,pos.Y() + 1 }, peekhint); if ((p != nullptr) && (*p != 0)) return true; }
+                        { const auto p = Grid.peek(iVec2{ pos.X() + 1,pos.Y() - 1 }, peekhint); if ((p != nullptr) && (*p != 0)) return true; }
+                        { const auto p = Grid.peek(iVec2{ pos.X() - 1,pos.Y() + 1 }, peekhint); if ((p != nullptr) && (*p != 0)) return true; }
+                        { const auto p = Grid.peek(iVec2{ pos.X() - 1,pos.Y() - 1 }, peekhint); if ((p != nullptr) && (*p != 0)) return true; }
+                }
+            return false;
     }
 
 
-
-
-
-
-std::atomic<int> nbptr = 0;
-char tptr[100];
-
-
-inline RGBc colorTest(const iVec2 & pos, const iVec2& imSize, void* & data)
+/* add particules to the cluster */
+inline void addParticules(int64 nb)
     {
-    if (data == nullptr) { data = tptr + (int)(nbptr++); }
-    int k = (int)((char*)data - tptr);
-    switch(k)
+    for (int64 i = 0; i < nb;i++)
         {
-        case 0: { return RGBc::c_Cyan;}
-        case 1: { return RGBc::c_Blue;}
-        case 2: { return RGBc::c_Gray;}
-        case 3: { return RGBc::c_Green;}
-        case 4: { return RGBc::c_Orange;}
-        case 5: { return RGBc::c_Red;}
-        default: { return RGBc::c_Black;}
+        double radius = ((maxrad < 1000) ? 1000 : maxrad);
+        double a = Unif(gen);
+        iVec2 pos = { (int64)round(sin(TWOPI*a) * 3 * radius) , (int64)round(cos(TWOPI*a) * 3 * radius) }; // random starting position
+        do
+            {
+            double v;
+            while ((v = pos.norm()) > radius + 100)
+                { // out of the ball that contain the cluster, we can move fast
+                if (v > 100 * radius) { pos *= 9; pos /= 10; } // too far away, we drift back...
+                else
+                    { // make a large step
+                    int64 l = (int64)((v - radius - 10)*2.0 / 3.0);
+                    SRW_Z2_MoveInRect(pos, iBox2(pos.X() - l, pos.X() + l, pos.Y() - l, pos.Y() + l), 16, gen);
+                    }
+                }
+            iBox2 fullR;
+            Grid.findFullBoxCentered(pos, fullR);
+            if (fullR.boundaryDist(pos) == 0)
+                { // we only move by a single step
+                SRW_Z2_1step(pos, gen);
+                }
+            else
+                { // we are away from the cluster so we can make larger moves
+                SRW_Z2_MoveInRect(pos, fullR, 16, gen);
+                }
+            }
+        while (!hasNeighbour(pos));
+            Grid(pos) = N;
+            N++;
+            double r = pos.norm();
+            if (r > maxrad) { maxrad = r; }
         }
     }
 
 
-
-
-
-mtools::Img<unsigned char> lenna;
-int64 lenx, leny;
-
-inline RGBc colorImage(int64 x, int64 y)
+RGBc colorFct(iVec2 pos, void* & data)
     {
-    if (x < 0) return RGBc::c_Maroon;
-    if (y < 0) return RGBc::c_Green;
-    return lenna.getPixel({ x % lenx , leny - 1 - (y % leny) });
-    }
-
-void loadImage()
-    {
-    lenna.load("lenna.jpg");
-    lenx = lenna.width();
-    leny = lenna.height();
-    cout << "LX = " << lenx << "\n";
-    cout << "LY = " << leny << "\n";
+    auto p = Grid.peek(pos,data);
+    if (p == nullptr) return RGBc::c_TransparentBlack;
+    if (*p == 0) return RGBc::c_TransparentBlack;
+    return RGBc::jetPalette(*p, 0, N);
     }
 
 
-
-
-void test()
+int main(int argc, char *argv[])
     {
-    loadImage();
-    const int LLX = 2200;
-    const int LLY = 1400;
-    const int UX = 2000;
-    const int UY = 1300;
-
-    ProgressImg progIm(LLX, LLY);
-    progIm.clear((RGBc64)RGBc::c_Red);
-
-    mtools::Img<unsigned char> dispIm(LLX, LLY, 1, 4);
-    cimg_library::CImg<unsigned char> * cim = (cimg_library::CImg<unsigned char> *)&dispIm;
-
-    fBox2 r(-0.5, UX - 0.5, -0.5, UY - 0.5);
-
-    PixelDrawer<decltype(colorImage)> TPD(colorImage, 6);
-
-    iBox2 SubB(50, 50 + UX - 1, 20, 20 + UY - 1);
-
-    TPD.enable(true);
-    TPD.setParameters(r, &progIm, SubB);
-    TPD.sync();
-    TPD.sync();
-    int drawtype = 0, isaxe = 1, isgrid = 0, iscell = 1; // flags
-    cimg_library::CImgDisplay DD(*cim); // display
-    while ((!DD.is_closed()))
+    MTOOLS_SWAP_THREADS(argc, argv);
+    parseCommandLine(argc, argv);
+    int64 maxNN = arg("N", 10000000).info("total number of particles in the simulation");
+    int autoredraw = arg('a', 600).info("autoredraw per minutes");
+    eight_neighbour = arg('e', false).info("use 8 neighbours adjacency");
+    Grid({ 0,0 }) = N; N++; // initial particle 
+    Plotter2D P;
+    auto L = makePlot2DLattice(colorFct, "external DLA 2D"); 
+    //auto L = makePlot2DPixel(colorFct, 2,"external DLA 2D");
+    P[L];
+    P.autoredraw(autoredraw);
+    P.startPlot();
+    watch("# of particles", N);
+    watch("cluster radius", maxrad);
+    while (P.shown())
         {
-        uint32 k = DD.key();
-        if ((DD.is_key(cimg_library::cimg::keyA))) { TPD.enable(!TPD.enable()); std::this_thread::sleep_for(std::chrono::milliseconds(50)); }   // type A for toggle axe (with graduations)
-        if ((DD.is_key(cimg_library::cimg::keyG))) { isgrid = 1 - isgrid; std::this_thread::sleep_for(std::chrono::milliseconds(50)); } // type G for toggle grid
-        if ((DD.is_key(cimg_library::cimg::keyC))) { iscell = 1 - iscell; std::this_thread::sleep_for(std::chrono::milliseconds(50)); } // type C for toggle cell
-        if (DD.is_key(cimg_library::cimg::keyESC)) { TPD.redraw(false); } // [ESC] to force complete redraw
-        if (DD.is_key(cimg_library::cimg::keyARROWUP)) { double sh = r.ly() / 20; r.min[1] += sh; r.max[1] += sh; TPD.setParameters(r, &progIm, SubB); } // move n the four directions
-        if (DD.is_key(cimg_library::cimg::keyARROWDOWN)) { double sh = r.ly() / 20; r.min[1] -= sh; r.max[1] -= sh; TPD.setParameters(r, &progIm, SubB); } //
-        if (DD.is_key(cimg_library::cimg::keyARROWLEFT)) { double sh = r.lx() / 20; r.min[0] -= sh; r.max[0] -= sh; TPD.setParameters(r, &progIm, SubB); } //
-        if (DD.is_key(cimg_library::cimg::keyARROWRIGHT)) { double sh = r.lx() / 20; r.min[0] += sh; r.max[0] += sh; TPD.setParameters(r, &progIm, SubB); } //
-        if (DD.is_key(cimg_library::cimg::keyPAGEDOWN)) { double lx = r.max[0] - r.min[0]; double ly = r.max[1] - r.min[1]; r.min[0] = r.min[0] - (lx / 8.0); r.max[0] = r.max[0] + (lx / 8.0); r.min[1] = r.min[1] - (ly / 8.0);  r.max[1] = r.max[1] + (ly / 8.0); TPD.setParameters(r, &progIm, SubB); }
-        if (DD.is_key(cimg_library::cimg::keyPAGEUP)) { if ((r.lx()>0.5) && (r.ly()>0.5)) { double lx = r.max[0] - r.min[0]; double ly = r.max[1] - r.min[1]; r.min[0] = r.min[0] + (lx / 10.0); r.max[0] = r.max[0] - (lx / 10.0); r.min[1] = r.min[1] + (ly / 10.0); r.max[1] = r.max[1] - (ly / 10.0); } TPD.setParameters(r, &progIm, SubB); }
-
-        TPD.sync();
-        //          std::cout << "quality = " << TPD.quality() << "\n";
-        progIm.blit(dispIm);
-        //            if (isaxe) { dispIm.fBox2_drawAxes(r).fBox2_drawGraduations(r).fBox2_drawNumbers(r); }
-        //            if (isgrid) { dispIm.fBox2_drawGrid(r); }
-        //            if (iscell) { dispIm.fBox2_drawCells(r); }
-        DD.display(*cim);
+        if (maxNN - N > 1000) { addParticules(1000); }
+        else
+            {
+            addParticules(maxNN - N);
+            cout << "Simulation completed ! \n";
+            P.autoredraw(0);
+            int64 l = (int64)maxrad + 1;
+            P.range().setRange(iBox2(-l, l, -l, l));
+            P.redraw();
+            P.plot();
+            return 0;
+            }
         }
-    return;
-    }
-
-
-
-
-
-
-
-int main(int argc, char * argv[])
-    {
-
-    /*
-    cimg_library::CImg<mtools::RGBc> imrgbc;
-
-    imrgbc.resize(100, 100, 1, 1);
-    */
-    //   RGBc * p = 0;
-    //   imrgbc.draw_circle(50, 50, 10,p, 1.0);
-
-    //test();
-
-
-
-    loadImage();
-
-    {Plotter2D plotter;
-    plotter.sensibility(1);
-    auto P = mtools::makePlot2DPixel(colorImage, 3, "test");
-    plotter[P];
-    plotter.plot();
-    plotter.remove(P);
-    }
-
-    {Plotter2D plotter;
-    plotter.sensibility(1);
-    auto P = mtools::makePlot2DLattice(colorImage, "lenna");
-    plotter[P];
-    plotter.plot();
-    plotter.remove(P);
-    }
-
     return 0;
     }
+
+/* end of file main.cpp */
+
+
+
+
 
 
