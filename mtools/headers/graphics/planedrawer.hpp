@@ -20,9 +20,6 @@
 #pragma once
 
 
-
-
-
 #include "../misc/threadworker.hpp"
 #include "drawable2DInterface.hpp"
 #include "customcimg.hpp"
@@ -203,14 +200,16 @@ template<typename T> class GetColorPlaneSelector
     };
 
 
-
-
-
     /**
-    * ThreadPlaneDrawer class
-    *
-    * Use a single thread to draw from a getColor function into a progressImg
-    **/
+     * ThreadPlaneDrawer class
+     * 
+     * Use a single thread to draw from a getColor function into a progressImg. Used by the
+     * PlaneDRawer class which combined several instance of the class to optimized the drawing using
+     * several threads.
+     *
+     * @tparam  ObjType Type of the object to draw. Must implement a method recognized by
+     *                  GetColorPlaneSelector.
+     **/
     template<typename ObjType> class ThreadPlaneDrawer : public ThreadWorker
         {
 
@@ -245,6 +244,8 @@ template<typename T> class GetColorPlaneSelector
             **/
             virtual ~ThreadPlaneDrawer()
                 {
+                enable(false);
+                sync();
                 }
 
 
@@ -280,14 +281,11 @@ template<typename T> class GetColorPlaneSelector
 
 
             /**
-            * Force a redraw.
-            *
-            * Returns immediately, use sync() to wait for the operation to complete.
-            *
-            * @param   keepPrevious    If true, keep the previous drawing so that quality starts from 1 and
-            *                          not 0 if possible.
-            **/
-            void redraw(bool keepPrevious = true)
+             * Force a redraw.
+             * 
+             * Returns immediately, use sync() to wait for the operation to complete.
+             **/
+            void redraw()
                 {
                 sync();
                 signal(SIGNAL_REDRAW);
@@ -298,6 +296,7 @@ template<typename T> class GetColorPlaneSelector
 
 
             /**
+            * Override from ThreadWorker.
             * Handles the thread messages
             **/
             virtual int message(int64 code) override
@@ -346,6 +345,7 @@ template<typename T> class GetColorPlaneSelector
 
 
             /**
+            * Override from ThreadWorker.
             * The main 'work' method
             **/
             virtual void work() override
@@ -467,13 +467,14 @@ template<typename T> class GetColorPlaneSelector
 
 
     /**
-    * PlaneDrawer class
-    *
-    * Use several threads to draw from a getColor function into a progressImg.
-    *
-    * @tparam  ObjType Type of the object type.
-    **/
-
+     * PlaneDrawer class
+     * 
+     * Combine several instances of ThreadPlaneDrawer (hence use several threads) to draw from a
+     * getColor function into a progressImg.
+     *
+     * @tparam  ObjType Type of the object to draw. Must implement a method recognized by
+     *                  GetColorPlaneSelector.
+     **/
     template<typename ObjType> class PlaneDrawer
         {
 
@@ -557,6 +558,7 @@ template<typename T> class GetColorPlaneSelector
                 return pr;
                 }
 
+
             /**
             * Enables/Disable all the threads.
             **/
@@ -628,6 +630,7 @@ template<typename T> class GetColorPlaneSelector
         private:
 
 
+            /* compute the range of a subbox */
             fBox2 _computeRange(fBox2 range, iBox2 subBox, iBox2 cBox)
                 {
                 const double px = range.lx() / (subBox.lx() + 1);
@@ -658,28 +661,6 @@ template<typename T> class GetColorPlaneSelector
 
 
         };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

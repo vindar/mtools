@@ -36,32 +36,32 @@ namespace mtools
     template< typename T > class  Plot2DPlane;
 
 
-
     /**
-    * Factory function for creating a plot2DPlane (reference version).
-    *
-    * @tparam  T   The class must implement the PlaneDrawer requirements.
-    * @param [in,out]  obj The Plane object to plot (reference version)
-    * @param   name        The name of the plot.
-    *
-    * @return  A Plot2DPlane<T>
-    **/
+     * Factory function for creating a plot2DPlane (reference version).
+     *
+     * @tparam  T   The class must implement the PlaneDrawer requirements.
+     * @param [in,out]  obj The Plane object to plot (reference version)
+     * @param   nbthreads   The number of thread to use for drawing.
+     * @param   name        The name of the plot.
+     *
+     * @return  A Plot2DPlane&lt;T&gt;
+     **/
     template<typename T> Plot2DPlane<T> makePlot2DPlane(T & obj, int nbthreads = 1, std::string name = "Plane")
         {
         return Plot2DPlane<T>(obj, nbthreads, name);
         }
 
 
-
     /**
-    * Factory function for creating a plot2DPlane (pointer version).
-    *
-    * @tparam  T   The class must implement the PlaneDrawer requirements.
-    * @param [in,out]  obj The Plane object to plot (reference version)
-    * @param   name        The name of the plot.
-    *
-    * @return  A Plot2DPlane<T>
-    **/
+     * Factory function for creating a plot2DPlane (pointer version).
+     *
+     * @tparam  T   The class must implement the PlaneDrawer requirements.
+     * @param [in,out]  obj The Plane object to plot (reference version)
+     * @param   nbthreads   The number of threads to use for drawing.
+     * @param   name        The name of the plot.
+     *
+     * @return  A Plot2DPlane&lt;T&gt;
+     **/
     template<typename T> Plot2DPlane<T> makePlot2DPlane(T * obj, int nbthreads = 1, std::string name = "Plane")
         {
         return Plot2DPlane<T>(obj, nbthreads, name);
@@ -82,11 +82,13 @@ namespace mtools
 
         public:
 
+
             /**
              * Constructor. Pointer version : permit to pass nullptr if the methods are static.
              *
              * @param [in,out]  obj The plane object that must fullfill the requirement of PlaneDrawer. The
              *                      object must survive the plot.
+             * @param   nbthread    The number of threads to use for drawing.
              * @param   name        The name of the plot.
              **/
             Plot2DPlane(T * obj, int nbthread = 1, std::string name = "Plane") : internals_graphics::Plotter2DObj(name), _LD(nullptr), _proImg(nullptr)
@@ -97,12 +99,13 @@ namespace mtools
 
 
             /**
-            * Constructor. Reference verison
-            *
-            * @param [in,out]  obj The plane object that must fullfill the requirement of PlaneDrawer. The
-            *                      object must survive the plot.
-            * @param   name        The name of the plot.
-            **/
+             * Constructor. Reference verison.
+             *
+             * @param [in,out]  obj The plane object that must fullfill the requirement of PlaneDrawer. The
+             *                      object must survive the plot.
+             * @param   nbthread    The number of threads to use for drawing.
+             * @param   name        The name of the plot.
+             **/
             Plot2DPlane(T & obj, int nbthread = 1, std::string name = "Plane") : internals_graphics::Plotter2DObj(name), _LD(nullptr), _proImg(nullptr)
                 {
                 _LD = new PlaneDrawer<T>(&obj, nbthread);
@@ -129,13 +132,13 @@ namespace mtools
                 delete _LD;     // remove the plane drawer
                 delete _proImg; // and the progress image
                 }
-
-
   
-
 
         protected:
 
+            /**
+             * Override from the Drawable2DInterface. 
+             **/
             virtual void setParam(mtools::fBox2 range, mtools::iVec2 imageSize) override
                 {
                 if ((_proImg->height() != imageSize.X()) || (_proImg->width() != imageSize.Y()))
@@ -153,6 +156,9 @@ namespace mtools
                 }
 
 
+            /**  
+             * Override from the Drawable2DInterface.
+             **/
             virtual void resetDrawing() override
                 {
                 _LD->redraw();
@@ -160,6 +166,9 @@ namespace mtools
                 }
 
 
+            /**
+            * Override from the Drawable2DInterface.
+            **/
             virtual int drawOnto(Img<unsigned char> & im, float opacity = 1.0) override
                 {
                 int q = _LD->progress();
@@ -167,28 +176,43 @@ namespace mtools
                 return q;
                 }
 
+
+            /**
+            *Override from the Drawable2DInterface.
+            **/
             virtual int quality() const override { return _LD->progress(); }
 
 
+            /**
+            *Override from the Drawable2DInterface.
+            **/
             virtual void enableThreads(bool status) override { _LD->enable(status); _LD->sync();  }
-
-            virtual bool enableThreads() const override { return _LD->enable(); }
-
-            virtual int nbThreads() const override { return _LD->nbThreads(); }
-
 
 
             /**
-            * Override of the removed method, nothing to do...
+            *Override from the Drawable2DInterface.
+            **/
+            virtual bool enableThreads() const override { return _LD->enable(); }
+
+
+            /**
+            *Override from the Drawable2DInterface.
+            **/
+            virtual int nbThreads() const override { return _LD->nbThreads(); }
+
+
+            /**
+            * Override from the Plot2DObj base class method. 
             **/
             virtual void removed(Fl_Group * optionWin) override
                 {
-                _LD->enable(false);
+                _LD->enable(false); // so that the underlying object will not be ccessed anymore.
                 }
 
 
             /**
-            * Override of the inserted method. There is no option window for a plane object...
+            * Override from the Plot2DObj base class method.
+            * There is no option window for a plane object...
             **/
             virtual internals_graphics::Drawable2DInterface * inserted(Fl_Group * & optionWin, int reqWidth) override
                 {
