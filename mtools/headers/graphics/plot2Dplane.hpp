@@ -44,7 +44,7 @@ namespace mtools
      * @param   nbthreads   The number of thread to use for drawing.
      * @param   name        The name of the plot.
      *
-     * @return  A Plot2DPlane&lt;T&gt;
+     * @return  A plottable object;
      **/
     template<typename T> Plot2DPlane<T> makePlot2DPlane(T & obj, int nbthreads = 1, std::string name = "Plane")
         {
@@ -60,7 +60,7 @@ namespace mtools
      * @param   nbthreads   The number of threads to use for drawing.
      * @param   name        The name of the plot.
      *
-     * @return  A Plot2DPlane&lt;T&gt;
+     * @return  A plottable object;
      **/
     template<typename T> Plot2DPlane<T> makePlot2DPlane(T * obj, int nbthreads = 1, std::string name = "Plane")
         {
