@@ -92,8 +92,8 @@ int main(int argc, char *argv[])
     eight_neighbour = arg('e', false).info("use 8 neighbours adjacency");
     Grid({ 0,0 }) = N; N++; // initial particle 
     Plotter2D P;
-    auto L = makePlot2DLattice(colorFct, "external DLA 2D"); 
-    //auto L = makePlot2DPixel(colorFct, 6,"external DLA 2D");
+    //auto L = makePlot2DLattice(colorFct, "external DLA 2D"); 
+    auto L = makePlot2DPixel(colorFct, 4,"external DLA 2D");
     P[L];
     P.autoredraw(autoredraw);
     P.sensibility(10);
