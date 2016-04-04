@@ -155,7 +155,7 @@ int main(int argc, char * argv[])
 
     {Plotter2D plotter;
     plotter.sensibility(1);
-    auto P = mtools::makePlot2DPixel(colorImage, 6, "test");
+    auto P = mtools::makePlot2DPixel(colorImage, 3, "test");
     plotter[P];
     plotter.plot();
     plotter.remove(P);
