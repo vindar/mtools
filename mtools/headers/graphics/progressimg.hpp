@@ -257,10 +257,9 @@ namespace mtools
                 const size_t lx = (size_t)im.width();
                 const size_t ly = (size_t)im.height();
                 if ((lx <= 0) || (ly <= 0)) return;
-         //       MTOOLS_ASSERT(lx == height());
-                //MTOOLS_ASSERT(ly == width());
+                MTOOLS_ASSERT(lx == height());
+                MTOOLS_ASSERT(ly == width());
                 const size_t l = (size_t)lx*ly;
-
                 if (im.spectrum() == 3)
                     {
                     if (!reverse)
@@ -268,14 +267,7 @@ namespace mtools
                         unsigned char * p1 = im.data();
                         unsigned char * p2 = im.data() + l;
                         unsigned char * p3 = im.data() + 2 * l;
-                        if (op32 < 255)
-                            {
-                            for (size_t z = 0; z < l; z++) { _fastblend(_imData[z], _normData[z] + 1, op32, p1[z], p2[z], p3[z]); }
-                            }
-                        else
-                            {
-                            for (size_t z = 0; z < l; z++) { _fastcopy(_imData[z], _normData[z] + 1, p1[z], p2[z], p3[z]); }
-                            }
+                        for (size_t z = 0; z < l; z++) { _fastblend(_imData[z], _normData[z] + 1, op32, p1[z], p2[z], p3[z]); }
                         return;
                         }
                     else
@@ -284,21 +276,10 @@ namespace mtools
                         unsigned char * p2 = im.data() + (2 * l - lx);
                         unsigned char * p3 = im.data() + (3 * l - lx);
                         size_t z = 0;
-                        if (op32 < 255)
+                        for (size_t j = 0;j < ly; j++)
                             {
-                            for (size_t j = 0;j < ly; j++)
-                                {
-                                for (size_t i = 0; i < lx; i++) { _fastblend(_imData[z], _normData[z] + 1, op32, p1[i], p2[i], p3[i]); z++; }
-                                p1 -= lx; p2 -= lx; p3 -= lx;
-                                }
-                            }
-                        else
-                            {
-                            for (size_t j = 0;j < ly; j++)
-                                {
-                                for (size_t i = 0; i < lx; i++) { _fastcopy(_imData[z], _normData[z] + 1, p1[i], p2[i], p3[i]); z++; }
-                                p1 -= lx; p2 -= lx; p3 -= lx;
-                                }
+                            for (size_t i = 0; i < lx; i++) { _fastblend(_imData[z], _normData[z] + 1, op32, p1[i], p2[i], p3[i]); z++; }
+                            p1 -= lx; p2 -= lx; p3 -= lx;
                             }
                         }
                     return;
@@ -311,14 +292,7 @@ namespace mtools
                         unsigned char * p2 = im.data() + l;
                         unsigned char * p3 = im.data() + 2 * l;
                         unsigned char * p4 = im.data() + 3 * l;
-                        if (op32 < 255)
-                            {
-                            for (size_t z = 0; z < l; z++) { _fastblend(_imData[z], _normData[z] + 1, op32, p1[z], p2[z], p3[z]); p4[z] = 255; }
-                            }
-                        else
-                            {
-                            for (size_t z = 0; z < l; z++) { _fastcopy(_imData[z], _normData[z] + 1, p1[z], p2[z], p3[z]); p4[z] = 255; }
-                            }
+                        for (size_t z = 0; z < l; z++) { _fastblend(_imData[z], _normData[z] + 1, op32, p1[z], p2[z], p3[z]); p4[z] = 255; }
                         return;
                         }
                     else
@@ -328,21 +302,10 @@ namespace mtools
                         unsigned char * p3 = im.data() + (3 * l - lx);
                         unsigned char * p4 = im.data() + (4 * l - lx);
                         size_t z = 0;
-                        if (op32 < 255)
+                        for (size_t j = 0;j < ly; j++)
                             {
-                            for (size_t j = 0;j < ly; j++)
-                                {
-                                for (size_t i = 0; i < lx; i++) { _fastblend(_imData[z], _normData[z] + 1, op32, p1[i], p2[i], p3[i]); p4[z] = 255; z++; }
-                                p1 -= lx; p2 -= lx; p3 -= lx; p4 -= lx;
-                                }
-                            }
-                        else
-                            {
-                            for (size_t j = 0;j < ly; j++)
-                                {
-                                for (size_t i = 0; i < lx; i++) { _fastcopy(_imData[z], _normData[z] + 1, p1[i], p2[i], p3[i]); p4[z] = 255; z++; }
-                                p1 -= lx; p2 -= lx; p3 -= lx; p4 -= lx;
-                                }
+                            for (size_t i = 0; i < lx; i++) { _fastblend(_imData[z], _normData[z] + 1, op32, p1[i], p2[i], p3[i]); p4[z] = 255; z++; }
+                            p1 -= lx; p2 -= lx; p3 -= lx; p4 -= lx;
                             }
                         }
                     return;
