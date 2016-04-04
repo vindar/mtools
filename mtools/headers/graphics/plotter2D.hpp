@@ -76,7 +76,7 @@ class Plotter2D
     static const int MIN_W = 600;           ///< min width of the plotter window
     static const int MIN_H = 600;           ///< min height of the plotter window
 
-    static const int DEFAULT_SENSIBILITY = 5; ///< default delta in quality needed to trigger an update of the window.
+    static const int DEFAULT_SENSIBILITY = 1; ///< default delta in quality needed to trigger an update of the window.
 
 
     /**
