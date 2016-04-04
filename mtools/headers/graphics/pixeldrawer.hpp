@@ -227,8 +227,17 @@ namespace mtools
             /* very fast drawing */
             void _draw_veryfast()
                 {
-                // TODO
-                //setProgress(4);
+                // not using it right now as it slows down more than it helps
+                /*
+                _draw_veryfast(16);
+                setProgress(1);
+                _draw_veryfast(8);
+                setProgress(2);
+                _draw_veryfast(4);
+                setProgress(3);
+                _draw_veryfast(2);
+                setProgress(4);
+                */
                 return;
                 }
 
@@ -237,6 +246,118 @@ namespace mtools
             int64 _nbPixels() const
                 {
                 return (_subBox.lx() + 1)*(_subBox.yx() + 1);
+                }
+
+
+            /* very fast drawing, draw with square of size L */
+            void _draw_veryfast(const int64 L)
+                {
+                RGBc64 * imData = _im->imData();
+                uint8 * normData = _im->normData();
+                const double px = _dlx;
+                const double py = _dly;
+                const int64 ilx = _subBox.lx() + 1;
+                const int64 ily = _subBox.ly() + 1;
+                const int64 nx = ilx / L;
+                const int64 rx = ilx % L;
+                const int64 ny = ily / L;
+                const int64 ry = ily % L;
+
+                const fBox2 r = _range;
+                const int64 width = _im->width();
+
+                size_t off = (size_t)(_subBox.min[0] + _im->width()*(_subBox.min[1]));
+                size_t pa = (size_t)(width - ilx);
+
+                    int64  prevsy = (int64)r.min[1] - 3; // cannot match anything
+
+                    for (int64 j = 0; j < ny; j++)
+                        {
+                        check();
+                        const double y = r.min[1] + (j + 0.5)*py*L;
+                        const int64 sy = (int64)floor(y + 0.5);
+                        if (sy == prevsy)
+                            {
+                            std::memcpy((imData + off), (imData + off) - width, (size_t)ilx*sizeof(RGBc64));
+                            std::memset((normData + off), 0, (size_t)ilx);
+                            off += (size_t)width;
+                            }
+                        else
+                            {
+                            prevsy = sy;
+                            RGBc64 coul;
+                            int64 prevsx = (int64)r.min[0] - 3; // cannot match anything
+                            for (int64 i = 0; i < nx; i++)
+                                {
+                                const double x = r.min[0] + (i + 0.5)*px*L;
+                                const int64 sx = (int64)floor(x + 0.5);
+                                if (prevsx != sx) { coul = mtools::GetColorSelector<ObjType>::call(*_obj, { sx , sy }, _opaque); prevsx = sx; }
+                                for (int k = 0;k < L; k++) { imData[off] = coul; normData[off] = 0; off++; }
+                                }                            
+                                { // complete the line
+                                const double x = r.min[0] + (nx + 0.5)*px*L;
+                                const int64 sx = (int64)floor(x + 0.5);
+                                if (prevsx != sx) { coul = mtools::GetColorSelector<ObjType>::call(*_obj, { sx , sy }, _opaque); prevsx = sx; }
+                                for (int k = 0;k < rx; k++) { imData[off] = coul; normData[off] = 0; off++; }
+                                }
+                            off += pa;
+                            }
+                        // copy all L-1 next lines
+                        const auto src = (imData + off) - width;
+                        for (int k = 0; k < L-1; k++)
+                            {
+                            check();
+                            std::memcpy((imData + off), src, (size_t)ilx*sizeof(RGBc64));
+                            std::memset((normData + off), 0, (size_t)ilx);
+                            off += (size_t)width;
+                            }                            
+                        }
+                    if (ry >0)
+                        { // do the last lines
+                        check();
+                        const double y = r.min[1] + (ny + 0.5)*py*L;
+                        const int64 sy = (int64)floor(y + 0.5);
+                        if (sy == prevsy)
+                            {
+                            std::memcpy((imData + off), (imData + off) - width, (size_t)ilx*sizeof(RGBc64));
+                            std::memset((normData + off), 0, (size_t)ilx);
+                            off += (size_t)width;
+                            }
+                        else
+                            {
+                            prevsy = sy;
+                            RGBc64 coul;
+                            int64 prevsx = (int64)r.min[0] - 3; // cannot match anything
+                            for (int64 i = 0; i < nx; i++)
+                                {
+                                const double x = r.min[0] + (i + 0.5)*px*L;
+                                const int64 sx = (int64)floor(x + 0.5);
+                                if (prevsx != sx) { coul = mtools::GetColorSelector<ObjType>::call(*_obj, { sx , sy }, _opaque); prevsx = sx; }
+                                for (int k = 0;k < L; k++) { imData[off] = coul; normData[off] = 0; off++; }
+                                }
+                            { // complete the line
+                            const double x = r.min[0] + (nx + 0.5)*px*L;
+                            const int64 sx = (int64)floor(x + 0.5);
+                            if (prevsx != sx) { coul = mtools::GetColorSelector<ObjType>::call(*_obj, { sx , sy }, _opaque); prevsx = sx; }
+                            for (int k = 0;k < rx; k++) { imData[off] = coul; normData[off] = 0; off++; }
+                            }
+                            off += pa;
+                            }
+                        // copy all L-1 next lines
+                        const auto src = (imData + off) - width;
+                        for(int k = 0; k < ry - 1; k++)
+                            {
+                            check();
+                            std::memcpy((imData + off), src, (size_t)ilx*sizeof(RGBc64));
+                            std::memset((normData + off), 0, (size_t)ilx);
+                            off += (size_t)width;
+                            }
+                        }
+
+
+
+                setProgress(1);
+
                 }
 
 
