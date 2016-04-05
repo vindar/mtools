@@ -1677,14 +1677,17 @@ namespace mtools
         void Plotter2DWindow::refresh_timer_static(void* p) { if (p == nullptr) { return; } ((Plotter2DWindow *)p)->refresh_timer(); }
         void Plotter2DWindow::refresh_timer()
         {
-            _w_refreshscale->color(FL_DARK_RED);
-            _w_refreshscale->redraw();
-            Fl::flush();
-            Fl::add_timeout(0.1, refresh_timer2_static, this); // one time timeout to stop the blinking
-            updateView(); // better to start be updating so we leave some time to compute the next image
-            for (int i = 0; i < (int)_vecPlot.size(); i++)
+            //if (quality() >= _min_redraw_quality)  // TODO: implement _min_redraw_quality
                 {
-                if (_vecPlot[i]->quality() > 0 ) _vecPlot[i]->resetDrawing(false); // soft reset : reset only the drawing with non zero quality
+                _w_refreshscale->color(FL_DARK_RED);
+                _w_refreshscale->redraw();
+                Fl::flush();
+                Fl::add_timeout(0.1, refresh_timer2_static, this); // one time timeout to stop the blinking
+                updateView(); // better to start be updating so we leave some time to compute the next image
+                for (int i = 0; i < (int)_vecPlot.size(); i++)
+                    {
+                    if (_vecPlot[i]->quality() > 0) _vecPlot[i]->resetDrawing(false); // soft reset : reset only the drawing with non zero quality
+                    }
                 }
             if (_refreshrate > 0) { Fl::repeat_timeout((60.0 / ((double)_refreshrate)), refresh_timer_static, this); } // repeat the timeout
            //_mainImageQuality = 0; // the display image is outdated so we pretend its quality is zero. (not good).
