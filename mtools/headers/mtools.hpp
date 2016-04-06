@@ -45,9 +45,11 @@
 #include "graphics/simpleBMP.hpp"
 #include "graphics/edgesiteimage.hpp"
 #include "graphics/interpolation.hpp"
-#include "graphics/latticedrawer.hpp"
 #include "graphics/planedrawer.hpp"
 #include "graphics/pixeldrawer.hpp"
+#include "graphics/sitedrawer.hpp"
+
+#include "graphics/latticedrawer.hpp" // deprecated.
 
 #include "graphics/plotter2D.hpp"
 #include "graphics/plot2Darray.hpp"

@@ -337,6 +337,7 @@
     <ClInclude Include="headers\graphics\drawable2DInterface.hpp" />
     <ClInclude Include="headers\graphics\drawable2Dobject.hpp" />
     <ClInclude Include="headers\graphics\edgesiteimage.hpp" />
+    <ClInclude Include="headers\graphics\getcolorselector.hpp" />
     <ClInclude Include="headers\graphics\interpolation.hpp" />
     <ClInclude Include="headers\graphics\latticedrawer.hpp" />
     <ClInclude Include="headers\graphics\pixeldrawer.hpp" />
@@ -351,6 +352,7 @@
     <ClInclude Include="headers\graphics\plot2Dplane.hpp" />
     <ClInclude Include="headers\graphics\plot2Dvector.hpp" />
     <ClInclude Include="headers\graphics\progressimg.hpp" />
+    <ClInclude Include="headers\graphics\sitedrawer.hpp" />
     <ClInclude Include="headers\graphics\view2Dwidget.hpp" />
     <ClInclude Include="headers\graphics\plotter2D.hpp" />
     <ClInclude Include="headers\graphics\plotter2Dobj.hpp" />
