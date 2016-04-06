@@ -23,12 +23,13 @@
 #include "drawable2DInterface.hpp"
 #include "customcimg.hpp"
 #include "rgbc.hpp"
+#include "progressimg.hpp"
 #include "../maths/vec.hpp"
 #include "../maths/box.hpp"
 #include "../misc/misc.hpp"
 #include "../misc/metaprog.hpp"
 #include "../randomgen/fastRNG.hpp"
-
+#include "getcolorselector.hpp"
 
 #include <algorithm>
 #include <ctime>
@@ -37,9 +38,9 @@
 
 
 
-
 namespace mtools
     {
+
 
 
 
@@ -50,7 +51,7 @@ namespace mtools
      * used by the PixelDrawer class which combine several threads together for faster drawing.
      *
      * @tparam  ObjType Type of object to draw. Must implement a color recognized by the
-     *                  GetColorSelector().
+     *                  GetColorSelector() (cf file getcolorselector.hpp).
      **/
     template<typename ObjType> class ThreadPixelDrawer : public ThreadWorker
         {
