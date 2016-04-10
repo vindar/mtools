@@ -520,6 +520,7 @@ namespace mtools
                 SingleObjectAllocator & operator=(const SingleObjectAllocator & alloc) = delete; // operator= forbidden
                 
                 template<typename T2, size_t AllocSize2, size_t PoolSize2> friend class SingleObjectAllocator; // friend with its template variant
+
                 typedef CstSizeMemoryPool<AllocSize, PoolSize> MemPoolType;
 
                 MemPoolType *   _memPool;   // memory Pool
