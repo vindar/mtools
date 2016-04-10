@@ -331,8 +331,164 @@ namespace mtools
 
 
 
-}
+        /**
+        * Simple STL compliant allocator
+        *
+        * The allocator can only serve chunks of memory whose lenght is no more than AllocSize bytes
+        * (uses mtools::SingleAllocator to manage memory allocation).
+        *
+        * - Allocator created by the default ctor use their personal memory pool.
+        *
+        * - Allocators created via copy constructor share the pool of their father. The commun pool
+        * is destroyed (without calling the destructor) when the last allocator is destroyed.
+        *
+        * To use the allocator with an stl container, choose AllocSize large enough so that it can
+        * allocate all required node structures. For example:
+        *
+        * std::set<double, std::less<double>, mtools::FixedSizeAllocator<double, 40> > mySet; // double + 4 pointers for nodes
+        *
+        * @tparam  T               Type of object to allocate. Must be such that sizeof(T) <= AllocSize.
+        * @tparam  AllocSize       Maximum number of bytes of any allocation request.
+        * @tparam  PoolSize        Size of the pool i.e. number of chunks of lenght AllocSize per pool.
+        *                          (default = such that each pool uses 100MB).
+        **/
+        template<typename T, size_t AllocSize, size_t PoolSize = NB_FOR_SIZE(AllocSize, MEM_MB(100))> class FixedSizeAllocator
+            {
 
+            public:
+
+                typedef size_t      size_type;              // required to comply with stl allocators
+                typedef ptrdiff_t   difference_type;        // 
+                typedef T*          pointer;                //
+                typedef const T*    const_pointer;          //
+                typedef T&          reference;              //
+                typedef const T&    const_reference;        //
+                typedef T           value_type;             //
+
+                template<typename U> struct rebind { typedef FixedSizeAllocator<U, AllocSize, PoolSize> other; }; // obtain the allocator for a new type
+
+
+                                                                                                                  /** Default constructor. */
+                FixedSizeAllocator() throw() : _memPool(new MemPoolType()), _count(new size_t(1))
+                    {
+                    MTOOLS_DEBUG(std::string("FixedSizeAllocator ctor with T=[") + typeid(T).name() + "] size " + mtools::toString(sizeof(T)) + " AllocSize = " + mtools::toString(AllocSize));
+                    }
+
+
+                /** Copy constructor. **/
+                FixedSizeAllocator(const FixedSizeAllocator & alloc) throw() : _memPool((MemPoolType*)alloc._memPool), _count(alloc._count)
+                    {
+                    (*_count)++;
+                    MTOOLS_DEBUG(std::string("FixedSizeAllocator copy ctor with T=[") + typeid(T).name() + "] size " + mtools::toString(sizeof(T)) + " AllocSize = " + mtools::toString(AllocSize));
+                    }
+
+
+                /** Copy constructor with another type. **/
+                template<typename U> FixedSizeAllocator(const FixedSizeAllocator<U, AllocSize, PoolSize> & alloc) throw() : _memPool((MemPoolType*)alloc._memPool), _count(alloc._count)
+                    {
+                    (*_count)++;
+                    MTOOLS_DEBUG(std::string("FixedSizeAllocator copy ctor from T=[") + typeid(T).name() + "] size " + mtools::toString(sizeof(T)) + " to " + typeid(U).name() + "] size " + mtools::toString(sizeof(U)) + " AllocSize = " + mtools::toString(AllocSize));
+                    }
+
+
+                /** Destructor. */
+                ~FixedSizeAllocator()
+                    {
+                    MTOOLS_DEBUG(std::string("FixedSizeAllocator destructor with T=[") + typeid(T).name() + "] size " + mtools::toString(sizeof(T)) + " AllocSize = " + mtools::toString(AllocSize));
+                    (*_count)--;
+                    if ((*_count) == 0)
+                        {
+                        delete _memPool;
+                        MTOOLS_DEBUG(std::string("Last instance of FixedSizeAllocator, deleting also the memory pool"));
+                        }
+                    }
+
+
+                /** Copy. **/
+                FixedSizeAllocator & operator=(const FixedSizeAllocator & alloc) = delete;
+
+
+                /** Copy with another type **/
+                template<typename U> FixedSizeAllocator& operator=(const FixedSizeAllocator<U, AllocSize, PoolSize> & alloc) = delete;
+
+
+                /** Get address of reference. **/
+                pointer address(reference x) const { return &x; }
+
+
+                /** Get const address of const reference **/
+                const_pointer address(const_reference x) const { return &x; }
+
+
+                /** Allocate memory **/
+                pointer allocate(size_type n, const void* hint = 0)
+                    {
+                    if ((n*sizeof(value_type)) > AllocSize) { MTOOLS_ERROR(std::string("FixedSizeAllocator<") + typeid(T).name() + ", " + mtools::toString(AllocSize) + ", " + mtools::toString(PoolSize) + ">::allocate. Trying to allocate " + mtools::toString(n) + " objects of size " + mtools::toString(sizeof(value_type))); }
+                    return (pointer)(_memPool->allocate());
+                    }
+
+
+                /** Deallocate memory **/
+                void deallocate(void* p, size_type n)
+                    {
+                    if ((n*sizeof(value_type)) > AllocSize) { MTOOLS_ERROR(std::string("FixedSizeAllocator<") + typeid(T).name() + ", " + mtools::toString(AllocSize) + ", " + mtools::toString(PoolSize) + ">::deallocate. Trying to deallocate " + mtools::toString(n) + " objects of size " + mtools::toString(sizeof(value_type))); }
+                    _memPool->deallocate((TT*)p);
+                    }
+
+
+                /** deallocate all object in the associated memory pool **/
+                void deallocateAll()
+                    {
+                    _memPool->deallocateAll();
+                    }
+
+
+                /** Call the constructor **/
+                void construct(pointer p, const T& val) { ::new((T*)p) T(val); }
+
+
+                /** Call the constructor with additional arguments **/
+                template<typename U, typename... Args> void construct(U* p, Args&&... args) { ::new((U*)p) U(std::forward<Args>(args)...); }
+
+
+                /** Call the destructor **/
+                void destroy(pointer p) { p->~T(); }
+
+
+                /** Call the destructor of type U **/
+                template<typename U> void destroy(U* p) { p->~U(); }
+
+
+                /** Query the max allocation size **/
+                size_type max_size() const { return size_type(-1); } // DO NOT CHANGE : putting some other value here seems to mess with the STL containers...
+
+
+            private:
+
+                template<typename T2, size_t AllocSize2, size_t PoolSize2> friend class FixedSizeAllocator;
+
+                static_assert((sizeof(T) <= AllocSize), "Type T is larger than the size of a block. Try increasing the AllocSize template parameter");
+
+                typedef typename std::aligned_storage<metaprog::static_lcm<sizeof(int*), AllocSize>::value>::type TT;
+
+                typedef typename SingleAllocator<TT, PoolSize, false> MemPoolType;
+
+                MemPoolType *   _memPool;   // memory Pool
+                size_t *        _count;     // object count
+
+
+            };
+
+
+        /** Operator== overload : instances with same template parameters AllocSize and PoolSize compare equal if they have the same meory pool **/
+        template<typename T1, typename T2, size_t AllocSize, size_t PoolSize> inline bool operator==(const FixedSizeAllocator<T1, AllocSize, PoolSize>& alloc1, const FixedSizeAllocator<T2, AllocSize, PoolSize>& alloc2) { return (alloc1._memPool == alloc2._memPool); }
+
+        /** Operator!= overload : instances with same template parameters AllocSize and PoolSize compare equal if they have the same meory pool **/
+        template<typename T1, typename T2, size_t AllocSize, size_t PoolSize> inline bool operator!=(const FixedSizeAllocator<T1, AllocSize, PoolSize>& alloc1, const FixedSizeAllocator<T2, AllocSize, PoolSize>& alloc2) { return (alloc1._memPool != alloc2._memPool); }
+
+
+
+}
 
 
 /* end of file */
