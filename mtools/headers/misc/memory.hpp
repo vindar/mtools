@@ -155,7 +155,7 @@ namespace mtools
                  * @param   releaseMemoryToOS   true to release malloced memory to the operating system (default
                  *                              false).
                  **/
-                template<typename T> void destroyAndfreeAll(bool releaseMemoryToOS = false)
+                template<typename T> void destroyAndFreeAll(bool releaseMemoryToOS = false)
                     {
                     if (_m_firstpool == nullptr) return;
                     // we call the dtor for all the sites with lower bit set since they cannot be free sites (memory adresses are aligned mod 2)
@@ -460,7 +460,7 @@ namespace mtools
                  **/
                 void destroyAndDeallocateAll(bool releaseMemoryToOS = false)
                     {
-                    _memPool->destroyAndfreeAll<T>(releaseMemoryToOS);
+                    _memPool->template destroyAndFreeAll<T>(releaseMemoryToOS);
                     }
 
 
@@ -473,7 +473,7 @@ namespace mtools
                 template<typename U> void destroyAndDeallocateAll(bool releaseMemoryToOS = false)
                     {
                     static_assert(sizeof(U) < AllocSize, "Trying to destroy objects larger then AllocSize !");
-                    _memPool->destroyAndfreeAll<U>(releaseMemoryToOS);
+                    _memPool->template destroyAndFreeAll<U>(releaseMemoryToOS);
                     }
 
 
