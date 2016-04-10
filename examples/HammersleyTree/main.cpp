@@ -1,5 +1,10 @@
 /***********************************************
  * Project : HammersleyTree
+ * 
+ * Graphical representation of the generalized 
+ * 'Hammersley Tree process' for unary, binary
+ * and geometric trees.
+ * 
  ***********************************************/
 
 #include "stdafx.h"
@@ -398,7 +403,7 @@ int main(int argc, char *argv[])
 
     drawLines(image);
     drawPoints(image);
-    //drawTrees(image_trees);
+    //drawTrees(image_trees);       // uncomment to color the tree alternatively
 
     auto im = makePlot2DCImg(image, "lines");
     auto imTrees = makePlot2DCImg(image_trees, "trees");
@@ -417,7 +422,7 @@ int main(int argc, char *argv[])
         if (sourcerate > 0.0) { filename += std::string("_source") + toString(sourcerate);  if (createsink) { filename += "_withsink"; } } else { filename += std::string("_nosource"); }
         filename += std::string("_X") + toString(X) + "_T" + toString(T) + ".png";
         cout << "saving " << filename << "...";
-        //drawTrees(image); 
+        //drawTrees(image);   uncomment to color the tree alternatively
         image.save(filename.c_str());
         cout << "ok!\n\n";
         }
