@@ -201,7 +201,7 @@ namespace mtools
                 *
                 * @return  the number of bytes currently allocated.
                 **/
-                inline size_t used() const { return(sizeof(T)*_m_allocatedobj); }
+                inline size_t used() const { return(UNITALLOCSIZE*_m_allocatedobj); }
 
 
                 /**
@@ -497,7 +497,7 @@ namespace mtools
                  *
                  * @return  The number of bytes consumed by the memory pool.
                  **/
-                inline size_t footprint() const { return (_memPool->footprint); }
+                inline size_t footprint() const { return (_memPool->footprint()); }
 
 
                 /**
