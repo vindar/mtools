@@ -329,7 +329,7 @@ namespace mtools
                  **/
                 SingleObjectAllocator() throw() : _memPool(new MemPoolType()), _count(new size_t(1))
                     {
-                    MTOOLS_DEBUG(std::string("SingleObjectAllocator ctor with T=[") + typeid(T).name() + "] size " + mtools::toString(sizeof(T)) + " AllocSize = " + mtools::toString(AllocSize)) + " poolSize = " + mtools::toString(PoolSize));
+                    MTOOLS_DEBUG(std::string("SingleObjectAllocator ctor with T=[") + typeid(T).name() + "] size " + mtools::toString(sizeof(T)) + " AllocSize = " + mtools::toString(AllocSize) + " poolSize = " + mtools::toString(PoolSize));
                     }
 
 
@@ -339,7 +339,7 @@ namespace mtools
                 SingleObjectAllocator(const SingleObjectAllocator & alloc) throw() : _memPool((MemPoolType*)alloc._memPool), _count(alloc._count)
                     {
                     (*_count)++;
-                    MTOOLS_DEBUG(std::string("SingleObjectAllocator copy ctor with T=[") + typeid(T).name() + "] size " + mtools::toString(sizeof(T)) + " AllocSize = " + mtools::toString(AllocSize)) + " poolSize = " + mtools::toString(PoolSize));
+                    MTOOLS_DEBUG(std::string("SingleObjectAllocator copy ctor with T=[") + typeid(T).name() + "] size " + mtools::toString(sizeof(T)) + " AllocSize = " + mtools::toString(AllocSize) + " poolSize = " + mtools::toString(PoolSize));
                     }
 
 
@@ -350,7 +350,7 @@ namespace mtools
                     {
                     static_assert(sizeof(U) < AllocSize, "Copy constructor to a type U which is larger than AllocSize. Try increasing the AllocSize template parameter");
                     (*_count)++;
-                    MTOOLS_DEBUG(std::string("SingleObjectAllocator copy ctor from T=[") + typeid(T).name() + "] size " + mtools::toString(sizeof(T)) + " to " + typeid(U).name() + "] size " + mtools::toString(sizeof(U)) + " AllocSize = " + mtools::toString(AllocSize)) + " poolSize = " + mtools::toString(PoolSize));
+                    MTOOLS_DEBUG(std::string("SingleObjectAllocator copy ctor from T=[") + typeid(T).name() + "] size " + mtools::toString(sizeof(T)) + " to " + typeid(U).name() + "] size " + mtools::toString(sizeof(U)) + " AllocSize = " + mtools::toString(AllocSize) + " poolSize = " + mtools::toString(PoolSize));
                     }
 
 
@@ -359,7 +359,7 @@ namespace mtools
                  **/
                 ~SingleObjectAllocator()
                     {
-                    MTOOLS_DEBUG(std::string("SingleObjectAllocator destructor with T=[") + typeid(T).name() + "] size " + mtools::toString(sizeof(T)) + " AllocSize = " + mtools::toString(AllocSize)) + " poolSize = " + mtools::toString(PoolSize));
+                    MTOOLS_DEBUG(std::string("SingleObjectAllocator destructor with T=[") + typeid(T).name() + "] size " + mtools::toString(sizeof(T)) + " AllocSize = " + mtools::toString(AllocSize) + " poolSize = " + mtools::toString(PoolSize));
                     (*_count)--;
                     if ((*_count) == 0)
                         {
