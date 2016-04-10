@@ -1414,8 +1414,8 @@ namespace mtools
             _pcurrent = nullptr;
             _rangemin.clear(std::numeric_limits<int64>::max());
             _rangemax.clear(std::numeric_limits<int64>::min());
-            _poolNode.destroyAll();
-            if (_callDtors) { _poolLeaf.destroyAll(); } else { _poolLeaf.deallocateAll(); }
+            _poolNode.deallocateAll();
+            if (_callDtors) { _poolLeaf.destroyAndDeallocateAll(); } else { _poolLeaf.deallocateAll(); }
             return;
             }
 
@@ -1523,8 +1523,8 @@ namespace mtools
         mutable Pos   _rangemax;        // the maximal range
         bool _callDtors;                // should we call the destructors
 
-        mutable SingleAllocator<internals_grid::_leaf<D, T, R> >  _poolLeaf;       // the two memory pools
-        mutable SingleAllocator<internals_grid::_node<D, T, R> >  _poolNode;       //
+        mutable SingleObjectAllocator<internals_grid::_leaf<D, T, R>,true >  _poolLeaf;       // the two memory pools
+        mutable SingleObjectAllocator<internals_grid::_node<D, T, R>,true >  _poolNode;       //
 
     };
 

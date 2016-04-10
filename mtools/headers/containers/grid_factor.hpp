@@ -457,7 +457,7 @@ namespace mtools
             std::lock_guard<std::recursive_mutex> lock(_peekmut); // protect from safePeek()
             MTOOLS_INSURE(((newMaxSpec < newMinSpec) || ((newMaxSpec - newMinSpec) < ((int64)NB_SPECIAL))));
             _expandTree(); // we expand the whole tree, removing every dummy links
-            if (_callDtors) _poolSpec.destroyAll(); else _poolSpec.deallocateAll(); // release the memory for all the special objects saved
+            if (_callDtors) _poolSpec.destroyAndDeallocateAll(); else _poolSpec.deallocateAll(); // release the memory for all the special objects saved
             memset(_tabSpecObj, 0, sizeof(_tabSpecObj)); // clear the list of pointer to special objects
             memset(_tabSpecNB, 0, sizeof(_tabSpecNB));   // clear the count for special objects
             _nbNormalObj = 0; // reset the number of normal objects
@@ -1676,8 +1676,8 @@ namespace mtools
             _poolNode.deallocateAll();
             if (_callDtors)
                 {
-                _poolLeaf.destroyAll();
-                _poolSpec.destroyAll();
+                _poolLeaf.destroyAndDeallocateAll();
+                _poolSpec.destroyAndDeallocateAll();
                 }
             else
                 {
@@ -2147,7 +2147,8 @@ namespace mtools
             MTOOLS_ASSERT(L != nullptr); // the node must not be nullptr
             MTOOLS_ASSERT(_getSpecialObject(L) == nullptr); // the node must not be special
             MTOOLS_ASSERT(L->isLeaf());
-            if (_callDtors) { _poolLeaf.destroy(L); } else { _poolLeaf.deallocate(L); }
+            if (_callDtors) { _poolLeaf.destroy(L); } 
+             _poolLeaf.deallocate(L);
             }
 
 
@@ -2455,9 +2456,9 @@ namespace mtools
         mutable int64 _minVal;                  // current minimum value in the grid
         mutable int64 _maxVal;                  // current maximum value in the grid
 
-        mutable SingleAllocator<internals_grid::_leafFactor<D, T, NB_SPECIAL, R> >  _poolLeaf;      // pool for leaf objects
-        mutable SingleAllocator<internals_grid::_node<D, T, R> >  _poolNode;                        // pool for node objects
-        mutable SingleAllocator<T, NB_SPECIAL + 1 >  _poolSpec;                                     // pool for special objects
+        mutable SingleObjectAllocator<internals_grid::_leafFactor<D, T, NB_SPECIAL, R>,true >  _poolLeaf; // pool for leaf objects
+        mutable SingleObjectAllocator<internals_grid::_node<D, T, R>,true >  _poolNode;                   // pool for node objects
+        mutable SingleObjectAllocator<T, true, NB_SPECIAL + 1 >  _poolSpec;                               // pool for special objects
 
         mutable T* _tabSpecObj[NB_SPECIAL];                                                         // array of T pointers to the special objects.
         mutable uint64 _tabSpecNB[NB_SPECIAL];                                                      // total number of special objects of each type. 
