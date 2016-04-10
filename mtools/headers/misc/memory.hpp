@@ -86,7 +86,7 @@ namespace mtools
          *
          * @tparam  T                   Type of objects to allocate.
          * @tparam  POOLSIZE            Number of T object per memory pool (default = such that the memory 
-         *                              pool is around 100MB).
+         *                              pool is around 50MB).
          * @tparam  DELETEOBJECTSONEXIT Set this to true (default) to call the destructors of all
          *                              remaining objects when the allocator is deleted. If set to false,
          *                              the memory is released but the objects are simply dumped wihout
@@ -95,7 +95,7 @@ namespace mtools
          *                              (the code calling ~T() is not generated as long as the methods
          *                              destroy() and destroyAll() are not called).
          **/
-        template<typename T, size_t POOLSIZE = NB_FOR_SIZE(T,MEM_MB(100)), bool DELETEOBJECTSONEXIT = true> class SingleAllocator
+        template<typename T, size_t POOLSIZE = NB_FOR_SIZE(T,MEM_MB(50)), bool DELETEOBJECTSONEXIT = true> class SingleAllocator
         {
         public:
 
@@ -350,9 +350,9 @@ namespace mtools
         * @tparam  T               Type of object to allocate. Must be such that sizeof(T) <= AllocSize.
         * @tparam  AllocSize       Maximum number of bytes of any allocation request.
         * @tparam  PoolSize        Size of the pool i.e. number of chunks of lenght AllocSize per pool.
-        *                          (default = such that each pool uses 100MB).
+        *                          (default = such that each pool uses 50MB).
         **/
-        template<typename T, size_t AllocSize, size_t PoolSize = NB_FOR_SIZE(AllocSize, MEM_MB(100))> class FixedSizeAllocator
+        template<typename T, size_t AllocSize, size_t PoolSize = ((MEM_MB(50))/AllocSize)+1> class FixedSizeAllocator
             {
 
             public:
