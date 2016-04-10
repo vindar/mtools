@@ -394,7 +394,7 @@ namespace mtools
                         else
                             {
                             prevsy = sy;
-                            RGBc64 coul;
+                            RGBc64 coul(0);
                             int64 prevsx = (int64)r.min[0] - 3; // cannot match anything
                             for (int64 i = 0; i < ilx; i++)
                                 {
