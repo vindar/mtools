@@ -1523,8 +1523,8 @@ namespace mtools
         mutable Pos   _rangemax;        // the maximal range
         bool _callDtors;                // should we call the destructors
 
-        mutable SingleObjectAllocator<internals_grid::_leaf<D, T, R>,true >  _poolLeaf;       // the two memory pools
-        mutable SingleObjectAllocator<internals_grid::_node<D, T, R>,true >  _poolNode;       //
+        mutable SingleObjectAllocator<internals_grid::_leaf<D, T, R> >  _poolLeaf;       // the two memory pools
+        mutable SingleObjectAllocator<internals_grid::_node<D, T, R> >  _poolNode;       //
 
     };
 

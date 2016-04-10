@@ -2456,9 +2456,9 @@ namespace mtools
         mutable int64 _minVal;                  // current minimum value in the grid
         mutable int64 _maxVal;                  // current maximum value in the grid
 
-        mutable SingleObjectAllocator<internals_grid::_leafFactor<D, T, NB_SPECIAL, R>,true >  _poolLeaf; // pool for leaf objects
-        mutable SingleObjectAllocator<internals_grid::_node<D, T, R>,true >  _poolNode;                   // pool for node objects
-        mutable SingleObjectAllocator<T, true, NB_SPECIAL + 1 >  _poolSpec;                               // pool for special objects
+        mutable SingleObjectAllocator<internals_grid::_leafFactor<D, T, NB_SPECIAL, R> >  _poolLeaf; // pool for leaf objects
+        mutable SingleObjectAllocator<internals_grid::_node<D, T, R> >  _poolNode;                   // pool for node objects
+        mutable SingleObjectAllocator<T, sizeof(T), NB_SPECIAL + 1 >  _poolSpec;                     // pool for special objects
 
         mutable T* _tabSpecObj[NB_SPECIAL];                                                         // array of T pointers to the special objects.
         mutable uint64 _tabSpecNB[NB_SPECIAL];                                                      // total number of special objects of each type. 
