@@ -627,6 +627,11 @@ union RGBc64
         /** Default constructor. */
         RGBc64() = default;
 
+
+        /** Constructor from uint64 */
+        RGBc64(uint64 col) : color(col) {}
+
+
         /**
         * Constructor.
         *
