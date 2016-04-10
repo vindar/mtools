@@ -682,7 +682,7 @@ namespace mtools
                     {
                     if ((_proImg->height() != imageSize.X()) || (_proImg->width() != imageSize.Y()))
                         {
-                        auto npimg = new ProgressImg(imageSize.X(), imageSize.Y());
+                        auto npimg = new ProgressImg((size_t)imageSize.X(), (size_t)imageSize.Y());
                         _LD->setParameters(range, npimg);
                         _LD->sync();
                         delete _proImg;
