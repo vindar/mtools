@@ -85,17 +85,17 @@ namespace mtools
          * hence distinct instances will not conflict with each other).  
          *
          * @tparam  T                   Type of objects to allocate.
-         * @tparam  POOLSIZE            Number of T object per memory pool (default = such that the memory 
-         *                              pool is around 50MB).
-         * @tparam  DELETEOBJECTSONEXIT Set this to true (default) to call the destructors of all
+         * @tparam  DELETEOBJECTSONEXIT Set this to true (default false) to call the destructors of all
          *                              remaining objects when the allocator is deleted. If set to false,
          *                              the memory is released but the objects are simply dumped wihout
          *                              proper destruction. Setting this template parameter flag to false
          *                              enable to allocate objects with private inaccessible destructors
          *                              (the code calling ~T() is not generated as long as the methods
-         *                              destroy() and destroyAll() are not called).
+         *                              destroy() and destroyAndDeallocateAll() are not called).
+         * @tparam  POOLSIZE            Number of T object per memory pool (default = such that the memory
+         *                              pool is around 50MB).
          **/
-        template<typename T, size_t POOLSIZE = NB_FOR_SIZE(T,MEM_MB(50)), bool DELETEOBJECTSONEXIT = true> class SingleAllocator
+        template<typename T, bool DELETEOBJECTSONEXIT = false, size_t POOLSIZE = NB_FOR_SIZE(T,MEM_MB(50))> class SingleObjectAllocator
         {
         public:
 
@@ -105,7 +105,7 @@ namespace mtools
             /**
              * Default constructor. Create the memory allocator but does not allocate any memory.
              **/
-            SingleAllocator() : _m_allocatedobj(0), _m_totmem(0), _m_firstfree(nullptr), _m_currentpool(nullptr), _m_firstpool(nullptr), _m_index(POOLSIZE) {}
+            SingleObjectAllocator() : _m_allocatedobj(0), _m_totmem(0), _m_firstfree(nullptr), _m_currentpool(nullptr), _m_firstpool(nullptr), _m_index(POOLSIZE) {}
 
 
             /**
@@ -113,7 +113,7 @@ namespace mtools
              * parameter DELETEOBJECTSONEXIT is set to false) and then finally release all the memory
              * allocated to the OS.
              **/
-            ~SingleAllocator()
+            ~SingleObjectAllocator()
                 { 
                 if (_m_firstpool == nullptr) return; 
                 _dtorDestroy(metaprog::dummy<DELETEOBJECTSONEXIT>() ); // call, if required the dtors of all object still alive. 
@@ -122,7 +122,7 @@ namespace mtools
 
             /**
              * Return a pointer to a memory location for storing an object of type T. throw std::bad_alloc
-             * if allocation fails (if so we are doomed and the state of the object is undetermined)
+             * if allocation fails (the state of the object is undetermined)
              **/
             inline pointer allocate()
                 {
@@ -138,7 +138,7 @@ namespace mtools
                     if (_m_currentpool == nullptr)
                         {
                         _m_currentpool = (_pool*)malloc(sizeof(_pool));
-                        if (_m_currentpool == nullptr) { MTOOLS_DEBUG("SingleAllocator, bad_alloc"); throw std::bad_alloc(); }
+                        if (_m_currentpool == nullptr) { MTOOLS_DEBUG("SingleObjectAllocator, bad_alloc"); throw std::bad_alloc(); }
                         MTOOLS_ASSERT(((size_t)_m_currentpool) % 2 == 0); // alignement is at least mod 2
                         _m_totmem += sizeof(_pool);
                         _m_firstpool = _m_currentpool;
@@ -149,7 +149,7 @@ namespace mtools
                         if (_m_currentpool->next == nullptr)
                             {
                             _m_currentpool->next = (_pool*)malloc(sizeof(_pool));
-                            if (_m_currentpool == nullptr) { MTOOLS_DEBUG("SingleAllocator, bad_alloc"); throw std::bad_alloc(); }
+                            if (_m_currentpool == nullptr) { MTOOLS_DEBUG("SingleObjectAllocator, bad_alloc"); throw std::bad_alloc(); }
                             MTOOLS_ASSERT(((size_t)_m_currentpool->next) % 2 == 0); // alignement is at least mod 2
                             _m_totmem += sizeof(_pool);
                             _m_currentpool->next->next = nullptr;
@@ -165,7 +165,7 @@ namespace mtools
 
 
             /**
-             * Release the memory allocated at adress p WITHOUT calling the destructor of the pointed object.
+             * Release the memory allocated at adress p without calling any destructor.
              **/
             inline void deallocate(pointer p)
                 {
@@ -176,15 +176,15 @@ namespace mtools
                 _m_firstfree = (_pfakeT)p;
                 }
 
+
             /**
-             * Delete the object at adress p. Call its destructor and then release it memory to the allocator.
+             * Delete the object at adress p. Call its destructor but do not release the memory.
              **/
             inline void destroy(pointer p)
                 {
                 MTOOLS_ASSERT(_m_firstpool != nullptr);
                 MTOOLS_ASSERT(_m_allocatedobj > 0);
                 p->~T();
-                deallocate(p);
                 }
 
 
@@ -212,7 +212,7 @@ namespace mtools
              * @param   releaseMemoryToOS   true to release the malloced memory to the operating system
              *                              (false by default).
              **/
-            void destroyAll(bool releaseMemoryToOS = false)
+            void destroyAndDeallocateAll(bool releaseMemoryToOS = false)
                 {
                 if (_m_firstpool == nullptr) return;
                 // we call the dtor for all the sites with lower bit set since they cannot be free sites (memory adresses are aligned mod 2)
@@ -277,7 +277,7 @@ namespace mtools
              **/
             std::string toString() const 
                 {
-                std::string s = std::string("Single Allocator<") + typeid(T).name() + ">\n";
+                std::string s = std::string("SingleObjectAllocator<") + typeid(T).name() + ">\n";
                 s += std::string(" - memory allocated : ") + mtools::toString(used() / (1024 * 1024)) + "MB (" + mtools::toString(_m_allocatedobj) + " objects)\n";
                 s += std::string(" - memory footprint : ") + mtools::toString(footprint() / (1024 * 1024)) + "MB\n";
                 return s;
@@ -285,8 +285,8 @@ namespace mtools
 
             private:
 
-            SingleAllocator(const SingleAllocator &) = delete;                  // no copy
-            SingleAllocator & operator=(const SingleAllocator &) = delete;      //
+            SingleObjectAllocator(const SingleObjectAllocator &) = delete;                  // no copy
+            SingleObjectAllocator & operator=(const SingleObjectAllocator &) = delete;      //
 
 
             /* a fake T large enough to contain also a pointer, alignement such that T and T* can be safely stored */
@@ -325,8 +325,8 @@ namespace mtools
                 _m_totmem = 0;           
                 }
 
-            inline void _dtorDestroy(metaprog::dummy<true> Dum)  { destroyAll(true); }     // here we call the dtors for all object still allocated
-            inline void _dtorDestroy(metaprog::dummy<false> Dum) { deallocateAll(true); }  // here, we don't...
+            inline void _dtorDestroy(metaprog::dummy<true> Dum)  { destroyAndDeallocateAll(true); }     // here we call the dtors for all object still allocated
+            inline void _dtorDestroy(metaprog::dummy<false> Dum) { deallocateAll(true); }               // here, we don't...
         };
 
 
@@ -335,7 +335,7 @@ namespace mtools
         * Simple STL compliant allocator
         *
         * The allocator can only serve chunks of memory whose lenght is no more than AllocSize bytes
-        * (uses mtools::SingleAllocator to manage memory allocation).
+        * (uses mtools::SingleObjectAllocator to manage memory allocation).
         *
         * - Allocator created by the default ctor use their personal memory pool.
         *
@@ -471,7 +471,7 @@ namespace mtools
 
                 typedef typename std::aligned_storage<metaprog::static_lcm<sizeof(int*), AllocSize>::value>::type TT;
 
-                typedef typename SingleAllocator<TT, PoolSize, false> MemPoolType;
+                typedef typename SingleObjectAllocator<TT, false, PoolSize> MemPoolType;
 
                 MemPoolType *   _memPool;   // memory Pool
                 size_t *        _count;     // object count
