@@ -74,7 +74,7 @@ namespace mtools
          * @tparam  POOLSIZE        Number of chunks in each pool. When a pool is full, a new one is
          *                          created (default: each pool uses 50MB).
          **/
-        template<size_t UNITALLOCSIZE, size_t POOLSIZE = NB_FOR_SIZE(T, MEM_MB(50))> class CstSizeMemoryPool
+        template<size_t UNITALLOCSIZE, size_t POOLSIZE = MEM_MB(50)/UNITALLOCSIZE + 1 > class CstSizeMemoryPool
             {
 
             public:
@@ -520,7 +520,7 @@ namespace mtools
                 SingleObjectAllocator & operator=(const SingleObjectAllocator & alloc) = delete; // operator= forbidden
                 
                 template<typename T2, size_t AllocSize2, size_t PoolSize2> friend class SingleObjectAllocator; // friend with its template variant
-                typedef typename CstSizeMemoryPool<AllocSize, PoolSize> MemPoolType;
+                typedef CstSizeMemoryPool<AllocSize, PoolSize> MemPoolType;
 
                 MemPoolType *   _memPool;   // memory Pool
                 size_t *        _count;     // object count
