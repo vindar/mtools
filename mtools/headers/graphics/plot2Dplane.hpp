@@ -141,9 +141,9 @@ namespace mtools
              **/
             virtual void setParam(mtools::fBox2 range, mtools::iVec2 imageSize) override
                 {
-                if ((_proImg->height() != imageSize.X()) || (_proImg->width() != imageSize.Y()))
+                if ((_proImg->height() != (size_t)imageSize.X()) || (_proImg->width() != (size_t)imageSize.Y()))
                     {
-                    auto npimg  = new ProgressImg(imageSize.X(), imageSize.Y());
+                    auto npimg  = new ProgressImg((size_t)imageSize.X(), (size_t)imageSize.Y());
                     _LD->setParameters(range, npimg);
                     _LD->sync();
                     delete _proImg;

@@ -358,7 +358,7 @@ namespace mtools
                 if (nb == nbThreads()) return;
                 _deleteAllThread();
                 _vecThread.resize(nb);
-                for (size_t i = 0; i < nb; i++) { _vecThread[i] = new ThreadPlaneDrawer<ObjType>(_obj); }
+                for (int i = 0; i < nb; i++) { _vecThread[i] = new ThreadPlaneDrawer<ObjType>(_obj); }
                 }
 
 

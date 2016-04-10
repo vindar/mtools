@@ -271,11 +271,10 @@ void drawPoints(Img<unsigned char> & image, float op = 1.0)
     for (auto it = PPPSet.begin(); it != PPPSet.end(); it++)
         {
         pPoissonPoint pp = it->adr();
-        RGBc coul = RGBc::c_Black;
-        if ((pp->father() != nullptr)&&(pp->father()->lastused() ==  pp)) image.fBox2_draw_circle(R, { pp->x, pp->t }, T / 1000, RGBc::c_Red, op);
-        else
-        image.fBox2_draw_circle(R, { pp->x, pp->t }, T / 1000, RGBc::c_Blue,op);   // draw the points
-        
+        if ((pp->father() != nullptr)&&(pp->father()->lastused() ==  pp)) 
+            image.fBox2_draw_circle(R, { pp->x, pp->t }, T / 1000, RGBc::c_Red, op);
+        else 
+            image.fBox2_draw_circle(R, { pp->x, pp->t }, T / 1000, RGBc::c_Blue,op);
         }
     cout << "ok!\n\n";
     }
