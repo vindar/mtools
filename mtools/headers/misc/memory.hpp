@@ -24,6 +24,7 @@
 #include "error.hpp"
 #include "metaprog.hpp"
 
+#include <cstdlib>
 #include <string>
 #include <utility>
 #include <string>
@@ -60,95 +61,192 @@ namespace mtools
     #define MEM_FOR_OBJ(_type, _nb) (sizeof(_type)*_nb)
 
 
+
+
         /**
-         * A simple (but pretty fast) memory allocator for serving one element of type T at a time.
+         * A simple (but fast) memory pool.
          * 
-         * - The allocator requests memory from the OS via `malloc()` by chunk of POOLSIZE elements of
-         * type T. The memory is returned to the OS with `free()` only when the allocator object itself
-         * is destroyed (i.e. deallocating or destroying objects in the allocator does not release the
-         * memory: it is kept for a subsequent allocation). Thus, the global memory footprint of the
-         * program is non-decreasing in time.
+         * Each allocation request returns a continuous memory portion of UNITALLOCSIZE bytes.
          * 
-         * - It is possible to deallocate the memory of one object / every object without calling their
-         * destructor(s) via the `deallocate()`/`deallocateAll()` methods. Dumping the whole collection
-         * of objects can sometime gives a nice speed-up of the program... Otherwise, traditionnal
-         * destruction of one/all objects calling their destructors is performed using the
-         * `destroy()`\`destroyAll()` methods. In particular, 'destroyAll' enables to destroy correctly
-         * every objects still allocated without having to keep track of them.
-         * 
-         * - The memory size used for each object is LCM(sizeof(T), T*).  Therefore, for object with
-         * size larger than a pointer, the memory overhead null (except for a couple of pointer for each
-         * memory block).
-         * 
-         * - The Allocator is NOT thread safe! The user is responsible for synchronization when sharing
-         * an allocator object between different thread (but the allocator contain no static member
-         * hence distinct instances will not conflict with each other).  
+         * There is no 'wasted' memory provided that UNITALLOCSIZE > sizeof(T*).
          *
-         * @tparam  T                   Type of objects to allocate.
-         * @tparam  DELETEOBJECTSONEXIT Set this to true (default false) to call the destructors of all
-         *                              remaining objects when the allocator is deleted. If set to false,
-         *                              the memory is released but the objects are simply dumped wihout
-         *                              proper destruction. Setting this template parameter flag to false
-         *                              enable to allocate objects with private inaccessible destructors
-         *                              (the code calling ~T() is not generated as long as the methods
-         *                              destroy() and destroyAndDeallocateAll() are not called).
-         * @tparam  POOLSIZE            Number of T object per memory pool (default = such that the memory
-         *                              pool is around 50MB).
+         * @tparam  UNITALLOCSIZE   Size in byte of each unit chunk of memory to allocate.
+         * @tparam  POOLSIZE        Number of chunks in each pool. When a pool is full, a new one is
+         *                          created (default: each pool uses 50MB).
          **/
-        template<typename T, bool DELETEOBJECTSONEXIT = false, size_t POOLSIZE = NB_FOR_SIZE(T,MEM_MB(50))> class SingleObjectAllocator
-        {
-        public:
+        template<size_t UNITALLOCSIZE, size_t POOLSIZE = NB_FOR_SIZE(T, MEM_MB(50))> class CstSizeMemoryPool
+            {
 
-        typedef T* pointer;     ///< A pointer to a T objet.
+            public:
 
-
-            /**
-             * Default constructor. Create the memory allocator but does not allocate any memory.
-             **/
-            SingleObjectAllocator() : _m_allocatedobj(0), _m_totmem(0), _m_firstfree(nullptr), _m_currentpool(nullptr), _m_firstpool(nullptr), _m_index(POOLSIZE) {}
+                /** Default constructor. */
+                CstSizeMemoryPool() : _m_allocatedobj(0), _m_totmem(0), _m_firstfree(nullptr), _m_currentpool(nullptr), _m_firstpool(nullptr), _m_index(POOLSIZE)  { }
 
 
-            /**
-             * Destructor. Delete all remaining objects by calling their destructors (unless the template
-             * parameter DELETEOBJECTSONEXIT is set to false) and then finally release all the memory
-             * allocated to the OS.
-             **/
-            ~SingleObjectAllocator()
-                { 
-                if (_m_firstpool == nullptr) return; 
-                _dtorDestroy(metaprog::dummy<DELETEOBJECTSONEXIT>() ); // call, if required the dtors of all object still alive. 
-                }
+                /** Destructor. */
+                ~CstSizeMemoryPool() { freeAll(true); }
 
 
-            /**
-             * Return a pointer to a memory location for storing an object of type T. throw std::bad_alloc
-             * if allocation fails (the state of the object is undetermined)
-             **/
-            inline pointer allocate()
-                {
-                ++_m_allocatedobj;                    
-                if (_m_firstfree != nullptr)
+                /**
+                 * Allocate UNITALLOCSIZE contiguous bytes.
+                 *
+                 * @return  a pointer to the allocated memory
+                 **/
+                inline void * malloc()
                     {
-                    _pfakeT p = _m_firstfree;
-                    _m_firstfree = _getnextfake(_m_firstfree);
-                    return((pointer)p);
+                    ++_m_allocatedobj;
+                    if (_m_firstfree != nullptr)
+                        {
+                        _pfakeT p = _m_firstfree;
+                        _m_firstfree = _getnextfake(_m_firstfree);
+                        return p;
+                        }
+                    if (_m_index == POOLSIZE) { _nextPool(); }
+                    auto r = _m_currentpool->tab + _m_index;
+                    _m_index++;
+                    return r;
+
                     }
-                if (_m_index == POOLSIZE)
+
+
+                /**
+                 * Free a previously malloced memory (of UNITALLOCSIZE bytes).
+                 *
+                 * @param [in,out]  p   pointer to the memory portien to free. 
+                 **/
+                inline void free(void * p)
+                    {
+                    MTOOLS_ASSERT(_m_firstpool != nullptr);
+                    MTOOLS_ASSERT(_m_allocatedobj > 0);
+                    --_m_allocatedobj;
+                    _getnextfake((_pfakeT)p) = _m_firstfree;
+                    _m_firstfree = (_pfakeT)p;
+                    }
+
+
+                /**
+                 * Free all allocated memory.
+                 *
+                 * @param   releaseMemoryToOS   true to release malloced memory to the operating system (default
+                 *                              false).
+                 **/
+                inline void freeAll(bool releaseMemoryToOS = false)
+                    {
+                    if (_m_firstpool == nullptr) return;
+                    _m_firstfree = nullptr;
+                    _m_currentpool = _m_firstpool;
+                    _m_allocatedobj = 0;
+                    _m_index = 0;
+                    if (releaseMemoryToOS) 
+                        {
+                        while (_m_firstpool != nullptr) { _pool * p = _m_firstpool; _m_firstpool = _m_firstpool->next; std::free(p); }                       
+                        _m_firstpool = nullptr;
+                        _m_index = POOLSIZE;
+                        _m_totmem = 0;
+                        }
+                    }
+
+
+                /**
+                 * Free all allocated memeory but call destructor ~T() on all allocated memory before releasing
+                 * it.
+                 *
+                 * @tparam  T   Type of object stored in memory (i.e. type of dtor called).
+                 * @param   releaseMemoryToOS   true to release malloced memory to the operating system (default
+                 *                              false).
+                 **/
+                template<typename T> void destroyAndfreeAll(bool releaseMemoryToOS = false)
+                    {
+                    if (_m_firstpool == nullptr) return;
+                    // we call the dtor for all the sites with lower bit set since they cannot be free sites (memory adresses are aligned mod 2)
+                    _pool * p = _m_firstpool;
+                    while (p != _m_currentpool)
+                        {
+                        for (size_t i = 0; i < POOLSIZE; i++)
+                            {
+                            _pfakeT f = (p->tab + i); if ((((size_t)_getnextfake(f)) % 2) != 0) { ((T*)f)->~T(); }
+                            }
+                        p = p->next;
+                        }
+                    for (size_t i = 0; i < _m_index; i++)
+                        {
+                        _pfakeT f = (p->tab + i); if ((((size_t)_getnextfake(f)) % 2) != 0) { ((T*)f)->~T(); }
+                        }
+                    // iterate over the list of free site and put every lowest bit to 1
+                    while (_m_firstfree != nullptr)
+                        {
+                        _pfakeT  f = _getnextfake(_m_firstfree); _getnextfake(_m_firstfree) = ((_pfakeT)(1)); _m_firstfree = f;
+                        }
+                    // we call the dtor for all the sites with lower bit = 0, these are exactly the site whose dtor has not yet been called.
+                    p = _m_firstpool;
+                    while (p != _m_currentpool)
+                        {
+                        for (size_t i = 0; i < POOLSIZE; i++)
+                            {
+                            _pfakeT f = (p->tab + i); if ((((size_t)_getnextfake(f)) % 2) == 0) { ((T*)f)->~T(); }
+                            }
+                        p = p->next;
+                        }
+                    for (size_t i = 0; i < _m_index; i++)
+                        {
+                        _pfakeT f = (p->tab + i); if ((((size_t)_getnextfake(f)) % 2) == 0) { ((T*)f)->~T(); }
+                        }
+                    // finally, we release the memory to the allocator (and, optionnaly to the OS). 
+                    freeAll(releaseMemoryToOS);
+                    }
+
+
+                /**
+                * Return the memory size currently allocated.
+                *
+                * @return  the number of bytes currently allocated.
+                **/
+                inline size_t used() const { return(sizeof(T)*_m_allocatedobj); }
+
+
+                /**
+                 * Return the total memory size malloced by the allocator object. This quantity never decrease
+                 * since memory is not release until destruction of the allocator.
+                 *
+                 * @return  The number of bytes consumed by the allocator.
+                 **/
+                inline size_t footprint() const { return (_m_totmem); }
+
+
+                /**
+                * Print some information about the state of the memory pool.
+                *
+                * @return  A std::string that with info about the current object state. 
+                **/
+                std::string toString() const
+                    {
+                    std::string s = std::string("CstSizeMemoryPool<") + mtools::toString(UNITALLOCSIZE) + ", " + mtools::toString(POOLSIZE) + ">\n";
+                    s += std::string(" - memory allocated : ") + toStringMemSize(used()) + " (" + mtools::toString(_m_allocatedobj) + " chunks)\n";
+                    s += std::string(" - memory footprint : ") + toStringMemSize(footprint()) + " (" + mtools::toString(footprint() /sizeof(_pool)) + " pools)\n";
+                    return s;
+                    }
+
+
+            private:
+
+
+               // get/create the next memory pool
+                void _nextPool()
                     {
                     if (_m_currentpool == nullptr)
                         {
-                        _m_currentpool = (_pool*)malloc(sizeof(_pool));
+                        _m_currentpool = (_pool*)std::malloc(sizeof(_pool));
                         if (_m_currentpool == nullptr) { MTOOLS_DEBUG("SingleObjectAllocator, bad_alloc"); throw std::bad_alloc(); }
                         MTOOLS_ASSERT(((size_t)_m_currentpool) % 2 == 0); // alignement is at least mod 2
                         _m_totmem += sizeof(_pool);
                         _m_firstpool = _m_currentpool;
-                        _m_currentpool->next  = nullptr;
+                        _m_currentpool->next = nullptr;
                         }
                     else
                         {
                         if (_m_currentpool->next == nullptr)
                             {
-                            _m_currentpool->next = (_pool*)malloc(sizeof(_pool));
+                            _m_currentpool->next = (_pool*)std::malloc(sizeof(_pool));
                             if (_m_currentpool == nullptr) { MTOOLS_DEBUG("SingleObjectAllocator, bad_alloc"); throw std::bad_alloc(); }
                             MTOOLS_ASSERT(((size_t)_m_currentpool->next) % 2 == 0); // alignement is at least mod 2
                             _m_totmem += sizeof(_pool);
@@ -158,202 +256,60 @@ namespace mtools
                         }
                     _m_index = 0;
                     }
-                pointer r = (pointer)(_m_currentpool->tab + _m_index);
-                _m_index++;
-                return(r);
-                }
 
 
-            /**
-             * Release the memory allocated at adress p without calling any destructor.
-             **/
-            inline void deallocate(pointer p)
-                {
-                MTOOLS_ASSERT(_m_firstpool != nullptr);
-                MTOOLS_ASSERT(_m_allocatedobj > 0);
-                --_m_allocatedobj;
-                _getnextfake((_pfakeT)p) = _m_firstfree;
-                _m_firstfree = (_pfakeT)p;
-                }
+                CstSizeMemoryPool(const CstSizeMemoryPool &) = delete;                  // no copy
+                CstSizeMemoryPool & operator=(const CstSizeMemoryPool &) = delete;      //
 
 
-            /**
-             * Delete the object at adress p. Call its destructor but do not release the memory.
-             **/
-            inline void destroy(pointer p)
-                {
-                MTOOLS_ASSERT(_m_firstpool != nullptr);
-                MTOOLS_ASSERT(_m_allocatedobj > 0);
-                p->~T();
-                }
-
-
-            /**
-             * Release all the memory still allocated WITHOUT calling the destructors (fast).
-             *
-             * @param   releaseMemoryToOS   true to release the malloced memory to the operating system
-             *                              (false by default).
-             **/
-            inline void deallocateAll(bool releaseMemoryToOS = false)
-                {
-                if (_m_firstpool == nullptr) return;
-                _m_firstfree = nullptr;
-                _m_currentpool = _m_firstpool;
-                _m_allocatedobj = 0;
-                _m_index = 0;
-                if (releaseMemoryToOS) { _releaseMallocedMemory(); }
-                }
-
-
-            /**
-             * Call the destructors of every objects still allocated then release all the memory to the
-             * allocator.
-             *
-             * @param   releaseMemoryToOS   true to release the malloced memory to the operating system
-             *                              (false by default).
-             **/
-            void destroyAndDeallocateAll(bool releaseMemoryToOS = false)
-                {
-                if (_m_firstpool == nullptr) return;
-                // we call the dtor for all the sites with lower bit set since they cannot be free sites (memory adresses are aligned mod 2)
-                _pool * p = _m_firstpool;
-                while (p != _m_currentpool)
+                typedef typename std::aligned_storage<((UNITALLOCSIZE > sizeof(int*)) ? UNITALLOCSIZE : sizeof(int*))>::type _fakeT; // placeholder 
+                typedef _fakeT * _pfakeT; // pointer of placeholder
+                                          
+                struct _pool // memory pool
                     {
-                    for (size_t i = 0; i < POOLSIZE; i++)
-                        {
-                        _pfakeT f = (p->tab + i); if ((((size_t)_getnextfake(f)) % 2) != 0) { ((pointer)f)->~T(); }
-                        }
-                    p = p->next;
-                    }
-                for (size_t i = 0; i < _m_index; i++)
-                    {
-                    _pfakeT f = (p->tab + i); if ((((size_t)_getnextfake(f)) % 2) != 0) { ((pointer)f)->~T(); }
-                    }
-                // iterate over the list of free site and put every lowest bit to 1
-                while (_m_firstfree != nullptr)
-                    {
-                    _pfakeT  f = _getnextfake(_m_firstfree); _getnextfake(_m_firstfree) = ((_pfakeT)(1)); _m_firstfree = f;
-                    }
-                // we call the dtor for all the sites with lower bit = 0, these are exactly the site whose dtor has not yet been called.
-                p = _m_firstpool;
-                while (p != _m_currentpool)
-                    {
-                    for (size_t i = 0; i < POOLSIZE; i++)
-                        {
-                        _pfakeT f = (p->tab + i); if ((((size_t)_getnextfake(f)) % 2) == 0) { ((pointer)f)->~T(); }
-                        }
-                    p = p->next;
-                    }
-                for (size_t i = 0; i < _m_index; i++)
-                    {
-                    _pfakeT f = (p->tab + i); if ((((size_t)_getnextfake(f)) % 2) == 0) { ((pointer)f)->~T(); }
-                    }
-                // finally, we release the memory to the allocator (and, optionnaly to the OS). 
-                deallocateAll(releaseMemoryToOS);
-                }
+                    _fakeT      tab[POOLSIZE];
+                    _pool *     next;
+                    };
 
+                size_t      _m_allocatedobj;    // number of object currently allocated.
+                size_t      _m_totmem;          // total memory used by the allocator. 
 
-            /**
-             * Return the memory size currently allocated by the T objects.
-             *
-             * @return  the number of bytes currently allocated as T objects (i.e. this value is equal to
-             *          sizeof(T) times the number of T objects currently allocated.
-             **/
-            inline size_t used() const {return(sizeof(T)*_m_allocatedobj);}
-            
-            /**
-             * Return the total memory size "malloc-ed" by the allocator object. This quantity never decrease 
-             * since memory is not release until destruction of the allocator.
-             *
-             * @return  The number of bytes consumed by the allocator
-             **/
-            size_t footprint() const { return (_m_totmem); }
+                _pfakeT     _m_firstfree;       // first free elment in the simply chained list of free blocks
+                _pool *     _m_currentpool;     // pointer to the current pool
+                _pool *     _m_firstpool;       // pointer to the first tpool
+                size_t      _m_index;           // index of the first free element in the current pool
 
+                _pfakeT & _getnextfake(_pfakeT f) { return (*((_pfakeT *)f)); } // get the fake T written a the adress of the fake T !
 
-            /**
-             * Print some information about the state of the allocator
-             *
-             * @return  A std::string that with info about the allocator.
-             **/
-            std::string toString() const 
-                {
-                std::string s = std::string("SingleObjectAllocator<") + typeid(T).name() + ">\n";
-                s += std::string(" - memory allocated : ") + mtools::toString(used() / (1024 * 1024)) + "MB (" + mtools::toString(_m_allocatedobj) + " objects)\n";
-                s += std::string(" - memory footprint : ") + mtools::toString(footprint() / (1024 * 1024)) + "MB\n";
-                return s;
-                }
-
-            private:
-
-            SingleObjectAllocator(const SingleObjectAllocator &) = delete;                  // no copy
-            SingleObjectAllocator & operator=(const SingleObjectAllocator &) = delete;      //
-
-
-            /* a fake T large enough to contain also a pointer, alignement such that T and T* can be safely stored */
-            typedef typename std::aligned_storage<metaprog::static_lcm<sizeof(T*), sizeof(T)>::value>::type _fakeT;
-
-            /* pointer to a fake T*/
-            typedef _fakeT * _pfakeT;
-
-            /* a memory pool */
-            struct _pool
-                {
-                _fakeT      tab[POOLSIZE];
-                _pool *     next;
-                };
-
-            size_t      _m_allocatedobj;    // number of object currently allocated.
-            size_t      _m_totmem;          // total memory used by the allocator. 
-
-            _pfakeT     _m_firstfree;       // first free elment in the simply chained list of free blocks
-            _pool *     _m_currentpool;     // pointer to the current pool
-            _pool *     _m_firstpool;       // pointer to the first tpool
-            size_t      _m_index;           // index of the first free element in the current pool
-
-            _pfakeT & _getnextfake(_pfakeT f) { return (*((_pfakeT *)f)); } // get the fake T written a the adress of the fake T !
-
-            // should only be called when no object are allocated. 
-            inline void _releaseMallocedMemory()
-                {                                 
-                MTOOLS_ASSERT(_m_allocatedobj == 0);
-                while (_m_firstpool != nullptr) { _pool * p = _m_firstpool; _m_firstpool = _m_firstpool->next; free(p); }
-                _m_firstfree = nullptr;
-                _m_currentpool = nullptr;
-                _m_firstpool = nullptr;
-                _m_index = POOLSIZE;
-                _m_allocatedobj = 0;
-                _m_totmem = 0;           
-                }
-
-            inline void _dtorDestroy(metaprog::dummy<true> Dum)  { destroyAndDeallocateAll(true); }     // here we call the dtors for all object still allocated
-            inline void _dtorDestroy(metaprog::dummy<false> Dum) { deallocateAll(true); }               // here, we don't...
-        };
+            };
 
 
 
         /**
-        * Simple STL compliant allocator
-        *
-        * The allocator can only serve chunks of memory whose lenght is no more than AllocSize bytes
-        * (uses mtools::SingleObjectAllocator to manage memory allocation).
-        *
-        * - Allocator created by the default ctor use their personal memory pool.
-        *
-        * - Allocators created via copy constructor share the pool of their father. The commun pool
-        * is destroyed (without calling the destructor) when the last allocator is destroyed.
-        *
-        * To use the allocator with an stl container, choose AllocSize large enough so that it can
-        * allocate all required node structures. For example:
-        *
-        * std::set<double, std::less<double>, mtools::FixedSizeAllocator<double, 40> > mySet; // double + 4 pointers for nodes
-        *
-        * @tparam  T               Type of object to allocate. Must be such that sizeof(T) <= AllocSize.
-        * @tparam  AllocSize       Maximum number of bytes of any allocation request.
-        * @tparam  PoolSize        Size of the pool i.e. number of chunks of lenght AllocSize per pool.
-        *                          (default = such that each pool uses 50MB).
-        **/
-        template<typename T, size_t AllocSize, size_t PoolSize = ((MEM_MB(50))/AllocSize)+1> class FixedSizeAllocator
+         * Simple STL compliant allocator
+         * 
+         * The allocator can only serve chunks of memory whose lenght is no more than AllocSize bytes
+         * (rely on CstSizeMemoryPool for memory allocation).
+         * 
+         * Allocator have a state. This means that two distinct instances have separate memory pool. Yet,
+         * Allocators constructed via copy constructors share the same memory pool hence compare equal.
+         * 
+         * To use the allocator with an stl container such as list/set/map..., choose AllocSize large enough 
+         * so that it can allocate all the required node structs. 
+         * 
+         * For example:
+         * 
+         * std::set<double, std::less<double>, mtools::SingleObjectAllocator<double, 40> > mySet; // double + 4 pointers for nodes.
+         *
+         * @tparam  T           Type of object to allocate. Must be such that sizeof(T) <= AllocSize.
+         * @tparam  AllocSize   Maximum number of bytes of any allocation.
+         * @tparam  PoolSize    Size of each memory pool i.e. number of chunks of lenght AllocSize per
+         *                      pool. (default = such that each pool uses 50MB).
+         **/
+        template<typename T, size_t AllocSize = sizeof(T), size_t PoolSize = ((MEM_MB(50))/AllocSize)+1> class SingleObjectAllocator
             {
+
+                static_assert((sizeof(T) <= AllocSize), "Type T is larger than the size of a block. Try increasing the AllocSize template parameter");
 
             public:
 
@@ -365,126 +321,217 @@ namespace mtools
                 typedef const T&    const_reference;        //
                 typedef T           value_type;             //
 
-                template<typename U> struct rebind { typedef FixedSizeAllocator<U, AllocSize, PoolSize> other; }; // obtain the allocator for a new type
+                template<typename U> struct rebind { typedef SingleObjectAllocator<U, AllocSize, PoolSize> other; }; // rebind: obtain the allocator for a new type
 
 
-                                                                                                                  /** Default constructor. */
-                FixedSizeAllocator() throw() : _memPool(new MemPoolType()), _count(new size_t(1))
+                /**
+                 * Default constructor.
+                 **/
+                SingleObjectAllocator() throw() : _memPool(new MemPoolType()), _count(new size_t(1))
                     {
-                    MTOOLS_DEBUG(std::string("FixedSizeAllocator ctor with T=[") + typeid(T).name() + "] size " + mtools::toString(sizeof(T)) + " AllocSize = " + mtools::toString(AllocSize));
+                    MTOOLS_DEBUG(std::string("SingleObjectAllocator ctor with T=[") + typeid(T).name() + "] size " + mtools::toString(sizeof(T)) + " AllocSize = " + mtools::toString(AllocSize)) + " poolSize = " + mtools::toString(PoolSize));
                     }
 
 
-                /** Copy constructor. **/
-                FixedSizeAllocator(const FixedSizeAllocator & alloc) throw() : _memPool((MemPoolType*)alloc._memPool), _count(alloc._count)
+                /**
+                 * Copy constructor.
+                 **/
+                SingleObjectAllocator(const SingleObjectAllocator & alloc) throw() : _memPool((MemPoolType*)alloc._memPool), _count(alloc._count)
                     {
                     (*_count)++;
-                    MTOOLS_DEBUG(std::string("FixedSizeAllocator copy ctor with T=[") + typeid(T).name() + "] size " + mtools::toString(sizeof(T)) + " AllocSize = " + mtools::toString(AllocSize));
+                    MTOOLS_DEBUG(std::string("SingleObjectAllocator copy ctor with T=[") + typeid(T).name() + "] size " + mtools::toString(sizeof(T)) + " AllocSize = " + mtools::toString(AllocSize)) + " poolSize = " + mtools::toString(PoolSize));
                     }
 
 
-                /** Copy constructor with another type. **/
-                template<typename U> FixedSizeAllocator(const FixedSizeAllocator<U, AllocSize, PoolSize> & alloc) throw() : _memPool((MemPoolType*)alloc._memPool), _count(alloc._count)
+                /**
+                 *  Copy constructor with another type.
+                 **/
+                template<typename U> SingleObjectAllocator(const SingleObjectAllocator<U, AllocSize, PoolSize> & alloc) throw() : _memPool((MemPoolType*)alloc._memPool), _count(alloc._count)
                     {
+                    static_assert(sizeof(U) < AllocSize, "Copy constructor to a type U which is larger than AllocSize. Try increasing the AllocSize template parameter");
                     (*_count)++;
-                    MTOOLS_DEBUG(std::string("FixedSizeAllocator copy ctor from T=[") + typeid(T).name() + "] size " + mtools::toString(sizeof(T)) + " to " + typeid(U).name() + "] size " + mtools::toString(sizeof(U)) + " AllocSize = " + mtools::toString(AllocSize));
+                    MTOOLS_DEBUG(std::string("SingleObjectAllocator copy ctor from T=[") + typeid(T).name() + "] size " + mtools::toString(sizeof(T)) + " to " + typeid(U).name() + "] size " + mtools::toString(sizeof(U)) + " AllocSize = " + mtools::toString(AllocSize)) + " poolSize = " + mtools::toString(PoolSize));
                     }
 
 
-                /** Destructor. */
-                ~FixedSizeAllocator()
+                /**
+                 * Destructor.
+                 **/
+                ~SingleObjectAllocator()
                     {
-                    MTOOLS_DEBUG(std::string("FixedSizeAllocator destructor with T=[") + typeid(T).name() + "] size " + mtools::toString(sizeof(T)) + " AllocSize = " + mtools::toString(AllocSize));
+                    MTOOLS_DEBUG(std::string("SingleObjectAllocator destructor with T=[") + typeid(T).name() + "] size " + mtools::toString(sizeof(T)) + " AllocSize = " + mtools::toString(AllocSize)) + " poolSize = " + mtools::toString(PoolSize));
                     (*_count)--;
                     if ((*_count) == 0)
                         {
                         delete _memPool;
-                        MTOOLS_DEBUG(std::string("Last instance of FixedSizeAllocator, deleting also the memory pool"));
+                        delete _count;
+                        MTOOLS_DEBUG(std::string("Last instance of SingleObjectAllocator, deleting also the memory pool"));
                         }
                     }
 
 
-                /** Copy. **/
-                FixedSizeAllocator & operator=(const FixedSizeAllocator & alloc) = delete;
-
-
-                /** Copy with another type **/
-                template<typename U> FixedSizeAllocator& operator=(const FixedSizeAllocator<U, AllocSize, PoolSize> & alloc) = delete;
-
-
-                /** Get address of reference. **/
+                /**
+                 *  Get address of reference.
+                 **/
                 pointer address(reference x) const { return &x; }
 
 
-                /** Get const address of const reference **/
+                /**
+                 *  Get const address of const reference.
+                 **/
                 const_pointer address(const_reference x) const { return &x; }
 
 
-                /** Allocate memory **/
-                pointer allocate(size_type n, const void* hint = 0)
+                /**
+                 * Allocates memory for one object (do not call the constructor).
+                 *
+                 * @param   n       Must be 1.
+                 * @param   hint    Unused.
+                 *
+                 * @return  A pointer to the allocated memory.
+                 **/
+                pointer allocate(size_type n = 1, const void* hint = 0)
                     {
-                    if ((n*sizeof(value_type)) > AllocSize) { MTOOLS_ERROR(std::string("FixedSizeAllocator<") + typeid(T).name() + ", " + mtools::toString(AllocSize) + ", " + mtools::toString(PoolSize) + ">::allocate. Trying to allocate " + mtools::toString(n) + " objects of size " + mtools::toString(sizeof(value_type))); }
-                    return (pointer)(_memPool->allocate());
+                    if (n != 1) { MTOOLS_ERROR(std::string("SingleObjectAllocator<") + typeid(T).name() + ", " + mtools::toString(AllocSize) + ", " + mtools::toString(PoolSize) + ">::allocate. Trying to allocate " + mtools::toString(n) + " objects simultaneously (must be 1)."); }
+                    return (pointer)(_memPool->malloc());
                     }
 
 
-                /** Deallocate memory **/
-                void deallocate(void* p, size_type n)
+                /**
+                 * Deallocate the memory of the object (do not call the destructor).
+                 *
+                 * @param [in,out]  p   Pointer to the object to deallocate.
+                 * @param   n           Must be 1 (single block allocation).
+                 **/
+                void deallocate(void* p, size_type n = 1)
                     {
-                    if ((n*sizeof(value_type)) > AllocSize) { MTOOLS_ERROR(std::string("FixedSizeAllocator<") + typeid(T).name() + ", " + mtools::toString(AllocSize) + ", " + mtools::toString(PoolSize) + ">::deallocate. Trying to deallocate " + mtools::toString(n) + " objects of size " + mtools::toString(sizeof(value_type))); }
-                    _memPool->deallocate((TT*)p);
+                    if (n != 1) { MTOOLS_ERROR(std::string("SingleObjectAllocator<") + typeid(T).name() + ", " + mtools::toString(AllocSize) + ", " + mtools::toString(PoolSize) + ">::deallocate. Trying to deallocate " + mtools::toString(n) + " objects simultaneously (should be 1)"); }
+                    _memPool->free(p);
                     }
 
 
-                /** deallocate all object in the associated memory pool **/
-                void deallocateAll()
+                /**
+                 * Deallocate all objects in the associated memory pool.
+                 *
+                 * @param   releaseMemoryToOS   true to release the malloced memory to the operating system.
+                 **/
+                void deallocateAll(bool releaseMemoryToOS = false)
                     {
-                    _memPool->deallocateAll();
+                    _memPool->freeAll(releaseMemoryToOS);
                     }
 
 
-                /** Call the constructor **/
+                /**
+                 *  Call the constructor.
+                 **/
                 void construct(pointer p, const T& val) { ::new((T*)p) T(val); }
 
 
-                /** Call the constructor with additional arguments **/
-                template<typename U, typename... Args> void construct(U* p, Args&&... args) { ::new((U*)p) U(std::forward<Args>(args)...); }
+                /**
+                 *  Call the constructor with additional arguments.
+                 **/
+                template<typename U, typename... Args> void construct(U* p, Args&&... args) 
+                    { 
+                    static_assert(sizeof(U) < AllocSize, "Trying to construct an object larger than AllocSize !");
+                    ::new((U*)p) U(std::forward<Args>(args)...); 
+                    }
 
 
-                /** Call the destructor **/
+                /**
+                 *  Call the destructor (do not release memeory).
+                 **/
                 void destroy(pointer p) { p->~T(); }
 
 
-                /** Call the destructor of type U **/
-                template<typename U> void destroy(U* p) { p->~U(); }
+                /**
+                 *  Call the destructor of type U * (do not release memory).
+                 **/
+                template<typename U> void destroy(U* p) 
+                    { 
+                    static_assert(sizeof(U) < AllocSize, "Trying to destroy an object larger then AllocSize !");
+                    p->~U();
+                    }
 
 
-                /** Query the max allocation size **/
+                /**
+                 * Call the destructors and then deallocate all objects in the memory pool.
+                 *
+                 * @param   releaseMemoryToOS   true to release the malloced memory to the operating system.
+                 **/
+                void destroyAndDeallocateAll(bool releaseMemoryToOS = false)
+                    {
+                    _memPool->destroyAndfreeAll<T>(releaseMemoryToOS);
+                    }
+
+
+                /**
+                 * Call the destructors of given type U and then deallocate all objects in the memory pool.
+                 *
+                 * @tparam  U   Type of destructor to call.
+                 * @param   releaseMemoryToOS   true to release the malloced memory to the operating system.
+                 **/
+                template<typename U> void destroyAndDeallocateAll(bool releaseMemoryToOS = false)
+                    {
+                    static_assert(sizeof(U) < AllocSize, "Trying to destroy objects larger then AllocSize !");
+                    _memPool->destroyAndfreeAll<U>(releaseMemoryToOS);
+                    }
+
+
+                /**
+                 *  Query the max allocation size *.
+                 **/
                 size_type max_size() const { return size_type(-1); } // DO NOT CHANGE : putting some other value here seems to mess with the STL containers...
 
 
+                /**
+                * Return the memory size currently allocated.
+                *
+                * @return  the number of bytes currently allocated.
+                **/
+                inline size_t used() const { return (_memPool->used()); }
+
+
+                /**
+                 * Return the total memory size malloced by the memory pool. This quantity never decrease
+                 * since memory is not release until destruction of the allocator.
+                 *
+                 * @return  The number of bytes consumed by the memory pool.
+                 **/
+                inline size_t footprint() const { return (_memPool->footprint); }
+
+
+                /**
+                * Print some information about the state of the memory pool.
+                *
+                * @return  A std::string that with info about the current object state. 
+                **/
+                std::string toString() const
+                    {
+                    std::string s = std::string("SingleObjectAllocator<") + typeid(T).name() + ", " + mtools::toString(AllocSize) + ", " + mtools::toString(PoolSize) + ">\n";
+                    s += std::string(" - object count : ") + mtools::toString(_count) + "\n";
+                    s += std::string(" - memory pool adress : ") + mtools::toString(_memPool) + "\n --- Memory pool info ---\n";
+                    s += _memPool->toString() + "---\n";
+                    return s;
+                    }
+
+
             private:
-
-                template<typename T2, size_t AllocSize2, size_t PoolSize2> friend class FixedSizeAllocator;
-
-                static_assert((sizeof(T) <= AllocSize), "Type T is larger than the size of a block. Try increasing the AllocSize template parameter");
-
-                typedef typename std::aligned_storage<metaprog::static_lcm<sizeof(int*), AllocSize>::value>::type TT;
-
-                typedef typename SingleObjectAllocator<TT, false, PoolSize> MemPoolType;
+                
+                SingleObjectAllocator & operator=(const SingleObjectAllocator & alloc) = delete; // operator= forbidden
+                
+                template<typename T2, size_t AllocSize2, size_t PoolSize2> friend class SingleObjectAllocator; // friend with its template variant
+                typedef typename CstSizeMemoryPool<AllocSize, PoolSize> MemPoolType;
 
                 MemPoolType *   _memPool;   // memory Pool
                 size_t *        _count;     // object count
-
-
             };
 
 
         /** Operator== overload : instances with same template parameters AllocSize and PoolSize compare equal if they have the same meory pool **/
-        template<typename T1, typename T2, size_t AllocSize, size_t PoolSize> inline bool operator==(const FixedSizeAllocator<T1, AllocSize, PoolSize>& alloc1, const FixedSizeAllocator<T2, AllocSize, PoolSize>& alloc2) { return (alloc1._memPool == alloc2._memPool); }
+        template<typename T1, typename T2, size_t AllocSize, size_t PoolSize> inline bool operator==(const SingleObjectAllocator<T1, AllocSize, PoolSize>& alloc1, const SingleObjectAllocator<T2, AllocSize, PoolSize>& alloc2) { return (alloc1._memPool == alloc2._memPool); }
 
         /** Operator!= overload : instances with same template parameters AllocSize and PoolSize compare equal if they have the same meory pool **/
-        template<typename T1, typename T2, size_t AllocSize, size_t PoolSize> inline bool operator!=(const FixedSizeAllocator<T1, AllocSize, PoolSize>& alloc1, const FixedSizeAllocator<T2, AllocSize, PoolSize>& alloc2) { return (alloc1._memPool != alloc2._memPool); }
+        template<typename T1, typename T2, size_t AllocSize, size_t PoolSize> inline bool operator!=(const SingleObjectAllocator<T1, AllocSize, PoolSize>& alloc1, const SingleObjectAllocator<T2, AllocSize, PoolSize>& alloc2) { return (alloc1._memPool != alloc2._memPool); }
 
 
 
