@@ -66,7 +66,7 @@ namespace mtools
              **/
             SiteDrawer(ObjType * obj, void * opaque) : _obj(obj), _opaque(opaque), _validParam(false)
                 {
-                static_assert(mtools::GetImageSelector<ObjType>::has_getImage, "The object must be implement one of the getImage() method recognized by GetImageSelector.");
+                static_assert(mtools::GetImageSelector<ObjType, unsigned char>::has_getImage, "The object must be implement one of the getImage() method recognized by GetImageSelector.");
                 }
 
 
@@ -143,18 +143,6 @@ namespace mtools
             virtual void work() override
                 {
                 MTOOLS_INSURE((bool)_validParam);
-
-                // plusieurs possiblité
-                // 1), 
-
-                // on recalcule l'image associée au range. 
-
-                if (_redraw)
-                    {
-                    _drawImage()
-
-                    }
-                _improveImage();
                 }
 
 
