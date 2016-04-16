@@ -214,6 +214,23 @@ void createSink()
     cout << "ok\n\n";
     }
 
+/** Creates the sinks (linear intensity). */
+void createLinearSink(double rate)
+    {
+    mtools::PoissonLaw Pl(T*rate);
+    int64 N = (int64)Pl(gen); // number of source point
+    cout << "Generating linear sinks with rate " << sourcerate << " -> " << N << " points on [" << 0 << "," << X << "] ";
+    std::set<double> setsinks;
+    for (int64 k = 0;k < N;k++) { setsinks.insert(Unif(gen)*X); }
+    for (auto it = setsinks.begin(); it != setsinks.end(); it++)
+        {
+        PPPSet.insert(PoissonPoint(X + N, (*it)));
+        N--;
+        }
+    cout << "ok\n\n";
+    }
+
+
 
 /** Creates the genealogical tree. */
 void createTree()
@@ -272,9 +289,9 @@ void drawPoints(Img<unsigned char> & image, float op = 1.0)
         {
         pPoissonPoint pp = it->adr();
         if ((pp->father() != nullptr)&&(pp->father()->lastused() ==  pp)) 
-            image.fBox2_draw_circle(R, { pp->x, pp->t }, T / 1000, RGBc::c_Red, op);
+        image.fBox2_draw_circle(R, { pp->x, pp->t }, T / 1000, RGBc::c_Red, op);
         else 
-            image.fBox2_draw_circle(R, { pp->x, pp->t }, T / 1000, RGBc::c_Blue,op);
+        image.fBox2_draw_circle(R, { pp->x, pp->t }, T / 1000, RGBc::c_Blue,op);
         }
     cout << "ok!\n\n";
     }
@@ -385,15 +402,17 @@ int main(int argc, char *argv[])
     sourcerate = arg("source", 1.0).info("source rate");
     if (sourcerate > 0) { createsink = arg("sink").info("create sinks"); }
 
-    X = arg("X", 25).info("interval length");
-    T = arg("T", 9).info("time length");
+    X = arg("X", 20).info("interval length");
+    T = arg("T", 20).info("time length");
 
-    zoom = arg("zoom", 100).info("zoom (size of image)");
+    zoom = arg("zoom", 150).info("zoom (size of image)");
     LX = (int)(zoom*X);
     LY = (int)(zoom*T);
 
     createPPPSet();     // create the PPP set
+    
     createSource();     // create the sources points
+    //createLinearSink(1.0/sourcerate);
     createSink();       // create the sink points
     createTree();       // construct the genealogy 
 
@@ -402,7 +421,7 @@ int main(int argc, char *argv[])
 
     drawLines(image);
     drawPoints(image);
-    //drawTrees(image_trees);       // uncomment to color the tree alternatively
+    drawTrees(image_trees);       // uncomment to color the tree alternatively
 
     auto im = makePlot2DCImg(image, "lines");
     auto imTrees = makePlot2DCImg(image_trees, "trees");
@@ -421,7 +440,7 @@ int main(int argc, char *argv[])
         if (sourcerate > 0.0) { filename += std::string("_source") + toString(sourcerate);  if (createsink) { filename += "_withsink"; } } else { filename += std::string("_nosource"); }
         filename += std::string("_X") + toString(X) + "_T" + toString(T) + ".png";
         cout << "saving " << filename << "...";
-        //drawTrees(image);   uncomment to color the tree alternatively
+        drawTrees(image);   //uncomment to color the tree alternatively
         image.save(filename.c_str());
         cout << "ok!\n\n";
         }
