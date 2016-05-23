@@ -23,6 +23,7 @@ iVec2 pos;                      // position of the walk
 double delta = 1.0;             // reinf param
 int64 maxV = 0;                 // max local time on site
 double maxE = 1.0;              // max weight on edges 
+double logscale = 1.2;          // logarithmic scale
 int64 range = 1;                // number of distincts site visited. 
 iBox2 R;                        // rectangle enclosing the trace of the walk
 Grid_basic<2, siteInfo> G;      // the grid
@@ -38,7 +39,7 @@ struct LERRWPlot
         {
         const siteInfo * S = G.peek(pos);
         if ((S == nullptr) || (S->V == 0)) return RGBc::c_TransparentWhite;
-        return RGBc::jetPaletteLog(S->V, 0, maxV, 1.2); // light logarithmic scale
+        return RGBc::jetPaletteLog(S->V, 0, maxV, logscale); // light logarithmic scale
         }
 
 
@@ -48,17 +49,17 @@ struct LERRWPlot
         const siteInfo * S = G.peek(p);
         if ((S == nullptr) || (S->V == 0)) return nullptr;
         EdgeSiteImage ES;
-        if (pos == p) { ES.bkColor(RGBc::c_Black.getOpacity(0.5)); }
-        ES.site(true, RGBc::jetPaletteLog(S->V, 0, maxV, 1.2));
+        //if (pos == p) { ES.bkColor(RGBc::c_Black.getOpacity(0.5)); }      // uncomment to display the current position
+        ES.site(true, RGBc::jetPaletteLog(S->V, 0, maxV, logscale));
         ES.text(mtools::toString(S->V)).textColor(RGBc::c_White);
         double right = S->right;
         double up = S->up;
         double left = G(p.X() - 1, p.Y()).right;
         double down = G(p.X(), p.Y() - 1).up;
-        if (up > 1.0) { ES.up(ES.EDGE, RGBc::jetPaletteLog(up / maxE, 1.2)); ES.textup(mtools::toString((int64)((up - 1) / delta))); }
-        if (down > 1.0) { ES.down(ES.EDGE, RGBc::jetPaletteLog(down / maxE, 1.2)); }
-        if (left > 1.0) { ES.left(ES.EDGE, RGBc::jetPaletteLog(left / maxE, 1.2)); ES.textleft(mtools::toString((int64)((left - 1) / delta))); }
-        if (right > 1.0) { ES.right(ES.EDGE, RGBc::jetPaletteLog(right / maxE, 1.2)); }
+        if (up > 1.0) { ES.up(ES.EDGE, RGBc::jetPaletteLog(up / maxE, logscale)); ES.textup(mtools::toString((int64)((up - 1) / delta))); }
+        if (down > 1.0) { ES.down(ES.EDGE, RGBc::jetPaletteLog(down / maxE, logscale)); }
+        if (left > 1.0) { ES.left(ES.EDGE, RGBc::jetPaletteLog(left / maxE, logscale)); ES.textleft(mtools::toString((int64)((left - 1) / delta))); }
+        if (right > 1.0) { ES.right(ES.EDGE, RGBc::jetPaletteLog(right / maxE, logscale)); }
         ES.makeImage(image, size);
         return(&image);
         }
@@ -117,6 +118,9 @@ void makeLERRW(uint64 steps, double d)
                 }
             }
         }
+    watch("maxV",maxV);
+    watch("maxE", maxE);
+    watch("mlogscale", logscale);
     // update one last time for the terminating point
     siteInfo & S = G[pos];
     if (S.V == 0) { range++; }
@@ -155,7 +159,7 @@ int main(int argc, char *argv[])
     cout << " Simulation of a Linearly Reinforced Random Walk on Z^2\n";
     cout << "*******************************************************\n\n";
     double delta = arg('d', 2.0).info("reinforcement parameter");
-    int64 N = arg('N', 50000000).info("number of steps of the walk");
+    int64 N = arg('N', 1000000000).info("number of steps of the walk");
     makeLERRW(N, delta);
     return 0;
 	}

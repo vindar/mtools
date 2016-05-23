@@ -398,6 +398,7 @@ int main(int argc, char *argv[])
         typelaw = 3; 
         pgeom = arg("p", 1.0/3.0).info("parameter of the geometric rv");
         }
+    else { pgeom = 0.25; }
 
     sourcerate = arg("source", 1.0).info("source rate");
     if (sourcerate > 0) { createsink = arg("sink").info("create sinks"); }
@@ -421,7 +422,7 @@ int main(int argc, char *argv[])
 
     drawLines(image);
     drawPoints(image);
-    drawTrees(image_trees);       // uncomment to color the tree alternatively
+  //  drawTrees(image_trees);       // uncomment to color the tree alternatively
 
     auto im = makePlot2DCImg(image, "lines");
     auto imTrees = makePlot2DCImg(image_trees, "trees");
@@ -440,7 +441,7 @@ int main(int argc, char *argv[])
         if (sourcerate > 0.0) { filename += std::string("_source") + toString(sourcerate);  if (createsink) { filename += "_withsink"; } } else { filename += std::string("_nosource"); }
         filename += std::string("_X") + toString(X) + "_T" + toString(T) + ".png";
         cout << "saving " << filename << "...";
-        drawTrees(image);   //uncomment to color the tree alternatively
+        //drawTrees(image);   //uncomment to color the tree alternatively
         image.save(filename.c_str());
         cout << "ok!\n\n";
         }
