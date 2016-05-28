@@ -196,16 +196,19 @@ void createSource()
 void createSink()
     {
     if ((!createsink)||(pgeom <= 0.0)) return; // do nothing if sink not wanted
+    if (sourcerate <= 0.0) { sourcerate = 1e-300; }
     double M = (1 / pgeom)*log(1.0 + (pgeom / sourcerate)*T);
     mtools::PoissonLaw Pl(M);
     int64 N = (int64)Pl(gen); // number of sink point
     cout << "Generating Sink  with rate 1/(" << sourcerate << " + " << pgeom << " x) dx  -> " << N << " points on [" << 0 << "," << T << "] ";
     std::set<double> setsink;
+
     for (int64 k = 0;k < N;k++) 
         {
         double y = (exp(pgeom*Unif(gen)*M) - 1.0)*sourcerate / pgeom;
         setsink.insert(y);
         }
+
     for (auto it = setsink.begin(); it != setsink.end(); it++)
         {
         PPPSet.insert(PoissonPoint(X+N,(*it)));
@@ -401,7 +404,7 @@ int main(int argc, char *argv[])
     else { pgeom = 0.25; }
 
     sourcerate = arg("source", 1.0).info("source rate");
-    if (sourcerate > 0) { createsink = arg("sink").info("create sinks"); }
+    createsink = arg("sink").info("create sinks"); 
 
     X = arg("X", 20).info("interval length");
     T = arg("T", 20).info("time length");
