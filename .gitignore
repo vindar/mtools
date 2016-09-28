@@ -3,6 +3,7 @@
 *.userosscache
 *.sln.docstates
 *.userprefs
+*.VC.db
 
 [Cc]out.txt
 [Dd]ebug.txt
