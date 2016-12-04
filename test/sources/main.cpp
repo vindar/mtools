@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
     Grid({ 0,0 }) = N; N++; // initial particle 
     Plotter2D P;
     //auto L = makePlot2DLattice(colorFct, "external DLA 2D"); 
-    auto L = makePlot2DPixel(colorFct, 2,"external DLA 2D");
+    auto L = makePlot2DPixel(colorFct, 7,"external DLA 2D");
     P[L];
     P.autoredraw(autoredraw);
     P.sensibility(10);
@@ -107,6 +107,18 @@ int main(int argc, char *argv[])
             {
             addParticules(maxNN - N);
             cout << "Simulation completed ! \n";
+
+			cout << "print\n";
+			P.autoredraw(0);
+			P.redraw();
+			while (P.quality() < 100) { cout << "waiting...\n"; Sleep(1000);  }
+			Sleep(1000);
+			cout << "saving\n";
+			mtools::Img<unsigned char> im;
+			P.exportImg(im);
+			im.save("imtest.png");
+
+
             P.autoredraw(0);
             int64 l = (int64)maxrad + 1;
             P.range().setRange(iBox2(-l, l, -l, l));

@@ -119,6 +119,13 @@ namespace mtools
         return img;
         }
 
+	Img<T>& assign(const Img<T> & img)
+		{
+		//((CImg<T>*)this)->assign(img);
+		cimg_library::CImg<T>::assign(img);
+		return(*this);
+		}
+
     Img<T>& assign(const unsigned int size_x, const unsigned int size_y = 1, const unsigned int size_z = 1, const unsigned int size_c = 1)
         {
         cimg_library::CImg<T>::assign(size_x, size_y, size_z, size_c);

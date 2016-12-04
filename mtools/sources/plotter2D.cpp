@@ -244,6 +244,10 @@ namespace mtools
             /* do a redraw */
             void doRedraw();
 
+			/* export the current image */
+			void exportImg(mtools::Img<unsigned char> * im);
+
+
             Plotter2DWindow(const Plotter2DWindow &) = delete;              // no copy
             Plotter2DWindow & operator=(const Plotter2DWindow &) = delete;  //
 
@@ -1793,6 +1797,14 @@ namespace mtools
         }
 
 
+
+		void Plotter2DWindow::exportImg(mtools::Img<unsigned char> * im)
+			{
+			im->assign(*_mainImage);
+			return;
+			}
+
+
     }
 
 
@@ -2053,6 +2065,17 @@ namespace mtools
         mtools::runInFltkThread(proxy);
         return viewZoomFactor();
         }
+
+
+	int Plotter2D::quality() const { return (_plotterWin->_mainImageQuality); }
+
+
+	void Plotter2D::exportImg(mtools::Img<unsigned char> & im)
+		{
+		mtools::IndirectMemberProc<internals_graphics::Plotter2DWindow, mtools::Img<unsigned char> *> proxy(*_plotterWin, &internals_graphics::Plotter2DWindow::exportImg, &im);
+		mtools::runInFltkThread(proxy);
+		return;
+		}
 
 
 }

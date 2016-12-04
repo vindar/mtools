@@ -426,6 +426,29 @@ class Plotter2D
     int viewZoomFactor(int zoomFactor);
 
 
+	/**
+	* Query the quality of the drawing
+	*
+	* @return	The quality between 0 and 100.
+	**/
+	int quality() const;
+
+
+	/**
+	* Copy the current plot image into im.
+	* 
+	* Make sure autoredraw() is off (set to zero) and the quality is acceptable
+	* before exporting the image. Do something like this:
+	* 
+	* P.autoredraw(0);
+	* P.redraw();
+	* while(P.quality() < 100) {Sleep(10);}
+	* Sleep(100);
+	* P.exportImg(im);
+	**/
+	void exportImg(mtools::Img<unsigned char> & im);
+
+
 
     private:
 
