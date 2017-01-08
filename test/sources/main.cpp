@@ -83,8 +83,39 @@ RGBc colorFct(iVec2 pos, void* & data)
     }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+
+const double UIHPT_PEEL_TAB[1000];
+
+const double UIPT_PEEL_TAB_M1[3]
+const double UIPT_PEEL_TAB_M100[3]
+*/
+
 int main(int argc, char *argv[])
     {
+	int m = 100; 
+
+
+	for (int i = -2;i < m + 3; i++)
+		{
+		cout << "p(" << m << "," << i << ") = " << mtools::doubleToStringHighPrecision(UIPT_FBTpeelCDF(i, m)) << "\n";
+		}
+
+	cout.getKey();
+	return 0;
     MTOOLS_SWAP_THREADS(argc, argv);
     parseCommandLine(argc, argv);
     int64 maxNN = arg("N", 10000000).info("total number of particles in the simulation");

@@ -867,8 +867,8 @@ namespace mtools
     * Cumulative distribution of the random variable associated with the peeling of the Infinite Uniform
     * Half plane Triangulation.
     *
-    * c.f. Angel (2002) Growth and Percolation on the Uniform Infinite Planar Triangulation, p15.
-    *
+    * c.f. Angel (2002) Growth and Percolation on the Uniform Infinite Planar Triangulation, p15. 
+	*
     * The random variable S takes value in {-1}U{1,2,3,...} with distribution:
     *    - P(S = -1) = 2/3
     *    - P(S = k) = 2*(2k-2)! /((k-1)!*(k+1)!*4^k) pour k = 1,2,3,...
@@ -979,6 +979,70 @@ namespace mtools
 
 
 
+
+
+	/**
+	* Cumulative distribution of the random variables associated with the peeling of a
+	* Free Boltzmann Triangulation (FBT). 
+	*
+	* c.f. Angel (2002) Growth and Percolation on the Uniform Infinite Planar Triangulation, p15.
+	*
+	* Compute the CDF of the markov chain describing the size position k of the splitting of an 
+	* m+2 gon with boundary { x_0, x_1, ..., x_{m+1} } when peeling the edge (x_{m+1}, x_0).
+	* 
+	* q_(m,k) = -1 if a new vertex is discovered. 
+	* q_(m,k) = i in {1,..m} if the triangle discovered is (x_{m+1}, x_0, x_i)
+	*
+	* The density is explicit (cf Angel) and the CDF is also explicit (use maple to compute it)
+	*
+	* @param   m   consider a FBT of the (m+2) gon
+	* @param   k   maximum index to reattach to.
+	*
+	* @return  the probability that the index i the peeled edge (x_{m+1},x_0) reattaches to is 
+	* 		   such that i <= k (with the  convention that the index for discovering a new vertex is -1)
+	* 		   
+	**/
+	inline double UIPT_FBTpeelCDF(const int64 k,const int64 m)
+		{
+		const double mm = (const double)m;
+		const double kk = (const double)k;
+		if (k < -1) return 0.0;
+		if (k >= m) return 1.0;
+		if (k < 1) return (2 * mm + 1.0) / (3 * (mm + 3.0));
+		// we have 1 <= k < m
+		return
+			(1.0 / 6.0)*(
+			(5 * (mm + 2.0) / (mm + 3.0)) -
+				((16 * kk*kk*kk - 24 * kk*kk*mm + 6 * kk*mm*mm + mm*mm*mm - 18 * kk*mm + 9 * mm*mm - 16 * kk + 8 * mm)*(kk + 1.0) / ((mm + 3)*(mm - kk)*(m + 1 - k)))*
+				exp((gammln(2 * mm - 2 * kk) + gammln(2 * kk + 1) + 2 * gammln(mm)) - (2 * gammln(mm - kk) + 2 * gammln(kk + 2) + gammln(2 * mm)))
+				);
+		}
+
+
+	/* Proxy object acting as a functor for the CDF of  UIPT_FBTpeelCDF(k,m) for a given m */
+	struct UIPT_FBTpeelCDFobj
+		{
+		UIPT_FBTpeelCDFobj(int64 m) : _m(m) {}
+		inline double operator()(int64 k) { return UIPT_FBTpeelCDF(k, _m); }
+		private: int64 _m;
+		};
+
+
+	/**
+	* Sample a random variable according to the splitting of the boundary when peeling
+	* a Free Boltzmann Triangulation (type II) of the m+2 gon. 
+	*
+	* @param   m           the size of the boundary is m+2 with vertices { x_0, x_1, ..., x_{m+1} }
+	* @param [in,out]  gen the random number generator.
+	*
+	* @return  index 1 <= i <= m of the vertex we reattaches to when peeling (x_{m+1},x_0) 
+	* 		   or -1 f we discover a new vertice. 
+	**/
+	template<class random_t> inline int64 UIPT_FBTpeelLaw(int64 m, random_t & gen)
+		{
+		UIPT_FBTpeelCDFobj O(m);
+		return sampleDiscreteRVfromCDF(O, gen);
+		}
 
 
 }
