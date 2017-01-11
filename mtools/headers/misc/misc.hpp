@@ -58,13 +58,26 @@ namespace mtools
 
    /** Numeric constants */
 
-   const double PI  = 3.1415926535897932384626433832795;
-
-   const double TWOPI = 6.283185307179586476925286766559;
+   const double PI        = 3.141592653589793238;
+   const double TWOPI     = 6.283185307179586477;
+   const double PIOVERTWO = 1.570796326794896619;
 
    const double NaN = std::numeric_limits<double>::quiet_NaN();
 
    const double INF = std::numeric_limits<double>::infinity();
+
+
+#ifndef M_PI
+#define M_PI    3.141592653589793238
+#endif
+
+#ifndef M_PI_2
+#define M_PI_2  1.570796326794896619
+#endif
+
+#ifndef M_2_PI
+#define M_2_PI  6.283185307179586477
+#endif
 
 
 }
