@@ -91,8 +91,9 @@
 #include "random/gen_xorgen4096_64.hpp"
 #include "random/gen_fastRNG.hpp"
 #include "random/classiclaws.hpp"
-#include "random/krikunlaw.hpp"
 #include "random/SRW.hpp"
+#include "random/peelingUIPT.hpp"
+#include "random/krikunlaw.hpp"
 
 // just in case...
 #undef min
