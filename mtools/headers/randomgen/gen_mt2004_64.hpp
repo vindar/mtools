@@ -1,4 +1,4 @@
-/** @file mt2004_64.hpp */
+/** @file gen_mt2004_64.hpp */
 //
 // Copyright 2015 Arvind Singh
 //

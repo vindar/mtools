@@ -1,4 +1,4 @@
-/** @file fastRNG.hpp */
+/** @file gen_fastRNG.hpp */
 //
 // Copyright 2015 Arvind Singh
 //
@@ -64,13 +64,13 @@ namespace mtools
 
 
             /**
-             * Change the seed. This dies nothing here (kept for compatibility purposes).
+             * Change the seed. This does nothing here (kept for compatibility purposes).
              **/
             void seed(result_type s) { }
 
 
             /**
-            * Default constructor. Always initialize with the smae seed.
+            * Default constructor. Always initialize with the same seed.
             **/
             FastRNG() : _gen_x(123456789), _gen_y(362436069), _gen_z(521288629) { }
 

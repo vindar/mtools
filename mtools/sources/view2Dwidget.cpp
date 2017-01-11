@@ -23,7 +23,7 @@
 
 #include "graphics/view2Dwidget.hpp"
 #include "misc/error.hpp"
-#include "randomgen/fastRNG.hpp"
+#include "randomgen/gen_fastRNG.hpp"
 
 
 

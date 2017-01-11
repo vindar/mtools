@@ -86,10 +86,10 @@
 #include "misc/timefct.hpp"
 
 // randomgen
-#include "randomgen/mt2002_32.hpp"
-#include "randomgen/mt2004_64.hpp"
-#include "randomgen/xorgen4096_64.hpp"
-#include "randomgen/fastRNG.hpp"
+#include "randomgen/gen_mt2002_32.hpp"
+#include "randomgen/gen_mt2004_64.hpp"
+#include "randomgen/gen_xorgen4096_64.hpp"
+#include "randomgen/gen_fastRNG.hpp"
 #include "randomgen/classiclaws.hpp"
 #include "randomgen/krikunlaw.hpp"
 #include "randomgen/SRW.hpp"

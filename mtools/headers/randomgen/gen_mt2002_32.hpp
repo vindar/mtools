@@ -1,4 +1,4 @@
-/** @file mt2002_32.hpp */
+/** @file gen_mt2002_32.hpp */
 //
 // Copyright 2015 Arvind Singh
 //

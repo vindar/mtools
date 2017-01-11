@@ -1,4 +1,4 @@
-/** @file xorgen4096_64.hpp */
+/** @file gen_xorgen4096_64.hpp */
 //
 // Copyright 2004, 2006, 2008 R. P. Brent. for the xorgen generator.
 // Copyright 2015 Arvind Singh
