@@ -228,6 +228,9 @@
     <ClInclude Include="headers\graphics\getcolorselector.hpp">
       <Filter>Header Files\graphics</Filter>
     </ClInclude>
+    <ClInclude Include="headers\maths\circlePacking.hpp">
+      <Filter>Header Files\maths</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\console.cpp">

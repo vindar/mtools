@@ -74,6 +74,7 @@
 #include "maths/box.hpp"
 #include "maths/sqrmatrix.hpp"
 #include "maths/specialFunctions.hpp"
+#include "maths/circlePacking.hpp"
 
 //misc
 #include "misc/error.hpp"
