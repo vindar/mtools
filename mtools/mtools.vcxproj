@@ -174,7 +174,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalOptions>/Zm200 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Zm300 %(AdditionalOptions)</AdditionalOptions>
       <PrecompiledHeaderFile>stdafx_mtools.h</PrecompiledHeaderFile>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <ProgramDataBaseFileName>./lib/mtools32d.pdb</ProgramDataBaseFileName>
@@ -191,7 +191,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;FL_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalOptions>/Zm200 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Zm300 %(AdditionalOptions)</AdditionalOptions>
       <PrecompiledHeaderFile>stdafx_mtools.h</PrecompiledHeaderFile>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <ProgramDataBaseFileName>./lib/mtools32d-fltkdll.pdb</ProgramDataBaseFileName>
@@ -208,7 +208,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalOptions>/Zm200 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Zm300 %(AdditionalOptions)</AdditionalOptions>
       <PrecompiledHeaderFile>stdafx_mtools.h</PrecompiledHeaderFile>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <ProgramDataBaseFileName>./lib/mtools64d.pdb</ProgramDataBaseFileName>
@@ -225,7 +225,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;FL_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalOptions>/Zm200 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Zm300 %(AdditionalOptions)</AdditionalOptions>
       <PrecompiledHeaderFile>stdafx_mtools.h</PrecompiledHeaderFile>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <ProgramDataBaseFileName>./lib/mtools64d-fltkdll.pdb</ProgramDataBaseFileName>
@@ -244,7 +244,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalOptions>/Zm200 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Zm300 %(AdditionalOptions)</AdditionalOptions>
       <PrecompiledHeaderFile>stdafx_mtools.h</PrecompiledHeaderFile>
       <WholeProgramOptimization>false</WholeProgramOptimization>
       <DebugInformationFormat>None</DebugInformationFormat>
@@ -266,7 +266,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;FL_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalOptions>/Zm200 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Zm300 %(AdditionalOptions)</AdditionalOptions>
       <PrecompiledHeaderFile>stdafx_mtools.h</PrecompiledHeaderFile>
       <WholeProgramOptimization>false</WholeProgramOptimization>
       <DebugInformationFormat>None</DebugInformationFormat>
@@ -288,7 +288,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalOptions>/Zm200 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Zm300 %(AdditionalOptions)</AdditionalOptions>
       <PrecompiledHeaderFile>stdafx_mtools.h</PrecompiledHeaderFile>
       <WholeProgramOptimization>false</WholeProgramOptimization>
       <DebugInformationFormat>None</DebugInformationFormat>
@@ -310,7 +310,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;FL_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalOptions>/Zm200 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Zm300 %(AdditionalOptions)</AdditionalOptions>
       <PrecompiledHeaderFile>stdafx_mtools.h</PrecompiledHeaderFile>
       <WholeProgramOptimization>false</WholeProgramOptimization>
       <DebugInformationFormat>None</DebugInformationFormat>
