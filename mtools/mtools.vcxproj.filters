@@ -28,8 +28,8 @@
     <Filter Include="Header Files\misc">
       <UniqueIdentifier>{3dcbb432-b09b-4f3d-9835-74463a39108d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\randomgen">
-      <UniqueIdentifier>{216d0a88-a36a-4bea-8a86-205bffab1157}</UniqueIdentifier>
+    <Filter Include="Header Files\random">
+      <UniqueIdentifier>{87c52711-b343-477b-8a29-0ff72fc9faf7}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -138,12 +138,6 @@
     <ClInclude Include="headers\graphics\plot2Dvector.hpp">
       <Filter>Header Files\graphics</Filter>
     </ClInclude>
-    <ClInclude Include="headers\randomgen\classiclaws.hpp">
-      <Filter>Header Files\randomgen</Filter>
-    </ClInclude>
-    <ClInclude Include="headers\randomgen\krikunlaw.hpp">
-      <Filter>Header Files\randomgen</Filter>
-    </ClInclude>
     <ClInclude Include="stdafx_mtools.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -176,12 +170,6 @@
     </ClInclude>
     <ClInclude Include="headers\graphics\plot2Dcimg.hpp">
       <Filter>Header Files\graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="headers\randomgen\exitGridSRWZ2.hpp">
-      <Filter>Header Files\randomgen</Filter>
-    </ClInclude>
-    <ClInclude Include="headers\randomgen\SRW.hpp">
-      <Filter>Header Files\randomgen</Filter>
     </ClInclude>
     <ClInclude Include="headers\maths\specialFunctions.hpp">
       <Filter>Header Files\maths</Filter>
@@ -219,17 +207,29 @@
     <ClInclude Include="headers\maths\circlePacking.hpp">
       <Filter>Header Files\maths</Filter>
     </ClInclude>
-    <ClInclude Include="headers\randomgen\gen_mt2002_32.hpp">
-      <Filter>Header Files\randomgen</Filter>
+    <ClInclude Include="headers\random\classiclaws.hpp">
+      <Filter>Header Files\random</Filter>
     </ClInclude>
-    <ClInclude Include="headers\randomgen\gen_mt2004_64.hpp">
-      <Filter>Header Files\randomgen</Filter>
+    <ClInclude Include="headers\random\exitGridSRWZ2.hpp">
+      <Filter>Header Files\random</Filter>
     </ClInclude>
-    <ClInclude Include="headers\randomgen\gen_xorgen4096_64.hpp">
-      <Filter>Header Files\randomgen</Filter>
+    <ClInclude Include="headers\random\gen_fastRNG.hpp">
+      <Filter>Header Files\random</Filter>
     </ClInclude>
-    <ClInclude Include="headers\randomgen\gen_fastRNG.hpp">
-      <Filter>Header Files\randomgen</Filter>
+    <ClInclude Include="headers\random\gen_mt2002_32.hpp">
+      <Filter>Header Files\random</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\random\gen_mt2004_64.hpp">
+      <Filter>Header Files\random</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\random\gen_xorgen4096_64.hpp">
+      <Filter>Header Files\random</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\random\krikunlaw.hpp">
+      <Filter>Header Files\random</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\random\SRW.hpp">
+      <Filter>Header Files\random</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

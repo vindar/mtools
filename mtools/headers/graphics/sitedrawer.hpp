@@ -28,7 +28,7 @@
 #include "../maths/box.hpp"
 #include "../misc/misc.hpp"
 #include "../misc/metaprog.hpp"
-#include "../randomgen/gen_fastRNG.hpp"
+#include "../random/gen_fastRNG.hpp"
 #include "getcolorselector.hpp"
 
 #include <algorithm>

@@ -24,7 +24,7 @@
 #include "../maths/vec.hpp"
 #include "cimgwidget.hpp"
 #include "rangemanager.hpp"
-#include "../randomgen/gen_fastRNG.hpp"
+#include "../random/gen_fastRNG.hpp"
 
 
 namespace mtools
