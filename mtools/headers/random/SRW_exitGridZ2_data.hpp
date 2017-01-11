@@ -1,4 +1,4 @@
-/** @file exitGridSRWZ2.hpp */
+/** @file SRW_exitGridZ2_data.hpp */
 //
 // Copyright 2015 Arvind Singh
 //

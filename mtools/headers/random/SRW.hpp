@@ -22,7 +22,7 @@
 #include "../misc/misc.hpp"
 #include "../maths/vec.hpp"
 #include "../maths/box.hpp"
-#include "exitGridSRWZ2.hpp"
+#include "SRW_exitGridZ2_data.hpp"
 #include "classiclaws.hpp"
 
 #include <algorithm>

@@ -85,14 +85,14 @@
 #include "misc/stringfct.hpp"
 #include "misc/timefct.hpp"
 
-// randomgen
-#include "randomgen/gen_mt2002_32.hpp"
-#include "randomgen/gen_mt2004_64.hpp"
-#include "randomgen/gen_xorgen4096_64.hpp"
-#include "randomgen/gen_fastRNG.hpp"
-#include "randomgen/classiclaws.hpp"
-#include "randomgen/krikunlaw.hpp"
-#include "randomgen/SRW.hpp"
+// random
+#include "random/gen_mt2002_32.hpp"
+#include "random/gen_mt2004_64.hpp"
+#include "random/gen_xorgen4096_64.hpp"
+#include "random/gen_fastRNG.hpp"
+#include "random/classiclaws.hpp"
+#include "random/krikunlaw.hpp"
+#include "random/SRW.hpp"
 
 // just in case...
 #undef min

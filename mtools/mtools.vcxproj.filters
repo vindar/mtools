@@ -207,12 +207,6 @@
     <ClInclude Include="headers\maths\circlePacking.hpp">
       <Filter>Header Files\maths</Filter>
     </ClInclude>
-    <ClInclude Include="headers\random\classiclaws.hpp">
-      <Filter>Header Files\random</Filter>
-    </ClInclude>
-    <ClInclude Include="headers\random\exitGridSRWZ2.hpp">
-      <Filter>Header Files\random</Filter>
-    </ClInclude>
     <ClInclude Include="headers\random\gen_fastRNG.hpp">
       <Filter>Header Files\random</Filter>
     </ClInclude>
@@ -229,6 +223,12 @@
       <Filter>Header Files\random</Filter>
     </ClInclude>
     <ClInclude Include="headers\random\SRW.hpp">
+      <Filter>Header Files\random</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\random\SRW_exitGridZ2_data.hpp">
+      <Filter>Header Files\random</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\random\classiclaws.hpp">
       <Filter>Header Files\random</Filter>
     </ClInclude>
   </ItemGroup>
