@@ -289,6 +289,14 @@ int main(int argc, char *argv[])
 	//sim(argc, argv);
 	
 
+	MT2004_64 gen;
+	cout << uniformRandomPermutation<std::vector<int>, MT2004_64>(3,gen);
+
+	cout.getKey();
+	cout.getKey();
+	return 0;
+
+
 	std::vector<std::vector<int> > graph;
 	fBox2 R;
 	std::vector<int> boundary;

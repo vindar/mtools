@@ -234,6 +234,9 @@
     <ClInclude Include="headers\random\peelingUIPT.hpp">
       <Filter>Header Files\random</Filter>
     </ClInclude>
+    <ClInclude Include="headers\random\randomgraph.hpp">
+      <Filter>Header Files\random</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\console.cpp">
