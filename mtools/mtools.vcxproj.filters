@@ -237,6 +237,18 @@
     <ClInclude Include="headers\random\randomgraph.hpp">
       <Filter>Header Files\random</Filter>
     </ClInclude>
+    <ClInclude Include="headers\maths\dyckword.hpp">
+      <Filter>Header Files\maths</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\maths\combinatorialmap.hpp">
+      <Filter>Header Files\maths</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\maths\combinatorics.hpp">
+      <Filter>Header Files\maths</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\misc\triple.hpp">
+      <Filter>Header Files\misc</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\console.cpp">

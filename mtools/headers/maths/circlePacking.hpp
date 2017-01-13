@@ -20,151 +20,17 @@
 
 #pragma once
 
+#include "../misc/misc.hpp" 
+#include "../misc/stringfct.hpp" 
+#include "../misc/error.hpp"
 #include "vec.hpp"
 #include "box.hpp"
+#include "combinatorics.hpp"
+
 
 namespace mtools
 	{
 	
-
-	/** Defines an alias representing a permutation of {0,1,...,n} */
-	typedef std::vector<int> Permutation;
-
-
-	/**
-	* Return the permutation associated with the ordering of labels in non-decreasing order.
-	* The label themselves are NOT reordered.
-	*
-	* @tparam	LABELS	Type of the object to reorder, typically std::vector<int>.
-	* 					- Must be accessible via operator[].
-	* 					- elements must be comparable with operator<() to allow sorting.
-	*
-	* @param	labels	The labels used to compute the re-ordering.
-	*
-	* @return	the reordering permutation. perm[i] = k means that the label initially at
-	* 			position k is now at position i after reordering.
-	*           Call method permute(labels,perm) to effectively sort the labels.
-	**/
-	template<typename LABELS> Permutation getSortPermutation(const LABELS & labels)
-		{
-		Permutation  res;
-		const int l = (int)labels.size();
-		if (l == 0) return res;
-		res.resize(l);
-		for (int i = 0; i < l; i++) { res[i] = i; }
-		sort(res.begin(), res.end(), [&](const int & x, const int & y) { return labels[x] < labels[y]; });
-		return res;
-		}
-
-
-	/**
-	* Compute the inverse of a permutation.
-	*
-	* @param	perm	the permutation. Must be bijection of {0,...,perm.size()-1}.
-	*
-	* @return	the inverse permutation such that return[perm[k]] = k for all k.
-	**/
-	inline Permutation invertPermutation(const Permutation & perm)
-		{
-		Permutation invperm;
-		const size_t l = perm.size();
-		if (l > 0)
-			{
-			invperm.resize(l);
-			for (size_t i = 0; i < l; i++) { invperm[perm[i]] = (int)i; }
-			}
-		return invperm;
-		}
-
-
-	/**
-	* Re-order the labels according to the permutation perm.
-	* (obtained for example from getSortPermutation() )
-	*
-	* @tparam	VECTOR	Type of the object to reorder, typically std::vector<T>.
-	* 					- Must be accessible via operator[].
-	*
-	* @param	labels	The labels to reorder.
-	* @param	perm	the permutation, perm[i] = k means that label at position k must be put at pos i.
-	**/
-	template<typename VECTOR> VECTOR permute(const VECTOR & labels, const Permutation & perm)
-		{
-		const size_t l = labels.size();
-		MTOOLS_INSURE(perm.size() == l);
-		VECTOR res;
-		if (l == 0) return res;
-		res.resize(l);
-		for (size_t i = 0; i < l; i++)
-			{
-			res[i] = labels[perm[i]];
-			}
-		return res;
-		}
-
-
-	/**
-	* Reorder the vertices of a graph according to a permutation.
-	*
-	* @tparam	GRAPH   	Type of the graph, typically std::vector< std::list<int> >.
-	* 						- The outside container must be accessible via operator[].
-	* 						- The inside container must accept be iterable and contain
-	*                         elements convertible to size_t (corresponding to the indexes
-	*                          the neighour vertices).
-	* @param	graph	  	The graph to reorder.
-	* @param	perm    	The permutation to apply: perm[i] = k means that the vertex with index k
-	*                       must now become the vertex at index i in the new graph.
-	* @param	invperm    	The inverse permutation of perm. (use the other permuteGraph() method if
-	*						not previously computed).
-	*
-	* @return  the permuted graph.
-	**/
-	template<typename GRAPH> GRAPH permuteGraph(const GRAPH & graph, const Permutation  & perm, const Permutation & invperm)
-		{
-		const size_t l = graph.size();
-		MTOOLS_INSURE(perm.size() == l);
-		if (l == 0) return GRAPH();
-		GRAPH res = permute<GRAPH>(graph, perm);	// permute the order of the vertices. 
-		for (size_t i = 0; i < l; i++)
-			{
-			for (auto it = res[i].begin(); it != res[i].end(); it++)
-				{
-				(*it) = invperm[*it];
-				}
-			}
-		return res;
-		}
-
-
-	/**
-	 * Convert a graph from type A to type B.
-	 *
-	 **/
-	template<typename GRAPH_A, typename GRAPH_B> GRAPH_B convertGraph(const GRAPH_A & graph)
-		{
-		GRAPH_B res;
-		const size_t l = graph.size();
-		if (l == 0) return res;
-		res.resize(l);
-		for (size_t i = 0; i < l; i++)
-			{
-			auto & lv1 = graph[i];
-			auto & lv2 = res[i];
-			for (auto it = lv1.begin(); it != lv1.end(); ++it) { lv2.push_back(*it); }
-			}
-		return res;
-		}
-
-
-	/**
-	* Reorder the vertices of a graph according to a permutation.
-	* Same as above but also compute the inverse permutation.
-	*/
-	template<typename GRAPH> GRAPH permuteGraph(const GRAPH & graph, const Permutation & perm)
-		{
-		return(permuteGraph(graph, perm, invertPermutation(perm)));
-		}
-
-
 
 	/**
 	* Class used for computing the circle packing of a triangulation.
@@ -356,7 +222,6 @@ namespace mtools
 						}
 						
 					}
-				cout << "erreur = " << c << "\n";
 				return iter;
 				}
 

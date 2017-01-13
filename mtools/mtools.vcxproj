@@ -369,6 +369,9 @@
     <ClInclude Include="headers\io\watch.hpp" />
     <ClInclude Include="headers\maths\box.hpp" />
     <ClInclude Include="headers\maths\circlePacking.hpp" />
+    <ClInclude Include="headers\maths\combinatorialmap.hpp" />
+    <ClInclude Include="headers\maths\combinatorics.hpp" />
+    <ClInclude Include="headers\maths\dyckword.hpp" />
     <ClInclude Include="headers\maths\specialFunctions.hpp" />
     <ClInclude Include="headers\maths\sqrmatrix.hpp" />
     <ClInclude Include="headers\maths\vec.hpp" />
@@ -381,6 +384,7 @@
     <ClInclude Include="headers\misc\stringfct.hpp" />
     <ClInclude Include="headers\misc\threadworker.hpp" />
     <ClInclude Include="headers\misc\timefct.hpp" />
+    <ClInclude Include="headers\misc\triple.hpp" />
     <ClInclude Include="headers\mtools.hpp" />
     <ClInclude Include="headers\random\classiclaws.hpp" />
     <ClInclude Include="headers\random\gen_fastRNG.hpp" />

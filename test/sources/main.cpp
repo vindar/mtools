@@ -4,7 +4,12 @@
 using namespace mtools;
 
 
-MT2004_64 gen(123); // RNG
+
+
+
+
+
+MT2004_64 gen; // RNG
 
 Grid_basic<2, int64, 2> Grid; // the 2D grid
 
@@ -371,11 +376,13 @@ void loadtestgraph(std::vector<std::vector<int> > & gr, std::vector<int> & bound
 
 void testTriangulation()
 	{
-	int sizeTrig = 500;
+	int sizeTrig = 20;
+
+	cout << "\n\n\n\n" << Unif(gen) << "\n";
 
 	mtools::Chronometer();
 	DyckWord D(sizeTrig, 3);
-	D.shuffle(gen);
+	D.shuffle(gen,false);
 
 	cout << "tree created in " << mtools::Chronometer() << " ms\n";
 
@@ -432,9 +439,10 @@ void testTriangulation()
 
 void testBall()
 	{
-	int sizeTrig = 50000;
+	int sizeTrig = 50;
 
 	mtools::Chronometer();
+
 	DyckWord D(sizeTrig, 3);
 	D.shuffle(gen);
 	cout << "tree created in " << mtools::Chronometer() << " ms\n";
@@ -482,8 +490,6 @@ void testBall()
 	oldbound = mtools::permute(oldbound, getSortPermutation(marked));
 	gr = mtools::permuteGraph(gr, getSortPermutation(marked));
 	marked = mtools::permute(marked, getSortPermutation(marked));
-
-
 
 
 
@@ -553,9 +559,24 @@ int main(int argc, char *argv[])
     {
 	MTOOLS_SWAP_THREADS(argc, argv);
 	parseCommandLine(argc, argv);
+
+
+	triple<int, char, double> t = { 34, 'a', 0.1 };
+
+	cout << t << "\n";
+	cout.getKey();
+	return 0;
 	//sim(argc, argv);
 
-	//testTriangulation(); return 0;
+
+
+	std::pair<int, int> a;
+
+
+	while (1)	
+		{
+		testTriangulation();
+		}
 
 	testBall(); return 0;
 

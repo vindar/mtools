@@ -74,15 +74,19 @@
 #include "maths/box.hpp"
 #include "maths/sqrmatrix.hpp"
 #include "maths/specialFunctions.hpp"
+#include "maths/combinatorics.hpp"
+#include "maths/dyckword.hpp"
+#include "maths/combinatorialmap.hpp"
 #include "maths/circlePacking.hpp"
 
 //misc
 #include "misc/error.hpp"
+#include "misc/stringfct.hpp"
+#include "misc/triple.hpp"
 #include "misc/indirectcall.hpp"
 #include "misc/memory.hpp"
 #include "misc/metaprog.hpp"
 #include "misc/misc.hpp"
-#include "misc/stringfct.hpp"
 #include "misc/timefct.hpp"
 
 // random
