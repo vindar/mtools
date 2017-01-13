@@ -314,6 +314,28 @@ namespace internals_serialization
         static inline void write(uint64 & nbitem, OArchive & ar, const typeT & obj, std::string & dest) { ar.operator&(obj.first); ar.operator&(obj.second); }
     };
 
+
+	/* specialization for std::tuple */
+	template<typename... U>  class OArchiveHelper < std::tuple<U...> >
+		{
+
+		template <size_t n> static inline typename std::enable_if<(n >= sizeof...(U))>::type archive_tuple_rec(OArchive &, const std::tuple<U...>&) {}
+
+		template <size_t n> static inline typename std::enable_if<(n < sizeof...(U))>::type archive_tuple_rec(OArchive & ar, const std::tuple<U...>& tup)
+			{
+			ar.operator&(std::get<n>(tup));
+			archive_tuple_rec<n + 1>(ar, tup);
+			}
+
+		public:
+
+			static inline void write(uint64 & nbitem, OArchive & ar, const std::tuple<U...> & obj, std::string & dest) 
+				{ 
+				archive_tuple_rec<0>(ar, obj); 
+				}
+		};
+
+
     /* specialization for std::string */
     template<> class OArchiveHelper < std::string >
     {
@@ -707,6 +729,29 @@ public:
     typedef std::pair<T1, T2> typeT;
     static inline void read(uint64 & nbitem, IArchive & ar, typeT & obj) { ar.operator&(obj.first); ar.operator&(obj.second); }
 };
+
+
+/* specialization for std::tuple */
+template<typename... U>  class IArchiveHelper < std::tuple<U...> >
+	{
+
+	template <size_t n> static inline typename std::enable_if<(n >= sizeof...(U))>::type archive_tuple_rec(IArchive &, const std::tuple<U...>&) {}
+
+	template <size_t n> static inline typename std::enable_if<(n < sizeof...(U))>::type archive_tuple_rec(IArchive & ar, const std::tuple<U...>& tup)
+		{
+		ar.operator&(std::get<n>(tup));
+		archive_tuple_rec<n + 1>(ar, tup);
+		}
+
+	public:
+
+		static inline void read(uint64 & nbitem, IArchive & ar, std::tuple<U...> & obj)
+			{
+			archive_tuple_rec<0>(ar, obj);
+			}
+	};
+
+
 
 /* specialization for std::string */
 template<> class IArchiveHelper < std::string >
