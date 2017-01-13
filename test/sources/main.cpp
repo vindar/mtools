@@ -390,7 +390,7 @@ void testTriangulation()
 
 	int a, b, c, nbv;
 
-	CM.btreeToTriangulation(a, b, c);
+	std::tie(a,b,c) = CM.btreeToTriangulation();
 	cout << "triangulation created in " << mtools::Chronometer() << " ms\n";
 
 	auto gr = CM.toGraph();
@@ -449,7 +449,7 @@ void testBall()
 
 	CombinatorialMap CM(D);
 	int a, b, c;
-	CM.btreeToTriangulation(a, b, c);
+	std::tie(a,b,c) = CM.btreeToTriangulation();
 	cout << "triangulation created in " << mtools::Chronometer() << " ms\n";
 
 	auto gr = CM.toGraph();
@@ -555,22 +555,39 @@ void testBall()
 	}
 
 
+
+
+
+	template <size_t n, typename... T> 
+	typename std::enable_if<(n >= sizeof...(T))>::type print_tuple(std::ostream&, const std::tuple<T...>&) {}
+
+
+	template <size_t n, typename... T>
+	typename std::enable_if<(n < sizeof...(T))>::type print_tuple(std::ostream& os, const std::tuple<T...>& tup)
+		{
+		if (n != 0) os << ", "; os << std::get<n>(tup);
+		print_tuple<n + 1>(os, tup);
+		}
+
+
+	template <typename... T> std::ostream& operator<<(std::ostream& os, const std::tuple<T...>& tup)
+		{
+		os << "(";
+		print_tuple<0>(os, tup);
+		return os << ")";
+		}
+
+	std::tuple<int,int,double> testuple()
+		{
+		return std::make_tuple(1, 1, 0.1);
+		}
+
+
 int main(int argc, char *argv[])
     {
 	MTOOLS_SWAP_THREADS(argc, argv);
 	parseCommandLine(argc, argv);
 
-
-	triple<int, char, double> t = { 34, 'a', 0.1 };
-
-	cout << t << "\n";
-	cout.getKey();
-	return 0;
-	//sim(argc, argv);
-
-
-
-	std::pair<int, int> a;
 
 
 	while (1)	
