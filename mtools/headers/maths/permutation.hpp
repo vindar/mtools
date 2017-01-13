@@ -33,6 +33,8 @@ namespace mtools
 	typedef std::vector<int> Permutation;
 
 
+
+
 	/**
 	* Return the permutation associated with the ordering of labels in non-decreasing order.
 	* The label themselves are NOT reordered.
@@ -105,71 +107,7 @@ namespace mtools
 
 
 	/**
-	* Reorder the vertices of a graph according to a permutation.
-	*
-	* @tparam	GRAPH   	Type of the graph, typically std::vector< std::list<int> >.
-	* 						- The outside container must be accessible via operator[].
-	* 						- The inside container must accept be iterable and contain
-	*                         elements convertible to size_t (corresponding to the indexes
-	*                          the neighour vertices).
-	* @param	graph	  	The graph to reorder.
-	* @param	perm    	The permutation to apply: perm[i] = k means that the vertex with index k
-	*                       must now become the vertex at index i in the new graph.
-	* @param	invperm    	The inverse permutation of perm. (use the other permuteGraph() method if
-	*						not previously computed).
-	*
-	* @return  the permuted graph.
-	**/
-	template<typename GRAPH> GRAPH permuteGraph(const GRAPH & graph, const Permutation  & perm, const Permutation & invperm)
-		{
-		const size_t l = graph.size();
-		MTOOLS_INSURE(perm.size() == l);
-		if (l == 0) return GRAPH();
-		GRAPH res = permute<GRAPH>(graph, perm);	// permute the order of the vertices. 
-		for (size_t i = 0; i < l; i++)
-			{
-			for (auto it = res[i].begin(); it != res[i].end(); it++)
-				{
-				(*it) = invperm[*it];
-				}
-			}
-		return res;
-		}
-
-
-	/**
-	* Reorder the vertices of a graph according to a permutation.
-	* Same as above but also compute the inverse permutation.
-	*/
-	template<typename GRAPH> GRAPH permuteGraph(const GRAPH & graph, const Permutation & perm)
-		{
-		return(permuteGraph(graph, perm, invertPermutation(perm)));
-		}
-
-
-	/**
-	* Convert a graph from type A to type B.
-	*
-	**/
-	template<typename GRAPH_A, typename GRAPH_B> GRAPH_B convertGraph(const GRAPH_A & graph)
-		{
-		GRAPH_B res;
-		const size_t l = graph.size();
-		if (l == 0) return res;
-		res.resize(l);
-		for (size_t i = 0; i < l; i++)
-			{
-			auto & lv1 = graph[i];
-			auto & lv2 = res[i];
-			for (auto it = lv1.begin(); it != lv1.end(); ++it) { lv2.push_back(*it); }
-			}
-		return res;
-		}
-
-
-
-	/**
-	* Perform a uniform permutation of a vector.
+	* Perform a uniform shuffle of a vector.
 	*
 	* @tparam	random_t	Type of the random number generator
 	* @tparam	Vector  	Type of the vector. Must implement size() and operator[].
@@ -212,6 +150,18 @@ namespace mtools
 		randomShuffle(vec, gen);
 		return vec;
 		}
+
+
+	/**
+	 * Default permutation type is mtools::Permutation
+	 **/
+	template<class random_t> inline Permutation uniformRandomPermutation(int n, random_t & gen)
+		{
+		return uniformRandomPermutation<Permutation>(n, gen);
+		}
+
+
+
 
 
 

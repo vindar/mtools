@@ -337,10 +337,10 @@ void loadtestgraph(std::vector<std::vector<int> > & gr, std::vector<int> & bound
 	gr[0].push_back(2);
 	gr[0].push_back(5);
 	gr[0].push_back(3);
-	gr[0].push_back(1);
+	//gr[0].push_back(1);
 
-	gr[1].push_back(0);
-	gr[1].push_back(3);
+	//gr[1].push_back(0);
+	//gr[1].push_back(3);
 	gr[1].push_back(4);
 	gr[1].push_back(2);
 
@@ -352,7 +352,7 @@ void loadtestgraph(std::vector<std::vector<int> > & gr, std::vector<int> & bound
 	gr[3].push_back(0);
 	gr[3].push_back(5);
 	gr[3].push_back(4);
-	gr[3].push_back(1);
+	//gr[3].push_back(1);
 
 	gr[4].push_back(3);
 	gr[4].push_back(5);
@@ -556,39 +556,28 @@ void testBall()
 
 
 
-
-
-	template <size_t n, typename... T> 
-	typename std::enable_if<(n >= sizeof...(T))>::type print_tuple(std::ostream&, const std::tuple<T...>&) {}
-
-
-	template <size_t n, typename... T>
-	typename std::enable_if<(n < sizeof...(T))>::type print_tuple(std::ostream& os, const std::tuple<T...>& tup)
-		{
-		if (n != 0) os << ", "; os << std::get<n>(tup);
-		print_tuple<n + 1>(os, tup);
-		}
-
-
-	template <typename... T> std::ostream& operator<<(std::ostream& os, const std::tuple<T...>& tup)
-		{
-		os << "(";
-		print_tuple<0>(os, tup);
-		return os << ")";
-		}
-
-	std::tuple<int,int,double> testuple()
-		{
-		return std::make_tuple(1, 1, 0.1);
-		}
-
-
 int main(int argc, char *argv[])
     {
 	MTOOLS_SWAP_THREADS(argc, argv);
 	parseCommandLine(argc, argv);
 
+	std::vector<std::vector<int> > gr;
+	std::vector<int> boundary;
+	loadtestgraph(gr, boundary);
 
+
+//	cout << gr << "\n";
+
+	CombinatorialMap C(gr);
+	
+	C.permute(uniformRandomPermutation(C.nbedges()*2, gen));
+	cout << C.toGraph() << "\n";
+	C.permute(uniformRandomPermutation(C.nbedges() * 2, gen));
+	cout << C.toGraph() << "\n";
+
+
+	cout.getKey();
+	return 0;
 
 	while (1)	
 		{

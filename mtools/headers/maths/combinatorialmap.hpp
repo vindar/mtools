@@ -27,7 +27,7 @@
 #include "vec.hpp"
 #include "box.hpp"
 #include "../random/classiclaws.hpp"
-#include "combinatorics.hpp"
+#include "permutation.hpp"
 #include "dyckword.hpp"
 
 
@@ -151,7 +151,18 @@ namespace mtools
 
 
 			/**
+			 * Constructor from a graph (eg std::vector<std::vector<int> > or similar).
+			 * the graph must be non oriented (ie symmetric) or the method may crash. 
+			 **/
+			template<typename GRAPH> CombinatorialMap(const GRAPH & gr)
+				{
+				fromGraph(gr);
+				}
+
+
+			/**
 			* Number of edges of the graph
+			* The number of half-edge (ie arrows) is twice that number.
 			**/
 			int nbedges() const { return (int)_alpha.size() / 2; }
 
@@ -165,6 +176,57 @@ namespace mtools
 				int nbv;
 				findVertices(nbv);
 				return nbv;
+				}
+
+
+			/**
+			 * Load the object from a graph. 
+			 * the graph must be non oriented (ie symmetric) or the method may crash.
+			 *
+			 * @tparam	GRAPH	Type of the graph (eg std::vector<std::vector<int> > or similar)
+			 * @param	gr	the graph
+			 *
+			 * @return	a map that give the index of each oriented edge in the permutations ie
+			 * 			map[{u,v}] = i means that the oriented edge from u to v in the graph correpsond
+			 * 			to the arrow index i in the combinatorial map. 
+			 **/
+			template<typename GRAPH> std::map< std::pair<int, int>, int> fromGraph(const GRAPH & gr)
+				{
+				const size_t l = gr.size();
+				int te = 0;
+				for (size_t i = 0; i < l; i++) { te += (int)gr[i].size(); } // compute the number of half edges
+				_root = 0;
+				_sigma.clear();
+				_alpha.clear();
+				_sigma.reserve(te + 1);
+				_alpha.reserve(te + 1);
+				_sigma.resize(te);
+				_alpha.resize(te);
+				// construct the involution
+				int j = 0; while (j < te) { _alpha[j] = j + 1; _alpha[j + 1] = j; j += 2; }
+				// construct sigma
+				std::map< std::pair<int, int>, int> mapEdge;
+				int freeindex = 0;
+				for (size_t i = 0; i < l; i++)
+					{
+					int firstindex = -1;
+					int previndex = -1;
+					for (auto it = gr[i].begin(); it != gr[i].end(); ++it)
+						{
+						auto res = mapEdge.insert({ std::pair<int, int>((int)i, *it), freeindex }); // try to insert the edge
+						if (res.second)
+							{ // insertion successful: first time we encounter this edge. 
+							mapEdge.insert({ std::pair<int, int>(*it, (int)i), freeindex + 1 }); // insert the oposite edge
+							freeindex += 2;
+							}
+						int index = res.first->second; // index of the edge
+						if (previndex < 0) { firstindex = index; } else { _sigma[previndex] = index; }
+						previndex = index;
+						}
+					if (firstindex >= 0) { _sigma[previndex] = firstindex; }
+					}
+				MTOOLS_ASSERT(freeindex = te);
+				return mapEdge;
 				}
 
 
@@ -196,6 +258,36 @@ namespace mtools
 						}
 					}
 				return gr;
+				}
+
+
+			/**
+			 * Permute the indices of alpha and sigma according to a permutation
+			 *
+			 * @param	perm   	The permutation
+			 * @param	invperm	its inverse
+			 **/
+			void permute(const Permutation  & perm, const Permutation & invperm)
+				{
+				const size_t l = _sigma.size();
+				MTOOLS_ASSERT(perm.size() == l);
+				auto sigma2 = _sigma;
+				auto alpha2 = _alpha;
+				for (int i = 0;i < l; i++)
+					{
+					_sigma[i] = invperm[sigma2[perm[i]]];
+					_alpha[i] = invperm[alpha2[perm[i]]];
+					}
+				_root = invperm[_root];
+				}
+
+
+			/**
+			 * Same as above but when the inverse was not previously precalculated
+			 **/
+			void permute(const Permutation & perm)
+				{
+				permute(perm, invertPermutation(perm));
 				}
 
 

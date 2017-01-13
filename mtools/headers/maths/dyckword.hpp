@@ -26,7 +26,7 @@
 #include "vec.hpp"
 #include "box.hpp"
 #include "../random/classiclaws.hpp"
-#include "combinatorics.hpp"
+#include "permutation.hpp"
 
 
 namespace mtools

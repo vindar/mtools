@@ -243,11 +243,14 @@
     <ClInclude Include="headers\maths\combinatorialmap.hpp">
       <Filter>Header Files\maths</Filter>
     </ClInclude>
-    <ClInclude Include="headers\maths\combinatorics.hpp">
-      <Filter>Header Files\maths</Filter>
-    </ClInclude>
     <ClInclude Include="headers\misc\triple.hpp">
       <Filter>Header Files\misc</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\maths\permutation.hpp">
+      <Filter>Header Files\maths</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\maths\graph.hpp">
+      <Filter>Header Files\maths</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

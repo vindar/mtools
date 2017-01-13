@@ -370,7 +370,8 @@
     <ClInclude Include="headers\maths\box.hpp" />
     <ClInclude Include="headers\maths\circlePacking.hpp" />
     <ClInclude Include="headers\maths\combinatorialmap.hpp" />
-    <ClInclude Include="headers\maths\combinatorics.hpp" />
+    <ClInclude Include="headers\maths\graph.hpp" />
+    <ClInclude Include="headers\maths\permutation.hpp" />
     <ClInclude Include="headers\maths\dyckword.hpp" />
     <ClInclude Include="headers\maths\specialFunctions.hpp" />
     <ClInclude Include="headers\maths\sqrmatrix.hpp" />

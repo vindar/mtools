@@ -25,7 +25,7 @@
 #include "../misc/error.hpp"
 #include "vec.hpp"
 #include "box.hpp"
-#include "combinatorics.hpp"
+#include "permutation.hpp"
 
 
 namespace mtools
