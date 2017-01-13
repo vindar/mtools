@@ -83,7 +83,7 @@
 //misc
 #include "misc/error.hpp"
 #include "misc/stringfct.hpp"
-#include "misc/triple.hpp"
+#include "misc/tuple.hpp"
 #include "misc/indirectcall.hpp"
 #include "misc/memory.hpp"
 #include "misc/metaprog.hpp"
@@ -99,7 +99,6 @@
 #include "random/SRW.hpp"
 #include "random/peelingUIPT.hpp"
 #include "random/krikunlaw.hpp"
-#include "random/randomgraph.hpp"
 
 
 // just in case...

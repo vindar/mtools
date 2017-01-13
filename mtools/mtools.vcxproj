@@ -385,7 +385,7 @@
     <ClInclude Include="headers\misc\stringfct.hpp" />
     <ClInclude Include="headers\misc\threadworker.hpp" />
     <ClInclude Include="headers\misc\timefct.hpp" />
-    <ClInclude Include="headers\misc\triple.hpp" />
+    <ClInclude Include="headers\misc\tuple.hpp" />
     <ClInclude Include="headers\mtools.hpp" />
     <ClInclude Include="headers\random\classiclaws.hpp" />
     <ClInclude Include="headers\random\gen_fastRNG.hpp" />
@@ -394,7 +394,6 @@
     <ClInclude Include="headers\random\gen_xorgen4096_64.hpp" />
     <ClInclude Include="headers\random\krikunlaw.hpp" />
     <ClInclude Include="headers\random\peelingUIPT.hpp" />
-    <ClInclude Include="headers\random\randomgraph.hpp" />
     <ClInclude Include="headers\random\SRW.hpp" />
     <ClInclude Include="headers\random\SRW_exitGridZ2_data.hpp" />
     <ClInclude Include="stdafx_mtools.h" />

@@ -407,7 +407,7 @@ void testTriangulation()
 
 void testBall()
 	{
-	int sizeTrig = 50;
+	int sizeTrig = 2000;
 
 	mtools::Chronometer();
 
@@ -492,7 +492,9 @@ void testBall()
 	*/
 
 	cout << L << "\n";
-	
+
+	cout << mtools::graphInfo(gr);
+
 
 	fBox2 R;
 	std::vector<double> radii;
@@ -530,12 +532,8 @@ int main(int argc, char *argv[])
 	MTOOLS_SWAP_THREADS(argc, argv);
 	parseCommandLine(argc, argv);
 
-
-//		testTriangulation();
-
-	testBall(); return 0;
-
-
+	testBall(); 
+	return 0;
 
 
 /*
