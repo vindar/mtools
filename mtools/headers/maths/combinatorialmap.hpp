@@ -157,6 +157,18 @@ namespace mtools
 
 
 			/**
+			* Number of vertices of the graph. 
+			* THIS IS SLOW : calls findVertices(nbv) and return nbv.
+			**/
+			int nbvertices() const
+				{
+				int nbv;
+				findVertices(nbv);
+				return nbv;
+				}
+
+
+			/**
 			 * Converts the object into a graph.
 			 *
 			 * @tparam	GRAPH	Type of the graph. For example std::vector<std::vector<int> >.
@@ -207,10 +219,10 @@ namespace mtools
 			 * Algorithmica (2006) 46: 505. 
 			 * Implementation adaptated from Laurent Ménard's code :-)
 			 *
-			 * @return	the tree half edges (a,b,c) that determine the root face oriented counterclockise
-			 * 			(the oriented root edge is a).
+			 * @return	the indexes of the 3 oriented half edges (a,b,c) that determine the root face 
+			 * 			oriented counterclockise (the oriented root edge is a).
 			 **/
-			void btreeToTriangulation(int & A,int & B,int & C)
+			std::tuple<int,int,int> btreeToTriangulation()
 				{
 				const int ne = (int)_alpha.size() / 2;	// number of edges
 				const int nv = (ne - 2) / 3 + 1;    // number of inner vertices. 
@@ -290,17 +302,16 @@ namespace mtools
 					if (it == buds.end()) it = buds.begin();
 					_sigma[it->first] = pit->first;
 					}
-
-				
-				A = 2 * ne + 1;
-				B = _sigma[_alpha[A]];
-				C = _sigma[_alpha[B]];
-				return;
+				int A = 2 * ne + 1;
+				int B = _sigma[_alpha[A]];
+				int C = _sigma[_alpha[B]];
+				_root = A;
+				return std::make_tuple(A,B,C);
 				}
 
 
 			/**
-			* Print the word into a string
+			* Print the into a string
 			**/
 			std::string toString() const
 				{
@@ -354,6 +365,15 @@ namespace mtools
 				}
 
 
+			/**
+			* Same as above but does not indicate the total number of vertices.
+			**/
+			std::vector<int> findVertices() const
+				{
+				int nbv;
+				return findVertices(nbv);
+				}
+
 
 		private:
 
@@ -377,8 +397,6 @@ namespace mtools
 				if (sr2 == lr2) { _sigma[i1] = i1; }
 				else { _sigma[i1] = sr2; _sigma[lr2] = i1; }
 				}
-
-
 
 
 			std::vector<int> _alpha;	// involution that matches half edges
