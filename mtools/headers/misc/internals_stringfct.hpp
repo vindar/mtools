@@ -319,6 +319,44 @@ namespace mtools
             }
         };
 
+
+		template<typename... U> class StringConverter < std::tuple<U...> >
+			{
+
+			template <size_t n> static inline typename std::enable_if<(n >= sizeof...(U))>::type print_tuple_rec(std::string &, const std::tuple<U...>&) {}
+
+			template <size_t n> static inline typename std::enable_if<(n < sizeof...(U))>::type print_tuple_rec(std::string & s, const std::tuple<U...>& tup)
+				{
+				if (n != 0) s += ", ";
+				s += toString(std::get<n>(tup));
+				print_tuple_rec<n + 1>(s, tup);
+				}
+
+			template <size_t n> static inline typename std::enable_if<(n >= sizeof...(U))>::type print_tuple_type_rec(std::string &, const std::tuple<U...>&) {}
+
+			template <size_t n> static inline typename std::enable_if<(n < sizeof...(U))>::type print_tuple_type_rec(std::string & s, const std::tuple<U...>& tup)
+				{
+				if (n != 0) s += ", ";
+				s += toString(typeid(decltype(std::get<n>(tup))).name());
+				print_tuple_type_rec<n + 1>(s, tup);
+				}
+
+			public:
+
+				static inline std::string print(const std::tuple<U...> & val, StringEncoding enc)
+					{
+					std::string s("std::tuple<");
+					print_tuple_type_rec<0>(s, val);
+					s += "> = (";
+					print_tuple_rec<0>(s, val);
+					s += ")";
+					return s;
+					}
+			};
+
+
+
+
         template<typename U, size_t N> class StringConverter < std::array<U, N> >
         {
             typedef std::array<U, N> T;
