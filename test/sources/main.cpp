@@ -4,7 +4,7 @@
 using namespace mtools;
 
 
-MT2004_64 gen; // RNG
+MT2004_64 gen(123); // RNG
 
 Grid_basic<2, int64, 2> Grid; // the 2D grid
 
@@ -138,7 +138,7 @@ int sim(int argc, char *argv[])
 
 
 
-void drawCirclePacking(fBox2 R, std::vector<double> & radiuses, std::vector<fVec2> & circles)
+void drawCirclePacking(fBox2 R, std::vector<double> & radiuses, std::vector<fVec2> & circles, std::vector<std::vector<int> > & gr)
 	{
 	cout << "Number of circles: " << circles.size() << "\n";
 
@@ -150,11 +150,21 @@ void drawCirclePacking(fBox2 R, std::vector<double> & radiuses, std::vector<fVec
 
 	for (int i = 0;i < circles.size(); i++)
 		{
-		Im.fBox2_draw_circle(R, circles[i], radiuses[i], RGBc::c_Red);
+		Im.fBox2_draw_circle(R, circles[i], radiuses[i], RGBc::c_Red,0.5f);
 		//Im.fBox2_drawPointCirclePen(R,circles[i],2, RGBc::c_Blue);
-		Im.fBox2_drawText(R, toString(i + 1), circles[i], 'c', 'c', 10, false, RGBc::c_Blue);
+		//Im.fBox2_drawText(R, toString(i + 1), circles[i], 'c', 'c', 10, false, RGBc::c_Blue);
 		}
-	Im.fBox2_drawAxes(R);
+
+	for (int i = 0;i < circles.size(); i++)
+		{
+		for (int j = 0;j < gr[i].size(); j++)
+			{
+			Im.fBox2_drawLine(R, circles[i], circles[gr[i][j]], RGBc::c_Black);
+			}
+		}
+
+
+	Im.fBox2_drawAxes(R,RGBc::c_Green);
 
 
 	Plotter2D Plotter;
@@ -238,6 +248,82 @@ void loadGraph(std::string filename, std::vector<std::vector<int> > & gr, fBox2 
 
 
 
+
+std::vector<int> ComputeDistance(std::vector<std::vector<int> > & gr, int origin, int & maxdist)
+	{
+	std::vector<int> dist(gr.size(), -1);
+	std::set<int> nei1;
+	std::set<int> nei2;
+	std::set<int> * cnei = &nei1;
+	std::set<int> * cneialt = &nei2;
+
+	dist[origin] = 0;
+	for (int i = 0; i < gr[origin].size(); i++) { cnei->insert(gr[origin][i]); }
+
+	int d = 1;
+	while(cnei->size() != 0)
+		{
+		cneialt->clear();
+		for(auto it = cnei->begin(); it != cnei->end(); it++) {  dist[*it] = d; }
+		for (auto it = cnei->begin(); it != cnei->end(); it++)
+			{
+			int k = (*it);
+			for(int j = 0; j < gr[k].size(); j++)
+				{ 
+				int n = gr[k][j];
+				if (dist[n] < 0) cneialt->insert(n);
+				}
+			}
+		d++; 
+		if (cnei == &nei1) { cnei = &nei2; cneialt = &nei1; } else { cnei = &nei1; cneialt = &nei2; }
+		}
+	d--;
+	maxdist = d;
+	return dist;
+	}
+
+
+std::vector<int> markToRemove(std::vector<std::vector<int> > & gr, std::vector<int> & dist, int dmin, int dmax, std::vector<int> & bound)
+	{
+	bound.clear();
+	bound.resize(gr.size(), 0);
+	std::vector<int> marked(gr.size(), 0);
+	int o = -1;
+	for (int i = 0; i < gr.size(); i++) { if (dist[i] == dmax) { o = i; } }
+	marked[o] = 1;
+	std::set<int> nei1;
+	std::set<int> nei2;
+	std::set<int> * cnei = &nei1;
+	std::set<int> * cneialt = &nei2;
+
+	for (int i = 0; i < gr[o].size(); i++) 
+		{ 
+		if (dist[gr[o][i]] == dmin) { bound[gr[o][i]] = 1; } else
+		if ((dist[gr[o][i]] > dmin) && (marked[gr[o][i]] == 0)) { cnei->insert(gr[o][i]); } 
+		}
+
+	while (cnei->size() != 0)
+		{
+		cneialt->clear();
+		for (auto it = cnei->begin(); it != cnei->end(); it++) { marked[*it] = 1; cout << "."; }
+		for (auto it = cnei->begin(); it != cnei->end(); it++)
+			{
+			int k = (*it);
+			for (int j = 0; j < gr[k].size(); j++)
+				{
+				int n = gr[k][j];
+				if (dist[n] == dmin) { bound[n] = 1; } 
+				if ((dist[n] > dmin) && (marked[n] == 0)) { cneialt->insert(n); }
+				}
+			}
+		if (cnei == &nei1) { cnei = &nei2; cneialt = &nei1; } else { cnei = &nei1; cneialt = &nei2; }
+		}
+	return marked;
+	}
+
+
+
+
 void loadtestgraph(std::vector<std::vector<int> > & gr, std::vector<int> & boundary)
 	{
 	gr.clear();
@@ -282,21 +368,201 @@ void loadtestgraph(std::vector<std::vector<int> > & gr, std::vector<int> & bound
 
 
 
+
+void testTriangulation()
+	{
+	int sizeTrig = 500;
+
+	mtools::Chronometer();
+	DyckWord D(sizeTrig, 3);
+	D.shuffle(gen);
+
+	cout << "tree created in " << mtools::Chronometer() << " ms\n";
+
+	CombinatorialMap CM(D);
+
+	int a, b, c, nbv;
+
+	CM.btreeToTriangulation(a, b, c);
+	cout << "triangulation created in " << mtools::Chronometer() << " ms\n";
+
+	auto gr = CM.toGraph();
+	cout << "converted in graph in " << mtools::Chronometer() << " ms\n";
+
+	auto V = CM.findVertices(nbv);
+	int v1 = V[a];
+	int v2 = V[b];
+	int v3 = V[c];
+	cout << v1 << " " << v2 << " " << v3 << "\n\n";
+
+	fBox2 R;
+	std::vector<int> boundary;
+	boundary.resize(gr.size());
+	boundary[v1] = 1;
+	boundary[v2] = 1;
+	boundary[v3] = 1;
+
+	std::vector<double> radii;
+	std::vector<fVec2> circles;
+
+	CirclePacking CP;
+
+	CP.setTriangulation(gr, boundary);
+	CP.setRadii();
+
+	cout << "packing...\n";
+	mtools::Chronometer();
+	cout << "ITER = " << CP.computeRadiiFast(1.0e-7) << "\n";
+	cout << "done in " << mtools::Chronometer() << "ms\n";
+
+
+	cout << "layout...\n";
+	mtools::Chronometer();
+	CP.computeLayout();
+	cout << "done in " << mtools::Chronometer() << "ms\n";
+
+	radii = CP.getRadii();
+	circles = CP.getLayout();
+	R = CP.getEnclosingRect();
+	drawCirclePacking(R, radii, circles, gr);
+
+	return;
+	}
+
+
+void testBall()
+	{
+	int sizeTrig = 50000;
+
+	mtools::Chronometer();
+	DyckWord D(sizeTrig, 3);
+	D.shuffle(gen);
+	cout << "tree created in " << mtools::Chronometer() << " ms\n";
+
+	CombinatorialMap CM(D);
+	int a, b, c;
+	CM.btreeToTriangulation(a, b, c);
+	cout << "triangulation created in " << mtools::Chronometer() << " ms\n";
+
+	auto gr = CM.toGraph();
+	cout << "converted in graph in " << mtools::Chronometer() << " ms\n";
+
+
+	int nbv;
+	auto V = CM.findVertices(nbv);
+	int v1 = V[a];
+	int v2 = V[b];
+	int v3 = V[c];
+	cout << v1 << " " << v2 << " " << v3 << "\n\n";
+	std::vector<int> oldbound;
+	oldbound.resize(gr.size());
+	oldbound[v1] = 1;
+	oldbound[v2] = 1;
+	oldbound[v3] = 1;
+
+
+	int maxd;
+	auto dist = ComputeDistance(gr, 0, maxd);
+	int cutd = maxd/2;
+	cout << "maxdist = " << maxd << "\n";;
+	cout << "cutd = " << cutd << "\n";;
+
+	std::vector<int> bound;
+	auto marked = markToRemove(gr, dist, cutd, maxd, bound);
+
+
+	cout << dist;
+	cout << bound;
+	cout << marked;
+	cout << gr;
+
+	
+	dist = mtools::permute(dist, getSortPermutation(marked));
+	bound = mtools::permute(bound, getSortPermutation(marked));
+	oldbound = mtools::permute(oldbound, getSortPermutation(marked));
+	gr = mtools::permuteGraph(gr, getSortPermutation(marked));
+	marked = mtools::permute(marked, getSortPermutation(marked));
+
+
+
+
+
+
+	int L = 0;
+	while (marked[L] == 0) { L++; }
+	gr.resize(L);
+	bound.resize(L);
+
+	std::vector<std::vector<int> > gr2;
+	gr2.resize(L);
+	for (int i = 0; i < L; i++)
+		{
+		gr2[i].reserve(gr[i].size());
+		for (auto j = 0; j < gr[i].size(); j++)
+			{
+			int x = gr[i][j]; if (x < L) gr2[i].push_back(x);
+			}
+		}
+	gr = gr2;
+
+	cout << bound;
+	cout << gr;
+
+
+	/*
+	cout << dist;
+	cout << bound;
+	cout << marked;
+	cout << gr;
+	*/
+
+	cout << L << "\n";
+	
+
+	fBox2 R;
+	std::vector<double> radii;
+	std::vector<fVec2> circles;
+
+	CirclePacking CP;
+
+	CP.setTriangulation(gr, bound);
+	CP.setRadii();
+
+	cout << "packing...\n";
+	mtools::Chronometer();
+	cout << "ITER = " << CP.computeRadiiFast(1.0e-10) << "\n";
+	cout << "done in " << mtools::Chronometer() << "ms\n";
+
+
+	cout << "layout...\n";
+	mtools::Chronometer();
+	CP.computeLayout();
+	cout << "done in " << mtools::Chronometer() << "ms\n";
+
+	radii = CP.getRadii();
+	circles = CP.getLayout();
+	R = CP.getEnclosingRect();
+	drawCirclePacking(R, radii, circles, gr);
+
+
+
+	}
+
+
 int main(int argc, char *argv[])
     {
 	MTOOLS_SWAP_THREADS(argc, argv);
 	parseCommandLine(argc, argv);
 	//sim(argc, argv);
-	
 
-	MT2004_64 gen;
-	cout << uniformRandomPermutation<std::vector<int>, MT2004_64>(3,gen);
+	//testTriangulation(); return 0;
 
-	cout.getKey();
-	cout.getKey();
-	return 0;
+	testBall(); return 0;
 
 
+
+
+/*
 	std::vector<std::vector<int> > graph;
 	fBox2 R;
 	std::vector<int> boundary;
@@ -330,7 +596,7 @@ int main(int argc, char *argv[])
 	circles = CP.getLayout();
 	R = CP.getEnclosingRect();
 	drawCirclePacking(R, radii, circles);
-
+	*/
 
     }
 
