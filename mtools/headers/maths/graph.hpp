@@ -104,6 +104,58 @@ namespace mtools
 
 
 
+	/**
+	* Explore the graph starting from a root vertex and following the oriented edges.
+	* Accept lambda functions.
+	*
+	* See method computeDistances() below for an example of how to use it. 
+	*
+	* @param	gr	  	The graph.
+	* @param	origin	The vertex to start exploration from.
+	* @param	fun   	The function to call at each visited vertex. Of the form:
+	* 					bool fun(int vert, int dist)
+	* 					  - vert  : the vertice currently visited
+	* 					  - dist  : the distance of vert from the stating position
+	* 					  - return: true to explore its neighobur and false to stop.
+	*
+	* @return	the total number of vertices visited.
+	**/
+	template<typename GRAPH> int exploreGraph(const GRAPH & gr, int origin, std::function<bool(int, int)> fun)
+		{
+		const size_t l = gr.size();
+		std::vector<char> vis(l, 0);
+		std::vector<int> tempv1; tempv1.reserve(l);
+		std::vector<int> tempv2; tempv2.reserve(l);
+		std::vector<int> * pv1 = &tempv1;
+		std::vector<int> * pv2 = &tempv2;
+		vis[origin] = 1;
+		pv1->push_back(origin);
+		int sum = 1;
+		int d = 0;
+		while (pv1->size() != 0)
+			{
+			pv2->clear();
+			const size_t l = pv1->size();
+			for (int i = 0; i < l; i++)
+				{
+				const int k = pv1->operator[](i);
+				if (fun(k, d))
+					{
+					for (auto it = gr[k].begin(); it != gr[k].end(); ++it)
+						{
+						const int n = (*it);
+						if (vis[n] == 0) { vis[n] = 1;  pv2->push_back(n); sum++; }
+						}
+					}
+				}
+			d++;
+			if (pv1 == &tempv1) { pv1 = &tempv2; pv2 = &tempv1; }
+			else { pv1 = &tempv1; pv2 = &tempv2; }
+			}
+		return sum;
+		}
+
+
 
 	/**
 	 * Compute the distance from a given vertex in the graph.
@@ -121,33 +173,10 @@ namespace mtools
 		{
 		const size_t l = gr.size();
 		std::vector<int> dist(l, -1);
-		std::vector<int> tempv1; tempv1.reserve(l);
-		std::vector<int> tempv2; tempv2.reserve(l);
-		std::vector<int> * pv1 = &tempv1;
-		std::vector<int> * pv2 = &tempv2;
-		dist[rootVertex] = 0;
-		pv1->push_back(rootVertex);
-		size_t visited = 1;
-		int d = 1;
-		int vd = 0;
-		while(pv1->size() != 0)
-			{
-			pv2->clear();
-			const size_t l = pv1->size();
-			for (int i = 0; i < l; i++)
-				{
-				const int k = pv1->operator[](i);
-				for (auto it = gr[k].begin(); it != gr[k].end(); ++it)
-					{
-					const int n = (*it);
-					if (dist[n] < 0) { pv2->push_back(n); dist[n] = d; visited++; vd = d; }
-					}
-				}
-			d++;
-			if (pv1 == &tempv1) { pv1 = &tempv2; pv2 = &tempv1; } else { pv1 = &tempv1; pv2 = &tempv2; }
-			}
-		maxdistance = vd;
-		connected = (visited == l);
+		int md = 0;
+		int nbvis = exploreGraph(gr, rootVertex, [&](int vert, int d) -> bool { dist[vert] = d; if (d > md) { md = d; } return true; });
+		maxdistance = md;
+		connected = (nbvis == l);
 		return dist;
 		}
 
@@ -177,35 +206,184 @@ namespace mtools
 
 
 	/**
-	* Query if a graph has loops 
-	* ie if there exist an edge u->u
-	**/
-	template<typename GRAPH> bool hasLoop(const GRAPH & gr)
+	 * Return the type of the graph.
+	 *
+	 * @param	gr	The graph.
+	 *
+	 * @return	Return a tuple with the following meaning
+	 * 			- <0>:  valid					true if all edges index are within [0,graph.size()[.
+	 * 			- <1>:  oriented   			true if the graph is oriented (edge set is not symmetric). 
+	 * 			- <2>:  isolated outgoing		true if the graph has vertices without outgoing edge
+	 * 			- <3>:  isolated ingoing		true if the graph has vertices without ingoing edge
+	 * 			- <4>:  isolated both			true if the graph has vertices without outgoing nor ingoing edge
+	 * 			- <5>:  has loop.				true if the graph has loops.
+	 * 			- <6>:  has double edge.		true is the graph has double edges  
+	 * 			- <7>:  number of oriented edges in the graph.
+	 * 			- <8>:  number of vertices in the graph.  
+	 * 			- <9>:  maximum outgoing degre of the vertices
+	 * 			- <10>: maximum ingoing degre of the vertices
+	 **/
+	template<typename GRAPH> std::tuple<bool,bool,bool, bool, bool, bool,bool, int,int,int,int> graphType(const GRAPH & gr)
 		{
-		size_t l = gr.size();
-		for (size_t i = 0; i < l; i++)
-			{
+		const int nbv = (int)gr.size();	// number of vertices
+		int nbe = 0;				// number of edges
+		std::map<std::pair<int, int>, std::pair<int, int> >  mapedge;	// store edges count to check for symmetry
+		std::vector<int> invec; invec.resize(nbv);			// in degre
+		std::vector<int> outvec; outvec.resize(nbv);		// out degree
+		bool isValid = true;			// graph is valid ?
+		bool hasLoop = false;			// graph has loops ?
+		for (int i = 0; i < nbv; i++)
+			{ // iterate over the vertices
+			const int ne = (int)gr[i].size();
+			nbe += ne;
 			for (auto it = gr[i].begin(); it != gr[i].end(); ++it)
 				{
-				if ((*it) == i) return true;
+				const int j = *it;
+				if ((j < 0) || (j >= nbv)) { isValid = false; }
+				else
+					{
+					if (i == j) { hasLoop = true; }
+					else
+						{
+						invec[j]++; 
+						outvec[i]++;
+						if (i < j) { mapedge[{i, j}].first++; } else { mapedge[{j, i}].second++; }
+						}					
+					}
 				}
 			}
-		return false;
+		bool hasIsolatedOut  = false;
+		bool hasIsolatedIn   = false;
+		bool hasIsolatedBoth = false;
+		int maxoud			 = 0;
+		int maxind			 = 0;
+		for (size_t i = 0; i < nbv; i++)
+			{
+			const int in  = invec[i];
+			const int ou  = outvec[i];
+			if (in > maxind) { maxind = in; }
+			if (ou > maxoud) { maxoud = ou; }
+			if (in == 0) { hasIsolatedIn = true; }
+			if (ou == 0) { hasIsolatedOut = true;  if (in == 0) { hasIsolatedBoth = true; } }			
+			}			
+		bool isOriented = false;
+		bool hasDoubleEdge = false;
+		for (auto it = mapedge.begin(); it != mapedge.end(); ++it)
+			{
+			auto & value = it->second;
+			if (value.first != value.second) { isOriented = true; }
+			if ((value.first > 1)|| (value.second > 1)) { hasDoubleEdge = true; }
+			}
+		MTOOLS_ASSERT(isOriented || ((maxoud == maxind) && (nbe % 2 == 0)));
+		return std::make_tuple( isValid,		// 0
+								isOriented,		// 1
+								hasIsolatedOut,	// 2
+								hasIsolatedIn,	// 3
+								hasIsolatedBoth,// 4
+								hasLoop,		// 5
+								hasDoubleEdge,	// 6
+								nbe,			// 7
+								nbv,			// 8 
+								maxoud,			// 9
+								maxind			// 10
+								);
 		}
 
 
+	/** Convenience method for graphType() **/
+	inline bool graphType_isValid(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int> typ) { return std::get<0>(typ); }
+
+	/**  Convenience method for graphType() **/
+	inline bool graphType_isOriented(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int> typ) { return std::get<1>(typ); }
+
+	/**  Convenience method for graphType() **/
+	inline bool graphType_hasIsolatedOut(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int> typ) { return std::get<2>(typ); }
+
+	/**  Convenience method for graphType() **/
+	inline bool graphType_hasIsolatedIn(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int> typ) { return std::get<3>(typ); }
+
+	/**  Convenience method for graphType() **/
+	inline bool graphType_hasIsolatedBoth(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int> typ) { return std::get<4>(typ); }
+
+	/**  Convenience method for graphType() **/
+	inline bool graphType_hasLoop(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int> typ) { return std::get<5>(typ); }
+
+	/**  Convenience method for graphType() **/
+	inline bool graphType_hasDoubleEdge(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int> typ) { return std::get<6>(typ); }
+
+	/**  Convenience method for graphType() **/
+	inline int graphType_nbEdges(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int> typ) { return std::get<7>(typ); }
+
+	/**  Convenience method for graphType() **/
+	inline int graphType_nbVertices(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int> typ) { return std::get<8>(typ); }
+
+	/**  Convenience method for graphType() **/
+	inline int graphType_maxOutDegree(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int> typ) { return std::get<9>(typ); }
+
+	/**  Convenience method for graphType() **/
+	inline int graphType_maxInDegree(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int> typ) { return std::get<10>(typ); }
+
 	/**
-	* Query if a graph has double edges
-	* ie if there exist two edges u->v for the same u,v. 
+	* Convenience method for graphType(). 
+	* Return true if the graph is simple i.e. if it is unoriented, without loop and double edge. 
 	**/
-	template<typename GRAPH> bool hasDoubleEdges(const GRAPH & gr);
+	inline bool graphType_isSimple(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int> typ) { return ((graphType_isValid(typ))&&(!graphType_isOriented(typ)) && (!graphType_hasLoop(typ)) && (!graphType_hasDoubleEdge(typ))); }
 
 
 	/**
-	* Query if gr is unoriented
-	* ie for any u,v, there is the same number of edges u->v and v->u
+	* Print information about the graph into a string
 	**/
-	template<typename GRAPH> bool isUnoriented(const GRAPH & gr);
+	template<typename GRAPH> std::string graphInfo(const GRAPH & gr)
+		{
+		std::string s;
+		auto res = graphType(gr);
+		if (!graphType_isValid(res)) { s += std::string("!!! INVALID GRAPH !!!!\n"); }
+		else
+			{
+			if (graphType_isOriented(res))
+				{
+				s += std::string("ORIENTED GRAPH\n");
+				if (graphType_hasLoop(res))       { s += std::string("    -> WITH LOOPS\n"); }        else { s += std::string("    -> no loop.\n"); }
+				if (graphType_hasDoubleEdge(res)) { s += std::string("    -> WITH DOUBLE EDGES\n"); } else { s += std::string("    -> no double edge.\n"); }
+				s += std::string(" - Vertices       : ") + toString(graphType_nbVertices(res)) + "\n";
+				s += std::string(" - Oriented edges : ") + toString(graphType_nbEdges(res));
+				s += std::string(" - Max out degree : ") + toString(graphType_maxOutDegree(res)) + "\n";
+				s += std::string(" - Max in  degree : ") + toString(graphType_maxInDegree(res)) + "\n";
+				s += std::string(" - Isolated vertice out   : ") + toString(graphType_hasIsolatedOut(res)) + "\n";
+				s += std::string(" - Isolated vertices in   : ") + toString(graphType_hasIsolatedOut(res)) + "\n";
+				s += std::string(" - Isolated vertices both : ") + toString(graphType_hasIsolatedOut(res)) + "\n";
+				}
+			else
+				{
+				if (graphType_isSimple(res)) { s += std::string("SIMPLE NON-ORIENTED GRAPH (no loop nor double edge)\n"); }
+				else
+					{
+					s += std::string("NON-ORIENTED GRAPH\n");
+					if (graphType_hasLoop(res))       { s += std::string("    -> WITH LOOPS\n"); }        else { s += std::string("    -> no loop.\n"); }
+					if (graphType_hasDoubleEdge(res)) { s += std::string("    -> WITH DOUBLE EDGES\n"); } else { s += std::string("    -> no double edge.\n"); }
+					}
+				s += std::string("Vertices   : ") + toString(graphType_nbVertices(res)) + "\n";
+				s += std::string("Edges      : ") + toString(graphType_nbEdges(res) / 2) + "  ( " + toString(graphType_nbEdges(res)) + " oriented edges)\n";
+				s += std::string("Max degree : ") + toString(graphType_maxInDegree(res)) + "\n";
+				bool connected;
+				int maxd;
+				computeDistances(gr, 0, maxd, connected);
+				if (connected)
+					{
+					s += std::string("Graph is CONNECTED. Estimated diameter [") + toString(maxd) + "," + toString(2 * maxd) + "]\n";
+					}
+				else
+					{
+					s += std::string("Graph is NOT connected.\n");
+					s += std::string("   - isolated vertices    : ") + toString(graphType_hasIsolatedBoth(res)) + "\n";
+					}
+				}
+			}
+		return s;
+		}
+
+
+
 
 
 	/**
@@ -266,12 +444,12 @@ namespace mtools
 
 
 
+
+
+
 	/***
 	Info on a graph
-	- unoriented ? 
-	- loop ?
-	- double edges ?
-	- conected ?
+
 	- planar ? 
 	- number of vertices
 	- number of oriented/non-oriented edges ?
