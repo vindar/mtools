@@ -9,7 +9,7 @@ using namespace mtools;
 
 
 
-MT2004_64 gen; // RNG
+MT2004_64 gen(100); // RNG
 
 Grid_basic<2, int64, 2> Grid; // the 2D grid
 
@@ -254,38 +254,6 @@ void loadGraph(std::string filename, std::vector<std::vector<int> > & gr, fBox2 
 
 
 
-std::vector<int> ComputeDistance(std::vector<std::vector<int> > & gr, int origin, int & maxdist)
-	{
-	std::vector<int> dist(gr.size(), -1);
-	std::set<int> nei1;
-	std::set<int> nei2;
-	std::set<int> * cnei = &nei1;
-	std::set<int> * cneialt = &nei2;
-
-	dist[origin] = 0;
-	for (int i = 0; i < gr[origin].size(); i++) { cnei->insert(gr[origin][i]); }
-
-	int d = 1;
-	while(cnei->size() != 0)
-		{
-		cneialt->clear();
-		for(auto it = cnei->begin(); it != cnei->end(); it++) {  dist[*it] = d; }
-		for (auto it = cnei->begin(); it != cnei->end(); it++)
-			{
-			int k = (*it);
-			for(int j = 0; j < gr[k].size(); j++)
-				{ 
-				int n = gr[k][j];
-				if (dist[n] < 0) cneialt->insert(n);
-				}
-			}
-		d++; 
-		if (cnei == &nei1) { cnei = &nei2; cneialt = &nei1; } else { cnei = &nei1; cneialt = &nei2; }
-		}
-	d--;
-	maxdist = d;
-	return dist;
-	}
 
 
 std::vector<int> markToRemove(std::vector<std::vector<int> > & gr, std::vector<int> & dist, int dmin, int dmax, std::vector<int> & bound)
@@ -468,10 +436,11 @@ void testBall()
 	oldbound[v2] = 1;
 	oldbound[v3] = 1;
 
-
-	int maxd;
-	auto dist = ComputeDistance(gr, 0, maxd);
+	bool connected = false;
+	int maxd = -1;
+	auto dist = computeDistances(gr, 0, maxd,connected);
 	int cutd = maxd/2;
+	cout << "connected = " << connected << "\n";;
 	cout << "maxdist = " << maxd << "\n";;
 	cout << "cutd = " << cutd << "\n";;
 
@@ -561,28 +530,8 @@ int main(int argc, char *argv[])
 	MTOOLS_SWAP_THREADS(argc, argv);
 	parseCommandLine(argc, argv);
 
-	std::vector<std::vector<int> > gr;
-	std::vector<int> boundary;
-	loadtestgraph(gr, boundary);
 
-
-//	cout << gr << "\n";
-
-	CombinatorialMap C(gr);
-	
-	C.permute(uniformRandomPermutation(C.nbedges()*2, gen));
-	cout << C.toGraph() << "\n";
-	C.permute(uniformRandomPermutation(C.nbedges() * 2, gen));
-	cout << C.toGraph() << "\n";
-
-
-	cout.getKey();
-	return 0;
-
-	while (1)	
-		{
-		testTriangulation();
-		}
+//		testTriangulation();
 
 	testBall(); return 0;
 
