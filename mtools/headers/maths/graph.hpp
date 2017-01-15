@@ -220,8 +220,8 @@ namespace mtools
 	 * 			- <6>:  has double edge.		true is the graph has double edges  
 	 * 			- <7>:  number of oriented edges in the graph.
 	 * 			- <8>:  number of vertices in the graph.  
-	 * 			- <9>:  maximum outgoing degre of the vertices
-	 * 			- <10>: maximum ingoing degre of the vertices
+	 * 			- <9>:  maximum outgoing degre of the vertices (not counting loops)
+	 * 			- <10>: maximum ingoing degre of the vertices  (not counting loops)
 	 **/
 	template<typename GRAPH> std::tuple<bool,bool,bool, bool, bool, bool,bool, int,int,int,int> graphType(const GRAPH & gr)
 		{
@@ -446,27 +446,14 @@ namespace mtools
 
 
 
+	/**
+	additionnal info on the graph
 
-	/***
-	Info on a graph
-
-	- planar ? 
-	- number of vertices
-	- number of oriented/non-oriented edges ?
-	- number of faces ?
+	- planar ? number of faces ?
 	- is a tree ? 
 	- is degree regular
-	- max degree of vertices
+	- max degree of vertices, min degree
 	- diameter
-	*/
-	/**
-	* TODO
-	* - compute distance
-	* - is connected
-	* - is tree
-	* - number of faces.
-	* - is symmetric (unoriented)
-	* - troncate.
 
 	**/
 

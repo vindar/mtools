@@ -527,11 +527,45 @@ void testBall()
 
 
 
+
+
+	void testR(CombinatorialMap & cm)
+		{
+		cout << "MAP\n";
+		cout << "Is tree : " << cm.isTree() << "\n";
+		cout << "nb edges: " << cm.nbEdges() << "\n";
+		cout << "nb faces: " << cm.nbFaces() << "\n";
+		cout << "nb verti: " << cm.nbVertices() << "\n\n";
+		cout << "euler   : " << cm.nbVertices() - cm.nbEdges() + cm.nbFaces() << "\n";
+		cout << "DUAL\n";
+		auto cm2 = cm.getDual();
+		cout << "Is tree : " << cm2.isTree() << "\n";
+		cout << "nb edges: " << cm2.nbEdges() << "\n";
+		cout << "nb faces: " << cm2.nbFaces() << "\n";
+		cout << "nb verti: " << cm2.nbVertices() << "\n\n";
+		cout << "euler   : " << cm.nbVertices() - cm.nbEdges() + cm.nbFaces() << "\n";
+		auto cm3 = cm2.getDual();
+		cout << "DUAL(DUAL) = MAP :" << (cm3 == cm) << "\n\n\n";
+		}
+
 int main(int argc, char *argv[])
     {
 	MTOOLS_SWAP_THREADS(argc, argv);
 	parseCommandLine(argc, argv);
 
+	DyckWord dw(20, 3);
+	CombinatorialMap cm(dw);
+
+	testR(cm);
+
+	cm.btreeToTriangulation();
+
+	testR(cm);
+
+	cout.getKey();
+	cout.getKey();
+
+	return 0;
 	testBall(); 
 	return 0;
 

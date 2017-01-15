@@ -64,10 +64,8 @@ namespace mtools
 				}
 
 
-
 			/**
 			* Construct a rooted planar tree from a Dick word.
-			*
 			* The total number of edges of the tree is dw.nbedges().
 			*
 			* if weigth = 1, it is the classic rooted tree encoded with the Dyck word. 
@@ -78,6 +76,213 @@ namespace mtools
 			* The tree is always rooted at a leaf edge, from the leaf to the interior vertice.
 			**/
 			CombinatorialMap(const DyckWord & dw)
+				{
+				fromDyckWord(dw);
+				}
+
+			/**
+			 * Constructor from a graph (eg std::vector<std::vector<int> > or similar).
+			 * the graph must be non oriented (ie symmetric) or the method may crash. 
+			 **/
+			template<typename GRAPH> CombinatorialMap(const GRAPH & gr)
+				{
+				fromGraph(gr);
+				}
+
+
+			/**
+			 * Equality operator. Return true is the object are exactly the same.
+			 * The map must have the same root and the same ordering of vetices to compare equal. 
+			 **/
+			bool operator==(const CombinatorialMap & cm)
+				{
+				return ((_root == cm._root) && (_sigma == cm._sigma) && (_alpha == cm._alpha));
+				}
+
+
+			/**
+			* Number of edges of the graph
+			* The number of half-edge (ie arrows) is twice that number.
+			**/
+			inline int nbEdges() const { return (int)_alpha.size() / 2; }
+
+
+			/**
+			* Number of half-edges (ie arrows) of the graph
+			* The number of half-edge (ie arrows) is twice that number.
+			**/
+			inline int nbHalfEdges() const { return (int)_alpha.size(); }
+
+
+			/**
+			* Permutation alpha: involution that
+			* matches the half edges together.
+			**/
+			inline const int & alpha(int i) const { return _alpha[i]; }
+
+
+			/**
+			* Permutation sigma. Give the next half edge
+			* when rotating around a vertex in positive
+			* orientation.
+			**/
+			inline const int & sigma(int i) const { return _sigma[i]; }
+
+
+			/**
+			* Permutation phi. Same as sigma(alpha(.)).
+			* Rotates around a face (or equivalently around a vertex of the dual graph).
+			**/
+			inline const int & phi(int i) const { return _sigma[_alpha[i]]; }
+
+
+			/**
+			* construct the dual combinatorial map
+			*
+			* @return	The dual graph
+			**/
+			CombinatorialMap getDual() const
+				{
+				CombinatorialMap cm(*this);
+				const size_t l = nbHalfEdges();
+				for (int i = 0; i < l; i++) { cm._sigma[i] = phi(i); }
+				return cm;
+				}
+
+
+			/**
+			* Number of vertices of the graph. 
+			* Calls findVertices(nbv) and return only nbv.
+			**/
+			int nbVertices() const
+				{
+				int nbv;
+				findVertices(nbv);
+				return nbv;
+				}
+
+
+			/**
+			* Create a vector associating each half-edge with its correpsonding vertex. 
+			* put the total number of vertices in nbv.
+			**/
+			std::vector<int> findVertices(int & nbv) const
+				{
+				std::vector<int> vert(nbHalfEdges(), -1);
+				nbv = 0;
+				for (int i = 0; i < vert.size(); i++)
+					{
+					if (vert[i] < 0)
+						{
+						vert[i] = nbv;
+						int j = sigma(i);
+						while (j != i)
+							{
+							MTOOLS_ASSERT(vert[j] < 0);
+							vert[j] = nbv;
+							j = sigma(j);
+							}
+						nbv++;
+						}
+					}
+				return vert;
+				}
+
+
+			/**
+			* Same as above but does not indicate the total number of vertices.
+			**/
+			std::vector<int> findVertices() const
+				{
+				int nbv;
+				return findVertices(nbv);
+				}
+
+
+			/**
+			* Number of faces of the graph.
+			* Calls findFaces(nbf) and return only nbf.
+			**/
+			int nbFaces() const
+				{
+				int nbf;
+				findFaces(nbf);
+				return nbf;
+				}
+
+
+			/**
+			* Create a vector associating each half-edge with its corresponding face.
+			* put the total number of faces in nbf.
+			**/
+			std::vector<int> findFaces(int & nbf) const
+				{
+				std::vector<int> vert(nbHalfEdges(), -1);
+				nbf = 0;
+				for (int i = 0; i < vert.size(); i++)
+					{
+					if (vert[i] < 0)
+						{
+						vert[i] = nbf;
+						int j = phi(i);
+						while (j != i)
+							{
+							MTOOLS_ASSERT(vert[j] < 0);
+							vert[j] = nbf;
+							j = phi(j);
+							}
+						nbf++;
+						}
+					}
+				return vert;
+				}
+
+
+			/**
+			* Query if the graph is a tree.
+			*
+			* @return	true if it is tree, false if not.
+			**/
+			inline bool isTree() const
+				{
+				int e = phi(0);
+				int n = 1;
+				while (e != 0) { n++; e = phi(e); } // follow the faces 
+				return(n == nbHalfEdges()); // tree iif there is only one face
+				}
+
+
+			/**
+			* Query if the combinatorial map is planar.
+			* This checks if the EMBEDDING is planar, not if the
+			* underlying graph admits a planar embedding.
+			*
+			* @return	true if planar, false if not.
+			**/
+			inline bool isPlanar() const
+				{
+				// we construct a spanning tree. 
+				int nbv;
+				auto tabv = findVertices(nbv); // find the vertices
+
+				// TODO
+		
+				return false;
+				}
+
+
+			/**
+			* Construct a rooted planar tree from a Dick word.
+			* The total number of edges of the tree is dw.nbedges().
+			*
+			* if weigth = 1, it is the classic rooted tree encoded with the Dyck word.
+			* if weight > 1, creates a tree where each non leaf vertex has exactly weight
+			*                neighbour leafs and there is dw.ups() interior edges (ie
+			*                dw.ups() + 1 non leaf vertices)
+			*
+			* The tree is always rooted at a leaf edge, from the leaf to the interior vertice.
+			**/
+			void fromDyckWord(const DyckWord & dw)
 				{
 				const int n = dw.nbedges();
 				MTOOLS_ASSERT(n > 0);           // tree must have at least 1 edges
@@ -149,35 +354,7 @@ namespace mtools
 				for (int i = 0; i < (2 * n); i++) { _sigma[i] = (_alpha[i] + 1) % (2 * n); }
 				}
 
-
-			/**
-			 * Constructor from a graph (eg std::vector<std::vector<int> > or similar).
-			 * the graph must be non oriented (ie symmetric) or the method may crash. 
-			 **/
-			template<typename GRAPH> CombinatorialMap(const GRAPH & gr)
-				{
-				fromGraph(gr);
-				}
-
-
-			/**
-			* Number of edges of the graph
-			* The number of half-edge (ie arrows) is twice that number.
-			**/
-			int nbedges() const { return (int)_alpha.size() / 2; }
-
-
-			/**
-			* Number of vertices of the graph. 
-			* THIS IS SLOW : calls findVertices(nbv) and return nbv.
-			**/
-			int nbvertices() const
-				{
-				int nbv;
-				findVertices(nbv);
-				return nbv;
-				}
-
+			
 
 			/**
 			 * Load the object from a graph. 
@@ -243,7 +420,7 @@ namespace mtools
 				std::vector<int> vert = findVertices(nbv);	// start vertices of the half edges
 				GRAPH gr;
 				gr.resize(nbv);
-				for (int i = 0; i < vert.size(); i++)
+				for (int i = 0; i < nbv; i++)
 					{
 					int v = vert[i];
 					if (gr[v].size() == 0)
@@ -262,11 +439,20 @@ namespace mtools
 
 
 			/**
-			 * Permute the indices of alpha and sigma according to a permutation
-			 *
-			 * @param	perm   	The permutation
-			 * @param	invperm	its inverse
-			 **/
+			* Default choice for graph is std::vector<std::vector<int> >
+			**/
+			std::vector<std::vector<int> > toGraph() const
+				{
+				return toGraph< std::vector<std::vector<int> > >();
+				}
+
+
+			/**
+			* Permute the indices of alpha and sigma according to a permutation
+			*
+			* @param	perm   	The permutation
+			* @param	invperm	its inverse
+			**/
 			void permute(const Permutation  & perm, const Permutation & invperm)
 				{
 				const size_t l = _sigma.size();
@@ -283,20 +469,11 @@ namespace mtools
 
 
 			/**
-			 * Same as above but when the inverse was not previously precalculated
-			 **/
+			* Same as above but when the inverse was not previously precalculated
+			**/
 			void permute(const Permutation & perm)
 				{
 				permute(perm, invertPermutation(perm));
-				}
-
-
-			/**
-			 * Default choice for graph is std::vector<std::vector<int> >
-			 **/
-			std::vector<std::vector<int> > toGraph() const 
-				{
-				return toGraph< std::vector<std::vector<int> > >();
 				}
 
 
@@ -427,43 +604,6 @@ namespace mtools
 				Archive & _root;
 				Archive & _alpha;
 				Archive & _sigma;
-				}
-
-
-			/**
-			* Create a vector associating each half-edge with its correpsonding vertex. put the total
-			* number of vertices in nbv.
-			**/
-			std::vector<int> findVertices(int & nbv) const
-				{
-				std::vector<int> vert(_alpha.size(), -1);
-				nbv = 0;
-				for (int i = 0; i < vert.size(); i++)
-					{
-					if (vert[i] < 0)
-						{
-						vert[i] = nbv;
-						int j = _sigma[i];
-						while (j != i)
-							{
-							MTOOLS_ASSERT(vert[j] < 0);
-							vert[j] = nbv;
-							j = _sigma[j];
-							}
-						nbv++;
-						}
-					}
-				return vert;
-				}
-
-
-			/**
-			* Same as above but does not indicate the total number of vertices.
-			**/
-			std::vector<int> findVertices() const
-				{
-				int nbv;
-				return findVertices(nbv);
 				}
 
 
