@@ -149,8 +149,16 @@ namespace mtools
 					}
 				}
 			d++;
-			if (pv1 == &tempv1) { pv1 = &tempv2; pv2 = &tempv1; }
-			else { pv1 = &tempv1; pv2 = &tempv2; }
+			if (pv1 == &tempv1) 
+				{ 
+				pv1 = &tempv2; 
+				pv2 = &tempv1; 
+				} 
+			else 
+				{ 
+				pv1 = &tempv1; 
+				pv2 = &tempv2; 
+				}
 			}
 		return sum;
 		}

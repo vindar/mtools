@@ -344,7 +344,7 @@ void loadtestgraph(std::vector<std::vector<int> > & gr, std::vector<int> & bound
 
 void testTriangulation()
 	{
-	int sizeTrig = 20;
+	int sizeTrig = 1000;
 
 	cout << "\n\n\n\n" << Unif(gen) << "\n";
 
@@ -364,7 +364,7 @@ void testTriangulation()
 	auto gr = CM.toGraph();
 	cout << "converted in graph in " << mtools::Chronometer() << " ms\n";
 
-	auto V = CM.findVertices(nbv);
+	auto V = CM.getVerticeVector(nbv);
 	int v1 = V[a];
 	int v2 = V[b];
 	int v3 = V[c];
@@ -407,7 +407,7 @@ void testTriangulation()
 
 void testBall()
 	{
-	int sizeTrig = 2000;
+	int sizeTrig = 100;
 
 	mtools::Chronometer();
 
@@ -417,15 +417,28 @@ void testBall()
 
 	CombinatorialMap CM(D);
 	int a, b, c;
-	std::tie(a,b,c) = CM.btreeToTriangulation();
+
+//	CM.permute(mtools::uniformRandomPermutation(CM.nbHalfEdges(),gen));
+
+	cout << CM.toString();
+
+	std::tie(a, b, c) = CM.btreeToTriangulation();
 	cout << "triangulation created in " << mtools::Chronometer() << " ms\n";
+
+	cout << CM.toString();
 
 	auto gr = CM.toGraph();
 	cout << "converted in graph in " << mtools::Chronometer() << " ms\n";
 
+	cout << graphInfo(gr);
+	cout.getKey();
 
 	int nbv;
-	auto V = CM.findVertices(nbv);
+	auto V = CM.getVerticeVector(nbv);
+
+	cout << V;
+	cout.getKey();
+
 	int v1 = V[a];
 	int v2 = V[b];
 	int v3 = V[c];
@@ -438,11 +451,18 @@ void testBall()
 
 	bool connected = false;
 	int maxd = -1;
+
+	cout << gr;
+	cout.getKey();
+
 	auto dist = computeDistances(gr, 0, maxd,connected);
 	int cutd = maxd/2;
 	cout << "connected = " << connected << "\n";;
 	cout << "maxdist = " << maxd << "\n";;
 	cout << "cutd = " << cutd << "\n";;
+
+
+	cout.getKey();
 
 	std::vector<int> bound;
 	auto marked = markToRemove(gr, dist, cutd, maxd, bound);
@@ -553,6 +573,7 @@ int main(int argc, char *argv[])
 	MTOOLS_SWAP_THREADS(argc, argv);
 	parseCommandLine(argc, argv);
 
+	/*
 	DyckWord dw(20, 3);
 	CombinatorialMap cm(dw);
 
@@ -566,6 +587,8 @@ int main(int argc, char *argv[])
 	cout.getKey();
 
 	return 0;
+	*/
+
 	testBall(); 
 	return 0;
 

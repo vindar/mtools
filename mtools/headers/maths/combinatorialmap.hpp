@@ -30,6 +30,7 @@
 #include "permutation.hpp"
 #include "dyckword.hpp"
 
+#include"../io/console.hpp"
 
 namespace mtools
 	{
@@ -37,15 +38,18 @@ namespace mtools
 
 
 	/**
-	* Class that encode a planar graph into a combinatorial map.
-	*
-	* a planar graph with n edges is encoded with two permutation
+	* Class that encode a (rooted) combinatorial map.
+	* i.e. an unoriented graph together with a rotation system 
+	* rooted on a oriented edge. 
+	* 
+	* The graph has n edges and is encoded with two permutations
 	* of size 2n (representing half-edges or arrows) 
-	*
-	* alpha : Involution that matches half-edges together. 
-	* sigma : rotation around a vertex. sigma[i] point to next half
-	*         edge around the vertex when rotationg counterclockise.         
-	*         
+	*     - alpha : Involution that matches half-edges together. 
+	*     - sigma : Rotation around a vertex. sigma[i] point to   
+	*               next half edge around the vertex when rotationg
+	*               in the positive orientation.
+	*     - phi:    = sigma(alpha(.)). Rotation around a face in          
+	*               positive orientation.
 	* The map is rooted at a given half-edge.
 	**/
 	class CombinatorialMap
@@ -61,6 +65,8 @@ namespace mtools
 				_sigma.resize(2);
 				_alpha[0] = 1; _alpha[1] = 0;
 				_sigma[0] = 0; _sigma[1] = 1;
+				_computeVerticeSet();
+				_computeFaceSet();
 				}
 
 
@@ -79,6 +85,7 @@ namespace mtools
 				{
 				fromDyckWord(dw);
 				}
+
 
 			/**
 			 * Constructor from a graph (eg std::vector<std::vector<int> > or similar).
@@ -104,21 +111,25 @@ namespace mtools
 			* Number of edges of the graph
 			* The number of half-edge (ie arrows) is twice that number.
 			**/
-			inline int nbEdges() const { return (int)_alpha.size() / 2; }
+			inline int nbEdges() const { return ((int)_alpha.size())/2; }
 
 
 			/**
 			* Number of half-edges (ie arrows) of the graph
 			* The number of half-edge (ie arrows) is twice that number.
 			**/
-			inline int nbHalfEdges() const { return (int)_alpha.size(); }
+			inline int nbHalfEdges() const { return ((int)_alpha.size()); }
 
 
 			/**
 			* Permutation alpha: involution that
 			* matches the half edges together.
 			**/
-			inline const int & alpha(int i) const { return _alpha[i]; }
+			inline const int & alpha(int i) const 
+				{ 
+				MTOOLS_ASSERT((i >= 0) && (i < nbHalfEdges()));
+				return _alpha[i]; 
+				}
 
 
 			/**
@@ -126,14 +137,112 @@ namespace mtools
 			* when rotating around a vertex in positive
 			* orientation.
 			**/
-			inline const int & sigma(int i) const { return _sigma[i]; }
+			inline const int & sigma(int i) const 
+				{ 
+				MTOOLS_ASSERT((i >= 0) && (i < nbHalfEdges()));
+				return _sigma[i]; 
+				}
 
 
 			/**
 			* Permutation phi. Same as sigma(alpha(.)).
 			* Rotates around a face (or equivalently around a vertex of the dual graph).
 			**/
-			inline const int & phi(int i) const { return _sigma[_alpha[i]]; }
+			inline const int & phi(int i) const 
+				{ 
+				MTOOLS_ASSERT((i >= 0) && (i < nbHalfEdges()));
+				return _sigma[_alpha[i]]; 
+				}
+
+
+			/**
+			* Number of vertices of the graph. 
+			**/
+			int nbVertices() const { return _nbvertices; }
+
+
+			/**
+			* Return the vertex associated with half edge i
+			**/
+			int vertice(int i) const
+				{
+				MTOOLS_ASSERT((i >= 0) && (i < nbHalfEdges()));
+				return _vertices[i];
+				}
+
+
+			/**
+			*Return the vertice vector mapping each half edge to its face index.
+			**/
+			std::vector<int> getVerticeVector() const { return _vertices; }
+
+
+			/**
+			* Return the vertice vector mapping each half edge to its face index.
+			* Also put in nbv the number of vertices.
+			**/
+			std::vector<int> getVerticeVector(int & nbv) const { nbv = nbVertices(); return _vertices; }
+
+
+			/**
+			* Number of faces of the graph.
+			**/
+			int nbFaces() const { return _nbfaces; }
+
+
+			/**
+			* Return the face associated with half edge i
+			**/
+			int face(int i) const 
+				{
+				MTOOLS_ASSERT((i >= 0) && (i < nbHalfEdges())); 
+				return _faces[i];
+				}
+
+
+			/**
+			 *Return the face vector mapping each half edge to its face index.
+			 **/
+			std::vector<int> getFaceVector() const { return _faces; }
+
+
+			/**
+			*Return the face vector mapping each half edge to its face index.
+			* Also put in nbf the number of vertices.
+			**/
+			std::vector<int> getFaceVector(int & nbf) const { nbf = nbFaces(); return _faces; }
+
+
+			/**
+			 * Query the gneus of the combinatorial map (from euler characteristic).
+			 * The return value is zero iif it is a planar embedding of the graph.
+			 * 
+			 * the relation holds: V - E + F = 2 - 2g
+			 * @return	The genus of the combinatorial map..
+			 **/
+			inline int genus() const
+				{
+				int khi = _nbvertices - nbEdges() + _nbfaces;
+				MTOOLS_ASSERT((khi % 2) == 0);
+				return((2 - khi)/2);
+				}
+
+
+			/**
+			* Query if the graph is (connected) tree.
+			*
+			* @return	true if it is tree, false if not.
+			**/
+			inline bool isTree() const { return (nbFaces() == 1); }
+
+
+			/**
+			* Query if the combinatorial map is planar.
+			* This is equivalent to checking if the genus of the map is zero.
+			*
+			* @return	true if the embeding is planar, false if not.
+			**/
+			inline bool isPlanar() const { return (genus() == 0); }
 
 
 			/**
@@ -146,128 +255,9 @@ namespace mtools
 				CombinatorialMap cm(*this);
 				const size_t l = nbHalfEdges();
 				for (int i = 0; i < l; i++) { cm._sigma[i] = phi(i); }
+				cm._computeFaceSet();
+				cm._computeVerticeSet();
 				return cm;
-				}
-
-
-			/**
-			* Number of vertices of the graph. 
-			* Calls findVertices(nbv) and return only nbv.
-			**/
-			int nbVertices() const
-				{
-				int nbv;
-				findVertices(nbv);
-				return nbv;
-				}
-
-
-			/**
-			* Create a vector associating each half-edge with its correpsonding vertex. 
-			* put the total number of vertices in nbv.
-			**/
-			std::vector<int> findVertices(int & nbv) const
-				{
-				std::vector<int> vert(nbHalfEdges(), -1);
-				nbv = 0;
-				for (int i = 0; i < vert.size(); i++)
-					{
-					if (vert[i] < 0)
-						{
-						vert[i] = nbv;
-						int j = sigma(i);
-						while (j != i)
-							{
-							MTOOLS_ASSERT(vert[j] < 0);
-							vert[j] = nbv;
-							j = sigma(j);
-							}
-						nbv++;
-						}
-					}
-				return vert;
-				}
-
-
-			/**
-			* Same as above but does not indicate the total number of vertices.
-			**/
-			std::vector<int> findVertices() const
-				{
-				int nbv;
-				return findVertices(nbv);
-				}
-
-
-			/**
-			* Number of faces of the graph.
-			* Calls findFaces(nbf) and return only nbf.
-			**/
-			int nbFaces() const
-				{
-				int nbf;
-				findFaces(nbf);
-				return nbf;
-				}
-
-
-			/**
-			* Create a vector associating each half-edge with its corresponding face.
-			* put the total number of faces in nbf.
-			**/
-			std::vector<int> findFaces(int & nbf) const
-				{
-				std::vector<int> vert(nbHalfEdges(), -1);
-				nbf = 0;
-				for (int i = 0; i < vert.size(); i++)
-					{
-					if (vert[i] < 0)
-						{
-						vert[i] = nbf;
-						int j = phi(i);
-						while (j != i)
-							{
-							MTOOLS_ASSERT(vert[j] < 0);
-							vert[j] = nbf;
-							j = phi(j);
-							}
-						nbf++;
-						}
-					}
-				return vert;
-				}
-
-
-			/**
-			* Query if the graph is a tree.
-			*
-			* @return	true if it is tree, false if not.
-			**/
-			inline bool isTree() const
-				{
-				int e = phi(0);
-				int n = 1;
-				while (e != 0) { n++; e = phi(e); } // follow the faces 
-				return(n == nbHalfEdges()); // tree iif there is only one face
-				}
-
-
-			/**
-			* Query if the combinatorial map is planar.
-			* This checks if the EMBEDDING is planar, not if the
-			* underlying graph admits a planar embedding.
-			*
-			* @return	true if planar, false if not.
-			**/
-			inline bool isPlanar() const
-				{
-				// we construct a spanning tree. 
-				int nbv;
-				auto tabv = findVertices(nbv); // find the vertices
-
-				// TODO
-		
-				return false;
 				}
 
 
@@ -352,6 +342,8 @@ namespace mtools
 				MTOOLS_ASSERT(st.size() == 0);
 				// construct sigma by going around the exterior face
 				for (int i = 0; i < (2 * n); i++) { _sigma[i] = (_alpha[i] + 1) % (2 * n); }
+				_computeVerticeSet();
+				_computeFaceSet();
 				}
 
 			
@@ -403,6 +395,8 @@ namespace mtools
 					if (firstindex >= 0) { _sigma[previndex] = firstindex; }
 					}
 				MTOOLS_ASSERT(freeindex = te);
+				_computeVerticeSet();
+				_computeFaceSet();
 				return mapEdge;
 				}
 
@@ -416,20 +410,24 @@ namespace mtools
 			 **/
 			template<typename GRAPH> GRAPH toGraph() const
 				{
-				int nbv;
-				std::vector<int> vert = findVertices(nbv);	// start vertices of the half edges
+				const int l = nbHalfEdges();
 				GRAPH gr;
-				gr.resize(nbv);
-				for (int i = 0; i < nbv; i++)
+				gr.resize(_nbvertices);
+				for(int i = 0; i < l; i++)
 					{
-					int v = vert[i];
+					int v = _vertices[i];
+
+					if (v == 9)
+						{
+						cout << "ok";
+						}
 					if (gr[v].size() == 0)
 						{
-						gr[v].push_back(vert[_alpha[i]]);
+						gr[v].push_back(_vertices[_alpha[i]]);
 						int j = _sigma[i];
-						while (j != i)
+						while(j != i)
 							{
-							gr[v].push_back(vert[_alpha[j]]);
+							gr[v].push_back(_vertices[_alpha[j]]);
 							j = _sigma[j];
 							}
 						}
@@ -449,7 +447,8 @@ namespace mtools
 
 			/**
 			* Permute the indices of alpha and sigma according to a permutation
-			*
+			*This changes the numbering of the vertices
+			* 
 			* @param	perm   	The permutation
 			* @param	invperm	its inverse
 			**/
@@ -459,12 +458,14 @@ namespace mtools
 				MTOOLS_ASSERT(perm.size() == l);
 				auto sigma2 = _sigma;
 				auto alpha2 = _alpha;
-				for (int i = 0;i < l; i++)
+				for (int i = 0; i < l; i++)
 					{
 					_sigma[i] = invperm[sigma2[perm[i]]];
 					_alpha[i] = invperm[alpha2[perm[i]]];
 					}
 				_root = invperm[_root];
+				_computeVerticeSet();
+				_computeFaceSet();
 				}
 
 
@@ -493,6 +494,9 @@ namespace mtools
 			 **/
 			std::tuple<int,int,int> btreeToTriangulation()
 				{
+
+				_canonicalTreeOrdering();
+
 				const int ne = (int)_alpha.size() / 2;	// number of edges
 				const int nv = (ne - 2) / 3 + 1;    // number of inner vertices. 
 				std::list< std::pair<int, int> > buds; // position of the buds and number of inner edges following them
@@ -575,6 +579,8 @@ namespace mtools
 				int B = _sigma[_alpha[A]];
 				int C = _sigma[_alpha[B]];
 				_root = A;
+				_computeVerticeSet();
+				_computeFaceSet();
 				return std::make_tuple(A,B,C);
 				}
 
@@ -582,28 +588,49 @@ namespace mtools
 			/**
 			* Print the into a string
 			**/
-			std::string toString() const
+			std::string toString(bool detailed = false) const
 				{
-				int nbv;
-				auto vert = findVertices(nbv);
-				std::string s("CombinatorialMap: ");
-				s += mtools::toString(_alpha.size() / 2) + " edges, " + mtools::toString(nbv) + " vertices (root at " + mtools::toString(_root) + ")\n";
-				s += "alpha = [ "; for (int i = 0; i < _alpha.size(); i++) { s += mtools::toString(_alpha[i]) + " "; } s += "]\n";
-				s += "sigma = [ "; for (int i = 0; i < _sigma.size(); i++) { s += mtools::toString(_sigma[i]) + " "; } s += "]\n";
-				s += "vert  = [ "; for (int i = 0; i < vert.size(); i++) { s += mtools::toString(vert[i]) + " "; } s += "]\n";
+				std::string s("CombinatorialMap: (");
+				s += mtools::toString(nbHalfEdges()) + " darts)\n";
+				s += std::string("   edges    : ") + mtools::toString(nbEdges()) + "\n";
+				s += std::string("   vertices : ") + mtools::toString(nbVertices()) + "\n";
+				s += std::string("   faces    : ") + mtools::toString(nbFaces());
+				if (isTree()) s += std::string(" (TREE)");
+				s += "\n";
+				s += std::string("   genus    : ") + mtools::toString(genus());
+				if (genus() == 0) s += std::string(" (PLANARY EMBEDDING)");
+				if (detailed)
+					{
+					s += std::string("alpha     = [ "); for (int i = 0; i < _alpha.size(); i++) { s += mtools::toString(_alpha[i]) + " "; } s += "]\n";
+					s += std::string("sigma     = [ "); for (int i = 0; i < _sigma.size(); i++) { s += mtools::toString(_sigma[i]) + " "; } s += "]\n";
+					s += std::string("vertices  = [ "); for (int i = 0; i < _vertices.size(); i++) { s += mtools::toString(_vertices[i]) + " "; } s += "]\n";
+					s += std::string("faces     = [ "); for (int i = 0; i < _vertices.size(); i++) { s += mtools::toString(_faces[i]) + " "; } s += "]\n";
+					}
 				return s;
 				}
 
 
 			/**
-			* Serialise/deserialize. Works with boost and with the custom serialization classes
-			* OArchive and IArchive. the method performs both serialization and deserialization.
+			* Serialise
 			**/
-			template<typename U> void serialize(U & Archive, const int version = 0)
+			void serialize(OArchive & ar, const int version = 0)
 				{
-				Archive & _root;
-				Archive & _alpha;
-				Archive & _sigma;
+				ar & _root;
+				ar & _alpha;
+				ar & _sigma;
+				}
+
+
+			/**
+			* Deserialise
+			**/
+			void deserialize(IArchive & ar, const int version = 0)
+				{
+				ar & _root;
+				ar & _alpha;
+				ar & _sigma;
+				_computeVerticeSet();
+				_computeFaceSet();
 				}
 
 
@@ -611,30 +638,104 @@ namespace mtools
 
 
 			/* swap indexes i1 and i2 without modifiying the graph */
-			void swapIndexes(int i1, int i2)
+			/*
+			void _swapIndexes(int i1, int i2)
 				{
-				if (i1 == i2) return;
+				if (i1 == i2) return;	// nothing to do
+				// update alpha
 				int a1 = _alpha[i1];
 				int a2 = _alpha[i2];
 				_alpha[i1] = a2;
 				_alpha[a2] = i1;
 				_alpha[i2] = a1;
 				_alpha[a1] = i2;
+				// update sigma
 				int sr1 = _sigma[i1];
 				int sr2 = _sigma[i2];
 				int lr1 = i1; while (_sigma[lr1] != i1) { lr1 = _sigma[lr1]; }
 				int lr2 = i2; while (_sigma[lr2] != i2) { lr2 = _sigma[lr2]; }
-				if (sr1 == lr1) { _sigma[i2] = i2; }
-				else { _sigma[i2] = sr1; _sigma[lr1] = i2; }
-				if (sr2 == lr2) { _sigma[i1] = i1; }
-				else { _sigma[i1] = sr2; _sigma[lr2] = i1; }
+				if (sr1 == lr1) { _sigma[i2] = i2; } else { _sigma[i2] = sr1; _sigma[lr1] = i2; }
+				if (sr2 == lr2) { _sigma[i1] = i1; } else { _sigma[i1] = sr2; _sigma[lr2] = i1; }
+				// update the face and vertice sets
+				int tmpf = _faces[i1]; _faces[i1] = _faces[i2]; _faces[i2] = tmpf;
+				int tmpv = _vertices[i1]; _vertices[i1] = _vertices[i2]; _vertices[i2] = tmpf;
+				// update the root
+				if (_root == i1) { _root = i2; } else { if (_root == i2) { _root = i1; } }
+				}
+			*/
+
+
+			/* Permute sigma and alpha in such way that phi = sigma(alpha(.)) if the circular
+			permuation i->i+1 
+			The map must be a tree. */
+			void _canonicalTreeOrdering()
+				{
+				std::vector<int> ord(nbHalfEdges(), -1);
+				int i = 1;
+				ord[0] = 0;
+				int x = phi(0);
+				while (x != 0) { ord[x] = i; i++; x = phi(x); }
+				MTOOLS_INSURE(i == nbHalfEdges()); // make sure we are dealing with a tree
+				permute(getSortPermutation(ord));
+				}
+
+			/* Compute the vertex set from sigma and alpha */
+			void _computeVerticeSet()
+				{
+				const int l = nbHalfEdges();
+				_vertices.clear();
+				_vertices.resize(l, -1);
+				_nbvertices = 0;
+				for (int i = 0; i < l; i++)
+					{
+					if (_vertices[i] < 0)
+						{
+						_vertices[i] = _nbvertices;
+						int j = sigma(i);
+						while (j != i)
+							{
+							MTOOLS_ASSERT(_vertices[j] < 0);
+							_vertices[j] = _nbvertices;
+							j = sigma(j);
+							}
+						_nbvertices++;
+						}
+					}
+				}
+
+
+			/* compute the faces set from sigma and alpha */
+			void _computeFaceSet()
+				{
+				const int l = nbHalfEdges();
+				_faces.clear();
+				_faces.resize(l, -1);
+				_nbfaces = 0;
+				for(int i = 0; i < l; i++)
+					{
+					if (_faces[i] < 0)
+						{
+						_faces[i] = _nbfaces;
+						int j = phi(i);
+						while (j != i)
+							{
+							MTOOLS_ASSERT(_faces[j] < 0);
+							_faces[j] = _nbfaces;
+							j = phi(j);
+							}
+						_nbfaces++;
+						}
+					}
 				}
 
 
 			std::vector<int> _alpha;	// involution that matches half edges
 			std::vector<int> _sigma;	// rotations around vertices
 			int _root;					// root half-edge
-
+			std::vector<int> _vertices;	// index of vertices associated with half edges
+			int _nbvertices;
+			std::vector<int> _faces;	// index of faces associated with half edges
+			int _nbfaces;
 		};
 
 
