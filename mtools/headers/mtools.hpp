@@ -75,9 +75,9 @@
 #include "maths/sqrmatrix.hpp"
 #include "maths/specialFunctions.hpp"
 #include "maths/permutation.hpp"
-#include "maths/graph.hpp"
 #include "maths/dyckword.hpp"
 #include "maths/combinatorialmap.hpp"
+#include "maths/graph.hpp"
 #include "maths/circlePacking.hpp"
 
 //misc
