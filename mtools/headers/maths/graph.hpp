@@ -27,6 +27,7 @@
 #include "box.hpp"
 #include "../random/classiclaws.hpp"
 #include "permutation.hpp"
+#include "combinatorialmap.hpp"
 
 namespace mtools
 	{
@@ -38,7 +39,6 @@ namespace mtools
 
 	typedef Graph1 Graph; // default choice. 
 	
-
 
 	/**
 	* Reorder the vertices of a graph according to a permutation.
@@ -230,8 +230,12 @@ namespace mtools
 	 * 			- <8>:  number of vertices in the graph.  
 	 * 			- <9>:  maximum outgoing degre of the vertices (not counting loops)
 	 * 			- <10>: maximum ingoing degre of the vertices  (not counting loops)
+	 * 			- <11>: minimum outgoing degre of the vertices (not counting loops)
+	 * 			- <12>: minimum ingoing degre of the vertices  (not counting loops)
+	 * 			- <13>: = d if the graph is non oriented and all the vertices have degree d except one with degree n. -1 otherwise
+	 * 			- <14>: = n if the graph is non oriented and all the vertices have degree d except one with degree n. -1 otherwise
 	 **/
-	template<typename GRAPH> std::tuple<bool,bool,bool, bool, bool, bool,bool, int,int,int,int> graphType(const GRAPH & gr)
+	template<typename GRAPH> std::tuple<bool,bool,bool, bool, bool, bool,bool, int,int,int,int, int, int, int, int> graphType(const GRAPH & gr)
 		{
 		const int nbv = (int)gr.size();	// number of vertices
 		int nbe = 0;				// number of edges
@@ -263,16 +267,10 @@ namespace mtools
 		bool hasIsolatedOut  = false;
 		bool hasIsolatedIn   = false;
 		bool hasIsolatedBoth = false;
-		int maxoud			 = 0;
-		int maxind			 = 0;
 		for (size_t i = 0; i < nbv; i++)
 			{
-			const int in  = invec[i];
-			const int ou  = outvec[i];
-			if (in > maxind) { maxind = in; }
-			if (ou > maxoud) { maxoud = ou; }
-			if (in == 0) { hasIsolatedIn = true; }
-			if (ou == 0) { hasIsolatedOut = true;  if (in == 0) { hasIsolatedBoth = true; } }			
+			if (invec[i] == 0) { hasIsolatedIn = true; }
+			if (outvec[i] == 0) { hasIsolatedOut = true;  if (invec[i] == 0) { hasIsolatedBoth = true; } }
 			}			
 		bool isOriented = false;
 		bool hasDoubleEdge = false;
@@ -281,6 +279,21 @@ namespace mtools
 			auto & value = it->second;
 			if (value.first != value.second) { isOriented = true; }
 			if ((value.first > 1)|| (value.second > 1)) { hasDoubleEdge = true; }
+			}
+		std::sort(invec.begin(), invec.end());
+		std::sort(outvec.begin(), outvec.end());
+		int maxoud = -1;
+		int maxind = -1;
+		int minoud = -1;
+		int minind = -1;
+		int other = -1;
+		int alone = -1;
+		if (invec.size() > 0)  { minind = invec.front(); maxind = invec.back(); }
+		if (outvec.size() > 0) { minoud = outvec.front(); maxoud = outvec.back(); }
+		if ((isOriented == false)&&(invec.size() >= 2))
+			{
+			if (invec[1] == invec.back()) { alone = invec.front(); other = invec.back(); }
+			if (invec[invec.size()-2] == invec.front()) { alone = invec.back(); other = invec.front(); }
 			}
 		MTOOLS_ASSERT(isOriented || ((maxoud == maxind) && (nbe % 2 == 0)));
 		return std::make_tuple( isValid,		// 0
@@ -293,49 +306,62 @@ namespace mtools
 								nbe,			// 7
 								nbv,			// 8 
 								maxoud,			// 9
-								maxind			// 10
+								maxind,			// 10
+								minoud,			// 11
+								minind,			// 12
+								other,          // 13
+								alone			// 14
 								);
 		}
 
 
 	/** Convenience method for graphType() **/
-	inline bool graphType_isValid(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int> typ) { return std::get<0>(typ); }
+	inline bool graphType_isValid(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int, int, int, int, int> typ) { return std::get<0>(typ); }
 
 	/**  Convenience method for graphType() **/
-	inline bool graphType_isOriented(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int> typ) { return std::get<1>(typ); }
+	inline bool graphType_isOriented(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int, int, int, int, int> typ) { return std::get<1>(typ); }
 
 	/**  Convenience method for graphType() **/
-	inline bool graphType_hasIsolatedOut(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int> typ) { return std::get<2>(typ); }
+	inline bool graphType_hasIsolatedOut(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int, int, int, int, int> typ) { return std::get<2>(typ); }
 
 	/**  Convenience method for graphType() **/
-	inline bool graphType_hasIsolatedIn(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int> typ) { return std::get<3>(typ); }
+	inline bool graphType_hasIsolatedIn(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int, int, int, int, int> typ) { return std::get<3>(typ); }
 
 	/**  Convenience method for graphType() **/
-	inline bool graphType_hasIsolatedBoth(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int> typ) { return std::get<4>(typ); }
+	inline bool graphType_hasIsolatedBoth(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int, int, int, int, int> typ) { return std::get<4>(typ); }
 
 	/**  Convenience method for graphType() **/
-	inline bool graphType_hasLoop(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int> typ) { return std::get<5>(typ); }
+	inline bool graphType_hasLoop(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int, int, int, int, int> typ) { return std::get<5>(typ); }
 
 	/**  Convenience method for graphType() **/
-	inline bool graphType_hasDoubleEdge(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int> typ) { return std::get<6>(typ); }
+	inline bool graphType_hasDoubleEdge(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int, int, int, int, int> typ) { return std::get<6>(typ); }
 
 	/**  Convenience method for graphType() **/
-	inline int graphType_nbEdges(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int> typ) { return std::get<7>(typ); }
+	inline int graphType_nbEdges(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int, int, int, int, int> typ) { return std::get<7>(typ); }
 
 	/**  Convenience method for graphType() **/
-	inline int graphType_nbVertices(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int> typ) { return std::get<8>(typ); }
+	inline int graphType_nbVertices(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int, int, int, int, int> typ) { return std::get<8>(typ); }
 
 	/**  Convenience method for graphType() **/
-	inline int graphType_maxOutDegree(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int> typ) { return std::get<9>(typ); }
+	inline int graphType_maxOutDegree(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int, int, int, int, int> typ) { return std::get<9>(typ); }
 
 	/**  Convenience method for graphType() **/
-	inline int graphType_maxInDegree(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int> typ) { return std::get<10>(typ); }
+	inline int graphType_maxInDegree(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int, int, int, int, int> typ) { return std::get<10>(typ); }
+
+	/**  Convenience method for graphType() **/
+	inline int graphType_minOutDegree(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int, int, int, int, int> typ) { return std::get<11>(typ); }
+
+	/**  Convenience method for graphType() **/
+	inline int graphType_minInDegree(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int, int, int, int, int> typ) { return std::get<12>(typ); }
+
+	/**  Convenience method for graphType() **/
+	inline std::pair<int, int> graphType_biType(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int, int, int, int, int> typ) { return std::pair<int,int>(std::get<13>(typ), std::get<14>(typ)); }
 
 	/**
 	* Convenience method for graphType(). 
 	* Return true if the graph is simple i.e. if it is unoriented, without loop and double edge. 
 	**/
-	inline bool graphType_isSimple(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int> typ) { return ((graphType_isValid(typ))&&(!graphType_isOriented(typ)) && (!graphType_hasLoop(typ)) && (!graphType_hasDoubleEdge(typ))); }
+	inline bool graphType_isSimple(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int, int, int, int, int> typ) { return ((graphType_isValid(typ))&&(!graphType_isOriented(typ)) && (!graphType_hasLoop(typ)) && (!graphType_hasDoubleEdge(typ))); }
 
 
 	/**
@@ -345,52 +371,87 @@ namespace mtools
 		{
 		std::string s;
 		auto res = graphType(gr);
-		if (!graphType_isValid(res)) { s += std::string("!!! INVALID GRAPH !!!!\n"); }
-		else
+		if (gr.size() == 0) { s += std::string("EMPTY GRAPH\n"); return s; }
+		if (!graphType_isValid(res)) { s += std::string("!!! INVALID GRAPH !!!!\n"); return s; }
+		if (graphType_isOriented(res))
 			{
-			if (graphType_isOriented(res))
+			// oriented graph
+			s += std::string("ORIENTED GRAPH\n");
+			if (graphType_hasLoop(res)) { s += std::string("    -> WITH LOOPS\n"); }
+			else { s += std::string("    -> no loop.\n"); }
+			if (graphType_hasDoubleEdge(res)) { s += std::string("    -> WITH DOUBLE EDGES\n"); }
+			else { s += std::string("    -> no double edge.\n"); }
+			s += std::string(" - Vertices         : ") + toString(graphType_nbVertices(res)) + "\n";
+			s += std::string(" - Oriented edges   : ") + toString(graphType_nbEdges(res));
+			s += std::string(" - out degree range : [") + toString(graphType_minOutDegree(res)) + "," + toString(graphType_maxOutDegree(res)) + "]\n";
+			s += std::string(" - in  degree range : [") + toString(graphType_minInDegree(res)) + "," + toString(graphType_maxInDegree(res)) + "]\n";
+			s += std::string(" - Isolated vertice out   : ") + toString(graphType_hasIsolatedOut(res)) + "\n";
+			s += std::string(" - Isolated vertices in   : ") + toString(graphType_hasIsolatedOut(res)) + "\n";
+			s += std::string(" - Isolated vertices both : ") + toString(graphType_hasIsolatedOut(res)) + "\n";
+			return s;
+			}
+		// non-oriented graph
+		if (!graphType_isSimple(res))
+			{ // no simple
+			s += std::string("UNORIENTED GRAPH\n");
+			if (graphType_hasLoop(res)) { s += std::string("    -> WITH LOOPS\n"); }
+			else { s += std::string("    -> no loop.\n"); }
+			if (graphType_hasDoubleEdge(res)) { s += std::string("    -> WITH DOUBLE EDGES\n"); }
+			else { s += std::string("    -> no double edge.\n"); }
+
+			s += std::string("Vertices     : ") + toString(graphType_nbVertices(res)) + "\n";
+			s += std::string("Edges        : ") + toString(graphType_nbEdges(res) / 2) + "\n";
+			s += std::string("degree range : [") + toString(graphType_minInDegree(res)) + "," + toString(graphType_maxInDegree(res)) + "]\n";
+			bool connected;
+			int maxd;
+			computeDistances(gr, 0, maxd, connected);
+			if (connected)
 				{
-				s += std::string("ORIENTED GRAPH\n");
-				if (graphType_hasLoop(res))       { s += std::string("    -> WITH LOOPS\n"); }        else { s += std::string("    -> no loop.\n"); }
-				if (graphType_hasDoubleEdge(res)) { s += std::string("    -> WITH DOUBLE EDGES\n"); } else { s += std::string("    -> no double edge.\n"); }
-				s += std::string(" - Vertices       : ") + toString(graphType_nbVertices(res)) + "\n";
-				s += std::string(" - Oriented edges : ") + toString(graphType_nbEdges(res));
-				s += std::string(" - Max out degree : ") + toString(graphType_maxOutDegree(res)) + "\n";
-				s += std::string(" - Max in  degree : ") + toString(graphType_maxInDegree(res)) + "\n";
-				s += std::string(" - Isolated vertice out   : ") + toString(graphType_hasIsolatedOut(res)) + "\n";
-				s += std::string(" - Isolated vertices in   : ") + toString(graphType_hasIsolatedOut(res)) + "\n";
-				s += std::string(" - Isolated vertices both : ") + toString(graphType_hasIsolatedOut(res)) + "\n";
+				s += std::string("Graph is CONNECTED. Estimated diameter [") + toString(maxd) + "," + toString(2 * maxd) + "]\n";
 				}
 			else
 				{
-				if (graphType_isSimple(res)) { s += std::string("SIMPLE NON-ORIENTED GRAPH (no loop nor double edge)\n"); }
-				else
-					{
-					s += std::string("NON-ORIENTED GRAPH\n");
-					if (graphType_hasLoop(res))       { s += std::string("    -> WITH LOOPS\n"); }        else { s += std::string("    -> no loop.\n"); }
-					if (graphType_hasDoubleEdge(res)) { s += std::string("    -> WITH DOUBLE EDGES\n"); } else { s += std::string("    -> no double edge.\n"); }
-					}
-				s += std::string("Vertices   : ") + toString(graphType_nbVertices(res)) + "\n";
-				s += std::string("Edges      : ") + toString(graphType_nbEdges(res) / 2) + "  ( " + toString(graphType_nbEdges(res)) + " oriented edges)\n";
-				s += std::string("Max degree : ") + toString(graphType_maxInDegree(res)) + "\n";
-				bool connected;
-				int maxd;
-				computeDistances(gr, 0, maxd, connected);
-				if (connected)
-					{
-					s += std::string("Graph is CONNECTED. Estimated diameter [") + toString(maxd) + "," + toString(2 * maxd) + "]\n";
-					}
-				else
-					{
-					s += std::string("Graph is NOT connected.\n");
-					s += std::string("   - isolated vertices    : ") + toString(graphType_hasIsolatedBoth(res)) + "\n";
-					}
+				s += std::string("Graph is NOT connected.\n");
+				s += std::string("   - isolated vertices    : ") + toString(graphType_hasIsolatedBoth(res)) + "\n";
 				}
+			}
+		// simple non oriented graph
+		s += std::string("SIMPLE NON-ORIENTED GRAPH (no loop nor double edge)\n");
+		CombinatorialMap cm(gr);
+		auto gr2 = cm.getDual().toGraph();
+		auto res2 = graphType(cm.getDual().toGraph());
+		s += std::string("   Edges        : ") + mtools::toString(cm.nbEdges()) + "\n";
+		s += std::string("   Faces        : ") + mtools::toString(cm.nbFaces()); if (cm.isTree()) {s += std::string(" (TREE)");}  s += "\n";
+		s += std::string("     |-> degree : [") + toString(graphType_minInDegree(res2)) + "," + toString(graphType_maxInDegree(res2)) + "]\n";
+		s += std::string("   Vertices     : ") + mtools::toString(cm.nbVertices()) + "\n";
+		s += std::string("     |-> degree : [") + toString(graphType_minInDegree(res)) + "," + toString(graphType_maxInDegree(res)) + "]\n";
+		bool connected;
+		int maxd;
+		computeDistances(gr, 0, maxd, connected);
+		if (!connected)
+			{
+			s += std::string("Graph is NOT connected.\n");
+			s += std::string("   - isolated vertices    : ") + toString(graphType_hasIsolatedBoth(res)) + "\n";
+			return s;
+			}		
+		s += std::string("Connected graph. Estimated diameter [") + toString(maxd) + "," + toString(2 * maxd) + "]\n";
+		s += std::string("Genus : ") + mtools::toString(cm.genus());   if (cm.isPlanar()) s += std::string(" -> PLANAR GRAPH\n");
+		int other, alone; 
+		std::tie(other, alone) = graphType_biType(res);
+		int other2, alone2;
+		std::tie(other2, alone2) = graphType_biType(res2);
+		if (other > 0)
+			{
+			if (other == alone) { s += std::string("REGULAR GRAPH: every site has degree ") + toString(other) + "\n"; }
+			else { s += std::string("ALMOST REGULAR GRAPH: every site has degree ") + toString(other) + " except one with degree " + toString(alone) + "\n"; }
+			}
+		if (other2 > 0)
+			{
+			if (other2 == alone2) { s += std::string("ANGULATION: every face has degree ") + toString(other2) + "\n"; }
+			else { s += std::string("ANGULATION WITH BOUNDARY: every face has degree ") + toString(other2) + " except one with degree " + toString(alone2) + "\n"; }
 			}
 		return s;
 		}
-
-
 
 
 
