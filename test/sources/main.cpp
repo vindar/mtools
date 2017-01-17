@@ -434,7 +434,6 @@ void testBall()
 
 	cout << graphInfo(gr) << "\n\n";
 	cout << graphInfo(CombinatorialMap(gr).getDual().toGraph()) << "\n\n";
-
 	cout.getKey();
 
 	int nbv = CM.nbVertices();
@@ -456,13 +455,12 @@ void testBall()
 	bool connected = false;
 	int maxd = -1;
 
-	auto dist = computeDistances(gr, 0, maxd,connected);
+	auto dist = computeGraphDistances(gr, 0, maxd,connected);
 	int cutd = maxd/2;
 	cout << "connected = " << connected << "\n";;
 	cout << "maxdist = " << maxd << "\n";;
 	cout << "cutd = " << cutd << "\n";;
 
-	cout.getKey();
 
 	std::vector<int> bound;
 	auto marked = markToRemove(gr, dist, cutd, maxd, bound);
@@ -471,7 +469,6 @@ void testBall()
 	cout << "dist = " << dist << "\n";
 	cout << "bound = " << bound << "\n";
 	cout << "marked = " << marked << "\n";
-	cout << graphInfo(gr);
 
 	dist = mtools::permute(dist, getSortPermutation(marked));
 	bound = mtools::permute(bound, getSortPermutation(marked));
@@ -509,9 +506,8 @@ void testBall()
 
 	cout << L << "\n";
 
-	cout << mtools::graphInfo(gr);
+	cout << mtools::graphInfo(gr) << "\n\n";;
 	cout << graphInfo(CombinatorialMap(gr).getDual().toGraph()) << "\n\n";
-	cout << "ZZZ\n";
 	cout.getKey();
 
 	fBox2 R;

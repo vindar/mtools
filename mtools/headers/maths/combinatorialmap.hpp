@@ -34,18 +34,10 @@ namespace mtools
 	{
 
 
+
 	/* forward declaration from graph.hpp */
-
-	template<typename GRAPH> std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int, int, int, int, int> graphType(const GRAPH & gr);
-
-	inline bool graphType_isValid(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int, int, int, int, int> typ);
-
-	inline bool graphType_isOriented(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int, int, int, int, int> typ);
-
-	inline bool graphType_hasIsolatedBoth(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int, int, int, int, int> typ);
-
-	inline bool graphType_hasDoubleEdge(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int, int, int, int, int> typ);
-
+	template<typename GRAPH>  bool isGraphSimple(const GRAPH & gr);
+	template<typename GRAPH>  bool isGraphEmpty(const GRAPH & gr);
 
 
 	/**
@@ -377,8 +369,12 @@ namespace mtools
 
 
 			/**
-			 * Construct the object from a graph.  The graph must be non-oriented and without double edges 
-			 * nor isolated points or the method may crash.
+			 * Construct the object from a graph.  
+			 * The graph must be simple i.e.
+			 *    - non-oriented  
+			 *    - without double edges  
+			 *    - without loops
+			 *    - without isolated vertices
 			 * 
 			 * The numbering of the vertices is preserved.
 			 *
@@ -393,10 +389,8 @@ namespace mtools
 			 **/
 			template<typename GRAPH> std::map< std::pair<int, int>, int> fromGraph(const GRAPH & gr, std::pair<int,int> root = std::pair<int, int>(-1,-1))
 				{
-				MTOOLS_ASSERT(graphType_isValid(graphType(gr)) == false);	// graph non-oriented
-				MTOOLS_ASSERT(graphType_isOriented(graphType(gr))== false);	// graph non-oriented
-				MTOOLS_ASSERT(graphType_hasDoubleEdge(graphType(gr)) == false);	// wihtout double edges
-				MTOOLS_ASSERT(graphType_hasIsolatedBoth(graphType(gr)) == false); // nor isolated vertices
+				MTOOLS_ASSERT(isGraphSimple(gr)); // make sure the graph is simple (unoriented without loop nor double edges). 
+				MTOOLS_ASSERT(!isGraphEmpty(gr)); // make sure the graph is not empty
 				const int nbv = (int)gr.size();
 				int totaldarts = 0;
 				for (int i = 0; i < nbv; i++) { totaldarts += (int)gr[i].size(); } // compute the number of darts
