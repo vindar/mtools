@@ -9,7 +9,7 @@ using namespace mtools;
 
 
 
-MT2004_64 gen(100); // RNG
+MT2004_64 gen(123456); // RNG
 
 Grid_basic<2, int64, 2> Grid; // the 2D grid
 
@@ -364,7 +364,8 @@ void testTriangulation()
 	auto gr = CM.toGraph();
 	cout << "converted in graph in " << mtools::Chronometer() << " ms\n";
 
-	auto V = CM.getVerticeVector(nbv);
+	nbv = CM.nbVertices();
+	auto V = CM.getVerticeVector();
 	int v1 = V[a];
 	int v2 = V[b];
 	int v3 = V[c];
@@ -407,7 +408,7 @@ void testTriangulation()
 
 void testBall()
 	{
-	int sizeTrig = 100;
+	int sizeTrig = 3000;
 
 	mtools::Chronometer();
 
@@ -418,26 +419,29 @@ void testBall()
 	CombinatorialMap CM(D);
 	int a, b, c;
 
-//	CM.permute(mtools::uniformRandomPermutation(CM.nbHalfEdges(),gen));
+	CM = CM.getPermute(mtools::uniformRandomPermutation(CM.nbHalfEdges(),gen));
 
-	cout << CM.toString();
+	cout << CM.toString() << "\n\n";
 
 	std::tie(a, b, c) = CM.btreeToTriangulation();
-	cout << "triangulation created in " << mtools::Chronometer() << " ms\n";
 
-	cout << CM.toString();
+	cout << "triangulation created in " << mtools::Chronometer() << " ms\n";
+	
+	cout << CM.toString() << "\n\n";
 
 	auto gr = CM.toGraph();
 	cout << "converted in graph in " << mtools::Chronometer() << " ms\n";
 
-	cout << graphInfo(gr);
+	cout << graphInfo(gr) << "\n\n";
+	cout << graphInfo(CombinatorialMap(gr).getDual().toGraph()) << "\n\n";
+
 	cout.getKey();
 
-	int nbv;
-	auto V = CM.getVerticeVector(nbv);
+	int nbv = CM.nbVertices();
+	auto V = CM.getVerticeVector();
 
-	cout << V;
-	cout.getKey();
+	//cout << V;
+	//cout.getKey();
 
 	int v1 = V[a];
 	int v2 = V[b];
@@ -452,15 +456,11 @@ void testBall()
 	bool connected = false;
 	int maxd = -1;
 
-	cout << gr;
-	cout.getKey();
-
 	auto dist = computeDistances(gr, 0, maxd,connected);
 	int cutd = maxd/2;
 	cout << "connected = " << connected << "\n";;
 	cout << "maxdist = " << maxd << "\n";;
 	cout << "cutd = " << cutd << "\n";;
-
 
 	cout.getKey();
 
@@ -468,20 +468,16 @@ void testBall()
 	auto marked = markToRemove(gr, dist, cutd, maxd, bound);
 
 
-	cout << dist;
-	cout << bound;
-	cout << marked;
-	cout << gr;
+	cout << "dist = " << dist << "\n";
+	cout << "bound = " << bound << "\n";
+	cout << "marked = " << marked << "\n";
+	cout << graphInfo(gr);
 
-	
 	dist = mtools::permute(dist, getSortPermutation(marked));
 	bound = mtools::permute(bound, getSortPermutation(marked));
 	oldbound = mtools::permute(oldbound, getSortPermutation(marked));
 	gr = mtools::permuteGraph(gr, getSortPermutation(marked));
 	marked = mtools::permute(marked, getSortPermutation(marked));
-
-
-
 
 	int L = 0;
 	while (marked[L] == 0) { L++; }
@@ -500,8 +496,8 @@ void testBall()
 		}
 	gr = gr2;
 
-	cout << bound;
-	cout << gr;
+//	cout << bound;
+//	cout << gr;
 
 
 	/*
@@ -514,7 +510,9 @@ void testBall()
 	cout << L << "\n";
 
 	cout << mtools::graphInfo(gr);
-
+	cout << graphInfo(CombinatorialMap(gr).getDual().toGraph()) << "\n\n";
+	cout << "ZZZ\n";
+	cout.getKey();
 
 	fBox2 R;
 	std::vector<double> radii;
