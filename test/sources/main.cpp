@@ -408,7 +408,7 @@ void testTriangulation()
 
 void testBall()
 	{
-	int sizeTrig = 3000;
+	int sizeTrig = 3000000;
 
 	mtools::Chronometer();
 
