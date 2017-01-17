@@ -30,26 +30,40 @@
 #include "permutation.hpp"
 #include "dyckword.hpp"
 
-#include"../io/console.hpp"
-
 namespace mtools
 	{
 
 
+	/* forward declaration from graph.hpp */
+
+	template<typename GRAPH> std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int, int, int, int, int> graphType(const GRAPH & gr);
+
+	inline bool graphType_isValid(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int, int, int, int, int> typ);
+
+	inline bool graphType_isOriented(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int, int, int, int, int> typ);
+
+	inline bool graphType_hasIsolatedBoth(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int, int, int, int, int> typ);
+
+	inline bool graphType_hasDoubleEdge(std::tuple<bool, bool, bool, bool, bool, bool, bool, int, int, int, int, int, int, int, int> typ);
+
+
 
 	/**
-	* Class that encode a (rooted) combinatorial map.
-	* i.e. an unoriented graph together with a rotation system 
-	* rooted on a oriented edge. 
+	* Class that encode a rooted combinatorial map.
+	* i.e. an unoriented graph together with a rotation system.
 	* 
-	* The graph has n edges and is encoded with two permutations
-	* of size 2n (representing half-edges or arrows) 
-	*     - alpha : Involution that matches half-edges together. 
-	*     - sigma : Rotation around a vertex. sigma[i] point to   
-	*               next half edge around the vertex when rotationg
-	*               in the positive orientation.
-	*     - phi:    = sigma(alpha(.)). Rotation around a face in          
-	*               positive orientation.
+	* The graph which has n edges and is encoded with two permutations
+	* of size 2n that represents the mapping for half edges (darts)
+	* 
+	*  - alpha : Involution that matches half-edges together. 
+	*  - sigma : Rotation around a vertex. sigma[i] point to next   
+	*            half-edge around the vertex when rotating in the 
+	*            positive orientation.
+	*            
+	* Also define phi = sigma(alpha(.)) the rotation around a face in          
+	* positive orientation thus (alpha,phi) is the combinatorial map 
+	* associated with the dual graph. 
+	*            
 	* The map is rooted at a given half-edge.
 	**/
 	class CombinatorialMap
@@ -79,7 +93,10 @@ namespace mtools
 			*                neighbour leafs and there is dw.ups() interior edges (ie 
 			*                dw.ups() + 1 non leaf vertices)
 			*                 
-			* The tree is always rooted at a leaf edge, from the leaf to the interior vertice.
+			* the root edge is set to 0 and always a leaf edge (ie such that sigma(0) = 0).
+			* the edges 0,1,2,3 are ordered according to the exploration of the face ie
+			* such that phi(i) = i+1. The numbering of the vertices also start from the
+			* root vertex (ie vertice(0) =0) and follow the contour of the tree.
 			**/
 			CombinatorialMap(const DyckWord & dw)
 				{
@@ -88,42 +105,53 @@ namespace mtools
 
 
 			/**
-			 * Constructor from a graph (eg std::vector<std::vector<int> > or similar).
-			 * the graph must be non oriented (ie symmetric) or the method may crash. 
-			 **/
-			template<typename GRAPH> CombinatorialMap(const GRAPH & gr)
+			* Construct the object from a graph. The graph must be non-oriented or the method may crash.
+			* The numbering of the vertices is preserved.
+			*
+			* @tparam	GRAPH	Type of the graph (eg std::vector<std::vector<int>> or similar)
+			* @param	gr		  	the graph.
+			* @param	root	  	The oriented root edge. If it does not belong to the graph, the dart edge
+			* 						is set to 0.
+   		    **/
+			template<typename GRAPH> CombinatorialMap(const GRAPH & gr, std::pair<int, int> root = std::pair<int, int>(-1, -1))
 				{
-				fromGraph(gr);
+				fromGraph(gr,root);
 				}
 
 
 			/**
 			 * Equality operator. Return true is the object are exactly the same.
-			 * The map must have the same root and the same ordering of vetices to compare equal. 
+			 * The map must have the same root, the same ordering of edges and the
+			 * same ordering of vertice and faces to compare equal. 
 			 **/
 			bool operator==(const CombinatorialMap & cm)
 				{
-				return ((_root == cm._root) && (_sigma == cm._sigma) && (_alpha == cm._alpha));
+				return ((_root == cm._root) && (_sigma == cm._sigma) && (_alpha == cm._alpha)&&(_vertices == cm._vertices)&&(_faces == cm._faces));
 				}
 
 
 			/**
-			* Number of edges of the graph
-			* The number of half-edge (ie arrows) is twice that number.
+			* Number of non-oriented edges of the graph
 			**/
 			inline int nbEdges() const { return ((int)_alpha.size())/2; }
 
 
 			/**
-			* Number of half-edges (ie arrows) of the graph
-			* The number of half-edge (ie arrows) is twice that number.
+			* Number of half-edges (ie darts) of the graph
+			* This is equal to twice nbEdges().
 			**/
 			inline int nbHalfEdges() const { return ((int)_alpha.size()); }
 
 
 			/**
-			* Permutation alpha: involution that
-			* matches the half edges together.
+			 * Return the index of the root dart (i.e. oriented edge).
+			 **/
+			inline int root() const { return _root; }
+
+
+			/**
+			* Permutation alpha: involution that matches the darts
+			* together.
 			**/
 			inline const int & alpha(int i) const 
 				{ 
@@ -133,9 +161,8 @@ namespace mtools
 
 
 			/**
-			* Permutation sigma. Give the next half edge
-			* when rotating around a vertex in positive
-			* orientation.
+			* Permutation sigma. Give the next dart when rotating 
+			* around a vertex in the positive orientation.
 			**/
 			inline const int & sigma(int i) const 
 				{ 
@@ -146,7 +173,8 @@ namespace mtools
 
 			/**
 			* Permutation phi. Same as sigma(alpha(.)).
-			* Rotates around a face (or equivalently around a vertex of the dual graph).
+			* Rotates around a face (or equivalently around a vertex of 
+			* the dual graph).
 			**/
 			inline const int & phi(int i) const 
 				{ 
@@ -162,7 +190,8 @@ namespace mtools
 
 
 			/**
-			* Return the vertex associated with half edge i
+			* Return the index of the vertex which is the start point
+			* of the dart i.
 			**/
 			int vertice(int i) const
 				{
@@ -172,16 +201,11 @@ namespace mtools
 
 
 			/**
-			*Return the vertice vector mapping each half edge to its face index.
+			* Return a vector of size nbHalfEdges() that describe the 
+			* start vertex of each dart.
 			**/
 			std::vector<int> getVerticeVector() const { return _vertices; }
 
-
-			/**
-			* Return the vertice vector mapping each half edge to its face index.
-			* Also put in nbv the number of vertices.
-			**/
-			std::vector<int> getVerticeVector(int & nbv) const { nbv = nbVertices(); return _vertices; }
 
 
 			/**
@@ -191,7 +215,7 @@ namespace mtools
 
 
 			/**
-			* Return the face associated with half edge i
+			* Return the index of the face to which the dart i belongs.
 			**/
 			int face(int i) const 
 				{
@@ -201,24 +225,18 @@ namespace mtools
 
 
 			/**
-			 *Return the face vector mapping each half edge to its face index.
+			 * Return a vector of size nbHalfEdges() that describe the face
+			 * for each dart.
 			 **/
 			std::vector<int> getFaceVector() const { return _faces; }
 
 
 			/**
-			*Return the face vector mapping each half edge to its face index.
-			* Also put in nbf the number of vertices.
-			**/
-			std::vector<int> getFaceVector(int & nbf) const { nbf = nbFaces(); return _faces; }
-
-
-			/**
-			 * Query the gneus of the combinatorial map (from euler characteristic).
-			 * The return value is zero iif it is a planar embedding of the graph.
+			 * Query the genus of the combinatorial map (euler characteristic).
+			 * The return value is zero i.i.f. this combinatorial map corresponds
+			 * to a planar embedding of the graph.
 			 * 
-			 * the relation holds: V - E + F = 2 - 2g
-			 * @return	The genus of the combinatorial map..
+			 * The genus is given by: V - E + F = 2 - 2g
 			 **/
 			inline int genus() const
 				{
@@ -229,16 +247,17 @@ namespace mtools
 
 
 			/**
-			* Query if the graph is (connected) tree.
+			* Query if the graph is connected tree.
 			*
-			* @return	true if it is tree, false if not.
+			* @return	true if it is a connected tree, false if not.
 			**/
 			inline bool isTree() const { return (nbFaces() == 1); }
 
 
 			/**
-			* Query if the combinatorial map is planar.
-			* This is equivalent to checking if the genus of the map is zero.
+			* Query if the combinatorial map define a planar embedding 
+			* of the underlying graph. This is equivalent to checking 
+			* if the genus of the map is zero.
 			*
 			* @return	true if the embeding is planar, false if not.
 			**/
@@ -246,17 +265,24 @@ namespace mtools
 
 
 			/**
-			* construct the dual combinatorial map
+			* Construct the dual combinatorial map
+			* It is obtained by exchanging the role of sigma and phi.
+			* Defines an involution.
 			*
 			* @return	The dual graph
 			**/
 			CombinatorialMap getDual() const
 				{
-				CombinatorialMap cm(*this);
-				const size_t l = nbHalfEdges();
-				for (int i = 0; i < l; i++) { cm._sigma[i] = phi(i); }
-				cm._computeFaceSet();
-				cm._computeVerticeSet();
+				CombinatorialMap cm;
+				cm._alpha = _alpha;	// same alpha
+				const size_t l = nbHalfEdges(); 
+				cm._sigma.resize(l);
+				for (int i = 0; i < l; i++) { cm._sigma[i] = phi(i); } // invert phi becomes sigma
+				cm._vertices = _faces;
+				cm._nbvertices = _nbfaces;
+				cm._faces = _vertices;
+				cm._nbfaces = _nbvertices;
+				cm._root = _root;
 				return cm;
 				}
 
@@ -270,7 +296,10 @@ namespace mtools
 			*                neighbour leafs and there is dw.ups() interior edges (ie
 			*                dw.ups() + 1 non leaf vertices)
 			*
-			* The tree is always rooted at a leaf edge, from the leaf to the interior vertice.
+			* the root edge is set to 0 and always a leaf edge (ie such that sigma(0) = 0).
+			* the edges 0,1,2,3 are ordered according to the exploration of the face ie
+			* such that phi(i) = i+1. The numbering of the vertices also start from the
+			* root vertex (ie vertice(0) =0) and follow the contour of the tree.
 			**/
 			void fromDyckWord(const DyckWord & dw)
 				{
@@ -346,56 +375,62 @@ namespace mtools
 				_computeFaceSet();
 				}
 
-			
 
 			/**
-			 * Load the object from a graph. 
-			 * the graph must be non oriented (ie symmetric) or the method may crash.
+			 * Construct the object from a graph.  The graph must be non-oriented and without double edges 
+			 * nor isolated points or the method may crash.
+			 * 
+			 * The numbering of the vertices is preserved.
 			 *
-			 * @tparam	GRAPH	Type of the graph (eg std::vector<std::vector<int> > or similar)
-			 * @param	gr	the graph
+			 * @tparam	GRAPH	Type of the graph (eg std::vector<std::vector<int>> or similar)
+			 * @param	gr		  	the graph.
+			 * @param	root	  	The oriented root edge. If it does not belong to the graph, the dart edge
+			 * 						is set to 0.
 			 *
-			 * @return	a map that give the index of each oriented edge in the permutations ie
-			 * 			map[{u,v}] = i means that the oriented edge from u to v in the graph correpsond
-			 * 			to the arrow index i in the combinatorial map. 
+			 * @return	a map that give the index of each oriented edge in the permutations ie map[{u,v}] = i
+			 * 			means that the oriented edge from u to v in the graph correspond to the arrow index i
+			 * 			in the combinatorial map.
 			 **/
-			template<typename GRAPH> std::map< std::pair<int, int>, int> fromGraph(const GRAPH & gr)
+			template<typename GRAPH> std::map< std::pair<int, int>, int> fromGraph(const GRAPH & gr, std::pair<int,int> root = std::pair<int, int>(-1,-1))
 				{
-				const size_t l = gr.size();
-				int te = 0;
-				for (size_t i = 0; i < l; i++) { te += (int)gr[i].size(); } // compute the number of half edges
-				_root = 0;
+				MTOOLS_ASSERT(graphType_isValid(graphType(gr)) == false);	// graph non-oriented
+				MTOOLS_ASSERT(graphType_isOriented(graphType(gr))== false);	// graph non-oriented
+				MTOOLS_ASSERT(graphType_hasDoubleEdge(graphType(gr)) == false);	// wihtout double edges
+				MTOOLS_ASSERT(graphType_hasIsolatedBoth(graphType(gr)) == false); // nor isolated vertices
+				const int nbv = (int)gr.size();
+				int totaldarts = 0;
+				for (int i = 0; i < nbv; i++) { totaldarts += (int)gr[i].size(); } // compute the number of darts
+				_root = 0;	// default choice for the root if the edge provided does not exist
 				_sigma.clear();
 				_alpha.clear();
-				_sigma.reserve(te + 1);
-				_alpha.reserve(te + 1);
-				_sigma.resize(te);
-				_alpha.resize(te);
-				// construct the involution
-				int j = 0; while (j < te) { _alpha[j] = j + 1; _alpha[j + 1] = j; j += 2; }
-				// construct sigma
+				_sigma.reserve(totaldarts + 1);
+				_alpha.reserve(totaldarts + 1);
+				_sigma.resize(totaldarts);
+				_alpha.resize(totaldarts);
+				_vertices.reserve(totaldarts + 1);
+				_vertices.resize(totaldarts);
+				_nbvertices = nbv;
 				std::map< std::pair<int, int>, int> mapEdge;
-				int freeindex = 0;
-				for (size_t i = 0; i < l; i++)
+				int e = 0;
+				for (int i = 0; i < nbv; i++)
 					{
-					int firstindex = -1;
-					int previndex = -1;
+					int firste = e;
 					for (auto it = gr[i].begin(); it != gr[i].end(); ++it)
 						{
-						auto res = mapEdge.insert({ std::pair<int, int>((int)i, *it), freeindex }); // try to insert the edge
-						if (res.second)
-							{ // insertion successful: first time we encounter this edge. 
-							mapEdge.insert({ std::pair<int, int>(*it, (int)i), freeindex + 1 }); // insert the oposite edge
-							freeindex += 2;
+						_vertices[e] = i;
+						if ((root.first == i) && (root.second == (*it))) { _root = e; } // found the root
+						if (it != gr[i].begin()) { _sigma[e - 1] = e; } // chain to the previous one
+						auto res = mapEdge.find(std::pair<int, int>(*it,i)); // did we already insert the opposite edge ? 
+						if (res != mapEdge.end())
+							{ 
+							_alpha[e] = res->second; // opposite edge already found
+							_alpha[res->second] = e; // link them together
 							}
-						int index = res.first->second; // index of the edge
-						if (previndex < 0) { firstindex = index; } else { _sigma[previndex] = index; }
-						previndex = index;
+						mapEdge[std::pair<int, int>(i, *it)] = e; // insert the edge in the map in any case.
+						e++; // next edge
 						}
-					if (firstindex >= 0) { _sigma[previndex] = firstindex; }
+					if (e != firste) { _sigma[e - 1] = firste; } // complete rotation cycle if not empty
 					}
-				MTOOLS_ASSERT(freeindex = te);
-				_computeVerticeSet();
 				_computeFaceSet();
 				return mapEdge;
 				}
@@ -403,10 +438,13 @@ namespace mtools
 
 			/**
 			 * Converts the object into a graph.
+			 * Inverse operation of fromGraph() in the sense that toGraph(fromGraph(G)) = G
+			 * [but fromGraph(toGraph(CM)) may be different from CM].
 			 *
 			 * @tparam	GRAPH	Type of the graph. For example std::vector<std::vector<int> >.
 			 *
-			 * @return	The corresponding graph object
+			 * @return	The graph object. The numbering of the vertices is unchanged. 
+			 * 			
 			 **/
 			template<typename GRAPH> GRAPH toGraph() const
 				{
@@ -416,11 +454,6 @@ namespace mtools
 				for(int i = 0; i < l; i++)
 					{
 					int v = _vertices[i];
-
-					if (v == 9)
-						{
-						cout << "ok";
-						}
 					if (gr[v].size() == 0)
 						{
 						gr[v].push_back(_vertices[_alpha[i]]);
@@ -446,35 +479,46 @@ namespace mtools
 
 
 			/**
-			* Permute the indices of alpha and sigma according to a permutation
-			*This changes the numbering of the vertices
+			* Return a combinatorial map where the indice have been permutated 
+			* in such way that:
+			* 
+			*   - the darts at position k in the returned object was at position   
+			*     perm[k] in the original map.
+			*     
+			* The permutation does not change the numbering of the vertices.
 			* 
 			* @param	perm   	The permutation
-			* @param	invperm	its inverse
+			* @param	invperm	its inverse (optional)
 			**/
-			void permute(const Permutation  & perm, const Permutation & invperm)
+			CombinatorialMap getPermute(const Permutation  & perm, const Permutation & invperm) const
 				{
-				const size_t l = _sigma.size();
-				MTOOLS_ASSERT(perm.size() == l);
-				auto sigma2 = _sigma;
-				auto alpha2 = _alpha;
+				const int l = nbHalfEdges();
+				MTOOLS_ASSERT((int)perm.size() == l);
+				CombinatorialMap cm;
+				cm._alpha.resize(l);
+				cm._sigma.resize(l);
+				cm._vertices.resize(l);
+				cm._faces.resize(l);
 				for (int i = 0; i < l; i++)
 					{
-					_sigma[i] = invperm[sigma2[perm[i]]];
-					_alpha[i] = invperm[alpha2[perm[i]]];
+					cm._sigma[i]    = invperm[_sigma[perm[i]]];
+					cm._alpha[i]    = invperm[_alpha[perm[i]]];
+					cm._vertices[i] = _vertices[perm[i]];
+					cm._faces[i]    = _faces[perm[i]];
 					}
-				_root = invperm[_root];
-				_computeVerticeSet();
-				_computeFaceSet();
+				cm._nbvertices = _nbvertices;
+				cm._nbfaces = _nbfaces;
+				cm._root = invperm[_root];
+				return cm;
 				}
 
 
 			/**
-			* Same as above but when the inverse was not previously precalculated
+			* Same as above but without providing the the inverse of the permutation.
 			**/
-			void permute(const Permutation & perm)
+			CombinatorialMap getPermute(const Permutation & perm)
 				{
-				permute(perm, invertPermutation(perm));
+				return getPermute(perm, invertPermutation(perm));
 				}
 
 
@@ -494,9 +538,34 @@ namespace mtools
 			 **/
 			std::tuple<int,int,int> btreeToTriangulation()
 				{
-
-				_canonicalTreeOrdering();
-
+				// we need to make sure that the numbering of the edges follow the contour of the tree.
+				const int len = nbHalfEdges();
+				bool needreorder = false;
+				std::vector<int> ord(len, -1);
+				int x0 = 0; while (_sigma[x0] != x0) { x0++; MTOOLS_ASSERT(x0 < len); } // find an half edge x0 that is a leaf. 
+				if (x0 != 0) { needreorder = true; }
+				ord[x0] = 0; // set it a the root
+				int x = phi(x0), i = 1;
+				while (x != x0) 
+					{// iterate on the (unique face) to find the order
+					if (x != i) { needreorder = true; }
+					ord[x] = i; i++; x = phi(x);
+					} 
+				MTOOLS_INSURE(i == len); // make sure we are dealing with a tree
+				// reorder the darts if needed.
+				if (needreorder)
+					{
+					auto perm = getSortPermutation(ord);
+					auto invperm = invertPermutation(perm);
+					auto _alpha2 = _alpha;
+					auto _sigma2 = _sigma;
+					for (int i = 0; i < len; i++)
+						{
+						_sigma[i] = invperm[_sigma2[perm[i]]];
+						_alpha[i] = invperm[_alpha2[perm[i]]];
+						}
+					}				
+				// ok, now have a tree in canonical order, we can apply the algorithm.				
 				const int ne = (int)_alpha.size() / 2;	// number of edges
 				const int nv = (ne - 2) / 3 + 1;    // number of inner vertices. 
 				std::list< std::pair<int, int> > buds; // position of the buds and number of inner edges following them
@@ -511,7 +580,6 @@ namespace mtools
 				auto nit = it; nit++;
 				MTOOLS_INSURE(nit == buds.end());
 				it->second = (2 * ne) - it->first - 2;
-
 				// partial closure
 				it = buds.begin();
 				while (it != buds.end())
@@ -585,8 +653,10 @@ namespace mtools
 				}
 
 
+
 			/**
-			* Print the into a string
+			* Print infos about the map into a string
+			* set the detailed to true to print the complete map
 			**/
 			std::string toString(bool detailed = false) const
 				{
@@ -598,9 +668,12 @@ namespace mtools
 				if (isTree()) s += std::string(" (TREE)");
 				s += "\n";
 				s += std::string("   genus    : ") + mtools::toString(genus());
-				if (genus() == 0) s += std::string(" (PLANARY EMBEDDING)");
+				if (genus() == 0) s += std::string(" (PLANAR EMBEDDING)");
+				s += "\n";
+				s += std::string("   root pos : ") + mtools::toString(root()) + "\n";
 				if (detailed)
 					{
+
 					s += std::string("alpha     = [ "); for (int i = 0; i < _alpha.size(); i++) { s += mtools::toString(_alpha[i]) + " "; } s += "]\n";
 					s += std::string("sigma     = [ "); for (int i = 0; i < _sigma.size(); i++) { s += mtools::toString(_sigma[i]) + " "; } s += "]\n";
 					s += std::string("vertices  = [ "); for (int i = 0; i < _vertices.size(); i++) { s += mtools::toString(_vertices[i]) + " "; } s += "]\n";
@@ -611,27 +684,20 @@ namespace mtools
 
 
 			/**
-			* Serialise
+			* Serialise/deserialize the object
 			**/
-			void serialize(OArchive & ar, const int version = 0)
+			template<typename ARCHIVE> void serialize(ARCHIVE & ar, const int version = 0)
 				{
 				ar & _root;
+				ar & _nbvertices;
+				ar & _nbfaces;
 				ar & _alpha;
 				ar & _sigma;
+				ar & _vertices;
+				ar & _faces;
 				}
 
 
-			/**
-			* Deserialise
-			**/
-			void deserialize(IArchive & ar, const int version = 0)
-				{
-				ar & _root;
-				ar & _alpha;
-				ar & _sigma;
-				_computeVerticeSet();
-				_computeFaceSet();
-				}
 
 
 		private:
@@ -664,20 +730,6 @@ namespace mtools
 				}
 			*/
 
-
-			/* Permute sigma and alpha in such way that phi = sigma(alpha(.)) if the circular
-			permuation i->i+1 
-			The map must be a tree. */
-			void _canonicalTreeOrdering()
-				{
-				std::vector<int> ord(nbHalfEdges(), -1);
-				int i = 1;
-				ord[0] = 0;
-				int x = phi(0);
-				while (x != 0) { ord[x] = i; i++; x = phi(x); }
-				MTOOLS_INSURE(i == nbHalfEdges()); // make sure we are dealing with a tree
-				permute(getSortPermutation(ord));
-				}
 
 			/* Compute the vertex set from sigma and alpha */
 			void _computeVerticeSet()
@@ -728,14 +780,14 @@ namespace mtools
 					}
 				}
 
-
+			int _root;					// root half-edge
+			int _nbvertices;
+			int _nbfaces;
 			std::vector<int> _alpha;	// involution that matches half edges
 			std::vector<int> _sigma;	// rotations around vertices
-			int _root;					// root half-edge
 			std::vector<int> _vertices;	// index of vertices associated with half edges
-			int _nbvertices;
 			std::vector<int> _faces;	// index of faces associated with half edges
-			int _nbfaces;
+
 		};
 
 
