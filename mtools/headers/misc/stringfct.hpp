@@ -103,6 +103,20 @@ namespace mtools
      **/
     template<class T> T removeBeginning(T s, size_t nb) { if (nb == 0) { return s; } if (nb >= s.length()) { s.clear(); return s; } T r(s, nb, s.length() - nb); return r; }
 
+	
+	/**
+	 * Remove everything after the first null char.
+	 *
+	 * @param [in,out]	s	The string to process.
+	 *
+	 * @return	the string troncated after its first null char. 
+	 **/
+	template<class T> T troncateAfterNullChar(const T & s)
+		{
+		const size_t n = s.find((char)0, 0);
+		return((n == std::string::npos) ? s : s.substr(0, n));
+		}
+	
 
     /**
      * Removes the left spaces of a string.
