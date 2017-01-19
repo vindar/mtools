@@ -75,8 +75,8 @@ namespace mtools
 #define M_PI_2  1.570796326794896619
 #endif
 
-#ifndef M_2_PI
-#define M_2_PI  6.283185307179586477
+#ifndef M_2PI
+#define M_2PI   6.283185307179586477
 #endif
 
 
