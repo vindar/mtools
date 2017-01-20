@@ -26,7 +26,7 @@
 #include "vec.hpp"
 #include "box.hpp"
 #include "permutation.hpp"
-
+#include "../random/gen_fastRNG.hpp"
 
 namespace mtools
 	{
@@ -68,7 +68,7 @@ namespace mtools
 
 
 			/**
-			* Loads a trinagulation and define the boundary vertices.
+			* Loads a triangulation and define the boundary vertices.
 			* This clear all previous computation.
 			*
 			* @param graph		The triangulation with boundary (must be 3 connected).
@@ -76,7 +76,7 @@ namespace mtools
 			* 					is considered to be a boundary vertice.
 			*/
 			template<typename GRAPH> void setTriangulation(const GRAPH & graph, const std::vector<int> & boundary)
-				{
+				{ 
 				clear();
 				const size_t l = graph.size();
 				MTOOLS_INSURE(boundary.size() == l);
@@ -88,17 +88,43 @@ namespace mtools
 					{
 					if (boundary[_perm[i]] > 0.0) { _i0 = i; break; }
 					}
-				MTOOLS_INSURE(_i0 < l);
+				MTOOLS_INSURE((_i0 > 0)&&(_i0 < l-2));
+				}
+
+
+			/** Compute the error in the circle radius in L2 norm. */
+			double errorL2() const
+				{
+				double e = 0.0;
+				for (size_t i = 0; i < _i0; ++i)
+					{
+					const double v = _rad[i];
+					const double c = angleSumEuclidian(v, _gr[i]) - M_2PI;
+					e += c*c;
+					}
+				return e;
+				}
+
+			/** Compute the error in the circle radius in L1 norm. */
+			double errorL1() const
+				{
+				double e = 0.0;
+				for (size_t i = 0; i < _i0; ++i)
+					{
+					const double v = _rad[i];
+					const double c = angleSumEuclidian(v, _gr[i]) - M_2PI;
+					e += fabs(c);
+					}
+				return e;
 				}
 
 
 			/**
-			* Sets the initial radii of the circle around each vertex.
-			* The radii associated with the boundary vertices are fixed and
-			* represent the boundary condition for the packing.
-			*
-			* @param	rad	The radii. Any values <= 0.0 is set to 1.0.
-			*/
+			 * Sets the radii of the circle around each vertices. The radii associated with the boundary
+			 * vertices are not modified during the circle packing algorithm.
+			 *
+			 * @param	rad	The radii. Any values < 0 is set to 1.0.
+			 **/
 			void setRadii(const std::vector<double> & rad)
 				{
 				const size_t l = _gr.size();
@@ -122,42 +148,6 @@ namespace mtools
 
 
 			/**
-			 * Compute the radii for circle packing the triangulation. After the method returns, the radii
-			 * may be queried via getRadii().
-			 *
-			 * @param	precision	the required precision, in L2 norm for the total angle sum.
-			 *
-			 * @return	The number of iterations performed.
-			 **/
-			int64 computeRadii(double precision = 10e-10)
-				{
-				precision *= precision;
-				int64 iter = 0;
-				const size_t i0 = _i0;
-				while(1)
-					{
-					iter++;
-					double c = 0.0;
-					for (size_t i = 0; i < i0; ++i)
-						{
-						const double v = _rad[i];
-						const double theta = angleSumEuclidian(v, _gr[i]);
-						const double k = (double)_gr[i].size();
-						const double beta = sin(theta*0.5/k);
-						const double tildev = beta*v / (1.0 - beta);
-						const double delta = sin(M_PI/k);
-						const double u = (1.0 - delta)*tildev / delta;
-						const double e = theta - M_2PI;
-						c += e*e;
-						_rad[i] = u;
-						}
-					if (c < precision) return iter;
-					}
-				}
-
-
-
-			/**
 			* Compute the radii for circle packing the triangulation. After the method returns, the radii
 			* may be queried via getRadii().
 			* 
@@ -167,10 +157,13 @@ namespace mtools
 			*
 			* @return	The number of iterations performed.
 			**/
-			int64 computeRadiiFast(const double eps = 10e-10,const double delta = 0.1)
+			int64 computeRadii(int nbii, const double eps = 10e-9,const double delta = 0.05)
 				{
 
-				#define DELAY_POST_RADII		// uncomment this line to prevent posting radii as soon as they are computing (for debugging). 
+				FastRNG gen;
+
+				#define DELAY_POST_RADII		// uncomment those line for debugging
+				//#define DO_NOT_USE_RNG		//
 
 				const size_t i0 = _i0;
 				int64 iter = 0;
@@ -179,10 +172,11 @@ namespace mtools
 				bool fl = false, fl0;
 				std::vector<double> _rad0 = _rad;
 				while (c > eps)
+				//for(int ii = 0; ii<nbii; ii++)
 					{
 					iter++;
 					c0 = c;
-					c = 0;
+					c = 0.0;
 					lambda0 = lambda;
 					fl0 = fl;
 					#ifndef DELAY_POST_RADII
@@ -209,11 +203,16 @@ namespace mtools
 					_rad.swap(_rad0);
 					#endif
 					c = sqrt(c); 
+					if (((iter-1) % 1000) == 0)
+						cout << (iter - 1) << "   c = " << c << "\n\n";
 					lambda = c / c0;
 					fl = true;					
 					if ((fl0) && (lambda < 1.0))
 						{
-						if (abs(lambda - lambda0) < delta) { lambda = lambda / (1.0 - lambda); }
+						if (abs(lambda - lambda0) < delta) 
+							{ 
+							lambda = lambda / (1.0 - lambda); 
+							}
 						double lstar = 3*lambda;
 						for (size_t i = 0; i < i0; ++i) 
 							{
@@ -224,14 +223,40 @@ namespace mtools
 								if (d2 < lstar) { lstar = d2; }
 								}
 							}
+
 						lambda = std::min<double>(lambda, 0.5*lstar);
+						
+						#ifdef DO_NOT_USE_RNG
 						for (size_t i = 0; i < i0; ++i) { _rad[i] += lambda*(_rad[i] - _rad0[i]); }
 						fl = 0;
+						#else
+						if (Unif(gen) > 0.5) 
+							{
+							for (size_t i = 0; i < i0; ++i) { _rad[i] += lambda*(_rad[i] - _rad0[i]); } 
+							fl = 0;
+							}
+						#endif ENDIF
+
 						}
-						
+					/*
+					if (iter <= 4)
+						{
+						cout << "*************************************************************************************************************************************\n";
+						cout << iter - 1 << "\n";
+						cout << "*************************************************************************************************************************************\n";
+
+						for (int i = 0;i < _rad.size(); i++)
+							{
+							cout << i << "   " << _rad[i] << "\n";
+							}
+
+						}
+					*/
+
 					}
 				return iter;
 
+				#undef DO_NOT_USE_RNG
 				#undef DELAY_POST_RADII 
 				}
 
@@ -346,6 +371,45 @@ namespace mtools
 			* @return	the enclosing rectangle.
 			*/
 			fBox2 getEnclosingRect() const { return _rect; }
+
+
+			/**
+			 * Draw circle packing into an image
+			 *
+			 * @param	maxImagedimension	The maximum image dimension in any direction.
+			 * @param	drawCircles		 	true to draw circles.
+			 * @param	drawLines		 	true to draw lines.
+			 * @param	colorCircles	 	The color of the circles.
+			 * @param	colorLines		 	The color of the lines.
+			 *
+			 * @return	A mtools::Img<unsigned char>
+			 **/
+			mtools::Img<unsigned char> drawCirclePacking(int maxImagedimension, bool drawCircles = true, bool drawLines = true, RGBc colorCircles = RGBc::c_Red, RGBc colorLines = RGBc::c_Black)
+				{
+				MTOOLS_INSURE(!_rect.isEmpty());
+				int LX = (_rect.lx() > _rect.ly()) ? maxImagedimension : (maxImagedimension*_rect.lx()/_rect.ly());
+				int LY = (_rect.ly() > _rect.lx()) ? maxImagedimension : (maxImagedimension*_rect.ly() / _rect.lx());
+				Img<unsigned char> Im(LX, LY, 1, 4);
+				if (drawCircles)
+					{
+					for (int i = 0;i < _circle.size(); i++)
+						{
+						Im.fBox2_draw_circle(R, circles[i], radiuses[i], colorCircles, 0.5f);
+						//Im.fBox2_drawText(R, toString(i + 1), circles[i], 'c', 'c', 10, false, RGBc::c_Blue);
+						}
+					}
+				if (drawLines)
+					{
+					for (int i = 0;i < circles.size(); i++)
+						{
+						for (int j = 0;j < gr[i].size(); j++)
+							{
+							Im.fBox2_drawLine(R, circles[i], circles[gr[i][j]], colorLines);
+							}
+						}
+					}
+				return Im;
+				}
 
 
 		private:
