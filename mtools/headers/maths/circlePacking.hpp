@@ -147,7 +147,7 @@ namespace mtools
 						const double tildev = beta*v / (1.0 - beta);
 						const double delta = sin(M_PI/k);
 						const double u = (1.0 - delta)*tildev / delta;
-						const double e = theta - M_2_PI;
+						const double e = theta - M_2PI;
 						c += e*e;
 						_rad[i] = u;
 						}
@@ -169,14 +169,15 @@ namespace mtools
 			**/
 			int64 computeRadiiFast(const double eps = 10e-10,const double delta = 0.1)
 				{
+
+				#define DELAY_POST_RADII		// uncomment this line to prevent posting radii as soon as they are computing (for debugging). 
+
 				const size_t i0 = _i0;
 				int64 iter = 0;
 				double c = 1.0, c0;
 				double lambda = -1.0, lambda0;
 				bool fl = false, fl0;
-				std::vector<double> _rad0;
-				_rad0.resize(_rad.size());
-
+				std::vector<double> _rad0 = _rad;
 				while (c > eps)
 					{
 					iter++;
@@ -184,7 +185,9 @@ namespace mtools
 					c = 0;
 					lambda0 = lambda;
 					fl0 = fl;
-					memcpy(_rad0.data(),_rad.data(),i0*sizeof(double));
+					#ifndef DELAY_POST_RADII
+					memcpy(_rad0.data(), _rad.data(), _rad.size()*sizeof(double));	
+					#endif
 					for (size_t i = 0; i < i0; ++i)
 						{
 						const double v = _rad[i];
@@ -194,15 +197,20 @@ namespace mtools
 						const double tildev = beta*v / (1.0 - beta);
 						const double delta = sin(M_PI / k);
 						const double u = (1.0 - delta)*tildev / delta;
-						const double e = theta - M_2_PI;
+						const double e = theta - M_2PI;
 						c += e*e;
+						#ifdef DELAY_POST_RADII
+						_rad0[i] = u;
+						#else
 						_rad[i] = u;
+						#endif
 						}
+					#ifdef DELAY_POST_RADII
+					_rad.swap(_rad0);
+					#endif
 					c = sqrt(c); 
 					lambda = c / c0;
-					lambda *= lambda;
-					fl = true;
-					
+					fl = true;					
 					if ((fl0) && (lambda < 1.0))
 						{
 						if (abs(lambda - lambda0) < delta) { lambda = lambda / (1.0 - lambda); }
@@ -223,6 +231,8 @@ namespace mtools
 						
 					}
 				return iter;
+
+				#undef DELAY_POST_RADII 
 				}
 
 
