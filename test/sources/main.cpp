@@ -9,7 +9,7 @@ using namespace mtools;
 
 
 
-MT2004_64 gen(123456); // RNG
+MT2004_64 gen(123); // RNG
 
 Grid_basic<2, int64, 2> Grid; // the 2D grid
 
@@ -151,7 +151,7 @@ void drawCirclePacking(fBox2 R, std::vector<double> & radiuses, std::vector<fVec
 	int LX = 15000;
 	int LY = (int)(LX / ratio);
 
-	Img<unsigned char> Im(LX, LY, 1, 4);
+	mtools::Img<unsigned char> Im(LX, LY, 1, 4);
 
 	for (int i = 0;i < circles.size(); i++)
 		{
@@ -388,7 +388,7 @@ void testTriangulation()
 
 	cout << "packing...\n";
 	mtools::Chronometer();
-	cout << "ITER = " << CP.computeRadiiFast(1.0e-7) << "\n";
+	cout << "ITER = " << CP.computeRadii(1.0e-7) << "\n";
 	cout << "done in " << mtools::Chronometer() << "ms\n";
 
 
@@ -408,7 +408,7 @@ void testTriangulation()
 
 void testBall()
 	{
-	int sizeTrig = 3000000;
+	int sizeTrig = 50000;
 
 	mtools::Chronometer();
 
@@ -521,7 +521,7 @@ void testBall()
 
 	cout << "packing...\n";
 	mtools::Chronometer();
-	cout << "ITER = " << CP.computeRadiiFast(1.0e-10) << "\n";
+	cout << "ITER = " << CP.computeRadii(1.0e-12) << "\n";
 	cout << "done in " << mtools::Chronometer() << "ms\n";
 
 

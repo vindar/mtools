@@ -27,6 +27,8 @@
 #include "box.hpp"
 #include "permutation.hpp"
 #include "../random/gen_fastRNG.hpp"
+#include "../random/classiclaws.hpp"
+#include "../graphics/customcimg.hpp"
 
 namespace mtools
 	{
@@ -102,7 +104,7 @@ namespace mtools
 					const double c = angleSumEuclidian(v, _gr[i]) - M_2PI;
 					e += c*c;
 					}
-				return e;
+				return sqrt(e);
 				}
 
 			/** Compute the error in the circle radius in L1 norm. */
@@ -157,7 +159,7 @@ namespace mtools
 			*
 			* @return	The number of iterations performed.
 			**/
-			int64 computeRadii(int nbii, const double eps = 10e-9,const double delta = 0.05)
+			int64 computeRadii(const double eps = 10e-9,const double delta = 0.05)
 				{
 
 				FastRNG gen;
@@ -172,7 +174,6 @@ namespace mtools
 				bool fl = false, fl0;
 				std::vector<double> _rad0 = _rad;
 				while (c > eps)
-				//for(int ii = 0; ii<nbii; ii++)
 					{
 					iter++;
 					c0 = c;
@@ -203,8 +204,6 @@ namespace mtools
 					_rad.swap(_rad0);
 					#endif
 					c = sqrt(c); 
-					if (((iter-1) % 1000) == 0)
-						cout << (iter - 1) << "   c = " << c << "\n\n";
 					lambda = c / c0;
 					fl = true;					
 					if ((fl0) && (lambda < 1.0))
@@ -279,7 +278,7 @@ namespace mtools
 			 *
 			 * @return	The enclosing rectangle of the circle packing
 			 **/
-			fBox2 computeLayout(int i1 = -1, int i2 = -1)
+			mtools::fBox2 computeLayout(int i1 = -1, int i2 = -1)
 				{
 				if (i1 < 0)
 					{
@@ -307,10 +306,10 @@ namespace mtools
 					}
 				// i1 and i2 are good, we can start the layout
 				_circle.resize(_rad.size());
-				_circle[i1] = fVec2(0.0, 0.0);
-				_circle[i2] = fVec2(_rad[i1] + _rad[i2], 0.0);
+				_circle[i1] = mtools::fVec2(0.0, 0.0);
+				_circle[i2] = mtools::fVec2(_rad[i1] + _rad[i2], 0.0);
 
-				fBox2 R;
+				mtools::fBox2 R;
 				R.min[0] = -_rad[i1];
 				R.max[0] = _rad[i1] + 2 * _rad[i2];
 				R.max[1] = std::max<double>(_rad[i1], _rad[i2]);
@@ -337,7 +336,7 @@ namespace mtools
 						{
 						if (doneCircle[*it] == 0)
 							{
-							fVec2 p = layout(index, *pit, *it);
+							mtools::fVec2 p = layout(index, *pit, *it);
 							_circle[*it] = p;
 							double rad = _rad[*it];
 							if (p.X() + rad > R.max[0]) { R.max[0] = p.X() + rad; }
@@ -362,7 +361,7 @@ namespace mtools
 			*
 			* @return	The layout.
 			*/
-			std::vector<fVec2> getLayout() const { return permute(_circle, _invperm); }
+			std::vector<mtools::fVec2> getLayout() const { return permute(_circle, _invperm); }
 
 
 			/**
@@ -370,7 +369,7 @@ namespace mtools
 			*
 			* @return	the enclosing rectangle.
 			*/
-			fBox2 getEnclosingRect() const { return _rect; }
+			mtools::fBox2 getEnclosingRect() const { return _rect; }
 
 
 			/**
@@ -389,22 +388,22 @@ namespace mtools
 				MTOOLS_INSURE(!_rect.isEmpty());
 				int LX = (_rect.lx() > _rect.ly()) ? maxImagedimension : (maxImagedimension*_rect.lx()/_rect.ly());
 				int LY = (_rect.ly() > _rect.lx()) ? maxImagedimension : (maxImagedimension*_rect.ly() / _rect.lx());
-				Img<unsigned char> Im(LX, LY, 1, 4);
+				mtools::Img<unsigned char> Im(LX, LY, 1, 4);
 				if (drawCircles)
 					{
 					for (int i = 0;i < _circle.size(); i++)
 						{
-						Im.fBox2_draw_circle(R, circles[i], radiuses[i], colorCircles, 0.5f);
+						Im.fBox2_draw_circle(_rect, _circle[i], _rad[i], colorCircles, 0.5f);
 						//Im.fBox2_drawText(R, toString(i + 1), circles[i], 'c', 'c', 10, false, RGBc::c_Blue);
 						}
 					}
 				if (drawLines)
 					{
-					for (int i = 0;i < circles.size(); i++)
+					for (int i = 0;i < _circle.size(); i++)
 						{
-						for (int j = 0;j < gr[i].size(); j++)
+						for (int j = 0;j < _gr[i].size(); j++)
 							{
-							Im.fBox2_drawLine(R, circles[i], circles[gr[i][j]], colorLines);
+							Im.fBox2_drawLine(_rect, _circle[i], _circle[_gr[i][j]], colorLines);
 							}
 						}
 					}
@@ -419,17 +418,17 @@ namespace mtools
 			 * Compute the position of _circle[z] provided that _circle[x]and _circle[y] are already known   
 			 * and z is the next vertex after y in the flower of x. 
 			 * **/
-			inline fVec2 layout(int x, int y, int z)
+			inline mtools::fVec2 layout(int x, int y, int z)
 				{
 				const double rx = _rad[x];
 				const double ry = _rad[y];
 				const double rz = _rad[z];
 				double alpha = angleEuclidian(rx, ry, rz);
-				fVec2 V = (_circle[y] - _circle[x]);
+				mtools::fVec2 V = (_circle[y] - _circle[x]);
 				V.normalize();
 				const double ca = cos(alpha);
 				const double sa = sin(alpha);
-				fVec2 W = fVec2(ca*V.X() - sa*V.Y(), sa*V.X() + ca*V.Y());
+				mtools::fVec2 W = mtools::fVec2(ca*V.X() - sa*V.Y(), sa*V.X() + ca*V.Y());
 				W.normalize();
 				W *= (rx + rz);
 				W += _circle[x];
@@ -449,6 +448,7 @@ namespace mtools
 				}
 
 
+
 			/** Compute the total angle around vertex index **/
 			inline double angleSumEuclidian(const double rx, const std::vector<int> & neighbour) const
 				{
@@ -466,12 +466,12 @@ namespace mtools
 
 
 			std::vector<std::vector<int> >	_gr;		// the graph
-			Permutation						_perm;		// the permutation applied to get all the boundary vertices at the end
-			Permutation						_invperm;	// the inverse permutation
+			mtools::Permutation				_perm;		// the permutation applied to get all the boundary vertices at the end
+			mtools::Permutation				_invperm;	// the inverse permutation
 			std::vector<double>				_rad;		// vertex raduises
-			std::vector<fVec2>				_circle;	// circle layout
+			std::vector<mtools::fVec2>		_circle;	// circle layout
 			size_t							_i0;		// index of the first boundary vertice. 
-			fBox2							_rect;		// rectangle enclosing the packing.
+			mtools::fBox2					_rect;		// rectangle enclosing the packing.
 
 		};
 
