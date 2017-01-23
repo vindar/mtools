@@ -122,7 +122,7 @@ namespace mtools
         /**
         * Assignment operator from another type.
         **/
-        template<typename U> Vec<U,N> & operator=(const Vec<U,N> & V)  { for (size_t i = 0; i < N; i++) { _m_tab[i] = (T)V._m_tab[i]; } return(*this); }
+//        template<typename U> Vec<U,N> & operator=(const Vec<U,N> & V)  { for (size_t i = 0; i < N; i++) { _m_tab[i] = (T)(V[i]); } return(*this); }
 
 
         /**

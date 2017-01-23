@@ -521,7 +521,7 @@ void testBall()
 
 	cout << "packing...\n";
 	mtools::Chronometer();
-	cout << "ITER = " << CP.computeRadii(1.0e-12) << "\n";
+	cout << "ITER = " << CP.computeRadii(1.0e-11) << "\n";
 	cout << "done in " << mtools::Chronometer() << "ms\n";
 
 
