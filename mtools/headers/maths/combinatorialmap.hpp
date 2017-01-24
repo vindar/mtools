@@ -183,12 +183,29 @@ namespace mtools
 
 			/**
 			* Return the index of the vertex which is the start point
-			* of the dart i.
+			* of dartIndex.
 			**/
-			int vertice(int i) const
+			int vertice(int dartIndex) const
 				{
-				MTOOLS_ASSERT((i >= 0) && (i < nbHalfEdges()));
-				return _vertices[i];
+				MTOOLS_ASSERT((dartIndex >= 0) && (dartIndex < nbHalfEdges()));
+				return _vertices[dartIndex];
+				}
+
+
+			/**
+			* Compute the degree of the vertex that is the start point of a given dart.
+			*
+			* @param	dartIndex	the dart index whose start vertex's degree is to be computed.
+			* 						(note that this is NOT the index of the vertex itself!).
+			*
+			* @return	the degree.
+			**/
+			int vertexDegree(int dartIndex) const 
+				{
+				MTOOLS_ASSERT((dartIndex >= 0) && (dartIndex < nbHalfEdges()));
+				int n = 1, j= sigma(dartIndex);
+				while (j != dartIndex) { j = sigma(j); n++; }
+				return n;
 				}
 
 
@@ -199,7 +216,6 @@ namespace mtools
 			std::vector<int> getVerticeVector() const { return _vertices; }
 
 
-
 			/**
 			* Number of faces of the graph.
 			**/
@@ -207,12 +223,29 @@ namespace mtools
 
 
 			/**
-			* Return the index of the face to which the dart i belongs.
+			* Return the index of the face to which the dartIndex belongs.
 			**/
-			int face(int i) const 
+			int face(int dartIndex) const
 				{
-				MTOOLS_ASSERT((i >= 0) && (i < nbHalfEdges())); 
-				return _faces[i];
+				MTOOLS_ASSERT((dartIndex >= 0) && (dartIndex < nbHalfEdges()));
+				return _faces[dartIndex];
+				}
+
+
+			/**
+			* Compute the number of edge that compose the face to which a given dart belongs.
+			*
+			* @param	dartIndex	the dart index whose associated face size is to be computed.
+			* 						(note that this is NOT the index of the face itself!).
+			*
+			* @return	the number of edges in the face.
+			**/
+			int faceSize(int dartIndex)
+				{
+				MTOOLS_ASSERT((dartIndex >= 0) && (dartIndex < nbHalfEdges()));
+				int n = 1, j = phi(dartIndex);
+				while (j != dartIndex) { j = phi(j); n++; }
+				return n;
 				}
 
 
@@ -469,6 +502,49 @@ namespace mtools
 			std::vector<std::vector<int> > toGraph() const
 				{
 				return toGraph< std::vector<std::vector<int> > >();
+				}
+
+
+			/**
+			 * Construct a triangulation by adding a single vertice inside each face of degree larger than 3.
+			 * 
+			 * - The numbering of the vertices already present is unchanged and the new ones follow.
+			 * - The numbering of the faces may change, even for faces that where already triangulations !
+			 *
+			 * @return	the number of vertices inserted (which is also the number of faces that were not
+			 * 			triangles).
+			 **/
+			int triangulate() 
+				{
+				const int nbv = nbVertices();
+				const int l = nbHalfEdges();
+				for (int i = 0; i < l; i++) 
+					{ 
+					_triangulateFace(i); 
+					}
+				_computeFaceSet();
+				return nbVertices() - nbv;
+				}
+
+
+			/**
+			 * Triangulate a face belonging to a given dart. If the face is already a triangle, does
+			 * nothing. Otherwise, add a vertice inside the face and then connect every vertice of the face
+			 * to it.
+			 * 
+			 * - The numbering of the vertices already present is unchanged and the new one follow.
+			 * - The numbering of the faces may change, even for faces that where already present !
+			 *
+			 * @param	dartIndex	The index of a dart of the face to triangulate 
+			 * 						(note that this is NOT the index of the face itself!).
+			 *
+			 * @return	The degree of the face that was triangulated.
+			 **/
+			int triangulateFace(int dartIndex)
+				{
+				int d = _triangulateFace(dartIndex);
+				_computeFaceSet();
+				return d;
 				}
 
 
@@ -773,6 +849,38 @@ namespace mtools
 						}
 					}
 				}
+
+
+			/* Triangulate a face but do not recompute the _faces vector */
+			int _triangulateFace(int dartIndex)
+				{
+				const int d = faceSize(dartIndex);
+				MTOOLS_ASSERT(d >= 3);
+				if (d == 3) return 3; // nothing to do
+				int f = (int)_alpha.size();
+				int i = dartIndex;
+				_alpha.resize(f + 2*d);
+				_sigma.resize(f + 2*d);
+				_vertices.resize(f + 2*d);
+				for (int h = 0; h < d; h++)
+					{
+					const int nexti = phi(i);
+					_vertices[f]   = _vertices[_alpha[i]];
+					_vertices[f + 1] = _nbvertices;
+					_sigma[f + 1] = ((h > 0) ? (f-1) : ((int)_sigma.size() - 1) );
+					_alpha[f + 1] = f;
+					_sigma[f] = _sigma[_alpha[i]];
+					_sigma[_alpha[i]] = f;
+					_alpha[f] = f + 1;
+					f += 2;
+					i = nexti;
+					}
+				_nbvertices++;
+				// now, _nbfaces and _faces are dirty !
+				// should call _computeFaceSet() to make it straight.
+				return d;
+				}
+
 
 			int _root;					// root half-edge
 			int _nbvertices;
