@@ -9,7 +9,7 @@ using namespace mtools;
 
 
 
-MT2004_64 gen; // RNG
+MT2004_64 gen(555); // RNG
 
 Grid_basic<2, int64, 2> Grid; // the 2D grid
 
@@ -485,7 +485,7 @@ void remove_last_vertex(std::vector< std::vector<int> > & gr)
 void testBall()
 	{
 
-	int sizeTrig = 10000;
+	int sizeTrig = 3000;
 
 
 	DyckWord D(sizeTrig, 3);
@@ -535,27 +535,19 @@ void testBall()
 	gr.resize(L);
 	bound.resize(L);
 
-	std::vector<std::vector<int> > gr2;
-	gr2.resize(L);
-	for (int i = 0; i < L; i++)
-		{
-		gr2[i].reserve(gr[i].size());
-		for (auto j = 0; j < gr[i].size(); j++)
-			{
-			int x = gr[i][j]; if (x < L) gr2[i].push_back(x);
-			}
-		}
-	gr = gr2;
+	gr = resizeGraph(gr, L);
 
 	cout << mtools::graphInfo(gr) << "\n\n";
-
-	// ok, we have the graph gr with boundary bound
+	cout << "A1\n";
+	cout.getKey();
+	// ok, we have the graph with boundary bound
 	
-	closeBoundary(gr, bound);
-
-	cout << "Boundary closed...\n";
-
+	gr = triangulateGraph(gr);
+	// ok the graph is triangulated
+	
 	cout << mtools::graphInfo(gr) << "\n\n";
+	cout << "A2\n";
+	cout.getKey();
 
 
 	oldbound.resize(gr.size()); // the orignal root face
@@ -577,7 +569,7 @@ void testBall()
 
 	cout << "packing...\n";
 	mtools::Chronometer();
-	cout << "ITER = " << CP.computeRadii(1.0e-9) << "\n";
+	cout << "ITER = " << CP.computeRadii(1.0e-8) << "\n";
 	CP.computeLayout();
 	cout << "done in " << mtools::Chronometer() << "ms\n";
 
