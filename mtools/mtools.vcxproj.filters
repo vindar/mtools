@@ -249,6 +249,9 @@
     <ClInclude Include="headers\misc\tuple.hpp">
       <Filter>Header Files\misc</Filter>
     </ClInclude>
+    <ClInclude Include="headers\maths\complex.hpp">
+      <Filter>Header Files\maths</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\console.cpp">
