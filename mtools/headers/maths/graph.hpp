@@ -85,7 +85,6 @@ namespace mtools
 
 	/**
 	* Convert a graph from type A to type B.
-	*
 	**/
 	template<typename GRAPH_A, typename GRAPH_B> GRAPH_B convertGraph(const GRAPH_A & graph)
 		{
@@ -100,6 +99,46 @@ namespace mtools
 			for (auto it = lv1.begin(); it != lv1.end(); ++it) { lv2.push_back(*it); }
 			}
 		return res;
+		}
+
+
+	/**
+	 * Removes all the vertices (and edges pointing to them) from index newSize to the end. The
+	 * vertices strictly below startIndex are unaffected. This yields a  graph with a total number
+	 * of newSize vertice.
+	 *
+	 * @param	newSize	The new number of vertice to keep (the first ones).
+	 *
+	 * @return	the troncated graph.
+	 **/
+	template<typename GRAPH> GRAPH resizeGraph(const GRAPH & graph, int newSize)
+		{
+		std::vector<std::vector<int> > gres;
+		gres.resize(newSize);
+		for (int i = 0; i < newSize; i++)
+			{
+			gres[i].reserve(graph[i].size());
+			for (auto j = 0; j < graph[i].size(); j++)
+				{
+				const int x = graph[i][j]; if (x < newSize) gres[i].push_back(x);
+				}
+			}
+		return gres;
+		}
+
+
+	/**
+	 * Triangulate the graph. The graph must be a simple connected planar graph without double edge
+	 * nor loops.
+	 * 
+	 * Add a single vertice inside each face of the graph and add vertices between it and the face's
+	 * vertices to construct a maximal triangulation.
+	 **/
+	template<typename GRAPH> GRAPH triangulateGraph(const GRAPH & graph)
+		{
+		CombinatorialMap CM(graph);
+		CM.triangulate();
+		return CM.toGraph<GRAPH>();
 		}
 
 
