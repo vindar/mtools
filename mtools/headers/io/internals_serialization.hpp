@@ -315,6 +315,15 @@ namespace internals_serialization
     };
 
 
+	/* specialization for std::pair */
+	template<typename T> class OArchiveHelper < std::complex<T> >
+		{
+		public:
+			typedef std::complex<T> typeT;
+			static inline void write(uint64 & nbitem, OArchive & ar, const typeT & obj, std::string & dest)  { ar.operator&(obj.real()); ar.operator&(obj.imag()); }
+		};
+
+
 	/* specialization for std::tuple */
 	template<typename... U>  class OArchiveHelper < std::tuple<U...> >
 		{
@@ -729,6 +738,15 @@ public:
     typedef std::pair<T1, T2> typeT;
     static inline void read(uint64 & nbitem, IArchive & ar, typeT & obj) { ar.operator&(obj.first); ar.operator&(obj.second); }
 };
+
+
+/* specialization for std::complex */
+template<typename T> class IArchiveHelper < std::complex<T> >
+	{
+	public:
+		typedef std::complex<T> typeT;
+		static inline void read(uint64 & nbitem, IArchive & ar, typeT & obj)  { T real, im; ar.operator&(real);  ar.operator&(im); obj = typeT(real,im); }
+	};
 
 
 /* specialization for std::tuple */
