@@ -25,6 +25,7 @@
 #include "../misc/misc.hpp"
 #include "../misc/stringfct.hpp"
 #include "../io/serialization.hpp"
+#include "complex.hpp"
 
 #include <algorithm>
 #include <string>
@@ -89,6 +90,18 @@ namespace mtools
          * @param   y   The y coordinate
          **/
         Vec(const T & x, const T & y) { static_assert(N == 2, "template parameter N must be 2"); _m_tab[0] = x; _m_tab[1] = y; return; }
+
+
+		/**
+		 * Constructor from a complex number
+		 */
+		Vec(const mtools::complex<T> & c)  { static_assert(N == 2, "template parameter N must be 2"); _m_tab[0] = c.real(); _m_tab[1] = c.imag(); return;  }
+
+
+		/**
+		 * Explicit cast from a 2 dimensionnal vector to complex number.
+		 */
+		explicit operator std::complex<T>() const  { static_assert(N == 2, "template parameter N must be 2"); return mtools::complex<T>(_m_tab[0], _m_tab[1]); }
 
 
         /**
