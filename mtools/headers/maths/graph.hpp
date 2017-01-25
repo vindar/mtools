@@ -458,6 +458,18 @@ namespace mtools
 
 
 	/**
+	 * Return the maximum out degree of any site in the graph.
+	 **/
+	template<typename GRAPH>  inline int maxOutDegreeGraph(const GRAPH & gr)
+		{
+		int maxout = 0;
+		for (size_t i = 0;i < gr.size(); i++) { if (gr[i].size() > maxout) { maxout = (int)gr[i].size(); } }
+		return maxout;
+		}
+
+	
+
+	/**
 	 * Gather information about a graph and put the result in
 	 * a GraphInfo structure.
 	 **/
