@@ -485,6 +485,11 @@ void remove_last_vertex(std::vector< std::vector<int> > & gr)
 void testBall()
 	{
 
+
+	mtools::OpenCLBundle bundle;
+
+	cout.getKey();
+
 	int sizeTrig = 100;
 
 

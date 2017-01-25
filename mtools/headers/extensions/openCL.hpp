@@ -31,7 +31,6 @@
 	#include <OpenCL/cl.hpp>
 #else
 	#include <CL/cl.hpp>
-
 #endif
 
 
