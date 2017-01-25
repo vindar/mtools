@@ -9,7 +9,7 @@ using namespace mtools;
 
 
 
-MT2004_64 gen(555); // RNG
+MT2004_64 gen; // RNG
 
 Grid_basic<2, int64, 2> Grid; // the 2D grid
 
@@ -354,7 +354,7 @@ void loadtestgraph(std::vector<std::vector<int> > & gr, std::vector<int> & bound
 
 void testTriangulation()
 	{
-	int sizeTrig = 1000;
+	int sizeTrig = 10000;
 
 	cout << "\n\n\n\n" << Unif(gen) << "\n";
 
@@ -490,7 +490,7 @@ void testBall()
 
 	cout.getKey();
 
-	int sizeTrig = 100;
+	int sizeTrig = 4000;
 
 
 	DyckWord D(sizeTrig, 3);
