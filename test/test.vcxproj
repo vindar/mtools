@@ -125,7 +125,7 @@
     <OutDir>.\Build\</OutDir>
     <IntDir>.\Build\temp32d\</IntDir>
     <TargetName>test32d</TargetName>
-    <IncludePath>./;../mtools/headers/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(ZLIB_LIB)/source/;$(LIBPNG_LIB)/source/;$(LIBJPEG_LIB)/source/;$(CAIRO_LIB)/source/;$(PIXMAN_LIB)/source/pixman/;$(FREETYPE_LIB)/source/include/freetype/;$(IncludePath)</IncludePath>
+    <IncludePath>./;../mtools/headers/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(ZLIB_LIB)/source/;$(LIBPNG_LIB)/source/;$(LIBJPEG_LIB)/source/;$(CAIRO_LIB)/source/;$(PIXMAN_LIB)/source/pixman/;$(FREETYPE_LIB)/source/include/freetype/;$(OPENCL_ROOT_INCLUDE)/;$(OPENCL_LIB)/;$(IncludePath)</IncludePath>
     <ExecutablePath>$(VC_ExecutablePath_x86);$(WindowsSDK_ExecutablePath);$(VS_ExecutablePath);$(MSBuild_ExecutablePath);$(SystemRoot)\SysWow64;$(FxCopDir);$(PATH);</ExecutablePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-DLL|Win32'">
@@ -133,7 +133,7 @@
     <OutDir>.\Build\</OutDir>
     <IntDir>.\Build\temp32d-fltkdll\</IntDir>
     <TargetName>test32d-fltkdll</TargetName>
-    <IncludePath>./;../mtools/headers/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(ZLIB_LIB)/source/;$(LIBPNG_LIB)/source/;$(LIBJPEG_LIB)/source/;$(CAIRO_LIB)/source/;$(PIXMAN_LIB)/source/pixman/;$(FREETYPE_LIB)/source/include/freetype/;$(IncludePath)</IncludePath>
+    <IncludePath>./;../mtools/headers/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(ZLIB_LIB)/source/;$(LIBPNG_LIB)/source/;$(LIBJPEG_LIB)/source/;$(CAIRO_LIB)/source/;$(PIXMAN_LIB)/source/pixman/;$(FREETYPE_LIB)/source/include/freetype/;$(OPENCL_ROOT_INCLUDE)/;$(OPENCL_LIB)/;$(IncludePath)</IncludePath>
     <ExecutablePath>$(VC_ExecutablePath_x86);$(WindowsSDK_ExecutablePath);$(VS_ExecutablePath);$(MSBuild_ExecutablePath);$(SystemRoot)\SysWow64;$(FxCopDir);$(PATH);</ExecutablePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -141,7 +141,7 @@
     <OutDir>.\Build\</OutDir>
     <IntDir>.\Build\temp64d\</IntDir>
     <TargetName>test64d</TargetName>
-    <IncludePath>./;../mtools/headers/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(ZLIB_LIB)/source/;$(LIBPNG_LIB)/source/;$(LIBJPEG_LIB)/source/;$(CAIRO_LIB)/source/;$(PIXMAN_LIB)/source/pixman/;$(FREETYPE_LIB)/source/include/freetype/;$(IncludePath)</IncludePath>
+    <IncludePath>./;../mtools/headers/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(ZLIB_LIB)/source/;$(LIBPNG_LIB)/source/;$(LIBJPEG_LIB)/source/;$(CAIRO_LIB)/source/;$(PIXMAN_LIB)/source/pixman/;$(FREETYPE_LIB)/source/include/freetype/;$(OPENCL_ROOT_INCLUDE)/;$(OPENCL_LIB)/;$(IncludePath)</IncludePath>
     <ExecutablePath>$(VC_ExecutablePath_x64);$(WindowsSDK_ExecutablePath);$(VS_ExecutablePath);$(MSBuild_ExecutablePath);$(FxCopDir);$(PATH);</ExecutablePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-DLL|x64'">
@@ -149,7 +149,7 @@
     <OutDir>.\Build\</OutDir>
     <IntDir>.\Build\temp64d-fltkdll\</IntDir>
     <TargetName>test64d-fltkdll</TargetName>
-    <IncludePath>./;../mtools/headers/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(ZLIB_LIB)/source/;$(LIBPNG_LIB)/source/;$(LIBJPEG_LIB)/source/;$(CAIRO_LIB)/source/;$(PIXMAN_LIB)/source/pixman/;$(FREETYPE_LIB)/source/include/freetype/;$(IncludePath)</IncludePath>
+    <IncludePath>./;../mtools/headers/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(ZLIB_LIB)/source/;$(LIBPNG_LIB)/source/;$(LIBJPEG_LIB)/source/;$(CAIRO_LIB)/source/;$(PIXMAN_LIB)/source/pixman/;$(FREETYPE_LIB)/source/include/freetype/;$(OPENCL_ROOT_INCLUDE)/;$(OPENCL_LIB)/;$(IncludePath)</IncludePath>
     <ExecutablePath>$(VC_ExecutablePath_x64);$(WindowsSDK_ExecutablePath);$(VS_ExecutablePath);$(MSBuild_ExecutablePath);$(FxCopDir);$(PATH);</ExecutablePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -157,7 +157,7 @@
     <OutDir>.\Build\</OutDir>
     <IntDir>.\Build\temp32\</IntDir>
     <TargetName>test32</TargetName>
-    <IncludePath>./;../mtools/headers/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(ZLIB_LIB)/source/;$(LIBPNG_LIB)/source/;$(LIBJPEG_LIB)/source/;$(CAIRO_LIB)/source/;$(PIXMAN_LIB)/source/pixman/;$(FREETYPE_LIB)/source/include/freetype/;$(IncludePath)</IncludePath>
+    <IncludePath>./;../mtools/headers/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(ZLIB_LIB)/source/;$(LIBPNG_LIB)/source/;$(LIBJPEG_LIB)/source/;$(CAIRO_LIB)/source/;$(PIXMAN_LIB)/source/pixman/;$(FREETYPE_LIB)/source/include/freetype/;$(OPENCL_ROOT_INCLUDE)/;$(OPENCL_LIB)/;$(IncludePath)</IncludePath>
     <ExecutablePath>$(VC_ExecutablePath_x86);$(WindowsSDK_ExecutablePath);$(VS_ExecutablePath);$(MSBuild_ExecutablePath);$(SystemRoot)\SysWow64;$(FxCopDir);$(PATH);</ExecutablePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-DLL|Win32'">
@@ -165,7 +165,7 @@
     <OutDir>.\Build\</OutDir>
     <IntDir>.\Build\temp32-fltkdll\</IntDir>
     <TargetName>test32-fltkdll</TargetName>
-    <IncludePath>./;../mtools/headers/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(ZLIB_LIB)/source/;$(LIBPNG_LIB)/source/;$(LIBJPEG_LIB)/source/;$(CAIRO_LIB)/source/;$(PIXMAN_LIB)/source/pixman/;$(FREETYPE_LIB)/source/include/freetype/;$(IncludePath)</IncludePath>
+    <IncludePath>./;../mtools/headers/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(ZLIB_LIB)/source/;$(LIBPNG_LIB)/source/;$(LIBJPEG_LIB)/source/;$(CAIRO_LIB)/source/;$(PIXMAN_LIB)/source/pixman/;$(FREETYPE_LIB)/source/include/freetype/;$(OPENCL_ROOT_INCLUDE)/;$(OPENCL_LIB)/;$(IncludePath)</IncludePath>
     <ExecutablePath>$(VC_ExecutablePath_x86);$(WindowsSDK_ExecutablePath);$(VS_ExecutablePath);$(MSBuild_ExecutablePath);$(SystemRoot)\SysWow64;$(FxCopDir);$(PATH);</ExecutablePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -173,7 +173,7 @@
     <OutDir>.\Build\</OutDir>
     <IntDir>.\Build\temp64\</IntDir>
     <TargetName>test64</TargetName>
-    <IncludePath>./;../mtools/headers/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(ZLIB_LIB)/source/;$(LIBPNG_LIB)/source/;$(LIBJPEG_LIB)/source/;$(CAIRO_LIB)/source/;$(PIXMAN_LIB)/source/pixman/;$(FREETYPE_LIB)/source/include/freetype/;$(IncludePath)</IncludePath>
+    <IncludePath>./;../mtools/headers/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(ZLIB_LIB)/source/;$(LIBPNG_LIB)/source/;$(LIBJPEG_LIB)/source/;$(CAIRO_LIB)/source/;$(PIXMAN_LIB)/source/pixman/;$(FREETYPE_LIB)/source/include/freetype/;$(OPENCL_ROOT_INCLUDE)/;$(OPENCL_LIB)/;$(IncludePath)</IncludePath>
     <ExecutablePath>$(VC_ExecutablePath_x64);$(WindowsSDK_ExecutablePath);$(VS_ExecutablePath);$(MSBuild_ExecutablePath);$(FxCopDir);$(PATH);</ExecutablePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-DLL|x64'">
@@ -181,7 +181,7 @@
     <OutDir>.\Build\</OutDir>
     <IntDir>.\Build\temp64-fltkdll\</IntDir>
     <TargetName>test64-fltkdll</TargetName>
-    <IncludePath>./;../mtools/headers/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(ZLIB_LIB)/source/;$(LIBPNG_LIB)/source/;$(LIBJPEG_LIB)/source/;$(CAIRO_LIB)/source/;$(PIXMAN_LIB)/source/pixman/;$(FREETYPE_LIB)/source/include/freetype/;$(IncludePath)</IncludePath>
+    <IncludePath>./;../mtools/headers/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(ZLIB_LIB)/source/;$(LIBPNG_LIB)/source/;$(LIBJPEG_LIB)/source/;$(CAIRO_LIB)/source/;$(PIXMAN_LIB)/source/pixman/;$(FREETYPE_LIB)/source/include/freetype/;$(OPENCL_ROOT_INCLUDE)/;$(OPENCL_LIB)/;$(IncludePath)</IncludePath>
     <ExecutablePath>$(VC_ExecutablePath_x64);$(WindowsSDK_ExecutablePath);$(VS_ExecutablePath);$(MSBuild_ExecutablePath);$(FxCopDir);$(PATH);</ExecutablePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -197,8 +197,8 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>fltkd.lib;fltkgld.lib;libpngd.lib;fltkjpegd.lib;zlibd.lib;cairod.lib;freetyped.lib;pixmand.lib;comctl32.lib;mtools32d.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(CIMG_LIB)/win32/;$(FLTK_LIB)/win32/;$(ZLIB_LIB)/win32/;$(LIBPNG_LIB)/win32/;$(LIBJPEG_LIB)/win32/;$(CAIRO_LIB)/win32/;$(PIXMAN_LIB)/win32/;$(FREETYPE_LIB)/win32/;../mtools/lib/;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>fltkd.lib;fltkgld.lib;libpngd.lib;fltkjpegd.lib;zlibd.lib;cairod.lib;freetyped.lib;pixmand.lib;comctl32.lib;mtools32d.lib;$(OPENCL_LIB_NAME);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(CIMG_LIB)/win32/;$(FLTK_LIB)/win32/;$(ZLIB_LIB)/win32/;$(LIBPNG_LIB)/win32/;$(LIBJPEG_LIB)/win32/;$(CAIRO_LIB)/win32/;$(PIXMAN_LIB)/win32/;$(FREETYPE_LIB)/win32/;../mtools/lib/;$(OPENCL_ROOT_LIB_WIN32);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>if not exist "$(ProjectDir)exe\" mkdir "$(ProjectDir)exe\"
@@ -222,8 +222,8 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>fltkdlld.lib;fltkgld.lib;fltkpngd.lib;fltkjpegd.lib;fltkzlibd.lib;comctl32.lib;mtools32d-fltkdll.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(CIMG_LIB)/win32/;$(FLTK_LIB)/win32/;$(ZLIB_LIB)/win32/;$(LIBPNG_LIB)/win32/;$(LIBJPEG_LIB)/win32/;$(CAIRO_LIB)/win32/;$(PIXMAN_LIB)/win32/;$(FREETYPE_LIB)/win32/;../mtools/lib/;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>fltkdlld.lib;fltkgld.lib;fltkpngd.lib;fltkjpegd.lib;fltkzlibd.lib;comctl32.lib;mtools32d-fltkdll.lib;$(OPENCL_LIB_NAME);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(CIMG_LIB)/win32/;$(FLTK_LIB)/win32/;$(ZLIB_LIB)/win32/;$(LIBPNG_LIB)/win32/;$(LIBJPEG_LIB)/win32/;$(CAIRO_LIB)/win32/;$(PIXMAN_LIB)/win32/;$(FREETYPE_LIB)/win32/;../mtools/lib/;$(OPENCL_ROOT_LIB_WIN32);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>echo on
@@ -247,8 +247,8 @@ xcopy /y  "$(FLTK_LIB)\lib32\*.dll" "$(ProjectDir)exe\"</Command>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>fltkd.lib;fltkgld.lib;libpngd.lib;fltkjpegd.lib;zlibd.lib;cairod.lib;freetyped.lib;pixmand.lib;comctl32.lib;mtools64d.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(CIMG_LIB)/x64/;$(FLTK_LIB)/x64/;$(ZLIB_LIB)/x64/;$(LIBPNG_LIB)/x64/;$(LIBJPEG_LIB)/x64/;$(CAIRO_LIB)/x64/;$(PIXMAN_LIB)/x64/;$(FREETYPE_LIB)/x64/;../mtools/lib/;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>fltkd.lib;fltkgld.lib;libpngd.lib;fltkjpegd.lib;zlibd.lib;cairod.lib;freetyped.lib;pixmand.lib;comctl32.lib;mtools64d.lib;$(OPENCL_LIB_NAME);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(CIMG_LIB)/x64/;$(FLTK_LIB)/x64/;$(ZLIB_LIB)/x64/;$(LIBPNG_LIB)/x64/;$(LIBJPEG_LIB)/x64/;$(CAIRO_LIB)/x64/;$(PIXMAN_LIB)/x64/;$(FREETYPE_LIB)/x64/;../mtools/lib/;$(OPENCL_ROOT_LIB_X64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>if not exist "$(ProjectDir)exe\" mkdir "$(ProjectDir)exe\"
@@ -272,8 +272,8 @@ xcopy /y  "$(FLTK_LIB)\lib32\*.dll" "$(ProjectDir)exe\"</Command>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>fltkdlld.lib;fltkgld.lib;fltkpngd.lib;fltkjpegd.lib;fltkzlibd.lib;comctl32.lib;mtools64d-fltkdll.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(CIMG_LIB)/x64/;$(FLTK_LIB)/x64/;$(ZLIB_LIB)/x64/;$(LIBPNG_LIB)/x64/;$(LIBJPEG_LIB)/x64/;$(CAIRO_LIB)/x64/;$(PIXMAN_LIB)/x64/;$(FREETYPE_LIB)/x64/;../mtools/lib/;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>fltkdlld.lib;fltkgld.lib;fltkpngd.lib;fltkjpegd.lib;fltkzlibd.lib;comctl32.lib;mtools64d-fltkdll.lib;$(OPENCL_LIB_NAME);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(CIMG_LIB)/x64/;$(FLTK_LIB)/x64/;$(ZLIB_LIB)/x64/;$(LIBPNG_LIB)/x64/;$(LIBJPEG_LIB)/x64/;$(CAIRO_LIB)/x64/;$(PIXMAN_LIB)/x64/;$(FREETYPE_LIB)/x64/;../mtools/lib/;$(OPENCL_ROOT_LIB_X64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>echo on
@@ -301,8 +301,8 @@ xcopy /y  "$(FLTK_LIB)\lib64\*.dll" "$(ProjectDir)exe\"</Command>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>fltk.lib;fltkgl.lib;libpng.lib;fltkjpeg.lib;zlib.lib;cairo.lib;freetype.lib;pixman.lib;comctl32.lib;mtools32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(CIMG_LIB)/win32/;$(FLTK_LIB)/win32/;$(ZLIB_LIB)/win32/;$(LIBPNG_LIB)/win32/;$(LIBJPEG_LIB)/win32/;$(CAIRO_LIB)/win32/;$(PIXMAN_LIB)/win32/;$(FREETYPE_LIB)/win32/;../mtools/lib/;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>fltk.lib;fltkgl.lib;libpng.lib;fltkjpeg.lib;zlib.lib;cairo.lib;freetype.lib;pixman.lib;comctl32.lib;mtools32.lib;$(OPENCL_LIB_NAME);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(CIMG_LIB)/win32/;$(FLTK_LIB)/win32/;$(ZLIB_LIB)/win32/;$(LIBPNG_LIB)/win32/;$(LIBJPEG_LIB)/win32/;$(CAIRO_LIB)/win32/;$(PIXMAN_LIB)/win32/;$(FREETYPE_LIB)/win32/;../mtools/lib/;$(OPENCL_ROOT_LIB_WIN32);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>if not exist "$(ProjectDir)exe\" mkdir "$(ProjectDir)exe\"</Command>
@@ -328,8 +328,8 @@ xcopy /y  "$(FLTK_LIB)\lib64\*.dll" "$(ProjectDir)exe\"</Command>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>fltkdll.lib;fltkgl.lib;fltkpng.lib;fltkjpeg.lib;fltkzlib.lib;comctl32.lib;mtools32-fltkdll.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(CIMG_LIB)/win32/;$(FLTK_LIB)/win32/;$(ZLIB_LIB)/win32/;$(LIBPNG_LIB)/win32/;$(LIBJPEG_LIB)/win32/;$(CAIRO_LIB)/win32/;$(PIXMAN_LIB)/win32/;$(FREETYPE_LIB)/win32/;../mtools/lib/;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>fltkdll.lib;fltkgl.lib;fltkpng.lib;fltkjpeg.lib;fltkzlib.lib;comctl32.lib;mtools32-fltkdll.lib;$(OPENCL_LIB_NAME);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(CIMG_LIB)/win32/;$(FLTK_LIB)/win32/;$(ZLIB_LIB)/win32/;$(LIBPNG_LIB)/win32/;$(LIBJPEG_LIB)/win32/;$(CAIRO_LIB)/win32/;$(PIXMAN_LIB)/win32/;$(FREETYPE_LIB)/win32/;../mtools/lib/;$(OPENCL_ROOT_LIB_WIN32);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>echo on
@@ -357,8 +357,8 @@ xcopy /y  "$(FLTK_LIB)\lib32\*.dll" "$(ProjectDir)exe\"</Command>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>fltk.lib;fltkgl.lib;libpng.lib;fltkjpeg.lib;zlib.lib;cairo.lib;freetype.lib;pixman.lib;comctl32.lib;mtools64.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(CIMG_LIB)/x64/;$(FLTK_LIB)/x64/;$(ZLIB_LIB)/x64/;$(LIBPNG_LIB)/x64/;$(LIBJPEG_LIB)/x64/;$(CAIRO_LIB)/x64/;$(PIXMAN_LIB)/x64/;$(FREETYPE_LIB)/x64/;../mtools/lib/;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>fltk.lib;fltkgl.lib;libpng.lib;fltkjpeg.lib;zlib.lib;cairo.lib;freetype.lib;pixman.lib;comctl32.lib;mtools64.lib;$(OPENCL_LIB_NAME);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(CIMG_LIB)/x64/;$(FLTK_LIB)/x64/;$(ZLIB_LIB)/x64/;$(LIBPNG_LIB)/x64/;$(LIBJPEG_LIB)/x64/;$(CAIRO_LIB)/x64/;$(PIXMAN_LIB)/x64/;$(FREETYPE_LIB)/x64/;../mtools/lib/;$(OPENCL_ROOT_LIB_X64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>if not exist "$(ProjectDir)exe\" mkdir "$(ProjectDir)exe\"</Command>
@@ -384,8 +384,8 @@ xcopy /y  "$(FLTK_LIB)\lib32\*.dll" "$(ProjectDir)exe\"</Command>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>fltkdll.lib;fltkgl.lib;fltkpng.lib;fltkjpeg.lib;fltkzlib.lib;comctl32.lib;mtools64-fltkdll.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(CIMG_LIB)/x64/;$(FLTK_LIB)/x64/;$(ZLIB_LIB)/x64/;$(LIBPNG_LIB)/x64/;$(LIBJPEG_LIB)/x64/;$(CAIRO_LIB)/x64/;$(PIXMAN_LIB)/x64/;$(FREETYPE_LIB)/x64/;../mtools/lib/;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>fltkdll.lib;fltkgl.lib;fltkpng.lib;fltkjpeg.lib;fltkzlib.lib;comctl32.lib;mtools64-fltkdll.lib;$(OPENCL_LIB_NAME);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(CIMG_LIB)/x64/;$(FLTK_LIB)/x64/;$(ZLIB_LIB)/x64/;$(LIBPNG_LIB)/x64/;$(LIBJPEG_LIB)/x64/;$(CAIRO_LIB)/x64/;$(PIXMAN_LIB)/x64/;$(FREETYPE_LIB)/x64/;../mtools/lib/;$(OPENCL_ROOT_LIB_X64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>echo on

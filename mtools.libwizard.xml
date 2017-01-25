@@ -35,5 +35,6 @@ using namespace mtools;
 <VAR name = "LIBPNG_INSTALL" value = "yes" />
 <VAR name = "PIXMAN_INSTALL" value = "yes" />
 <VAR name = "ZLIB_INSTALL" value = "yes" />
+<VAR name = "OPENCL_INSTALL" value = "yes" />
 <!-- done ! -->
 <VAR name = "%LIB_INSTALLED%"  value = "yes" /> <!-- Mark the library as installed -->

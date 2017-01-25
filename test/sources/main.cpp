@@ -485,7 +485,7 @@ void remove_last_vertex(std::vector< std::vector<int> > & gr)
 void testBall()
 	{
 
-	int sizeTrig = 3000;
+	int sizeTrig = 100;
 
 
 	DyckWord D(sizeTrig, 3);

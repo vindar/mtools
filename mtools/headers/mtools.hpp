@@ -19,6 +19,8 @@
 
 #pragma once
 
+
+// CImg
 #if defined (_MSC_VER) 
 #pragma warning( push )
 #pragma warning( disable : 4312 )
@@ -100,6 +102,9 @@
 #include "random/SRW.hpp"
 #include "random/peelingUIPT.hpp"
 #include "random/krikunlaw.hpp"
+
+//extensions
+#include "extensions/openCL.hpp"
 
 
 // just in case...

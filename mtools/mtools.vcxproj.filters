@@ -31,6 +31,9 @@
     <Filter Include="Header Files\random">
       <UniqueIdentifier>{87c52711-b343-477b-8a29-0ff72fc9faf7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\extensions">
+      <UniqueIdentifier>{9bc38574-33d2-42fa-a3ea-6c5a925b40d5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="headers\containers\grid_basic.hpp">
@@ -252,6 +255,9 @@
     <ClInclude Include="headers\maths\complex.hpp">
       <Filter>Header Files\maths</Filter>
     </ClInclude>
+    <ClInclude Include="headers\extensions\openCL.hpp">
+      <Filter>Header Files\extensions</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\console.cpp">
@@ -321,6 +327,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="sources\fltkSupervisor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\openCL.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
