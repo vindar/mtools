@@ -1,8 +1,8 @@
 
-// precompiled header
+//#pragma message("Compiling pre-compiled headers for stdafx.h\n")
 #pragma once
 
-// *** STL ***
+// STL
 #include <cstdlib>
 #include <cstdio>
 #include <ctime>
@@ -18,6 +18,7 @@
 #include <limits>
 #include <initializer_list>
 #include <chrono>
+#include <complex>
 
 #include <ostream>
 #include <fstream>
@@ -40,8 +41,12 @@
 #include <unordered_set>
 #include <unordered_map>
 
+// *** Library mtools ***
+// Uncomment the following line to disable mtools console and use stdout instead
+// #define MTOOLS_BASIC_CONSOLE
+#include "mtools.hpp"
 
-// *** fltk ***
+// *** Library fltk ***
 #if defined (_MSC_VER) 
 #pragma warning( push )
 #pragma warning( disable : 4312 )
@@ -70,22 +75,25 @@
 #pragma warning( pop )
 #endif
 
-// *** libpng ***
-#include "png.h"
-
-// *** pixman ***
-#include "pixman.h"
-
-// *** cairo ***
+// *** Library cairo ***
 #include "cairo.h"
 
-// *** zlib ***
-#include "zlib.h"
+// *** Library freetype ***
+//#include "freetype.h"
 
-// *** libjpeg ***
+// *** Library libjpeg ***
 #include "jpeglib.h"
 
-// *** mtools ***
-#include "mtools.hpp"
+// *** Library libpng ***
+#include "png.h"
+
+// *** Library pixman ***
+#include "pixman.h"
+
+// *** Library zlib ***
+#include "zlib.h"
+
+
 
 /* end of file stdafx.h */
+

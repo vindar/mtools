@@ -1,3 +1,3 @@
 
-// precompiled header file.
+// precompiled headers.
 #include "stdafx.h"

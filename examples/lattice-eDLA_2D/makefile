@@ -1,4 +1,3 @@
-
 OUTFILE = lattice-eDLA_2D
 
 OUTDIR = bin
@@ -9,20 +8,21 @@ CPP_FILES := $(filter-out stdafx.cpp,$(ALL_FILES))
 WORKDIR = `pwd`
 CXX = g++
 
-CXXFLAGS = -std=c++11 -Wall `fltk-config --cxxflags` `pkg-config cairo --cflags` `pkg-config pixman-1 --cflags` -Dcimg_display=0
-LDFLAGS =   -lmtools `fltk-config --ldstaticflags` `pkg-config cairo --libs` -lfreetype -ljpeg -lpng `pkg-config pixman-1 --libs` -lz
+CXXFLAGS = -std=c++11 -Wall  -Dcimg_display=0 `fltk-config --cxxflags` `pkg-config cairo --cflags` `pkg-config pixman-1 --cflags`
+LDFLAGS =   -lmtools `fltk-config --ldstaticflags` `pkg-config cairo --libs` -lfreetype -ljpeg -lpng `pkg-config pixman-1 --libs` -lz -lOpenCL
 
 CHECKCOMPILERGCC = $(shell $(CXX) --version | grep 'GCC\|gcc\|g++')
 ifneq ("$(CHECKCOMPILERGCC)","")
 # gcc specific options
     LDFLAGS += -latomic
-    CXXFLAGS += -fopenmp	
+    CXXFLAGS += -fopenmp
 endif
 
-CHECKCOMPILERLLVM = $(shell $(CXX) --version | grep LLVM)
+CHECKCOMPILERLLVM = $(shell $(CXX) --version | grep 'LLVM\|clang')
 ifneq ("$(CHECKCOMPILERLLVM)","")
 # clang specific options
 endif
+
 
 .PHONY: release nographics debug debug_nographics buildprog clean
 
@@ -46,3 +46,5 @@ $(OUTFILE): $(CPP_FILES)
 
 clean: 
 	@rm -rf $(OUTDIR)
+
+
