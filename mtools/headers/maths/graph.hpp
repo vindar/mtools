@@ -343,7 +343,7 @@ namespace mtools
 
 
 	// anonymous namsepace for private function
-	namespace
+	namespace internals_graph
 		{ 
 
 		/* fills part (A) and (B) of the GraphInfo structure. */
@@ -428,7 +428,7 @@ namespace mtools
 
 
 	/** Queries if a graph is undirected. **/
-	template<typename GRAPH>  bool isGraphUndirected(const GRAPH & gr) { return graphInfo_partAB(gr).undirected;	}
+	template<typename GRAPH>  bool isGraphUndirected(const GRAPH & gr) { return internals_graph::graphInfo_partAB(gr).undirected;	}
 
 
 	/**
@@ -452,7 +452,7 @@ namespace mtools
 	 **/
 	template<typename GRAPH>  inline bool isGraphSimple(const GRAPH & gr)
 		{
-		GraphInfo res = graphInfo_partAB(gr);
+		GraphInfo res = internals_graph::graphInfo_partAB(gr);
 		return ((res.isValid)&&(res.undirected) && (!res.hasIsolatedVertex) && (!res.hasLoops) && (!res.hasDoubleEdges));
 		}
 
@@ -465,7 +465,7 @@ namespace mtools
 		{
 		// part (A) and (B)
 		GraphInfo res;
-		res = graphInfo_partAB(gr);
+		res = internals_graph::graphInfo_partAB(gr);
 		if (!res.undirected) return res; // done if the graph is oriented.
 		// part (C)
 		computeGraphDistances(gr, 0, res.diameter_min, res.connected);
@@ -474,7 +474,7 @@ namespace mtools
 		// part (D)
 		CombinatorialMap cm(gr);
 		res.genus = cm.genus();
-		GraphInfo res2 = graphInfo_partAB(cm.getDual().toGraph());
+		GraphInfo res2 = internals_graph::graphInfo_partAB(cm.getDual().toGraph());
 		res.nbFaces = res2.nbVertices;
 		res.minFaceDegree = res2.minVertexOutDegree;
 		res.maxFaceDegree = res2.maxVertexOutDegree;
