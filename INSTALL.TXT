@@ -13,6 +13,9 @@ The library depend on a few external libraries which are readily available:
     - libjpeg (http://www.ijg.org/) [reading/writing jpeg images]
     - cairo (http://cairographics.org/) [2D graphics library]
 
+optionally
+    
+    - openCL (https://www.khronos.org/opencl/) [programming on GPU]
     
 
 
@@ -24,15 +27,18 @@ The library depend on a few external libraries which are readily available:
 1) Installation of the external libraries
 
 The repository 'https://github.com/vindar/mtools-dependencies' contain VS2015
-builds of all the required library making the process straighforward with Visual
-Studio. Just put the 'mtools-dependencies/' folder where you want and then run
-the 'setEnvVar-mtools-dependencies.bat' script with admin. rights to create
-the environment variables indicating where the librairies are located.
+builds of all the required library. Just put the 'mtools-dependencies/' folder 
+where you want and then run the 'setup-mtools-dependencies.bat' script with admin. 
+rights and follow the instructions.
+
+NOTE: In order to use the openCL extension, an openCL SDK (either Intel's, NVIDIA's
+or AMD's) must be installed before running 'setup-mtools-dependencies.bat'. See 
+'/openCL/install-howto.txt' for details on how to install the SDK.
 
 
 2) Building mtools
 
-First, you must run the 'setEnvVar-mtools.bat'script with admin. rights to
+First, you must run the 'setup-mtools.bat'script with admin. rights to
 indicate where mtools will be located.
 
 Open the mtools.sln file at the root of the mtools source tree with VS2015.
