@@ -35,3 +35,4 @@ ipch/
 *.vsp
 *.vspx
 *.opendb
+mtools/headers/mtools_config_OpenCL.hpp
