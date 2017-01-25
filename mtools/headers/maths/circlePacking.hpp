@@ -26,9 +26,12 @@
 #include "vec.hpp"
 #include "box.hpp"
 #include "permutation.hpp"
+#include "graph.hpp" 
 #include "../random/gen_fastRNG.hpp"
 #include "../random/classiclaws.hpp"
 #include "../graphics/customcimg.hpp"
+#include "../extensions/openCL.hpp"
+
 
 namespace mtools
 	{
@@ -467,8 +470,558 @@ namespace mtools
 
 
 
+	namespace internals_circlepacking
+		{
 
 
+		/**
+		 * Class used to compute the radii associated with the (euclidian) circle packing
+		 * of a triangulation with a boundary.
+		 *
+		 * The algorithm is taken from Collins and Stephenson (2003).
+		 *
+		 * NOTE : this class compute a 'packing label' in the euclidian case. Yet, it is possible to
+		 *        deduce the associated hyperbolic packing inside the unit disk D in the following way:
+		 *        1) Join all boundary vertice to a new vertex W, creating therefore a triangulation
+		 *        without a boundary.
+		 *        2) Choose a face (a,b,c) that does not contain W and compute the packing labels
+		 *        with the outer face (a,b,c) with boundary condition (1.0,1.0,1.0).
+		 *        3) Construct the layout of of this packing obtained. Center the ball associated
+		 *        with W at the origin and normalize it such that it has unit radius.
+		 *        4) Apply the inversion Mobius transformatin z -> 1/z to all circles
+		 *        5) Voila !
+		 *
+		 * NOTE: If openCL extension is active, the class CirclePackingLabelGPU may be used instead
+		 *       increase computation speed.
+		 *
+		 * @tparam	FPTYPE	Floating type that should be used during calculation.
+		 **/
+		template<typename FPTYPE = double> class CirclePackingLabel
+			{
+
+			public:
+
+			/* ctor, empty object */
+			CirclePackingLabel() : _pi(acos((FPTYPE)(-1.0))) , _twopi(2*acos((FPTYPE)(-1.0)))
+				{
+				}
+
+
+			/* dtor, empty object */
+			~CirclePackingLabel() {}
+
+
+			/** Clears the object to a blank initial state. */
+			void clear()
+				{
+				_gr.clear();
+				_perm.clear();
+				_invperm.clear();
+				_nb = 0;
+				_rad.clear();
+				}
+
+
+			/**
+			* Loads a triangulation and define the boundary vertices.
+			* All radii are set to 1.0. 
+			*
+			* @param graph	   The triangulation with boundary.
+			* @param boundary  The boundary vector. Every index i for which boundary[i] > 0
+			* 					is considered to be a boundary vertice.
+			*/
+			template<typename GRAPH> void setTriangulation(const GRAPH & graph, const std::vector<int> & boundary)
+				{ 
+				clear();
+				const size_t l = graph.size();
+				MTOOLS_INSURE(boundary.size() == l);
+				_perm = getSortPermutation(boundary);
+				_invperm = invertPermutation(_perm);
+				_gr = permuteGraph<std::vector<std::vector<int> > >(convertGraph<GRAPH, std::vector<std::vector<int> > >(graph), _perm, _invperm);
+				_nb = l;
+				for (size_t i = 0; i < l; i++)
+					{
+					if (boundary[_perm[i]] > 0.0) { _nb = i; break; }
+					}
+				MTOOLS_INSURE((_nb > 0)&&(_nb < l-2));
+				_rad.resize(l, (FPTYPE)1.0);
+				}
+
+
+			/** Compute current packing 'angle' error in L2 norm. */
+			FPTYPE errorL2() const
+				{
+				FPTYPE e(0.0);
+				for (size_t i = 0; i < _nb; ++i)
+					{
+					const FPTYPE v = _rad[i];
+					const FPTYPE c = angleSumEuclidian(v, _gr[i]) - _twopi;
+					e += c*c;
+					}
+				return sqrt(e);
+				}
+
+
+			/** Compute current packing 'angle' error in L1 norm. */
+			FPTYPE errorL1() const
+				{
+				FPTYPE e(0.0);
+				for (size_t i = 0; i < _nb; ++i)
+					{
+					const FPTYPE v = _rad[i];
+					const FPTYPE c = angleSumEuclidian(v, _gr[i]) - _twopi;
+					e += ((c < (FPTYPE)0.0) ? -c : c);
+					}
+				return e;
+				}
+
+
+			/**
+			 * Sets the radii of the circle around each vertices. 
+			 * The radii associated with the boundary vertices are not modified during 
+			 * the circle packing algorithm.
+			 *
+			 * @param	rad	The radii. Any values <= 0.0 is set to 1.0.
+			 **/
+			void setRadii(const std::vector<FPTYPE> & rad)
+				{
+				const size_t l = _gr.size();
+				MTOOLS_INSURE(rad.size() == l);
+				_rad = permute(rad, _perm);
+				for (size_t i = 0; i < l; i++)
+					{
+					if (_rad[i] <= (FPTYPE)0.0) _rad[i] = (FPTYPE)1.0;
+					}
+				}
+
+
+			/**
+			* Return the list of radii.
+			*
+			* @return	The radii of the circles around each vertices.
+			*/
+			std::vector<FPTYPE> getRadii() const { return permute(_rad, _invperm); }
+
+
+			/**
+			 * Sets all radii to r.
+			 **/
+			void setRadii(FPTYPE r = 1.0)
+				{
+				MTOOLS_INSURE(r > 0.0);
+				const size_t l = _gr.size();
+				_rad.resize(l);
+				for (size_t i = 0; i < l; i++) { _rad[i] = r; }
+				}
+
+
+			/**
+			 * Run the algoritm for computing the value of the radii.
+			 *
+			 * @param	eps				the required precision, in L2 norm.
+			 * @param	maxIteration	The maximum number of iteration before stopping. -1 = no limit
+			 * @param	delta			parameter that detemrine how super acceleration is performed (slower
+			 * 							value = more restrictive condition to perform acceleration).
+			 *
+			 * @return	The number of iterations performed.
+			 **/
+			int64 computeRadii(const FPTYPE eps = 10e-9, int64 maxIteration = -1, const FPTYPE delta = 0.05)
+				{
+				FastRNG gen;					// use to randomize acceleration.
+
+				//#define DELAY_POST_RADII		// uncomment those line for debugging
+				//#define DO_NOT_USE_RNG		//
+
+				const int nb = (int)_nb;
+				int64 iter = 0;
+				FPTYPE c = 1.0 + eps, c0;
+				FPTYPE lambda = -1.0, lambda0;
+				bool fl = false, fl0;
+				std::vector<FPTYPE> _rad0 = _rad;
+				while((c > eps)&&(iter != maxIteration))
+					{
+					iter++;
+					c0 = c;
+					c = 0.0;
+					lambda0 = lambda;
+					fl0 = fl;
+					#ifndef DELAY_POST_RADII
+					_rad0 = _rad;
+					#endif
+					for (int i = 0; i < nb; i++)
+						{
+						const FPTYPE v = _rad[i];
+						const FPTYPE theta = angleSumEuclidian(v, _gr[i]);
+						const FPTYPE k = (FPTYPE)_gr[i].size();
+						const FPTYPE beta = sin(theta*0.5 / k);
+						const FPTYPE tildev = beta*v / (1.0 - beta);
+						const FPTYPE delta = sin(_pi / k);
+						const FPTYPE u = (1.0 - delta)*tildev / delta;
+						const FPTYPE e = theta - _twopi;
+						c += e*e;
+						#ifdef DELAY_POST_RADII
+						_rad0[i] = u;
+						#else
+						_rad[i] = u;
+						#endif
+						}
+					#ifdef DELAY_POST_RADII
+					_rad.swap(_rad0);
+					#endif
+					c = sqrt(c); 
+					lambda = c / c0;
+					fl = true;					
+					if ((fl0) && (lambda < 1.0))
+						{
+						if (abs(lambda - lambda0) < delta) {  lambda = lambda / (1.0 - lambda); }
+						FPTYPE lstar = 3.0*lambda;
+						for (size_t i = 0; i < nb; ++i) 
+							{
+							const FPTYPE d = _rad0[i] - _rad[i];
+							if (d > 0.0)
+								{
+								const FPTYPE d2 = (_rad[i] / d);
+								if (d2 < lstar) { lstar = d2; }
+								}
+							}
+						lambda = ((lambda < 0.5*lstar) ? lambda : 0.5*lstar);
+						
+						#ifdef DO_NOT_USE_RNG
+						for (size_t i = 0; i < nb; ++i) { _rad[i] += lambda*(_rad[i] - _rad0[i]); }
+						fl = 0;
+						#else
+						if (Unif(gen) > 0.5) 
+							{
+							for (size_t i = 0; i < nb; ++i) { _rad[i] += lambda*(_rad[i] - _rad0[i]); } 
+							fl = 0;
+							}
+						#endif ENDIF
+						}
+					}
+				return iter;
+
+				#undef DO_NOT_USE_RNG
+				#undef DELAY_POST_RADII 
+				}
+
+
+			private:
+
+
+				/** Compute the total angle around vertex index **/
+				inline FPTYPE angleSumEuclidian(const FPTYPE rx, const std::vector<int> & neighbour) const
+					{
+					const size_t l = neighbour.size();
+					FPTYPE sum = 0.0;
+					FPTYPE ry = _rad[neighbour[l - 1]];
+					for (size_t i = 0; i<l; ++i)
+						{
+						const FPTYPE rz = _rad[neighbour[i]];
+						const FPTYPE a = rx + ry;
+						const FPTYPE b = rx + rz;
+						const FPTYPE c = ry + rz;
+						const FPTYPE r = (a*a + b*b - c*c) / (2 * a*b);
+						if (r < (FPTYPE)1.0)
+							{
+							if (r <= (FPTYPE)-1.0) { return sum += _pi; } else { sum += acos(r); }
+							}
+						ry = rz;
+						}
+					return sum;
+					}
+
+
+				const FPTYPE					_pi;		// pi
+				const FPTYPE					_twopi;		// pi
+
+				std::vector<std::vector<int> >	_gr;		// the graph
+				mtools::Permutation				_perm;		// the permutation applied to get all the boundary vertices at the end
+				mtools::Permutation				_invperm;	// the inverse permutation
+				std::vector<FPTYPE>				_rad;		// vertex raduises
+				size_t							_nb;		// number of internal vertices
+
+
+			};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		/**
+		 * Same as the class above but use GPU acceleration.
+		 *
+		 * @tparam	FPTYPE	floating type used for calculations. Must be either oduble or float. 
+		 **/
+		template<typename FPTYPE = double> class CirclePackingLabelGPU
+			{
+
+			public:
+
+			/* ctor, empty object */
+			CirclePackingLabelGPU() : _clbundle(), _localsize(0), _nbVertices(0), _maxDegree(0), _prog(nullptr), _kernel_updateRadius(nullptr), _kernel_reduction1(nullptr), _kernel_reduction2(nullptr), _kernel_reduction_finale1(nullptr), _kernel_reduction_finale2(nullptr)
+				{
+				clear();
+				}
+
+
+			/* dtor, empty object */
+			~CirclePackingLabelGPU() 
+				{
+				delete _kernel_updateRadius;
+				delete _kernel_reduction1;
+				delete _kernel_reduction2;
+				delete _kernel_reduction_finale1;
+				delete _kernel_reduction_finale2;
+				delete _prog;
+				}
+
+
+			/** Clears the object to a blank initial state. */
+			void clear()
+				{
+				_gr.clear();
+				_perm.clear();
+				_invperm.clear();
+				_nb = 0;
+				_rad.clear();
+				}
+
+
+			/**
+			* Loads a triangulation and define the boundary vertices.
+			* All radii are set to 1.0. 
+			*
+			* @param graph	   The triangulation with boundary.
+			* @param boundary  The boundary vector. Every index i for which boundary[i] > 0
+			* 					is considered to be a boundary vertice.
+			*/
+			template<typename GRAPH> void setTriangulation(const GRAPH & graph, const std::vector<int> & boundary)
+				{ 
+				clear();
+				const size_t l = graph.size();
+				MTOOLS_INSURE(boundary.size() == l);
+				_perm = getSortPermutation(boundary);
+				_invperm = invertPermutation(_perm);
+				_gr = permuteGraph<std::vector<std::vector<int> > >(convertGraph<GRAPH, std::vector<std::vector<int> > >(graph), _perm, _invperm);
+				_nb = l;
+				for (size_t i = 0; i < l; i++)
+					{
+					if (boundary[_perm[i]] > 0.0) { _nb = i; break; }
+					}
+				MTOOLS_INSURE((_nb > 0)&&(_nb < l-2));
+				_rad.resize(l, (FPTYPE)1.0);
+				}
+
+
+			/** Compute current packing 'angle' error in L2 norm. */
+			FPTYPE errorL2() const
+				{
+				FPTYPE e(0.0);
+				for (size_t i = 0; i < _nb; ++i)
+					{
+					const FPTYPE v = _rad[i];
+					const FPTYPE c = angleSumEuclidian(v, _gr[i]) - (FPTYPE)M_2PI;
+					e += c*c;
+					}
+				return sqrt(e);
+				}
+
+
+			/** Compute current packing 'angle' error in L1 norm. */
+			FPTYPE errorL1() const
+				{
+				FPTYPE e(0.0);
+				for (size_t i = 0; i < _nb; ++i)
+					{
+					const FPTYPE v = _rad[i];
+					const FPTYPE c = angleSumEuclidian(v, _gr[i]) - (FPTYPE)M_2PI;
+					e += ((c < (FPTYPE)0.0) ? -c : c);
+					}
+				return e;
+				}
+
+
+			/**
+			 * Sets the radii of the circle around each vertices. 
+			 * The radii associated with the boundary vertices are not modified during 
+			 * the circle packing algorithm.
+			 *
+			 * @param	rad	The radii. Any values <= 0.0 is set to 1.0.
+			 **/
+			void setRadii(const std::vector<FPTYPE> & rad)
+				{
+				const size_t l = _gr.size();
+				MTOOLS_INSURE(rad.size() == l);
+				_rad = permute(rad, _perm);
+				for (size_t i = 0; i < l; i++)
+					{
+					if (_rad[i] <= (FPTYPE)0.0) _rad[i] = (FPTYPE)1.0;
+					}
+				}
+
+
+			/**
+			* Return the list of radii.
+			*
+			* @return	The radii of the circles around each vertices.
+			*/
+			std::vector<FPTYPE> getRadii() const { return permute(_rad, _invperm); }
+
+
+			/**
+			 * Sets all radii to r.
+			 **/
+			void setRadii(FPTYPE r = 1.0)
+				{
+				MTOOLS_INSURE(r > 0.0);
+				const size_t l = _gr.size();
+				_rad.resize(l);
+				for (size_t i = 0; i < l; i++) { _rad[i] = r; }
+				}
+
+
+
+
+
+
+
+			/**
+			 * Run the algorithm for computing the value of the radii.
+			 *
+			 * @param	eps				the required precision, in L2 norm.
+			 * @param	maxIteration	The maximum number of iteration before stopping. -1 = no limit
+			 * @param	delta			parameter that detemrine how super acceleration is performed (slower
+			 * 							value = more restrictive condition to perform acceleration).
+			 *
+			 * @return	The number of iterations performed.
+			 **/
+			int64 computeRadii(const FPTYPE eps = 10e-9, int64 maxIteration = -1, const FPTYPE delta = 0.05)
+				{
+
+				_recreateKernels();		// recreate kernels if needed.
+
+				// create buffers
+				// fill them
+				// attach krnels
+				// run algo
+				// get buffer
+				// delete buffers
+				// 
+				return 0;
+				}
+
+
+
+
+
+			private:
+
+
+				/** Compute the total angle around vertex index **/
+				inline FPTYPE angleSumEuclidian(const FPTYPE rx, const std::vector<int> & neighbour) const
+					{
+					const size_t l = neighbour.size();
+					FPTYPE sum(0.0);
+					FPTYPE ry = _rad[neighbour[l - 1]];
+					for (size_t i = 0; i<l; ++i)
+						{
+						const FPTYPE rz = _rad[neighbour[i]];
+						const FPTYPE a = rx + ry;
+						const FPTYPE b = rx + rz;
+						const FPTYPE c = ry + rz;
+						const FPTYPE r = (a*a + b*b - c*c) / (2 * a*b);
+						if (r < (FPTYPE)1.0)
+							{
+							if (r <= (FPTYPE)-1.0) { return sum += (FPTYPE)M_PI; } else { sum += acos(r); }
+							}
+						ry = rz;
+						}
+					return sum;
+					}
+
+
+				/* create the openCL programm and kernels if needed */
+				void _recreateKernels()
+					{
+					bool redo = false;
+					const int maxdeg = maxOutDegreeGraph(_gr);
+					if ((_prog == nullptr) || (_localsize != _clbundle.maxWorkGroupSize()) || ((int)_gr.size() != _nbVertices) || (maxdeg != _maxDegree)) { redo = true; }
+					if (!redo) return;
+					delete _kernel_updateRadius;
+					delete _kernel_reduction1;
+					delete _kernel_reduction2;
+					delete _kernel_reduction_finale1;
+					delete _kernel_reduction_finale2;
+					delete _prog;
+
+					_localsize = _clbundle.maxWorkGroupSize();
+					_nbVertices = (int)_gr.size();
+					_maxDegree = maxdeg;
+
+					// compiler options
+					std::string options;
+					options += std::string(" -DFPTYPE=") + typeid(FPTYPE).name();
+					options += std::string(" -DFPTYPE_VEC4=") + typeid(FPTYPE).name() + "4";
+					options += std::string(" -DFPTYPE_VEC2=") + typeid(FPTYPE).name() + "2";
+					options += " -DNBVERTICES=" + toString(_nbVertices);
+					options += " -DMAXDEGREE=" + toString(_maxDegree);
+					options += " -DMAXGROUPSIZE=" + toString(_localsize);
+					options += " -cl-nv-verbose";
+					//options += " -DDELTA=" + toString(0.0001);
+
+					// create kernels
+					_prog                     = new cl::Program(_clbundle.createProgramFromFile("testKernel.cl", options));	// create programm
+					_kernel_updateRadius      = new cl::Kernel(_clbundle.createKernel(*_prog, "updateRadius"));		// create kernel rad1 -> rad2
+					_kernel_reduction1        = new cl::Kernel(_clbundle.createKernel(*_prog, "reduction"));			// create kernel error1 -> error2
+					_kernel_reduction2        = new cl::Kernel(_clbundle.createKernel(*_prog, "reduction"));			// create kernel error2 -> error1
+					_kernel_reduction_finale1 = new cl::Kernel(_clbundle.createKernel(*_prog, "reduction_finale"));	// create kernel error1 -> param
+					_kernel_reduction_finale2 = new cl::Kernel(_clbundle.createKernel(*_prog, "reduction_finale"));	// create kernel error2 -> param
+
+					return;
+					}
+
+
+				mtools::OpenCLBundle			_clbundle;
+				int _localsize;
+				int _nbVertices;
+				int _maxDegree;
+				cl::Program * _prog;
+				cl::Kernel *  _kernel_updateRadius;
+				cl::Kernel *  _kernel_reduction1;
+				cl::Kernel *  _kernel_reduction2;
+				cl::Kernel *  _kernel_reduction_finale1;
+				cl::Kernel *  _kernel_reduction_finale2;
+
+				std::vector<std::vector<int> >	_gr;		// the graph
+				mtools::Permutation				_perm;		// the permutation applied to get all the boundary vertices at the end
+				mtools::Permutation				_invperm;	// the inverse permutation
+				std::vector<FPTYPE>				_rad;		// vertex raduises
+				size_t							_nb;		// number of internal vertices
+
+
+			};
+
+
+		}
 	}
 
 /* end of file */

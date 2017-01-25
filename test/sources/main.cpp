@@ -9,7 +9,7 @@ using namespace mtools;
 
 
 
-MT2004_64 gen; // RNG
+MT2004_64 gen(567); // RNG
 
 Grid_basic<2, int64, 2> Grid; // the 2D grid
 
@@ -490,7 +490,7 @@ void testBall()
 
 	cout.getKey();
 
-	int sizeTrig = 4000;
+	int sizeTrig = 5000;
 
 
 	DyckWord D(sizeTrig, 3);
@@ -569,14 +569,35 @@ void testBall()
 	fBox2 R;
 	std::vector<double> radii;
 	std::vector<fVec2> circles;
-	CirclePacking CP;
+	
 
-	CP.setTriangulation(gr, oldbound);
-	CP.setRadii();
+//	mtools::internals_circlepacking::CirclePackingLabelGPU<double> CP2;
+	mtools::internals_circlepacking::CirclePackingLabelGPU<double> CP2;
+
+	CP2.setTriangulation(gr, oldbound);
+	CP2.setRadii();
 
 	cout << "packing...\n";
 	mtools::Chronometer();
-	cout << "ITER = " << CP.computeRadii(1.0e-8) << "\n";
+	cout << "ITER = " << CP2.computeRadii(1.0e-10) << "\n";
+	cout << "done in " << mtools::Chronometer() << "ms\n";
+	cout << CP2.errorL1() << "\n";
+	cout << CP2.errorL2() << "\n";
+
+
+
+	CirclePacking CP;
+	CP.setTriangulation(gr, oldbound);
+
+	auto R1 = CP2.getRadii();
+	std::vector<double> R2(gr.size());
+	for (int i = 0;i < gr.size(); i++)
+		{
+		R2[i] = (double)R1[i];
+		}
+
+	CP.setRadii(R2);
+
 	CP.computeLayout();
 	cout << "done in " << mtools::Chronometer() << "ms\n";
 
