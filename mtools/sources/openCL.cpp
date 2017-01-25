@@ -143,7 +143,7 @@ namespace mtools
 		}
 
 
-	cl::Program OpenCLBundle::createProgram(const std::string & filename, std::string compileroptions, bool output)
+	cl::Program OpenCLBundle::createProgramFromFile(const std::string & filename, std::string compileroptions, bool output)
 		{
 		try
 			{
@@ -178,6 +178,42 @@ namespace mtools
 				{
 				mtools::cout << "Build successful.\n";
 				if (textlog.length() > 2) { mtools::cout << "Compiler log:\n" << textlog << "\n"; }
+				}
+			return prog;
+			}
+		catch (const cl::Error & e) { MTOOLS_ERROR(std::string("OpenCL error :[") + e.what() + "]\n"); }
+		}
+
+
+	cl::Program OpenCLBundle::createProgramFromString(const std::string & source, std::string & log, std::string compileroptions, bool output)
+		{
+		try
+			{
+			if (output)
+				{
+				mtools::cout << "-----------------------------------------------\n";
+				mtools::cout << "Building program from a std::string\n";
+				mtools::cout << "    with options : [" << compileroptions << "]\n";
+				}
+			if (source.length() == 0) { MTOOLS_ERROR("error empty source string"); }
+			cl::Program prog(context, source);
+			std::vector<cl::Device> listdevice; listdevice.push_back(device);
+			try {
+				prog.build(listdevice, compileroptions.c_str());
+				}
+			catch (const cl::Error & e)
+				{
+				log = mtools::troncateAfterNullChar(prog.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device));
+				mtools::cout << "*** build error ***\nlog file:\n";
+				mtools::cout << log << "\n\n";
+				mtools::cout.getKey();
+				MTOOLS_ERROR(std::string("OpenCL error [") + e.what() + "]\nwhile building program from std::string\nwith options [" + compileroptions + "]\n");
+				}
+			log = mtools::troncateAfterNullChar(prog.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device));
+			if (output)
+				{
+				mtools::cout << "Build successful.\n";
+				if (log.length() > 2) { mtools::cout << "Compiler log:\n" << log << "\n"; }
 				}
 			return prog;
 			}

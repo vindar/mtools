@@ -80,7 +80,20 @@ namespace mtools
 		* @return	A cl::Program. a log file named "filename.log"  is created is the log returned by the
 		* 			compiler is not empty.
 		**/
-		cl::Program createProgram(const std::string & filename, std::string compileroptions = "", bool output = true);
+		cl::Program createProgramFromFile(const std::string & filename, std::string compileroptions = "", bool output = true);
+
+
+		/**
+		 * Creates program from the source given in a std::string.
+		 *
+		 * @param	source		   	programm source.
+		 * @param	log   		   	std::string to receive the log file.
+		 * @param	compileroptions	The compiler options.
+		 * @param	output		   	true to output to mtools::cout.
+		 *
+		 * @return	A cl::Program.
+		 **/
+		cl::Program createProgramFromString(const std::string & source, std::string & log, std::string compileroptions = "", bool output = true);
 
 
 		/**
