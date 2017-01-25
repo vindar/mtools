@@ -8,15 +8,29 @@ if '%errorlevel%' NEQ '0' (
 ) 
 
 CD /D "%~dp0"
+echo ===================================
+echo mtools setup
+echo ===================================
+echo.
+echo This script must be run AFTER running
+echo 'setup-mtools-dependencies.bat'. 
+echo.
 
-echo This script must be run from the base directory of the mtools library.
-echo Setting the global environment variables MTOOLS_LIB....
+
+echo - Setting the global environment variables MTOOLS_LIB....
 echo on
 
 setx /m MTOOLS_LIB "%CD%\\" 
 
 echo off
-echo done.
+echo.
+echo - Copying 'mtools_config_OpenCL.hpp'
+echo.
 
+echo on
+copy /y  "%OPENCL_LIB%\mtools_config_OpenCL_CHOSEN.hpp"  "%MTOOLS_LIB%\mtools\headers\mtools_config_OpenCL.hpp"
+echo off
+
+echo done !
 pause > nul
 
