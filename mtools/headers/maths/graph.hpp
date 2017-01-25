@@ -38,7 +38,7 @@ namespace mtools
 	typedef std::vector<std::list<int> >	Graph3;
 
 	typedef Graph1 Graph; // default choice. 
-	
+
 
 	/**
 	* Reorder the vertices of a graph according to a permutation.
@@ -484,15 +484,38 @@ namespace mtools
 		}
 
 
-
-
-
-
-
-
-
-
-
+	/**
+	* Saves a graph in dot file format (graphviz format).
+	*
+	* @param	graph   	The graph.
+	* @param	filename	name of the file.
+	*
+	* @return	true if it the operation succeeds, false if it fails.
+	**/
+	template<typename GRAPH> bool saveGraphAsDotFile(const GRAPH & graph, const std::string & filename, const std::string & graphname = "my_graph")
+		{
+		MTOOLS_ASSERT(isGraphValid(graph));
+		std::ofstream f(filename.c_str());
+		if (!f.is_open()) { return false; }
+		GraphInfo info = graphInfo(graph);
+		f << "/********************************************************************\n";
+		f << info.toString();
+		f << "********************************************************************/\n\n";		
+		if (info.undirected)
+				{
+				f << "graph " << graphname << " {\n";
+				for (size_t i = 0; i < graph.size(); i++) { for (auto it = graph[i].begin(); it != graph[i].end(); it++) { if (i <= (*it)) { f << mtools::toString(i) << " -- " << mtools::toString(*it) << ";\n"; } } }
+				f << "}\n\n";
+				}
+			else
+				{
+				f << "digraph " << graphname << " {\n";
+				for (size_t i = 0; i < graph.size(); i++) { for (auto it = graph[i].begin(); it != graph[i].end(); it++) { f << mtools::toString(i) << " -> " << mtools::toString(*it) << ";\n"; } }
+				f << "}\n\n";
+				}
+		f.close();
+		return true;
+		}
 
 
 

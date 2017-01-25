@@ -552,6 +552,8 @@ void testBall()
 	
 	cout << mtools::graphInfo(gr) << "\n\n";
 	cout << "A2\n";
+
+	saveGraphAsDotFile(gr, "mygraph.dot");
 	cout.getKey();
 
 
