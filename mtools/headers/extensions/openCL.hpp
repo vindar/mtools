@@ -19,7 +19,7 @@
 #pragma once
 
 // check if OpenCL must be enabled
-#ifdef MTOOLS_VERSION >= 2
+#if (MTOOLS_VERSION >= 2)
 #include "mtools_config_OpenCL.hpp" // defines MTOOLS_HAS_OPENCL is openCL is installed and should be used.
 #endif
 
