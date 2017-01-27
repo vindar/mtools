@@ -127,7 +127,7 @@ namespace mtools
 	* Select an openCL platform.
 	*
 	* @param	selectdefault	true to select the default platform if mor than one.
-	* @param	output		 	true to output to cout.
+	* @param	output		 	true to output to mtools:cout.
 	*
 	* @return	A cl::Platform.
 	**/
@@ -139,7 +139,7 @@ namespace mtools
 	*
 	* @param	platform	 	The platform on which the device must reside.
 	* @param	selectdefault	true to select the default GPU device
-	* @param	output		 	true to output to cout.
+	* @param	output		 	true to output to mtools:cout.
 	*
 	* @return	A cl::Device.
 	**/
