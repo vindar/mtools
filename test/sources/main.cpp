@@ -567,7 +567,7 @@ void loadTest()
 
 void testBall()
 	{
-	int sizeTrig = 500000*2;
+	int sizeTrig = 100;//000;
 
 	DyckWord D(sizeTrig, 3);
 	D.shuffle(gen);
@@ -774,8 +774,8 @@ int main(int argc, char *argv[])
 	return 0;
 	*/
 	//testTriangulation(); return 0;
-	loadTest();
-	return 0;
+	//loadTest();
+	//return 0;
 	testBall(); 
 	return 0;
 

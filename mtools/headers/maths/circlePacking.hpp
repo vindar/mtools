@@ -907,7 +907,7 @@ namespace mtools
 					{
 					if (boundary[i] <= 0.0) 
 						{ 
-						boundary[i] = - graph[i].size(); //
+						boundary[i] = - (int)graph[i].size(); //
 						//boundary[i] = -100000 * Unif(gen); //-1000 - graph[i].size(); //
 						_nb++; 
 						}
@@ -1198,7 +1198,7 @@ namespace mtools
 					options += " -DNBVERTICES=" + toString(_nbVertices);
 					options += " -DMAXDEGREE=" + toString(_maxDegree);
 					options += " -DMAXGROUPSIZE=" + toString(_localsize);
-					options += " -cl-nv-verbose";
+//					options += " -cl-nv-verbose";
 
 					// build program
 					_prog.reset(new cl::Program(_clbundle.createProgramFromFile("testKernel.cl", options)));			// create programm
