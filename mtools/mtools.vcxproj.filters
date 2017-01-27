@@ -258,6 +258,9 @@
     <ClInclude Include="headers\extensions\openCL.hpp">
       <Filter>Header Files\extensions</Filter>
     </ClInclude>
+    <ClInclude Include="headers\maths\circlePacking.cl.hpp">
+      <Filter>Header Files\maths</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\console.cpp">

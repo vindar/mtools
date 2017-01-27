@@ -369,6 +369,7 @@
     <ClInclude Include="headers\io\serialization.hpp" />
     <ClInclude Include="headers\io\watch.hpp" />
     <ClInclude Include="headers\maths\box.hpp" />
+    <ClInclude Include="headers\maths\circlePacking.cl.hpp" />
     <ClInclude Include="headers\maths\circlePacking.hpp" />
     <ClInclude Include="headers\maths\combinatorialmap.hpp" />
     <ClInclude Include="headers\maths\complex.hpp" />
