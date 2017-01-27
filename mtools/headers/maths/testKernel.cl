@@ -33,7 +33,7 @@ inline uint rand(__global uint4  * g_gen)
 				
 /** Compute the angle between the two circles of radius y and z 
     that adjacent to the circle of radius x **/
- inline FPTYPE angleEuclidian(FPTYPE rx, FPTYPE ry, FPTYPE rz)
+inline FPTYPE angleEuclidian(FPTYPE rx, FPTYPE ry, FPTYPE rz)
 	{
 	const FPTYPE a = rx + ry;
 	const FPTYPE b = rx + rz;
@@ -44,16 +44,16 @@ inline uint rand(__global uint4  * g_gen)
 	}	
 
 /*	
-inline FPTYPE angleEuclidian(double rx, double ry, double rz)
+inline FPTYPE angleEuclidian(float rx, float ry, float rz)
 	{
-	double a = rx + ry;
-	double b = rx + rz;
-	double c = ry + rz;
-	double r = (float)(((a/b) + (b/a) - (c/a)*(c/b))/2);
+	float a = rx + ry;
+	float b = rx + rz;
+	float c = ry + rz;
+	float r = ((a/b) + (b/a) - (c/a)*(c/b))/2;
 	if (r >= 1.0) { return 0.0; } else if (r <= -1.0) { return M_1PI; }
-	return (double)acos((double)r);
+	return (double)acos(r);
 	}		
-	*/
+*/	
 	
 /** Update the radii **/	
 __kernel void updateRadius(__global FPTYPE g_radiiTab1[NBVERTICES],						// original radii of each vertex
@@ -66,7 +66,7 @@ __kernel void updateRadius(__global FPTYPE g_radiiTab1[NBVERTICES],						// orig
 	{				
 	const int index = get_global_id(0);		// global index
 	const FPTYPE v  = g_radiiTab1[index];	// radius
-
+		
 	// compute the sum angle
 	const int degree = g_degreeTab[index]; 			
 	FPTYPE theta = 0.0;											
