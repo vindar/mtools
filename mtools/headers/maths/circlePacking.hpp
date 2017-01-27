@@ -851,6 +851,7 @@ namespace mtools
 				_perm.clear();
 				_invperm.clear();
 				_nb = 0;
+				_nbdummy = 0;
 				_rad.clear();
 				}
 
@@ -865,26 +866,35 @@ namespace mtools
 			*/
 			template<typename GRAPH> void setTriangulation(const GRAPH & graph, std::vector<int> boundary)
 				{ 
-				mtools::FastRNG gen;
-				clear();
 				const size_t l = graph.size();
+				MTOOLS_INSURE(l > 4);
 				MTOOLS_INSURE(boundary.size() == l);
+				clear();
 				_nb = 0;
-				for (size_t i = 0; i < l; i++)
-					{
-					if (boundary[i] <= 0.0) 
-						{ 
-						//boundary[i] = - (int)(gen()/16);
-						//boundary[i] = -10000 + (int)graph[i].size();
-						boundary[i] = -(int)graph[i].size();
-						_nb++;
-						}
+				int lb = -1;
+				for (size_t i = 0; i < l; i++) 
+					{ 
+					if (boundary[i] <= 0.0) { boundary[i] = -(int)graph[i].size() - 2; _nb++; } else { lb = (int)i; }
 					}
+				MTOOLS_INSURE((_nb > 0) && (_nb < l - 2));
+				_gr = convertGraph<GRAPH, std::vector<std::vector<int> > >(graph);
+				// add dummy vertice so that the number of inner vertices is a multiple of groupsize
+				const int wg = _clbundle.maxWorkGroupSize();
+				const int r = ((int)_nb) % wg;
+				_nbdummy = ((r == 0) ? 0 : (wg - r));
+				_gr.resize(l + _nbdummy);
+				boundary.resize(l + _nbdummy);
+				for (size_t i = l; i < l + _nbdummy; i++)
+					{
+					boundary[i] = -1; // no a boundary site.
+					_gr[i].resize(3); _gr[i][0] = lb; _gr[i][1] = lb; _gr[i][2] = lb; // vertice connected to '3' boundary sites with the same radius -> perfect radius computed after 1 iteration.
+					}
+				_nb += _nbdummy;
+				// done.
 				_perm = getSortPermutation(boundary);
 				_invperm = invertPermutation(_perm);
-				_gr = permuteGraph<std::vector<std::vector<int> > >(convertGraph<GRAPH, std::vector<std::vector<int> > >(graph), _perm, _invperm);
-				MTOOLS_INSURE((_nb > 0)&&(_nb < l-2));
-				_rad.resize(l, (FPTYPE)1.0);
+				_gr = permuteGraph<std::vector<std::vector<int> > >(_gr, _perm, _invperm);
+				_rad.resize(_gr.size(), (FPTYPE)1.0);
 				}
 				
 
@@ -923,10 +933,11 @@ namespace mtools
 			 *
 			 * @param	rad	The radii. Any values <= 0.0 is set to 1.0.
 			 **/
-			void setRadii(const std::vector<FPTYPE> & rad)
+			void setRadii(std::vector<FPTYPE> rad)
 				{
 				const size_t l = _gr.size();
-				MTOOLS_INSURE(rad.size() == l);
+				MTOOLS_INSURE(rad.size() == l - _nbdummy);
+				rad.resize(l,1.0);
 				_rad = permute(rad, _perm);
 				for (size_t i = 0; i < l; i++)
 					{
@@ -936,16 +947,8 @@ namespace mtools
 
 
 			/**
-			* Return the list of radii.
-			*
-			* @return	The radii of the circles around each vertices.
-			*/
-			std::vector<FPTYPE> getRadii() const { return permute(_rad, _invperm); }
-
-
-			/**
-			 * Sets all radii to the same value r.
-			 **/
+			* Sets all radii to the same value r.
+			**/
 			void setRadii(FPTYPE r = 1.0)
 				{
 				MTOOLS_INSURE(r > 0.0);
@@ -953,6 +956,21 @@ namespace mtools
 				_rad.resize(l);
 				for (size_t i = 0; i < l; i++) { _rad[i] = r; }
 				}
+
+
+			/**
+			* Return the list of radii.
+			*
+			* @return	The radii of the circles around each vertices.
+			*/
+			std::vector<FPTYPE> getRadii() const 
+				{
+				std::vector<FPTYPE> r = permute(_rad, _invperm);
+				r.resize(r.size() - _nbdummy);
+				return r; 
+				}
+
+
 
 
 			/**
@@ -1211,6 +1229,7 @@ namespace mtools
 				mtools::Permutation				_invperm;	// the inverse permutation
 				std::vector<FPTYPE>				_rad;		// vertex raduises
 				size_t							_nb;		// number of internal vertices
+				size_t							_nbdummy;   // number of 'dummy' vertice so that the number of acitve vertice
 
 			};
 

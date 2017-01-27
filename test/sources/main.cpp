@@ -9,8 +9,9 @@ using namespace mtools;
 
 
 
-//MT2004_64 gen(9987); // RNG
+
 MT2004_64 gen(31); // RNG
+//MT2004_64 gen(44); // RNG
 
 Grid_basic<2, int64, 2> Grid; // the 2D grid
 
@@ -570,7 +571,7 @@ void loadTest(std::string filename)
 
 void testBall()
 	{
-	int sizeTrig = 300000;//10e6 200K error
+	int sizeTrig = 200000;//10e6 200K error
 
 	DyckWord D(sizeTrig, 3);
 	D.shuffle(gen);
@@ -630,7 +631,6 @@ void testBall()
 		}
 	cout << f << "\n";
 
-
 	fBox2 R;
 	std::vector<double> radii;
 	std::vector<fVec2> circles;
@@ -642,12 +642,11 @@ void testBall()
 	
 	cout << "packing GPU...\n";
 	auto cc = Chrono();
-	cout << "ITER = " << CPTEST.computeRadii(1.0e-8) << "\n";
+	cout << "ITER = " << CPTEST.computeRadii(1.0e-8,0.05,-1,1000) << "\n";
 	cout << "done in " << cc << "\n";
 	cout << CPTEST.errorL1() << "\n";
 	cout << CPTEST.errorL2() << "\n\n";
-	
-	
+
 	/*
 	CirclePackingLabel<double> CP2;
 	CP2.setTriangulation(gr, oldbound);
