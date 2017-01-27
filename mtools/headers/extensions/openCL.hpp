@@ -26,7 +26,19 @@
 #ifdef MTOOLS_HAS_OPENCL
 
 // we want to use C++ exceptions
-#define __CL_ENABLE_EXCEPTIONS
+//#define __CL_ENABLE_EXCEPTIONS
+
+#ifndef __CL_ENABLE_EXCEPTIONS
+namespace cl
+{
+class Error
+	{
+	public:
+		const char * what() const { return "exceptions not activated for openCL.."; }
+	};
+}
+#endif
+
 
 // openCL c++ header
 #ifdef __APPLE__
