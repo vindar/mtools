@@ -38,7 +38,7 @@ namespace internals_circlepacking
 
 
 #define M_2PI 6.283185307179586477
-#define M_1PI 3.141592653589793238;
+#define M_1PI 3.141592653589793238
 
 
 /** fast random number generator **/
@@ -65,11 +65,9 @@ inline FPTYPE angleEuclidian(FPTYPE rx, FPTYPE ry, FPTYPE rz)
 	const FPTYPE a = rx + ry;
 	const FPTYPE b = rx + rz;
 	const FPTYPE c = ry + rz;
-
 	//const FPTYPE r = (a*a + b*b - c*c) / (2 * a*b);
-	const FPTYPE r = ((a/b) + (b/a) - (c/a)*(c/b))/2;	// <- this version is slower by 30% than that above but much better at limiting the exponent swing... 
-	if (r >= 1.0) { return 0.0; } else if (r <= -1.0) { return M_1PI; }
-	return acos(r);
+	const FPTYPE r = ((a/b) + (b/a) - (c/a)*(c/b))/2;	// <- this version is slower by 30% than the one above but much better at limiting the exponent swing... 	
+	return((r >= 1.0) ? 0.0 : ((r <= -1.0) ? (M_1PI) : (acos(r))));
 	}	
 
 	
