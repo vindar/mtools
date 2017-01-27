@@ -1014,11 +1014,13 @@ namespace mtools
 				_buff_neighbour.reset(new cl::Buffer(_clbundle.context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(int32)*_nbVertices*_maxDegree, neighbourTab.data()));
 
 				FPTYPE_VEC8 paramTab;
-				paramTab[0] = (FPTYPE)(1.0 + eps); // error
+				FPTYPE ce = errorL2();
+				paramTab[0] = (FPTYPE)(ce);	   	   // error
 				paramTab[1] = (FPTYPE)1.0;		   // lambda
 				paramTab[2] = (FPTYPE)1.0;		   // flag acceleration
 				paramTab[3] = (FPTYPE)eps;         // target value
 				paramTab[4] = (FPTYPE)delta;	   // acceleration parameter
+				paramTab[5] = (FPTYPE)ce;		   // min error
 				_buff_param.reset(new cl::Buffer(_clbundle.context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeof(paramTab), paramTab));
 
 				UINT_VEC4 rngTab;
@@ -1102,8 +1104,9 @@ namespace mtools
 						if (_verbose)
 							{
 							mtools::cout << "iteration = " << iter << "\n";
-							mtools::cout << "L2 error  = " << param[0] << "\n";
-							mtools::cout << "L2 target = " << param[3] << "\n";
+							mtools::cout << "L2 current error  = " << param[0] << "\n";
+							mtools::cout << "L2 minimum error  = " << param[5] << "\n";
+							mtools::cout << "L2 target         = " << param[3] << "\n";
 							mtools::cout << stepIter << " interations performed in " << Chronometer() << "ms\n\n";
 							}													
 						}

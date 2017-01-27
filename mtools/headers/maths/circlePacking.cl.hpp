@@ -55,7 +55,6 @@ inline uint rand(__global uint4  * g_gen)
 				(*g_gen) = gen;				
                 return gen.z;
                 }
-
 				
 				
 /** Compute the angle between the two circles of radius y and z 
@@ -98,9 +97,9 @@ __kernel void updateRadius(__global FPTYPE g_radiiTab1[NBVERTICES],						// orig
 	g_radiiTab2[index] 	= u;								// save new radius	
 
 	const FPTYPE e      = theta - M_2PI;					// error term
-	const FPTYPE l 		= (v - u);							// delta between old and new radius
-	
 	g_error[index]		= (e*e);							// save error
+
+	const FPTYPE l 		= (v - u);							// delta between old and new radius	
 	g_lambdastar[index] = ((l <= 0.0) ? 1.0e10 : (u/l));	// save lambdastar
 	}
 
@@ -165,7 +164,8 @@ __kernel void reduction_finale( __global FPTYPE * errorin, __global FPTYPE * lam
 		{
 		FPTYPE_VEC8 prev = (*param);
 		FPTYPE_VEC8 next = prev;
-		next.s0 = sqrt(temperror[0]);	// new error		
+		next.s0 = sqrt(temperror[0]);		// new error		
+		next.s5 = fmin(next.s0, next.s5);	// new minimum error
 		next.s1 = next.s0/prev.s0;		// new lambda
 		next.s2 -= 1.0;
 		if ((next.s0 > next.s3)&&(prev.s2 < 1.0)&&(next.s1 < 1.0)) // flag is set and new lambda smaller than 1
