@@ -1175,7 +1175,7 @@ namespace mtools
 					options += " -DNBVERTICES=" + toString(_nbVertices);
 					options += " -DMAXDEGREE=" + toString(_maxDegree);
 					options += " -DMAXGROUPSIZE=" + toString(_localsize);
-//					options += " -cl-nv-verbose"; // debug option. Only available for nvidia openCL
+					//options += " -cl-nv-verbose"; // debug option. Only available for nvidia openCL
 
 					// build program
 					std::string log;

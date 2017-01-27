@@ -66,8 +66,8 @@ inline FPTYPE angleEuclidian(FPTYPE rx, FPTYPE ry, FPTYPE rz)
 	const FPTYPE b = rx + rz;
 	const FPTYPE c = ry + rz;
 
-	const FPTYPE r = (a*a + b*b - c*c) / (2 * a*b);
-	//const FPTYPE r = ((a/b) + (b/a) - (c/a)*(c/b))/2; // best version for large exponents.
+	//const FPTYPE r = (a*a + b*b - c*c) / (2 * a*b);
+	const FPTYPE r = ((a/b) + (b/a) - (c/a)*(c/b))/2;	// <- this version is slower by 30% than that above but much better at limiting the exponent swing... 
 	if (r >= 1.0) { return 0.0; } else if (r <= -1.0) { return M_1PI; }
 	return acos(r);
 	}	
