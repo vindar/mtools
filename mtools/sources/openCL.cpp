@@ -26,6 +26,7 @@
 
 #include "misc/error.hpp"
 #include "io/console.hpp"
+#include "io/fileio.hpp"
 
 namespace mtools
 	{
