@@ -9,7 +9,8 @@ using namespace mtools;
 
 
 
-MT2004_64 gen(567); // RNG
+//MT2004_64 gen(9987); // RNG
+MT2004_64 gen(31698653); // RNG
 
 Grid_basic<2, int64, 2> Grid; // the 2D grid
 
@@ -288,7 +289,7 @@ std::vector<int> markToRemove(std::vector<std::vector<int> > & gr, std::vector<i
 	while (cnei->size() != 0)
 		{
 		cneialt->clear();
-		for (auto it = cnei->begin(); it != cnei->end(); it++) { marked[*it] = 1; cout << "."; }
+		for (auto it = cnei->begin(); it != cnei->end(); it++) { marked[*it] = 1;  }
 		for (auto it = cnei->begin(); it != cnei->end(); it++)
 			{
 			int k = (*it);
@@ -391,7 +392,7 @@ void testTriangulation()
 	std::vector<double> radii;
 	std::vector<fVec2> circles;
 
-	CirclePacking CP;
+	mtools::internals_circlepacking::CirclePackingLabelGPU<double> CP;
 
 	CP.setTriangulation(gr, boundary);
 	CP.setRadii();
@@ -401,14 +402,17 @@ void testTriangulation()
 	cout << "ITER = " << CP.computeRadii(1.0e-5) << "\n";
 	cout << "done in " << mtools::Chronometer() << "ms\n";
 
+	CirclePacking CP2;
+	CP2.setTriangulation(gr, boundary);
+	CP2.setRadii(CP.getRadii());
 	cout << "layout...\n";
 	mtools::Chronometer();
-	CP.computeLayout();
+	CP2.computeLayout();
 	cout << "done in " << mtools::Chronometer() << "ms\n";
 
-	radii = CP.getRadii();
-	circles = CP.getLayout();
-	R = CP.getEnclosingRect();
+	radii = CP2.getRadii();
+	circles = CP2.getLayout();
+	R = CP2.getEnclosingRect();
 	drawCirclePacking(R, radii, circles, gr);
 
 	return;
@@ -470,7 +474,7 @@ void closeBoundary(std::vector< std::vector<int> > & gr, std::vector<int> & boun
 
 void remove_last_vertex(std::vector< std::vector<int> > & gr)
 	{
-	const int l = gr.size() - 1;
+	const int l = (int)gr.size() - 1;
 	gr.resize(l);
 	for (int i = 0; i < l; i++)
 		{
@@ -482,16 +486,88 @@ void remove_last_vertex(std::vector< std::vector<int> > & gr)
 	}
 
 
-void testBall()
+
+void loadTest()
 	{
 
+	fBox2 R;
+	std::vector<double> radii;
+	std::vector<fVec2> circles;
+	std::vector<std::vector<int>> gr;
+	std::vector<int> bound;
 
-	mtools::OpenCLBundle bundle;
 
+	{
+	mtools::IArchive ar(std::string("trig664604.txt"));
+	ar & gr; ar.newline();
+	ar & bound; ar.newline();
+	ar & radii; ar.newline();
+	ar & circles; ar.newline();
+	}
+
+	mtools::internals_circlepacking::CirclePackingLabelGPU<double> CPTEST;
+	cout.getKey();
+	CPTEST.setTriangulation(gr, bound);
+	cout.getKey();
+	CPTEST.setRadii();
+
+	cout << "packing GPU...\n";
 	cout.getKey();
 
-	int sizeTrig = 5000;
+	mtools::Chronometer();
+	cout << "ITER = " << CPTEST.computeRadii(1.0e-7) << "\n";
+	cout << "done in " << mtools::Chronometer() << "ms\n";
+	cout << CPTEST.errorL1() << "\n";
+	cout << CPTEST.errorL2() << "\n\n";
 
+
+
+
+	CirclePacking CP;
+	CP.setTriangulation(gr, bound);
+
+	auto R1 = CPTEST.getRadii();
+	std::vector<double> R2(gr.size());
+	for (int i = 0;i < gr.size(); i++)
+		{
+		R2[i] = (double)R1[i];
+		}
+
+	CP.setRadii(R2);
+
+	CP.computeLayout();
+	cout << "done in " << mtools::Chronometer() << "ms\n";
+
+
+	radii = CP.getRadii();
+	circles = CP.getLayout();
+
+
+	fVec2 pos0 = circles.back();
+	double rad0 = radii.back();
+	mtools::Mobius<double> M(0.0, 1.0, 1.0, 0.0);
+
+	for (int i = 0; i < circles.size(); i++)
+		{
+		circles[i] -= pos0;
+		circles[i] /= rad0;
+		radii[i] /= rad0;
+
+		auto rr = M.imageCircle((mtools::complex<double>)(circles[i]), radii[i]);
+		circles[i] = rr.first;
+		radii[i] = rr.second;
+		}
+
+
+	drawCirclePacking(fBox2(-2, 2, -2, 2), radii, circles, gr);
+
+	}
+
+
+
+void testBall()
+	{
+	int sizeTrig = 500000*2;
 
 	DyckWord D(sizeTrig, 3);
 	D.shuffle(gen);
@@ -503,7 +579,6 @@ void testBall()
 	auto gr = CM.toGraph();
 
 	cout << "TRIANGULATION CREATED\n";
-	cout << graphInfo(gr) << "\n\n";
 
 	int nbv	= CM.nbVertices();
 	auto V = CM.getVerticeVector();
@@ -525,10 +600,6 @@ void testBall()
 	std::vector<int> bound;
 	auto marked = markToRemove(gr, dist, cutd, maxd, bound);
 
-	cout << "dist = " << dist << "\n";
-	cout << "bound = " << bound << "\n";
-	cout << "marked = " << marked << "\n";
-
 	dist = mtools::permute(dist, getSortPermutation(marked));
 	bound = mtools::permute(bound, getSortPermutation(marked));
 	oldbound = mtools::permute(oldbound, getSortPermutation(marked));
@@ -541,22 +612,13 @@ void testBall()
 	bound.resize(L);
 
 	gr = resizeGraph(gr, L);
-
 	cout << mtools::graphInfo(gr) << "\n\n";
-	cout << "A1\n";
-	cout.getKey();
 	// ok, we have the graph with boundary bound
 	
 	gr = triangulateGraph(gr);
+	cout << mtools::graphInfo(gr) << "\n\n";
 	// ok the graph is triangulated
 	
-	cout << mtools::graphInfo(gr) << "\n\n";
-	cout << "A2\n";
-
-	saveGraphAsDotFile(gr, "mygraph.dot");
-	cout.getKey();
-
-
 	oldbound.resize(gr.size()); // the orignal root face
 	int f = 0;
 	for (int i = 0;i < gr.size();i++)
@@ -571,25 +633,51 @@ void testBall()
 	std::vector<fVec2> circles;
 	
 
-//	mtools::internals_circlepacking::CirclePackingLabelGPU<double> CP2;
-	mtools::internals_circlepacking::CirclePackingLabelGPU<double> CP2;
-
+	mtools::internals_circlepacking::CirclePackingLabelGPU<double> CPTEST;
+	CPTEST.setTriangulation(gr, oldbound);
+	CPTEST.setRadii();
+	
+	cout << "packing GPU...\n";
+	mtools::Chronometer();
+	cout << "ITER = " << CPTEST.computeRadii(1.0e-7) << "\n";
+	cout << "done in " << mtools::Chronometer() << "ms\n";
+	cout << CPTEST.errorL1() << "\n";
+	cout << CPTEST.errorL2() << "\n\n";
+	
+	
+	/*
+	mtools::internals_circlepacking::CirclePackingLabel<double> CP2;
 	CP2.setTriangulation(gr, oldbound);
 	CP2.setRadii();
-
-	cout << "packing...\n";
+	
+	cout << "packing classique CPU...\n";
 	mtools::Chronometer();
-	cout << "ITER = " << CP2.computeRadii(1.0e-10) << "\n";
+	cout << "ITER = " << CP2.computeRadii(1.0e-7) << "\n";
 	cout << "done in " << mtools::Chronometer() << "ms\n";
 	cout << CP2.errorL1() << "\n";
-	cout << CP2.errorL2() << "\n";
+	cout << CP2.errorL2() << "\n\n";
+	*/
+
+
+	/*
+	mtools::internals_circlepacking::CirclePackingLabel<double> CP3;
+	CP3.setTriangulation(gr, oldbound);
+	CP3.setRadii();
+
+	cout << "packing classique CPU slow...\n";
+	mtools::Chronometer();
+	cout << "ITER = " << CP3.computeRadiiSlow(1.0e-7) << "\n";
+	cout << "done in " << mtools::Chronometer() << "ms\n";
+	cout << CP3.errorL1() << "\n";
+	cout << CP3.errorL2() << "\n";
+	*/
 
 
 
 	CirclePacking CP;
 	CP.setTriangulation(gr, oldbound);
 
-	auto R1 = CP2.getRadii();
+	auto R1 = CPTEST.getRadii();
 	std::vector<double> R2(gr.size());
 	for (int i = 0;i < gr.size(); i++)
 		{
@@ -604,6 +692,16 @@ void testBall()
 
 	radii = CP.getRadii();
 	circles = CP.getLayout();
+
+
+	{
+	mtools::OArchive ar(std::string("trig") + mtools::toString(gr.size()) + ".txt");
+	ar & gr; ar.newline();
+	ar & oldbound; ar.newline();
+	ar & radii; ar.newline();
+	ar & circles; ar.newline();
+	}
+
 
 	fVec2 pos0 = circles.back();
 	double rad0 = radii.back();
@@ -622,7 +720,7 @@ void testBall()
 		}
 
 
-	cout.getKey();
+	//cout.getKey();
 
 
 	drawCirclePacking(fBox2(-2,2,-2,2), radii, circles, gr);
@@ -675,7 +773,9 @@ int main(int argc, char *argv[])
 
 	return 0;
 	*/
-
+	//testTriangulation(); return 0;
+	loadTest();
+	return 0;
 	testBall(); 
 	return 0;
 

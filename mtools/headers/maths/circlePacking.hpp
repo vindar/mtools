@@ -378,8 +378,8 @@ namespace mtools
 			mtools::Img<unsigned char> drawCirclePacking(int maxImagedimension, bool drawCircles = true, bool drawLines = true, RGBc colorCircles = RGBc::c_Red, RGBc colorLines = RGBc::c_Black)
 				{
 				MTOOLS_INSURE(!_rect.isEmpty());
-				int LX = (_rect.lx() > _rect.ly()) ? maxImagedimension : (maxImagedimension*_rect.lx()/_rect.ly());
-				int LY = (_rect.ly() > _rect.lx()) ? maxImagedimension : (maxImagedimension*_rect.ly() / _rect.lx());
+				int LX = (int)(_rect.lx() > _rect.ly()) ? maxImagedimension : (int)(maxImagedimension*_rect.lx()/_rect.ly());
+				int LY = (int)(_rect.ly() > _rect.lx()) ? maxImagedimension : (int)(maxImagedimension*_rect.ly() / _rect.lx());
 				mtools::Img<unsigned char> Im(LX, LY, 1, 4);
 				if (drawCircles)
 					{
@@ -619,13 +619,13 @@ namespace mtools
 			 * Run the algoritm for computing the value of the radii.
 			 *
 			 * @param	eps				the required precision, in L2 norm.
-			 * @param	maxIteration	The maximum number of iteration before stopping. -1 = no limit
 			 * @param	delta			parameter that detemrine how super acceleration is performed (slower
 			 * 							value = more restrictive condition to perform acceleration).
+			 * @param	maxIteration	The maximum number of iteration before stopping. -1 = no limit.
 			 *
 			 * @return	The number of iterations performed.
 			 **/
-			int64 computeRadii(const FPTYPE eps = 10e-9, int64 maxIteration = -1, const FPTYPE delta = 0.05)
+			int64 computeRadii(const FPTYPE eps = 10e-9, const FPTYPE delta = 0.05, const int64 maxIteration = -1)
 				{
 				FastRNG gen;					// use to randomize acceleration.
 
@@ -705,6 +705,92 @@ namespace mtools
 				}
 
 
+
+			/**
+			* Run the algoritm for computing the value of the radii.
+			*
+			* @param	eps				the required precision, in L2 norm.
+			* @param	delta			parameter that detemrine how super acceleration is performed (slower
+			* 							value = more restrictive condition to perform acceleration).
+			* @param	maxIteration	The maximum number of iteration before stopping. -1 = no limit.
+			*
+			* @return	The number of iterations performed.
+			**/
+			int64 computeRadiiSlow(const FPTYPE eps = 10e-9, const FPTYPE delta = 0.05, const int64 maxIteration = -1)
+				{
+				FastRNG gen;					// use to randomize acceleration.
+				uint32 rz;
+
+				const int nb = (int)_nb;
+				int64 iter = 0;
+				FPTYPE c = 1.0 + eps, c0;
+				FPTYPE lambda = -1.0, lambda0;
+				bool fl = false, fl0 = false;
+				std::vector<FPTYPE> _rad0 = _rad;
+				while ((c > eps) && (iter != maxIteration))
+					{
+					rz = 0;
+					iter++;
+					c0 = c;
+					c = 0.0;
+					lambda0 = lambda;
+					fl0 = fl;
+					for (int i = 0; i < nb; i++)
+						{
+						const FPTYPE v = _rad[i];
+						const FPTYPE theta = angleSumEuclidian(v, _gr[i]);
+						const FPTYPE k = (FPTYPE)_gr[i].size();
+						const FPTYPE beta = sin(theta*0.5 / k);
+						const FPTYPE tildev = beta*v / (1.0 - beta);
+						const FPTYPE de = sin(_pi / k);
+						const FPTYPE u = (1.0 - de)*tildev / de;
+						const FPTYPE e = theta - _twopi;
+						c += e*e;
+						_rad0[i] = u;
+						}
+					_rad.swap(_rad0);
+					c = sqrt(c);
+					lambda = c / c0;
+					fl = true;
+					if ((fl0) && (lambda < 1.0))
+						{
+						if (abs(lambda - lambda0) < delta) { lambda = lambda / (1.0 - lambda); }
+						FPTYPE lstar = 3.0*lambda;
+						for (size_t i = 0; i < nb; ++i)
+							{
+							const FPTYPE d = _rad0[i] - _rad[i];
+							if (d > 0.0)
+								{
+								const FPTYPE d2 = (_rad[i] / d);
+								if (d2 < lstar) { lstar = d2; }
+								}
+							}
+						lambda = ((lambda < 0.5*lstar) ? lambda : 0.5*lstar);
+
+						if (gen() & 1)
+							{
+
+							for (size_t i = 0; i < nb; ++i) { _rad[i] += lambda*(_rad[i] - _rad0[i]); }
+							fl = 0;
+							}
+						}
+					/*
+					cout << "it        = " << iter << "\n";
+					cout << "err       = " << c << "\n";
+					cout << "lambda    = " << lambda << "\n";
+					cout << "flag algo = " << !fl << "\n";
+					cout << "flag accel= " << (rz & 1) << "\n\n";
+					double rzd = (double)rz;
+					cout << "gen = " << (uint32)rzd << "\n\n";
+					cout << "\n";
+					cout.getKey();
+					*/
+					}
+				return iter;
+
+				}
+
+
 			private:
 
 
@@ -777,7 +863,7 @@ namespace mtools
 			public:
 
 			/* ctor, empty object */
-			CirclePackingLabelGPU() : _clbundle(), _localsize(0), _nbVertices(0), _maxDegree(0), _prog(nullptr), _kernel_updateRadius(nullptr), _kernel_reduction1(nullptr), _kernel_reduction2(nullptr), _kernel_reduction_finale1(nullptr), _kernel_reduction_finale2(nullptr)
+			CirclePackingLabelGPU() : _localsize(-1), _nbVertices(0), _maxDegree(0), _clbundle()
 				{
 				clear();
 				}
@@ -786,12 +872,6 @@ namespace mtools
 			/* dtor, empty object */
 			~CirclePackingLabelGPU() 
 				{
-				delete _kernel_updateRadius;
-				delete _kernel_reduction1;
-				delete _kernel_reduction2;
-				delete _kernel_reduction_finale1;
-				delete _kernel_reduction_finale2;
-				delete _prog;
 				}
 
 
@@ -814,8 +894,34 @@ namespace mtools
 			* @param boundary  The boundary vector. Every index i for which boundary[i] > 0
 			* 					is considered to be a boundary vertice.
 			*/
-			template<typename GRAPH> void setTriangulation(const GRAPH & graph, const std::vector<int> & boundary)
+
+			
+			template<typename GRAPH> void setTriangulation(const GRAPH & graph, std::vector<int> boundary)
 				{ 
+				mtools::FastRNG gen;
+				clear();
+				const size_t l = graph.size();
+				MTOOLS_INSURE(boundary.size() == l);
+				_nb = 0;
+				for (size_t i = 0; i < l; i++)
+					{
+					if (boundary[i] <= 0.0) 
+						{ 
+						boundary[i] = - graph[i].size(); //
+						//boundary[i] = -100000 * Unif(gen); //-1000 - graph[i].size(); //
+						_nb++; 
+						}
+					}
+				_perm = getSortPermutation(boundary);
+				_invperm = invertPermutation(_perm);
+				_gr = permuteGraph<std::vector<std::vector<int> > >(convertGraph<GRAPH, std::vector<std::vector<int> > >(graph), _perm, _invperm);
+				MTOOLS_INSURE((_nb > 0)&&(_nb < l-2));
+				_rad.resize(l, (FPTYPE)1.0);
+				}
+				
+			/*
+			template<typename GRAPH> void setTriangulation(const GRAPH & graph, const std::vector<int> & boundary)
+				{
 				clear();
 				const size_t l = graph.size();
 				MTOOLS_INSURE(boundary.size() == l);
@@ -827,9 +933,11 @@ namespace mtools
 					{
 					if (boundary[_perm[i]] > 0.0) { _nb = i; break; }
 					}
-				MTOOLS_INSURE((_nb > 0)&&(_nb < l-2));
+				MTOOLS_INSURE((_nb > 0) && (_nb < l - 2));
 				_rad.resize(l, (FPTYPE)1.0);
 				}
+				*/
+
 
 
 			/** Compute current packing 'angle' error in L2 norm. */
@@ -899,34 +1007,147 @@ namespace mtools
 				}
 
 
-
-
-
-
-
 			/**
 			 * Run the algorithm for computing the value of the radii.
 			 *
 			 * @param	eps				the required precision, in L2 norm.
-			 * @param	maxIteration	The maximum number of iteration before stopping. -1 = no limit
 			 * @param	delta			parameter that detemrine how super acceleration is performed (slower
 			 * 							value = more restrictive condition to perform acceleration).
+			 * @param	maxIteration	The maximum number of iteration before stopping. -1 = no limit.
+			 * @param	stepIter		number of iterations between each check of the current error.
 			 *
 			 * @return	The number of iterations performed.
 			 **/
-			int64 computeRadii(const FPTYPE eps = 10e-9, int64 maxIteration = -1, const FPTYPE delta = 0.05)
+			int64 computeRadii(const FPTYPE eps = 10e-9, const FPTYPE delta = 0.05, const int64 maxIteration = -1, const int64 stepIter = 1000)
 				{
+				// recreate kernels if needed
+				_recreateKernels();
 
-				_recreateKernels();		// recreate kernels if needed.
+				const int nbVerticesPow2 = pow2roundup(_nbVertices); // new power of 2
 
-				// create buffers
-				// fill them
-				// attach krnels
-				// run algo
-				// get buffer
-				// delete buffers
-				// 
-				return 0;
+				// create buffers and set their values
+				{
+				std::vector<FPTYPE> buff(nbVerticesPow2, (FPTYPE)0);
+				_buff_error1.reset(new cl::Buffer(_clbundle.context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeof(FPTYPE)*nbVerticesPow2, buff.data()));
+				_buff_error2.reset(new cl::Buffer(_clbundle.context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeof(FPTYPE)*nbVerticesPow2, buff.data()));
+
+				for (size_t i = 0; i < nbVerticesPow2; i++) { buff[i] = (FPTYPE)1.0e10; }
+				_buff_lambdastar1.reset(new cl::Buffer(_clbundle.context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeof(FPTYPE)*nbVerticesPow2, buff.data()));
+				_buff_lambdastar2.reset(new cl::Buffer(_clbundle.context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeof(FPTYPE)*nbVerticesPow2, buff.data()));
+
+				_buff_radii1.reset(new cl::Buffer(_clbundle.context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeof(FPTYPE)*_nbVertices, _rad.data()));
+				_buff_radii2.reset(new cl::Buffer(_clbundle.context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeof(FPTYPE)*_nbVertices, _rad.data()));
+
+				std::vector<int32> degTab(_nbVertices);
+				for (int i = 0; i < _nbVertices; i++) { degTab[i] = (int32)_gr[i].size(); }
+				_buff_degree.reset(new cl::Buffer(_clbundle.context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(int32)*_nbVertices, degTab.data()));
+
+				std::vector<int32> neighbourTab(_nbVertices*_maxDegree, 0);
+				for (int i = 0; i < _nbVertices; i++) { for (int j = 0; j < (int)(_gr[i].size()); j++) { neighbourTab[j*_nbVertices + i] = (int32)_gr[i][j]; } }
+				_buff_neighbour.reset(new cl::Buffer(_clbundle.context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(int32)*_nbVertices*_maxDegree, neighbourTab.data()));
+
+				FPTYPE paramTab[8];
+				paramTab[0] = (FPTYPE)(1.0 + eps); // error
+				paramTab[1] = (FPTYPE)1.0;		   // lambda
+				paramTab[2] = (FPTYPE)1.0;		   // flag acceleration
+				paramTab[3] = (FPTYPE)eps;         // target value
+				paramTab[4] = (FPTYPE)0.0;
+				paramTab[5] = (FPTYPE)0.0;
+				paramTab[6] = (FPTYPE)0.0;
+				paramTab[7] = (FPTYPE)0.0;
+				_buff_param.reset(new cl::Buffer(_clbundle.context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeof(FPTYPE) * 8, paramTab));
+
+				uint32 rngTab[4];
+				rngTab[0] = 123456789; rngTab[1] = 362436069; rngTab[2] = 521288629; rngTab[3] = 0; 
+				_buff_rng.reset(new cl::Buffer(_clbundle.context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeof(uint32) * 4, rngTab));
+				}
+
+				// set kernels arguments
+				_kernel_updateRadius->setArg(0, *_buff_radii1);
+				_kernel_updateRadius->setArg(1, *_buff_radii2);
+				_kernel_updateRadius->setArg(2, *_buff_degree);
+				_kernel_updateRadius->setArg(3, *_buff_neighbour);
+				_kernel_updateRadius->setArg(4, *_buff_error1);
+				_kernel_updateRadius->setArg(5, *_buff_lambdastar1);
+
+				_kernel_reduction1->setArg(0, *_buff_error1);
+				_kernel_reduction1->setArg(1, *_buff_error2);
+				_kernel_reduction1->setArg(2, *_buff_lambdastar1);
+				_kernel_reduction1->setArg(3, *_buff_lambdastar2);
+
+				_kernel_reduction2->setArg(0, *_buff_error2);
+				_kernel_reduction2->setArg(1, *_buff_error1);
+				_kernel_reduction2->setArg(2, *_buff_lambdastar2);
+				_kernel_reduction2->setArg(3, *_buff_lambdastar1);
+
+				_kernel_reduction_finale1->setArg(0, *_buff_error1);
+				_kernel_reduction_finale1->setArg(1, *_buff_lambdastar1);
+				_kernel_reduction_finale1->setArg(2, *_buff_param);
+				_kernel_reduction_finale1->setArg(3, *_buff_rng);
+
+				_kernel_reduction_finale2->setArg(0, *_buff_error2);
+				_kernel_reduction_finale2->setArg(1, *_buff_lambdastar2);
+				_kernel_reduction_finale2->setArg(2, *_buff_param);
+				_kernel_reduction_finale2->setArg(3, *_buff_rng);
+
+				_kernel_accelerate->setArg(0, *_buff_radii1);
+				_kernel_accelerate->setArg(1, *_buff_radii2);
+				_kernel_accelerate->setArg(2, *_buff_param);
+
+				Chronometer();
+				// make computation
+				int64 iter = 0;
+				bool done = false;
+				while((!done)&&(iter != maxIteration))
+					{
+					iter++;
+
+					// update radii
+					_clbundle.queue.enqueueNDRangeKernel(*_kernel_updateRadius, 0, _nb, cl::NullRange);
+					
+					// compute the total error
+					int globalsize = nbVerticesPow2;
+					int flip = 1;
+					while (globalsize > _localsize)
+						{
+						_clbundle.queue.enqueueNDRangeKernel(((flip == 1) ? *_kernel_reduction1 : *_kernel_reduction2), 0, globalsize, _localsize);
+						flip = 1 - flip;
+						globalsize /= _localsize;
+						}					
+
+					// complete the reduction and copute lambda.
+					_clbundle.queue.enqueueNDRangeKernel(((flip == 1) ? *_kernel_reduction_finale1 : *_kernel_reduction_finale2), 0, globalsize, globalsize);
+					
+					// perform acceleration
+					_clbundle.queue.enqueueNDRangeKernel(*_kernel_accelerate, 0, _nb, cl::NullRange);
+
+					if (iter % stepIter == 0)
+						{
+						FPTYPE param[4];
+						_clbundle.queue.finish();
+						_clbundle.queue.enqueueReadBuffer(*_buff_param, CL_TRUE, 0, 8 * sizeof(FPTYPE), &param);
+						if (param[0] < eps) { done = true; }
+												
+						//if (iter % 1000 == 0)
+							{
+						
+							cout << "it        = " << iter << "\n";
+							cout << "err       = " << param[0] << "\n";
+							cout << "lambda    = " << param[1] << "\n";
+							cout << "flag algo = " << param[2] << "\n";
+							cout << "flag accel= " << param[3] << "\n\n";
+							cout << "done in = " << Chronometer() << "\ms\n\n";
+						//	cout.getKey();
+							
+							}
+							
+						
+						}
+					}
+				// done, read back the result 
+				_clbundle.queue.finish();
+				_clbundle.queue.enqueueReadBuffer(*_buff_radii1, CL_TRUE, 0, _nbVertices * sizeof(FPTYPE), _rad.data());
+				return iter;
 				}
 
 
@@ -934,7 +1155,6 @@ namespace mtools
 
 
 			private:
-
 
 				/** Compute the total angle around vertex index **/
 				inline FPTYPE angleSumEuclidian(const FPTYPE rx, const std::vector<int> & neighbour) const
@@ -959,57 +1179,70 @@ namespace mtools
 					}
 
 
-				/* create the openCL programm and kernels if needed */
+				/* create the openCL kernels if needed */
 				void _recreateKernels()
 					{
-					bool redo = false;
 					const int maxdeg = maxOutDegreeGraph(_gr);
-					if ((_prog == nullptr) || (_localsize != _clbundle.maxWorkGroupSize()) || ((int)_gr.size() != _nbVertices) || (maxdeg != _maxDegree)) { redo = true; }
-					if (!redo) return;
-					delete _kernel_updateRadius;
-					delete _kernel_reduction1;
-					delete _kernel_reduction2;
-					delete _kernel_reduction_finale1;
-					delete _kernel_reduction_finale2;
-					delete _prog;
-
-					_localsize = _clbundle.maxWorkGroupSize();
-					_nbVertices = (int)_gr.size();
+					const int maxgpsize = _clbundle.maxWorkGroupSize();
+					const int nbvert = (int)_gr.size();
+					if ((_localsize == maxgpsize) && ((int)_gr.size() == _nbVertices) && (maxdeg == _maxDegree)) { return; }
+					_localsize = maxgpsize/2;
+					_nbVertices = nbvert;
 					_maxDegree = maxdeg;
+
 
 					// compiler options
 					std::string options;
 					options += std::string(" -DFPTYPE=") + typeid(FPTYPE).name();
-					options += std::string(" -DFPTYPE_VEC4=") + typeid(FPTYPE).name() + "4";
-					options += std::string(" -DFPTYPE_VEC2=") + typeid(FPTYPE).name() + "2";
+					options += std::string(" -DFPTYPE_VEC8=") + typeid(FPTYPE).name() + "8";
 					options += " -DNBVERTICES=" + toString(_nbVertices);
 					options += " -DMAXDEGREE=" + toString(_maxDegree);
 					options += " -DMAXGROUPSIZE=" + toString(_localsize);
 					options += " -cl-nv-verbose";
-					//options += " -DDELTA=" + toString(0.0001);
 
-					// create kernels
-					_prog                     = new cl::Program(_clbundle.createProgramFromFile("testKernel.cl", options));	// create programm
-					_kernel_updateRadius      = new cl::Kernel(_clbundle.createKernel(*_prog, "updateRadius"));		// create kernel rad1 -> rad2
-					_kernel_reduction1        = new cl::Kernel(_clbundle.createKernel(*_prog, "reduction"));			// create kernel error1 -> error2
-					_kernel_reduction2        = new cl::Kernel(_clbundle.createKernel(*_prog, "reduction"));			// create kernel error2 -> error1
-					_kernel_reduction_finale1 = new cl::Kernel(_clbundle.createKernel(*_prog, "reduction_finale"));	// create kernel error1 -> param
-					_kernel_reduction_finale2 = new cl::Kernel(_clbundle.createKernel(*_prog, "reduction_finale"));	// create kernel error2 -> param
+					// build program
+					_prog.reset(new cl::Program(_clbundle.createProgramFromFile("testKernel.cl", options)));			// create programm
+
+					// create kernels objects
+					_kernel_updateRadius.reset(new cl::Kernel(_clbundle.createKernel(*_prog, "updateRadius")));			// create kernel rad1 -> rad2
+					_kernel_reduction1.reset(new cl::Kernel(_clbundle.createKernel(*_prog, "reduction")));				// create kernel error1 -> error2
+					_kernel_reduction2.reset(new cl::Kernel(_clbundle.createKernel(*_prog, "reduction")));				// create kernel error2 -> error1
+					_kernel_reduction_finale1.reset(new cl::Kernel(_clbundle.createKernel(*_prog, "reduction_finale")));// create kernel error1 -> param
+					_kernel_reduction_finale2.reset(new cl::Kernel(_clbundle.createKernel(*_prog, "reduction_finale")));// create kernel error2 -> param
+					_kernel_accelerate.reset(new cl::Kernel(_clbundle.createKernel(*_prog, "accelerate")));             // create kernel accelerate. 
 
 					return;
 					}
 
 
-				mtools::OpenCLBundle			_clbundle;
+				// define
 				int _localsize;
 				int _nbVertices;
 				int _maxDegree;
-				cl::Program * _prog;
-				cl::Kernel *  _kernel_updateRadius;
-				cl::Kernel *  _kernel_reduction1;
-				cl::Kernel *  _kernel_reduction2;
-				cl::Kernel *  _kernel_reduction_finale1;
-				cl::Kernel *  _kernel_reduction_finale2;
+
+				// openCL bundle
+				mtools::OpenCLBundle			_clbundle;
+
+				// kernels
+				std::unique_ptr<cl::Program> _prog;
+				std::unique_ptr<cl::Kernel>  _kernel_updateRadius;
+				std::unique_ptr<cl::Kernel>  _kernel_reduction1;
+				std::unique_ptr<cl::Kernel>  _kernel_reduction2;
+				std::unique_ptr<cl::Kernel>  _kernel_reduction_finale1;
+				std::unique_ptr<cl::Kernel>  _kernel_reduction_finale2;
+				std::unique_ptr<cl::Kernel>  _kernel_accelerate;
+
+				// buffer
+				std::unique_ptr<cl::Buffer> _buff_error1;
+				std::unique_ptr<cl::Buffer> _buff_error2;
+				std::unique_ptr<cl::Buffer> _buff_lambdastar1;
+				std::unique_ptr<cl::Buffer> _buff_lambdastar2;
+				std::unique_ptr<cl::Buffer> _buff_radii1;
+				std::unique_ptr<cl::Buffer> _buff_radii2;
+				std::unique_ptr<cl::Buffer> _buff_degree;
+				std::unique_ptr<cl::Buffer> _buff_neighbour;
+				std::unique_ptr<cl::Buffer> _buff_param;
+				std::unique_ptr<cl::Buffer> _buff_rng;
 
 				std::vector<std::vector<int> >	_gr;		// the graph
 				mtools::Permutation				_perm;		// the permutation applied to get all the boundary vertices at the end
