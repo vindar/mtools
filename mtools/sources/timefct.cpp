@@ -73,9 +73,8 @@ namespace mtools
         std::chrono::high_resolution_clock::time_point next = std::chrono::high_resolution_clock::now();
         std::chrono::duration<long double> elapsed = std::chrono::duration_cast<std::chrono::duration<long double>>(next - prev);
         prev = next;
-        return std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
+        return (uint64)std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
         }
-
 
 
     std::string durationToString(uint64 milliseconds, bool printMilliseconds)
@@ -96,6 +95,34 @@ namespace mtools
         if ((printMilliseconds) && (milliseconds)) { res += mtools::toString(sec) + " ms. "; }
         return res;
         }
+
+
+
+	Chrono::Chrono()
+		{
+		_t = std::chrono::high_resolution_clock::now();
+		}
+
+
+	uint64 Chrono::elapsed()
+		{
+		std::chrono::high_resolution_clock::time_point n = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<long double> e = std::chrono::duration_cast<std::chrono::duration<long double>>(n - _t);
+		return (uint64)std::chrono::duration_cast<std::chrono::milliseconds>(e).count();
+		}
+
+
+	std::string Chrono::toString()
+		{
+		uint64 e = elapsed();
+		return durationToString(e, (e < 61000));
+		}
+
+
+	/**
+	* Return a chrono object. (Convinience function).
+	**/
+	Chrono chrono() { return Chrono(); }
 
 
 

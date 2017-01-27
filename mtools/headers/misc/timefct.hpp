@@ -59,6 +59,51 @@ namespace mtools
     uint64 Chronometer();
 
 
+
+	/**
+	* Simple class that store a chronometer. 
+	**/
+	class Chrono
+		{
+		public:
+
+			/**
+			* Create the object and record the construction time.
+			**/
+			Chrono();
+
+
+			/**
+			* number of milliseconds elapsed since the creation of the object.
+			**/
+			uint64 elapsed();
+
+
+			/**
+			* Cast to uint64. Same as elapsed.
+			**/
+			inline operator uint64() { return elapsed(); }
+
+
+			/**
+			* print into a std::string
+			**/
+			std::string toString();
+
+		private:
+
+			std::chrono::high_resolution_clock::time_point _t;
+
+		};
+
+
+	/**
+	 * Return a chrono object. (Convinience function). 
+	 **/
+	Chrono chrono();
+
+
+
     /**
      * Convert a time length in millisecond into string with format  "XXX days YYY hours ZZZ min.
      * TTT sec. [MMM ms.]".
