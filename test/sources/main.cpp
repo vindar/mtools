@@ -10,7 +10,7 @@ using namespace mtools;
 
 
 //MT2004_64 gen(9987); // RNG
-MT2004_64 gen(31698653); // RNG
+MT2004_64 gen(31); // RNG
 
 Grid_basic<2, int64, 2> Grid; // the 2D grid
 
@@ -165,7 +165,7 @@ void drawCirclePacking(fBox2 R, std::vector<double> & radiuses, std::vector<fVec
 			Im.fBox2_draw_circle(R, circles[i], radiuses[i], RGBc::c_Green, 0.1f);
 			}
 		//Im.fBox2_drawPointCirclePen(R,circles[i],2, RGBc::c_Blue);
-		Im.fBox2_drawText(R, toString(i + 1), circles[i], 'c', 'c', 20, false, RGBc::c_Blue);
+		//Im.fBox2_drawText(R, toString(i + 1), circles[i], 'c', 'c', 20, false, RGBc::c_Blue);
 		}
 
 	for (int i = 0;i < circles.size() - 1; i++)
@@ -392,7 +392,7 @@ void testTriangulation()
 	std::vector<double> radii;
 	std::vector<fVec2> circles;
 
-	mtools::internals_circlepacking::CirclePackingLabelGPU<double> CP;
+	CirclePackingLabelGPU<double> CP;
 
 	CP.setTriangulation(gr, boundary);
 	CP.setRadii();
@@ -487,7 +487,7 @@ void remove_last_vertex(std::vector< std::vector<int> > & gr)
 
 
 
-void loadTest()
+void loadTest(std::string filename)
 	{
 
 	fBox2 R;
@@ -498,28 +498,34 @@ void loadTest()
 
 
 	{
-	mtools::IArchive ar(std::string("trig664604.txt"));
-	ar & gr; ar.newline();
-	ar & bound; ar.newline();
-	ar & radii; ar.newline();
-	ar & circles; ar.newline();
+	mtools::IArchive ar(filename);
+	ar & gr; 
+	ar & bound; 
+	ar & radii; 
+	ar & circles; 
 	}
 
-	mtools::internals_circlepacking::CirclePackingLabelGPU<double> CPTEST;
-	cout.getKey();
+	CirclePackingLabel<double> CPTEST(true);
 	CPTEST.setTriangulation(gr, bound);
-	cout.getKey();
-	CPTEST.setRadii();
+
+
+	std::vector<double> rr(gr.size());
+	for (int i = 0;i < gr.size(); i++) { rr[i] = radii[i]; }
+
+	std::sort(rr.begin(), rr.end());
+
+	cout << rr << "\n";
+
+	CPTEST.setRadii(radii);
 
 	cout << "packing GPU...\n";
-	cout.getKey();
 
 	mtools::Chronometer();
-	cout << "ITER = " << CPTEST.computeRadii(1.0e-7) << "\n";
+	cout << "ITER = " << CPTEST.computeRadii(1.0e-8,0.05,125,100) << "\n";
+	cout.getKey();
 	cout << "done in " << mtools::Chronometer() << "ms\n";
 	cout << CPTEST.errorL1() << "\n";
 	cout << CPTEST.errorL2() << "\n\n";
-
 
 
 
@@ -567,7 +573,7 @@ void loadTest()
 
 void testBall()
 	{
-	int sizeTrig = 100;//000;
+	int sizeTrig = 100000;//000;
 
 	DyckWord D(sizeTrig, 3);
 	D.shuffle(gen);
@@ -633,7 +639,7 @@ void testBall()
 	std::vector<fVec2> circles;
 	
 
-	mtools::internals_circlepacking::CirclePackingLabelGPU<double> CPTEST;
+	CirclePackingLabelGPU<double> CPTEST;
 	CPTEST.setTriangulation(gr, oldbound);
 	CPTEST.setRadii();
 	
@@ -646,7 +652,7 @@ void testBall()
 	
 	
 	/*
-	mtools::internals_circlepacking::CirclePackingLabel<double> CP2;
+	CirclePackingLabel<double> CP2;
 	CP2.setTriangulation(gr, oldbound);
 	CP2.setRadii();
 	
@@ -660,7 +666,7 @@ void testBall()
 
 
 	/*
-	mtools::internals_circlepacking::CirclePackingLabel<double> CP3;
+	CirclePackingLabel<double> CP3;
 	CP3.setTriangulation(gr, oldbound);
 	CP3.setRadii();
 
@@ -753,68 +759,19 @@ void testBall()
 		cout << "DUAL(DUAL) = MAP :" << (cm3 == cm) << "\n\n\n";
 		}
 
+
+
 int main(int argc, char *argv[])
     {
 	MTOOLS_SWAP_THREADS(argc, argv);
 	parseCommandLine(argc, argv);
 
-	/*
-	DyckWord dw(20, 3);
-	CombinatorialMap cm(dw);
-
-	testR(cm);
-
-	cm.btreeToTriangulation();
-
-	testR(cm);
-
-	cout.getKey();
-	cout.getKey();
-
+	loadTest("trig48703.txt");
 	return 0;
-	*/
-	//testTriangulation(); return 0;
-	//loadTest();
-	//return 0;
 	testBall(); 
 	return 0;
 
 
-/*
-	std::vector<std::vector<int> > graph;
-	fBox2 R;
-	std::vector<int> boundary;
-	std::vector<double> radii;
-	std::vector<fVec2> circles;
-	
-	loadGraph("color-wheel.p", graph, R, boundary, radii, circles);
-	
-//	loadtestgraph(graph, boundary);
-
-
-	CirclePacking CP;
-
-	CP.setTriangulation(graph, boundary);
-	CP.setRadii();
-
-	cout << "packing...\n";
-	mtools::Chronometer();
-	//cout << "ITER = " << CP.computeRadii(1.0e-12) << "\n";
-	cout << "ITER = " << CP.computeRadiiFast(1.0e-13) << "\n";
-	cout << "done in " << mtools::Chronometer() << "ms\n";
-
-
-
-	cout << "layout...\n";
-	mtools::Chronometer();
-	CP.computeLayout();
-	cout << "done in " << mtools::Chronometer() << "ms\n";
-
-	radii = CP.getRadii();
-	circles = CP.getLayout();
-	R = CP.getEnclosingRect();
-	drawCirclePacking(R, radii, circles);
-	*/
 
     }
 

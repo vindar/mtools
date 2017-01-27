@@ -23,6 +23,7 @@
 #include "../misc/misc.hpp" 
 #include "../misc/stringfct.hpp" 
 #include "../misc/error.hpp"
+#include "../io/console.hpp"
 #include "vec.hpp"
 #include "box.hpp"
 #include "permutation.hpp"
@@ -30,6 +31,7 @@
 #include "../random/gen_fastRNG.hpp"
 #include "../random/classiclaws.hpp"
 #include "../graphics/customcimg.hpp"
+
 #include "../extensions/openCL.hpp"
 
 
@@ -181,7 +183,7 @@ namespace mtools
 					iter++;
 					if ((iter > 1000)&&(iter % 10000 == 0))
 						{
-						cout << "iter = " << iter << " error = " << c << "\n";
+						mtools::cout << "iter = " << iter << " error = " << c << "\n";
 						}
 					c0 = c;
 					c = 0.0;
@@ -470,8 +472,23 @@ namespace mtools
 
 
 
-	namespace internals_circlepacking
-		{
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 		/**
@@ -480,15 +497,15 @@ namespace mtools
 		 *
 		 * The algorithm is taken from Collins and Stephenson (2003).
 		 *
-		 * NOTE : this class compute a 'packing label' in the euclidian case. Yet, it is possible to
-		 *        deduce the associated hyperbolic packing inside the unit disk D in the following way:
-		 *        1) Join all boundary vertice to a new vertex W, creating therefore a triangulation
+		 * NOTE : This class computes a 'packing label' in the euclidian case. It is possible to deduce
+		 *        the maximal hyperbolic packing inside the unit disk D in the following way:
+		 *        1) Join all boundary vertices to a new vertex v0, creating therefore a triangulation
 		 *        without a boundary.
-		 *        2) Choose a face (a,b,c) that does not contain W and compute the packing labels
-		 *        with the outer face (a,b,c) with boundary condition (1.0,1.0,1.0).
-		 *        3) Construct the layout of of this packing obtained. Center the ball associated
-		 *        with W at the origin and normalize it such that it has unit radius.
-		 *        4) Apply the inversion Mobius transformatin z -> 1/z to all circles
+		 *        2) Choose any face (a,b,c) that does not contain W and compute the packing labels
+		 *        with (a,b,c) as the outer face with boundary condition (1.0,1.0,1.0).
+		 *        3) Construct the layout of of the packing obtained. Center the circle associated
+		 *        with the special vertex v0 at the origin and normalize it such that it has unit radius.
+		 *        4) Apply the inversion Mobius transformatin z -> 1/z to all circles.
 		 *        5) Voila !
 		 *
 		 * NOTE: If openCL extension is active, the class CirclePackingLabelGPU may be used instead
@@ -501,8 +518,12 @@ namespace mtools
 
 			public:
 
-			/* ctor, empty object */
-			CirclePackingLabel() : _pi(acos((FPTYPE)(-1.0))) , _twopi(2*acos((FPTYPE)(-1.0)))
+			/**
+			 * Constructor.
+			 *
+			 * @param	verbose	true to print info to mtools::cout during packing.
+			 */
+			CirclePackingLabel(bool verbose = false) : _verbose(verbose), _pi(acos((FPTYPE)(-1.0))) , _twopi(2*acos((FPTYPE)(-1.0)))
 				{
 				}
 
@@ -618,16 +639,27 @@ namespace mtools
 			/**
 			 * Run the algoritm for computing the value of the radii.
 			 *
+			 * @param	verbose			true to print progress to mtools::cout.
 			 * @param	eps				the required precision, in L2 norm.
 			 * @param	delta			parameter that detemrine how super acceleration is performed (slower
 			 * 							value = more restrictive condition to perform acceleration).
 			 * @param	maxIteration	The maximum number of iteration before stopping. -1 = no limit.
+			 * @param	stepIter		number of iterations between printing infos (used only if verbose = true).
 			 *
 			 * @return	The number of iterations performed.
 			 **/
-			int64 computeRadii(const FPTYPE eps = 10e-9, const FPTYPE delta = 0.05, const int64 maxIteration = -1)
+			int64 computeRadii(const FPTYPE eps = 10e-9, const FPTYPE delta = 0.05, const int64 maxIteration = -1, const int64 stepIter = 1000)
 				{
 				FastRNG gen;					// use to randomize acceleration.
+				if (_verbose) 
+					{ 
+					mtools::cout << "\n  --- Starting Packing Algorithm [CPU] ---\n\n"; 
+					mtools::cout << "initial L2 error  = " << errorL2() << "\n";
+					mtools::cout << "L2 target         = " << eps << "\n";
+					mtools::cout << "max iterations    = " << maxIteration << "\n";
+					mtools::cout << "iter between info = " << stepIter << "\n\n";
+					}
+				Chronometer();
 
 				//#define DELAY_POST_RADII		// uncomment those line for debugging
 				//#define DO_NOT_USE_RNG		//
@@ -690,104 +722,32 @@ namespace mtools
 						for (size_t i = 0; i < nb; ++i) { _rad[i] += lambda*(_rad[i] - _rad0[i]); }
 						fl = 0;
 						#else
-						if (Unif(gen) > 0.5) 
+						if ((gen() & 1)&&(c > eps)) // do not accelerate if c < eps 
 							{
 							for (size_t i = 0; i < nb; ++i) { _rad[i] += lambda*(_rad[i] - _rad0[i]); } 
 							fl = 0;
 							}
 						#endif ENDIF
 						}
+					if ((_verbose)&&((iter % stepIter == 0)||(c < eps)||(iter == maxIteration)))
+						{
+						mtools::cout << "iteration = " << iter << "\n";
+						mtools::cout << "L2 error  = " << c << "\n";
+						mtools::cout << "L2 target = " << eps << "\n";
+						mtools::cout << ((iter % stepIter == 0) ? stepIter : iter % stepIter) << " interations performed in " << Chronometer() << "ms\n\n";
+						}
+					}
+				if (_verbose) 
+					{ 
+					cout << "\n\nFinal L2 error = " << errorL2() << "\n";
+					cout << "Final L1 error = " << errorL1() << "\n\n";
+					if (iter == maxIteration) { mtools::cout << "  --- Packing stopped after " << iter << " iterations ---  \n\n"; }
+					else { mtools::cout << "  --- Packing complete ---  \n\n"; }
 					}
 				return iter;
 
 				#undef DO_NOT_USE_RNG
 				#undef DELAY_POST_RADII 
-				}
-
-
-
-			/**
-			* Run the algoritm for computing the value of the radii.
-			*
-			* @param	eps				the required precision, in L2 norm.
-			* @param	delta			parameter that detemrine how super acceleration is performed (slower
-			* 							value = more restrictive condition to perform acceleration).
-			* @param	maxIteration	The maximum number of iteration before stopping. -1 = no limit.
-			*
-			* @return	The number of iterations performed.
-			**/
-			int64 computeRadiiSlow(const FPTYPE eps = 10e-9, const FPTYPE delta = 0.05, const int64 maxIteration = -1)
-				{
-				FastRNG gen;					// use to randomize acceleration.
-				uint32 rz;
-
-				const int nb = (int)_nb;
-				int64 iter = 0;
-				FPTYPE c = 1.0 + eps, c0;
-				FPTYPE lambda = -1.0, lambda0;
-				bool fl = false, fl0 = false;
-				std::vector<FPTYPE> _rad0 = _rad;
-				while ((c > eps) && (iter != maxIteration))
-					{
-					rz = 0;
-					iter++;
-					c0 = c;
-					c = 0.0;
-					lambda0 = lambda;
-					fl0 = fl;
-					for (int i = 0; i < nb; i++)
-						{
-						const FPTYPE v = _rad[i];
-						const FPTYPE theta = angleSumEuclidian(v, _gr[i]);
-						const FPTYPE k = (FPTYPE)_gr[i].size();
-						const FPTYPE beta = sin(theta*0.5 / k);
-						const FPTYPE tildev = beta*v / (1.0 - beta);
-						const FPTYPE de = sin(_pi / k);
-						const FPTYPE u = (1.0 - de)*tildev / de;
-						const FPTYPE e = theta - _twopi;
-						c += e*e;
-						_rad0[i] = u;
-						}
-					_rad.swap(_rad0);
-					c = sqrt(c);
-					lambda = c / c0;
-					fl = true;
-					if ((fl0) && (lambda < 1.0))
-						{
-						if (abs(lambda - lambda0) < delta) { lambda = lambda / (1.0 - lambda); }
-						FPTYPE lstar = 3.0*lambda;
-						for (size_t i = 0; i < nb; ++i)
-							{
-							const FPTYPE d = _rad0[i] - _rad[i];
-							if (d > 0.0)
-								{
-								const FPTYPE d2 = (_rad[i] / d);
-								if (d2 < lstar) { lstar = d2; }
-								}
-							}
-						lambda = ((lambda < 0.5*lstar) ? lambda : 0.5*lstar);
-
-						if (gen() & 1)
-							{
-
-							for (size_t i = 0; i < nb; ++i) { _rad[i] += lambda*(_rad[i] - _rad0[i]); }
-							fl = 0;
-							}
-						}
-					/*
-					cout << "it        = " << iter << "\n";
-					cout << "err       = " << c << "\n";
-					cout << "lambda    = " << lambda << "\n";
-					cout << "flag algo = " << !fl << "\n";
-					cout << "flag accel= " << (rz & 1) << "\n\n";
-					double rzd = (double)rz;
-					cout << "gen = " << (uint32)rzd << "\n\n";
-					cout << "\n";
-					cout.getKey();
-					*/
-					}
-				return iter;
-
 				}
 
 
@@ -816,6 +776,7 @@ namespace mtools
 					return sum;
 					}
 
+				bool _verbose;		// do we print info on mtools::cout ?
 
 				const FPTYPE					_pi;		// pi
 				const FPTYPE					_twopi;		// pi
@@ -834,36 +795,44 @@ namespace mtools
 
 
 
+/**********************************************************************************************************
+*
+* 
+* OPENCL VERSION : only defined if openCL extension is activated.
+* 
+*
+**********************************************************************************************************/
 
 
+#ifdef MTOOLS_HAS_OPENCL
 
 
-
-
-
-
-
-
-
-
-
-
-
-
+#include "circlePacking.cl.hpp"	// the openCL program source.
 
 
 		/**
 		 * Same as the class above but use GPU acceleration.
-		 *
-		 * @tparam	FPTYPE	floating type used for calculations. Must be either oduble or float. 
+		 * This class is defined only if the openCL extension is activated. 
+		 * 
+		 * @tparam	FPTYPE	floating type used for calculations. Must be either double or float.
 		 **/
 		template<typename FPTYPE = double> class CirclePackingLabelGPU
 			{
 
+			using UINT_VEC4   = uint32[4];
+			using FPTYPE_VEC4 = FPTYPE[4];
+			using FPTYPE_VEC8 = FPTYPE[8];
+
+			static_assert(std::is_same<FPTYPE, double>::value || std::is_same<FPTYPE, float>::value, "mtools::CirclePackingLabelGPU<FPTYPE> can only be instantiated with FPTYPE= double or float.");
+
 			public:
 
-			/* ctor, empty object */
-			CirclePackingLabelGPU() : _localsize(-1), _nbVertices(0), _maxDegree(0), _clbundle()
+			/**
+			 * Constructor.
+			 *
+			 * @param	verbose	true print informations to mtools::cout.
+			 */
+			CirclePackingLabelGPU(bool verbose = false) : _verbose(verbose), _localsize(-1), _nbVertices(0), _maxDegree(0), _clbundle(true, verbose, verbose)
 				{
 				clear();
 				}
@@ -894,11 +863,8 @@ namespace mtools
 			* @param boundary  The boundary vector. Every index i for which boundary[i] > 0
 			* 					is considered to be a boundary vertice.
 			*/
-
-			
 			template<typename GRAPH> void setTriangulation(const GRAPH & graph, std::vector<int> boundary)
 				{ 
-				mtools::FastRNG gen;
 				clear();
 				const size_t l = graph.size();
 				MTOOLS_INSURE(boundary.size() == l);
@@ -907,8 +873,7 @@ namespace mtools
 					{
 					if (boundary[i] <= 0.0) 
 						{ 
-						boundary[i] = - (int)graph[i].size(); //
-						//boundary[i] = -100000 * Unif(gen); //-1000 - graph[i].size(); //
+						boundary[i] = - (int)graph[i].size();
 						_nb++; 
 						}
 					}
@@ -919,26 +884,6 @@ namespace mtools
 				_rad.resize(l, (FPTYPE)1.0);
 				}
 				
-			/*
-			template<typename GRAPH> void setTriangulation(const GRAPH & graph, const std::vector<int> & boundary)
-				{
-				clear();
-				const size_t l = graph.size();
-				MTOOLS_INSURE(boundary.size() == l);
-				_perm = getSortPermutation(boundary);
-				_invperm = invertPermutation(_perm);
-				_gr = permuteGraph<std::vector<std::vector<int> > >(convertGraph<GRAPH, std::vector<std::vector<int> > >(graph), _perm, _invperm);
-				_nb = l;
-				for (size_t i = 0; i < l; i++)
-					{
-					if (boundary[_perm[i]] > 0.0) { _nb = i; break; }
-					}
-				MTOOLS_INSURE((_nb > 0) && (_nb < l - 2));
-				_rad.resize(l, (FPTYPE)1.0);
-				}
-				*/
-
-
 
 			/** Compute current packing 'angle' error in L2 norm. */
 			FPTYPE errorL2() const
@@ -996,7 +941,7 @@ namespace mtools
 
 
 			/**
-			 * Sets all radii to r.
+			 * Sets all radii to the same value r.
 			 **/
 			void setRadii(FPTYPE r = 1.0)
 				{
@@ -1011,10 +956,11 @@ namespace mtools
 			 * Run the algorithm for computing the value of the radii.
 			 *
 			 * @param	eps				the required precision, in L2 norm.
-			 * @param	delta			parameter that detemrine how super acceleration is performed (slower
+			 * @param	delta			parameter that determine how super acceleration is performed (slower
 			 * 							value = more restrictive condition to perform acceleration).
 			 * @param	maxIteration	The maximum number of iteration before stopping. -1 = no limit.
-			 * @param	stepIter		number of iterations between each check of the current error.
+			 * @param	stepIter		number of iterations between each check of the current error 
+			 * 							(and printing information if verbose = true)
 			 *
 			 * @return	The number of iterations performed.
 			 **/
@@ -1046,20 +992,16 @@ namespace mtools
 				for (int i = 0; i < _nbVertices; i++) { for (int j = 0; j < (int)(_gr[i].size()); j++) { neighbourTab[j*_nbVertices + i] = (int32)_gr[i][j]; } }
 				_buff_neighbour.reset(new cl::Buffer(_clbundle.context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(int32)*_nbVertices*_maxDegree, neighbourTab.data()));
 
-				FPTYPE paramTab[8];
+				FPTYPE_VEC8 paramTab;
 				paramTab[0] = (FPTYPE)(1.0 + eps); // error
 				paramTab[1] = (FPTYPE)1.0;		   // lambda
 				paramTab[2] = (FPTYPE)1.0;		   // flag acceleration
 				paramTab[3] = (FPTYPE)eps;         // target value
-				paramTab[4] = (FPTYPE)0.0;
-				paramTab[5] = (FPTYPE)0.0;
-				paramTab[6] = (FPTYPE)0.0;
-				paramTab[7] = (FPTYPE)0.0;
-				_buff_param.reset(new cl::Buffer(_clbundle.context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeof(FPTYPE) * 8, paramTab));
+				_buff_param.reset(new cl::Buffer(_clbundle.context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeof(paramTab), paramTab));
 
-				uint32 rngTab[4];
-				rngTab[0] = 123456789; rngTab[1] = 362436069; rngTab[2] = 521288629; rngTab[3] = 0; 
-				_buff_rng.reset(new cl::Buffer(_clbundle.context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeof(uint32) * 4, rngTab));
+				UINT_VEC4 rngTab;
+				rngTab[0] = 123456789; rngTab[1] = 362436069; rngTab[2] = 521288629; rngTab[3] = 0; // initial seed 
+				_buff_rng.reset(new cl::Buffer(_clbundle.context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeof(rngTab), rngTab));
 				}
 
 				// set kernels arguments
@@ -1094,6 +1036,14 @@ namespace mtools
 				_kernel_accelerate->setArg(1, *_buff_radii2);
 				_kernel_accelerate->setArg(2, *_buff_param);
 
+				if (_verbose)
+					{
+					mtools::cout << "\n  --- Starting Packing Algorithm [openCL GPU] ---\n\n";
+					mtools::cout << "initial L2 error  = " << errorL2() << "\n";
+					mtools::cout << "L2 target         = " << eps << "\n";
+					mtools::cout << "max iterations    = " << maxIteration << "\n";
+					mtools::cout << "iter between info = " << stepIter << "\n\n";
+					}
 				Chronometer();
 				// make computation
 				int64 iter = 0;
@@ -1123,30 +1073,35 @@ namespace mtools
 
 					if (iter % stepIter == 0)
 						{
-						FPTYPE param[4];
+						FPTYPE_VEC8 param;
 						_clbundle.queue.finish();
-						_clbundle.queue.enqueueReadBuffer(*_buff_param, CL_TRUE, 0, 8 * sizeof(FPTYPE), &param);
-						if (param[0] < eps) { done = true; }
-												
-						//if (iter % 1000 == 0)
+						_clbundle.queue.enqueueReadBuffer(*_buff_param, CL_TRUE, 0, sizeof(param), &param);
+						if (param[0] < eps) { done = true; }												
+						if (_verbose)
 							{
-						
-							cout << "it        = " << iter << "\n";
-							cout << "err       = " << param[0] << "\n";
-							cout << "lambda    = " << param[1] << "\n";
-							cout << "flag algo = " << param[2] << "\n";
-							cout << "flag accel= " << param[3] << "\n\n";
-							cout << "done in = " << Chronometer() << "\ms\n\n";
-						//	cout.getKey();
-							
-							}
-							
-						
+							mtools::cout << "iteration = " << iter << "\n";
+							mtools::cout << "L2 error  = " << param[0] << "\n";
+							mtools::cout << "L2 target = " << param[3] << "\n";
+							mtools::cout << stepIter << " interations performed in " << Chronometer() << "ms\n\n";
+							}													
 						}
 					}
 				// done, read back the result 
 				_clbundle.queue.finish();
 				_clbundle.queue.enqueueReadBuffer(*_buff_radii1, CL_TRUE, 0, _nbVertices * sizeof(FPTYPE), _rad.data());
+				if (_verbose)
+					{
+					if (done) { mtools::cout << "  --- Packing complete ---\n\n"; }
+					else
+						{
+						FPTYPE_VEC8 param;
+						_clbundle.queue.enqueueReadBuffer(*_buff_param, CL_TRUE, 0, sizeof(param), &param);
+						cout << "\nFinal L2 error = " << errorL2() << "\n";
+						cout << "Final L1 error = " << errorL1() << "\n\n";
+						mtools::cout << "  --- Packing stopped after " << iter << " iterations ---  \n\n";
+						}
+					}
+
 				return iter;
 				}
 
@@ -1190,32 +1145,35 @@ namespace mtools
 					_nbVertices = nbvert;
 					_maxDegree = maxdeg;
 
-
 					// compiler options
 					std::string options;
 					options += std::string(" -DFPTYPE=") + typeid(FPTYPE).name();
+					options += std::string(" -DFPTYPE_VEC4=") + typeid(FPTYPE).name() + "4";
 					options += std::string(" -DFPTYPE_VEC8=") + typeid(FPTYPE).name() + "8";
 					options += " -DNBVERTICES=" + toString(_nbVertices);
 					options += " -DMAXDEGREE=" + toString(_maxDegree);
 					options += " -DMAXGROUPSIZE=" + toString(_localsize);
-//					options += " -cl-nv-verbose";
+//					options += " -cl-nv-verbose"; // debug option. Only available for nvidia openCL
 
 					// build program
-					_prog.reset(new cl::Program(_clbundle.createProgramFromFile("testKernel.cl", options)));			// create programm
+					std::string log;
+					_prog.reset(new cl::Program(_clbundle.createProgramFromString(internals_circlepacking::circlePacking_openCLprogram,log, options,_verbose))); // create programm
 
 					// create kernels objects
-					_kernel_updateRadius.reset(new cl::Kernel(_clbundle.createKernel(*_prog, "updateRadius")));			// create kernel rad1 -> rad2
-					_kernel_reduction1.reset(new cl::Kernel(_clbundle.createKernel(*_prog, "reduction")));				// create kernel error1 -> error2
-					_kernel_reduction2.reset(new cl::Kernel(_clbundle.createKernel(*_prog, "reduction")));				// create kernel error2 -> error1
-					_kernel_reduction_finale1.reset(new cl::Kernel(_clbundle.createKernel(*_prog, "reduction_finale")));// create kernel error1 -> param
-					_kernel_reduction_finale2.reset(new cl::Kernel(_clbundle.createKernel(*_prog, "reduction_finale")));// create kernel error2 -> param
-					_kernel_accelerate.reset(new cl::Kernel(_clbundle.createKernel(*_prog, "accelerate")));             // create kernel accelerate. 
+					_kernel_updateRadius.reset(new cl::Kernel(_clbundle.createKernel(*_prog, "updateRadius",_verbose)));			// create kernel rad1 -> rad2
+					_kernel_reduction1.reset(new cl::Kernel(_clbundle.createKernel(*_prog, "reduction", _verbose)));				// create kernel error1 -> error2
+					_kernel_reduction2.reset(new cl::Kernel(_clbundle.createKernel(*_prog, "reduction", _verbose)));				// create kernel error2 -> error1
+					_kernel_reduction_finale1.reset(new cl::Kernel(_clbundle.createKernel(*_prog, "reduction_finale", _verbose)));// create kernel error1 -> param
+					_kernel_reduction_finale2.reset(new cl::Kernel(_clbundle.createKernel(*_prog, "reduction_finale", _verbose)));// create kernel error2 -> param
+					_kernel_accelerate.reset(new cl::Kernel(_clbundle.createKernel(*_prog, "accelerate", _verbose)));             // create kernel accelerate. 
 
 					return;
 					}
 
 
-				// define
+				bool _verbose;		// do we print info on mtools::cout ?
+
+				// define in compiler options
 				int _localsize;
 				int _nbVertices;
 				int _maxDegree;
@@ -1250,11 +1208,11 @@ namespace mtools
 				std::vector<FPTYPE>				_rad;		// vertex raduises
 				size_t							_nb;		// number of internal vertices
 
-
 			};
 
+#endif
 
-		}
+
 	}
 
 /* end of file */
