@@ -865,6 +865,7 @@ namespace mtools
 			*/
 			template<typename GRAPH> void setTriangulation(const GRAPH & graph, std::vector<int> boundary)
 				{ 
+				mtools::FastRNG gen;
 				clear();
 				const size_t l = graph.size();
 				MTOOLS_INSURE(boundary.size() == l);
@@ -873,8 +874,10 @@ namespace mtools
 					{
 					if (boundary[i] <= 0.0) 
 						{ 
-						boundary[i] = - (int)graph[i].size();
-						_nb++; 
+						//boundary[i] = - (int)(gen()/16);
+						//boundary[i] = -10000 + (int)graph[i].size();
+						boundary[i] = -(int)graph[i].size();
+						_nb++;
 						}
 					}
 				_perm = getSortPermutation(boundary);
@@ -997,6 +1000,7 @@ namespace mtools
 				paramTab[1] = (FPTYPE)1.0;		   // lambda
 				paramTab[2] = (FPTYPE)1.0;		   // flag acceleration
 				paramTab[3] = (FPTYPE)eps;         // target value
+				paramTab[4] = (FPTYPE)delta;	   // acceleration parameter
 				_buff_param.reset(new cl::Buffer(_clbundle.context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeof(paramTab), paramTab));
 
 				UINT_VEC4 rngTab;

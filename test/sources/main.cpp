@@ -508,25 +508,22 @@ void loadTest(std::string filename)
 	CirclePackingLabel<double> CPTEST(true);
 	CPTEST.setTriangulation(gr, bound);
 
-
 	std::vector<double> rr(gr.size());
 	for (int i = 0;i < gr.size(); i++) { rr[i] = radii[i]; }
 
 	std::sort(rr.begin(), rr.end());
 
-	cout << rr << "\n";
+	cout << "\n";
+	cout << "min radius = "<< rr[3] << "\n";
+	cout << "max radius = " << rr.back() << "\n\n";
 
 	CPTEST.setRadii(radii);
 
-	cout << "packing GPU...\n";
+	cout << "repacking...\n";
 
-	mtools::Chronometer();
-	cout << "ITER = " << CPTEST.computeRadii(1.0e-8,0.05,125,100) << "\n";
-	cout.getKey();
-	cout << "done in " << mtools::Chronometer() << "ms\n";
-	cout << CPTEST.errorL1() << "\n";
-	cout << CPTEST.errorL2() << "\n\n";
-
+	auto cc = chrono();
+	cout << "ITER = " << CPTEST.computeRadii(1.0e-7,0.05,100,100) << "\n";
+	cout << "done in " << cc << "\n";
 
 
 	CirclePacking CP;
@@ -573,7 +570,7 @@ void loadTest(std::string filename)
 
 void testBall()
 	{
-	int sizeTrig = 100000;//000;
+	int sizeTrig = 300000;//10e6 200K error
 
 	DyckWord D(sizeTrig, 3);
 	D.shuffle(gen);
@@ -639,14 +636,14 @@ void testBall()
 	std::vector<fVec2> circles;
 	
 
-	CirclePackingLabelGPU<double> CPTEST;
+	CirclePackingLabelGPU<double> CPTEST(true);
 	CPTEST.setTriangulation(gr, oldbound);
 	CPTEST.setRadii();
 	
 	cout << "packing GPU...\n";
-	mtools::Chronometer();
-	cout << "ITER = " << CPTEST.computeRadii(1.0e-7) << "\n";
-	cout << "done in " << mtools::Chronometer() << "ms\n";
+	auto cc = Chrono();
+	cout << "ITER = " << CPTEST.computeRadii(1.0e-8) << "\n";
+	cout << "done in " << cc << "\n";
 	cout << CPTEST.errorL1() << "\n";
 	cout << CPTEST.errorL2() << "\n\n";
 	
@@ -766,8 +763,8 @@ int main(int argc, char *argv[])
 	MTOOLS_SWAP_THREADS(argc, argv);
 	parseCommandLine(argc, argv);
 
-	loadTest("trig48703.txt");
-	return 0;
+	//loadTest("trig1421883.txt");
+	//return 0;
 	testBall(); 
 	return 0;
 

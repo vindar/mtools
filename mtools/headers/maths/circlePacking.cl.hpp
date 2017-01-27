@@ -25,21 +25,20 @@ namespace internals_circlepacking
 /* The openCL program for circle packing
    use by the CirclePackingLAbelGPU class from circlePacking.hpp
    Algorithm from Stephenson & Collins (2003) */
-static const char * circlePacking_openCLprogram = R"CLsource(
+	static const char * circlePacking_openCLprogram = R"CLsource(
 
 //#pragma OPENCL EXTENSION cl_khr_fp64 : enable
 
 //#define FPTYPE		  		//
-//#define FPTYPE_VEC8 			//
-//#define NBVERTICES     		// define passed via compiler options
+//#define FPTYPE_VEC4 			//
+//#define FPTYPE_VEC8 			// defined via compiler options
+//#define NBVERTICES     		// 
 //#define MAXDEGREE      		//
 //#define MAXGROUPSIZE   		//
 
 
 #define M_2PI 6.283185307179586477
 #define M_1PI 3.141592653589793238;
-#define MEDVALUE_RNG 2147483648
-#define DELTA 0.01
 
 
 /** fast random number generator **/
@@ -66,7 +65,9 @@ inline FPTYPE angleEuclidian(FPTYPE rx, FPTYPE ry, FPTYPE rz)
 	const FPTYPE a = rx + ry;
 	const FPTYPE b = rx + rz;
 	const FPTYPE c = ry + rz;
+
 	const FPTYPE r = (a*a + b*b - c*c) / (2 * a*b);
+	//const FPTYPE r = ((a/b) + (b/a) - (c/a)*(c/b))/2; // best version for large exponents.
 	if (r >= 1.0) { return 0.0; } else if (r <= -1.0) { return M_1PI; }
 	return acos(r);
 	}	
@@ -92,11 +93,10 @@ __kernel void updateRadius(__global FPTYPE g_radiiTab1[NBVERTICES],						// orig
 
 	// compute the new radius
 	const FPTYPE ik     = 1.0/((FPTYPE)degree);
-	const FPTYPE beta   = sin(theta*0.5*ik);
+	const FPTYPE beta   = sin(theta*ik*0.5);
 	const FPTYPE tildev = beta*v/(1.0-beta);
 	const FPTYPE delta  = sinpi(ik);
 	const FPTYPE u      = (1.0-delta)*tildev/delta;
-
 	g_radiiTab2[index] 	= u;								// save new radius	
 
 	const FPTYPE e      = theta - M_2PI;					// error term
@@ -172,7 +172,7 @@ __kernel void reduction_finale( __global FPTYPE * errorin, __global FPTYPE * lam
 		next.s2 -= 1.0;
 		if ((next.s0 > next.s3)&&(prev.s2 < 1.0)&&(next.s1 < 1.0)) // flag is set and new lambda smaller than 1
 			{ // we accelerate
-			if (fabs(next.s1 - prev.s1) < DELTA) { next.s1 = (next.s1)/(1.0 - next.s1);  } // super-acceleration  
+			if (fabs(next.s1 - prev.s1) < prev.s4) { next.s1 = (next.s1)/(1.0 - next.s1);  } // super-acceleration 
 			next.s1 = fmin(next.s1,((FPTYPE)(0.5))*templambda[0]); // new lambda
 			next.s2 = (rand(g_gen) & 1) ? 5.0 : 0.0; // do we accelerate			
 			}			
