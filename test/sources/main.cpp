@@ -10,7 +10,7 @@ using namespace mtools;
 
 
 
-MT2004_64 gen(31); // RNG
+MT2004_64 gen(31135); // RNG
 //MT2004_64 gen(44); // RNG
 
 Grid_basic<2, int64, 2> Grid; // the 2D grid
@@ -523,7 +523,7 @@ void loadTest(std::string filename)
 	cout << "repacking...\n";
 
 	auto cc = chrono();
-	cout << "ITER = " << CPTEST.computeRadii(1.0e-7,0.05,100,100) << "\n";
+	cout << "ITER = " << CPTEST.computeRadii(1.0e-10,0.05,100,1000) << "\n";
 	cout << "done in " << cc << "\n";
 
 
@@ -571,7 +571,7 @@ void loadTest(std::string filename)
 
 void testBall()
 	{
-	int sizeTrig = 200000;//10e6 200K error
+	int sizeTrig = 2000000;//10e6 200K error
 
 	DyckWord D(sizeTrig, 3);
 	D.shuffle(gen);
@@ -642,7 +642,7 @@ void testBall()
 	
 	cout << "packing GPU...\n";
 	auto cc = Chrono();
-	cout << "ITER = " << CPTEST.computeRadii(1.0e-8,0.05,-1,1000) << "\n";
+	cout << "ITER = " << CPTEST.computeRadii(1.0e-10,0.03,-1,1000) << "\n";
 	cout << "done in " << cc << "\n";
 	cout << CPTEST.errorL1() << "\n";
 	cout << CPTEST.errorL2() << "\n\n";
