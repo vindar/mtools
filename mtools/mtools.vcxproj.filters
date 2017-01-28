@@ -252,13 +252,16 @@
     <ClInclude Include="headers\misc\tuple.hpp">
       <Filter>Header Files\misc</Filter>
     </ClInclude>
-    <ClInclude Include="headers\maths\complex.hpp">
-      <Filter>Header Files\maths</Filter>
-    </ClInclude>
     <ClInclude Include="headers\extensions\openCL.hpp">
       <Filter>Header Files\extensions</Filter>
     </ClInclude>
     <ClInclude Include="headers\maths\circlePacking.cl.hpp">
+      <Filter>Header Files\maths</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\maths\mobius.hpp">
+      <Filter>Header Files\maths</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\maths\circle.hpp">
       <Filter>Header Files\maths</Filter>
     </ClInclude>
   </ItemGroup>
