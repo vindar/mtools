@@ -72,10 +72,11 @@
 #include "io/watch.hpp"
 
 // maths
-#include "maths/complex.hpp"
 #include "maths/vec.hpp"
 #include "maths/box.hpp"
 #include "maths/sqrmatrix.hpp"
+#include "maths/circle.hpp"
+#include "maths/mobius.hpp"
 #include "maths/specialFunctions.hpp"
 #include "maths/permutation.hpp"
 #include "maths/dyckword.hpp"
