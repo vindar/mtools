@@ -55,6 +55,9 @@ namespace mtools
    /** Defines an alias to void *. */
    typedef void * p_void;
 
+   /*  stl complex class by default.  */
+   template<typename T> using complex = std::complex<T>; 
+
 
    /** Numeric constants */
 
