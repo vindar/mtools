@@ -1,4 +1,4 @@
-/** @file complex.hpp */
+/** @file mobius.hpp */
 //
 // Copyright 2015 Arvind Singh
 //
@@ -23,34 +23,36 @@
 #include "../misc/misc.hpp" 
 #include "../misc/stringfct.hpp" 
 #include "../misc/error.hpp"
+#include "circle.hpp"
 
 
 namespace mtools
 	{
 
 
-	template<typename T> using complex = std::complex<T>;   ///< using stl complex class by default. 
-
-
-
-
-
-	template<typename  T> class Mobius
+	/**
+	 * Class representing a Mobius transformation of the form  z -> (az + b)/(cz+d). 
+	 *
+	 * @tparam	T	Floating type to use.
+	 **/
+	template<typename  T = double> class Mobius
 		{
 
 		public:
 
+
 		/** Default constructor. set the identity transformation. */
 		Mobius() : a((T)1.0), b(T(0.0)), c((T)0.0), d(T(1.0)) {}
 
+
 		/**
-		 * Constructor. constuct the mobius transformation z -> (az + b)/(cz + d).
+		 * Constructor. Constuct the mobius transformation z -> (az + b)/(cz + d).
 		 */
 		Mobius(const mtools::complex<T> & aa,const mtools::complex<T> & bb,const mtools::complex<T> & cc, const mtools::complex<T> & dd) : a(aa), b(bb), c(cc), d(dd) {}
 		
 
 		/**   
-		/* Mobius tranformation z -> (z - c)/(conj(c)z - 1).
+		/* Constructor. Construct the tranformation z -> (z - c)/(conj(c)z - 1).
 		 * This swaps c and 0  while preserving the unit disk if |c| < 1.
 		 **/
 		Mobius(const mtools::complex<T> & c) : a((T)1.0), b(-c), c(std::conj(c)), d((T)(-1.0)) {}
@@ -73,6 +75,20 @@ namespace mtools
 			return (a * z + b)/(c * z + d);
 			}
 
+
+		/**
+		 * Compute the image of a circle. It is again a circle but beware that the center of the image
+		 * circle is not the image of the center the original circle.
+		 **/
+		/*
+		template<T EPS> mtools::Circle<T, EPS> operator*(const mtools::Circle<T,EPS> & circle) const
+			{
+			return mtools::Circle<T, EPS>(
+				((a*center + b)*(std::conj(c*center + d)) - rad*rad*a*(std::conj(c))) / (std::norm(c*center + d) - rad*rad*(std::norm(c))),
+					(rad*(std::abs(a*d - b*c))) / (std::abs(std::norm(c*center + d) - rad*rad*norm(c)))
+					);
+			}
+			*/
 
 		/**
 		 * Return the invert transformation.
@@ -107,7 +123,7 @@ namespace mtools
 
 
 		/**
-		* Print the the vector into a string.
+		* Print the transformation into a string.
 		**/
 		std::string toString() const
 			{
@@ -117,10 +133,10 @@ namespace mtools
 
 
 
-		mtools::complex<T> a;
-		mtools::complex<T> b;
-		mtools::complex<T> c;
-		mtools::complex<T> d;
+		mtools::complex<T> a;   // the parameters of the transformation
+		mtools::complex<T> b;   //
+		mtools::complex<T> c;   //
+		mtools::complex<T> d;   //
 
 		};
 
