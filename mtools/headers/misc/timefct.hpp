@@ -80,6 +80,11 @@ namespace mtools
 
 
 			/**
+			* restart the timer.
+			**/
+			void reset();
+
+			/**
 			* Cast to uint64. Same as elapsed.
 			**/
 			inline operator uint64() { return elapsed(); }

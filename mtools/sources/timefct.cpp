@@ -92,13 +92,19 @@ namespace mtools
         if (hours) { res += mtools::toString(hours) + ((hours == 1) ? " hour " : " hours "); }
         if (min)   { res += mtools::toString(min) + " min. "; }
         if (sec)   { res += mtools::toString(sec) + " sec. "; }
-        if ((printMilliseconds) && (milliseconds)) { res += mtools::toString(sec) + " ms. "; }
+        if ((printMilliseconds) && (milliseconds)) { res += mtools::toString(milliseconds) + " ms. "; }
         return res;
         }
 
 
 
 	Chrono::Chrono()
+		{
+		reset();
+		}
+
+
+	void Chrono::reset()
 		{
 		_t = std::chrono::high_resolution_clock::now();
 		}
