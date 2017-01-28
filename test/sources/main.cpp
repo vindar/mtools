@@ -762,6 +762,22 @@ int main(int argc, char *argv[])
 	MTOOLS_SWAP_THREADS(argc, argv);
 	parseCommandLine(argc, argv);
 
+
+
+	mtools::Circle<double> C(complex<double>(0.5,1/3.0), 0.1);
+
+	cout << C << "\n";
+
+	auto H = C.euclidianToHyperbolic();
+	cout << H << "\n";
+
+	auto C2 = H.hyperbolicToEuclidian();
+	cout << C2 << "\n";
+
+	cout.getKey(); 
+	cout.getKey();
+	return 0;
+
 	//loadTest("trig1421883.txt");
 	//return 0;
 	testBall(); 

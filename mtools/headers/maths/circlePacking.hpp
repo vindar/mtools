@@ -40,6 +40,53 @@ namespace mtools
 	{
 	
 
+
+
+
+	/**
+	* Class used for computing the position of the circle in the circle packing 
+	* of a triangulation.
+	*/
+	template<typename FPTYPE = double> class CirclePackingLayout
+		{
+
+
+
+		/**
+		 * Set the graph. 
+		 **/
+		template<typename GRAPH> void setGraph(const GRAPH & graph)
+			{
+			}
+
+
+		/**
+		 * Set the radii size.
+		 **/
+		template<typename RADII> void setRadii(const RADII & radii)
+			{
+			}
+
+
+		/**
+		 * COmpute the Euclidian layout
+		 *
+		 * @param	originVertex	The vertex that must be put at the origin. 
+		 * 							It must be an interior vertex !
+		 * 			
+		 *
+		 * @return	The euclidian layout.
+		 **/
+		std::vector<mtools::Circle<FPTYPE> > getEuclidianLayout(int originVertex, int)
+			{}
+
+
+
+
+		};
+
+
+
 	/**
 	* Class used for computing the circle packing of a triangulation.
 	*
@@ -533,6 +580,12 @@ namespace mtools
 			~CirclePackingLabel() {}
 
 
+			/**
+			* Decide whether packing information should be printed to mtools::cout.
+			**/
+			void verbose(bool verb) { _verbose = verb; }
+
+
 			/** Clears the object to a blank initial state. */
 			void clear()
 				{
@@ -848,6 +901,12 @@ namespace mtools
 			~CirclePackingLabelGPU() 
 				{
 				}
+
+
+			/**
+			* Decide whether packing information should be printed to mtools::cout.
+			**/
+			void verbose(bool verb) { _verbose = verb; }
 
 
 			/** Clears the object to a blank initial state. */
