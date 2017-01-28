@@ -30,9 +30,8 @@ namespace internals_circlepacking
 //#pragma OPENCL EXTENSION cl_khr_fp64 : enable
 
 //#define FPTYPE		  		//
-//#define FPTYPE_VEC4 			//
-//#define FPTYPE_VEC8 			// defined via compiler options
-//#define NBVERTICES     		// 
+//#define FPTYPE_VEC8 			// 
+//#define NBVERTICES     		// defined via compiler options
 //#define MAXDEGREE      		//
 //#define MAXGROUPSIZE   		//
 

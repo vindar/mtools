@@ -23,6 +23,7 @@
 #include "../misc/misc.hpp" 
 #include "../misc/stringfct.hpp" 
 #include "../misc/error.hpp"
+#include "../misc/timefct.hpp"
 #include "../io/console.hpp"
 #include "vec.hpp"
 #include "box.hpp"
@@ -650,16 +651,17 @@ namespace mtools
 			 **/
 			int64 computeRadii(const FPTYPE eps = 10e-9, const FPTYPE delta = 0.05, const int64 maxIteration = -1, const int64 stepIter = 1000)
 				{
+				auto totduration = chrono();
 				FastRNG gen;					// use to randomize acceleration.
-				if (_verbose) 
+				FPTYPE minc = errorL2();
+				if (_verbose)
 					{ 
 					mtools::cout << "\n  --- Starting Packing Algorithm [CPU] ---\n\n"; 
-					mtools::cout << "initial L2 error  = " << errorL2() << "\n";
+					mtools::cout << "initial L2 error  = " << minc << "\n";
 					mtools::cout << "L2 target         = " << eps << "\n";
 					mtools::cout << "max iterations    = " << maxIteration << "\n";
 					mtools::cout << "iter between info = " << stepIter << "\n\n";
 					}
-				Chronometer();
 
 				//#define DELAY_POST_RADII		// uncomment those line for debugging
 				//#define DO_NOT_USE_RNG		//
@@ -670,6 +672,7 @@ namespace mtools
 				FPTYPE lambda = -1.0, lambda0;
 				bool fl = false, fl0;
 				std::vector<FPTYPE> _rad0 = _rad;
+				auto duration = chrono();
 				while((c > eps)&&(iter != maxIteration))
 					{
 					iter++;
@@ -701,6 +704,7 @@ namespace mtools
 					_rad.swap(_rad0);
 					#endif
 					c = sqrt(c); 
+					if (c < minc) { minc = c; }
 					lambda = c / c0;
 					fl = true;					
 					if ((fl0) && (lambda < 1.0))
@@ -732,15 +736,18 @@ namespace mtools
 					if ((_verbose)&&((iter % stepIter == 0)||(c < eps)||(iter == maxIteration)))
 						{
 						mtools::cout << "iteration = " << iter << "\n";
-						mtools::cout << "L2 error  = " << c << "\n";
-						mtools::cout << "L2 target = " << eps << "\n";
-						mtools::cout << ((iter % stepIter == 0) ? stepIter : iter % stepIter) << " interations performed in " << Chronometer() << "ms\n\n";
+						mtools::cout << "L2 current error  = " << c << "\n";
+						mtools::cout << "L2 minimum error  = " << minc << "\n";
+						mtools::cout << "L2 target         = " << eps << "\n";
+						mtools::cout << ((iter % stepIter == 0) ? stepIter : iter % stepIter) << " interations performed in " << duration << "\n\n";
+						duration.reset();
 						}
 					}
 				if (_verbose) 
 					{ 
 					cout << "\n\nFinal L2 error = " << errorL2() << "\n";
 					cout << "Final L1 error = " << errorL1() << "\n\n";
+					cout << "Total packing time : " << totduration << "\n\n";
 					if (iter == maxIteration) { mtools::cout << "  --- Packing stopped after " << iter << " iterations ---  \n\n"; }
 					else { mtools::cout << "  --- Packing complete ---  \n\n"; }
 					}
@@ -820,7 +827,6 @@ namespace mtools
 			{
 
 			using UINT_VEC4   = uint32[4];
-			using FPTYPE_VEC4 = FPTYPE[4];
 			using FPTYPE_VEC8 = FPTYPE[8];
 
 			static_assert(std::is_same<FPTYPE, double>::value || std::is_same<FPTYPE, float>::value, "mtools::CirclePackingLabelGPU<FPTYPE> can only be instantiated with FPTYPE= double or float.");
@@ -987,6 +993,8 @@ namespace mtools
 			 **/
 			int64 computeRadii(const FPTYPE eps = 10e-9, const FPTYPE delta = 0.05, const int64 maxIteration = -1, const int64 stepIter = 1000)
 				{
+				auto totduration = chrono();
+
 				// recreate kernels if needed
 				_recreateKernels();
 
@@ -1068,10 +1076,10 @@ namespace mtools
 					mtools::cout << "max iterations    = " << maxIteration << "\n";
 					mtools::cout << "iter between info = " << stepIter << "\n\n";
 					}
-				Chronometer();
 				// make computation
 				int64 iter = 0;
 				bool done = false;
+				auto duration = chrono();
 				while((!done)&&(iter != maxIteration))
 					{
 					iter++;
@@ -1107,7 +1115,8 @@ namespace mtools
 							mtools::cout << "L2 current error  = " << param[0] << "\n";
 							mtools::cout << "L2 minimum error  = " << param[5] << "\n";
 							mtools::cout << "L2 target         = " << param[3] << "\n";
-							mtools::cout << stepIter << " interations performed in " << Chronometer() << "ms\n\n";
+							mtools::cout << stepIter << " interations performed in " << duration << "\n\n";
+							duration.reset();
 							}													
 						}
 					}
@@ -1116,13 +1125,18 @@ namespace mtools
 				_clbundle.queue.enqueueReadBuffer(*_buff_radii1, CL_TRUE, 0, _nbVertices * sizeof(FPTYPE), _rad.data());
 				if (_verbose)
 					{
-					if (done) { mtools::cout << "  --- Packing complete ---\n\n"; }
+					if (done) 
+						{ 
+						cout << "Total packing time : " << totduration << "\n\n";
+						mtools::cout << "  --- Packing complete ---\n\n"; 
+						}
 					else
 						{
 						FPTYPE_VEC8 param;
 						_clbundle.queue.enqueueReadBuffer(*_buff_param, CL_TRUE, 0, sizeof(param), &param);
 						cout << "\nFinal L2 error = " << errorL2() << "\n";
 						cout << "Final L1 error = " << errorL1() << "\n\n";
+						cout << "Total packing time : " << totduration << "\n\n";
 						mtools::cout << "  --- Packing stopped after " << iter << " iterations ---  \n\n";
 						}
 					}
@@ -1173,7 +1187,6 @@ namespace mtools
 					// compiler options
 					std::string options;
 					options += std::string(" -DFPTYPE=") + typeid(FPTYPE).name();
-					options += std::string(" -DFPTYPE_VEC4=") + typeid(FPTYPE).name() + "4";
 					options += std::string(" -DFPTYPE_VEC8=") + typeid(FPTYPE).name() + "8";
 					options += " -DNBVERTICES=" + toString(_nbVertices);
 					options += " -DMAXDEGREE=" + toString(_maxDegree);
