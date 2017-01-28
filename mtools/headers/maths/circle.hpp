@@ -44,13 +44,13 @@ namespace mtools
 			/**
 			* Constructor.
 			**/
-			Circle(std::complex<FPTYPE> & centerpos, const FPTYPE & rad) : center(centerpos), radius(rad), _eps((FPTYPE)0) {}
+			Circle(std::complex<FPTYPE> & centerpos, const FPTYPE & rad) : center(centerpos), radius(rad) {}
 
 
 			/**
 			 * Sets the rounding precision (default 0).
 			 **/
-			void setPrecision(const FPTYPE & precision) { _eps = precision; }
+			static void setPrecision(const FPTYPE & precision) { _eps = precision; }
 
 
 			/**
@@ -162,9 +162,14 @@ namespace mtools
 
 		private:
 
-			FPTYPE _eps; // precision. 
+			static FPTYPE _eps; // precision. 
 
 		};
+
+
+
+
+	template<typename FPTYPE> FPTYPE Circle<FPTYPE>::_eps = (FPTYPE)0;
 
 
 	}
