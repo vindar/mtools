@@ -96,7 +96,8 @@ namespace mtools
 				const FPTYPE d = std::abs(center);
 				if (radius <= _eps) { MTOOLS_ASSERT(d <= (FPTYPE)1 + _eps); return *this; } // radius is zero. 
 				MTOOLS_ASSERT(d + radius <= (FPTYPE)1 + _eps); // the circle should be contained in the closed unit disk
-				if (d + radius >= (FPTYPE)1 - _eps) return Circle(center / d, -radius); // horocycle
+				if (d + radius >= (FPTYPE)1 - _eps) 
+					return Circle(((d<=_eps) ? (complex<FPTYPE>((FPTYPE)0, (FPTYPE)0)) :  (center/d)), -radius); // horocycle
 				const FPTYPE d2 = std::norm(center);
 				const FPTYPE radius2 = radius*radius;
 				const FPTYPE s = sqrt((1 - 2 * radius + radius2 - d2) / (1 + 2 * radius + radius2 - d2));

@@ -764,7 +764,7 @@ int main(int argc, char *argv[])
 
 
 
-	mtools::Circle<double> C(complex<double>(0.5,1/3.0), 0.1);
+	mtools::Circle<double> C(complex<double>(0.0,0.0), 1);
 
 	cout << C << "\n";
 
