@@ -59,21 +59,21 @@ namespace mtools
 			return acos(r);
 			}
 
-
 		}
 
 
 			/**
 			 * Compute a circle packing layout.
 			 *
-			 * @param	v0			index of the vertex to put at the origin.
-			 * @param	graph   	The graph.
-			 * @param	boundary	The boundary vector.
-			 * @param	rad			The radii vector.
+			 * @param	v0		   	index of the vertex to put at the origin.
+			 * @param	graph	   	The graph.
+			 * @param	boundary   	The boundary vector.
+			 * @param	rad		   	The radii vector.
+			 * @param	strictMaths	true to raise an error is the the layout cannot be accuraetly computed.
 			 *
-			 * @return	The calculated euclidian layout together with it bounding box. 
+			 * @return	The calculated euclidian layout together with it bounding box.
 			 **/
-			template<typename FPTYPE, typename GRAPH> std::pair< std::vector<Circle<FPTYPE> >, Box<FPTYPE,2> > computeCirclePackLayout(int v0, const GRAPH & graph, const std::vector<int> & boundary, const std::vector<FPTYPE> & rad)
+			template<typename FPTYPE, typename GRAPH> std::pair< std::vector<Circle<FPTYPE> >, Box<FPTYPE,2> > computeCirclePackLayout(int v0, const GRAPH & graph, const std::vector<int> & boundary, const std::vector<FPTYPE> & rad, bool strictMaths = false)
 				{
 				MTOOLS_INSURE(graph.size() == rad.size());
 				MTOOLS_INSURE(graph.size() == boundary.size());
@@ -111,18 +111,19 @@ namespace mtools
 							const int x = index;
 							const int y = *pit;
 							const int z = *it;
-							const FPTYPE & rx = rad[x];
-							const FPTYPE & ry = rad[y];
-							const FPTYPE & rz = rad[z];
+							const FPTYPE & rx = rad[x]; if ((strictMaths)&&((rx == (FPTYPE)0.0)||(isnan(rx)))) { MTOOLS_ERROR(std::string("Precision error A. null radius (site ") + mtools::toString(x) + ")"); }
+							const FPTYPE & ry = rad[y]; if ((strictMaths)&&((ry == (FPTYPE)0.0)||(isnan(ry)))) { MTOOLS_ERROR(std::string("Precision error B. null radius (site ") + mtools::toString(y) + ")"); }
+							const FPTYPE & rz = rad[z]; if ((strictMaths)&&((rz == (FPTYPE)0.0)||(isnan(rz)))) { MTOOLS_ERROR(std::string("Precision error C. null radius (site ") + mtools::toString(z) + ")"); }
 							const FPTYPE & alpha = internals_circlepacking::angleEuclidian(rx, ry, rz);
+							if ((strictMaths) && (isnan(alpha))) { MTOOLS_ERROR(std::string("Precision error D. null alpha (site ") + mtools::toString(z) + ")"); }
 							auto w = circle[y].center - circle[x].center;
-							w /= std::abs(w);
 							auto rot = complex<FPTYPE>(cos(alpha), sin(alpha));
 							w = w*rot;
-							w /= std::abs(w);
-							w *= (rx + rz);
+							const FPTYPE norm = std::abs(w);
+							if (norm != (FPTYPE)0.0) { w /= norm; w *= (rx + rz); } else { if (strictMaths) { MTOOLS_ERROR(std::string("Precision error E (site ") + mtools::toString(*it) + ")"); } }
 							w += circle[x].center;
 							circle[z].center = w;
+							if ((circle[z].center == circle[y].center) || (circle[z].center == circle[x].center)) { if (strictMaths) { MTOOLS_ERROR(std::string("Precision error F (site ") + mtools::toString(*it) + ")"); } }
 							circle[z].radius = rad[z];
 							if (w.real() + rad[z] > R.max[0]) { R.max[0] = w.real() + rad[z]; }
 							if (w.real() - rad[z] < R.min[0]) { R.min[0] = w.real() - rad[z]; }
