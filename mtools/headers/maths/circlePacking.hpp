@@ -29,6 +29,8 @@
 #include "box.hpp"
 #include "permutation.hpp"
 #include "graph.hpp" 
+#include "circle.hpp"
+#include "mobius.hpp"
 #include "../random/gen_fastRNG.hpp"
 #include "../random/classiclaws.hpp"
 #include "../graphics/customcimg.hpp"
@@ -38,52 +40,114 @@
 
 namespace mtools
 	{
-	
 
 
 
-
-	/**
-	* Class used for computing the position of the circle in the circle packing 
-	* of a triangulation.
-	*/
-	template<typename FPTYPE = double> class CirclePackingLayout
+	namespace internals_circlepacking
 		{
 
 
-
-		/**
-		 * Set the graph. 
-		 **/
-		template<typename GRAPH> void setGraph(const GRAPH & graph)
+		/** Compute the angle between the two circles of radius y and z that surround the circle of radius x **/
+		template<typename FPTYPE> FPTYPE angleEuclidian(const FPTYPE & rx, const  FPTYPE & ry, const  FPTYPE & rz)
 			{
+			const FPTYPE a = rx + ry;
+			const FPTYPE b = rx + rz;
+			const FPTYPE c = ry + rz;
+			const FPTYPE r = (a*a + b*b - c*c) / (2 * a*b);
+			if (r > (FPTYPE)1.0) { return (FPTYPE)0; }
+			else if (r < (FPTYPE)(-1.0)) { return acos((FPTYPE)(-1.0)); }
+			return acos(r);
 			}
 
 
-		/**
-		 * Set the radii size.
-		 **/
-		template<typename RADII> void setRadii(const RADII & radii)
-			{
-			}
+		}
 
 
-		/**
-		 * COmpute the Euclidian layout
-		 *
-		 * @param	originVertex	The vertex that must be put at the origin. 
-		 * 							It must be an interior vertex !
-		 * 			
-		 *
-		 * @return	The euclidian layout.
-		 **/
-		std::vector<mtools::Circle<FPTYPE> > getEuclidianLayout(int originVertex, int)
-			{}
+			/**
+			 * Compute a circle packing layout.
+			 *
+			 * @param	v0			index of the vertex to put at the origin.
+			 * @param	graph   	The graph.
+			 * @param	boundary	The boundary vector.
+			 * @param	rad			The radii vector.
+			 *
+			 * @return	The calculated euclidian layout together with it bounding box. 
+			 **/
+			template<typename FPTYPE, typename GRAPH> std::pair< std::vector<Circle<FPTYPE> >, Box<FPTYPE,2> > computeCirclePackLayout(int v0, const GRAPH & graph, const std::vector<int> & boundary, const std::vector<FPTYPE> & rad)
+				{
+				MTOOLS_INSURE(graph.size() == rad.size());
+				MTOOLS_INSURE(graph.size() == boundary.size());
+				MTOOLS_INSURE(boundary[v0] <= 0);
+				std::pair< std::vector<Circle<FPTYPE> >, Box<FPTYPE, 2> > res;
+				if (rad.size() == 0) return res;
+				auto & circle = res.first;
+				auto & R = res.second;
+				circle.resize(rad.size());
+				circle[v0] = Circle<FPTYPE>(complex<FPTYPE>((FPTYPE)0, (FPTYPE)0), rad[v0]);
+				int v1 = graph[v0].front();
+				circle[v1] = Circle<FPTYPE>(complex<FPTYPE>(rad[v0] + rad[v1], (FPTYPE)0), rad[v1]);
+				R.min[0] = -rad[v0];
+				R.max[0] = rad[v0] + 2*rad[v1];
+				R.max[1] = std::max<FPTYPE>(rad[v0], rad[v1]);
+				R.min[1] = -R.max[1];
+				std::vector<int> doneCircle(rad.size(),0);
+				doneCircle[v0] = 1;
+				doneCircle[v1] = 1;
+				std::queue<int> st;
+				st.push(v0);
+				if (boundary[v1] <= 0) st.push(v1);
+				while (st.size() != 0)
+					{
+					int index = st.front(); st.pop();
+					auto it = graph[index].begin();
+					while (doneCircle[*it] == 0) { ++it; }
+					auto sit = it, pit = it;
+					++it;
+					if (it == graph[index].end()) { it = graph[index].begin(); }
+					while (it != sit)
+						{
+						if (doneCircle[*it] == 0)
+							{
+							const int x = index;
+							const int y = *pit;
+							const int z = *it;
+							const FPTYPE & rx = rad[x];
+							const FPTYPE & ry = rad[y];
+							const FPTYPE & rz = rad[z];
+							const FPTYPE & alpha = internals_circlepacking::angleEuclidian(rx, ry, rz);
+							auto w = circle[y].center - circle[x].center;
+							w /= std::abs(w);
+							auto rot = complex<FPTYPE>(cos(alpha), sin(alpha));
+							w = w*rot;
+							w /= std::abs(w);
+							w *= (rx + rz);
+							w += circle[x].center;
+							circle[z].center = w;
+							circle[z].radius = rad[z];
+							if (w.real() + rad[z] > R.max[0]) { R.max[0] = w.real() + rad[z]; }
+							if (w.real() - rad[z] < R.min[0]) { R.min[0] = w.real() - rad[z]; }
+							if (w.imag() + rad[z] > R.max[1]) { R.max[1] = w.imag() + rad[z]; }
+							if (w.imag() - rad[z] < R.min[1]) { R.min[1] = w.imag() - rad[z]; }
+							doneCircle[z] = 1;
+							if (boundary[z] <= 0) { st.push(z); }
+							}
+						pit = it;
+						++it;
+						if (it == graph[index].end()) { it = graph[index].begin(); }
+						}
+					}
+				return res;
+				}
 
 
 
 
-		};
+
+
+
+
+
+
 
 
 
