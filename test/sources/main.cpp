@@ -10,7 +10,7 @@ using namespace mtools;
 
 
 
-MT2004_64 gen(31135); // RNG
+MT2004_64 gen; // RNG
 //MT2004_64 gen(44); // RNG
 
 Grid_basic<2, int64, 2> Grid; // the 2D grid
@@ -571,7 +571,7 @@ void loadTest(std::string filename)
 
 void testBall()
 	{
-	int sizeTrig = 2000000;//10e6 200K error
+	int sizeTrig = 1500000;//10e6 200K error
 
 	DyckWord D(sizeTrig, 3);
 	D.shuffle(gen);
@@ -631,9 +631,6 @@ void testBall()
 		}
 	cout << f << "\n";
 
-	fBox2 R;
-	std::vector<double> radii;
-	std::vector<fVec2> circles;
 	
 
 	CirclePackingLabelGPU<double> CPTEST(true);
@@ -661,23 +658,7 @@ void testBall()
 	*/
 
 
-	/*
-	CirclePackingLabel<double> CP3;
-	CP3.setTriangulation(gr, oldbound);
-	CP3.setRadii();
 
-	cout << "packing classique CPU slow...\n";
-	mtools::Chronometer();
-	cout << "ITER = " << CP3.computeRadiiSlow(1.0e-7) << "\n";
-	cout << "done in " << mtools::Chronometer() << "ms\n";
-	cout << CP3.errorL1() << "\n";
-	cout << CP3.errorL2() << "\n";
-	*/
-
-
-
-	CirclePacking CP;
-	CP.setTriangulation(gr, oldbound);
 
 	auto R1 = CPTEST.getRadii();
 	std::vector<double> R2(gr.size());
@@ -686,14 +667,17 @@ void testBall()
 		R2[i] = (double)R1[i];
 		}
 
-	CP.setRadii(R2);
-
-	CP.computeLayout();
+	auto res = computeCirclePackLayout(0, gr, oldbound, R2);
 	cout << "done in " << mtools::Chronometer() << "ms\n";
 
+	std::vector<double> radii(R2.size());
+	std::vector<fVec2> circles(R2.size());
 
-	radii = CP.getRadii();
-	circles = CP.getLayout();
+	for (int i = 0; i < R2.size(); i++)
+		{
+		circles[i] = res.first[i].center;
+		radii[i] = res.first[i].radius;
+		}
 
 
 	{
@@ -722,9 +706,6 @@ void testBall()
 		}
 
 
-	//cout.getKey();
-
-
 	drawCirclePacking(fBox2(-2,2,-2,2), radii, circles, gr);
 
 
@@ -736,47 +717,11 @@ void testBall()
 
 
 
-	void testR(CombinatorialMap & cm)
-		{
-		cout << "MAP\n";
-		cout << "Is tree : " << cm.isTree() << "\n";
-		cout << "nb edges: " << cm.nbEdges() << "\n";
-		cout << "nb faces: " << cm.nbFaces() << "\n";
-		cout << "nb verti: " << cm.nbVertices() << "\n\n";
-		cout << "euler   : " << cm.nbVertices() - cm.nbEdges() + cm.nbFaces() << "\n";
-		cout << "DUAL\n";
-		auto cm2 = cm.getDual();
-		cout << "Is tree : " << cm2.isTree() << "\n";
-		cout << "nb edges: " << cm2.nbEdges() << "\n";
-		cout << "nb faces: " << cm2.nbFaces() << "\n";
-		cout << "nb verti: " << cm2.nbVertices() << "\n\n";
-		cout << "euler   : " << cm.nbVertices() - cm.nbEdges() + cm.nbFaces() << "\n";
-		auto cm3 = cm2.getDual();
-		cout << "DUAL(DUAL) = MAP :" << (cm3 == cm) << "\n\n\n";
-		}
-
-
-
 int main(int argc, char *argv[])
     {
 	MTOOLS_SWAP_THREADS(argc, argv);
 	parseCommandLine(argc, argv);
 
-
-
-	mtools::Circle<double> C(complex<double>(0.0,0.0), 1);
-
-	cout << C << "\n";
-
-	auto H = C.euclidianToHyperbolic();
-	cout << H << "\n";
-
-	auto C2 = H.hyperbolicToEuclidian();
-	cout << C2 << "\n";
-
-	cout.getKey(); 
-	cout.getKey();
-	return 0;
 
 	//loadTest("trig1421883.txt");
 	//return 0;
