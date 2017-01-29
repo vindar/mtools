@@ -113,15 +113,12 @@ namespace mtools
 	 **/
 	template<typename GRAPH> GRAPH resizeGraph(const GRAPH & graph, int newSize)
 		{
-		std::vector<std::vector<int> > gres;
+		GRAPH gres;
 		gres.resize(newSize);
 		for (int i = 0; i < newSize; i++)
 			{
 			gres[i].reserve(graph[i].size());
-			for (auto j = 0; j < graph[i].size(); j++)
-				{
-				const int x = graph[i][j]; if (x < newSize) gres[i].push_back(x);
-				}
+			for (auto it = graph[i].begin(); it != graph[i].end(); it++) { if ((*it) < newSize) gres[i].push_back(*it); }
 			}
 		return gres;
 		}
@@ -133,6 +130,9 @@ namespace mtools
 	 * 
 	 * Add a single vertice inside each face of the graph and add vertices between it and the face's
 	 * vertices to construct a maximal triangulation.
+	 * 
+	 * The new vertices are added after the existing one:  does not change the indexing of already
+	 * existing vertices.
 	 **/
 	template<typename GRAPH> GRAPH triangulateGraph(const GRAPH & graph)
 		{
