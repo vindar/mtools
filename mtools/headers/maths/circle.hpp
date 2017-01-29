@@ -42,6 +42,12 @@ namespace mtools
 
 
 			/**
+			* Constructor. Circle of null radius centered at the origin.
+			**/
+			Circle() : center(complex<FPTYPE>((FPTYPE)0, (FPTYPE)0)), radius((FPTYPE)0) {}
+
+
+			/**
 			* Constructor.
 			**/
 			Circle(std::complex<FPTYPE> & centerpos, const FPTYPE & rad) : center(centerpos), radius(rad) {}
