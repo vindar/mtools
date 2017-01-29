@@ -69,6 +69,8 @@ inline FPTYPE angleEuclidian(FPTYPE rx, FPTYPE ry, FPTYPE rz)
 	}	
 
 	
+//#define KAHAN_SUM
+
 /** Update the radii **/	
 __kernel void updateRadius(__global FPTYPE g_radiiTab1[NBVERTICES],						// original radii of each vertex
 				      	   __global FPTYPE g_radiiTab2[NBVERTICES],						// updated radii of each vertex
@@ -86,8 +88,25 @@ __kernel void updateRadius(__global FPTYPE g_radiiTab1[NBVERTICES],						// orig
 		{
 		// compute the sum angle
 		FPTYPE theta = 0.0;
-		for(int k = 1; k < degree; k++) { theta += angleEuclidian(v,g_radiiTab1[g_neighbourTab[k-1][index]],g_radiiTab1[g_neighbourTab[k][index]]); }	
+
+		#ifdef KAHAN_SUM // use kahan summation algorithm to reduce roundoff error
+		FPTYPE C = 0.0;
+		for(int k = 1; k < degree; k++) 
+			{ 
+			FPTYPE Y = angleEuclidian(v,g_radiiTab1[g_neighbourTab[k-1][index]],g_radiiTab1[g_neighbourTab[k][index]]) - C;
+			FPTYPE T = theta + Y;
+			C = (T-theta) - Y;
+			theta = T;
+			}	
+		theta += (angleEuclidian(v,g_radiiTab1[g_neighbourTab[degree-1][index]],g_radiiTab1[g_neighbourTab[0][index]]) - C);
+		#else // just use classic summation
+		for(int k = 1; k < degree; k++) 
+			{ 
+			theta += angleEuclidian(v,g_radiiTab1[g_neighbourTab[k-1][index]],g_radiiTab1[g_neighbourTab[k][index]]);
+			}	
 		theta += angleEuclidian(v,g_radiiTab1[g_neighbourTab[degree-1][index]],g_radiiTab1[g_neighbourTab[0][index]]);
+		#endif
+
 		// compute the new radius
 		const FPTYPE ik     = 1.0/((FPTYPE)degree);
 		const FPTYPE beta   = sin(theta*ik*0.5);
@@ -103,13 +122,13 @@ __kernel void updateRadius(__global FPTYPE g_radiiTab1[NBVERTICES],						// orig
 		g_lambdastar[index] = ((l <= 0.0) ? 1.0e10 : (u/l));	// save lambdastar
 		}
 	else
-		{
+		{/*
 		if (degree < 0) // special site, with more than MAXDEGREE neighbour
 			{
 			g_radiiTab2[index] 	= 0;
 			g_error[index]		= 0;
 			g_lambdastar[index] = 0;
-			}
+			}*/
 		}
 	}
 
