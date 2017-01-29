@@ -178,7 +178,7 @@ namespace mtools
 			if (output)
 				{
 				mtools::cout << "Build successful.\n";
-				if (textlog.length() > 2) { mtools::cout << "Compiler log:\n" << textlog << "\n"; }
+				mtools::cout << "Compiler log:\n" << textlog << "\n";
 				}
 			return prog;
 			}
@@ -214,7 +214,7 @@ namespace mtools
 			if (output)
 				{
 				mtools::cout << "Build successful.\n";
-				if (log.length() > 2) { mtools::cout << "Compiler log:\n" << log << "\n"; }
+				mtools::cout << "Compiler log:\n" << log << "\n";
 				}
 			return prog;
 			}
