@@ -79,27 +79,38 @@ __kernel void updateRadius(__global FPTYPE g_radiiTab1[NBVERTICES],						// orig
 					      )	
 	{				
 	const int index = get_global_id(0);		// global index
-	const FPTYPE v  = g_radiiTab1[index];	// radius
-		
-	// compute the sum angle
 	const int degree = g_degreeTab[index]; 			
-	FPTYPE theta = 0.0;											
-	for(int k = 1; k < degree; k++) { theta += angleEuclidian(v,g_radiiTab1[g_neighbourTab[k-1][index]],g_radiiTab1[g_neighbourTab[k][index]]); }	
-	theta += angleEuclidian(v,g_radiiTab1[g_neighbourTab[degree-1][index]],g_radiiTab1[g_neighbourTab[0][index]]);
+	const FPTYPE v  = g_radiiTab1[index];	// radius
 
-	// compute the new radius
-	const FPTYPE ik     = 1.0/((FPTYPE)degree);
-	const FPTYPE beta   = sin(theta*ik*0.5);
-	const FPTYPE tildev = beta*v/(1.0-beta);
-	const FPTYPE delta  = sinpi(ik);
-	const FPTYPE u      = (1.0-delta)*tildev/delta;
-	g_radiiTab2[index] 	= u;								// save new radius	
+	if (degree > 0) // normal site, with at most MAXDEGREE neighbour
+		{
+		// compute the sum angle
+		FPTYPE theta = 0.0;
+		for(int k = 1; k < degree; k++) { theta += angleEuclidian(v,g_radiiTab1[g_neighbourTab[k-1][index]],g_radiiTab1[g_neighbourTab[k][index]]); }	
+		theta += angleEuclidian(v,g_radiiTab1[g_neighbourTab[degree-1][index]],g_radiiTab1[g_neighbourTab[0][index]]);
+		// compute the new radius
+		const FPTYPE ik     = 1.0/((FPTYPE)degree);
+		const FPTYPE beta   = sin(theta*ik*0.5);
+		const FPTYPE tildev = beta*v/(1.0-beta);
+		const FPTYPE delta  = sinpi(ik);
+		const FPTYPE u      = (1.0-delta)*tildev/delta;
+		g_radiiTab2[index] 	= u;								// save new radius	
 
-	const FPTYPE e      = theta - M_2PI;					// error term
-	g_error[index]		= (e*e);							// save error
+		const FPTYPE e      = theta - M_2PI;					// error term
+		g_error[index]		= (e*e);							// save error
 
-	const FPTYPE l 		= (v - u);							// delta between old and new radius	
-	g_lambdastar[index] = ((l <= 0.0) ? 1.0e10 : (u/l));	// save lambdastar
+		const FPTYPE l 		= (v - u);							// delta between old and new radius	
+		g_lambdastar[index] = ((l <= 0.0) ? 1.0e10 : (u/l));	// save lambdastar
+		}
+	else
+		{
+		if (degree < 0) // special site, with more than MAXDEGREE neighbour
+			{
+			g_radiiTab2[index] 	= 0;
+			g_error[index]		= 0;
+			g_lambdastar[index] = 0;
+			}
+		}
 	}
 
 	

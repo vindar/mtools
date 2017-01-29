@@ -150,7 +150,7 @@ void drawCirclePacking(fBox2 R, std::vector<double> & radiuses, std::vector<fVec
 	cout << "Number of circles: " << circles.size() << "\n";
 
 	double ratio = (double)R.lx() / ((double)R.ly());
-	int LX = 15000;
+	int LX = 5000;
 	int LY = (int)(LX / ratio);
 
 	mtools::Img<unsigned char> Im(LX, LY, 1, 4);
@@ -181,7 +181,7 @@ void drawCirclePacking(fBox2 R, std::vector<double> & radiuses, std::vector<fVec
 		}
 
 
-	Im.fBox2_drawAxes(R,RGBc::c_Green);
+	//Im.fBox2_drawAxes(R,RGBc::c_Green);
 
 
 	Plotter2D Plotter;

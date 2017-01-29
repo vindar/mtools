@@ -1015,8 +1015,8 @@ namespace mtools
 				boundary.resize(l + _nbdummy);
 				for (size_t i = l; i < l + _nbdummy; i++)
 					{
-					boundary[i] = -1; // no a boundary site.
-					_gr[i].resize(3); _gr[i][0] = lb; _gr[i][1] = lb; _gr[i][2] = lb; // vertice connected to '3' boundary sites with the same radius -> perfect radius computed after 1 iteration.
+					boundary[i] = -1; // not a boundary site.
+					_gr[i].clear(); // not a real site (degree = 0)
 					}
 				_nb += _nbdummy;
 				// done.
@@ -1033,9 +1033,12 @@ namespace mtools
 				FPTYPE e(0.0);
 				for (size_t i = 0; i < _nb; ++i)
 					{
-					const FPTYPE v = _rad[i];
-					const FPTYPE c = angleSumEuclidian(v, _gr[i]) - (FPTYPE)M_2PI;
-					e += c*c;
+					if (_gr[i].size() > 0)
+						{
+						const FPTYPE v = _rad[i];
+						const FPTYPE c = angleSumEuclidian(v, _gr[i]) - (FPTYPE)M_2PI;
+						e += c*c;
+						}
 					}
 				return sqrt(e);
 				}
@@ -1047,9 +1050,12 @@ namespace mtools
 				FPTYPE e(0.0);
 				for (size_t i = 0; i < _nb; ++i)
 					{
-					const FPTYPE v = _rad[i];
-					const FPTYPE c = angleSumEuclidian(v, _gr[i]) - (FPTYPE)M_2PI;
-					e += ((c < (FPTYPE)0.0) ? -c : c);
+					if (_gr[i].size() > 0)
+						{
+						const FPTYPE v = _rad[i];
+						const FPTYPE c = angleSumEuclidian(v, _gr[i]) - (FPTYPE)M_2PI;
+						e += ((c < (FPTYPE)0.0) ? -c : c);
+						}
 					}
 				return e;
 				}
