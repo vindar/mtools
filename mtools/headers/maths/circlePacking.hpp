@@ -322,7 +322,7 @@ namespace mtools
 				_perm.setSortPermutation(boundary);
 				_gr = permuteGraph<std::vector<std::vector<int> > >(convertGraph<GRAPH, std::vector<std::vector<int> > >(graph), _perm);
 				_nb = l;
-				for (size_t i = 0; i < l; i++) { if (boundary[_perm[i]] > 0) { _nb = i; break; } }
+				for (size_t i = 0; i < l; i++) { if (boundary[_perm[i]] > 0) { _nb = (int)i; break; } }
 				MTOOLS_INSURE((_nb > 0)&&(_nb < l-2));
 				_rad.resize(l, (FPTYPE)1.0);
 				}
@@ -368,13 +368,13 @@ namespace mtools
 			/**
 			* Compute the error in the circle radius in L2 norm.
 			*/
-			FPTYPE errorL2() const { return internals_circlepacking::errorL2(_gr, _rad, _nb); }
+			FPTYPE errorL2() const { return internals_circlepacking::errorL2(_gr, _rad, (int)_nb); }
 
 
 			/**
 			* Compute the error in the circle radius in L1 norm.
 			*/
-			FPTYPE errorL1() const { return internals_circlepacking::errorL1(_gr, _rad, _nb); }
+			FPTYPE errorL1() const { return internals_circlepacking::errorL1(_gr, _rad, (int)_nb); }
 
 
 			/**

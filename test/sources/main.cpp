@@ -205,6 +205,9 @@ void testBall(int N)
 	}
 
 
+	cout << gr;
+
+
 	auto pos0 = circleVec.back().center;
 	double rad0 = circleVec.back().radius;	
 	mtools::Mobius<double> M(0.0,1.0,1.0,0.0);
@@ -218,7 +221,7 @@ void testBall(int N)
 
 
 	double ratio = (double)R.lx() / ((double)R.ly());
-	int LX = 8000;
+	int LX = 2000;
 	int LY = (int)(LX / ratio);
 
 	mtools::Img<unsigned char> imcircle(LX, LY, 1, 4);
@@ -248,7 +251,7 @@ int main(int argc, char *argv[])
 	//loadTest("trig1503676.txt");
 	//loadTest("trig528.txt");
 	//return 0;
-	testBall(25); 
+	testBall(12); 
 	return 0;
 
 

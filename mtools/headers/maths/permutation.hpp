@@ -257,13 +257,21 @@ namespace mtools
 		/**
 		 * Return perm[index].
 		 **/
-		int operator[](int index) const { MTOOLS_ASSERT((index > 0) && (index < _perm.size())); return _perm[index]; }
+		int operator[](int index) const 
+			{
+			MTOOLS_ASSERT((index >= 0) && (index < _perm.size())); 
+			return _perm[index]; 
+			}
 
 
 		 /**
 		 * Return invperm[index].
 		 **/
-		int inv(int index) const { MTOOLS_ASSERT((index > 0) && (index < _perm.size())); return _invperm[index]; }
+		int inv(int index) const 
+			{ 
+			MTOOLS_ASSERT((index >= 0) && (index < _perm.size())); 
+			return _invperm[index]; 
+			}
 
 
 		/**
