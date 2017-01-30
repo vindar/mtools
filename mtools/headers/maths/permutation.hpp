@@ -30,7 +30,37 @@ namespace mtools
 	{
 
 
-	/** Class representing a permutation of {0,...,N} **/
+
+	/**
+	* Perform a uniform shuffle of a vector.
+	*
+	* @tparam	random_t	Type of the random number generator
+	* @tparam	Vector  	Type of the vector. Must implement size() and operator[].
+	* 						For example: std::vector of std::deque
+	* @param [in,out]	gen	the rng
+	* @param [in,out]	vec	the vector
+	*
+	* @return	An uint32.
+	**/
+	template<class Vector, class random_t> inline void randomShuffle(Vector & vec, random_t & gen)
+		{
+		const size_t l = vec.size();
+		if (l < 2) return;
+		for (size_t i = l - 1; i > 0; --i)
+			{
+			size_t j = (size_t)(Unif(gen)*(i + 1));
+			std::remove_reference<decltype(vec[0])>::type temp(vec[i]);
+			vec[i] = vec[j];
+			vec[j] = temp;
+			}
+		}
+
+
+
+
+	/**  
+	*  Class representing a permutation of {0,...,N-1} 
+	**/
 	class Permutation
 		{
 
@@ -53,7 +83,7 @@ namespace mtools
 		 * (perm[i] = k means that the label initially at position i is now at position k
 		 *  after they are sorted increasingly).
 		 **/
-		template<typename T> Permutation(const std::vector<T> & labels) : _perm(), _invperm() { setSortPerm(labels); }
+		template<typename T> Permutation(const std::vector<T> & labels) : _perm(), _invperm() { setSortPermutation(labels); }
 
 
 		/**
@@ -73,8 +103,8 @@ namespace mtools
 			{
 			MTOOLS_INSURE((i < size) && (j < size));
 			setIdentity(size);
-			_perm[i] = j; _perm[j] = i;
-			_invperm[i] = j; _invperm[j] = i;
+			_perm[i] = (int)j; _perm[j] = (int)i;
+			_invperm[i] = (int)j; _invperm[j] = (int)i;
 			}
 
 
@@ -118,6 +148,59 @@ namespace mtools
 			}
 
 
+
+		/**
+		* Create a random permutation, uniform among all permutations of a given size.
+		**/
+		template<class random_t> inline void setRandomPermutation(size_t size, random_t & gen)
+			{
+			setIdentity(size); shuffle(gen);
+			}
+
+
+		/**
+		 * Shuffles the permutation, making it uniform among all permutation of this size. 
+		 * Same as setRandomPermutation() but without changing the current size. 
+		 **/
+		template<class random_t> inline void shuffle(random_t & gen)
+			{
+			if (_perm.size() != 0) { mtools::randomShuffle(_perm); _recomputeInvert(); }
+			}
+
+
+
+		/**
+		* Re-order a vector of labels according to the permutation.
+		* perm[i] = k means that label L(k) initially at position k must be put at pos i.
+		* 
+		* see getAntiPermute() for the opposite transformation.
+		**/
+		template<typename VECTOR> VECTOR getPermute(const VECTOR & labels) const
+			{
+			const size_t l = labels.size();
+			MTOOLS_INSURE(_perm.size() == l);
+			VECTOR res(l);
+			for (size_t i = 0; i < l; i++) { res[i] = labels[_perm[i]]; }
+			return res;
+			}
+
+
+		/**
+		* Re-order a vector of labels according to the permutation.
+		* perm[i] = k means that label L(i) initially at position i must be put at pos k.
+		*
+		* see getPermute() for the opposite transformation.
+		**/
+		template<typename VECTOR> VECTOR getAntiPermute(const VECTOR & labels) const
+			{
+			const size_t l = labels.size();
+			MTOOLS_INSURE(_perm.size() == l);
+			VECTOR res(l);
+			for (size_t i = 0; i < l; i++) { res[_perm[i]] = labels[i]; }
+			return res;
+			}
+
+
 		/**
 		* Invert the permutation (very fast, just a swap). 
 		**/
@@ -153,7 +236,7 @@ namespace mtools
 			if (newsize >= l) // increase size
 				{ 
 				_perm.resize(newsize); _invperm.resize(newsize);
-				for (size_t i = l; i < newsize; i++) { _perm[i] = i; _invperm[i] = i; }
+				for (size_t i = l; i < newsize; i++) { _perm[i] = (int)i; _invperm[i] = (int)i; }
 				return;
 				}
 
@@ -166,9 +249,21 @@ namespace mtools
 
 
 		/**
+		* Clear the object, making it a empty permutation.
+		**/
+		void clear() { _perm.clear(); _invperm.clear(); }
+
+
+		/**
 		 * Return perm[index].
 		 **/
 		int operator[](int index) const { MTOOLS_ASSERT((index > 0) && (index < _perm.size())); return _perm[index]; }
+
+
+		 /**
+		 * Return invperm[index].
+		 **/
+		int inv(int index) const { MTOOLS_ASSERT((index > 0) && (index < _perm.size())); return _invperm[index]; }
 
 
 		/**
@@ -177,7 +272,7 @@ namespace mtools
 		Permutation operator*(const Permutation & P2) const
 			{
 			MTOOLS_INSURE(_perm.size() == P2.size());
-			const int l = _perm.size();
+			const int l = (int)_perm.size();
 			Permutation R;
 			R._perm.resize(l); R._invperm.resize(l);
 			for (int i = 0;i < l;i++) { R._perm[i] = _perm[P2._perm[i]]; R._invperm[i] = P2._invperm[_invperm[i]]; }
@@ -235,145 +330,6 @@ namespace mtools
 		std::vector<int> _perm;
 		std::vector<int> _invperm;
 		};
-
-
-
-
-
-
-	/** Defines an alias representing a permutation of {0,1,...,n} */
-	//typedef std::vector<int> Permutation;
-
-
-
-
-	/**
-	* Return the permutation associated with the ordering of labels in non-decreasing order.
-	* The label themselves are NOT reordered.
-	*
-	* @tparam	LABELS	Type of the object to reorder, typically std::vector<int>.
-	* 					- Must be accessible via operator[].
-	* 					- elements must be comparable with operator<() to allow sorting.
-	*
-	* @param	labels	The labels used to compute the re-ordering.
-	*
-	* @return	the reordering permutation. perm[i] = k means that the label initially at
-	* 			position k is now at position i after reordering.
-	*           Call method permute(labels,perm) to effectively sort the labels.
-	**/
-	template<typename LABELS> Permutation getSortPermutation(const LABELS & labels)
-		{
-		Permutation  res;
-		const int l = (int)labels.size();
-		if (l == 0) return res;
-		res.resize(l);
-		for (int i = 0; i < l; i++) { res[i] = i; }
-		sort(res.begin(), res.end(), [&](const int & x, const int & y) { return labels[x] < labels[y]; });
-		return res;
-		}
-
-
-	/**
-	* Compute the inverse of a permutation.
-	*
-	* @param	perm	the permutation. Must be bijection of {0,...,perm.size()-1}.
-	*
-	* @return	the inverse permutation such that return[perm[k]] = k for all k.
-	**/
-	inline Permutation invertPermutation(const Permutation & perm)
-		{
-		Permutation invperm;
-		const size_t l = perm.size();
-		if (l > 0)
-			{
-			invperm.resize(l);
-			for (size_t i = 0; i < l; i++) { invperm[perm[i]] = (int)i; }
-			}
-		return invperm;
-		}
-
-
-	/**
-	* Re-order the labels according to the permutation perm.
-	* (obtained for example from getSortPermutation() )
-	*
-	* @tparam	VECTOR	Type of the object to reorder, typically std::vector<T>.
-	* 					- Must be accessible via operator[].
-	*
-	* @param	labels	The labels to reorder.
-	* @param	perm	the permutation, perm[i] = k means that label at position k must be put at pos i.
-	**/
-	template<typename VECTOR> VECTOR permute(const VECTOR & labels, const Permutation & perm)
-		{
-		const size_t l = labels.size();
-		MTOOLS_INSURE(perm.size() == l);
-		VECTOR res;
-		if (l == 0) return res;
-		res.resize(l);
-		for (size_t i = 0; i < l; i++)
-			{
-			res[i] = labels[perm[i]];
-			}
-		return res;
-		}
-
-
-	/**
-	* Perform a uniform shuffle of a vector.
-	*
-	* @tparam	random_t	Type of the random number generator
-	* @tparam	Vector  	Type of the vector. Must implement size() and operator[].
-	* 						For example: std::vector of std::deque
-	* @param [in,out]	gen	the rng
-	* @param [in,out]	vec	the vector
-	*
-	* @return	An uint32.
-	**/
-	template<class Vector, class random_t> inline void randomShuffle(Vector & vec, random_t & gen)
-		{
-		const size_t l = vec.size();
-		if (l < 2) return;
-		for (size_t i = l - 1; i > 0; --i)
-			{
-			size_t j = (size_t)(Unif(gen)*(i + 1));
-			std::remove_reference<decltype(vec[0])>::type temp(vec[i]);
-			vec[i] = vec[j];
-			vec[j] = temp;
-			}
-		}
-
-
-	/**
-	* Construct a uniform random permuation of {0,...,n}
-	*
-	* @tparam	random_t	Type of the random number generator
-	* @tparam	Vector  	Type of the vector. Must implement resize() and operator[].
-	* 						For example: std::vector of std::deque
-	* @param	n		   	permutation of size n+1
-	* @param [in,out]	gen	the rng
-	*
-	* @return	a uniform random permutation.
-	**/
-	template<class Vector, class random_t> inline Vector uniformRandomPermutation(int n, random_t & gen)
-		{
-		Vector vec;
-		vec.resize(n);
-		for (int i = 0; i < n; i++) { vec[i] = i; }
-		randomShuffle(vec, gen);
-		return vec;
-		}
-
-
-	/**
-	 * Default permutation type is mtools::Permutation
-	 **/
-	template<class random_t> inline Permutation uniformRandomPermutation(int n, random_t & gen)
-		{
-		return uniformRandomPermutation<Permutation>(n, gen);
-		}
-
-
-
 
 
 

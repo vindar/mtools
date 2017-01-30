@@ -101,16 +101,15 @@ void loadTest(std::string filename)
 	ar & radii; 
 	ar & circles; 
 
-	Permutation perm = mtools::getSortPermutation(bound);
-	auto invperm = mtools::invertPermutation(perm);
+	Permutation perm(bound);
 	gr = permuteGraph(gr, perm);
-	radii = permute(radii, perm);
+	radii = perm.getPermute(radii);
 	int l = (int)(gr.size() - 3);
 	cout << "error L2 = " << internals_circlepacking::errorL2(gr, radii,l) << "\n";
 	cout << "error L1 = " << internals_circlepacking::errorL1(gr, radii,l) << "\n";
 
-	gr = permuteGraph(gr, invperm);
-	radii = permute(radii, invperm);
+	gr = permuteGraph(gr, perm.getInverse());
+	radii = perm.getAntiPermute(radii);
 
 	fVec2 pos0 = circles.back();
 	double rad0 = radii.back();
@@ -153,7 +152,7 @@ void testBall(int N)
 	int maxd = -1;													// the root vertex v1
 	auto dist = computeGraphDistances(gr, v1, maxd, connected);		//
 
-	int w = std::find(dist.begin(), dist.end(), maxd) - dist.begin();// index of a vertex a maximal distance 
+	int w = (int)(std::find(dist.begin(), dist.end(), maxd) - dist.begin());// index of a vertex a maximal distance 
 	int cutd = maxd/2;	// cut distance
 
 	std::vector<int> vm(gr.size(),0);
@@ -162,11 +161,11 @@ void testBall(int N)
 	int nbremove = 0;
 	exploreGraph(gr, w, [&](int vert, int d) -> bool { if (vm[vert] == 0) { vm[vert] = 1; nbremove++; return true; } return false;});  // mark +1 all the vertices to remove. 
 
-	auto perm = getSortPermutation(vm);             // permutation that put the vertices to remove at the end
+	Permutation perm(vm);							// permutation that put the vertices to remove at the end
 	gr = permuteGraph(gr, perm);					// permute the graph
 	v1 = perm[v1];	v2 = perm[v2]; v3 = perm[v3];	// and get the new indices for the root face. 
 
-	gr = resizeGraph(gr, (int)gr.size() - nbremove);			// remove al the vertices with +1
+	gr = resizeGraph(gr, (int)gr.size() - nbremove);			// remove all the vertices with +1
 
 	// We have the graph with a simple boundary
 	cout << mtools::graphInfo(gr) << "\n\n";	// info about the graph.
@@ -179,7 +178,7 @@ void testBall(int N)
 
 	cout << mtools::graphInfo(gr) << "\n\n";	// info about the graph.
 
-	CirclePackingLabelGPU<double> CPTEST(true);		// prepare for packing
+	CirclePackingLabel<double> CPTEST(true);		// prepare for packing
 	CPTEST.setTriangulation(gr, boundary);			//
 	CPTEST.setRadii();								//
 
@@ -192,7 +191,7 @@ void testBall(int N)
 
 
 	cout << "Laying out the circles...\n";
-	auto res = computeCirclePackLayout(0, gr, boundary,CPTEST.getRadii());
+	auto res = computeCirclePackLayout(gr.size()-1, gr, boundary,CPTEST.getRadii());
 	auto circleVec = res.first;
 	auto R = res.second;
 
@@ -206,16 +205,15 @@ void testBall(int N)
 	}
 
 
-
 	auto pos0 = circleVec.back().center;
 	double rad0 = circleVec.back().radius;	
 	mtools::Mobius<double> M(0.0,1.0,1.0,0.0);
 
 	for (int i = 0; i < circleVec.size(); i++)
 		{
-		circleVec[i] -= pos0; // center
-		circleVec[i] /= rad0; // normalise such that outer boundary circle has size 1
-		if (i != circleVec.size() - 1) { circleVec[i] = M*(circleVec[i]); } // invert
+//		circleVec[i] -= pos0; // center
+//		circleVec[i] /= rad0; // normalise such that outer boundary circle has size 1
+//		if (i != circleVec.size() - 1) { circleVec[i] = M*(circleVec[i]); } // invert
 		}
 
 
@@ -243,9 +241,6 @@ void testBall(int N)
 
 int main(int argc, char *argv[])
     {
-	int i = 3;
-	cout << (((i % 5) + 5) % 5);
-	cout.getKey();
 	MTOOLS_SWAP_THREADS(argc, argv);
 	parseCommandLine(argc, argv);
 
@@ -253,7 +248,7 @@ int main(int argc, char *argv[])
 	//loadTest("trig1503676.txt");
 	//loadTest("trig528.txt");
 	//return 0;
-	testBall(200000); 
+	testBall(25); 
 	return 0;
 
 

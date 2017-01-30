@@ -301,7 +301,6 @@ namespace mtools
 				{
 				_gr.clear();
 				_perm.clear();
-				_invperm.clear();
 				_nb = 0;
 				_rad.clear();
 				}
@@ -320,9 +319,8 @@ namespace mtools
 				clear();
 				const size_t l = graph.size();
 				MTOOLS_INSURE(boundary.size() == l);
-				_perm = getSortPermutation(boundary);
-				_invperm = invertPermutation(_perm);
-				_gr = permuteGraph<std::vector<std::vector<int> > >(convertGraph<GRAPH, std::vector<std::vector<int> > >(graph), _perm, _invperm);
+				_perm.setSortPermutation(boundary);
+				_gr = permuteGraph<std::vector<std::vector<int> > >(convertGraph<GRAPH, std::vector<std::vector<int> > >(graph), _perm);
 				_nb = l;
 				for (size_t i = 0; i < l; i++) { if (boundary[_perm[i]] > 0) { _nb = i; break; } }
 				MTOOLS_INSURE((_nb > 0)&&(_nb < l-2));
@@ -341,7 +339,7 @@ namespace mtools
 				{
 				const size_t l = _gr.size();
 				MTOOLS_INSURE(rad.size() == l);
-				_rad = permute(rad, _perm);
+				_rad = _perm.getPermute(rad);
 				for (size_t i = 0; i < l; i++)
 					{
 					if (_rad[i] <= (FPTYPE)0.0) _rad[i] = (FPTYPE)1.0;
@@ -364,19 +362,19 @@ namespace mtools
 			/**
 			* Return the list of radii.
 			*/
-			std::vector<FPTYPE> getRadii() const { return permute(_rad, _invperm); }
+			std::vector<FPTYPE> getRadii() const { return _perm.getAntiPermute(_rad); }
 
 
 			/**
 			* Compute the error in the circle radius in L2 norm.
 			*/
-			FPTYPE errorL2() const { return internals_circlepacking::errorL2(_gr, _rad, _i0); }
+			FPTYPE errorL2() const { return internals_circlepacking::errorL2(_gr, _rad, _nb); }
 
 
 			/**
 			* Compute the error in the circle radius in L1 norm.
 			*/
-			FPTYPE errorL1() const { return internals_circlepacking::errorL1(_gr, _rad, _i0); }
+			FPTYPE errorL1() const { return internals_circlepacking::errorL1(_gr, _rad, _nb); }
 
 
 			/**
@@ -427,6 +425,7 @@ namespace mtools
 					#endif
 					for (int i = 0; i < nb; i++)
 						{
+						const FPTYPE v = _rad[i];
 						const FPTYPE theta = internals_circlepacking::angleSumEuclidian(i, _gr, _rad);
 						const FPTYPE k = (FPTYPE)_gr[i].size();
 						const FPTYPE beta = sin(theta*0.5 / k);
@@ -506,7 +505,6 @@ namespace mtools
 
 				std::vector<std::vector<int> >	_gr;		// the graph
 				mtools::Permutation				_perm;		// the permutation applied to get all the boundary vertices at the end
-				mtools::Permutation				_invperm;	// the inverse permutation
 				std::vector<FPTYPE>				_rad;		// vertex raduises
 				size_t							_nb;		// number of internal vertices
 
@@ -570,7 +568,6 @@ namespace mtools
 				{
 				_gr.clear();
 				_perm.clear();
-				_invperm.clear();
 				_nb = 0;
 				_nbdummy = 0;
 				_rad.clear();
@@ -612,9 +609,8 @@ namespace mtools
 					}
 				_nb += _nbdummy;
 				// done.
-				_perm = getSortPermutation(boundary);
-				_invperm = invertPermutation(_perm);
-				_gr = permuteGraph<std::vector<std::vector<int> > >(_gr, _perm, _invperm);
+				_perm.setSortPermutation(boundary);
+				_gr = permuteGraph<std::vector<std::vector<int> > >(_gr, _perm);
 				_rad.resize(_gr.size(), (FPTYPE)1.0);
 				}
 				
@@ -665,7 +661,7 @@ namespace mtools
 				const size_t l = _gr.size();
 				MTOOLS_INSURE(rad.size() == l - _nbdummy);
 				rad.resize(l,1.0);
-				_rad = permute(rad, _perm);
+				_rad = _perm.getPermute(rad);
 				for (size_t i = 0; i < l; i++)
 					{
 					if (_rad[i] <= (FPTYPE)0.0) _rad[i] = (FPTYPE)1.0;
@@ -692,7 +688,7 @@ namespace mtools
 			*/
 			std::vector<FPTYPE> getRadii() const 
 				{
-				std::vector<FPTYPE> r = permute(_rad, _invperm);
+				std::vector<FPTYPE> r = _perm.getAntiPermute(_rad);
 				r.resize(r.size() - _nbdummy);
 				return r; 
 				}
@@ -973,7 +969,6 @@ namespace mtools
 
 				std::vector<std::vector<int> >	_gr;		// the graph
 				mtools::Permutation				_perm;		// the permutation applied to get all the boundary vertices at the end
-				mtools::Permutation				_invperm;	// the inverse permutation
 				std::vector<FPTYPE>				_rad;		// vertex raduises
 				size_t							_nb;		// number of internal vertices
 				size_t							_nbdummy;   // number of 'dummy' vertice so that the number of acitve vertice

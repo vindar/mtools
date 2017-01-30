@@ -56,31 +56,20 @@ namespace mtools
 	*
 	* @return  the permuted graph.
 	**/
-	template<typename GRAPH> GRAPH permuteGraph(const GRAPH & graph, const Permutation  & perm, const Permutation & invperm)
+	template<typename GRAPH> GRAPH permuteGraph(const GRAPH & graph, const Permutation  & perm)
 		{
 		const size_t l = graph.size();
 		MTOOLS_INSURE(perm.size() == l);
 		if (l == 0) return GRAPH();
-		GRAPH res = permute<GRAPH>(graph, perm);	// permute the order of the vertices. 
+		GRAPH res = perm.getPermute<GRAPH>(graph);	// permute the order of the vertices. 
 		for (size_t i = 0; i < l; i++)
 			{
-			for (auto it = res[i].begin(); it != res[i].end(); it++)
-				{
-				(*it) = invperm[*it];
-				}
+			for (auto it = res[i].begin(); it != res[i].end(); it++) { (*it) = perm.inv(*it); }
 			}
 		return res;
 		}
 
 
-	/**
-	* Reorder the vertices of a graph according to a permutation.
-	* Same as above but also compute the inverse permutation.
-	*/
-	template<typename GRAPH> GRAPH permuteGraph(const GRAPH & graph, const Permutation & perm)
-		{
-		return(permuteGraph(graph, perm, invertPermutation(perm)));
-		}
 
 
 	/**
@@ -609,18 +598,6 @@ namespace mtools
 
 
 
-
-
-	/**
-	additionnal info on the graph
-
-	- planar ? number of faces ?
-	- is a tree ? 
-	- is degree regular
-	- max degree of vertices, min degree
-	- diameter
-
-	**/
 
 	}
 

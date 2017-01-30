@@ -560,7 +560,7 @@ namespace mtools
 			* @param	perm   	The permutation
 			* @param	invperm	its inverse (optional)
 			**/
-			CombinatorialMap getPermute(const Permutation  & perm, const Permutation & invperm) const
+			CombinatorialMap getPermute(const Permutation  & perm) const
 				{
 				const int l = nbHalfEdges();
 				MTOOLS_ASSERT((int)perm.size() == l);
@@ -571,24 +571,15 @@ namespace mtools
 				cm._faces.resize(l);
 				for (int i = 0; i < l; i++)
 					{
-					cm._sigma[i]    = invperm[_sigma[perm[i]]];
-					cm._alpha[i]    = invperm[_alpha[perm[i]]];
+					cm._sigma[i]    = perm.inv(_sigma[perm[i]]);
+					cm._alpha[i]    = perm.inv(_alpha[perm[i]]);
 					cm._vertices[i] = _vertices[perm[i]];
 					cm._faces[i]    = _faces[perm[i]];
 					}
 				cm._nbvertices = _nbvertices;
 				cm._nbfaces = _nbfaces;
-				cm._root = invperm[_root];
+				cm._root = perm.inv(_root);
 				return cm;
-				}
-
-
-			/**
-			* Same as above but without providing the the inverse of the permutation.
-			**/
-			CombinatorialMap getPermute(const Permutation & perm)
-				{
-				return getPermute(perm, invertPermutation(perm));
 				}
 
 
@@ -625,14 +616,13 @@ namespace mtools
 				// reorder the darts if needed.
 				if (needreorder)
 					{
-					auto perm = getSortPermutation(ord);
-					auto invperm = invertPermutation(perm);
+					Permutation perm(ord);
 					auto _alpha2 = _alpha;
 					auto _sigma2 = _sigma;
 					for (int i = 0; i < len; i++)
 						{
-						_sigma[i] = invperm[_sigma2[perm[i]]];
-						_alpha[i] = invperm[_alpha2[perm[i]]];
+						_sigma[i] = perm.inv(_sigma2[perm[i]]);
+						_alpha[i] = perm.inv(_alpha2[perm[i]]);
 						}
 					}				
 				// ok, now have a tree in canonical order, we can apply the algorithm.				
