@@ -76,7 +76,7 @@ namespace mtools
      *
      * @tparam  T   type of pixels.
      **/
-    template<class T > struct Img : private cimg_library::CImg<T>
+    template<class T = unsigned char> struct Img : private cimg_library::CImg<T>
     {
 
     typedef T* iterator;
