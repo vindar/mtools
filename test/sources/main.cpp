@@ -243,6 +243,9 @@ void testBall(int N)
 
 int main(int argc, char *argv[])
     {
+	int i = 3;
+	cout << (((i % 5) + 5) % 5);
+	cout.getKey();
 	MTOOLS_SWAP_THREADS(argc, argv);
 	parseCommandLine(argc, argv);
 

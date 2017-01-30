@@ -29,8 +29,220 @@
 namespace mtools
 	{
 
+
+	/** Class representing a permutation of {0,...,N} **/
+	class Permutation
+		{
+
+		public:
+
+		/**
+		* Constructor. empty permutation. 
+		**/
+		Permutation() : _perm(), _invperm() {}
+
+
+		/**
+		 * Constructor. Identity permutation of a given size.
+		 **/
+		Permutation(size_t size) : _perm(), _invperm()	{ setIdentity(size); }
+
+
+		/**
+		 * Constructor. Create the permutation that sorts the given sequence of label in increasing order. 
+		 * (perm[i] = k means that the label initially at position i is now at position k
+		 *  after they are sorted increasingly).
+		 **/
+		template<typename T> Permutation(const std::vector<T> & labels) : _perm(), _invperm() { setSortPerm(labels); }
+
+
+		/**
+		 * Sets the permutation as the identity on the set of size elements.
+		 **/
+		void setIdentity(size_t size)
+			{
+			_perm.resize(size); _invperm.resize(size);
+			for (int i = 0; i < (int)size; i++) { _perm[i] = i; _invperm[i] = i; }
+			}
+
+
+		/**
+		* Sets the permutation as the transposition of i and j in {0,...,size-1}
+		**/
+		void setTransposition(size_t i, size_t j, size_t size)
+			{
+			MTOOLS_INSURE((i < size) && (j < size));
+			setIdentity(size);
+			_perm[i] = j; _perm[j] = i;
+			_invperm[i] = j; _invperm[j] = i;
+			}
+
+
+		/**
+		* Sets the permutation as the cycle _perm[i] = (i + k)%size
+		**/
+		void setCycle(int k, size_t size)
+			{
+			_perm.resize(size); _invperm.resize(size);
+			int l = (int)size;
+			if (l == 0) return;
+			const int k1 = (((k % l) + l) % l); // makes sure k \in {0,size-1}
+			const int k2 = l - k1; 
+			for (size_t i = 0; i < size; i++)
+				{
+				_perm[i] = (i + k1) % l; _invperm[i] = (i + k2) % l;
+				}
+			}
+
+
+		/* Set the permutation as the involution perm[i] = size-1 - i */
+		void setMirror(size_t size)
+			{
+			_perm.resize(size); _invperm.resize(size);
+			for (int i = 0; i < size; i++) { _perm[i] = (int)size - 1 - i; _invperm[i] = (int)size - 1 - i; }
+			}
+
+
+		/**
+		 * Sets the object as the permutation that reorders labels in increasing order.
+		 * (perm[i] = k means that the label initially at position i is now at position k
+		 *  after they are sorted increasingly).
+		 **/
+		template<typename T> void setSortPermutation(const std::vector<T> & labels)
+			{
+			const size_t l = labels.size();
+			setIdentity(l);
+			if (l == 0) return;
+			sort(_perm.begin(), _perm.end(), [&](const int & x, const int & y) { return labels[x] < labels[y]; });
+			_recomputeInvert();
+			}
+
+
+		/**
+		* Invert the permutation (very fast, just a swap). 
+		**/
+		void invert() { _perm.swap(_invperm); }
+
+
+		/**
+		 * Return the inverse permutation
+		 **/
+		Permutation getInverse() const { Permutation P(*this); P.invert(); return P; }
+
+
+		/**
+		 * Convert the permutation to a vector
+		 **/
+		operator std::vector<int>() const { return _perm; }
+
+		/**
+		 * Query the size of the permutation
+		 **/
+		size_t size() const { return _perm.size(); }
+
+
+		/**
+		 * Resize the permutation. 
+		 * - If the size is increased, then perm[k] = k for all new elements. 
+		 * - If the size is decreased, the subset {newsize,..., size-1} must  
+		 * be stable by the permutation otherwise an error is raised.
+		 **/
+		void resize(int newsize)
+			{
+			const size_t l = _perm.size();
+			if (newsize >= l) // increase size
+				{ 
+				_perm.resize(newsize); _invperm.resize(newsize);
+				for (size_t i = l; i < newsize; i++) { _perm[i] = i; _invperm[i] = i; }
+				return;
+				}
+
+			for (size_t i = newsize; i < l; i++)
+				{
+				if (_perm[i] < newsize) { MTOOLS_ERROR(std::string("Subset is not stable: perm[") + mtools::toString(i) + "]=" + mtools::toString(_perm[i]) + " < newsize = " + mtools::toString(newsize)); }
+				}
+			_perm.resize(newsize); _invperm.resize(newsize);
+			}
+
+
+		/**
+		 * Return perm[index].
+		 **/
+		int operator[](int index) const { MTOOLS_ASSERT((index > 0) && (index < _perm.size())); return _perm[index]; }
+
+
+		/**
+		 * Composition operator ie (P1*P2)[k] = P1[P2[k]]
+		 **/
+		Permutation operator*(const Permutation & P2) const
+			{
+			MTOOLS_INSURE(_perm.size() == P2.size());
+			const int l = _perm.size();
+			Permutation R;
+			R._perm.resize(l); R._invperm.resize(l);
+			for (int i = 0;i < l;i++) { R._perm[i] = _perm[P2._perm[i]]; R._invperm[i] = P2._invperm[_invperm[i]]; }
+			return R;
+			}
+
+
+		/**
+		* serialise the permutation
+		**/
+		template<typename U> void serialize(U & Archive, const int version = 0) const 
+			{
+			Archive & _perm;
+			}
+
+
+		/**
+		* deserialise the permutation
+		**/
+		template<typename U> void deserialize(U & Archive, const int version = 0)
+			{
+			Archive & _perm;
+			_recomputeInvert();
+			}
+
+
+		/**
+		* Print the transformation into a string.
+		**/
+		std::string toString(bool details = false) const
+			{
+			const size_t l = _perm.size();
+			if (l == 0) return "Permutation[empty]";
+			std::string s("Permutation[0,"); s += mtools::toString(l - 1) + "]";
+			if (details)
+				{
+				s += "\n";
+				for (int i = 0;i < l;i++) { s += mtools::toString(i) + "\t -> \t" + mtools::toString(_perm[i]) + "\n"; }
+				}
+			return s;
+			}
+
+
+		private:
+
+
+		/* re-compute the inverse permutation */
+		void _recomputeInvert()
+			{
+			const size_t l = _perm.size();
+			_invperm.resize(l);	
+			for (size_t i = 0; i < l; i++) { _invperm[_perm[i]] = (int)i; } 
+			}
+		
+		std::vector<int> _perm;
+		std::vector<int> _invperm;
+		};
+
+
+
+
+
+
 	/** Defines an alias representing a permutation of {0,1,...,n} */
-	typedef std::vector<int> Permutation;
+	//typedef std::vector<int> Permutation;
 
 
 
