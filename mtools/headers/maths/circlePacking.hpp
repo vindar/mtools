@@ -1143,13 +1143,41 @@ namespace mtools
 				_buff_radii1.reset(new cl::Buffer(_clbundle.context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeof(FPTYPE)*_nbVertices, _rad.data()));
 				_buff_radii2.reset(new cl::Buffer(_clbundle.context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeof(FPTYPE)*_nbVertices, _rad.data()));
 
+				int outsite = 0;
 				std::vector<int32> degTab(_nbVertices);
-				for (int i = 0; i < _nbVertices; i++) { degTab[i] = (int32)_gr[i].size(); }
+				for (int i = 0; i < _nbVertices; i++) 
+					{ 
+					const int l = (int32)_gr[i].size();
+					degTab[i] = l;
+					if (l > _maxDegree) { outsite += l - _maxDegree + 1; }
+					}
 				_buff_degree.reset(new cl::Buffer(_clbundle.context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(int32)*_nbVertices, degTab.data()));
 
 				std::vector<int32> neighbourTab(_nbVertices*_maxDegree, 0);
-				for (int i = 0; i < _nbVertices; i++) { for (int j = 0; j < (int)(_gr[i].size()); j++) { neighbourTab[j*_nbVertices + i] = (int32)_gr[i][j]; } }
+				std::vector<int32> neighbourTabRest(outsite, 0);
+
+				int offset = 0;
+				for (int i = 0; i < _nbVertices; i++) 
+					{ 
+					const int l = (int)(_gr[i].size());
+					if (l <= _maxDegree)
+						{
+						for (int j = 0; j < l; j++) { neighbourTab[j*_nbVertices + i] = (int32)_gr[i][j]; }
+						}
+					else
+						{
+						for (int j = 0; j < _maxDegree - 1; j++) { neighbourTab[j*_nbVertices + i] = (int32)_gr[i][j]; }
+						neighbourTab[(_maxDegree - 1)*_nbVertices + i] = offset;
+						for (int j = _maxDegree - 1; j < l; j++) { neighbourTabRest[offset] = (int32)_gr[i][j]; offset++; }
+						}
+					}
+				MTOOLS_INSURE(offset == outsite);
+
+				cout << offset << "\n";
+				cout.getKey();
+
 				_buff_neighbour.reset(new cl::Buffer(_clbundle.context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(int32)*_nbVertices*_maxDegree, neighbourTab.data()));
+				_buff_neighbourRest.reset(new cl::Buffer(_clbundle.context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(int32)*outsite, neighbourTabRest.data()));
 
 				FPTYPE_VEC8 paramTab;
 				FPTYPE ce = errorL2();
@@ -1171,8 +1199,9 @@ namespace mtools
 				_kernel_updateRadius->setArg(1, *_buff_radii2);
 				_kernel_updateRadius->setArg(2, *_buff_degree);
 				_kernel_updateRadius->setArg(3, *_buff_neighbour);
-				_kernel_updateRadius->setArg(4, *_buff_error1);
-				_kernel_updateRadius->setArg(5, *_buff_lambdastar1);
+				_kernel_updateRadius->setArg(4, *_buff_neighbourRest);
+				_kernel_updateRadius->setArg(5, *_buff_error1);
+				_kernel_updateRadius->setArg(6, *_buff_lambdastar1);
 
 				_kernel_reduction1->setArg(0, *_buff_error1);
 				_kernel_reduction1->setArg(1, *_buff_error2);
@@ -1306,7 +1335,8 @@ namespace mtools
 				/* create the openCL kernels if needed */
 				void _recreateKernels()
 					{
-					const int maxdeg = maxOutDegreeGraph(_gr);
+					const int maxdeg = 2; // maxOutDegreeGraph(_gr);
+
 					const int maxgpsize = _clbundle.maxWorkGroupSize();
 					const int nbvert = (int)_gr.size();
 					if ((_localsize == maxgpsize) && ((int)_gr.size() == _nbVertices) && (maxdeg == _maxDegree)) { return; }
@@ -1367,6 +1397,7 @@ namespace mtools
 				std::unique_ptr<cl::Buffer> _buff_radii2;
 				std::unique_ptr<cl::Buffer> _buff_degree;
 				std::unique_ptr<cl::Buffer> _buff_neighbour;
+				std::unique_ptr<cl::Buffer> _buff_neighbourRest;
 				std::unique_ptr<cl::Buffer> _buff_param;
 				std::unique_ptr<cl::Buffer> _buff_rng;
 

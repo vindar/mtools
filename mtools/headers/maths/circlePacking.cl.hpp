@@ -63,73 +63,75 @@ inline FPTYPE angleEuclidian(FPTYPE rx, FPTYPE ry, FPTYPE rz)
 	const FPTYPE a = rx + ry;
 	const FPTYPE b = rx + rz;
 	const FPTYPE c = ry + rz;
-	//const FPTYPE r = (a*a + b*b - c*c) / (2 * a*b);
-	const FPTYPE r = ((a/b) + (b/a) - (c/a)*(c/b))/2;	// <- this version is slower by 30% than the one above but much better at limiting the exponent swing... 	
+	const FPTYPE r = (a*a + b*b - c*c) / (2 * a*b);
+	//const FPTYPE r = ((a/b) + (b/a) - (c/a)*(c/b))/2;	// <- this version is slower by 30% than the one above but much better at limiting the exponent swing... 	
 	return((r >= 1.0) ? 0.0 : ((r <= -1.0) ? (M_1PI) : (acos(r))));
 	}	
 
-	
-//#define KAHAN_SUM
 
 /** Update the radii **/	
 __kernel void updateRadius(__global FPTYPE g_radiiTab1[NBVERTICES],						// original radii of each vertex
 				      	   __global FPTYPE g_radiiTab2[NBVERTICES],						// updated radii of each vertex
                            __global const int g_degreeTab[NBVERTICES],					// degree of each vertex
                            __global const int g_neighbourTab[MAXDEGREE][NBVERTICES],	// list of neighbours of each vertex 
+						   __global const int * g_neighbourRest,						// the neighbours for the large sites
 						   __global FPTYPE g_error[NBVERTICES],							// error term 
 						   __global FPTYPE g_lambdastar[NBVERTICES] 					// max admissible lambda
 					      )	
 	{				
 	const int index = get_global_id(0);		// global index
-	const int degree = g_degreeTab[index]; 			
+	const int deg = g_degreeTab[index]; 	// degree of the site
+	if (deg == 0) return;					// dummy site, nothing to do
+
 	const FPTYPE v  = g_radiiTab1[index];	// radius
+	const int nb    = ((deg > MAXDEGREE) ? (MAXDEGREE-1) : deg);	// number of neighbour in g_neighbourTab
 
-	if (degree > 0) // normal site, with at most MAXDEGREE neighbour
-		{
-		// compute the sum angle
-		FPTYPE theta = 0.0;
+	// compute the sum angle
+	FPTYPE theta = 0.0;
+	FPTYPE C = 0.0;
 
-		#ifdef KAHAN_SUM // use kahan summation algorithm to reduce roundoff error
-		FPTYPE C = 0.0;
-		for(int k = 1; k < degree; k++) 
+	const FPTYPE firstR = g_radiiTab1[g_neighbourTab[0][index]];	
+	FPTYPE prevR = firstR;
+	FPTYPE nextR;
+	for(int k = 1; k < nb; k++) // add the angles due to the first MAXDEGREE neighbours
+		{ 
+		nextR = g_radiiTab1[g_neighbourTab[k][index]];
+		FPTYPE Y = angleEuclidian(v,prevR,nextR) - C;
+		FPTYPE T = theta + Y;
+		C = (T-theta) - Y;
+		theta = T;
+		prevR = nextR;
+		}	
+	if (deg > MAXDEGREE) // add the remaining neighbours angles if any
+		{ 
+		const int offset = g_neighbourTab[MAXDEGREE-1][index];
+		const int nbremaining = deg - (MAXDEGREE - 1);
+		for(int k = 0; k < nbremaining; k++) 
 			{ 
-			FPTYPE Y = angleEuclidian(v,g_radiiTab1[g_neighbourTab[k-1][index]],g_radiiTab1[g_neighbourTab[k][index]]) - C;
+			nextR = g_radiiTab1[g_neighbourRest[k+offset]];
+			FPTYPE Y = angleEuclidian(v,prevR,nextR) - C;
 			FPTYPE T = theta + Y;
 			C = (T-theta) - Y;
 			theta = T;
-			}	
-		theta += (angleEuclidian(v,g_radiiTab1[g_neighbourTab[degree-1][index]],g_radiiTab1[g_neighbourTab[0][index]]) - C);
-		#else // just use classic summation
-		for(int k = 1; k < degree; k++) 
-			{ 
-			theta += angleEuclidian(v,g_radiiTab1[g_neighbourTab[k-1][index]],g_radiiTab1[g_neighbourTab[k][index]]);
-			}	
-		theta += angleEuclidian(v,g_radiiTab1[g_neighbourTab[degree-1][index]],g_radiiTab1[g_neighbourTab[0][index]]);
-		#endif
+			prevR = nextR;
+			}
+		}	
+	theta += (angleEuclidian(v,prevR,firstR) - C); // close the flower
 
-		// compute the new radius
-		const FPTYPE ik     = 1.0/((FPTYPE)degree);
-		const FPTYPE beta   = sin(theta*ik*0.5);
-		const FPTYPE tildev = beta*v/(1.0-beta);
-		const FPTYPE delta  = sinpi(ik);
-		const FPTYPE u      = (1.0-delta)*tildev/delta;
-		g_radiiTab2[index] 	= u;								// save new radius	
 
-		const FPTYPE e      = theta - M_2PI;					// error term
-		g_error[index]		= (e*e);							// save error
+	// compute the new radius
+	const FPTYPE ik     = 1.0/((FPTYPE)deg);
+	const FPTYPE beta   = sin(theta*ik*0.5);
+	const FPTYPE tildev = beta*v/(1.0-beta);
+	const FPTYPE delta  = sinpi(ik);
+	const FPTYPE u      = (1.0-delta)*tildev/delta;
+	g_radiiTab2[index] 	= u;								// save new radius	
 
-		const FPTYPE l 		= (v - u);							// delta between old and new radius	
-		g_lambdastar[index] = ((l <= 0.0) ? 1.0e10 : (u/l));	// save lambdastar
-		}
-	else
-		{/*
-		if (degree < 0) // special site, with more than MAXDEGREE neighbour
-			{
-			g_radiiTab2[index] 	= 0;
-			g_error[index]		= 0;
-			g_lambdastar[index] = 0;
-			}*/
-		}
+	const FPTYPE e      = theta - M_2PI;					// error term
+	g_error[index]		= (e*e);							// save error
+
+	const FPTYPE l 		= (v - u);							// delta between old and new radius	
+	g_lambdastar[index] = ((l <= 0.0) ? 1.0e10 : (u/l));	// save lambdastar
 	}
 
 	

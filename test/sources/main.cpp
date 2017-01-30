@@ -7,11 +7,11 @@ using namespace mtools;
 
 
 
+MT2004_64 gen(987653); // RNG with 2M vertices.
 
 
 
-MT2004_64 gen(987654321); // RNG
-//MT2004_64 gen(44); // RNG
+//MT2004_64 gen(98765); // RNG
 
 Grid_basic<2, int64, 2> Grid; // the 2D grid
 
@@ -159,7 +159,7 @@ void drawCirclePacking(fBox2 R, std::vector<double> & radiuses, std::vector<fVec
 		{
 		if (i != circles.size()-1)
 			{
-			Im.fBox2_draw_circle(R, circles[i], radiuses[i], RGBc::c_Red, 0.7f);
+		//	Im.fBox2_draw_circle(R, circles[i], radiuses[i], RGBc::c_Red, 0.7f);
 			}
 		else
 			{
@@ -519,13 +519,13 @@ void loadTest(std::string filename)
 	cout << "max radius = " << rr.back() << "\n\n";
 
 	CPTEST.setRadii(radii);
-
+	/*
 	cout << "repacking...\n";
 
 	auto cc = chrono();
 	cout << "ITER = " << CPTEST.computeRadii(1.0e-10,0.05,100,1000) << "\n";
 	cout << "done in " << cc << "\n";
-
+	*/
 
 	CirclePacking CP;
 	CP.setTriangulation(gr, bound);
@@ -723,7 +723,7 @@ int main(int argc, char *argv[])
 	parseCommandLine(argc, argv);
 
 
-	//loadTest("trig1421883.txt");
+	//loadTest("trig1618973.txt");
 	//return 0;
 	testBall(); 
 	return 0;
