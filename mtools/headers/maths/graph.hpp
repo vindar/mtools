@@ -144,6 +144,26 @@ namespace mtools
 
 
 	/**
+	* Explore the direct neighbours of a given vertex in a graph. The vertex itself is not visited.
+	*
+	* @param	gr	  	The graph.
+	* @param	vertex	The vertex whose neighbour should be visited.
+	* @param	fun   	The function to call at each neighbour. Of the form:
+	* 					bool fun(int vert)
+	* 					  - vert  : the vertice currently visited
+	* 					  - return: true to continue visiting and false to stop.
+	*
+	* @return	the total number of neighbour visited.
+	**/
+	template<typename GRAPH> int exploreNeighbour(const GRAPH & gr, int vertex, std::function<bool(int)> fun)
+		{
+		int nbv = 0;
+		for (const auto it = gr[vertex].begin(); it != gr[vertex].end(); ++it) { if (!fun(*it)) return nbv; }
+		return nbv;
+		}
+
+
+	/**
 	* Explore the graph starting from a root vertex and following the oriented edges.
 	* Accept lambda functions.
 	*
