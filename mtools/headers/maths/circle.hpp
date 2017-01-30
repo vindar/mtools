@@ -143,6 +143,29 @@ namespace mtools
 				}
 
 
+			/**
+			 * shift the center of the circle
+			 **/
+			Circle & operator+=(const complex<FPTYPE> & pos) { center += pos; return *this; }
+
+
+			/**
+			* shift the center of the circle
+			**/
+			Circle & operator-=(const complex<FPTYPE> & pos) { center -= pos; return *this; }
+
+
+			/**
+			* Apply the transformation z-> lambda z to the circle.
+			**/
+			Circle & operator*=(const FPTYPE & lambda) { radius *= lambda; center *= lambda; return *this; }
+
+
+			/**
+			* Apply the transformation z-> z/lambda to the circle.
+			**/
+			Circle & operator/=(const FPTYPE & lambda) { radius /= lambda; center /= lambda; return *this; }
+
 
 			/**
 			* serialise/deserialize the tranformation. Works with boost and with the custom serialization classes
@@ -150,7 +173,7 @@ namespace mtools
 			**/
 			template<typename U> void serialize(U & Archive, const int version = 0)
 				{
-				Archive center & radius;
+				Archive & center & radius;
 				}
 
 
@@ -172,6 +195,32 @@ namespace mtools
 			static FPTYPE _eps; // precision. 
 
 		};
+
+
+
+		/**
+		* shift the center of the circle
+		**/
+		template<typename FPTYPE> Circle<FPTYPE> operator+(Circle<FPTYPE> circle, const complex<FPTYPE> & pos) { circle += pos; return circle; }
+
+
+		/**
+		* shift the center of the circle
+		**/
+		template<typename FPTYPE> Circle<FPTYPE> operator-(Circle<FPTYPE> circle, const complex<FPTYPE> & pos) { circle -= pos; return circle; }
+
+
+		/**
+		* Apply the transformation z-> lambda z to the circle.
+		**/
+		template<typename FPTYPE> Circle<FPTYPE> operator*(Circle<FPTYPE> circle, const complex<FPTYPE> & lambda) { circle *= lambda; return circle; }
+		template<typename FPTYPE> Circle<FPTYPE> operator*(const complex<FPTYPE> & lambda, Circle<FPTYPE> circle) { circle *= lambda; return circle; }
+
+
+		/**
+		* Apply the transformation z-> z/lambda to the circle.
+		**/
+		template<typename FPTYPE> Circle<FPTYPE> operator/(Circle<FPTYPE> circle, const complex<FPTYPE> & lambda) { circle /= lambda; return circle; }
 
 
 
