@@ -80,15 +80,14 @@ namespace mtools
 		 * Compute the image of a circle. It is again a circle but beware that the center of the image
 		 * circle is not the image of the center the original circle.
 		 **/
-		/*
-		template<T EPS> mtools::Circle<T, EPS> operator*(const mtools::Circle<T,EPS> & circle) const
+		mtools::Circle<T> operator*(const mtools::Circle<T> & circle) const
 			{
-			return mtools::Circle<T, EPS>(
-				((a*center + b)*(std::conj(c*center + d)) - rad*rad*a*(std::conj(c))) / (std::norm(c*center + d) - rad*rad*(std::norm(c))),
-					(rad*(std::abs(a*d - b*c))) / (std::abs(std::norm(c*center + d) - rad*rad*norm(c)))
+			return mtools::Circle<T>(
+				((a*circle.center + b)*(std::conj(c*circle.center + d)) - circle.radius*circle.radius*a*(std::conj(c))) / (std::norm(c*circle.center + d) - circle.radius*circle.radius*(std::norm(c))),
+					(circle.radius*(std::abs(a*d - b*c))) / (std::abs(std::norm(c*circle.center + d) - circle.radius*circle.radius*norm(c)))
 					);
 			}
-			*/
+			
 
 		/**
 		 * Return the invert transformation.
