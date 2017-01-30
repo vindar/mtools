@@ -29,10 +29,9 @@ namespace internals_circlepacking
 
 //#pragma OPENCL EXTENSION cl_khr_fp64 : enable
 
-//#define FPTYPE		  		//
-//#define FPTYPE_VEC8 			// 
-//#define NBVERTICES     		// defined via compiler options
-//#define MAXDEGREE      		//
+//#define FPTYPE		  		// these defined are passed
+//#define FPTYPE_VEC8 			// via compiler's option
+//#define NBVERTICES     		// 
 //#define MAXGROUPSIZE   		//
 
 
@@ -73,51 +72,34 @@ inline FPTYPE angleEuclidian(FPTYPE rx, FPTYPE ry, FPTYPE rz)
 __kernel void updateRadius(__global FPTYPE g_radiiTab1[NBVERTICES],						// original radii of each vertex
 				      	   __global FPTYPE g_radiiTab2[NBVERTICES],						// updated radii of each vertex
                            __global const int g_degreeTab[NBVERTICES],					// degree of each vertex
-                           __global const int g_neighbourTab[MAXDEGREE][NBVERTICES],	// list of neighbours of each vertex 
-						   __global const int * g_neighbourRest,						// the neighbours for the large sites
+                           __global const int g_neighbourOffset[NBVERTICES],			// offset to the list of neighbours of each vertex
+						   __global const int * g_neighbourList,						// the list of neighbours
 						   __global FPTYPE g_error[NBVERTICES],							// error term 
 						   __global FPTYPE g_lambdastar[NBVERTICES] 					// max admissible lambda
 					      )	
 	{				
-	const int index = get_global_id(0);		// global index
-	const int deg = g_degreeTab[index]; 	// degree of the site
-	if (deg == 0) return;					// dummy site, nothing to do
+	const int index = get_global_id(0);				// global index
+	const int deg = g_degreeTab[index]; 			// degree of the site
+	if (deg == 0) return;							// dummy site, nothing to do
 
-	const FPTYPE v  = g_radiiTab1[index];	// radius
-	const int nb    = ((deg > MAXDEGREE) ? (MAXDEGREE-1) : deg);	// number of neighbour in g_neighbourTab
+	const FPTYPE v  = g_radiiTab1[index];			// radius
+	const int offset = g_neighbourOffset[index];	// offset for the list of neighbours
 
-	// compute the sum angle
+	// compute the sum angle, use Kahan summation algorithm to reduce roundoff errors
 	FPTYPE theta = 0.0;
-	FPTYPE C = 0.0;
-
-	const FPTYPE firstR = g_radiiTab1[g_neighbourTab[0][index]];	
+	FPTYPE C = 0.0;	
+	const FPTYPE firstR = g_radiiTab1[g_neighbourList[offset]];	
 	FPTYPE prevR = firstR;
-	FPTYPE nextR;
-	for(int k = 1; k < nb; k++) // add the angles due to the first MAXDEGREE neighbours
+	for(int k = 1; k < deg; k++) // add the angles due to the neighbours
 		{ 
-		nextR = g_radiiTab1[g_neighbourTab[k][index]];
+		FPTYPE nextR = g_radiiTab1[g_neighbourList[offset + k]];
 		FPTYPE Y = angleEuclidian(v,prevR,nextR) - C;
 		FPTYPE T = theta + Y;
 		C = (T-theta) - Y;
 		theta = T;
 		prevR = nextR;
 		}	
-	if (deg > MAXDEGREE) // add the remaining neighbours angles if any
-		{ 
-		const int offset = g_neighbourTab[MAXDEGREE-1][index];
-		const int nbremaining = deg - (MAXDEGREE - 1);
-		for(int k = 0; k < nbremaining; k++) 
-			{ 
-			nextR = g_radiiTab1[g_neighbourRest[k+offset]];
-			FPTYPE Y = angleEuclidian(v,prevR,nextR) - C;
-			FPTYPE T = theta + Y;
-			C = (T-theta) - Y;
-			theta = T;
-			prevR = nextR;
-			}
-		}	
 	theta += (angleEuclidian(v,prevR,firstR) - C); // close the flower
-
 
 	// compute the new radius
 	const FPTYPE ik     = 1.0/((FPTYPE)deg);
@@ -199,7 +181,7 @@ __kernel void reduction_finale( __global FPTYPE * errorin, __global FPTYPE * lam
 		next.s5 = fmin(next.s0, next.s5);	// new minimum error
 		next.s1 = next.s0/prev.s0;		// new lambda
 		next.s2 -= 1.0;
-		if ((next.s0 > next.s3)&&(prev.s2 < 1.0)&&(next.s1 < 1.0)) // flag is set and new lambda smaller than 1
+		if ((next.s0 > next.s3)&&(prev.s2 < 1.0)&&(next.s1 < 1.0)) // flag is set, new lambda smaller than 1 and not reached target
 			{ // we accelerate
 			if (fabs(next.s1 - prev.s1) < prev.s4) { next.s1 = (next.s1)/(1.0 - next.s1);  } // super-acceleration 
 			next.s1 = fmin(next.s1,((FPTYPE)(0.5))*templambda[0]); // new lambda

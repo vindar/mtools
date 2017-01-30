@@ -159,7 +159,7 @@ void drawCirclePacking(fBox2 R, std::vector<double> & radiuses, std::vector<fVec
 		{
 		if (i != circles.size()-1)
 			{
-		//	Im.fBox2_draw_circle(R, circles[i], radiuses[i], RGBc::c_Red, 0.7f);
+			Im.fBox2_draw_circle(R, circles[i], radiuses[i], RGBc::c_Red, 0.2f);
 			}
 		else
 			{
@@ -571,7 +571,7 @@ void loadTest(std::string filename)
 
 void testBall()
 	{
-	int sizeTrig = 100000;//10e6 200K error
+	int sizeTrig = 2000000;//10e6 200K error
 
 	DyckWord D(sizeTrig, 3);
 	D.shuffle(gen);
