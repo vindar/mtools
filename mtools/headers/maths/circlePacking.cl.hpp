@@ -18,14 +18,17 @@
 // along with mtools  If not, see <http://www.gnu.org/licenses/>.
 
 
-namespace internals_circlepacking
+namespace mtools 
 	{
 
+	namespace internals_circlepacking
+		{
 
-/* The openCL program for circle packing
-   use by the CirclePackingLAbelGPU class from circlePacking.hpp
-   Algorithm from Stephenson & Collins (2003) */
-	static const char * circlePacking_openCLprogram = R"CLsource(
+
+		/* The openCL program for circle packing
+		   use by the CirclePackingLAbelGPU class from circlePacking.hpp
+		   Algorithm from Stephenson & Collins (2003) */
+		static const char * circlePacking_openCLprogram = R"CLsource(
 
 //#pragma OPENCL EXTENSION cl_khr_fp64 : enable
 
@@ -208,6 +211,9 @@ __kernel void accelerate( __global FPTYPE g_radiiTab1[NBVERTICES],  __global FPT
 
 )CLsource";
 
+		}
+
 	}
+
 
 /* end of file */
