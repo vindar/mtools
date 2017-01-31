@@ -117,10 +117,10 @@ namespace mtools
 	 * Triangulate the graph. The graph must be a simple connected planar graph without double edge
 	 * nor loops.
 	 * 
-	 * Add a single vertice inside each face of the graph and add vertices between it and the face's
+	 * Add a single vertice inside each face of the graph and add edges between it and the face's
 	 * vertices to construct a maximal triangulation.
 	 * 
-	 * The new vertices are added after the existing one:  does not change the indexing of already
+	 * The new vertices are stored after the existing one: this does not change the indexing of already
 	 * existing vertices.
 	 **/
 	template<typename GRAPH> GRAPH triangulateGraph(const GRAPH & graph)
@@ -154,9 +154,11 @@ namespace mtools
 
 	/**
 	* Explore the graph starting from a root vertex and following the oriented edges.
-	* Accept lambda functions.
+	* use breadth-first search. Each vertice are visited exactly once. 
+	* 
+	* Accept a lambda functions.
 	*
-	* See method computeDistances() below for an example of how to use it. 
+	* See the implementation method computeDistances() below for an example of how to use it. 
 	*
 	* @param	gr	  	The graph.
 	* @param	origin	The vertex to start exploration from.
