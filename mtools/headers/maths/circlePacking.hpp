@@ -24,6 +24,7 @@
 #include "../misc/stringfct.hpp" 
 #include "../misc/error.hpp"
 #include "../misc/timefct.hpp"
+#include "../io/logfile.hpp"
 #include "../io/console.hpp"
 #include "vec.hpp"
 #include "box.hpp"
@@ -123,6 +124,99 @@ namespace mtools
 
 
 		}
+
+
+	/** Different geometry types. */
+	enum class GeometryType { euclidian, hyperbolic, spherical };
+
+
+	/**
+	 * Saves a circle packing into a file with file format compatible with .p file of the CirclePack
+	 * program by Stephenson.
+	 *
+	 * IMPORTANT : for the time being, the value are stored on file using double precision...
+	 * 
+	 * @param	filename	name of the file.
+	 * @param	graph   	the graph.
+	 * @param	boundary	The boundary (any vertex v with boundary[v] > 0 is considered a boundary vertex)
+	 * @param	circles 	The circles.
+	 * @param	type		type of geometry (euclidian, spherical or hyperbolic)
+	 * @param	alpha   	The alpha vertex (the one use to start the drawing, should be interior)
+	 * @param	beta		The beta vertex  (obsolete, used to be a boundy vertex)
+	 * @param	gamma   	The gamma vertex (shold rotate such that is is on the positive imaginary line)
+	 */
+	template<typename FPTYPE, typename GRAPH> void saveCirclePacking(const std::string & filename, const GRAPH & graph, const std::vector<int> & boundary, const std::vector<Circle<FPTYPE> > & circles, GeometryType type, int alpha, int beta = -1, int gamma = -1)
+		{
+		const size_t l = graph.size();
+		MTOOLS_INSURE((l > 0)&&(boundary.size() == l)&&(circles.size() == l));
+		std::vector<std::vector<int> > gr = convertGraph<GRAPH , std::vector<std::vector<int> > >(graph);
+		rotateGraphNeighbourList(gr, boundary);
+		mtools::LogFile F(filename, false, false, false);
+		F << "NODECOUNT:  " << l << "\n";
+		F << "GEOMETRY: ";
+		switch (type)
+			{
+			case GeometryType::hyperbolic: { F << "hyperbolic\n"; break; } 
+			case GeometryType::spherical: { F << "spherical\n"; break; }
+			default: { F << "euclidian\n"; break; }
+			}
+		if (gamma == -1) { gamma = gr[alpha].front(); } // default: choose first neighobur of alpha. 
+		F << "ALPHA/BETA/GAMMA: " << (alpha + 1) << " " << (beta + 1) << " " << (gamma + 1) << "\n";
+		F << "FLOWERS: \n";
+		for (size_t i = 0; i < graph.size(); i++)
+			{
+			F << (i + 1) << " ";
+			if (boundary[i] > 0)
+				{
+				F << gr[i].size() - 1 << "  ";
+				for (size_t j = 0;j < gr[i].size(); j++) { F << " " << (gr[i][j] + 1); }
+				F << "\n";
+				}
+			else
+				{
+				F << gr[i].size() << "  ";
+				for (size_t j = 0; j < gr[i].size(); j++) { F << " " << (gr[i][j] + 1); }
+				F << " " << (gr[i][0] + 1) << "\n";
+				}
+			}
+		F << "\n\nRADII: \n";
+		int count = 0;
+		for (size_t i = 0; i < graph.size(); i++)
+			{
+			count++;
+			F << doubleToStringHighPrecision(circles[i].radius);
+			if (count == 4) { F << "\n"; count = 0; } else { F << "   "; }
+			}
+		F << "\n\nCENTERS: \n";
+		count = 0;
+		for (size_t i = 0; i < graph.size(); i++)
+			{
+			count++;
+			F << doubleToStringHighPrecision(circles[i].center.real()) << " " << doubleToStringHighPrecision(circles[i].center.imag());
+			if (count == 2) { F << "\n"; count = 0; } else { F << "   "; }
+			}
+		F << "\n\nEND\n\n";
+		}
+
+
+	/**
+	 * Loads a Circle packing file. The file must be in the format used by the CirclePack program by
+	 * Stephenson.
+	 *
+	 * @param	filename	   	 name of the file.
+	 * @param [in,out]	graph  	 the graph.
+	 * @param [in,out]	boundary the boundary vector (boundary[v] = 1 for boundary and 0 for interior v).
+	 * @param [in,out]	circles	 the circle vector.
+	 * @param [in,out]	type   	 type of geometry.
+	 * @param [in,out]	alpha  	 index of the alpha vertex (interior start vertex for layout)
+	 * @param [in,out]	beta     index of the beta vertex (obsolete, used to be on the boundary, may be -1)
+	 * @param [in,out]	gamma    index of the gamma vertex (rotate so that it is on the positive imaginary line)
+	 */
+	template<typename FPTYPE, typename GRAPH> void loadCirclePacking(const std::string & filename, GRAPH & graph, std::vector<Circle<FPTYPE> > & circles, GeometryType & type, int & alpha, int & beta, int & gamma)
+		{
+		// TODO
+		}
+
 
 
 
@@ -249,6 +343,11 @@ namespace mtools
 
 
 
+
+
+
+
+
 		/**
 		 * Class used to compute the radii associated with the (euclidian) circle packing
 		 * of a triangulation with a boundary.
@@ -322,7 +421,13 @@ namespace mtools
 				_perm.setSortPermutation(boundary);
 				_gr = permuteGraph<std::vector<std::vector<int> > >(convertGraph<GRAPH, std::vector<std::vector<int> > >(graph), _perm);
 				_nb = l;
-				for (size_t i = 0; i < l; i++) { if (boundary[_perm[i]] > 0) { _nb = (int)i; break; } }
+				for (size_t i = 0; i < l; i++) 
+					{ 
+					if (boundary[_perm[(int)i]] > 0) 
+						{ 
+						_nb = i; break; 
+						} 
+					}
 				MTOOLS_INSURE((_nb > 0)&&(_nb < l-2));
 				_rad.resize(l, (FPTYPE)1.0);
 				}
