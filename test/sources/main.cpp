@@ -189,7 +189,7 @@ void testBall(int N)
 
 	cout << mtools::graphInfo(gr) << "\n\n";	// info about the graph.
 
-	CirclePackingLabelGPU<double> CPTEST(true);		// prepare for packing
+	CirclePackingLabel<double> CPTEST(true);		// prepare for packing
 	CPTEST.setTriangulation(gr, boundary);			//
 	CPTEST.setRadii();								//
 
@@ -218,15 +218,6 @@ void testBall(int N)
 		if (i != circleVec.size() - 1) { circleVec[i] = M*(circleVec[i]); } // invert */
 		}
 
-	/*
-	gr = resizeGraph(gr, gr.size() - 1);
-	boundary.resize(gr.size());
-	circleVec.resize(gr.size());
-	*/
-	cout << "ALLAAAALLLLLAAAAAA" << graphInfo(gr) << "\n";
-
-	mtools::saveCirclePacking(std::string("trig") + mtools::toString(gr.size()) + ".p", gr, boundary, circleVec, GeometryType::euclidian, v1);
-
 
 	double ratio = (double)R.lx() / ((double)R.ly());
 	int LX = 4000;
@@ -235,20 +226,27 @@ void testBall(int N)
 	mtools::Img<unsigned char> imcircle(LX, LY, 1, 4);
 	imcircle.clear(RGBc::c_White);
 
-	drawCirclePacking(imcircle, R, circleVec, gr, true, true, false, false, RGBc::c_Blue, 0.1f, (int)gr.size() - 1, (int)gr.size() - 1);	
+	drawCirclePacking(imcircle, R, circleVec, gr, true, true, false, false, RGBc::c_Blue, 0.1f, (int)gr.size() - 1, (int)gr.size() - 1);
 	drawCirclePacking(imcircle, R, circleVec, gr, true, true, false, false, RGBc::c_Red, 0.2f, 0, (int)gr.size() - 2);
 	drawCirclePacking(imcircle, R, circleVec, gr, false, false, false, true, RGBc::c_Black, 1.0f, 0, (int)gr.size() - 2);
 	drawCirclePacking(imcircle, R, circleVec, gr, false, false, true, false, RGBc::c_Green, 1.0f, 0, (int)gr.size() - 2);
 
-	
+
+	boundary.clear();
+	boundary.resize(gr.size(),0);
+	for (int i = 0;i < gr.back().size(); i++) { boundary[gr.back()[i]] = 1; }
+
+	gr = resizeGraph(gr, gr.size() - 1);
+	boundary.resize(gr.size());
+	circleVec.resize(gr.size());
+
+	mtools::saveCirclePacking(std::string("trig") + mtools::toString(gr.size()) + ".p", gr, boundary, circleVec, GeometryType::euclidian, v1);
 
 	
 	Plotter2D Plotter;
 	auto P2 = makePlot2DCImg(imcircle, "circles");
 	Plotter[P2];
 	Plotter.autorangeXY();
-
-
 	Plotter.plot();
 
 	}
@@ -266,7 +264,7 @@ int main(int argc, char *argv[])
 	//loadTest("trig1503676.txt");
 	//loadTest("trig528.txt");
 	//return 0;
-	testBall(40); 
+	testBall(400); 
 
 
 	return 0;
