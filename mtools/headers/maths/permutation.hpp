@@ -257,7 +257,7 @@ namespace mtools
 		/**
 		 * Return perm[index].
 		 **/
-		int operator[](int index) const 
+		int operator[](size_t index) const 
 			{
 			MTOOLS_ASSERT((index >= 0) && (index < _perm.size())); 
 			return _perm[index]; 
@@ -267,7 +267,7 @@ namespace mtools
 		 /**
 		 * Return invperm[index].
 		 **/
-		int inv(int index) const 
+		int inv(size_t index) const 
 			{ 
 			MTOOLS_ASSERT((index >= 0) && (index < _perm.size())); 
 			return _invperm[index]; 
