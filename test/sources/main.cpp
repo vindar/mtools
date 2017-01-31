@@ -101,6 +101,17 @@ void loadTest(std::string filename)
 	ar & radii; 
 	ar & circles; 
 
+	/*
+	{
+	mtools::OArchive ar(std::string("trig") + mtools::toString(gr.size()) + ".txt");
+	ar & gr; ar.newline();
+	ar & boundary; ar.newline();
+	ar & circleVec; ar.newline();
+	}
+	*/
+
+
+
 	Permutation perm(bound);
 	gr = permuteGraph(gr, perm);
 	radii = perm.getPermute(radii);
@@ -189,7 +200,6 @@ void testBall(int N)
 	cout << "L2 error = " << CPTEST.errorL2() << "\n";
 	cout << "\nL1 error = " << CPTEST.errorL1() << "\n\n";
 
-
 	cout << "Laying out the circles...\n";
 	auto res = computeCirclePackLayout((int)gr.size()-1, gr, boundary,CPTEST.getRadii());
 	auto circleVec = res.first;
@@ -197,40 +207,48 @@ void testBall(int N)
 
 	cout << "done in " << mtools::Chronometer() << "ms\n";
 
-	{
-	mtools::OArchive ar(std::string("trig") + mtools::toString(gr.size()) + ".txt");
-	ar & gr; ar.newline();
-	ar & boundary; ar.newline();
-	ar & circleVec; ar.newline();
-	}
-
-
 	auto pos0 = circleVec.back().center;
 	double rad0 = circleVec.back().radius;	
 	mtools::Mobius<double> M(0.0,1.0,1.0,0.0);
 
 	for (int i = 0; i < circleVec.size(); i++)
-		{
+		{ 
 		circleVec[i] -= pos0; // center
 		circleVec[i] /= rad0; // normalise such that outer boundary circle has size 1
-		if (i != circleVec.size() - 1) { circleVec[i] = M*(circleVec[i]); } // invert
+		if (i != circleVec.size() - 1) { circleVec[i] = M*(circleVec[i]); } // invert */
 		}
+
+	/*
+	gr = resizeGraph(gr, gr.size() - 1);
+	boundary.resize(gr.size());
+	circleVec.resize(gr.size());
+	*/
+	cout << "ALLAAAALLLLLAAAAAA" << graphInfo(gr) << "\n";
+
+	mtools::saveCirclePacking(std::string("trig") + mtools::toString(gr.size()) + ".p", gr, boundary, circleVec, GeometryType::euclidian, v1);
 
 
 	double ratio = (double)R.lx() / ((double)R.ly());
-	int LX = 8000;
+	int LX = 4000;
 	int LY = (int)(LX / ratio);
 
 	mtools::Img<unsigned char> imcircle(LX, LY, 1, 4);
+	imcircle.clear(RGBc::c_White);
 
-	drawCirclePacking(imcircle, R, circleVec, gr, true, true, false, RGBc::c_Blue, 0.1f, (int)gr.size() - 1, (int)gr.size() - 1);
-	drawCirclePacking(imcircle, R, circleVec, gr, true, true, false, RGBc::c_Red, 0.2f, 0, (int)gr.size() - 2);
-	drawCirclePacking(imcircle, R, circleVec, gr, false, false, true, RGBc::c_Black, 1.0f, 0, (int)gr.size() - 2);
+	drawCirclePacking(imcircle, R, circleVec, gr, true, true, false, false, RGBc::c_Blue, 0.1f, (int)gr.size() - 1, (int)gr.size() - 1);	
+	drawCirclePacking(imcircle, R, circleVec, gr, true, true, false, false, RGBc::c_Red, 0.2f, 0, (int)gr.size() - 2);
+	drawCirclePacking(imcircle, R, circleVec, gr, false, false, false, true, RGBc::c_Black, 1.0f, 0, (int)gr.size() - 2);
+	drawCirclePacking(imcircle, R, circleVec, gr, false, false, true, false, RGBc::c_Green, 1.0f, 0, (int)gr.size() - 2);
 
+	
+
+	
 	Plotter2D Plotter;
 	auto P2 = makePlot2DCImg(imcircle, "circles");
 	Plotter[P2];
 	Plotter.autorangeXY();
+
+
 	Plotter.plot();
 
 	}
@@ -241,14 +259,14 @@ void testBall(int N)
 
 int main(int argc, char *argv[])
     {
-	MTOOLS_SWAP_THREADS(argc, argv);
-	parseCommandLine(argc, argv);
+//	MTOOLS_SWAP_THREADS(argc, argv);
+//	parseCommandLine(argc, argv);
 
 
 	//loadTest("trig1503676.txt");
 	//loadTest("trig528.txt");
 	//return 0;
-	testBall(3000000); 
+	testBall(40); 
 
 
 	return 0;
