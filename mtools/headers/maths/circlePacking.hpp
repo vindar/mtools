@@ -302,6 +302,9 @@ namespace mtools
 
 			/**
 			 * Draw circle packing into an image.
+			 * 
+			 * Beware when working with 4-layers image that the image is not fully transparent otherwise
+			 * the texts will not appear !
 			 *
 			 * @param [in,out]	img	The image to draw onto. It is not erased first.
 			 * @param	R		   	The range represented by the image.
@@ -309,6 +312,7 @@ namespace mtools
 			 * @param	gr		   	The graph.
 			 * @param	drawCircles	true to draw the circles.
 			 * @param	filled	   	true to fill the circles if they are drawn.
+			 * @param	drawLabels 	true to draw the labels.
 			 * @param	drawLines  	true to draw the graph lines.
 			 * @param	color	   	color for drawing.
 			 * @param	opacity	   	opacity for drawing.
@@ -316,7 +320,7 @@ namespace mtools
 			 * @param	lastIndex  	Last index of the sub-graph to draw (inclusive) -1 = until the end.
 			 **/
 			template<typename FPTYPE> void drawCirclePacking(mtools::Img<unsigned char> & img, const mtools::Box<FPTYPE, 2> & R, const std::vector<Circle<FPTYPE> > circles, const std::vector<std::vector<int> > & gr,
-				                                             bool drawCircles, bool filled, bool drawLines, RGBc color, float opacity = 1.0f, int firstIndex = 0, int lastIndex = -1)
+				                                             bool drawCircles, bool filled, bool drawLabels, bool drawLines, RGBc color, float opacity = 1.0f, int firstIndex = 0, int lastIndex = -1)
 				{
 				MTOOLS_ASSERT(circles.size() == gr.size());
 				if ((lastIndex < 0) || (lastIndex >= (int)(gr.size() - 1))) lastIndex = (int)(gr.size() - 1);
@@ -335,6 +339,13 @@ namespace mtools
 							{
 							if ((*it >= firstIndex) && (*it <= lastIndex)) { img.fBox2_drawLine(R, circles[i].center, circles[*it].center,color,opacity); }
 							}
+						}
+					}
+				if (drawLabels)
+					{
+					for (int i = firstIndex; i <= lastIndex; i++)
+						{
+						img.fBox2_drawText(R,mtools::toString(i+1),circles[i].center,'c','c', 20 , true, color, opacity);
 						}
 					}
 				}
