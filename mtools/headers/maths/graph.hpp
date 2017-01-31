@@ -113,6 +113,61 @@ namespace mtools
 		}
 
 
+
+	
+	namespace internals_graph
+		{
+
+		/**
+		* Rotate the vector such that the ith element is now in first place.
+		*/
+		inline std::vector<int> getRotatedVector(size_t i, const std::vector<int> & vec)
+			{
+			const size_t l = vec.size();
+			i = (i % l) + l; // i is now non-negative
+			std::vector<int> vec2(l);
+			for (int k = 0; k < l; k++) { vec2[k] = vec[(k + i) % l]; }
+			return vec2;
+			}
+		
+		}
+
+
+	/**
+	 * Return a graph with the same ordering of vertice and order of neighbour but
+	 * but where the list of neighbour have been rotated to expose a given "exterior" 
+	 * face so that adding vertices at the end of the list of neighbours puts them inside
+	 * the exterior face.
+	 *
+	 * @param	gr			The grap.
+	 * @param	bound   	The boundary vector. Must be such that boundary[v] > 0 à iif v 
+	 * 						is on the exterior boundary face. Those are the vertice for which 
+	 * 						the list of neighbour is rotated so that the first and last neighobur
+	 * 						also belong to the face.
+	 */
+	template<typename GRAPH> void rotateGraphNeighbourList(GRAPH & gr, const std::vector<int> & bound)
+		{
+		for(size_t i = 0; i < gr.size(); i++)
+			{
+			if (bound[i] > 0)
+				{
+				const size_t m = gr[i].size();
+				size_t k;
+				for (k = 0; k < m; k++)
+					{
+					if ((bound[gr[i][k]] > 0) && (bound[gr[i][(k + 1) % m]] > 0))
+						{
+						gr[i] = internals_graph::getRotatedVector(k + 1, gr[i]); k = m + 2;
+						}
+					}
+				MTOOLS_INSURE(k == (m + 3));
+				}
+			}
+		}
+
+
+
+
 	/**
 	 * Triangulate the graph. The graph must be a simple connected planar graph without double edge
 	 * nor loops.
