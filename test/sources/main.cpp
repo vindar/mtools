@@ -163,7 +163,7 @@ void testBall(int N)
 
 	Permutation perm(vm);							// permutation that put the vertices to remove at the end
 	gr = permuteGraph(gr, perm);					// permute the graph
-	v1 = perm[v1];	v2 = perm[v2]; v3 = perm[v3];	// and get the new indices for the root face. 
+	v1 = perm.inv(v1);	v2 = perm.inv(v2); v3 = perm.inv(v3);	// and get the new indices for the root face. 
 
 	gr = resizeGraph(gr, (int)gr.size() - nbremove);			// remove all the vertices with +1
 
@@ -178,7 +178,7 @@ void testBall(int N)
 
 	cout << mtools::graphInfo(gr) << "\n\n";	// info about the graph.
 
-	CirclePackingLabel<double> CPTEST(true);		// prepare for packing
+	CirclePackingLabelGPU<double> CPTEST(true);		// prepare for packing
 	CPTEST.setTriangulation(gr, boundary);			//
 	CPTEST.setRadii();								//
 
@@ -186,12 +186,12 @@ void testBall(int N)
 	auto cc = Chrono();
 	cout << "ITERATION = " << CPTEST.computeRadii(1.0e-9, 0.03, -1, 1000) << "\n";
 	cout << "done in " << cc << "\n";
-	cout << "L2 error = " << CPTEST.errorL1() << "\n";
-	//cout << "\nL1 error = " << CPTEST.errorL1 << "\n\n";
+	cout << "L2 error = " << CPTEST.errorL2() << "\n";
+	cout << "\nL1 error = " << CPTEST.errorL1() << "\n\n";
 
 
 	cout << "Laying out the circles...\n";
-	auto res = computeCirclePackLayout(gr.size()-1, gr, boundary,CPTEST.getRadii());
+	auto res = computeCirclePackLayout((int)gr.size()-1, gr, boundary,CPTEST.getRadii());
 	auto circleVec = res.first;
 	auto R = res.second;
 
@@ -205,23 +205,20 @@ void testBall(int N)
 	}
 
 
-	cout << gr;
-
-
 	auto pos0 = circleVec.back().center;
 	double rad0 = circleVec.back().radius;	
 	mtools::Mobius<double> M(0.0,1.0,1.0,0.0);
 
 	for (int i = 0; i < circleVec.size(); i++)
 		{
-//		circleVec[i] -= pos0; // center
-//		circleVec[i] /= rad0; // normalise such that outer boundary circle has size 1
-//		if (i != circleVec.size() - 1) { circleVec[i] = M*(circleVec[i]); } // invert
+		circleVec[i] -= pos0; // center
+		circleVec[i] /= rad0; // normalise such that outer boundary circle has size 1
+		if (i != circleVec.size() - 1) { circleVec[i] = M*(circleVec[i]); } // invert
 		}
 
 
 	double ratio = (double)R.lx() / ((double)R.ly());
-	int LX = 2000;
+	int LX = 8000;
 	int LY = (int)(LX / ratio);
 
 	mtools::Img<unsigned char> imcircle(LX, LY, 1, 4);
@@ -251,7 +248,9 @@ int main(int argc, char *argv[])
 	//loadTest("trig1503676.txt");
 	//loadTest("trig528.txt");
 	//return 0;
-	testBall(12); 
+	testBall(3000000); 
+
+
 	return 0;
 
 
