@@ -76,7 +76,7 @@ namespace mtools
      *
      * @tparam  T   type of pixels.
      **/
-    template<class T = unsigned char> struct Img : private cimg_library::CImg<T>
+    template<class T> struct Img : private cimg_library::CImg<T>
     {
 
     typedef T* iterator;
@@ -669,7 +669,7 @@ namespace mtools
         static std::unique_ptr< cimg_library::CImgList<floatT> > font_tab[257];
         static std::unique_ptr< cimg_library::CImgList<floatT> > vfont_tab[257];
         font_height = (font_height < 5) ? 5 : (font_height>256 ? 256 : font_height);
-        if (variable_width)
+		if (variable_width)
             {
             if (vfont_tab[font_height] == nullptr)
                 { // create the variable size font of size fontheight
@@ -812,7 +812,7 @@ namespace mtools
             (float)opacity, 
             getFont(fontsize, variable_width), 
             false);
-        //this->draw_text(x, y, text.c_str(), color.buf(), 0, op, );
+//        this->draw_text((int)Pos.X(), (int)Pos.Y(), text.c_str(), color.buf(), 0, (float)opacity, getFont(fontsize, variable_width));
         // THIS VERSION BUG IN 32BIT MODE (BUT NOT IN 64BIT MODE) AND I DO NOT UNDERSTAND WHY....
         //this->draw_text((int)Pos.X(), (int)Pos.Y(),"%s",color.buf(),0,(float)opacity, getFont(fontsize, variable_width),text);
         return(*this);
