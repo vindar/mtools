@@ -100,11 +100,11 @@ namespace mtools
 	 *
 	 * @return	the troncated graph.
 	 **/
-	template<typename GRAPH> GRAPH resizeGraph(const GRAPH & graph, int newSize)
+	template<typename GRAPH> GRAPH resizeGraph(const GRAPH & graph, size_t newSize)
 		{
 		GRAPH gres;
 		gres.resize(newSize);
-		for (int i = 0; i < newSize; i++)
+		for (size_t i = 0; i < newSize; i++)
 			{
 			gres[i].reserve(graph[i].size());
 			for (auto it = graph[i].begin(); it != graph[i].end(); it++) { if ((*it) < newSize) gres[i].push_back(*it); }
