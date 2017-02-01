@@ -45,6 +45,7 @@ namespace mtools
 
 
 
+	/*  private stuff */
 	namespace internals_circlepacking
 		{
 
@@ -105,7 +106,7 @@ namespace mtools
 			}
 
 
-		/** Compute the L2 error for the angle sum for all vertices on the range [0,N-1] **/
+		/** Compute the L1 error for the angle sum for all vertices on the range [0,N-1] **/
 		template<typename GRAPH, typename FPTYPE> FPTYPE errorL1(const GRAPH & gr, const std::vector<FPTYPE> & rad, const int N)
 			{
 			CONST FPTYPE twopi = 2 * acos((FPTYPE)-1);
@@ -122,30 +123,116 @@ namespace mtools
 			return e;
 			}
 
-
 		}
 
 
-	/** Different geometry types. */
-	enum class GeometryType { euclidian, hyperbolic, spherical };
+
+	/**
+	 * Compute the L2 error for the angle sum of the packing for all inner vertices.
+	 *
+	 * @param	gr			The graph.
+	 * @param	boundary	The boundary: any vertex boundary[v] > 0 belongs to the exterior face thus not counted.
+	 * @param	rad			The radiui.
+	 **/
+	template<typename FPTYPE, typename GRAPH> FPTYPE circlePackErrorL2(const GRAPH & gr, const std::vector<int> & boundary, const std::vector<FPTYPE> & rad)
+		{
+		size_t l = (int)gr.size();
+		MTOOLS_INSURE((rad.size() == l) && (boundary.size() == l));
+		CONST FPTYPE twopi = (2 * acos((FPTYPE)-1));
+		FPTYPE e = (FPTYPE)0;
+		FPTYPE C = (FPTYPE)0;
+		for (int i = 0; i < l; ++i) // use Kahan summation algorithm
+			{
+			if (boundary[i] <= 0)
+				{
+				const FPTYPE a = (internals_circlepacking::angleSumEuclidian((int)i, gr, rad) - twopi);
+				FPTYPE Y = (a*a) - C;
+				FPTYPE T = e + Y;
+				C = (T - e) - Y;
+				e = T;
+				}
+			}
+		return sqrt(e);
+		}
 
 
 	/**
-	 * Saves a circle packing into a file with file format compatible with .p file of the CirclePack
-	 * program by Stephenson.
+	* Other version. Compute the L2 error for the angle sum of the packing for all inner vertices.
+	*
+	* @param	gr			The graph.
+	* @param	boundary	The boundary: any vertex boundary[v] > 0 belongs to the exterior face thus not counted.
+	* @param	circles			The circles around each vertex.
+	**/
+	template<typename FPTYPE, typename GRAPH> FPTYPE circlePackErrorL2(const GRAPH & gr, const std::vector<int> & boundary, const std::vector<Circle<FPTYPE> > & circles)
+		{
+		std::vector<FPTYPE> rad(circles.size());
+		for (size_t i = 0;i < circles.size(); i++) { rad[i] = circles[i].radius; }
+		return circlePackErrorL2(gr, boundary, rad);
+		}
+
+
+	/**
+	* Compute the L1 error for the angle sum of the packing for all inner vertices.
+	*
+	* @param	gr			The graph.
+	* @param	boundary	The boundary: any vertex boundary[v] > 0 belongs to the exterior face thus not counted.
+	* @param	rad			The radiui.
+	**/
+	template<typename GRAPH, typename FPTYPE> FPTYPE circlePackErrorL1(const GRAPH & gr, const std::vector<int> & boundary, const std::vector<FPTYPE> & rad)
+		{
+		size_t l = (int)gr.size();
+		MTOOLS_INSURE((rad.size() == l) && (boundary.size() == l));
+		CONST FPTYPE twopi = (2 * acos((FPTYPE)-1));
+		FPTYPE e = (FPTYPE)0;
+		FPTYPE C = (FPTYPE)0;
+		for (int i = 0; i < l; ++i) // use Kahan summation algorithm
+			{
+			if (boundary[i] <= 0)
+				{
+				const FPTYPE a = (internals_circlepacking::angleSumEuclidian((int)i, gr, rad) - twopi);
+				FPTYPE Y = ((a >(FPTYPE)0) ? a : -a) - C;
+				FPTYPE T = e + Y;
+				C = (T - e) - Y;
+				e = T;
+				}
+			}
+		return e;
+		}
+
+
+	/**
+	* Other version. Compute the L1 error for the angle sum of the packing for all inner vertices.
+	*
+	* @param	gr			The graph.
+	* @param	boundary	The boundary: any vertex boundary[v] > 0 belongs to the exterior face thus not counted.
+	* @param	circles			The circles around each vertex.
+	**/
+	template<typename FPTYPE, typename GRAPH> FPTYPE circlePackErrorL1(const GRAPH & gr, const std::vector<int> & boundary, const std::vector<Circle<FPTYPE> > & circles)
+		{
+		std::vector<FPTYPE> rad(circles.size());
+		for (size_t i = 0;i < circles.size(); i++) { rad[i] = circles[i].radius; }
+		return circlePackErrorL1(gr, boundary, rad);
+		}
+
+
+
+
+	/**
+	 * Saves a circle packing into a file with the .p format of the CirclePack program by Stephenson.
+	 * 
+	 * The packing is saved in euclidian form. 
 	 *
 	 * IMPORTANT : for the time being, the value are stored on file using double precision...
 	 * 
 	 * @param	filename	name of the file.
 	 * @param	graph   	the graph.
-	 * @param	boundary	The boundary (any vertex v with boundary[v] > 0 is considered a boundary vertex)
+	 * @param	boundary	The boundary vector: any vertex boundary[v] > 0 belongs to the exterior face.
 	 * @param	circles 	The circles.
-	 * @param	type		type of geometry (euclidian, spherical or hyperbolic)
-	 * @param	alpha   	The alpha vertex (the one use to start the drawing, should be interior)
-	 * @param	beta		The beta vertex  (obsolete, used to be a boundy vertex)
-	 * @param	gamma   	The gamma vertex (shold rotate such that is is on the positive imaginary line)
+	 * @param	alpha   	The alpha vertex: the one use to start the layout (must be interior).
+	 * @param	beta		The beta vertex:  obsolete, (used to be a boundary vertex).
+	 * @param	gamma   	The gamma vertex: indicate that this site should be on the positive imaginary line.
 	 */
-	template<typename FPTYPE, typename GRAPH> void saveCirclePacking(const std::string & filename, const GRAPH & graph, const std::vector<int> & boundary, const std::vector<Circle<FPTYPE> > & circles, GeometryType type, int alpha, int beta = -1, int gamma = -1)
+	template<typename FPTYPE, typename GRAPH> void saveCirclePacking(const std::string & filename, const GRAPH & graph, const std::vector<int> & boundary, const std::vector<Circle<FPTYPE> > & circles, int alpha = -1, int beta = -1, int gamma = -1)
 		{
 		const size_t l = graph.size();
 		MTOOLS_INSURE((l > 0)&&(boundary.size() == l)&&(circles.size() == l));
@@ -153,14 +240,13 @@ namespace mtools
 		rotateGraphNeighbourList(gr, boundary);
 		mtools::LogFile F(filename, false, false, false);
 		F << "NODECOUNT:  " << l << "\n";
-		F << "GEOMETRY: ";
-		switch (type)
-			{
-			case GeometryType::hyperbolic: { F << "hyperbolic\n"; break; } 
-			case GeometryType::spherical: { F << "spherical\n"; break; }
-			default: { F << "euclidian\n"; break; }
+		F << "GEOMETRY: euclidian\n";
+		if (alpha < 0) 
+			{ // default: first non-boundary vertice
+			for (size_t i = 0;i < l; i++) { if (boundary[i] <= 0) { alpha = (int)i; break; } }
+			MTOOLS_INSURE(alpha > 0);
 			}
-		if (gamma == -1) { gamma = gr[alpha].front(); } // default: choose first neighobur of alpha. 
+		if (gamma == -1) { gamma = gr[alpha].front(); } // default: choose first neighbour of alpha. 
 		F << "ALPHA/BETA/GAMMA: " << (alpha + 1) << " " << (beta + 1) << " " << (gamma + 1) << "\n";
 		F << "FLOWERS: \n";
 		for (size_t i = 0; i < graph.size(); i++)
@@ -184,7 +270,7 @@ namespace mtools
 		for (size_t i = 0; i < graph.size(); i++)
 			{
 			count++;
-			F << doubleToStringHighPrecision(circles[i].radius);
+			F << doubleToStringHighPrecision(circles[i].radius,16);
 			if (count == 4) { F << "\n"; count = 0; } else { F << "   "; }
 			}
 		F << "\n\nCENTERS: \n";
@@ -192,170 +278,271 @@ namespace mtools
 		for (size_t i = 0; i < graph.size(); i++)
 			{
 			count++;
-			F << doubleToStringHighPrecision(circles[i].center.real()) << " " << doubleToStringHighPrecision(circles[i].center.imag());
+			F << doubleToStringHighPrecision(circles[i].center.real(),16) << " " << doubleToStringHighPrecision(circles[i].center.imag(),16);
 			if (count == 2) { F << "\n"; count = 0; } else { F << "   "; }
 			}
 		F << "\n\nEND\n\n";
 		}
 
 
-	/**
-	 * Loads a Circle packing file. The file must be in the format used by the CirclePack program by
-	 * Stephenson.
+	 /**
+	 * Load a circle packing in Stephenson CirclePack .p format.
 	 *
-	 * @param	filename	   	 name of the file.
-	 * @param [in,out]	graph  	 the graph.
-	 * @param [in,out]	boundary the boundary vector (boundary[v] = 1 for boundary and 0 for interior v).
-	 * @param [in,out]	circles	 the circle vector.
-	 * @param [in,out]	type   	 type of geometry.
-	 * @param [in,out]	alpha  	 index of the alpha vertex (interior start vertex for layout)
-	 * @param [in,out]	beta     index of the beta vertex (obsolete, used to be on the boundary, may be -1)
-	 * @param [in,out]	gamma    index of the gamma vertex (rotate so that it is on the positive imaginary line)
-	 */
-	template<typename FPTYPE, typename GRAPH> void loadCirclePacking(const std::string & filename, GRAPH & graph, std::vector<Circle<FPTYPE> > & circles, GeometryType & type, int & alpha, int & beta, int & gamma)
+	 * RQ: read circle and radius without conversion from a geometry to another. 
+	 * 
+	 * @param	filename	name of the file.
+	 * @param	graph   	the graph.
+	 * @param	boundary	The boundary vector (boundar[v] = 1 for boundary vertices and 0 otherwise).
+	 * @param	circles 	The circles.
+	 * @param	alpha   	The alpha vertex: the one use to start the layout (must be interior).
+	 * @param	beta		The beta vertex:  obsolete, (used to be a boundary vertex).
+	 * @param	gamma   	The gamma vertex: indicate that this site should be on the positive imaginary line.
+	 **/
+	template<typename FPTYPE, typename GRAPH> void loadCirclePacking(const std::string & filename, GRAPH & graph, std::vector<int> & boundary, std::vector<Circle<FPTYPE> > & circles, int & alpha, int & beta, int & gamma)
 		{
-		// TODO
+		IArchive ar(filename);
+		size_t nodecount = 0;
+		graph.clear();
+		boundary.clear();
+		circles.clear();
+		alpha = -1; beta = -1; gamma = -1;
+		std::string s;
+		ar & s; MTOOLS_INSURE(mtools::toLowerCase(s) == std::string("nodecount:"));
+		ar & nodecount; MTOOLS_INSURE(nodecount > 0);
+		ar & s;
+		s = mtools::toLowerCase(s);
+		while (1)
+			{
+			bool treated = false;
+			if (s == std::string("end")) { MTOOLS_INSURE(graph.size() > 0); return; }
+			MTOOLS_INSURE((s.size() != 0)&&(s[s.size()-1] == ':'));
+			if (s == std::string("alpha/beta/gamma:"))
+				{
+				ar & alpha & beta & gamma; 
+				alpha--; beta--; gamma--;
+				treated = true;
+				}
+			if (s == std::string("flowers:"))
+				{
+				graph.resize(nodecount);
+				boundary.resize(nodecount,0);
+				circles.resize(nodecount);
+				for(size_t i = 0; i < nodecount; i++)
+					{
+					int index; ar & index; index--;
+					MTOOLS_INSURE((index >= 0) && (index < nodecount) && (graph[index].size() == 0));
+					size_t nbc; ar & nbc; MTOOLS_INSURE(nbc >= 2);
+					graph[index].reserve(nbc+1);
+					for (size_t j = 0; j < nbc; j++) 
+						{
+						int nn; ar & nn; nn--; 
+						MTOOLS_INSURE((nn >= 0) && (nn < nodecount));
+						graph[index].push_back(nn);
+						}
+					int ln; ar & ln; ln--;
+					MTOOLS_INSURE((ln >= 0) && (ln < nodecount));
+					if (ln != graph[index].front()) { graph[index].push_back(ln); boundary[index] = 1; }
+					}
+				treated = true;
+				}
+			if (s == std::string("radii:"))
+				{
+				for (size_t i = 0; i < nodecount; i++) 
+					{ 
+					FPTYPE r; ar & r;  
+					circles[i].radius = r; 
+					}
+				treated = true;
+				}
+			if (s == std::string("centers:"))
+				{
+				for (size_t i = 0; i < nodecount; i++)
+					{
+					FPTYPE a, b; ar & a & b;
+					circles[i].center = mtools::complex<double>(a, b);
+					}
+				treated = true;
+				}
+			ar & s;
+			s = mtools::toLowerCase(s);
+			while (!treated)
+				{
+				if ((s == std::string("end")) || ((s.size()>0)&&(s[s.size()-1] == ':')) )
+					{ 
+					treated = true; 
+					}
+				else 
+					{
+					ar & s;
+					s = mtools::toLowerCase(s);
+					}
+				}
+			}
+		}
+
+
+	/**
+	 * Compute a circle packing layout.
+	 *
+	 * @param	graph	   	The graph.
+	 * @param	boundary   	The boundary vector. any v with boundary[v] > 0 is on the extrior face.
+	 * @param	rad		   	The radii vector.
+	 * @param	strictMaths	true to raise an error is the the layout cannot be accuraetly computed
+	 * 						(ie if FPTYPE has insufficient resolution).
+	 * @param	v0		   	index of the vertex to put at the origin, but if specified, must be an
+	 * 						interior vertex.
+	 *
+	 * @return	The calculated euclidian layout together with it bounding box.
+	 **/
+	template<typename FPTYPE, typename GRAPH> std::pair< std::vector<Circle<FPTYPE> >, Box<FPTYPE, 2> > computeCirclePackLayout(const GRAPH & graph, const std::vector<int> & boundary, const std::vector<FPTYPE> & rad, bool strictMaths = false, int v0 = -1)
+		{
+		MTOOLS_INSURE(graph.size() == rad.size());
+		MTOOLS_INSURE(graph.size() == boundary.size());
+		if (v0 < 0) { for (size_t i = 0; i < boundary.size(); i++) { if (boundary[i] <= 0) { v0 = (int)i; break; } } }
+		MTOOLS_INSURE(boundary[v0] <= 0);
+		std::pair< std::vector<Circle<FPTYPE> >, Box<FPTYPE, 2> > res;
+		if (rad.size() == 0) return res;
+		auto & circle = res.first;
+		auto & R = res.second;
+		circle.resize(rad.size());
+		circle[v0] = Circle<FPTYPE>(complex<FPTYPE>((FPTYPE)0, (FPTYPE)0), rad[v0]);
+		int v1 = graph[v0].front();
+		circle[v1] = Circle<FPTYPE>(complex<FPTYPE>(rad[v0] + rad[v1], (FPTYPE)0), rad[v1]);
+		R.min[0] = -rad[v0];
+		R.max[0] = rad[v0] + 2 * rad[v1];
+		R.max[1] = std::max<FPTYPE>(rad[v0], rad[v1]);
+		R.min[1] = -R.max[1];
+		std::vector<int> doneCircle(rad.size(), 0);
+		doneCircle[v0] = 1;
+		doneCircle[v1] = 1;
+		std::queue<int> st;
+		st.push(v0);
+		if (boundary[v1] <= 0) st.push(v1);
+		while (st.size() != 0)
+			{
+			int index = st.front(); st.pop();
+			auto it = graph[index].begin();
+			while (doneCircle[*it] == 0) { ++it; }
+			auto sit = it, pit = it;
+			++it;
+			if (it == graph[index].end()) { it = graph[index].begin(); }
+			while (it != sit)
+				{
+				if (doneCircle[*it] == 0)
+					{
+					const int x = index;
+					const int y = *pit;
+					const int z = *it;
+					const FPTYPE & rx = rad[x]; if ((strictMaths) && ((rx == (FPTYPE)0.0) || (isnan(rx)))) { MTOOLS_ERROR(std::string("Precision error A. null radius (site ") + mtools::toString(x) + ")"); }
+					const FPTYPE & ry = rad[y]; if ((strictMaths) && ((ry == (FPTYPE)0.0) || (isnan(ry)))) { MTOOLS_ERROR(std::string("Precision error B. null radius (site ") + mtools::toString(y) + ")"); }
+					const FPTYPE & rz = rad[z]; if ((strictMaths) && ((rz == (FPTYPE)0.0) || (isnan(rz)))) { MTOOLS_ERROR(std::string("Precision error C. null radius (site ") + mtools::toString(z) + ")"); }
+					const FPTYPE & alpha = internals_circlepacking::angleEuclidian(rx, ry, rz);
+					if ((strictMaths) && (isnan(alpha))) { MTOOLS_ERROR(std::string("Precision error D. null alpha (site ") + mtools::toString(z) + ")"); }
+					auto w = circle[y].center - circle[x].center;
+					auto rot = complex<FPTYPE>(cos(alpha), sin(alpha));
+					w = w*rot;
+					const FPTYPE norm = std::abs(w);
+					if (norm != (FPTYPE)0.0) { w /= norm; w *= (rx + rz); }
+					else { if (strictMaths) { MTOOLS_ERROR(std::string("Precision error E (site ") + mtools::toString(*it) + ")"); } }
+					w += circle[x].center;
+					circle[z].center = w;
+					if ((circle[z].center == circle[y].center) || (circle[z].center == circle[x].center)) { if (strictMaths) { MTOOLS_ERROR(std::string("Precision error F (site ") + mtools::toString(*it) + ")"); } }
+					circle[z].radius = rad[z];
+					if (w.real() + rad[z] > R.max[0]) { R.max[0] = w.real() + rad[z]; }
+					if (w.real() - rad[z] < R.min[0]) { R.min[0] = w.real() - rad[z]; }
+					if (w.imag() + rad[z] > R.max[1]) { R.max[1] = w.imag() + rad[z]; }
+					if (w.imag() - rad[z] < R.min[1]) { R.min[1] = w.imag() - rad[z]; }
+					doneCircle[z] = 1;
+					if (boundary[z] <= 0) { st.push(z); }
+					}
+				pit = it;
+				++it;
+				if (it == graph[index].end()) { it = graph[index].begin(); }
+				}
+			}
+		return res;
 		}
 
 
 
 
 
-			/**
-			 * Compute a circle packing layout.
-			 *
-			 * @param	v0		   	index of the vertex to put at the origin.
-			 * @param	graph	   	The graph.
-			 * @param	boundary   	The boundary vector.
-			 * @param	rad		   	The radii vector.
-			 * @param	strictMaths	true to raise an error is the the layout cannot be accuraetly computed.
-			 *
-			 * @return	The calculated euclidian layout together with it bounding box.
-			 **/
-			template<typename FPTYPE, typename GRAPH> std::pair< std::vector<Circle<FPTYPE> >, Box<FPTYPE,2> > computeCirclePackLayout(int v0, const GRAPH & graph, const std::vector<int> & boundary, const std::vector<FPTYPE> & rad, bool strictMaths = false)
+	/**
+	* Draw the graph of the circle packing.
+	* -> Draw the circle around each vertex
+	*
+	* @param [in,out]	img	The image to draw onto. It is not erased first.
+	* @param	R		   	The range represented by the image.
+	* @param	circles	   	The vector of circles.
+	* @param	gr		   	The graph.
+	* @parma    filled		true to draw filled circles.						
+	* @param	color	   	color for drawing.
+	* @param	opacity	   	opacity for drawing.
+	* @param	firstIndex 	First index of the sub-graph to draw (included)
+	* @param	lastIndex  	Last index of the sub-graph to draw (excluded) or -1 = until the end.
+	**/
+	template<typename FPTYPE> void drawCirclePacking_Circles(mtools::Img<unsigned char> & img, const mtools::Box<FPTYPE, 2> & R, const std::vector<Circle<FPTYPE> > circles, const std::vector<std::vector<int> > & gr, bool filled, RGBc color, float opacity = 1.0f, int firstIndex = 0, int lastIndex = -1)
+		{
+		MTOOLS_ASSERT(circles.size() == gr.size());
+		if ((lastIndex < 0) || (lastIndex > (int)(gr.size()))) lastIndex = (int)(gr.size());
+		for (int i = firstIndex; i < lastIndex; i++)
+			{
+			img.fBox2_draw_circle(R, circles[i].center, circles[i].radius, color, opacity, filled);
+			}
+		}
+
+
+
+	/**
+	* Draw the graph of the circle packing.
+	* -> Draw lines between the position of the centers of each circles.
+	*
+	* @param [in,out]	img	The image to draw onto. It is not erased first.
+	* @param	R		   	The range represented by the image.
+	* @param	circles	   	The vector of circles.
+	* @param	gr		   	The graph.
+	* @param	color	   	color for drawing.
+	* @param	opacity	   	opacity for drawing.
+	* @param	firstIndex 	First index of the sub-graph to draw (included)
+	* @param	lastIndex  	Last index of the sub-graph to draw (excluded) or -1 = until the end.
+	**/
+	template<typename FPTYPE> void drawCirclePacking_Graph(mtools::Img<unsigned char> & img, const mtools::Box<FPTYPE, 2> & R, const std::vector<Circle<FPTYPE> > circles, const std::vector<std::vector<int> > & gr, RGBc color, float opacity = 1.0f, int firstIndex = 0, int lastIndex = -1)
+		{
+		MTOOLS_ASSERT(circles.size() == gr.size());
+		if ((lastIndex < 0) || (lastIndex > (int)(gr.size()))) lastIndex = (int)(gr.size());
+		for (int i = firstIndex; i < lastIndex; i++)
+			{
+			for (auto it = gr[i].begin(); it != gr[i].end(); ++it)
 				{
-				MTOOLS_INSURE(graph.size() == rad.size());
-				MTOOLS_INSURE(graph.size() == boundary.size());
-				MTOOLS_INSURE(boundary[v0] <= 0);
-				std::pair< std::vector<Circle<FPTYPE> >, Box<FPTYPE, 2> > res;
-				if (rad.size() == 0) return res;
-				auto & circle = res.first;
-				auto & R = res.second;
-				circle.resize(rad.size());
-				circle[v0] = Circle<FPTYPE>(complex<FPTYPE>((FPTYPE)0, (FPTYPE)0), rad[v0]);
-				int v1 = graph[v0].front();
-				circle[v1] = Circle<FPTYPE>(complex<FPTYPE>(rad[v0] + rad[v1], (FPTYPE)0), rad[v1]);
-				R.min[0] = -rad[v0];
-				R.max[0] = rad[v0] + 2*rad[v1];
-				R.max[1] = std::max<FPTYPE>(rad[v0], rad[v1]);
-				R.min[1] = -R.max[1];
-				std::vector<int> doneCircle(rad.size(),0);
-				doneCircle[v0] = 1;
-				doneCircle[v1] = 1;
-				std::queue<int> st;
-				st.push(v0);
-				if (boundary[v1] <= 0) st.push(v1);
-				while (st.size() != 0)
-					{
-					int index = st.front(); st.pop();
-					auto it = graph[index].begin();
-					while (doneCircle[*it] == 0) { ++it; }
-					auto sit = it, pit = it;
-					++it;
-					if (it == graph[index].end()) { it = graph[index].begin(); }
-					while (it != sit)
-						{
-						if (doneCircle[*it] == 0)
-							{
-							const int x = index;
-							const int y = *pit;
-							const int z = *it;
-							const FPTYPE & rx = rad[x]; if ((strictMaths)&&((rx == (FPTYPE)0.0)||(isnan(rx)))) { MTOOLS_ERROR(std::string("Precision error A. null radius (site ") + mtools::toString(x) + ")"); }
-							const FPTYPE & ry = rad[y]; if ((strictMaths)&&((ry == (FPTYPE)0.0)||(isnan(ry)))) { MTOOLS_ERROR(std::string("Precision error B. null radius (site ") + mtools::toString(y) + ")"); }
-							const FPTYPE & rz = rad[z]; if ((strictMaths)&&((rz == (FPTYPE)0.0)||(isnan(rz)))) { MTOOLS_ERROR(std::string("Precision error C. null radius (site ") + mtools::toString(z) + ")"); }
-							const FPTYPE & alpha = internals_circlepacking::angleEuclidian(rx, ry, rz);
-							if ((strictMaths) && (isnan(alpha))) { MTOOLS_ERROR(std::string("Precision error D. null alpha (site ") + mtools::toString(z) + ")"); }
-							auto w = circle[y].center - circle[x].center;
-							auto rot = complex<FPTYPE>(cos(alpha), sin(alpha));
-							w = w*rot;
-							const FPTYPE norm = std::abs(w);
-							if (norm != (FPTYPE)0.0) { w /= norm; w *= (rx + rz); } else { if (strictMaths) { MTOOLS_ERROR(std::string("Precision error E (site ") + mtools::toString(*it) + ")"); } }
-							w += circle[x].center;
-							circle[z].center = w;
-							if ((circle[z].center == circle[y].center) || (circle[z].center == circle[x].center)) { if (strictMaths) { MTOOLS_ERROR(std::string("Precision error F (site ") + mtools::toString(*it) + ")"); } }
-							circle[z].radius = rad[z];
-							if (w.real() + rad[z] > R.max[0]) { R.max[0] = w.real() + rad[z]; }
-							if (w.real() - rad[z] < R.min[0]) { R.min[0] = w.real() - rad[z]; }
-							if (w.imag() + rad[z] > R.max[1]) { R.max[1] = w.imag() + rad[z]; }
-							if (w.imag() - rad[z] < R.min[1]) { R.min[1] = w.imag() - rad[z]; }
-							doneCircle[z] = 1;
-							if (boundary[z] <= 0) { st.push(z); }
-							}
-						pit = it;
-						++it;
-						if (it == graph[index].end()) { it = graph[index].begin(); }
-						}
-					}
-				return res;
+				if ((*it >= firstIndex) && (*it <= lastIndex)) { img.fBox2_drawLine(R, circles[i].center, circles[*it].center, color, opacity); }
 				}
+			}
+		}
 
 
-			/**
-			 * Draw circle packing into an image.
-			 * 
-			 * Beware when working with 4-layers image that the image is not fully transparent otherwise
-			 * the texts will not appear !
-			 *
-			 * @param [in,out]	img	The image to draw onto. It is not erased first.
-			 * @param	R		   	The range represented by the image.
-			 * @param	circles	   	The vector of circles.
-			 * @param	gr		   	The graph.
-			 * @param	drawCircles	true to draw the circles.
-			 * @param	filled	   	true to fill the circles if they are drawn.
-			 * @param	drawLabels 	true to draw the labels.
-			 * @param	drawLines  	true to draw the graph lines.
-			 * @param	color	   	color for drawing.
-			 * @param	opacity	   	opacity for drawing.
-			 * @param	firstIndex 	First index of the sub-graph to draw (inclusive)
-			 * @param	lastIndex  	Last index of the sub-graph to draw (inclusive) -1 = until the end.
-			 **/
-			template<typename FPTYPE> void drawCirclePacking(mtools::Img<unsigned char> & img, const mtools::Box<FPTYPE, 2> & R, const std::vector<Circle<FPTYPE> > circles, const std::vector<std::vector<int> > & gr,
-				                                             bool drawCircles, bool filled, bool drawLabels, bool drawLines, RGBc color, float opacity = 1.0f, int firstIndex = 0, int lastIndex = -1)
-				{
-				MTOOLS_ASSERT(circles.size() == gr.size());
-				if ((lastIndex < 0) || (lastIndex >= (int)(gr.size() - 1))) lastIndex = (int)(gr.size() - 1);
-				if (drawCircles)
-					{
-					for (int i = firstIndex; i <= lastIndex; i++) 
-						{ 
-						img.fBox2_draw_circle(R, circles[i].center, circles[i].radius, color, opacity, filled);
-						}
-					}
-				if (drawLines)
-					{
-					for (int i = firstIndex; i <= lastIndex; i++)
-						{
-						for (auto it = gr[i].begin(); it != gr[i].end(); ++it)
-							{
-							if ((*it >= firstIndex) && (*it <= lastIndex)) { img.fBox2_drawLine(R, circles[i].center, circles[*it].center,color,opacity); }
-							}
-						}
-					}
-				if (drawLabels)
-					{
-					for (int i = firstIndex; i <= lastIndex; i++)
-						{
-						img.fBox2_drawText(R,mtools::toString(i+1),circles[i].center,'c','c', 20 , true, color, opacity);
-						}
-					}
-				}
-
-	
-
-
-
-
-
+	/**
+	* Draw the graph of the circle packing.
+	* -> Draw the labels around each vertex
+	*
+	* @param [in,out]	img	The image to draw onto. It is not erased first.
+	* @param	R		   	The range represented by the image.
+	* @param	circles	   	The vector of circles.
+	* @param	gr		   	The graph.
+	* @parma    fontsize	size of the font to use
+	* @param	color	   	color for drawing.
+	* @param	opacity	   	opacity for drawing.
+	* @param	firstIndex 	First index of the sub-graph to draw (included)
+	* @param	lastIndex  	Last index of the sub-graph to draw (excluded) or -1 = until the end.
+	**/
+	template<typename FPTYPE> void drawCirclePacking_Labels(mtools::Img<unsigned char> & img, const mtools::Box<FPTYPE, 2> & R, const std::vector<Circle<FPTYPE> > circles, const std::vector<std::vector<int> > & gr, int fontsize, RGBc color, float opacity = 1.0f, int firstIndex = 0, int lastIndex = -1)
+		{
+		MTOOLS_ASSERT(circles.size() == gr.size());
+		if ((lastIndex < 0) || (lastIndex > (int)(gr.size() - 1))) lastIndex = (int)(gr.size());
+		for (int i = firstIndex; i < lastIndex; i++)
+			{
+			img.fBox2_drawText(R, mtools::toString(i + 1), circles[i].center, 'c', 'c', fontsize, true, color, opacity);
+			}
+		}
 
 
 
@@ -494,7 +681,7 @@ namespace mtools
 
 
 			/**
-			 * Run the algoritm for computing the value of the radii.
+			 * Run the algorithm for computing the value of the radii.
 			 *
 			 * @param	verbose			true to print progress to mtools::cout.
 			 * @param	eps				the required precision, in L2 norm.
