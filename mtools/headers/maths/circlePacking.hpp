@@ -464,6 +464,185 @@ namespace mtools
 		}
 
 
+	/**
+	 * Convert distance from the origin from euclidian to hyperbolic
+	 */
+	template<typename FPTYPE> FPTYPE distRtoH(const FPTYPE & r) { return log((1 + r)/(1 - r)); }
+
+
+	/**
+	* Convert distance from the origin from hyperbolic to euclidian
+	*/
+	template<typename FPTYPE> FPTYPE distHtoR(const FPTYPE & h) { return (exp(h) - 1)/(exp(h) + 1); }
+
+
+	/**
+	 * convert distance from the s parametrization to real hyperbolic distance. s = exp(-h).
+	 */
+	template<typename FPTYPE> FPTYPE distHtoS(const FPTYPE & h) { return exp(-h); }
+
+
+	/**
+	* convert real hyperbolic distance to s parametrization. h = -log(s).
+	*/
+	template<typename FPTYPE> FPTYPE distStoH(const FPTYPE & s) { return -log(s); }
+
+
+	/**
+	 * convert hyperbolic, s_parametrized distance from origin to euclidian distance.
+	 * Same as distHtoR(distStoH(s))
+	 */
+	template<typename FPTYPE> FPTYPE distStoR(const FPTYPE & s) { return (1-s)/(1+s); }
+
+
+	 /**
+	 * convert euclidian distance to hyperbolic, s_parametrized distance from origin.
+	 * Same as distHtoS(distRtoH(s))
+	 */
+	template<typename FPTYPE> FPTYPE distRtoS(const FPTYPE & r) { return (1-r)/(1+r); }
+
+
+
+	/**    
+	* Let C1 be the circle centered at the origin with euclidian radius r1. 
+	* Let C2 be a circle tangent to C1 with hyperbolic s-radius s2.
+	* 
+	* Returns the euclidian radii r2 of C2.
+	* 
+	* The computation is obtained in the following way. 
+	* 1) Compute the hyperbolic h2 radius from s2 via h2 = -log s2
+	* 2) Compute the euclidian raddi rr2 if C2 was centered at the origin rr2 = (exp(h2) - 1)/(exp(h2) + 1);  
+	*    -> Combining the two transformations give rr2 = (1 - s2)/(1 + s2)
+
+	* 3 Let M be the mobius transformation with M(-rr2) = r1 while leaving the whole
+	*   real line invariant and with M(-1) = -1, M(1) = 1.  
+	*   -> M(z) =  ((r1*rr2 + 1)*z + (r1 + rr2)) / ( (r1 + rr2)*z + (r1*rr2 + 1))
+	* 
+	* 3) The euclidian raddi r2 is given by r2 = (M(rr2) - r1)/2
+	*
+	* Putting everything together yields:
+	* 
+	*    r2 = 0.5*( 1 + (r1*s2)^2 - r1^2 -s2^2 )/( 1 + r1 + s2^2 - r1*(s2^2) )
+	*   
+	* This formula works even if s2 = 0 (ie the circle C2 has infinite radius). 
+	**/
+	template<typename FPTYPE> FPTYPE tangentCircleStoR(const FPTYPE & r1, const FPTYPE & s2)
+		{
+		const FPTYPE r1_sqr = r1*r1;
+		const FPTYPE s2_sqr = s2*s2;
+		return ((FPTYPE)1 + r1_sqr*s2_sqr - r1_sqr - s2_sqr  ) / (((FPTYPE)2)*( (FPTYPE)1 + r1 + s2_sqr - r1*s2_sqr ));
+		}
+
+
+	
+
+
+
+	/**
+	 * Compute the layout of an hyperbolic packing label (ie when the radius are computed for the hyperbolic
+	 * metric instead of the euclidian one).
+	 *
+	 * @param	graph	   	The graph.
+	 * @param	boundary   	The boundary. Any boundary[v] > 0 is on the outer face.
+	 * @param	srad	   	The vector of hyperbolic radii given in s-radii:  s = exp(-h) where h is the real 
+	 * 						hyperbolic radius. Thus, s = 0 for infinite radius.
+	 * @param	strictMaths	true to raise an error if FPTYPE does not allows sufficient precision for layout.
+	 * @param	v0		   	Index of the vertex to lay out at the origin of the disk. 
+	 *
+	 * @return	The positions of the circles for the packing label. This yields a packing inside the unit disk. 
+	 */
+	template<typename FPTYPE, typename GRAPH> std::vector<Circle<FPTYPE> > computeCirclePackLayoutHyperbolic(const GRAPH & graph, const std::vector<int> & boundary, const std::vector<FPTYPE> & srad, bool strictMaths = false, int v0 = -1)
+		{
+		Circle<FPTYPE>::setPrecision(1.0e-13);
+
+		MTOOLS_INSURE(graph.size() == srad.size());
+		MTOOLS_INSURE(graph.size() == boundary.size());
+		if (v0 < 0) { for (size_t i = 0; i < boundary.size(); i++) { if (boundary[i] <= 0) { v0 = (int)i; break; } } }
+		MTOOLS_INSURE(boundary[v0] <= 0);
+
+		std::vector<Circle<FPTYPE> > circle(srad.size());
+		
+		circle[v0] = Circle<FPTYPE>(complex<FPTYPE>((FPTYPE)0, (FPTYPE)0), distStoR(srad[v0]));  // lay the circle at the origin
+		
+		int v1 = graph[v0].front();												//
+		circle[v1].radius = tangentCircleStoR(circle[v0].radius, srad[v1]);		// lay v1 on the right of v0.
+		circle[v1].center = circle[v0].radius + circle[v1].radius;				// 
+
+		std::vector<int> doneCircle(srad.size(), 0);
+		doneCircle[v0] = 1;
+		doneCircle[v1] = 1;
+		std::queue<int> st;
+		st.push(v0); 
+		if (boundary[v1] <= 0) st.push(v1);
+		while (st.size() != 0)
+			{
+			int index = st.front(); st.pop();
+			auto it = graph[index].begin();
+			while (doneCircle[*it] == 0) { ++it; }
+			auto sit = it, pit = it;
+			++it;
+			if (it == graph[index].end()) { it = graph[index].begin(); }
+			while (it != sit)
+				{
+				if (doneCircle[*it] == 0)
+					{
+					const int ix = index; // index of the  center circle C(x)
+					const int iy = *pit;  // index of the tangent circle C(y) already laid out.
+					const int iz = *it;	  // index of the circle C(z) to lay out.
+
+
+					auto hypcx = circle[ix].euclidianToHyperbolic().center; // hyperbolic center for C(x)
+					mtools::Mobius<FPTYPE> M(hypcx); // Mobius transformation that centers the circle C(x) around 0 (M is an involution)
+
+
+					FPTYPE rx = distStoR(srad[ix]);					// radius of C(x) when it is centered on 0
+					if ((strictMaths) && ((rx == (FPTYPE)0.0) || (isnan(rx)))) { MTOOLS_ERROR(std::string("Precision error A. null radius (site ") + mtools::toString(ix) + ")"); }
+					FPTYPE ry = tangentCircleStoR(rx, srad[iy]);	// radius of C(y) when C(x) centered on 0
+					if ((strictMaths) && ((ry == (FPTYPE)0.0) || (isnan(ry)))) { MTOOLS_ERROR(std::string("Precision error B. null radius (site ") + mtools::toString(iy) + ")"); }
+					FPTYPE rz = tangentCircleStoR(rx, srad[iz]);	// radius of C(z) when C(x) centered on 0
+					if ((strictMaths) && ((rz == (FPTYPE)0.0) || (isnan(rz)))) { MTOOLS_ERROR(std::string("Precision error C. null radius (site ") + mtools::toString(iz) + ")"); }
+
+					MTOOLS_ASSERT(std::abs((M*circle[ix]).center) < 1.0e-13); //TEST
+					MTOOLS_ASSERT(std::abs(rx - M*circle[ix].radius) < 1.0e-13);
+					MTOOLS_ASSERT(std::abs(ry - M*circle[iy].radius) < 1.0e-13);
+
+					const FPTYPE & alpha = internals_circlepacking::angleEuclidian(rx, ry, rz); // angle <y,x,z>
+					if ((strictMaths) && (isnan(alpha))) { MTOOLS_ERROR(std::string("Precision error D. null alpha (site ") + mtools::toString(iz) + ")"); }
+
+					const Circle<FPTYPE> Cy = M*circle[iy];	// position of C(y) after the tranformation M (ie when C(x) is centered at 0)
+		
+					auto w = (Cy.center)*complex<FPTYPE>(cos(alpha), sin(alpha)); // apply a rotation of angle alpha to the center of C(y)
+					const FPTYPE norm = std::abs(w); // resize the lenght of the vector to be rx + rz.
+					if (norm != (FPTYPE)0.0) { w /= norm; w *= (rx + rz); }	else { if (strictMaths) { MTOOLS_ERROR(std::string("Precision error E (site ") + mtools::toString(*it) + ")"); } }
+					
+					const Circle<FPTYPE> Cz(w, rz); // position of C(z) when C(x) is centered.
+					circle[iz] = (M*Cz);			// move back to the correct position by applying the inverse tranformation.
+
+					doneCircle[iz] = 1;
+					if (boundary[iz] <= 0) { st.push(iz); }
+					}
+				pit = it;
+				++it;
+				if (it == graph[index].end()) { it = graph[index].begin(); }
+				}
+			}
+		return circle;
+		}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1285,3 +1464,116 @@ namespace mtools
 
 /* end of file */
 
+
+
+	/*
+	 HYPERBOLIC
+
+  
+		 do { // Make sure factor < 1.0
+
+			 c1 = 0.0;
+
+			 for (int j = 0; j < aimnum; j++) 
+				 {
+
+				 angle = 0;
+
+				 v // -> index du site a traiter
+			     r = rdata[v].rad;  // radius du site, si <0 met 0.
+				 sr = sqrt(r);  //  racine carre
+				 N =  // nombre de voisins				 
+			     twor = 2 * r; // dex fois le rayon
+
+				 r2 = rad[gr[v][0]]; radius du premier voisin
+				 m2 = (r2 > 0) ? (1 - r2) / (1 - r * r2) : (double)1; 
+
+				 for (int k = 1; k <= N; k++) 
+					 { // loop through petals
+					 r3 = rad[gr[v][k]];
+					 m3 = (r3 > 0) ? (1 - r3) / (1 - r * r3) : (double)1;
+				     angle += acos(1 - twor * m2 * m3); // angle																 
+					 m2 = m3;
+					 }
+					 
+
+				 denom = 1.0 / (2.0 * ((double)gr[v].size()));
+
+				 delta = sin(twopi*denom);
+				 beta = sin(angle*denom);
+
+				 r2 = (bet - sr)/(bet * r - sr); // reference radius 
+				 if (r2 > 0) 
+					 { // calc new label
+					 t1 = 1 - r2;
+					 t2 = 2 * del;
+					 t3 = t2 / (sqrt(t1 * t1 + t2 * t2 * r2) + t1);
+					 r2 = t3 * t3;
+					 }
+				 else r2 = del * del; // use lower limit
+				 rdata[v].rad = r2; // store new label
+				 rdata[v].curv = fbest; // store new anglesum
+				 fbest = fbest - faim;
+				 c1 += fbest * fbest; // accumulate error
+				 }
+			 c1 = Math.sqrt(c1);
+
+			 factor = c1 / c0;
+			 if (factor >= 1.0) {
+				 c0 = c1;
+				 key = 1;
+				 numBadCuts++;
+				 }
+
+
+
+
+	 EUCLIDIAN 
+
+
+	    for (j=0;j<aimnum;j++) {
+	    	v = index[j];
+	    	faim = rdata[v].aim;         // get target sum 
+	    	r = rdata[v].rad;            // get present label
+	    	// compute anglesum inline (using local data)
+	    	fbest=0.0;
+	    	j2=kdata[v].flower[0];
+	    	r2=rdata[j2].rad;
+	    	if (!p.overlapStatus) {
+	    		m2 = r2/(r+r2);
+	    		for (int n=1;n<=kdata[v].num;n++) {
+	    			m1 = m2;
+	    			r2 = rdata[kdata[v].flower[n]].rad;
+	    			m2 = r2/(r+r2);
+	    			fbest += Math.acos(1-2*m1*m2);
+	    		}
+	    	}
+	    	else  {
+	    		o2=kdata[v].overlaps[0];
+			    for (int n=1;n<=kdata[v].num;n++) {
+			    	j1=j2;r1=r2;o1=o2;
+			    	j2=kdata[v].flower[n];
+			    	r2=rdata[j2].rad;
+			    	o2=kdata[v].overlaps[n];
+			    	ovlp=kdata[j1].overlaps[p.nghb(j1,j2)];
+			    	// note: we don't check for errors in utilPacket
+			    	EuclMath.e_cos_overlap(r,r1,r2,ovlp,o2,o1,utilPacket);
+			    	fbest += Math.acos(utilPacket.value);
+			    }
+	    	}
+
+	    	// use the model to predict the next value 
+	    	N = 2*kdata[v].num;
+	    	del = Math.sin(faim/N);
+	    	bet = Math.sin(fbest/N);
+	    	r2 = r*bet*(1-del)/(del*(1-bet));
+	    	// store as new radius label 
+	    	if (r2<0) 
+	    		throw new PackingException();
+	    	rdata[v].rad = r2;
+	    	rdata[v].curv = fbest;  // store new angle sum
+	    	fbest -= faim;
+	    	c0 += fbest*fbest;   // accum abs error 
+	    }
+	    c0 = Math.sqrt(c0);
+		*/

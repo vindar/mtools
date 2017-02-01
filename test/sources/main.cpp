@@ -7,7 +7,7 @@ using namespace mtools;
 
 
 
-MT2004_64 gen; // RNG with 2M vertices.
+MT2004_64 gen(123); // RNG with 2M vertices.
 
 
 
@@ -143,6 +143,22 @@ void loadTest(std::string filename)
 
 
 
+
+
+std::vector<double> computeHyperbolicRadii(const std::vector<Circle<double> > & circle)
+	{
+	std::vector<double> srad(circle.size());
+	for (size_t i = 0; i < circle.size(); i++)
+		{
+		double s = circle[i].euclidianToHyperbolic().radius;
+		if (s < 0) { s = 0; }
+		srad[i] = s;
+		}
+	return srad;
+	}
+
+
+
 void testBall(int N)
 	{
 						   
@@ -241,13 +257,36 @@ void testBall(int N)
 	circleVec.resize(gr.size());
 
 	mtools::saveCirclePacking(std::string("trig") + mtools::toString(gr.size()) + ".p", gr, boundary, circleVec, v1);
-	/*	
+		
 	Plotter2D Plotter;
 	auto P2 = makePlot2DCImg(im, "circles");
 	Plotter[P2];
 	Plotter.autorangeXY();
 	Plotter.plot();
-	*/
+	
+
+	/* compute hyperbolic radii */
+	auto srad = computeHyperbolicRadii(circleVec);
+
+	cout << "Laying out the circles in hyperbolic space...\n";
+	auto circleVec2 = computeCirclePackLayoutHyperbolic(gr, boundary, srad, false);
+
+	{
+	im.clear(RGBc::c_White);
+	drawCirclePacking_Circles(im, R, circleVec2, gr, true, RGBc::c_Red, 0.2f, 0, (int)gr.size());
+	drawCirclePacking_Graph(im, R, circleVec2, gr, RGBc::c_Black, 1.0f, 0, (int)gr.size());
+	drawCirclePacking_Labels(im, R, circleVec2, gr, 13, RGBc::c_Green, 1.0f, 0, (int)gr.size());
+
+	Plotter2D Plotter;
+	auto P2 = makePlot2DCImg(im, "circles");
+	Plotter[P2];
+	Plotter.autorangeXY();
+	Plotter.plot();
+	}
+
+
+
+
 	}
 
 
@@ -267,7 +306,7 @@ void testBall(int N)
 
 		fBox2 R(-1, 1, -1, 1);
 
-		/*
+		
 		CirclePackingLabelGPU<double> CPTEST(true);	// prepare for packing
 		CPTEST.setTriangulation(gr, bound);			//
 
@@ -288,8 +327,7 @@ void testBall(int N)
 
 		cout << "Laying out the circles...\n";
 		std::tie(circles, R) = computeCirclePackLayout(gr, bound, CPTEST.getRadii(),false,alpha);
-		*/
-
+		
 
 		int LX = 4000;
 		int LY = 4000;
@@ -322,7 +360,8 @@ int main(int argc, char *argv[])
 	//loadTest("trig528.txt");
 	//return 0;
 
-	testBall(1000000); 
+	testBall(20000); 
+	/*
 	testBall(1100001);
 	testBall(1200002);
 	testBall(1400003);
@@ -331,7 +370,7 @@ int main(int argc, char *argv[])
 	testBall(2000006);
 	testBall(2200007);
 	//	loadPack("trig97484.p");
-
+	*/
 	return 0;
 
 

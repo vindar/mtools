@@ -50,7 +50,7 @@ namespace mtools
 			/**
 			* Constructor.
 			**/
-			Circle(std::complex<FPTYPE> & centerpos, const FPTYPE & rad) : center(centerpos), radius(rad) {}
+			Circle(const std::complex<FPTYPE> & centerpos, const FPTYPE & rad) : center(centerpos), radius(rad) {}
 
 
 			/**
@@ -86,56 +86,50 @@ namespace mtools
 			/**
 			 * Convert a circle from a euclidian representation to the hyperbolic one.
 			 *
-			 * The radius for the hyperbolic circle is the 'x-radius' ie such  that x = 1 - exp(-2h)
-			 * where h is the real hyperbolic radius. Hence it is a number between 0 (null radius) and 1
-			 * (infinite radius).
+			 * The radius for the hyperbolic circle is the s-radius ie such that s = exp(-h) where h 
+			 * is the real hyperbolic radius. Hence it is a number between 0 (infinite radius) and 1
+			 * (null radius).
 			 *
 			 * @return	The 'hyperbolic' circle given by its hyperbolic center inside the unit disk and its
-			 * 			hyperbolic x-radii.
-			 * 			If the circle is an horocycle Then the center is set at the tangency point and the
+			 * 			hyperbolic s-radius
+			 * 			If the circle is an horocycle Then the center is set to the tangency point and the
 			 * 			radius is set as the negative of the euclidian radius (doing this instead of setting
-			 * 			the x-radius to 1 enables to go back to euclidian later on).
+			 * 			the s-radius to 0 enables to go back to euclidian later on).
 			 **/
 			Circle euclidianToHyperbolic() const
 				{
-				MTOOLS_ASSERT(radius >= -_eps); // radius should not be negative
-				const FPTYPE d = std::abs(center);
-				if (radius <= _eps) { MTOOLS_ASSERT(d <= (FPTYPE)1 + _eps); return *this; } // radius is zero. 
+				MTOOLS_ASSERT(radius >= (FPTYPE)0);				// radius should not be negative
+				const FPTYPE d = std::abs(center);				// distance to origin
 				MTOOLS_ASSERT(d + radius <= (FPTYPE)1 + _eps); // the circle should be contained in the closed unit disk
-				if (d + radius >= (FPTYPE)1 - _eps) 
-					return Circle(((d<=_eps) ? (complex<FPTYPE>((FPTYPE)0, (FPTYPE)0)) :  (center/d)), -radius); // horocycle
+				if (radius <= _eps) {  return Circle(center, 1 - radius); } // radius is zero. 				
+				if (d + radius >= (FPTYPE)1 - _eps) return Circle(((d<=_eps) ? (complex<FPTYPE>((FPTYPE)0, (FPTYPE)0)) :  (center/d)), -radius); // horocycle
 				const FPTYPE d2 = std::norm(center);
 				const FPTYPE radius2 = radius*radius;
 				const FPTYPE s = sqrt((1 - 2 * radius + radius2 - d2) / (1 + 2 * radius + radius2 - d2));
-				const FPTYPE hyp_rad = (FPTYPE)1 - s*s;
-				if (hyp_rad >= (FPTYPE)1 - _eps) return Circle(center / d, -radius); // horocycle
-				if (d <= _eps) return Circle(complex<FPTYPE>((FPTYPE)0, (FPTYPE)0), hyp_rad);
+				if (s <= _eps) return Circle(((d <= _eps) ? (complex<FPTYPE>((FPTYPE)0, (FPTYPE)0)) : (center / d)), -radius); // horocycle
+				if (d <= _eps) return Circle(complex<FPTYPE>((FPTYPE)0, (FPTYPE)0), s);
 				const FPTYPE v = sqrt(((FPTYPE)1 + 2 * d + d2 - radius2) / ((FPTYPE)1 - 2 * d + d2 - radius2));
 				const FPTYPE l = (v - 1) / (v + 1);
 				const FPTYPE g = l / d;
-				return Circle(g*center, hyp_rad);
+				return Circle(g*center, s);
 				}
 
 
 			/**
 			 * Convert an hyperbolic circle to its euclidian representation.
 			 *
-			 * The input hyperbolic circle is parametrised by its hyperbolic center and its hyperbolic x-
-			 * radius defined by x = 1 - exp(-2h) where h is the real hyperbolic radius.
-			 * If the hyperbolic circle is an horocycle, its radius should be the inverse of the euclidian
-			 * raddii (as obtained with euclidianToHyperbolic() ).
+			 * The input hyperbolic circle is gven by its hyperbolic center and its hyperbolic s-radius defined 
+			 * by s = exp(-h) where h is the real hyperbolic radius. If the hyperbolic circle is an horocycle, its 
+			 * radius should be the inverse of the euclidian one (compatible with euclidianToHyperbolic() ).
 			 *
 			 * @return	The corresponding euclidian circle.
 			 **/
 			Circle hyperbolicToEuclidian() const
 				{
-				if (radius <= _eps) // radii is negative or zero
-					{
-					if (radius >= -_eps) return *this; // null radius
-					return Circle((1 + radius)*center, -radius);	// horocycle				
-					}
-				MTOOLS_ASSERT(radius < (FPTYPE)1); // should be a real circle
-				const FPTYPE s = sqrt(1 - radius);
+				const FPTYPE & s = radius; // radius is the s-radius
+				if (s < 0) { return Circle(((FPTYPE)1 + s)*center, -s); } // horocycle
+				MTOOLS_ASSERT(s > 0); // should be a real circle, not infinite raduis.
+				if (s >= (FPTYPE)1 - _eps) return Circle(center, (FPTYPE)1 - s);
 				const FPTYPE l = std::abs(center);  const FPTYPE g = (1 + l) / (1 - l);
 				const FPTYPE a = g / s;               const FPTYPE d = (a - 1) / (a + 1);
 				const FPTYPE b = g*s;               const FPTYPE k = (b - 1) / (b + 1);
