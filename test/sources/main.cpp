@@ -7,7 +7,7 @@ using namespace mtools;
 
 
 
-MT2004_64 gen(3456); // RNG with 2M vertices.
+MT2004_64 gen; // RNG with 2M vertices.
 
 
 
@@ -323,13 +323,13 @@ int main(int argc, char *argv[])
 	//return 0;
 
 	testBall(1000000); 
-	testBall(1000001);
-	testBall(1000002);
-	testBall(1000003);
-	testBall(2000004);
-	testBall(2000005);
+	testBall(1100001);
+	testBall(1200002);
+	testBall(1400003);
+	testBall(1600004);
+	testBall(1800005);
 	testBall(2000006);
-	testBall(2000007);
+	testBall(2200007);
 	//	loadPack("trig97484.p");
 
 	return 0;
