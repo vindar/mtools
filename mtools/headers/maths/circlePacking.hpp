@@ -89,39 +89,91 @@ namespace mtools
 
 
 		/** Compute the L2 error for the angle sum for all vertices on the range [0,N-1] **/
-		template<typename FPTYPE, typename GRAPH> FPTYPE errorL2(const GRAPH & gr, const std::vector<FPTYPE> & rad, const int N)
+		template<typename FPTYPE, typename GRAPH> FPTYPE errorL2euclidian(const GRAPH & gr, const std::vector<FPTYPE> & rad, const int N)
 			{
 			CONST FPTYPE twopi = (2*acos((FPTYPE)-1));
 			FPTYPE e = (FPTYPE)0;
 			FPTYPE C = (FPTYPE)0;
 			for (int i = 0; i < N; ++i) // use Kahan summation algorithm
 				{
-				const FPTYPE a = (angleSumEuclidian(i,gr,rad) - twopi);
-				FPTYPE Y = (a*a) - C;
-				FPTYPE T = e + Y;
-				C = (T - e) - Y;
-				e = T;
+				if (gr[i].size() > 1)
+					{
+					const FPTYPE a = (angleSumEuclidian(i, gr, rad) - twopi);
+					FPTYPE Y = (a*a) - C;
+					FPTYPE T = e + Y;
+					C = (T - e) - Y;
+					e = T;
+					}
 				}
 			return sqrt(e);
 			}
 
 
 		/** Compute the L1 error for the angle sum for all vertices on the range [0,N-1] **/
-		template<typename GRAPH, typename FPTYPE> FPTYPE errorL1(const GRAPH & gr, const std::vector<FPTYPE> & rad, const int N)
+		template<typename GRAPH, typename FPTYPE> FPTYPE errorL1euclidian(const GRAPH & gr, const std::vector<FPTYPE> & rad, const int N)
 			{
 			CONST FPTYPE twopi = 2 * acos((FPTYPE)-1);
 			FPTYPE e = (FPTYPE)0;
 			FPTYPE C = (FPTYPE)0;
 			for (int i = 0; i < N; ++i) // use Kahan summation algorithm
 				{
-				const FPTYPE a = (angleSumEuclidian(i, gr, rad) - twopi);
-				FPTYPE Y = ((a > (FPTYPE)0) ? a : -a) - C;
-				FPTYPE T = e + Y;
-				C = (T - e) - Y;
-				e = T;
+				if (gr[i].size() > 1)
+					{
+					const FPTYPE a = (angleSumEuclidian(i, gr, rad) - twopi);
+					FPTYPE Y = ((a > (FPTYPE)0) ? a : -a) - C;
+					FPTYPE T = e + Y;
+					C = (T - e) - Y;
+					e = T;
+					}
 				}
 			return e;
 			}
+
+
+		/**
+		* Perform an exploration of the graph that can be used for the layout of the circles.
+		*
+		* @param	gr		  	The graph to explore.
+		* @param	v0		  	The start vertex v0.
+		* @param	v1		  	The second vertex.
+		* @param	v1interior	true to also visit the neighour around v1.
+		* @param	fun		  	Function of the form bool f(int x,int y,int iz) called for each new
+		* 						vertex visited z.
+		*
+		* @return	The total number of site visited (not counting v0 and v1 for which fun() is not called).
+		**/
+		template<typename GRAPH> size_t layoutExplorer(const GRAPH & graph, int v0, int v1, bool explorearoundv1, std::function<bool(int, int, int)> fun)
+			{
+			std::vector<int> doneCircle(graph.size(), 0);
+			doneCircle[v0] = 1;
+			doneCircle[v1] = 1;
+			size_t tot = 0;
+			std::queue<int> st;
+			st.push(v0);
+			if (explorearoundv1) st.push(v1);
+			while (st.size() != 0)
+				{
+				int index = st.front(); st.pop();
+				auto it = graph[index].begin();
+				while (doneCircle[*it] == 0) { ++it; }
+				auto sit = it, pit = it; ++it;
+				if (it == graph[index].end()) { it = graph[index].begin(); }
+				while (it != sit)
+					{
+					if (doneCircle[*it] == 0)
+						{
+						if (fun(index, *pit, *it)) { st.push(*it); }
+						doneCircle[*it] = 1;
+						tot++;
+						}
+					pit = it;
+					++it;
+					if (it == graph[index].end()) { it = graph[index].begin(); }
+					}
+				}
+			return tot;
+			}
+
 
 		}
 
@@ -134,7 +186,7 @@ namespace mtools
 	 * @param	boundary	The boundary: any vertex boundary[v] > 0 belongs to the exterior face thus not counted.
 	 * @param	rad			The radiui.
 	 **/
-	template<typename FPTYPE, typename GRAPH> FPTYPE circlePackErrorL2(const GRAPH & gr, const std::vector<int> & boundary, const std::vector<FPTYPE> & rad)
+	template<typename FPTYPE, typename GRAPH> FPTYPE circlePackErrorL2euclidian(const GRAPH & gr, const std::vector<int> & boundary, const std::vector<FPTYPE> & rad)
 		{
 		size_t l = (int)gr.size();
 		MTOOLS_INSURE((rad.size() == l) && (boundary.size() == l));
@@ -163,12 +215,13 @@ namespace mtools
 	* @param	boundary	The boundary: any vertex boundary[v] > 0 belongs to the exterior face thus not counted.
 	* @param	circles			The circles around each vertex.
 	**/
-	template<typename FPTYPE, typename GRAPH> FPTYPE circlePackErrorL2(const GRAPH & gr, const std::vector<int> & boundary, const std::vector<Circle<FPTYPE> > & circles)
+	template<typename FPTYPE, typename GRAPH> FPTYPE circlePackErrorL2euclidian(const GRAPH & gr, const std::vector<int> & boundary, const std::vector<Circle<FPTYPE> > & circles)
 		{
 		std::vector<FPTYPE> rad(circles.size());
 		for (size_t i = 0;i < circles.size(); i++) { rad[i] = circles[i].radius; }
-		return circlePackErrorL2(gr, boundary, rad);
+		return circlePackErrorL2euclidian(gr, boundary, rad);
 		}
+
 
 
 	/**
@@ -178,7 +231,7 @@ namespace mtools
 	* @param	boundary	The boundary: any vertex boundary[v] > 0 belongs to the exterior face thus not counted.
 	* @param	rad			The radiui.
 	**/
-	template<typename GRAPH, typename FPTYPE> FPTYPE circlePackErrorL1(const GRAPH & gr, const std::vector<int> & boundary, const std::vector<FPTYPE> & rad)
+	template<typename GRAPH, typename FPTYPE> FPTYPE circlePackErrorL1euclidian(const GRAPH & gr, const std::vector<int> & boundary, const std::vector<FPTYPE> & rad)
 		{
 		size_t l = (int)gr.size();
 		MTOOLS_INSURE((rad.size() == l) && (boundary.size() == l));
@@ -207,11 +260,11 @@ namespace mtools
 	* @param	boundary	The boundary: any vertex boundary[v] > 0 belongs to the exterior face thus not counted.
 	* @param	circles			The circles around each vertex.
 	**/
-	template<typename FPTYPE, typename GRAPH> FPTYPE circlePackErrorL1(const GRAPH & gr, const std::vector<int> & boundary, const std::vector<Circle<FPTYPE> > & circles)
+	template<typename FPTYPE, typename GRAPH> FPTYPE circlePackErrorL1euclidian(const GRAPH & gr, const std::vector<int> & boundary, const std::vector<Circle<FPTYPE> > & circles)
 		{
 		std::vector<FPTYPE> rad(circles.size());
 		for (size_t i = 0;i < circles.size(); i++) { rad[i] = circles[i].radius; }
-		return circlePackErrorL1(gr, boundary, rad);
+		return circlePackErrorL1euclidian(gr, boundary, rad);
 		}
 
 
@@ -381,87 +434,6 @@ namespace mtools
 		}
 
 
-	/**
-	 * Compute a circle packing layout.
-	 *
-	 * @param	graph	   	The graph.
-	 * @param	boundary   	The boundary vector. any v with boundary[v] > 0 is on the extrior face.
-	 * @param	rad		   	The radii vector.
-	 * @param	strictMaths	true to raise an error is the the layout cannot be accuraetly computed
-	 * 						(ie if FPTYPE has insufficient resolution).
-	 * @param	v0		   	index of the vertex to put at the origin, but if specified, must be an
-	 * 						interior vertex.
-	 *
-	 * @return	The calculated euclidian layout together with it bounding box.
-	 **/
-	template<typename FPTYPE, typename GRAPH> std::pair< std::vector<Circle<FPTYPE> >, Box<FPTYPE, 2> > computeCirclePackLayout(const GRAPH & graph, const std::vector<int> & boundary, const std::vector<FPTYPE> & rad, bool strictMaths = false, int v0 = -1)
-		{
-		MTOOLS_INSURE(graph.size() == rad.size());
-		MTOOLS_INSURE(graph.size() == boundary.size());
-		if (v0 < 0) { for (size_t i = 0; i < boundary.size(); i++) { if (boundary[i] <= 0) { v0 = (int)i; break; } } }
-		MTOOLS_INSURE(boundary[v0] <= 0);
-		std::pair< std::vector<Circle<FPTYPE> >, Box<FPTYPE, 2> > res;
-		if (rad.size() == 0) return res;
-		auto & circle = res.first;
-		auto & R = res.second;
-		circle.resize(rad.size());
-		circle[v0] = Circle<FPTYPE>(complex<FPTYPE>((FPTYPE)0, (FPTYPE)0), rad[v0]);
-		int v1 = graph[v0].front();
-		circle[v1] = Circle<FPTYPE>(complex<FPTYPE>(rad[v0] + rad[v1], (FPTYPE)0), rad[v1]);
-		R.min[0] = -rad[v0];
-		R.max[0] = rad[v0] + 2 * rad[v1];
-		R.max[1] = std::max<FPTYPE>(rad[v0], rad[v1]);
-		R.min[1] = -R.max[1];
-		std::vector<int> doneCircle(rad.size(), 0);
-		doneCircle[v0] = 1;
-		doneCircle[v1] = 1;
-		std::queue<int> st;
-		st.push(v0);
-		if (boundary[v1] <= 0) st.push(v1);
-		while (st.size() != 0)
-			{
-			int index = st.front(); st.pop();
-			auto it = graph[index].begin();
-			while (doneCircle[*it] == 0) { ++it; }
-			auto sit = it, pit = it;
-			++it;
-			if (it == graph[index].end()) { it = graph[index].begin(); }
-			while (it != sit)
-				{
-				if (doneCircle[*it] == 0)
-					{
-					const int x = index;
-					const int y = *pit;
-					const int z = *it;
-					const FPTYPE & rx = rad[x]; if ((strictMaths) && ((rx == (FPTYPE)0.0) || (isnan(rx)))) { MTOOLS_ERROR(std::string("Precision error A. null radius (site ") + mtools::toString(x) + ")"); }
-					const FPTYPE & ry = rad[y]; if ((strictMaths) && ((ry == (FPTYPE)0.0) || (isnan(ry)))) { MTOOLS_ERROR(std::string("Precision error B. null radius (site ") + mtools::toString(y) + ")"); }
-					const FPTYPE & rz = rad[z]; if ((strictMaths) && ((rz == (FPTYPE)0.0) || (isnan(rz)))) { MTOOLS_ERROR(std::string("Precision error C. null radius (site ") + mtools::toString(z) + ")"); }
-					const FPTYPE & alpha = internals_circlepacking::angleEuclidian(rx, ry, rz);
-					if ((strictMaths) && (isnan(alpha))) { MTOOLS_ERROR(std::string("Precision error D. null alpha (site ") + mtools::toString(z) + ")"); }
-					auto w = circle[y].center - circle[x].center;
-					auto rot = complex<FPTYPE>(cos(alpha), sin(alpha));
-					w = w*rot;
-					const FPTYPE norm = std::abs(w);
-					if (norm != (FPTYPE)0.0) { w /= norm; w *= (rx + rz); }
-					else { if (strictMaths) { MTOOLS_ERROR(std::string("Precision error E (site ") + mtools::toString(*it) + ")"); } }
-					w += circle[x].center;
-					circle[z].center = w;
-					if ((circle[z].center == circle[y].center) || (circle[z].center == circle[x].center)) { if (strictMaths) { MTOOLS_ERROR(std::string("Precision error F (site ") + mtools::toString(*it) + ")"); } }
-					circle[z].radius = rad[z];
-					if (w.real() + rad[z] > R.max[0]) { R.max[0] = w.real() + rad[z]; }
-					if (w.real() - rad[z] < R.min[0]) { R.min[0] = w.real() - rad[z]; }
-					if (w.imag() + rad[z] > R.max[1]) { R.max[1] = w.imag() + rad[z]; }
-					if (w.imag() - rad[z] < R.min[1]) { R.min[1] = w.imag() - rad[z]; }
-					doneCircle[z] = 1;
-					if (boundary[z] <= 0) { st.push(z); }
-					}
-				pit = it;
-				++it;
-				if (it == graph[index].end()) { it = graph[index].begin(); }
-				}
-			}
-		return res;
-		}
 
 
 	/**
@@ -534,115 +506,111 @@ namespace mtools
 		}
 
 
-	
-
-
 
 	/**
-	 * Compute the layout of an hyperbolic packing label (ie when the radius are computed for the hyperbolic
+	 * Compute the layout for an hyperbolic packing label (i.e when the radius are given in term of the hyperbolic
 	 * metric instead of the euclidian one).
 	 *
 	 * @param	graph	   	The graph.
-	 * @param	boundary   	The boundary. Any boundary[v] > 0 is on the outer face.
-	 * @param	srad	   	The vector of hyperbolic radii given in s-radii:  s = exp(-h) where h is the real 
-	 * 						hyperbolic radius. Thus, s = 0 for infinite radius.
-	 * @param	strictMaths	true to raise an error if FPTYPE does not allows sufficient precision for layout.
-	 * @param	v0		   	Index of the vertex to lay out at the origin of the disk. 
+	 * @param	boundary   	The boundary. Any vertex v with boundary[v] > 0 is on the exterior face.
+	 * @param	srad	   	The vector of hyperbolic radii given in s-radii format:  s = exp(-h) where h is the real 
+	 * 						hyperbolic radius. Thus, s = 0 for infinite radius and s = 1 for null radius
+	 * @param	strictMaths	true to raise an error if FPTYPE does not allows sufficient precision for layout. Otherwise, 
+	 * 						the algorithm does its best but circles may end up overlapping. 
+	 * @param	v0		   	Index of the start vertex to lay out at the origin of the disk or -1 to choose an arbirary one. 
 	 *
 	 * @return	The positions of the circles for the packing label. This yields a packing inside the unit disk. 
 	 */
 	template<typename FPTYPE, typename GRAPH> std::vector<Circle<FPTYPE> > computeCirclePackLayoutHyperbolic(const GRAPH & graph, const std::vector<int> & boundary, const std::vector<FPTYPE> & srad, bool strictMaths = false, int v0 = -1)
 		{
 		Circle<FPTYPE>::setPrecision(1.0e-13);
-
 		MTOOLS_INSURE(graph.size() == srad.size());
 		MTOOLS_INSURE(graph.size() == boundary.size());
 		if (v0 < 0) { for (size_t i = 0; i < boundary.size(); i++) { if (boundary[i] <= 0) { v0 = (int)i; break; } } }
 		MTOOLS_INSURE(boundary[v0] <= 0);
-
-		std::vector<Circle<FPTYPE> > circle(srad.size());
-		
-		circle[v0] = Circle<FPTYPE>(complex<FPTYPE>((FPTYPE)0, (FPTYPE)0), distStoR(srad[v0]));  // lay the circle at the origin
-		
+		std::vector<Circle<FPTYPE> > circle(srad.size());		
+		circle[v0] = Circle<FPTYPE>(complex<FPTYPE>((FPTYPE)0, (FPTYPE)0), distStoR(srad[v0]));  // lay the circle at the origin		
 		int v1 = graph[v0].front();												//
 		circle[v1].radius = tangentCircleStoR(circle[v0].radius, srad[v1]);		// lay v1 on the right of v0.
 		circle[v1].center = circle[v0].radius + circle[v1].radius;				// 
 
-		std::vector<int> doneCircle(srad.size(), 0);
-		doneCircle[v0] = 1;
-		doneCircle[v1] = 1;
-		std::queue<int> st;
-		st.push(v0); 
-		if (boundary[v1] <= 0) st.push(v1);
-		while (st.size() != 0)
+		internals_circlepacking::layoutExplorer(graph, v0, v1, (boundary[v1] <= 0), [&](int ix, int iy, int iz)->bool
 			{
-			int index = st.front(); st.pop();
-			auto it = graph[index].begin();
-			while (doneCircle[*it] == 0) { ++it; }
-			auto sit = it, pit = it;
-			++it;
-			if (it == graph[index].end()) { it = graph[index].begin(); }
-			while (it != sit)
-				{
-				if (doneCircle[*it] == 0)
-					{
-					const int ix = index; // index of the  center circle C(x)
-					const int iy = *pit;  // index of the tangent circle C(y) already laid out.
-					const int iz = *it;	  // index of the circle C(z) to lay out.
+			auto hypcx = circle[ix].euclidianToHyperbolic().center; // hyperbolic center for C(x)
+			mtools::Mobius<FPTYPE> M(hypcx); // Mobius transformation that centers the circle C(x) around 0 (M is an involution)
 
+			FPTYPE rx = distStoR(srad[ix]);					// radius of C(x) when it is centered on 0
+			if ((strictMaths) && ((rx == (FPTYPE)0.0) || (isnan(rx)))) { MTOOLS_ERROR(std::string("Precision error A. null radius (site ") + mtools::toString(ix) + ")"); }
+			FPTYPE ry = tangentCircleStoR(rx, srad[iy]);	// radius of C(y) when C(x) centered on 0
+			if ((strictMaths) && ((ry == (FPTYPE)0.0) || (isnan(ry)))) { MTOOLS_ERROR(std::string("Precision error B. null radius (site ") + mtools::toString(iy) + ")"); }
+			FPTYPE rz = tangentCircleStoR(rx, srad[iz]);	// radius of C(z) when C(x) centered on 0
+			if ((strictMaths) && ((rz == (FPTYPE)0.0) || (isnan(rz)))) { MTOOLS_ERROR(std::string("Precision error C. null radius (site ") + mtools::toString(iz) + ")"); }
 
-					auto hypcx = circle[ix].euclidianToHyperbolic().center; // hyperbolic center for C(x)
-					mtools::Mobius<FPTYPE> M(hypcx); // Mobius transformation that centers the circle C(x) around 0 (M is an involution)
+			MTOOLS_ASSERT(std::abs((M*circle[ix]).center) < 1.0e-13); //TEST
+			MTOOLS_ASSERT(std::abs(rx - M*circle[ix].radius) < 1.0e-13);
+			MTOOLS_ASSERT(std::abs(ry - M*circle[iy].radius) < 1.0e-13);
 
+			const FPTYPE & alpha = internals_circlepacking::angleEuclidian(rx, ry, rz); // angle <y,x,z>
+			if ((strictMaths) && (isnan(alpha))) { MTOOLS_ERROR(std::string("Precision error D. null alpha (site ") + mtools::toString(iz) + ")"); }
 
-					FPTYPE rx = distStoR(srad[ix]);					// radius of C(x) when it is centered on 0
-					if ((strictMaths) && ((rx == (FPTYPE)0.0) || (isnan(rx)))) { MTOOLS_ERROR(std::string("Precision error A. null radius (site ") + mtools::toString(ix) + ")"); }
-					FPTYPE ry = tangentCircleStoR(rx, srad[iy]);	// radius of C(y) when C(x) centered on 0
-					if ((strictMaths) && ((ry == (FPTYPE)0.0) || (isnan(ry)))) { MTOOLS_ERROR(std::string("Precision error B. null radius (site ") + mtools::toString(iy) + ")"); }
-					FPTYPE rz = tangentCircleStoR(rx, srad[iz]);	// radius of C(z) when C(x) centered on 0
-					if ((strictMaths) && ((rz == (FPTYPE)0.0) || (isnan(rz)))) { MTOOLS_ERROR(std::string("Precision error C. null radius (site ") + mtools::toString(iz) + ")"); }
+			const Circle<FPTYPE> Cy = M*circle[iy];	// position of C(y) after the tranformation M (ie when C(x) is centered at 0)
 
-					MTOOLS_ASSERT(std::abs((M*circle[ix]).center) < 1.0e-13); //TEST
-					MTOOLS_ASSERT(std::abs(rx - M*circle[ix].radius) < 1.0e-13);
-					MTOOLS_ASSERT(std::abs(ry - M*circle[iy].radius) < 1.0e-13);
+			auto w = (Cy.center)*complex<FPTYPE>(cos(alpha), sin(alpha)); // apply a rotation of angle alpha to the center of C(y)
+			const FPTYPE norm = std::abs(w); // resize the lenght of the vector to be rx + rz.
+			if (norm != (FPTYPE)0.0) { w /= norm; w *= (rx + rz); }
+			else { if (strictMaths) { MTOOLS_ERROR(std::string("Precision error E (site ") + mtools::toString(iz) + ")"); } }
 
-					const FPTYPE & alpha = internals_circlepacking::angleEuclidian(rx, ry, rz); // angle <y,x,z>
-					if ((strictMaths) && (isnan(alpha))) { MTOOLS_ERROR(std::string("Precision error D. null alpha (site ") + mtools::toString(iz) + ")"); }
+			const Circle<FPTYPE> Cz(w, rz); // position of C(z) when C(x) is centered.
+			circle[iz] = (M*Cz);			// move back to the correct position by applying the inverse tranformation.
 
-					const Circle<FPTYPE> Cy = M*circle[iy];	// position of C(y) after the tranformation M (ie when C(x) is centered at 0)
-		
-					auto w = (Cy.center)*complex<FPTYPE>(cos(alpha), sin(alpha)); // apply a rotation of angle alpha to the center of C(y)
-					const FPTYPE norm = std::abs(w); // resize the lenght of the vector to be rx + rz.
-					if (norm != (FPTYPE)0.0) { w /= norm; w *= (rx + rz); }	else { if (strictMaths) { MTOOLS_ERROR(std::string("Precision error E (site ") + mtools::toString(*it) + ")"); } }
-					
-					const Circle<FPTYPE> Cz(w, rz); // position of C(z) when C(x) is centered.
-					circle[iz] = (M*Cz);			// move back to the correct position by applying the inverse tranformation.
+			return (boundary[iz] <= 0); // explore also around iz if it is an interior vertex
+			});
 
-					doneCircle[iz] = 1;
-					if (boundary[iz] <= 0) { st.push(iz); }
-					}
-				pit = it;
-				++it;
-				if (it == graph[index].end()) { it = graph[index].begin(); }
-				}
-			}
 		return circle;
 		}
 
 
+	 /**
+	 * Compute the layout for an euclidian packing label.
+	 *
+	 * @param	graph	   	The graph.
+	 * @param	boundary   	The boundary. Any vertex v with boundary[v] > 0 is on the exterior face.
+	 * @param	srad	   	The vector of radii.
+	 * @param	strictMaths	true to raise an error if FPTYPE does not allows sufficient precision for layout. Otherwise,
+	 * 						the algorithm does its best but circles may end up overlapping anyway.
+	 * @param	v0		   	Index of the start vertex to lay out at the origin of the disk or -1 to choose an arbirary one.
+	 *
+	 * @return	The positions of the circles for the packing label. 
+	 */
+	template<typename FPTYPE, typename GRAPH> std::vector<Circle<FPTYPE> > computeCirclePackLayout(const GRAPH & graph, const std::vector<int> & boundary, const std::vector<FPTYPE> & rad, bool strictMaths = false, int v0 = -1)
+		{
+		MTOOLS_INSURE(graph.size() == rad.size());
+		MTOOLS_INSURE(graph.size() == boundary.size());
+		if (v0 < 0) { for (size_t i = 0; i < boundary.size(); i++) { if (boundary[i] <= 0) { v0 = (int)i; break; } } }
+		MTOOLS_INSURE(boundary[v0] <= 0);
+		std::vector<Circle<FPTYPE> > circle(rad.size());
+		circle[v0] = Circle<FPTYPE>(complex<FPTYPE>((FPTYPE)0, (FPTYPE)0), rad[v0]);
+		int v1 = graph[v0].front();
+		circle[v1] = Circle<FPTYPE>(complex<FPTYPE>(rad[v0] + rad[v1], (FPTYPE)0), rad[v1]);
 
-
-
-
-
-
-
-
-
-
-
-
-
+		internals_circlepacking::layoutExplorer(graph, v0, v1, (boundary[v1] <= 0), [&](int ix, int iy, int iz)->bool
+			{
+			const FPTYPE & rx = rad[ix]; if ((strictMaths) && ((rx == (FPTYPE)0.0) || (isnan(rx)))) { MTOOLS_ERROR(std::string("Precision error A. null radius (site ") + mtools::toString(ix) + ")"); }
+			const FPTYPE & ry = rad[iy]; if ((strictMaths) && ((ry == (FPTYPE)0.0) || (isnan(ry)))) { MTOOLS_ERROR(std::string("Precision error B. null radius (site ") + mtools::toString(iy) + ")"); }
+			const FPTYPE & rz = rad[iz]; if ((strictMaths) && ((rz == (FPTYPE)0.0) || (isnan(rz)))) { MTOOLS_ERROR(std::string("Precision error C. null radius (site ") + mtools::toString(iz) + ")"); }
+			const FPTYPE & alpha = internals_circlepacking::angleEuclidian(rx, ry, rz);
+			if ((strictMaths) && (isnan(alpha))) { MTOOLS_ERROR(std::string("Precision error D. null alpha (site ") + mtools::toString(iz) + ")"); }
+			auto w = circle[iy].center - circle[ix].center;
+			w = w*complex<FPTYPE>(cos(alpha), sin(alpha));
+			const FPTYPE norm = std::abs(w);
+			if (norm != (FPTYPE)0.0) { w /= norm; w *= (rx + rz); } else { if (strictMaths) { MTOOLS_ERROR(std::string("Precision error E (site ") + mtools::toString(iz) + ")"); } }
+			circle[iz].center = circle[ix].center + w;
+			if ((circle[iz].center == circle[iy].center) || (circle[iz].center == circle[ix].center)) { if (strictMaths) { MTOOLS_ERROR(std::string("Precision error F (site ") + mtools::toString(iz) + ")"); } }
+			circle[iz].radius = rad[iz];
+			return (boundary[iz] <= 0);
+			});
+		return circle;
+		}
 
 
 
@@ -722,6 +690,7 @@ namespace mtools
 			img.fBox2_drawText(R, mtools::toString(i + 1), circles[i].center, 'c', 'c', fontsize, true, color, opacity);
 			}
 		}
+
 
 
 
@@ -850,13 +819,13 @@ namespace mtools
 			/**
 			* Compute the error in the circle radius in L2 norm.
 			*/
-			FPTYPE errorL2() const { return internals_circlepacking::errorL2(_gr, _rad, (int)_nb); }
+			FPTYPE errorL2() const { return internals_circlepacking::errorL2euclidian(_gr, _rad, (int)_nb); }
 
 
 			/**
 			* Compute the error in the circle radius in L1 norm.
 			*/
-			FPTYPE errorL1() const { return internals_circlepacking::errorL1(_gr, _rad, (int)_nb); }
+			FPTYPE errorL1() const { return internals_circlepacking::errorL1euclidian(_gr, _rad, (int)_nb); }
 
 
 			/**
@@ -1097,40 +1066,6 @@ namespace mtools
 				}
 				
 
-			/** Compute current packing 'angle' error in L2 norm. */
-			FPTYPE errorL2() const
-				{
-				FPTYPE e(0.0);
-				for (size_t i = 0; i < _nb; ++i)
-					{
-					if (_gr[i].size() > 0)
-						{
-						const FPTYPE v = _rad[i];
-						const FPTYPE c = angleSumEuclidian(v, _gr[i]) - (FPTYPE)M_2PI;
-						e += c*c;
-						}
-					}
-				return sqrt(e);
-				}
-
-
-			/** Compute current packing 'angle' error in L1 norm. */
-			FPTYPE errorL1() const
-				{
-				FPTYPE e(0.0);
-				for (size_t i = 0; i < _nb; ++i)
-					{
-					if (_gr[i].size() > 0)
-						{
-						const FPTYPE v = _rad[i];
-						const FPTYPE c = angleSumEuclidian(v, _gr[i]) - (FPTYPE)M_2PI;
-						e += ((c < (FPTYPE)0.0) ? -c : c);
-						}
-					}
-				return e;
-				}
-
-
 			/**
 			 * Sets the radii of the circle around each vertices. 
 			 * The radii associated with the boundary vertices are not modified during 
@@ -1176,6 +1111,16 @@ namespace mtools
 				}
 
 
+			/**
+			* Compute the error in the circle radius in L2 norm.
+			*/
+			FPTYPE errorL2() const { return internals_circlepacking::errorL2euclidian(_gr, _rad, (int)_nb); }
+
+
+			/**
+			* Compute the error in the circle radius in L1 norm.
+			*/
+			FPTYPE errorL1() const { return internals_circlepacking::errorL1euclidian(_gr, _rad, (int)_nb); }
 
 
 			/**
@@ -1355,9 +1300,6 @@ namespace mtools
 
 				return iter;
 				}
-
-
-
 
 
 			private:

@@ -116,8 +116,8 @@ void loadTest(std::string filename)
 	gr = permuteGraph(gr, perm);
 	radii = perm.getPermute(radii);
 	int l = (int)(gr.size() - 3);
-	cout << "error L2 = " << internals_circlepacking::errorL2(gr, radii,l) << "\n";
-	cout << "error L1 = " << internals_circlepacking::errorL1(gr, radii,l) << "\n";
+	cout << "error L2 = " << internals_circlepacking::errorL2euclidian(gr, radii,l) << "\n";
+	cout << "error L1 = " << internals_circlepacking::errorL1euclidian(gr, radii,l) << "\n";
 
 	gr = permuteGraph(gr, perm.getInverse());
 	radii = perm.getAntiPermute(radii);
@@ -217,9 +217,7 @@ void testBall(int N)
 	cout << "\nL1 error = " << CPTEST.errorL1() << "\n\n";
 
 	cout << "Laying out the circles...\n";
-	auto res = computeCirclePackLayout(gr, boundary,CPTEST.getRadii(), false,(int)gr.size() - 1);
-	auto circleVec = res.first;
-	auto R = res.second;
+	auto circleVec = computeCirclePackLayout(gr, boundary, CPTEST.getRadii(), false, (int)gr.size() - 1);
 
 	cout << "done in " << mtools::Chronometer() << "ms\n";
 
@@ -235,10 +233,9 @@ void testBall(int N)
 		}
 
 
-	double ratio = (double)R.lx() / ((double)R.ly());
 	int LX = 4000;
-	int LY = (int)(LX / ratio);
-
+	int LY = 4000;
+	fBox2 R(-2, 2, -2, 2);
 	mtools::Img<unsigned char> im(LX, LY, 1, 4);
 	im.clear(RGBc::c_White);
 
@@ -301,10 +298,8 @@ void testBall(int N)
 
 		cout << graphInfo(gr); 
 
-		cout << "L2 error = " << circlePackErrorL2(gr, bound, circles) << "\n";
-		cout << "\nL1 error = " << circlePackErrorL1(gr, bound, circles) << "\n\n";
-
-		fBox2 R(-1, 1, -1, 1);
+		cout << "L2 error = " << circlePackErrorL2euclidian(gr, bound, circles) << "\n";
+		cout << "\nL1 error = " << circlePackErrorL1euclidian(gr, bound, circles) << "\n\n";
 
 		
 		CirclePackingLabelGPU<double> CPTEST(true);	// prepare for packing
@@ -326,9 +321,10 @@ void testBall(int N)
 
 
 		cout << "Laying out the circles...\n";
-		std::tie(circles, R) = computeCirclePackLayout(gr, bound, CPTEST.getRadii(),false,alpha);
+		circles = computeCirclePackLayout(gr, bound, CPTEST.getRadii(),false,alpha);
 		
 
+		fBox2 R(-1, 1, -1, 1);
 		int LX = 4000;
 		int LY = 4000;
 		mtools::Img<unsigned char> im(LX, LY, 1, 4);
