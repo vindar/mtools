@@ -514,7 +514,7 @@ namespace mtools
 			{
 			for (auto it = gr[i].begin(); it != gr[i].end(); ++it)
 				{
-				if ((*it >= firstIndex) && (*it <= lastIndex)) { img.fBox2_drawLine(R, circles[i].center, circles[*it].center, color, opacity); }
+				if ((*it >= firstIndex) && (*it < lastIndex)) { img.fBox2_drawLine(R, circles[i].center, circles[*it].center, color, opacity); }
 				}
 			}
 		}
