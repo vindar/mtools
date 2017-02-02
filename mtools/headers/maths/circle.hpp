@@ -53,7 +53,7 @@ namespace mtools
 			Circle(const std::complex<FPTYPE> & centerpos, const FPTYPE & rad) : center(centerpos), radius(rad) {}
 
 
-			/**
+			/**   TO BE REMOVED !!!!!!!!!!!!!!!!!!!!!!!!!!
 			 * Sets the rounding precision (default 0).
 			 **/
 			static void setPrecision(const FPTYPE & precision) { _eps = precision; }
@@ -63,24 +63,6 @@ namespace mtools
 			* Query if the circle is non-empty ie if the radius is strictly positive.
 			**/
 			bool isNonempty() const { return (radius > (FPTYPE)0); }
-
-
-			/**
-			* Query if this circle may be interpreted as an hyperbolic circle
-			* i.e. if it is non-empty and lies inside the closed unit disk.
-			**/
-			bool isHyperbolic() const { return((isNonEmpty()) && (std::norm(center) + radius <= (FPTYPE)1 + _eps)); }
-
-
-			/**
-			* Query if the circle is an horocycle i.e. it is non-empty, lies inside the closed unit disk and
-			* is tangent to the unit circle.
-			**/
-			bool isHorocycle() const
-				{
-				FPTYPE d = std::norm(center) + radius;
-				return((isNonEmpty()) && (d <= (FPTYPE)1 + _eps) && (d >= (FPTYPE)1 - _eps));
-				}
 
 
 			/**
@@ -98,19 +80,33 @@ namespace mtools
 			 **/
 			Circle euclidianToHyperbolic() const
 				{
-				MTOOLS_ASSERT(radius >= (FPTYPE)0);				// radius should not be negative
-				const FPTYPE d = std::abs(center);				// distance to origin
-				MTOOLS_ASSERT(d + radius <= (FPTYPE)1 + _eps); // the circle should be contained in the closed unit disk
-				if (radius <= _eps) {  return Circle(center, 1 - radius); } // radius is zero. 				
-				if (d + radius >= (FPTYPE)1 - _eps) return Circle(((d<=_eps) ? (complex<FPTYPE>((FPTYPE)0, (FPTYPE)0)) :  (center/d)), -radius); // horocycle
+				MTOOLS_INSURE(radius >= (FPTYPE)0);
+				const FPTYPE d = std::abs(center);
+				if (!(d + radius < 1)) { // horocycle
+					MTOOLS_INSURE(d >(FPTYPE)0);
+					if (!(-radius < (FPTYPE)0)) return Circle(center/d, (FPTYPE)1); else return Circle(center/d, -radius);
+					}
+				if (!(radius > (FPTYPE)0)) { return Circle(center, (FPTYPE)1); }
+				const FPTYPE r2 = radius*radius;
 				const FPTYPE d2 = std::norm(center);
-				const FPTYPE radius2 = radius*radius;
-				const FPTYPE s = sqrt((1 - 2 * radius + radius2 - d2) / (1 + 2 * radius + radius2 - d2));
-				if (s <= _eps) return Circle(((d <= _eps) ? (complex<FPTYPE>((FPTYPE)0, (FPTYPE)0)) : (center / d)), -radius); // horocycle
-				if (d <= _eps) return Circle(complex<FPTYPE>((FPTYPE)0, (FPTYPE)0), s);
-				const FPTYPE v = sqrt(((FPTYPE)1 + 2 * d + d2 - radius2) / ((FPTYPE)1 - 2 * d + d2 - radius2));
+				const FPTYPE num = 1 - 2*radius + r2 - d2;
+				if (!(num > (FPTYPE)0)) { // horocycle
+					MTOOLS_INSURE(d > (FPTYPE)0);
+					if (!(-radius < (FPTYPE)0)) return Circle(center / d, (FPTYPE)1); else return Circle(center / d, -radius);
+					}
+				const FPTYPE denom = 1 + 2 * radius + r2 - d2;
+				const FPTYPE s = sqrt(num / denom);
+				MTOOLS_INSURE(!isnan(s));
+				if (!(d > 0)) { return Circle(center, s); }
+				const FPTYPE denom2 = 1 - 2*d + d2 - r2;
+				if (!(denom2 > (FPTYPE)0)) { // horocycle
+					if (!(-radius < (FPTYPE)0)) return Circle(center / d, (FPTYPE)1); else return Circle(center / d, -radius);
+					}
+				const FPTYPE num2 = 1 + 2*d + d2 - r2;
+				const FPTYPE v = sqrt(num2 / denom2);
 				const FPTYPE l = (v - 1) / (v + 1);
 				const FPTYPE g = l / d;
+				MTOOLS_INSURE(!isnan(g));
 				return Circle(g*center, s);
 				}
 
@@ -126,14 +122,15 @@ namespace mtools
 			 **/
 			Circle hyperbolicToEuclidian() const
 				{
-				const FPTYPE & s = radius; // radius is the s-radius
+				/* TODO : fix NaN and other possible overflow during calculation (like in the method  euclidianToHyperbolic()) */
+				const FPTYPE & s = radius;
 				if (s < 0) { return Circle(((FPTYPE)1 + s)*center, -s); } // horocycle
-				MTOOLS_ASSERT(s > 0); // should be a real circle, not infinite raduis.
-				if (s >= (FPTYPE)1 - _eps) return Circle(center, (FPTYPE)1 - s);
+				MTOOLS_INSURE((s > 0)&&(s<=1));
+				if (s >= 1) return Circle(center, (FPTYPE)0);
 				const FPTYPE l = std::abs(center);  const FPTYPE g = (1 + l) / (1 - l);
 				const FPTYPE a = g / s;               const FPTYPE d = (a - 1) / (a + 1);
 				const FPTYPE b = g*s;               const FPTYPE k = (b - 1) / (b + 1);
-				return Circle(((l <= _eps) ? complex<FPTYPE>((FPTYPE)0, (FPTYPE)0) : (((d + k) / (l*((FPTYPE)2)))*center)), (d - k) / ((FPTYPE)2));
+				return Circle(((l <= 0) ? complex<FPTYPE>((FPTYPE)0, (FPTYPE)0) : (((d + k) / (l*((FPTYPE)2)))*center)), (d - k) / ((FPTYPE)2));
 				}
 
 
@@ -186,7 +183,7 @@ namespace mtools
 
 		private:
 
-			static FPTYPE _eps; // precision. 
+			static FPTYPE _eps; // precision.  TO BE REMOVED !!!!!!!!!!!!!!!!!!!!!!!!
 
 		};
 
@@ -219,7 +216,7 @@ namespace mtools
 
 
 
-	template<typename FPTYPE> FPTYPE Circle<FPTYPE>::_eps = (FPTYPE)0;
+	template<typename FPTYPE> FPTYPE Circle<FPTYPE>::_eps = (FPTYPE)0; //// TO BE REMOVED
 
 
 	}

@@ -153,6 +153,10 @@ std::vector<double> computeHyperbolicRadii(const std::vector<Circle<double> > & 
 		double s = circle[i].euclidianToHyperbolic().radius;
 		if (s < 0) { s = 0; }
 		srad[i] = s;
+		if (s >= 1)
+			{
+			cout << "UN = " << circle[i] << "\n";
+			}
 		}
 	return srad;
 	}
@@ -266,7 +270,7 @@ void testBall(int N)
 	auto srad = computeHyperbolicRadii(circleVec);
 
 	cout << "Laying out the circles in hyperbolic space...\n";
-	auto circleVec2 = computeCirclePackLayoutHyperbolic(gr, boundary, srad, false);
+	auto circleVec2 = computeCirclePackLayoutHyperbolic(gr, boundary, srad, true);
 
 	{
 	im.clear(RGBc::c_White);

@@ -540,15 +540,14 @@ namespace mtools
 			mtools::Mobius<FPTYPE> M(hypcx); // Mobius transformation that centers the circle C(x) around 0 (M is an involution)
 
 			FPTYPE rx = distStoR(srad[ix]);					// radius of C(x) when it is centered on 0
-			if ((strictMaths) && ((rx == (FPTYPE)0.0) || (isnan(rx)))) { MTOOLS_ERROR(std::string("Precision error A. null radius (site ") + mtools::toString(ix) + ")"); }
+			if ((strictMaths) && ((rx == (FPTYPE)0.0))) { MTOOLS_ERROR(std::string("Precision error A. null radius (site ") + mtools::toString(ix) + ")"); }
+			if ((strictMaths) && ((std::isnan(rx))))    { MTOOLS_ERROR(std::string("Precision error A. NaN (site ") + mtools::toString(ix) + ")"); }
 			FPTYPE ry = tangentCircleStoR(rx, srad[iy]);	// radius of C(y) when C(x) centered on 0
-			if ((strictMaths) && ((ry == (FPTYPE)0.0) || (isnan(ry)))) { MTOOLS_ERROR(std::string("Precision error B. null radius (site ") + mtools::toString(iy) + ")"); }
+			if ((strictMaths) && ((ry == (FPTYPE)0.0))) { MTOOLS_ERROR(std::string("Precision error B. null radius (site ") + mtools::toString(iy) + ")"); }
+			if ((strictMaths) && ((std::isnan(ry))))    { MTOOLS_ERROR(std::string("Precision error B. NaN (site ") + mtools::toString(iy) + ")"); }
 			FPTYPE rz = tangentCircleStoR(rx, srad[iz]);	// radius of C(z) when C(x) centered on 0
-			if ((strictMaths) && ((rz == (FPTYPE)0.0) || (isnan(rz)))) { MTOOLS_ERROR(std::string("Precision error C. null radius (site ") + mtools::toString(iz) + ")"); }
-
-			MTOOLS_ASSERT(std::abs((M*circle[ix]).center) < 1.0e-13); //TEST
-			MTOOLS_ASSERT(std::abs(rx - M*circle[ix].radius) < 1.0e-13);
-			MTOOLS_ASSERT(std::abs(ry - M*circle[iy].radius) < 1.0e-13);
+	//		if ((strictMaths) && ((rz == (FPTYPE)0.0))) { MTOOLS_ERROR(std::string("Precision error C. null radius (site ") + mtools::toString(iz) + ")"); }
+			if ((strictMaths) && ((std::isnan(rz))))    { MTOOLS_ERROR(std::string("Precision error C. NaN (site ") + mtools::toString(iz) + ")"); }
 
 			const FPTYPE & alpha = internals_circlepacking::angleEuclidian(rx, ry, rz); // angle <y,x,z>
 			if ((strictMaths) && (isnan(alpha))) { MTOOLS_ERROR(std::string("Precision error D. null alpha (site ") + mtools::toString(iz) + ")"); }
@@ -557,11 +556,30 @@ namespace mtools
 
 			auto w = (Cy.center)*complex<FPTYPE>(cos(alpha), sin(alpha)); // apply a rotation of angle alpha to the center of C(y)
 			const FPTYPE norm = std::abs(w); // resize the lenght of the vector to be rx + rz.
-			if (norm != (FPTYPE)0.0) { w /= norm; w *= (rx + rz); }
-			else { if (strictMaths) { MTOOLS_ERROR(std::string("Precision error E (site ") + mtools::toString(iz) + ")"); } }
+			if (norm > (FPTYPE)0.0) { w /= norm; w *= (rx + rz); } else { if (strictMaths) { MTOOLS_ERROR(std::string("Precision error E (site ") + mtools::toString(iz) + ")"); } }
 
 			const Circle<FPTYPE> Cz(w, rz); // position of C(z) when C(x) is centered.
 			circle[iz] = (M*Cz);			// move back to the correct position by applying the inverse tranformation.
+
+
+			FPTYPE a = circle[iz].center.real();
+			FPTYPE b = circle[iz].center.imag();
+			FPTYPE c = circle[iz].radius;
+
+			if (c == 0)
+				{
+				cout << "s-rad = " << srad[iz] << "\n";
+				cout.getKey();
+				}
+			if ((std::isnan(a)) 
+				|| (std::isnan(a)) 
+				|| (std::isnan(c)))
+				{
+				cout << M << "\n";
+				cout << Cz << "\n";
+				cout.getKey();
+				}
+
 
 			return (boundary[iz] <= 0); // explore also around iz if it is an interior vertex
 			});
