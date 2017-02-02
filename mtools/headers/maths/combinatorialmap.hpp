@@ -713,6 +713,154 @@ namespace mtools
 				}
 
 
+			/**
+			 * Adds a triangle inside a face.
+			 * 
+			 * The triangle is glued against the next oriented edge following dartindex on the same face (ie
+			 * phi(dartIndex)). This creates an additionnal vertex inside the face and two edges from it to
+			 * the endpoints of E.
+			 * 
+			 * Thus, the procedure effectively increases the number of darts by 4, the number of non-
+			 * oriented edge by two, the number of face by 1 and the number of vertices by 1.
+			 *
+			 * @param	dartIndex	The dart preceding the one to which the face should be added.
+			 */
+			void addTriangle(int dartIndex)
+				{
+				const size_t l = _alpha.size();
+				_alpha.resize(l+4);
+				_sigma.resize(l+4);
+				_vertices.resize(l+4);
+				_faces.resize(l+4);
+
+				const int F = _faces[dartIndex];
+				const int a = _alpha[dartIndex];
+				const int b = _sigma[a];
+				const int c = _alpha[b];
+				const int d = _sigma[c];
+				const int v1 = _vertices[a];
+				const int v2 = _vertices[c];
+
+				_alpha[l+0] = l+1;  _alpha[l+1] = l+0;
+				_alpha[l+2] = l+3;  _alpha[l+3] = l+2;
+
+				_sigma[a] = l+0; _sigma[l+0] = b;
+				_sigma[c] = l+3; _sigma[l+3] = d;
+				_sigma[l+1] = l+2; _sigma[l+2] = l+1;
+
+				_vertices[l + 0] = v1;
+				_vertices[l + 3] = v2;
+				_vertices[l + 1] = _nbvertices;
+				_vertices[l + 2] = _nbvertices;
+				_nbvertices++;
+
+				_faces[b]     = _nbfaces;
+				_faces[l + 3] = _nbfaces;
+				_faces[l + 1] = _nbfaces;
+				_faces[l + 0] = F;
+				_faces[l + 2] = F;
+				_nbfaces++;
+
+				}
+
+
+			/**
+			 * Add a triangle inside a face, effectively splitting it into 3 faces, the center one being the
+			 * triangle. Just like addTriangle(), the base of the triangle is the next edge after dartIndexBase 
+			 * following the same face (ie phi(dartIndexBase)). The third vertex of the triangle is the end 
+			 * vertex of dartIndexTarget. 
+			 *
+			 * Effectively, the number of faces is increased by two. The number of dart by 4, the number of
+			 * non-oriented edges by 2 and the number of vertices remains the same. 
+			 *
+			 * NB: the method work even if the triangle created contian loops of double edges) 
+			 *
+			 * @param	dartIndexBase  	The dart preceding the base of the triangle
+			 * @param	dartIndexTarget	The dart whose endpoint is the third vertex of the triangle
+			 */
+			void addSplittingTriangle(int dartIndexBase, int dartIndexTarget)
+				{
+				MTOOLS_INSURE(_faces[dartIndexBase] == _faces[dartIndexTarget]);
+
+				const size_t l = _alpha.size();
+				_alpha.resize(l + 4);
+				_sigma.resize(l + 4);
+				_vertices.resize(l + 4);
+				_faces.resize(l + 4);
+
+				const int F = _faces[dartIndexBase];
+				const int a = _alpha[dartIndexBase];
+				const int b = _sigma[a];
+				const int c = _alpha[b];
+				const int d = _sigma[c];
+
+				const int e = _alpha[dartIndexTarget];
+				const int f = _sigma[e];
+
+				const int v1 = _vertices[a];
+				const int v2 = _vertices[c];
+				const int v3 = _vertices[e];
+
+				_alpha[l + 0] = l + 1;  _alpha[l + 1] = l + 0;
+				_alpha[l + 2] = l + 3;  _alpha[l + 3] = l + 2;
+
+				_sigma[a] = l + 0; _sigma[l + 0] = b;
+				_sigma[c] = l + 3; _sigma[l + 3] = d;
+				_sigma[e] = l + 2; _sigma[l + 2] = l + 1; _sigma[l + 1] = f;
+
+				_vertices[l + 0] = v1;
+				_vertices[l + 3] = v2;
+				_vertices[l + 1] = v3;
+				_vertices[l + 2] = v3;
+
+				_faces[l + 0] = F;
+				_faces[b] = _nbfaces;
+				_faces[l + 3] = _nbfaces;
+				_faces[l + 1] = _nbfaces;
+				_nbfaces++;
+
+				int k = d;
+				while (k != (l + 2)) { _faces[k] = _nbfaces; k = phi(k); }
+				_faces[k] = _nbfaces;
+				_nbfaces++;
+				}
+
+
+			/**
+			 * Pell a given face of the map, starting from startDart.
+			 *
+			 * @param	preRootDart	The dart that precede thae rootDart that will be used for the first step of the peeling
+			 * 						i.e. rootDart = phi(preRootdart). 
+			 * @param	fun		 	The function to call at each step of the peeling process.
+			 * 						int fun(int rootdart,int facesize)
+			 * 						  - rootdart : the edge of the face to peel.  
+			 * 						  - facesize : number of edge in the face.  
+			 * 						  returns the action to take:
+			 * 						     -2 : stop the peeling of this (sub)face.
+			 * 						     -1 : create a triangle with a new vertex and base rootEdge
+			 * 						    k>=0: create a triangle with base rootEdge and third vertex the endpoint of dart index k
+			 */
+			void boltzmannPeeling(int preRootDart, std::function< int(int,int)> fun, int facesize = -1)
+				{
+				if (facesize < 0) { facesize = faceSize(preRootDart); }
+				int res  = fun(phi(preRootDart), facesize);
+
+				if (res == -2) return;
+				if (res == -1) { addTriangle(preRootDart); boltzmannPeeling(preRootDart, fun,facesize + 1); return; }
+				
+				addSplittingTriangle(int dartIndexBase, int dartIndexTarget)
+
+
+				}
+
+
+
+
+
+
+
+
+
 
 			/**
 			* Print infos about the map into a string
