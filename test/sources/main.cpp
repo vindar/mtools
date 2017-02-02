@@ -138,7 +138,7 @@ void loadTest(std::string filename)
 		}
 
 	double h = 1;
-	//drawCirclePacking(fBox2(-h, h, -h, h), radii, circles, gr);
+	
 	}
 
 
@@ -305,7 +305,7 @@ void testBall(int N)
 		cout << "L2 error = " << circlePackErrorL2euclidian(gr, bound, circles) << "\n";
 		cout << "\nL1 error = " << circlePackErrorL1euclidian(gr, bound, circles) << "\n\n";
 
-		
+		/*
 		CirclePackingLabelGPU<double> CPTEST(true);	// prepare for packing
 		CPTEST.setTriangulation(gr, bound);			//
 
@@ -326,23 +326,35 @@ void testBall(int N)
 
 		cout << "Laying out the circles...\n";
 		circles = computeCirclePackLayout(gr, bound, CPTEST.getRadii(),false,alpha);
-		
+		*/
 
 		fBox2 R(-1, 1, -1, 1);
-		int LX = 4000;
-		int LY = 4000;
+		int LX = 12000;
+		int LY = 12000;
 		mtools::Img<unsigned char> im(LX, LY, 1, 4);
+
 		im.clear(RGBc::c_White);
-		
-		drawCirclePacking_Circles(im,R,circles,gr, true, RGBc::c_Red, 0.2f);
+		im.fBox2_draw_circle(R, { 0,0 }, 1.0, RGBc::c_Blue, 0.1f, true);
 		drawCirclePacking_Graph(im, R, circles, gr, RGBc::c_Black, 1.0f);
-		drawCirclePacking_Labels(im, R, circles, gr, 13, RGBc::c_Green, 1.0f);
+
 
 		Plotter2D Plotter;
 		auto P2 = makePlot2DCImg(im, "circles");
 		Plotter[P2];
 		Plotter.autorangeXY();
 		Plotter.plot();
+
+		im.clear(RGBc::c_White);
+		im.fBox2_draw_circle(R, { 0,0 }, 1.0, RGBc::c_Blue, 0.2f, true);
+		drawCirclePacking_Circles(im, R, circles, gr, true, RGBc::c_Red, 0.2f);
+		drawCirclePacking_Graph(im, R, circles, gr, RGBc::c_Black, 1.0f);
+		//drawCirclePacking_Labels(im, R, circles, gr, 13, RGBc::c_Green, 1.0f);
+
+
+		Plotter.redraw();
+		Plotter.autorangeXY();
+		Plotter.plot();
+
 
 
 		}
@@ -357,10 +369,12 @@ int main(int argc, char *argv[])
 
 
 	//loadTest("trig1503676.txt");
-	//loadTest("trig528.txt");
-	//return 0;
+	//loadTest("trig1503676.txt");
+	
+	loadPack("trig1125072.p");
+	return 0;
 
-	testBall(20000); 
+	//testBall(20000); 
 	/*
 	testBall(1100001);
 	testBall(1200002);
@@ -369,7 +383,7 @@ int main(int argc, char *argv[])
 	testBall(1800005);
 	testBall(2000006);
 	testBall(2200007);
-	//	loadPack("trig97484.p");
+	//	
 	*/
 	return 0;
 

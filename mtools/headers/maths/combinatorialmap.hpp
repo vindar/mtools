@@ -727,7 +727,7 @@ namespace mtools
 			 */
 			void addTriangle(int dartIndex)
 				{
-				const size_t l = _alpha.size();
+				const int l = (int)_alpha.size();
 				_alpha.resize(l+4);
 				_sigma.resize(l+4);
 				_vertices.resize(l+4);
@@ -773,16 +773,22 @@ namespace mtools
 			 * Effectively, the number of faces is increased by two. The number of dart by 4, the number of
 			 * non-oriented edges by 2 and the number of vertices remains the same. 
 			 *
-			 * NB: the method work even if the triangle created contian loops of double edges) 
+			 * NB: the method work even for double edge but not for loop i.e. it is forbidden that
+			 *     dartIndexTarget = dartIndexBase or phi(dartIndexBase)...
 			 *
 			 * @param	dartIndexBase  	The dart preceding the base of the triangle
 			 * @param	dartIndexTarget	The dart whose endpoint is the third vertex of the triangle
+			 * 							
+			 * Returns the len of the face that does NOT contain dartIndexBase. The face that contains it
+			 *         has size (initialFaceSize - len + 1)
 			 */
-			void addSplittingTriangle(int dartIndexBase, int dartIndexTarget)
+			int addSplittingTriangle(int dartIndexBase, int dartIndexTarget)
 				{
 				MTOOLS_INSURE(_faces[dartIndexBase] == _faces[dartIndexTarget]);
+				MTOOLS_INSURE(dartIndexTarget != dartIndexBase);
+				MTOOLS_INSURE(dartIndexTarget != phi(dartIndexBase));
 
-				const size_t l = _alpha.size();
+				const int l = (int)_alpha.size();
 				_alpha.resize(l + 4);
 				_sigma.resize(l + 4);
 				_vertices.resize(l + 4);
@@ -819,10 +825,12 @@ namespace mtools
 				_faces[l + 1] = _nbfaces;
 				_nbfaces++;
 
+				int len = 1;
 				int k = d;
-				while (k != (l + 2)) { _faces[k] = _nbfaces; k = phi(k); }
+				while (k != (l + 2)) { _faces[k] = _nbfaces; k = phi(k); len++; }
 				_faces[k] = _nbfaces;
 				_nbfaces++;
+				return len;
 				}
 
 
@@ -839,6 +847,7 @@ namespace mtools
 			 * 						     -2 : stop the peeling of this (sub)face.
 			 * 						     -1 : create a triangle with a new vertex and base rootEdge
 			 * 						    k>=0: create a triangle with base rootEdge and third vertex the endpoint of dart index k
+			 *  0param  facesize    Do not set. For internal (recursive) use .
 			 */
 			void boltzmannPeeling(int preRootDart, std::function< int(int,int)> fun, int facesize = -1)
 				{
@@ -846,9 +855,9 @@ namespace mtools
 				int res  = fun(phi(preRootDart), facesize);
 
 				if (res == -2) return;
-				if (res == -1) { addTriangle(preRootDart); boltzmannPeeling(preRootDart, fun,facesize + 1); return; }
+				if (res == -1) { addTriangle(preRootDart); boltzmannPeeling(preRootDart, fun, facesize + 1); return; }
 				
-				addSplittingTriangle(int dartIndexBase, int dartIndexTarget)
+			//	addSplittingTriangle(int dartIndexBase, int dartIndexTarget)
 
 
 				}
