@@ -32,6 +32,22 @@ namespace mtools
 
 
 	/**
+	* Query if a given vector encode a proper permutation of {0,...,vec.size()-1}.
+	**/
+	inline bool isPermutationVector(const std::vector<int> & vec)
+		{
+		std::vector<int> tab(vec.size(), 0);
+		for (int i = 0;i < vec.size();i++)
+			{
+			int k = vec[i];
+			if ((k < 0) || (k >= vec.size()) || (tab[k] != 0)) return false;
+			tab[k] = 1;
+			}
+		return true;
+		}
+
+
+	/**
 	* Perform a uniform shuffle of a vector.
 	*
 	* @tparam	random_t	Type of the random number generator
