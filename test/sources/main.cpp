@@ -380,12 +380,13 @@ void testBall(int N)
 			int m = facesize - 2;
 			if (facesize >= 3)  k = (int)UIPT_FBTpeelLaw(m, gen);
 
+
 			auto gr = CM.toGraph();
 			cout << graphInfo(gr);
 			cout << "facesize = " << facesize << "\n";
 			cout << "peeledge = " << peeledge << "\n";
 			cout << " k = " << k << "\n";
-		//	cout.getKey();
+			//cout.getKey();
 
 			if (facesize < 3) { return -3; } // collapse double edges.
 //			const int m = facesize - 2; // we have an (m+2)-gon
