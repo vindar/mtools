@@ -76,6 +76,13 @@ namespace mtools
 				}
 
 
+			/** Create a n-gon (a cycle with n=edges i.e. 2n darts) */
+			CombinatorialMap(int n)
+				{
+				makeNgon(n);
+				}
+
+
 			/**
 			* Construct a rooted planar tree from a Dick word.
 			* The total number of edges of the tree is dw.nbedges().
@@ -190,6 +197,18 @@ namespace mtools
 
 
 			/**
+			* Inverse of permutation phi. 
+			* Rotate around a face in the other direction 
+			* (slower than phi).
+			**/
+			inline int invphi(int i) const
+				{
+				MTOOLS_ASSERT((i >= 0) && (i < nbHalfEdges()));
+				return _alpha[invsigma(i)];
+				}
+
+
+			/**
 			* Number of vertices of the graph. 
 			**/
 			int nbVertices() const { return _nbvertices; }
@@ -225,7 +244,7 @@ namespace mtools
 
 			/**
 			* Return a vector of size nbHalfEdges() that describe the 
-			* start vertex of each dart.
+			* start vertex index of each dart.
 			**/
 			std::vector<int> getVerticeVector() const { return _vertices; }
 
@@ -264,7 +283,7 @@ namespace mtools
 
 
 			/**
-			 * Return a vector of size nbHalfEdges() that describe the face
+			 * Return a vector of size nbHalfEdges() that describe the face index
 			 * for each dart.
 			 **/
 			std::vector<int> getFaceVector() const { return _faces; }
@@ -757,7 +776,7 @@ namespace mtools
 			 * Adds a triangle inside a face.
 			 * 
 			 * The triangle is glued against the next oriented edge following dartindex on the same face (ie
-			 * phi(dartIndex)). This creates an additionnal vertex inside the face and two edges from it to
+			 * phi(dartIndex) = E). This creates an additionnal vertex inside the face and two edges from it to
 			 * the endpoints of E.
 			 * 
 			 * Thus, the procedure effectively increases the number of darts by 4, the number of non-
@@ -807,13 +826,13 @@ namespace mtools
 			/**
 			 * Add a triangle inside a face, effectively splitting it into 3 faces, the center one being the
 			 * triangle. Just like addTriangle(), the base of the triangle is the next edge after dartIndexBase 
-			 * following the same face (ie phi(dartIndexBase)). The third vertex of the triangle is the end 
+			 * following the same face (ie phi(dartIndexBase) = E). The third vertex of the triangle is the end 
 			 * vertex of dartIndexTarget. 
 			 *
-			 * Effectively, the number of faces is increased by two. The number of dart by 4, the number of
-			 * non-oriented edges by 2 and the number of vertices remains the same. 
+			 * The number of faces is increased by two. The number of dart by 4, the number of non-oriented 
+			 * edges by 2 and the number of vertices remains the same. 
 			 *
-			 * NB: the method work even for double edge but not for loop i.e. it is forbidden that
+			 * NB: the method work also for double edge but not for loop i.e. it is forbidden that
 			 *     dartIndexTarget = dartIndexBase or phi(dartIndexBase)...
 			 *
 			 * @param	dartIndexBase  	The dart preceding the base of the triangle
@@ -876,106 +895,56 @@ namespace mtools
 				}
 
 
-			
-			/**  Removes the edege associated with a given dart.     
-			 *  This reduce the size of the map by 2 darts. 
-			 **/
-			 /*
-			 TODO. Find a way to do it so that we do not need to ecount the vertices and faces.
-			 void removeEdge(int da)
-				{
-				const int l = (int)_alpha.size();
-				MTOOLS_ASSERT(l >= 4);
-				MTOOLS_ASSERT((da >= 0) && (da < l);
-				int db = _alpha[da];
-				swapDart(da, l - 2);
-				swapDart(db, l - 1);
-
-				_alpha.resize(l - 2);
-				_sigma.resize(l - 2);
-				_vertices.resize(l - 2);
-				_faces.resize(l - 2);
-				}
-				*/
-			
 
 			/**
-			 * Removes a (pair of) dart belonging to a face of size 2.
+			 * Removes an edge belonging to a face of size 2.
 			 * 
-			 * The method remove the dart and its alpha(dart). This destroy the face of size two leaving only the other edge of the face
+			 * The method remove the dart and its alpha[dart]. This destroy the face of size two leaving
+			 * only the other edge of the face.
+			 * 
+			`* this method reduces the number of edge by 1 (number of darts by 2) and reduces the number
+			 * of faces by 1. The number of vertice remains unchanged.
 			 *
-			 * @param	dart	The dart belong to the face of size 2 to remove.
+			 * @param	dart	The dart to remove (with its alpha[dart]). It must belong to the face of size 2.
 			 **/
 			void removeDartFromFaceOfSize2(int dart)
 				{
+				const int f1 = _removeDartFromFaceOfSize2(dart);  // remove the face
+				const int f2 = _nbfaces - 1;
 				const int l = (int)_alpha.size();
-				const int dart2 = _alpha[dart];
-				MTOOLS_ASSERT(l >= 4);
-				MTOOLS_ASSERT(phi(dart) != dart2);       // not a flat face.
-				MTOOLS_ASSERT(phi(phi(dart)) == dart);   // but a real face of degree two
-				int a = l-2;
-				int b = l-1;
-				_swapdarts(dart, a);
-				_swapdarts(dart2, b);
-				int c = phi(a);
-				int d = _alpha[c];
-				_sigma[invsigma(b)] = c;
-				_sigma[d] = _sigma[a];
-				_faces[c] = _faces[b];
-				if (_root == a) { _root = d; } else if (_root == b) { _root = c; }
+				for (int i = 0; i < l; i++)  // face f1 has disappeared, move f2 to f1
+					{
+					if (_faces[i] == f2) { _faces[i] = f1; }
+					}
 				_nbfaces--;
-				_alpha.resize(l - 2);
-				_sigma.resize(l - 2);
-				_vertices.resize(l - 2);
-				_faces.resize(l - 2);
 				}
+
 
 			/**
 			 * Algorithm to peel a given face of the map.
 			 *
-			 * BEWARE : during the call the fun(), the _faces set may be incorrect !
+			 * IMPORTANT: during the calls to fun(), the current number of faces may be lower than _nbfaces because some
+			 *            faces may have disappeared their index may be currently unused. Everything is set right when 
+			 *            the method returns;
 			 *
-			 * 
-			 * @param	preRootDart	The dart that precede the rootDart that will be used for the first step of the peeling
-			 * 						i.e. rootDart = phi(preRootdart). 
+			 * @param	startpeeledge	The dart that specify the face to peel and the edge to use as the first peeling step.
 			 * @param	fun		 	The function to call at each step of the peeling process.
 			 * 						int fun(int rootdart,int facesize)
-			 * 						  - rootdart : the edge of the face to peel.  
-			 * 						  - facesize : number of edge in the face.  
+			 * 						  - edgetopeel : the dart (ie edge) that should be peeled.  
+			 * 						  - facesize : number of edges in this face.  
 			 * 						  returns the action to take:
-			 * 						     -3 : destroy the face by removing the edge of rootdart : only 
-			 * 						          possible for face of size 2, otherwise, stop the peeling.
-			 * 						     -2 : stop the peeling of this (sub)-face.
-			 * 						     -1 : create a triangle with a new vertex and base rootEdge
-			 * 						    k>=0: create a triangle with base rootEdge and third vertex the endpoint of dart index k
-			 *  0param  facesize    Do not set. For internal (recursive) use .
+			 * 						     -3 : destroy the face by removing the edge edgetopeel : only 
+			 * 						          possible for a face of size 2, otherwise, just stop the peeling this sub-face.
+			 * 						     -2 : stop peeling this sub-face.
+			 * 						     -1 : create a triangle with a new vertex and base edgetopeel
+			 * 						    k>=0: create a triangle with base edgetopeel and third vertex the end-point of dart index k
 			 */
-			void boltzmannPeelingAlgo(int preRootDart, std::function< int(int,int)> fun, int facesize = -1)
+			void boltzmannPeelingAlgo(int startpeeledge, std::function< int(int,int)> fun)
 				{
-				MTOOLS_INSURE((preRootDart >= 0)&&(preRootDart < _alpha.size()));
-				if (facesize < 0) { facesize = faceSize(preRootDart); }
-				int res  = fun(phi(preRootDart), facesize);
-				MTOOLS_INSURE(res >= -3);
-				MTOOLS_INSURE(res < ((int)_alpha.size()));
-
-				if (res == -3) 
-					{ 
-					if (facesize == 2) 
-						{ 
-						removeDartFromFaceOfSize2(phi(preRootDart)); 
-						} 
-					return; 
-					}
-				if (res == -2) return;
-				if (res == -1) { addTriangle(preRootDart); boltzmannPeelingAlgo(preRootDart, fun, facesize + 1); return; }
-				int fs2 = addSplittingTriangle(preRootDart, res);
-				int fs1 = facesize - fs2 + 1;
-				boltzmannPeelingAlgo(preRootDart, fun, fs1); 
-				boltzmannPeelingAlgo(res, fun, fs2); 
+				_boltzmannPeelingAlgo(invphi(startpeeledge), fun, faceSize(startpeeledge)); // run the algorithm recursively
+				_computeFaceSet(); // re-number the faces.
 				return;
 				}
-
-
 
 
 			/**
@@ -997,7 +966,6 @@ namespace mtools
 				s += std::string("   root pos : ") + mtools::toString(root()) + "\n";
 				if (detailed)
 					{
-
 					s += std::string("alpha     = [ "); for (int i = 0; i < _alpha.size(); i++) { s += mtools::toString(_alpha[i]) + " "; } s += "]\n";
 					s += std::string("sigma     = [ "); for (int i = 0; i < _sigma.size(); i++) { s += mtools::toString(_sigma[i]) + " "; } s += "]\n";
 					s += std::string("vertices  = [ "); for (int i = 0; i < _vertices.size(); i++) { s += mtools::toString(_vertices[i]) + " "; } s += "]\n";
@@ -1025,6 +993,55 @@ namespace mtools
 
 
 		private:
+
+
+			/* internal version, do not recompute _nbfaces and reorder the face numbering */
+			void _boltzmannPeelingAlgo(int preRootDart, std::function< int(int, int)> fun, int facesize)
+				{
+				MTOOLS_INSURE((preRootDart >= 0) && (preRootDart < _alpha.size()));
+				int res = fun(phi(preRootDart), facesize);
+				MTOOLS_INSURE(res >= -3);
+				MTOOLS_INSURE(res < ((int)_alpha.size()));
+				if (res == -3) { if (facesize == 2) { _removeDartFromFaceOfSize2(phi(preRootDart)); } return; }
+				if (res == -2) return;
+				if (res == -1) { addTriangle(preRootDart); _boltzmannPeelingAlgo(preRootDart, fun, facesize + 1); return; }
+				int fs2 = addSplittingTriangle(preRootDart, res);
+				int fs1 = facesize - fs2 + 1;
+				_boltzmannPeelingAlgo(preRootDart, fun, fs1);
+				_boltzmannPeelingAlgo(res, fun, fs2);
+				return;
+				}
+
+
+			/* remove an edge in a face of size 2 .
+			   Return the index of this face of size two that disapeared
+			   This Leaves _faces[] inconsistent in the sense that _nbfaces
+			   is not updated and faces are not re-numbered to stay inside [0,n-2]
+			   (if there was n faces before removing it) */
+			int _removeDartFromFaceOfSize2(int dart)
+				{
+				const int l = (int)_alpha.size();
+				const int dart2 = _alpha[dart];
+				MTOOLS_ASSERT(l >= 4);
+				MTOOLS_ASSERT(phi(dart) != dart2);       // not a flat face (this would reove a vertex)
+				MTOOLS_ASSERT(phi(phi(dart)) == dart);   // but indeed a real face of degree two
+				const int F = _faces[dart]; //
+				int a = l - 2;
+				int b = l - 1;
+				_swapdarts(dart, a);
+				_swapdarts(dart2, b);
+				int c = phi(a);
+				int d = _alpha[c];
+				_sigma[invsigma(b)] = c;
+				_sigma[d] = _sigma[a];
+				_faces[c] = _faces[b];
+				if (_root == a) { _root = d; } else if (_root == b) { _root = c; }
+				_alpha.resize(l - 2);
+				_sigma.resize(l - 2);
+				_vertices.resize(l - 2);
+				_faces.resize(l - 2);
+				return F;
+				}
 
 
 			/* move a dart from i to f, used by _swapdarts 

@@ -398,7 +398,7 @@ void testBall(int N)
 
 		cout << mtools::graphInfo(gr) << "\n\n";	// info about the graph.
 
-		CirclePackingLabelGPU<double> CPTEST(true);		// prepare for packing
+		CirclePackingLabel<double> CPTEST(true);		// prepare for packing
 		CPTEST.setTriangulation(gr, boundary);			//
 		CPTEST.setRadii();								//
 
@@ -446,7 +446,7 @@ int main(int argc, char *argv[])
 //	MTOOLS_SWAP_THREADS(argc, argv);
 //	parseCommandLine(argc, argv);
 
-	testFBT(100);
+	testFBT(10);
 	//loadTest("trig1503676.txt");
 	//loadTest("trig1503676.txt");
 	
