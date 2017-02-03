@@ -116,7 +116,7 @@ namespace mtools
 			 * The map must have the same root, the same ordering of edges and the
 			 * same ordering of vertice and faces to compare equal. 
 			 **/
-			bool operator==(const CombinatorialMap & cm)
+			bool operator==(const CombinatorialMap & cm) const
 				{
 				return ((_root == cm._root) && (_sigma == cm._sigma) && (_alpha == cm._alpha)&&(_vertices == cm._vertices)&&(_faces == cm._faces));
 				}
@@ -145,7 +145,7 @@ namespace mtools
 			* Permutation alpha: involution that matches the darts
 			* together.
 			**/
-			inline const int & alpha(int i) const 
+			inline int alpha(int i) const 
 				{ 
 				MTOOLS_ASSERT((i >= 0) && (i < nbHalfEdges()));
 				return _alpha[i]; 
@@ -156,10 +156,24 @@ namespace mtools
 			* Permutation sigma. Give the next dart when rotating 
 			* around a vertex in the positive orientation.
 			**/
-			inline const int & sigma(int i) const 
+			inline int sigma(int i) const 
 				{ 
 				MTOOLS_ASSERT((i >= 0) && (i < nbHalfEdges()));
 				return _sigma[i]; 
+				}
+
+
+			/**
+			* Inverse of permutation sigma. Give the previous dart when 
+			* rotating around a vertex in the positive orientation. 
+			* (slower that sigma).
+			**/
+			inline int invsigma(int i) const
+				{
+				MTOOLS_ASSERT((i >= 0) && (i < nbHalfEdges()));
+				int prev = i; 
+				while (_sigma[prev] != i) { prev = _sigma[prev]; }
+				return prev;
 				}
 
 
@@ -168,7 +182,7 @@ namespace mtools
 			* Rotates around a face (or equivalently around a vertex of 
 			* the dual graph).
 			**/
-			inline const int & phi(int i) const 
+			inline int phi(int i) const 
 				{ 
 				MTOOLS_ASSERT((i >= 0) && (i < nbHalfEdges()));
 				return _sigma[_alpha[i]]; 
@@ -240,7 +254,7 @@ namespace mtools
 			*
 			* @return	the number of edges in the face.
 			**/
-			int faceSize(int dartIndex)
+			int faceSize(int dartIndex) const
 				{
 				MTOOLS_ASSERT((dartIndex >= 0) && (dartIndex < nbHalfEdges()));
 				int n = 1, j = phi(dartIndex);
@@ -309,6 +323,32 @@ namespace mtools
 				cm._nbfaces = _nbvertices;
 				cm._root = _root;
 				return cm;
+				}
+
+
+			/**
+			 * Create a n-gon (cycle graph with n edges). 
+			 * Odd numbered darts are on one side and even numbered darts on the other side with 
+			 * matching (2i) <-> (2i+1).
+			 *
+			 * @param	n	the number of non oriented edges in the cycle.
+			 **/
+			void makeNgon(int n)
+				{
+				_root = 0;
+				_nbvertices = n;
+				_nbfaces = 2;				
+				_alpha.resize(2*n);
+				_sigma.resize(2*n);
+				_faces.resize(2 * n);
+				_vertices.resize(2*n);
+				for (int i = 0;i < n; i++) 
+					{ 
+					_alpha[2*i] = 2*i + 1; _alpha[2*i + 1] = 2*i; 
+					_faces[2*i] = 0; _faces[2*i + 1] = 1; 
+					_sigma[2*i + 1] = ((2*i + 2)%(2*n)); _sigma[(2*i + 2)%(2*n)] = 2*i + 1;
+					_vertices[2*i + 1] = ((i+1)%n); _vertices[(2*i + 2)%(2*n)] = ((i+1)%n);
+					}
 				}
 
 
@@ -732,7 +772,7 @@ namespace mtools
 				_sigma.resize(l+4);
 				_vertices.resize(l+4);
 				_faces.resize(l+4);
-
+				
 				const int F = _faces[dartIndex];
 				const int a = _alpha[dartIndex];
 				const int b = _sigma[a];
@@ -753,7 +793,7 @@ namespace mtools
 				_vertices[l + 1] = _nbvertices;
 				_vertices[l + 2] = _nbvertices;
 				_nbvertices++;
-
+				
 				_faces[b]     = _nbfaces;
 				_faces[l + 3] = _nbfaces;
 				_faces[l + 1] = _nbfaces;
@@ -784,6 +824,8 @@ namespace mtools
 			 */
 			int addSplittingTriangle(int dartIndexBase, int dartIndexTarget)
 				{
+				MTOOLS_ASSERT((dartIndexBase >= 0) && (dartIndexBase < _alpha.size()));
+				MTOOLS_ASSERT((dartIndexTarget >= 0) && (dartIndexTarget < _alpha.size()));
 				MTOOLS_INSURE(_faces[dartIndexBase] == _faces[dartIndexTarget]);
 				MTOOLS_INSURE(dartIndexTarget != dartIndexBase);
 				MTOOLS_INSURE(dartIndexTarget != phi(dartIndexBase));
@@ -834,39 +876,104 @@ namespace mtools
 				}
 
 
+			
+			/**  Removes the edege associated with a given dart.     
+			 *  This reduce the size of the map by 2 darts. 
+			 **/
+			 /*
+			 TODO. Find a way to do it so that we do not need to ecount the vertices and faces.
+			 void removeEdge(int da)
+				{
+				const int l = (int)_alpha.size();
+				MTOOLS_ASSERT(l >= 4);
+				MTOOLS_ASSERT((da >= 0) && (da < l);
+				int db = _alpha[da];
+				swapDart(da, l - 2);
+				swapDart(db, l - 1);
+
+				_alpha.resize(l - 2);
+				_sigma.resize(l - 2);
+				_vertices.resize(l - 2);
+				_faces.resize(l - 2);
+				}
+				*/
+			
+
 			/**
-			 * Pell a given face of the map, starting from startDart.
+			 * Removes a (pair of) dart belonging to a face of size 2.
+			 * 
+			 * The method remove the dart and its alpha(dart). This destroy the face of size two leaving only the other edge of the face
 			 *
-			 * @param	preRootDart	The dart that precede thae rootDart that will be used for the first step of the peeling
+			 * @param	dart	The dart belong to the face of size 2 to remove.
+			 **/
+			void removeDartFromFaceOfSize2(int dart)
+				{
+				const int l = (int)_alpha.size();
+				const int dart2 = _alpha[dart];
+				MTOOLS_ASSERT(l >= 4);
+				MTOOLS_ASSERT(phi(dart) != dart2);       // not a flat face.
+				MTOOLS_ASSERT(phi(phi(dart)) == dart);   // but a real face of degree two
+				int a = l-2;
+				int b = l-1;
+				_swapdarts(dart, a);
+				_swapdarts(dart2, b);
+				int c = phi(a);
+				int d = _alpha[c];
+				_sigma[invsigma(b)] = c;
+				_sigma[d] = _sigma[a];
+				_faces[c] = _faces[b];
+				if (_root == a) { _root = d; } else if (_root == b) { _root = c; }
+				_nbfaces--;
+				_alpha.resize(l - 2);
+				_sigma.resize(l - 2);
+				_vertices.resize(l - 2);
+				_faces.resize(l - 2);
+				}
+
+			/**
+			 * Algorithm to peel a given face of the map.
+			 *
+			 * BEWARE : during the call the fun(), the _faces set may be incorrect !
+			 *
+			 * 
+			 * @param	preRootDart	The dart that precede the rootDart that will be used for the first step of the peeling
 			 * 						i.e. rootDart = phi(preRootdart). 
 			 * @param	fun		 	The function to call at each step of the peeling process.
 			 * 						int fun(int rootdart,int facesize)
 			 * 						  - rootdart : the edge of the face to peel.  
 			 * 						  - facesize : number of edge in the face.  
 			 * 						  returns the action to take:
-			 * 						     -2 : stop the peeling of this (sub)face.
+			 * 						     -3 : destroy the face by removing the edge of rootdart : only 
+			 * 						          possible for face of size 2, otherwise, stop the peeling.
+			 * 						     -2 : stop the peeling of this (sub)-face.
 			 * 						     -1 : create a triangle with a new vertex and base rootEdge
 			 * 						    k>=0: create a triangle with base rootEdge and third vertex the endpoint of dart index k
 			 *  0param  facesize    Do not set. For internal (recursive) use .
 			 */
-			void boltzmannPeeling(int preRootDart, std::function< int(int,int)> fun, int facesize = -1)
+			void boltzmannPeelingAlgo(int preRootDart, std::function< int(int,int)> fun, int facesize = -1)
 				{
+				MTOOLS_INSURE((preRootDart >= 0)&&(preRootDart < _alpha.size()));
 				if (facesize < 0) { facesize = faceSize(preRootDart); }
 				int res  = fun(phi(preRootDart), facesize);
+				MTOOLS_INSURE(res >= -3);
+				MTOOLS_INSURE(res < ((int)_alpha.size()));
 
+				if (res == -3) 
+					{ 
+					if (facesize == 2) 
+						{ 
+						removeDartFromFaceOfSize2(phi(preRootDart)); 
+						} 
+					return; 
+					}
 				if (res == -2) return;
-				if (res == -1) { addTriangle(preRootDart); boltzmannPeeling(preRootDart, fun, facesize + 1); return; }
-				
-			//	addSplittingTriangle(int dartIndexBase, int dartIndexTarget)
-
-
+				if (res == -1) { addTriangle(preRootDart); boltzmannPeelingAlgo(preRootDart, fun, facesize + 1); return; }
+				int fs2 = addSplittingTriangle(preRootDart, res);
+				int fs1 = facesize - fs2 + 1;
+				boltzmannPeelingAlgo(preRootDart, fun, fs1); 
+				boltzmannPeelingAlgo(res, fun, fs2); 
+				return;
 				}
-
-
-
-
-
-
 
 
 
@@ -914,40 +1021,49 @@ namespace mtools
 				ar & _faces;
 				}
 
-
+			
 
 
 		private:
 
 
-			/* swap indexes i1 and i2 without modifiying the graph */
-			/*
-			void _swapIndexes(int i1, int i2)
+			/* move a dart from i to f, used by _swapdarts 
+			   leave the object in an inconsistent state */
+			void _movedart(int i, int f)
 				{
-				if (i1 == i2) return;	// nothing to do
-				// update alpha
-				int a1 = _alpha[i1];
-				int a2 = _alpha[i2];
-				_alpha[i1] = a2;
-				_alpha[a2] = i1;
-				_alpha[i2] = a1;
-				_alpha[a1] = i2;
-				// update sigma
-				int sr1 = _sigma[i1];
-				int sr2 = _sigma[i2];
-				int lr1 = i1; while (_sigma[lr1] != i1) { lr1 = _sigma[lr1]; }
-				int lr2 = i2; while (_sigma[lr2] != i2) { lr2 = _sigma[lr2]; }
-				if (sr1 == lr1) { _sigma[i2] = i2; } else { _sigma[i2] = sr1; _sigma[lr1] = i2; }
-				if (sr2 == lr2) { _sigma[i1] = i1; } else { _sigma[i1] = sr2; _sigma[lr2] = i1; }
-				// update the face and vertice sets
-				int tmpf = _faces[i1]; _faces[i1] = _faces[i2]; _faces[i2] = tmpf;
-				int tmpv = _vertices[i1]; _vertices[i1] = _vertices[i2]; _vertices[i2] = tmpf;
-				// update the root
-				if (_root == i1) { _root = i2; } else { if (_root == i2) { _root = i1; } }
+				int a = _alpha[i];
+				_alpha[f] = a;
+				_alpha[a] = f;
+				int n = _sigma[i];
+				int p = invsigma(i);
+				_sigma[f] = ((n == i) ? f : n);
+				_sigma[p] = f;
+				_faces[f] = _faces[i];
+				_vertices[f] = _vertices[i];
+				if (_root == i) { _root = f; }
 				}
-			*/
 
 
+			/* swap indexes i1 and i2 without modifiying the graph */
+			void _swapdarts(int i, int j)
+				{
+				/* TODO : implement without resize() */
+				if (i == j) return;
+				const int l = (int)_alpha.size();
+				_alpha.resize(l + 1);
+				_sigma.resize(l + 1);
+				_vertices.resize(l + 1);
+				_faces.resize(l + 1);
+				_movedart(i, l);
+				_movedart(j, i);
+				_movedart(l, j);
+				_alpha.resize(l);
+				_sigma.resize(l);
+				_vertices.resize(l);
+				_faces.resize(l);
+				}
+				
+				
 			/* Compute the vertex set from sigma and alpha */
 			void _computeVerticeSet()
 				{
@@ -1044,4 +1160,4 @@ namespace mtools
 	}
 
 /* end of file */
-
+	

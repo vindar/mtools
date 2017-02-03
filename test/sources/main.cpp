@@ -362,16 +362,95 @@ void testBall(int N)
 
 
 
+	void testFBT(int n)
+		{
+
+		CombinatorialMap CM;
+		CM.makeNgon(n);
+
+		cout << graphInfo(CM.toGraph()) << "\n";
+		cout.getKey(); 
+		
+
+		CM.boltzmannPeelingAlgo(0, [&](int peeledge, int facesize)-> int {
+
+			if (facesize <= 3) { return -3; }
+			return CM.phi(CM.phi(peeledge));
+
+			});
+			
+
+		// OK, 
+		std::vector<std::vector<int> > gr = CM.toGraph();
+
+		int e1 = 0;
+		int e2 = CM.phi(e1);
+		int e3 = CM.phi(e2);
+		MTOOLS_INSURE(CM.phi(e3) == e1);
+		int v1 = CM.vertice(e1);
+		int v2 = CM.vertice(e2);
+		int v3 = CM.vertice(e3);
+
+		gr = triangulateGraph(gr);
+		std::vector<int> boundary(gr.size(), 0);				// set the root face
+		boundary[v1] = 1; boundary[v2] = 1; boundary[v3] = 1;	// as the exterior face for packing
+
+
+		cout << mtools::graphInfo(gr) << "\n\n";	// info about the graph.
+
+		CirclePackingLabelGPU<double> CPTEST(true);		// prepare for packing
+		CPTEST.setTriangulation(gr, boundary);			//
+		CPTEST.setRadii();								//
+
+		cout << "ITERATION = " << CPTEST.computeRadii(1.0e-9, 0.03, -1, 1000) << "\n";
+		cout << "Laying out the circles...\n";
+		auto circleVec = computeCirclePackLayout(gr, boundary, CPTEST.getRadii(), false, (int)gr.size() - 1);
+
+		cout << "done in " << mtools::Chronometer() << "ms\n";
+
+		auto pos0 = circleVec.back().center;
+		double rad0 = circleVec.back().radius;
+		mtools::Mobius<double> M(0.0, 1.0, 1.0, 0.0);
+
+		for (int i = 0; i < circleVec.size(); i++)
+			{
+			circleVec[i] -= pos0; // center
+			circleVec[i] /= rad0; // normalise such that outer boundary circle has size 1
+			if (i != circleVec.size() - 1) { circleVec[i] = M*(circleVec[i]); } // invert */
+			}
+
+
+		int LX = 2000;
+		int LY = 2000;
+		fBox2 R(-2, 2, -2, 2);
+		mtools::Img<unsigned char> im(LX, LY, 1, 4);
+		im.clear(RGBc::c_White);
+
+		drawCirclePacking_Circles(im, R, circleVec, gr, true, RGBc::c_Red, 0.2f, (int)gr.size() - 1, (int)gr.size());
+		drawCirclePacking_Circles(im, R, circleVec, gr, true, RGBc::c_Red, 0.2f, 0, (int)gr.size() - 1);
+		drawCirclePacking_Graph(im, R, circleVec, gr, RGBc::c_Black, 1.0f, 0, (int)gr.size() - 1);
+		drawCirclePacking_Labels(im, R, circleVec, gr, 55, RGBc::c_Green, 1.0f, 0, (int)gr.size() - 1);
+
+		Plotter2D Plotter;
+		auto P2 = makePlot2DCImg(im, "circles");
+		Plotter[P2];
+		Plotter.autorangeXY();
+		Plotter.plot();
+
+		}
+
+
+
 int main(int argc, char *argv[])
     {
 //	MTOOLS_SWAP_THREADS(argc, argv);
 //	parseCommandLine(argc, argv);
 
-
+	testFBT(100);
 	//loadTest("trig1503676.txt");
 	//loadTest("trig1503676.txt");
 	
-	loadPack("trig1125072.p");
+	//loadPack("trig1125072.p");
 	return 0;
 
 	//testBall(20000); 
