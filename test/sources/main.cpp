@@ -374,15 +374,35 @@ void testBall(int N)
 
 		CM.boltzmannPeelingAlgo(0, [&](int peeledge, int facesize)-> int {
 
-			if (facesize <= 3) { return -3; }
-			return CM.phi(CM.phi(peeledge));
+			MTOOLS_INSURE(facesize >= 2);
 
+			int k = -4; 
+			int m = facesize - 2;
+			if (facesize >= 3)  k = (int)UIPT_FBTpeelLaw(m, gen);
+
+			auto gr = CM.toGraph();
+			cout << graphInfo(gr);
+			cout << "facesize = " << facesize << "\n";
+			cout << "peeledge = " << peeledge << "\n";
+			cout << " k = " << k << "\n";
+		//	cout.getKey();
+
+			if (facesize < 3) { return -3; } // collapse double edges.
+//			const int m = facesize - 2; // we have an (m+2)-gon
+			if (k == -1) return -1; // new vertex discovered.
+			if (k == -1) { k = (m+1)/2; }
+			MTOOLS_INSURE(k >= 1);
+			MTOOLS_INSURE(k <= m);
+			for (int i = 0;i < k; i++) { peeledge = CM.phi(peeledge); }
+			return peeledge;
 			});
 			
 
 		// OK, 
 		std::vector<std::vector<int> > gr = CM.toGraph();
 
+		cout << graphInfo(gr) << "\n";
+		cout.getKey(); 
 		int e1 = 0;
 		int e2 = CM.phi(e1);
 		int e3 = CM.phi(e2);
@@ -446,7 +466,7 @@ int main(int argc, char *argv[])
 //	MTOOLS_SWAP_THREADS(argc, argv);
 //	parseCommandLine(argc, argv);
 
-	testFBT(10);
+	testFBT(20);
 	//loadTest("trig1503676.txt");
 	//loadTest("trig1503676.txt");
 	

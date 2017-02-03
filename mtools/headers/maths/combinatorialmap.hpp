@@ -888,7 +888,10 @@ namespace mtools
 
 				int len = 1;
 				int k = d;
-				while (k != (l + 2)) { _faces[k] = _nbfaces; k = phi(k); len++; }
+				while (k != (l + 2)) 
+					{ 
+					_faces[k] = _nbfaces; k = phi(k); len++; 
+					}
 				_faces[k] = _nbfaces;
 				_nbfaces++;
 				return len;
@@ -1007,8 +1010,16 @@ namespace mtools
 				if (res == -1) { addTriangle(preRootDart); _boltzmannPeelingAlgo(preRootDart, fun, facesize + 1); return; }
 				int fs2 = addSplittingTriangle(preRootDart, res);
 				int fs1 = facesize - fs2 + 1;
-				_boltzmannPeelingAlgo(preRootDart, fun, fs1);
-				_boltzmannPeelingAlgo(res, fun, fs2);
+				if (fs1 < fs2)
+					{
+					_boltzmannPeelingAlgo(preRootDart, fun, fs1);
+					_boltzmannPeelingAlgo(res, fun, fs2);
+					}
+				else
+					{
+					_boltzmannPeelingAlgo(res, fun, fs2);
+					_boltzmannPeelingAlgo(preRootDart, fun, fs1);
+					}
 				return;
 				}
 
@@ -1016,7 +1027,7 @@ namespace mtools
 			/* remove an edge in a face of size 2 .
 			   Return the index of this face of size two that disapeared
 			   This Leaves _faces[] inconsistent in the sense that _nbfaces
-			   is not updated and faces are not re-numbered to stay inside [0,n-2]
+			   is not updated since faces are not re-numbered to stay inside [0,n-2]
 			   (if there was n faces before removing it) */
 			int _removeDartFromFaceOfSize2(int dart)
 				{
