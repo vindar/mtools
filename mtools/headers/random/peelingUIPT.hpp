@@ -95,7 +95,7 @@ namespace mtools
 
 	/**
 	* Cumulative distribution of the random variables associated with the peeling of the Infinite
-	* Uniform Triangulation.
+	* Uniform Triangulation (type II).
 	*
 	* c.f. Angel (2002) Growth and Percolation on the Uniform Infinite Planar Triangulation, p15.
 	*
@@ -134,7 +134,7 @@ namespace mtools
 
 	/**
 	* Sample a random variable according to increment of the size of the boundary when peeling to
-	* UIPT. with a boundary of (m+2) vertices ie sampled from the CDF UIPTpeelCDF(.,m).
+	* UIPT of type II with a boundary of (m+2) vertices i.e. sampled from the CDF UIPTpeelCDF(.,m).
 	*
 	* @param   m           the size of the boudary is m+2.
 	* @param [in,out]  gen the random number generator.
@@ -150,7 +150,7 @@ namespace mtools
 
 	/**
 	* Cumulative distribution of the random variables associated with the peeling of a
-	* Free Boltzmann Triangulation (FBT).
+	* Free Boltzmann Triangulation (FBT) of type II.
 	*
 	* c.f. Angel (2002) Growth and Percolation on the Uniform Infinite Planar Triangulation, p15.
 	*
@@ -208,7 +208,9 @@ namespace mtools
 	template<class random_t> inline int64 UIPT_FBTpeelLaw(int64 m, random_t & gen)
 		{
 		UIPT_FBTpeelCDFobj O(m);
-		return sampleDiscreteRVfromCDF(O, gen);
+		int64 v = sampleDiscreteRVfromCDF(O, gen);
+		if ((v > 0) && (Unif_1(gen))) { v = m + 1 - v; } // re-symmetrize to reduce numerical error, even if it is theorically uneeded.
+		return v;
 		}
 
 
