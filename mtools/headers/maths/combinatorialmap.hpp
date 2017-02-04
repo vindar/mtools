@@ -35,7 +35,7 @@ namespace mtools
 
 
 	#ifdef _DEBUG
-	#define CHECKCONSISTENCY _checkConsistency();
+	#define CHECKCONSISTENCY checkConsistency();
 	#else
 	#define CHECKCONSISTENCY (0);
 	#endif
@@ -45,6 +45,8 @@ namespace mtools
 	/* forward declaration from graph.hpp */
 	template<typename GRAPH>  bool isGraphSimple(const GRAPH & gr);
 	template<typename GRAPH>  bool isGraphEmpty(const GRAPH & gr);
+	template<typename GRAPH> GRAPH resizeGraph(const GRAPH & graph, size_t newSize);
+	template<typename GRAPH> GRAPH permuteGraph(const GRAPH & graph, const Permutation  & perm);
 
 
 	/**
@@ -147,7 +149,7 @@ namespace mtools
 			* Number of half-edges (ie darts) of the graph
 			* This is equal to twice nbEdges().
 			**/
-			inline int nbHalfEdges() const { return ((int)_alpha.size()); }
+			inline int nbDarts() const { return ((int)_alpha.size()); }
 
 
 			/**
@@ -162,7 +164,7 @@ namespace mtools
 			**/
 			inline int alpha(int i) const 
 				{ 
-				MTOOLS_ASSERT((i >= 0) && (i < nbHalfEdges()));
+				MTOOLS_ASSERT((i >= 0) && (i < nbDarts()));
 				return _alpha[i]; 
 				}
 
@@ -173,7 +175,7 @@ namespace mtools
 			**/
 			inline int sigma(int i) const 
 				{ 
-				MTOOLS_ASSERT((i >= 0) && (i < nbHalfEdges()));
+				MTOOLS_ASSERT((i >= 0) && (i < nbDarts()));
 				return _sigma[i]; 
 				}
 
@@ -185,7 +187,7 @@ namespace mtools
 			**/
 			inline int invsigma(int i) const
 				{
-				MTOOLS_ASSERT((i >= 0) && (i < nbHalfEdges()));
+				MTOOLS_ASSERT((i >= 0) && (i < nbDarts()));
 				int prev = i; 
 				while (_sigma[prev] != i) { prev = _sigma[prev]; }
 				return prev;
@@ -199,7 +201,7 @@ namespace mtools
 			**/
 			inline int phi(int i) const 
 				{ 
-				MTOOLS_ASSERT((i >= 0) && (i < nbHalfEdges()));
+				MTOOLS_ASSERT((i >= 0) && (i < nbDarts()));
 				return _sigma[_alpha[i]]; 
 				}
 
@@ -211,7 +213,7 @@ namespace mtools
 			**/
 			inline int invphi(int i) const
 				{
-				MTOOLS_ASSERT((i >= 0) && (i < nbHalfEdges()));
+				MTOOLS_ASSERT((i >= 0) && (i < nbDarts()));
 				return _alpha[invsigma(i)];
 				}
 
@@ -228,7 +230,7 @@ namespace mtools
 			**/
 			int vertice(int dartIndex) const
 				{
-				MTOOLS_ASSERT((dartIndex >= 0) && (dartIndex < nbHalfEdges()));
+				MTOOLS_ASSERT((dartIndex >= 0) && (dartIndex < nbDarts()));
 				return _vertices[dartIndex];
 				}
 
@@ -243,7 +245,7 @@ namespace mtools
 			**/
 			int vertexDegree(int dartIndex) const 
 				{
-				MTOOLS_ASSERT((dartIndex >= 0) && (dartIndex < nbHalfEdges()));
+				MTOOLS_ASSERT((dartIndex >= 0) && (dartIndex < nbDarts()));
 				int n = 1, j= sigma(dartIndex);
 				while (j != dartIndex) { j = sigma(j); n++; }
 				return n;
@@ -251,7 +253,7 @@ namespace mtools
 
 
 			/**
-			* Return a vector of size nbHalfEdges() that describe the 
+			* Return a vector of size nbDarts() that describe the 
 			* start vertex index of each dart.
 			**/
 			std::vector<int> getVerticeVector() const { return _vertices; }
@@ -268,7 +270,7 @@ namespace mtools
 			**/
 			int face(int dartIndex) const
 				{
-				MTOOLS_ASSERT((dartIndex >= 0) && (dartIndex < nbHalfEdges()));
+				MTOOLS_ASSERT((dartIndex >= 0) && (dartIndex < nbDarts()));
 				return _faces[dartIndex];
 				}
 
@@ -283,7 +285,7 @@ namespace mtools
 			**/
 			int faceSize(int dartIndex) const
 				{
-				MTOOLS_ASSERT((dartIndex >= 0) && (dartIndex < nbHalfEdges()));
+				MTOOLS_ASSERT((dartIndex >= 0) && (dartIndex < nbDarts()));
 				int n = 1, j = phi(dartIndex);
 				while (j != dartIndex) { j = phi(j); n++; }
 				return n;
@@ -291,7 +293,7 @@ namespace mtools
 
 
 			/**
-			 * Return a vector of size nbHalfEdges() that describe the face index
+			 * Return a vector of size nbDarts() that describe the face index
 			 * for each dart.
 			 **/
 			std::vector<int> getFaceVector() const { return _faces; }
@@ -341,7 +343,7 @@ namespace mtools
 				{
 				CombinatorialMap cm;
 				cm._alpha = _alpha;	// same alpha
-				const size_t l = nbHalfEdges(); 
+				const size_t l = nbDarts();
 				cm._sigma.resize(l);
 				for (int i = 0; i < l; i++) { cm._sigma[i] = phi(i); } // invert phi becomes sigma
 				cm._vertices = _faces;
@@ -546,24 +548,7 @@ namespace mtools
 			template<typename GRAPH> GRAPH toGraph() const
 				{
 				CHECKCONSISTENCY;
-				const int l = nbHalfEdges();
-				GRAPH gr;
-				gr.resize(_nbvertices);
-				for(int i = 0; i < l; i++)
-					{
-					int v = _vertices[i];
-					if (gr[v].size() == 0)
-						{
-						gr[v].push_back(_vertices[_alpha[i]]);
-						int j = _sigma[i];
-						while(j != i)
-							{
-							gr[v].push_back(_vertices[_alpha[j]]);
-							j = _sigma[j];
-							}
-						}
-					}
-				return gr;
+				return _toGraph<GRAPH>();
 				}
 
 
@@ -588,7 +573,7 @@ namespace mtools
 			int triangulate() 
 				{
 				const int nbv = nbVertices();
-				const int l = nbHalfEdges();
+				const int l = nbDarts();
 				for (int i = 0; i < l; i++) 
 					{ 
 					_triangulateFace(i); 
@@ -636,7 +621,7 @@ namespace mtools
 			CombinatorialMap getPermute(const Permutation  & perm) const
 				{
 				CHECKCONSISTENCY;
-				const int l = nbHalfEdges();
+				const int l = nbDarts();
 				MTOOLS_ASSERT((int)perm.size() == l);
 				CombinatorialMap cm;
 				cm._alpha.resize(l);
@@ -676,7 +661,7 @@ namespace mtools
 				{
 				CHECKCONSISTENCY;
 				// we need to make sure that the numbering of the edges follow the contour of the tree.
-				const int len = nbHalfEdges();
+				const int len = nbDarts();
 				bool needreorder = false;
 				std::vector<int> ord(len, -1);
 				int x0 = 0; while (_sigma[x0] != x0) { x0++; MTOOLS_ASSERT(x0 < len); } // find an half edge x0 that is a leaf. 
@@ -839,24 +824,28 @@ namespace mtools
 
 
 			/**
-			 * Removes an edge belonging to a face of size 2.
+			 * Collapse a face of size 2 into a single edge.
 			 * 
-			 * The method remove the dart and its alpha[dart]. This destroy the face of size two leaving
-			 * only the other edge of the face.
+			 * The method remove the dart and alpha[dart]. This destroy the face of size two leaving only the 
+			 * other edge of the face.
 			 * 
-			`* this method reduces the number of edge by 1 (number of darts by 2) and reduces the number
-			 * of faces by 1. The number of vertice remains unchanged.
+			`* -> Reduces the number of edges by 1 (hence the number of darts by 2) and reduces the number
+			 *    of faces by 1. The numbering of vertices remain unchanged but the numbering of the dart and 
+			 *    faces are modified.
+			 *
+			 * -> The method cannot be use to remove double edges that do not define a face of size two (ie if
+			 *    there are edges in between).
 			 *
 			 * @param	dart	The dart to remove (with its alpha[dart]). It must belong to the face of size 2.
 			 **/
-			void removeDartFromFaceOfSize2(int dart)
+			void collapseFaceOfSize2(int dart)
 				{
 				CHECKCONSISTENCY;
-				const int f1 = _removeDartFromFaceOfSize2(dart);  // remove the face
+				const int f1 = _collapseFaceOfSize2(dart);  // remove the face
 				const int f2 = _nbfaces - 1;
 				const int l = (int)_alpha.size();
-				for (int i = 0; i < l; i++)  // face f1 has disappeared, move f2 to f1
-					{
+				for (int i = 0; i < l; i++) // face f1 has disappeared, move f2 to f1
+					{ 
 					if (_faces[i] == f2) { _faces[i] = f1; }
 					}
 				_nbfaces--;
@@ -867,30 +856,51 @@ namespace mtools
 			/**
 			 * Algorithm to peel a given face of the map.
 			 *
-			 * IMPORTANT: during the calls to fun(), the current number of faces may be lower than _nbfaces because some
-			 *            faces may have disappeared their index may be currently unused. Everything is set right when 
-			 *            the method returns;
-			 *
-			 * @param	startpeeledge	The dart that specify the face to peel and the edge to use as the first peeling step.
+			 * @param	startpeeledge	The dart that specify the face to peel and the edge peeled at the first step.
 			 * @param	fun		 	The function to call at each step of the peeling process.
-			 * 						int fun(int rootdart,int facesize)
-			 * 						  - edgetopeel : the dart (ie edge) that should be peeled.  
-			 * 						  - facesize : number of edges in this face.  
+			 * 						int fun(int edgetopeel,int facesize)
+			 * 						     - edgetopeel : the dart (edge) that should be peeled.  
+			 * 						     - facesize   : number of edges on this face.  
 			 * 						  returns the action to take:
-			 * 						     -3 : destroy the face by removing the edge edgetopeel : only 
-			 * 						          possible for a face of size 2, otherwise, just stop the peeling this sub-face.
-			 * 						     -2 : stop peeling this sub-face.
-			 * 						     -1 : create a triangle with a new vertex and base edgetopeel
-			 * 						    k>=0: create a triangle with base edgetopeel and third vertex the end-point of dart index k
+			 * 						     -2   : stop peeling this face.
+			 * 						     -1   : create a triangle with a new vertex and base edgetopeel
+			 * 						    k>=0  : create a triangle with base edgetopeel and third vertex the end-point of dart index k
+			 * Algorithm:
+			 * 
+			 * - fun() >= 0 :   Two new edges are revealed and the n-gon is splitted in two. These new edges are e1 = alpha(invphi(edgestopeel))   
+			 *                  and e2 = alpha(phi(edgetopeel)). The algorithm continues peeling both n-gon starting from e1 and e2 respectively.
+			 *                  The smallest n-gon is peeled first.
+			 * - fun()  =-1 :   two new edges are revealed but the n-gon is not splitted. These new edges are e1 = alpha(invphi(edgestopeel))   
+			 *                  and e2 = alpha(phi(edgetopeel)). The algorithm continues peeling the (n+1)-gon from e1.
 			 */
 			void boltzmannPeelingAlgo(int startpeeledge, std::function< int(int,int)> fun)
 				{
 				CHECKCONSISTENCY;
 				_boltzmannPeelingAlgo(invphi(startpeeledge), fun, faceSize(startpeeledge)); // run the algorithm recursively
-				_computeFaceSet(); // re-number the faces.
 				CHECKCONSISTENCY;
 				return;
 				}
+
+
+
+			/**
+			* Remove all the vertices that are contained between two parallel double edges and then collapse the 
+			* remaining face of size 2 into a single edge. Use the root face to determine whether a vertex is "inside" 
+			* or "outside" a double edge: the root face is always outside (hence it is not removed). 
+			* 
+			*  - This method returns a type III graph (ie without double edges). The result are undefined is the graph 
+			*    has loops.
+			*    
+			*  - the numbering of faces, vertices and darts is modified !
+			**/
+			void toTypeIII()
+				{
+				CHECKCONSISTENCY;
+				_toTypeIII();
+				CHECKCONSISTENCY;
+				return;
+				}
+
 
 
 			/**
@@ -901,7 +911,7 @@ namespace mtools
 				{
 				CHECKCONSISTENCY;
 				std::string s("CombinatorialMap: (");
-				s += mtools::toString(nbHalfEdges()) + " darts)\n";
+				s += mtools::toString(nbDarts()) + " darts)\n";
 				s += std::string("   edges    : ") + mtools::toString(nbEdges()) + "\n";
 				s += std::string("   vertices : ") + mtools::toString(nbVertices()) + "\n";
 				s += std::string("   faces    : ") + mtools::toString(nbFaces());
@@ -937,25 +947,96 @@ namespace mtools
 				CHECKCONSISTENCY;
 				}
 
-			
+
+
+			/**
+			* Make sure that the object is in a consistent state.
+			* The macro CHECKCONSISTENCY call this method if _DEBUG is set. 
+			**/
+			void checkConsistency() const
+				{
+				const size_t l = _alpha.size();
+				MTOOLS_INSURE(l >= 2);
+				MTOOLS_INSURE(_sigma.size() == l);
+				MTOOLS_INSURE(_vertices.size() == l);
+				MTOOLS_INSURE(_faces.size() == l);
+				MTOOLS_INSURE((_root >= 0) && (_root < (int)l));
+
+				// alpha must be fixed point free involution
+				MTOOLS_INSURE(isPermutationVector(_alpha));
+				for (size_t i = 0;i < l; i++)
+					{
+					MTOOLS_INSURE(_alpha[i] != i);
+					MTOOLS_INSURE(_alpha[_alpha[i]] == i);
+					}
+
+				// _sigma can be any permutation
+				MTOOLS_INSURE(isPermutationVector(_sigma));
+
+				// make sure the vertices vector is ok
+				MTOOLS_INSURE((_nbvertices > 0) && (_nbvertices <= l));
+
+				{ // check that the vertice vector is ok.
+				std::vector<int> vv(l, -1);
+				std::set<int> vs;
+				for (int i = 0;i < (int)l; i++)
+					{
+					MTOOLS_INSURE((_vertices[i] >= 0) && (_vertices[i] < _nbvertices));
+					if (vs.find(_vertices[i]) != vs.end()) { MTOOLS_INSURE(_vertices[i] == vv[i]); }
+					else
+						{
+						MTOOLS_INSURE(vv[i] == -1);
+						vv[i] = _vertices[i];
+						vs.insert(_vertices[i]);
+						int j = _sigma[i];
+						while (j != i)
+							{
+							MTOOLS_INSURE(vv[j] == -1);
+							MTOOLS_INSURE(_vertices[j] == _vertices[i]);
+							vv[j] = _vertices[i];
+							j = _sigma[j];
+							}
+						}
+					}
+				MTOOLS_INSURE(vs.size() == _nbvertices);
+				}
+
+				{ // check that the face vector is ok.
+				std::vector<int> ff(l, -1);
+				std::set<int> fs;
+				for (int i = 0; i < (int)l; i++)
+					{
+					MTOOLS_INSURE((_faces[i] >= 0) && (_faces[i] < _nbfaces));
+					if (fs.find(_faces[i]) != fs.end()) { MTOOLS_INSURE(_faces[i] == ff[i]); }
+					else
+						{
+						MTOOLS_INSURE(ff[i] == -1);
+						ff[i] = _faces[i];
+						fs.insert(_faces[i]);
+						int j = _sigma[_alpha[i]];
+						while (j != i)
+							{
+							MTOOLS_INSURE(ff[j] == -1);
+							MTOOLS_INSURE(_faces[j] == _faces[i]);
+							ff[j] = _faces[i];
+							j = _sigma[_alpha[j]];
+							}
+						}
+					}
+				MTOOLS_INSURE(fs.size() == _nbfaces);
+				}
+				return;
+				}
+
+
+
 
 
 		private:
 
 
 
-			/**
-			* Adds a triangle inside a face.
-			*
-			* The triangle is glued against the next oriented edge following dartindex on the same face (ie
-			* phi(dartIndex) = E). This creates an additionnal vertex inside the face and two edges from it to
-			* the endpoints of E.
-			*
-			* Thus, the procedure effectively increases the number of darts by 4, the number of non-
-			* oriented edge by two, the number of face by 1 and the number of vertices by 1.
-			*
-			* @param	dartIndex	The dart preceding the one to which the face should be added.
-			*/
+			/* Private method that does not check for consistency */
 			void _addTriangle(int dartIndex)
 				{
 				const int l = (int)_alpha.size();
@@ -1052,12 +1133,11 @@ namespace mtools
 				}
 
 
-			/* remove an edge in a face of size 2 .
-			Return the index of this face of size two that disapeared
-			This Leaves _faces[] inconsistent in the sense that _nbfaces
-			is not updated since faces are not re-numbered to stay inside [0,n-2]
-			(if there was n faces before removing it) */
-			int _removeDartFromFaceOfSize2(int dart)
+			/* private method. leaves _faces[] and _nbfaces inconsistent since there
+			   is one less face (but renumbering is not performed and _nbfaces is not
+			   decremented).
+			   Return the (now available) index of the face that was removed. */
+			int _collapseFaceOfSize2(int dart)
 				{
 				const int l = (int)_alpha.size();
 				const int dart2 = _alpha[dart];
@@ -1084,20 +1164,18 @@ namespace mtools
 				}
 
 
-			/* internal version, do not recompute _nbfaces and reorder the face numbering */
+			/* internal version, do not check for consistency */
 			void _boltzmannPeelingAlgo(int preRootDart, std::function< int(int, int)> fun, int facesize)
 				{
 				MTOOLS_INSURE((preRootDart >= 0) && (preRootDart < _alpha.size()));
-				_computeFaceSet();
 				int res = fun(phi(preRootDart), facesize);
-				MTOOLS_INSURE(res >= -3);
+				MTOOLS_INSURE(res >= -2);
 				MTOOLS_INSURE(res < ((int)_alpha.size()));
-				if (res == -3) { if (facesize == 2) { _removeDartFromFaceOfSize2(phi(preRootDart)); } return; }
 				if (res == -2) return;
 				if (res == -1) { _addTriangle(preRootDart); _boltzmannPeelingAlgo(preRootDart, fun, facesize + 1); return; }
 				int fs2 = _addSplittingTriangle(preRootDart, res);
 				int fs1 = facesize - fs2 + 1;
-				if (fs1 < fs2)
+				if (fs1 < fs2) // we start by peeling the face with smallest boundary. 
 					{
 					_boltzmannPeelingAlgo(preRootDart, fun, fs1);
 					_boltzmannPeelingAlgo(res, fun, fs2);
@@ -1109,7 +1187,6 @@ namespace mtools
 					}
 				return;
 				}
-
 
 
 
@@ -1225,91 +1302,117 @@ namespace mtools
 					i = nexti;
 					}
 				_nbvertices++;
-				// now, _nbfaces and _faces are dirty !
-				// should call _computeFaceSet() to make it straight.
+				// now, _nbfaces and _faces are dirty. Call _computeFaceSet() to make it straight.
 				return d;
 				}
 
-			/* make sure the object is consistent */
-			void _checkConsistency() const
+
+
+			/* private method */
+			void _toTypeIII()
 				{
-				const size_t l = _alpha.size();
-				MTOOLS_INSURE(l>=2);
-				MTOOLS_INSURE(_sigma.size() == l);
-				MTOOLS_INSURE(_vertices.size() == l);
-				MTOOLS_INSURE(_faces.size() == l);
-				MTOOLS_INSURE((_root >= 0)&&(_root < (int)l));
-
-				// alpha must be fixed point free involution
-				MTOOLS_INSURE(isPermutationVector(_alpha));
-				for (size_t i = 0;i < l; i++)
+				MTOOLS_INSURE(_vertices[_root] != _vertices[_alpha[_root]]); // make sure that the root is not a loop !
+				const int l = (int)_alpha.size();
+				// make a list of all double edges and loop
+				std::vector<int> darttype(l, 0); // 0 = normal edge, 1 = double edge, 2 = loop
+				{
+				std::map<std::pair<int, int>, int> mape;
+				for (int i = 0; i < l; i++)
 					{
-					MTOOLS_INSURE(_alpha[i] != i);
-					MTOOLS_INSURE(_alpha[_alpha[i]] == i);
-					}
-
-				// _sigma can be any permutation
-				MTOOLS_INSURE(isPermutationVector(_sigma));
-
-				// make sure the vertices vector is ok
-				MTOOLS_INSURE((_nbvertices > 0) && (_nbvertices <= l));
-				
-				{ // check that the vertice vector is ok.
-				std::vector<int> vv(l, -1);
-				std::set<int> vs;
-				for (int i = 0;i < (int)l; i++)
-					{
-					MTOOLS_INSURE((_vertices[i] >= 0) && (_vertices[i] < _nbvertices));
-					if (vs.find(_vertices[i]) != vs.end()) { MTOOLS_INSURE(_vertices[i] == vv[i]); }
+					int va = _vertices[i];
+					int vb = _vertices[_alpha[i]];
+					if (va == vb) { darttype[i] = 2; }
 					else
 						{
-						MTOOLS_INSURE(vv[i] == -1);
-						vv[i] = _vertices[i];
-						vs.insert(_vertices[i]);
+						int & j = mape[{va, vb}];
+						if (j == 0) { j = (i+1); } else { darttype[i] = 1; darttype[j-1] = 1; }
+						}
+					}
+				}
+				// we start from the root face and explore the graph's faces, marking along the way all the pairs of darts that belong to faces explored. 
+				std::vector<int> exploreddarts(l, 0); // -1 = explored, 0 = not explored
+				{
+				std::vector<int> exploredfaces(_nbfaces, 0);
+				std::vector<int> ve1; ve1.reserve(_nbfaces);
+				std::vector<int> ve2; ve2.reserve(_nbfaces);
+				exploredfaces[_faces[_root]] = 1;
+				ve1.push_back(_root);
+				while (ve1.size() > 0)
+					{
+					ve2.clear();
+					for (auto it = ve1.begin(); it != ve1.end(); it++)
+						{
+						int e = (*it);
+						do {
+							const int oe = _alpha[e];
+							exploreddarts[e]  = -1;
+							exploreddarts[oe] = -1;
+							if (darttype[e] == 0) // not a forbidden edge
+								{ 
+								const int of = _faces[oe];
+								if (exploredfaces[of] == 0) { exploredfaces[of] = 1; ve2.push_back(oe); }
+								}
+							e = phi(e);
+							}
+						while (e != (*it));
+						}
+					ve1.swap(ve2);
+					}
+				}
+				// tag the additional edges to remove to (loops and keep only one double edge of each type).
+				{
+				std::map<std::pair<int, int>, int> mape;
+				exploreddarts[_root] = -2; exploreddarts[_alpha[_root]] = -2;
+				const int rva = _vertices[_root], rvb = _vertices[_alpha[_root]];
+				mape[{rva, rvb}] = 1; mape[{rvb, rva}] = 1;
+				for (int i = 0; i < l; i++)
+					{
+					int oi = _alpha[i];
+					if (exploreddarts[i] == -1) // only look at darts whose status is yet unknown
+						{
+						int va = _vertices[i], vb = _vertices[oi];
+						if (va == vb) { exploreddarts[i] = 0; exploreddarts[oi] = 0; } // remove loops
+						else
+							{
+							int & j1 = mape[{va, vb}];
+							int & j2 = mape[{va, vb}];
+							MTOOLS_INSURE(j1 == j2);
+							if (j1 == 0) { exploreddarts[i] = -2; exploreddarts[oi] = -2; } // keep the fist pair of dart
+							else { exploreddarts[i] = 0; exploreddarts[oi] = 0; } // but remove the other ones
+							j1++; j2++;
+							}
+						}
+					}
+				}
+				// ok, the new map is composed of all the darts e such that exploreddarts[e] == -2
+
+
+				}
+
+
+
+			/* cpvert to a graph, private method */
+			template<typename GRAPH> GRAPH _toGraph() const
+				{
+				const int l = nbDarts();
+				GRAPH gr;
+				gr.resize(_nbvertices);
+				for (int i = 0; i < l; i++)
+					{
+					int v = _vertices[i];
+					if (gr[v].size() == 0)
+						{
+						gr[v].push_back(_vertices[_alpha[i]]);
 						int j = _sigma[i];
 						while (j != i)
 							{
-							MTOOLS_INSURE(vv[j] == -1);
-							MTOOLS_INSURE(_vertices[j] == _vertices[i]);
-							vv[j] = _vertices[i];
+							gr[v].push_back(_vertices[_alpha[j]]);
 							j = _sigma[j];
 							}
 						}
 					}
-				MTOOLS_INSURE(vs.size() == _nbvertices);
+				return gr;
 				}
-					
-				{ // check that the face vector is ok.
-				std::vector<int> ff(l, -1);
-				std::set<int> fs;
-				for (int i = 0; i < (int)l; i++)
-					{
-					MTOOLS_INSURE((_faces[i] >= 0) &&(_faces[i] < _nbfaces));
-					if (fs.find(_faces[i]) != fs.end()) { MTOOLS_INSURE(_faces[i] == ff[i]); }
-					else
-						{
-						MTOOLS_INSURE(ff[i] == -1);
-						ff[i] = _faces[i];
-						fs.insert(_faces[i]);
-						int j = _sigma[_alpha[i]];
-						while (j != i)
-							{
-							MTOOLS_INSURE(ff[j] == -1);
-							MTOOLS_INSURE(_faces[j] == _faces[i]);
-							ff[j] = _faces[i];
-							j = _sigma[_alpha[j]];
-							}
-						}
-					}
-				MTOOLS_INSURE(fs.size() == _nbfaces);
-				}
-				return;
-				}
-
-
-
-
-
 
 
 

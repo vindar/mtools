@@ -51,8 +51,6 @@ namespace mtools
 	* @param	graph	  	The graph to reorder.
 	* @param	perm    	The permutation to apply: perm[i] = k means that the vertex with index k
 	*                       must now become the vertex at index i in the new graph.
-	* @param	invperm    	The inverse permutation of perm. (use the other permuteGraph() method if
-	*						not previously computed).
 	*
 	* @return  the permuted graph.
 	**/
