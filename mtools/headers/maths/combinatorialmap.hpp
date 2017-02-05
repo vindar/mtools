@@ -1173,30 +1173,7 @@ namespace mtools
 				}
 
 
-			/* internal version */
-/*			void _boltzmannPeelingAlgo(int preRootDart, std::function< int(int, int)> fun, int facesize)
-				{
-				MTOOLS_INSURE((preRootDart >= 0) && (preRootDart < _alpha.size()));
-				int res = fun(phi(preRootDart), facesize);
-				MTOOLS_INSURE(res >= -2);
-				MTOOLS_INSURE(res < ((int)_alpha.size()));
-				if (res == -2) return;
-				if (res == -1) { _addTriangle(preRootDart); _boltzmannPeelingAlgo(preRootDart, fun, facesize + 1); return; }
-				int fs2 = _addSplittingTriangle(preRootDart, res);
-				int fs1 = facesize - fs2 + 1;
-				if (fs1 < fs2) // we start by peeling the face with smallest boundary. 
-					{
-					_boltzmannPeelingAlgo(preRootDart, fun, fs1);
-					_boltzmannPeelingAlgo(res, fun, fs2);
-					}
-				else
-					{
-					_boltzmannPeelingAlgo(res, fun, fs2);
-					_boltzmannPeelingAlgo(preRootDart, fun, fs1);
-					}
-				return;
-				}*/
-
+			/* internal method */
 			void _boltzmannPeelingAlgo(int preDart, std::function< int(int, int)> fun, int fsize)
 				{
 				MTOOLS_INSURE((preDart >= 0) && (preDart < _alpha.size()));
@@ -1222,8 +1199,6 @@ namespace mtools
 					}
 				return;
 				}
-
-
 
 
 			/* move a dart from i to f, used by _swapdarts 
