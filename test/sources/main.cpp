@@ -369,42 +369,58 @@ void testBall(int N)
 		CM.makeNgon(n);
 
 		cout << graphInfo(CM.toGraph()) << "\n";
-		cout.getKey(); 
-		
 
 		CM.boltzmannPeelingAlgo(0, [&](int peeledge, int facesize)-> int {
-
 			MTOOLS_INSURE(facesize >= 2);
-
-			int k = -4; 
+			if (facesize < 3) { return -2; } // nothing to do 
 			int m = facesize - 2;
-			if (facesize >= 3)  k = (int)UIPT_FBTpeelLaw(m, gen);
-
-
-			auto gr = CM.toGraph();
-			cout << graphInfo(gr);
-			cout << "facesize = " << facesize << "\n";
-			cout << "peeledge = " << peeledge << "\n";
-			cout << " k = " << k << "\n";
-			//cout.getKey();
-
-			if (facesize < 3) { return -3; } // collapse double edges.
-//			const int m = facesize - 2; // we have an (m+2)-gon
+			int k = (int)UIPT_FBTpeelLaw(m, gen);
 			if (k == -1) return -1; // new vertex discovered.
-			if (k == -1) { k = (m+1)/2; }
-			MTOOLS_INSURE(k >= 1);
-			MTOOLS_INSURE(k <= m);
-			for (int i = 0;i < k; i++) { peeledge = CM.phi(peeledge); }
+			MTOOLS_INSURE((k >= 1)&&(k <= m));
+			//k = (m + 1 / 2);
+			for (int i = 0; i < k; i++) { peeledge = CM.phi(peeledge); }
 			return peeledge;
 			});
 			
+		cout.getKey();
+		cout << "\n\nOK, finished peeling\n\n";
+		cout << graphInfo(CM.toGraph());
+		//cout << CM.toGraph() << "\n\n";	// info about the graph.
+
+		cout.getKey();
+		cout << "\n\nMake type III\n\n";
+		CM.reroot(CM.alpha(CM.root()));
+		CM.collapsetoTypeIII();
+
+		cout << graphInfo(CM.toGraph());
+		//cout << CM.toGraph() << "\n\n";	// info about the graph.
+		cout.getKey();
+
+		cout << "done !\n";
+
 
 		// OK, 
 		std::vector<std::vector<int> > gr = CM.toGraph();
 
 		cout << graphInfo(gr) << "\n";
 		cout.getKey(); 
-		int e1 = 0;
+
+
+		std::vector<int> bbv(n);
+		int maxd = 0;
+		int maxv = -1;
+		for (int i = 0;i < n;i++) { bbv[i] = i; }
+		exploreGraph(gr, bbv, [&](int v, int d)->bool { maxd = d; maxv = v; return true;});
+
+		int ee = -1;
+		for (int i = 0;i < CM.nbDarts(); i++) { if (CM.vertice(i) == maxv) { ee = i; break; } }
+		MTOOLS_INSURE(ee != -1);
+
+		cout << "max distance from boundary = " << maxd << "\n";
+		cout << "index of vertex that realizes it = " << maxv << "\n";
+		cout << "index of vertex that realizes it = " << CM.vertice(ee) << "\n";
+
+		int e1 = ee;
 		int e2 = CM.phi(e1);
 		int e3 = CM.phi(e2);
 		MTOOLS_INSURE(CM.phi(e3) == e1);
@@ -419,11 +435,11 @@ void testBall(int N)
 
 		cout << mtools::graphInfo(gr) << "\n\n";	// info about the graph.
 
-		CirclePackingLabel<double> CPTEST(true);		// prepare for packing
+		CirclePackingLabelGPU<double> CPTEST(true);		// prepare for packing
 		CPTEST.setTriangulation(gr, boundary);			//
 		CPTEST.setRadii();								//
 
-		cout << "ITERATION = " << CPTEST.computeRadii(1.0e-9, 0.03, -1, 1000) << "\n";
+		cout << "ITERATION = " << CPTEST.computeRadii(5.0e-7, 0.03, -1, 1000) << "\n";
 		cout << "Laying out the circles...\n";
 		auto circleVec = computeCirclePackLayout(gr, boundary, CPTEST.getRadii(), false, (int)gr.size() - 1);
 
@@ -450,7 +466,7 @@ void testBall(int N)
 		drawCirclePacking_Circles(im, R, circleVec, gr, true, RGBc::c_Red, 0.2f, (int)gr.size() - 1, (int)gr.size());
 		drawCirclePacking_Circles(im, R, circleVec, gr, true, RGBc::c_Red, 0.2f, 0, (int)gr.size() - 1);
 		drawCirclePacking_Graph(im, R, circleVec, gr, RGBc::c_Black, 1.0f, 0, (int)gr.size() - 1);
-		drawCirclePacking_Labels(im, R, circleVec, gr, 55, RGBc::c_Green, 1.0f, 0, (int)gr.size() - 1);
+		//drawCirclePacking_Labels(im, R, circleVec, gr, 40, RGBc::c_Green, 1.0f, 0, (int)gr.size() - 1);
 
 		Plotter2D Plotter;
 		auto P2 = makePlot2DCImg(im, "circles");
@@ -467,7 +483,7 @@ int main(int argc, char *argv[])
 //	MTOOLS_SWAP_THREADS(argc, argv);
 //	parseCommandLine(argc, argv);
 
-	testFBT(20);
+	testFBT(300);
 	//loadTest("trig1503676.txt");
 	//loadTest("trig1503676.txt");
 	
