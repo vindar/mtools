@@ -159,6 +159,16 @@ namespace mtools
 
 
 			/**
+			 * Re-roots the map on another dart.
+			 **/
+			inline void reroot(int newRootDart)
+				{
+				MTOOLS_ASSERT((newRootDart >= 0) && (newRootDart < nbDarts()));
+				_root = newRootDart;
+				}
+
+
+			/**
 			* Permutation alpha: involution that matches the darts
 			* together.
 			**/
@@ -882,23 +892,22 @@ namespace mtools
 				}
 
 
-
 			/**
-			* Remove all the vertices that are contained between two parallel double edges and then collapse the 
-			* remaining face of size 2 into a single edge. Use the root face to determine whether a vertex is "inside" 
-			* or "outside" a double edge: the root face is always outside (hence it is not removed). 
-			* 
-			*  - This method returns a type III graph (ie without double edges). The result are undefined is the graph 
-			*    has loops.
-			*    
-			*  - the numbering of faces, vertices and darts is modified !
-			**/
-			void toTypeIII()
+			 * Remove all the vertices that are contained between two parallel double edges and loops and
+			 * then collapse the remaining faces of size 2 into a single edge. Use the root face to
+			 * determine whether a vertex is "inside" or "outside" a double edge: the root face is always
+			 * outside (hence it is not removed).
+			 * 
+			 *  - This method returns a type III graph (ie without double edges or loops).
+			 * 
+			 *  - the numbering of faces, vertices and darts is modified !
+			 *
+			 * @return the permutation that describe how the label of darts changed. 
+			 **/
+			Permutation collapsetoTypeIII()
 				{
 				CHECKCONSISTENCY;
-				_toTypeIII();
-				CHECKCONSISTENCY;
-				return;
+				return _collapsetoTypeIII();
 				}
 
 
@@ -1164,8 +1173,8 @@ namespace mtools
 				}
 
 
-			/* internal version, do not check for consistency */
-			void _boltzmannPeelingAlgo(int preRootDart, std::function< int(int, int)> fun, int facesize)
+			/* internal version */
+/*			void _boltzmannPeelingAlgo(int preRootDart, std::function< int(int, int)> fun, int facesize)
 				{
 				MTOOLS_INSURE((preRootDart >= 0) && (preRootDart < _alpha.size()));
 				int res = fun(phi(preRootDart), facesize);
@@ -1186,7 +1195,34 @@ namespace mtools
 					_boltzmannPeelingAlgo(preRootDart, fun, fs1);
 					}
 				return;
+				}*/
+
+			void _boltzmannPeelingAlgo(int preDart, std::function< int(int, int)> fun, int fsize)
+				{
+				MTOOLS_INSURE((preDart >= 0) && (preDart < _alpha.size()));
+				std::queue<std::pair<int, int> > que;
+				que.push(std::pair<int, int>(preDart, fsize));
+				while (que.size() > 0)
+					{
+					int facesize, preedge;
+					std::tie(preedge,facesize) = que.front(); que.pop();
+					int res = fun(phi(preedge), facesize);
+					MTOOLS_INSURE((res >= -2)&&(res < ((int)_alpha.size())));
+					if (res == -1) { _addTriangle(preedge); que.push(std::pair<int, int>(preedge, facesize + 1)); }
+					else
+						{
+						if (res >= 0)
+							{
+							int fs2 = _addSplittingTriangle(preedge, res);
+							int fs1 = facesize - fs2 + 1;
+							que.push(std::pair<int, int>(preedge, fs1));
+							que.push(std::pair<int, int>(res, fs2));
+							}
+						}
+					}
+				return;
 				}
+
 
 
 
@@ -1309,7 +1345,7 @@ namespace mtools
 
 
 			/* private method */
-			void _toTypeIII()
+			Permutation _collapsetoTypeIII()
 				{
 				MTOOLS_INSURE(_vertices[_root] != _vertices[_alpha[_root]]); // make sure that the root is not a loop !
 				const int l = (int)_alpha.size();
@@ -1324,8 +1360,8 @@ namespace mtools
 					if (va == vb) { darttype[i] = 2; }
 					else
 						{
-						int & j = mape[{va, vb}];
-						if (j == 0) { j = (i+1); } else { darttype[i] = 1; darttype[j-1] = 1; }
+						int & n = mape[{va, vb}];
+						if (n == 0) { n = (i+1); } else { darttype[i] = 1; darttype[n-1] = 1; }
 						}
 					}
 				}
@@ -1347,10 +1383,23 @@ namespace mtools
 							const int oe = _alpha[e];
 							exploreddarts[e]  = -1;
 							exploreddarts[oe] = -1;
-							if (darttype[e] == 0) // not a forbidden edge
+							const int tt = darttype[e];
+							if (tt == 0) // normal edge: explore the other side
 								{ 
 								const int of = _faces[oe];
 								if (exploredfaces[of] == 0) { exploredfaces[of] = 1; ve2.push_back(oe); }
+								}
+							else
+								{ 
+								if (tt == 1) // double edge, skip the face of size 2.
+									{
+									const int va = _vertices[e];
+									int z = _sigma[oe];
+									while (_vertices[_alpha[z]] != va) { z = _sigma[z]; }
+									MTOOLS_ASSERT(z != oe);
+									const int of = _faces[z];
+									if (exploredfaces[of] == 0) { exploredfaces[of] = 1; ve2.push_back(z); }
+									}
 								}
 							e = phi(e);
 							}
@@ -1359,7 +1408,7 @@ namespace mtools
 					ve1.swap(ve2);
 					}
 				}
-				// tag the additional edges to remove to (loops and keep only one double edge of each type).
+				// tag the additional edges to remove to loops and keep only one double edge of each type.
 				{
 				std::map<std::pair<int, int>, int> mape;
 				exploreddarts[_root] = -2; exploreddarts[_alpha[_root]] = -2;
@@ -1375,23 +1424,51 @@ namespace mtools
 						else
 							{
 							int & j1 = mape[{va, vb}];
-							int & j2 = mape[{va, vb}];
-							MTOOLS_INSURE(j1 == j2);
+							int & j2 = mape[{vb, va}];
+							MTOOLS_ASSERT(j1 == j2);
 							if (j1 == 0) { exploreddarts[i] = -2; exploreddarts[oi] = -2; } // keep the fist pair of dart
-							else { exploreddarts[i] = 0; exploreddarts[oi] = 0; } // but remove the other ones
+							else { exploreddarts[i] = 0; exploreddarts[oi] = 0; MTOOLS_ASSERT(j1 == 1); } // but remove the other ones
 							j1++; j2++;
 							}
 						}
 					}
 				}
-				// ok, the new map is composed of all the darts e such that exploreddarts[e] == -2
-
-
+				// ok, the new map is composed of all the darts e such that exploreddarts[e] == -2.
+				// we fix the _sigma vector and count the number of dart remaining
+				int nbdarts = 0;
+				for (int i = 0;i < l; i++)
+					{
+					MTOOLS_ASSERT((exploreddarts[i] == -2) || (exploreddarts[i] == 0));
+					if (exploreddarts[i] == -2) // the dart is kept in the new graph. 
+						{
+						int j = _sigma[i]; 
+						while (exploreddarts[j] != -2) {j = _sigma[j]; }
+						_sigma[i] = j;
+						nbdarts++;
+						}
+					}
+				// ok, we can now reorder and troncate 
+				Permutation perm(exploreddarts);
+				std::vector<int > sigma2(l);
+				std::vector<int > alpha2(l);
+				for (int i = 0; i < l; i++)
+					{
+					sigma2[i] = perm.inv(_sigma[perm[i]]);
+					alpha2[i] = perm.inv(_alpha[perm[i]]);
+					}
+				_root = perm.inv(_root);
+				_alpha = alpha2; _alpha.resize(nbdarts);
+				_sigma = sigma2; _sigma.resize(nbdarts);
+				_computeFaceSet();
+				_computeVerticeSet();
+				CHECKCONSISTENCY;
+				// done !
+				return perm;
 				}
 
 
 
-			/* cpvert to a graph, private method */
+			/* convert to a graph, private method */
 			template<typename GRAPH> GRAPH _toGraph() const
 				{
 				const int l = nbDarts();
