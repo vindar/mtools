@@ -207,7 +207,7 @@ namespace mtools
 
 	/**
 	* Explore the graph starting from a root vertex and following the oriented edges.
-	* use breadth-first search. Each vertice are visited exactly once. 
+	* use breadth-first search. Each vertex is visited only once. 
 	* 
 	* Accept a lambda functions.
 	*
@@ -265,6 +265,71 @@ namespace mtools
 			}
 		return sum;
 		}
+
+
+	/**
+	* Explore the graph starting from a given set of vertices.
+	* use breadth-first search. Each vertex is visited only once.
+	*
+	* Accept a lambda functions.
+	*
+	* See the implementation method computeDistances() below for an example of how to use it.
+	*
+	* @param	gr	  	 The graph.
+	* @param	startset The set of vertices to start the exploration from.
+	* @param	fun   	 The function to call at each visited vertex. Of the form:
+	* 					 bool fun(int vert, int dist)
+	* 					   - vert  : the vertice currently visited
+	* 					   - dist  : the distance of vert from the stating set.
+	* 					   - return: true to explore its neighobur and false to stop.
+	*
+	* @return	the total number of vertices visited.
+	**/
+	template<typename GRAPH> int exploreGraph(const GRAPH & gr, const std::vector<int> & startset, std::function<bool(int, int)> fun)
+		{
+		const size_t l = gr.size();
+		std::vector<char> vis(l, 0);
+		std::vector<int> tempv1; tempv1.reserve(l);
+		std::vector<int> tempv2; tempv2.reserve(l);
+		std::vector<int> * pv1 = &tempv1;
+		std::vector<int> * pv2 = &tempv2;
+		tempv1 = startset;
+		int sum = (int)tempv1.size();
+		for (int i = 0;i < sum; i++) { vis[tempv1[i]] = 1; }
+		int d = 0;
+		while (pv1->size() != 0)
+			{
+			pv2->clear();
+			const size_t l = pv1->size();
+			for (int i = 0; i < l; i++)
+				{
+				const int k = pv1->operator[](i);
+				if (fun(k, d))
+					{
+					for (auto it = gr[k].begin(); it != gr[k].end(); ++it)
+						{
+						const int n = (*it);
+						if (vis[n] == 0) { vis[n] = 1;  pv2->push_back(n); sum++; }
+						}
+					}
+				}
+			d++;
+			if (pv1 == &tempv1)
+				{
+				pv1 = &tempv2;
+				pv2 = &tempv1;
+				}
+			else
+				{
+				pv1 = &tempv1;
+				pv2 = &tempv2;
+				}
+			}
+		return sum;
+		}
+
+
+
 
 
 
