@@ -20,13 +20,13 @@
 
 // check if OpenCL must be enabled
 #if (MTOOLS_VERSION >= 2)
-#include "mtools_config_OpenCL.hpp" // defines MTOOLS_HAS_OPENCL is openCL is installed and should be used.
+#include "mtools_config_OpenCL.hpp" // defines MTOOLS_HAS_OPENCL if openCL is installed and should be used.
 #endif
 
 #ifdef MTOOLS_HAS_OPENCL
 
 // we want to use C++ exceptions
-//#define __CL_ENABLE_EXCEPTIONS
+#define __CL_ENABLE_EXCEPTIONS
 
 #ifndef __CL_ENABLE_EXCEPTIONS
 namespace cl
