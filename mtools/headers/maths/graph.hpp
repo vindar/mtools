@@ -206,68 +206,6 @@ namespace mtools
 
 
 	/**
-	* Explore the graph starting from a root vertex and following the oriented edges.
-	* use breadth-first search. Each vertex is visited only once. 
-	* 
-	* Accept a lambda functions.
-	*
-	* See the implementation method computeDistances() below for an example of how to use it. 
-	*
-	* @param	gr	  	The graph.
-	* @param	origin	The vertex to start exploration from.
-	* @param	fun   	The function to call at each visited vertex. Of the form:
-	* 					bool fun(int vert, int dist)
-	* 					  - vert  : the vertice currently visited
-	* 					  - dist  : the distance of vert from the stating position
-	* 					  - return: true to explore its neighobur and false to stop.
-	*
-	* @return	the total number of vertices visited.
-	**/
-	template<typename GRAPH> int exploreGraph(const GRAPH & gr, int origin, std::function<bool(int, int)> fun)
-		{
-		const size_t l = gr.size();
-		std::vector<char> vis(l, 0);
-		std::vector<int> tempv1; tempv1.reserve(l);
-		std::vector<int> tempv2; tempv2.reserve(l);
-		std::vector<int> * pv1 = &tempv1;
-		std::vector<int> * pv2 = &tempv2;
-		vis[origin] = 1;
-		pv1->push_back(origin);
-		int sum = 1;
-		int d = 0;
-		while (pv1->size() != 0)
-			{
-			pv2->clear();
-			const size_t l = pv1->size();
-			for (int i = 0; i < l; i++)
-				{
-				const int k = pv1->operator[](i);
-				if (fun(k, d))
-					{
-					for (auto it = gr[k].begin(); it != gr[k].end(); ++it)
-						{
-						const int n = (*it);
-						if (vis[n] == 0) { vis[n] = 1;  pv2->push_back(n); sum++; }
-						}
-					}
-				}
-			d++;
-			if (pv1 == &tempv1) 
-				{ 
-				pv1 = &tempv2; 
-				pv2 = &tempv1; 
-				} 
-			else 
-				{ 
-				pv1 = &tempv1; 
-				pv2 = &tempv2; 
-				}
-			}
-		return sum;
-		}
-
-
-	/**
 	* Explore the graph starting from a given set of vertices.
 	* use breadth-first search. Each vertex is visited only once.
 	*
@@ -329,6 +267,29 @@ namespace mtools
 		}
 
 
+	/**
+	* Explore the graph starting from a root vertex and following the oriented edges.
+	* use breadth-first search. Each vertex is visited only once.
+	*
+	* Accept a lambda functions.
+	*
+	* See the implementation method computeDistances() below for an example of how to use it.
+	*
+	* @param	gr	  	The graph.
+	* @param	origin	The vertex to start exploration from.
+	* @param	fun   	The function to call at each visited vertex. Of the form:
+	* 					bool fun(int vert, int dist)
+	* 					  - vert  : the vertice currently visited
+	* 					  - dist  : the distance of vert from the stating position
+	* 					  - return: true to explore its neighobur and false to stop.
+	*
+	* @return	the total number of vertices visited.
+	**/
+	template<typename GRAPH> int exploreGraph(const GRAPH & gr, int origin, std::function<bool(int, int)> fun)
+		{
+		std::vector<int> startvec(1, origin);
+		return exploreGraph(gr, startvec, fun);
+		}
 
 
 
@@ -657,65 +618,6 @@ namespace mtools
 		f.close();
 		return true;
 		}
-
-
-
-	/**
-	 * Troncate a graph, keeping only the sub-graph consisting of all the verticess a distance at
-	 * most radius from centerVertex (and the edges joining these vertices).
-	 *
-	 * @param	gr				The graph.
-	 * @param	centerVertex	The center vertex.
-	 * @param	radius			The radius of the (closed) ball to keep
-	 * @param	dist			(optional) The distance vector of all points to centerVertex. 
-	 *
-	 * @return	- first member:  the troncated graph.
-	 * 			- second member: the number N of boundary vertices (is adjacent to a vertex removed). they are
-	 * 			                 indexed between [0,N-1] in the new graph. 
-	 * 			- third member:  the permutation that describe how the vertices are mapped to the new graph. 
-	 * 			                 perm[i] is the new indice of the vertex that was initially at i.
-	 * 			                 If (perm[i] >= newgraph.size()), this means the vertex i was removed.
-	 **/
-	template<typename GRAPH> std::tuple<GRAPH, int, Permutation> keepBall(const GRAPH & gr, int centerVertex, int radius, const std::vector<int> & dist);
-
-
-	/**
-	 * same as above but does not need to pass the distance vector.  
-	 **/
-	template<typename GRAPH> std::tuple<GRAPH, int, Permutation> keepBall(const GRAPH & gr, int centerVertex, int radius)
-		{
-		return keepBall(gr, centerVertex, radius, computeDistances(gr, centerVertex));
-		}
-
-
-	/**
-	* Troncate a graph, removing all the verticess a distance less or equal to radius 
-	* from centerVertex (and the edges joining these vertices).
-	*
-	* @param	gr				The graph.
-	* @param	centerVertex	The center vertex.
-	* @param	radius			The radius of the (closed) ball around vertexCenter to to removed
-	* @param	dist			(optional) The distance vector of all points to centerVertex.
-	*
-	* @return	- first member:  the troncated graph.
-	* 			- second member: the number N of boundary vertices (is adjacent to a vertex removed). they are
-	* 			                 indexed between [0,N-1] in the new graph.
-	* 			- third member:  the permutation that describe how the vertices are mapped to the new graph.
-	* 			                 perm[i] is the new indice of the vertex that was initially at i.
-	* 			                 If (perm[i] >= newgraph.size()), this means the vertex i was removed.
-	**/
-	template<typename GRAPH> std::tuple<GRAPH, int, Permutation> removeBall(const GRAPH & gr, int centerVertex, int radius, const std::vector<int> & dist);
-
-
-
-	/**
-	* same as above but does not need to pass the distance vector.
-	**/
-	template<typename GRAPH> std::tuple<GRAPH, int, Permutation> removeBall(const GRAPH & gr, int centerVertex, int radius)
-		{
-		return removeBall(gr, centerVertex, radius, computeDistances(gr, centerVertex));
-		}
-
 
 
 
