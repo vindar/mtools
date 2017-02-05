@@ -7,7 +7,7 @@ using namespace mtools;
 
 
 
-MT2004_64 gen(123); // RNG with 2M vertices.
+MT2004_64 gen; // RNG with 2M vertices.
 
 
 
@@ -435,11 +435,11 @@ void testBall(int N)
 
 		cout << mtools::graphInfo(gr) << "\n\n";	// info about the graph.
 
-		CirclePackingLabelGPU<double> CPTEST(true);		// prepare for packing
+		CirclePackingLabel<double> CPTEST(true);		// prepare for packing
 		CPTEST.setTriangulation(gr, boundary);			//
 		CPTEST.setRadii();								//
 
-		cout << "ITERATION = " << CPTEST.computeRadii(5.0e-7, 0.03, -1, 1000) << "\n";
+		cout << "ITERATION = " << CPTEST.computeRadii(9.9e-7, 0.03, -1, 1000) << "\n";
 		cout << "Laying out the circles...\n";
 		auto circleVec = computeCirclePackLayout(gr, boundary, CPTEST.getRadii(), false, (int)gr.size() - 1);
 
@@ -488,9 +488,9 @@ int main(int argc, char *argv[])
 	//loadTest("trig1503676.txt");
 	
 	//loadPack("trig1125072.p");
-	return 0;
 
-	//testBall(20000); 
+//	testBall(20000); 
+	return 0;
 	/*
 	testBall(1100001);
 	testBall(1200002);
