@@ -705,7 +705,7 @@ namespace mtools
 		if ((lastIndex < 0) || (lastIndex > (int)(gr.size() - 1))) lastIndex = (int)(gr.size());
 		for (int i = firstIndex; i < lastIndex; i++)
 			{
-			img.fBox2_drawText(R, mtools::toString(i + 1), circles[i].center, 'c', 'c', fontsize, true, color, opacity);
+			img.fBox2_drawText(R, mtools::toString(i), circles[i].center, 'c', 'c', fontsize, true, color, opacity);
 			}
 		}
 
