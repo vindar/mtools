@@ -34,8 +34,8 @@ namespace mtools
 
 
 	/**
-	* Cumulative distribution of the random variable associated with the peeling of the Infinite Uniform
-	* Half-plane Triangulation.
+	* Cumulative distribution of the random walk associated with the peeling of the Infinite Uniform
+	* Half-plane Triangulation (type II).
 	*
 	* c.f. Angel (2002) Growth and Percolation on the Uniform Infinite Planar Triangulation, p15.
 	*
@@ -107,7 +107,7 @@ namespace mtools
 	*
 	* (p_k and p_{k,m} are the same as in Angel (2002)).
 	*
-	* @param   k   number of vertice to remove (k &lt;= m and k =-1 for adding one).
+	* @param   k   number of vertice to remove (0 <= k <= m or k =-1 for adding one).
 	* @param   m   number of vertice on the boundary is m + 2.
 	*
 	* @return  The value of sum( p_{i,m}, i = -1..k) which is the probability that we remove at most k
@@ -150,9 +150,9 @@ namespace mtools
 
 	/**
 	* Cumulative distribution of the random variables associated with the peeling of a
-	* Free Boltzmann Triangulation (FBT) of type II.
+	* free Boltzmann Triangulation of type II.
 	*
-	* c.f. Angel (2002) Growth and Percolation on the Uniform Infinite Planar Triangulation, p15.
+	* c.f. Angel (2003) Growth and Percolation on the Uniform Infinite Planar Triangulation.
 	*
 	* Compute the CDF of the markov chain describing the size position k of the splitting of an
 	* m+2 gon with boundary { x_0, x_1, ..., x_{m+1} } when peeling the edge (x_{m+1}, x_0).
@@ -169,7 +169,7 @@ namespace mtools
 	* 		   such that i <= k (with the  convention that the index for discovering a new vertex is -1)
 	*
 	**/
-	inline double UIPT_FBTpeelCDF(const int64 k, const int64 m)
+	inline double freeBoltzmanTriangulation_CDF(const int64 k, const int64 m)
 		{
 		const double mm = (const double)m;
 		const double kk = (const double)k;
@@ -187,10 +187,10 @@ namespace mtools
 
 
 	/* Proxy object acting as a functor for the CDF of  UIPT_FBTpeelCDF(k,m) for a given m */
-	struct UIPT_FBTpeelCDFobj
+	struct freeBoltzmanTriangulation_CDF_obj
 		{
-		UIPT_FBTpeelCDFobj(int64 m) : _m(m) {}
-		inline double operator()(int64 k) { return UIPT_FBTpeelCDF(k, _m); }
+		freeBoltzmanTriangulation_CDF_obj(int64 m) : _m(m) {}
+		inline double operator()(int64 k) { return freeBoltzmanTriangulation_CDF(k, _m); }
 		private: int64 _m;
 		};
 
@@ -205,13 +205,104 @@ namespace mtools
 	* @return  index 1 <= i <= m of the vertex we reattaches to when peeling (x_{m+1},x_0)
 	* 		   or -1 f we discover a new vertice.
 	**/
-	template<class random_t> inline int64 UIPT_FBTpeelLaw(int64 m, random_t & gen)
+	template<class random_t> inline int64 freeBoltzmanTriangulationLaw(int64 m, random_t & gen)
 		{
-		UIPT_FBTpeelCDFobj O(m);
+		freeBoltzmanTriangulation_CDF_obj O(m);
 		int64 v = sampleDiscreteRVfromCDF(O, gen);
 		if ((v > 0) && (Unif_1(gen))) { v = m + 1 - v; } // re-symmetrize to reduce numerical error, even if it is theorically uneeded.
 		return v;
 		}
+
+
+
+	/**
+	* Cumulative distribution of the peeling of a general Boltzmann triangulation of type II.
+	*
+	* c.f. Angel (2003) Growth and Percolation on the Uniform Infinite Planar Triangulation.
+	*
+	* Compute the CDF of the markov chain describing the size position k of the splitting of an
+	* m+2 gon with boundary { x_0, x_1, ..., x_{m+1} } when peeling the edge (x_{m+1}, x_0).
+	*
+	* q_(m,k) = -1 if a new vertex is discovered.
+	* q_(m,k) = i in {1,..m} if the triangle discovered is (x_{m+1}, x_0, x_i)
+	*
+	* The density is explicit (cf Angel) and the CDF is also explicit (use maple to compute it)
+	*
+	* The parameter of the Boltzman is 
+	* 
+	*                                    0 < alpha <= 27/2 
+	*                                    
+	* with alpha = 27/2 corresponding to the free Boltzman triangulation. 
+	* 
+	* Here, we use theta for parametrization with 1/alpha  =  theta*(1-2*theta)^2  hence 
+	* 
+	*                                    0 < theta <= 1/6
+	* 
+	* with theta = 1/6 corresponding to the free Boltzman triangulation. 
+	*
+	* c.f. Angel (2003) p.941 for details.
+	*
+	* @param   k		maximum index to reattach to.
+	* @param   m		consider a Boltzamnn of the (m+2) gon with parameter theta.
+	* @param   theta    parameter of the boltzmann given by 1/alpha  =  theta*(1-2*theta)^2.
+	*
+	* @return  the probability that the index i the peeled edge (x_{m+1},x_0) reattaches to is
+	* 		   such that i <= k (with the  convention that the index for discovering a new vertex is -1)
+	*
+	**/
+	inline double generalBoltzmanTriangulation_CDF(const int64 kk, const int64 mm,  const double theta)
+		{
+		const double k = (double)kk;
+		const double m = (double)mm;	
+		if (kk < -1) return 0.0;
+		if (kk >= mm) return 1.0;
+		const double q = 2 * (2 * m + 1)*theta*(6 * m*theta - m + 12 * theta - 3) / ((6 * m*theta - m + 6 * theta - 2)*(m + 3));
+		if (kk < 1) { return q; }
+		// we have 1 <= k < m		
+		const double m2 = m*m;
+		const double m3 = m2*m;
+		const double k2 = k*k;
+		const double theta2 = theta*theta;
+		double A = (36*m2*theta2 - 12*m2*theta + 84*m*theta2 + m2 - 44*m*theta + 24*theta2 + 5*m - 24*theta + 6)*k2
+		     	   + (-36*m3*theta2 + 12*m3*theta - 84*m2*theta2 - m3 + 44*m2*theta - 24*m*theta2 - 5*m2 + 24*m*theta - 6*m)*k
+			       - 24*m3*theta2 + 10*m3*theta - 84*m2*theta2 - m3 + 48*m2*theta - 84*m*theta2 - 6*m2 + 62*theta*m - 24*theta2 - 11*m + 24*theta - 6;
+		A *= ((2*k - m)*(k + 1)) / ((m + 1 - k)*(m - k));
+		A *= exp(gammln(2*m - 2*k) + gammln(2*k + 1) + 2 * gammln(m) - 2 * gammln(m - k) - 2 * gammln(k + 2) - gammln(2 * m));
+		A -= 24*m2*theta2 - 10*m2*theta + 60*m*theta2 + m2 - 38*m*theta + 24*theta2 + 5*m - 24*theta + 6;
+		A /= 2*(6*m*theta - m + 6*theta - 2)*(m + 3);
+		return(A + q);
+		}
+
+
+	/* Proxy object acting as a functor for the CDF of generalBoltzmanTriangulation_CDF for a given m, theta */
+	struct generalBoltzmanTriangulation_CDF_obj
+		{
+		generalBoltzmanTriangulation_CDF_obj(int64 m, double theta) : _m(m), _theta(theta) {}
+		inline double operator()(int64 k) { return generalBoltzmanTriangulation_CDF(k, _m,_theta); }
+		private: int64  _m;
+				 double _theta;
+		};
+
+
+	/**
+	* Sample a random variable according to the splitting of the boundary when peeling
+	* a general Boltzmann Triangulation (type II) of the m+2 gon with parameter theta
+	*
+	* @param   m           the size of the boundary is m+2 with vertices { x_0, x_1, ..., x_{m+1} }
+	* @param   theta       parameter of the boltzmann given by 1/alpha  =  theta*(1-2*theta)^2 (cf Angel 03, p941).
+	* @param [in,out]  gen the random number generator.
+	*
+	* @return  index 1 <= i <= m of the vertex we reattaches to when peeling (x_{m+1},x_0)
+	* 		   or -1 f we discover a new vertice.
+	**/
+	template<class random_t> inline int64 generalBoltzmanTriangulationLaw(int64 m, double theta, random_t & gen)
+		{
+		generalBoltzmanTriangulation_CDF_obj O(m,theta);
+		int64 v = sampleDiscreteRVfromCDF(O, gen);
+		if ((v > 0) && (Unif_1(gen))) { v = m + 1 - v; } // re-symmetrize to reduce numerical error, even if it is theorically uneeded.
+		return v;
+		}
+
 
 
 	}

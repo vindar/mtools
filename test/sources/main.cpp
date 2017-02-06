@@ -374,7 +374,7 @@ void testBall(int N)
 			MTOOLS_INSURE(facesize >= 2);
 			if (facesize < 3) { return -2; } // nothing to do 
 			int m = facesize - 2;
-			int k = (int)UIPT_FBTpeelLaw(m, gen);
+			int k = (int)generalBoltzmanTriangulationLaw(m, 1.0/8.0, gen);
 			if (k == -1) return -1; // new vertex discovered.
 			MTOOLS_INSURE((k >= 1)&&(k <= m));
 			//k = (m + 1 / 2);
@@ -439,7 +439,7 @@ void testBall(int N)
 		CPTEST.setTriangulation(gr, boundary);			//
 		CPTEST.setRadii();								//
 
-		cout << "ITERATION = " << CPTEST.computeRadii(9.9e-7, 0.03, -1, 1000) << "\n";
+		cout << "ITERATION = " << CPTEST.computeRadii(9.9e-4, 0.03, -1, 1000) << "\n";
 		cout << "Laying out the circles...\n";
 		auto circleVec = computeCirclePackLayout(gr, boundary, CPTEST.getRadii(), false, (int)gr.size() - 1);
 
@@ -480,10 +480,23 @@ void testBall(int N)
 
 int main(int argc, char *argv[])
     {
-//	MTOOLS_SWAP_THREADS(argc, argv);
+	/*
+	double q = generalBoltzmanTriangulation_CDF(0, 100, 1.0 / 6.0);
+
+	cout << "GBT = " << 1.0 - generalBoltzmanTriangulation_CDF(100 - 37, 100, 1.0 / 6.0) << "\n";
+	cout << "GBT = " << generalBoltzmanTriangulation_CDF(37, 100, 1.0 / 6.0) - q << "\n";
+
+
+
+	cout << "GBT = " << generalBoltzmanTriangulation_CDF(99, 100, 1.0 / 6.0) << "\n";
+	cout << "FBT = " << freeBoltzmanTriangulation_CDF(99, 100) << "\n\n";
+*/
+
+	cout.getKey();
+	//	MTOOLS_SWAP_THREADS(argc, argv);
 //	parseCommandLine(argc, argv);
 
-	testFBT(300);
+	testFBT(200);
 	//loadTest("trig1503676.txt");
 	//loadTest("trig1503676.txt");
 	
