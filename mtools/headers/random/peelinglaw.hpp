@@ -1,4 +1,4 @@
-/** @file peelingUIPT.hpp */
+/** @file peelinglaw.hpp */
 //
 // Copyright 2015 Arvind Singh
 //
@@ -381,15 +381,6 @@ namespace mtools
 			std::vector<double> _cvec;
 
 		};
-
-
-
-
-
-
-
-
-
 
 
 	/**
