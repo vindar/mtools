@@ -33,6 +33,11 @@ namespace mtools
 	{
 
 
+	/*******************************************************************************************************************
+	* 
+	*                                     UI(H)PT : UNIFORM INFINITE (HALF)-PLANAR TRIANGULATION
+	*
+	********************************************************************************************************************/
 
 
 	/**
@@ -218,6 +223,175 @@ namespace mtools
 
 
 
+
+
+	/*******************************************************************************************************************
+	*
+	*                                     HYPERBOLIC INFINITE PLANAR TRIANGULATIONS
+	*
+	********************************************************************************************************************/
+
+
+
+	/**
+	 * Cumulative distribution of the random walk associated with the peeling of an hyperbolic
+	 * infinite Half-plane Triangulation (type II).
+	 * 
+	 * c.f. Angel, Ray (2014) Classification of half planar maps.
+	 *      Curien (2014) Planar stochastic hyperbolic infinite triangulations
+	 * 
+	 * The parameter kappa is that of the 'inside' Boltzman triangulation of the n-gon: each
+	 * interior vertice has weight kappa with
+	 * 
+	 *                                    0 < kappa <= 27/2
+	 * 
+	 * The case kappa = 2/27 correpsond to the UIPT.
+	 * 
+	 * We use the parametrization of Angel-Ray (2014) and Curien (2015).
+	 * 
+	 *                                     0 < theta <= 1/6
+	 * 
+	 *                                   2/3 <= alpha < 1
+	 * 
+	 * with              kappa   =   theta*(1-2*theta)^2   =   alpha^2 * (1-alpha)/2
+	 * 
+	 * ie                               alpha = 1 - 2*theta
+	 * 
+	 * the case alpha = 2/3  <-> theta = 1/6 correspond to the free Boltzmann triangulation.
+	 *
+	 * @param	k	 	The value to query.
+	 * @param	theta	parameter theta in (0,1/6].
+	 *
+	 * @return	the probability P(S <= k).
+	 **/
+	inline double hyperbolicIHPT_CDF(int64 k, double theta)
+		{
+		const double kk = (double)k;
+		if (k < -1) return 0.0;
+		const double alpha = 1 - 2 * theta;
+		if (k <= 0) { return alpha; }
+		return(1.0 - (k + 1)*(1 - alpha)*exp(k*log((1 - alpha) / (2 * alpha)) + factln(2 * k) - 2 * factln(k + 1)));
+		}
+	
+
+	/* Proxy object acting as a functor for hyperbolicIHPT_CDF	for a given theta */
+	struct hyperbolicIHPT_CDF_obj
+		{
+		hyperbolicIHPT_CDF_obj(double theta) : _theta(theta) {}
+		inline double operator()(int64 k) { return hyperbolicIHPT_CDF(k, _theta); }
+		private: double _theta;
+		};
+
+
+	/**
+	* Sample a random variable according to the law of the walk associated with the peeling process
+	* of an hyperbolic infinite Half plane Triangulation.
+	*
+	* @param	theta	parameter theta in (0,1/6].
+	* @param [in,out]  gen the random number generator
+	**/
+	template<class random_t> inline int64 hyperbolicIHPTLaw(double theta, random_t & gen)
+		{
+		hyperbolicIHPT_CDF_obj O(theta);
+		return sampleDiscreteRVfromCDF(O, gen);
+		}
+
+
+
+
+
+
+	/**
+	* Sample a random variable according to the law of the walk associated with the peeling process
+	* of an hyperbolic infinite plane Triangulation (cf Curien 2015 and methods above). 
+	*
+	* @param	theta	parameter theta in (0,1/7]. (too slow for 1/7 < theta < 1/6).
+	* @param [in,out]  gen the random number generator
+	**/	class hyperbolicIPTLaw
+		{
+		public:
+
+		hyperbolicIPTLaw(double theta) { setParam(theta); }
+
+		void setParam(double theta)
+			{
+			MTOOLS_INSURE(theta <= 1 / 7.0); // 
+			_theta = theta;
+			_cvec.clear();
+			_cvec.reserve(1000);
+			const double alpha = 1 - 2 * theta;
+			_cvec.push_back(0.0);
+			_cvec.push_back(0.0);
+			_cvec.push_back(1/(alpha*alpha));
+			_cvec.push_back(1/(alpha*alpha*alpha));
+			_l = 1.0;
+			int p = 3;
+			while (1)
+				{
+				double C = _cvec[p];
+				for (int j = 1; j < p - 1; j++) { C -= _q(j, theta)*_cvec[p - j]; }
+				C /= alpha;
+				_cvec.push_back(C); // C(p+1);				
+				double r = C / _cvec[p]; if (r > _l) { _l = r; }
+				if (C <= _cvec[p]) { return; }
+				p++;
+				}
+			}
+
+
+		/**
+		* Sample a random variable according to increment of the size of the boundary when peeling the
+		* hyperblic triangulation of type II with a boundary of (m+2) vertices.
+		*
+		* @param   m           the size of the boundary is m+2.
+		* @param [in,out]  gen the random number generator.
+		*
+		* @return  The number of vertices removed from the boundary (or -1 if one was added).
+		**/
+		template<class random_t> int64 operator()(int64 m, random_t & gen) const
+			{
+			m += 2; // real boundary size
+			MTOOLS_INSURE(m >= 2);
+			if (m == 2) return -1;
+			// m is at least 3
+			while (1) // use rejection method
+				{
+				int64 y;
+				do { y = hyperbolicIHPTLaw(_theta, gen); }  // sample from hyperbolic half plane. 
+				while (m - y < 2); // reject if new boundary < 2. 
+				if (_l*Unif(gen) < (_cvec[m - y] / _cvec[m])) return y; // accept. 
+				}
+			}
+
+
+
+		private:
+
+
+			inline double _q(int i, double theta)
+				{
+				const double alpha = 1 - 2 * theta;
+				if (i == -1) return alpha;
+				if (i == 0) return 0.0;
+				return (2 * ((3 * alpha - 2)*i + 1)*exp(i*log(1.0 / (2 * alpha) - 0.5) + factln(2 * i - 2) - factln(i - 1) - factln(i + 1)));
+				}
+
+			double _theta;
+			double _l;
+			std::vector<double> _cvec;
+
+		};
+
+
+
+
+
+
+
+
+
+
+
 	/**
 	* Cumulative distribution of the peeling of a general Boltzmann triangulation of type II.
 	*
@@ -329,74 +503,6 @@ namespace mtools
 		if ((v > 0) && (Unif_1(gen))) { v = m + 1 - v; } // re-symmetrize to reduce numerical error, even if it is theorically uneeded.
 		return v;
 		}
-
-
-	/**
-	 * Cumulative distribution of the random walk associated with the peeling of an hyperbolic
-	 * infinite Half-plane Triangulation (type II).
-	 * 
-	 * c.f. Angel, Ray (2014) Classification of half planar maps.
-	 *      Curien (2014) Planar stochastic hyperbolic infinite triangulations
-	 * 
-	 * The parameter kappa is that of the 'inside' Boltzman triangulation of the n-gon: each
-	 * interior vertice has weight kappa with
-	 * 
-	 *                                    0 < kappa <= 27/2
-	 * 
-	 * The case kappa = 2/27 correpsond to the UIPT.
-	 * 
-	 * We use the parametrization of Angel-Ray (2014) and Curien (2015).
-	 * 
-	 *                                     0 < theta <= 1/6
-	 * 
-	 *                                   2/3 <= alpha < 1
-	 * 
-	 * with              kappa   =   theta*(1-2*theta)^2   =   alpha^2 * (1-alpha)/2
-	 * 
-	 * ie                               alpha = 1 - 2*theta
-	 * 
-	 * the case alpha = 2/3  <-> theta = 1/6 correspond to the free Boltzmann triangulation.
-	 *
-	 * @param	k	 	The value to query.
-	 * @param	theta	parameter theta in (0,1/6].
-	 *
-	 * @return	the probability P(S <= k).
-	 **/
-	inline double hyperbolicIHPT_CDF(int64 k, double theta)
-		{
-		const double kk = (double)k;
-		if (k < -1) return 0.0;
-		const double alpha = 1 - 2 * theta;
-		if (k <= 0) { return alpha; }
-		return(1.0 - (k + 1)*(1 - alpha)*exp(k*log((1 - alpha) / (2 * alpha)) + factln(2 * k) - 2 * factln(k + 1)));
-		}
-	
-
-
-	/* Proxy object acting as a functor for hyperbolicIHPT_CDF	for a given theta */
-	struct hyperbolicIHPT_CDF_obj
-		{
-		hyperbolicIHPT_CDF_obj(double theta) : _theta(theta) {}
-		inline double operator()(int64 k) { return hyperbolicIHPT_CDF(k, _theta); }
-		private: double _theta;
-		};
-
-
-
-	/**
-	* Sample a random variable according to the law of the walk associated with the peeling process
-	* of an hyperbolic infinite Half plane Triangulation.
-	*
-	* @param	theta	parameter theta in (0,1/6].
-	* @param [in,out]  gen the random number generator
-	**/
-	template<class random_t> inline int64 hyperbolicIHPTLaw(double theta, random_t & gen)
-		{
-		hyperbolicIHPT_CDF_obj(theta);
-		return sampleDiscreteRVfromCDF(O, gen);
-		}
-
-
 
 	}
 

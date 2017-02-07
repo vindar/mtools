@@ -478,8 +478,97 @@ void testBall(int N)
 
 
 
+
+
+
+
+
+	inline double Q(int i,double theta)
+			{
+			const double alpha = 1 - 2 * theta;
+			if (i == -1) return alpha;
+			if (i == 0) return 0.0;
+			return (2*((3 * alpha - 2)*i + 1)*exp( i*log(1.0 /(2*alpha) - 0.5) + factln(2 * i - 2) - factln(i - 1) - factln(i + 1)));
+			}
+
+
+
+	inline double cdfQ(int i, double theta)
+		{
+		double a = 0.0;
+		for (int j = -1; j <= i; j++)
+			{
+			a += Q(j, theta);
+			}
+		return a;
+		}
+
+	void makeC(double theta)
+			{
+			std::vector<double> Cvec;
+			Cvec.reserve(1000);
+			const double alpha = 1 - 2*theta;
+			Cvec.push_back(0.0);
+			Cvec.push_back(0.0);
+			Cvec.push_back(1/(alpha*alpha));
+			Cvec.push_back(1/(alpha*alpha*alpha));
+			int p = 3;
+			while(1)
+				{
+				double C = Cvec[p];
+
+				for (int j = 1; j < p - 1; j++)
+					{
+					C -= Q(j, theta)*Cvec[p - j];
+					}
+				C /= alpha;
+				Cvec.push_back(C); // C(p+1);				
+				if (C == Cvec[p])
+					{
+					for (int i = 0;i < (int)Cvec.size(); i++)
+						{
+						cout << "Cvec[" << i << "] = " << doubleToStringHighPrecision(Cvec[i]) << "\n";
+						}
+					return;
+					}
+				p++;
+				}
+
+
+			}
+
 int main(int argc, char *argv[])
     {
+
+	hyperbolicIPTLaw HL(1 / 7.5);
+	cout << "ok...\n";
+	cout.getKey(); 
+	int mm = 0;
+	for (int i = 0;i < 10000;i++)
+		{
+		int t = HL(100, gen);
+		cout << t << "\n";
+
+		if (t > mm) mm = t;
+		}
+	cout << "mm = " << mm << "\n";
+	cout << hyperbolicIHPT_CDF(10, 1 / 7.5) << "\n";;
+	cout.getKey();
+
+
+	double theta = 1 / 8.0;
+	for (int i = -1; i < 100; i++)
+		{
+		cout << doubleToStringHighPrecision(cdfQ(i,theta)) << "\n";
+		cout << doubleToStringHighPrecision(hyperbolicIHPT_CDF(i, theta)) << "\n\n";
+		}
+
+	cout.getKey();
+	makeC(1 / 8.0);
+	
+	cout << Q(200, 1 / 8.0);
+	cout.getKey();
+
 	/*
 	for(int i=-2;i<40; i++)
 		{
