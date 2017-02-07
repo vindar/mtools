@@ -435,7 +435,7 @@ void testBall(int N)
 
 		cout << mtools::graphInfo(gr) << "\n\n";	// info about the graph.
 
-		CirclePackingLabel<double> CPTEST(true);		// prepare for packing
+		CirclePackingLabelGPU<double> CPTEST(true);		// prepare for packing
 		CPTEST.setTriangulation(gr, boundary);			//
 		CPTEST.setRadii();								//
 
@@ -481,6 +481,15 @@ void testBall(int N)
 int main(int argc, char *argv[])
     {
 	/*
+	for(int i=-2;i<40; i++)
+		{
+		cout << "hyper = " << mtools::doubleToStringHighPrecision(hyperbolicIHPT_CDF(i, 1.0 / 10.0)) << "\n";
+		cout << "norm  = " << mtools::doubleToStringHighPrecision(UIHPT_CDF(i)) << "\n\n";
+		}
+	cout.getKey();
+
+	*/ 
+	/*
 	double q = generalBoltzmanTriangulation_CDF(0, 100, 1.0 / 6.0);
 
 	cout << "GBT = " << 1.0 - generalBoltzmanTriangulation_CDF(100 - 37, 100, 1.0 / 6.0) << "\n";
@@ -496,7 +505,7 @@ int main(int argc, char *argv[])
 	//	MTOOLS_SWAP_THREADS(argc, argv);
 //	parseCommandLine(argc, argv);
 
-	testFBT(200);
+	testFBT(500);
 	//loadTest("trig1503676.txt");
 	//loadTest("trig1503676.txt");
 	
