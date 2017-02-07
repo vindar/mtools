@@ -7,7 +7,7 @@ using namespace mtools;
 
 
 
-MT2004_64 gen; // RNG with 2M vertices.
+MT2004_64 gen(1); // RNG with 2M vertices.
 
 
 
@@ -365,6 +365,21 @@ void testBall(int N)
 	void testFBT(int n)
 		{
 
+				
+		cout << "In progress\n";
+		CombinatorialMap CM;
+		CM.makeNgon(2);
+		peelUIPT(CM, 1000, 0, gen);
+		cout << "ok1\n";
+		
+		//CM.collapsetoTypeIII();
+				//cout << "ok2\n";
+				//cout << graphInfo(CM.toGraph()) << "\n";
+				//cout.getKey();
+
+				
+
+/*
 		CombinatorialMap CM;
 		CM.makeNgon(n);
 
@@ -381,7 +396,8 @@ void testBall(int N)
 			for (int i = 0; i < k; i++) { peeledge = CM.phi(peeledge); }
 			return peeledge;
 			});
-			
+	*/		
+
 		cout.getKey();
 		cout << "\n\nOK, finished peeling\n\n";
 		cout << graphInfo(CM.toGraph());
@@ -389,7 +405,7 @@ void testBall(int N)
 
 		cout.getKey();
 		cout << "\n\nMake type III\n\n";
-		CM.reroot(CM.alpha(CM.root()));
+		//CM.reroot(CM.alpha(CM.root()));
 		CM.collapsetoTypeIII();
 
 		cout << graphInfo(CM.toGraph());
@@ -482,64 +498,9 @@ void testBall(int N)
 
 
 
-
-	inline double Q(int i,double theta)
-			{
-			const double alpha = 1 - 2 * theta;
-			if (i == -1) return alpha;
-			if (i == 0) return 0.0;
-			return (2*((3 * alpha - 2)*i + 1)*exp( i*log(1.0 /(2*alpha) - 0.5) + factln(2 * i - 2) - factln(i - 1) - factln(i + 1)));
-			}
-
-
-
-	inline double cdfQ(int i, double theta)
-		{
-		double a = 0.0;
-		for (int j = -1; j <= i; j++)
-			{
-			a += Q(j, theta);
-			}
-		return a;
-		}
-
-	void makeC(double theta)
-			{
-			std::vector<double> Cvec;
-			Cvec.reserve(1000);
-			const double alpha = 1 - 2*theta;
-			Cvec.push_back(0.0);
-			Cvec.push_back(0.0);
-			Cvec.push_back(1/(alpha*alpha));
-			Cvec.push_back(1/(alpha*alpha*alpha));
-			int p = 3;
-			while(1)
-				{
-				double C = Cvec[p];
-
-				for (int j = 1; j < p - 1; j++)
-					{
-					C -= Q(j, theta)*Cvec[p - j];
-					}
-				C /= alpha;
-				Cvec.push_back(C); // C(p+1);				
-				if (C == Cvec[p])
-					{
-					for (int i = 0;i < (int)Cvec.size(); i++)
-						{
-						cout << "Cvec[" << i << "] = " << doubleToStringHighPrecision(Cvec[i]) << "\n";
-						}
-					return;
-					}
-				p++;
-				}
-
-
-			}
-
 int main(int argc, char *argv[])
     {
-
+	/*
 	hyperbolicIPTLaw HL(1 / 7.5);
 	cout << "ok...\n";
 	cout.getKey(); 
@@ -568,7 +529,7 @@ int main(int argc, char *argv[])
 	
 	cout << Q(200, 1 / 8.0);
 	cout.getKey();
-
+	*/
 	/*
 	for(int i=-2;i<40; i++)
 		{
@@ -590,9 +551,9 @@ int main(int argc, char *argv[])
 	cout << "FBT = " << freeBoltzmanTriangulation_CDF(99, 100) << "\n\n";
 */
 
-	cout.getKey();
-	//	MTOOLS_SWAP_THREADS(argc, argv);
-//	parseCommandLine(argc, argv);
+
+	MTOOLS_SWAP_THREADS(argc, argv);
+	parseCommandLine(argc, argv);
 
 	testFBT(500);
 	//loadTest("trig1503676.txt");

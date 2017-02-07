@@ -81,6 +81,7 @@
 #include "maths/permutation.hpp"
 #include "maths/dyckword.hpp"
 #include "maths/combinatorialmap.hpp"
+#include "maths/combinatorialmap_random_triangulation.hpp"
 #include "maths/graph.hpp"
 #include "maths/circlePacking.hpp"
 
@@ -101,7 +102,7 @@
 #include "random/gen_fastRNG.hpp"
 #include "random/classiclaws.hpp"
 #include "random/SRW.hpp"
-#include "random/peelingUIPT.hpp"
+#include "random/peelinglaw.hpp"
 #include "random/krikunlaw.hpp"
 
 //extensions

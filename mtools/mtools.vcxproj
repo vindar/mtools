@@ -373,6 +373,7 @@
     <ClInclude Include="headers\maths\circlePacking.cl.hpp" />
     <ClInclude Include="headers\maths\circlePacking.hpp" />
     <ClInclude Include="headers\maths\combinatorialmap.hpp" />
+    <ClInclude Include="headers\maths\combinatorialmap_random_triangulation.hpp" />
     <ClInclude Include="headers\maths\mobius.hpp" />
     <ClInclude Include="headers\maths\graph.hpp" />
     <ClInclude Include="headers\maths\permutation.hpp" />
@@ -397,7 +398,7 @@
     <ClInclude Include="headers\random\gen_mt2004_64.hpp" />
     <ClInclude Include="headers\random\gen_xorgen4096_64.hpp" />
     <ClInclude Include="headers\random\krikunlaw.hpp" />
-    <ClInclude Include="headers\random\peelingUIPT.hpp" />
+    <ClInclude Include="headers\random\peelinglaw.hpp" />
     <ClInclude Include="headers\random\SRW.hpp" />
     <ClInclude Include="headers\random\SRW_exitGridZ2_data.hpp" />
     <ClInclude Include="stdafx_mtools.h" />

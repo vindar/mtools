@@ -234,9 +234,6 @@
     <ClInclude Include="headers\random\classiclaws.hpp">
       <Filter>Header Files\random</Filter>
     </ClInclude>
-    <ClInclude Include="headers\random\peelingUIPT.hpp">
-      <Filter>Header Files\random</Filter>
-    </ClInclude>
     <ClInclude Include="headers\maths\dyckword.hpp">
       <Filter>Header Files\maths</Filter>
     </ClInclude>
@@ -262,6 +259,12 @@
       <Filter>Header Files\maths</Filter>
     </ClInclude>
     <ClInclude Include="headers\maths\circle.hpp">
+      <Filter>Header Files\maths</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\random\peelinglaw.hpp">
+      <Filter>Header Files\random</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\maths\combinatorialmap_random_triangulation.hpp">
       <Filter>Header Files\maths</Filter>
     </ClInclude>
   </ItemGroup>
