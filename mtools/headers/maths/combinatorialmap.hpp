@@ -800,7 +800,7 @@ namespace mtools
 			void addTriangle(int dartIndex)
 				{
 				CHECKCONSISTENCY;
-				addTriangle(dartIndex);
+				_addTriangle(dartIndex);
 				CHECKCONSISTENCY;
 				}
 
@@ -826,7 +826,7 @@ namespace mtools
 			int addSplittingTriangle(int dartIndexBase, int dartIndexTarget)
 				{
 				CHECKCONSISTENCY;
-				int len = addSplittingTriangle(dartIndexBase, dartIndexTarget);
+				int len = _addSplittingTriangle(dartIndexBase, dartIndexTarget);
 				CHECKCONSISTENCY;
 				return len;
 				}
