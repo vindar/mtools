@@ -371,7 +371,7 @@ namespace mtools
 				int64 y;
 				do { y = hyperbolicIHPTLaw(_theta, gen); }  // sample from hyperbolic half plane. 
 				while (m - y < 2); // reject if new boundary < 2. 
-				if (m - y >= _cvec.size()) { return y; }
+				if (m - y >= (int)_cvec.size()) { return y; }
 				if (_l*Unif(gen) < (_cvec[m - y] / _cvec[m])) return y; // accept. 
 				}
 			}
