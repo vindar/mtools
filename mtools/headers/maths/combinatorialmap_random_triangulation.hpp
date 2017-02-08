@@ -36,15 +36,19 @@ namespace mtools
 	{
 
 	/**
-	 * Insert a free Boltzmann Triangulation (of type II) inside a given face of a map using the
+	 * Insert a Free Boltzmann Triangulation (of type II) inside a given face of a map using the
 	 * peeling algorithm.
+	 * 
+	 * This method only add new darts/vertices/faces inside the map but does not change the numbering
+	 * of the vertices/darts/other faces already present. 
+	 *
 	 * 
 	 * @param [in,out]	CM			The map.
 	 * @param	peeldart            a dart that identifies the face inside which the FBT should be constructed.
 	 * @param	avoiddoubleedges	true to avoid double edges whenever possible. This means that when the peeling
-	 * 								algorithm encounter a face of size two. It simply collapse the two edges together.
-	 * 								Useful for creating a type III free Boltzman triangulation but:
-	 * 								!!! Even if avoiddoubleedges = true, the resulting map may still contain double edges !!!
+	 * 								algorithm encounters a face of size two, it collapse the two edges together.
+	 * 								This is useful for creating a type III free Boltzman triangulation BUT even 
+	 * 								if avoiddoubleedges = true, the resulting map may still contain double edges!
 	 * 								Use collapseToTypeII() after this method to create a 'real' type III map.
 	 *
 	 * @param [in,out]	gen			random number generator.
@@ -63,6 +67,43 @@ namespace mtools
 			return peeledge;
 			},true); 
 		}
+
+
+
+	/**
+	* Insert a generalized Boltzmann Triangulation (of type II) inside a given face of a map using the
+	* peeling algorithm.
+	*
+	* This method only add new darts/vertices/faces inside the map but does not change the numbering
+	* of the vertices/darts/other faces already present.
+	*
+	*
+	* @param [in,out]	CM			The map.
+	* @param	peeldart            a dart that identifies the face inside which the FBT should be constructed.
+	* 0param    theta               Parameter of the boltzman in (0,1/6] (cf peelinglaw.hpp for details).		
+	* @param	avoiddoubleedges	true to avoid double edges whenever possible. This means that when the peeling
+	* 								algorithm encounters a face of size two, it collapse the two edges together.
+	* 								This is useful for creating a type III free Boltzman triangulation BUT even
+	* 								if avoiddoubleedges = true, the resulting map may still contain double edges!
+	* 								Use collapseToTypeII() after this method to create a 'real' type III map.
+	*
+	* @param [in,out]	gen			random number generator.
+	*/
+	template<typename random_t> void generalBoltzmannTriangulation(CombinatorialMap & CM, int peeldart, double theta, bool avoiddoubleedges, random_t & gen)
+		{
+		CM.boltzmannPeelingAlgo(peeldart, [&](int peeledge, int facesize)-> int {
+			MTOOLS_ASSERT((facesize >= 2)); // face must have size at least 2
+			MTOOLS_ASSERT((facesize >= 3) || (!avoiddoubleedges)); // if we avoid double edges, then all faces must have size >= 3.
+			int m = facesize - 2;
+			int k = (int)generalBoltzmanTriangulationLaw(m, theta, gen);
+			if (k == -1) return -1; // new vertex discovered.
+			if ((m == 0) && (k == 0)) return -2; // stop peeling this face of size 2
+			MTOOLS_ASSERT((k >= 1) && (k <= m));
+			for (int i = 0; i < k + 1; i++) { peeledge = CM.phi(peeledge); }
+			return peeledge;
+			}, true);
+		}
+
 
 
 	/**
@@ -104,6 +145,59 @@ namespace mtools
 					int fs1 = fsize - fs2 + 1;
 					MTOOLS_INSURE(fs2 = k + 1);
 					if ((!avoiddoubleddges) || (fs1 > 2)) { freeBoltzmannTriangulation(CM, predart, avoiddoubleddges, gen); }
+					predart = CM.invphi(d);
+					}
+				fsize -= k;
+				}
+			MTOOLS_INSURE(fsize == CM.faceSize(predart));
+			}
+		return predart;
+		}
+
+
+
+	/**
+	* Peel a given number of steps of an hyperbolic infinite planar triangulation (cf peelinglaw.hpp).
+	* Use the peeling 'by layer'.
+	*
+	* @param [in,out]	CM 	The map to peel
+	* @param	nbsteps	   	The nbsteps.
+	* @param	peeldart   	The peeldart.
+	* 0param    theta       Parameter of hyperbolicity in (0,1/6] (use <= 1/8 otherwise its very slow). 						
+	* @param [in,out]	gen	The generate.
+	*/
+	template<typename random_t> int peelHyperbolicIPT(CombinatorialMap & CM, int64 nbsteps, int predart, double theta, bool avoiddoubleddges, random_t & gen)
+		{
+		hyperbolicIPTLaw HL(theta);
+		int fsize = CM.faceSize(predart);
+		for (int64 n = 0; n < nbsteps; n++)
+			{
+			int k = HL(fsize - 2, gen);
+			if (k == -1)
+				{
+				CM.addTriangle(predart);
+				fsize++;
+				predart = CM.invphi(predart);
+				}
+			else
+				{
+				if (Unif_1(gen)) // direction
+					{
+					int d = predart;
+					for (int i = 0; i < k + 1; i++) { d = CM.phi(d); }
+					auto fs2 = CM.addSplittingTriangle(predart, d, avoiddoubleddges);
+					MTOOLS_INSURE(fs2 = k + 1);
+					if ((!avoiddoubleddges) || (fs2 > 2)) { generalBoltzmannTriangulation(CM, d, theta, avoiddoubleddges, gen); }
+					predart = CM.invphi(predart);
+					}
+				else
+					{
+					int d = predart;
+					for (int i = 0; i < k; i++) { d = CM.invphi(d); }
+					auto fs2 = CM.addSplittingTriangle(predart, d, avoiddoubleddges);
+					int fs1 = fsize - fs2 + 1;
+					MTOOLS_INSURE(fs2 = k + 1);
+					if ((!avoiddoubleddges) || (fs1 > 2)) { generalBoltzmannTriangulation(CM, predart, theta, avoiddoubleddges, gen); }
 					predart = CM.invphi(d);
 					}
 				fsize -= k;

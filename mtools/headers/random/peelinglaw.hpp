@@ -326,7 +326,7 @@ namespace mtools
 
 		void setParam(double theta)
 			{
-			MTOOLS_INSURE(theta <= 1 / 7.0); // 
+			MTOOLS_INSURE(theta <= 1 / 6.0); // 
 			_theta = theta;
 			_cvec.clear();
 			_cvec.reserve(1000);
@@ -344,7 +344,8 @@ namespace mtools
 				C /= alpha;
 				_cvec.push_back(C); // C(p+1);				
 				double r = C / _cvec[p]; if (r > _l) { _l = r; }
-				if (C <= _cvec[p]) { return; }
+				if (C <= _cvec[p]) { 
+					return; }
 				p++;
 				}
 			}
@@ -370,6 +371,7 @@ namespace mtools
 				int64 y;
 				do { y = hyperbolicIHPTLaw(_theta, gen); }  // sample from hyperbolic half plane. 
 				while (m - y < 2); // reject if new boundary < 2. 
+				if (m - y >= _cvec.size()) { return y; }
 				if (_l*Unif(gen) < (_cvec[m - y] / _cvec[m])) return y; // accept. 
 				}
 			}

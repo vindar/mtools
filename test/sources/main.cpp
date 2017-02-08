@@ -7,7 +7,7 @@ using namespace mtools;
 
 
 
-MT2004_64 gen(123); // RNG with 2M vertices.
+MT2004_64 gen(4123); // RNG with 2M vertices.
 
 
 
@@ -364,14 +364,15 @@ void testBall(int N)
 
 	void testFBT(int n)
 		{
-
+		double theta = 1 / 6.5;
 		cout << "In progress\n";
 
 		cout << "\n peeling...\n";
 		CombinatorialMap CM;
 		CM.makeNgon(3);
-		auto r = peelUIPT(CM, n, 0, true, gen);
-		CM.reroot(r);			
+//		auto r = peelUIPT(CM, n, 0, true, gen);
+		auto r = peelHyperbolicIPT(CM, n, 0, theta, true, gen);
+		CM.reroot(r);
 		cout << "\n done peeling\n";
 		cout << graphInfo(CM.toGraph()) << "\n\n";
 
@@ -520,7 +521,7 @@ int main(int argc, char *argv[])
 	MTOOLS_SWAP_THREADS(argc, argv);
 	parseCommandLine(argc, argv);
 
-	testFBT(10000);
+	testFBT(20000);
 	//loadTest("trig1503676.txt");
 	//loadTest("trig1503676.txt");
 	
