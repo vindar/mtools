@@ -119,7 +119,8 @@ namespace mtools
 		int fsize = CM.faceSize(predart); 
 		for (int64 n = 0; n < nbsteps; n++)
 			{
-			int k = UIPTLaw(fsize - 2, gen);
+			int k = (int)UIPTLaw(fsize - 2, gen);
+			if (avoiddoubleddges) { if (fsize == 3) { k = -1; } else if (fsize - k == 2) { k--; } } // avoid problematic cases...
 			if (k == -1)
 				{
 				CM.addTriangle(predart);
@@ -172,7 +173,8 @@ namespace mtools
 		int fsize = CM.faceSize(predart);
 		for (int64 n = 0; n < nbsteps; n++)
 			{
-			int k = HL(fsize - 2, gen);
+			int k = (int)HL(fsize - 2, gen);
+			if (avoiddoubleddges) { if (fsize == 3) { k = -1;} else if (fsize - k == 2) { k--; } } // avoid problematic cases...
 			if (k == -1)
 				{
 				CM.addTriangle(predart);
