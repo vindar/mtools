@@ -7,8 +7,9 @@ using namespace mtools;
 
 
 
-MT2004_64 gen(4123); // RNG with 2M vertices.
+MT2004_64 gen(5679); // RNG with 2M vertices.
 
+//MT2004_64 gen(567); // RNG with 2M vertices.
 
 
 void loadGraph(std::string filename, std::vector<std::vector<int> > & gr, fBox2 & R, std::vector<int> & boundary, std::vector<double> & radiuses, std::vector<fVec2> & circles)
@@ -381,7 +382,7 @@ void testBall(int N)
 		cout << "done \n\n";
 		std::vector<std::vector<int> > gr = CM.toGraph();
 		cout << graphInfo(gr) << "\n\n";
-		cout.getKey();
+		//cout.getKey();
 
 
 		int bsize = CM.faceSize(CM.root());
@@ -439,8 +440,8 @@ void testBall(int N)
 			}
 
 
-		int LX = 2000;
-		int LY = 2000;
+		int LX = 10000;
+		int LY = 10000;
 		fBox2 R(-2, 2, -2, 2);
 		mtools::Img<unsigned char> im(LX, LY, 1, 4);
 		im.clear(RGBc::c_White);
@@ -464,8 +465,157 @@ void testBall(int N)
 
 
 
+
+
+
+
+
+
+
+
+
+
+		void testHyperbolic(int n)
+			{
+			double theta = 1 / 7.1;
+			cout << "In progress\n";
+
+			cout << "\n peeling...\n";
+			CombinatorialMap CM;
+			CM.makeNgon(3);
+			//		auto r = peelUIPT(CM, n, 0, true, gen);
+			auto r = peelHyperbolicIPT(CM, n, 0, theta, true, gen);
+			CM.reroot(r);
+			cout << "\n done peeling\n";
+			cout << graphInfo(CM.toGraph()) << "\n\n";
+
+			cout << "collapsing...\n";
+			CM.collapsetoTypeIII();
+			cout << "done \n\n";
+			std::vector<std::vector<int> > gr = CM.toGraph();
+			cout << graphInfo(gr) << "\n\n";
+			//cout.getKey();
+
+
+			std::vector<int> boundary(gr.size(),0);
+			int bsize = CM.faceSize(CM.root());
+			cout << "bsize = " << bsize << "\n";
+			int e = CM.root();
+			for (int i = 0;i < bsize; i++) { boundary[CM.vertice(e)] = 1; e = CM.phi(e); } // note the boundary
+
+			std::vector<double> rad(gr.size(),0.5);
+			for (int i = 0; i < gr.size(); i++) { if (boundary[i] > 0) { rad[i] = 0.0; } }
+
+
+			CirclePackingLabelHyperbolic<double> CPTEST(true);		// prepare for packing
+			CPTEST.setTriangulation(gr, boundary);			//
+			CPTEST.setRadii(rad);								//
+
+			cout << "ITERATION = " << CPTEST.computeRadii(1.0e-6, 0.05, -1, 1000) << "\n";
+			cout << "Laying out the circles...\n";
+
+
+			std::vector<int> bbv;
+			e = CM.root();
+			for (int i = 0;i < bsize; i++) { bbv.push_back(CM.vertice(e)); e = CM.phi(e); }
+			int maxd = 0; int maxv = -1;
+			exploreGraph(gr, bbv, [&](int v, int d)->bool { maxd = d; maxv = v; return true;});
+			int ee = -1;
+			for (int i = 0;i < CM.nbDarts(); i++) { if (CM.vertice(i) == maxv) { ee = i; break; } }
+			MTOOLS_INSURE(ee != -1);
+			cout << "max distance from boundary = " << maxd << "\n";
+			cout << "index of vertex that realizes it = " << maxv << "\n";
+			cout << "index of vertex that realizes it = " << CM.vertice(ee) << "\n";
+			int e1 = ee;
+			int e2 = CM.phi(e1);
+			int e3 = CM.phi(e2);
+			MTOOLS_INSURE(CM.phi(e3) == e1);
+			int v1 = CM.vertice(e1);
+			int v2 = CM.vertice(e2);
+			int v3 = CM.vertice(e3);
+
+
+			cout.getKey();
+
+			auto grad = CPTEST.getRadii();
+
+			for (int i = 0;i < grad.size(); i++)
+				{
+				grad[i] = grad[i]*grad[i];
+				}
+	
+
+			cout << "Laying out the circles in hyperbolic space...\n";
+			auto circleVec2 = computeCirclePackLayoutHyperbolic(gr, boundary, grad, true,v1);
+
+			{
+			int LX = 4000;
+			int LY = 4000;
+			fBox2 R(-2, 2, -2, 2);
+			mtools::Img<unsigned char> im(LX, LY, 1, 4);
+			im.clear(RGBc::c_White);
+
+			im.clear(RGBc::c_White);
+			drawCirclePacking_Circles(im, R, circleVec2, gr, true, RGBc::c_Red, 0.2f, 0, (int)gr.size());
+			drawCirclePacking_Graph(im, R, circleVec2, gr, RGBc::c_Black, 1.0f, 0, (int)gr.size());
+			drawCirclePacking_Labels(im, R, circleVec2, gr, 13, RGBc::c_Green, 1.0f, 0, (int)gr.size());
+
+			Plotter2D Plotter;
+			auto P2 = makePlot2DCImg(im, "circles");
+			Plotter[P2];
+			Plotter.autorangeXY();
+			Plotter.plot();
+
+			}
+
+
+			/*
+			//auto circleVec = computeCirclePackLayout(gr, boundary, CPTEST.getRadii(), false, (int)gr.size() - 1);
+
+			cout << "done in " << mtools::Chronometer() << "ms\n";
+
+			auto pos0 = circleVec.back().center;
+			double rad0 = circleVec.back().radius;
+			mtools::Mobius<double> M(0.0, 1.0, 1.0, 0.0);
+
+			for (int i = 0; i < circleVec.size(); i++)
+				{
+				circleVec[i] -= pos0; // center
+				circleVec[i] /= rad0; // normalise such that outer boundary circle has size 1
+				if (i != circleVec.size() - 1) { circleVec[i] = M*(circleVec[i]); } 
+				}
+
+
+			int LX = 10000;
+			int LY = 10000;
+			fBox2 R(-2, 2, -2, 2);
+			mtools::Img<unsigned char> im(LX, LY, 1, 4);
+			im.clear(RGBc::c_White);
+
+			drawCirclePacking_Circles(im, R, circleVec, gr, true, RGBc::c_Red, 0.2f, (int)gr.size() - 1, (int)gr.size());
+			drawCirclePacking_Circles(im, R, circleVec, gr, true, RGBc::c_Red, 0.2f, 0, (int)gr.size() - 1);
+			drawCirclePacking_Graph(im, R, circleVec, gr, RGBc::c_Black, 1.0f, 0, (int)gr.size() - 1);
+			//drawCirclePacking_Labels(im, R, circleVec, gr, 40, RGBc::c_Green, 1.0f, 0, (int)gr.size() - 1);
+
+			Plotter2D Plotter;
+			auto P2 = makePlot2DCImg(im, "circles");
+			Plotter[P2];
+			Plotter.autorangeXY();
+			Plotter.plot();
+			*/
+			}
+
+
+
+
+
+
+
+
 int main(int argc, char *argv[])
     {
+
+
 	/*
 	hyperbolicIPTLaw HL(1 / 7.5);
 	cout << "ok...\n";
@@ -521,7 +671,10 @@ int main(int argc, char *argv[])
 	MTOOLS_SWAP_THREADS(argc, argv);
 	parseCommandLine(argc, argv);
 
-	testFBT(20000);
+
+	testHyperbolic(10);
+
+	testFBT(70000);
 	//loadTest("trig1503676.txt");
 	//loadTest("trig1503676.txt");
 	
