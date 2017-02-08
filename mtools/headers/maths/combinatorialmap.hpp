@@ -602,7 +602,7 @@ namespace mtools
 			 * - The numbering of the vertices already present is unchanged and the new one follow.
 			 * - The numbering of the faces may change, even for faces that where already present !
 			 *
-			 * @param	dartIndex	The index of a dart of the face to triangulate 
+			 * @param	dartIndex	The index of a dart that identifies the face to triangulate 
 			 * 						(note that this is NOT the index of the face itself!).
 			 *
 			 * @return	The degree of the face that was triangulated.
@@ -788,13 +788,16 @@ namespace mtools
 			/**
 			 * Adds a triangle inside a face.
 			 * 
-			 * The triangle is glued against the next oriented edge following dartindex on the same face (ie
-			 * phi(dartIndex) = E). This creates an additionnal vertex inside the face and two edges from it to
+			 * The triangle is glued against the NEXT oriented edge following dartindex on the same face i.e.
+			 * phi(dartIndex) =: E. This creates an additionnal vertex inside the face and two edges from it to
 			 * the endpoints of E.
 			 * 
 			 * Thus, the procedure effectively increases the number of darts by 4, the number of non-
 			 * oriented edge by two, the number of face by 1 and the number of vertices by 1.
 			 *
+			 * This method only creates new darts, vertices and faces butdoes not change any previous numbering 
+			 * (of darts, vertices, faces etc...).
+			 * 
 			 * @param	dartIndex	The dart preceding the one to which the face should be added.
 			 */
 			void addTriangle(int dartIndex)
@@ -807,9 +810,9 @@ namespace mtools
 
 			/**
 			 * Add a triangle inside a face, effectively splitting it into 3 faces, the center one being the
-			 * triangle. Just like addTriangle(), the base of the triangle is the next edge after dartIndexBase 
-			 * following the same face (ie phi(dartIndexBase) = E). The third vertex of the triangle is the end 
-			 * vertex of dartIndexTarget. 
+			 * triangle. Just like addTriangle(), the base of the triangle is the NEXT edge after dartIndexBase 
+			 * on the same face i.e. phi(dartIndexBase). The third vertex of the triangle is the END vertex 
+			 * of dartIndexTarget. 
 			 *
 			 * The number of faces is increased by two. The number of dart by 4, the number of non-oriented 
 			 * edges by 2 and the number of vertices remains the same. 
@@ -817,8 +820,11 @@ namespace mtools
 			 * NB: the method work also for double edge but not for loop i.e. it is forbidden that
 			 *     dartIndexTarget = dartIndexBase or phi(dartIndexBase)...
 			 *
-			 * @param	dartIndexBase  	The dart preceding the base of the triangle
-			 * @param	dartIndexTarget	The dart whose endpoint is the third vertex of the triangle
+			 * This method only creates new darts, vertices and faces butdoes not change any previous numbering
+			 * (of darts, vertices, faces etc...).
+			 *
+			 * @param	dartIndexBase  	The dart PRECEDING the base of the triangle
+			 * @param	dartIndexTarget	The dart whose ENDPOINT is the third vertex of the triangle
 			 * 							
 			 * Returns the len of the face that does NOT contain dartIndexBase. The face that contains it
 			 *         has size (initialFaceSize - len + 1)
@@ -866,22 +872,22 @@ namespace mtools
 			/**
 			 * Algorithm to peel a given face of the map.
 			 *
-			 * @param	startpeeledge	The dart that specify the face to peel and the edge peeled at the first step.
+			 * @param	predart   	The dart that specify the face to peel (the fisrt step peels the edge FOLLOWING predart just as
+			 * 						for addTriangle() and addSplittingTriangle() 
 			 * @param	fun		 	The function to call at each step of the peeling process.
-			 * 						int fun(int edgetopeel,int facesize)
-			 * 						     - edgetopeel : the dart (edge) that should be peeled.  
-			 * 						     - facesize   : number of edges on this face.  
+			 * 						int fun(int & edgetopeel,int facesize)
+			 * 						     - predartpeel : the dart that PRECEDE the one that should be peeled. A default choice is   
+			 * 						                     proposed bu can be changed  
+			 * 						     - facesize    : the number of edges on this face.  
 			 * 						  returns the action to take:
 			 * 						     -2   : stop peeling this face.
-			 * 						     -1   : create a triangle with a new vertex and base edgetopeel
-			 * 						    k>=0  : create a triangle with base edgetopeel and third vertex the end-point of dart index k
-			 * Algorithm:
-			 * 
-			 * - fun() >= 0 :   Two new edges are revealed and the n-gon is splitted in two. These new edges are e1 = alpha(invphi(edgestopeel))   
-			 *                  and e2 = alpha(phi(edgetopeel)). The algorithm continues peeling both n-gon starting from e1 and e2 respectively.
-			 *                  The smallest n-gon is peeled first.
-			 * - fun()  =-1 :   two new edges are revealed but the n-gon is not splitted. These new edges are e1 = alpha(invphi(edgestopeel))   
-			 *                  and e2 = alpha(phi(edgetopeel)). The algorithm continues peeling the (n+1)-gon from e1.
+			 * 						     -1   : create a triangle with a new vertex and base phi(predartpeel)
+			 * 						    k>=0  : create a triangle with base phi(predartpeel) and third vertex the ENDPOINT of dart index k
+			 * Peeling Algorithm:
+			 *
+			 *  - if a new verrtex is added, the propsoed dart at the next step is the same as the previous step i.e. predartpeel  
+			 *  - if the ngon is split in two. the proposed darts at the next step are predartpeel and the dart k returned.   
+			 *   
 			 */
 			void boltzmannPeelingAlgo(int startpeeledge, std::function< int(int,int)> fun)
 				{
