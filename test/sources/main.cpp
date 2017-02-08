@@ -7,7 +7,7 @@ using namespace mtools;
 
 
 
-MT2004_64 gen(1); // RNG with 2M vertices.
+MT2004_64 gen(123); // RNG with 2M vertices.
 
 
 
@@ -365,69 +365,33 @@ void testBall(int N)
 	void testFBT(int n)
 		{
 
-				
 		cout << "In progress\n";
+
+		cout << "\n peeling...\n";
 		CombinatorialMap CM;
-		CM.makeNgon(2);
-		peelUIPT(CM, 120000, 0, gen);
-		cout << "ok1\n";
-		
-		//CM.collapsetoTypeIII();
-				//cout << "ok2\n";
-				//cout << graphInfo(CM.toGraph()) << "\n";
-				//cout.getKey();
+		CM.makeNgon(3);
+		auto r = peelUIPT(CM, n, 0, true, gen);
+		CM.reroot(r);			
+		cout << "\n done peeling\n";
+		cout << graphInfo(CM.toGraph()) << "\n\n";
 
-				
-
-/*
-		CombinatorialMap CM;
-		CM.makeNgon(n);
-
-		cout << graphInfo(CM.toGraph()) << "\n";
-
-		CM.boltzmannPeelingAlgo(0, [&](int peeledge, int facesize)-> int {
-			MTOOLS_INSURE(facesize >= 2);
-			if (facesize < 3) { return -2; } // nothing to do 
-			int m = facesize - 2;
-			int k = (int)generalBoltzmanTriangulationLaw(m, 1.0/8.0, gen);
-			if (k == -1) return -1; // new vertex discovered.
-			MTOOLS_INSURE((k >= 1)&&(k <= m));
-			//k = (m + 1 / 2);
-			for (int i = 0; i < k; i++) { peeledge = CM.phi(peeledge); }
-			return peeledge;
-			});
-	*/		
-
-		cout.getKey();
-		cout << "\n\nOK, finished peeling\n\n";
-		cout << graphInfo(CM.toGraph());
-		//cout << CM.toGraph() << "\n\n";	// info about the graph.
-
-		cout.getKey();
-		cout << "\n\nMake type III\n\n";
-		//CM.reroot(CM.alpha(CM.root()));
+		cout << "collapsing...\n";
 		CM.collapsetoTypeIII();
-
-		cout << graphInfo(CM.toGraph());
-		//cout << CM.toGraph() << "\n\n";	// info about the graph.
+		cout << "done \n\n";
+		std::vector<std::vector<int> > gr = CM.toGraph();
+		cout << graphInfo(gr) << "\n\n";
 		cout.getKey();
 
-		cout << "done !\n";
+
+		int bsize = CM.faceSize(CM.root());
+		cout << "bsize = " << bsize << "\n";
+		std::vector<int> bbv;
+		int e = CM.root();
+		for (int i = 0;i < bsize; i++) { bbv.push_back(CM.vertice(e)); e = CM.phi(e); }
 
 
-		// OK, 
-		std::vector<std::vector<int> > gr = CM.toGraph();
-
-		cout << graphInfo(gr) << "\n";
-		cout.getKey(); 
-
-
-		std::vector<int> bbv(n);
-		int maxd = 0;
-		int maxv = -1;
-		for (int i = 0;i < n;i++) { bbv[i] = i; }
+		int maxd = 0; int maxv = -1;
 		exploreGraph(gr, bbv, [&](int v, int d)->bool { maxd = d; maxv = v; return true;});
-
 		int ee = -1;
 		for (int i = 0;i < CM.nbDarts(); i++) { if (CM.vertice(i) == maxv) { ee = i; break; } }
 		MTOOLS_INSURE(ee != -1);
@@ -440,6 +404,7 @@ void testBall(int N)
 		int e2 = CM.phi(e1);
 		int e3 = CM.phi(e2);
 		MTOOLS_INSURE(CM.phi(e3) == e1);
+
 		int v1 = CM.vertice(e1);
 		int v2 = CM.vertice(e2);
 		int v3 = CM.vertice(e3);
@@ -555,7 +520,7 @@ int main(int argc, char *argv[])
 	MTOOLS_SWAP_THREADS(argc, argv);
 	parseCommandLine(argc, argv);
 
-	testFBT(500);
+	testFBT(10000);
 	//loadTest("trig1503676.txt");
 	//loadTest("trig1503676.txt");
 	

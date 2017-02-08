@@ -123,6 +123,7 @@ namespace mtools
 	inline double UIPT_CDF(int64 k, int64 m)
 		{
 		if (k < -1) return 0;
+		if (m == 0) { return 1.0; } // always discover a new vertex when boundary has size 2
 		if (k >= m) return 1.0;
 		if (k < 1) return (2 * m + 3.0) / (3 * m + 3.0);
 		// we have 1 <= k < m
@@ -174,6 +175,8 @@ namespace mtools
 	*
 	* @return  the probability that the index i the peeled edge (x_{m+1},x_0) reattaches to is
 	* 		   such that i <= k (with the  convention that the index for discovering a new vertex is -1)
+	* 		   -> In the particular case m = 0 (2-gon), the method returns 1/9 (probab. of creating a 
+	* 		   triangle) for k=-1 and returns 1.0 for k >= 0. 
 	*
 	**/
 	inline double freeBoltzmanTriangulation_CDF(const int64 k, const int64 m)
@@ -181,8 +184,10 @@ namespace mtools
 		const double mm = (const double)m;
 		const double kk = (const double)k;
 		if (k < -1) return 0.0;
+		const double q = (2 * mm + 1.0) / (3 * (mm + 3.0));
+		if (k == -1) return q;
 		if (k >= m) return 1.0;
-		if (k < 1) return (2 * mm + 1.0) / (3 * (mm + 3.0));
+		if (k == 0) return q;
 		// we have 1 <= k < m
 		return
 			(1.0 / 6.0)*(
@@ -209,14 +214,20 @@ namespace mtools
 	* @param   m           the size of the boundary is m+2 with vertices { x_0, x_1, ..., x_{m+1} }
 	* @param [in,out]  gen the random number generator.
 	*
-	* @return  index 1 <= i <= m of the vertex we reattaches to when peeling (x_{m+1},x_0)
-	* 		   or -1 f we discover a new vertice.
-	**/
+	* @return  if (m > 0)
+	* 		    -> return -1 if we discover a new vertex.
+	* 		       return  1 <= i <= m if the triangle with base (x_{m+1},x_0) reattaches itself to
+	* 		       vertex x_i on the boundary.
+	*
+	* 		   if (m == 0)
+	* 		    -> return -1 if we discover a new vertex.
+	* 		       return 0 if we stop peeling (ie the two edges should collapse).
+	**/      
 	template<class random_t> inline int64 freeBoltzmanTriangulationLaw(int64 m, random_t & gen)
 		{
 		freeBoltzmanTriangulation_CDF_obj O(m);
 		int64 v = sampleDiscreteRVfromCDF(O, gen);
-		if ((v > 0) && (Unif_1(gen))) { v = m + 1 - v; } // re-symmetrize to reduce numerical error, even if it is theorically uneeded.
+		if ((m > 0) && (v > 0) && (Unif_1(gen))) { v = m + 1 - v; } // re-symmetrize to reduce numerical error, even if it is theorically uneeded.
 		return v;
 		}
 
@@ -352,7 +363,7 @@ namespace mtools
 			{
 			m += 2; // real boundary size
 			MTOOLS_INSURE(m >= 2);
-			if (m == 2) return -1;
+			if (m == 2) return -1; // always find a new vertex if boundary of size 2
 			// m is at least 3
 			while (1) // use rejection method
 				{
@@ -417,6 +428,8 @@ namespace mtools
 	*
 	* @return  the probability that the index i the peeled edge (x_{m+1},x_0) reattaches to is
 	* 		   such that i <= k (with the  convention that the index for discovering a new vertex is -1)
+	* 		   -> In the particular case m = 0 (2-gon), the method returns the probab. of creating a
+	* 		   triangle for k=-1 and returns 1.0 for k >= 0.
 	*
 	**/
 	inline double generalBoltzmanTriangulation_CDF(const int64 kk, const int64 mm,  const double theta)
@@ -424,9 +437,10 @@ namespace mtools
 		const double k = (double)kk;
 		const double m = (double)mm;	
 		if (kk < -1) return 0.0;
-		if (kk >= mm) return 1.0;
 		const double q = 2 * (2 * m + 1)*theta*(6 * m*theta - m + 12 * theta - 3) / ((6 * m*theta - m + 6 * theta - 2)*(m + 3));
-		if (kk < 1) { return q; }
+		if (kk == -1) { return q; }
+		if (kk >= mm) return 1.0;
+		if (kk == 0) { return q; }
 		// we have 1 <= k < m		
 		const double m2 = m*m;
 		const double m3 = m2*m;
@@ -484,14 +498,20 @@ namespace mtools
 	* @param   theta       parameter of the boltzmann parametrized as above in (0,1/6].
 	* @param [in,out]  gen the random number generator.
 	*
-	* @return  index 1 <= i <= m of the vertex we reattaches to when peeling (x_{m+1},x_0)
-	* 		   or -1 f we discover a new vertice.
+	* @return  if (m > 0)
+	* 		    -> return -1 if we discover a new vertex.
+	* 		       return  1 <= i <= m if the triangle with base (x_{m+1},x_0) reattaches itself to
+	* 		       vertex x_i on the boundary.
+	*
+	* 		   if (m == 0)
+	* 		    -> return -1 if we discover a new vertex.
+	* 		       return 0 if we stop peeling (ie the two edges should collapse).
 	**/
 	template<class random_t> inline int64 generalBoltzmanTriangulationLaw(int64 m, double theta, random_t & gen)
 		{
 		generalBoltzmanTriangulation_CDF_obj O(m,theta);
 		int64 v = sampleDiscreteRVfromCDF(O, gen);
-		if ((v > 0) && (Unif_1(gen))) { v = m + 1 - v; } // re-symmetrize to reduce numerical error, even if it is theorically uneeded.
+		if ((m > 0) && (v > 0) && (Unif_1(gen))) { v = m + 1 - v; } // re-symmetrize to reduce numerical error, even if it is theorically uneeded.
 		return v;
 		}
 

@@ -795,10 +795,10 @@ namespace mtools
 			 * Thus, the procedure effectively increases the number of darts by 4, the number of non-
 			 * oriented edge by two, the number of face by 1 and the number of vertices by 1.
 			 *
-			 * This method only creates new darts, vertices and faces butdoes not change any previous numbering 
+			 * This method only creates new darts, vertices and faces but does not change any previous numbering 
 			 * (of darts, vertices, faces etc...).
 			 * 
-			 * @param	dartIndex	The dart preceding the one to which the face should be added.
+			 * @param	dartIndex	The dart PRECEDING the one to which the face should be added.
 			 */
 			void addTriangle(int dartIndex)
 				{
@@ -820,19 +820,25 @@ namespace mtools
 			 * NB: the method work also for double edge but not for loop i.e. it is forbidden that
 			 *     dartIndexTarget = dartIndexBase or phi(dartIndexBase)...
 			 *
-			 * This method only creates new darts, vertices and faces butdoes not change any previous numbering
+			 * This method only creates new darts, vertices and faces but does not change any previous numbering
 			 * (of darts, vertices, faces etc...).
 			 *
-			 * @param	dartIndexBase  	The dart PRECEDING the base of the triangle
-			 * @param	dartIndexTarget	The dart whose ENDPOINT is the third vertex of the triangle
-			 * 							
-			 * Returns the len of the face that does NOT contain dartIndexBase. The face that contains it
-			 *         has size (initialFaceSize - len + 1)
+			 * @param	dartIndexBase  		The dart PRECEDING the base of the triangle
+			 * @param	dartIndexTarget		The dart whose ENDPOINT is the third vertex of the triangle
+			 * @param   collapsedoubleedge  true to collapse double edges created if dartIndexTarget is either
+			 * 								invphi(dartIndexBase) or phi(phi(dartIndexBase)). In this case,
+			 * 								the parralel edges that should be created are ignored.
+			 *
+			 * Returns the size (len) of the face that contain [dartIndexTarget].
+			 *         the size of the face that contain [dartIndexBase] is (initialFaceSize - len + 1).
+			 *         
+			 *         -> if collapsedoubleedge = true, the method still return 2 when a face was not 
+			 *            created since it would have has size 2.
 			 */
-			int addSplittingTriangle(int dartIndexBase, int dartIndexTarget)
+			int addSplittingTriangle(int dartIndexBase, int dartIndexTarget, bool collapsedoubleedge = true)
 				{
 				CHECKCONSISTENCY;
-				int len = _addSplittingTriangle(dartIndexBase, dartIndexTarget);
+				int len = _addSplittingTriangle(dartIndexBase, dartIndexTarget, collapsedoubleedge);
 				CHECKCONSISTENCY;
 				return len;
 				}
@@ -874,25 +880,32 @@ namespace mtools
 			 *
 			 * @param	predart   	The dart that specify the face to peel (the fisrt step peels the edge FOLLOWING predart just as
 			 * 						for addTriangle() and addSplittingTriangle() 
+			 * 						
 			 * @param	fun		 	The function to call at each step of the peeling process.
 			 * 						int fun(int & edgetopeel,int facesize)
-			 * 						     - predartpeel : the dart that PRECEDE the one that should be peeled. A default choice is   
-			 * 						                     proposed bu can be changed  
-			 * 						     - facesize    : the number of edges on this face.  
-			 * 						  returns the action to take:
+			 * 						     - predartpeel : the dart PRECEDING the one that should be peeled. A default choice is   
+			 * 						                     proposed but can be changed.  
+			 * 						     - facesize    : the number of edges on this face.    
+			 * 						      
+			 * 						the function should return the action to take:
 			 * 						     -2   : stop peeling this face.
-			 * 						     -1   : create a triangle with a new vertex and base phi(predartpeel)
+			 * 						     -1   : create a triangle with a new vertex and base phi(predartpeel i.e. the edge AFTER predartpeel.
 			 * 						    k>=0  : create a triangle with base phi(predartpeel) and third vertex the ENDPOINT of dart index k
-			 * Peeling Algorithm:
+			 *  						    
+			 * @param    collapsedoubleedge    true to collapse double edges created when the splitting position k = fun() returned is either 
+			 * 								   k = invphi(predartpeel) or k = phi(phi(predartpeel)). In this case, the face of size 2 are not
+			 * 								   explored and the parralel edges that should be created are collapsed
+			 * 
+			 * Peeling default stategy:
 			 *
-			 *  - if a new verrtex is added, the propsoed dart at the next step is the same as the previous step i.e. predartpeel  
-			 *  - if the ngon is split in two. the proposed darts at the next step are predartpeel and the dart k returned.   
+			 *  - if a new verrtex is added, the proposed dart at the next step is the same as the previous step i.e. predartpeel  .
+			 *  - if the n-gon is split in two. the proposed darts at the next step are predartpeel and the dart k returned by the function.   
 			 *   
 			 */
-			void boltzmannPeelingAlgo(int startpeeledge, std::function< int(int,int)> fun)
+			void boltzmannPeelingAlgo(int predart, std::function< int(int,int)> fun, bool collapsedoubleedge = true)
 				{
 				CHECKCONSISTENCY;
-				_boltzmannPeelingAlgo(invphi(startpeeledge), fun, faceSize(startpeeledge)); // run the algorithm recursively
+				_boltzmannPeelingAlgo(predart, fun, faceSize(predart), collapsedoubleedge); // run the algorithm recursively
 				CHECKCONSISTENCY;
 				return;
 				}
@@ -1090,8 +1103,8 @@ namespace mtools
 				}
 
 
-			/* Private method that does not check for consistency */
-			int _addSplittingTriangle(int dartIndexBase, int dartIndexTarget)
+			/* Private method */
+			int _addSplittingTriangle(int dartIndexBase, int dartIndexTarget, bool collapsedoubleedge)
 				{
 				MTOOLS_ASSERT((dartIndexBase >= 0) && (dartIndexBase < _alpha.size()));
 				MTOOLS_ASSERT((dartIndexTarget >= 0) && (dartIndexTarget < _alpha.size()));
@@ -1099,6 +1112,77 @@ namespace mtools
 				MTOOLS_INSURE(dartIndexTarget != dartIndexBase);
 				MTOOLS_INSURE(dartIndexTarget != phi(dartIndexBase));
 
+				bool ignore1 = false;
+				bool ignore2 = false;
+				if (collapsedoubleedge)
+					{
+					if (dartIndexBase == phi(dartIndexTarget)) { ignore1 = true; }
+					if (phi(phi(dartIndexBase)) == dartIndexTarget) { ignore2 = true; }
+					}
+				if (ignore1 && ignore2) return 2; // we have a triangle that should not be split.
+
+				if (ignore2)
+					{ // only 1 edge to add. 
+					const int l = (int)_alpha.size();
+					_alpha.resize(l + 2);
+					_sigma.resize(l + 2);
+					_vertices.resize(l + 2);
+					_faces.resize(l + 2);
+					const int F = _faces[dartIndexBase];
+					const int a = _alpha[dartIndexBase];
+					const int b = _sigma[a];
+					const int c = _alpha[b];
+					const int d = _sigma[c]; // equal to dartIndexTarget here
+					const int e = _alpha[dartIndexTarget];
+					const int f = _sigma[e];
+					const int v1 = _vertices[a];
+					const int v2 = _vertices[c];
+					const int v3 = _vertices[e];
+					_alpha[l + 0] = l + 1;  _alpha[l + 1] = l + 0;
+					_sigma[a] = l + 0; _sigma[l + 0] = b;
+					_sigma[e] = l + 1; _sigma[l + 1] = f;
+					_vertices[l + 0] = v1;
+					_vertices[l + 1] = v3;
+					_faces[l + 0] = F;
+					_faces[b] = _nbfaces;
+					_faces[d] = _nbfaces;
+					_faces[l + 1] = _nbfaces;
+					_nbfaces++;
+					return 2;
+					}
+
+				if (ignore1)
+					{ // only 1 edge to add
+					int len = faceSize(dartIndexBase); // compute size of face before changes
+					const int l = (int)_alpha.size();
+					_alpha.resize(l + 2);
+					_sigma.resize(l + 2);
+					_vertices.resize(l + 2);
+					_faces.resize(l + 2);
+					const int F = _faces[dartIndexBase];
+					const int a = _alpha[dartIndexBase];
+					const int b = _sigma[a];
+					const int c = _alpha[b];
+					const int d = _sigma[c];
+					const int e = _alpha[dartIndexTarget];
+					const int f = _sigma[e]; // equal to dartIndexBase here
+					const int v1 = _vertices[a];
+					const int v2 = _vertices[c];
+					const int v3 = _vertices[e];
+					_alpha[l + 0] = l + 1;  _alpha[l + 1] = l + 0;
+					_sigma[c] = l + 1; _sigma[l + 1] = d;
+					_sigma[e] = l + 0; _sigma[l + 0] = f;
+					_vertices[l + 0] = v3;
+					_vertices[l + 1] = v2;
+					_faces[l + 0] = F;
+					_faces[f] = _nbfaces;
+					_faces[b] = _nbfaces;
+					_faces[l + 1] = _nbfaces;
+					_nbfaces++;
+					return len - 1;
+					}
+
+				// normale setting, rwo edges to add
 				const int l = (int)_alpha.size();
 				_alpha.resize(l + 4);
 				_sigma.resize(l + 4);
@@ -1180,7 +1264,7 @@ namespace mtools
 
 
 			/* internal method */
-			void _boltzmannPeelingAlgo(int preDart, std::function< int(int, int)> fun, int fsize)
+			void _boltzmannPeelingAlgo(int preDart, std::function<int(int &, int)> fun, int fsize, bool collapsedoubleedge)
 				{
 				MTOOLS_INSURE((preDart >= 0) && (preDart < _alpha.size()));
 				std::queue<std::pair<int, int> > que;
@@ -1189,17 +1273,21 @@ namespace mtools
 					{
 					int facesize, preedge;
 					std::tie(preedge,facesize) = que.front(); que.pop();
-					int res = fun(phi(preedge), facesize);
+					int res = fun(preedge, facesize); // query the peeling action, may change preedege
 					MTOOLS_INSURE((res >= -2)&&(res < ((int)_alpha.size())));
-					if (res == -1) { _addTriangle(preedge); que.push(std::pair<int, int>(preedge, facesize + 1)); }
+					if (res == -1) 
+						{ // discover a new triangle
+						_addTriangle(preedge); que.push(std::pair<int, int>(preedge, facesize + 1)); 
+						}
 					else
-						{
+						{ // split the n-gon
 						if (res >= 0)
 							{
-							int fs2 = _addSplittingTriangle(preedge, res);
+							int fs2 = _addSplittingTriangle(preedge, res, collapsedoubleedge);
 							int fs1 = facesize - fs2 + 1;
-							que.push(std::pair<int, int>(preedge, fs1));
-							que.push(std::pair<int, int>(res, fs2));
+							// push sub n-gons if needed
+							if ((fs1 > 2) || (!collapsedoubleedge)) { que.push(std::pair<int, int>(preedge, fs1)); }
+							if ((fs2 > 2) || (!collapsedoubleedge)) { que.push(std::pair<int, int>(res, fs2)); }
 							}
 						}
 					}
