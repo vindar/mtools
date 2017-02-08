@@ -981,6 +981,308 @@ namespace mtools
 
 
 
+
+
+
+
+
+
+
+
+		/**
+		 * Class used to compute the radii associated with the (euclidian) circle packing
+		 * of a triangulation with a boundary.
+		 *
+		 * The algorithm is taken from Collins and Stephenson (2003).
+		 *
+		 * NOTE : This class computes a 'packing label' in the euclidian case. It is possible to deduce
+		 *        the maximal hyperbolic packing inside the unit disk D in the following way:
+		 *        1) Join all boundary vertices to a new vertex v0, creating therefore a triangulation
+		 *        without a boundary.
+		 *        2) Choose any face (a,b,c) that does not contain W and compute the packing labels
+		 *        with (a,b,c) as the outer face with boundary condition (1.0,1.0,1.0).
+		 *        3) Construct the layout of of the packing obtained. Center the circle associated
+		 *        with the special vertex v0 at the origin and normalize it such that it has unit radius.
+		 *        4) Apply the inversion Mobius transformatin z -> 1/z to all circles.
+		 *        5) Voila !
+		 *
+		 * NOTE: If openCL extension is active, the class CirclePackingLabelGPU may be used instead
+		 *       increase computation speed.
+		 *
+		 * @tparam	FPTYPE	Floating type that should be used during calculation.
+		 **/
+		template<typename FPTYPE = double> class CirclePackingLabelHyperbolic
+			{
+
+			public:
+
+			/**
+			 * Constructor.
+			 *
+			 * @param	verbose	true to print info to mtools::cout during packing.
+			 */
+			CirclePackingLabelHyperbolic(bool verbose = false) : _verbose(verbose), _pi(acos((FPTYPE)(-1.0))) , _twopi(2*acos((FPTYPE)(-1.0)))
+				{
+				}
+
+
+			/* dtor, empty object */
+			~CirclePackingLabelHyperbolic() {}
+
+
+			/**
+			* Decide whether packing information should be printed to mtools::cout.
+			**/
+			void verbose(bool verb) { _verbose = verb; }
+
+
+			/** Clears the object to a blank initial state. */
+			void clear()
+				{
+				_gr.clear();
+				_perm.clear();
+				_nb = 0;
+				_rad.clear();
+				}
+
+
+			/**
+			* Loads a triangulation and define the boundary vertices.
+			* All radii are set to 1.0. 
+			*
+			* @param graph	   The triangulation with boundary.
+			* @param boundary  The boundary vector. Every index i for which boundary[i] > 0
+			* 					is considered to be a boundary vertice.
+			*/
+			template<typename GRAPH> void setTriangulation(const GRAPH & graph, const std::vector<int> & boundary)
+				{ 
+				clear();
+				const size_t l = graph.size();
+				MTOOLS_INSURE(boundary.size() == l);
+				_perm.setSortPermutation(boundary);
+				_gr = permuteGraph<std::vector<std::vector<int> > >(convertGraph<GRAPH, std::vector<std::vector<int> > >(graph), _perm);
+				_nb = l;
+				for (size_t i = 0; i < l; i++) 
+					{ 
+					if (boundary[_perm[(int)i]] > 0) 
+						{ 
+						_nb = i; break; 
+						} 
+					}
+				MTOOLS_INSURE((_nb > 0)&&(_nb < l-2));
+				_rad.resize(l, (FPTYPE)1.0);
+				}
+
+
+			/**
+			* Sets the radii of the circle around each vertices.
+			* The radii associated with the boundary vertices are not modified during
+			* the circle packing algorithm.
+			*
+			* @param	rad	The radii. Any values < 0.0 or > 1.0 is set to 0.5.
+			**/
+			void setRadii(const std::vector<FPTYPE> & rad)
+				{
+				const size_t l = _gr.size();
+				MTOOLS_INSURE(rad.size() == l);
+				_rad = _perm.getPermute(rad);
+				for (size_t i = 0; i < l; i++)
+					{
+//					if ((_rad[i] <= (FPTYPE)0.0)|| (_rad[i] >= (FPTYPE)1.0)) _rad[i] = (FPTYPE)0.5;
+					}
+				}
+
+
+			/**
+			* Sets all radii to r.
+			**/
+			void setRadii(FPTYPE r = 0.5)
+				{
+				MTOOLS_INSURE(r > 0.0);
+				const size_t l = _gr.size();
+				_rad.resize(l);
+				for (size_t i = 0; i < l; i++) { _rad[i] = r; }
+				}
+
+
+			/**
+			* Return the list of radii.
+			*/
+			std::vector<FPTYPE> getRadii() const { return _perm.getAntiPermute(_rad); }
+
+
+			/**
+			* Compute the error in the circle radius in L2 norm.
+			*/
+			FPTYPE errorL2() const { return internals_circlepacking::errorL2euclidian(_gr, _rad, (int)_nb); }
+
+
+			/**
+			* Compute the error in the circle radius in L1 norm.
+			*/
+			FPTYPE errorL1() const { return internals_circlepacking::errorL1euclidian(_gr, _rad, (int)_nb); }
+
+
+			/**
+			 * Run the algorithm for computing the value of the radii.
+			 *
+			 * @param	verbose			true to print progress to mtools::cout.
+			 * @param	eps				the required precision, in L2 norm.
+			 * @param	delta			parameter that detemrine how super acceleration is performed (slower
+			 * 							value = more restrictive condition to perform acceleration).
+			 * @param	maxIteration	The maximum number of iteration before stopping. -1 = no limit.
+			 * @param	stepIter		number of iterations between printing infos (used only if verbose = true).
+			 *
+			 * @return	The number of iterations performed.
+			 **/
+			int64 computeRadii(const FPTYPE eps = 10e-9, const FPTYPE delta = 0.05, const int64 maxIteration = -1, const int64 stepIter = 1000)
+				{
+				auto totduration = chrono();
+				FastRNG gen;					// use to randomize acceleration.
+				FPTYPE minc = errorL2();
+				if (_verbose)
+					{ 
+					mtools::cout << "\n  --- Starting Packing Algorithm [CPU] ---\n\n"; 
+					mtools::cout << "initial L2 error  = " << minc << "\n";
+					mtools::cout << "L2 target         = " << eps << "\n";
+					mtools::cout << "max iterations    = " << maxIteration << "\n";
+					mtools::cout << "iter between info = " << stepIter << "\n\n";
+					}
+
+				//#define DELAY_POST_RADII		// uncomment those line for debugging
+				//#define DO_NOT_USE_RNG		//
+
+				const int nb = (int)_nb;
+				int64 iter = 0;
+				FPTYPE c = 1.0 + eps, c0;
+				FPTYPE lambda = -1.0, lambda0;
+				bool fl = false, fl0;
+				std::vector<FPTYPE> _rad0 = _rad;
+				auto duration = chrono();
+				while((c > eps)&&(iter != maxIteration))
+					{
+					iter++;
+					c0 = c;
+					c = 0.0;
+					lambda0 = lambda;
+					fl0 = fl;
+					_rad0 = _rad;
+					for (int i = 0; i < nb; i++)
+						{
+						FPTYPE suma = 0;
+						const FPTYPE r = _rad[i];
+						const FPTYPE sr = sqrt(r);
+						const int N = (int)_gr[i].size();
+						const FPTYPE twor = 2 * r;
+						const FPTYPE r2 = _rad[_gr[i][0]];
+						FPTYPE m2 = (r2 > 0) ? (1 - r2) / (1 - r * r2) : (FPTYPE)1;
+						for (int k = 1; k < N; k++)
+							{
+							const FPTYPE r3 = _rad[_gr[i][k]];
+							const FPTYPE m3 = (r3 > 0) ? (1 - r3) / (1 - r * r3) : (FPTYPE)1;
+							FPTYPE y = 1 - twor * m2 * m3;
+							if (y < -1.0) y = -1.0; else if (y > 1.0) y = 1.0;
+							suma += acos(y);
+							m2 = m3;
+							}
+						const FPTYPE r3 = _rad[_gr[i][0]];
+						const FPTYPE m3 = (r3 > 0) ? (1 - r3) / (1 - r * r3) : (FPTYPE)1;
+						FPTYPE y = 1 - twor * m2 * m3;
+						if (y < -1.0) y = -1.0; else if (y > 1.0) y = 1.0;
+						suma += acos(y);
+
+						const FPTYPE denom = 1.0 / (2.0 * ((FPTYPE)N));
+						const FPTYPE del = sin(_twopi * denom);
+						const FPTYPE bet = sin(suma * denom);
+					    FPTYPE rr2 = (bet - sr) / (bet * r - sr); 
+						if (rr2 > 0) 
+							{
+							const FPTYPE t1 = 1 - rr2;
+							const FPTYPE t2 = 2 * del;
+							const FPTYPE t3 = t2 / (sqrt(t1 * t1 + t2 * t2 * rr2) + t1);
+							rr2 = t3 * t3;
+							}
+						else { rr2 = del * del; }
+						const FPTYPE e = suma - _twopi;
+						c += e*e;
+						_rad[i] = rr2;
+						}
+					c = sqrt(c); 
+					if (c < minc) { minc = c; }
+					lambda = c / c0;
+					fl = true;				
+					/*
+					if ((fl0) && (lambda < 1.0))
+						{
+						if (abs(lambda - lambda0) < delta) {  lambda = lambda / (1.0 - lambda); }
+						FPTYPE lstar = 3.0*lambda;
+						for (size_t i = 0; i < nb; ++i) 
+							{
+							const FPTYPE d = _rad0[i] - _rad[i];
+							if (d > 0.0)
+								{
+								const FPTYPE d2 = (_rad[i] / d);
+								if (d2 < lstar) { lstar = d2; }
+								}
+							else
+								{
+								const FPTYPE d2 = -(1 - _rad[i]) / d;
+								if (d2 < lstar) { lstar = d2; }
+								}
+							}
+						lambda = ((lambda < 0.5*lstar) ? lambda : 0.5*lstar);
+						
+						#ifdef DO_NOT_USE_RNG
+						for (size_t i = 0; i < nb; ++i) { _rad[i] += lambda*(_rad[i] - _rad0[i]); }
+						fl = 0;
+						#else
+						if ((gen() & 1)&&(c > eps)) // do not accelerate if c < eps 
+							{
+							for (size_t i = 0; i < nb; ++i) { _rad[i] += lambda*(_rad[i] - _rad0[i]); } 
+							fl = 0;
+							}
+						#endif ENDIF
+						}
+					*/
+					if ((_verbose)&&((iter % stepIter == 0)||(c < eps)||(iter == maxIteration)))
+						{
+						mtools::cout << "iteration = " << iter << "\n";
+						mtools::cout << "L2 current error  = " << c << "\n";
+						mtools::cout << "L2 minimum error  = " << minc << "\n";
+						mtools::cout << "L2 target         = " << eps << "\n";
+						mtools::cout << ((iter % stepIter == 0) ? stepIter : iter % stepIter) << " interations performed in " << duration << "\n\n";
+						duration.reset();
+						}
+					}
+				if (_verbose) 
+					{ 
+					cout << "\n\nFinal L2 error = " << errorL2() << "\n";
+					cout << "Final L1 error = " << errorL1() << "\n\n";
+					cout << "Total packing time : " << totduration << "\n\n";
+					if (iter == maxIteration) { mtools::cout << "  --- Packing stopped after " << iter << " iterations ---  \n\n"; }
+					else { mtools::cout << "  --- Packing complete ---  \n\n"; }
+					}
+				return iter;
+
+				#undef DO_NOT_USE_RNG
+				#undef DELAY_POST_RADII 
+				}
+
+
+				bool _verbose;	// do we print info on mtools::cout ?
+
+				const FPTYPE					_pi;		// pi
+				const FPTYPE					_twopi;		// pi
+
+				std::vector<std::vector<int> >	_gr;		// the graph
+				mtools::Permutation				_perm;		// the permutation applied to get all the boundary vertices at the end
+				std::vector<FPTYPE>				_rad;		// vertex raduises
+				size_t							_nb;		// number of internal vertices
+
+			};
+
+
+
 /**********************************************************************************************************
 *
 * 
