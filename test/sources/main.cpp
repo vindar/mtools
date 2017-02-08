@@ -369,7 +369,7 @@ void testBall(int N)
 		cout << "In progress\n";
 		CombinatorialMap CM;
 		CM.makeNgon(2);
-		peelUIPT(CM, 1000, 0, gen);
+		peelUIPT(CM, 120000, 0, gen);
 		cout << "ok1\n";
 		
 		//CM.collapsetoTypeIII();
@@ -455,7 +455,7 @@ void testBall(int N)
 		CPTEST.setTriangulation(gr, boundary);			//
 		CPTEST.setRadii();								//
 
-		cout << "ITERATION = " << CPTEST.computeRadii(9.9e-4, 0.03, -1, 1000) << "\n";
+		cout << "ITERATION = " << CPTEST.computeRadii(1.0e-6, 0.05, -1, 1000) << "\n";
 		cout << "Laying out the circles...\n";
 		auto circleVec = computeCirclePackLayout(gr, boundary, CPTEST.getRadii(), false, (int)gr.size() - 1);
 

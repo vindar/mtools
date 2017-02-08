@@ -64,6 +64,7 @@ namespace mtools
 				{
 				CM.addTriangle(peeldart);
 				fsize++;
+				peeldart = CM.invphi(peeldart);
 				}
 			else
 				{
@@ -73,6 +74,7 @@ namespace mtools
 					for (int i = 0; i < k + 1; i++) { d = CM.phi(d); }
 					CM.addSplittingTriangle(peeldart, d);
 					freeBoltzmannPeeling(CM, d, gen);
+					peeldart = CM.invphi(peeldart);
 					}
 				else
 					{
@@ -80,7 +82,7 @@ namespace mtools
 					for (int i = 0; i < k; i++) { d = CM.invphi(d); }
 					CM.addSplittingTriangle(peeldart, d);
 					freeBoltzmannPeeling(CM, peeldart, gen);
-					peeldart = d;
+					peeldart = CM.invphi(d);
 					}
 				fsize -= k;
 				}
