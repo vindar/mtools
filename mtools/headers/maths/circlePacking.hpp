@@ -140,9 +140,9 @@ namespace mtools
 		* @param	fun		  	Function of the form bool f(int x,int y,int iz) called for each new
 		* 						vertex visited z.
 		*
-		* @return	The total number of site visited (not counting v0 and v1 for which fun() is not called).
+		* @return	A vector where vec[i] = 1 if circle i was lay out and 0 vec[i] = 0 if it was not encountered. (v0 and v1 are set to 1).
 		**/
-		template<typename GRAPH> size_t layoutExplorer(const GRAPH & graph, int v0, int v1, bool explorearoundv1, std::function<bool(int, int, int)> fun)
+		template<typename GRAPH> std::vector<int> layoutExplorer(const GRAPH & graph, int v0, int v1, bool explorearoundv1, std::function<bool(int, int, int)> fun)
 			{
 			std::vector<int> doneCircle(graph.size(), 0);
 			doneCircle[v0] = 1;
@@ -171,7 +171,7 @@ namespace mtools
 					if (it == graph[index].end()) { it = graph[index].begin(); }
 					}
 				}
-			return tot;
+			return doneCircle;
 			}
 
 
@@ -534,7 +534,7 @@ namespace mtools
 		circle[v1].radius = tangentCircleStoR(circle[v0].radius, srad[v1]);		// lay v1 on the right of v0.
 		circle[v1].center = circle[v0].radius + circle[v1].radius;				// 
 
-		internals_circlepacking::layoutExplorer(graph, v0, v1, (boundary[v1] <= 0), [&](int ix, int iy, int iz)->bool
+		auto laidvec = internals_circlepacking::layoutExplorer(graph, v0, v1, (boundary[v1] <= 0), [&](int ix, int iy, int iz)->bool
 			{
 			auto hypcx = circle[ix].euclidianToHyperbolic().center; // hyperbolic center for C(x)
 			mtools::Mobius<FPTYPE> M(hypcx); // Mobius transformation that centers the circle C(x) around 0 (M is an involution)
@@ -546,7 +546,7 @@ namespace mtools
 			if ((strictMaths) && ((ry == (FPTYPE)0.0))) { MTOOLS_ERROR(std::string("Precision error B. null radius (site ") + mtools::toString(iy) + ")"); }
 			if ((strictMaths) && ((std::isnan(ry))))    { MTOOLS_ERROR(std::string("Precision error B. NaN (site ") + mtools::toString(iy) + ")"); }
 			FPTYPE rz = tangentCircleStoR(rx, srad[iz]);	// radius of C(z) when C(x) centered on 0
-	//		if ((strictMaths) && ((rz == (FPTYPE)0.0))) { MTOOLS_ERROR(std::string("Precision error C. null radius (site ") + mtools::toString(iz) + ")"); }
+			if ((strictMaths) && ((rz == (FPTYPE)0.0))) { MTOOLS_ERROR(std::string("Precision error C. null radius (site ") + mtools::toString(iz) + ")"); }
 			if ((strictMaths) && ((std::isnan(rz))))    { MTOOLS_ERROR(std::string("Precision error C. NaN (site ") + mtools::toString(iz) + ")"); }
 
 			const FPTYPE & alpha = internals_circlepacking::angleEuclidian(rx, ry, rz); // angle <y,x,z>
@@ -561,29 +561,52 @@ namespace mtools
 			const Circle<FPTYPE> Cz(w, rz); // position of C(z) when C(x) is centered.
 			circle[iz] = (M*Cz);			// move back to the correct position by applying the inverse tranformation.
 
-
-			FPTYPE a = circle[iz].center.real();
-			FPTYPE b = circle[iz].center.imag();
-			FPTYPE c = circle[iz].radius;
-
-			if (c == 0)
-				{
-				cout << "s-rad = " << srad[iz] << "\n";
-				cout.getKey();
-				}
-			if ((std::isnan(a)) 
-				|| (std::isnan(a)) 
-				|| (std::isnan(c)))
-				{
-				cout << M << "\n";
-				cout << Cz << "\n";
-				cout.getKey();
-				}
-
-
 			return (boundary[iz] <= 0); // explore also around iz if it is an interior vertex
 			});
+		// done layout out circle adjacent to an interior circle but there may still be some other one to lay out
+		std::queue<int> queue;
+		for (int i = 0; i < laidvec.size(); i++) { if (laidvec[i] == 0) { MTOOLS_INSURE(boundary[i] > 0); queue.push(i); } } // push all vertices that are not yet lais. 
 
+		//
+		// TODO : THE FOLLOWING ASSUME THAT THE REMAINING CIRCLES TO LAY OUT ARE HOROCYCLES (IE WE ARE WORKING WITH
+		// A MAXIMAL HYPERBOLIC PACKING
+		// -> adapt to deal with the general case.
+		while(queue.size() >0)
+			{
+			const int iz = queue.front(); queue.pop();
+			for (int k = 0; k < graph[iz].size(); k++)
+				{
+				int ix = graph[iz][k];
+				if (laidvec[ix] > 0)
+					{
+					int iy = graph[iz][(k + 1) % ((int)graph[iz].size())];
+					if (laidvec[iy] > 0)
+						{ 
+						int h = -1; for (int j = 0; j < graph[ix].size(); j++) { if (graph[ix][j] == iy) { h = j; break; } }
+						MTOOLS_INSURE(h > 0);
+						if (graph[ix][(h + 1) % ((int)graph[ix].size())] != iz) { int t = ix; ix = iy; iy = t; }
+						// ok, we can lay out iz
+						const FPTYPE & rx = circle[ix].radius;
+						const FPTYPE & ry = circle[iy].radius;
+						const FPTYPE rz = 1 / (1 / rx + 1 / ry - 1 + 2 * sqrt(1 / (rx*ry) - 1 / ry - 1 / rx)); // soddy circles theorem :-)
+						const FPTYPE & alpha = internals_circlepacking::angleEuclidian(rx, ry, rz);
+						if ((strictMaths) && (isnan(alpha))) { MTOOLS_ERROR(std::string("Precision error D. null alpha (site ") + mtools::toString(iz) + ")"); }
+						auto w = circle[iy].center - circle[ix].center;
+						w = w*complex<FPTYPE>(cos(alpha), sin(alpha));
+						const FPTYPE norm = std::abs(w);
+						if (norm != (FPTYPE)0.0) { w /= norm; w *= (rx + rz); }
+						else { if (strictMaths) { MTOOLS_ERROR(std::string("Precision error E (site ") + mtools::toString(iz) + ")"); } }
+						circle[iz].center = circle[ix].center + w;
+						if ((circle[iz].center == circle[iy].center) || (circle[iz].center == circle[ix].center)) { if (strictMaths) { MTOOLS_ERROR(std::string("Precision error F (site ") + mtools::toString(iz) + ")"); } }
+						circle[iz].radius = rz;
+						laidvec[iz] = 1;						
+						break;
+						}
+					}
+				}
+			if (laidvec[iz] == 0) { queue.push(iz); }
+			}
+		// all done !
 		return circle;
 		}
 

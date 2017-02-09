@@ -567,16 +567,16 @@ void testBall(int N)
 			im.clear(RGBc::c_White);
 
 
-			im.fBox2_draw_circle(R, { 0.0,0.0 }, 1.0, RGBc::c_Blue, 0.1, true);
+			im.fBox2_draw_circle(R, { 0.0,0.0 }, 1.0, RGBc::c_Blue, 0.1f, true);
 			int p = 0;
 
-//			p = 0; drawCirclePacking_Circles(im, R, circleVec2, gr, true, RGBc::c_Red, 0.2f, p, p + 1);
-//			p = 1; drawCirclePacking_Circles(im, R, circleVec2, gr, true, RGBc::c_Red, 0.2f, p, p + 1);
+			p = 0; drawCirclePacking_Circles(im, R, circleVec2, gr, true, RGBc::c_Red, 0.2f, p, p + 1);
+			p = 1; drawCirclePacking_Circles(im, R, circleVec2, gr, true, RGBc::c_Red, 0.2f, p, p + 1);
 			p = 2; drawCirclePacking_Circles(im, R, circleVec2, gr, true, RGBc::c_Red, 0.2f, p, p + 1);
-//			p = 3; drawCirclePacking_Circles(im, R, circleVec2, gr, true, RGBc::c_Red, 0.2f, p, p + 1);
-//			p = 4; drawCirclePacking_Circles(im, R, circleVec2, gr, true, RGBc::c_Red, 0.2f, p, p + 1);
+			p = 3; drawCirclePacking_Circles(im, R, circleVec2, gr, true, RGBc::c_Red, 0.2f, p, p + 1);
+			p = 4; drawCirclePacking_Circles(im, R, circleVec2, gr, true, RGBc::c_Red, 0.2f, p, p + 1);
 			p = 5; drawCirclePacking_Circles(im, R, circleVec2, gr, true, RGBc::c_Red, 0.2f, p, p + 1);
-//			p = 6; drawCirclePacking_Circles(im, R, circleVec2, gr, true, RGBc::c_Red, 0.2f, p, p + 1);
+			p = 6; drawCirclePacking_Circles(im, R, circleVec2, gr, true, RGBc::c_Red, 0.2f, p, p + 1);
 			p = 7; drawCirclePacking_Circles(im, R, circleVec2, gr, true, RGBc::c_Red, 0.2f, p, p + 1);
 
 			
