@@ -365,7 +365,7 @@ void testBall(int N)
 
 	void testFBT(int n)
 		{
-		double theta = 1 / 6.5;
+		double theta = 1 / 6.6;
 		cout << "In progress\n";
 
 		cout << "\n peeling...\n";
@@ -382,7 +382,6 @@ void testBall(int N)
 		cout << "done \n\n";
 		std::vector<std::vector<int> > gr = CM.toGraph();
 		cout << graphInfo(gr) << "\n\n";
-		//cout.getKey();
 
 
 		int bsize = CM.faceSize(CM.root());
@@ -422,10 +421,9 @@ void testBall(int N)
 		CPTEST.setTriangulation(gr, boundary);			//
 		CPTEST.setRadii();								//
 
-		cout << "ITERATION = " << CPTEST.computeRadii(1.0e-6, 0.05, -1, 1000) << "\n";
+		cout << "ITERATION = " << CPTEST.computeRadii(5.0e-6, 0.05, -1, 1000) << "\n";
 		cout << "Laying out the circles...\n";
 		auto circleVec = computeCirclePackLayout(gr, boundary, CPTEST.getRadii(), false, (int)gr.size() - 1);
-
 		cout << "done in " << mtools::Chronometer() << "ms\n";
 
 		auto pos0 = circleVec.back().center;
@@ -440,16 +438,21 @@ void testBall(int N)
 			}
 
 
-		int LX = 10000;
-		int LY = 10000;
+
+		int LX = 8000;
+		int LY = 8000;
 		fBox2 R(-2, 2, -2, 2);
 		mtools::Img<unsigned char> im(LX, LY, 1, 4);
 		im.clear(RGBc::c_White);
 
-		drawCirclePacking_Circles(im, R, circleVec, gr, true, RGBc::c_Red, 0.2f, (int)gr.size() - 1, (int)gr.size());
+		drawCirclePacking_Circles(im, R, circleVec, gr, true, RGBc::c_Blue, 0.1f, (int)gr.size() - 1, (int)gr.size());
 		drawCirclePacking_Circles(im, R, circleVec, gr, true, RGBc::c_Red, 0.2f, 0, (int)gr.size() - 1);
 		drawCirclePacking_Graph(im, R, circleVec, gr, RGBc::c_Black, 1.0f, 0, (int)gr.size() - 1);
 		//drawCirclePacking_Labels(im, R, circleVec, gr, 40, RGBc::c_Green, 1.0f, 0, (int)gr.size() - 1);
+
+
+		mtools::saveCirclePacking(std::string("trighyp") + mtools::toString(gr.size()) + ".p", gr, boundary, circleVec, v1);
+
 
 		Plotter2D Plotter;
 		auto P2 = makePlot2DCImg(im, "circles");
@@ -672,9 +675,9 @@ int main(int argc, char *argv[])
 	parseCommandLine(argc, argv);
 
 
-	testHyperbolic(10);
+	//testHyperbolic(10);
 
-	testFBT(70000);
+	testFBT(80000);
 	//loadTest("trig1503676.txt");
 	//loadTest("trig1503676.txt");
 	
