@@ -538,30 +538,50 @@ void testBall(int N)
 			int v3 = CM.vertice(e3);
 
 
-			cout.getKey();
+			
 
 			auto grad = CPTEST.getRadii();
 
 			for (int i = 0;i < grad.size(); i++)
 				{
-				grad[i] = grad[i]*grad[i];
+				grad[i] = sqrt(grad[i]);//*grad[i];
 				}
 	
+			// 0 :   4 1
+			// 1 :   0 7 6 2 4
+			// 2 :   3 4 1 6 5 7
+			// 3 :   2 4
+			// 4 :   3 0 1 2
+			// 5 :   7 2 6
+			// 6 :   1 7 5 2
+			// 7 :   5 6 1 2
 
 			cout << "Laying out the circles in hyperbolic space...\n";
 			auto circleVec2 = computeCirclePackLayoutHyperbolic(gr, boundary, grad, true,v1);
 
 			{
-			int LX = 4000;
-			int LY = 4000;
+			int LX = 2000;
+			int LY = 2000;
 			fBox2 R(-2, 2, -2, 2);
 			mtools::Img<unsigned char> im(LX, LY, 1, 4);
 			im.clear(RGBc::c_White);
 
-			im.clear(RGBc::c_White);
-			drawCirclePacking_Circles(im, R, circleVec2, gr, true, RGBc::c_Red, 0.2f, 0, (int)gr.size());
+
+			im.fBox2_draw_circle(R, { 0.0,0.0 }, 1.0, RGBc::c_Blue, 0.1, true);
+			int p = 0;
+
+//			p = 0; drawCirclePacking_Circles(im, R, circleVec2, gr, true, RGBc::c_Red, 0.2f, p, p + 1);
+//			p = 1; drawCirclePacking_Circles(im, R, circleVec2, gr, true, RGBc::c_Red, 0.2f, p, p + 1);
+			p = 2; drawCirclePacking_Circles(im, R, circleVec2, gr, true, RGBc::c_Red, 0.2f, p, p + 1);
+//			p = 3; drawCirclePacking_Circles(im, R, circleVec2, gr, true, RGBc::c_Red, 0.2f, p, p + 1);
+//			p = 4; drawCirclePacking_Circles(im, R, circleVec2, gr, true, RGBc::c_Red, 0.2f, p, p + 1);
+			p = 5; drawCirclePacking_Circles(im, R, circleVec2, gr, true, RGBc::c_Red, 0.2f, p, p + 1);
+//			p = 6; drawCirclePacking_Circles(im, R, circleVec2, gr, true, RGBc::c_Red, 0.2f, p, p + 1);
+			p = 7; drawCirclePacking_Circles(im, R, circleVec2, gr, true, RGBc::c_Red, 0.2f, p, p + 1);
+
+			
 			drawCirclePacking_Graph(im, R, circleVec2, gr, RGBc::c_Black, 1.0f, 0, (int)gr.size());
-			drawCirclePacking_Labels(im, R, circleVec2, gr, 13, RGBc::c_Green, 1.0f, 0, (int)gr.size());
+			drawCirclePacking_Labels(im, R, circleVec2, gr, 25, RGBc::c_Green, 1.0f, 0, (int)gr.size());
 
 			Plotter2D Plotter;
 			auto P2 = makePlot2DCImg(im, "circles");
@@ -572,40 +592,6 @@ void testBall(int N)
 			}
 
 
-			/*
-			//auto circleVec = computeCirclePackLayout(gr, boundary, CPTEST.getRadii(), false, (int)gr.size() - 1);
-
-			cout << "done in " << mtools::Chronometer() << "ms\n";
-
-			auto pos0 = circleVec.back().center;
-			double rad0 = circleVec.back().radius;
-			mtools::Mobius<double> M(0.0, 1.0, 1.0, 0.0);
-
-			for (int i = 0; i < circleVec.size(); i++)
-				{
-				circleVec[i] -= pos0; // center
-				circleVec[i] /= rad0; // normalise such that outer boundary circle has size 1
-				if (i != circleVec.size() - 1) { circleVec[i] = M*(circleVec[i]); } 
-				}
-
-
-			int LX = 10000;
-			int LY = 10000;
-			fBox2 R(-2, 2, -2, 2);
-			mtools::Img<unsigned char> im(LX, LY, 1, 4);
-			im.clear(RGBc::c_White);
-
-			drawCirclePacking_Circles(im, R, circleVec, gr, true, RGBc::c_Red, 0.2f, (int)gr.size() - 1, (int)gr.size());
-			drawCirclePacking_Circles(im, R, circleVec, gr, true, RGBc::c_Red, 0.2f, 0, (int)gr.size() - 1);
-			drawCirclePacking_Graph(im, R, circleVec, gr, RGBc::c_Black, 1.0f, 0, (int)gr.size() - 1);
-			//drawCirclePacking_Labels(im, R, circleVec, gr, 40, RGBc::c_Green, 1.0f, 0, (int)gr.size() - 1);
-
-			Plotter2D Plotter;
-			auto P2 = makePlot2DCImg(im, "circles");
-			Plotter[P2];
-			Plotter.autorangeXY();
-			Plotter.plot();
-			*/
 			}
 
 
@@ -675,9 +661,9 @@ int main(int argc, char *argv[])
 	parseCommandLine(argc, argv);
 
 
-	//testHyperbolic(10);
+	testHyperbolic(10);
 
-	testFBT(80000);
+	//testFBT(80000);
 	//loadTest("trig1503676.txt");
 	//loadTest("trig1503676.txt");
 	
