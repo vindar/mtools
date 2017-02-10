@@ -41,6 +41,24 @@ namespace mtools
 
 
 	/**
+	 * Return true if j is a neighour of i. SErach by iterating among the neighbour of i
+	 * which is linear in the degree of i. 
+	 *
+	 * @param	graph	The graph.
+	 * @param	i	 	start vertex
+	 * @param	j	 	end vertex.
+	 *
+	 * @return	true if there is a directed edge from i to j.
+	 **/
+	template<typename GRAPH> bool isNeighbour(const GRAPH & graph, int i, int j)
+		{
+		const size_t l = gr[i].size();
+		for (size_t k = 0; k < l; k++) { if (gr[i][k] == j) return true; }
+		return false;
+		}
+
+
+	/**
 	* Reorder the vertices of a graph according to a permutation.
 	*
 	* @tparam	GRAPH   	Type of the graph, typically std::vector< std::list<int> >.

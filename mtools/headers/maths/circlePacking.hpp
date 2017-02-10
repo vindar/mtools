@@ -130,52 +130,109 @@ namespace mtools
 			}
 
 
-		/**
-		* Perform an exploration of the graph that can be used for the layout of the circles.
-		*
-		* @param	gr		  	The graph to explore.
-		* @param	v0		  	The start vertex v0.
-		* @param	v1		  	The second vertex.
-		* @param	v1interior	true to also visit the neighour around v1.
-		* @param	fun		  	Function of the form bool f(int x,int y,int iz) called for each new
-		* 						vertex visited z.
-		*
-		* @return	A vector where vec[i] = 1 if circle i was lay out and 0 vec[i] = 0 if it was not encountered. (v0 and v1 are set to 1).
-		**/
-		template<typename GRAPH> std::vector<int> layoutExplorer(const GRAPH & graph, int v0, int v1, bool explorearoundv1, std::function<bool(int, int, int)> fun)
+
+
+		template<typename GRAPH> void layoutExplorer(const CombinatorialMap & CM, const int outerFaceDart, int v0, int v1, std::function<void(int, int, int)> fun)
 			{
-			std::vector<int> doneCircle(graph.size(), 0);
+			std::vector<int> doneCircle(graph.size(), 0); // the set of circle already laid out
 			doneCircle[v0] = 1;
 			doneCircle[v1] = 1;
-			size_t tot = 0;
-			std::queue<int> st;
-			st.push(v0);
-			if (explorearoundv1) st.push(v1);
-			while (st.size() != 0)
-				{
-				int index = st.front(); st.pop();
-				auto it = graph[index].begin();
-				while (doneCircle[*it] == 0) { ++it; }
-				auto sit = it, pit = it; ++it;
-				if (it == graph[index].end()) { it = graph[index].begin(); }
-				while (it != sit)
-					{
-					if (doneCircle[*it] == 0)
-						{
-						if (fun(index, *pit, *it)) { st.push(*it); }
-						doneCircle[*it] = 1;
-						tot++;
-						}
-					pit = it;
-					++it;
-					if (it == graph[index].end()) { it = graph[index].begin(); }
-					}
-				}
-			return doneCircle;
+			MTOOLS_INSURE(v0 != v1);
+			MTOOLS_INSURE(CM.nbVertices() >= 3);
+			MTOOLS_INSURE(isNeighbour(graph, v0, v1));
+
+
 			}
 
 
-		}
+		/**
+		* Perform the exploration of the graph neded for the layout. Two vertices v0 and v1 must already been laid out
+		* and the method calls the given layout function for all the other sites in the correct order.
+		*
+		* @param	gr		  	The graph to explore.
+		* @param    boundary    the set of boundary vertices (those with boundary[x] >0)						
+		* @param	v0		  	vertex v0 already laid out
+		* @param	v1		  	vertex v1 already laid out
+		* @param	fun		  	Function of the form void f(int ix,int iy,int iz) called for each new vertex z to lay out.
+		* 						-> the function is called with ix, iy and iz forming a positively oriented triangle
+		* 						   and the circles ix and iy have already been laid out, but not iz.
+		**/
+		template<typename GRAPH> void layoutExplorer(const GRAPH & graph, const std::vector<int> & boundary, int v0, int v1, std::function<void(int, int, int)> fun)
+			{
+			std::vector<int> doneCircle(graph.size(), 0); // the set of circle already laid out
+			doneCircle[v0] = 1;
+			doneCircle[v1] = 1;
+			MTOOLS_INSURE(graph.size() >= 3);
+			MTOOLS_INSURE(v0 != v1);
+			MTOOLS_INSURE(isNeighbour(graph, v0, v1));
+			if (graph.size() == 3)
+				{ // the whole graph is just a triangle				
+				int v2 = 0;
+				if ((v0 != 1) && (v1 != 1)) { v2 = 1; }
+				if ((v0 != 2) && (v1 != 2)) { v2 = 2; }
+				MTOOLS_INSURE(isNeighbour(graph, v2, v0));
+				MTOOLS_INSURE(isNeighbour(graph, v2, v1));
+				fun(v0, v1, v2);
+				return;
+				}
+			size_t tot = 2; 
+			std::queue<int> st;
+			st.push(v0); st.push(v1);
+			while (st.size() != 0)
+				{
+				const int index = st.front(); st.pop(); // pick a circle already laid out
+				const int l = (int)graph[index].size();
+				for (int k = 0; k <= 2 * l; k++) // going up twice
+					{
+					const int index2 = graph[index][k % l];
+					const int index3 = graph[index][(k + 1) % l];
+					if ((doneCircle[index2] > 0) && (doneCircle[index3] == 0) && (isNeighbour(graph, index2, index3)))
+						{ // we should lay out index 3
+						const int ix = index;
+						const int iy = index2;
+						const int iz = index3;
+						if (graph[ix].size() <= 2)
+							{ // exclude degenerate case when we do not know on which side the to lay out.
+							MTOOLS_INSURE(graph[iy].size() > 2); // <- this would mean that the whole graph is a triangle !  
+							st.push(iy); // we will lay out iz from the other side
+							}
+						else
+							{
+							fun(ix, iy, iz);
+							st.push(iz);
+							doneCircle[iz] = 1;
+							tot++;
+							}
+						}
+					}
+				for (int k = 2 * l; k >= 0; k--) // and down twice
+					{
+					const int index2 = graph[index][(k + 1) % l];
+					const int index3 = graph[index][k % l];
+					if ((doneCircle[index2] > 0) && (doneCircle[index3] == 0) && (isNeighbour(graph, index2, index3)))
+						{ // we should lay out index 3
+						const int ix = index2;
+						const int iy = index;
+						const int iz = index3;
+						if (graph[ix].size() <= 2)
+							{ // exclude degenerate case when we do not know on which side the to lay out.
+							MTOOLS_INSURE(graph[iy].size() > 2); // <- this would mean that the whole graph is a triangle !  
+							st.push(iy); // we will lay out iz from the other side
+							}
+						else
+							{
+							fun(ix, iy, iz);
+							st.push(iz);
+							doneCircle[iz] = 1;
+							tot++;
+							}
+						}
+					}
+				}
+				MTOOLS_INSURE(tot == graph.size()); // normaly, we laid out everything.
+			}
+
+
 
 
 
@@ -468,7 +525,7 @@ namespace mtools
 
 
 	 /**
-	 * convert euclidian distance to hyperbolic, s_parametrized distance from origin.
+	 * convert euclidian distance to hyperbolic, s parametrized distance from origin.
 	 * Same as distHtoS(distRtoH(s))
 	 */
 	template<typename FPTYPE> FPTYPE distRtoS(const FPTYPE & r) { return (1-r)/(1+r); }
@@ -523,7 +580,6 @@ namespace mtools
 	 */
 	template<typename FPTYPE, typename GRAPH> std::vector<Circle<FPTYPE> > computeCirclePackLayoutHyperbolic(const GRAPH & graph, const std::vector<int> & boundary, const std::vector<FPTYPE> & srad, bool strictMaths = false, int v0 = -1)
 		{
-		Circle<FPTYPE>::setPrecision(1.0e-13);
 		MTOOLS_INSURE(graph.size() == srad.size());
 		MTOOLS_INSURE(graph.size() == boundary.size());
 		if (v0 < 0) { for (size_t i = 0; i < boundary.size(); i++) { if (boundary[i] <= 0) { v0 = (int)i; break; } } }
@@ -634,7 +690,7 @@ namespace mtools
 		int v1 = graph[v0].front();
 		circle[v1] = Circle<FPTYPE>(complex<FPTYPE>(rad[v0] + rad[v1], (FPTYPE)0), rad[v1]);
 
-		internals_circlepacking::layoutExplorer(graph, v0, v1, (boundary[v1] <= 0), [&](int ix, int iy, int iz)->bool
+		internals_circlepacking::layoutExplorer(graph, v0, v1, [&](int ix, int iy, int iz)->void
 			{
 			const FPTYPE & rx = rad[ix]; if ((strictMaths) && ((rx == (FPTYPE)0.0) || (isnan(rx)))) { MTOOLS_ERROR(std::string("Precision error A. null radius (site ") + mtools::toString(ix) + ")"); }
 			const FPTYPE & ry = rad[iy]; if ((strictMaths) && ((ry == (FPTYPE)0.0) || (isnan(ry)))) { MTOOLS_ERROR(std::string("Precision error B. null radius (site ") + mtools::toString(iy) + ")"); }
