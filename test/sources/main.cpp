@@ -5,11 +5,9 @@ using namespace mtools;
 
 
 
-
-
 MT2004_64 gen(5679); // RNG with 2M vertices.
 
-//MT2004_64 gen(567); // RNG with 2M vertices.
+
 
 
 void loadGraph(std::string filename, std::vector<std::vector<int> > & gr, fBox2 & R, std::vector<int> & boundary, std::vector<double> & radiuses, std::vector<fVec2> & circles)
@@ -102,17 +100,6 @@ void loadTest(std::string filename)
 	ar & radii; 
 	ar & circles; 
 
-	/*
-	{
-	mtools::OArchive ar(std::string("trig") + mtools::toString(gr.size()) + ".txt");
-	ar & gr; ar.newline();
-	ar & boundary; ar.newline();
-	ar & circleVec; ar.newline();
-	}
-	*/
-
-
-
 	Permutation perm(bound);
 	gr = permuteGraph(gr, perm);
 	radii = perm.getPermute(radii);
@@ -163,7 +150,7 @@ std::vector<double> computeHyperbolicRadii(const std::vector<Circle<double> > & 
 	}
 
 
-
+/*
 void testBall(int N)
 	{
 						   
@@ -234,7 +221,7 @@ void testBall(int N)
 		{ 
 		circleVec[i] -= pos0; // center
 		circleVec[i] /= rad0; // normalise such that outer boundary circle has size 1
-		if (i != circleVec.size() - 1) { circleVec[i] = M*(circleVec[i]); } // invert */
+		if (i != circleVec.size() - 1) { circleVec[i] = M*(circleVec[i]); } // invert 
 		}
 
 
@@ -267,7 +254,7 @@ void testBall(int N)
 	Plotter.plot();
 	
 
-	/* compute hyperbolic radii */
+	// compute hyperbolic radii
 	auto srad = computeHyperbolicRadii(circleVec);
 
 	cout << "Laying out the circles in hyperbolic space...\n";
@@ -286,11 +273,8 @@ void testBall(int N)
 	Plotter.plot();
 	}
 
-
-
-
 	}
-
+*/
 
 
 	void loadPack(std::string filename)
@@ -362,7 +346,7 @@ void testBall(int N)
 
 
 
-
+	/*
 	void testFBT(int n)
 		{
 		double theta = 1 / 6.6;
@@ -434,7 +418,7 @@ void testBall(int N)
 			{
 			circleVec[i] -= pos0; // center
 			circleVec[i] /= rad0; // normalise such that outer boundary circle has size 1
-			if (i != circleVec.size() - 1) { circleVec[i] = M*(circleVec[i]); } // invert */
+			if (i != circleVec.size() - 1) { circleVec[i] = M*(circleVec[i]); } // invert 
 			}
 
 
@@ -461,6 +445,7 @@ void testBall(int N)
 		Plotter.plot();
 
 		}
+		*/
 
 
 
@@ -468,27 +453,13 @@ void testBall(int N)
 
 
 
-
-
-
-
-
-
-
-
-
-
-		void testHyperbolic(int n)
+		void testPacking(int n = 10000)
 			{
-			double theta = 1 / 7.1;
-			cout << "In progress\n";
-
 			cout << "\n peeling...\n";
 			CombinatorialMap CM;
 			CM.makeNgon(3);
-			//		auto r = peelUIPT(CM, n, 0, true, gen);
-			auto r = peelHyperbolicIPT(CM, n, 0, theta, true, gen);
-			CM.reroot(r);
+			auto r = peelUIPT(CM, n, 0, true, gen);
+			CM.reroot(r); // reroot on the boundary
 			cout << "\n done peeling\n";
 			cout << graphInfo(CM.toGraph()) << "\n\n";
 
@@ -497,27 +468,27 @@ void testBall(int N)
 			cout << "done \n\n";
 			std::vector<std::vector<int> > gr = CM.toGraph();
 			cout << graphInfo(gr) << "\n\n";
-			//cout.getKey();
+			cout.getKey();
+
+			CirclePackingLabelEuclidian<float> CP(true);
+			CP.setTriangulation(CM,CM.root());
+
+			cout << "ITERATION = " << CP.computeRadii(5.0e-2, 0.05, -1, 1000) << "\n";
+			cout << "Laying out the circles...\n";
+
+			cout.getKey();
+			CirclePackingLabelEuclidianGPU<float> CP2(true);
+			CP2.setTriangulation(CM, CM.root());
+			CP2.setRadii(CP.getRadii());
 
 
-			std::vector<int> boundary(gr.size(),0);
-			int bsize = CM.faceSize(CM.root());
-			cout << "bsize = " << bsize << "\n";
-			int e = CM.root();
-			for (int i = 0;i < bsize; i++) { boundary[CM.vertice(e)] = 1; e = CM.phi(e); } // note the boundary
-
-			std::vector<double> rad(gr.size(),0.5);
-			for (int i = 0; i < gr.size(); i++) { if (boundary[i] > 0) { rad[i] = 0.0; } }
-
-
-			CirclePackingLabelHyperbolic<double> CPTEST(true);		// prepare for packing
-			CPTEST.setTriangulation(gr, boundary);			//
-			CPTEST.setRadii(rad);								//
-
-			cout << "ITERATION = " << CPTEST.computeRadii(1.0e-6, 0.05, -1, 1000) << "\n";
+			cout << "ITERATION = " << CP2.computeRadii(1.0e-5, 0.05, -1, 1000) << "\n";
 			cout << "Laying out the circles...\n";
 
 
+			
+			
+			/*
 			std::vector<int> bbv;
 			e = CM.root();
 			for (int i = 0;i < bsize; i++) { bbv.push_back(CM.vertice(e)); e = CM.phi(e); }
@@ -591,9 +562,8 @@ void testBall(int N)
 
 			}
 
-
+			*/
 			}
-
 
 
 
@@ -604,83 +574,11 @@ void testBall(int N)
 int main(int argc, char *argv[])
     {
 
-
-	/*
-	hyperbolicIPTLaw HL(1 / 7.5);
-	cout << "ok...\n";
-	cout.getKey(); 
-	int mm = 0;
-	for (int i = 0;i < 10000;i++)
-		{
-		int t = HL(100, gen);
-		cout << t << "\n";
-
-		if (t > mm) mm = t;
-		}
-	cout << "mm = " << mm << "\n";
-	cout << hyperbolicIHPT_CDF(10, 1 / 7.5) << "\n";;
-	cout.getKey();
-
-
-	double theta = 1 / 8.0;
-	for (int i = -1; i < 100; i++)
-		{
-		cout << doubleToStringHighPrecision(cdfQ(i,theta)) << "\n";
-		cout << doubleToStringHighPrecision(hyperbolicIHPT_CDF(i, theta)) << "\n\n";
-		}
-
-	cout.getKey();
-	makeC(1 / 8.0);
-	
-	cout << Q(200, 1 / 8.0);
-	cout.getKey();
-	*/
-	/*
-	for(int i=-2;i<40; i++)
-		{
-		cout << "hyper = " << mtools::doubleToStringHighPrecision(hyperbolicIHPT_CDF(i, 1.0 / 10.0)) << "\n";
-		cout << "norm  = " << mtools::doubleToStringHighPrecision(UIHPT_CDF(i)) << "\n\n";
-		}
-	cout.getKey();
-
-	*/ 
-	/*
-	double q = generalBoltzmanTriangulation_CDF(0, 100, 1.0 / 6.0);
-
-	cout << "GBT = " << 1.0 - generalBoltzmanTriangulation_CDF(100 - 37, 100, 1.0 / 6.0) << "\n";
-	cout << "GBT = " << generalBoltzmanTriangulation_CDF(37, 100, 1.0 / 6.0) - q << "\n";
-
-
-
-	cout << "GBT = " << generalBoltzmanTriangulation_CDF(99, 100, 1.0 / 6.0) << "\n";
-	cout << "FBT = " << freeBoltzmanTriangulation_CDF(99, 100) << "\n\n";
-*/
-
-
 	MTOOLS_SWAP_THREADS(argc, argv);
 	parseCommandLine(argc, argv);
 
+	testPacking();
 
-	testHyperbolic(10);
-
-	//testFBT(80000);
-	//loadTest("trig1503676.txt");
-	//loadTest("trig1503676.txt");
-	
-	//loadPack("trig1125072.p");
-
-//	testBall(20000); 
-	return 0;
-	/*
-	testBall(1100001);
-	testBall(1200002);
-	testBall(1400003);
-	testBall(1600004);
-	testBall(1800005);
-	testBall(2000006);
-	testBall(2200007);
-	//	
-	*/
 	return 0;
 
 
