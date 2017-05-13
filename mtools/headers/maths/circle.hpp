@@ -53,12 +53,6 @@ namespace mtools
 			Circle(const std::complex<FPTYPE> & centerpos, const FPTYPE & rad) : center(centerpos), radius(rad) {}
 
 
-			/**   TO BE REMOVED !!!!!!!!!!!!!!!!!!!!!!!!!!
-			 * Sets the rounding precision (default 0).
-			 **/
-			static void setPrecision(const FPTYPE & precision) { _eps = precision; }
-
-
 			/**
 			* Query if the circle is non-empty ie if the radius is strictly positive.
 			**/
@@ -181,9 +175,6 @@ namespace mtools
 
 			FPTYPE radius;
 
-		private:
-
-			static FPTYPE _eps; // precision.  TO BE REMOVED !!!!!!!!!!!!!!!!!!!!!!!!
 
 		};
 
@@ -213,10 +204,6 @@ namespace mtools
 		**/
 		template<typename FPTYPE> Circle<FPTYPE> operator/(Circle<FPTYPE> circle, const complex<FPTYPE> & lambda) { circle /= lambda; return circle; }
 
-
-
-
-	template<typename FPTYPE> FPTYPE Circle<FPTYPE>::_eps = (FPTYPE)0; //// TO BE REMOVED
 
 
 	}
