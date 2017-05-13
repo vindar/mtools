@@ -40,6 +40,40 @@
 #include "circlePacking.cl.hpp"	    // the openCL program source.
 
 
+
+
+
+/***********************************************************************************************************************************
+
+CHOSE A FAIRE:
+--------------
+
+
+-> Circle packing euclidien : - methode pour calculer les labels, version CPU          : OK
+                              - methode pour calculer les labels, version openCL GPU   : OK
+
+							  - methode pour layout les cercle : A MODIFIER:
+							     -> pour l'instant, ne permet pas de placer les cercles qui ne sont pas relie au cercle central via 
+								    des sites interieurs...
+									(mais au moins ca marche si le bord est de taille 3 pour le calcul du packing maximal par inversion)
+
+
+-> Circle packing hyperbolic: - methode pour claculer les s-radii CPU : semble OK, à verifier.
+                              - methode pour claculer les s-radii openCL : a faire.
+							   
+							   - methode pour le layout des cercle : A MODIFIER
+							   -> pour l'instant, ne permet pas de placer les cercles qui ne sont pas relie au cercle central via
+							   des sites interieurs...
+
+   -> dans le cas hyperbolic, faire gaffe au perte de precision pour les s-radii prochent de 1 (ie de rayon hyperbolique petit). 
+
+
+
+*************************************************************************************************************************************/
+
+
+
+
 namespace mtools
 	{
 
@@ -70,11 +104,11 @@ namespace mtools
 			if (gr[index].size() < 2) return theta;
 			FPTYPE v = rad[index];
 			auto it = gr[index].begin();
-			const FPTYPE firstR = rad[*it];
+			const FPTYPE firstR =rad[*it];
 			FPTYPE prevR = firstR;
 			it++;
 			FPTYPE C = 0.0;
-			for (; it != gr[index].end(); ++it) // use Kahan summation algorithm
+			for(; it != gr[index].end(); ++it) // use Kahan summation algorithm
 				{
 				FPTYPE nextR = rad[*it];
 				FPTYPE Y = angleEuclidian(v, prevR, nextR) - C;
@@ -91,7 +125,7 @@ namespace mtools
 		/** Compute the L2 error for the angle sum for all vertices on the range [0,N-1] **/
 		template<typename FPTYPE, typename GRAPH> FPTYPE errorL2euclidian(const GRAPH & gr, const std::vector<FPTYPE> & rad, const int N)
 			{
-			CONST FPTYPE twopi = (2 * acos((FPTYPE)-1));
+			CONST FPTYPE twopi = (2*acos((FPTYPE)-1));
 			FPTYPE e = (FPTYPE)0;
 			FPTYPE C = (FPTYPE)0;
 			for (int i = 0; i < N; ++i) // use Kahan summation algorithm
@@ -130,93 +164,48 @@ namespace mtools
 			}
 
 
-
-
 		/**
-		* Perform the exploration of the graph neded for the layout. Two vertices v0 and v1 must already been laid out
-		* and the method calls the given layout function for all the other sites in the correct order.
+		* Perform an exploration of the graph that can be used for the layout of the circles.
 		*
 		* @param	gr		  	The graph to explore.
-		* @param    boundary    the set of boundary vertices (those with boundary[x] >0)
-		* @param	v0		  	vertex v0 already laid out
-		* @param	v1		  	vertex v1 already laid out
-		* @param	fun		  	Function of the form void f(int ix,int iy,int iz) called for each new vertex z to lay out.
-		* 						-> the function is called with ix, iy and iz forming a positively oriented triangle
-		* 						   and the circles ix and iy have already been laid out, but not iz.
+		* @param	v0		  	The start vertex v0.
+		* @param	v1		  	The second vertex.
+		* @param	v1interior	true to also visit the neighour around v1.
+		* @param	fun		  	Function of the form bool f(int x,int y,int iz) called for each new
+		* 						vertex visited z.
+		*
+		* @return	A vector where vec[i] = 1 if circle i was lay out and 0 vec[i] = 0 if it was not encountered. (v0 and v1 are set to 1).
 		**/
-		template<typename GRAPH> void layoutExplorer(const GRAPH & graph, const std::vector<int> & boundary, int v0, int v1, std::function<void(int, int, int)> fun)
+		template<typename GRAPH> std::vector<int> layoutExplorer(const GRAPH & graph, int v0, int v1, bool explorearoundv1, std::function<bool(int, int, int)> fun)
 			{
-			std::vector<int> doneCircle(graph.size(), 0); // the set of circle already laid out
+			std::vector<int> doneCircle(graph.size(), 0);
 			doneCircle[v0] = 1;
 			doneCircle[v1] = 1;
-			MTOOLS_INSURE(graph.size() >= 3);
-			MTOOLS_INSURE(v0 != v1);
-			MTOOLS_INSURE(isNeighbour(graph, v0, v1));
-			if (graph.size() == 3)
-				{ // the whole graph is just a triangle				
-				int v2 = 0;
-				if ((v0 != 1) && (v1 != 1)) { v2 = 1; }
-				if ((v0 != 2) && (v1 != 2)) { v2 = 2; }
-				MTOOLS_INSURE(isNeighbour(graph, v2, v0));
-				MTOOLS_INSURE(isNeighbour(graph, v2, v1));
-				fun(v0, v1, v2);
-				return;
-				}
-			size_t tot = 2;
+			size_t tot = 0;
 			std::queue<int> st;
-			st.push(v0); st.push(v1);
+			st.push(v0);
+			if (explorearoundv1) st.push(v1);
 			while (st.size() != 0)
 				{
-				const int index = st.front(); st.pop(); // pick a circle already laid out
-				const int l = (int)graph[index].size();
-				for (int k = 0; k <= 2 * l; k++) // going up twice
+				int index = st.front(); st.pop();
+				auto it = graph[index].begin();
+				while (doneCircle[*it] == 0) { ++it; }
+				auto sit = it, pit = it; ++it;
+				if (it == graph[index].end()) { it = graph[index].begin(); }
+				while (it != sit)
 					{
-					const int index2 = graph[index][k % l];
-					const int index3 = graph[index][(k + 1) % l];
-					if ((doneCircle[index2] > 0) && (doneCircle[index3] == 0) && (isNeighbour(graph, index2, index3)))
-						{ // we should lay out index 3
-						const int ix = index;
-						const int iy = index2;
-						const int iz = index3;
-						if (graph[ix].size() <= 2)
-							{ // exclude degenerate case when we do not know on which side the to lay out.
-							MTOOLS_INSURE(graph[iy].size() > 2); // <- this would mean that the whole graph is a triangle !  
-							st.push(iy); // we will lay out iz from the other side
-							}
-						else
-							{
-							fun(ix, iy, iz);
-							st.push(iz);
-							doneCircle[iz] = 1;
-							tot++;
-							}
+					if (doneCircle[*it] == 0)
+						{
+						if (fun(index, *pit, *it)) { st.push(*it); }
+						doneCircle[*it] = 1;
+						tot++;
 						}
-					}
-				for (int k = 2 * l; k >= 0; k--) // and down twice
-					{
-					const int index2 = graph[index][(k + 1) % l];
-					const int index3 = graph[index][k % l];
-					if ((doneCircle[index2] > 0) && (doneCircle[index3] == 0) && (isNeighbour(graph, index2, index3)))
-						{ // we should lay out index 3
-						const int ix = index2;
-						const int iy = index;
-						const int iz = index3;
-						if (graph[ix].size() <= 2)
-							{ // exclude degenerate case when we do not know on which side the to lay out.
-							MTOOLS_INSURE(graph[iy].size() > 2); // <- this would mean that the whole graph is a triangle !  
-							st.push(iy); // we will lay out iz from the other side
-							}
-						else
-							{
-							fun(ix, iy, iz);
-							st.push(iz);
-							doneCircle[iz] = 1;
-							tot++;
-							}
-						}
+					pit = it;
+					++it;
+					if (it == graph[index].end()) { it = graph[index].begin(); }
 					}
 				}
-			MTOOLS_INSURE(tot == graph.size()); // normaly, we laid out everything.
+			return doneCircle;
 			}
 
 
@@ -268,6 +257,7 @@ namespace mtools
 		}
 
 
+
 	/**
 	* Compute the L1 error for the angle sum of the packing for all inner vertices.
 	*
@@ -310,6 +300,7 @@ namespace mtools
 		for (size_t i = 0;i < circles.size(); i++) { rad[i] = circles[i].radius; }
 		return circlePackErrorL1euclidian(gr, boundary, rad);
 		}
+
 
 
 
@@ -479,7 +470,6 @@ namespace mtools
 
 
 
-
 	/**
 	 * Convert distance from the origin from euclidian to hyperbolic
 	 */
@@ -490,6 +480,7 @@ namespace mtools
 	* Convert distance from the origin from hyperbolic to euclidian
 	*/
 	template<typename FPTYPE> FPTYPE distHtoR(const FPTYPE & h) { return (exp(h) - 1)/(exp(h) + 1); }
+
 
 	/**
 	 * convert distance from the s parametrization to real hyperbolic distance. s = exp(-h).
@@ -510,11 +501,12 @@ namespace mtools
 	template<typename FPTYPE> FPTYPE distStoR(const FPTYPE & s) { return (1-s)/(1+s); }
 
 
-    /**
-	 * convert euclidian distance to hyperbolic, s parametrized distance from origin.
+	 /**
+	 * convert euclidian distance to hyperbolic, s_parametrized distance from origin.
 	 * Same as distHtoS(distRtoH(s))
 	 */
 	template<typename FPTYPE> FPTYPE distRtoS(const FPTYPE & r) { return (1-r)/(1+r); }
+
 
 
 	/**    
@@ -550,6 +542,167 @@ namespace mtools
 
 
 	/**
+	/* 
+	 *  ********************
+	 *  INCOMPLET : NE PLACE PAS TOUT LES RADII. (MANQUE CEUX QUI SONT SEPARE DU SITE CENTRAL PAR DES CERCLE FRONTIERE).
+	 *  ********************
+	 * 
+	 * Compute the layout for an hyperbolic packing label (i.e when the radius are given in term of the hyperbolic
+	 * metric instead of the euclidian one).
+	 *
+	 * @param	graph	   	The graph.
+	 * @param	boundary   	The boundary. Any vertex v with boundary[v] > 0 is on the exterior face.
+	 * @param	srad	   	The vector of hyperbolic radii given in s-radii format:  s = exp(-h) where h is the real 
+	 * 						hyperbolic radius. Thus, s = 0 for infinite radius and s = 1 for null radius
+	 * @param	strictMaths	true to raise an error if FPTYPE does not allows sufficient precision for layout. Otherwise, 
+	 * 						the algorithm does its best but circles may end up overlapping. 
+	 * @param	v0		   	Index of the start vertex to lay out at the origin of the disk or -1 to choose an arbirary one. 
+	 *
+	 * @return	The positions of the circles for the packing label. This yields a packing inside the unit disk. 
+	 */
+	template<typename FPTYPE, typename GRAPH> std::vector<Circle<FPTYPE> > computeCirclePackLayoutHyperbolic(const GRAPH & graph, const std::vector<int> & boundary, const std::vector<FPTYPE> & srad, bool strictMaths = false, int v0 = -1)
+		{
+		MTOOLS_INSURE(graph.size() == srad.size());
+		MTOOLS_INSURE(graph.size() == boundary.size());
+		if (v0 < 0) { for (size_t i = 0; i < boundary.size(); i++) { if (boundary[i] <= 0) { v0 = (int)i; break; } } }
+		MTOOLS_INSURE(boundary[v0] <= 0);
+		std::vector<Circle<FPTYPE> > circle(srad.size());		
+		circle[v0] = Circle<FPTYPE>(complex<FPTYPE>((FPTYPE)0, (FPTYPE)0), distStoR(srad[v0]));  // lay the circle at the origin		
+		int v1 = graph[v0].front();												//
+		circle[v1].radius = tangentCircleStoR(circle[v0].radius, srad[v1]);		// lay v1 on the right of v0.
+		circle[v1].center = circle[v0].radius + circle[v1].radius;				// 
+
+		auto laidvec = internals_circlepacking::layoutExplorer(graph, v0, v1, (boundary[v1] <= 0), [&](int ix, int iy, int iz)->bool
+			{
+			auto hypcx = circle[ix].euclidianToHyperbolic().center; // hyperbolic center for C(x)
+			mtools::Mobius<FPTYPE> M(hypcx); // Mobius transformation that centers the circle C(x) around 0 (M is an involution)
+
+			FPTYPE rx = distStoR(srad[ix]);					// radius of C(x) when it is centered on 0
+			if ((strictMaths) && ((rx == (FPTYPE)0.0))) { MTOOLS_ERROR(std::string("Precision error A. null radius (site ") + mtools::toString(ix) + ")"); }
+			if ((strictMaths) && ((std::isnan(rx))))    { MTOOLS_ERROR(std::string("Precision error A. NaN (site ") + mtools::toString(ix) + ")"); }
+			FPTYPE ry = tangentCircleStoR(rx, srad[iy]);	// radius of C(y) when C(x) centered on 0
+			if ((strictMaths) && ((ry == (FPTYPE)0.0))) { MTOOLS_ERROR(std::string("Precision error B. null radius (site ") + mtools::toString(iy) + ")"); }
+			if ((strictMaths) && ((std::isnan(ry))))    { MTOOLS_ERROR(std::string("Precision error B. NaN (site ") + mtools::toString(iy) + ")"); }
+			FPTYPE rz = tangentCircleStoR(rx, srad[iz]);	// radius of C(z) when C(x) centered on 0
+			if ((strictMaths) && ((rz == (FPTYPE)0.0))) { MTOOLS_ERROR(std::string("Precision error C. null radius (site ") + mtools::toString(iz) + ")"); }
+			if ((strictMaths) && ((std::isnan(rz))))    { MTOOLS_ERROR(std::string("Precision error C. NaN (site ") + mtools::toString(iz) + ")"); }
+
+			const FPTYPE & alpha = internals_circlepacking::angleEuclidian(rx, ry, rz); // angle <y,x,z>
+			if ((strictMaths) && (isnan(alpha))) { MTOOLS_ERROR(std::string("Precision error D. null alpha (site ") + mtools::toString(iz) + ")"); }
+
+			const Circle<FPTYPE> Cy = M*circle[iy];	// position of C(y) after the tranformation M (ie when C(x) is centered at 0)
+
+			auto w = (Cy.center)*complex<FPTYPE>(cos(alpha), sin(alpha)); // apply a rotation of angle alpha to the center of C(y)
+			const FPTYPE norm = std::abs(w); // resize the lenght of the vector to be rx + rz.
+			if (norm > (FPTYPE)0.0) { w /= norm; w *= (rx + rz); } else { if (strictMaths) { MTOOLS_ERROR(std::string("Precision error E (site ") + mtools::toString(iz) + ")"); } }
+
+			const Circle<FPTYPE> Cz(w, rz); // position of C(z) when C(x) is centered.
+			circle[iz] = (M*Cz);			// move back to the correct position by applying the inverse tranformation.
+
+			return (boundary[iz] <= 0); // explore also around iz if it is an interior vertex
+			});
+		// done layout out circle adjacent to an interior circle but there may still be some other one to lay out
+		std::queue<int> queue;
+		for (int i = 0; i < laidvec.size(); i++) { if (laidvec[i] == 0) { queue.push(i); } } // push all vertices that are not yet lais. 
+
+		//
+		// TODO : THE FOLLOWING ASSUME THAT THE REMAINING CIRCLES TO LAY OUT ARE HOROCYCLES (IE WE ARE WORKING WITH
+		// A MAXIMAL HYPERBOLIC PACKING
+		// -> adapt to deal with the general case.
+		/*
+		while(queue.size() >0)
+			{
+			const int iz = queue.front(); queue.pop();
+			for (int k = 0; k < graph[iz].size(); k++)
+				{
+				int ix = graph[iz][k];
+				if (laidvec[ix] > 0)
+					{
+					int iy = graph[iz][(k + 1) % ((int)graph[iz].size())];
+					if (laidvec[iy] > 0)
+						{ 
+						int h = -1; 
+						for (int j = 0; j < graph[ix].size(); j++) { if (graph[ix][j] == iy) { h = j; break; } }
+						if (h >= 0)
+							{ // ok, ix iy iz form a triangle and ix and iy are alreay laid out. 
+							if (graph[ix][(h + 1) % ((int)graph[ix].size())] != iz) { int t = ix; ix = iy; iy = t; }
+							// ok, we can lay out iz
+							const FPTYPE & rx = circle[ix].radius;
+							const FPTYPE & ry = circle[iy].radius;
+							const FPTYPE rz = 1 / (1 / rx + 1 / ry - 1 + 2 * sqrt(1 / (rx*ry) - 1 / ry - 1 / rx)); // soddy circles theorem :-)
+							const FPTYPE & alpha = internals_circlepacking::angleEuclidian(rx, ry, rz);
+							if ((strictMaths) && (isnan(alpha))) { MTOOLS_ERROR(std::string("Precision error D. null alpha (site ") + mtools::toString(iz) + ")"); }
+							auto w = circle[iy].center - circle[ix].center;
+							w = w*complex<FPTYPE>(cos(alpha), sin(alpha));
+							const FPTYPE norm = std::abs(w);
+							if (norm != (FPTYPE)0.0) { w /= norm; w *= (rx + rz); }
+							else { if (strictMaths) { MTOOLS_ERROR(std::string("Precision error E (site ") + mtools::toString(iz) + ")"); } }
+							circle[iz].center = circle[ix].center + w;
+							if ((circle[iz].center == circle[iy].center) || (circle[iz].center == circle[ix].center)) { if (strictMaths) { MTOOLS_ERROR(std::string("Precision error F (site ") + mtools::toString(iz) + ")"); } }
+							circle[iz].radius = rz;
+							laidvec[iz] = 1;
+							break;
+							}
+						}
+					}
+				}
+			if (laidvec[iz] == 0) { queue.push(iz); }
+			}
+			*/
+		// all done !
+		return circle;
+		}
+
+
+	 /**
+	 *  ********************
+	 *  INCOMPLET : NE PLACE PAS TOUT LES RADII. (MANQUE CEUX QUI SONT SEPARE DU SITE CENTRAL PAR DES CERCLE FRONTIERE).
+	 *  ********************
+	 *  
+	 * Compute the layout for an euclidian packing label.
+	 *
+	 * @param	graph	   	The graph.
+	 * @param	boundary   	The boundary. Any vertex v with boundary[v] > 0 is on the exterior face.
+	 * @param	srad	   	The vector of radii.
+	 * @param	strictMaths	true to raise an error if FPTYPE does not allows sufficient precision for layout. Otherwise,
+	 * 						the algorithm does its best but circles may end up overlapping anyway.
+	 * @param	v0		   	Index of the start vertex to lay out at the origin of the disk or -1 to choose an arbirary one.
+	 *
+	 * @return	The positions of the circles for the packing label. 
+	 */
+	template<typename FPTYPE, typename GRAPH> std::vector<Circle<FPTYPE> > computeCirclePackLayout(const GRAPH & graph, const std::vector<int> & boundary, const std::vector<FPTYPE> & rad, bool strictMaths = false, int v0 = -1)
+		{
+		MTOOLS_INSURE(graph.size() == rad.size());
+		MTOOLS_INSURE(graph.size() == boundary.size());
+		if (v0 < 0) { for (size_t i = 0; i < boundary.size(); i++) { if (boundary[i] <= 0) { v0 = (int)i; break; } } }
+		MTOOLS_INSURE(boundary[v0] <= 0);
+		std::vector<Circle<FPTYPE> > circle(rad.size());
+		circle[v0] = Circle<FPTYPE>(complex<FPTYPE>((FPTYPE)0, (FPTYPE)0), rad[v0]);
+		int v1 = graph[v0].front();
+		circle[v1] = Circle<FPTYPE>(complex<FPTYPE>(rad[v0] + rad[v1], (FPTYPE)0), rad[v1]);
+
+		internals_circlepacking::layoutExplorer(graph, v0, v1, (boundary[v1] <= 0), [&](int ix, int iy, int iz)->bool
+			{
+			const FPTYPE & rx = rad[ix]; if ((strictMaths) && ((rx == (FPTYPE)0.0) || (isnan(rx)))) { MTOOLS_ERROR(std::string("Precision error A. null radius (site ") + mtools::toString(ix) + ")"); }
+			const FPTYPE & ry = rad[iy]; if ((strictMaths) && ((ry == (FPTYPE)0.0) || (isnan(ry)))) { MTOOLS_ERROR(std::string("Precision error B. null radius (site ") + mtools::toString(iy) + ")"); }
+			const FPTYPE & rz = rad[iz]; if ((strictMaths) && ((rz == (FPTYPE)0.0) || (isnan(rz)))) { MTOOLS_ERROR(std::string("Precision error C. null radius (site ") + mtools::toString(iz) + ")"); }
+			const FPTYPE & alpha = internals_circlepacking::angleEuclidian(rx, ry, rz);
+			if ((strictMaths) && (isnan(alpha))) { MTOOLS_ERROR(std::string("Precision error D. null alpha (site ") + mtools::toString(iz) + ")"); }
+			auto w = circle[iy].center - circle[ix].center;
+			w = w*complex<FPTYPE>(cos(alpha), sin(alpha));
+			const FPTYPE norm = std::abs(w);
+			if (norm != (FPTYPE)0.0) { w /= norm; w *= (rx + rz); } else { if (strictMaths) { MTOOLS_ERROR(std::string("Precision error E (site ") + mtools::toString(iz) + ")"); } }
+			circle[iz].center = circle[ix].center + w;
+			if ((circle[iz].center == circle[iy].center) || (circle[iz].center == circle[ix].center)) { if (strictMaths) { MTOOLS_ERROR(std::string("Precision error F (site ") + mtools::toString(iz) + ")"); } }
+			circle[iz].radius = rad[iz];
+			return (boundary[iz] <= 0);
+			});
+		return circle;
+		}
+
+
+
+	/**
 	* Draw the graph of the circle packing.
 	* -> Draw the circle around each vertex
 	*
@@ -572,6 +725,7 @@ namespace mtools
 			img.fBox2_draw_circle(R, circles[i].center, circles[i].radius, color, opacity, filled);
 			}
 		}
+
 
 
 	/**
@@ -627,139 +781,157 @@ namespace mtools
 
 
 
-	/**
-		* Class used to compute the radii associated with the euclidian circle packing of a triangulation 
-		* with a boundary.
-		*
-		* This means that we compute the SIZE of the circle around each vertex but not their position (this
-		* is done using the layout methods).  
-		*
-		* The algorithm is taken from Collins and Stephenson (2003).
-		*
-		* NOTE1: This class computes a 'packing label' of a triangulation with a boundary in the euclidian 
-		*        case. It is possible to deduce from it the maximal hyperbolic packing inside the unit disk
-		*        in the following way:
-		*        
-		*        1) Join all outer boundary vertices to a new vertex v0 thus creating a triangulation
-		*           without boundary.
-		*        2) Choose any face (a,b,c) that DOES NOT contain v0 and compute the packing labels
-		*        with (a,b,c) set as the outer face and with boundary condition r = 1.0.
-		*        3) Construct the layout of of the packing obtained. Center the circle associated
-		*           with the vertex v0 at the origin and normalize it so that it has unit radius.
-		*        4) Apply the inversion Mobius transformatin z -> 1/z to all circles.
-		*        
-		*        The resulting circle packing is a maximal circle packing on the initial triangulation
-		*        with a boundary inside the unit disk !
-		*            
-		*        This algorithm is good for "euclidian" triangulations where the boudary is not too
-		*        large but fails for "hyperbolic" triangulation where the boudary is big. In this case
-		*        it is better to use the CirclePackingLabelHyperbolic class instead. 
-		*
-		* NOTE2: If openCL extension is active, the class CirclePackingLabelEuclidianGPU may be used instead
-		*        increase computation speed.
-		*
-		* @tparam	FPTYPE	Floating type that should be used during calculation.
-		**/
-	template<typename FPTYPE = double> class CirclePackingLabelEuclidian
+
+		/**
+		 * Class used to compute the radii associated with the (euclidian) circle packing
+		 * of a triangulation with a boundary.
+		 *
+		 * The algorithm is taken from Collins and Stephenson (2003).
+		 *
+		 * NOTE : This class computes a 'packing label' in the euclidian case. It is possible to deduce
+		 *        the maximal hyperbolic packing inside the unit disk D in the following way:
+		 *        1) Join all boundary vertices to a new vertex v0, creating therefore a triangulation
+		 *        without a boundary.
+		 *        2) Choose any face (a,b,c) that does not contain W and compute the packing labels
+		 *        with (a,b,c) as the outer face with boundary condition (1.0,1.0,1.0).
+		 *        3) Construct the layout of of the packing obtained. Center the circle associated
+		 *        with the special vertex v0 at the origin and normalize it such that it has unit radius.
+		 *        4) Apply the inversion Mobius transformatin z -> 1/z to all circles.
+		 *        5) Voila !
+		 *
+		 * NOTE: If openCL extension is active, the class CirclePackingLabelGPU may be used instead
+		 *       increase computation speed.
+		 *
+		 * @tparam	FPTYPE	Floating type that should be used during calculation.
+		 **/
+		template<typename FPTYPE = double> class CirclePackingLabel
 			{
 
 			public:
 
-
 			/**
-			 * Construct the object.
+			 * Constructor.
 			 *
-			 * @param	verbose	true to print ou info to mtools::cout during computation, false to keep silent.
-			 **/
-			CirclePackingLabelEuclidian(bool verbose) : _verbose(verbose), _pi(acos((FPTYPE)(-1.0))), _twopi(2 * acos((FPTYPE)(-1.0)))
+			 * @param	verbose	true to print info to mtools::cout during packing.
+			 */
+			CirclePackingLabel(bool verbose = false) : _verbose(verbose), _pi(acos((FPTYPE)(-1.0))) , _twopi(2*acos((FPTYPE)(-1.0)))
 				{
 				}
 
 
+			/* dtor, empty object */
+			~CirclePackingLabel() {}
+
+
 			/**
-			 * Set the triangulation whose packing label is to be computed
-			 *
-			 * @param	triangulation	The combinatorial map. It must be a triangulation with a boundary.
-			 * @param	outFaceDart		Index of a dart in the combinatorial map that identifies the outer face.
-			 **/
-			void setTriangulation(const CombinatorialMap & triangulation, int outFaceDart)
+			* Decide whether packing information should be printed to mtools::cout.
+			**/
+			void verbose(bool verb) { _verbose = verb; }
+
+
+			/** Clears the object to a blank initial state. */
+			void clear()
 				{
-				const size_t l = (size_t)triangulation.nbVertices();
-				std::vector<int> boundary(l);
-				int dart = outFaceDart;
-				size_t nbb = 0;
-				do  {
-					int & bv = boundary[triangulation.vertice(dart)];
-					if (bv == 0) { bv = 1; nbb++; }
-					dart = triangulation.phi(dart);
-					}
-				while (dart != outFaceDart);
+				_gr.clear();
+				_perm.clear();
+				_nb = 0;
+				_rad.clear();
+				}
+
+
+			/**
+			* Loads a triangulation and define the boundary vertices.
+			* All radii are set to 1.0. 
+			*
+			* @param graph	   The triangulation with boundary.
+			* @param boundary  The boundary vector. Every index i for which boundary[i] > 0
+			* 					is considered to be a boundary vertice.
+			*/
+			template<typename GRAPH> void setTriangulation(const GRAPH & graph, const std::vector<int> & boundary)
+				{ 
+				clear();
+				const size_t l = graph.size();
+				MTOOLS_INSURE(boundary.size() == l);
 				_perm.setSortPermutation(boundary);
-				_gr = permuteGraph<std::vector<std::vector<int> > >(triangulation.toGraph(), _perm);
-				_nb = l - nbb;
+				_gr = permuteGraph<std::vector<std::vector<int> > >(convertGraph<GRAPH, std::vector<std::vector<int> > >(graph), _perm);
+				_nb = l;
+				for (size_t i = 0; i < l; i++) 
+					{ 
+					if (boundary[_perm[(int)i]] > 0) 
+						{ 
+						_nb = i; break; 
+						} 
+					}
+				MTOOLS_INSURE((_nb > 0)&&(_nb < l-2));
 				_rad.resize(l, (FPTYPE)1.0);
 				}
 
 
 			/**
-			 * Sets the value of the radius of all circles to rad.
-			 *
-			 * @param	rad	The new radius of all circles, must be > 0.
-			 **/
-			void setRadii(const FPTYPE & rad)
-				{
-				const size_t l = _gr.size();
-				for (size_t i = 0; i < l; i++) { _rad[i] = rad; }
-				}
-
-
-			/**
-			* Sets the value of the radius of all circles to rad.
+			* Sets the radii of the circle around each vertices.
+			* The radii associated with the boundary vertices are not modified during
+			* the circle packing algorithm.
 			*
-			* @param	rad	The new radius of the circles.
+			* @param	rad	The radii. Any values <= 0.0 is set to 1.0.
 			**/
 			void setRadii(const std::vector<FPTYPE> & rad)
 				{
-				MTOOLS_INSURE(rad.size() == _rad.size());
+				const size_t l = _gr.size();
+				MTOOLS_INSURE(rad.size() == l);
 				_rad = _perm.getPermute(rad);
+				for (size_t i = 0; i < l; i++)
+					{
+					if (_rad[i] <= (FPTYPE)0.0) _rad[i] = (FPTYPE)1.0;
+					}
 				}
 
 
 			/**
-			 * Return the current vector of radii associated with the sites of the triangulation.
-			 *
-			 * @return	The vector of radii. vec[i] is the radii of vertex i of the combinatorial map.
-			 **/
+			* Sets all radii to r.
+			**/
+			void setRadii(FPTYPE r = 1.0)
+				{
+				MTOOLS_INSURE(r > 0.0);
+				const size_t l = _gr.size();
+				_rad.resize(l);
+				for (size_t i = 0; i < l; i++) { _rad[i] = r; }
+				}
+
+
+			/**
+			* Return the list of radii.
+			*/
 			std::vector<FPTYPE> getRadii() const { return _perm.getAntiPermute(_rad); }
 
 
 			/**
-			* Compute the current angle sum error of the layout (L2 norm).
+			* Compute the error in the circle radius in L2 norm.
 			*/
 			FPTYPE errorL2() const { return internals_circlepacking::errorL2euclidian(_gr, _rad, (int)_nb); }
 
 
 			/**
-			* Compute the current angle sum error of the layout (L1 norm).
+			* Compute the error in the circle radius in L1 norm.
 			*/
 			FPTYPE errorL1() const { return internals_circlepacking::errorL1euclidian(_gr, _rad, (int)_nb); }
 
 
 			/**
-			* Run the algorithm that compute the packing label. Use the algorithm of Collins and Stephenson (2003). 
-			*
-			* @param	eps				the required precision for the total angle sum packing error, in L2 norm.
-			* @param	delta			parameter that determines how super acceleration is performed (slower
-			* 							value = more restrictive condition to perform acceleration).
-			* @param	maxIteration	The maximum number of iterations before stopping. -1 = no limit.
-			* @param	stepIter		number of iterations between printing out infos (only if verbose = true).
-			*
-			* @return	The number of iterations performed.
-			**/
+			 * Run the algorithm for computing the value of the radii.
+			 *
+			 * @param	verbose			true to print progress to mtools::cout.
+			 * @param	eps				the required precision, in L2 norm.
+			 * @param	delta			parameter that detemrine how super acceleration is performed (slower
+			 * 							value = more restrictive condition to perform acceleration).
+			 * @param	maxIteration	The maximum number of iteration before stopping. -1 = no limit.
+			 * @param	stepIter		number of iterations between printing infos (used only if verbose = true).
+			 *
+			 * @return	The number of iterations performed.
+			 **/
 			int64 computeRadii(const FPTYPE eps = 10e-9, const FPTYPE delta = 0.05, const int64 maxIteration = -1, const int64 stepIter = 1000)
 				{
 				auto totduration = chrono();
-				FastRNG gen;					// RNG used to randomize acceleration times.
+				FastRNG gen;					// use to randomize acceleration.
 				FPTYPE minc = errorL2();
 				if (_verbose)
 					{ 
@@ -769,8 +941,10 @@ namespace mtools
 					mtools::cout << "max iterations    = " << maxIteration << "\n";
 					mtools::cout << "iter between info = " << stepIter << "\n\n";
 					}
+
 				//#define DELAY_POST_RADII		// uncomment those line for debugging
 				//#define DO_NOT_USE_RNG		//
+
 				const int nb = (int)_nb;
 				int64 iter = 0;
 				FPTYPE c = 1.0 + eps, c0;
@@ -826,6 +1000,7 @@ namespace mtools
 								}
 							}
 						lambda = ((lambda < 0.5*lstar) ? lambda : 0.5*lstar);
+						
 						#ifdef DO_NOT_USE_RNG
 						for (size_t i = 0; i < nb; ++i) { _rad[i] += lambda*(_rad[i] - _rad0[i]); }
 						fl = 0;
@@ -856,47 +1031,51 @@ namespace mtools
 					else { mtools::cout << "  --- Packing complete ---  \n\n"; }
 					}
 				return iter;
+
 				#undef DO_NOT_USE_RNG
 				#undef DELAY_POST_RADII 
 				}
 
 
-			private:
+				bool _verbose;	// do we print info on mtools::cout ?
 
-				bool							_verbose;	// do we print info on mtools::cout ?
 				const FPTYPE					_pi;		// pi
-				const FPTYPE					_twopi;		// 2pi
+				const FPTYPE					_twopi;		// pi
+
 				std::vector<std::vector<int> >	_gr;		// the graph
 				mtools::Permutation				_perm;		// the permutation applied to get all the boundary vertices at the end
-				std::vector<FPTYPE>				_rad;		// vertex radii
+				std::vector<FPTYPE>				_rad;		// vertex raduises
 				size_t							_nb;		// number of internal vertices
 
 			};
 
 
-	/**
-		 * Class used to compute the radii associated with the (euclidian) circle packing
+
+
+
+
+
+
+
+
+
+		/**
+		 * Class used to compute the radii associated with the hyperbolic circle packing
 		 * of a triangulation with a boundary.
 		 *
 		 * The algorithm is taken from Collins and Stephenson (2003).
 		 *
-		 * NOTE : This class computes a 'packing label' in the euclidian case. It is possible to deduce
-		 *        the maximal hyperbolic packing inside the unit disk D in the following way:
-		 *        1) Join all boundary vertices to a new vertex v0, creating therefore a triangulation
-		 *        without a boundary.
-		 *        2) Choose any face (a,b,c) that does not contain W and compute the packing labels
-		 *        with (a,b,c) as the outer face with boundary condition (1.0,1.0,1.0).
-		 *        3) Construct the layout of of the packing obtained. Center the circle associated
-		 *        with the special vertex v0 at the origin and normalize it such that it has unit radius.
-		 *        4) Apply the inversion Mobius transformatin z -> 1/z to all circles.
-		 *        5) Voila !
-		 *
-		 * NOTE: If openCL extension is active, the class CirclePackingLabelGPU may be used instead
-		 *       increase computation speed.
+		 * This class computes a 'packing label' in the hyperbolic case. The radii are
+		 * taken and coimputed is the so called s-format where 
+		 *                                  
+		 *                                    s = exp(-h)
+		 *                                    
+		 * and h is the true hyperbolic radii. Thus s = 0 means infinite radius and s = 1
+		 * means 0 radius. 
 		 *
 		 * @tparam	FPTYPE	Floating type that should be used during calculation.
 		 **/
-	template<typename FPTYPE = double> class CirclePackingLabelHyperbolic
+		template<typename FPTYPE = double> class CirclePackingLabelHyperbolic
 			{
 
 			public:
@@ -933,57 +1112,56 @@ namespace mtools
 
 			/**
 			* Loads a triangulation and define the boundary vertices.
-			* All radii are set to 1.0. 
+			* All inside s-radii are set to 0.5 and all boundary s-radii are set to 0.0 (maximal packing
+			* in the disk with infinite radius for boundary circles. 
 			*
 			* @param graph	   The triangulation with boundary.
 			* @param boundary  The boundary vector. Every index i for which boundary[i] > 0
 			* 					is considered to be a boundary vertice.
 			*/
 			template<typename GRAPH> void setTriangulation(const GRAPH & graph, const std::vector<int> & boundary)
-				{ 
+				{
 				clear();
 				const size_t l = graph.size();
 				MTOOLS_INSURE(boundary.size() == l);
 				_perm.setSortPermutation(boundary);
 				_gr = permuteGraph<std::vector<std::vector<int> > >(convertGraph<GRAPH, std::vector<std::vector<int> > >(graph), _perm);
 				_nb = l;
-				for (size_t i = 0; i < l; i++) 
-					{ 
-					if (boundary[_perm[(int)i]] > 0) 
-						{ 
-						_nb = i; break; 
-						} 
+				for (size_t i = 0; i < l; i++)
+					{
+					if (boundary[_perm[(int)i]] > 0)
+						{
+						_nb = i; break;
+						}
 					}
-				MTOOLS_INSURE((_nb > 0)&&(_nb < l-2));
-				_rad.resize(l, (FPTYPE)1.0);
+				MTOOLS_INSURE((_nb > 0) && (_nb < l - 2));
+				_rad.resize(l, (FPTYPE)0);
+				for (size_t i = 0;i < _nb; i++)  { _rad[i] = (FPTYPE)0.5; }
 				}
 
 
 			/**
-			* Sets the radii of the circle around each vertices.
-			* The radii associated with the boundary vertices are not modified during
-			* the circle packing algorithm.
+			* Sets the s-radii of the circle around each vertices.
+			* The s-radii associated with the boundary vertices are not modified during
+			* the circle packing algorithm and serve as Dirichlet condition. 
 			*
-			* @param	rad	The radii. Any values < 0.0 or > 1.0 is set to 0.5.
+			* @param	rad	The s-radii. Any values < 0.0 or > 1.0 is clipped.
 			**/
 			void setRadii(const std::vector<FPTYPE> & rad)
 				{
 				const size_t l = _gr.size();
 				MTOOLS_INSURE(rad.size() == l);
 				_rad = _perm.getPermute(rad);
-				for (size_t i = 0; i < l; i++)
-					{
-//					if ((_rad[i] <= (FPTYPE)0.0)|| (_rad[i] >= (FPTYPE)1.0)) _rad[i] = (FPTYPE)0.5;
-					}
+				for (size_t i = 0; i < l; i++) { if (_rad[i] < (FPTYPE)0.0) _rad[i] = 0.0; else if (_rad[i] > (FPTYPE)1.0) _rad[i] = 1.0; }
 				}
 
 
 			/**
-			* Sets all radii to r.
+			* Sets all s-radii to r.
 			**/
 			void setRadii(FPTYPE r = 0.5)
 				{
-				MTOOLS_INSURE(r > 0.0);
+				MTOOLS_INSURE((r >= (FPTYPE)0.0)&&(r <= (FPTYPE)1.0));
 				const size_t l = _gr.size();
 				_rad.resize(l);
 				for (size_t i = 0; i < l; i++) { _rad[i] = r; }
@@ -991,21 +1169,35 @@ namespace mtools
 
 
 			/**
-			* Return the list of radii.
+			* Return the list of s-radii.
 			*/
 			std::vector<FPTYPE> getRadii() const { return _perm.getAntiPermute(_rad); }
 
 
 			/**
+			*
+			*                            TODO
+			*
 			* Compute the error in the circle radius in L2 norm.
 			*/
-			FPTYPE errorL2() const { return internals_circlepacking::errorL2euclidian(_gr, _rad, (int)_nb); }
+			FPTYPE errorL2() const 
+				{ 
+				//   TODO, compute hyperbolic error
+				return 1;
+				}
 
 
 			/**
+			*
+			*                            TODO 
+			*
 			* Compute the error in the circle radius in L1 norm.
 			*/
-			FPTYPE errorL1() const { return internals_circlepacking::errorL1euclidian(_gr, _rad, (int)_nb); }
+			FPTYPE errorL1() const 
+				{ 
+				//   TODO, compute hyperbolic error
+				return 1;
+				}
 
 
 			/**
@@ -1024,7 +1216,7 @@ namespace mtools
 				{
 				auto totduration = chrono();
 				FastRNG gen;					// use to randomize acceleration.
-				FPTYPE minc = errorL2();
+				FPTYPE minc = errorL2();  // <- currently, this is wrong since errorL2 is not implemented.
 				if (_verbose)
 					{ 
 					mtools::cout << "\n  --- Starting Packing Algorithm [CPU] ---\n\n"; 
@@ -1097,6 +1289,9 @@ namespace mtools
 					lambda = c / c0;
 					fl = true;				
 					/*
+
+					ACCELERATION NOT WORKING, SHOULD CHANGE SOMETIHNG...
+
 					if ((fl0) && (lambda < 1.0))
 						{
 						if (abs(lambda - lambda0) < delta) {  lambda = lambda / (1.0 - lambda); }
@@ -1161,10 +1356,13 @@ namespace mtools
 
 				std::vector<std::vector<int> >	_gr;		// the graph
 				mtools::Permutation				_perm;		// the permutation applied to get all the boundary vertices at the end
-				std::vector<FPTYPE>				_rad;		// vertex raduises
+				std::vector<FPTYPE>				_rad;		// s-radii
 				size_t							_nb;		// number of internal vertices
 
 			};
+
+
+
 
 
 
@@ -1181,19 +1379,18 @@ namespace mtools
 
 
 		/**
-		 * Similar to CirclePackingLabelEuclidian but use GPU acceleration.
+		 * Same as the class above but use GPU acceleration.
 		 * This class is defined only if the openCL extension is activated. 
 		 * 
 		 * @tparam	FPTYPE	floating type used for calculations. Must be either double or float.
 		 **/
-		template<typename FPTYPE = double> class CirclePackingLabelEuclidianGPU
+		template<typename FPTYPE = double> class CirclePackingLabelGPU
 			{
 
 			using UINT_VEC4   = uint32[4];
 			using FPTYPE_VEC8 = FPTYPE[8];
 
-			static_assert(std::is_same<FPTYPE, double>::value || std::is_same<FPTYPE, float>::value, "mtools::CirclePackingLabelEuclidianGPU<FPTYPE> can only be instantiated with FPTYPE= double or float.");
-
+			static_assert(std::is_same<FPTYPE, double>::value || std::is_same<FPTYPE, float>::value, "mtools::CirclePackingLabelGPU<FPTYPE> can only be instantiated with FPTYPE= double or float.");
 
 			public:
 
@@ -1202,96 +1399,131 @@ namespace mtools
 			 *
 			 * @param	verbose	true print informations to mtools::cout.
 			 */
-			CirclePackingLabelEuclidianGPU(bool verbose = false) : _verbose(verbose), _localsize(-1), _nbVertices(0), _clbundle(true, verbose, verbose)
+			CirclePackingLabelGPU(bool verbose = false) : _verbose(verbose), _localsize(-1), _nbVertices(0), _clbundle(true, verbose, verbose)
+				{
+				clear();
+				}
+
+
+			/* dtor, empty object */
+			~CirclePackingLabelGPU() 
 				{
 				}
 
 
+			/**
+			* Decide whether packing information should be printed to mtools::cout.
+			**/
+			void verbose(bool verb) { _verbose = verb; }
+
+
+			/** Clears the object to a blank initial state. */
+			void clear()
+				{
+				_gr.clear();
+				_perm.clear();
+				_nb = 0;
+				_nbdummy = 0;
+				_rad.clear();
+				}
+
 
 			/**
-			* Set the triangulation whose packing label is to be computed
+			* Loads a triangulation and define the boundary vertices.
+			* All radii are set to 1.0. 
 			*
-			* @param	triangulation	The combinatorial map. It must be a triangulation with a boundary.
-			* @param	outFaceDart		Index of a dart in the combinatorial map that identifies the outer face.
-			**/
-			void setTriangulation(const CombinatorialMap & triangulation, int outFaceDart)
+			* @param graph	   The triangulation with boundary.
+			* @param boundary  The boundary vector. Every index i for which boundary[i] > 0
+			* 					is considered to be a boundary vertice.
+			*/
+			template<typename GRAPH> void setTriangulation(const GRAPH & graph, std::vector<int> boundary)
 				{ 
-				const size_t l = (size_t)triangulation.nbVertices();
-				std::vector<int> boundary(l);
-				int dart = outFaceDart;
-				size_t nbb = 0;
-				do {
-					int & bv = boundary[triangulation.vertice(dart)];
-					if (bv == 0) { bv = 1; nbb++; }
-					dart = triangulation.phi(dart);
+				const size_t l = graph.size();
+				MTOOLS_INSURE(l > 4);
+				MTOOLS_INSURE(boundary.size() == l);
+				clear();
+				_nb = 0;
+				int lb = -1;
+				for (size_t i = 0; i < l; i++) 
+					{ 
+					if (boundary[i] <= 0.0) { boundary[i] = -(int)graph[i].size() - 2; _nb++; } else { lb = (int)i; }
 					}
-				while (dart != outFaceDart);
-				// compute the number of dummy vertices to add to get a multiple of groupsize
-				_nb = l - nbb;
+				MTOOLS_INSURE((_nb > 0) && (_nb < l - 2));
+				_gr = convertGraph<GRAPH, std::vector<std::vector<int> > >(graph);
+				// add dummy vertice so that the number of inner vertices is a multiple of groupsize
 				const int wg = _clbundle.maxWorkGroupSize();
 				const int r = ((int)_nb) % wg;
 				_nbdummy = ((r == 0) ? 0 : (wg - r));
-
+				_gr.resize(l + _nbdummy);
 				boundary.resize(l + _nbdummy);
-				std::vector<std::vector<int> > graph = triangulation.toGraph();
-				graph.resize(l + _nbdummy);
-
-				_perm.setSortPermutation(boundary);
-				_gr = permuteGraph<std::vector<std::vector<int> > >(graph, _perm);
+				for (size_t i = l; i < l + _nbdummy; i++)
+					{
+					boundary[i] = -1; // not a boundary site.
+					_gr[i].clear(); // not a real site (degree = 0)
+					}
 				_nb += _nbdummy;
-				_rad.resize(l + _nbdummy, (FPTYPE)1.0);
+				// done.
+				_perm.setSortPermutation(boundary);
+				_gr = permuteGraph<std::vector<std::vector<int> > >(_gr, _perm);
+				_rad.resize(_gr.size(), (FPTYPE)1.0);
 				}
 				
 
 			/**
-			* Sets the value of the radius of all circles to rad.
-			*
-			* @param	rad	The new radius of all circles, must be > 0.
-			**/
-			void setRadii(const FPTYPE & rad)
-				{
-				const size_t l = _gr.size();
-				for(size_t i = 0; i < l; i++) { _rad[i] = rad; }
-				}
-
-
-			/**
-			* Sets the value of the radius of all circles to rad.
-			*
-			* @param	rad	The new radius of the circles.
-			**/
+			 * Sets the radii of the circle around each vertices. 
+			 * The radii associated with the boundary vertices are not modified during 
+			 * the circle packing algorithm.
+			 *
+			 * @param	rad	The radii. Any values <= 0.0 is set to 1.0.
+			 **/
 			void setRadii(std::vector<FPTYPE> rad)
 				{
-				MTOOLS_INSURE(rad.size() == _rad.size() - _nbdummy);
-				rad.resize(_rad.size(), (FPTYPE)1.0);
+				const size_t l = _gr.size();
+				MTOOLS_INSURE(rad.size() == l - _nbdummy);
+				rad.resize(l,1.0);
 				_rad = _perm.getPermute(rad);
+				for (size_t i = 0; i < l; i++)
+					{
+					if (_rad[i] <= (FPTYPE)0.0) _rad[i] = (FPTYPE)1.0;
+					}
 				}
 
 
 			/**
-			* Return the current vector of radii associated with the sites of the triangulation.
-			*
-			* @return	The vector of radii. vec[i] is the radii of vertex i of the combinatorial map.
+			* Sets all radii to the same value r.
 			**/
+			void setRadii(FPTYPE r = 1.0)
+				{
+				MTOOLS_INSURE(r > 0.0);
+				const size_t l = _gr.size();
+				_rad.resize(l);
+				for (size_t i = 0; i < l; i++) { _rad[i] = r; }
+				}
+
+
+			/**
+			* Return the list of radii.
+			*
+			* @return	The radii of the circles around each vertices.
+			*/
 			std::vector<FPTYPE> getRadii() const 
 				{
 				std::vector<FPTYPE> r = _perm.getAntiPermute(_rad);
 				r.resize(r.size() - _nbdummy);
-				return r;
+				return r; 
 				}
 
 
 			/**
-			* Compute the current angle sum error of the layout (L2 norm).
+			* Compute the error in the circle radius in L2 norm.
 			*/
 			FPTYPE errorL2() const { return internals_circlepacking::errorL2euclidian(_gr, _rad, (int)_nb); }
 
 
 			/**
-			* Compute the current angle sum error of the layout (L1 norm).
+			* Compute the error in the circle radius in L1 norm.
 			*/
 			FPTYPE errorL1() const { return internals_circlepacking::errorL1euclidian(_gr, _rad, (int)_nb); }
-
 
 
 			/**
@@ -1443,7 +1675,7 @@ namespace mtools
 							mtools::cout << "L2 current error  = " << param[0] << "\n";
 							mtools::cout << "L2 minimum error  = " << param[5] << "\n";
 							mtools::cout << "L2 target         = " << param[3] << "\n";
-							mtools::cout << stepIter << " iterations performed in " << duration << "\n\n";
+							mtools::cout << stepIter << " interations performed in " << duration << "\n\n";
 							duration.reset();
 							}													
 						}
@@ -1474,6 +1706,28 @@ namespace mtools
 
 
 			private:
+
+				/** Compute the total angle around vertex index **/
+				inline FPTYPE angleSumEuclidian(const FPTYPE rx, const std::vector<int> & neighbour) const
+					{
+					const size_t l = neighbour.size();
+					FPTYPE sum(0.0);
+					FPTYPE ry = _rad[neighbour[l - 1]];
+					for (size_t i = 0; i<l; ++i)
+						{
+						const FPTYPE rz = _rad[neighbour[i]];
+						const FPTYPE a = rx + ry;
+						const FPTYPE b = rx + rz;
+						const FPTYPE c = ry + rz;
+						const FPTYPE r = (a*a + b*b - c*c) / (2 * a*b);
+						if (r < (FPTYPE)1.0)
+							{
+							if (r <= (FPTYPE)-1.0) { return sum += (FPTYPE)M_PI; } else { sum += acos(r); }
+							}
+						ry = rz;
+						}
+					return sum;
+					}
 
 
 				/* create the openCL kernels if needed */
@@ -1544,11 +1798,9 @@ namespace mtools
 				mtools::Permutation				_perm;		// the permutation applied to get all the boundary vertices at the end
 				std::vector<FPTYPE>				_rad;		// vertex raduises
 				size_t							_nb;		// number of internal vertices
-				size_t							_nbdummy;   // number of 'dummy' vertice so that the number of active vertice
+				size_t							_nbdummy;   // number of 'dummy' vertice so that the number of acitve vertice
 
 			};
-
-
 
 #endif
 
@@ -1556,5 +1808,6 @@ namespace mtools
 	}
 
 /* end of file */
+
 
 
