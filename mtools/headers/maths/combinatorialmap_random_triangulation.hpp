@@ -108,11 +108,20 @@ namespace mtools
 
 	/**
 	 * Peel a given number of steps of the UIPT type II. Use the peeling 'by layer'.
-	 *
-	 * @param [in,out]	CM 	The map to peel
-	 * @param	nbsteps	   	The nbsteps.
-	 * @param	peeldart   	The peeldart.
-	 * @param [in,out]	gen	The generate.
+	 * The peeling take place on a given face whci his assume to be the infinite face. Start from a triangle
+	 * map to construct the usual peeling. 
+	 * 
+	 * @param [in,out]	CM 			The map to peel
+	 * @param	nbsteps	   			The number of steps of peeling to perform.
+	 * @param	peeldart   			Dart that identify the infinite face to peel. 
+	 * @param	avoiddoubleedges	true to avoid double edges whenever possible. This means that when the peeling
+	 * 								algorithm encounters a face of size two, it collapse the two edges together.
+	 * 								This is useful for creating a type III free Boltzman triangulation BUT even
+	 * 								if avoiddoubleedges = true, the resulting map may still contain double edges!
+	 * 								Use collapseToTypeII() after this method to create a 'real' type III map.
+	 * @param [in,out]	gen			the random number generator
+	 * 					
+	 * returns the next edge to peel (identifies the infinite face). 
 	 */
 	template<typename random_t> int peelUIPT(CombinatorialMap & CM, int64 nbsteps, int predart, bool avoiddoubleddges, random_t & gen)
 		{
@@ -158,22 +167,29 @@ namespace mtools
 
 
 	/**
-	* Peel a given number of steps of an hyperbolic infinite planar triangulation (cf peelinglaw.hpp).
-	* Use the peeling 'by layer'.
+	* Peel a given number of steps of an hyperbolic infinite planar triangulation of  type II. Use the peeling 
+	* 'by layer'. The peeling take place on a given face whci his assume to be the infinite face. Start from a 
+	* triangle map to construct the usual peeling.
 	*
-	* @param [in,out]	CM 	The map to peel
-	* @param	nbsteps	   	The nbsteps.
-	* @param	peeldart   	The peeldart.
-	* 0param    theta       Parameter of hyperbolicity in (0,1/6] (use <= 1/8 otherwise its very slow). 						
-	* @param [in,out]	gen	The generate.
+	* @param [in,out]	CM 			The map to peel
+	* @param	nbsteps	   			The number of steps of peeling to perform.
+	* @param	peeldart   			Dart that identify the infinite face to peel.
+	* @param    theta               hyperbolicity paramter in (0,1/6) 1/6 = UIPT 								
+	* @param	avoiddoubleedges	true to avoid double edges whenever possible. This means that when the peeling
+	* 								algorithm encounters a face of size two, it collapse the two edges together.
+	* 								This is useful for creating a type III free Boltzman triangulation BUT even
+	* 								if avoiddoubleedges = true, the resulting map may still contain double edges!
+	* 								Use collapseToTypeII() after this method to create a 'real' type III map.
+	* @param [in,out]	gen			the random number generator
+	*
+	* returns the next edge to peel (identifies the infinite face).
 	*/
 	template<typename random_t> int peelHyperbolicIPT(CombinatorialMap & CM, int64 nbsteps, int predart, double theta, bool avoiddoubleddges, random_t & gen)
 		{
-		hyperbolicIPTLaw HL(theta);
 		int fsize = CM.faceSize(predart);
 		for (int64 n = 0; n < nbsteps; n++)
 			{
-			int k = (int)HL(fsize - 2, gen);
+			int k = (int)hyperbolicIPTLaw(fsize - 2, theta, gen);
 			if (avoiddoubleddges) { if (fsize == 3) { k = -1;} else if (fsize - k == 2) { k--; } } // avoid problematic cases...
 			if (k == -1)
 				{
