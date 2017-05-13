@@ -309,91 +309,42 @@ namespace mtools
 
 
 
-
-
-
 	/**
-	* Sample a random variable according to the law of the walk associated with the peeling process
-	* of an hyperbolic infinite plane Triangulation (cf Curien 2015 and methods above). 
+	* Sample a random variable according to increment of the size of the boundary when peeling an
+	* hyperbolic infinite planar triangulation of type II with a boundary of (m+2) vertices.
+	* This increment correpsond to those of the random walk with step hyperbolicIHPTLaw() 
+	* conditionned to stay non-negative. 
 	*
-	* @param	theta	parameter theta in (0,1/7]. (too slow for 1/7 < theta < 1/6).
-	* @param [in,out]  gen the random number generator
-	**/	class hyperbolicIPTLaw
+	* The h-transform is not explicit as for the UIPT. But for theta < 1/6, the walk has positive 
+	* drift hence the law is pretty close to the non-conditionned law. The method for simulating
+	* is just to make a few steps in advance and accept the first step if the walk does not go 
+	* below 0.
+	* 
+	* TODO : MAKE A BETTER APPROXIMATION....
+	*
+	* @param   m           the size of the boudary is m+2.
+	* @param   theta	   hyperbolicity parameter theta in (0,1/6).
+	* @param [in,out]  gen the random number generator.
+	*
+	* @return  The number of vertices removed from the boundary (or -1 if one was added).
+	**/
+	template<class random_t> inline int64 hyperbolicIPTLaw(int64 m, double theta, random_t & gen)
 		{
-		public:
-
-		hyperbolicIPTLaw(double theta) { setParam(theta); }
-
-		void setParam(double theta)
+		hyperbolicIHPT_CDF_obj O(theta);
+		const int NBSTEP = 10;
+		while (1)
 			{
-			MTOOLS_INSURE(theta <= 1 / 6.0); // 
-			_theta = theta;
-			_cvec.clear();
-			_cvec.reserve(1000);
-			const double alpha = 1 - 2 * theta;
-			_cvec.push_back(0.0);
-			_cvec.push_back(0.0);
-			_cvec.push_back(1/(alpha*alpha));
-			_cvec.push_back(1/(alpha*alpha*alpha));
-			_l = 1.0;
-			int p = 3;
-			while (1)
+			int64 x0 = sampleDiscreteRVfromCDF(O, gen);
+			int64 pos = m - x0;
+			for (int i = 0; i < NBSTEP; i++)
 				{
-				double C = _cvec[p];
-				for (int j = 1; j < p - 1; j++) { C -= _q(j, theta)*_cvec[p - j]; }
-				C /= alpha;
-				_cvec.push_back(C); // C(p+1);				
-				double r = C / _cvec[p]; if (r > _l) { _l = r; }
-				if (C <= _cvec[p]) { 
-					return; }
-				p++;
+				if (pos < 0) { break; }
+				pos -= sampleDiscreteRVfromCDF(O, gen);
 				}
+			if (pos >= 0) { return x0;  }
 			}
+		}
 
-
-		/**
-		* Sample a random variable according to increment of the size of the boundary when peeling the
-		* hyperblic triangulation of type II with a boundary of (m+2) vertices.
-		*
-		* @param   m           the size of the boundary is m+2.
-		* @param [in,out]  gen the random number generator.
-		*
-		* @return  The number of vertices removed from the boundary (or -1 if one was added).
-		**/
-		template<class random_t> int64 operator()(int64 m, random_t & gen) const
-			{
-			m += 2; // real boundary size
-			MTOOLS_INSURE(m >= 2);
-			if (m == 2) return -1; // always find a new vertex if boundary of size 2
-			// m is at least 3
-			while (1) // use rejection method
-				{
-				int64 y;
-				do { y = hyperbolicIHPTLaw(_theta, gen); }  // sample from hyperbolic half plane. 
-				while (m - y < 2); // reject if new boundary < 2. 
-				if (m - y >= (int)_cvec.size()) { return y; }
-				if (_l*Unif(gen) < (_cvec[m - y] / _cvec[m])) return y; // accept. 
-				}
-			}
-
-
-
-		private:
-
-
-			inline double _q(int i, double theta)
-				{
-				const double alpha = 1 - 2 * theta;
-				if (i == -1) return alpha;
-				if (i == 0) return 0.0;
-				return (2 * ((3 * alpha - 2)*i + 1)*exp(i*log(1.0 / (2 * alpha) - 0.5) + factln(2 * i - 2) - factln(i - 1) - factln(i + 1)));
-				}
-
-			double _theta;
-			double _l;
-			std::vector<double> _cvec;
-
-		};
 
 
 	/**
