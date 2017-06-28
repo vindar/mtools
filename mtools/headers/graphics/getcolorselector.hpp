@@ -58,26 +58,26 @@ namespace mtools
     *
     * The signature below are recognized with the following order:
     *
-    *  std::pair<RGBc,bool> getImage([const] fVec2 [&] pos, [const] fBox2 [&] box, int32 nbiter, void* & data)
-    *  std::pair<RGBc,bool> getImage([const] fVec2 [&] pos, [const] fBox2 [&] box, int32 nbiter)
-    *  std::pair<RGBc,bool> getImage([const] fVec2 [&] pos, [const] fBox2 [&] box)
-    *  std::pair<RGBc,bool> getImage([const] fVec2 [&] pos)
+    *  std::pair<RGBc,bool> getColor([const] fVec2 [&] pos, [const] fBox2 [&] box, int32 nbiter, void* & data)
+    *  std::pair<RGBc,bool> getColor([const] fVec2 [&] pos, [const] fBox2 [&] box, int32 nbiter)
+    *  std::pair<RGBc,bool> getColor([const] fVec2 [&] pos, [const] fBox2 [&] box)
+    *  std::pair<RGBc,bool> getColor([const] fVec2 [&] pos)
     *  std::pair<RGBc,bool> operator()([const] fVec2 [&] pos, [const] fBox2 [&] box, int32 nbiter, void* & data)
     *  std::pair<RGBc,bool> operator()([const] fVec2 [&] pos, [const] fBox2 [&] box, int32 nbiter)
     *  std::pair<RGBc,bool> operator()([const] fVec2 [&] pos, [const] fBox2 [&] box)
     *  std::pair<RGBc,bool> operator()([const] fVec2 [&] pos)
-    *  std::pair<RGBc,bool> getImage([const] double [&] x, [const] double [&] y)
+    *  std::pair<RGBc,bool> getColor([const] double [&] x, [const] double [&] y)
     *  std::pair<RGBc,bool> operator()([const] double [&] x, [const] double [&] y)
     *
-    *  RGBc getImage([const] fVec2 [&] pos, [const] fBox2 [&] box, int32 nbiter, void* & data)
-    *  RGBc getImage([const] fVec2 [&] pos, [const] fBox2 [&] box, int32 nbiter)
-    *  RGBc getImage([const] fVec2 [&] pos, [const] fBox2 [&] box)
-    *  RGBc getImage([const] fVec2 [&] pos)
+    *  RGBc getColor([const] fVec2 [&] pos, [const] fBox2 [&] box, int32 nbiter, void* & data)
+    *  RGBc getColor([const] fVec2 [&] pos, [const] fBox2 [&] box, int32 nbiter)
+    *  RGBc getColor([const] fVec2 [&] pos, [const] fBox2 [&] box)
+    *  RGBc getColor([const] fVec2 [&] pos)
     *  RGBc operator()([const] fVec2 [&] pos, [const] fBox2 [&] box, int32 nbiter, void* & data)
     *  RGBc operator()([const] fVec2 [&] pos, [const] fBox2 [&] box, int32 nbiter)
     *  RGBc operator()([const] fVec2 [&] pos, [const] fBox2 [&] box)
     *  RGBc operator()([const] fVec2 [&] pos)
-    *  RGBc getImage([const] double [&] x, [const] double [&] y)
+    *  RGBc getColor([const] double [&] x, [const] double [&] y)
     *  RGBc operator()([const] double [&] x, [const] double [&] y)
     *
     **/
@@ -299,10 +299,10 @@ namespace mtools
         *
         * The signature below are recognized with the following order:
         *
-        *  RGBc getImage([const]iVec2 [&] pos, void* & data)
-        *  RGBc getImage([const]iVec2 [&] pos)
-        *  RGBc getImage([const] int64 [&] x,[const] int64 [&] y, void* & data)
-        *  RGBc getImage([const] int64 [&] x,[const] int64 [&] y)
+        *  RGBc getColor([const]iVec2 [&] pos, void* & data)
+        *  RGBc getColor([const]iVec2 [&] pos)
+        *  RGBc getColor([const] int64 [&] x,[const] int64 [&] y, void* & data)
+        *  RGBc getColor([const] int64 [&] x,[const] int64 [&] y)
         *  RGBc operator()([const]iVec2 [&] pos, void* & data)
         *  RGBc operator()([const]iVec2 [&] pos)
         *  RGBc operator()([const] int64 [&] x,[const] int64 [&] y, void* & data)

@@ -45,7 +45,7 @@ namespace mtools
      * ThreadPlaneDrawer class
      * 
      * Use a single thread to draw from a getColor function into a progressImg. Used by the
-     * PlaneDRawer class which combined several instance of the class to optimized the drawing using
+     * PlaneDrawer class which combined several instance of the class to optimized the drawing using
      * several threads.
      *
      * @tparam  ObjType Type of the object to draw. Must implement a method recognized by

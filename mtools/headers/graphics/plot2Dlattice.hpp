@@ -586,7 +586,7 @@ namespace mtools
         * @param [in,out]  obj The Plane object to plot (reference version)
         * @param   name        The name of the plot.
         *
-        * @return  A Plot2DPlane<T>
+        * @return  A Plot2DPixel<T>
         **/
         template<typename T> Plot2DPixel<T> makePlot2DPixel(T & obj, int nbthreads = 1, std::string name = "PixelLattice")
             {

@@ -47,7 +47,7 @@ namespace mtools
     /**
      * Thread pixel drawer class.
      * 
-     * Template class that create a unique thread used to dra inside a progressImg. This class is
+     * Template class that create a unique thread used to draw inside a progressImg. This class is
      * used by the PixelDrawer class which combine several threads together for faster drawing.
      *
      * @tparam  ObjType Type of object to draw. Must implement a color recognized by the
