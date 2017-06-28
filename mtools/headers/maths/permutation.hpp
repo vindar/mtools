@@ -37,10 +37,10 @@ namespace mtools
 	inline bool isPermutationVector(const std::vector<int> & vec)
 		{
 		std::vector<int> tab(vec.size(), 0);
-		for (int i = 0;i < vec.size();i++)
+		for (int i = 0;i < (int)vec.size();i++)
 			{
 			int k = vec[i];
-			if ((k < 0) || (k >= vec.size()) || (tab[k] != 0)) return false;
+			if ((k < 0) || (k >= (int)vec.size()) || (tab[k] != 0)) return false;
 			tab[k] = 1;
 			}
 		return true;
@@ -145,7 +145,7 @@ namespace mtools
 		void setMirror(size_t size)
 			{
 			_perm.resize(size); _invperm.resize(size);
-			for (int i = 0; i < size; i++) { _perm[i] = (int)size - 1 - i; _invperm[i] = (int)size - 1 - i; }
+			for (int i = 0; i < (int)size; i++) { _perm[i] = (int)size - 1 - i; _invperm[i] = (int)size - 1 - i; }
 			}
 
 
@@ -249,10 +249,10 @@ namespace mtools
 		void resize(int newsize)
 			{
 			const size_t l = _perm.size();
-			if (newsize >= l) // increase size
+			if (newsize >= (int)l) // increase size
 				{ 
 				_perm.resize(newsize); _invperm.resize(newsize);
-				for (size_t i = l; i < newsize; i++) { _perm[i] = (int)i; _invperm[i] = (int)i; }
+				for (size_t i = l; i < (size_t)newsize; i++) { _perm[i] = (int)i; _invperm[i] = (int)i; }
 				return;
 				}
 
@@ -334,7 +334,7 @@ namespace mtools
 			if (details)
 				{
 				s += "\n";
-				for (int i = 0;i < l;i++) { s += mtools::toString(i) + "\t -> \t" + mtools::toString(_perm[i]) + "\n"; }
+				for (int i = 0;i < (int)l;i++) { s += mtools::toString(i) + "\t -> \t" + mtools::toString(_perm[i]) + "\n"; }
 				}
 			return s;
 			}

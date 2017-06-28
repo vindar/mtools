@@ -28,6 +28,9 @@
 #include "io/console.hpp"
 #include "io/fileio.hpp"
 
+
+
+
 namespace mtools
 	{
 
@@ -44,7 +47,7 @@ namespace mtools
 				{
 				mtools::cout << "-----------------------------------------------\n";
 				mtools::cout << "OpenCL platforms found: " << platformList.size() << "\n\n";
-				for (int i = 0; i < platformList.size(); ++i)
+				for (int i = 0; i < (int)platformList.size(); ++i)
 					{
 					mtools::cout << "(" << i << ") Platform name: [" << mtools::troncateAfterNullChar(platformList[i].getInfo<CL_PLATFORM_NAME>()) << "]\n";
 					mtools::cout << "           vendor: [" << mtools::troncateAfterNullChar(platformList[i].getInfo<CL_PLATFORM_VENDOR>()) << "]\n";
@@ -61,11 +64,12 @@ namespace mtools
 				return platform;
 				}
 			int i = -1;
-			while ((i < 0) || (i >= platformList.size())) { i = mtools::cout.ask("Which platform do you want to use ? ", 0); }
+			while ((i < 0) || (i >= (int)platformList.size())) { i = mtools::cout.ask("Which platform do you want to use ? ", 0); }
 			mtools::cout << "Selecting platform : [" << mtools::troncateAfterNullChar(platformList[i].getInfo<CL_PLATFORM_NAME>()) << "]\n";
 			return platformList[i];
 			}
 		catch (const cl::Error & e) { MTOOLS_ERROR(std::string("OpenCL error :[") + e.what() + "]\n"); }
+		throw ""; // used to remove warning
 		}
 
 
@@ -80,7 +84,7 @@ namespace mtools
 				{
 				mtools::cout << "-----------------------------------------------\n";
 				mtools::cout << "GPU device found: " << deviceList.size() << "\n\n";
-				for (int i = 0; i < deviceList.size(); ++i)
+				for (int i = 0; i < (int)deviceList.size(); ++i)
 					{
 					mtools::cout << "(" << i << ")        name: [" << mtools::troncateAfterNullChar(deviceList[i].getInfo<CL_DEVICE_NAME>()) << "]\n";
 					mtools::cout << "       mem size: [" << deviceList[i].getInfo<CL_DEVICE_GLOBAL_MEM_SIZE>() / (1024 * 1024) << "Mo]\n";
@@ -91,12 +95,13 @@ namespace mtools
 				}
 			int i = -1;
 			if ((selectdefault) || (deviceList.size() == 1)) { i = 0; }
-			while ((i < 0) || (i >= deviceList.size())) { i = mtools::cout.ask("Which device do you want to use ? ", 0); }
+			while ((i < 0) || (i >= (int)deviceList.size())) { i = mtools::cout.ask("Which device do you want to use ? ", 0); }
 			if ((int)deviceList[i].getInfo<CL_DEVICE_AVAILABLE>() == 0) { MTOOLS_ERROR("The openCL device selected is not available"); }
 			if (output) { mtools::cout << "Selecting device : [" << mtools::troncateAfterNullChar(deviceList[i].getInfo<CL_DEVICE_NAME>()) << "]\n"; }
 			return deviceList[i];
 			}
 		catch (const cl::Error & e) { MTOOLS_ERROR(std::string("OpenCL error :[") + e.what() + "]\n"); }
+		throw ""; // used to remove warning
 		}
 
 
@@ -112,6 +117,7 @@ namespace mtools
 			return context;
 			}
 		catch (const cl::Error & e) { MTOOLS_ERROR(std::string("OpenCL error :[") + e.what() + "]\n"); }
+		throw ""; // used to remove warning
 		}
 
 
@@ -127,6 +133,7 @@ namespace mtools
 			return queue;
 			}
 		catch (const cl::Error & e) { MTOOLS_ERROR(std::string("OpenCL error :[") + e.what() + "]\n"); }
+		throw ""; // used to remove warning
 		}
 
 
@@ -141,6 +148,7 @@ namespace mtools
 			queue = openCL_createQueue(device, context, output);
 			}
 		catch (const cl::Error & e) { MTOOLS_ERROR(std::string("OpenCL error :[") + e.what() + "]\n"); }
+		throw ""; // used to remove warning
 		}
 
 
@@ -183,6 +191,7 @@ namespace mtools
 			return prog;
 			}
 		catch (const cl::Error & e) { MTOOLS_ERROR(std::string("OpenCL error :[") + e.what() + "]\n"); }
+		throw ""; // used to remove warning
 		}
 
 
@@ -219,6 +228,7 @@ namespace mtools
 			return prog;
 			}
 		catch (const cl::Error & e) { MTOOLS_ERROR(std::string("OpenCL error :[") + e.what() + "]\n"); }
+		throw ""; // used to remove warning
 		}
 
 
@@ -235,6 +245,7 @@ namespace mtools
 			return kernel;
 			}
 		catch (const cl::Error & e) { MTOOLS_ERROR(std::string("OpenCL error :[") + e.what() + "]\n"); }
+		throw ""; // used to remove warning
 		}
 
 

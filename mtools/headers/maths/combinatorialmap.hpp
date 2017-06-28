@@ -355,7 +355,7 @@ namespace mtools
 				cm._alpha = _alpha;	// same alpha
 				const size_t l = nbDarts();
 				cm._sigma.resize(l);
-				for (int i = 0; i < l; i++) { cm._sigma[i] = phi(i); } // invert phi becomes sigma
+				for (int i = 0; i < (int)l; i++) { cm._sigma[i] = phi(i); } // invert phi becomes sigma
 				cm._vertices = _faces;
 				cm._nbvertices = _nbfaces;
 				cm._faces = _vertices;
@@ -951,10 +951,10 @@ namespace mtools
 				s += std::string("   root pos : ") + mtools::toString(root()) + "\n";
 				if (detailed)
 					{
-					s += std::string("alpha     = [ "); for (int i = 0; i < _alpha.size(); i++) { s += mtools::toString(_alpha[i]) + " "; } s += "]\n";
-					s += std::string("sigma     = [ "); for (int i = 0; i < _sigma.size(); i++) { s += mtools::toString(_sigma[i]) + " "; } s += "]\n";
-					s += std::string("vertices  = [ "); for (int i = 0; i < _vertices.size(); i++) { s += mtools::toString(_vertices[i]) + " "; } s += "]\n";
-					s += std::string("faces     = [ "); for (int i = 0; i < _vertices.size(); i++) { s += mtools::toString(_faces[i]) + " "; } s += "]\n";
+					s += std::string("alpha     = [ "); for (int i = 0; i < (int)_alpha.size(); i++) { s += mtools::toString(_alpha[i]) + " "; } s += "]\n";
+					s += std::string("sigma     = [ "); for (int i = 0; i < (int)_sigma.size(); i++) { s += mtools::toString(_sigma[i]) + " "; } s += "]\n";
+					s += std::string("vertices  = [ "); for (int i = 0; i < (int)_vertices.size(); i++) { s += mtools::toString(_vertices[i]) + " "; } s += "]\n";
+					s += std::string("faces     = [ "); for (int i = 0; i < (int)_vertices.size(); i++) { s += mtools::toString(_faces[i]) + " "; } s += "]\n";
 					}
 				return s;
 				}
@@ -1002,7 +1002,7 @@ namespace mtools
 				MTOOLS_INSURE(isPermutationVector(_sigma));
 
 				// make sure the vertices vector is ok
-				MTOOLS_INSURE((_nbvertices > 0) && (_nbvertices <= l));
+				MTOOLS_INSURE((_nbvertices > 0) && (_nbvertices <= (int)l));
 
 				{ // check that the vertice vector is ok.
 				std::vector<int> vv(l, -1);
@@ -1106,8 +1106,8 @@ namespace mtools
 			/* Private method */
 			int _addSplittingTriangle(int dartIndexBase, int dartIndexTarget, bool collapsedoubleedge)
 				{
-				MTOOLS_ASSERT((dartIndexBase >= 0) && (dartIndexBase < _alpha.size()));
-				MTOOLS_ASSERT((dartIndexTarget >= 0) && (dartIndexTarget < _alpha.size()));
+				MTOOLS_ASSERT((dartIndexBase >= 0) && (dartIndexBase < (int)_alpha.size()));
+				MTOOLS_ASSERT((dartIndexTarget >= 0) && (dartIndexTarget < (int)_alpha.size()));
 				MTOOLS_INSURE(_faces[dartIndexBase] == _faces[dartIndexTarget]);
 				MTOOLS_INSURE(dartIndexTarget != dartIndexBase);
 				MTOOLS_INSURE(dartIndexTarget != phi(dartIndexBase));
@@ -1266,7 +1266,7 @@ namespace mtools
 			/* internal method */
 			void _boltzmannPeelingAlgo(int preDart, std::function<int(int &, int)> fun, int fsize, bool collapsedoubleedge)
 				{
-				MTOOLS_INSURE((preDart >= 0) && (preDart < _alpha.size()));
+				MTOOLS_INSURE((preDart >= 0) && (preDart < (int)_alpha.size()));
 				std::queue<std::pair<int, int> > que;
 				que.push(std::pair<int, int>(preDart, fsize));
 				while (que.size() > 0)

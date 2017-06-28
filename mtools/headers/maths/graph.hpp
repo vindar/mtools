@@ -142,7 +142,7 @@ namespace mtools
 			const size_t l = vec.size();
 			i = (i % l) + l; // i is now non-negative
 			std::vector<int> vec2(l);
-			for (int k = 0; k < l; k++) { vec2[k] = vec[(k + i) % l]; }
+			for (int k = 0; k < (int)l; k++) { vec2[k] = vec[(k + i) % l]; }
 			return vec2;
 			}
 		
