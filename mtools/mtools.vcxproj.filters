@@ -326,9 +326,6 @@
     <ClCompile Include="stdafx_mtools.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="sources\plot2Dcimg.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="sources\error.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
