@@ -206,7 +206,8 @@ namespace mtools
             **/
             virtual void removed(Fl_Group * optionWin) override
                 {
-                _LD->enable(false); // so that the underlying object will not be ccessed anymore.
+                _LD->enable(false); // so that the underlying object will not be accessed anymore.
+				_PD->sync();
                 }
 
 
