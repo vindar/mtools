@@ -29,7 +29,23 @@ int main(int argc, char *argv[])
 	parseCommandLine(argc, argv);
 
 
+	Img<unsigned char> im; 
+	im.load("lenna.jpg");
+
 	Plotter2D plotter;
+
+
+	auto P3 = makePlot2DCImg(im, 1,"image");
+
+
+
+	plotter[P3];
+
+	plotter.plot();
+
+	return 0;
+
+
 
 	auto P1 = makePlot2DLattice(color, "Lattice");
 	auto P2 = makePlot2DPixel(color, 3, "Pixel");
