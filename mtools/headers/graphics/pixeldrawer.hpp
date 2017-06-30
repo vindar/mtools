@@ -458,7 +458,7 @@ namespace mtools
                         check();
                         for (int64 i = xmin; i <= xmax; i++)
                             {
-							if (i % 50 == 0) check();
+							if (i % 128 == 0) check();
                             imData[off] = mtools::GetColorSelector<ObjType>::call(*_obj, { i , j }, _opaque);
                             normData[off] = 0;
                             off++;
@@ -473,7 +473,7 @@ namespace mtools
                         check();
                         for (int64 i = xmin; i <= xmax; i++)
                             {
-							if (i % 50 == 0) check();
+							if (i % 128 == 0) check();
                             imData[off] = mtools::GetColorSelector<ObjType>::call(*_obj, { i , j }, _opaque);
                             normData[off] = 0;
                             off++;
@@ -566,7 +566,7 @@ namespace mtools
                         {
                         for (int64 ii = 0; ii < ilx; ii++)
                             {
-							if (ii % 50 == 0) check();
+							if (ii % 128 == 0) check();
                             iBox2 siteBox((int64)std::floor(pixBox.min[0] + 0.5), (int64)std::ceil(pixBox.max[0] - 0.5), (int64)std::floor(pixBox.min[1] + 0.5), (int64)std::ceil(pixBox.max[1] - 0.5));
                             if (px > 2.0)
                                 { // adjust horizontal boundary
@@ -673,7 +673,7 @@ namespace mtools
 									check();
 									for (int64 i = siteBox.min[0]; i <= siteBox.max[0]; i++)
 										{
-										if (i % 256 == 0) check();
+										if (i % 128 == 0) check();
 										const RGBc c = mtools::GetColorSelector<ObjType>::call(*_obj, { i, j }, _opaque);
 										iR += c.comp.R; iG += c.comp.G; iB += c.comp.B; iA += c.comp.A;
 										}
