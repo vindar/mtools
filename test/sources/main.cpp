@@ -35,20 +35,34 @@ int main(int argc, char *argv[])
 	Plotter2D plotter;
 
 
-	auto P3 = makePlot2DCImg(im, 1,"image");
-
-
+	auto P3 = makePlot2DCImg(nullptr, 6,"image");
 
 	plotter[P3];
 
-	plotter.plot();
+	plotter.startPlot(); 
+
+	cout.getKey();
+
+	P3.image(im);
+
+	cout.getKey();
+
+	P3.image(nullptr);
+	
+	cout.getKey();
+	
+	P3.image(im);
+
+	cout.getKey();
+
+	plotter.endPlot();
 
 	return 0;
 
 
 
 	auto P1 = makePlot2DLattice(color, "Lattice");
-	auto P2 = makePlot2DPixel(color, 3, "Pixel");
+	auto P2 = makePlot2DPixel(color, 6, "Pixel");
 
 	plotter[P1][P2];
 	plotter.plot();

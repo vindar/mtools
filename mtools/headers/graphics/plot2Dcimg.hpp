@@ -181,69 +181,33 @@ namespace mtools
         inline RGBc getColor(iVec2 pos)
             {
             if (_im == nullptr) return RGBc::c_TransparentWhite;
-            if (_typepos == TYPEBOTTOMLEFT) { pos.Y() = _im->height() - 1 - pos.Y(); }
-            else
-                {
-                pos.X() -= _im->width() /2;
-                pos.Y() = _im->height()/2 - 1 - pos.Y();
-                }
-            const int64 dx = _im->width();
-            const int64 dxy = dx*_im->height();
-            int64 off = pos.X() + dx*pos.Y();
-            if ((off < 0) || (off >= dxy)) return RGBc::c_TransparentWhite;
-            const unsigned char * p = _im->data();
-            const char r = *(p + off);
-            const char g = *(p + off + dxy);
-            const char b = *(p + off + 2*dxy);
-            const char a = ((_im->spectrum() < 4) ? 255 : (*(p + off + 3*dxy)));
-            return RGBc(r, g, b, a);
+			const int64 lx = _im->width();
+			const int64 ly = _im->height();
+			int64 x = pos.X();
+			int64 y = pos.Y();
+			if (_typepos == TYPECENTER) { x += lx/2; y += ly/2; }
+			if ((x <0)||(y < 0)||(x >= lx)||(y >= ly)) return RGBc::c_TransparentWhite;
+			y = ly - 1 - y;
+			const int64 lxy = lx*ly;
+			int64 off = x + lx*y;
+			const unsigned char * p = _im->data();
+			const char r = *(p + off);
+			const char g = *(p + off + lxy);
+			const char b = *(p + off + 2*lxy);
+			const char a = ((_im->spectrum() < 4) ? 255 : (*(p + off + 3*lxy)));
+			return RGBc(r, g, b, a);
             }
 
 
+		
+		virtual fBox2 favouriteRangeX(fBox2 R) override { return computeRange(); }
 
-		/* set the domain
-		void _setDomain()
-		{
-		if (_im == nullptr) { _LD->domainEmpty(); return; }
-		if (_typepos == TYPECENTER)
-		{
-		_LD->domain(iBox2(-_im->width() / 2, _im->width() - 1 - _im->width() / 2, _im->height() / 2 - _im->height(), _im->height() / 2 - 1)); return;
-		}
-		_LD->domain(iBox2(0, _im->width() - 1, 0, _im->height() - 1));
-		}
-		*/
-
-
-		/*
-		virtual fBox2 favouriteRangeX(fBox2 R) override
-			{
+		virtual fBox2 favouriteRangeY(fBox2 R) override { return computeRange(); }
 			
-			if ((_LD->isDomainEmpty() || _LD->isDomainFull())) return fBox2(); // no favourite range
-			iBox2 D = _LD->domain();
-			return fBox2((double)D.min[0] - 0.5, (double)D.max[0] + 0.5, (double)D.min[1] - 0.5, (double)D.max[1] + 0.5);
-			}
+		virtual bool hasFavouriteRangeX() override { return(!computeRange().isEmpty()); }
 
-
-
-		virtual fBox2 favouriteRangeY(fBox2 R) override
-			{
-			if ((_LD->isDomainEmpty() || _LD->isDomainFull())) return fBox2(); // no favourite range
-			iBox2 D = _LD->domain();
-			return fBox2((double)D.min[0] - 0.5, (double)D.max[0] + 0.5, (double)D.min[1] - 0.5, (double)D.max[1] + 0.5);
-			}
-
-
-		virtual bool hasFavouriteRangeX() override
-			{
-			return(!(_LD->isDomainEmpty() || _LD->isDomainFull())); // there is a favourite range if the domain is neither empy nor full
-			}
-
-
-		virtual bool hasFavouriteRangeY() override
-			{
-			return(!(_LD->isDomainEmpty() || _LD->isDomainFull())); // there is a favourite range if the domain is neither empy nor full
-			}
-			*/
+		virtual bool hasFavouriteRangeY() override { return(!computeRange().isEmpty()); }
+			
 
     protected:
 
@@ -270,6 +234,7 @@ namespace mtools
 			{
 			_PD->redraw(false);
 			_PD->sync();
+			Plotter2DObj::refresh();
 			}
 
 		virtual int drawOnto(Img<unsigned char> & im, float opacity = 1.0) override
@@ -329,6 +294,17 @@ namespace mtools
 
     private:
 
+
+		/* compute the range of the image */
+		fBox2 computeRange()
+			{
+			if (_im == nullptr) return fBox2();
+			const int lx = _im->width();
+			const int ly = _im->height();
+			if (_typepos == TYPEBOTTOMLEFT) return fBox2(-0.5, lx - 0.5, -0.5, ly - 0.5);
+			return fBox2(-0.5 - (lx / 2), lx - 0.5 - (lx / 2), -0.5 - (ly / 2), ly - 0.5 - (ly / 2));
+			}
+
         /* update the state of the buttons */
         void _updatePosTypeInFLTK()
 			{
@@ -357,6 +333,7 @@ namespace mtools
         Fl_Round_Button * _checkButtonBottomLeft;		 //
 
     };
+
 
 
 	/**
