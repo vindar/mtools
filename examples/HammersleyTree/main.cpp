@@ -427,8 +427,8 @@ int main(int argc, char *argv[])
     drawPoints(image);
   //  drawTrees(image_trees);       // uncomment to color the tree alternatively
 
-    auto im = makePlot2DCImg(image, "lines");
-    auto imTrees = makePlot2DCImg(image_trees, "trees");
+    auto im = makePlot2DCImg(image, 1, "lines");
+    auto imTrees = makePlot2DCImg(image_trees, 1, "trees");
 
     Plotter2D Plotter;
     Plotter.axesObject(false);
