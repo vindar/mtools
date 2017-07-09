@@ -430,7 +430,8 @@ namespace mtools
                 void deallocate(void* p, size_type n = 1)
                     {
                     if (n != 1) { MTOOLS_ERROR(std::string("SingleObjectAllocator<") + typeid(T).name() + ", " + mtools::toString(AllocSize) + ", " + mtools::toString(PoolSize) + ">::deallocate. Trying to deallocate " + mtools::toString(n) + " objects simultaneously (should be 1)"); }
-                    _memPool->free(p);
+					if (_count == nullptr) return; // empty object, do nothing
+					_memPool->free(p);
                     }
 
 
@@ -441,7 +442,8 @@ namespace mtools
                  **/
                 void deallocateAll(bool releaseMemoryToOS = false)
                     {
-                    _memPool->freeAll(releaseMemoryToOS);
+					if (_count == nullptr) return; // empty object, do nothing
+					_memPool->freeAll(releaseMemoryToOS);
                     }
 
 
@@ -484,7 +486,8 @@ namespace mtools
                  **/
                 void destroyAndDeallocateAll(bool releaseMemoryToOS = false)
                     {
-                    _memPool->template destroyAndFreeAll<T>(releaseMemoryToOS);
+					if (_count == nullptr) return; // empty object, do nothing
+					_memPool->template destroyAndFreeAll<T>(releaseMemoryToOS);
                     }
 
 
@@ -497,7 +500,8 @@ namespace mtools
                 template<typename U> void destroyAndDeallocateAll(bool releaseMemoryToOS = false)
                     {
                     static_assert(sizeof(U) < AllocSize, "Trying to destroy objects larger then AllocSize !");
-                    _memPool->template destroyAndFreeAll<U>(releaseMemoryToOS);
+					if (_count == nullptr) return; // empty object, do nothing
+					_memPool->template destroyAndFreeAll<U>(releaseMemoryToOS);
                     }
 
 
