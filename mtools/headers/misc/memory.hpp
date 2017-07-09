@@ -83,6 +83,18 @@ namespace mtools
                 CstSizeMemoryPool() : _m_allocatedobj(0), _m_totmem(0), _m_firstfree(nullptr), _m_currentpool(nullptr), _m_firstpool(nullptr), _m_index(POOLSIZE)  { }
 
 
+				/** Move constructor **/
+				CstSizeMemoryPool(CstSizeMemoryPool && csmp) : _m_allocatedobj(csmp._m_allocatedobj), _m_totmem(csmp._m_totmem), _m_firstfree(csmp._m_firstfree), _m_currentpool(csmp._m_currentpool), _m_firstpool(csmp._m_firstpool), _m_index(csmp._m_index)
+					{
+					_m_allocatedobj = 0;
+					_m_totmem = 0;
+					_m_firstfree = nullptr;
+					_m_currentpool = nullptr;
+					_m_firstpool = nullptr;
+					_m_index = POOLSIZE;
+					}
+
+				
                 /** Destructor. */
                 ~CstSizeMemoryPool() { freeAll(true); }
 
@@ -354,12 +366,24 @@ namespace mtools
                     }
 
 
+				/**
+				* Move constructor.
+				**/
+				SingleObjectAllocator(SingleObjectAllocator && alloc) throw() : _memPool((MemPoolType*)alloc._memPool), _count(alloc._count)
+					{
+					alloc._count = nullptr;
+					alloc._memPool = nullptr;
+					MTOOLS_DEBUG(std::string("SingleObjectAllocator move ctor with T=[") + typeid(T).name() + "] size " + mtools::toString(sizeof(T)) + " AllocSize = " + mtools::toString(AllocSize) + " poolSize = " + mtools::toString(PoolSize));
+					}
+
+
                 /**
                  * Destructor.
                  **/
                 ~SingleObjectAllocator()
                     {
                     MTOOLS_DEBUG(std::string("SingleObjectAllocator destructor with T=[") + typeid(T).name() + "] size " + mtools::toString(sizeof(T)) + " AllocSize = " + mtools::toString(AllocSize) + " poolSize = " + mtools::toString(PoolSize));
+					if (_count == nullptr) return; // empty object, do nothing
                     (*_count)--;
                     if ((*_count) == 0)
                         {
