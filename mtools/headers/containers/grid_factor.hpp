@@ -153,6 +153,11 @@ namespace mtools
             }
 
 
+		/**
+		* Move constructor. TODO some day...
+		**/
+
+
         /**
          * Destructor. Destroys the grid. The destructors of all the T objects in the grid are invoqued
          * if the callDtor flag is set and are dropped into oblivion otherwise.

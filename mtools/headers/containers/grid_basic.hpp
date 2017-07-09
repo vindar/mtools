@@ -139,6 +139,19 @@ namespace mtools
         Grid_basic(const char * str) : _pcurrent((_pbox)nullptr), _pcurrentpeek((_pbox)nullptr), _rangemin(std::numeric_limits<int64>::max()), _rangemax(std::numeric_limits<int64>::min()), _callDtors(true) { load(std::string(str)); } // needed together with the std::string ctor to prevent implicit conversion to bool and call of the wrong ctor.
 
 
+		/**
+		 * Move constructor.
+		 **/
+		Grid_basic(Grid_basic && G) : _pcurrent((_pbox)G._pcurrent), _pcurrentpeek((_pbox)G._pcurrentpeek), _rangemin(G._rangemin), _rangemax(G._rangemax), _callDtors(G._callDtors), _poolLeaf(std::move(G._poolLeaf)), _poolNode(std::move(G._poolNode))
+			{
+			G._pcurrentpeek = nullptr;
+			G._pcurrent = nullptr;
+			G._rangemin.clear(std::numeric_limits<int64>::max());
+			G._rangemax.clear(std::numeric_limits<int64>::min());
+			G._callDtors = false;
+			}
+
+
         /**
          * Destructor. Destroys the grid. The destructors of all the T objects in the grid are invoqued.
          * In order to prevent calling the dtors of T objects, invoque `callDtors(false)` prior to
