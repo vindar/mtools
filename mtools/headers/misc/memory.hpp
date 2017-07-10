@@ -239,6 +239,30 @@ namespace mtools
                     }
 
 
+				/**
+				 * Query if a pointer belong to the memory pool.
+				 * 
+				 * Does not check whether the adress is allocated or not, just whether it resides inside the memory pool.
+				 * Does not check if the adress is correctly aligned. 
+				 * 
+				 * @param [in,out]	p	the pointer to check
+				 *
+				 * @return	true if it points to some memory inside the pool and false otherwise. 
+				 **/
+				bool isInPool(void * p) const
+					{
+					const uintptr_t uip = (uintptr_t)p;
+					_pool * cpool = _m_firstpool;
+					while (cpool != nullptr)
+						{
+						const uintptr_t uimin = (uintptr_t)(cpool->tab);
+						const uintptr_t uimax = (uintptr_t)(cpool->tab + POOLSIZE);
+						if ((uip >= uimin) && (uip < uimax)) return true;
+						cpool = cpool->next;
+						}
+					return false;
+					}
+
             private:
 
 
@@ -286,7 +310,7 @@ namespace mtools
                 size_t      _m_allocatedobj;    // number of object currently allocated.
                 size_t      _m_totmem;          // total memory used by the allocator. 
 
-                _pfakeT     _m_firstfree;       // first free elment in the simply chained list of free blocks
+                _pfakeT     _m_firstfree;       // first free element in the simply chained list of free blocks
                 _pool *     _m_currentpool;     // pointer to the current pool
                 _pool *     _m_firstpool;       // pointer to the first tpool
                 size_t      _m_index;           // index of the first free element in the current pool
@@ -541,6 +565,21 @@ namespace mtools
                     s += _memPool->toString() + "---\n";
                     return s;
                     }
+
+
+
+				/**
+				* Query if a pointer belong to the memory pool of the allocator.
+				*
+				* Does not check whether the adress is allocated or not, just whether it resides inside the memory pool.
+				* Does not check if the adress is correctly aligned.
+				*
+				* @param [in,out]	p	the pointer to check
+				*
+				* @return	true if it points to some memory inside the pool and false otherwise.
+				**/
+				bool isInPool(void * p) const { return _memPool->isInPool(p); }
+
 
 
             private:
