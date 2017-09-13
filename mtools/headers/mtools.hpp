@@ -70,6 +70,7 @@
 #include "io/serialization.hpp"
 #include "io/commandarg.hpp"
 #include "io/watch.hpp"
+#include "io/serialport.hpp"
 
 // maths
 #include "maths/vec.hpp"

@@ -211,6 +211,7 @@
     <ClInclude Include="headers\io\internals_serialization.hpp" />
     <ClInclude Include="headers\io\logfile.hpp" />
     <ClInclude Include="headers\io\serialization.hpp" />
+    <ClInclude Include="headers\io\serialport.hpp" />
     <ClInclude Include="headers\io\watch.hpp" />
     <ClInclude Include="headers\maths\box.hpp" />
     <ClInclude Include="headers\maths\circle.hpp" />
@@ -261,6 +262,7 @@
     <ClCompile Include="sources\plot2Daxes.cpp" />
     <ClCompile Include="sources\plot2Dbasegraph.cpp" />
     <ClCompile Include="sources\plot2Dgrid.cpp" />
+    <ClCompile Include="sources\serialport.cpp" />
     <ClCompile Include="sources\view2Dwidget.cpp" />
     <ClCompile Include="sources\plotter2D.cpp" />
     <ClCompile Include="sources\plotter2Dobj.cpp" />

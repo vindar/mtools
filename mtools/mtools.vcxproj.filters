@@ -267,6 +267,9 @@
     <ClInclude Include="headers\maths\combinatorialmap_random_triangulation.hpp">
       <Filter>Header Files\maths</Filter>
     </ClInclude>
+    <ClInclude Include="headers\io\serialport.hpp">
+      <Filter>Header Files\io</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\console.cpp">
@@ -336,6 +339,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="sources\openCL.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\serialport.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
