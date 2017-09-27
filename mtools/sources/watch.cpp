@@ -24,7 +24,7 @@
 #include "misc/timefct.hpp"
 #include "misc/stringfct.hpp"
 #include "misc/indirectcall.hpp"
-#include "io/fltkSupervisor.hpp"
+#include "io/internal/fltkSupervisor.hpp"
 #include "graphics/rgbc.hpp"
 
 #include <time.h>

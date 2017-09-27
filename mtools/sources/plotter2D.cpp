@@ -25,7 +25,7 @@
 #include "graphics/plotter2D.hpp"
 #include "graphics/plotter2Dobj.hpp"
 #include "graphics/view2Dwidget.hpp"
-#include "io/fltkSupervisor.hpp"
+#include "io/internal/fltkSupervisor.hpp"
 #include "misc/error.hpp"
 
 #include "io/fileio.hpp"

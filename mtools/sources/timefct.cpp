@@ -32,7 +32,7 @@
 
 #include "misc/timefct.hpp"
 #include "misc/indirectcall.hpp"
-#include "io/fltkSupervisor.hpp"
+#include "io/internal/fltkSupervisor.hpp"
 #include "misc/stringfct.hpp"
 
 

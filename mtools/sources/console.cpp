@@ -20,7 +20,7 @@
 
 #include "stdafx_mtools.h"
 
-#include "io/fltkSupervisor.hpp"
+#include "io/internal/fltkSupervisor.hpp"
 #include "misc/stringfct.hpp"
 #include "misc/indirectcall.hpp"
 #include "graphics/rgbc.hpp"

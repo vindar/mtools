@@ -668,7 +668,7 @@ namespace mtools
 
 
 /* include the helper class definiton */
-#include "internals_serialization.hpp"
+#include "internal/internals_serialization.hpp"
 
 
 namespace mtools

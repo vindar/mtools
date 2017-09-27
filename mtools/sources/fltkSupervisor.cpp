@@ -22,7 +22,7 @@
 
 #include "misc/error.hpp"
 #include "misc/indirectcall.hpp"
-#include "io/fltkSupervisor.hpp"
+#include "io/internal/fltkSupervisor.hpp"
 #include "misc/stringfct.hpp"
 
 namespace mtools

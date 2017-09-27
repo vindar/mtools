@@ -23,7 +23,7 @@
 #include "graphics/plotter2Dobj.hpp"
 #include "misc/error.hpp"
 #include "misc/indirectcall.hpp"
-#include "io/fltkSupervisor.hpp"
+#include "io/internal/fltkSupervisor.hpp"
 #include "graphics/customcimg.hpp"
 #include "graphics/drawable2Dobject.hpp"
 #include "graphics/rangemanager.hpp"

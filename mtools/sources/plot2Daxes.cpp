@@ -23,7 +23,7 @@
 
 #include "graphics/plot2Daxes.hpp"
 #include "misc/indirectcall.hpp"
-#include "io/fltkSupervisor.hpp"
+#include "io/internal/fltkSupervisor.hpp"
 
  
 

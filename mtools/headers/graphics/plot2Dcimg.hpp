@@ -27,7 +27,7 @@
 #include "rangemanager.hpp"
 
 #include "../misc/indirectcall.hpp"
-#include "../io/fltkSupervisor.hpp"
+#include "../io/internal/fltkSupervisor.hpp"
 
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Round_Button.H>

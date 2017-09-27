@@ -21,8 +21,8 @@
 #pragma once
 
 
-#include "../misc/error.hpp"
-#include "../misc/indirectcall.hpp"
+#include "../../misc/error.hpp"
+#include "../../misc/indirectcall.hpp"
 
 
 // If we are on OSX, we must swap threads as only the master thread is allowed to
