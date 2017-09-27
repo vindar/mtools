@@ -37,7 +37,7 @@
 #include "../graphics/customcimg.hpp"
 
 #include "../extensions/openCL.hpp" // openCL extension
-#include "circlePacking.cl.hpp"	    // the openCL program source.
+#include "internal/circlePacking.cl.hpp"	    // the openCL program source.
 
 
 

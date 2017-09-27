@@ -34,15 +34,21 @@
     <Filter Include="Header Files\extensions">
       <UniqueIdentifier>{9bc38574-33d2-42fa-a3ea-6c5a925b40d5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\containers\internal">
+      <UniqueIdentifier>{71e32d35-143d-4bee-945c-999fc46c7e66}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\io\internal">
+      <UniqueIdentifier>{52b36d68-5b7d-4cc0-a318-7527920fccba}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\maths\internal">
+      <UniqueIdentifier>{7a52fb3a-30b4-4563-951a-333d92eeb69b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="headers\containers\grid_basic.hpp">
       <Filter>Header Files\containers</Filter>
     </ClInclude>
     <ClInclude Include="headers\containers\grid_factor.hpp">
-      <Filter>Header Files\containers</Filter>
-    </ClInclude>
-    <ClInclude Include="headers\containers\internals_grid.hpp">
       <Filter>Header Files\containers</Filter>
     </ClInclude>
     <ClInclude Include="headers\graphics\customcimg.hpp">
@@ -162,9 +168,6 @@
     <ClInclude Include="headers\io\serialization.hpp">
       <Filter>Header Files\io</Filter>
     </ClInclude>
-    <ClInclude Include="headers\io\internals_serialization.hpp">
-      <Filter>Header Files\io</Filter>
-    </ClInclude>
     <ClInclude Include="headers\graphics\planedrawer.hpp">
       <Filter>Header Files\graphics</Filter>
     </ClInclude>
@@ -185,9 +188,6 @@
     </ClInclude>
     <ClInclude Include="headers\maths\box.hpp">
       <Filter>Header Files\maths</Filter>
-    </ClInclude>
-    <ClInclude Include="headers\io\fltkSupervisor.hpp">
-      <Filter>Header Files\io</Filter>
     </ClInclude>
     <ClInclude Include="headers\misc\threadworker.hpp">
       <Filter>Header Files\misc</Filter>
@@ -252,9 +252,6 @@
     <ClInclude Include="headers\extensions\openCL.hpp">
       <Filter>Header Files\extensions</Filter>
     </ClInclude>
-    <ClInclude Include="headers\maths\circlePacking.cl.hpp">
-      <Filter>Header Files\maths</Filter>
-    </ClInclude>
     <ClInclude Include="headers\maths\mobius.hpp">
       <Filter>Header Files\maths</Filter>
     </ClInclude>
@@ -269,6 +266,18 @@
     </ClInclude>
     <ClInclude Include="headers\io\serialport.hpp">
       <Filter>Header Files\io</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\containers\internal\internals_grid.hpp">
+      <Filter>Header Files\containers\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\io\internal\fltkSupervisor.hpp">
+      <Filter>Header Files\io\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\io\internal\internals_serialization.hpp">
+      <Filter>Header Files\io\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\maths\internal\circlePacking.cl.hpp">
+      <Filter>Header Files\maths\internal</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -342,6 +351,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="sources\serialport.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\serialization.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
