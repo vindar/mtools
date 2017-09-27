@@ -46,7 +46,7 @@
 #include <unordered_set>
 #include <unordered_map>
 
-#include "zlib.h"       // fltk zlib
+
 
 
 #if defined (_MSC_VER)
@@ -397,30 +397,11 @@ namespace mtools
 
 
             /* open the archive file for writing, overwrite any existing file */
-            inline void _openFile()
-                {
-                if (_compress)
-                    {
-                    _gzhandle = gzopen(_filename.c_str(), "wb4");
-                    if (_gzhandle == nullptr) { MTOOLS_THROW("OArchive error (openfile 1)"); }
-                    if (gzbuffer(_gzhandle, GZIPBUFFERSIZE) != 0) { MTOOLS_THROW("OArchive error (openfile 2)");}
-                    return;
-                    }
-                _handle = fopen(_filename.c_str(), "wb");
-                if (_handle == nullptr) { MTOOLS_THROW("OArchive error (openfile 3)");}
-                return;
-                }
+			void _openFile();
 
 
             /* close the archive file */
-            inline void _closeFile()
-                {
-                newline();
-                _flush(true);
-                if (_compress) { if (gzclose(_gzhandle) != Z_OK) { MTOOLS_THROW("OArchive error (closefile 1)"); } return; }
-                if (fclose(_handle) != 0) { MTOOLS_THROW("OArchive error (closefile 2)"); }
-                return;
-                }
+			void _closeFile();
 
 
 
@@ -443,21 +424,7 @@ namespace mtools
 
 
             /* write the buffer to the file (if needed or forced) */
-            inline void _flush(bool force = false)
-                {
-                if ((force) || (_writeBuffer.length() > WRITEBUFFERSIZE))
-                    { // ok we do flush
-                    if (_compress)
-                        {
-                        if ((unsigned int)gzwrite(_gzhandle, _writeBuffer.c_str(), (unsigned int)_writeBuffer.length()) != _writeBuffer.length()) { MTOOLS_THROW("OArchive error (_flush 1)"); }
-                        }
-                    else
-                        {
-                        if (fwrite(_writeBuffer.c_str(), 1, _writeBuffer.length(), _handle) != _writeBuffer.length()) { MTOOLS_THROW("OArchive error (_flush 2)"); }
-                        }
-                    _writeBuffer.clear();
-                    }
-                }
+			void _flush(bool force = false);
 
 
 
@@ -470,7 +437,7 @@ namespace mtools
             size_t _indent;                  // number of indentation at the beginning of each new line
             bool _compress;                  // true if we are using compression
             uint64 _nbitem;                  // number of item in the archive
-            gzFile _gzhandle;                // handle when using compression
+            void * _gzhandle;                // gzFile handle when using compression
             FILE * _handle;                  // handle when not using compression
 
         };
@@ -677,31 +644,13 @@ namespace mtools
             static const char * _refillStatic(size_t & len, void * data) { MTOOLS_ASSERT(data != nullptr); return ((IArchive *)data)->refill(len); }
 
             /* refill the read buffer */
-            const char * refill(size_t & len)
-                {
-                int l = gzread(_gzhandle, _readBuffer, READBUFFERSIZE);
-                if (l < 0) { MTOOLS_THROW("IArchive error"); } // something went wrong
-                _readSize = (size_t)l; // save the new number of char in the buffer
-                len = _readSize;
-                if (l == 0) { return nullptr; } // end of file
-                return _readBuffer; // ok
-                }
+			const char * refill(size_t & len);
 
             /* open the archive file for reading, throw if error */
-            inline void _openFile()
-                {
-                _gzhandle = gzopen(_filename.c_str(), "rb");
-                if (_gzhandle == nullptr) { MTOOLS_THROW("IArchive error"); }
-                if (gzbuffer(_gzhandle, GZIPBUFFERSIZE) != 0) { MTOOLS_THROW("IArchive error"); }
-                return;
-                }
+			void _openFile();
 
             /* close the archive file */
-            inline void _closeFile()
-                {
-                if (gzclose(_gzhandle) != Z_OK) { MTOOLS_THROW("IArchive error"); }
-                return;
-                }
+			void _closeFile();
 
             static const size_t GZIPBUFFERSIZE = 512000;
             static const size_t READBUFFERSIZE = 512000;
@@ -712,7 +661,7 @@ namespace mtools
             std::string _tempstr;           // temporary string used for reconstructing objects
             std::string _filename;           // name of the archive file
             uint64 _nbitem;                  // number of item in the archive
-            gzFile _gzhandle;                // handle
+            void * _gzhandle;                // gzfile handle
         };
 
     }
