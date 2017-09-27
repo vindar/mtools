@@ -25,6 +25,10 @@
 #include "io/internal/fltkSupervisor.hpp"
 
 #include <FL/Fl_Color_Chooser.H> 
+#include <FL/Fl_Group.H>
+#include <FL/Fl_Value_Slider.H>
+#include <FL/Fl_Button.H>
+#include <FL/Fl_Check_Button.H>
 
 
 namespace mtools
