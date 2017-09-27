@@ -22,11 +22,11 @@
 
 
 #include "../maths/vec.hpp"
-#include "plotter2Dobj.hpp"
-#include "drawable2Dobject.hpp"
-#include "rangemanager.hpp"
+#include "internal/plotter2Dobj.hpp"
+#include "internal/drawable2Dobject.hpp"
+#include "internal/rangemanager.hpp"
 #include "interpolation.hpp"
-#include "plot2Dbasegraph.hpp"
+#include "internal/plot2Dbasegraph.hpp"
 
 
 namespace mtools

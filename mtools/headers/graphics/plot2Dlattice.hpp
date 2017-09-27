@@ -21,10 +21,10 @@
 #pragma once
 
 
-#include "plotter2Dobj.hpp"
-#include "drawable2Dobject.hpp"
+#include "internal/plotter2Dobj.hpp"
+#include "internal/drawable2Dobject.hpp"
 #include "latticedrawer.hpp"
-#include "rangemanager.hpp"
+#include "internal/rangemanager.hpp"
 #include "../misc/indirectcall.hpp"
 
 #include <FL/Fl_Group.H>

@@ -25,8 +25,8 @@
 #include "../maths/vec.hpp"
 #include "../maths/box.hpp"
 #include "rgbc.hpp"
-#include "plotter2Dobj.hpp"
-#include "drawable2DInterface.hpp"
+#include "internal/plotter2Dobj.hpp"
+#include "internal/drawable2DInterface.hpp"
 
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Value_Slider.H>

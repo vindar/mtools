@@ -20,7 +20,7 @@
 
 #include "stdafx_mtools.h"
 
-#include "graphics/plot2Dbasegraph.hpp"
+#include "graphics/internal/plot2Dbasegraph.hpp"
 #include "misc/indirectcall.hpp"
 #include "io/internal/fltkSupervisor.hpp"
 

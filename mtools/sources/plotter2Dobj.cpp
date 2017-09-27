@@ -20,13 +20,13 @@
 
 #include "stdafx_mtools.h"
 
-#include "graphics/plotter2Dobj.hpp"
+#include "graphics/internal/plotter2Dobj.hpp"
 #include "misc/error.hpp"
 #include "misc/indirectcall.hpp"
 #include "io/internal/fltkSupervisor.hpp"
 #include "graphics/customcimg.hpp"
-#include "graphics/drawable2Dobject.hpp"
-#include "graphics/rangemanager.hpp"
+#include "graphics/internal/drawable2Dobject.hpp"
+#include "graphics/internal/rangemanager.hpp"
 
 
 namespace mtools

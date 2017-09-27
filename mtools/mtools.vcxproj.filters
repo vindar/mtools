@@ -49,6 +49,9 @@
     <Filter Include="Header Files\random\internal">
       <UniqueIdentifier>{3a3653b7-1c5b-47fd-9251-02fa10e98a1d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\graphics\internal">
+      <UniqueIdentifier>{8a11746d-4bd0-4e09-a46e-2f1c0a425f85}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="headers\containers\grid_basic.hpp">
@@ -105,25 +108,10 @@
     <ClInclude Include="headers\io\console.hpp">
       <Filter>Header Files\io</Filter>
     </ClInclude>
-    <ClInclude Include="headers\graphics\cimgwidget.hpp">
-      <Filter>Header Files\graphics</Filter>
-    </ClInclude>
     <ClInclude Include="headers\graphics\latticedrawer.hpp">
       <Filter>Header Files\graphics</Filter>
     </ClInclude>
-    <ClInclude Include="headers\graphics\rangemanager.hpp">
-      <Filter>Header Files\graphics</Filter>
-    </ClInclude>
     <ClInclude Include="headers\graphics\plotter2D.hpp">
-      <Filter>Header Files\graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="headers\graphics\plotter2Dobj.hpp">
-      <Filter>Header Files\graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="headers\graphics\view2Dwidget.hpp">
-      <Filter>Header Files\graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="headers\graphics\drawable2Dobject.hpp">
       <Filter>Header Files\graphics</Filter>
     </ClInclude>
     <ClInclude Include="headers\graphics\plot2Dlattice.hpp">
@@ -142,9 +130,6 @@
       <Filter>Header Files\graphics</Filter>
     </ClInclude>
     <ClInclude Include="headers\graphics\interpolation.hpp">
-      <Filter>Header Files\graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="headers\graphics\plot2Dbasegraph.hpp">
       <Filter>Header Files\graphics</Filter>
     </ClInclude>
     <ClInclude Include="headers\graphics\plot2Dvector.hpp">
@@ -195,16 +180,10 @@
     <ClInclude Include="headers\graphics\progressimg.hpp">
       <Filter>Header Files\graphics</Filter>
     </ClInclude>
-    <ClInclude Include="headers\graphics\drawable2DInterface.hpp">
-      <Filter>Header Files\graphics</Filter>
-    </ClInclude>
     <ClInclude Include="headers\graphics\pixeldrawer.hpp">
       <Filter>Header Files\graphics</Filter>
     </ClInclude>
     <ClInclude Include="headers\graphics\sitedrawer.hpp">
-      <Filter>Header Files\graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="headers\graphics\getcolorselector.hpp">
       <Filter>Header Files\graphics</Filter>
     </ClInclude>
     <ClInclude Include="headers\maths\circlePacking.hpp">
@@ -284,6 +263,30 @@
     </ClInclude>
     <ClInclude Include="headers\random\internal\SRW_exitGridZ2_data.hpp">
       <Filter>Header Files\random\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\graphics\internal\cimgwidget.hpp">
+      <Filter>Header Files\graphics\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\graphics\internal\drawable2DInterface.hpp">
+      <Filter>Header Files\graphics\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\graphics\internal\drawable2Dobject.hpp">
+      <Filter>Header Files\graphics\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\graphics\internal\getcolorselector.hpp">
+      <Filter>Header Files\graphics\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\graphics\internal\plot2Dbasegraph.hpp">
+      <Filter>Header Files\graphics\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\graphics\internal\plotter2Dobj.hpp">
+      <Filter>Header Files\graphics\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\graphics\internal\rangemanager.hpp">
+      <Filter>Header Files\graphics\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\graphics\internal\view2Dwidget.hpp">
+      <Filter>Header Files\graphics\internal</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

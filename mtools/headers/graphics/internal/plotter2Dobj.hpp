@@ -20,9 +20,9 @@
 
 #pragma once
 
-#include "../maths/vec.hpp"
-#include "../maths/box.hpp"
-#include "customcimg.hpp"
+#include "../../maths/vec.hpp"
+#include "../../maths/box.hpp"
+#include "../customcimg.hpp"
 #include "drawable2DInterface.hpp"
 #include "rangemanager.hpp"
 

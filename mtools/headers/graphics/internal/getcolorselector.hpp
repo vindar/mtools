@@ -19,12 +19,12 @@
 
 #pragma once
 
-#include "customcimg.hpp"
-#include "rgbc.hpp"
-#include "../maths/vec.hpp"
-#include "../maths/box.hpp"
-#include "../misc/misc.hpp"
-#include "../misc/metaprog.hpp"
+#include "../customcimg.hpp"
+#include "../rgbc.hpp"
+#include "../../maths/vec.hpp"
+#include "../../maths/box.hpp"
+#include "../../misc/misc.hpp"
+#include "../../misc/metaprog.hpp"
 
 
 namespace mtools

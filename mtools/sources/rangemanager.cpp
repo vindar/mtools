@@ -22,7 +22,7 @@
 
 
 #include "misc/error.hpp"
-#include "graphics/rangemanager.hpp"
+#include "graphics/internal/rangemanager.hpp"
 
 
 namespace mtools

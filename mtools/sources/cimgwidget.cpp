@@ -20,7 +20,7 @@
 
 #include "stdafx_mtools.h"
 
-#include "graphics/cimgwidget.hpp"
+#include "graphics/internal/cimgwidget.hpp"
 
 
 namespace mtools

@@ -25,7 +25,7 @@
 #include "../maths/box.hpp"
 #include "../misc/error.hpp"
 #include "customcimg.hpp"
-#include "rangemanager.hpp"
+#include "internal/rangemanager.hpp"
 #include "plot2Daxes.hpp"
 #include "plot2Dgrid.hpp"
 

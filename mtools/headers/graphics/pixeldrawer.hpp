@@ -20,7 +20,7 @@
 #pragma once
 
 #include "../misc/internal/threadworker.hpp"
-#include "drawable2DInterface.hpp"
+#include "internal/drawable2DInterface.hpp"
 #include "customcimg.hpp"
 #include "rgbc.hpp"
 #include "progressimg.hpp"
@@ -29,7 +29,7 @@
 #include "../misc/misc.hpp"
 #include "../misc/metaprog.hpp"
 #include "../random/gen_fastRNG.hpp"
-#include "getcolorselector.hpp"
+#include "internal/getcolorselector.hpp"
 
 #include <algorithm>
 #include <ctime>

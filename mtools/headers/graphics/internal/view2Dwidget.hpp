@@ -20,11 +20,11 @@
 
 #pragma once
 
-#include "../maths/box.hpp"
-#include "../maths/vec.hpp"
+#include "../../maths/box.hpp"
+#include "../../maths/vec.hpp"
 #include "cimgwidget.hpp"
 #include "rangemanager.hpp"
-#include "../random/gen_fastRNG.hpp"
+#include "../../random/gen_fastRNG.hpp"
 
 
 namespace mtools

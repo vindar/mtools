@@ -21,7 +21,7 @@
 #include "stdafx_mtools.h"
 
 
-#include "graphics/drawable2Dobject.hpp"
+#include "graphics/internal/drawable2Dobject.hpp"
 
 
 namespace mtools

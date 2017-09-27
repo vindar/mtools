@@ -21,7 +21,7 @@
 #pragma once
 
 
-#include "drawable2Dobject.hpp"
+#include "internal/drawable2Dobject.hpp"
 #include "customcimg.hpp"
 #include "rgbc.hpp"
 #include "../maths/vec.hpp"
@@ -29,7 +29,7 @@
 #include "../misc/misc.hpp"
 #include "../misc/metaprog.hpp"
 #include "../random/gen_fastRNG.hpp"
-#include "getcolorselector.hpp"
+#include "internal/getcolorselector.hpp"
 
 #include <algorithm>
 #include <ctime>

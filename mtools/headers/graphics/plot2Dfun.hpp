@@ -22,7 +22,7 @@
 
 
 
-#include "plot2Dbasegraph.hpp"
+#include "internal/plot2Dbasegraph.hpp"
 
 #include <string>
 #include <limits>
