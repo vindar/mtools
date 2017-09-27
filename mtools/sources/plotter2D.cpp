@@ -20,14 +20,12 @@
 
 #include "stdafx_mtools.h"
 
-
 #include "graphics/customcimg.hpp"
 #include "graphics/plotter2D.hpp"
 #include "graphics/internal/plotter2Dobj.hpp"
 #include "graphics/internal/view2Dwidget.hpp"
 #include "io/internal/fltkSupervisor.hpp"
 #include "misc/error.hpp"
-
 #include "io/fileio.hpp"
 
 namespace mtools

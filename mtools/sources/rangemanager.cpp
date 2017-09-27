@@ -20,7 +20,6 @@
 
 #include "stdafx_mtools.h"
 
-
 #include "misc/error.hpp"
 #include "graphics/internal/rangemanager.hpp"
 

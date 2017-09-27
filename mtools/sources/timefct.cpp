@@ -20,6 +20,12 @@
 
 #include "stdafx_mtools.h"
 
+#include "misc/timefct.hpp"
+#include "misc/indirectcall.hpp"
+#include "io/internal/fltkSupervisor.hpp"
+#include "misc/stringfct.hpp"
+
+
 #include <random>
 
 #if defined(__linux__) || defined(__APPLE__)
@@ -28,13 +34,6 @@
 #elif _WIN32
 #include <windows.h>
 #endif
-
-
-#include "misc/timefct.hpp"
-#include "misc/indirectcall.hpp"
-#include "io/internal/fltkSupervisor.hpp"
-#include "misc/stringfct.hpp"
-
 
 
 namespace mtools

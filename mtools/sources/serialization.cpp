@@ -22,7 +22,7 @@
 
 #include "io/serialization.hpp"
 
-#include "zlib.h"       // fltk zlib
+#include <zlib.h>       // fltk zlib
 
 
 namespace mtools

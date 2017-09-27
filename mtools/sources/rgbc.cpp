@@ -20,8 +20,6 @@
 
 #include "stdafx_mtools.h"
 
-
-
 #include "graphics/rgbc.hpp"
 
 namespace mtools

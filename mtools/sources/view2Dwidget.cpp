@@ -20,7 +20,6 @@
 
 #include "stdafx_mtools.h"
 
-
 #include "graphics/internal/view2Dwidget.hpp"
 #include "misc/error.hpp"
 #include "random/gen_fastRNG.hpp"

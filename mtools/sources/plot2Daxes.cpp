@@ -20,7 +20,6 @@
 
 #include "stdafx_mtools.h"
 
-
 #include "graphics/plot2Daxes.hpp"
 #include "misc/indirectcall.hpp"
 #include "io/internal/fltkSupervisor.hpp"

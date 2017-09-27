@@ -32,7 +32,6 @@
 #define MTOOLS_HASUNISTD
 #endif
 
-
 #include <cstdio>
 #if defined(MTOOLS_HASCONIO)
 #include <conio.h>

@@ -20,7 +20,6 @@
 
 #include "stdafx_mtools.h"
 
-
 #include "graphics/interpolation.hpp"
 
 namespace mtools

@@ -20,10 +20,8 @@
 
 #include "stdafx_mtools.h"
 
-
 #include "misc/stringfct.hpp"
 #include "io/fileio.hpp"
-
 
 #if defined (_MSC_VER)
 #include <windows.h>

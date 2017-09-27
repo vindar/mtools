@@ -19,7 +19,6 @@
 
 #include "stdafx_mtools.h"
 
-
 #include "misc/error.hpp"
 #include "graphics/customcimg.hpp"
 #include "io/logfile.hpp"
