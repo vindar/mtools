@@ -26,7 +26,7 @@
 #include "../maths/box.hpp"
 #include "../misc/metaprog.hpp"
 #include "../io/serialization.hpp"
-#include "internals_grid.hpp"
+#include "internal/internals_grid.hpp"
 
 #include <type_traits>
 #include <string>
