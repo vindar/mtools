@@ -21,8 +21,8 @@
 #pragma once
 
 
-#include "metaprog.hpp"
-#include "misc.hpp"
+#include "../metaprog.hpp"
+#include "../misc.hpp"
 
 #if defined (_MSC_VER)
 // header missing with libstdc++

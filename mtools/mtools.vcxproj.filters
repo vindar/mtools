@@ -43,6 +43,9 @@
     <Filter Include="Header Files\maths\internal">
       <UniqueIdentifier>{7a52fb3a-30b4-4563-951a-333d92eeb69b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\misc\internal">
+      <UniqueIdentifier>{71d0ba75-3965-4662-b99e-d39917c25fe6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="headers\containers\grid_basic.hpp">
@@ -92,9 +95,6 @@
     </ClInclude>
     <ClInclude Include="headers\mtools.hpp">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="headers\misc\internals_stringfct.hpp">
-      <Filter>Header Files\misc</Filter>
     </ClInclude>
     <ClInclude Include="headers\misc\indirectcall.hpp">
       <Filter>Header Files\misc</Filter>
@@ -189,9 +189,6 @@
     <ClInclude Include="headers\maths\box.hpp">
       <Filter>Header Files\maths</Filter>
     </ClInclude>
-    <ClInclude Include="headers\misc\threadworker.hpp">
-      <Filter>Header Files\misc</Filter>
-    </ClInclude>
     <ClInclude Include="headers\graphics\progressimg.hpp">
       <Filter>Header Files\graphics</Filter>
     </ClInclude>
@@ -278,6 +275,12 @@
     </ClInclude>
     <ClInclude Include="headers\maths\internal\circlePacking.cl.hpp">
       <Filter>Header Files\maths\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\misc\internal\internals_stringfct.hpp">
+      <Filter>Header Files\misc\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\misc\internal\threadworker.hpp">
+      <Filter>Header Files\misc\internal</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

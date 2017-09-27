@@ -228,12 +228,12 @@
     <ClInclude Include="headers\maths\vec.hpp" />
     <ClInclude Include="headers\misc\error.hpp" />
     <ClInclude Include="headers\misc\indirectcall.hpp" />
-    <ClInclude Include="headers\misc\internals_stringfct.hpp" />
+    <ClInclude Include="headers\misc\internal\internals_stringfct.hpp" />
+    <ClInclude Include="headers\misc\internal\threadworker.hpp" />
     <ClInclude Include="headers\misc\memory.hpp" />
     <ClInclude Include="headers\misc\metaprog.hpp" />
     <ClInclude Include="headers\misc\misc.hpp" />
     <ClInclude Include="headers\misc\stringfct.hpp" />
-    <ClInclude Include="headers\misc\threadworker.hpp" />
     <ClInclude Include="headers\misc\timefct.hpp" />
     <ClInclude Include="headers\misc\tuple.hpp" />
     <ClInclude Include="headers\mtools.hpp" />

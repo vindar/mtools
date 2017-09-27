@@ -33,7 +33,7 @@ namespace mtools
     enum StringEncoding { enc_utf8, enc_iso8859, enc_unknown };
 }
 
-#include "internals_stringfct.hpp"
+#include "internal/internals_stringfct.hpp"
 
 
 

@@ -20,7 +20,7 @@
 #pragma once
 
 
-#include "../misc/threadworker.hpp"
+#include "../misc/internal/threadworker.hpp"
 #include "drawable2DInterface.hpp"
 #include "customcimg.hpp"
 #include "rgbc.hpp"
