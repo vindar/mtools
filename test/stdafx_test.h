@@ -53,6 +53,7 @@
 //
 // FLTK
 //
+/*
 #include <FL/Fl.H>
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Double_Window.H>
@@ -77,7 +78,7 @@
 #include "zlib.h"       // fltk zlib
 #include "png.h"        // fltk libpng
 #include "jpeglib.h"    // fltk libjpeg
-
+*/
 
 #if defined (_MSC_VER)
 #pragma warning( pop )

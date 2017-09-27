@@ -1,4 +1,3 @@
-
 /** pre-compiled header */
 
 //#pragma message("Compiling precompiled headers for stdafx_mtools.h.\n")
@@ -74,6 +73,7 @@
 //#include "GL/glut.h"    // glut
 #include "png.h"        // libpng
 #include "jpeglib.h"    // libjpeg
+
 
 #include "headers/graphics/customcimg.hpp"
 

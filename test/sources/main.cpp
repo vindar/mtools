@@ -588,12 +588,31 @@ RGBc color(int64 x, int64 y)
 
 MT2004_64 gen(5679); // RNG with 2M vertices.
 int main(int argc, char *argv[])
-    {
+	{
 
 
 	MTOOLS_SWAP_THREADS(argc, argv);
 	parseCommandLine(argc, argv);
 
+	{
+	OArchive ar("test.tst.gz");
+
+	int z = 1234567;
+	ar & z;
+	}
+	
+	{
+	IArchive ir("test.tst.gz");
+
+	int e = 0;
+
+	ir & e;
+	cout << e << "\n";
+	}
+
+	cout.getKey();
+
+	return 0;
 
 	RStarTree<int, 2> RST;
 
