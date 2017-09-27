@@ -42,6 +42,14 @@
 #endif
 
 
+#include <FL/Fl_Window.H>
+#include <FL/Fl_Double_Window.H>
+#include <FL/Fl_Box.H>
+#include <FL/Fl_Input.H>
+#include <FL/Fl_Toggle_Button.H>
+#include <FL/Fl_Text_Display.H>
+#include <FL/fl_ask.H>
+
 namespace mtools
 {
 

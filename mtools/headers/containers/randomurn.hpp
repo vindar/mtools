@@ -20,14 +20,13 @@
 
 #pragma once
 
-
-/* headers */
-#include <string>
-#include <vector>
-
 #include "../misc/stringfct.hpp"
 #include "../misc/misc.hpp"
 #include "../misc/error.hpp"
+
+#include <string>
+#include <vector>
+
 
 namespace mtools
 {

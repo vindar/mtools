@@ -29,6 +29,7 @@
 #pragma warning( disable : 4996 )
 #endif
 
+#include <FL/filename.H>
 
 namespace mtools
 {

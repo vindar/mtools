@@ -30,8 +30,6 @@
 #include <ostream>
 
 
-#undef min
-#undef max
 
 namespace mtools
     {

@@ -20,14 +20,11 @@
 
 #pragma once
 
-
-/* headers */
-#include <string>
-
 #include "../misc/error.hpp"
 #include "../misc/misc.hpp"
 #include "../misc/stringfct.hpp"
 
+#include <string>
 
 
 /****************************************************************************************************

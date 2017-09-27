@@ -25,6 +25,9 @@
 
 #include <iostream>
 
+#include <FL/fl_ask.H>
+
+
 namespace mtools
     {
     namespace internals_error

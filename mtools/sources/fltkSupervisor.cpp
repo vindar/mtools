@@ -25,6 +25,8 @@
 #include "io/internal/fltkSupervisor.hpp"
 #include "misc/stringfct.hpp"
 
+#include <FL/Fl.H>
+
 namespace mtools
     {
 

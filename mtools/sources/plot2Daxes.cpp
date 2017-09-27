@@ -24,7 +24,8 @@
 #include "misc/indirectcall.hpp"
 #include "io/internal/fltkSupervisor.hpp"
 
- 
+#include <FL/Fl_Color_Chooser.H> 
+
 
 namespace mtools
 {

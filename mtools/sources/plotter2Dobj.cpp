@@ -28,6 +28,8 @@
 #include "graphics/internal/drawable2Dobject.hpp"
 #include "graphics/internal/rangemanager.hpp"
 
+#include <FL/Fl_Color_Chooser.H> 
+
 
 namespace mtools
 {
