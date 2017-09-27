@@ -22,6 +22,7 @@
 
 
 #include "misc.hpp"
+#include "error.hpp"
 
 #include <cstring>
 
