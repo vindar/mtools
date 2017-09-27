@@ -21,15 +21,7 @@
 
 
 // CImg
-#if defined (_MSC_VER) 
-#pragma warning( push )
-#pragma warning( disable : 4312 )
-#pragma warning( disable : 4319 )
-#endif
 #include "graphics/customcimg.hpp"
-#if defined (_MSC_VER) 
-#pragma warning( pop )
-#endif
 
 
 // containers
@@ -110,9 +102,6 @@
 #include "extensions/openCL.hpp"
 
 
-// just in case...
-#undef min
-#undef max
 
 /* end of file */
 

@@ -47,13 +47,15 @@
 
 #if defined (_MSC_VER) 
 #pragma warning( push )				// disable some warnings
-#pragma warning( disable : 4244 )	//
 #pragma warning( disable : 4146 )	//
+#pragma warning( disable : 4197 )	//
+#pragma warning( disable : 4244 )	//
 #pragma warning( disable : 4267 )	//
-#pragma warning( disable : 4723 )	//
 #pragma warning( disable : 4305 )	//
 #pragma warning( disable : 4309 )	//
-#pragma warning( disable : 4197 )	//
+#pragma warning( disable : 4312 )	//
+#pragma warning( disable : 4319 )	//
+#pragma warning( disable : 4723 )	//
 #endif
 
 #include <CImg.h>	    // the header for the cimg library
