@@ -46,6 +46,9 @@
     <Filter Include="Header Files\misc\internal">
       <UniqueIdentifier>{71d0ba75-3965-4662-b99e-d39917c25fe6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\random\internal">
+      <UniqueIdentifier>{3a3653b7-1c5b-47fd-9251-02fa10e98a1d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="headers\containers\grid_basic.hpp">
@@ -225,9 +228,6 @@
     <ClInclude Include="headers\random\SRW.hpp">
       <Filter>Header Files\random</Filter>
     </ClInclude>
-    <ClInclude Include="headers\random\SRW_exitGridZ2_data.hpp">
-      <Filter>Header Files\random</Filter>
-    </ClInclude>
     <ClInclude Include="headers\random\classiclaws.hpp">
       <Filter>Header Files\random</Filter>
     </ClInclude>
@@ -281,6 +281,9 @@
     </ClInclude>
     <ClInclude Include="headers\misc\internal\threadworker.hpp">
       <Filter>Header Files\misc\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="headers\random\internal\SRW_exitGridZ2_data.hpp">
+      <Filter>Header Files\random\internal</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -242,10 +242,10 @@
     <ClInclude Include="headers\random\gen_mt2002_32.hpp" />
     <ClInclude Include="headers\random\gen_mt2004_64.hpp" />
     <ClInclude Include="headers\random\gen_xorgen4096_64.hpp" />
+    <ClInclude Include="headers\random\internal\SRW_exitGridZ2_data.hpp" />
     <ClInclude Include="headers\random\krikunlaw.hpp" />
     <ClInclude Include="headers\random\peelinglaw.hpp" />
     <ClInclude Include="headers\random\SRW.hpp" />
-    <ClInclude Include="headers\random\SRW_exitGridZ2_data.hpp" />
     <ClInclude Include="stdafx_mtools.h" />
   </ItemGroup>
   <ItemGroup>
