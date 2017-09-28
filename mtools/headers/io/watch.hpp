@@ -22,6 +22,7 @@
 
 #include "internal/fltkSupervisor.hpp" // make sure sentinel object for fltk thread created before the global watch object
 #include "../misc/metaprog.hpp"
+#include "../misc/internal/forward_fltk.hpp"
 
 #include <mutex>
 #include <atomic>
@@ -52,15 +53,15 @@ namespace mtools
                 virtual std::string type() const;
                 int refreshRate() const;
                 int refreshRate(int newrate);
-                void assignFltkWin(FltkWatchWin * p, void * nameButton, void * valueButton);
+                void assignFltkWin(FltkWatchWin * p, Fl_Button * nameButton, Fl_Button * valueButton);
 
                 virtual std::string _get() const;
                 virtual size_t _set(const std::string & value);
 
                 int _rate;                          // refresh rate (number of time per minutes)
                 FltkWatchWin * _fltkwin;            // the associated watch window
-                void * _name_button;           // fltk button with the name
-                void * _value_button;          // fltk button with the value
+				Fl_Button * _name_button;           // fltk button with the name
+				Fl_Button * _value_button;          // fltk button with the value
                 std::string _name;                  // identifier name of the variable
             };
 

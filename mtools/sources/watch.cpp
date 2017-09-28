@@ -89,7 +89,7 @@ namespace mtools
 
         int WatchObj::refreshRate(int newrate) { if (newrate < 0) { newrate = 0; } else if (newrate > 600) { newrate = 600; } _rate = newrate; return _rate; }
 
-        void WatchObj::assignFltkWin(FltkWatchWin * p, void * nameButton, void * valueButton) { _fltkwin = p;  _name_button = nameButton; _value_button = valueButton; }
+        void WatchObj::assignFltkWin(FltkWatchWin * p, Fl_Button * nameButton, Fl_Button * valueButton) { _fltkwin = p;  _name_button = nameButton; _value_button = valueButton; }
 
         /* fltk watch window */
         class FltkWatchWin
@@ -195,8 +195,8 @@ namespace mtools
                 /* detach windows */
                 void detachWindow(WatchObj * obj, bool reposition)
                     {
-                    int Y = ((Fl_Button*)obj->_name_button)->y();
-                    int H = ((Fl_Button*)obj->_name_button)->h();
+                    int Y = (obj->_name_button)->y();
+                    int H = (obj->_name_button)->h();
                     delete obj->_name_button;
                     delete obj->_value_button;
                     obj->assignFltkWin(this, nullptr, nullptr);
@@ -285,8 +285,8 @@ namespace mtools
                     std::string val = obj->get();
                     if (val != std::string(((Fl_Button*)obj->_value_button)->label()))
                         {  
-						((Fl_Button*)obj->_value_button)->copy_label(val.c_str());
-						((Fl_Button*)obj->_value_button)->redraw_label();
+						(obj->_value_button)->copy_label(val.c_str());
+						(obj->_value_button)->redraw_label();
                         paintValue(obj, RGBc::c_Red);
                         } 
                     else 
@@ -345,20 +345,20 @@ namespace mtools
                 /* color the name if needed */
                 void paintName(WatchObj * obj, RGBc color)
                     {
-                    if (((Fl_Button*)obj->_name_button)->labelcolor() != (Fl_Color)color)
+                    if ((obj->_name_button)->labelcolor() != (Fl_Color)color)
                         {
-						((Fl_Button*)obj->_name_button)->labelcolor((Fl_Color)color);
-						((Fl_Button*)obj->_name_button)->redraw_label();
+						(obj->_name_button)->labelcolor((Fl_Color)color);
+						(obj->_name_button)->redraw_label();
                         }
                     }
 
                 /* color the value if needed */
                 void paintValue(WatchObj * obj, RGBc color)
                     {
-                    if (((Fl_Button*)obj->_value_button)->labelcolor() != (Fl_Color)color)
+                    if ((obj->_value_button)->labelcolor() != (Fl_Color)color)
                         {
-						((Fl_Button*)obj->_value_button)->labelcolor((Fl_Color)color);
-						((Fl_Button*)obj->_value_button)->redraw_label();
+						(obj->_value_button)->labelcolor((Fl_Color)color);
+						(obj->_value_button)->redraw_label();
                         }
                     }
 
@@ -494,7 +494,7 @@ namespace mtools
                 void dialvalue_ok(WatchObj * obj)
                     {
                     std::string newval(input_widget->value());  // get the new value
-                    if (newval != std::string(((Fl_Button*)obj->_value_button)->label()))
+                    if (newval != std::string((obj->_value_button)->label()))
                         {
                         obj->set(newval); // set the value
                         removeTimers(obj); // remove timers
