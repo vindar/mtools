@@ -403,7 +403,7 @@ namespace mtools
 
             virtual void removed(Fl_Group * optionWin) override
                 {
-				Plot2DLatticeBase::removed();
+				Plot2DLatticeBase::removed(optionWin);
                 delete _encD;
                 _encD = nullptr;
                 }
@@ -411,7 +411,7 @@ namespace mtools
 
             virtual internals_graphics::Drawable2DInterface * inserted(Fl_Group * & optionWin, int reqWidth) override
                 {
-				insertUI(Fl_Group * & optionWin, int reqWidth, _LD->imageType(), _LD->hasImage(), _LD->opacify(), _LD->transparentColor());
+				insertUI(optionWin, reqWidth, _LD->imageType(), _LD->hasImage(), _LD->opacify(), _LD->transparentColor());
 				_encD = new internals_graphics::EncapsulateDrawable2DObject(_LD, false);
 				return _encD;
                 }
