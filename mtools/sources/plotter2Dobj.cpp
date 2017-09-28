@@ -28,6 +28,11 @@
 #include "graphics/internal/drawable2Dobject.hpp"
 #include "graphics/internal/rangemanager.hpp"
 
+#include <FL/Fl_Group.H>
+#include <FL/Fl_Box.H>
+#include <FL/Fl_Progress.H>
+#include <FL/Fl_Check_Button.H>
+#include <FL/Fl_Value_Slider.H>
 #include <FL/Fl_Color_Chooser.H> 
 
 

@@ -32,7 +32,7 @@
 namespace mtools
 {
 
-    template<typename F > class Plot2DArray;
+    template<typename F> class Plot2DArray;
 
 
     /**

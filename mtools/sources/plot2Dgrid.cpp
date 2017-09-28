@@ -24,8 +24,11 @@
 #include "misc/indirectcall.hpp"
 #include "io/internal/fltkSupervisor.hpp"
 
+#include <FL/Fl_Group.H>
+#include <FL/Fl_Button.H>
+#include <FL/Fl_Input.H>
+#include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Color_Chooser.H> 
-
 
 
 namespace mtools

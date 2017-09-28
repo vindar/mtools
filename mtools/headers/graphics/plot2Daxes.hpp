@@ -27,11 +27,7 @@
 #include "rgbc.hpp"
 #include "internal/plotter2Dobj.hpp"
 #include "internal/drawable2DInterface.hpp"
-
-#include <FL/Fl_Group.H>
-#include <FL/Fl_Value_Slider.H>
-#include <FL/Fl_Button.H>
-#include <FL/Fl_Check_Button.H>
+#include "../misc/internal/forward_fltk.hpp"
 
 namespace mtools
 {

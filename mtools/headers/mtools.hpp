@@ -23,7 +23,6 @@
 // CImg
 #include "graphics/customcimg.hpp"
 
-
 // containers
 #include "containers/grid_basic.hpp"
 #include "containers/grid_factor.hpp"
@@ -31,29 +30,6 @@
 #include "containers/randomurn.hpp"
 #include "containers/RWtreegraph.hpp"
 #include "containers/extab.hpp"
-
-
-// graphics
-#include "graphics/rgbc.hpp"
-#include "graphics/progressimg.hpp"
-#include "graphics/simpleBMP.hpp"
-#include "graphics/edgesiteimage.hpp"
-#include "graphics/interpolation.hpp"
-#include "graphics/planedrawer.hpp"
-#include "graphics/pixeldrawer.hpp"
-#include "graphics/sitedrawer.hpp"
-
-#include "graphics/latticedrawer.hpp" // deprecated.
-
-#include "graphics/plotter2D.hpp"
-#include "graphics/plot2Darray.hpp"
-#include "graphics/plot2Daxes.hpp"
-#include "graphics/plot2Dfun.hpp"
-#include "graphics/plot2Dgrid.hpp"
-#include "graphics/plot2Dlattice.hpp"
-#include "graphics/plot2Dplane.hpp"
-#include "graphics/plot2Dvector.hpp"
-#include "graphics/plot2Dcimg.hpp"
 
 //i.o.
 #include "io/console.hpp"
@@ -100,6 +76,28 @@
 
 //extensions
 #include "extensions/openCL.hpp"
+
+// graphics
+#include "graphics/progressimg.hpp"
+#include "graphics/simpleBMP.hpp"
+#include "graphics/edgesiteimage.hpp"
+#include "graphics/interpolation.hpp"
+#include "graphics/planedrawer.hpp"
+#include "graphics/pixeldrawer.hpp"
+#include "graphics/sitedrawer.hpp"
+
+#include "graphics/latticedrawer.hpp" // deprecated.
+
+#include "graphics/plotter2D.hpp"
+#include "graphics/plot2Darray.hpp"
+#include "graphics/plot2Daxes.hpp"
+#include "graphics/plot2Dfun.hpp"
+#include "graphics/plot2Dgrid.hpp"
+#include "graphics/plot2Dplane.hpp"
+#include "graphics/plot2Dvector.hpp"
+#include "graphics/plot2Dcimg.hpp"
+#include "graphics/plot2Dlattice.hpp"
+#include "graphics/rgbc.hpp"
 
 
 

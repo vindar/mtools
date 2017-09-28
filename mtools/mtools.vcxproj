@@ -228,6 +228,7 @@
     <ClInclude Include="headers\maths\vec.hpp" />
     <ClInclude Include="headers\misc\error.hpp" />
     <ClInclude Include="headers\misc\indirectcall.hpp" />
+    <ClInclude Include="headers\misc\internal\forward_fltk.hpp" />
     <ClInclude Include="headers\misc\internal\internals_stringfct.hpp" />
     <ClInclude Include="headers\misc\internal\threadworker.hpp" />
     <ClInclude Include="headers\misc\memory.hpp" />
@@ -261,6 +262,7 @@
     <ClCompile Include="sources\openCL.cpp" />
     <ClCompile Include="sources\plot2Daxes.cpp" />
     <ClCompile Include="sources\plot2Dbasegraph.cpp" />
+    <ClCompile Include="sources\plot2Dcimg.cpp" />
     <ClCompile Include="sources\plot2Dgrid.cpp" />
     <ClCompile Include="sources\serialization.cpp" />
     <ClCompile Include="sources\serialport.cpp" />

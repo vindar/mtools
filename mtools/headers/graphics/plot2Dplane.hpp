@@ -20,7 +20,6 @@
 
 #pragma once
 
-#include <iostream>
 
 #include "internal/plotter2Dobj.hpp"
 #include "internal/drawable2DInterface.hpp"
@@ -28,6 +27,7 @@
 #include "internal/rangemanager.hpp"
 #include "../misc/indirectcall.hpp"
 
+#include <iostream>
 #include <atomic>
 
 namespace mtools

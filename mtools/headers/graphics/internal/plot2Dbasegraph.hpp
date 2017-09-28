@@ -24,18 +24,11 @@
 
 #include "plotter2Dobj.hpp"
 #include "drawable2DInterface.hpp"
+#include "../../misc/internal/forward_fltk.hpp"
 
 #include <atomic>
 #include <limits>
 #include <cmath>
-
-#include <FL/Fl_Group.H>
-#include <FL/Fl_Round_Button.H>
-#include <FL/Fl_Value_Slider.H>
-#include <FL/Fl_Button.H>
-#include <FL/Fl_Check_Button.H>
-#include <FL/Fl_Color_Chooser.H> 
-
 
 
 namespace mtools

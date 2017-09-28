@@ -26,11 +26,8 @@
 #include "rgbc.hpp"
 #include "internal/plotter2Dobj.hpp"
 #include "internal/drawable2DInterface.hpp"
+#include "../misc/internal/forward_fltk.hpp"
 
-#include <FL/Fl_Group.H>
-#include <FL/Fl_Button.H>
-#include <FL/Fl_Input.H>
-#include <FL/Fl_Check_Button.H>
 
 #include <atomic>
 

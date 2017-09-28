@@ -26,6 +26,7 @@
 #include "latticedrawer.hpp"
 #include "internal/rangemanager.hpp"
 #include "../misc/indirectcall.hpp"
+#include "../misc/internal/forward_fltk.hpp"
 
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Box.H>

@@ -25,12 +25,7 @@
 #include "../customcimg.hpp"
 #include "drawable2DInterface.hpp"
 #include "rangemanager.hpp"
-
-#include <FL/Fl_Group.H>
-#include <FL/Fl_Box.H>
-#include <FL/Fl_Progress.H>
-#include <FL/Fl_Check_Button.H>
-#include <FL/Fl_Value_Slider.H>
+#include "../../misc/internal/forward_fltk.hpp"
 
 #include <atomic>
 

@@ -643,14 +643,30 @@ const Fl_Widget  & operator*(const opaque_p_Fl_Widget & p)
 
 
 
+class inC;
+
+
+inC * create(void * p)
+	{
+	return (inC*)p;
+	}
+
 MT2004_64 gen(5679); // RNG with 2M vertices.
 int main(int argc, char *argv[])
 	{
+
+	auto oo = makePlot2DCImg(nullptr);
+
 	tvv.resize(1);
 	tvv[0] = 77;
 
+	void * o = new char;
+	inC * pc = create(o);
 
+	cout << pc << "\n";
+	cout << o << "\n";
 
+	cout.getKey();
 	tvv.resize(1000);
 
 	for (int i = 0;i < 1000;i++)

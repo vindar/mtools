@@ -62,10 +62,8 @@
 #include <FL/Fl_File_Chooser.H> 
 #include <FL/filename.H>
 #include <FL/fl_draw.H>
-*/
 
 
-/*
 #include "zlib.h"       // fltk zlib
 //#include "GL/glut.h"    // glut
 #include "png.h"        // libpng

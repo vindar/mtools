@@ -288,6 +288,9 @@
     <ClInclude Include="headers\graphics\internal\view2Dwidget.hpp">
       <Filter>Header Files\graphics\internal</Filter>
     </ClInclude>
+    <ClInclude Include="headers\misc\internal\forward_fltk.hpp">
+      <Filter>Header Files\misc\internal</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\console.cpp">
@@ -363,6 +366,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="sources\serialization.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\plot2Dcimg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
