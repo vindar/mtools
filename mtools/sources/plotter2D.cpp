@@ -27,35 +27,31 @@
 #include "io/internal/fltkSupervisor.hpp"
 #include "misc/error.hpp"
 #include "io/fileio.hpp"
+#include "graphics/internal/rgbc_flcolor.hpp"
 
-
-//#include <FL/Fl.H>
+#include <FL/Fl.H>
 #include <FL/Fl_Window.H>
-//#include <FL/Fl_Double_Window.H>
+#include <FL/Fl_Double_Window.H>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Input.H>
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Check_Button.H>
-//#include <FL/Fl_Round_Button.H>
-//#include <FL/Fl_Toggle_Button.H>
+#include <FL/Fl_Round_Button.H>
+#include <FL/Fl_Toggle_Button.H>
 #include <FL/Fl_Value_Slider.H>
 #include <FL/Fl_Counter.H>
 #include <FL/Fl_Scroll.H>
-//#include <FL/Fl_Progress.H>
 #include <FL/Fl_Pack.H>
-//#include <FL/Fl_Text_Display.H>
 #include <FL/fl_ask.H>
 #include <FL/Fl_Color_Chooser.H> 
 #include <FL/Fl_File_Chooser.H> 
-//#include <FL/filename.H>
-//#include <FL/fl_draw.H>
 
 
 
 namespace mtools
 {
 
-
+	using internals_graphics::toFlColor;
 
     namespace internals_graphics
     {
@@ -1144,8 +1140,8 @@ namespace mtools
         /* update the widget for the solid bk color */
         void Plotter2DWindow::updatesolidback()
         {
-        _w_solidbackColor->color2((Fl_Color)((RGBc)_solidBKcolor));
-        _w_solidbackColor->color((Fl_Color)((RGBc)_solidBKcolor));
+        _w_solidbackColor->color2(toFlColor((RGBc)_solidBKcolor));
+        _w_solidbackColor->color(toFlColor((RGBc)_solidBKcolor));
         if ((bool)_usesolidBK)
             {
             _w_solidback->value(1);

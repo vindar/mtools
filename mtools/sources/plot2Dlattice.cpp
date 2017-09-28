@@ -29,6 +29,7 @@
 #include "misc/internal/forward_fltk.hpp"
 #include "graphics/plot2Dlattice.hpp"
 
+#include <FL/Fl.H>
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Round_Button.H>

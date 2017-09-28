@@ -294,6 +294,9 @@
     <ClInclude Include="headers\graphics\plot2Dpixel.hpp">
       <Filter>Header Files\graphics</Filter>
     </ClInclude>
+    <ClInclude Include="headers\graphics\internal\rgbc_flcolor.hpp">
+      <Filter>Header Files\graphics\internal</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\console.cpp">

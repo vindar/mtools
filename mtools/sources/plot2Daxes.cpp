@@ -23,7 +23,8 @@
 #include "graphics/plot2Daxes.hpp"
 #include "misc/indirectcall.hpp"
 #include "io/internal/fltkSupervisor.hpp"
-
+#include "graphics/internal/rgbc_flcolor.hpp"
+#include <FL/Fl.H>
 #include <FL/Fl_Color_Chooser.H> 
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Value_Slider.H>
@@ -33,6 +34,7 @@
 
 namespace mtools
 {
+	using internals_graphics::toFlColor;
 
     const bool Plot2DAxes::DEFAULT_GRAD_SHOW = true;
     const bool Plot2DAxes::DEFAULT_NUM_SHOW = true;
@@ -97,8 +99,8 @@ namespace mtools
             if (!isInserted()) return; // not inserted, we are done
             _gradButton->value(_gradStatus ? 1 : 0);
             _numButton->value(_numStatus ? 1 : 0);
-            _gradColorButton->color((Fl_Color)_gradColor);
-            _gradColorButton->color2((Fl_Color)_gradColor);
+            _gradColorButton->color(toFlColor(_gradColor));
+            _gradColorButton->color2(toFlColor(_gradColor));
             _gradColorButton->redraw();
             refresh();
             yieldFocus();
@@ -131,8 +133,8 @@ namespace mtools
             if (!isInserted()) return; // not inserted, we are done
             _gradButton->value(_gradStatus ? 1 : 0);
             _numButton->value(_numStatus ? 1 : 0);
-            _numColorButton->color((Fl_Color)_numColor);
-            _numColorButton->color2((Fl_Color)_numColor);
+            _numColorButton->color(toFlColor(_numColor));
+            _numColorButton->color2(toFlColor(_numColor));
             _numColorButton->redraw();
             refresh();
             yieldFocus();
@@ -205,13 +207,13 @@ namespace mtools
             _numButton->value(_numStatus ? 1 : 0);
 
             _gradColorButton = new Fl_Button(10, 10, 15, 15);
-            _gradColorButton->color2((Fl_Color)_gradColor);
-            _gradColorButton->color((Fl_Color)_gradColor);
+            _gradColorButton->color2(toFlColor(_gradColor));
+            _gradColorButton->color(toFlColor(_gradColor));
             _gradColorButton->callback(_gradColorButtonCB_static, this);
 
             _numColorButton = new Fl_Button(10, 35, 15, 15);
-            _numColorButton->color2((Fl_Color)_numColor);
-            _numColorButton->color((Fl_Color)_numColor);
+            _numColorButton->color2(toFlColor(_numColor));
+            _numColorButton->color(toFlColor(_numColor));
             _numColorButton->callback(_numColorButtonCB_static, this);
 
             _scaleSlider = new Fl_Value_Slider(reqWidth - 150, 30, 140, 15);

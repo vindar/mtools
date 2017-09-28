@@ -20,8 +20,6 @@
 
 #pragma once
 
-#include <FL/Fl.H>
-
 #include "../misc/error.hpp"
 #include "../misc/misc.hpp"
 #include "../misc/stringfct.hpp"
@@ -32,6 +30,9 @@
 
 namespace mtools
 {
+
+
+
 
     /* forward definition */
     union RGBc64;
@@ -106,19 +107,6 @@ namespace mtools
 
 
         /**
-         * Constructor from a Fl_Color type.
-         *
-         * @param   c   the color.
-         * @param   a   the transparency
-         **/
-        RGBc(Fl_Color c, uint8 a) 
-            {
-            Fl::get_color(c, comp.R, comp.G, comp.B);
-            comp.A = a;
-            }
-
-
-        /**
          * Constructor from a buffer. Use all 4 bytes.
          **/
         RGBc(const unsigned char * p) : color(*((uint32*)p)) {}
@@ -145,17 +133,6 @@ namespace mtools
         RGBc & operator=(const RGBc64 & c);
 
 
-        /**
-         * Assignment operator from a Fl_Color, alpha value set to DEFAULTALPHA.
-         **/
-        /*
-        RGBc & operator=(Fl_Color c) 
-            {
-            Fl::get_color(c, comp.R, comp.G, comp.B);
-            comp.A = DEFAULTALPHA;
-            return(*this);
-            }
-            */
 
         /**
          * Assignment operator from a buffer. Use all 4 bytes.
@@ -170,12 +147,6 @@ namespace mtools
         * Converts the color into a RGBc64.
         **/
         explicit operator RGBc64() const;
-
-
-        /**
-         * Converts the color into a Fl_Color type (ignore the alpha channel).
-         **/
-        explicit operator Fl_Color() const { return fl_rgb_color(comp.R, comp.G, comp.B); }
 
 
         /**

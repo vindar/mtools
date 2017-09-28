@@ -23,7 +23,9 @@
 #include "graphics/internal/plot2Dbasegraph.hpp"
 #include "misc/indirectcall.hpp"
 #include "io/internal/fltkSupervisor.hpp"
+#include "graphics/internal/rgbc_flcolor.hpp"
 
+#include <FL/Fl.H>
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Round_Button.H>
 #include <FL/Fl_Value_Slider.H>
@@ -336,13 +338,13 @@ namespace mtools
                 _underButton->value(_drawUnder ? 1 : 0);
 
                 _overColorButton = new Fl_Button(10, 70 + 5, 15, 15);
-                _overColorButton->color2((Fl_Color)_drawOverColor);
-                _overColorButton->color((Fl_Color)_drawOverColor);
+                _overColorButton->color2(toFlColor(_drawOverColor));
+                _overColorButton->color(toFlColor(_drawOverColor));
                 _overColorButton->callback(_overColorButtonCB_static, this);
 
                 _underColorButton = new Fl_Button(10, 90 + 5, 15, 15);
-                _underColorButton->color2((Fl_Color)_drawUnderColor);
-                _underColorButton->color((Fl_Color)_drawUnderColor);
+                _underColorButton->color2(toFlColor(_drawUnderColor));
+                _underColorButton->color(toFlColor(_drawUnderColor));
                 _underColorButton->callback(_underColorButtonCB_static, this);
 
                 _overSlider = new Fl_Value_Slider(145, 70 + 1 + 5, 80, 14);
@@ -463,8 +465,8 @@ namespace mtools
                 if (fl_color_chooser("Color to use", coul.comp.R , coul.comp.G, coul.comp.B, 1) != 0)
                     {
                     _drawOverColor = coul;
-                    _overColorButton->color((Fl_Color)coul);
-                    _overColorButton->color2((Fl_Color)coul);
+                    _overColorButton->color(toFlColor(coul));
+                    _overColorButton->color2(toFlColor(coul));
                     _overColorButton->redraw();
                     refresh();
                     }
@@ -478,8 +480,8 @@ namespace mtools
                 if (fl_color_chooser("Color to use", coul.comp.R , coul.comp.G, coul.comp.B, 1) != 0)
                     {
                     _drawUnderColor = coul;
-                    _underColorButton->color((Fl_Color)coul);
-                    _underColorButton->color2((Fl_Color)coul);
+                    _underColorButton->color(toFlColor(coul));
+                    _underColorButton->color2(toFlColor(coul));
                     _underColorButton->redraw();
                     refresh();
                     }
@@ -520,11 +522,11 @@ namespace mtools
             _dichoQualitySlider->value(_dichoQuality);
             _overButton->value(_drawOver ? 1 : 0);
             _underButton->value(_drawUnder ? 1 : 0);
-            _overColorButton->color((Fl_Color)_drawOverColor);
-            _overColorButton->color2((Fl_Color)_drawOverColor);
+            _overColorButton->color(toFlColor(_drawOverColor));
+            _overColorButton->color2(toFlColor(_drawOverColor));
             _overColorButton->redraw();
-            _underColorButton->color((Fl_Color)_drawUnderColor);
-            _underColorButton->color2((Fl_Color)_drawUnderColor);
+            _underColorButton->color(toFlColor(_drawUnderColor));
+            _underColorButton->color2(toFlColor(_drawUnderColor));
             _underColorButton->redraw();
             _overSlider->value(_drawOverOpacity);
             _underSlider->value(_drawUnderOpacity);

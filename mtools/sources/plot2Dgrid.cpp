@@ -23,7 +23,10 @@
 #include "graphics/plot2Dgrid.hpp"
 #include "misc/indirectcall.hpp"
 #include "io/internal/fltkSupervisor.hpp"
+#include "graphics/internal/rgbc_flcolor.hpp"
 
+
+#include <FL/Fl.H>
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Input.H>
@@ -34,6 +37,7 @@
 namespace mtools
 {
 
+	using internals_graphics::toFlColor;
 
 
     Plot2DGrid::Plot2DGrid(bool fitToAxes, std::string name) : internals_graphics::Plotter2DObj(name), _win(nullptr), _color(RGBc::c_Black),  _hspace(1.0), _hoffset(0), _vspace(1.0), _voffset(0),  _fittoaxes(fitToAxes)
@@ -323,8 +327,8 @@ namespace mtools
             optionWin = _win;
 
             _colorButton = new Fl_Button(5, 5, 15, 15);
-            _colorButton->color2((Fl_Color)((RGBc)_color));
-            _colorButton->color((Fl_Color)((RGBc)_color));
+            _colorButton->color2(toFlColor((RGBc)_color));
+            _colorButton->color(toFlColor((RGBc)_color));
             _colorButton->callback(_colorCB_static, this);
 
             auto colorText = new Fl_Box(20, 5, 100, 15, "Color of the grid.");
@@ -461,8 +465,8 @@ namespace mtools
                 _hspaceInput->value(doubleToStringNice(_hspace).c_str());
                 _hoffsetInput->value(doubleToStringNice(_hoffset).c_str());
                 }
-            _colorButton->color((Fl_Color)((RGBc)_color));
-            _colorButton->color2((Fl_Color)((RGBc)_color));
+            _colorButton->color(toFlColor((RGBc)_color));
+            _colorButton->color2(toFlColor((RGBc)_color));
             _colorButton->redraw();
             }
 

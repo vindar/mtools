@@ -27,7 +27,9 @@
 #include "graphics/customcimg.hpp"
 #include "graphics/internal/drawable2Dobject.hpp"
 #include "graphics/internal/rangemanager.hpp"
+#include "graphics/internal/rgbc_flcolor.hpp"
 
+#include <FL/Fl.H>
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Progress.H>
@@ -396,14 +398,14 @@ namespace mtools
             if ((pnot)_ownercb == nullptr) return;  // return if not inserted
             RGBc coul = nameWidgetColor();
             if (coul == RGBc::c_TransparentWhite) { return; }
-            _nameBox->color((Fl_Color)coul);
+            _nameBox->color(toFlColor(coul));
             if ((int)coul.comp.R + (int)coul.comp.G + (int)coul.comp.B < 300)
                 {
-                _nameBox->labelcolor((Fl_Color)RGBc(230, 230, 230));
+                _nameBox->labelcolor(toFlColor(RGBc(230, 230, 230)));
                 }
             else
                 {
-                _nameBox->labelcolor((Fl_Color)RGBc::c_Black);
+                _nameBox->labelcolor(toFlColor(RGBc::c_Black));
                 }
             _nameBox->redraw();
             refresh();
