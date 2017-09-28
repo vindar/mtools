@@ -604,7 +604,7 @@ int main(int argc, char *argv[])
 
 	std::map<double, double> mmap;
 
-	for (int i = 0;i < 100; i++)
+	for (int i = 0;i < 10000000; i++)
 		{
 		double v = Unif(gen) * 10;
 		mmap[v] = sin(v);
