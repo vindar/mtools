@@ -550,6 +550,7 @@ namespace mtools
 					return s;
 					}
 				MTOOLS_ERROR("DEPTH ERROR!\n");
+				return s;
 				}
 
 
@@ -595,80 +596,25 @@ RGBc color(int64 x, int64 y)
 std::vector<double> tvv;
 
 
-
-
-/*
-
-template<typename T> class opaque_fltk
-	{
-
-
-		void * operator->() {return }
-	private:
-
-		void * _p;
-	}
-
-struct opaque_p_Fl_Widget 
-	{
-	void * _p;
-	};
-
-
-
-
-
-Fl_Widget  & operator*(opaque_p_Fl_Widget & p)
-	{
-	return *((Fl_Widget*)p._p);
-	}
-
-const Fl_Widget  & operator*(const opaque_p_Fl_Widget & p)
-	{
-	return *((Fl_Widget*)p._p);
-	}
-
-Fl_Widget * operator->(opaque_p_Fl_Widget & p)
-	{
-	return ((Fl_Widget*)p._p);
-	}
-
-
-const Fl_Widget  & operator*(const opaque_p_Fl_Widget & p)
-	{
-	return *((Fl_Widget*)p._p);
-	}
-
-	*/
-
-
-
-class inC;
-
-
-inC * create(void * p)
-	{
-	return (inC*)p;
-	}
-
 MT2004_64 gen(5679); // RNG with 2M vertices.
+
+
 int main(int argc, char *argv[])
 	{
 
 
+	std::map<double, double> mmap;
 
-	auto oo = makePlot2DCImg(nullptr);
+	mmap[-10] = 0;
+	mmap[50] = 1;
+
+
+	auto P2 = makePlot2DMap(mmap, "mamap");
+
 
 	tvv.resize(1);
 	tvv[0] = 77;
 
-	void * o = new char;
-	inC * pc = create(o);
-
-	cout << pc << "\n";
-	cout << o << "\n";
-
-	cout.getKey();
 	tvv.resize(1000);
 
 	for (int i = 0;i < 1000;i++)
@@ -679,7 +625,7 @@ int main(int argc, char *argv[])
 	Plotter2D plot;
 
 	auto P1 = makePlot2DVector(tvv);
-	plot[P1];
+	plot[P2];
 
 	plot.plot();
 	return 0;

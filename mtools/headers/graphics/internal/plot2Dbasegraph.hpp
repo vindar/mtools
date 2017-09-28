@@ -58,18 +58,18 @@ namespace mtools
         Plot2DBaseGraph(double minDomain, double maxDomain, std::string name);
 
 
-        /**
+		/**
+		* Constructor. The definition domain is the whole line.
+		*
+		* @param   name    The name of the plot .
+		**/
+		Plot2DBaseGraph(std::string name);
+		
+		
+		/**
          * Move Constructor
          **/
         Plot2DBaseGraph(Plot2DBaseGraph &&);
-
-
-        /**
-         * Constructor. The definition domain is the whole line.
-         *
-         * @param   name    The name of the plot .
-         **/
-        Plot2DBaseGraph(std::string name);
 
 
         /**
@@ -348,6 +348,14 @@ namespace mtools
          * @param   name        The name of the plot.
          **/
         Plot2DBaseGraphWithInterpolation(double minDomain, double maxDomain, std::string name);
+
+
+		/**
+		 * Constructor.
+		 *
+		 * @param	name	The name of the plot.
+		 */
+		Plot2DBaseGraphWithInterpolation(std::string name);
 
 
         /**

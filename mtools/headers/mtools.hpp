@@ -88,17 +88,18 @@
 
 #include "graphics/latticedrawer.hpp" // deprecated.
 
+#include "graphics/rgbc.hpp"
 #include "graphics/plotter2D.hpp"
-#include "graphics/plot2Darray.hpp"
 #include "graphics/plot2Daxes.hpp"
-#include "graphics/plot2Dfun.hpp"
 #include "graphics/plot2Dgrid.hpp"
+#include "graphics/plot2Dfun.hpp"
+#include "graphics/plot2Darray.hpp"
+#include "graphics/plot2Dvector.hpp"
+#include "graphics/plot2Dmap.hpp"
 #include "graphics/plot2Dplane.hpp"
 #include "graphics/plot2Dpixel.hpp"
-#include "graphics/plot2Dvector.hpp"
-#include "graphics/plot2Dcimg.hpp"
 #include "graphics/plot2Dlattice.hpp"
-#include "graphics/rgbc.hpp"
+#include "graphics/plot2Dcimg.hpp"
 
 
 

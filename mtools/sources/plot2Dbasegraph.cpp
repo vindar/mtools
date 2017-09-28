@@ -650,11 +650,14 @@ namespace mtools
 
 
 
-
-
         Plot2DBaseGraphWithInterpolation::Plot2DBaseGraphWithInterpolation(double minDomain, double maxDomain, std::string name) : Plot2DBaseGraph(minDomain, maxDomain, name), _interpolationType(INTERPOLATION_NONE), _optGroup(nullptr)
             {
             }
+
+
+		Plot2DBaseGraphWithInterpolation::Plot2DBaseGraphWithInterpolation(std::string name) : Plot2DBaseGraph(name), _interpolationType(INTERPOLATION_NONE), _optGroup(nullptr)
+			{
+			}
 
 
 

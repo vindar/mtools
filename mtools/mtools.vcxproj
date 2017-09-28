@@ -198,6 +198,7 @@
     <ClInclude Include="headers\graphics\plot2Dfun.hpp" />
     <ClInclude Include="headers\graphics\plot2Dgrid.hpp" />
     <ClInclude Include="headers\graphics\plot2Dlattice.hpp" />
+    <ClInclude Include="headers\graphics\plot2Dmap.hpp" />
     <ClInclude Include="headers\graphics\plot2Dpixel.hpp" />
     <ClInclude Include="headers\graphics\plot2Dplane.hpp" />
     <ClInclude Include="headers\graphics\plot2Dvector.hpp" />
