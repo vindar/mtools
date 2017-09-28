@@ -602,31 +602,19 @@ MT2004_64 gen(5679); // RNG with 2M vertices.
 int main(int argc, char *argv[])
 	{
 
-
 	std::map<double, double> mmap;
 
-	mmap[-10] = 0;
-	mmap[50] = 1;
+	for (int i = 0;i < 100; i++)
+		{
+		double v = Unif(gen) * 10;
+		mmap[v] = sin(v);
+		}
 
 
 	auto P2 = makePlot2DMap(mmap, "mamap");
 
-
-	tvv.resize(1);
-	tvv[0] = 77;
-
-	tvv.resize(1000);
-
-	for (int i = 0;i < 1000;i++)
-		{
-		tvv[i] = sin((double)i / 100);
-		}
-
 	Plotter2D plot;
-
-	auto P1 = makePlot2DVector(tvv);
 	plot[P2];
-
 	plot.plot();
 	return 0;
 

@@ -109,10 +109,40 @@ namespace mtools
 				_minDomain = (_pmap->begin())->first;
 				_maxDomain = (_pmap->rbegin())->first;
 				if ((x < _minDomain)||(x > _maxDomain)) { return  std::numeric_limits<double>::quiet_NaN(); }
+				
+				auto it2 = _pmap->lower_bound(x);
+				if (it2 == _pmap->end()) { return  std::numeric_limits<double>::quiet_NaN(); }
+				if (it2 == _pmap->begin()) { if (x < (double)(it2->first)) { return  std::numeric_limits<double>::quiet_NaN(); } else { return it2->second; } }
+				
+				double x2 = (double)it2->first;
+				double y2 = (double)it2->second;
+				auto it1 = it2; it1--;
+				double x1 = (double)it1->first;
+				double y1 = (double)it1->second;
 
+				int t = interpolationMethod();
+				if (t == INTERPOLATION_NONE) { return y1; }
+				if (t == INTERPOLATION_LINEAR) { return linearInterpolation(x, fVec2(x1, y1), fVec2(x2, y2)); }
 
+				double x0 = x1 - 1.0;
+				double x3 = x2 + 1.0;
+				double y0 = std::numeric_limits<double>::quiet_NaN();
+				double y3 = std::numeric_limits<double>::quiet_NaN();
+				if (it1 != _pmap->begin())
+					{
+					it1--;
+					double x0 = (double)it1->first;
+					double y0 = (double)it1->second;
+					}
+				it2++;
+				if (it2 != _pmap->end())
+					{
+					double x3 = (double)it2->first;
+					double y3 = (double)it2->second;
+					}
+				if (t == INTERPOLATION_CUBIC) return cubicInterpolation(x, fVec2(x0, y0), fVec2(x1, y1), fVec2(x2, y2), fVec2(x3, y3));
+				return monotoneCubicInterpolation(x, fVec2(x0, y0), fVec2(x1, y1), fVec2(x2, y2), fVec2(x3, y3));
 
-				return x;
 				/*
 				if ((_tab == nullptr) || (_len == 0)) return std::numeric_limits<double>::quiet_NaN();
 				if (!((x >= _minDomain) && (x <= _maxDomain))) return std::numeric_limits<double>::quiet_NaN();
