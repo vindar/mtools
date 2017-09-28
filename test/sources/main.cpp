@@ -574,6 +574,10 @@ namespace mtools
 
 
 
+
+
+
+
 RGBc color(int64 x, int64 y)
 	{
 	if (x*x + y*y < 10000)
@@ -586,9 +590,81 @@ RGBc color(int64 x, int64 y)
 	return RGBc::c_TransparentWhite;
 	}
 
+
+
+std::vector<double> tvv;
+
+
+
+
+/*
+
+template<typename T> class opaque_fltk
+	{
+
+
+		void * operator->() {return }
+	private:
+
+		void * _p;
+	}
+
+struct opaque_p_Fl_Widget 
+	{
+	void * _p;
+	};
+
+
+
+
+
+Fl_Widget  & operator*(opaque_p_Fl_Widget & p)
+	{
+	return *((Fl_Widget*)p._p);
+	}
+
+const Fl_Widget  & operator*(const opaque_p_Fl_Widget & p)
+	{
+	return *((Fl_Widget*)p._p);
+	}
+
+Fl_Widget * operator->(opaque_p_Fl_Widget & p)
+	{
+	return ((Fl_Widget*)p._p);
+	}
+
+
+const Fl_Widget  & operator*(const opaque_p_Fl_Widget & p)
+	{
+	return *((Fl_Widget*)p._p);
+	}
+
+	*/
+
+
+
 MT2004_64 gen(5679); // RNG with 2M vertices.
 int main(int argc, char *argv[])
 	{
+	tvv.resize(1);
+	tvv[0] = 77;
+
+
+
+	tvv.resize(1000);
+
+	for (int i = 0;i < 1000;i++)
+		{
+		tvv[i] = sin((double)i / 100);
+		}
+
+	Plotter2D plot;
+
+	auto P1 = makePlot2DVector(tvv);
+	plot[P1];
+
+	plot.plot();
+	return 0;
 
 
 	MTOOLS_SWAP_THREADS(argc, argv);
