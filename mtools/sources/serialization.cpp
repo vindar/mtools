@@ -38,7 +38,18 @@ namespace mtools
 			if (gzbuffer((gzFile)_gzhandle, GZIPBUFFERSIZE) != 0) { MTOOLS_THROW("OArchive error (openfile 2)"); }
 			return;
 			}
+
+		#if defined (_MSC_VER) 
+		#pragma warning( push )				
+		#pragma warning( disable : 4996 )	
+		#endif
 		_handle = fopen(_filename.c_str(), "wb");
+		#if defined (_MSC_VER) 
+		#pragma warning( pop )
+		#endif
+
+
+
 		if (_handle == nullptr) { MTOOLS_THROW("OArchive error (openfile 3)"); }
 		return;
 		}
