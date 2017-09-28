@@ -20,7 +20,7 @@
 
 #pragma once
 
-
+#include "../misc/internal/mtools_export.hpp"
 #include "internal/plotter2Dobj.hpp"
 #include "internal/drawable2Dobject.hpp"
 #include "pixeldrawer.hpp"

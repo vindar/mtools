@@ -31,6 +31,7 @@
 
 #pragma once
 
+#include "../misc/internal/mtools_export.hpp"
 #include "internal/fltkSupervisor.hpp" // make sure sentnel object for fltk thread created before the global watch object
 #include "logfile.hpp"
 

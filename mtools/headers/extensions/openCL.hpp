@@ -25,6 +25,8 @@
 
 #ifdef MTOOLS_HAS_OPENCL
 
+#include "../misc/internal/mtools_export.hpp"
+
 // we want to use C++ exceptions
 #define __CL_ENABLE_EXCEPTIONS
 

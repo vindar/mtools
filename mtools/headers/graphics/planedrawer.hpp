@@ -19,7 +19,7 @@
 
 #pragma once
 
-
+#include "../misc/internal/mtools_export.hpp"
 #include "../misc/internal/threadworker.hpp"
 #include "internal/drawable2DInterface.hpp"
 #include "customcimg.hpp"

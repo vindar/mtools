@@ -20,7 +20,7 @@
 
 #pragma once
 
-
+#include "../misc/internal/mtools_export.hpp"
 #include "misc.hpp"
 #include "error.hpp"
 

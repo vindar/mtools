@@ -22,7 +22,7 @@
 
 
 
-
+#include "../misc/internal/mtools_export.hpp"
 #include "../misc/error.hpp"
 #include "../misc/metaprog.hpp"
 #include "../misc/stringfct.hpp"

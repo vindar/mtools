@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "../misc/internal/mtools_export.hpp"
 #include "internal/fltkSupervisor.hpp" // make sure sentinel object for fltk thread created before the global watch object
 #include "../misc/metaprog.hpp"
 #include "../misc/internal/forward_fltk.hpp"

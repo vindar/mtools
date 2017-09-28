@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "../misc/internal/mtools_export.hpp"
 #include "../misc/misc.hpp"
 #include "../maths/vec.hpp"
 #include "../maths/box.hpp"

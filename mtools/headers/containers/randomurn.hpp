@@ -20,6 +20,8 @@
 
 #pragma once
 
+
+#include "../misc/internal/mtools_export.hpp"
 #include "../misc/stringfct.hpp"
 #include "../misc/misc.hpp"
 #include "../misc/error.hpp"

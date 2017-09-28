@@ -20,12 +20,13 @@
 
 #pragma once
 
-#include <string>
-
+#include "../misc/internal/mtools_export.hpp"
 #include "../misc/error.hpp"
 #include "../misc/stringfct.hpp"
 #include "../misc/misc.hpp"
 #include "../io/serialization.hpp"
+
+#include <string>
 
 namespace mtools
 {

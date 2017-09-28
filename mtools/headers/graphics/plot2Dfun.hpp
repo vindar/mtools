@@ -21,7 +21,7 @@
 #pragma once
 
 
-
+#include "../misc/internal/mtools_export.hpp"
 #include "internal/plot2Dbasegraph.hpp"
 
 #include <string>

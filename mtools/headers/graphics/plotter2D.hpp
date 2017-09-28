@@ -20,7 +20,7 @@
 
 #pragma once
 
-
+#include "../misc/internal/mtools_export.hpp"
 #include "../maths/vec.hpp"
 #include "../maths/box.hpp"
 #include "../misc/error.hpp"

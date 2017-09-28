@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include "../misc/internal/mtools_export.hpp"
+
 namespace mtools
 	{
 
