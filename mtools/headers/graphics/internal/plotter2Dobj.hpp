@@ -147,11 +147,13 @@ namespace mtools
              * 
              * Calling this method override any suspended flag previously set with suspend().              *.
              *
+             * may be overriden in derived classes but should call the base class method anyway. 
+			 *
              * @param   status  true to enable and false to disable the object.
              *
              * @sa  suspend
             **/
-            void enable(bool status);
+            virtual void enable(bool status);
 
 
             /**
@@ -160,10 +162,12 @@ namespace mtools
              * (in particular, quality() and drawOnto() simply return 0). This permits to safely modify an
              * underlying object which cannot be concurrently accessed. Then, call suspend(false) when
              * modification are finished.
-             *
+			 *
+			 * may be overriden in derived classes but should call the base class method anyway.
+			 *
              * @param   status  true to suspend the object drawing and false to resume it.
             **/
-            void suspend(bool status);
+            virtual void suspend(bool status);
 
 
             /**
