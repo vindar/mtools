@@ -119,7 +119,7 @@ namespace mtools
      * while (P.shown())                   // loop until the plotter window is closed
      *    {
      *    while(tab.size() < tab.capacity()) { pos += ((Unif(gen) < 0.5) ? -1 : 1); tab.push_back(pos); } // fill the vector with new steps of the walk until its capacity()
-     *    PV.suspend();      // disable the graph since we must reallocate (use suspend() instead of enable(false) flickering by not erasing the drawing).
+     *    PV.suspend();      // disable the graph since we must reallocate (use suspend() instead of enable(false) to prevent flickering by not erasing the drawing).
      *    tab.reserve(tab.capacity() + 100000); // reserve additonnal space
      *    PV.enable(true);   // enable again.
      *    //P.autorangeXY(); // autorange (this cause a redraw so we can turn off autoredraw if we uncomment this line)
