@@ -39,7 +39,7 @@ namespace mtools
     union RGBc64;
 
     /**
-     * A color in (R,G,B,A) format.
+     * A color in (B,G,R,A) format.
      **/
     union RGBc
     {
@@ -47,15 +47,16 @@ namespace mtools
     public:
 
         /*
-         * Color is ordered in RGBA layout : Reversed compared with Fl_Color ! 
+         * Color is ordered in BGRA layout (for compatibility with cairo)
          */
+
         uint32 color;       // color seen as a uint32 : low byte is R, high byte is A      
 
         struct _RGBc_component   // color seen as 4 unsigned char in RGBA layout 
             {
-            uint8 R;    // byte 1 : Red.  (low byte in uint32)
+            uint8 B;    // byte 1 : Blue.  (low byte in uint32)
             uint8 G;    // byte 2 : Green.
-            uint8 B;    // byte 3 : Blue
+            uint8 R;    // byte 3 : Red
             uint8 A;    // byte 4 : alpha. (high byte in uint32)
             } comp;
 
@@ -78,7 +79,7 @@ namespace mtools
          * @param   b   color black.
          * @param   a   alpha channel (DEFAULTALPHA)
          **/
-        RGBc(uint8 r, uint8 g, uint8 b, uint8 a = DEFAULTALPHA) : comp{r,g,b,a} {}
+        RGBc(uint8 r, uint8 g, uint8 b, uint8 a = DEFAULTALPHA) : comp{b,g,r,a} {}
 
 
         /**
@@ -116,10 +117,7 @@ namespace mtools
         /**
          * Constructor from a buffer. Use only 3 bytes and set the alpha value separately
          **/
-        RGBc(const unsigned char * p, unsigned char a) : comp{ p[0], p[1], p[2], 0 }
-            {
-            comp.A = a;
-            }
+        RGBc(const unsigned char * p, unsigned char a) : comp{ p[0], p[1], p[2], a } {}
 
 
         /**
@@ -139,7 +137,7 @@ namespace mtools
          * Assignment operator from a buffer. Use all 4 bytes.
          *
          * @warning The buffer must have size at least 4 !
-         * @param   p   The buffer of size 3 with p[0] = red, p[1] = green, p[2] = blue, p[3] = alpha.
+         * @param   p   The buffer of size 3 with p[0] = blue, p[1] = green, p[2] = red, p[3] = alpha.
          **/
         RGBc & operator=(const unsigned char * p) { color = *((uint32*)p);  return(*this); }
 
@@ -151,13 +149,13 @@ namespace mtools
 
 
         /**
-         * The buffer for the R G B A color.
+         * The buffer for the B G R A color.
          **/
         unsigned char* buf() { return((unsigned char *)&color); }
 
 
         /**
-         * The buffer for the R G B A color (const version).
+         * The buffer for the B G R A color (const version).
          **/
         const unsigned char* buf() const { return((unsigned char *)&color); }
 
@@ -562,7 +560,7 @@ namespace mtools
 
 
     /**
-    * Addition operator. Component per component.
+    * Multiplication operator. Component per component.
     **/
     inline RGBc operator*(float f, RGBc coul)
         {
@@ -574,7 +572,7 @@ namespace mtools
 
 
 /**
-* A color in (R,G,B,A,N) format with 14 bit precision per channel.
+* A color in (B,G,R,A) format with 16 bit precision per channel.
 **/
 union RGBc64
     {
@@ -582,15 +580,16 @@ union RGBc64
     public:
 
         /*
-        * Color ordered in RGBA layout
+        * Color ordered in BGRA layout
         */
         uint64 color;
-        struct _RGBc64_component   // color seen as 4 unsigned char in RGBA layout 
+
+        struct _RGBc64_component   // color seen as 4 unsigned char in BGRA layout 
             {
-            uint16 R;    // byte 1 : Red.  (low byte in uint32)
-            uint16 G;    // byte 2 : Green.
-            uint16 B;    // byte 3 : Blue
-            uint16 A;    // byte 4 : alpha. (high byte in uint32)
+            uint16 B;    // word 1 : Blue.  (low word in uint64)
+            uint16 G;    // word 2 : Green.
+            uint16 R;    // word 3 : Red
+            uint16 A;    // word 4 : alpha. (high word in uint64)
             } comp;
 
         static const uint8 DEFAULTALPHA = 255; ///< default value for transparency : fully opaque
@@ -614,7 +613,7 @@ union RGBc64
         **/
         RGBc64(uint16 r, uint16 g, uint16 b, uint16 a = DEFAULTALPHA)
             {
-            color = ((uint64)r) + (((uint64)g) << 16) + (((uint64)b) << 32) + (((uint64)a) << 48);
+            color = ((uint64)b) + (((uint64)g) << 16) + (((uint64)r) << 32) + (((uint64)a) << 48);
             }
 
 
@@ -667,15 +666,15 @@ union RGBc64
 
 
         /**
-        * The buffer for the R G B A color.
+        * The buffer.
         **/
-        inline unsigned char* buf() { return((unsigned char *)&color); }
+        //inline unsigned char* buf() { return((unsigned char *)&color); }
 
 
         /**
-        * The buffer for the R G B A color (const version).
+        * The buffer.
         **/
-        inline const unsigned char* buf() const { return((unsigned char *)&color); }
+        //inline const unsigned char* buf() const { return((unsigned char *)&color); }
 
 
         /**
@@ -723,9 +722,9 @@ union RGBc64
          **/
         inline void normalize(int n)
             {
-            comp.R /= n;
             comp.G /= n;
             comp.B /= n;
+            comp.R /= n;
             comp.A /= n;
             }
 
