@@ -85,13 +85,22 @@ namespace mtools
 
 
 
-   /* round up to the next power of 2 */
-   inline int pow2roundup(int x)
+	/**
+	* round up to the next power of 2
+	**/
+	inline int pow2roundup(int x)
 	   {
 	   --x; x |= x >> 1; x |= x >> 2; x |= x >> 4; x |= x >> 8; x |= x >> 16;
 	   return x + 1;
 	   }
 
+	   
+	/**
+	 * my own swap, because std::swap is troublesome....
+	 **/
+	template<typename T> void swap(T & a, T & b) { T c(a); a = b; b = c; }
+
+	   
 }
 
 
