@@ -1,7 +1,28 @@
 #include "stdafx_test.h"
 
 #include "mtools.hpp"
+
+
 using namespace mtools;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -601,26 +622,14 @@ MT2004_64 gen(5679); // RNG with 2M vertices.
 
 int main(int argc, char *argv[])
 	{
-
-	std::map<double, double> mmap;
-
-	for (int i = 0;i < 10000000; i++)
-		{
-		double v = Unif(gen) * 10;
-		mmap[v] = sin(v);
-		}
+	MTOOLS_SWAP_THREADS(argc, argv);
+	parseCommandLine(argc, argv);
 
 
-	auto P2 = makePlot2DMap(mmap, "mamap");
-
-	Plotter2D plot;
-	plot[P2];
-	plot.plot();
+	cout.getKey();
 	return 0;
 
 
-	MTOOLS_SWAP_THREADS(argc, argv);
-	parseCommandLine(argc, argv);
 
 	{
 	OArchive ar("test.tst.gz");
