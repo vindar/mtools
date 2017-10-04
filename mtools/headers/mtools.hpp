@@ -19,6 +19,8 @@
 
 #pragma once
 
+// auto-generated configuration file.
+#include "mtools_config.hpp"
 
 // CImg
 #include "graphics/customcimg.hpp"
