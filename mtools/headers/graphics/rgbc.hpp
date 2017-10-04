@@ -61,7 +61,7 @@ namespace mtools
 	 **/
 	inline uint32 convertAlpha_0x100_to_0xFF(uint32 v)
 		{
-		return(v - (~((v - 128) >> 31)));
+		return(v - (((~(v - 128)) >> 31)));
 		}
 
 
@@ -116,7 +116,7 @@ namespace mtools
          * @param   r   color red.
          * @param   g   color green.
          * @param   b   color black.
-         * @param   a   alpha channel (DEFAULTALPHA)
+         * @param   a   alpha channel in 0..255 (DEFAULTALPHA)
          **/
         RGBc(uint8 r, uint8 g, uint8 b, uint8 a = DEFAULTALPHA) : comp{b,g,r,a} {}
 
@@ -316,7 +316,7 @@ namespace mtools
          *
          * @param   o   the opacity between 0.0 (transparent) and 1.0 (opaque)
          **/
-        inline void opacity(float o) { MTOOLS_ASSERT((o >= 0.0) && (o <= 1.0)); comp.A = (uint8)(o * 255); }
+        inline void opacity(float o) { MTOOLS_ASSERT((o >= 0.0f) && (o <= 1.0f)); comp.A = (uint8)(o * 255); }
 
 
         /**
@@ -324,15 +324,15 @@ namespace mtools
          *
          * @param   o   the opacity between 0.0 (transparent) and 1.0 (opaque)
          **/
-        inline RGBc getOpacity(float o) const { MTOOLS_ASSERT((o >= 0.0) && (o <= 1.0)); return RGBc((color & 0x00FFFFFF) | ((uint32)(o * 255)) << 24); }
+        inline RGBc getOpacity(float o) const { MTOOLS_ASSERT((o >= 0.0f) && (o <= 1.0f)); return RGBc((color & 0x00FFFFFF) | ((uint32)(o * 255)) << 24); }
 
 
 		/**
 		 * Blends colorB over this color.
-		 *  
-		 * The opacity of the destination (ie this color) is ignored.  
+		 * 
+		 * The opacity of the bottom (ie this color) is ignored.  
 		 *
-		 * @param	colorB	The color to blend over this one. 
+		 * @param	colorB	The 'top' color to blend over this one.
 		 **/
 		inline void blend(const RGBc colorB)
 			{
@@ -342,11 +342,13 @@ namespace mtools
 
 		/**
 		 * Blends colorB over this color.
+		 * 
+		 * The opacity of the bottom (ie this color) is ignored.
 		 *
-		 * The opacity of the destination (ie this color) is ignored.
-		 *
-		 * @param	colorB 	The color to blend over this one.
-		 * @param	opacity	opacity between 0 and 255 to multiply colorB before blending.
+		 * @param	colorB 	The 'top' color to blend over this one.
+		 * @param	opacity	The opacity to multiply colorB alpha channel with before blending, must be in
+		 * 					the range [0, 0x100] (use convertAlpha_0xFF_to_0x100() to convert a value in
+		 * 					[0,0xFF] to this range).
 		 **/
 		inline void blend(const RGBc colorB, const uint32 opacity)
 			{
@@ -355,19 +357,18 @@ namespace mtools
 
 
 		/**
-		 * Return the color obtained by blending colorB over this one.
-		 * 
-		 * The opacity of the this color is ignored.
-		 *
-		 * @param	colorB	The color to blend over this one.
-		 *
-		 * @return	the color obtained by blending colorB over this.
-		 **/
-		inline RGBc get_blend(const RGBc colorB)
+		* Blends colorB over this color.
+		*
+		* The opacity of the bottom (ie this color) is ignored.
+		*
+		* @param	colorB 	The 'top' color to blend over this one.
+		* @param	opacity	The opacity to multiply colorB alpha channel with before blending, must be in
+		* 					the range [0,1.0f].
+		**/
+		inline void blend(const RGBc colorB, const float opacity)
 			{
-			return *this;
+			(*this) = get_blend(colorB, opacity);
 			}
-
 
 
 		/**
@@ -375,14 +376,57 @@ namespace mtools
 		 * 
 		 * The opacity of the this color is ignored.
 		 *
-		 * @param	colorB 	The color to blend over this one.
-		 * @param	opacity	The opacity to multiply colorB with before blending.
+		 * @param	colorB	The 'top' color to blend over this one.
 		 *
 		 * @return	the color obtained by blending colorB over this.
 		 **/
-		inline RGBc get_blend(const RGBc colorB, const uint32 opacity)
+		inline RGBc get_blend(const RGBc colorB) const
 			{
-			return *this;
+			const uint32 o = convertAlpha_0xFF_to_0x100(colorB.color >> 24); // opacity of b in the range [0,0x100]
+			const uint32 invo = 0x100 - o; // again in the range [0,0x100]
+			const uint32 br = ((invo*(color & 0x00FF00FF)) + (o*(colorB.color & 0x00FF00FF))) >> 8; // blend blue and red together.
+			const uint32 g = ((invo*(color & 0x0000FF00)) + (o*(colorB.color & 0x0000FF00))) >> 8; // blend green  
+			return ((br & 0x00FF00FF) | (g & 0x0000FF00) | 0xFF000000); // return the blend, fully opaque. 
+			}
+
+
+		/**
+		 * Return the color obtained by blending colorB over this one.
+		 * 
+		 * The opacity of the this color is ignored.
+		 *
+		 * @param	colorB 	The 'top' color to blend over this one.
+		 * @param	opacity	The opacity to multiply colorB alpha channel with before blending, must be in
+		 * 					the range [0, 0x100] (use convertAlpha_0xFF_to_0x100() to convert a value in
+		 * 					[0,0xFF] to this range).
+		 *
+		 * @return	the color obtained by blending colorB over this.
+		 **/
+		inline RGBc get_blend(const RGBc colorB, const uint32 opacity) const
+			{
+			const uint32 o = (convertAlpha_0xFF_to_0x100(colorB.color >> 24) * opacity) >> 8; // opacity of b in the range [0,0x100]
+			const uint32 invo = 0x100 - o; // again in the range [0,0x100]
+			const uint32 br = ((invo*(color & 0x00FF00FF)) + (o*(colorB.color & 0x00FF00FF))) >> 8; // blend blue and red together.
+			const uint32 g = ((invo*(color & 0x0000FF00)) + (o*(colorB.color & 0x0000FF00))) >> 8; // blend green  
+			return ((br & 0x00FF00FF) | (g & 0x0000FF00) | 0xFF000000); // return the blend, fully opaque. 
+			}
+
+
+		/**
+		* Return the color obtained by blending colorB over this one.
+		*
+		* The opacity of the this color is ignored.
+		*
+		* @param	colorB 	The 'top' color to blend over this one.
+		* @param	opacity	The opacity to multiply colorB alpha channel with before blending, must be in
+		* 					the range [0, 0x100] (use convertAlpha_0xFF_to_0x100() to convert a value in
+		* 					[0,0xFF] to this range).
+		*
+		* @return	the color obtained by blending colorB over this.
+		**/
+		inline RGBc get_blend(const RGBc colorB, const float opacity) const
+			{
+			return get_blend(colorB, (uint32)(256 * opacity));
 			}
 
 
@@ -390,12 +434,16 @@ namespace mtools
         /**
         * Create a blending with another background color using the 'over' operator.
         *
+		* ************* DEPRECATED ****************
+		*
         * @param   B       The color to blend over (background color)
         *
         * @return the 'this over B' color
         **/
         inline RGBc over(RGBc coulB) const
             {
+			return coulB.get_blend(*this);
+			/*
             const float op = opacity();
             const float po = 1.0f - op;
             const float opB = coulB.opacity();
@@ -404,21 +452,27 @@ namespace mtools
             const int nG = (int)((comp.G*op + coulB.comp.G*opB*po) / nop);
             const int nB = (int)((comp.B*op + coulB.comp.B*opB*po) / nop);
             return RGBc(nR, nG, nB, (int)(255*nop));
+            */
             }
 
 
 
-            /**
-            * Create a blending with another background color using the 'over' operator.
-            *
-            * @param   B       The color to blend over (background color)
-            * @param   opa     The opacity to mutiply the color with before blending.
-            *
-            * @return the 'this over B' color
-            **/
-            inline RGBc over(RGBc coulB, float opa) const
+       /**
+        * Create a blending with another background color using the 'over' operator.
+        *
+        * ************* DEPRECATED ****************
+		*
+        * @param   B       The color to blend over (background color)
+        * @param   opa     The opacity to mutiply the color with before blending.
+        *
+        * @return the 'this over B' color
+        **/
+		inline RGBc over(RGBc coulB, float opa) const
             {
-            const float op = opacity()*opa;
+			return coulB.get_blend(*this,opa);
+			/*
+			return coulB.get_blend(*this);
+			const float op = opacity()*opa;
             const float po = 1.0f - op;
             const float opB = coulB.opacity();
             const float nop = op + opB*po;
@@ -426,8 +480,8 @@ namespace mtools
             const int nG = (int)((comp.G*op + coulB.comp.G*opB*po) / nop);
             const int nB = (int)((comp.B*op + coulB.comp.B*opB*po) / nop);
             return RGBc(nR, nG, nB, (int)(255 * nop));
-            }
-
+            */
+			}
 
 
         /**
@@ -627,6 +681,8 @@ namespace mtools
     /**
     * Return the blended color using the 'A over B' operator.
     *
+    * ************* DEPRECATED ****************
+	*
     * @param   A       The first color.
     * @param   B       The second color 
     *
@@ -638,7 +694,9 @@ namespace mtools
     /**
      * Return the blended color using the 'A over B' operator.
      *
-     * @param   A   The first color.
+	 * ************* DEPRECATED ****************
+	 *
+	 * @param   A   The first color.
      * @param   B   The second color.
      * @param   op  The opacity to mutiply color A with before blending.
      *
@@ -646,6 +704,57 @@ namespace mtools
      **/
     inline RGBc blendOver(RGBc A, RGBc B, float op) { return A.over(B,op); }
 
+
+
+	/**
+	* Blend color B over color A. (color A is assumed fully opaque).
+	*
+	* @param	colorA	bottom color (considered opaque).
+	* @param	colorB	top color.
+	*
+	* @return	the resulting (opaque) color obtainec by blending colorB over colorA.
+	**/
+	inline RGBc blend(RGBc colorA, RGBc colorB)
+		{
+		return colorA.get_blend(colorB);
+		}
+
+
+	/**
+	* Blend color B over color A. (color A is assumed fully opaque).
+	*
+	* The alpha channel of color B is previously multiplied by opacity before blending.
+	*
+	* @param	colorA 	bottom color (considered opaque).
+	* @param	colorB 	top color.
+	* @param	opacity	The opacity to multiply with colorB original opacity before blending. Must be
+	* 					in the range [0x100] (use convertAlpha_0xFF_to_0x100() to convert from uchar
+	* 					to this range).
+	*
+	* @return	the resulting (opaque) color obtained by blending colorB over colorA.
+	**/
+	inline RGBc blend(RGBc colorA, RGBc colorB, uint32 opacity)
+		{
+		return colorA.get_blend(colorB,opacity);
+		}
+
+
+	/**
+	* Blend color B over color A. (color A is assumed fully opaque).
+	*
+	* The alpha channel of color B is previously multiplied by opacity before blending.
+	*
+	* @param	colorA 	bottom color (considered opaque).
+	* @param	colorB 	top color.
+	* @param	opacity	The opacity to multiply with colorB original opacity before blending. Must be
+	* 					in the range [0.0f,1.0f].
+	*
+	* @return	the resulting (opaque) color obtained by blending colorB over colorA.
+	**/
+	inline RGBc blend(RGBc colorA, RGBc colorB, float opacity)
+		{
+		return colorA.get_blend(colorB, opacity);
+		}
 
 
 
@@ -753,18 +862,6 @@ union RGBc64
             {
             return RGBc(*this);
             }
-
-
-        /**
-        * The buffer.
-        **/
-        //inline unsigned char* buf() { return((unsigned char *)&color); }
-
-
-        /**
-        * The buffer.
-        **/
-        //inline const unsigned char* buf() const { return((unsigned char *)&color); }
 
 
         /**
