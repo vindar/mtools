@@ -622,6 +622,24 @@ MT2004_64 gen(5679); // RNG with 2M vertices.
 
 
 
+RGBc getColor(int64 i, int64 j)
+	{
+	i -= 100;
+	j -= 100;
+	if (i*i + j*j < 100*100) return RGBc::c_Red;
+	return RGBc::c_TransparentWhite;
+	}
+
+RGBc getColor2(int64 i, int64 j)
+	{
+	i += 100;
+	j += 100;
+	if (i*i + j*j < 100 * 100) return RGBc::c_Green;
+	return RGBc::c_TransparentWhite;
+	}
+
+
+
 
 
 int main(int argc, char *argv[])
@@ -629,41 +647,20 @@ int main(int argc, char *argv[])
 	MTOOLS_SWAP_THREADS(argc, argv);
 	parseCommandLine(argc, argv);
 
+	auto P1 = makePlot2DPixel(getColor, 2);
+	auto P2 = makePlot2DLattice(getColor2);
 
-	RGBc C1(189,45,99,1.0f); 
-	RGBc C2 (56,255,12,0.45f); 
+	Plotter2D plotter;
 
-	Chronometer();
-	int64 N = 1;
-	for (int64 i = 0; i < N; i++)
-		{
-		C1 = blend(C1, C2);
-		}
-	cout << "OK : " << C1 << " in " << Chronometer() << "\n";
-	cout.getKey();
-	return 0;
+	plotter[P1];
+	plotter[P2];
 
+	plotter.range().setRange(fBox2(-500, 500, -300, 300));
+	plotter.plot();
 
-
-	{
-	OArchive ar("test.tst.gz");
-
-	int z = 1234567;
-	ar & z;
-	}
-	
-	{
-	IArchive ir("test.tst.gz");
-
-	int e = 0;
-
-	ir & e;
-	cout << e << "\n";
-	}
-
-	cout.getKey();
 
 	return 0;
+	cout.getKey();
 
 	RStarTree<int, 2> RST;
 

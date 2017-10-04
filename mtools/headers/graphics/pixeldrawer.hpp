@@ -654,20 +654,6 @@ namespace mtools
 								{ // work on the pixel....
 								  // compute the integer box of sites that intersect pixBox
 								iBox2 siteBox((int64)std::floor(pixBox.min[0] + 0.5), (int64)std::ceil(pixBox.max[0] - 0.5), (int64)std::floor(pixBox.min[1] + 0.5), (int64)std::ceil(pixBox.max[1] - 0.5));
-								if (px > 2.0)
-									{ // adjust horizontal boundary
-									const double dxmin = pixBox.min[0] + 0.5 - siteBox.min[0];  // how much of the left pixels
-									if (dxmin < 0.5) siteBox.min[0]++;
-									const double dxmax = siteBox.max[0] + 0.5 - pixBox.max[0];  // how much of the right pixels
-									if (dxmax <= 0.5) siteBox.max[0]--;
-									}
-								if (py > 2.0)
-									{// adjust vertical boundary
-									const double dymin = pixBox.min[1] + 0.5 - siteBox.min[1];  // how much of the bottom pixels
-									if (dymin < 0.5) siteBox.min[1]++;
-									const double dymax = siteBox.max[1] + 0.5 - pixBox.max[1];  // how much of the top pixels
-									if (dymax <= 0.5) siteBox.max[1]--;
-									}
 								int64 iR = 0, iG = 0, iB = 0, iA = 0;
 								for (int64 j = siteBox.min[1]; j <= siteBox.max[1]; j++)
 									{
@@ -705,20 +691,6 @@ namespace mtools
 								{ // work on the pixel....
 								  // compute the integer box of sites that intersect pixBox
 								iBox2 siteBox((int64)std::floor(pixBox.min[0] + 0.5), (int64)std::ceil(pixBox.max[0] - 0.5), (int64)std::floor(pixBox.min[1] + 0.5), (int64)std::ceil(pixBox.max[1] - 0.5));
-								if (px > 2.0)
-									{ // adjust horizontal boundary
-									const double dxmin = pixBox.min[0] + 0.5 - siteBox.min[0];  // how much of the left pixels
-									if (dxmin < 0.5) siteBox.min[0]++;
-									const double dxmax = siteBox.max[0] + 0.5 - pixBox.max[0];  // how much of the right pixels
-									if (dxmax <= 0.5) siteBox.max[0]--;
-									}
-								if (py > 2.0)
-									{// adjust vertical boundary
-									const double dymin = pixBox.min[1] + 0.5 - siteBox.min[1];  // how much of the bottom pixels
-									if (dymin < 0.5) siteBox.min[1]++;
-									const double dymax = siteBox.max[1] + 0.5 - pixBox.max[1];  // how much of the top pixels
-									if (dymax <= 0.5) siteBox.max[1]--;
-									}
 								int64 iR = 0, iG = 0, iB = 0, iA = 0;
 								for (int64 j = siteBox.min[1]; j <= siteBox.max[1]; j++)
 									{
@@ -756,20 +728,6 @@ namespace mtools
 							{ // work on the pixel....
 							  // compute the integer box of sites that intersect pixBox
 							iBox2 siteBox((int64)std::floor(pixBox.min[0] + 0.5), (int64)std::ceil(pixBox.max[0] - 0.5), (int64)std::floor(pixBox.min[1] + 0.5), (int64)std::ceil(pixBox.max[1] - 0.5));
-							if (px > 2.0)
-								{ // adjust horizontal boundary
-								const double dxmin = pixBox.min[0] + 0.5 - siteBox.min[0];  // how much of the left pixels
-								if (dxmin < 0.5) siteBox.min[0]++;
-								const double dxmax = siteBox.max[0] + 0.5 - pixBox.max[0];  // how much of the right pixels
-								if (dxmax <= 0.5) siteBox.max[0]--;
-								}
-							if (py > 2.0)
-								{// adjust vertical boundary
-								const double dymin = pixBox.min[1] + 0.5 - siteBox.min[1];  // how much of the bottom pixels
-								if (dymin < 0.5) siteBox.min[1]++;
-								const double dymax = siteBox.max[1] + 0.5 - pixBox.max[1];  // how much of the top pixels
-								if (dymax <= 0.5) siteBox.max[1]--;
-								}
 							int64 iR = 0, iG = 0, iB = 0, iA = 0;
 							for (int64 j = siteBox.min[1]; j <= siteBox.max[1]; j++)
 								{
@@ -859,16 +817,13 @@ namespace mtools
                                             pix_j++;
                                             }
                                         const RGBc coul_max = mtools::GetColorSelector<ObjType>::call(*_obj, { pix_i, pix_j }, _opaque);
-
-                                        const double dymin = pixBox.min[1] + 0.5 - siteBox.min[1];  // how much of the bottom pixels
-                                        const double dymax = siteBox.max[1] + 0.5 - pixBox.max[1]; // how much of the top pixels
+										const double dymin = siteBox.min[1] + 0.5 - pixBox.min[1];  // how much of the bottom pixels
+										const double dymax = pixBox.max[1] + 0.5 - siteBox.max[1];  // how much of the top pixels
                                         const double aera = dymin + dymax + (double)(siteBox.max[1] - siteBox.min[1] - 1);
-
                                         double fR = (dymin*coul_min.comp.R + ((double)iR) + dymax*coul_max.comp.R) / aera;
                                         double fG = (dymin*coul_min.comp.G + ((double)iG) + dymax*coul_max.comp.G) / aera;
                                         double fB = (dymin*coul_min.comp.B + ((double)iB) + dymax*coul_max.comp.B) / aera;
                                         double fA = (dymin*coul_min.comp.A + ((double)iA) + dymax*coul_max.comp.A) / aera;
-
                                         imData[off] = RGBc64((uint16)fR, (uint16)fG, (uint16)fB, (uint16)fA);
                                         normData[off] = 0;
                                         }
@@ -889,16 +844,13 @@ namespace mtools
                                             pix_i++;
                                             }
                                         const RGBc coul_max = mtools::GetColorSelector<ObjType>::call(*_obj, { pix_i, pix_j }, _opaque);
-
-                                        const double dxmin = pixBox.min[0] + 0.5 - siteBox.min[0];  // how much of the left pixels
+										const double dxmin = pixBox.min[0] + 0.5 - siteBox.min[0];  // how much of the left pixels
                                         const double dxmax = siteBox.max[0] + 0.5 - pixBox.max[0]; // how much of the right pixels
                                         const double aera = dxmin + dxmax + (double)(siteBox.max[0] - siteBox.min[0] - 1);
-
                                         double fR = (dxmin*coul_min.comp.R + ((double)iR) + dxmax*coul_max.comp.R) / aera;
                                         double fG = (dxmin*coul_min.comp.G + ((double)iG) + dxmax*coul_max.comp.G) / aera;
                                         double fB = (dxmin*coul_min.comp.B + ((double)iB) + dxmax*coul_max.comp.B) / aera;
                                         double fA = (dxmin*coul_min.comp.A + ((double)iA) + dxmax*coul_max.comp.A) / aera;
-
                                         imData[off] = RGBc64((uint16)fR, (uint16)fG, (uint16)fB, (uint16)fA);
                                         normData[off] = 0;
                                         }
@@ -922,12 +874,10 @@ namespace mtools
                                         aera = ((double)(siteBox.max[0] - siteBox.min[0] - 1))*((double)(siteBox.max[1] - siteBox.min[1] - 1));
                                         fR = (double)iR; fG = (double)iG; fB = (double)iB; fA = (double)iA;
                                         }
-
-                                        const double dxmin = pixBox.min[0] + 0.5 - siteBox.min[0];  // how much of the left pixels
-                                        const double dxmax = siteBox.max[0] + 0.5 - pixBox.max[0];  // how much of the right pixels
-                                        const double dymin = pixBox.min[1] + 0.5 - siteBox.min[1];  // how much of the bottom pixels
-                                        const double dymax = siteBox.max[1] + 0.5 - pixBox.max[1];  // how much of the top pixels
-
+										const double dxmin = siteBox.min[0] + 0.5 - pixBox.min[0];  // how much of the left pixels
+										const double dxmax = pixBox.max[0] + 0.5 - siteBox.max[0];  // how much of the right pixels
+										const double dymin = siteBox.min[1] + 0.5 - pixBox.min[1];  // how much of the bottom pixels
+										const double dymax = pixBox.max[1] + 0.5 - siteBox.max[1];  // how much of the top pixels
                                         // sum over the 4 corners
                                         {
                                         const RGBc c = mtools::GetColorSelector<ObjType>::call(*_obj, { siteBox.min[0], siteBox.min[1] }, _opaque); const double a = dxmin*dymin;
