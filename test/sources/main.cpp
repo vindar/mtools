@@ -620,13 +620,26 @@ std::vector<double> tvv;
 MT2004_64 gen(5679); // RNG with 2M vertices.
 
 
+
+
+
+
 int main(int argc, char *argv[])
 	{
 	MTOOLS_SWAP_THREADS(argc, argv);
 	parseCommandLine(argc, argv);
 
 
+	RGBc C1(189,45,99,1.0f); 
+	RGBc C2 (56,255,12,0.45f); 
 
+	Chronometer();
+	int64 N = 1;
+	for (int64 i = 0; i < N; i++)
+		{
+		C1 = blend(C1, C2);
+		}
+	cout << "OK : " << C1 << " in " << Chronometer() << "\n";
 	cout.getKey();
 	return 0;
 
