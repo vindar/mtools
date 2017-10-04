@@ -31,39 +31,78 @@
 
 namespace mtools
 {
+	/**
+	 * Convert a value in the range [0,0xFF] to the range [0,0x100].
+	 * 
+	 * Maps 0 to 0 and 0xFF to 0x100.
+	 *
+	 * convertAlpha_0x100_to_0xFF( convertAlpha_0xFF_to_0x100(v)) = v.
+	 *
+	 * @param	v	The value in [0,0xFF].
+	 *
+	 * @return	The scaled value in [0,0x100].
+	 **/
+	inline uint32 convertAlpha_0xFF_to_0x100(uint32 v)
+		{
+		return(v + ((v & 128) >> 7));
+		}
 
 
+	/**
+	* Convert a value in the range [0,0xFF] to the range [0,0x100].
+	*
+	* Maps 0 to 0 and 0xFF to 0x100.
+	* 
+	* convertAlpha_0x100_to_0xFF( convertAlpha_0xFF_to_0x100(v)) = v.
+	* 
+	* @param	v	The value in [0,0x100].
+	*
+	* @return	The scaled value in [0,0xFF].
+	 **/
+	inline uint32 convertAlpha_0x100_to_0xFF(uint32 v)
+		{
+		return(v - (~((v - 128) >> 31)));
+		}
 
 
     /* forward definition */
     union RGBc64;
 
     /**
-     * A color in (B,G,R,A) format.
+     * A color in BGRA format.
+     * 
+	 * ONLY FOR LITTLE ENDIAN COMPUTERS. 
      **/
     union RGBc
     {
 
     public:
 
-        /*
-         * Color is ordered in BGRA layout (for compatibility with cairo)
-         */
-
-        uint32 color;       // color seen as a uint32 : low byte is R, high byte is A      
-
-        struct _RGBc_component   // color seen as 4 unsigned char in RGBA layout 
+        /**
+         * Color seen as a uint32. Low byte is Blue, high byte is Alpha.  
+         * 
+         * 31--------------------------------0
+		 * AAAAAAAA RRRRRRRR GGGGGGGG BBBBBBBB  
+         **/
+        uint32 color; 
+							        
+		/**
+		* Assume Little endian computer. 
+		* memory layout BRGA
+		**/
+		struct _RGBc_component
             {
-            uint8 B;    // byte 1 : Blue.  (low byte in uint32)
-            uint8 G;    // byte 2 : Green.
-            uint8 R;    // byte 3 : Red
-            uint8 A;    // byte 4 : alpha. (high byte in uint32)
+            uint8 B;    // byte 0 : Blue.  (low byte in uint32)
+            uint8 G;    // byte 1 : Green.
+            uint8 R;    // byte 2 : Red
+            uint8 A;    // byte 3 : alpha. (high byte in uint32)
             } comp;
 
 
         static const uint8 DEFAULTALPHA = 255;      ///< default value for transparency : fully opaque
         static const uint8 OPAQUEALPHA = 255;       ///< fully opaque
         static const uint8 TRANSPARENTALPHA = 0;    ///< fully transparent
+
 
         /**
          * Default constructor.
@@ -129,7 +168,7 @@ namespace mtools
         /**
         * assignment operator from RGBc64.
         **/
-        RGBc & operator=(const RGBc64 & c);
+        inline RGBc & operator=(const RGBc64 & c);
 
 
 
@@ -151,42 +190,37 @@ namespace mtools
         /**
          * The buffer for the B G R A color.
          **/
-        unsigned char* buf() { return((unsigned char *)&color); }
+        inline unsigned char* buf() { return((unsigned char *)&color); }
 
 
         /**
          * The buffer for the B G R A color (const version).
          **/
-        const unsigned char* buf() const { return((unsigned char *)&color); }
+        inline const unsigned char* buf() const { return((unsigned char *)&color); }
 
 
         /**
          * Equality operator.
          **/
-        bool operator==(const RGBc & c) const { return (color == c.color); }
+        inline bool operator==(const RGBc & c) const { return (color == c.color); }
 
 
         /**
          * Inequality operator.
          **/
-        bool operator!=(const RGBc & c) const { return (color != c.color); }
+        inline bool operator!=(const RGBc & c) const { return (color != c.color); }
 
 
         /**
-        * Unary plus operator.
+        * Unary plus operator. Do nothing.
         **/
-        inline RGBc operator+()
-            {
-            return (*this);
-            }
+        inline RGBc operator+() { return (*this); }
+
 
         /**
-        * Unary minus operator.
+        * Unary minus operator. Component per component.
         **/
-        inline RGBc operator-()
-            {
-            return RGBc(-comp.R, -comp.G, -comp.B, -comp.A);
-            }
+        inline RGBc operator-() { return RGBc(-comp.R, -comp.G, -comp.B, -comp.A); }
 
 
         /**
@@ -194,8 +228,7 @@ namespace mtools
         **/
         inline RGBc operator+(RGBc coul)
             {
-            //return RGBc(comp.R + coul.comp.R, comp.G + coul.comp.G, comp.B + coul.comp.B, comp.A + coul.comp.A); // slow
-            return RGBc(coul.color + color);
+            return RGBc(comp.R + coul.comp.R, comp.G + coul.comp.G, comp.B + coul.comp.B, comp.A + coul.comp.A);
             }
 
 
@@ -204,8 +237,7 @@ namespace mtools
         **/
         inline RGBc & operator+=(RGBc coul)
             {
-            //comp.R += coul.comp.R; comp.G += coul.comp.G; comp.B += coul.comp.B; comp.A += coul.comp.A; // slow
-            color += coul.color;
+            comp.R += coul.comp.R; comp.G += coul.comp.G; comp.B += coul.comp.B; comp.A += coul.comp.A; // slow
             return *this;
             }
 
@@ -215,8 +247,7 @@ namespace mtools
         **/
         inline RGBc operator-(RGBc coul)
             {
-            //return RGBc(comp.R - coul.comp.R, comp.G - coul.comp.G, comp.B - coul.comp.B, comp.A - coul.comp.A); // slow
-            return RGBc(coul.color - color);
+            return RGBc(comp.R - coul.comp.R, comp.G - coul.comp.G, comp.B - coul.comp.B, comp.A - coul.comp.A); // slow
             }
 
 
@@ -225,8 +256,7 @@ namespace mtools
         **/
         inline RGBc & operator-=(RGBc coul)
             {
-            //comp.R -= coul.comp.R; comp.G -= coul.comp.G; comp.B -= coul.comp.B; comp.A -= coul.comp.A; // slow
-            color -= coul.color;
+            comp.R -= coul.comp.R; comp.G -= coul.comp.G; comp.B -= coul.comp.B; comp.A -= coul.comp.A; // slow
             return *this;
             }
 
@@ -242,7 +272,7 @@ namespace mtools
         /**
          * Makes the color fully transparent.
          **/
-        inline void makeTransparent() { comp.A = 0; }
+		inline void makeTransparent() { color &= 0x00FFFFFF; }
 
 
         /**
@@ -250,13 +280,13 @@ namespace mtools
          *
          * @return  The same color but with its alpha channel set to 0.
          **/
-        inline RGBc getTransparent() const { RGBc c(*this); c.comp.A = 0; return c; }
+		inline RGBc getTransparent() const { return RGBc(color & 0x00FFFFFF); }
 
 
         /**
          * Makes the color fully opaque.
          **/
-        inline void makeOpaque() { comp.A = 255; }
+		inline void makeOpaque() { color |= 0xFF000000; }
 
 
         /**
@@ -264,7 +294,7 @@ namespace mtools
          *
          * @return  The same color but with its alpha channel set to 255.
          **/
-        inline RGBc getOpaque() const { RGBc c(*this); c.comp.A = 255; return c; }
+		inline RGBc getOpaque() const { return RGBc(color | 0xFF000000); }
 
 
         /**
@@ -278,7 +308,7 @@ namespace mtools
          *
          * @return  The opacity between 0.0 (fully transparent) and 1.0 (fully opaque). 
          **/
-        inline float opacity() const { return(((float)comp.A) / ((float)255.0)); }
+        inline float opacity() const { return ((float)comp.A)/(255.0f); }
 
 
         /**
@@ -294,7 +324,67 @@ namespace mtools
          *
          * @param   o   the opacity between 0.0 (transparent) and 1.0 (opaque)
          **/
-        inline RGBc getOpacity(float o) const { MTOOLS_ASSERT((o >= 0.0) && (o <= 1.0));  RGBc c(*this); c.comp.A = (uint8)(o * 255); return c; }
+        inline RGBc getOpacity(float o) const { MTOOLS_ASSERT((o >= 0.0) && (o <= 1.0)); return RGBc((color & 0x00FFFFFF) | ((uint32)(o * 255)) << 24); }
+
+
+		/**
+		 * Blends colorB over this color.
+		 *  
+		 * The opacity of the destination (ie this color) is ignored.  
+		 *
+		 * @param	colorB	The color to blend over this one. 
+		 **/
+		inline void blend(const RGBc colorB)
+			{
+			(*this) = get_blend(colorB);
+			}
+
+
+		/**
+		 * Blends colorB over this color.
+		 *
+		 * The opacity of the destination (ie this color) is ignored.
+		 *
+		 * @param	colorB 	The color to blend over this one.
+		 * @param	opacity	opacity between 0 and 255 to multiply colorB before blending.
+		 **/
+		inline void blend(const RGBc colorB, const uint32 opacity)
+			{
+			(*this) = get_blend(colorB,opacity);
+			}
+
+
+		/**
+		 * Return the color obtained by blending colorB over this one.
+		 * 
+		 * The opacity of the this color is ignored.
+		 *
+		 * @param	colorB	The color to blend over this one.
+		 *
+		 * @return	the color obtained by blending colorB over this.
+		 **/
+		inline RGBc get_blend(const RGBc colorB)
+			{
+			return *this;
+			}
+
+
+
+		/**
+		 * Return the color obtained by blending colorB over this one.
+		 * 
+		 * The opacity of the this color is ignored.
+		 *
+		 * @param	colorB 	The color to blend over this one.
+		 * @param	opacity	The opacity to multiply colorB with before blending.
+		 *
+		 * @return	the color obtained by blending colorB over this.
+		 **/
+		inline RGBc get_blend(const RGBc colorB, const uint32 opacity)
+			{
+			return *this;
+			}
+
 
 
         /**
@@ -367,8 +457,8 @@ namespace mtools
          **/
         static inline RGBc jetPalette(int64 value, int64 a, int64 b = 0)
             {
-            if (b < a)  {int64 c = a; a = b; b = c;}
-            if (b == a) { if (value < a) return jetPalette(0.0); else if (value > b) return jetPalette(1.0); return jetPalette(0.5); }
+			if (b < a) { mtools::swap<int64>(a, b); }
+            if (b - a <= 0) { if (value < a) return jetPalette(0.0); else if (value > b) return jetPalette(1.0); return jetPalette(0.5); }
             return jetPalette(((double)(value - a)) / ((double)(b - a)));
             }
 
