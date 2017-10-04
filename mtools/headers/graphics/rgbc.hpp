@@ -440,10 +440,9 @@ namespace mtools
         *
         * @return the 'this over B' color
         **/
-        inline RGBc over(RGBc coulB) const
+/*        inline RGBc over(RGBc coulB) const
             {
 			return coulB.get_blend(*this);
-			/*
             const float op = opacity();
             const float po = 1.0f - op;
             const float opB = coulB.opacity();
@@ -452,9 +451,8 @@ namespace mtools
             const int nG = (int)((comp.G*op + coulB.comp.G*opB*po) / nop);
             const int nB = (int)((comp.B*op + coulB.comp.B*opB*po) / nop);
             return RGBc(nR, nG, nB, (int)(255*nop));
-            */
             }
-
+*/
 
 
        /**
@@ -467,11 +465,9 @@ namespace mtools
         *
         * @return the 'this over B' color
         **/
-		inline RGBc over(RGBc coulB, float opa) const
+/*		inline RGBc over(RGBc coulB, float opa) const
             {
 			return coulB.get_blend(*this,opa);
-			/*
-			return coulB.get_blend(*this);
 			const float op = opacity()*opa;
             const float po = 1.0f - op;
             const float opB = coulB.opacity();
@@ -480,9 +476,8 @@ namespace mtools
             const int nG = (int)((comp.G*op + coulB.comp.G*opB*po) / nop);
             const int nB = (int)((comp.B*op + coulB.comp.B*opB*po) / nop);
             return RGBc(nR, nG, nB, (int)(255 * nop));
-            */
 			}
-
+*/
 
         /**
          * A color of the palette in linear scale for a value between
@@ -688,8 +683,9 @@ namespace mtools
     *
     * @return the 'A over B' color
     **/
+	/*
     inline RGBc blendOver(RGBc A, RGBc B) { return A.over(B); }
-
+	*/
 
     /**
      * Return the blended color using the 'A over B' operator.
@@ -702,8 +698,9 @@ namespace mtools
      *
      * @return  the 'A over B' color.
      **/
-    inline RGBc blendOver(RGBc A, RGBc B, float op) { return A.over(B,op); }
-
+	/*
+	inline RGBc blendOver(RGBc A, RGBc B, float op) { return A.over(B,op); }
+	*/
 
 
 	/**

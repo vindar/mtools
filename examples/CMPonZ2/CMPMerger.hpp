@@ -400,7 +400,10 @@ template<typename T> class CMPMerger
         void colorCluster(cmpit<T> C, RGBc color, int colorIndex = 0)
             {
             T* p = C->first;
-            while (p != nullptr) { p->_cmp_color[colorIndex] = color.over(p->_cmp_color[colorIndex]); p = p->_cmp_next; }
+            while (p != nullptr) 
+				{ 
+				p->_cmp_color[colorIndex].blend(color); p = p->_cmp_next;
+				}
             }
 
 
@@ -421,7 +424,10 @@ template<typename T> class CMPMerger
             while (p != nullptr) // loop over the cluster sites
                 {
                 p->_cmp_tag = ctag1; // tag them
-                if (includeCluster) { p->_cmp_color[colorIndex] = color.over(p->_cmp_color[colorIndex]); } // color them if needed
+                if (includeCluster) 
+					{ 
+					(p->_cmp_color[colorIndex]).blend(color);
+					}
                 p = p->_cmp_next; 
                 } 
             p = C->first;
@@ -442,7 +448,7 @@ template<typename T> class CMPMerger
                 for (size_t i = 0; i < boundary1->size(); i++) // iterate over all those sites
                     {
                     T * q = (*boundary1)[i]; // the current site
-                    q->_cmp_color[colorIndex] = color.over(q->_cmp_color[colorIndex]); // color it
+					q->_cmp_color[colorIndex].blend(color); // color it
                     if (((double)(d + 1)) <= W)
                         { // we add the neighbours to the next boundary
                         int nbc = q->nbneighbour(); // number of neighour
@@ -482,8 +488,8 @@ template<typename T> class CMPMerger
                         { // not yet visited
                         if ((p->_cmp_cluster != C) || (includeCluster))
                             {
-                            p->_cmp_color[colorIndex] = color.over(p->_cmp_color[colorIndex]);
-                            }
+							(p->_cmp_color[colorIndex]).blend(color);
+							}
                         }
                     p->_cmp_tag = ctag1; 
                     p = p->_cmp_next; 
@@ -510,7 +516,7 @@ template<typename T> class CMPMerger
                 for (size_t i = 0; i < boundary1->size(); i++) // iterate over all those sites
                     {
                     T * site = (*boundary1)[i]; // the current site
-                    site->_cmp_color[colorIndex] = color.over(site->_cmp_color[colorIndex]); // color it
+					site->_cmp_color[colorIndex].blend(color); // color it
                     int nbc = site->nbneighbour(); // number of neighour
                     for (int k = 0; k < nbc; k++)
                         {
