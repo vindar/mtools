@@ -38,6 +38,9 @@ namespace mtools
    typedef int64_t      int64;
    typedef uint64_t     uint64;
 
+   /** Defines an alias representing an unsigned char. */
+   typedef unsigned char	uchar;
+
    /** Defines an alias const char *. */
    typedef const char * cp_char;
 
