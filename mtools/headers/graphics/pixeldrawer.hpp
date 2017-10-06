@@ -562,7 +562,7 @@ namespace mtools
 				FastLaw randX(1);
 				FastLaw randY(1);
 				uint32 bln = highestBit((uint32)batchsize) - 1; // shift needed to divide by batchsize
-				MTOOLS_INSURE((1L << bln) == batchsize);
+				MTOOLS_ASSERT((1L << bln) == batchsize);
 				for (int nbb = 0; nbb < nb; nbb++)
                     {
                     size_t off = (size_t)(_subBox.min[0] + _im->width()*(_subBox.min[1]));
