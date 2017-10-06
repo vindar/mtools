@@ -641,11 +641,13 @@ RGBc getColor2(int64 i, int64 j)
 
 
 
-
 int main(int argc, char *argv[])
 	{
 	MTOOLS_SWAP_THREADS(argc, argv);
 	parseCommandLine(argc, argv);
+
+	cout.getKey();
+	return 0;
 
 	auto P1 = makePlot2DPixel(getColor, 2);
 	auto P2 = makePlot2DLattice(getColor2);

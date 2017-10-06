@@ -26,6 +26,17 @@
 #include <limits>
 
 
+
+// macro to force inlining of a function. 
+#if defined (_MSC_VER) 
+#define MTOOLS_FORCEINLINE __forceinline
+#else
+#define MTOOLS_FORCEINLINE __attribute__((always_inline))
+#endif
+
+
+
+
 namespace mtools
 {
 
@@ -87,23 +98,41 @@ namespace mtools
 #endif
 
 
+	/** Round down to the previous power of 2. If x is a power of 2, return x. If x <= 0 returns 0. **/
+	inline int32 pow2rounddown(int32 z) { int32 x = (z >> 1); x |= x >> 1; x |= x >> 2; x |= x >> 4; x |= x >> 8; x |= x >> 16; return((x + 1) & (0xFFFFFFFE | z)); }
+
+	/** Round down to the previous power of 2. If x is a power of 2, return x.  If x=0 returns 0. **/
+	inline uint32 pow2rounddown(uint32 z) { uint32 x = (z >> 1); x |= x >> 1; x |= x >> 2; x |= x >> 4; x |= x >> 8; x |= x >> 16; return((x + 1) & (0xFFFFFFFE | z)); }
+
+	/** Round down to the previous power of 2. If x is a power of 2, return x, If x <= 0 returns 0. **/
+	inline int64 pow2rounddown(int64 z) { int64 x = (z >> 1); x |= x >> 1; x |= x >> 2; x |= x >> 4; x |= x >> 8; x |= x >> 16; x |= x >> 32; return((x + 1) & (0xFFFFFFFFFFFFFFFEULL | z)); }
+
+	/** Round down to the previous power of 2. If x is a power of 2, return x.  If x=0 returns 0. **/
+	inline uint64 pow2rounddown(uint64 z) { uint64 x = (z >> 1); x |= x >> 1; x |= x >> 2; x |= x >> 4; x |= x >> 8; x |= x >> 16; x |= x >> 32; return((x + 1) & (0xFFFFFFFFFFFFFFFEULL | z)); }
+
+
+	/** Round up to the next power of 2. If x is a power of 2 return x. If x = 0 return 0 (works only for 0 <= x <= 2^30). **/
+	inline int32 pow2roundup(int32 x) { --x; x |= x >> 1; x |= x >> 2; x |= x >> 4; x |= x >> 8; x |= x >> 16; return x + 1; }
+
+	/** round up to the next power of 2. If x is a power of 2 return x. If x = 0 return 0 (works only for x <= 2^31). **/
+	inline uint32 pow2roundup(uint32 x) { --x; x |= x >> 1; x |= x >> 2; x |= x >> 4; x |= x >> 8; x |= x >> 16; return x + 1; }
+
+	/** Round up to the next power of 2. If x is a power of 2 return x. If x = 0 return 0 (works only for 0 <= x <= 2^62). **/
+	inline int64 pow2roundup(int64 x) { --x; x |= x >> 1; x |= x >> 2; x |= x >> 4; x |= x >> 8; x |= x >> 16; x |= x >> 32; return x + 1; }
+
+	/** Round up to the next power of 2. If x is a power of 2 return x. If x = 0 return 0 (works only for x <= 2^63). **/
+	inline uint64 pow2roundup(uint64 x) { --x; x |= x >> 1; x |= x >> 2; x |= x >> 4; x |= x >> 8; x |= x >> 16; x |= x >> 32; return x + 1; }
+
 
 	/**
-	* round up to the next power of 2
-	**/
-	inline int pow2roundup(int x)
-	   {
-	   --x; x |= x >> 1; x |= x >> 2; x |= x >> 4; x |= x >> 8; x |= x >> 16;
-	   return x + 1;
-	   }
-
-	   
-	/**
-	 * my own swap, because std::swap is troublesome....
+	 * another swap, because std::swap is troublesome....
 	 **/
 	template<typename T> void swap(T & a, T & b) { T c(a); a = b; b = c; }
 
 	   
+
+
+
 }
 
 
