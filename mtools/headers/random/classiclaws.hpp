@@ -85,7 +85,6 @@ namespace mtools
     template<class random_t> inline uint32 Unif_1(random_t & gen) { return (Unif_32(gen) & 1); }
 
 
-
     /**
      * Construct a real-valued uniform number in [0,1[.
      *
@@ -860,6 +859,79 @@ namespace mtools
             std::vector<double> logfact;
 
         };
+
+
+
+	/**
+	* Symmetric distribution over an the integer interval {0,1,..,N-1}
+	*
+	* VERY VERY FAST !
+	*
+	* The law of the random variable returned is  B*X + B*(N-1 - X)
+	* where B is a Bernouilli 1/2 and X is uniform in {0,..,D-1} where D
+	* is the largest power of two smaller than N.
+	**/
+	class FastLaw
+		{
+		public:
+
+			/**
+			* Constructor. Set the parameter N.
+			*
+			* @param	N	Support of the law is {0,..,N-1} with 0 < N < 2^31.
+			**/
+			FastLaw(uint32 N) : Nminus1(N - 1), Lminus1(pow2rounddown(N) - 1)
+				{
+				MTOOLS_ASSERT(N > 0);
+				MTOOLS_ASSERT(N < (1UL << 31));
+				}
+
+
+			/**
+			* Set the parameter.
+			*
+			* @param	N	Support of the law is {0,..,N-1} with 0 < N < 2^31.
+			**/
+			void setParam(uint32 N)
+				{
+				MTOOLS_ASSERT(N > 0);
+				MTOOLS_ASSERT(N < (1UL << 31));
+				Nminus1 = N - 1;
+				Lminus1 = pow2rounddown(N) - 1;
+				}
+
+
+			/**
+			* Get a random number.
+			*
+			* @param [in,out]	gen	The random generator.
+			*
+			* @return	the random variable in {0,...,N-1}
+			**/
+			template<class random_t> MTOOLS_FORCEINLINE uint32 operator()(random_t & gen) const
+				{
+				return operator()((uint32)gen());
+				}
+
+
+			/**
+			* Get a random number. Take a uniform integer as input parameter instead of a generator.
+			* Since only certain bits are used, this permit to reuse the same input several time (by appying a shift). 
+			*
+			* @param [in,out]	x	an uniformly distributed integer (in fact, only bits up to pow2roundup(N + 1) are used).
+			*
+			* @return	the random variable in {0,...,N-1}
+			**/
+			MTOOLS_FORCEINLINE uint32 operator()(uint32_t x) const
+				{
+				uint32 v = (x >> 1) & Lminus1;
+				return ((x & 1)*v + (~x & 1)*(Nminus1 - v));
+				}
+
+
+		private:
+			uint32 Nminus1, Lminus1;
+		};
 
 
 
