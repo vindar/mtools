@@ -124,6 +124,47 @@ namespace mtools
 	inline uint64 pow2roundup(uint64 x) { --x; x |= x >> 1; x |= x >> 2; x |= x >> 4; x |= x >> 8; x |= x >> 16; x |= x >> 32; return x + 1; }
 
 
+
+	/**
+	* Return the position of the highest bit set.
+	*
+	* @param	x	the value to compute the highest bit set position.
+	*
+	* @return	the 1-based index of the highest bit set (i.e. in {1,..,32} for x > 0) and 0 for x=0.
+	**/
+	inline uint32 highestBit(uint32 x)
+		{
+		uint32 i = 1;
+		if (!x) return 0;
+		if (x & 0xFFFF0000) { i += 16;  x >>= 16; }
+		if (x & 0xFF00) { i += 8; x >>= 8; }
+		if (x & 0xF0) { i += 4; x >>= 4; }
+		if (x & 0x0C) { i += 2; x >>= 2; }
+		if (x & 0x2) { i += 1; }
+		return i;
+		}
+
+
+	/**
+	* Return the position of the highest bit set.
+	*
+	* @param	x	the value to compute the highest bit set position.
+	*
+	* @return	the 1-based index of the highest bit set (i.e. in {1,..,64} for x > 0) and 0 for x=0.
+	**/
+	inline uint32 highestBit(uint64 x)
+		{
+		uint32 i = 1;
+		if (!x) return 0;
+		if (x & 0xFFFFFFFF00000000) { i += 32;  x >>= 32; }
+		if (x & 0xFFFF0000) { i += 16;  x >>= 16; }
+		if (x & 0xFF00) { i += 8; x >>= 8; }
+		if (x & 0xF0) { i += 4; x >>= 4; }
+		if (x & 0x0C) { i += 2; x >>= 2; }
+		if (x & 0x2) { i += 1; }
+		return i;
+		}
+
 	/**
 	 * another swap, because std::swap is troublesome....
 	 **/

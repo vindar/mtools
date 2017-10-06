@@ -459,7 +459,7 @@ namespace mtools
                         check();
                         for (int64 i = xmin; i <= xmax; i++)
                             {
-							if (i % 128 == 0) check();
+							if (!(i & 127)) check();
                             imData[off] = mtools::GetColorSelector<ObjType>::call(*_obj, { i , j }, _opaque);
                             normData[off] = 0;
                             off++;
@@ -474,7 +474,7 @@ namespace mtools
                         check();
                         for (int64 i = xmin; i <= xmax; i++)
                             {
-							if (i % 128 == 0) check();
+							if (!(i & 127)) check();
                             imData[off] = mtools::GetColorSelector<ObjType>::call(*_obj, { i , j }, _opaque);
                             normData[off] = 0;
                             off++;
@@ -559,7 +559,11 @@ namespace mtools
                 const int64 width = _im->width();
                 const size_t pa = (size_t)(width - ilx);
                 const int sd = sampleDone;
-                for (int nbb = 0; nbb < nb; nbb++)
+				FastLaw randX(1);
+				FastLaw randY(1);
+				uint32 bln = highestBit((uint32)batchsize) - 1; // shift needed to divide by batchsize
+				MTOOLS_INSURE((1L << bln) == batchsize);
+				for (int nbb = 0; nbb < nb; nbb++)
                     {
                     size_t off = (size_t)(_subBox.min[0] + _im->width()*(_subBox.min[1]));
                     fBox2 pixBox(r.min[0], r.min[0] + px, r.min[1], r.min[1] + py);
@@ -567,27 +571,20 @@ namespace mtools
                         {
                         for (int64 ii = 0; ii < ilx; ii++)
                             {
-							if (ii % 128 == 0) check();
+							if (!(ii & 127)) check();
                             iBox2 siteBox((int64)std::floor(pixBox.min[0] + 0.5), (int64)std::ceil(pixBox.max[0] - 0.5), (int64)std::floor(pixBox.min[1] + 0.5), (int64)std::ceil(pixBox.max[1] - 0.5));
-                            if (px > 2.0)
-                                { // adjust horizontal boundary
-                                const double dxmin = pixBox.min[0] + 0.5 - siteBox.min[0]; if (dxmin < 0.5) siteBox.min[0]++;
-                                const double dxmax = siteBox.max[0] + 0.5 - pixBox.max[0]; if (dxmax <= 0.5) siteBox.max[0]--;
-                                }
-                            if (py > 2.0)
-                                {// adjust vertical boundary
-                                const double dymin = pixBox.min[1] + 0.5 - siteBox.min[1]; if (dymin < 0.5) siteBox.min[1]++;
-                                const double dymax = siteBox.max[1] + 0.5 - pixBox.max[1]; if (dymax <= 0.5) siteBox.max[1]--;
-                                }
+							randX.setParam((uint32)(siteBox.max[0] - siteBox.min[0] + 1));
+							randY.setParam((uint32)(siteBox.max[1] - siteBox.min[1] + 1));
                             int64 iR = 0, iG = 0, iB = 0, iA = 0;
                             for (int l = 0; l < batchsize; l++)
                                 {
-                                const int64 i = siteBox.min[0] + (_fastgen() % (siteBox.max[0] - siteBox.min[0] + 1));
-                                const int64 j = siteBox.min[1] + (_fastgen() % (siteBox.max[1] - siteBox.min[1] + 1));
+								uint32 rr = _fastgen();
+								const int64 i = siteBox.min[0] + randX(rr);
+								const int64 j = siteBox.min[1] +  randY(rr >> 16);
                                 const RGBc c = mtools::GetColorSelector<ObjType>::call(*_obj, { i, j }, _opaque);
                                 iR += c.comp.R; iG += c.comp.G; iB += c.comp.B; iA += c.comp.A;
                                 }
-                            imData[off].add(RGBc64((uint16)(iR / batchsize), (uint16)(iG / batchsize), (uint16)(iB / batchsize), (uint16)(iA / batchsize)));
+							imData[off].add(RGBc64((uint16)(iR >> bln), (uint16)(iG >> bln), (uint16)(iB >> bln), (uint16)(iA >> bln)));
                             normData[off]++;
                             off++;
                             pixBox.min[0] += px; pixBox.max[0] += px;
@@ -660,7 +657,7 @@ namespace mtools
 									check();
 									for (int64 i = siteBox.min[0]; i <= siteBox.max[0]; i++)
 										{
-										if (i % 128 == 0) check();
+										if (!(i & 127)) check();
 										const RGBc c = mtools::GetColorSelector<ObjType>::call(*_obj, { i, j }, _opaque);
 										iR += c.comp.R; iG += c.comp.G; iB += c.comp.B; iA += c.comp.A;
 										}
