@@ -30,6 +30,7 @@
 #include "../misc/misc.hpp"
 #include "../misc/metaprog.hpp"
 #include "../random/gen_fastRNG.hpp"
+#include "../random/classiclaws.hpp"
 #include "internal/getcolorselector.hpp"
 
 #include <algorithm>
