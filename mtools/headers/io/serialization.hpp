@@ -47,6 +47,8 @@
 #include <unordered_map>
 
 
+/* include the helper class definiton */
+#include "internal/internals_serialization.hpp"
 
 
 #if defined (_MSC_VER)
@@ -57,17 +59,11 @@
 namespace mtools
     {
 
-    namespace internals_serialization
-        {
-        /* forward declaration of helper classes */
-        template<typename T> class OArchiveHelper;
-        template<typename T> class IArchiveHelper;
-        };
 
 
     /**
-     * Serializer class. This class is used for serializing objects. Inspired by (but much simpler
-     * than boost serialization classes).
+     * Serializer class. This class is used for serializing objects. Inspired by (but much simpler)
+     * than boost serialization classes.
      *
      * - Operator&  is used for serialising an object into the file.
      * - Operator<< is used to add a commment in the file; It does not affect the serialization itself
@@ -224,7 +220,15 @@ namespace mtools
              *
              * @return  The archive for chaining.
             **/
-            template<typename T> OArchive & operator&(const T & obj);
+			template<typename T> OArchive & operator&(const T & obj)
+				{
+				typedef mtools::remove_cv_t<T> cvT; // type T but without qualifiers
+				cvT * p = const_cast<cvT*>(&obj); // pointer to obj without qualifiers
+				_makeSpace(); if (_comment) { _writeBuffer.append("% "); _comment = false; } // exit comment mode if needed
+				internals_serialization::OArchiveHelper<cvT, OArchive>::write(_nbitem, *this, (*p), _writeBuffer); // serialize the object into the archive using the helper class
+				_flush();
+				return(*this);
+				}
 
 
             /**
@@ -370,7 +374,7 @@ namespace mtools
         private:
 
             /* friend with the helper class */
-            template<typename T> friend class internals_serialization::OArchiveHelper;
+            template<typename T, typename OARCHIVE> friend class internals_serialization::OArchiveHelper;
 
             /* add a comment string */
             void _insertComment(std::string str)
@@ -507,7 +511,13 @@ namespace mtools
              *
              * @return  The archive for chaining.
             **/
-            template<typename T> IArchive & operator&(T & obj);
+			template<typename T> IArchive & operator&(T & obj)
+				{
+				typedef mtools::remove_cv_t<T> cvT; // type T but without qualifiers
+				cvT * p = const_cast<cvT*>(&obj); // pointer to obj without qualifiers
+				internals_serialization::IArchiveHelper<cvT, IArchive>::read(_nbitem, *this, (*p)); // deserialize the object into the archive using the helper class
+				return(*this);
+				}
 
 
             /**
@@ -602,7 +612,7 @@ namespace mtools
     private:
 
             /* friend with the helper class */
-            template<typename T> friend class internals_serialization::IArchiveHelper;
+            template<typename T, typename IARCHIVE> friend class internals_serialization::IArchiveHelper;
 
 
             /* read a token and put it in a given buffer. throws if the buffer is too small
@@ -667,34 +677,6 @@ namespace mtools
     }
 
 
-/* include the helper class definiton */
-#include "internal/internals_serialization.hpp"
-
-
-namespace mtools
-{
-
-    template<typename T> OArchive & OArchive::operator&(const T & obj)
-        {
-        typedef mtools::remove_cv_t<T> cvT; // type T but without qualifiers
-        cvT * p = const_cast<cvT*>(&obj); // pointer to obj without qualifiers
-        _makeSpace(); if (_comment) { _writeBuffer.append("% "); _comment = false; } // exit comment mode if needed
-        internals_serialization::OArchiveHelper<cvT>::write(_nbitem, *this, (*p), _writeBuffer); // serialize the object into the archive using the helper class
-        _flush();
-        return(*this);
-        }
-
-
-    template<typename T> IArchive & IArchive::operator&(T & obj)
-        {
-        typedef mtools::remove_cv_t<T> cvT; // type T but without qualifiers
-        cvT * p = const_cast<cvT*>(&obj); // pointer to obj without qualifiers
-        internals_serialization::IArchiveHelper<cvT>::read(_nbitem, *this, (*p)); // deserialize the object into the archive using the helper class
-        return(*this);
-        }
-
-
- }
 
 #if defined (_MSC_VER)
 #pragma warning( pop )

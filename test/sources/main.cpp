@@ -643,11 +643,33 @@ RGBc getColor2(int64 i, int64 j)
 
 int main(int argc, char *argv[])
 	{
+
+
 	MTOOLS_SWAP_THREADS(argc, argv);
 	parseCommandLine(argc, argv);
 
+
+	{
+	OArchive ar("bou.txt");
+	ar << "CEci est un test.";
+	int64 r = 12345678;
+	ar & r;
+	ar & std::string("Hello World\n");
+	std::map<int, double> mm;
+	ar & mm;
+	ar & nullptr;
+	}
+	{
+	IArchive ir("bou.txt");
+	std::string s;
+	int64 v = 7;
+	ir & v;
+	ir & s;
+	cout << v << "\n";
+	cout << s << "\n";
 	cout.getKey();
 	return 0;
+	}
 
 	auto P1 = makePlot2DPixel(getColor, 2);
 	auto P2 = makePlot2DLattice(getColor2);
