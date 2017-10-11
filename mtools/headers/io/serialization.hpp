@@ -60,6 +60,307 @@ namespace mtools
     {
 
 
+	class OBaseArchive
+		{
+
+		public:
+
+			/** Default constructor. */
+			OBaseArchive() :  _startline(true), _comment(false), _indent(0), _nbitem(0), _writeBuffer()
+				{
+				const size_t BUFFER_SIZE = 512000;
+				_writeBuffer.reserve(BUFFER_SIZE);
+				}
+
+
+			/** Destructor. */
+			~OBaseArchive()
+				{
+				}
+
+
+			/**
+			* Serialize an object into the archive. If the object implement a "serialize" method (local or
+			* global) it is used. Otherwise, basic memcpy of the object is used.  Specialization for all
+			* basic type and std container is provided.
+			*
+			* Serialization method:
+			* - char and wchar_t : serialized as characters
+			* - integer types : written in decimal form
+			* - floating point type : written in decimal scientific notation. This is user readable
+			* friendly but not very efficient. Use opaque() for fast reliable serialization fo floating
+			* point values.
+			* - char and wchar pointer : interpreted as null-terminated C-string which are written on file
+			* using a C-escaped sequence. Beware of buffer overflow !
+			* - Other pointers : not serializable ! Use array() or opaqueArray() to serialize the values
+			* pointed.
+			* - fixed-size C-array : size automatically detected. Serialized as a C-escaped string  for
+			* type char and wchar_t, serialized as a fixed size array otherwise (i.e. same as the array()
+			* method).
+			* - std::container : the size followed by the objects contained in it.
+			* - std::string and std::wstring : serialized as C-string written using a C-escape sequence.
+			* - std::pair : both object written.
+			*
+			* @tparam  T   Generic type parameter.
+			* @param   obj The object to serialize.
+			*
+			* @return  The archive for chaining.
+			**/
+			template<typename T> OBaseArchive & operator&(const T & obj)
+				{
+				typedef mtools::remove_cv_t<T> cvT; // type T but without qualifiers
+				cvT * p = const_cast<cvT*>(&obj); // pointer to obj without qualifiers
+				_makeSpace(); if (_comment) { _writeBuffer.append("% "); _comment = false; } // exit comment mode if needed
+				internals_serialization::OArchiveHelper<cvT, OArchive>::write(_nbitem, *this, (*p), _writeBuffer); // serialize the object into the archive using the helper class
+				_flush();
+				return(*this);
+				}
+
+
+			/**
+			* Serialize an object in the archive in an opaque way : the memory representing the object is
+			* simply copied using a memcpy and save in the form "\xXXXXXX...". This is the fastest
+			* serialization method and should be used when serializing very large objects (but it is also
+			* the least portable and not readable).
+			*
+			* @tparam  T   Generic type parameter.
+			* @param   obj The object to serialize.
+			*
+			* @return  The archive for chaining.
+			**/
+			template<typename T> OBaseArchive & opaque(const T & obj)
+				{
+				typedef mtools::remove_cv_t<T> cvT; // type T but without qualifiers
+				cvT * p = const_cast<cvT*>(&obj); // pointer to obj without qualifiers
+				_makeSpace(); if (_comment) { _writeBuffer.append("% "); _comment = false; } // exit comment mode if needed
+				if (sizeof(T) == 0) { _flush(); return(*this); }
+				_nbitem++;
+				createToken(_writeBuffer, p, sizeof(obj), true, false);
+				_flush();
+				return(*this);
+				}
+
+
+			/**
+			* Serialize an array of objects of type T. Each object in the array is serialized using the
+			* object serialization method. If the array has zero element, nothing is written.
+			*
+			* @tparam  T   Generic type parameter.
+			* @param   p   pointer the the array of objects.
+			* @param   len number of objects in the array.
+			*
+			* @return  The archive for chaining.
+			**/
+			template<typename T> OBaseArchive & array(const T * pp, size_t len)
+				{
+				typedef mtools::remove_cv_t<T> cvT; // type T but without qualifiers
+				cvT * p = const_cast<cvT*>(pp); // pointer without qualifiers
+				MTOOLS_ASSERT(p != nullptr);
+				_makeSpace(); if (_comment) { _writeBuffer.append("% "); _comment = false; } // exit comment mode if needed
+				if (len == 0) { _flush(); return(*this); }
+				for (size_t i = 0; i < len; i++) { operator&(p[i]); } // serialize each element of the array.
+				return(*this);
+				}
+
+
+			/**
+			* Serialize an array of objects of type T in raw form : the memory represented by the whole
+			* array is simply copied using memcpy() and save in the form "\xXXXXXX...". This is the fastest
+			* serialization method and should be used when serializing very large objects (but the least
+			* portable and not readable). If the array has 0 elements, nothing is written.
+			*
+			* @tparam  T   Generic type parameter.
+			* @param   p   pointer to the aray of T objects.
+			* @param   len number of objects in the array.
+			*
+			* @return  The archive for chaining.
+			**/
+			template<typename T> OBaseArchive & opaqueArray(const T * pp, size_t len)
+				{
+				typedef mtools::remove_cv_t<T> cvT; // type T but without qualifiers
+				cvT * p = const_cast<cvT*>(pp); // pointer without qualifiers
+				MTOOLS_ASSERT(p != nullptr);
+				_makeSpace(); if (_comment) { _writeBuffer.append("% "); _comment = false; }
+				if (len * sizeof(T) == 0) { _flush(); return(*this); }
+				_nbitem++;
+				createToken(_writeBuffer, p, sizeof(T)*len, true, false);
+				_flush();
+				return(*this);
+				}
+
+
+			/**
+			* Add a comment into the archive. Not very efficient: should be used sparringly when writing
+			* very large archives.
+			*
+			* @param   obj The comment to add, formatted using the toString() method.
+			*
+			* @return  The archive for chaining.
+			**/
+			template<typename T> OBaseArchive & operator<<(const T & obj)
+				{
+				typedef mtools::remove_cv_t<T> cvT; // type T but without qualifiers
+				cvT * p = const_cast<cvT*>(&obj); // pointer to obj without qualifiers
+				_insertComment(toString(*p)); 
+				_flush();
+				return(*this);
+				}
+
+
+			/**
+			* Insert a given number of tabulation.
+			*
+			* @param   nb  Number of tabulation to add (default = 1).
+			**/
+			OBaseArchive & tab(size_t nb = 1)
+				{
+				if (nb > 0) { _writeBuffer.append(nb, '\t'); _flush(); }
+				return(*this);
+				}
+
+
+			/**
+			* Skip a given number of lines.
+			*
+			* @param   nb  Number of new lines (default = 1).
+			*
+			* @return  The archive for chaining.
+			**/
+			OBaseArchive & newline(size_t nb = 1)
+				{
+				_newline(nb);
+				_flush();
+				return(*this);
+				}
+
+
+			/**
+			* Sets the indentation at each new line.
+			*
+			* @param   n   Number of tabulation at the beginning of each new line (default 0).
+			**/
+			OBaseArchive & setIndent(unsigned int n = 0) { _indent = n; return(*this); }
+
+
+			/**
+			* Increment the indentation (number of tabulations) at each new line.
+			**/
+			OBaseArchive & incIndent() { _indent++; return(*this); }
+
+
+			/**
+			* decrement the indentation (number of tabulations) at each new line.
+			**/
+			OBaseArchive & decIndent() { _indent--; return(*this); }
+
+
+			/**
+			* Return the number of items that have been deserialized.
+			**/
+			uint64 nbItem() const { return _nbitem; }
+
+
+		protected:
+
+
+			/** This method should be called by the derived  class constructor to write the header. */
+			void start()
+				{
+				static const char * ARCHIVE_HEADER = "mtools::archive version 1.0\n";
+				_insertComment(std::string(ARCHIVE_HEADER));
+				_flush();
+				}
+
+
+			/** This method should be called by the derived  class destructor to write the end string. */
+			void end()
+				{
+				setIndent(0);
+				static const char * ARCHIVE_TRAILER1 = "\nnumber of items: ";
+				static const char * ARCHIVE_TRAILER2 = "\nend of archive\n";
+				_insertComment(std::string(ARCHIVE_TRAILER1) + toString(_nbitem) + std::string(ARCHIVE_TRAILER2));
+				_flush();
+				}
+
+
+			/**
+			/* Called when there is some serialized data to process.
+			* Must be overloaded in the derived class.
+			**/
+			virtual void output(std::string & str, bool forceflush) {}
+
+
+		private:
+
+
+
+			/* friend with the helper class */
+			template<typename T, typename OARCHIVE> friend class internals_serialization::OArchiveHelper;
+
+
+			/* insert new lines */
+			void _newline(size_t nb = 1)
+				{
+				if (nb > 0) { _writeBuffer.append(nb, '\n'); _comment = false; _startline = true; _comment = false; }
+				}
+
+
+			/* add a comment string */
+			inline void _insertComment(std::string str)
+				{
+				if (str.length() == 0) return; // nothing to do
+				replace(str, "%", "#"); // replace every % by #
+				while (1)
+					{
+					size_t pos = str.find('\n');
+					auto str2 = str.substr(0, pos);
+					if (str2.length() != 0)
+						{
+						_makeSpace(); // make indentation if beginning of new line or space if not yet in comment mode
+						if (!_comment) { _writeBuffer.append(1, '%'); _comment = true; } // go in comment mode if this is not yet the case
+						_writeBuffer += str2;
+						}
+					if (pos == str.npos) { return; }
+					_newline();
+					str = str.substr(pos + 1, str.npos);
+					if (str.length() == 0) return;
+					}
+				}
+
+
+			/* add a space between token and new line tabulation if needed */
+			inline void _makeSpace()
+				{
+				if (_startline)
+					{ // add tabulation at the beginning of the new line if needed.
+					_startline = false;
+					if (_indent > 0) { _writeBuffer.append(_indent, '\t'); }
+					return;
+					}
+				else
+					{ // add a space if not in comment mode.
+					if (!_comment) { _writeBuffer.append(1, ' '); _flush(); }
+					}
+				}
+
+
+			/* write the buffer to the file (if needed or forced) */
+			inline void _flush(bool force = false)
+				{
+				output(_writeBuffer,force);
+				}
+
+
+
+			bool _startline;                 // true if we are at the beginning of a new line
+			bool _comment;                   // true if we are in comment mode
+			size_t _indent;                  // number of indentation at the beginning of each new line
+			uint64 _nbitem;                  // number of item in the archive
+			std::string _writeBuffer;        // the buffer where the archve is written
+
+		};
+
+
 
     /**
      * Serializer class. This class is used for serializing objects. Inspired by (but much simpler)
