@@ -22,29 +22,12 @@
 
 
 
+#include "../misc/misc.hpp"
 #include "../misc/internal/mtools_export.hpp"
 #include "../misc/error.hpp"
 #include "../misc/metaprog.hpp"
 #include "../misc/stringfct.hpp"
 #include "../io/fileio.hpp"
-
-#include <utility>
-#include <fstream>
-#include <type_traits>
-#include <wchar.h>
-#include <string>
-#include <array>
-#include <vector>
-#include <deque>
-#include <forward_list>
-#include <list>
-#include <stack>
-#include <queue>
-#include <set>
-#include <map>
-#include <complex>
-#include <unordered_set>
-#include <unordered_map>
 
 
 /* include the helper class definiton */
@@ -91,73 +74,7 @@ namespace mtools
 	* serialize(ARCHIVE & ar, const int version = 0)` which makes it compatible with the
 	* boost::serialization classes.
 	*
-	* If there is an error while performing serialization, an exception (type const char *) is
-	* thrown.
-	*
-	* @code{.cpp}
-	* class GPS
-	* {
-	* public:
-	*
-	* GPS(mtools::iVec2 p, double deg) : pos(p), degree(deg) {}
-	*
-	* template<typename ARCHIVE> void serialize(ARCHIVE & ar, const int version = 0) const
-	* {
-	* ar << "GPS class object";
-	* ar & pos;
-	* ar & degree;
-	* }
-	*
-	* // the deserialize method is not necessary here since serialize() above also accept IBaseArchive.
-	* // But since the method is present,it is chosen over serialize() when performing deserialization.
-	* void deserialize(IBaseArchive & ar, const int version = 0)
-	* {
-	* ar & pos;
-	* ar & degree;
-	* }
-	*
-	* mtools::iVec2 pos;
-	* double degree;
-	* };
-	*
-	*
-	* int main()
-	* {
-	* { // serialize
-	* GPS gps({ 1, 2 }, 1.3);
-	* std::set<int> myset = { 8, 1, 2, 7, 0 };
-	* char tab[10] = "azerty";
-	*      p = tab;
-	* std::wstring s = L"hello";
-	* int ti[5] = { 5, 2, 6, 7, 1 };
-	* OFileArchive ar("save.ar.gz"); // use compression
-	* ar << "Ceci est un commentaire"; // a comment
-	* ar & gps;           // save gps
-	* ar.opaque(gps);     // save again but in an opaque way using memcpy
-	* ar & myset;         // save the set
-	* ar & tab;           // save the C array
-	* ar & p;             // save as a null terminated C array
-	* ar.array(ti, 4);    // save as an array of size 4
-	* ar.opaqueArray(ti, 4); // save again but in an opaque way
-	* ar & s;             // save the wstring
-	* }
-	* GPS gps({ 0, 0 }, 0);
-	* std::set<int> myset;
-	* char tab[10];
-	* char tab2[10];
-	*      p = tab2;
-	* std::wstring s;
-	* int ti[5];
-	* IFileArchive ar("save.ar.gz"); // open the file
-	* ar & gps;
-	* ar.opaque(gps);
-	* ar & myset & tab & p;
-	* ar.array(ti, 4);
-	* ar.opaqueArray(ti, 4);
-	* ar & s; // deserialization
-	* return 0;
-	* }
-	* @endcode.
+	* If there is an error while performing serialization, an exception is thrown.
 	*
 	* @sa  class IBaseArchive
 	**/
@@ -399,6 +316,11 @@ namespace mtools
 
 		private:
 
+			/* no copy */
+			OBaseArchive(const OBaseArchive &) = delete;
+			OBaseArchive & operator=(const  OBaseArchive &) = delete;
+
+
 			/* friend with the helper class */
 			template<typename T, typename OARCHIVE> friend class internals_serialization::OArchiveHelper;
 
@@ -467,7 +389,7 @@ namespace mtools
 
 
 
-	/** Class to serialize into an std:string.  */
+	/** Class performing serialization into an std:string.  */
 	class OStringArchive : public OBaseArchive
 		{
 
@@ -494,7 +416,10 @@ namespace mtools
 
 
 
-	/** Class to serialize into an std:string formatted in such way that it can be included into a .ccp file. */
+	/**
+	 * Class used to serialize directly into a source file: construct an std::string which can be
+	 * directly pasted into a .cpp file.
+	 **/
 	class OCPPArchive : public OBaseArchive
 		{
 
@@ -503,9 +428,9 @@ namespace mtools
 			/**
 			 * Constructor.
 			 *
-			 * @param	name Name of the object to create. (of type const char**)
+			 * @param	name Name of the object to create. (of type const p_char[])
 			 */
-			OCPPArchive(const std::string name) : OBaseArchive() { header(); }
+			OCPPArchive(const std::string name) : OBaseArchive(), _name(name) { }
 
 
 			/** Destructor. */
@@ -516,19 +441,23 @@ namespace mtools
 			 * Return a string containing the serialized object formatted in such way that it can be
 			 * included in a .cpp file.
 			 */
-			std::string get() const { return std::string(); }
+			std::string get() const;
+
 
 		protected:
 
 			virtual void output(std::string & str) override { }
+
+		private:
+
+			std::string _name;
 
 		};
 
 
 
 
-
-	/** Class to serialize into a file. */
+	/** Class to serialize into a file (use compression depending on the file extension) */
 	class OFileArchive : public OBaseArchive
 		{
 		public:
@@ -742,10 +671,16 @@ namespace mtools
 			virtual const char * refill(size_t & len)
 				{
 				MTOOLS_ERROR("method IBaseArchive::refill() must be overloaded !");
+				return nullptr;
 				}
 
 
 		private:
+
+			/* no copy */
+			IBaseArchive(const IBaseArchive &) = delete;
+			IBaseArchive & operator=(const  IBaseArchive &) = delete;
+
 
 			/* friend with the helper class */
 			template<typename T, typename IARCHIVE> friend class internals_serialization::IArchiveHelper;
@@ -812,13 +747,33 @@ namespace mtools
 
 
 
-	/** Class to deserialize from a string. */
+
+	/** Class to deserialize from a string created with OStringArchive */
 	class IStringArchive : public IBaseArchive
 		{
 
+		public: 
+
+			/**
+			 * Constructor.
+			 *
+			 * @param	str	The string to deserialize.
+			 * 				
+			 * The string must remain accessible until the object is finished deserializing.
+			 **/
 			IStringArchive(const std::string & str) : _buf(str.c_str()), _len(str.size()) { }
-	
+
+
+			/**
+			 * Constructor.
+			 *
+			 * @param	buf	The buffer to deserialize.
+			 * @param	len	The length of the buffer. 
+			 * 				
+			 * The buffer must remain accessible until the object is finished deserializing. 
+			 **/
 			IStringArchive(const char * buf, size_t len) : _buf(buf), _len(len)	{ }
+
 
 			virtual ~IStringArchive() {}
 
@@ -840,14 +795,38 @@ namespace mtools
 		};
 
 
-	/** Class to deserialize from a const char ** created with OCPPArchive */
+	
+
+	/** Class to deserialize an object of type const p_char[] created with OCPPArchive. */
 	class ICPPArchive : public IBaseArchive
 		{
+
+		public: 
+
+			ICPPArchive(const cp_char obj[] );
+
+			virtual ~ICPPArchive() {}
+
+		protected:
+
+			virtual const char * refill(size_t & len) override 
+				{
+				if (_firsttime) { _firsttime = false; len = _buf.size(); return _buf.data(); }
+				len = 0;
+				return nullptr;
+				}
+
+		private:
+
+			std::string _buf;
+			bool _firsttime;
 
 		};
 
 
-	/** Class to deserialize from a file. */
+
+
+	/** Class to deserialize from a file create with OFileArchive. */
 	class IFileArchive : public IBaseArchive
 		{
 

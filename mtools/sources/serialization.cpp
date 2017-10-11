@@ -137,6 +137,77 @@ namespace mtools
 
 
 
+	std::string OCPPArchive::get() const 
+		{
+		const size_t CHUNKSIZE = 64;
+		const char * src = getbuffer().data();
+		const size_t src_len = getbuffer().size();
+		std::string dest(src_len + 128, ' ');
+		char * dst = &(dest[0]);
+		size_t dst_len = dest.size();
+		z_stream defstream;
+		defstream.zalloc = Z_NULL;
+		defstream.zfree = Z_NULL;
+		defstream.opaque = Z_NULL;
+		defstream.avail_in = (uInt)src_len;
+		defstream.next_in = (Bytef *)src;
+		defstream.avail_out = (uInt)dst_len;
+		defstream.next_out = (Bytef *)dst;
+		deflateInit(&defstream, Z_BEST_COMPRESSION);
+		deflate(&defstream, Z_FINISH);
+		deflateEnd(&defstream);
+		dst_len = defstream.total_out;
+		std::vector<std::string> tab;
+		while (dst_len >= CHUNKSIZE)
+			{
+			tab.push_back(mtools::memoryToString(dst, CHUNKSIZE));
+			dst += CHUNKSIZE;
+			dst_len -= CHUNKSIZE;
+			}
+		if (dst_len > 0) { tab.push_back(mtools::memoryToString(dst, dst_len)); }
+		std::string res("const p_char ");
+		res += _name + "[" + mtools::toString(tab.size() + 2) + "] = { ";
+		res += "\"" + mtools::toString(tab.size()) + "\", \"" + mtools::toString(src_len)  + "\"";
+		for (size_t i = 0; i < tab.size(); i++)
+			{
+			res += ",\n\"" + tab[i] + "\"";
+			}
+		res += "\n};\n";
+		return res; 
+		}
+
+
+	ICPPArchive::ICPPArchive(const cp_char obj[])
+		{
+		size_t tabsize, src_len;
+		mtools::fromString(obj[0], tabsize);
+		mtools::fromString(obj[1], src_len);
+		_buf.resize(src_len,' ');
+		std::string tmp;
+		z_stream strm;
+		strm.zalloc = Z_NULL;
+		strm.zfree = Z_NULL;
+		strm.opaque = Z_NULL;
+		strm.total_in = 0;
+		strm.avail_in = 0;
+		strm.next_in = Z_NULL;
+		strm.total_out = 0;
+		strm.avail_out = (uInt)src_len;
+		strm.next_out = (Bytef *)&_buf[0];
+		inflateInit(&strm);
+		for (size_t k = 0; k < tabsize; k++)
+			{
+			size_t l = (strlen(obj[k + 2]) >> 1);
+			tmp.resize(l);
+			stringToMemory(obj[k + 2], &(tmp[0]));
+			strm.avail_in = (uInt)l;
+			strm.next_in = (Bytef *)(&(tmp[0]));
+			inflate(&strm, Z_NO_FLUSH);
+			}
+		inflateEnd(&strm);
+		}
+
+
 	}
 
 
