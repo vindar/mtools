@@ -67,7 +67,7 @@ namespace mtools
         void load(const std::string & filename)
             {
             _tab.clear();
-            IArchive ar(filename);
+            IFileArchive ar(filename);
             ar & (*this);
             }
 
@@ -80,7 +80,7 @@ namespace mtools
          **/
         void save(const std::string & filename)
             {
-            OArchive ar(filename);
+            OFileArchive ar(filename);
             ar & (*this);
             }
 
@@ -192,11 +192,11 @@ namespace mtools
 
         /**
         * serialise/deserialize the urn. Works with boost and with the custom serialization classes
-        * OArchive and IArchive. the method performs both serialization and deserialization.
+        * OBaseArchive and IBaseArchive. the method performs both serialization and deserialization.
         **/
-        template<typename U> void serialize(U & Archive, const int version = 0)
+        template<typename ARCHIVE> void serialize(ARCHIVE & ar, const int version = 0)
             {
-            Archive & _tab;
+            ar & _tab;
             }
 
 

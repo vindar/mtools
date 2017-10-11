@@ -39,13 +39,13 @@ public:
 
     ExTab(size_t L);
     ExTab(const std::string & filename);
-	ExTab(mtools::IArchive & A);
+	ExTab(mtools::IBaseArchive & A);
     ~ExTab();
 
 	void Save(const std::string & filename) const;
 	void Reset();
-    void serialize(mtools::OArchive & ar);
-    void deserialize(mtools::IArchive & ar);
+    void serialize(mtools::OBaseArchive & ar);
+    void deserialize(mtools::IBaseArchive & ar);
     inline void Add(const T & val);
 
     inline T medV(uint64 pos) const;

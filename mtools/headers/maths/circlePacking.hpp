@@ -388,7 +388,7 @@ namespace mtools
 	 **/
 	template<typename FPTYPE, typename GRAPH> void loadCirclePacking(const std::string & filename, GRAPH & graph, std::vector<int> & boundary, std::vector<Circle<FPTYPE> > & circles, int & alpha, int & beta, int & gamma)
 		{
-		IArchive ar(filename);
+		IFileArchive ar(filename);
 		size_t nodecount = 0;
 		graph.clear();
 		boundary.clear();

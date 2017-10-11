@@ -206,33 +206,33 @@ namespace mtools
 
 
 			/**
-			* Serializes the tree into an OArchive. If T implement a serialize method recognized by
-			* OArchive, it is used for serialization otherwise OArchive uses its default serialization
+			* Serializes the tree into an OBaseArchive. If T implement a serialize method recognized by
+			* OBaseArchive, it is used for serialization otherwise OBaseArchive uses its default serialization
 			* method (which correspond to a basic memcpy() of the object memory).
 			*
 			* @param [in,out]  ar  The archive object to serialise the tree into.
-			* @sa  class OArchive, class IArchive
+			* @sa  class OBaseArchive, class IBaseArchive
 			**/
-			void serialize(OArchive & ar) const
+			void serialize(OBaseArchive & ar) const
 				{
 				MTOOLS_ERROR("Not yet implemented");		// TODO
 				}
 
 
 			/**
-			* Deserializes the tree from an IArchive. If T has a constructor of the form T(IArchive &), it
+			* Deserializes the tree from an IBaseArchive. If T has a constructor of the form T(IBaseArchive &), it
 			* is used for deserializing the T objects in the tree. Otherwise, if T implements one of the
-			* serialize methods recognized by IArchive, the objects in the tree are first position/default
+			* serialize methods recognized by IBaseArchive, the objects in the tree are first position/default
 			* constructed and then deserialized using those methods. If no specific deserialization method
-			* is found, IArchive falls back to its default derialization method.
+			* is found, IBaseArchive falls back to its default derialization method.
 			*
 			* If the tree is non-empty, it is first reset, possibly calling the ctor of the existing T
 			* objects depending on the status of the callCtor flag.
 			*
 			* @param [in,out]  ar  The archive to deserialize the tree from.
-			* @sa  class OArchive, class IArchive
+			* @sa  class OBaseArchive, class IBaseArchive
 			**/
-			void deserialize(IArchive & ar)
+			void deserialize(IBaseArchive & ar)
 				{
 				MTOOLS_ERROR("Not yet implemented");		// TODO
 				}
@@ -246,13 +246,13 @@ namespace mtools
 			*
 			* @param   filename    The filename to save.
 			* @return  true on success, false on failure.
-			* @sa  load, serialize, deserialize, class OArchive, class IArchive
+			* @sa  load, serialize, deserialize, class OBaseArchive, class IBaseArchive
 			**/
 			bool save(const std::string & filename) const
 				{
 				try
 					{
-					OArchive ar(filename);
+					OFileArchive ar(filename);
 					ar & (*this); // use the serialize method.
 					}
 				catch (...)
@@ -274,13 +274,13 @@ namespace mtools
 			*
 			* @param   filename    The filename to load.
 			* @return  true on success, false on failure [in this case, the lattice is reset].
-			* @sa  save, class OArchive, class IArchive
+			* @sa  save, class OBaseArchive, class IBaseArchive
 			**/
 			bool load(const std::string & filename)
 				{
 				try
 					{
-					IArchive ar(filename);
+					IFileArchive ar(filename);
 					ar & (*this); // use the deserialize method.
 					}
 				catch (...)
@@ -641,26 +641,80 @@ RGBc getColor2(int64 i, int64 j)
 
 
 
+
+void testAR()
+	{
+	std::string filename("testar.txt");
+	MT2004_64 gen(1);
+	size_t N = 1000;
+
+	double * tab = new double[N];
+
+	for (size_t i = 0; i < N; i++)
+		{
+		tab[i] = Unif(gen);
+		}
+	cout << "DONE 1\n";
+
+	
+	{
+	OFileArchive oar(filename);
+	for (size_t i = 0; i < N; i++)
+		{
+		oar & tab[i];
+		}
+	cout << "DONE 2\n";
+	}
+	
+	{
+	double * tab2 = new double[N];
+	cout << "DONE 3\n";
+
+	IFileArchive iar(filename);
+	for (size_t i = 0; i < N ; i++)
+		{
+		iar & tab2[i];
+		}
+	cout << "DONE 3\n";
+
+
+	for (size_t i = 0; i < N; i++)
+		{
+		if (tab[i] != tab2[i]) { cout << "ERROR :" << i << "\n"; }
+		}
+	cout << "DONE 4\n";
+	}
+
+	}
+
+
+
 int main(int argc, char *argv[])
 	{
-
 
 	MTOOLS_SWAP_THREADS(argc, argv);
 	parseCommandLine(argc, argv);
 
+	testAR();
+	cout.getKey();
+	cout.getKey();
+	return 0;
 
 	{
-	OArchive ar("bou.txt");
+	OFileArchive ar("bou.txt");
 	ar << "CEci est un test.";
-	int64 r = 12345678;
-	ar & r;
-	ar & std::string("Hello World\n");
+	int64 r = 123456998;
+	ar & r & std::string("Hello World\n");
 	std::map<int, double> mm;
 	ar & mm;
 	ar & nullptr;
+
+	//cout << ar.get() << "\n";
+	//cout.getKey();
+	//return 0;
 	}
 	{
-	IArchive ir("bou.txt");
+	IFileArchive ir("bou.txt");
 	std::string s;
 	int64 v = 7;
 	ir & v;

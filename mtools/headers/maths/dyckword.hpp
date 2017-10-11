@@ -160,7 +160,7 @@ namespace mtools
 
 			/**
 			* Serialise/deserialize. Works with boost and with the custom serialization classes
-			* OArchive and IArchive. the method performs both serialization and deserialization.
+			* OBaseArchive and IBaseArchive. the method performs both serialization and deserialization.
 			**/
 			template<typename U> void serialize(U & Archive, const int version = 0)
 				{

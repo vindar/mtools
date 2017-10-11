@@ -35,8 +35,8 @@ namespace mtools
 
 
 	/* forward declaration */
-	class IArchive;
-	class OArchive;
+	class IBaseArchive;
+	class OBaseArchive;
 	
     /**
     * Namespace containing meta-programing methods
@@ -95,28 +95,28 @@ namespace mtools
 
         template<typename T> class is_serializable
         {
-            template<typename U> static decltype((*(U*)(0)).serialize(*(OArchive*)(0)), yes()) testserializeMO(int);
+            template<typename U> static decltype((*(U*)(0)).serialize(*(OBaseArchive*)(0)), yes()) testserializeMO(int);
             template<typename> static no testserializeMO(...);
             static const bool _hasserializeMO = (sizeof(testserializeMO<T>(0)) == sizeof(yes));
 
-            template<typename U> static decltype(serialize((*(OArchive*)(0)), (*(U*)(0))), yes()) testserializeGO(int);
+            template<typename U> static decltype(serialize((*(OBaseArchive*)(0)), (*(U*)(0))), yes()) testserializeGO(int);
             template<typename> static no testserializeGO(...);
             static const bool _hasserializeGO = (sizeof(testserializeGO<T>(0)) == sizeof(yes));
 
-            template<typename U> static decltype((*(U*)(0)).serialize(*(IArchive*)(0)), yes()) testserializeMI(int);
+            template<typename U> static decltype((*(U*)(0)).serialize(*(IBaseArchive*)(0)), yes()) testserializeMI(int);
             template<typename> static no testserializeMI(...);
             static const bool _hasserializeMI = (sizeof(testserializeMI<T>(0)) == sizeof(yes));
 
-            template<typename U> static decltype(serialize((*(IArchive*)(0)), (*(U*)(0))), yes()) testserializeGI(int);
+            template<typename U> static decltype(serialize((*(IBaseArchive*)(0)), (*(U*)(0))), yes()) testserializeGI(int);
             template<typename> static no testserializeGI(...);
             static const bool _hasserializeGI = (sizeof(testserializeGI<T>(0)) == sizeof(yes));
 
 
-            template<typename U> static decltype((*(U*)(0)).deserialize(*(IArchive*)(0)), yes()) testdeserializeMI(int);
+            template<typename U> static decltype((*(U*)(0)).deserialize(*(IBaseArchive*)(0)), yes()) testdeserializeMI(int);
             template<typename> static no testdeserializeMI(...);
             static const bool _hasdeserializeMI = (sizeof(testdeserializeMI<T>(0)) == sizeof(yes));
 
-            template<typename U> static decltype(deserialize((*(IArchive*)(0)), (*(U*)(0))), yes()) testdeserializeGI(int);
+            template<typename U> static decltype(deserialize((*(IBaseArchive*)(0)), (*(U*)(0))), yes()) testdeserializeGI(int);
             template<typename> static no testdeserializeGI(...);
             static const bool _hasdeserializeGI = (sizeof(testdeserializeGI<T>(0)) == sizeof(yes));
 

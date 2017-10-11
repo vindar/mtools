@@ -67,9 +67,9 @@ namespace mtools
      * grid object can be copied/assigned via the copy ctor/assignement operator (the assignement
      * operator of T is not used, even when assigning the grid).
      * 
-     * - The grid can be serialized to file using the I/OArchive serialization classes and using the
+     * - The grid can be serialized to file using the I/OBaseArchive serialization classes and using the
      * default serialization method for T. Furthermore, it is possible to deserialize the object via
-     * a specific constructor `T(IArchive &)` (this prevent having to construct a default object
+     * a specific constructor `T(IBaseArchive &)` (this prevent having to construct a default object
      * first and then deserialize it).
      * 
      * - Grid_basic objects are compatible with Grid_factor objects (with the same template
@@ -235,15 +235,15 @@ namespace mtools
 
 
         /**
-         * Serializes the grid into an OArchive. If T implement a serialize method recognized by
-         * OArchive, it is used for serialization otherwise OArchive uses its default serialization
+         * Serializes the grid into an OBaseArchive. If T implement a serialize method recognized by
+         * OBaseArchive, it is used for serialization otherwise OBaseArchive uses its default serialization
          * method (which correspond to a basic memcpy() of the object memory).
          *
          * @param [in,out]  ar  The archive object to serialise the grid into.
          *
-         * @sa  class OArchive, class IArchive
+         * @sa  class OBaseArchive, class IBaseArchive
          **/
-        void serialize(OArchive & ar) const
+        void serialize(OBaseArchive & ar) const
             {
             ar << "\nBegining of Grid_basic<" << D << " , [" << std::string(typeid(T).name()) << "] , " << R << ">\n";
             ar << "Version";    ar & ((uint64)1); ar.newline();
@@ -263,20 +263,20 @@ namespace mtools
 
 
         /**
-         * Deserializes the grid from an IArchive. If T has a constructor of the form T(IArchive &), it
+         * Deserializes the grid from an IBaseArchive. If T has a constructor of the form T(IBaseArchive &), it
          * is used for deserializing the T objects in the grid. Otherwise, if T implements one of the
-         * serialize methods recognized by IArchive, the objects in the grid are first position/default
+         * serialize methods recognized by IBaseArchive, the objects in the grid are first position/default
          * constructed and then deserialized using those methods. If no specific deserialization method
-         * is found, IArchive falls back to its default derialization method.
+         * is found, IBaseArchive falls back to its default derialization method.
          * 
          * If the grid is non-empty, it is first reset, possibly calling the ctor of the existing T
          * objects depending on the status of the callCtor flag.
          *
          * @param [in,out]  ar  The archive to deserialize the grid from.
          *
-         * @sa  class OArchive, class IArchive
+         * @sa  class OBaseArchive, class IBaseArchive
          **/
-        void deserialize(IArchive & ar)
+        void deserialize(IBaseArchive & ar)
             {
             try
                 {
@@ -320,13 +320,13 @@ namespace mtools
          *
          * @return  true on success, false on failure.
          *
-         * @sa  load, serialize, deserialize, class OArchive, class IArchive
+         * @sa  load, serialize, deserialize, class OBaseArchive, class IBaseArchive
          **/
         bool save(const std::string & filename) const
             {
             try
                 {
-                OArchive ar(filename);
+                OFileArchive ar(filename);
                 ar & (*this); // use the serialize method.
                 }
             catch (...) 
@@ -352,13 +352,13 @@ namespace mtools
          *
          * @return  true on success, false on failure [in this case, the lattice is reset].
          *
-         * @sa  save, class OArchive, class IArchive
+         * @sa  save, class OFileArchive, class IFileArchive
          **/
         bool load(const std::string & filename)
             {
             try
                 {
-                IArchive ar(filename);
+                IFileArchive ar(filename);
                 ar & (*this); // use the deserialize method.
                 }
             catch (...) 
@@ -1375,15 +1375,15 @@ namespace mtools
             }
 
 
-        /* reconstruction of the object of a leaf from the constructor T(IArchive &)*/
-        inline void _reconstructLeaf(IArchive & ar, T * data, Pos center, metaprog::dummy<true> dum)
+        /* reconstruction of the object of a leaf from the constructor T(IBaseArchive &)*/
+        inline void _reconstructLeaf(IBaseArchive & ar, T * data, Pos center, metaprog::dummy<true> dum)
             {
             for (size_t i = 0; i < metaprog::power<(2 * R + 1), D>::value; ++i)  { new(data + i) T(ar); }
             }
 
 
         /* reconstruction of the object of a leaf when no constructor from archive */
-        inline void _reconstructLeaf(IArchive & ar, T * data, Pos center, metaprog::dummy<false> dum)
+        inline void _reconstructLeaf(IBaseArchive & ar, T * data, Pos center, metaprog::dummy<false> dum)
             {
             _createDataLeaf(data, center, metaprog::dummy<std::is_constructible<T, Pos>::value>());          // first call the default or the positionnal ctor for every object
             for (size_t i = 0; i < metaprog::power<(2 * R + 1), D>::value; ++i)  { ar &  (data[i]); }        // and then deserializes
@@ -1404,7 +1404,7 @@ namespace mtools
                 ar & p->rad;
                 MTOOLS_ASSERT(p->rad == 1);
                 p->father = father;
-                _reconstructLeaf(ar, p->data, p->center, metaprog::dummy< std::is_constructible<T, IArchive>::value>());
+                _reconstructLeaf(ar, p->data, p->center, metaprog::dummy< std::is_constructible<T, IBaseArchive>::value>());
                 return p;
                 }
             if (c == 'N')

@@ -29,13 +29,31 @@ namespace mtools
 	{
 
 
-	void OArchive::_openFile()
+
+	OFileArchive::OFileArchive(const std::string & filename) : OBaseArchive(), _filename(filename), _compress(false), _handle(nullptr)
+		{
+		std::string ext = toLowerCase(extractExtension(filename));
+		if ((ext == std::string("gz")) || (ext == std::string("gzip")) || (ext == std::string("z"))) { _compress = true; }
+		_openFile();
+		header();
+		}
+
+
+	OFileArchive::~OFileArchive()
+		{
+		footer();
+		_closeFile();
+		}
+
+
+
+	void OFileArchive::_openFile()
 		{
 		if (_compress)
 			{
-			_gzhandle = gzopen(_filename.c_str(), "wb4");
-			if (_gzhandle == nullptr) { MTOOLS_THROW("OArchive error (openfile 1)"); }
-			if (gzbuffer((gzFile)_gzhandle, GZIPBUFFERSIZE) != 0) { MTOOLS_THROW("OArchive error (openfile 2)"); }
+			_handle = gzopen(_filename.c_str(), "wb4");
+			if (_handle == nullptr) { MTOOLS_THROW("OFileArchive error (openfile 1)"); }
+			if (gzbuffer((gzFile)_handle, GZIPBUFFERSIZE) != 0) { MTOOLS_THROW("OFileArchive error (openfile 2)"); }
 			return;
 			}
 		#if defined (_MSC_VER) 
@@ -46,64 +64,77 @@ namespace mtools
 		#if defined (_MSC_VER) 
 		#pragma warning( pop )
 		#endif
-		if (_handle == nullptr) { MTOOLS_THROW("OArchive error (openfile 3)"); }
+		if (_handle == nullptr) { MTOOLS_THROW("OFileArchive error (openfile 3)"); }
 		return;
 		}
 
 
-	void OArchive::_closeFile()
+	void OFileArchive::_closeFile()
 		{
 		newline();
-		_flush(true);
-		if (_compress) { if (gzclose((gzFile)_gzhandle) != Z_OK) { MTOOLS_THROW("OArchive error (closefile 1)"); } return; }
-		if (fclose(_handle) != 0) { MTOOLS_THROW("OArchive error (closefile 2)"); }
+		_write(getbuffer(),true); // flush 
+		if (_compress) { if (gzclose((gzFile)_handle) != Z_OK) { MTOOLS_THROW("OFileArchive error (closefile 1)"); } return; }
+		if (fclose((FILE*)_handle) != 0) { MTOOLS_THROW("OFileArchive error (closefile 2)"); }
 		return;
 		}
 
 
-	void OArchive::_flush(bool force)
+	void OFileArchive::_write(std::string & buffer, bool force)
 		{
-		if ((force) || (_writeBuffer.length() > WRITEBUFFERSIZE))
+		if ((force) || (buffer.length() > WRITEBUFFERSIZE))
 			{ // ok we do flush
 			if (_compress)
 				{
-				if ((unsigned int)gzwrite((gzFile)_gzhandle, _writeBuffer.c_str(), (unsigned int)_writeBuffer.length()) != _writeBuffer.length()) { MTOOLS_THROW("OArchive error (_flush 1)"); }
+				if ((unsigned int)gzwrite((gzFile)_handle, buffer.c_str(), (unsigned int)buffer.length()) != buffer.length()) { MTOOLS_THROW("OFileArchive error (_flush 1)"); }
 				}
 			else
 				{
-				if (fwrite(_writeBuffer.c_str(), 1, _writeBuffer.length(), _handle) != _writeBuffer.length()) { MTOOLS_THROW("OArchive error (_flush 2)"); }
+				if (fwrite(buffer.c_str(), 1, buffer.length(), (FILE*)_handle) != buffer.length()) { MTOOLS_THROW("OFileArchive error (_flush 2)"); }
 				}
-			_writeBuffer.clear();
+			buffer.clear();
 			}
 		}
 
 
 
-	const char * IArchive::refill(size_t & len)
+	IFileArchive::IFileArchive(const std::string & filename) : IBaseArchive(), _filebuffer(nullptr), _handle(nullptr), _filename(filename)
 		{
-		int l = gzread((gzFile)_gzhandle, _readBuffer, READBUFFERSIZE);
-		if (l < 0) { MTOOLS_THROW("IArchive error"); } // something went wrong
-		_readSize = (size_t)l; // save the new number of char in the buffer
-		len = _readSize;
-		if (l == 0) { return nullptr; } // end of file
-		return _readBuffer; // ok
+		_filebuffer = new char[FILEBUFFERSIZE];
+		_openfile();
 		}
 
 
-	void IArchive::_openFile()
+	IFileArchive::~IFileArchive()
 		{
-		_gzhandle = gzopen(_filename.c_str(), "rb");
-		if (_gzhandle == nullptr) { MTOOLS_THROW("IArchive error"); }
-		if (gzbuffer((gzFile)_gzhandle, GZIPBUFFERSIZE) != 0) { MTOOLS_THROW("IArchive error"); }
+		_closefile();
+		delete[] _filebuffer;
+		}
+
+
+	void IFileArchive::_openfile()
+		{
+		_handle = gzopen(_filename.c_str(), "rb");
+		if (_handle == nullptr) { MTOOLS_THROW("IFileArchive::_openfile() error 1"); }
+		if (gzbuffer((gzFile)_handle, GZIPBUFFERSIZE) != 0) { MTOOLS_THROW("IFileArchive::_openfile() error 2"); }
 		return;
 		}
 
 
-	void IArchive::_closeFile()
+	void IFileArchive::_closefile()
 		{
-		if (gzclose((gzFile)_gzhandle) != Z_OK) { MTOOLS_THROW("IArchive error"); }
+		if (gzclose((gzFile)_handle) != Z_OK) { MTOOLS_THROW("IFileArchive::_closeFile() error"); }
 		return;
 		}
+
+	const char * IFileArchive::_readfile(size_t & len)
+		{
+		int l = gzread((gzFile)_handle, _filebuffer, FILEBUFFERSIZE);
+		if (l < 0) { MTOOLS_THROW("IFileArchive::_readfile() error"); } // something went wrong
+		len = (size_t)l; // number of char in the buffer
+		if (len == 0) return nullptr;
+		return _filebuffer;
+		}
+
 
 
 	}

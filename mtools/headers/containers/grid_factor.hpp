@@ -80,9 +80,9 @@ namespace mtools
      *     preferred.  
      *     - Copy constructible with `T(const T&)` and assignable with `operator=(const T&)`.
      * 
-     * - The grid can be serialized to file using the I/OArchive serialization classes and using the
+     * - The grid can be serialized to file using the I/OBaseArchive serialization classes and using the
      * default serialization method for T. Furthermore, it is possible to deserialize the object via
-     * a specific constructor `T(IArchive &)` (this prevent having to construct a default object
+     * a specific constructor `T(IBaseArchive &)` (this prevent having to construct a default object
      * first and then deserialize it).
      * 
      * - Grid_factor objects are compatible with Grid_factor objects (with the same template
@@ -314,7 +314,7 @@ namespace mtools
             {
             try
                 {
-                OArchive ar(filename);
+                OFileArchive ar(filename);
                 ar & (*this); // use the serialize method.
                 }
             catch (...) 
@@ -345,7 +345,7 @@ namespace mtools
             {
             try
                 {
-                IArchive ar(filename);
+                IFileArchive ar(filename);
                 ar & (*this); // use the deserialize method.
                 }
             catch (...) 
@@ -359,15 +359,15 @@ namespace mtools
 
 
         /**
-        * Serializes the grid into an OArchive. If T implement a serialize method recognized by
-        * OArchive, it is used for serialization otherwise OArchive uses the default serialization
+        * Serializes the grid into an OBaseArchive. If T implement a serialize method recognized by
+        * OBaseArchive, it is used for serialization otherwise OBaseArchive uses the default serialization
         * method which correspond to a basic memcpy() of the object memory
         *
         * @param [in,out]  ar  The archive object to serialise the grid into.
         *
-        * @sa  deserialize, class OArchive, class IArchive
+        * @sa  deserialize, class OBaseArchive, class IBaseArchive
         **/
-        void serialize(OArchive & ar) const
+        void serialize(OBaseArchive & ar) const
             {
             ar << "\nBegining of Grid_factor<" << D << " , [" << std::string(typeid(T).name()) << "] , " << NB_SPECIAL << " , " << R << ">\n";
             ar << "Version";    ar & ((uint64)1); ar.newline();
@@ -394,20 +394,20 @@ namespace mtools
 
 
         /**
-         * Deserializes the grid from an IArchive. If T has a constructor of the form T(IArchive &), it
+         * Deserializes the grid from an IBaseArchive. If T has a constructor of the form T(IBaseArchive &), it
          * is used for deserializing the T objects in the grid. Otherwise, if T implements one of the
-         * serialize methods recognized by IArchive, the objects in the grid are first position/default
+         * serialize methods recognized by IBaseArchive, the objects in the grid are first position/default
          * constructed and then deserialized using those methods. If no specific deserialization method
-         * is found, IArchive falls back on its default deserialization method. memcpy().
+         * is found, IBaseArchive falls back on its default deserialization method. memcpy().
          * 
          * If the grid is non-empty, it is first reset, possibly calling the ctor of the existing T
          * objects depending on the status of the callCtor flag.
          *
          * @param [in,out]  ar  The archive to deserialize the grid from.
          *
-         * @sa  serialize, class OArchive, class IArchive
+         * @sa  serialize, class OBaseArchive, class IBaseArchive
          **/
-        void deserialize(IArchive & ar)
+        void deserialize(IBaseArchive & ar)
             {
             try
                 {
@@ -1714,7 +1714,7 @@ namespace mtools
 
         /* recursive method for serialization of the tree 
            used by serialize() */
-            void _serializeTree(OArchive & ar, _pbox p) const
+            void _serializeTree(OBaseArchive & ar, _pbox p) const
             {
             if (p == nullptr) { ar & ((char)'V'); return; } // void pointer
             if (_getSpecialObject(p) != nullptr)
@@ -1744,7 +1744,7 @@ namespace mtools
 
         /* recursive method for deserialization of the tree 
            used by deserialize() */
-        _pbox _deserializeTree(IArchive & ar, _pbox father)
+        _pbox _deserializeTree(IBaseArchive & ar, _pbox father)
             {
             char c;
             ar & c;
@@ -2160,26 +2160,26 @@ namespace mtools
 
 
         /* deserialize a single object, use positional constructor first and then deserialize */
-        inline void _deserializeObjectT_sub(IArchive & ar, T * p, metaprog::dummy<false> dum) { new(p) T(Pos(0));  ar &  (*p); }
+        inline void _deserializeObjectT_sub(IBaseArchive & ar, T * p, metaprog::dummy<false> dum) { new(p) T(Pos(0));  ar &  (*p); }
 
         /* deserialize a single object, use default constructor first and then deserialize */
-        inline void _deserializeObjectT_sub(IArchive & ar, T * p, metaprog::dummy<true> dum)  { new(p) T(); ar &  (*p); }
+        inline void _deserializeObjectT_sub(IBaseArchive & ar, T * p, metaprog::dummy<true> dum)  { new(p) T(); ar &  (*p); }
 
         /* deserialize a single object using a constructor and then the deserialization method */
-        inline void _deserializeObjectT(IArchive & ar, T * p, metaprog::dummy<false> dum) {_deserializeObjectT_sub(ar, p, metaprog::dummy<std::is_constructible<T>::value>());}
+        inline void _deserializeObjectT(IBaseArchive & ar, T * p, metaprog::dummy<false> dum) {_deserializeObjectT_sub(ar, p, metaprog::dummy<std::is_constructible<T>::value>());}
 
-        /* deserialize a single object using the IArchive constructor */
-        inline void _deserializeObjectT(IArchive & ar, T * p, metaprog::dummy<true> dum) { new(p) T(ar); }
+        /* deserialize a single object using the IBaseArchive constructor */
+        inline void _deserializeObjectT(IBaseArchive & ar, T * p, metaprog::dummy<true> dum) { new(p) T(ar); }
 
         /* deserialize a single object, use the correct constructor  */
-        inline void _deserializeObjectT(IArchive & ar, T * p)
+        inline void _deserializeObjectT(IBaseArchive & ar, T * p)
             {
-            _deserializeObjectT(ar, p, metaprog::dummy< std::is_constructible<T, IArchive>::value>());
+            _deserializeObjectT(ar, p, metaprog::dummy< std::is_constructible<T, IBaseArchive>::value>());
             }
 
 
         /* deserialize data, use positional constructor first and then deserialize */
-        inline void _deserializeDataLeaf_sub(IArchive & ar, _pleafFactor L, metaprog::dummy<true> dum)
+        inline void _deserializeDataLeaf_sub(IBaseArchive & ar, _pleafFactor L, metaprog::dummy<true> dum)
             {
             Pos pos = L->center;
             for (size_t i = 0; i < D; ++i) { pos[i] -= R; } // go to the first cell
@@ -2194,7 +2194,7 @@ namespace mtools
 
 
         /* deserialize data, use default constructor first and then deserialize */
-        inline void _deserializeDataLeaf_sub(IArchive & ar, _pleafFactor L, metaprog::dummy<false> dum)
+        inline void _deserializeDataLeaf_sub(IBaseArchive & ar, _pleafFactor L, metaprog::dummy<false> dum)
             {
             for (size_t x = 0; x < metaprog::power<(2 * R + 1), D>::value; ++x)
                 {
@@ -2206,21 +2206,21 @@ namespace mtools
 
 
         /* deserialize data, use a constructor before deserialization */
-        inline void _deserializeDataLeaf(IArchive & ar, _pleafFactor L, metaprog::dummy<false> dum)
+        inline void _deserializeDataLeaf(IBaseArchive & ar, _pleafFactor L, metaprog::dummy<false> dum)
             {
             _deserializeDataLeaf_sub(ar, L, metaprog::dummy<std::is_constructible<T,Pos>::value>()); // call the correct constructor method
             }
 
 
-        /* deserialize data, use IArchive constructor */
-        inline void _deserializeDataLeaf(IArchive & ar, _pleafFactor L, metaprog::dummy<true> dum)
+        /* deserialize data, use IBaseArchive constructor */
+        inline void _deserializeDataLeaf(IBaseArchive & ar, _pleafFactor L, metaprog::dummy<true> dum)
             {
             for (size_t i = 0; i < metaprog::power<(2 * R + 1), D>::value; ++i) { new(L->data + i) T(ar); }
             }
 
 
         /* deserialize a leaf, call the correct constructor for the T objects */
-        inline _pleafFactor _deserializeLeaf(IArchive & ar, _pbox father)
+        inline _pleafFactor _deserializeLeaf(IBaseArchive & ar, _pbox father)
             {
             MTOOLS_ASSERT(father->rad == R);
             _pleafFactor L = _poolLeaf.allocate();
@@ -2228,7 +2228,7 @@ namespace mtools
             ar & L->center;
             ar & L->rad;
             MTOOLS_ASSERT(L->rad == 1);
-            _deserializeDataLeaf(ar, L, metaprog::dummy< std::is_constructible<T, IArchive>::value>()); // reconstruct the data, calling the correct ctor
+            _deserializeDataLeaf(ar, L, metaprog::dummy< std::is_constructible<T, IBaseArchive>::value>()); // reconstruct the data, calling the correct ctor
             memset(L->count, 0, sizeof(L->count));
             for (size_t i = 0; i < metaprog::power<(2 * R + 1), D>::value; ++i)
                 {

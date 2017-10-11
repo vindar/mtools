@@ -28,7 +28,7 @@ namespace internals_serialization
 
 
     /**
-     * OArchive helper classes.
+     * OBaseArchive helper classes.
      *
      * Used for partial template specialization for serializating different basic types.
      *
@@ -497,7 +497,7 @@ namespace internals_serialization
 
 
 /**
- * IArchive helper classes.
+ * IBaseArchive helper classes.
  *
  * Used for partial template specialization for serializating different basic types.
  *
