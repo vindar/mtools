@@ -23,11 +23,12 @@
 #include "../mtools_config.hpp"
 #include "../misc/misc.hpp"
 #include "../misc/error.hpp"
+#include "../maths/vec.hpp"
+#include "../maths/box.hpp"
 #include "rgbc.hpp"
 #include "../io/serialization.hpp"
 #include "../random/gen_fastRNG.hpp"
 #include "../random/classiclaws.hpp"
-
 #include <cairo.h>
 
 
@@ -117,6 +118,19 @@ namespace mtools
 			/**
 			 * Constructor.
 			 * 
+			 * Create a new image. The pixel buffer contain undefined color.
+			 *
+			 * @param	dim	   	dimensions of the image.
+			 * @param	padding	padding at the end of lines (default = no padding).
+			 **/
+			Image(const iVec2 & dim, int64 padding = 0) : Image(dim.X(), dim.Y(),padding)
+				{
+				}
+
+
+			/**
+			 * Constructor.
+			 * 
 			 * Create a new image and set the background color.
 			 *
 			 * @param	lx	    width of the image.
@@ -128,6 +142,21 @@ namespace mtools
 				{
 				clear(bkColor);
 				}
+
+
+			/**
+			 * Constructor.
+			 * 
+			 * Create a new image and set the background color.
+			 *
+			 * @param	dim	   	dimensions of the image.
+			 * @param	bkColor	background color.
+			 * @param	padding	padding at the end of lines (default = no padding).
+			 **/
+			Image(const iVec2 & dim, RGBc bkColor, int64 padding = 0) : Image(dim.X(), dim.Y(), bkColor, padding)
+				{
+				}
+
 
 
 			/**
@@ -162,6 +191,25 @@ namespace mtools
 					_blitRegion(_data, _stride, data, _stride, lx, ly);
 					}
 				}
+
+
+			/**
+			 * Constructor from a given buffer
+			 * 
+			 * Create an image using a given pixel buffer. If shallow = true, then THE BUFFER MUST REMAIN
+			 * VALID UNTIL THE IMAGE IS DESTROYED OR REASSIGNED TO ANOTHER BUFFER. If shallow = false, the
+			 * image creates a copy of the supplied buffer which may be deleted once the method returns.
+			 *
+			 * @param [in,out]	data	the pixel buffer.
+			 * @param	dim				dimensions of the image.
+			 * @param	shallow			true to use the supplied buffer directly and false to make an
+			 * 							internal copy.
+			 * @param	padding			padding at the end of each lines (default = no padding).
+			 **/
+			Image(RGBc * data, const iVec2 & dim, bool shallow, int64 padding = 0) : Image(data, dim.X(), dim.Y(), shallow, padding)
+				{
+				}
+
 
 
 			/** Destructor. */
@@ -246,6 +294,21 @@ namespace mtools
 					_allocate(_ly, _stride, nullptr);
 					_blitRegion(_data, _stride, p, source._stride, _lx, _ly);
 					}
+				}
+
+
+			/**
+			 * Create a sub-image, either deep or shallow.
+			 *
+			 * @param	source 	Source image.
+			 * @param	B	   	The (closed) portion of the image to use.
+			 * @param	shallow	true to make a shallow copy that shares the same pixel buffer and false to
+			 * 					make an independent image with its own pixel buffer.
+			 * @param	padding	padding of the sub-image (ignored if shallow is true since the padding it
+			 * 					then constrained by the source padding and the size of the sub-image).
+			 **/
+			Image(const Image & source, const iBox2 & B, bool shallow, int64 padding = 0) : Image(source, B.min[0], B.min[1], B.max[0] - B.min[0] + 1, B.max[1] - B.min[1] + 1, shallow, padding)
+				{
 				}
 
 
@@ -376,6 +439,23 @@ namespace mtools
 
 
 			/**
+			 * Crop the image.
+			 * 
+			 * Note: The method is fast when shallow is true (but this will change the image padding).
+			 *       When shallow is false, a new pixel buffer is created.
+			 *
+			 * @param	B	   	The (closed) portion of the image to keep.
+			 * @param	shallow	True to keep the same pixel buffer (with a different padding) and false to
+			 * 					create a new pixel buffer with the correct size.
+			 * @param	padding	new padding of the image (ignored if shallow = true).
+			 **/
+			void crop(const iBox2 & B, bool shallow, int64 padding = 0)
+				{
+				crop(B.min[0], B.min[1], B.max[0] - B.min[0] + 1, B.max[1] - B.min[1] + 1, shallow, padding);
+				}
+
+
+			/**
 			 * Create a sub-image (deep or shallow).
 			 * 
 			 *    Image im2 = im1.get_crop(x,y,lx,ly,shallow,padding);
@@ -398,6 +478,29 @@ namespace mtools
 			Image get_crop(int64 x0, int64 y0, int64 newlx, int64 newly, bool shallow, int64 padding = 0) const
 				{
 				return Image(*this, x0, y0, newlx, newly, shallow, padding);
+				}
+
+
+			/**
+			 * Create a sub-image (deep or shallow).
+			 * 
+			 *    Image im2 = im1.get_crop(B,shallow,padding);
+			 * 
+			 * is equivalent to
+			 * 
+			 *    Image im2(im1,B,shallow,padding);
+			 *
+			 * @param	B	   	The (closed) portion of the image to keep.
+			 * @param	shallow	true to keep the same pixel buffer (with a different padding) and false to
+			 * 					create a new pixel buffer.
+			 * @param	padding	padding of the resulting image (ignored if shallow is true since the padding
+			 * 					is constrained).
+			 *
+			 * @return	a sub image.
+			 **/
+			Image get_crop(const iBox2 & B, bool shallow, int64 padding = 0) const
+				{
+				return Image(*this, B, shallow, padding);
 				}
 
 
@@ -473,6 +576,23 @@ namespace mtools
 			Image sub_image(int64 x0, int64 y0, int64 newlx, int64 newly) const
 				{
 				return get_crop(x0, y0, newlx, newly, true);
+				}
+
+
+			/**
+			 * Create a shallow sub-image (ie using the same pixel buffer).
+			 * 
+			 * Same as:
+			 * 
+			 *         get_crop(B,true);
+			 *
+			 * @param	B	The (closed) rectangle delimitying the portion to keep.
+			 *
+			 * @return	a shared sub-image.
+			 **/
+			Image sub_image(const iBox2 & B) const
+				{
+				return get_crop(B,true);
 				}
 
 
@@ -580,9 +700,28 @@ namespace mtools
 
 
 			/**
+			 * Resize the image. Raw operation on the allocated memory. If the new buffer is smaller than
+			 * the current one and shrinktofit is false, no new allocation is perfomed (except if the new
+			 * size is zero in which case the allocated memory is freed). If shrink tofit is true, allocated
+			 * memory is freed and a new buffer with the right size is allocated.
+			 *
+			 * @param	newdim	   	The new dimensions.
+			 * @param	shrinktofit	false to keep the current buffer if large enough and true to free and
+			 * 						reallocate.
+			 * @param	padding	   	The new padding (default 0).
+			 *
+			 * ### param	newly	The new height.
+			 **/
+			void resizeRaw(const iVec2 & newdim, bool shrinktofit = false, int64 padding = 0)
+				{
+				resizeRaw(newdim.X(), newdim.Y(), shrinktofit, padding);
+				}
+
+
+			/**
 			 * Blit (part of) a sprite image.
 			 *
-			 * All input paramters are valid : regions outside of the source or destination
+			 * All input parameters are valid : regions outside of the source or destination
 			 * image are automatically discarded (considered transparent).
 			 *
 			 * @param	sprite  	The sprite to blit.
@@ -611,6 +750,22 @@ namespace mtools
 
 
 			/**
+			 * Blit (part of) a sprite image.
+			 * 
+			 * All input parameters are valid : regions outside of the source or destination image are
+			 * automatically discarded (considered transparent).
+			 *
+			 * @param	sprite	  	The sprite to blit.
+			 * @param	dest_posd 	position of the upper left corner in the destination.
+			 * @param	sprite_box	sub-image of the sprite to blit.
+			 **/
+			void blit(const Image & sprite, const iVec2 & dest_pos, const iBox2 & sprite_box)
+				{
+				blit(sprite, dest_pos.X(), dest_pos.Y(), sprite_box.min[0], sprite_box.min[1], sprite_box.max[0] - sprite_box.min[0] + 1, sprite_box.max[1] - sprite_box.min[1] + 1);
+				}
+
+
+			/**
 			 * Blit a sprite.
 			 * 
 			 * All input parameters are valid : regions outside of the destination are automatically
@@ -620,10 +775,26 @@ namespace mtools
 			 * @param	dext_x	x-coord of the upper left corner in the destination.
 			 * @param	dest_y	y-coord of the upper left corner in the destination.
 			 **/
-			void blit(const Image & sprite, int64 dext_x, int64 dest_y)
+			void blit(const Image & sprite, int64 dest_x, int64 dest_y)
 				{
-				blit(sprite, dext_x, dest_y, 0, 0, sprite._lx, sprite._ly);
+				blit(sprite, dest_x, dest_y, 0, 0, sprite._lx, sprite._ly);
 				}
+
+
+			/**
+			 * Blit a sprite.
+			 * 
+			 * All input parameters are valid : regions outside of the destination are automatically
+			 * discarded (considered transparent).
+			 *
+			 * @param	sprite  	The sprite to blit.
+			 * @param	dest_pos	position of the upper left corner in the destination.
+			 **/
+			void blit(const Image & sprite, const iVec2 & dest_pos)
+				{
+				blit(sprite, dest_pos.X(), dest_pos.Y(), 0, 0, sprite._lx, sprite._ly);
+				}
+
 
 
 			/**
@@ -659,6 +830,22 @@ namespace mtools
 
 
 			/**
+			 * Blit part of the image onto itself. Works even if the rectangle are overlapping.
+			 * 
+			 * All input paramters are valid : regions outside of the source or destination image are
+			 * automatically discarded (considered transparent).
+			 *
+			 * @param	dest_pos	position of the upper left corner of the destination rectangle.
+			 * @param	src_box 	the source rectangle.
+			 **/
+			void blitInside(const iVec2 & dest_pos, const iBox2 & src_box)
+				{
+				blitInside(dest_pos.X(), dest_pos.Y(), src_box.min[0], src_box.min[1], src_box.max[0] - src_box.min[0] + 1, src_box.max[1] - src_box.min[1] + 1);
+				}
+
+
+
+			/**
 			 * Blend (part of) a sprite image.
 			 * 
 			 * All input paramters are valid : regions outside of the source or destination image are
@@ -690,6 +877,23 @@ namespace mtools
 
 
 			/**
+			* Blend (part of) a sprite image.
+			*
+			* All input paramters are valid : regions outside of the source or destination image are
+			* automatically discarded (considered transparent).
+			*
+			* @param	sprite  	The sprite to blend.
+			* @param	dest_pos	position of the upper left corner of the destination rectangle.
+			* @param	sprite_box 	the source rectangle.
+			* @param	opacity 	The opacity to multiply the sprite with when blending.
+			**/
+			void blend(const Image & sprite, const iVec2 & dest_pos, const iBox2 & sprite_box, float opacity = 1.0f)
+				{
+				blend(sprite, dest_pos.X(), dest_pos.Y(), sprite_box.min[0], sprite_box.min[1], sprite_box.max[0] - sprite_box.min[0] + 1, sprite_box.max[1] - sprite_box.min[1] + 1, opacity);
+				}
+
+
+			/**
 			 * Blend a sprite.
 			 * 
 			 * All input parameters are valid : regions outside of the destination are automatically
@@ -703,6 +907,22 @@ namespace mtools
 			void blend(const Image & sprite, int64 dext_x, int64 dest_y, float opacity= 1.0f)
 				{
 				blend(sprite, dext_x, dest_y, 0, 0, sprite._lx, sprite._ly,opacity);
+				}
+
+
+			/**
+			* Blend a sprite.
+			*
+			* All input parameters are valid : regions outside of the destination are automatically
+			* discarded (considered transparent).
+			*
+			* @param	sprite 	The sprite to blit.
+			* @param	dest_pos	position of the upper left corner of the destination rectangle.
+			* @param	opacity	The opacity to multiply the sprite with when blending.
+			**/
+			void blend(const Image & sprite, const iVec2 & dest_pos, float opacity = 1.0f)
+				{
+				blend(sprite, dest_pos.X(), dest_pos.Y(), 0, 0, sprite._lx, sprite._ly, opacity);
 				}
 
 
@@ -735,6 +955,22 @@ namespace mtools
 				if ((sx <= 0) || (sy <= 0)) return;
 				if (((dest_x >= src_x) && (dest_x < src_x + sx)) && ((dest_y >= src_y) && (dest_y < src_y + sy))) { _blendRegionDown(_data + (dest_y*_stride) + dest_x, _stride, _data + (src_y*_stride) + src_x, _stride, sx, sy,opacity); return; }
 				_blendRegionUp(_data + (dest_y*_stride) + dest_x, _stride, _data + (src_y*_stride) + src_x, _stride, sx, sy,opacity);
+				}
+
+
+			/**
+			* Blend part of the image onto itself. Works even if the rectangle are overlapping.
+			*
+			* All input paramters are valid : regions outside of the source or destination
+			* image are automatically discarded (considered transparent).
+			*
+			* @param	dest_pos	position of the upper left corner of the destination rectangle.
+			* @param	src_box 	the source rectangle.
+			* @param	opacity	The opacity to multiply the sprite with when blending.
+			**/
+			void blendInside(const iVec2 & dest_pos, const iBox2 & src_box, float opacity = 1.0f)
+				{
+				blendInside(dest_pos.X(), dest_pos.Y(), src_box.min[0], src_box.min[1], src_box.max[0] - src_box.min[0] + 1, src_box.max[1] - src_box.min[1] + 1, opacity);
 				}
 
 
@@ -775,6 +1011,28 @@ namespace mtools
 
 
 			/**
+			 * Apply a mask given by (part of) a sprite image.
+			 * 
+			 * This operation is the same as blending (part of) the sprite onto the image except that only
+			 * the alpha channel of the sprite is used. Its RGB color is discarded and replaced by that
+			 * supplied as the input parameter color. [the alpha channel of the input color is also
+			 * multiplied by that of the sprite before blending].
+			 * 
+			 * All input paramters are valid : regions outside of the source or destination image are
+			 * automatically discarded (considered transparent).
+			 *
+			 * @param	sprite	  	The sprite to blend.
+			 * @param	dest_pos  	position of the upper left corner of the destination rectangle.
+			 * @param	sprite_box	the source rectangle.
+			 * @param	color	  	the color to use for the mask.
+			 **/
+			void mask(const Image & sprite, const iVec2 & dest_pos, const iBox2 & sprite_box, RGBc color)
+				{
+				mask(sprite, dest_pos.X(), dest_pos.Y(), sprite_box.min[0], sprite_box.min[1], sprite_box.max[0] - sprite_box.min[0] + 1, sprite_box.max[1] - sprite_box.min[1] + 1, color);
+				}
+
+
+			/**
 			* Apply a mask given by a sprite image.
 			*
 			* This operation is the same as blending (part of) the sprite onto the image except that only
@@ -797,6 +1055,27 @@ namespace mtools
 
 
 			/**
+			 * Apply a mask given by a sprite image.
+			 * 
+			 * This operation is the same as blending (part of) the sprite onto the image except that only
+			 * the alpha channel of the sprite is used. Its RGB color is discarded and replaced by that
+			 * supplied as the input parameter color. [the alpha channel of the input color is also
+			 * multiplied by that of the sprite before blending].
+			 * 
+			 * All input paramters are valid : regions outside of the destination are automatically
+			 * discarded (considered transparent).
+			 *
+			 * @param	sprite  	The sprite to blit.
+			 * @param	dest_pos	position of the upper left corner of the destination rectangle.
+			 * @param	color   	the color to use for the mask.
+			 **/
+			void mask(const Image & sprite, const iVec2 & dest_pos, RGBc color)
+				{
+				mask(sprite, dest_pos.X(), dest_pos.Y(), 0, 0, sprite._lx, sprite._ly, color);
+				}
+
+
+			/**
 			 * Rescale this image to a given size.
 			 * 
 			 * This method discard the current data buffer an create another one.
@@ -809,6 +1088,21 @@ namespace mtools
 			inline void rescale(int quality, int64 newlx, int64 newly, int64 newpadding = 0)
 				{
 				rescale(quality, newlx, newly, 0, 0, _lx, _ly, newpadding);
+				}
+
+
+			/**
+			 * Rescale this image to a given size.
+			 * 
+			 * This method discard the current data buffer an create another one.
+			 *
+			 * @param	quality   	0 for (fast) low quality and 1 for (slow) high quality rescaling.
+			 * @param	newsize   	new image size. 
+			 * @param	newpadding	horizontal padding.
+			 **/
+			inline void rescale(int quality, const iVec2 & newsize, int64 newpadding = 0)
+				{
+				rescale(quality, newsize.X(), newsize.Y(), 0, 0, _lx, _ly, newpadding);
 				}
 
 
@@ -833,6 +1127,22 @@ namespace mtools
 
 
 			/**
+			 * Crop a portion of this image and rescale it to a given size.
+			 * 
+			 * This method discard the current data buffer an create another one.
+			 *
+			 * @param	quality   	0 for (fast) low quality and 1 for (slow) high quality rescaling.
+			 * @param	newsize   	new image size.
+			 * @param	B		  	rectangle to crop.
+			 * @param	newpadding	horizontal padding.
+			 **/
+			inline void rescale(int quality, const iVec2 & newsize, const iBox2 & B, int64 newpadding = 0)
+				{
+				*this = get_rescale(quality, newsize.X(), newsize.Y(), B.min[0], B.min[1], B.max[0] - B.min[0] + 1, B.max[1] - B.min[1] + 1, newpadding);  
+				}
+
+
+			/**
 			 * Return a copy of this image rescaled to a given size using the fastest method available (low
 			 * quality).
 			 *
@@ -846,6 +1156,22 @@ namespace mtools
 			inline Image get_rescale(int quality, int64 newlx, int64 newly, int64 newpadding = 0) const
 				{
 				return get_rescale(quality, newlx, newly, 0, 0, _lx, _ly, newpadding);
+				}
+
+
+			/**
+			* Return a copy of this image rescaled to a given size using the fastest method available (low
+			* quality).
+			*
+			* @param	quality   	0 for (fast) low quality and 1 for (slow) high quality rescaling.
+			* @param	newsize   	new image size.
+			* @param	newpadding	horizontal padding.
+			*
+			* @return	A image obtained by rescaling the source to size newlx x newly.
+			**/
+			inline Image get_rescale(int quality, const iVec2 & newsize, int64 newpadding = 0) const
+				{
+				return get_rescale(quality, newsize.X(), newsize.Y(), 0, 0, _lx, _ly, newpadding);
 				}
 
 
@@ -874,18 +1200,52 @@ namespace mtools
 
 
 			/**
-			* Rescale a sprite image and then blit it onto this image.
-			*
-			* @param	quality   	0 for (fast) low quality and 1 for (slow) high quality rescaling.
-			* @param	sprite   	The sprite image to rescale and then blit.
-			* @param	dest_x   	x-coord of the upper left corner of the destination rectangle.
-			* @param	dest_y   	y-coord of the upper left corner of the destination rectangle.
-			* @param	dest_sx  	width of the destination rectangle.
-			* @param	dest_sy  	height of the destination rectangle.
-			**/
+			 * Return a copy of a portion of this image, rescaled to a given size.
+			 *
+			 * @param	quality   	0 for (fast) low quality and 1 for (slow) high quality rescaling.
+			 * @param	newsize   	new image size.
+			 * @param	B		  	rectangle to rescale.
+			 * @param	newpadding	horizontal padding.
+			 *
+			 * @return	an image of size newlx x newly containing the rescaling of the rectangle [x, x+
+			 * 			sx]x[y, y+sy] of the source image.
+			 **/
+			inline Image get_rescale(int quality, const iVec2 & newsize, const iBox2 & B, int64 newpadding = 0) const
+				{
+				return get_rescale(quality, newsize.X(), newsize.Y(), B.min[0], B.min[1], B.max[0] - B.min[0] + 1, B.max[1] - B.min[1] + 1, newpadding);
+				}
+
+
+			/**
+			 * Rescale a sprite image and then blit it onto this image.
+			 *
+			 * @param	quality	0 for (fast) low quality and 1 for (slow) high quality rescaling.
+			 * @param	sprite 	The sprite image to rescale and then blit.
+			 * @param	dest_x 	x-coord of the upper left corner of the destination rectangle.
+			 * @param	dest_y 	y-coord of the upper left corner of the destination rectangle.
+			 * @param	dest_sx	width of the destination rectangle.
+			 * @param	dest_sy	height of the destination rectangle.
+			 *
+			 * @return	The real quality of the rescaling performed. At least quality but may be higher.
+			 **/
 			inline int blit_rescaled(int quality, const Image & sprite, int64 dest_x, int64 dest_y, int64 dest_sx, int64 dest_sy)
 				{
 				return blit_rescaled(quality, sprite, dest_x, dest_y, dest_sx, dest_sy, 0, 0, sprite._lx, sprite._ly);
+				}
+
+
+			/**
+			 * Rescale a sprite image and then blit it onto this image.
+			 *
+			 * @param	quality 	0 for (fast) low quality and 1 for (slow) high quality rescaling.
+			 * @param	sprite  	The sprite image to rescale and then blit.
+			 * @param	dest_box	The destination rectangle.
+			 *
+			 * @return	The real quality of the rescaling performed. At least quality but may be higher.
+			 **/
+			inline int blit_rescaled(int quality, const Image & sprite, const iBox2 & dest_box)
+				{
+				return blit_rescaled(quality, sprite, dest_box.min[0], dest_box.min[1], dest_box.max[0] - dest_box.min[0] + 1, dest_box.max[1] - dest_box.min[1] + 1, 0, 0, sprite._lx, sprite._ly);
 				}
 
 
@@ -970,6 +1330,78 @@ namespace mtools
 				// mix up/down scaling -> use nearest neighbour
 				_nearest_neighbour_scaling(_data + (dest_y*_stride) + dest_x, _stride, dest_sx, dest_sy, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, sprite_sx, sprite_sy);
 				return MAX_QUALITY;
+				}
+
+
+			/**
+			* Rescale a portion of a sprite image and then blit it onto this image.
+			*
+			* @param	quality   	in [0,5]. 0 = low quality (fast) and 5 = max quality (slow).
+			* @param	sprite	  	The sprite image.
+			* @param	dest_box	The destination rectangle.
+			* @param	sprite_box	The rectangle part of the sprite to rescale and blit.
+			*
+			* @return	The real quality of the rescaling performed. At least quality but may be higher.
+			**/
+			inline int blit_rescaled(int quality, const Image & sprite, const iBox2 & dest_box, const iBox2 & sprite_box)
+				{
+				return blit_rescaled(quality, sprite, dest_box.min[0], dest_box.min[1], dest_box.max[0] - dest_box.min[0] + 1, dest_box.max[1] - dest_box.min[1] + 1,
+					sprite_box.min[0], sprite_box.min[1], sprite_box.max[0] - sprite_box.min[0] + 1, sprite_box.max[1] - sprite_box.min[1] + 1);
+				}
+
+
+			/**
+			 * Find the (closed) minimal bounding rectangle enclosing the image.
+			 *
+			 * @param	bk_color	The 'background' color which is not part of the image.
+			 *
+			 * @return	the minimal bounding box. 
+			 **/
+			iBox2 minBoundingBox(RGBc bk_color)
+				{
+				int64 minx = _lx + 1, maxx = -1;
+				int64 miny = _ly + 1, maxy = -1;
+				for (int64 j = 0; j < _ly; j++)
+					{
+					for (int64 i = 0; i < _lx; i++)
+						{
+						if (operator()(i, j) != bk_color)
+							{
+							if (i < minx) minx = i;
+							if (i > maxx) maxx = i;
+							if (j < miny) miny = j;
+							if (j > maxy) miny = j;
+							}
+						}
+					}
+				return iBox2(minx, maxx, miny, maxy);
+				}
+
+
+			/**
+			 * Find the (closed) minimal bounding rectangle enclosing the image. Only pixels whose alpha channel is
+			 * not zero are considered part of the image.
+			 *
+			 * @return	the minimal bounding box.
+			 **/
+			iBox2 minBoundingBox()								
+				{
+				int64 minx = _lx + 1, maxx = -1;
+				int64 miny = _ly + 1, maxy = -1;
+				for (int64 j = 0; j < _ly; j++)
+					{
+					for (int64 i = 0; i < _lx; i++)
+						{
+						if (operator()(i, j).comp.A != 0)
+							{
+							if (i < minx) minx = i;
+							if (i > maxx) maxx = i;
+							if (j < miny) miny = j;
+							if (j > maxy) miny = j;
+							}
+						}
+					}
+				return iBox2(minx,maxx,miny,maxy);				
 				}
 
 
@@ -1153,6 +1585,22 @@ namespace mtools
 
 
 			/**
+			 * Get the color at a given position. No bound check !
+			 *
+			 * @param	pos	The position to look at.
+			 *
+			 * @return	The color at position pos.
+			 **/
+			inline RGBc & operator()(const iVec2 & pos) 
+				{ 
+				const int64 x = pos.X();
+				const int64 y = pos.Y();
+				MTOOLS_ASSERT((x >= 0) && (x < _lx)); MTOOLS_ASSERT((y >= 0) && (y < _ly)); 
+				return _data[x + _stride*y]; 
+				}
+
+
+			/**
 			* Get the color at a given position (const version).
 			* No bound check !
 			*
@@ -1162,6 +1610,23 @@ namespace mtools
 			* @return	The color at position (x,y).
 			**/
 			inline const RGBc & operator()(const int64 x, const int64 y) const { MTOOLS_ASSERT((x >= 0) && (x < _lx)); MTOOLS_ASSERT((y >= 0) && (y < _ly)); return _data[x + _stride*y]; }
+
+
+			/**
+			* Get the color at a given position. (const version)
+			* No bound check !
+			*
+			* @param	pos	The position to look at.
+			*
+			* @return	The color at position pos.
+			**/
+			inline const RGBc & operator()(const iVec2 & pos) const
+				{
+				const int64 x = pos.X();
+				const int64 y = pos.Y();
+				MTOOLS_ASSERT((x >= 0) && (x < _lx)); MTOOLS_ASSERT((y >= 0) && (y < _ly));
+				return _data[x + _stride*y];
+				}
 
 
 			/**
@@ -1178,13 +1643,48 @@ namespace mtools
 
 
 			/**
-			* Query the color of a pixel. Return default color if outside of the image
-			* 
-			* @param	x	The x coordinate.
-			* @param	y	The y coordinate.
-			**/
+			 * Sets a pixel. Does nothing if the position is outside of the image.
+			 *
+			 * @param	pos  	The position to look at.
+			 * @param	color	color to set.
+			 **/
+			inline void setPixel(const iVec2 & pos, const RGBc color)
+				{
+				const int64 x = pos.X();
+				const int64 y = pos.Y();
+				if ((x >= 0) && (x < _lx) && (y >= 0) && (y < _ly)) { _data[x + _stride*y] = color; }
+				}
+
+
+
+			/**
+			 * Query the color of a pixel. Return default color if outside of the image.
+			 *
+			 * @param	x				The x coordinate.
+			 * @param	y				The y coordinate.
+			 * @param	defaultcolor	The default color if (x,y) outside of the image.
+			 *
+			 * @return	The pixel color.
+			 **/
 			inline RGBc getPixel(const int64 x, const int64 y, const RGBc defaultcolor = RGBc::c_TransparentWhite) const
 				{
+				if ((x >= 0) && (x < _lx) && (y >= 0) && (y < _ly)) { return _data[x + _stride*y]; }
+				return defaultcolor;
+				}
+
+
+			/**
+			 * Query the color of a pixel. Return default color if outside of the image.
+			 *
+			 * @param	pos				The position to look at. 
+			 * @param	defaultcolor	The default color if (x,y) is outside of the image.
+			 *
+			 * @return	The pixel color.
+			 **/
+			inline RGBc getPixel(const iVec2 & pos, const RGBc defaultcolor = RGBc::c_TransparentWhite) const
+				{
+				const int64 x = pos.X();
+				const int64 y = pos.Y();
 				if ((x >= 0) && (x < _lx) && (y >= 0) && (y < _ly)) { return _data[x + _stride*y]; }
 				return defaultcolor;
 				}
