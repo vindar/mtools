@@ -44,7 +44,7 @@ namespace mtools
 
     std::string loadStringFromFile(const std::string & filename, StringEncoding enc)
         {
-        std::ifstream t(filename);
+        std::ifstream t(filename , std::ifstream::binary | std::ifstream::in);
         if (t.fail()) { return ""; }
         t.seekg(0, std::ios::end);
         std::string s;
