@@ -80,6 +80,7 @@
 #include "extensions/openCL.hpp"
 
 // graphics
+//#include "graphics/image.hpp"
 #include "graphics/progressimg.hpp"
 #include "graphics/simpleBMP.hpp"
 #include "graphics/edgesiteimage.hpp"

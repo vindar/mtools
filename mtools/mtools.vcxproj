@@ -179,6 +179,7 @@
     <ClInclude Include="headers\extensions\openCL.hpp" />
     <ClInclude Include="headers\graphics\customcimg.hpp" />
     <ClInclude Include="headers\graphics\edgesiteimage.hpp" />
+    <ClInclude Include="headers\graphics\image.hpp" />
     <ClInclude Include="headers\graphics\internal\cimgwidget.hpp" />
     <ClInclude Include="headers\graphics\internal\drawable2DInterface.hpp" />
     <ClInclude Include="headers\graphics\internal\drawable2Dobject.hpp" />
