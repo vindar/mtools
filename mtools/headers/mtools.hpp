@@ -80,7 +80,7 @@
 #include "extensions/openCL.hpp"
 
 // graphics
-//#include "graphics/image.hpp"
+#include "graphics/image.hpp"
 #include "graphics/progressimg.hpp"
 #include "graphics/simpleBMP.hpp"
 #include "graphics/edgesiteimage.hpp"
@@ -102,6 +102,7 @@
 #include "graphics/plot2Dplane.hpp"
 #include "graphics/plot2Dpixel.hpp"
 #include "graphics/plot2Dlattice.hpp"
+#include "graphics/plot2Dimage.hpp"
 #include "graphics/plot2Dcimg.hpp"
 
 

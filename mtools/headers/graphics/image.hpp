@@ -25,7 +25,8 @@
 #include "../misc/error.hpp"
 #include "rgbc.hpp"
 #include "../io/serialization.hpp"
-
+#include "../random/gen_fastRNG.hpp"
+#include "../random/classiclaws.hpp"
 
 #include <cairo.h>
 
@@ -1759,7 +1760,7 @@ namespace mtools
 			/* blend a region, in increasing order */
 			inline static void _blendRegionUp(RGBc * pdest, int64 dest_stride, RGBc * psrc, int64 src_stride, int64 sx, int64 sy, float op)
 				{
-				uint32 uop = 256 * op;
+				uint32 uop = (uint32)(256 * op);
 				for (int64 j = 0; j < sy; j++)
 					{
 					for (int64 i = 0; i < sx; i++)
@@ -1776,7 +1777,7 @@ namespace mtools
 			/* blend a region, in decreasing order */
 			inline static void _blendRegionDown(RGBc * pdest, int64 dest_stride, RGBc * psrc, int64 src_stride, int64 sx, int64 sy, float op)
 				{
-				uint32 uop = 256 * op;
+				uint32 uop = (uint32)(256 * op);
 				for (int64 j = sy - 1; j >= 0; j--)
 					{
 					RGBc * pdest2 = pdest + j*dest_stride;

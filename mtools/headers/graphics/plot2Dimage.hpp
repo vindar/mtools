@@ -37,13 +37,11 @@
 
 namespace mtools
 	{
-
-
 	/**
-	* Plot Object which encapsulate a Img<unsigned char> image. The image is either centered at
-	* the origin or such that its bottom left corner is at the origin.
-	* It is possible to change the image even while being displayed or to remove it by passing nullptr.
-	**/
+	 * Plot Object which encapsulate a Image object. The image is either centered at the origin or
+	 * such that its bottom left corner is at the origin. It is possible to change the image while
+	 * being displayed or to remove it by passing nullptr.
+	 **/
 	class  Plot2DImage : public internals_graphics::Plotter2DObj, protected internals_graphics::Drawable2DInterface
 		{
 
@@ -57,7 +55,7 @@ namespace mtools
 			/**
 			* Constructor. Pointer version.
 			*
-			* @param [in,out]  im  Pointer to the CImg image to draw, must be 3 or 4 channels (otherwise nothing is shown). nullptr to draw nothing.
+			* @param [in,out]  im  Pointer to the Image object to draw, nullptr to draw nothing.
 			* @param   nbthread    The number of threads to use for drawing.
 			* @param   name        The name of the plot
 													**/
@@ -67,7 +65,7 @@ namespace mtools
 			/**
 			* Constructor. Reference version.
 			*
-			* @param [in,out]  im  The CImg image to draw, must be 3 or 4 channels (otherwise nothing is shown)
+			* @param [in,out]  im  The Image object to draw.
 			* @param   nbthread    The number of threads to use for drawing.
 			* @param   name        The name of the plot
 			**/
@@ -86,12 +84,13 @@ namespace mtools
 
 
 			/**
-			* Change the image (pointer version).
-			*
-			* @param [in,out]  im  The new image or nullptr if there is none. The previous image (if any) is
-			*                      NOT deleted.
-			**/
+			 * Change the image (pointer version).
+			 *
+			 * @param [in,out]	im	The new image or nullptr if there is none. The previous image (if any) is
+			 * 						removed but the pointer is not deleted.
+			 **/
 			void image(Image * im);
+
 
 			/**
 			* Change the image (reference version).
@@ -138,21 +137,12 @@ namespace mtools
 			inline RGBc getColor(iVec2 pos)
 				{
 				if (_im == nullptr) return RGBc::c_TransparentWhite;
-				const int64 lx = _im->width();
-				const int64 ly = _im->height();
+				const int64 lx = _im->lx();
+				const int64 ly = _im->ly();
 				int64 x = pos.X();
 				int64 y = pos.Y();
-				if (_typepos == TYPECENTER) { x += lx / 2; y += ly / 2; }
-				if ((x <0) || (y < 0) || (x >= lx) || (y >= ly)) return RGBc::c_TransparentWhite;
-				y = ly - 1 - y;
-				const int64 lxy = lx*ly;
-				int64 off = x + lx*y;
-				const unsigned char * p = _im->data();
-				const char r = *(p + off);
-				const char g = *(p + off + lxy);
-				const char b = *(p + off + 2 * lxy);
-				const char a = ((_im->spectrum() < 4) ? 255 : (*(p + off + 3 * lxy)));
-				return RGBc(r, g, b, a);
+				if (_typepos == TYPECENTER) { x += lx/2; y += ly/2; }
+				return _im->getPixel(x, ly - 1 - y);
 				}
 
 
@@ -227,18 +217,18 @@ namespace mtools
 
 
 	/**
-	* Factory function for a constructing a plot2DCImg image from a CImg object. Reference version
+	* Factory function for constructing a plot2DCImage object from a Image object. Reference version
 	**/
-	inline Plot2DImage makePlot2DImage(Image & im, int nbthreads = 1, std::string name = "CImg image")
+	inline Plot2DImage makePlot2DImage(Image & im, int nbthreads = 1, std::string name = "Image")
 		{
 		return Plot2DImage(im, nbthreads, name);
 		}
 
 
 	/**
-	* Factory function for a constructing a plot2DCImg image from a CImg object. Pointer version
+	* Factory function for constructing a plot2DCImage object from a Image object. Pointer version
 	**/
-	inline Plot2DImage makePlot2DImage(Image * im, int nbthreads = 1, std::string name = "CImg image")
+	inline Plot2DImage makePlot2DImage(Image * im, int nbthreads = 1, std::string name = "Image")
 		{
 		return Plot2DImage(im, nbthreads, name);
 		}

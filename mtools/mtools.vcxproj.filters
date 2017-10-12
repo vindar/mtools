@@ -392,5 +392,8 @@
     <ClCompile Include="sources\plot2Dlattice.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="sources\plot2Dimage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

@@ -270,6 +270,7 @@
     <ClCompile Include="sources\plot2Dbasegraph.cpp" />
     <ClCompile Include="sources\plot2Dcimg.cpp" />
     <ClCompile Include="sources\plot2Dgrid.cpp" />
+    <ClCompile Include="sources\plot2Dimage.cpp" />
     <ClCompile Include="sources\plot2Dlattice.cpp" />
     <ClCompile Include="sources\serialization.cpp" />
     <ClCompile Include="sources\serialport.cpp" />

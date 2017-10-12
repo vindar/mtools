@@ -2,7 +2,6 @@
 
 #include "mtools.hpp"
 
-#include "graphics/image.hpp"
 
 using namespace mtools;
 
@@ -70,9 +69,9 @@ void testImg()
 	{
 
 
-	im = readBFF("TNR6.bff");
+	//im = readBFF("TNR6.bff");
 	im = Image("lenna.png");
-	im.rescale(10, im.lx() / 10, im.ly() / 10);
+	//im.rescale(10, im.lx() / 10, im.ly() / 10);
 
 	/*
 	{
@@ -189,7 +188,7 @@ void testImg()
 
 
 	mtools::Plotter2D plotter;
-	auto P1 = mtools::makePlot2DPixel(fimg, 4, "Img");
+	auto P1 = mtools::makePlot2DImage(im, 4, "Img");
 	plotter[P1];
 	plotter.plot();
 
