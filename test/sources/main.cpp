@@ -7,14 +7,6 @@ using namespace mtools;
 
 
 
-
-
-
-
-
-
-using namespace mtools;
-
 Image im;
 
 
@@ -28,10 +20,11 @@ void testImg()
 
 
 	int64 x = 0;
-	int64 y = 400;
+	int64 y = 100;
 
 
-	Font F("SUI3.bff");
+	const Font &F = defaultFont(18);
+	//const Font F("SUI3.bff");
 
 	Font F2(F,102);
 
@@ -51,6 +44,12 @@ void testImg()
 
 	for (int i = 0; i < im.lx(); i++) { im.setPixel(i, y, RGBc::c_Red); }
 	for (int j = 0; j < im.ly(); j++) { im.setPixel(x, j, RGBc::c_Red); }
+
+
+
+	OCPPArchive ar("_dataFont");
+	ar & F;
+	cout << ar.get();
 
 
 

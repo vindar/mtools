@@ -47,7 +47,7 @@ namespace mtools
 
 
 		/** serialize / deserialize the glyph. **/
-		template<typename ARCHIVE> void serialize(ARCHIVE & ar) { ar & offx, offy, width, glyph; }
+		template<typename ARCHIVE> void serialize(ARCHIVE & ar)  { ar & offx & offy & width & glyph; }
 
 		int64 offx;		///< x offset to apply before drawing the glyph
 		int64 offy;		///< y offset to apply before drawing the glyph.
@@ -319,8 +319,11 @@ namespace mtools
 			**/
 			template<typename ARCHIVE> void serialize(ARCHIVE & ar)
 				{
-				ar & _fontsize & _tab;
+				ar & _fontsize;
+				ar & _tab;
 				}
+
+
 
 
 			/* text positioning constants */
@@ -442,7 +445,7 @@ namespace mtools
 		*
 		* @return	A reference to the font
 		**/
-		const Font & defaultFont(int fontsize, bool closestnative);
+		const Font & defaultFont(int fontsize, bool closestnative = true);
 
 
 
