@@ -1370,7 +1370,7 @@ namespace mtools
 							if (i < minx) minx = i;
 							if (i > maxx) maxx = i;
 							if (j < miny) miny = j;
-							if (j > maxy) miny = j;
+							if (j > maxy) maxy = j;
 							}
 						}
 					}
@@ -1397,7 +1397,7 @@ namespace mtools
 							if (i < minx) minx = i;
 							if (i > maxx) maxx = i;
 							if (j < miny) miny = j;
-							if (j > maxy) miny = j;
+							if (j > maxy) maxy = j;
 							}
 						}
 					}
@@ -1441,6 +1441,20 @@ namespace mtools
 					ar.opaqueArray(_data + _stride*j, _lx * 4);
 					}
 				}
+
+
+
+
+
+			 /**
+			  * draw geometric figure.
+			  *
+			  * @return	true if empty, false if not.
+			  **/
+			// fill
+			
+			// draw text
+
 
 
 			/**
@@ -1492,17 +1506,6 @@ namespace mtools
 				cairo_surface_destroy(psurface);
 				return true;
 				}
-
-
-			 /**
-			  * draw geometric figure.
-			  *
-			  * @return	true if empty, false if not.
-			  **/
-			// fill
-			
-			// draw text
-
 
 
 			/**
