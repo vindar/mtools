@@ -807,6 +807,9 @@ namespace mtools
 
 			virtual ~ICPPArchive() {}
 
+			/* for debug purpose, return the buffer */
+			const std::string buffer() const { return _buf; }
+
 		protected:
 
 			virtual const char * refill(size_t & len) override 

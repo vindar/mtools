@@ -177,7 +177,7 @@ namespace mtools
 		}
 
 
-	ICPPArchive::ICPPArchive(const cp_char obj[])
+	ICPPArchive::ICPPArchive(const cp_char obj[]) : _buf(), _firsttime(true)
 		{
 		size_t tabsize, src_len;
 		mtools::fromString(obj[0], tabsize);
