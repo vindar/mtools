@@ -309,6 +309,9 @@
     <ClInclude Include="headers\graphics\plot2Dimage.hpp">
       <Filter>Header Files\graphics</Filter>
     </ClInclude>
+    <ClInclude Include="headers\graphics\font.hpp">
+      <Filter>Header Files\graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\console.cpp">
@@ -393,6 +396,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="sources\plot2Dimage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\font.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

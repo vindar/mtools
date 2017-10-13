@@ -179,6 +179,7 @@
     <ClInclude Include="headers\extensions\openCL.hpp" />
     <ClInclude Include="headers\graphics\customcimg.hpp" />
     <ClInclude Include="headers\graphics\edgesiteimage.hpp" />
+    <ClInclude Include="headers\graphics\font.hpp" />
     <ClInclude Include="headers\graphics\image.hpp" />
     <ClInclude Include="headers\graphics\internal\cimgwidget.hpp" />
     <ClInclude Include="headers\graphics\internal\drawable2DInterface.hpp" />
@@ -263,6 +264,7 @@
     <ClCompile Include="sources\error.cpp" />
     <ClCompile Include="sources\fileio.cpp" />
     <ClCompile Include="sources\fltkSupervisor.cpp" />
+    <ClCompile Include="sources\font.cpp" />
     <ClCompile Include="sources\interpolation.cpp" />
     <ClCompile Include="sources\logfile.cpp" />
     <ClCompile Include="sources\openCL.cpp" />
