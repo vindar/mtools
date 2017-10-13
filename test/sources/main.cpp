@@ -32,9 +32,13 @@ void testImg()
 
 	FF.insertFont(F);
 
+	Font G; G.createFrom(F, 30);
+
+	FF.insertFont(G);
+
 
 	//im.load_png("lenna.png");
-	im.resizeRaw(800, 600);
+	im.resizeRaw(800, 2000);
 	im.clear(RGBc::c_Black);
 
 
@@ -47,7 +51,7 @@ void testImg()
 
 	for (int i = 2; i < 50; i+=2)
 		{
-		Font G = FF(i, MTOOLS_EXACT_FONT);			
+		Font G = FF(i, MTOOLS_NATIVE_FONT_BELOW);			
 		G.drawText(im, x, y, ss, G.TOPLEFT, RGBc::c_White);
 		y += i;
 		}

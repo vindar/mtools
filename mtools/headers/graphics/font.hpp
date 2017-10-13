@@ -586,7 +586,7 @@ namespace mtools
 					{
 					_nativeset.clear();
 					_fonts.clear();
-					_fonts.resize(MAX_FONT_SIZE);
+					_fonts.resize(MAX_FONT_SIZE+1);
 					}
 
 

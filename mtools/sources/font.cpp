@@ -148,13 +148,7 @@ const p_char _dataFont[114] = { "112", "114385",
 
 const Font & defaultFont(int fontsize, int  method)
 		{
-		static Font * _font = nullptr;
-		if (_font == nullptr)
-			{
-			_font = new Font();
-			ICPPArchive ar(_dataFont);
-			ar & (*_font);
-			}
+		static Font * _font = new Font(ICPPArchive(_dataFont));
 		return *_font;
 		}
 
