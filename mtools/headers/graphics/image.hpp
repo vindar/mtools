@@ -213,7 +213,7 @@ namespace mtools
 
 
 			/** Destructor. */
-			virtual ~Image()
+			~Image()
 				{
 				empty();
 				}
@@ -1419,7 +1419,7 @@ namespace mtools
 				if ((_lx <= 0) || (_ly <= 0) || (_stride < _lx)) return;
 				for (int64 j = 0; j < _ly; j++)
 					{
-					ar.opaqueArray(_data + _stride*j, _lx * 4);
+					ar.opaqueArray(_data + _stride*j, _lx);
 					ar.newline();
 					}
 				}
@@ -1438,7 +1438,7 @@ namespace mtools
 				_allocate(_ly, _stride, nullptr);
 				for (int64 j = 0; j < _ly; j++)
 					{
-					ar.opaqueArray(_data + _stride*j, _lx * 4);
+					ar.opaqueArray(_data + _stride*j, _lx);
 					}
 				}
 
@@ -2409,7 +2409,7 @@ namespace mtools
 			/* allocate memory, updates _data, and _deletepointer */
 			void _allocate(int64 ly, int64 stride, RGBc * databuffer)
 				{
-				int64 memsize = 16 + ((databuffer == nullptr) ? 4 * ly*stride : 0); // 16 byte + the image buffer size if needed.
+				size_t memsize = 16 + (size_t)((databuffer == nullptr) ? (4*ly*stride) : 0); // 16 byte + the image buffer size if needed.
 				_deletepointer = (uint32*)malloc(memsize);
 				if (_deletepointer == nullptr) { MTOOLS_ERROR(std::string("malloc error: cannot allocate ") + mtools::toStringMemSize(memsize)); }
 				(*_deletepointer) = 1; // set reference count to 1
