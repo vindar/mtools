@@ -45,9 +45,8 @@ namespace mtools
 		/** Default constructor: empty glyph. */
 		Glyph() : offx(0), offy(0), width(0), glyph() {}
 
-
 		/** serialize / deserialize the glyph. **/
-		template<typename ARCHIVE> void serialize(ARCHIVE & ar)  { ar & offx & offy & width & glyph; }
+		template<typename ARCHIVE> void serialize(ARCHIVE & ar) { ar & offx & offy & width & glyph; }
 
 		int64 offx;		///< x offset to apply before drawing the glyph
 		int64 offy;		///< y offset to apply before drawing the glyph.
@@ -138,12 +137,32 @@ namespace mtools
 
 
 			/**
+			* Constructor. Create the font by rescaling another one.
+			*
+			* @param	ft			the font to copy.
+			* @param	fontsize	the font size.
+			**/
+			Font(const Font & ft, int fontsize) : _fontsize(0), _tab()
+				{
+				createFrom(ft, fontsize);
+				}
+
+
+			/**
 			* Move constructor.
 			**/
 			Font(Font && ft) : _fontsize(ft._fontsize), _tab(std::move(ft._tab))
 				{
 				ft._fontsize = 0;
 				ft._tab.clear();
+				}
+
+
+			/**
+			* Copy constructor (shallow !)
+			**/
+			Font(const Font & ft) : _fontsize(ft._fontsize), _tab(ft._tab)
+				{
 				}
 
 
@@ -165,16 +184,17 @@ namespace mtools
 
 
 			/**
-			* Constructor. Create the font by rescaling another one.
-			*
-			* @param	ft			the font to copy.
-			* @param	fontsize	the font size.
+			* Assignment operator (shallow !)
 			**/
-			Font(const Font & ft, int fontsize) : _fontsize(0), _tab()
+			Font & operator=(const Font & ft)
 				{
-				createFrom(ft, fontsize);
+				if (this != &ft)
+					{
+					_fontsize = ft._fontsize;
+					_tab = ft._tab;
+					}
+				return(*this);
 				}
-
 
 
 			/**
@@ -206,6 +226,17 @@ namespace mtools
 						}
 					}
 				}
+
+
+
+			/**
+			 * Query if the font is empty.
+			 **/
+			bool isEmpty() const
+				{
+				return (_fontsize == 0);
+				}
+
 
 
 			/**
@@ -346,6 +377,17 @@ namespace mtools
 
 		private:
 
+			friend class FontFamily;
+
+			/**
+			* Empty the font (can only be used by a friend class)
+			**/
+			void empty()
+				{
+				_fontsize = 0;
+				_tab.clear();
+				}
+
 
 			/* trim the glyph image and set glyph.offx and glyph.offy values */
 			void _trim(int c)
@@ -416,11 +458,6 @@ namespace mtools
 				}
 
 
-			/* no copy */
-			Font(const Font &) = delete;
-			Font & operator=(const Font &) = delete;
-
-
 			int64 _fontsize;			// size of the font
 			std::vector<Glyph> _tab;	// vector containing the glyphs. 
 
@@ -429,23 +466,162 @@ namespace mtools
 
 
 
+		/* method to choose a font */
+		enum 
+			{
+			MTOOLS_EXACT_FONT = 0,
+		    MTOOLS_NATIVE_FONT_BELOW = 1,
+		    MTOOLS_NATIVE_FONT_ABOVE = 2
+			};
+
+
+
 		class FontFamily
 			{
+
+			public:
+
+
+			/** Default constructor. */
+			FontFamily() { _empty(); }
+
+
+			/**
+			 * Constructor. Deserialize the object.
+			 **/
+			FontFamily(IBaseArchive & ar) { _empty(); deserialize(ar); }
+
+
+			/**
+			 * Serialization of the object.
+			 **/
+			void serialize(OBaseArchive & ar)
+				{
+				ar & _nativeset.size();
+				for (auto it = _nativeset.begin(); it != _nativeset.end(); it++)
+					{
+					ar & (*it); 
+					ar & _fonts[*it];
+					}
+				}
+
+
+			/**
+			* Deserialization of the object.
+			**/
+			void deserialize(IBaseArchive & ar)
+				{
+				_empty();
+				size_t l; ar & l;
+				for (int i = 0;i < l; i++)
+					{
+					int fs; ar & fs;
+					_nativeset.insert(fs);
+					ar & _fonts[fs];
+					}
+				}
+
+
+			/**
+			 * Inserts a font. If a font with the same fontsize already exists. It is replaced.
+			 *
+			 * @param	font	The font to insert.
+			 **/
+			void insertFont(const Font & font)
+				{
+				const int size = font.fontsize();
+				if ((size <= 0)||(size >= MAX_FONT_SIZE)) return; 
+				_fonts[size] = font;
+				_nativeset.insert(size);
+				}
+
+
+			/**
+			 * Query if the font with a given size is a native one. 
+			 *
+			 * @param	fontsize	The font size.
+			 *
+			 * @return	true if native, false if it is rescaled from another font. 
+			 **/
+			bool isNative(int fontsize)
+				{
+				return (_nativeset.find(fontsize) == _nativeset.end());
+				}
+
+
+			/**
+			 * Return a font with a given fontsize.
+			 *
+			 * @param	fontsize	the requested size of the font.
+			 * @param	method  	method to choose the font in case no native font matches this size. One
+			 * 						of MTOOLS_EXACT_FONT, MTOOLS_NATIVE_FONT_BELOW, MTOOLS_NATIVE_FONT_ABOVE.
+			 *
+			 * @return	A reference to the matching font. If fontsize is negative or larger than
+			 * 			MAX_FONT_SIZE, return an empty font.
+			 **/
+			const Font & operator()(int fontsize, int  method = MTOOLS_NATIVE_FONT_BELOW)
+				{
+				if ((fontsize <= 0) || (fontsize > MAX_FONT_SIZE) || (_nativeset.size() == 0)) return _fonts[0];
+				if (method == MTOOLS_EXACT_FONT)
+					{
+					if (_fonts[fontsize].isEmpty()) { _constructFont(fontsize); }
+					return _fonts[fontsize];
+					}
+				auto it = _nativeset.lower_bound(fontsize); 
+				if (it == _nativeset.end()) { return _fonts[*(_nativeset.rbegin())]; } // past the last element, return the largest. 
+				if (method = MTOOLS_NATIVE_FONT_ABOVE) { return _fonts[*it]; }
+				if (it == _nativeset.begin()) { return _fonts[*it]; } // return the smallest available
+				it--;
+				return _fonts[*it];
+				}
+
+
+			private:
+
+				static const int MAX_FONT_SIZE = 4096;
+
+
+				/* Empty the object. */
+				void _empty()
+					{
+					_nativeset.clear();
+					_fonts.clear();
+					_fonts.resize(MAX_FONT_SIZE);
+					}
+
+
+				/* construct the font using the smallest larger font */ 
+				void _constructFont(int fontsize)
+					{
+					auto it = _nativeset.lower_bound(fontsize);
+					if (it == _nativeset.end()) 
+						{ // past the largest one. 
+						_fonts[fontsize].createFrom(_fonts[*(_nativeset.rbegin())], fontsize);
+						return; 
+						}  
+					_fonts[fontsize].createFrom(_fonts[*it], fontsize);
+					}
+
+
+			std::set<int>		_nativeset;				// set that keep tracks of native fonts
+			std::vector<Font>	_fonts;					// vector of fonts. 
 
 			};
 
 
 
+		
 		/**
 		* Return the default font with a given size.
 		*
-		* @param	fontsize	 	The requested font size.
-		* @param	closestnative	true to  return instead the closest native font (ie which was not
-		* 							rescaled from a native font).
+		* @param	fontsize	the requested size of the font.
+		* @param	method  	method to choose the font in case no native font matches this size. One
+		* 						of MTOOLS_EXACT_FONT, MTOOLS_NATIVE_FONT_BELOW, MTOOLS_NATIVE_FONT_ABOVE.
 		*
-		* @return	A reference to the font
+		* @return	A reference to the matching font. If fontsize is negative or larger than
+		* 			MAX_FONT_SIZE, return an empty font.
 		**/
-		const Font & defaultFont(int fontsize, bool closestnative = true);
+		const Font & defaultFont(int fontsize, int  method = MTOOLS_NATIVE_FONT_BELOW);
 
 
 

@@ -15,25 +15,52 @@ typedef char * pchar;
 
 
 
+
+
+
+
+
 void testImg()
 	{
 
 
-	int64 x = 0;
-	int64 y = 100;
 
 
-	const Font &F = defaultFont(18);
-	//const Font F("SUI3.bff");
+	Font F = defaultFont(18);
 
-	Font F2(F,102);
+	FontFamily FF;
 
+	FF.insertFont(F);
+
+
+	//im.load_png("lenna.png");
+	im.resizeRaw(800, 600);
+	im.clear(RGBc::c_Black);
+
+
+	std::string ss("Ceci est un test");
+
+
+	int64 x = 100;
+	int64 y = 10;
+
+
+	for (int i = 2; i < 50; i+=2)
+		{
+		Font G = FF(i, MTOOLS_EXACT_FONT);			
+		G.drawText(im, x, y, ss, G.TOPLEFT, RGBc::c_White);
+		y += i;
+		}
+
+
+
+	// 	Font F = defaultFont(18);
+	// 308450158
+	// 308450158
+	/*
 
 	std::string txt("The brown fox jumps over the lazy dog\nYEAH!!!!\nThat's nice! Here is a number: 1.2345678999e-678");
 
-	im.load_png("lenna.png");
-	
-	im.clear(RGBc::c_White);
 
 	F.drawBackground(im, x , y, txt, F.TOPLEFT, RGBc::c_Black);
 	F.drawText(im, x, y, txt, F.TOPLEFT, RGBc::c_White);
@@ -50,7 +77,7 @@ void testImg()
 	OCPPArchive ar("_dataFont");
 	ar & F;
 	cout << ar.get();
-
+	*/
 
 
 	mtools::Plotter2D plotter;
@@ -70,8 +97,13 @@ int main(int argc, char *argv[])
 
 
 
-	testImg();
-
+	try {
+		testImg();
+		}
+	catch (const char * e)
+		{
+		cout << e << "\n";;
+		}
 
 	cout << "Hello World\n";
 	cout.getKey();

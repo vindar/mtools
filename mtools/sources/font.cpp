@@ -143,10 +143,19 @@ const p_char _dataFont[114] = { "112", "114385",
 "5FCB7E79E83C0B2F6B9EB44DF02459B1F22E36E0C6581A63A9C858FE0B3BB80DDD"
 };
 
-	const Font & defaultFont(int fontsize, bool closestnative)
+
+
+
+const Font & defaultFont(int fontsize, int  method)
 		{
-		static Font * _font = new Font(ICPPArchive(_dataFont));
-		return *_font; 
+		static Font * _font = nullptr;
+		if (_font == nullptr)
+			{
+			_font = new Font();
+			ICPPArchive ar(_dataFont);
+			ar & (*_font);
+			}
+		return *_font;
 		}
 
 
