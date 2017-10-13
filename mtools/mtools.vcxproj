@@ -265,9 +265,11 @@
     <ClCompile Include="sources\fileio.cpp" />
     <ClCompile Include="sources\fltkSupervisor.cpp" />
     <ClCompile Include="sources\font.cpp" />
+    <ClCompile Include="sources\image.cpp" />
     <ClCompile Include="sources\interpolation.cpp" />
     <ClCompile Include="sources\logfile.cpp" />
     <ClCompile Include="sources\openCL.cpp" />
+    <ClCompile Include="sources\opensans_font.cpp" />
     <ClCompile Include="sources\plot2Daxes.cpp" />
     <ClCompile Include="sources\plot2Dbasegraph.cpp" />
     <ClCompile Include="sources\plot2Dcimg.cpp" />

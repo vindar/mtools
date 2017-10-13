@@ -34,6 +34,36 @@ namespace mtools
 	{
 
 
+
+	/* text positioning constants */
+	static const int MTOOLS_TEXT_XCENTER		= 0;
+	static const int MTOOLS_TEXT_LEFT			= 1;
+	static const int MTOOLS_TEXT_RIGHT			= 2;
+	static const int MTOOLS_TEXT_YCENTER		= 0;
+	static const int MTOOLS_TEXT_TOP			= 4;
+	static const int MTOOLS_TEXT_BOTTOM			= 8;
+	static const int MTOOLS_TEXT_TOPLEFT		= MTOOLS_TEXT_TOP | MTOOLS_TEXT_LEFT;
+	static const int MTOOLS_TEXT_TOPRIGHT		= MTOOLS_TEXT_TOP | MTOOLS_TEXT_RIGHT;
+	static const int MTOOLS_TEXT_BOTTOMLEFT		= MTOOLS_TEXT_BOTTOM | MTOOLS_TEXT_LEFT;
+	static const int MTOOLS_TEXT_BOTTOMRIGHT	= MTOOLS_TEXT_BOTTOM | MTOOLS_TEXT_RIGHT;
+	static const int MTOOLS_TEXT_CENTER			= MTOOLS_TEXT_XCENTER | MTOOLS_TEXT_YCENTER;
+	static const int MTOOLS_TEXT_CENTERLEFT		= MTOOLS_TEXT_YCENTER | MTOOLS_TEXT_LEFT;
+	static const int MTOOLS_TEXT_CENTERRIGHT	= MTOOLS_TEXT_YCENTER | MTOOLS_TEXT_RIGHT;
+	static const int MTOOLS_TEXT_CENTERTOP		= MTOOLS_TEXT_XCENTER | MTOOLS_TEXT_TOP;
+	static const int MTOOLS_TEXT_CENTERBOTTOM	= MTOOLS_TEXT_XCENTER | MTOOLS_TEXT_BOTTOM;
+
+
+
+	/* method to choose a font */
+	enum
+		{
+		MTOOLS_EXACT_FONT = 0,
+		MTOOLS_NATIVE_FONT_BELOW = 1,
+		MTOOLS_NATIVE_FONT_ABOVE = 2
+		};
+
+
+
 	/**
 	* Structure containing a glyph.
 	*
@@ -53,6 +83,8 @@ namespace mtools
 		int64 width;	///< width of the glyph (may before larger than glyph.lx() ). 
 		Image glyph;	///< The glyph image.
 		};
+
+
 
 
 	/**
@@ -79,50 +111,7 @@ namespace mtools
 			* @param	fontsize	Size of the font. Null or negative value to set the font size equal to
 			* 						the height of a cell in the .bff image.
 			**/
-			Font(const std::string & filename, int fontsize = 0) : _fontsize(fontsize), _tab()
-				{
-				std::string bff = mtools::loadStringFromFile(filename);
-				if (bff.size() == 0) { MTOOLS_ERROR(std::string("readBFF() : Cannot read file [") + filename + "]"); }
-				if (bff.size() <= 276) { MTOOLS_ERROR(std::string("readBFF() : File [") + filename + "] too small."); }
-				if (((uint8)bff[0] != 0xBF) || ((uint8)bff[1] != 0xF2)) { MTOOLS_ERROR(std::string("readBFF() : incorrect BFF tag for file [") + filename + "]"); }
-				const uint32 im_lx = *((uint32*)(bff.data() + 2));
-				const uint32 im_ly = *((uint32*)(bff.data() + 6));
-				const uint32 cell_lx = *((uint32*)(bff.data() + 10));
-				if (cell_lx == 0) { MTOOLS_ERROR(std::string("readBFF() : incorrect cell_lx =0 for file [") + filename + "]"); }
-				const uint32 cell_ly = *((uint32*)(bff.data() + 14));
-				if (cell_ly == 0) { MTOOLS_ERROR(std::string("readBFF() : incorrect cell_ly =0 for file [") + filename + "]"); }
-				const uint32 nbx = im_lx / cell_lx;
-				const uint32 nby = im_ly / cell_ly;
-				const uint8 bpp = (uint8)bff[18];
-				if (bpp != 32) { MTOOLS_ERROR(std::string("readBFF() : Error, image format must be 32bit. (file [") + filename + "])"); }
-				if (bff.size() < 276 + 4 * im_lx*im_ly) { MTOOLS_ERROR(std::string("readBFF() : Error, file [") + filename + " to small to contain the whole image."); }
-				const uint8 char_offset = (uint8)bff[19];
-				if ((uint32)(256 - char_offset) > nbx*nby) { MTOOLS_ERROR(std::string("readBFF() : Error, the image cannot contain all the glyphs (file [") + filename + "])"); }
-				if (_fontsize <= 0) _fontsize = cell_ly; else if (_fontsize > cell_ly) { MTOOLS_ERROR(std::string("readBFF() : Error, the fontsize is larger than cell_ly (file [") + filename + "])"); }
-				// file is ok. we load the image. 
-				Image im(im_lx, im_ly);
-				for (uint32 j = 0; j < im_ly; j++)
-					{
-					for (uint32 i = 0; i < im_lx; i++)
-						{
-						uint8 A = bff[276 + 4 * (i + j*im_lx) + 3];
-						if (A >= 0xFD) { A = 0xFF; }
-						else if (A <= 0x02) { A = 0x00; }
-						im(i, j) = RGBc(0, 0, 0, A);
-						}
-					}
-				// we construct the glyphs. 			
-				_tab.resize(256);
-				for (int k = 0; k < 256 - char_offset; k++)
-					{
-					const int c = k + char_offset;
-					const int i = k % nbx;
-					const int j = k / nbx;
-					_tab[c].width = (uint8)bff[20 + c];
-					_tab[c].glyph = im.sub_image(i*cell_lx, j*cell_ly, cell_lx, cell_ly);
-					_trim(c);
-					}
-				}
+			Font(const std::string & filename, int fontsize = 0);
 
 
 			/**
@@ -204,29 +193,7 @@ namespace mtools
 			* @param	ft			the font to copy.
 			* @param	fontsize	the font size.
 			**/
-			void createFrom(const Font & ft, int fontsize)
-				{
-				_tab.clear();
-				_fontsize = (fontsize <= 0) ? 0 : fontsize;
-				if ((_fontsize <= 0) || (ft._fontsize <= 0)) return;
-				double scale = ((double)_fontsize) / ((double)ft._fontsize);
-				_tab.resize(256);
-				for (int c = 0; c < 256; c++)
-					{
-					_tab[c].width = (int64)(ft._tab[c].width * scale + 0.5);
-					if (ft._tab[c].glyph.isEmpty()) { _tab[c].glyph.empty(); _tab[c].offx = 0; _tab[c].offy = 0; }
-					else
-						{
-						_tab[c].glyph = ft._tab[c].glyph;
-						_tab[c].offx = ft._tab[c].offx;
-						_tab[c].offy = ft._tab[c].offy;
-						_untrim(c, (int)ft._fontsize);
-						_tab[c].glyph.rescale(10, _fontsize, _fontsize);
-						_trim(c);
-						}
-					}
-				}
-
+			void createFrom(const Font & ft, int fontsize);
 
 
 			/**
@@ -236,7 +203,6 @@ namespace mtools
 				{
 				return (_fontsize == 0);
 				}
-
 
 
 			/**
@@ -266,8 +232,8 @@ namespace mtools
 			* @param	x		  	x coordinate of the text reference position.
 			* @param	y		  	y coordinate of the text reference position.
 			* @param	txt		  	the text.
-			* @param	txt_pos   	Positioning method (combination of XCENTER, LEFT, RIGHT, TOP, BOTTOM,
-			* 						YCENTER).
+			* @param	txt_pos   	Positioning method (combination of MTOOLS_TEXT_XCENTER, MTOOLS_TEXT_LEFT, MTOOLS_TEXT_RIGHT, MTOOLS_TEXT_TOP, MTOOLS_TEXT_BOTTOM,
+			* 						MTOOLS_TEXT_YCENTER).
 			* @param	bkcolor   	The color to blend over.
 			**/
 			void drawBackground(Image & im, int64 x, int64 y, const std::string & txt, int txt_pos, RGBc bkcolor) const
@@ -283,8 +249,8 @@ namespace mtools
 			* @param [in,out]	im	The image to draw onto.
 			* @param	pos		  	reference position.
 			* @param	txt		  	the text.
-			* @param	txt_pos   	Positioning method (combination of XCENTER, LEFT, RIGHT, TOP, BOTTOM,
-			* 						YCENTER).
+			* @param	txt_pos   	Positioning method (combination of MTOOLS_TEXT_XCENTER, MTOOLS_TEXT_LEFT, MTOOLS_TEXT_RIGHT, MTOOLS_TEXT_TOP, MTOOLS_TEXT_BOTTOM,
+			* 						MTOOLS_TEXT_YCENTER).
 			* @param	bkcolor   	The color to blend over.
 			**/
 			void drawBackground(Image & im, iVec2 pos, const std::string & txt, int txt_pos, RGBc bkcolor) const
@@ -302,30 +268,11 @@ namespace mtools
 			* @param [in,out]	im	The image to draw onto.
 			* @param	pos		  	reference position.
 			* @param	txt		  	The text to draw.
-			* @param	txt_pos   	Positioning method (combination of XCENTER, LEFT, RIGHT, TOP, BOTTOM,
-			* 						YCENTER).
+			* @param	txt_pos   	Positioning method (combination of MTOOLS_TEXT_XCENTER, MTOOLS_TEXT_LEFT, MTOOLS_TEXT_RIGHT, MTOOLS_TEXT_TOP, MTOOLS_TEXT_BOTTOM,
+			* 						MTOOLS_TEXT_YCENTER).
 			* @param	color	  	The color to use for drawing the font.
 			**/
-			void drawText(Image & im, const iVec2 & pos, const std::string & txt, int txt_pos, RGBc color) const
-				{
-				if ((!_fontsize) || (txt.size() == 0)) return;
-				auto npos = _upperleft(pos, txt, txt_pos);
-				int64 x = npos.X();
-				int64 y = npos.Y();
-				int64 x0 = x;
-				for (size_t i = 0; i < txt.size(); i++)
-					{
-					const char c = txt[i];
-					if (c == '\n') { x = x0; y += _fontsize; }
-					else if (c == '\t') { x += 4 * _tab[' '].width; }
-					else if (c >= 32)
-						{
-						im.mask(_tab[c].glyph, x + _tab[c].offx, y + _tab[c].offy, color);
-						x += _tab[c].width;
-						}
-					}
-				return;
-				}
+			void drawText(Image & im, const iVec2 & pos, const std::string & txt, int txt_pos, RGBc color) const;
 
 
 			/**
@@ -335,8 +282,8 @@ namespace mtools
 			* @param	x		  	x coordinate of the text reference position.
 			* @param	y		  	y coordinate of the text reference position.
 			* @param	txt		  	The text to draw.
-			* @param	txt_pos   	Positioning method (combination of XCENTER, LEFT, RIGHT, TOP, BOTTOM,
-			* 						YCENTER).
+			* @param	txt_pos   	Positioning method (combination of MTOOLS_TEXT_XCENTER, MTOOLS_TEXT_LEFT, MTOOLS_TEXT_RIGHT, MTOOLS_TEXT_TOP, MTOOLS_TEXT_BOTTOM,
+			* 						MTOOLS_TEXT_YCENTER).
 			* @param	color	  	The color to use for drawing the font.
 			**/
 			void drawText(Image & im, int64 x, int64 y, const std::string & txt, int txt_pos, RGBc color) const
@@ -356,106 +303,28 @@ namespace mtools
 
 
 
-
-			/* text positioning constants */
-			static const int XCENTER = 0;
-			static const int LEFT = 1;
-			static const int RIGHT = 2;
-			static const int YCENTER = 0;
-			static const int TOP = 4;
-			static const int BOTTOM = 8;
-			static const int TOPLEFT = TOP | LEFT;
-			static const int TOPRIGHT = TOP | RIGHT;
-			static const int BOTTOMLEFT = BOTTOM | LEFT;
-			static const int BOTTOMRIGHT = BOTTOM | RIGHT;
-			static const int CENTER = XCENTER | YCENTER;
-			static const int CENTERLEFT = YCENTER | LEFT;
-			static const int CENTERRIGHT = YCENTER | RIGHT;
-			static const int CENTERTOP = XCENTER | TOP;
-			static const int CENTERBOTTOM = XCENTER | BOTTOM;
-
-
 		private:
 
 			friend class FontFamily;
 
-			/**
-			* Empty the font (can only be used by a friend class)
-			**/
-			void empty()
-				{
-				_fontsize = 0;
-				_tab.clear();
-				}
-
+			/** Empty the font (only for friend class) **/
+			void empty() { _fontsize = 0; _tab.clear(); }
 
 			/* trim the glyph image and set glyph.offx and glyph.offy values */
-			void _trim(int c)
-				{
-				Glyph & G = _tab[c];
-				if (G.glyph.isEmpty()) return;
-				iBox2 B = G.glyph.minBoundingBox();
-				if (B.isEmpty()) { G.glyph.empty(); G.offx = 0; G.offy = 0; return; }
-				G.offx = B.min[0];
-				G.offy = B.min[1];
-				G.glyph.crop(B, false); // make independent copy.
-				}
-
+			void _trim(int c);
 
 			/* reverse operation of the trim operation, make the glyph size fontsize x fontsize */
-			void _untrim(int c, int fontsize)
-				{
-				Glyph & G = _tab[c];
-				if (G.glyph.isEmpty()) return;
-				Image im(fontsize, fontsize, RGBc(0, 0, 0, 0));
-				im.blit(G.glyph, G.offx, G.offy);
-				_tab[c].glyph = im;
-				}
-
+			void _untrim(int c, int fontsize);
 
 			/* compute the position of upper left corner of the text box depending on the positionning method. */
-			iVec2 _upperleft(iVec2 pos, const iVec2 & txtdim, int txt_pos) const
-				{
-				switch (txt_pos & 3)
-					{
-					case 0: { pos.X() -= txtdim.X() / 2; break;}
-					case 2: { pos.X() -= txtdim.X() - 1; break; }
-					case 3: { pos.X() -= txtdim.X() / 2; break; }
-					}
-				switch ((txt_pos >> 2) & 3)
-					{
-					case 0: { pos.Y() -= txtdim.Y() / 2; break; }
-					case 2: { pos.Y() -= txtdim.Y() - 1; break; }
-					case 3: { pos.Y() -= txtdim.Y() / 2; break; }
-					}
-				return pos;
-				}
-
+			iVec2 _upperleft(iVec2 pos, const iVec2 & txtdim, int txt_pos) const;
 
 			/* compute the position of upper left corner of the text box depending on the positionning method. */
-			iVec2 _upperleft(iVec2 pos, const std::string & txt, int txt_pos) const
-				{
-				if (((txt_pos & 3) == 1) && (((txt_pos >> 2) & 3) == 1)) { return pos; } //nothing to compute
-				return _upperleft(pos, _textDimension(txt), txt_pos);
-				}
-
+			iVec2 _upperleft(iVec2 pos, const std::string & txt, int txt_pos) const;
 
 			/* Return the size of the bounding box when drawing text txt with this font. */
-			iVec2 _textDimension(const std::string & txt) const
-				{
-				if ((!_fontsize) || (txt.size() == 0)) return iVec2(0, 0);
-				int64 mx = 0, x = 0;
-				int64 my = _fontsize;
-				for (size_t i = 0; i < txt.size(); i++)
-					{
-					const char c = txt[i];
-					if (c >= 32) { x += _tab[c].width; }
-					else if (c == '\t') { x += 4 * _tab[' '].width; }
-					else if (c == '\n') { if (x > mx) { mx = x; } x = 0;  my += _fontsize; }
-					}
-				if (x > mx) { mx = x; }
-				return iVec2(mx, my);
-				}
+			iVec2 _textDimension(const std::string & txt) const;
+
 
 
 			int64 _fontsize;			// size of the font
@@ -466,16 +335,14 @@ namespace mtools
 
 
 
-		/* method to choose a font */
-		enum 
-			{
-			MTOOLS_EXACT_FONT = 0,
-		    MTOOLS_NATIVE_FONT_BELOW = 1,
-		    MTOOLS_NATIVE_FONT_ABOVE = 2
-			};
 
 
 
+		/**
+		 * Font Family class.
+		 * 
+		 * This object encapsdulated a font family i.e. different version of a given font different font size. 
+		 **/
 		class FontFamily
 			{
 
@@ -559,60 +426,37 @@ namespace mtools
 			 * @return	A reference to the matching font. If fontsize is negative or larger than
 			 * 			MAX_FONT_SIZE, return an empty font.
 			 **/
-			const Font & operator()(int fontsize, int  method = MTOOLS_NATIVE_FONT_BELOW)
-				{
-				if ((fontsize <= 0) || (fontsize > MAX_FONT_SIZE) || (_nativeset.size() == 0)) return _fonts[0];
-				if (method == MTOOLS_EXACT_FONT)
-					{
-					if (_fonts[fontsize].isEmpty()) { _constructFont(fontsize); }
-					return _fonts[fontsize];
-					}
-				auto it = _nativeset.lower_bound(fontsize); 
-				if (it == _nativeset.end()) { return _fonts[*(_nativeset.rbegin())]; } // past the last element, return the largest. 
-				if (method = MTOOLS_NATIVE_FONT_ABOVE) { return _fonts[*it]; }
-				if (it == _nativeset.begin()) { return _fonts[*it]; } // return the smallest available
-				it--;
-				return _fonts[*it];
-				}
+			const Font & operator()(int fontsize, int  method = MTOOLS_NATIVE_FONT_BELOW);
 
 
-			private:
-
-				static const int MAX_FONT_SIZE = 4096;
-
-
-				/* Empty the object. */
-				void _empty()
-					{
-					_nativeset.clear();
-					_fonts.clear();
-					_fonts.resize(MAX_FONT_SIZE+1);
-					}
+			/**
+			 * Return the set of font size which are 'native' i.e. that were not rescale from another size.
+			 **/
+			std::set<int> nativeSizeSet() const { return _nativeset; }
 
 
-				/* construct the font using the smallest larger font */ 
-				void _constructFont(int fontsize)
-					{
-					auto it = _nativeset.lower_bound(fontsize);
-					if (it == _nativeset.end()) 
-						{ // past the largest one. 
-						_fonts[fontsize].createFrom(_fonts[*(_nativeset.rbegin())], fontsize);
-						return; 
-						}  
-					_fonts[fontsize].createFrom(_fonts[*it], fontsize);
-					}
+		private:
+
+			static const int MAX_FONT_SIZE = 4096;  ///< maximum font size. 
+
+
+			/* Empty the object. */
+			void _empty();
+
+			/* construct the font using the smallest larger font */ 
+			void _constructFont(int fontsize);
 
 
 			std::set<int>		_nativeset;				// set that keep tracks of native fonts
 			std::vector<Font>	_fonts;					// vector of fonts. 
 
-			};
+		};
 
 
 
 		
 		/**
-		* Return the default font with a given size.
+		* Return the global font with a given size.
 		*
 		* @param	fontsize	the requested size of the font.
 		* @param	method  	method to choose the font in case no native font matches this size. One
@@ -621,7 +465,7 @@ namespace mtools
 		* @return	A reference to the matching font. If fontsize is negative or larger than
 		* 			MAX_FONT_SIZE, return an empty font.
 		**/
-		const Font & defaultFont(int fontsize, int  method = MTOOLS_NATIVE_FONT_BELOW);
+		const Font & gFont(int fontsize, int  method = MTOOLS_NATIVE_FONT_BELOW);
 
 
 

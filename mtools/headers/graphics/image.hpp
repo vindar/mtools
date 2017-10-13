@@ -36,6 +36,11 @@ namespace mtools
 	{
 
 
+	/* forward declaration */
+	class Font;
+
+
+
 	/**
 	 * Class representing a true color image  
 	 * 
@@ -1405,7 +1410,6 @@ namespace mtools
 				}
 
 
-
 			/**
 			* Serializes the image into an OBaseArchive.
 			**/
@@ -1443,16 +1447,143 @@ namespace mtools
 				}
 
 
+			/**
+			 * Draw background of the rectangle that enclosed a given text. Color bkcolor is blend over the
+			 * image.
+			 *
+			 * @param	x	   	x coordinate of the text reference position.
+			 * @param	y	   	y coordinate of the text reference position.
+			 * @param	txt	   	the text.
+			 * @param	txt_pos	Positioning method (combination of MTOOLS_TEXT_XCENTER, MTOOLS_TEXT_LEFT,
+			 * 					MTOOLS_TEXT_RIGHT, MTOOLS_TEXT_TOP, MTOOLS_TEXT_BOTTOM, MTOOLS_TEXT_YCENTER).
+			 * @param	bkcolor	The color to blend over.
+			 * @param	font   	the font to use.
+			 **/
+			void draw_text_background(int64 x, int64 y, const std::string & txt, int txt_pos, RGBc bkcolor, const Font * font); 
+
+
+			/**
+			 * Draw background of the rectangle that enclosed a given text. Color bkcolor is blend over the
+			 * image. This version uses the default font (gFont).
+			 *
+			 * @param	x			x coordinate of the text reference position.
+			 * @param	y			y coordinate of the text reference position.
+			 * @param	txt			the text.
+			 * @param	txt_pos 	Positioning method (combination of MTOOLS_TEXT_XCENTER, MTOOLS_TEXT_LEFT,
+			 * 						MTOOLS_TEXT_RIGHT, MTOOLS_TEXT_TOP, MTOOLS_TEXT_BOTTOM, MTOOLS_TEXT_YCENTER).
+			 * @param	bkcolor 	The color to blend over.
+			 * @param	fontsize	the font size to use.
+			 **/
+			void draw_text_background(int64 x, int64 y, const std::string & txt, int txt_pos, RGBc bkcolor, int fontsize);
+
+
+			/**
+			 * Draw background of the rectangle that enclosed a given text. Color bkcolor is blend over the
+			 * image.
+			 *
+			 * @param	pos	   	the text reference position.
+			 * @param	txt	   	the text.
+			 * @param	txt_pos	Positioning method (combination of MTOOLS_TEXT_XCENTER, MTOOLS_TEXT_LEFT,
+			 * 					MTOOLS_TEXT_RIGHT, MTOOLS_TEXT_TOP, MTOOLS_TEXT_BOTTOM, MTOOLS_TEXT_YCENTER).
+			 * @param	bkcolor	The color to blend over.
+			 * @param	font   	the font to use.
+			 **/
+			void draw_text_background(const iVec2 & pos, const std::string & txt, int txt_pos, RGBc bkcolor, const Font * font)
+				{
+				draw_text_background(pos.X(), pos.Y(), txt, txt_pos, bkcolor, font);
+				}
+
+
+			/**
+			 * Draw background of the rectangle that enclosed a given text. Color bkcolor is blend over the
+			 * image. This version uses the default font (gFont).
+			 *
+			 * @param	pos			the text reference position.
+			 * @param	txt			the text.
+			 * @param	txt_pos 	Positioning method (combination of MTOOLS_TEXT_XCENTER, MTOOLS_TEXT_LEFT,
+			 * 						MTOOLS_TEXT_RIGHT, MTOOLS_TEXT_TOP, MTOOLS_TEXT_BOTTOM, MTOOLS_TEXT_YCENTER).
+			 * @param	bkcolor 	The color to blend over.
+			 * @param	fontsize	the font size to use.
+			 **/
+			void draw_text_background(const iVec2 & pos, const std::string & txt, int txt_pos, RGBc bkcolor, int fontsize)
+				{
+				draw_text_background( pos.X(), pos.Y() ,  txt, txt_pos, bkcolor, fontsize);
+				}
+
+
+			/**
+			 * Draws a text on the image, with a given color and using a given font.
+			 *
+			 * @param	x	   	x coordinate of the text reference position.
+			 * @param	y	   	y coordinate of the text reference position.
+			 * @param	txt	   	the text to draw.
+			 * @param	txt_pos	Positioning method (combination of MTOOLS_TEXT_XCENTER, MTOOLS_TEXT_LEFT,
+			 * 					MTOOLS_TEXT_RIGHT, MTOOLS_TEXT_TOP, MTOOLS_TEXT_BOTTOM, MTOOLS_TEXT_YCENTER).
+			 * @param	color  	The color to blend over.
+			 * @param	font   	the font to use.
+			 **/
+			void draw_text(int64 x, int64 y, const std::string & txt, int txt_pos, RGBc color, const Font * font);
+
+
+			/**
+			 * Draws a text on the image with a given color. Use the default font [gFont].
+			 *
+			 * @param	x			x coordinate of the text reference position.
+			 * @param	y			y coordinate of the text reference position.
+			 * @param	txt			the text to draw.
+			 * @param	txt_pos 	Positioning method (combination of MTOOLS_TEXT_XCENTER, MTOOLS_TEXT_LEFT,
+			 * 						MTOOLS_TEXT_RIGHT, MTOOLS_TEXT_TOP, MTOOLS_TEXT_BOTTOM, MTOOLS_TEXT_YCENTER).
+			 * @param	color   	The color to blend over.
+			 * @param	fontsize	the font size to use.
+			 **/
+			void draw_text(int64 x, int64 y, const std::string & txt, int txt_pos, RGBc color, int fontsize);
+
+
+			/**
+			* Draws a text on the image, with a given color and using a given font.
+			*
+			* @param	pos	   	the text reference position.
+			* @param	txt	   	the text to draw.
+			* @param	txt_pos	Positioning method (combination of MTOOLS_TEXT_XCENTER, MTOOLS_TEXT_LEFT,
+			* 					MTOOLS_TEXT_RIGHT, MTOOLS_TEXT_TOP, MTOOLS_TEXT_BOTTOM, MTOOLS_TEXT_YCENTER).
+			* @param	color  	The color to blend over.
+			* @param	font   	the font to use.
+			**/
+			void draw_text(const iVec2 & pos, const std::string & txt, int txt_pos, RGBc color, const Font * font)
+				{
+				draw_text(pos.X(), pos.Y(), txt, txt_pos, color, font);
+				}
+
+
+			/**
+			* Draws a text on the image with a given color. Use the default font [gFont].
+			*
+			* @param	pos			the text reference position.
+			* @param	txt			the text to draw
+			* @param	txt_pos 	Positioning method (combination of MTOOLS_TEXT_XCENTER, MTOOLS_TEXT_LEFT,
+			* 						MTOOLS_TEXT_RIGHT, MTOOLS_TEXT_TOP, MTOOLS_TEXT_BOTTOM, MTOOLS_TEXT_YCENTER).
+			* @param	color   	The color to blend over.
+			* @param	fontsize	the font size to use.
+			**/
+			void draw_text(const iVec2 & pos, const std::string & txt, int txt_pos, RGBc color, int fontsize)
+				{
+				draw_text(pos.X(), pos.Y(), txt, txt_pos, color, fontsize);
+				}
 
 
 
-			 /**
-			  * draw geometric figure.
-			  *
-			  * @return	true if empty, false if not.
-			  **/
+
+
+
+			/**
+			* draw geometric figure.
+			*
+			* @return	true if empty, false if not.
+			**/
 			// fill
-			
+
+
+
 
 
 			/**
