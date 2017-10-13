@@ -1453,8 +1453,44 @@ namespace mtools
 			  **/
 			// fill
 			
-			// draw text
 
+
+			/**
+			 * Blend a filled rectangle of given size and color over this image.
+			 *
+			 * @param	dest_box	position of the rectangle to blend over.
+			 * @param	boxcolor	the color to blend over. 
+			 **/
+			void draw_filled_rectangle(const iBox2 & dest_box, RGBc boxcolor)
+				{
+				draw_filled_rectangle(dest_box.min[0], dest_box.min[1], dest_box.max[0] - dest_box.min[0] + 1, dest_box.max[1] - dest_box.min[1] + 1, boxcolor);
+				}
+
+
+			/**
+			* Blend a filled rectangle of given size and color over this image.
+			*
+			 * @param	x			x-coordinate of the rectangle upper left corner.
+			 * @param	y			y-coordinate of the rectangle upper left corner.
+			 * @param	sx			rectangle width.
+			 * @param	sy			rectangle height.
+			 * @param	boxcolor	the color to blend over.
+			 **/
+			void draw_filled_rectangle(int64 x,int64 y, int64 sx, int64 sy, RGBc boxcolor)
+				{
+				if (x < 0) { sx -= x;   x = 0; }
+				if (y < 0) { sy -= y;   y = 0; }
+				if ((boxcolor.comp.A == 0) || (x >= _lx) || (y >= _ly)) return;
+				sx -= std::max<int64>(0, (x + sx - _lx));
+				sy -= std::max<int64>(0, (y + sy - _ly));
+				if ((sx <= 0) || (sy <= 0)) return;
+				RGBc * p = _data + _stride*y + x;
+				for (int64 j = 0; j < sy; j++)
+					{
+					for (int64 i = 0; i < sx; i++) { p[i].blend(boxcolor); }
+					p += _stride;
+					}
+				}
 
 
 			/**
