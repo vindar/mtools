@@ -1583,7 +1583,61 @@ namespace mtools
 			// fill
 
 
+			/**
+			 * Draw a line. portion outside the image is clipped.
+			 *
+			 * @param	P1		   	First point.
+			 * @param	P2		   	Second endpoint.
+			 * @param	color	   	The color to use.
+			 * @param	antialiased	true to draw an antialised line.
+			 * @param	blending   	true to use blending instead of simply copying the color.
+			 * @param	tickness   	The tickness of the line (default 1, much slower if other value). A line
+			 * 						with non-unit tickness is always antialiased.
+			 **/
+			void draw_line(iVec2 P1, iVec2 P2, RGBc color, bool antialiased = false, bool blending = false, float tickness = 1.0f)
+				{
+				if (tickness != 1.0f)
+					{
+					if (tickness <= 0.0f) return;
+					if (blending) _tickLineBresenhamAA_blend(P1, P2, tickness, color); else _tickLineBresenhamAA(P1, P2, tickness, color);
+					return; 
+					}
+				if (P1.X() == P2.X())
+					{
+					_verticalLine(P1, P2, color, blending);
+					return;
+					}
+				if (P1.Y() == P2.Y())
+					{
+					_horizontalLine(P1, P2, color, blending);
+					return; 
+					}
+				if (antialiased)
+					{
+					if (blending) _lineBresenhamAA_blend(P1, P2, color); else _lineBresenhamAA(P1, P2, color);
+					return;
+					}
+				if (blending) _lineBresenham_blend(P1, P2, color); else _lineBresenham(P1, P2, color);
+				}
 
+
+			/**
+			 * Draw a line. portion outside the image is clipped.
+			 *
+			 * @param	x1		   	x-coord of the first point.
+			 * @param	y1		   	y-coord of the first point.
+			 * @param	x2		   	x-coord of the second point.
+			 * @param	y2		   	y-coord of the second point.
+			 * @param	color	   	The color to use.
+			 * @param	antialiased	true to draw an antialised line.
+			 * @param	blending   	true to use blending instead of simply copying the color.
+			 * @param	tickness   	The tickness of the line (default 1, much slower if other value). A line
+			 * 						with non-unit tickness is always antialiased.
+			 **/
+			void draw_line(int64 x1, int64 y1, int64 x2, int64 y2, RGBc color, bool antialiased = false, bool blending = false, float tickness = 1.0f)
+				{
+				draw_line({ x1, y1 }, { x2, y2 }, color, antialiased, blending, tickness);
+				}
 
 
 			/**
@@ -1815,7 +1869,7 @@ namespace mtools
 			/**
 			 * Sets a pixel. Does nothing if the position is outside of the image.
 			 *
-			 * @param	pos  	The position to look at.
+			 * @param	pos  	The position to consider.
 			 * @param	color	color to set.
 			 **/
 			inline void setPixel(const iVec2 & pos, const RGBc color)
@@ -1823,6 +1877,99 @@ namespace mtools
 				const int64 x = pos.X();
 				const int64 y = pos.Y();
 				if ((x >= 0) && (x < _lx) && (y >= 0) && (y < _ly)) { _data[x + _stride*y] = color; }
+				}
+
+
+			/**
+			* Blend a color over a given pixel. Does nothing if the position is outside of the image.
+			* To improve performance, remove bound checking using (*this)(x,y).blend(color).
+			* 
+			* @param	x	 	The x coordinate.
+			* @param	y	 	The y coordinate.
+			* @param	color	color to blend over
+			**/
+			inline void blendPixel(const int64 x, const int64 y, const RGBc color)
+				{
+				if ((x >= 0) && (x < _lx) && (y >= 0) && (y < _ly)) { _data[x + _stride*y].blend(color); }
+				}
+
+
+			/**
+			* Blend a color over a given pixel. Does nothing if the position is outside of the image.
+			* To improve performance, remove bound checking using (*this)(x,y).blend(color).
+			*
+			* @param	pos  	The position to consider.
+			* @param	color	color to blend over
+			**/
+			inline void blendPixel(const iVec2 & pos, const RGBc color)
+				{
+				const int64 x = pos.X();
+				const int64 y = pos.Y();
+				if ((x >= 0) && (x < _lx) && (y >= 0) && (y < _ly)) { _data[x + _stride*y].blend(color); }
+				}
+
+
+			/**
+			 * Blend a color over a given pixel. Does nothing if the position is outside of the image. To
+			 * improve performance, remove bound checking using (*this)(x,y).blend(color,op).
+			 *
+			 * @param	x	 	The x coordinate.
+			 * @param	y	 	The y coordinate.
+			 * @param	color	color to blend over.
+			 * @param	op   	opacity pre-multiplier in [0.0f , 1.0f].
+			 **/
+			inline void blendPixel(const int64 x, const int64 y, const RGBc color, float op)
+				{
+				if ((x >= 0) && (x < _lx) && (y >= 0) && (y < _ly)) { _data[x + _stride*y].blend(color,op); }
+				}
+
+
+			/**
+			 * Blend a color over a given pixel. Does nothing if the position is outside of the image. To
+			 * improve performance, remove bound checking using (*this)(x,y).blend(color,op).
+			 *
+			 * @param	pos  	The position to consider.
+			 * @param	color	color to blend over.
+			 * @param	op   	opacity pre-multiplier in [0.0f , 1.0f].
+			 **/
+			inline void blendPixel(const iVec2 & pos, const RGBc color, float op)
+				{
+				const int64 x = pos.X();
+				const int64 y = pos.Y();
+				if ((x >= 0) && (x < _lx) && (y >= 0) && (y < _ly)) { _data[x + _stride*y].blend(color,op); }
+				}
+
+
+			/**
+			 * Blend a color over a given pixel. Does nothing if the position is outside of the image. To
+			 * improve performance, remove bound checking using (*this)(x,y).blend(color,op).
+			 *
+			 * @param	x	 	The x coordinate.
+			 * @param	y	 	The y coordinate.
+			 * @param	color	color to blend over.
+			 * @param	op   	opacity pre-multiplier in the range [0, 0x100]. (use
+			 * 					convertAlpha_0xFF_to_0x100() to convert to that range if needed).
+			 **/
+			inline void blendPixel(const int64 x, const int64 y, const RGBc color, uint32 op)
+				{
+				if ((x >= 0) && (x < _lx) && (y >= 0) && (y < _ly)) { _data[x + _stride*y].blend(color, op); }
+				}
+
+
+			/**
+			 * Blend a color over a given pixel. Does nothing if the position is outside of the image. To
+			 * improve performance, remove bound checking using (*this)(x,y).blend(color,op).
+			 *
+			 * @param	pos  	The position to consider.
+			 * @param	color	color to blend over.
+			 * @param	op   	opacity pre-multiplier in the range [0, 0x100]. (use
+			 * 					convertAlpha_0xFF_to_0x100() to convert to that range if needed).
+			 **/
+			inline void blendPixel(const iVec2 & pos, const RGBc color, uint32 op)
+				{
+				const int64 x = pos.X();
+				const int64 y = pos.Y();
+				if ((x >= 0) && (x < _lx) && (y >= 0) && (y < _ly)) { _data[x + _stride*y].blend(color, op); }
 				}
 
 
@@ -2530,6 +2677,516 @@ namespace mtools
 				return true;
 				}
 
+
+
+
+
+			/*************************************************************
+			*                     LINE DRAWING	                         *
+			*                                                            *
+			**************************************************************/
+
+
+
+			/** draw a vertical line (P1.X() = P2.X()) **/ 
+			void _verticalLine(const iVec2 & P1, const iVec2 & P2, RGBc color, bool blending)
+				{
+				MTOOLS_ASSERT(P1.X() == P2.X());
+				const int64 x = P1.X(); if ((x < 0) || (x >= _lx)) return;
+				int64 ymin = std::min<int64>(P1.Y(), P2.Y());  if (ymin >= _ly) return; else if (ymin < 0) ymin = 0;
+				int64 ymax = std::max<int64>(P1.Y(), P2.Y());  if (ymax < 0) return; else if (ymax >= _ly) ymax = _ly - 1;
+				const int64 l = ymax - ymin;
+				RGBc * p = _data + ymin*_stride + x;
+				if (blending)
+					{
+					for (int64 j = 0; j <= l; j++) { (*p).blend(color); p += _stride; }
+					}
+				else
+					{
+					for (int64 j = 0; j <= l; j++) { (*p) = color; p += _stride; }
+					}
+				}
+
+
+			/** draw an horizontal line  (P1.Y() = P2.Y()) **/
+			void _horizontalLine(const iVec2 & P1, const iVec2 & P2, RGBc color, bool blending)
+				{
+				MTOOLS_ASSERT(P1.Y() == P2.Y());
+				const int64 y = P1.Y(); if ((y < 0) || (y >= _ly)) return;
+				int64 xmin = std::min<int64>(P1.X(), P2.X());  if (xmin >= _lx) return; else if (xmin < 0) xmin = 0;
+				int64 xmax = std::max<int64>(P1.X(), P2.X());  if (xmax < 0) return; else if (xmax >= _lx) xmax = _lx - 1;
+				const int64 l = xmax - xmin;
+				RGBc * p = _data + y*_stride + xmin;
+				if (blending)
+					{
+					for (int64 j = 0; j <= l; j++) { p[j].blend(color); }
+					}
+				else
+					{
+					for (int64 j = 0; j <= l; j++) { p[j] = color; }
+					}
+				}
+
+
+			/** Used by CSLineClip() to compute the region where the point lies **/
+			static int _csLineClipCode(const iVec2 & P, const iBox2 & B)
+				{
+				int c = 0;
+				const int64 x = P.X();
+				const int64 y = P.Y();
+				if (x < B.min[0]) c |= 1;
+				if (x > B.max[0]) c |= 2;
+				if (y < B.min[1]) c |= 4;
+				if (y > B.max[1]) c |= 8;
+				return c;
+				}
+
+
+			/**
+			 * Cohen-Sutherland Line clipping algorithm.
+			 *
+			 * @param [in,out]	P1	The first point.
+			 * @param [in,out]	P2	The second point.
+			 * @param	B		  	The rectangle to clip into.
+			 *
+			 * @return	true if a line should be drawn and false if it should be discarded. If true, P1 and
+			 * 			P2 are now guaranteed to be inside the closed rectangle B.
+			 **/
+			static bool _csLineClip(iVec2 & P1, iVec2 & P2, const iBox2 & B)
+				{
+				int c1 = _csLineClipCode(P1, B);
+				int c2 = _csLineClipCode(P2, B);
+				while (1)
+					{
+					const double m = ((double)(P2.Y() - P1.Y())) / (P2.X() - P1.X());
+					if ((c1 == 0) && (c2 == 0)) { return true; } // both point inside		
+					if ((c1 & c2) != 0) { return false; } //AND of both codes != 0.Line is outside. Reject line
+					int64 x, y;
+					int temp = (c1 == 0) ? c2 : c1; //Decide if point1 is inside, if not, calculate intersection		
+					if (temp & 8)
+						{ //Line clips top edge
+						x = P1.X() + (int64)round((B.max[1] - P1.Y()) / m);
+						y = B.max[1];
+						}
+					else if (temp & 4)
+						{ 	//Line clips bottom edge
+						x = P1.X() + (int64)round((B.min[1] - P1.Y()) / m);
+						y = B.min[1];
+						}
+					else if (temp & 1)
+						{ 	//Line clips left edge
+						x = B.min[0];
+						y = P1.Y() + (int64)round(m*(B.min[0] - P1.X()));
+						}
+					else if (temp & 2)
+						{ 	//Line clips right edge
+						x = B.max[0];
+						y = P1.Y() + (int64)round(m*(B.max[0] - P1.X()));
+						}
+					if (temp == c1) //Check which point we had selected earlier as temp, and replace its co-ordinates
+						{
+						P1.X() = x; P1.Y() = y;
+						c1 = _csLineClipCode(P1, B);
+						}
+					else
+						{
+						P2.X() = x; P2.Y() = y;
+						c2 = _csLineClipCode(P2, B);
+						}
+					}
+				}
+
+
+			/**
+			* Draw a line using Bresenham's algorithm.
+			* Optimized.
+			**/
+			void _lineBresenham(iVec2 P1, iVec2 P2, RGBc color)
+				{
+				if (isEmpty()) return;
+				if (!_csLineClip(P1, P2, iBox2(0, _lx - 1, 0, _ly - 1))) return;
+				int64 & x1 = P1.X(); int64 & y1 = P1.Y();
+				int64 & x2 = P2.X(); int64 & y2 = P2.Y();
+				int64 dy = y2 - y1;
+				int64 dx = x2 - x1;
+				int64 stepx, stepy;
+				if (dy < 0) { dy = -dy;  stepy = -1; }
+				else { stepy = 1; }
+				if (dx < 0) { dx = -dx;  stepx = -1; }
+				else { stepx = 1; }
+				dy <<= 1; dx <<= 1;
+				operator()(x1, y1) = color;
+				if (dx > dy)
+					{
+					int64 fraction = dy - (dx >> 1);
+					while (x1 != x2)
+						{
+						if (fraction >= 0) { y1 += stepy; fraction -= dx; }
+						x1 += stepx; fraction += dy;
+						operator()(x1, y1) = color;
+						}
+					}
+				else
+					{
+					int64 fraction = dx - (dy >> 1);
+					while (y1 != y2)
+						{
+						if (fraction >= 0) { x1 += stepx; fraction -= dy; }
+						y1 += stepy; fraction += dx;
+						operator()(x1, y1) = color;
+						}
+					}
+				}
+
+
+			/**
+			* Draw a line using Bresenham's algorithm.
+			* Optimized. No bound check.
+			* Use blending.
+			**/
+			void _lineBresenham_blend(iVec2 P1, iVec2 P2, RGBc color)
+				{
+				if (isEmpty()) return;
+				if (!_csLineClip(P1, P2, iBox2(0, _lx - 1, 0, _ly - 1))) return;
+				int64 & x1 = P1.X(); int64 & y1 = P1.Y();
+				int64 & x2 = P2.X(); int64 & y2 = P2.Y();
+				int64 dy = y2 - y1;
+				int64 dx = x2 - x1;
+				int64 stepx, stepy;
+				if (dy < 0) { dy = -dy;  stepy = -1; }
+				else { stepy = 1; }
+				if (dx < 0) { dx = -dx;  stepx = -1; }
+				else { stepx = 1; }
+				dy <<= 1; dx <<= 1;
+				operator()(x1, y1).blend(color);
+				if (dx > dy)
+					{
+					int64 fraction = dy - (dx >> 1);
+					while (x1 != x2)
+						{
+						if (fraction >= 0) { y1 += stepy; fraction -= dx; }
+						x1 += stepx; fraction += dy;
+						operator()(x1, y1).blend(color);
+						}
+					}
+				else
+					{
+					int64 fraction = dx - (dy >> 1);
+					while (y1 != y2)
+						{
+						if (fraction >= 0) { x1 += stepx; fraction -= dy; }
+						y1 += stepy; fraction += dx;
+						operator()(x1, y1).blend(color);
+						}
+					}
+				}
+
+
+			/**
+			* Draw an antialiased line using Bresenham's algorithm.
+			* No bound check.
+			**/
+			void _lineBresenhamAA(iVec2 P1, iVec2 P2, RGBc color)
+				{
+				if (isEmpty()) return;
+				if (!_csLineClip(P1, P2, iBox2(0, _lx - 1, 0, _ly - 1))) return;
+				int64 & x0 = P1.X(); int64 & y0 = P1.Y();
+				int64 & x1 = P2.X(); int64 & y1 = P2.Y();
+				int64 sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1, x2;
+				int64 dx = abs(x1 - x0), dy = abs(y1 - y0), err = dx*dx + dy*dy;
+				int64 e2 = err == 0 ? 1 : (int64)(0xffff7fl / sqrt(err));
+				dx *= e2; dy *= e2; err = dx - dy;
+				int64 op = mtools::convertAlpha_0xFF_to_0x100(color.comp.A);
+				if (op == 256)
+					{
+					for (; ; )
+						{
+						color.comp.A = (uint8)((255 - (abs(err - dx + dy) >> 16)));
+						operator()(x0, y0) = color;
+						e2 = err; x2 = x0;
+						if (2 * e2 >= -dx) {
+							if (x0 == x1) break;
+							if (e2 + dy < 0xff0000l)
+								{
+								color.comp.A = (uint8)((255 - (int)((e2 + dy) >> 16)));
+								operator()(x0, y0 + sy) = color;
+								}
+							err -= dy; x0 += sx;
+							}
+						if (2 * e2 <= dy) {
+							if (y0 == y1) break;
+							if (dx - e2 < 0xff0000l)
+								{
+								color.comp.A = (uint8)((255 - (int)((dx - e2) >> 16)));
+								operator()(x2 + sx, y0) = color;
+								}
+							err += dx; y0 += sy;
+							}
+						}
+					return;
+					}
+				else
+					{
+					for (; ; )
+						{
+						color.comp.A = (uint8)(((255 - (abs(err - dx + dy) >> 16))*op) >> 8);
+						operator()(x0, y0) = color;
+						e2 = err; x2 = x0;
+						if (2 * e2 >= -dx) {
+							if (x0 == x1) break;
+							if (e2 + dy < 0xff0000l)
+								{
+								color.comp.A = (uint8)(((255 - (int)((e2 + dy) >> 16))*op) >> 8);
+								operator()(x0, y0 + sy) = color;
+								}
+							err -= dy; x0 += sx;
+							}
+						if (2 * e2 <= dy) {
+							if (y0 == y1) break;
+							if (dx - e2 < 0xff0000l)
+								{
+								color.comp.A = (uint8)(((255 - (int)((dx - e2) >> 16))*op) >> 8);
+								operator()(x2 + sx, y0) = color;
+								}
+							err += dx; y0 += sy;
+							}
+						}
+					return;
+					}
+				}
+
+
+
+			/**
+			* Draw an antialiased line using Bresenham's algorithm.
+			* No bound check.
+			* Use blending.
+			**/
+			void _lineBresenhamAA_blend(iVec2 P1, iVec2 P2, RGBc color)
+				{
+				if (isEmpty()) return;
+				if (!_csLineClip(P1, P2, iBox2(0, _lx - 1, 0, _ly - 1))) return;
+				int64 & x0 = P1.X(); int64 & y0 = P1.Y();
+				int64 & x1 = P2.X(); int64 & y1 = P2.Y();
+				int64 sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1, x2;
+				int64 dx = abs(x1 - x0), dy = abs(y1 - y0), err = dx*dx + dy*dy;
+				int64 e2 = err == 0 ? 1 : (int64)(0xffff7fl / sqrt(err));
+				dx *= e2; dy *= e2; err = dx - dy;
+				int64 op = mtools::convertAlpha_0xFF_to_0x100(color.comp.A);
+				if (op == 256)
+					{
+					for (; ; )
+						{
+						color.comp.A = (uint8)((255 - (abs(err - dx + dy) >> 16)));
+						operator()(x0, y0).blend(color);
+						e2 = err; x2 = x0;
+						if (2 * e2 >= -dx) {
+							if (x0 == x1) break;
+							if (e2 + dy < 0xff0000l)
+								{
+								color.comp.A = (uint8)((255 - (int)((e2 + dy) >> 16)));
+								operator()(x0, y0 + sy).blend(color);
+								}
+							err -= dy; x0 += sx;
+							}
+						if (2 * e2 <= dy) {
+							if (y0 == y1) break;
+							if (dx - e2 < 0xff0000l)
+								{
+								color.comp.A = (uint8)((255 - (int)((dx - e2) >> 16)));
+								operator()(x2 + sx, y0).blend(color);
+								}
+							err += dx; y0 += sy;
+							}
+						}
+					return;
+					}
+				else
+					{
+					for (; ; )
+						{
+						color.comp.A = (uint8)(((255 - (abs(err - dx + dy) >> 16))*op) >> 8);
+						operator()(x0, y0).blend(color);
+						e2 = err; x2 = x0;
+						if (2 * e2 >= -dx) {
+							if (x0 == x1) break;
+							if (e2 + dy < 0xff0000l)
+								{
+								color.comp.A = (uint8)(((255 - (int)((e2 + dy) >> 16))*op) >> 8);
+								operator()(x0, y0 + sy).blend(color);
+								}
+							err -= dy; x0 += sx;
+							}
+						if (2 * e2 <= dy) {
+							if (y0 == y1) break;
+							if (dx - e2 < 0xff0000l)
+								{
+								color.comp.A = (uint8)(((255 - (int)((dx - e2) >> 16))*op) >> 8);
+								operator()(x2 + sx, y0).blend(color);
+								}
+							err += dx; y0 += sy;
+							}
+						}
+					return;
+					}
+				}
+
+
+
+
+			/**
+			* Draw an tick antialiased line using Bresenham's algorithm.
+			**/
+			void _tickLineBresenhamAA(iVec2 P1, iVec2 P2, float wd, RGBc color)
+				{
+				if (isEmpty()) return;
+				if (!_csLineClip(P1, P2, iBox2(0, _lx - 1, 0, _ly - 1))) return;
+				int64 & x0 = P1.X(); int64 & y0 = P1.Y();
+				int64 & x1 = P2.X(); int64 & y1 = P2.Y();
+				int64 dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+				int64 dy = abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+				int64 err = dx - dy, e2, x2, y2;
+				float ed = dx + dy == 0 ? 1 : sqrt((float)dx*dx + (float)dy*dy);
+				int64 op = mtools::convertAlpha_0xFF_to_0x100(color.comp.A);
+				if (op == 256)
+					{
+					for (wd = (wd + 1) / 2; ; )
+						{
+						color.comp.A = (uint8)(255 - std::max<float>(0, 255 * (abs(err - dx + dy) / ed - wd + 1)));
+						setPixel(x0, y0, color);
+						e2 = err; x2 = x0;
+						if (2 * e2 >= -dx)
+							{
+							for (e2 += dy, y2 = y0; e2 < ed*wd && (y1 != y2 || dx > dy); e2 += dx)
+								{
+								color.comp.A = (uint8)(255 - std::max<float>(0, 255 * (abs(e2) / ed - wd + 1)));
+								setPixel(x0, y2 += sy, color);
+								}
+							if (x0 == x1) break;
+							e2 = err; err -= dy; x0 += sx;
+							}
+						if (2 * e2 <= dy)
+							{
+							for (e2 = dx - e2; e2 < ed*wd && (x1 != x2 || dx < dy); e2 += dy)
+								{
+								color.comp.A = (uint8)(255 - std::max<float>(0, 255 * (abs(e2) / ed - wd + 1)));
+								setPixel(x2 += sx, y0, color);
+								}
+							if (y0 == y1) break;
+							err += dx; y0 += sy;
+							}
+						}
+					return;
+					}
+				else
+					{
+					for (wd = (wd + 1) / 2; ; )
+						{
+						color.comp.A = (uint8)((((int32)(255 - std::max<float>(0, 255 * (abs(err - dx + dy) / ed - wd + 1)))) * op) >> 8);
+						setPixel(x0, y0, color);
+						e2 = err; x2 = x0;
+						if (2 * e2 >= -dx)
+							{
+							for (e2 += dy, y2 = y0; e2 < ed*wd && (y1 != y2 || dx > dy); e2 += dx)
+								{
+								color.comp.A = (uint8)((((int32)(255 - std::max<float>(0, 255 * (abs(e2) / ed - wd + 1))))*op) >> 8);
+								setPixel(x0, y2 += sy, color);
+								}
+							if (x0 == x1) break;
+							e2 = err; err -= dy; x0 += sx;
+							}
+						if (2 * e2 <= dy)
+							{
+							for (e2 = dx - e2; e2 < ed*wd && (x1 != x2 || dx < dy); e2 += dy)
+								{
+								color.comp.A = (uint8)((((int32)(255 - std::max<float>(0, 255 * (abs(e2) / ed - wd + 1))))*op) >> 8);
+								setPixel(x2 += sx, y0, color);
+								}
+							if (y0 == y1) break;
+							err += dx; y0 += sy;
+							}
+						}
+					return;
+					}
+				}
+
+
+			/**
+			* Draw an tick antialiased line using Bresenham's algorithm.
+			* use blending.
+			**/
+			void _tickLineBresenhamAA_blend(iVec2 P1, iVec2 P2, float wd, RGBc color)
+				{
+				if (isEmpty()) return;
+				if (!_csLineClip(P1, P2, iBox2(-(int64)(5*wd), _lx - 1 + (int64)(5 * wd), -(int64)(5 * wd), _ly - 1 + (int64)(5 * wd)))) return;
+				int64 & x0 = P1.X(); int64 & y0 = P1.Y();
+				int64 & x1 = P2.X(); int64 & y1 = P2.Y();
+				int64 dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+				int64 dy = abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+				int64 err = dx - dy, e2, x2, y2;
+				float ed = dx + dy == 0 ? 1 : sqrt((float)dx*dx + (float)dy*dy);
+				int64 op = mtools::convertAlpha_0xFF_to_0x100(color.comp.A);
+				if (op == 256)
+					{
+					for (wd = (wd + 1) / 2; ; )
+						{
+						color.comp.A = (uint8)(255 - std::max<float>(0, 255 * (abs(err - dx + dy) / ed - wd + 1)));
+						blendPixel(x0, y0, color);
+						e2 = err; x2 = x0;
+						if (2 * e2 >= -dx)
+							{
+							for (e2 += dy, y2 = y0; e2 < ed*wd && (y1 != y2 || dx > dy); e2 += dx)
+								{
+								color.comp.A = (uint8)(255 - std::max<float>(0, 255 * (abs(e2) / ed - wd + 1)));
+								blendPixel(x0, y2 += sy, color);
+								}
+							if (x0 == x1) break;
+							e2 = err; err -= dy; x0 += sx;
+							}
+						if (2 * e2 <= dy)
+							{
+							for (e2 = dx - e2; e2 < ed*wd && (x1 != x2 || dx < dy); e2 += dy)
+								{
+								color.comp.A = (uint8)(255 - std::max<float>(0, 255 * (abs(e2) / ed - wd + 1)));
+								blendPixel(x2 += sx, y0, color);
+								}
+							if (y0 == y1) break;
+							err += dx; y0 += sy;
+							}
+						}
+					return;
+					}
+				else
+					{
+					for (wd = (wd + 1) / 2; ; )
+						{
+						color.comp.A = (uint8)((((int32)(255 - std::max<float>(0, 255 * (abs(err - dx + dy) / ed - wd + 1)))) * op) >> 8);
+						blendPixel(x0, y0, color);
+						e2 = err; x2 = x0;
+						if (2 * e2 >= -dx)
+							{
+							for (e2 += dy, y2 = y0; e2 < ed*wd && (y1 != y2 || dx > dy); e2 += dx)
+								{
+								color.comp.A = (uint8)((((int32)(255 - std::max<float>(0, 255 * (abs(e2) / ed - wd + 1))))*op) >> 8);
+								blendPixel(x0, y2 += sy, color);
+								}
+							if (x0 == x1) break;
+							e2 = err; err -= dy; x0 += sx;
+							}
+						if (2 * e2 <= dy)
+							{
+							for (e2 = dx - e2; e2 < ed*wd && (x1 != x2 || dx < dy); e2 += dy)
+								{
+								color.comp.A = (uint8)((((int32)(255 - std::max<float>(0, 255 * (abs(e2) / ed - wd + 1))))*op) >> 8);
+								blendPixel(x2 += sx, y0, color);
+								}
+							if (y0 == y1) break;
+							err += dx; y0 += sy;
+							}
+						}
+					return;
+					}
+				}
 
 
 			/*************************************************************
