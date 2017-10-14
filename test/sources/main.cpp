@@ -124,7 +124,6 @@ void LineBresenham_blend(Image & im, int64 x1, int64 y1, int64 x2, int64 y2, RGB
 /**
 * Draw a line using Bresenham's algorithm.
 * Optimized. No bound check.
-* Use blending.
 **/
 void LineBresenham(Image & im, int64 x1, int64 y1, int64 x2, int64 y2, RGBc color)
 	{
@@ -530,13 +529,13 @@ void testImg()
 	int y = 300;
 
 
-	iBox2 B(200, 503, 118, 451);
-	im.draw_filled_rectangle(B, RGBc(220, 220, 220));
+	iBox2 B(0, 799, 0, 599);
+	im.draw_filled_rectangle(B, RGBc(220, 220, 220),false);
 
 	MT2004_64 gen(1);
 
 
-	int N = 2000000;
+	int N = 1000000;
 	std::vector<iVec2> tabP1, tabP2;
 	for (int i = 0;i < N; i++)
 		{
@@ -549,8 +548,99 @@ void testImg()
 	bool blend = false;
 	float tick = 1.0f;
 
+
+
+
+
+	
+	Img<unsigned char> cim(im.lx(),im.ly(),1,4);
+	im.clear(RGBc::c_White);
+	{
+
+	RGBc color = RGBc::c_Black.getOpacity(0.1f);
+	cout << "\n\nCIMG";
+	cout << "aa     = " << aa << "\n";
+	cout << "blend  = " << blend << "\n";
+	cout << "tick   = " << tick << "\n";
+	mtools::Chronometer();
+	for (int i = 0;i < N; i++)
+		{
+		iVec2 P1 = tabP1[i];
+		iVec2 P2 = tabP2[i];
+		cim.drawLine(P1, P2, color, 0.5);		
+		}
+		
+	cout << "done in : " << mtools::Chronometer() << "\n";
+	}
+	
+
+
+	im.clear(RGBc::c_White);
+	{
+
+	RGBc color = RGBc::c_Black.getOpacity(0.1f);
+	cout << "\n\nFUN";
+	cout << "aa     = " << aa << "\n";
+	cout << "blend  = " << blend << "\n";
+	cout << "tick   = " << tick << "\n";
+	mtools::Chronometer();
+	for (int i = 0;i < N; i++)
+		{
+		iVec2 P1 = tabP1[i];
+		iVec2 P2 = tabP2[i];
+		if (CSLineClip(P1, P2, B)) LineBresenham(im, P1.X(), P1.Y(), P2.X(), P2.Y(), color);
+		}
+
+	cout << "done in : " << mtools::Chronometer() << "\n";
+	}
+
+	im.clear(RGBc::c_White);
+	{
+
+	RGBc color = RGBc::c_Black.getOpacity(0.1f);
+	cout << "\n\nGG1";
+	cout << "aa     = " << aa << "\n";
+	cout << "blend  = " << blend << "\n";
+	cout << "tick   = " << tick << "\n";
+	mtools::Chronometer();
+	for (int i = 0;i < N; i++)
+		{
+		iVec2 P1 = tabP1[i];
+		iVec2 P2 = tabP2[i];
+		im.draw_line(P1, P2, color);
+		}
+
+	cout << "done in : " << mtools::Chronometer() << "\n";
+	}
+
+	im.clear(RGBc::c_White);
+	{
+
+	RGBc color = RGBc::c_Black.getOpacity(0.1f);
+	cout << "\n\nGG2";
+	cout << "aa     = " << aa << "\n";
+	cout << "blend  = " << blend << "\n";
+	cout << "tick   = " << tick << "\n";
+	mtools::Chronometer();
+	for (int i = 0;i < N; i++)
+		{
+		iVec2 P1 = tabP1[i];
+		iVec2 P2 = tabP2[i];
+		im.draw_line(P1, P2, color,false, true,1.0f);
+		}
+
+	cout << "done in : " << mtools::Chronometer() << "\n";
+	}
+
+
+	cout << "AAA\n";
+	cout.getKey();
+
+
+
 	tt(aa, blend, tick, N, tabP1, tabP2);
 
+	cout << "AAA2\n";
 	aa = false;
 	blend = true;
 	tick = 1.0f;
@@ -558,24 +648,28 @@ void testImg()
 	tt(aa, blend, tick, N, tabP1, tabP2);
 
 	
+	cout << "AAA3\n";
 	aa = true;
 	blend = false;
 	tick = 1.0f;
 
 	tt(aa, blend, tick, N, tabP1, tabP2);
 
+	cout << "AAA4\n";
 	aa = true;
 	blend = true;
 	tick = 1.0f;
 
 	tt(aa, blend, tick, N, tabP1, tabP2);
 
+	cout << "AAA5\n";
 	aa = true;
 	blend = false;
 	tick = 3.0f;
 
 	tt(aa, blend, tick, N, tabP1, tabP2);
 
+	cout << "AAA6\n";
 	aa = true;
 	blend = true;
 	tick = 3.0f;
@@ -621,16 +715,59 @@ void testImg()
 
 
 
+	void testtick()
+	{
+
+		im.resizeRaw(800, 600);
+		im.clear(RGBc::c_White);
+
+
+		int64 x0 = 400;
+		int64 y0 = 300;
+
+		double R = 200;
+		double a = 89;
+
+
+		int64 x1 = x0 + R*cos(a*TWOPI / 360);
+		int64 y1 = y0 + R*sin(a*TWOPI / 360);
+
+		x1 = x0 + 100 ;
+		y1 = y0  + 200; 
+
+
+		//im.draw_line({ x0,y0 }, { x1,y1 }, RGBc::c_Black.getOpacity(0.5), true, true, 5.8);
+		im.draw_line({ x1,y1 }, { x0,y0 }, RGBc::c_Black.getOpacity(0.5), true, true, 5.8);
+
+		im.setPixel({ x0,y0 }, RGBc::c_Red);
+		im.setPixel({ x1,y1 }, RGBc::c_Red);
+		mtools::Plotter2D plotter;
+		auto P1 = mtools::makePlot2DImage(im, 4, "Img");
+		plotter[P1];
+		P1.autorangeXY();
+		plotter.plot();
+	}
+
+
+
 int main(int argc, char *argv[])
 	{
 	MTOOLS_SWAP_THREADS(argc, argv);  // swap main/fltk threads on OSX
 	parseCommandLine(argc, argv, true); // parse the command line, interactive mode
 
+
+
+	
+	testtick();
+	cout << "Hello World\n";
+	cout.getKey();
+	return 0;
+	
 	/*
 	create();
 	cout << "done!\n";
 	cout.getKey();
-	return 0;
+	return 0;*
 	*/
 	try {
 		testImg();
@@ -648,3 +785,107 @@ int main(int argc, char *argv[])
 
 /* end of file main.cpp */
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+
+
+template<typename tc> Img<T> & draw_triangle(const int x0, const int y0, const int x1, const int y1, const int x2, const int y2, const tc *const color, const float opacity = 1)
+
+template<typename tc> Img<T>& draw_rectangle(const int x0, const int y0, const int x1, const int y1, const tc *const color, const float opacity = 1)
+
+template<typename tc> Img<T>& draw_circle(const int x0, const int y0, int radius, const tc *const color, const float opacity = 1)
+
+template<typename tc> Img<T>& draw_ellipse(const int x0, const int y0, const float r1, const float r2, const float angle, const tc *const color, const float opacity = 1)
+
+template<typename tc> Img<T>& draw_ellipse(const int x0, const int y0, const float r1, const float r2, const float angle, const tc *const color, const float opacity, const unsigned int pattern)
+
+const Img<T>& save(const char *const filename, const int number = -1, const unsigned int digits = 6) const
+
+Img<T>& load(const char *const filename)
+
+
+
+
+
+Img<T>& drawPoint(mtools::iVec2 P, mtools::RGBc color, const float opacity = 1);
+
+Img<T>& drawPointCirclePen(mtools::iVec2 P, int rad, mtools::RGBc color, const float opacity = 1);
+
+Img<T>& drawPointSquarePen(mtools::iVec2 P, int rad, mtools::RGBc color, const float opacity = 1)
+
+Img<T>& drawLine(mtools::iVec2 P1, mtools::iVec2 P2, mtools::RGBc color, float opacity = 1)
+
+Img<T>& drawHorizontalLine(int y, mtools::RGBc color, float opacity = 1)
+
+Img<T>& drawVerticalLine(int x, mtools::RGBc color, float opacity = 1)
+
+Img<T>& drawLineCirclePen(mtools::iVec2 P1, mtools::iVec2 P2, int rad, mtools::RGBc color, float opacity = 1)
+
+Img<T>& drawLineSquarePen(mtools::iVec2 P1, mtools::iVec2 P2, int rad, mtools::RGBc color, float opacity = 1)
+
+static const cimg_library::CImgList<floatT> & getFont(unsigned int font_height, bool variable_width = true)
+
+static unsigned int computeFontSize(const std::string & text, mtools::iVec2 boxsize, bool variable_width = true, unsigned int minheight = 5, unsigned int maxheight = 256)
+
+static mtools::iVec2 getTextDimensions(const std::string & text, unsigned int font_height, bool variable_width = true)
+
+Img<T>& drawText(const std::string & text, mtools::iVec2 Pos, char xcentering, char ycentering, int fontsize, bool variable_width, mtools::RGBc color, double opacity = 1.0)
+
+Img<T>& fBox2_drawText(const mtools::fBox2 & R, const std::string & text, mtools::fVec2 Pos, char xcentering, char ycentering, int fontsize, bool variable_width, mtools::RGBc color, double opacity = 1.0)
+
+unsigned int fBox2_computeFontSize(const mtools::fBox2 & R, const std::string & text, mtools::fVec2 boxsize, bool variable_width = true, unsigned int minheight = 5, unsigned int maxheight = 256)
+
+Img<T>& fBox2_floodFill(const mtools::fBox2 & R, mtools::fVec2 Pos, mtools::RGBc color, const float opacity = 1, const float sigma = 0, const bool is_high_connexity = false)
+
+Img<T>& fBox2_drawPoint(const mtools::fBox2 & R, mtools::fVec2 P, mtools::RGBc color, const float opacity = 1)
+
+Img<T>& fBox2_drawPointCirclePen(const mtools::fBox2 & R, mtools::fVec2 P, int rad, mtools::RGBc color, const float opacity = 1)
+
+Img<T>& fBox2_drawPointSquarePen(const mtools::fBox2 & R, mtools::fVec2 P, int rad, mtools::RGBc color, const float opacity = 1)
+
+Img<T>& fBox2_drawLine(const mtools::fBox2 & R, mtools::fVec2 P1, mtools::fVec2 P2, mtools::RGBc color, float opacity = 1)
+
+Img<T>& fBox2_drawHorizontalLine(const mtools::fBox2 & R, double y, mtools::RGBc color, float opacity = 1)
+
+Img<T>& fBox2_drawVerticalLine(const mtools::fBox2 & R, double x, mtools::RGBc color, float opacity = 1)
+
+Img<T>& fBox2_drawLineCirclePen(const mtools::fBox2 & R, mtools::fVec2 P1, mtools::fVec2 P2, int rad, mtools::RGBc color, float opacity = 1)
+
+Img<T>& fBox2_drawLineSquarePen(const mtools::fBox2 & R, mtools::fVec2 P1, mtools::fVec2 P2, int rad, mtools::RGBc color, float opacity = 1)
+
+Img<T>& fBox2_draw_spline(const mtools::fBox2 & R, mtools::fVec2 P1, mtools::fVec2 PA, mtools::fVec2 PB, mtools::fVec2 P2, mtools::RGBc color, float opacity = 1, float precision = 0.25)
+
+Img<T>& fBox2_draw_triangle(const mtools::fBox2 & R, mtools::fVec2 P1, mtools::fVec2 P2, mtools::fVec2 P3, mtools::RGBc color, float opacity = 1.0, bool filled = true)
+
+Img<T>& fBox2_draw_rectangle(const mtools::fBox2 & R, mtools::fVec2 P1, mtools::fVec2 P2, mtools::RGBc color, float opacity = 1.0, bool filled = true)
+
+Img<T>& fBox2_draw_circle(const mtools::fBox2 & R, mtools::fVec2 C, double rad, mtools::RGBc color, float opacity = 1, bool filled = true)
+
+Img<T>& fBox2_drawAxes(const mtools::fBox2 & R, mtools::RGBc color = mtools::RGBc::c_Black, float opacity = 1.0)
+
+Img<T>& fBox2_drawGrid(const mtools::fBox2 & R, mtools::RGBc color = mtools::RGBc::c_Gray, float opacity = 0.5)
+
+Img<T>& fBox2_drawCells(const mtools::fBox2 & R, mtools::RGBc color = mtools::RGBc::c_Gray, float opacity = 0.5)
+
+Img<T>& fBox2_drawGraduations(const mtools::fBox2 & R, float scaling = 1.0, mtools::RGBc color = mtools::RGBc::c_Black, float opacity = 0.7)
+
+Img<T>& fBox2_drawNumbers(const mtools::fBox2 & R, float scaling = 1.0, mtools::RGBc color = mtools::RGBc::c_Black, float opacity = 0.7)
+
+
+*/

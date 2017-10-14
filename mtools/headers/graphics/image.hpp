@@ -84,9 +84,9 @@ namespace mtools
 			 * 
 			 * 	Construct an empty image.
 			 */
-			Image() :	_lx(0), _ly(0), _stride(0),
-						_deletepointer(nullptr), _data(nullptr),
-						_pcairo_surface(nullptr), _pcairo_context(nullptr)
+			inline Image() :	_lx(0), _ly(0), _stride(0),
+								_deletepointer(nullptr), _data(nullptr),
+								_pcairo_surface(nullptr), _pcairo_context(nullptr)
 				{}
 
 
@@ -96,7 +96,7 @@ namespace mtools
 			 * @param	filename Name of the file (must have extension "png" or "jpg"). If the operation fails,
 			 * 					 the image is empty.
 			 */
-			Image(const std::string & filename) : Image()
+			inline Image(const std::string & filename) : Image()
 				{
 				load_png(filename);
 				}
@@ -111,9 +111,9 @@ namespace mtools
 			 * @param	ly	    height of the image.
 			 * @param	padding padding at the end of lines (default = no padding).
 			 */
-			Image(int64 lx, int64 ly, int64 padding = 0) :  _lx(lx), _ly(ly), _stride(lx + ((padding < 0) ? 0 : padding)),
-				                                            _deletepointer(nullptr), _data(nullptr), 
-				                                            _pcairo_surface(nullptr), _pcairo_context(nullptr)
+			inline Image(int64 lx, int64 ly, int64 padding = 0) :   _lx(lx), _ly(ly), _stride(lx + ((padding < 0) ? 0 : padding)),
+																                _deletepointer(nullptr), _data(nullptr), 
+																				_pcairo_surface(nullptr), _pcairo_context(nullptr)
 				{
 				if ((_lx <= 0) || (_ly <= 0)) { empty(); return; }
 				_allocate(_ly, _stride, nullptr);
@@ -128,7 +128,7 @@ namespace mtools
 			 * @param	dim	   	dimensions of the image.
 			 * @param	padding	padding at the end of lines (default = no padding).
 			 **/
-			Image(const iVec2 & dim, int64 padding = 0) : Image(dim.X(), dim.Y(),padding)
+			inline Image(const iVec2 & dim, int64 padding = 0) : Image(dim.X(), dim.Y(),padding)
 				{
 				}
 
@@ -143,7 +143,7 @@ namespace mtools
 			 * @param	bkColor background color.
 			 * @param	padding padding at the end of lines (default = no padding).
 			 */
-			Image(int64 lx, int64 ly, RGBc bkColor, int64 padding = 0) : Image(lx, ly, padding)
+			inline Image(int64 lx, int64 ly, RGBc bkColor, int64 padding = 0) : Image(lx, ly, padding)
 				{
 				clear(bkColor);
 				}
@@ -158,7 +158,7 @@ namespace mtools
 			 * @param	bkColor	background color.
 			 * @param	padding	padding at the end of lines (default = no padding).
 			 **/
-			Image(const iVec2 & dim, RGBc bkColor, int64 padding = 0) : Image(dim.X(), dim.Y(), bkColor, padding)
+			inline Image(const iVec2 & dim, RGBc bkColor, int64 padding = 0) : Image(dim.X(), dim.Y(), bkColor, padding)
 				{
 				}
 
@@ -178,7 +178,7 @@ namespace mtools
 			 * 							internal copy.
 			 * @param	padding			padding at the end of each lines (default = no padding).
 			 **/
-			Image(RGBc * data, int64 lx, int64 ly, bool shallow, int64 padding = 0) : _lx(lx), _ly(ly), _stride(lx + padding),
+			inline Image(RGBc * data, int64 lx, int64 ly, bool shallow, int64 padding = 0) : _lx(lx), _ly(ly), _stride(lx + padding),
 																				      _deletepointer(nullptr), _data(nullptr), 
 																		              _pcairo_surface(nullptr), _pcairo_context(nullptr)
 				{
@@ -211,14 +211,14 @@ namespace mtools
 			 * 							internal copy.
 			 * @param	padding			padding at the end of each lines (default = no padding).
 			 **/
-			Image(RGBc * data, const iVec2 & dim, bool shallow, int64 padding = 0) : Image(data, dim.X(), dim.Y(), shallow, padding)
+			inline Image(RGBc * data, const iVec2 & dim, bool shallow, int64 padding = 0) : Image(data, dim.X(), dim.Y(), shallow, padding)
 				{
 				}
 
 
 
 			/** Destructor. */
-			~Image()
+			virtual ~Image()
 				{
 				empty();
 				}
@@ -227,7 +227,7 @@ namespace mtools
 			/**
 			 * Move Constructor.
 			 **/
-			Image(Image && source) : _lx(source._lx), _ly(source._ly), _stride(source._stride),
+			inline Image(Image && source) : _lx(source._lx), _ly(source._ly), _stride(source._stride),
 									 _deletepointer(source._deletepointer), _data(source._data),
 									 _pcairo_surface(source._pcairo_surface), _pcairo_context(source._pcairo_context)				
 				{
@@ -248,7 +248,7 @@ namespace mtools
 			 *
 			 * @param	source Source image.
 			 */
-			Image(const Image & source) : Image(source, 0, 0, source._lx, source._ly, true)
+			inline Image(const Image & source) : Image(source, 0, 0, source._lx, source._ly, true)
 				{
 				}
 
@@ -262,7 +262,7 @@ namespace mtools
 			 * @param	padding padding of the new image (ignored if shallow is true since the padding must
 			 * 					be the same as the father image).
 			 */
-			Image(const Image & source, bool shallow, int64 padding = 0) : Image(source, 0, 0, source._lx, source._ly, shallow, padding)
+			inline Image(const Image & source, bool shallow, int64 padding = 0) : Image(source, 0, 0, source._lx, source._ly, shallow, padding)
 				{
 				}
 
@@ -280,7 +280,7 @@ namespace mtools
 			 * @param	padding padding of the sub-image (ignored if shallow is true since the padding it then
 			 * 					constrained by the source padding and the size of the sub-image).
 			 */
-			Image(const Image & source, int64 x0, int64 y0, int64 newlx, int64 newly, bool shallow, int64 padding = 0) :
+			inline Image(const Image & source, int64 x0, int64 y0, int64 newlx, int64 newly, bool shallow, int64 padding = 0) :
 								_lx(newlx), _ly(newly), _stride(shallow ? source._stride : (newlx + ((padding >= 0) ? padding : 0))),
 								_deletepointer(nullptr), _data(nullptr),
 								_pcairo_surface(nullptr), _pcairo_context(nullptr)
@@ -312,7 +312,7 @@ namespace mtools
 			 * @param	padding	padding of the sub-image (ignored if shallow is true since the padding it
 			 * 					then constrained by the source padding and the size of the sub-image).
 			 **/
-			Image(const Image & source, const iBox2 & B, bool shallow, int64 padding = 0) : Image(source, B.min[0], B.min[1], B.max[0] - B.min[0] + 1, B.max[1] - B.min[1] + 1, shallow, padding)
+			inline Image(const Image & source, const iBox2 & B, bool shallow, int64 padding = 0) : Image(source, B.min[0], B.min[1], B.max[0] - B.min[0] + 1, B.max[1] - B.min[1] + 1, shallow, padding)
 				{
 				}
 
@@ -326,7 +326,7 @@ namespace mtools
 			 *
 			 * @return	true if the buffer was re-created and false if the image was already standalone.
 			 */
-			bool standalone(int64 padding = 0)
+			inline bool standalone(int64 padding = 0)
 				{
 				if (!isShared()) return false;
 				*this = get_standalone(padding); // use move assignement operator. 
@@ -341,7 +341,7 @@ namespace mtools
 			 *
 			 * @return	A copy of the image which does not share its pixel buffer with anyone.
 			 */
-			Image get_standalone(int64 padding = 0) const
+			inline Image get_standalone(int64 padding = 0) const
 				{
 				return Image(*this,false,padding); // ctor + move operator or in place contruction. 
 				}
@@ -350,7 +350,7 @@ namespace mtools
 			/**
 			 * Move assignment operator.
 			 **/
-			Image & operator=(Image && source)
+			inline Image & operator=(Image && source)
 				{
 				if (this != &source)
 					{
@@ -377,7 +377,7 @@ namespace mtools
 			/**
 			 * Shallow assignment operator. Make a copy of the image that shares the same pixel buffer as the source.
 			 */
-			Image & operator=(const Image & source)
+			inline Image & operator=(const Image & source)
 				{
 				if (this != &source)
 					{
@@ -400,7 +400,7 @@ namespace mtools
 			 * @return	true if the images are visually equivalent: they have the same size (lx, ly) and the
 			 * 			same pixel color (but the padding may differ).
 			 */
-			bool operator==(const Image & im) const
+			inline bool operator==(const Image & im) const
 				{
 				if ((_lx != im._lx) || (_ly != im._ly)) return false;
 				if ((_data == nullptr)|| (_data == im._data)) return true;
@@ -426,7 +426,7 @@ namespace mtools
 			 * 					create a new pixel buffer with the correct size.
 			 * @param	padding new padding of the image (ignored if shallow = true).
 			 */
-			void crop(int64 x0, int64 y0, int64 newlx, int64 newly, bool shallow, int64 padding = 0)
+			inline void crop(int64 x0, int64 y0, int64 newlx, int64 newly, bool shallow, int64 padding = 0)
 				{
 				if ((newlx <= 0)||(newly <= 0)) { empty(); return; }
 				MTOOLS_INSURE((x0 >= 0) && (x0 + newlx <= _lx));
@@ -454,7 +454,7 @@ namespace mtools
 			 * 					create a new pixel buffer with the correct size.
 			 * @param	padding	new padding of the image (ignored if shallow = true).
 			 **/
-			void crop(const iBox2 & B, bool shallow, int64 padding = 0)
+			inline void crop(const iBox2 & B, bool shallow, int64 padding = 0)
 				{
 				crop(B.min[0], B.min[1], B.max[0] - B.min[0] + 1, B.max[1] - B.min[1] + 1, shallow, padding);
 				}
@@ -480,7 +480,7 @@ namespace mtools
 			 *
 			 * @return	a sub image.
 			 */
-			Image get_crop(int64 x0, int64 y0, int64 newlx, int64 newly, bool shallow, int64 padding = 0) const
+			inline Image get_crop(int64 x0, int64 y0, int64 newlx, int64 newly, bool shallow, int64 padding = 0) const
 				{
 				return Image(*this, x0, y0, newlx, newly, shallow, padding);
 				}
@@ -503,7 +503,7 @@ namespace mtools
 			 *
 			 * @return	a sub image.
 			 **/
-			Image get_crop(const iBox2 & B, bool shallow, int64 padding = 0) const
+			inline Image get_crop(const iBox2 & B, bool shallow, int64 padding = 0) const
 				{
 				return Image(*this, B, shallow, padding);
 				}
@@ -524,7 +524,7 @@ namespace mtools
 			 * @param	padding padding of the resulting image (ignored for a shared image since the padding
 			 * 					is contrained).
 			 */
-			void cropBorder(int64 left, int64 right, int64 up, int64 down, bool shallow, int64 padding = 0)
+			inline void cropBorder(int64 left, int64 right, int64 up, int64 down, bool shallow, int64 padding = 0)
 				{
 				int64 x0 = 0, y0 = 0, sx = _lx, sy = _ly;
 				if (left > 0) { x0 = left; sx -= left; }
@@ -549,7 +549,7 @@ namespace mtools
 			 * @param	padding padding of the resulting image (ignored for a shared image since the padding
 			 * 					is contrained).
 			 */
-			Image get_cropBorder(int64 left, int64 right, int64 up, int64 down, bool shallow, int64 padding = 0) const
+			inline Image get_cropBorder(int64 left, int64 right, int64 up, int64 down, bool shallow, int64 padding = 0) const
 				{
 				int64 x0 = 0, y0 = 0, sx = _lx, sy = _ly;
 				if (left > 0) { x0 = left; sx -= left; }
@@ -578,7 +578,7 @@ namespace mtools
 			 *
 			 * @return	a shared sub-image.
 			 */
-			Image sub_image(int64 x0, int64 y0, int64 newlx, int64 newly) const
+			inline Image sub_image(int64 x0, int64 y0, int64 newlx, int64 newly) const
 				{
 				return get_crop(x0, y0, newlx, newly, true);
 				}
@@ -595,7 +595,7 @@ namespace mtools
 			 *
 			 * @return	a shared sub-image.
 			 **/
-			Image sub_image(const iBox2 & B) const
+			inline Image sub_image(const iBox2 & B) const
 				{
 				return get_crop(B,true);
 				}
@@ -606,7 +606,7 @@ namespace mtools
 			 *
 			 * @param [in,out]	im	The image to swap with
 			 **/
-			void swap(Image & im)
+			inline void swap(Image & im)
 				{
 				if (&im != this)
 					{					
@@ -634,7 +634,7 @@ namespace mtools
 			 * @param	bkcolor Color to use for new pixels.
 			 * @param	padding padding for the resulting image.
 			 */
-			void expand(int64 left, int64 right, int64 up, int64 down, RGBc bkcolor = RGBc::c_TransparentWhite, int64 padding = 0)
+			inline void expand(int64 left, int64 right, int64 up, int64 down, RGBc bkcolor = RGBc::c_TransparentWhite, int64 padding = 0)
 				{
 				if (left < 0) { left = 0; }
 				if (right < 0) { right = 0; }
@@ -658,7 +658,7 @@ namespace mtools
 			 * @param	bkcolor	Color to use for new pixels.
 			 * @param	padding	padding for the resulting image.
 			 **/
-			Image get_expand(int64 left, int64 right, int64 up, int64 down, RGBc bkcolor = RGBc::c_TransparentWhite, int64 padding = 0) const
+			inline Image get_expand(int64 left, int64 right, int64 up, int64 down, RGBc bkcolor = RGBc::c_TransparentWhite, int64 padding = 0) const
 				{
 				if (left < 0) { left = 0; }
 				if (right < 0) { right = 0; }
@@ -683,7 +683,7 @@ namespace mtools
 			 * 						reallocate.
 			 * @param	padding	   	The new padding (default 0).
 			 **/
-			void resizeRaw(int64 newlx, int64 newly, bool shrinktofit = false, int64 padding = 0)
+			inline void resizeRaw(int64 newlx, int64 newly, bool shrinktofit = false, int64 padding = 0)
 				{
 				if ((newlx <= 0) || (newly <= 0)) { empty(); return; }
 				if (padding <= 0) { padding = 0; }
@@ -717,7 +717,7 @@ namespace mtools
 			 *
 			 * ### param	newly	The new height.
 			 **/
-			void resizeRaw(const iVec2 & newdim, bool shrinktofit = false, int64 padding = 0)
+			inline void resizeRaw(const iVec2 & newdim, bool shrinktofit = false, int64 padding = 0)
 				{
 				resizeRaw(newdim.X(), newdim.Y(), shrinktofit, padding);
 				}
@@ -737,7 +737,7 @@ namespace mtools
 			 * @param	sx			width of the part of the sprite to blit.
 			 * @param	sy			height of the part of the sprite to blit
 			 **/
-			void blit(const Image & sprite, int64 dest_x, int64 dest_y, int64 sprite_x, int64 sprite_y, int64 sx, int64 sy)
+			inline void blit(const Image & sprite, int64 dest_x, int64 dest_y, int64 sprite_x, int64 sprite_y, int64 sx, int64 sy)
 				{
 				if (sprite_x < 0) { dest_x -= sprite_x; sx += sprite_x; sprite_x = 0; }
 				if (sprite_y < 0) { dest_y -= sprite_y; sy += sprite_y; sprite_y = 0; }
@@ -764,7 +764,7 @@ namespace mtools
 			 * @param	dest_posd 	position of the upper left corner in the destination.
 			 * @param	sprite_box	sub-image of the sprite to blit.
 			 **/
-			void blit(const Image & sprite, const iVec2 & dest_pos, const iBox2 & sprite_box)
+			inline void blit(const Image & sprite, const iVec2 & dest_pos, const iBox2 & sprite_box)
 				{
 				blit(sprite, dest_pos.X(), dest_pos.Y(), sprite_box.min[0], sprite_box.min[1], sprite_box.max[0] - sprite_box.min[0] + 1, sprite_box.max[1] - sprite_box.min[1] + 1);
 				}
@@ -780,7 +780,7 @@ namespace mtools
 			 * @param	dext_x	x-coord of the upper left corner in the destination.
 			 * @param	dest_y	y-coord of the upper left corner in the destination.
 			 **/
-			void blit(const Image & sprite, int64 dest_x, int64 dest_y)
+			inline void blit(const Image & sprite, int64 dest_x, int64 dest_y)
 				{
 				blit(sprite, dest_x, dest_y, 0, 0, sprite._lx, sprite._ly);
 				}
@@ -795,7 +795,7 @@ namespace mtools
 			 * @param	sprite  	The sprite to blit.
 			 * @param	dest_pos	position of the upper left corner in the destination.
 			 **/
-			void blit(const Image & sprite, const iVec2 & dest_pos)
+			inline void blit(const Image & sprite, const iVec2 & dest_pos)
 				{
 				blit(sprite, dest_pos.X(), dest_pos.Y(), 0, 0, sprite._lx, sprite._ly);
 				}
@@ -815,7 +815,7 @@ namespace mtools
 			 * @param	sx	  	width of the rectangle to blit.
 			 * @param	sy	  	height of the rectangle to blit.
 			 **/
-			void blitInside(int64 dest_x, int64 dest_y, int64 src_x, int64 src_y,int64 sx, int64 sy)
+			inline void blitInside(int64 dest_x, int64 dest_y, int64 src_x, int64 src_y,int64 sx, int64 sy)
 				{
 				if ((dest_x == src_x) && (dest_y == src_y)) return;
 				if (src_x < 0) { dest_x -= src_x; sx += src_x; src_x = 0; }
@@ -843,7 +843,7 @@ namespace mtools
 			 * @param	dest_pos	position of the upper left corner of the destination rectangle.
 			 * @param	src_box 	the source rectangle.
 			 **/
-			void blitInside(const iVec2 & dest_pos, const iBox2 & src_box)
+			inline void blitInside(const iVec2 & dest_pos, const iBox2 & src_box)
 				{
 				blitInside(dest_pos.X(), dest_pos.Y(), src_box.min[0], src_box.min[1], src_box.max[0] - src_box.min[0] + 1, src_box.max[1] - src_box.min[1] + 1);
 				}
@@ -865,7 +865,7 @@ namespace mtools
 			 * @param	sy			height of the part of the sprite to blit.
 			 * @param	opacity 	The opacity to multiply the sprite with when blending.
 			 **/
-			void blend(const Image & sprite, int64 dest_x, int64 dest_y, int64 sprite_x, int64 sprite_y, int64 sx, int64 sy, float opacity = 1.0f)
+			inline void blend(const Image & sprite, int64 dest_x, int64 dest_y, int64 sprite_x, int64 sprite_y, int64 sx, int64 sy, float opacity = 1.0f)
 				{
 				if (sprite_x < 0) { dest_x -= sprite_x; sx += sprite_x; sprite_x = 0; }
 				if (sprite_y < 0) { dest_y -= sprite_y; sy += sprite_y; sprite_y = 0; }
@@ -892,7 +892,7 @@ namespace mtools
 			* @param	sprite_box 	the source rectangle.
 			* @param	opacity 	The opacity to multiply the sprite with when blending.
 			**/
-			void blend(const Image & sprite, const iVec2 & dest_pos, const iBox2 & sprite_box, float opacity = 1.0f)
+			inline void blend(const Image & sprite, const iVec2 & dest_pos, const iBox2 & sprite_box, float opacity = 1.0f)
 				{
 				blend(sprite, dest_pos.X(), dest_pos.Y(), sprite_box.min[0], sprite_box.min[1], sprite_box.max[0] - sprite_box.min[0] + 1, sprite_box.max[1] - sprite_box.min[1] + 1, opacity);
 				}
@@ -909,7 +909,7 @@ namespace mtools
 			 * @param	dest_y 	y-coord of the upper left corner in the destination.
 			 * @param	opacity	The opacity to multiply the sprite with when blending.
 			 **/
-			void blend(const Image & sprite, int64 dext_x, int64 dest_y, float opacity= 1.0f)
+			inline void blend(const Image & sprite, int64 dext_x, int64 dest_y, float opacity= 1.0f)
 				{
 				blend(sprite, dext_x, dest_y, 0, 0, sprite._lx, sprite._ly,opacity);
 				}
@@ -925,7 +925,7 @@ namespace mtools
 			* @param	dest_pos	position of the upper left corner of the destination rectangle.
 			* @param	opacity	The opacity to multiply the sprite with when blending.
 			**/
-			void blend(const Image & sprite, const iVec2 & dest_pos, float opacity = 1.0f)
+			inline void blend(const Image & sprite, const iVec2 & dest_pos, float opacity = 1.0f)
 				{
 				blend(sprite, dest_pos.X(), dest_pos.Y(), 0, 0, sprite._lx, sprite._ly, opacity);
 				}
@@ -945,7 +945,7 @@ namespace mtools
 			* @param	sy	  	height of the rectangle to blit.
 			* @param	opacity	The opacity to multiply the sprite with when blending.
 			**/
-			void blendInside(int64 dest_x, int64 dest_y, int64 src_x, int64 src_y, int64 sx, int64 sy, float opacity = 1.0f)
+			inline void blendInside(int64 dest_x, int64 dest_y, int64 src_x, int64 src_y, int64 sx, int64 sy, float opacity = 1.0f)
 				{
 				if ((dest_x == src_x) && (dest_y == src_y)) return;
 				if (src_x < 0) { dest_x -= src_x; sx += src_x; src_x = 0; }
@@ -973,7 +973,7 @@ namespace mtools
 			* @param	src_box 	the source rectangle.
 			* @param	opacity	The opacity to multiply the sprite with when blending.
 			**/
-			void blendInside(const iVec2 & dest_pos, const iBox2 & src_box, float opacity = 1.0f)
+			inline void blendInside(const iVec2 & dest_pos, const iBox2 & src_box, float opacity = 1.0f)
 				{
 				blendInside(dest_pos.X(), dest_pos.Y(), src_box.min[0], src_box.min[1], src_box.max[0] - src_box.min[0] + 1, src_box.max[1] - src_box.min[1] + 1, opacity);
 				}
@@ -999,7 +999,7 @@ namespace mtools
 			 * @param	sy			height of the part of the sprite to blit.
 			 * @param	color   	the color to use for the mask.
 			 **/
-			void mask(const Image & sprite, int64 dest_x, int64 dest_y, int64 sprite_x, int64 sprite_y, int64 sx, int64 sy, RGBc color)
+			inline void mask(const Image & sprite, int64 dest_x, int64 dest_y, int64 sprite_x, int64 sprite_y, int64 sx, int64 sy, RGBc color)
 				{
 				if (sprite_x < 0) { dest_x -= sprite_x; sx += sprite_x; sprite_x = 0; }
 				if (sprite_y < 0) { dest_y -= sprite_y; sy += sprite_y; sprite_y = 0; }
@@ -1031,7 +1031,7 @@ namespace mtools
 			 * @param	sprite_box	the source rectangle.
 			 * @param	color	  	the color to use for the mask.
 			 **/
-			void mask(const Image & sprite, const iVec2 & dest_pos, const iBox2 & sprite_box, RGBc color)
+			inline void mask(const Image & sprite, const iVec2 & dest_pos, const iBox2 & sprite_box, RGBc color)
 				{
 				mask(sprite, dest_pos.X(), dest_pos.Y(), sprite_box.min[0], sprite_box.min[1], sprite_box.max[0] - sprite_box.min[0] + 1, sprite_box.max[1] - sprite_box.min[1] + 1, color);
 				}
@@ -1053,7 +1053,7 @@ namespace mtools
 			* @param	dest_y 	y-coord of the upper left corner in the destination.
 			* @param	color   	the color to use for the mask.
 			**/
-			void mask(const Image & sprite, int64 dext_x, int64 dest_y, RGBc color)
+			inline void mask(const Image & sprite, int64 dext_x, int64 dest_y, RGBc color)
 				{
 				mask(sprite, dext_x, dest_y, 0, 0, sprite._lx, sprite._ly, color);
 				}
@@ -1074,7 +1074,7 @@ namespace mtools
 			 * @param	dest_pos	position of the upper left corner of the destination rectangle.
 			 * @param	color   	the color to use for the mask.
 			 **/
-			void mask(const Image & sprite, const iVec2 & dest_pos, RGBc color)
+			inline void mask(const Image & sprite, const iVec2 & dest_pos, RGBc color)
 				{
 				mask(sprite, dest_pos.X(), dest_pos.Y(), 0, 0, sprite._lx, sprite._ly, color);
 				}
@@ -1362,7 +1362,7 @@ namespace mtools
 			 *
 			 * @return	the minimal bounding box. 
 			 **/
-			iBox2 minBoundingBox(RGBc bk_color)
+			inline iBox2 minBoundingBox(RGBc bk_color)
 				{
 				int64 minx = _lx + 1, maxx = -1;
 				int64 miny = _ly + 1, maxy = -1;
@@ -1389,7 +1389,7 @@ namespace mtools
 			 *
 			 * @return	the minimal bounding box.
 			 **/
-			iBox2 minBoundingBox()								
+			inline iBox2 minBoundingBox()
 				{
 				int64 minx = _lx + 1, maxx = -1;
 				int64 miny = _ly + 1, maxy = -1;
@@ -1488,7 +1488,7 @@ namespace mtools
 			 * @param	bkcolor	The color to blend over.
 			 * @param	font   	the font to use.
 			 **/
-			void draw_text_background(const iVec2 & pos, const std::string & txt, int txt_pos, RGBc bkcolor, const Font * font)
+			inline void draw_text_background(const iVec2 & pos, const std::string & txt, int txt_pos, RGBc bkcolor, const Font * font)
 				{
 				draw_text_background(pos.X(), pos.Y(), txt, txt_pos, bkcolor, font);
 				}
@@ -1505,7 +1505,7 @@ namespace mtools
 			 * @param	bkcolor 	The color to blend over.
 			 * @param	fontsize	the font size to use.
 			 **/
-			void draw_text_background(const iVec2 & pos, const std::string & txt, int txt_pos, RGBc bkcolor, int fontsize)
+			inline void draw_text_background(const iVec2 & pos, const std::string & txt, int txt_pos, RGBc bkcolor, int fontsize)
 				{
 				draw_text_background( pos.X(), pos.Y() ,  txt, txt_pos, bkcolor, fontsize);
 				}
@@ -1549,7 +1549,7 @@ namespace mtools
 			* @param	color  	The color to blend over.
 			* @param	font   	the font to use.
 			**/
-			void draw_text(const iVec2 & pos, const std::string & txt, int txt_pos, RGBc color, const Font * font)
+			inline void draw_text(const iVec2 & pos, const std::string & txt, int txt_pos, RGBc color, const Font * font)
 				{
 				draw_text(pos.X(), pos.Y(), txt, txt_pos, color, font);
 				}
@@ -1565,7 +1565,7 @@ namespace mtools
 			* @param	color   	The color to blend over.
 			* @param	fontsize	the font size to use.
 			**/
-			void draw_text(const iVec2 & pos, const std::string & txt, int txt_pos, RGBc color, int fontsize)
+			inline void draw_text(const iVec2 & pos, const std::string & txt, int txt_pos, RGBc color, int fontsize)
 				{
 				draw_text(pos.X(), pos.Y(), txt, txt_pos, color, fontsize);
 				}
@@ -1583,99 +1583,169 @@ namespace mtools
 			// fill
 
 
+
+
+
+
 			/**
-			 * Draw a line. portion outside the image is clipped.
-			 *
-			 * @param	P1		   	First point.
-			 * @param	P2		   	Second endpoint.
-			 * @param	color	   	The color to use.
-			 * @param	antialiased	true to draw an antialised line.
-			 * @param	blending   	true to use blending instead of simply copying the color.
-			 * @param	tickness   	The tickness of the line (default 1, much slower if other value). A line
-			 * 						with non-unit tickness is always antialiased.
-			 **/
-			void draw_line(iVec2 P1, iVec2 P2, RGBc color, bool antialiased = false, bool blending = false, float tickness = 1.0f)
+			* Draw a line. portion outside the image is clipped.
+			*
+			* @param	P1		   	First point.
+			* @param	P2		   	Second endpoint.
+			* @param	color	   	The color to use.
+			**/
+			inline void draw_line(iVec2 P1, iVec2 P2, RGBc color)
 				{
-				if (tickness != 1.0f)
-					{
-					if (tickness <= 0.0f) return;
-					if (blending) _tickLineBresenhamAA_blend(P1, P2, tickness, color); else _tickLineBresenhamAA(P1, P2, tickness, color);
-					return; 
-					}
+				if (P1.X() == P2.X()) { _verticalLine(P1.X(), P1.Y(), P2.Y(), color);  return; }
+				if (P1.Y() == P2.Y()) { _horizontalLine(P1.Y(), P1.X(), P2.X(), color); return; }
+				_lineBresenham(P1, P2, color);
+				}
+
+
+			/**
+			* Draw a line. portion outside the image is clipped.
+			*
+			* @param	x1		   	x-coord of the first point.
+			* @param	y1		   	y-coord of the first point.
+			* @param	x2		   	x-coord of the second point.
+			* @param	y2		   	y-coord of the second point.
+			* @param	color	   	The color to use.
+			**/
+			MTOOLS_FORCEINLINE void draw_line(int64 x1, int64 y1, int64 x2, int64 y2, RGBc color)
+				{
+				draw_line({ x1, y1 }, { x2, y2 }, color);
+				}
+
+
+			/**
+			* Draw a line. portion outside the image is clipped.
+			*
+			* @param	P1		   	First point.
+			* @param	P2		   	Second endpoint.
+			* @param	color	   	The color to use.
+			* @param	blending   	true to use blending instead of simply copying the color.
+			* @param	antialiased	true to draw an antialised line.
+			**/
+			inline void draw_line(iVec2 P1, iVec2 P2, RGBc color, bool blending, bool antialiased)
+				{
 				if (P1.X() == P2.X())
 					{
-					_verticalLine(P1, P2, color, blending);
+					if (blending) { _verticalLine_blend(P1.X(), P1.Y(), P2.Y(), color); } else { _verticalLine(P1.X(), P1.Y(), P2.Y(), color); }
 					return;
 					}
 				if (P1.Y() == P2.Y())
 					{
-					_horizontalLine(P1, P2, color, blending);
-					return; 
+					if (blending) { _horizontalLine_blend(P1.Y(), P1.X(), P2.X(), color); } else { _horizontalLine(P1.Y(), P1.X(), P2.X(), color); }
+					return;
 					}
 				if (antialiased)
 					{
 					if (blending) _lineBresenhamAA_blend(P1, P2, color); else _lineBresenhamAA(P1, P2, color);
 					return;
 					}
-				if (blending) _lineBresenham_blend(P1, P2, color); else _lineBresenham(P1, P2, color);
+				else
+					{
+					if (blending) _lineBresenham_blend(P1, P2, color); else _lineBresenham(P1, P2, color);
+					}
 				}
 
 
+
 			/**
-			 * Draw a line. portion outside the image is clipped.
-			 *
-			 * @param	x1		   	x-coord of the first point.
-			 * @param	y1		   	y-coord of the first point.
-			 * @param	x2		   	x-coord of the second point.
-			 * @param	y2		   	y-coord of the second point.
-			 * @param	color	   	The color to use.
-			 * @param	antialiased	true to draw an antialised line.
-			 * @param	blending   	true to use blending instead of simply copying the color.
-			 * @param	tickness   	The tickness of the line (default 1, much slower if other value). A line
-			 * 						with non-unit tickness is always antialiased.
-			 **/
-			void draw_line(int64 x1, int64 y1, int64 x2, int64 y2, RGBc color, bool antialiased = false, bool blending = false, float tickness = 1.0f)
+			* Draw a line. portion outside the image is clipped.
+			*
+			* @param	x1		   	x-coord of the first point.
+			* @param	y1		   	y-coord of the first point.
+			* @param	x2		   	x-coord of the second point.
+			* @param	y2		   	y-coord of the second point.
+			* @param	color	   	The color to use.
+			* @param	blending   	true to use blending instead of simply copying the color.
+			* @param	antialiased	true to draw an antialised line.
+			**/
+			MTOOLS_FORCEINLINE void draw_line(int64 x1, int64 y1, int64 x2, int64 y2, RGBc color, bool blending, bool antialiased)
 				{
-				draw_line({ x1, y1 }, { x2, y2 }, color, antialiased, blending, tickness);
+				draw_line({ x1, y1 }, { x2,y2 }, color, blending, antialiased);
 				}
 
 
 			/**
-			 * Blend a filled rectangle of given size and color over this image.
+			* Draw a line. portion outside the image is clipped.
+			*
+			* @param	P1		   	First point.
+			* @param	P2		   	Second endpoint.
+			* @param	color	   	The color to use.
+			* @param	blending   	true to use blending instead of simply copying the color.
+			* @param	antialiased	true to draw an antialised line.
+			* @param	tickness   	The tickness of the line (default 1, much slower if other value). A line
+			* 						with non-unit tickness is always antialiased.
+			**/
+			inline void draw_line(iVec2 P1, iVec2 P2, RGBc color, bool blending, bool antialiased, float tickness)
+				{
+				if (tickness <= 0.0f) return;
+				if (tickness == 1.0f) { draw_line(P1, P2, color, blending, antialiased); return; }
+				if (P1.X() == P2.X()) 
+					{ 
+					if (blending) { _verticalLine_blend(P1.X(), P1.Y(), P2.Y(), color, tickness); } else { _verticalLine(P1.X(), P1.Y(), P2.Y(), color, tickness); }
+					return;
+					}
+				if (P1.Y() == P2.Y()) 
+					{
+					if (blending) { _horizontalLine_blend(P1.Y(), P1.X(), P2.X(), color, tickness); } else { _horizontalLine(P1.Y(), P1.X(), P2.X(), color, tickness); }
+					return;
+					}
+				if (blending) _tickLineBresenhamAA_blend(P1, P2, tickness, color); else _tickLineBresenhamAA(P1, P2, tickness, color);
+				}
+
+
+			/**
+			* Draw a line. portion outside the image is clipped.
+			*
+			* @param	x1		   	x-coord of the first point.
+			* @param	y1		   	y-coord of the first point.
+			* @param	x2		   	x-coord of the second point.
+			* @param	y2		   	y-coord of the second point.
+			* @param	color	   	The color to use.
+			* @param	blending   	true to use blending instead of simply copying the color.
+			* @param	antialiased	true to draw an antialised line.
+			* @param	tickness   	The tickness of the line (default 1, much slower if other value). A line
+			* 						with non-unit tickness is always antialiased.
+			**/
+			MTOOLS_FORCEINLINE void draw_line(int64 x1, int64 y1, int64 x2, int64 y2, RGBc color, bool blending, bool antialiased, float tickness)
+				{
+				draw_line({ x1, y1 }, { x2,y2 }, color, blending, antialiased, tickness);
+				}
+
+
+			/**
+			 * Blend a filled rectangle of given size and color over this image. Portion outside the image
+			 * are clipped.
 			 *
 			 * @param	dest_box	position of the rectangle to blend over.
-			 * @param	boxcolor	the color to blend over. 
+			 * @param	boxcolor	the color to blend over.
+			 * @param	blend   	true to use blending and false to simply copy the color.
 			 **/
-			void draw_filled_rectangle(const iBox2 & dest_box, RGBc boxcolor)
+			inline void draw_filled_rectangle(const iBox2 & dest_box, RGBc boxcolor, bool blend)
 				{
-				draw_filled_rectangle(dest_box.min[0], dest_box.min[1], dest_box.max[0] - dest_box.min[0] + 1, dest_box.max[1] - dest_box.min[1] + 1, boxcolor);
+				draw_filled_rectangle(dest_box.min[0], dest_box.min[1], dest_box.max[0] - dest_box.min[0] + 1, dest_box.max[1] - dest_box.min[1] + 1, boxcolor, blend);
 				}
 
 
 			/**
-			* Blend a filled rectangle of given size and color over this image.
-			*
+			 * Blend a filled rectangle of given size and color over this image. Portion outside the image
+			 * are clipped.
+			 *
 			 * @param	x			x-coordinate of the rectangle upper left corner.
 			 * @param	y			y-coordinate of the rectangle upper left corner.
 			 * @param	sx			rectangle width.
 			 * @param	sy			rectangle height.
 			 * @param	boxcolor	the color to blend over.
+			 * @param	blend   	true to use blending and false to simply copy the color.
 			 **/
-			void draw_filled_rectangle(int64 x,int64 y, int64 sx, int64 sy, RGBc boxcolor)
+			inline void draw_filled_rectangle(int64 x,int64 y, int64 sx, int64 sy, RGBc boxcolor, bool blend)
 				{
-				if (x < 0) { sx -= x;   x = 0; }
-				if (y < 0) { sy -= y;   y = 0; }
-				if ((boxcolor.comp.A == 0) || (x >= _lx) || (y >= _ly)) return;
-				sx -= std::max<int64>(0, (x + sx - _lx));
-				sy -= std::max<int64>(0, (y + sy - _ly));
-				if ((sx <= 0) || (sy <= 0)) return;
-				RGBc * p = _data + _stride*y + x;
-				for (int64 j = 0; j < sy; j++)
-					{
-					for (int64 i = 0; i < sx; i++) { p[i].blend(boxcolor); }
-					p += _stride;
-					}
+				_draw_box(x, y, sx, sy, boxcolor, blend);
 				}
+
 
 
 			/**
@@ -1734,31 +1804,31 @@ namespace mtools
 			 *
 			 * @return	true if empty, false if not.
 			 **/
-			bool isEmpty() const { return(_data == nullptr); }
+			MTOOLS_FORCEINLINE bool isEmpty() const { return(_data == nullptr); }
 
 
 			/**
 			 * Width of the image in pixels. Same as width().
 			 **/
-			int64 lx() const { return _lx; }
+			MTOOLS_FORCEINLINE int64 lx() const { return _lx; }
 
 
 			/**
 			* Width of the image in pixels. Same as lx().
 			**/
-			int64 width() const { return _lx; }
+			MTOOLS_FORCEINLINE int64 width() const { return _lx; }
 
 
 			/**
 			* Height of the image in pixels. Same as height().
 			**/
-			int64 ly() const { return _ly; }
+			MTOOLS_FORCEINLINE int64 ly() const { return _ly; }
 
 
 			/**
 			* Height of the image in pixels. Same as ly().
 			**/
-			int64 heigth() const { return _ly; }
+			MTOOLS_FORCEINLINE int64 heigth() const { return _ly; }
 
 
 
@@ -1766,7 +1836,7 @@ namespace mtools
 			 * Horizontal padding of the image: number of uint32 following the end of each horizontal line
 			 * (except the last one).
 			 **/
-			int64 padding() const { return(_stride - _lx); }
+			MTOOLS_FORCEINLINE int64 padding() const { return(_stride - _lx); }
 
 
 			/**
@@ -1787,13 +1857,13 @@ namespace mtools
 			/**
 			* Return a pointer to the pixel buffer (const version).
 			**/
-			const RGBc * data() const { return _data; }
+			MTOOLS_FORCEINLINE const RGBc * data() const { return _data; }
 
 
 			/**
 			* Return a pointer to the pixel buffer.
 			**/
-			RGBc * data() { return _data; }
+			MTOOLS_FORCEINLINE RGBc * data() { return _data; }
 
 
 			/**
@@ -1805,7 +1875,7 @@ namespace mtools
 			 *
 			 * @return	The color at position (x,y).
 			 **/
-			inline RGBc & operator()(const int64 x, const int64 y) { MTOOLS_ASSERT((x >= 0) && (x < _lx)); MTOOLS_ASSERT((y >= 0) && (y < _ly)); return _data[x + _stride*y]; }
+			MTOOLS_FORCEINLINE RGBc & operator()(const int64 x, const int64 y) { MTOOLS_ASSERT((x >= 0) && (x < _lx)); MTOOLS_ASSERT((y >= 0) && (y < _ly)); return _data[x + _stride*y]; }
 
 
 			/**
@@ -1815,7 +1885,7 @@ namespace mtools
 			 *
 			 * @return	The color at position pos.
 			 **/
-			inline RGBc & operator()(const iVec2 & pos) 
+			MTOOLS_FORCEINLINE RGBc & operator()(const iVec2 & pos)
 				{ 
 				const int64 x = pos.X();
 				const int64 y = pos.Y();
@@ -1833,7 +1903,7 @@ namespace mtools
 			*
 			* @return	The color at position (x,y).
 			**/
-			inline const RGBc & operator()(const int64 x, const int64 y) const { MTOOLS_ASSERT((x >= 0) && (x < _lx)); MTOOLS_ASSERT((y >= 0) && (y < _ly)); return _data[x + _stride*y]; }
+			MTOOLS_FORCEINLINE const RGBc & operator()(const int64 x, const int64 y) const { MTOOLS_ASSERT((x >= 0) && (x < _lx)); MTOOLS_ASSERT((y >= 0) && (y < _ly)); return _data[x + _stride*y]; }
 
 
 			/**
@@ -1844,7 +1914,7 @@ namespace mtools
 			*
 			* @return	The color at position pos.
 			**/
-			inline const RGBc & operator()(const iVec2 & pos) const
+			MTOOLS_FORCEINLINE const RGBc & operator()(const iVec2 & pos) const
 				{
 				const int64 x = pos.X();
 				const int64 y = pos.Y();
@@ -1860,7 +1930,7 @@ namespace mtools
 			 * @param	y	 	The y coordinate.
 			 * @param	color	color to set.
 			 **/
-			inline void setPixel(const int64 x, const int64 y, const RGBc color)
+			MTOOLS_FORCEINLINE void setPixel(const int64 x, const int64 y, const RGBc color)
 				{
 				if ((x >= 0) && (x < _lx) && (y >= 0) && (y < _ly)) { _data[x + _stride*y] = color; }
 				}
@@ -1872,7 +1942,7 @@ namespace mtools
 			 * @param	pos  	The position to consider.
 			 * @param	color	color to set.
 			 **/
-			inline void setPixel(const iVec2 & pos, const RGBc color)
+			MTOOLS_FORCEINLINE void setPixel(const iVec2 & pos, const RGBc color)
 				{
 				const int64 x = pos.X();
 				const int64 y = pos.Y();
@@ -1888,7 +1958,7 @@ namespace mtools
 			* @param	y	 	The y coordinate.
 			* @param	color	color to blend over
 			**/
-			inline void blendPixel(const int64 x, const int64 y, const RGBc color)
+			MTOOLS_FORCEINLINE void blendPixel(const int64 x, const int64 y, const RGBc color)
 				{
 				if ((x >= 0) && (x < _lx) && (y >= 0) && (y < _ly)) { _data[x + _stride*y].blend(color); }
 				}
@@ -1901,7 +1971,7 @@ namespace mtools
 			* @param	pos  	The position to consider.
 			* @param	color	color to blend over
 			**/
-			inline void blendPixel(const iVec2 & pos, const RGBc color)
+			MTOOLS_FORCEINLINE void blendPixel(const iVec2 & pos, const RGBc color)
 				{
 				const int64 x = pos.X();
 				const int64 y = pos.Y();
@@ -1918,7 +1988,7 @@ namespace mtools
 			 * @param	color	color to blend over.
 			 * @param	op   	opacity pre-multiplier in [0.0f , 1.0f].
 			 **/
-			inline void blendPixel(const int64 x, const int64 y, const RGBc color, float op)
+			MTOOLS_FORCEINLINE void blendPixel(const int64 x, const int64 y, const RGBc color, float op)
 				{
 				if ((x >= 0) && (x < _lx) && (y >= 0) && (y < _ly)) { _data[x + _stride*y].blend(color,op); }
 				}
@@ -1932,7 +2002,7 @@ namespace mtools
 			 * @param	color	color to blend over.
 			 * @param	op   	opacity pre-multiplier in [0.0f , 1.0f].
 			 **/
-			inline void blendPixel(const iVec2 & pos, const RGBc color, float op)
+			MTOOLS_FORCEINLINE void blendPixel(const iVec2 & pos, const RGBc color, float op)
 				{
 				const int64 x = pos.X();
 				const int64 y = pos.Y();
@@ -1950,7 +2020,7 @@ namespace mtools
 			 * @param	op   	opacity pre-multiplier in the range [0, 0x100]. (use
 			 * 					convertAlpha_0xFF_to_0x100() to convert to that range if needed).
 			 **/
-			inline void blendPixel(const int64 x, const int64 y, const RGBc color, uint32 op)
+			MTOOLS_FORCEINLINE void blendPixel(const int64 x, const int64 y, const RGBc color, uint32 op)
 				{
 				if ((x >= 0) && (x < _lx) && (y >= 0) && (y < _ly)) { _data[x + _stride*y].blend(color, op); }
 				}
@@ -1965,7 +2035,7 @@ namespace mtools
 			 * @param	op   	opacity pre-multiplier in the range [0, 0x100]. (use
 			 * 					convertAlpha_0xFF_to_0x100() to convert to that range if needed).
 			 **/
-			inline void blendPixel(const iVec2 & pos, const RGBc color, uint32 op)
+			MTOOLS_FORCEINLINE void blendPixel(const iVec2 & pos, const RGBc color, uint32 op)
 				{
 				const int64 x = pos.X();
 				const int64 y = pos.Y();
@@ -1983,7 +2053,7 @@ namespace mtools
 			 *
 			 * @return	The pixel color.
 			 **/
-			inline RGBc getPixel(const int64 x, const int64 y, const RGBc defaultcolor = RGBc::c_TransparentWhite) const
+			MTOOLS_FORCEINLINE RGBc getPixel(const int64 x, const int64 y, const RGBc defaultcolor = RGBc::c_TransparentWhite) const
 				{
 				if ((x >= 0) && (x < _lx) && (y >= 0) && (y < _ly)) { return _data[x + _stride*y]; }
 				return defaultcolor;
@@ -1998,7 +2068,7 @@ namespace mtools
 			 *
 			 * @return	The pixel color.
 			 **/
-			inline RGBc getPixel(const iVec2 & pos, const RGBc defaultcolor = RGBc::c_TransparentWhite) const
+			MTOOLS_FORCEINLINE RGBc getPixel(const iVec2 & pos, const RGBc defaultcolor = RGBc::c_TransparentWhite) const
 				{
 				const int64 x = pos.X();
 				const int64 y = pos.Y();
@@ -2051,7 +2121,7 @@ namespace mtools
 
 
 			/** Empty this image (the resulting image has size 0x0). */
-			void empty()
+			inline void empty()
 				{
 				_removecairo();
 				_deallocate();
@@ -2066,7 +2136,7 @@ namespace mtools
 			 *
 			 * @param	bkColor	the color to use.
 			 **/
-			void clear(RGBc bkColor)
+			inline void clear(RGBc bkColor)
 				{
 				//pixman_fill((uint32_t*)_data, _stride, 32, 0, 0, _lx, _ly, bkColor.color); // slow...
 				_fillRegion(_data, _stride, _lx, _ly, bkColor);
@@ -2091,7 +2161,7 @@ namespace mtools
 			 *
 			 * @return	true if shared, false if not.
 			 */
-			bool isShared() const
+			MTOOLS_FORCEINLINE bool isShared() const
 				{
 				return(refcount() != 1);
 				}
@@ -2102,7 +2172,7 @@ namespace mtools
 			 *
 			 * @return	Number of image sharing the same data buffer (1 is the image is not shared).
 			 */
-			uint32 refcount() const
+			MTOOLS_FORCEINLINE uint32 refcount() const
 				{
 				return ((_deletepointer != nullptr) ? (*_deletepointer) : 1);
 				}
@@ -2309,7 +2379,7 @@ namespace mtools
 
 			/* call _boxaverage_downscaling_FP32 with the correct template parameters for BIT_FP and BIT_DIV */
 			template<uint64 BIT_FP_REDUCE, bool USE_FUNCION_CALL = false, typename READ_FUNCTOR = _dummy_read_functor, typename WRITE_FUNCTOR = _dummy_write_functor>
-			static void _boxaverage_downscaling2(RGBc * dest_data, uint64 dest_stride, uint64 dest_sx, uint64 dest_sy, RGBc * src_data, uint64 src_stride, uint64 src_sx, uint64 src_sy, READ_FUNCTOR funread = _dummy_read_functor(), WRITE_FUNCTOR funwrite = _dummy_write_functor())
+			inline static void _boxaverage_downscaling2(RGBc * dest_data, uint64 dest_stride, uint64 dest_sx, uint64 dest_sy, RGBc * src_data, uint64 src_stride, uint64 src_sx, uint64 src_sy, READ_FUNCTOR funread = _dummy_read_functor(), WRITE_FUNCTOR funwrite = _dummy_write_functor())
 				{
 				const uint64 bx = (src_sx / dest_sx); // lower bound on horizontal ratio 
 				const uint64 by = (src_sy / dest_sy); // lower bound on vertical ratio
@@ -2527,7 +2597,7 @@ namespace mtools
 
 
 			/* fast blitting of a region, do not work for overlap */
-			inline static void _blitRegion(RGBc * pdest, int64 dest_stride, RGBc * psrc, int64 src_stride, int64 sx, int64 sy)
+			MTOOLS_FORCEINLINE static void _blitRegion(RGBc * pdest, int64 dest_stride, RGBc * psrc, int64 src_stride, int64 sx, int64 sy)
 				{
 				if (sx < 20) 
 					{ // for small width, faster to copy by element by element than using memcpy
@@ -2543,7 +2613,7 @@ namespace mtools
 
 
 			/* blit a region, in increasing order */
-			inline static void _blitRegionUp(RGBc * pdest, int64 dest_stride, RGBc * psrc, int64 src_stride, int64 sx, int64 sy)
+			MTOOLS_FORCEINLINE static void _blitRegionUp(RGBc * pdest, int64 dest_stride, RGBc * psrc, int64 src_stride, int64 sx, int64 sy)
 				{
 				for (int64 j = 0; j < sy; j++)
 					{
@@ -2559,7 +2629,7 @@ namespace mtools
 
 
 			/* blit a region, in decreasing order */
-			inline static void _blitRegionDown(RGBc * pdest, int64 dest_stride, RGBc * psrc, int64 src_stride, int64 sx, int64 sy)
+			MTOOLS_FORCEINLINE static void _blitRegionDown(RGBc * pdest, int64 dest_stride, RGBc * psrc, int64 src_stride, int64 sx, int64 sy)
 				{
 				for (int64 j = sy-1; j >= 0; j--)
 					{
@@ -2575,7 +2645,7 @@ namespace mtools
 
 
 			/* blend a region, in increasing order */
-			inline static void _blendRegionUp(RGBc * pdest, int64 dest_stride, RGBc * psrc, int64 src_stride, int64 sx, int64 sy, float op)
+			MTOOLS_FORCEINLINE static void _blendRegionUp(RGBc * pdest, int64 dest_stride, RGBc * psrc, int64 src_stride, int64 sx, int64 sy, float op)
 				{
 				uint32 uop = (uint32)(256 * op);
 				for (int64 j = 0; j < sy; j++)
@@ -2592,7 +2662,7 @@ namespace mtools
 
 
 			/* blend a region, in decreasing order */
-			inline static void _blendRegionDown(RGBc * pdest, int64 dest_stride, RGBc * psrc, int64 src_stride, int64 sx, int64 sy, float op)
+			MTOOLS_FORCEINLINE static void _blendRegionDown(RGBc * pdest, int64 dest_stride, RGBc * psrc, int64 src_stride, int64 sx, int64 sy, float op)
 				{
 				uint32 uop = (uint32)(256 * op);
 				for (int64 j = sy - 1; j >= 0; j--)
@@ -2610,7 +2680,7 @@ namespace mtools
 
 
 			/* mask a region */
-			inline static void _maskRegion(RGBc * pdest, int64 dest_stride, RGBc * psrc, int64 src_stride, int64 sx, int64 sy, RGBc color)
+			MTOOLS_FORCEINLINE static void _maskRegion(RGBc * pdest, int64 dest_stride, RGBc * psrc, int64 src_stride, int64 sx, int64 sy, RGBc color)
 				{
 				uint32 uop = mtools::convertAlpha_0xFF_to_0x100(color.comp.A);
 				for (int64 j = 0; j < sy; j++)
@@ -2632,26 +2702,26 @@ namespace mtools
 			**************************************************************/
 
 			/* tell cairo that the data buffer is possibly dirty */
-			void _cairomarkdirty() const
+			inline void _cairomarkdirty() const
 				{
 				if (_pcairo_surface != nullptr)	cairo_surface_mark_dirty((cairo_surface_t *)_pcairo_surface);
 				}
 
 			/* flush all cairo operation */
-			void _cairoflush() const
+			inline void _cairoflush() const
 				{
 				if (_pcairo_surface != nullptr)	cairo_surface_flush((cairo_surface_t *)_pcairo_surface);
 				}
 
 			/* remove the cairo objects */
-			void _removecairo() const
+			inline void _removecairo() const
 				{
 				if (_pcairo_context != nullptr) { cairo_destroy((cairo_t *)_pcairo_surface); _pcairo_context = nullptr; }
 				if (_pcairo_surface != nullptr) { cairo_surface_destroy((cairo_surface_t *)_pcairo_surface); _pcairo_surface = nullptr; }
 				}
 
 			/* create the cairo objects if needed */
-			bool _createcairo(bool stopOnError) const
+			inline bool _createcairo(bool stopOnError) const
 				{
 				if (_pcairo_surface == nullptr)
 					{
@@ -2682,54 +2752,50 @@ namespace mtools
 
 
 			/*************************************************************
+			*                     FORM DRAWING	                         *
+			*                                                            *
+			**************************************************************/
+
+
+			/* draw a filled rectazngle */
+			MTOOLS_FORCEINLINE void _draw_box(int64 x, int64 y, int64 sx, int64 sy, RGBc boxcolor, bool blend)
+				{
+				if (x < 0) { sx -= x;   x = 0; }
+				if (y < 0) { sy -= y;   y = 0; }
+				if ((boxcolor.comp.A == 0) || (x >= _lx) || (y >= _ly)) return;
+				sx -= std::max<int64>(0, (x + sx - _lx));
+				sy -= std::max<int64>(0, (y + sy - _ly));
+				if ((sx <= 0) || (sy <= 0)) return;
+				RGBc * p = _data + _stride*y + x;
+				if (blend && (boxcolor.comp.A < 255))
+					{
+					for (int64 j = 0; j < sy; j++)
+						{
+						for (int64 i = 0; i < sx; i++) { p[i].blend(boxcolor); }
+						p += _stride;
+						}
+					}
+				else
+					{
+					for (int64 j = 0; j < sy; j++)
+						{
+						for (int64 i = 0; i < sx; i++) { p[i] = boxcolor; }
+						p += _stride;
+						}
+					}
+				}
+
+
+
+
+			/*************************************************************
 			*                     LINE DRAWING	                         *
 			*                                                            *
 			**************************************************************/
 
 
-
-			/** draw a vertical line (P1.X() = P2.X()) **/ 
-			void _verticalLine(const iVec2 & P1, const iVec2 & P2, RGBc color, bool blending)
-				{
-				MTOOLS_ASSERT(P1.X() == P2.X());
-				const int64 x = P1.X(); if ((x < 0) || (x >= _lx)) return;
-				int64 ymin = std::min<int64>(P1.Y(), P2.Y());  if (ymin >= _ly) return; else if (ymin < 0) ymin = 0;
-				int64 ymax = std::max<int64>(P1.Y(), P2.Y());  if (ymax < 0) return; else if (ymax >= _ly) ymax = _ly - 1;
-				const int64 l = ymax - ymin;
-				RGBc * p = _data + ymin*_stride + x;
-				if (blending)
-					{
-					for (int64 j = 0; j <= l; j++) { (*p).blend(color); p += _stride; }
-					}
-				else
-					{
-					for (int64 j = 0; j <= l; j++) { (*p) = color; p += _stride; }
-					}
-				}
-
-
-			/** draw an horizontal line  (P1.Y() = P2.Y()) **/
-			void _horizontalLine(const iVec2 & P1, const iVec2 & P2, RGBc color, bool blending)
-				{
-				MTOOLS_ASSERT(P1.Y() == P2.Y());
-				const int64 y = P1.Y(); if ((y < 0) || (y >= _ly)) return;
-				int64 xmin = std::min<int64>(P1.X(), P2.X());  if (xmin >= _lx) return; else if (xmin < 0) xmin = 0;
-				int64 xmax = std::max<int64>(P1.X(), P2.X());  if (xmax < 0) return; else if (xmax >= _lx) xmax = _lx - 1;
-				const int64 l = xmax - xmin;
-				RGBc * p = _data + y*_stride + xmin;
-				if (blending)
-					{
-					for (int64 j = 0; j <= l; j++) { p[j].blend(color); }
-					}
-				else
-					{
-					for (int64 j = 0; j <= l; j++) { p[j] = color; }
-					}
-				}
-
-
 			/** Used by CSLineClip() to compute the region where the point lies **/
-			static int _csLineClipCode(const iVec2 & P, const iBox2 & B)
+			MTOOLS_FORCEINLINE static int _csLineClipCode(const iVec2 & P, const iBox2 & B)
 				{
 				int c = 0;
 				const int64 x = P.X();
@@ -2752,7 +2818,7 @@ namespace mtools
 			 * @return	true if a line should be drawn and false if it should be discarded. If true, P1 and
 			 * 			P2 are now guaranteed to be inside the closed rectangle B.
 			 **/
-			static bool _csLineClip(iVec2 & P1, iVec2 & P2, const iBox2 & B)
+			MTOOLS_FORCEINLINE static bool _csLineClip(iVec2 & P1, iVec2 & P2, const iBox2 & B)
 				{
 				int c1 = _csLineClipCode(P1, B);
 				int c2 = _csLineClipCode(P2, B);
@@ -2797,11 +2863,138 @@ namespace mtools
 				}
 
 
+			/* draw a vertical line */
+			MTOOLS_FORCEINLINE void _verticalLine(int64 x, int64 y1, int64 y2, RGBc color)
+				{
+				if ((x < 0) || (x >= _lx)) return;
+				if (y2 < y1) { mtools::swap(y1, y2); }
+				if ((y2 < 0) || (y1 >= _ly)) return;
+				y1 = (y1 < 0) ? 0 : y1;
+				y2 = (y2 >= _ly) ? (_ly - 1) : y2;
+				RGBc * p		= _data + y1*_stride + x;
+				const RGBc * q	= _data + (y2 + 1)*_stride + x;
+				while (p != q) { (*p) = color; p += _stride; }
+				}
+
+			/* draw a vertical line (use blending) */
+			MTOOLS_FORCEINLINE void _verticalLine_blend(int64 x, int64 y1, int64 y2, RGBc color)
+				{
+				if ((x < 0) || (x >= _lx)) return;
+				if (y2 < y1) { mtools::swap(y1, y2); }
+				if ((y2 < 0) || (y1 >= _ly)) return;
+				y1 = (y1 < 0) ? 0 : y1;
+				y2 = (y2 >= _ly) ? (_ly - 1) : y2;
+				RGBc * p = _data + y1*_stride + x;
+				const RGBc * q = _data + (y2 + 1)*_stride + x;
+				while (p != q) { (*p).blend(color); p += _stride; }
+				}
+
+
+			/* draw a horizontal line */
+			MTOOLS_FORCEINLINE void _horizontalLine(int64 y, int64 x1, int64 x2, RGBc color)
+				{
+				if ((y < 0) || (y >= _ly)) return;
+				if (x2 < x1) { mtools::swap(x1, x2); }
+				if ((x2 < 0) || (x1 >= _lx)) return;
+				x1 = (x1 < 0) ? 0 : x1;
+				x2 = (x2 >= _lx) ? (_lx - 1) : x2;
+				RGBc * p = _data + y*_stride + x1;
+				const RGBc * q = _data + y*_stride + x2 + 1;
+				while (p != q) { (*p) = color; p++; }
+				}
+
+
+			/* draw a horizontal line (use blending) */
+			MTOOLS_FORCEINLINE void _horizontalLine_blend(int64 y, int64 x1, int64 x2, RGBc color)
+				{
+				if ((y < 0) || (y >= _ly)) return;
+				if (x2 < x1) { mtools::swap(x1, x2); }
+				if ((x2 < 0) || (x1 >= _lx)) return;
+				x1 = (x1 < 0) ? 0 : x1;
+				x2 = (x2 >= _lx) ? (_lx - 1) : x2;
+				RGBc * p = _data + y*_stride + x1;
+				const RGBc * q = _data + y*_stride + x2 + 1;
+				while (p != q) { (*p).blend(color); p++; }
+				}
+
+
+			/* draw a tick vertical line */
+			MTOOLS_FORCEINLINE void _verticalLine(int64 x, int64 y1, int64 y2, RGBc color, float tickness)
+				{
+				// tickness is assumed positive
+				float f = (tickness / 2) + 0.5f;
+				int64 d = (int64)f;
+				if (d == 0) { _verticalLine(x, y1, y2, color.getOpacity(color.opacity()*tickness)); return; }
+				int64 xmin = x-d;
+				int64 xmax = x+d;
+				float r = f - d;
+				RGBc c = color.getOpacity(color.opacity()*r);
+				_verticalLine(xmin, y1, y2, c);
+				xmin++;
+				while (xmin < xmax) { _verticalLine(xmin, y1, y2, color); xmin++; }
+				_verticalLine(xmax, y1, y2, c);
+				}
+
+
+			/* draw a tick vertical line (use blending) */
+			MTOOLS_FORCEINLINE void _verticalLine_blend(int64 x, int64 y1, int64 y2, RGBc color, float tickness)
+				{
+				// tickness is assumed positive
+				float f = (tickness / 2) + 0.5f;
+				int64 d = (int64)f;
+				if (d == 0) { _verticalLine_blend(x, y1, y2, color.getOpacity(color.opacity()*tickness)); return; }
+				int64 xmin = x - d;
+				int64 xmax = x + d;
+				float r = f - d;
+				RGBc c = color.getOpacity(color.opacity()*r);
+				_verticalLine_blend(xmin, y1, y2, c);
+				xmin++;
+				while (xmin < xmax) { _verticalLine_blend(xmin, y1, y2, color); xmin++; }
+				_verticalLine_blend(xmax, y1, y2, c);
+				}
+
+
+			/* draw a tick horizontal line */
+			MTOOLS_FORCEINLINE void _horizontalLine(int64 y, int64 x1, int64 x2, RGBc color, float tickness)
+				{
+				// tickness is assumed positive
+				float f = (tickness / 2) + 0.5f;
+				int64 d = (int64)f;
+				if (d == 0) { _horizontalLine(y, x1, x2, color.getOpacity(color.opacity()*tickness)); return; }
+				int64 ymin = y - d;
+				int64 ymax = y + d;
+				float r = f - d;
+				RGBc c = color.getOpacity(color.opacity()*r);
+				_horizontalLine(ymin, x1, x2, c);
+				ymin++;
+				while (ymin < ymax) { _horizontalLine(ymin, x1, x2, color); ymin++; }
+				_horizontalLine(ymax, x1, x2, c);
+				}
+
+
+			/* draw a tick horizontal line (use blending) */
+			MTOOLS_FORCEINLINE void _horizontalLine_blend(int64 y, int64 x1, int64 x2, RGBc color, float tickness)
+				{
+				// tickness is assumed positive
+				float f = (tickness / 2) + 0.5f;
+				int64 d = (int64)f;
+				if (d == 0) { _horizontalLine_blend(y, x1, x2, color.getOpacity(color.opacity()*tickness)); return; }
+				int64 ymin = y - d;
+				int64 ymax = y + d;
+				float r = f - d;
+				RGBc c = color.getOpacity(color.opacity()*r);
+				_horizontalLine_blend(ymin, x1, x2, c);
+				ymin++;
+				while (ymin < ymax) { _horizontalLine(ymin, x1, x2, color); ymin++; }
+				_horizontalLine_blend(ymax, x1, x2, c);
+				}
+
+
 			/**
 			* Draw a line using Bresenham's algorithm.
 			* Optimized.
 			**/
-			void _lineBresenham(iVec2 P1, iVec2 P2, RGBc color)
+			MTOOLS_FORCEINLINE void _lineBresenham(iVec2 P1, iVec2 P2, RGBc color)
 				{
 				if (isEmpty()) return;
 				if (!_csLineClip(P1, P2, iBox2(0, _lx - 1, 0, _ly - 1))) return;
@@ -2844,7 +3037,7 @@ namespace mtools
 			* Optimized. No bound check.
 			* Use blending.
 			**/
-			void _lineBresenham_blend(iVec2 P1, iVec2 P2, RGBc color)
+			MTOOLS_FORCEINLINE void _lineBresenham_blend(iVec2 P1, iVec2 P2, RGBc color)
 				{
 				if (isEmpty()) return;
 				if (!_csLineClip(P1, P2, iBox2(0, _lx - 1, 0, _ly - 1))) return;
@@ -2886,7 +3079,7 @@ namespace mtools
 			* Draw an antialiased line using Bresenham's algorithm.
 			* No bound check.
 			**/
-			void _lineBresenhamAA(iVec2 P1, iVec2 P2, RGBc color)
+			MTOOLS_FORCEINLINE void _lineBresenhamAA(iVec2 P1, iVec2 P2, RGBc color)
 				{
 				if (isEmpty()) return;
 				if (!_csLineClip(P1, P2, iBox2(0, _lx - 1, 0, _ly - 1))) return;
@@ -2962,7 +3155,7 @@ namespace mtools
 			* No bound check.
 			* Use blending.
 			**/
-			void _lineBresenhamAA_blend(iVec2 P1, iVec2 P2, RGBc color)
+			MTOOLS_FORCEINLINE void _lineBresenhamAA_blend(iVec2 P1, iVec2 P2, RGBc color)
 				{
 				if (isEmpty()) return;
 				if (!_csLineClip(P1, P2, iBox2(0, _lx - 1, 0, _ly - 1))) return;
@@ -3037,7 +3230,7 @@ namespace mtools
 			/**
 			* Draw an tick antialiased line using Bresenham's algorithm.
 			**/
-			void _tickLineBresenhamAA(iVec2 P1, iVec2 P2, float wd, RGBc color)
+			MTOOLS_FORCEINLINE void _tickLineBresenhamAA(iVec2 P1, iVec2 P2, float wd, RGBc color)
 				{
 				if (isEmpty()) return;
 				if (!_csLineClip(P1, P2, iBox2(0, _lx - 1, 0, _ly - 1))) return;
@@ -3115,7 +3308,7 @@ namespace mtools
 			* Draw an tick antialiased line using Bresenham's algorithm.
 			* use blending.
 			**/
-			void _tickLineBresenhamAA_blend(iVec2 P1, iVec2 P2, float wd, RGBc color)
+			MTOOLS_FORCEINLINE void _tickLineBresenhamAA_blend(iVec2 P1, iVec2 P2, float wd, RGBc color)
 				{
 				if (isEmpty()) return;
 				if (!_csLineClip(P1, P2, iBox2(-(int64)(5*wd), _lx - 1 + (int64)(5 * wd), -(int64)(5 * wd), _ly - 1 + (int64)(5 * wd)))) return;
@@ -3195,7 +3388,7 @@ namespace mtools
 			**************************************************************/
 
 			/* allocate memory, updates _data, and _deletepointer */
-			void _allocate(int64 ly, int64 stride, RGBc * databuffer)
+			MTOOLS_FORCEINLINE void _allocate(int64 ly, int64 stride, RGBc * databuffer)
 				{
 				size_t memsize = 16 + (size_t)((databuffer == nullptr) ? (4*ly*stride) : 0); // 16 byte + the image buffer size if needed.
 				_deletepointer = (uint32*)malloc(memsize);
@@ -3205,7 +3398,7 @@ namespace mtools
 				}
 
 			/* decrease reference count and deallocate if not buffer not referenced anymore */
-			void _deallocate()
+			MTOOLS_FORCEINLINE void _deallocate()
 				{
 				if ((_deletepointer != nullptr) && ((--(*_deletepointer)) == 0))
 					{ // deallocate 
@@ -3217,7 +3410,7 @@ namespace mtools
 				}
 
 			/* copy buffer pointer and increment the reference count */
-			void _shallow_copy(uint32 * deletepointer, RGBc * data)
+			MTOOLS_FORCEINLINE void _shallow_copy(uint32 * deletepointer, RGBc * data)
 				{
 				(*deletepointer)++;
 				_deletepointer = deletepointer;
