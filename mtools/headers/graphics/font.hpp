@@ -258,7 +258,7 @@ namespace mtools
 				if ((!_fontsize) || (txt.size() == 0)) return;
 				iVec2 dim = textDimension(txt);
 				pos = _upperleft(pos, dim, txt_pos);
-				im.draw_filled_rectangle(pos.X(), pos.Y(), dim.X(), dim.Y(), bkcolor);
+				im.draw_filled_rectangle(pos.X(), pos.Y(), dim.X(), dim.Y(), bkcolor,true);
 				}
 
 
