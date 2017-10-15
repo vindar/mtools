@@ -42,7 +42,7 @@ namespace mtools
 	 *
 	 * @return	The scaled value in [0,0x100].
 	 **/
-	inline uint32 convertAlpha_0xFF_to_0x100(uint32 v)
+	MTOOLS_FORCEINLINE uint32 convertAlpha_0xFF_to_0x100(uint32 v)
 		{
 		return(v + ((v & 128) >> 7));
 		}
@@ -59,7 +59,7 @@ namespace mtools
 	*
 	* @return	The scaled value in [0,0xFF].
 	 **/
-	inline uint32 convertAlpha_0x100_to_0xFF(uint32 v)
+	MTOOLS_FORCEINLINE uint32 convertAlpha_0x100_to_0xFF(uint32 v)
 		{
 		return(v - (((~(v - 128)) >> 31)));
 		}
@@ -334,9 +334,13 @@ namespace mtools
 		 *
 		 * @param	colorB	The 'top' color to blend over this one.
 		 **/
-		inline void blend(const RGBc colorB)
+		MTOOLS_FORCEINLINE void blend(const RGBc colorB)
 			{
-			(*this) = get_blend(colorB);
+			const uint32 o = convertAlpha_0xFF_to_0x100(colorB.color >> 24); // opacity of b in the range [0,0x100]
+			const uint32 invo = 0x100 - o; // again in the range [0,0x100]
+			const uint32 br = ((invo*(color & 0x00FF00FF)) + (o*(colorB.color & 0x00FF00FF))) >> 8; // blend blue and red together.
+			const uint32 g = ((invo*(color & 0x0000FF00)) + (o*(colorB.color & 0x0000FF00))) >> 8; // blend green  
+			color = ((br & 0x00FF00FF) | (g & 0x0000FF00) | 0xFF000000); // return the blend, fully opaque. 
 			}
 
 
@@ -350,7 +354,7 @@ namespace mtools
 		 * 					the range [0, 0x100] (use convertAlpha_0xFF_to_0x100() to convert a value in
 		 * 					[0,0xFF] to this range).
 		 **/
-		inline void blend(const RGBc colorB, const uint32 opacity)
+		MTOOLS_FORCEINLINE void blend(const RGBc colorB, const uint32 opacity)
 			{
 			(*this) = get_blend(colorB,opacity);
 			}
@@ -365,7 +369,7 @@ namespace mtools
 		* @param	opacity	The opacity to multiply colorB alpha channel with before blending, must be in
 		* 					the range [0,1.0f].
 		**/
-		inline void blend(const RGBc colorB, const float opacity)
+		MTOOLS_FORCEINLINE void blend(const RGBc colorB, const float opacity)
 			{
 			(*this) = get_blend(colorB, opacity);
 			}
@@ -380,7 +384,7 @@ namespace mtools
 		 *
 		 * @return	the color obtained by blending colorB over this.
 		 **/
-		inline RGBc get_blend(const RGBc colorB) const
+		MTOOLS_FORCEINLINE RGBc get_blend(const RGBc colorB) const
 			{
 			const uint32 o = convertAlpha_0xFF_to_0x100(colorB.color >> 24); // opacity of b in the range [0,0x100]
 			const uint32 invo = 0x100 - o; // again in the range [0,0x100]
@@ -402,7 +406,7 @@ namespace mtools
 		 *
 		 * @return	the color obtained by blending colorB over this.
 		 **/
-		inline RGBc get_blend(const RGBc colorB, const uint32 opacity) const
+		MTOOLS_FORCEINLINE RGBc get_blend(const RGBc colorB, const uint32 opacity) const
 			{
 			const uint32 o = (convertAlpha_0xFF_to_0x100(colorB.color >> 24) * opacity) >> 8; // opacity of b in the range [0,0x100]
 			const uint32 invo = 0x100 - o; // again in the range [0,0x100]
@@ -424,7 +428,7 @@ namespace mtools
 		*
 		* @return	the color obtained by blending colorB over this.
 		**/
-		inline RGBc get_blend(const RGBc colorB, const float opacity) const
+		MTOOLS_FORCEINLINE RGBc get_blend(const RGBc colorB, const float opacity) const
 			{
 			return get_blend(colorB, (uint32)(256 * opacity));
 			}
