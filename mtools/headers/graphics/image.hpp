@@ -1598,7 +1598,8 @@ namespace mtools
 				{
 				if (P1.X() == P2.X()) { _verticalLine(P1.X(), P1.Y(), P2.Y(), color);  return; }
 				if (P1.Y() == P2.Y()) { _horizontalLine(P1.Y(), P1.X(), P2.X(), color); return; }
-				_lineBresenham(P1, P2, color);
+				//_lineBresenham(P1, P2, color);
+				_lineEFLA(P1, P2, color);  // a little faster
 				}
 
 
@@ -1640,12 +1641,14 @@ namespace mtools
 					}
 				if (antialiased)
 					{
-					if (blending) _lineBresenhamAA_blend(P1, P2, color); else _lineBresenhamAA(P1, P2, color);
+					//if (blending) _lineBresenhamAA_blend(P1, P2, color); else _lineBresenhamAA(P1, P2, color);
+					if (blending) _lineWuAA_blend(P1, P2, color); else _lineWuAA(P1, P2, color); // a little faster
 					return;
 					}
 				else
 					{
-					if (blending) _lineBresenham_blend(P1, P2, color); else _lineBresenham(P1, P2, color);
+					//if (blending) _lineBresenham_blend(P1, P2, color); else _lineBresenham(P1, P2, color);
+					if (blending) _lineEFLA_blend(P1, P2, color); else _lineEFLA(P1, P2, color); // a little faster
 					}
 				}
 
@@ -2990,6 +2993,91 @@ namespace mtools
 				}
 
 
+
+			/**
+			* THE EXTREMELY FAST LINE ALGORITHM Variation E (Addition Fixed Point PreCalc)
+			* Copyright 2001-2, By Po-Han Lin
+			* c.f. http://www.edepot.com
+			*
+			* A little faster than Bressenham (10% increase speed).
+			**/
+			MTOOLS_FORCEINLINE void _lineEFLA(iVec2 P1, iVec2 P2, RGBc color)
+				{
+				if (isEmpty()) return;
+				if (!_csLineClip(P1, P2, iBox2(0, _lx - 1, 0, _ly - 1))) return;
+				bool yLonger = false;
+				int64 & x = P1.X();
+				int64 & y = P1.Y();
+				int64 shortLen = P2.Y() - y;
+				int64 longLen = P2.X() - x;
+				if (abs(shortLen)>abs(longLen)) { int64 swap = shortLen; shortLen = longLen; longLen = swap; yLonger = true; }
+				int64 decInc;
+				if (longLen == 0) decInc = 0; else decInc = (shortLen << 16) / longLen;
+				if (yLonger)
+					{
+					if (longLen>0)
+						{
+						longLen += y;
+						for (int64 j = 0x8000 + (x << 16);y <= longLen;++y) { operator()(j >> 16, y) = color; j += decInc; }
+						return;
+						}
+					longLen += y;
+					for (int64 j = 0x8000 + (x << 16);y >= longLen;--y) { operator()(j >> 16, y) = color; j -= decInc; }
+					return;
+					}
+				if (longLen>0)
+					{
+					longLen += x;
+					for (int64 j = 0x8000 + (y << 16);x <= longLen;++x) { operator()(x, j >> 16) = color; j += decInc; }
+					return;
+					}
+				longLen += x;
+				for (int64 j = 0x8000 + (y << 16);x >= longLen;--x) { operator()(x, j >> 16) = color; j -= decInc; }
+				}
+
+
+			/**
+			* THE EXTREMELY FAST LINE ALGORITHM Variation E (Addition Fixed Point PreCalc)
+			* Copyright 2001-2, By Po-Han Lin
+			* c.f. http://www.edepot.com
+			*
+			* A little faster than Bressenham (10% increase speed).
+			**/
+			MTOOLS_FORCEINLINE void _lineEFLA_blend(iVec2 P1, iVec2 P2, RGBc color)
+				{
+				if (isEmpty()) return;
+				if (!_csLineClip(P1, P2, iBox2(0, _lx - 1, 0, _ly - 1))) return;
+				bool yLonger = false;
+				int64 & x = P1.X();
+				int64 & y = P1.Y();
+				int64 shortLen = P2.Y() - y;
+				int64 longLen = P2.X() - x;
+				if (abs(shortLen)>abs(longLen)) { int64 swap = shortLen; shortLen = longLen; longLen = swap; yLonger = true; }
+				int64 decInc;
+				if (longLen == 0) decInc = 0; else decInc = (shortLen << 16) / longLen;
+				if (yLonger)
+					{
+					if (longLen>0)
+						{
+						longLen += y;
+						for (int64 j = 0x8000 + (x << 16);y <= longLen;++y) { operator()(j >> 16, y).blend(color); j += decInc; }
+						return;
+						}
+					longLen += y;
+					for (int64 j = 0x8000 + (x << 16);y >= longLen;--y) { operator()(j >> 16, y).blend(color); j -= decInc; }
+					return;
+					}
+				if (longLen>0)
+					{
+					longLen += x;
+					for (int64 j = 0x8000 + (y << 16);x <= longLen;++x) { operator()(x, j >> 16).blend(color); j += decInc; }
+					return;
+					}
+				longLen += x;
+				for (int64 j = 0x8000 + (y << 16);x >= longLen;--x) { operator()(x, j >> 16).blend(color); j -= decInc; }
+				}
+
+
 			/**
 			* Draw a line using Bresenham's algorithm.
 			* Optimized.
@@ -3225,6 +3313,133 @@ namespace mtools
 				}
 
 
+			/* antialiased line with Wu algorithm, a little faster than Bressenham AA version (10%) */
+			MTOOLS_FORCEINLINE void _lineWuAA(iVec2 P1, iVec2 P2, RGBc color)
+				{
+				if (isEmpty()) return;
+				if (!_csLineClip(P1, P2, iBox2(0, _lx - 1, 0, _ly - 1))) return;
+				int64 & x0 = P1.X(); int64 & y0 = P1.Y();
+				int64 & x1 = P2.X(); int64 & y1 = P2.Y();
+				operator()(x0, y0) = color;
+				if (y0 > y1) { mtools::swap(y0, y1); mtools::swap(x0, x1); }
+				int64 dx = x1 - x0;
+				int64 dir;
+				if (dx >= 0) { dir = 1; } else { dir = -1; dx = -dx; }
+				int64 dy = y1 - y0;
+				if (dy == 0)
+					{
+					while (dx-- != 0) { x0 += dir; operator()(x0, y0) = color; }
+					return;
+					}
+				if (dx == 0)
+					{
+					do { y0++; operator()(x0, y0) = color; } while (--dy != 0);
+					return;
+					}
+				if (dx == dy)
+					{ 
+					do { x0 += dir; y0++; operator()(x0, y0) = color; } while (--dy != 0);
+					return;
+					}
+				uint32 err = 0;
+				if (dy > dx)
+					{
+					uint32 inc = (uint32)((dx << 32) / dy);
+					while (--dy)
+						{
+						const uint32 tmp = err;
+						err += inc;
+						if (err <= tmp) { x0 += dir; } // overflow !
+						y0++;
+						color.comp.A = (err >> 24);
+						operator()(x0 + dir, y0) = color;
+						color.comp.A = 0xFF ^ (color.comp.A);
+						operator()(x0, y0) = color;
+						}
+					}
+				else
+					{
+					uint32 inc = (uint32)((dy << 32) / dx);
+					while (--dx)
+						{
+						const uint32 tmp = err;
+						err += inc;
+						if (err <= tmp) { y0++; } // overflow !
+						x0 += dir;
+						color.comp.A = (err >> 24);
+						operator()(x0, y0 + 1) = color;
+						color.comp.A = 0xFF ^ (color.comp.A);
+						operator()(x0, y0) = color;
+						}
+					}
+				operator()(x1, y1) = color;
+				return; 
+				}
+
+
+			/* antialiased line with Wu algorithm, a little faster than Bressenham AA version (10%) */
+			MTOOLS_FORCEINLINE void _lineWuAA_blend(iVec2 P1, iVec2 P2, RGBc color)
+				{
+				if (isEmpty()) return;
+				if (!_csLineClip(P1, P2, iBox2(0, _lx - 1, 0, _ly - 1))) return;
+				int64 & x0 = P1.X(); int64 & y0 = P1.Y();
+				int64 & x1 = P2.X(); int64 & y1 = P2.Y();
+				operator()(x0, y0).blend(color); // Draw the initial pixel
+				if (y0 > y1) { mtools::swap(y0, y1); mtools::swap(x0, x1); } // swap for line direction 	
+				int64 dx = x1 - x0;
+				int64 dir;
+				if (dx >= 0) { dir = 1; }
+				else { dir = -1; dx = -dx; } // make dx positive 
+				int64 dy = y1 - y0;
+				if (dy == 0)
+					{
+					while (dx-- != 0) { x0 += dir; operator()(x0, y0).blend(color); }
+					return;
+					}
+				if (dx == 0)
+					{
+					do { y0++; operator()(x0, y0).blend(color); } while (--dy != 0);
+					return;
+					}
+				if (dx == dy)
+					{ // diagonal line
+					do { x0 += dir; y0++; operator()(x0, y0).blend(color); } while (--dy != 0);
+					return;
+					}
+				uint32 err = 0;
+				if (dy > dx)
+					{
+					uint32 inc = (uint32)((dx << 32) / dy);
+					while (--dy)
+						{
+						const uint32 tmp = err;
+						err += inc;
+						if (err <= tmp) { x0 += dir; } // overflow !
+						y0++;
+						color.comp.A = (err >> 24);
+						operator()(x0 + dir, y0).blend(color);
+						color.comp.A = 0xFF ^ (color.comp.A);
+						operator()(x0, y0).blend(color);
+						}
+					}
+				else
+					{
+					uint32 inc = (uint32)((dy << 32) / dx);
+					while (--dx)
+						{
+						const uint32 tmp = err;
+						err += inc;
+						if (err <= tmp) { y0++; } // overflow !
+						x0 += dir;
+						color.comp.A = (err >> 24);
+						operator()(x0, y0 + 1).blend(color);
+						color.comp.A = 0xFF ^ (color.comp.A);
+						operator()(x0, y0).blend(color);
+						}
+					}
+				operator()(x1, y1).blend(color);
+				return;
+				}
 
 
 			/**

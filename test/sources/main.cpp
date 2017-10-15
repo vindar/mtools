@@ -16,6 +16,7 @@ typedef char * pchar;
 
 
 
+
 /** Used by CSLineClip to compute the region where the point lies **/ 
 int CSLineClipCode(const iVec2 & P, const iBox2 & B)
 	{
@@ -120,6 +121,90 @@ void LineBresenham_blend(Image & im, int64 x1, int64 y1, int64 x2, int64 y2, RGB
 			}
 		}
 	}
+
+
+
+
+/* 
+*/ 
+
+
+/**
+* THE EXTREMELY FAST LINE ALGORITHM Variation E (Addition Fixed Point PreCalc)
+* Copyright 2001-2, By Po-Han Lin
+* c.f. http://www.edepot.com
+*
+* A little faster than Bressenham (10% increase speed).
+**/
+void LineEFLA(Image & im, int64 x, int64 y, int64 x2, int64 y2, RGBc color)
+	{
+	bool yLonger = false;
+	int64 shortLen = y2 - y;
+	int64 longLen = x2 - x;
+	if (abs(shortLen)>abs(longLen)) { int64 swap = shortLen; shortLen = longLen; longLen = swap; yLonger = true; }
+	int decInc;
+	if (longLen == 0) decInc = 0; else decInc = (shortLen << 16) / longLen;
+	if (yLonger)
+		{
+		if (longLen>0)
+			{
+			longLen += y;
+			for (int j = 0x8000 + (x << 16);y <= longLen;++y) { im(j >> 16, y) = color; j += decInc; }
+			return;
+			}
+		longLen += y;
+		for (int j = 0x8000 + (x << 16);y >= longLen;--y) { im(j >> 16, y) = color; j -= decInc; }
+		return;
+		}
+	if (longLen>0)
+		{
+		longLen += x;
+		for (int j = 0x8000 + (y << 16);x <= longLen;++x) { im(x, j >> 16) = color; j += decInc; }
+		return;
+		}
+	longLen += x;
+	for (int j = 0x8000 + (y << 16);x >= longLen;--x) { im(x, j >> 16) = color; j -= decInc; }
+	}
+
+
+/**
+* THE EXTREMELY FAST LINE ALGORITHM Variation E (Addition Fixed Point PreCalc)
+* Copyright 2001-2, By Po-Han Lin
+* c.f. http://www.edepot.com
+*
+* A little faster than Bressenham (10% increase speed).
+**/
+void LineEFLA_blend(Image & im, int64 x, int64 y, int64 x2, int64 y2, RGBc color)
+	{
+	bool yLonger = false;
+	int64 shortLen = y2 - y;
+	int64 longLen = x2 - x;
+	if (abs(shortLen)>abs(longLen)) { int64 swap = shortLen; shortLen = longLen; longLen = swap; yLonger = true; }
+	int decInc;
+	if (longLen == 0) decInc = 0; else decInc = (shortLen << 16) / longLen;
+	if (yLonger)
+		{
+		if (longLen>0)
+			{
+			longLen += y;
+			for (int j = 0x8000 + (x << 16);y <= longLen;++y) { im(j >> 16, y) = color; j += decInc; }
+			return;
+			}
+		longLen += y;
+		for (int j = 0x8000 + (x << 16);y >= longLen;--y) { im(j >> 16, y) = color; j -= decInc; }
+		return;
+		}
+	if (longLen>0)
+		{
+		longLen += x;
+		for (int j = 0x8000 + (y << 16);x <= longLen;++x) { im(x, j >> 16) = color; j += decInc; }
+		return;
+		}
+	longLen += x;
+	for (int j = 0x8000 + (y << 16);x >= longLen;--x) { im(x, j >> 16) = color; j -= decInc; }
+	}
+
+
 
 /**
 * Draw a line using Bresenham's algorithm.
@@ -537,6 +622,16 @@ void testImg()
 
 	int N = 1000000;
 	std::vector<iVec2> tabP1, tabP2;
+
+	tabP1.push_back({ 0,0 }); tabP2.push_back({ 799,599 });
+	tabP1.push_back({ 799,599 }); tabP2.push_back({ 0,0 });
+	tabP1.push_back({ 799,0 }); tabP2.push_back({ 0,599 });
+	tabP2.push_back({ 0,599 }); tabP1.push_back({ 799,0 });
+	tabP1.push_back({ 0,0 }); tabP2.push_back({ 0,599 });
+	tabP2.push_back({ 0,599 }); tabP1.push_back({ 0,0 });
+	tabP1.push_back({ 799,0 }); tabP2.push_back({ 799,599 });
+	tabP2.push_back({ 799,599 }); tabP1.push_back({ 799,0 });
+
 	for (int i = 0;i < N; i++)
 		{
 		tabP1.push_back({ Unif_int(-100, 900, gen), Unif_int(-100, 700, gen) });
@@ -555,6 +650,8 @@ void testImg()
 	
 	Img<unsigned char> cim(im.lx(),im.ly(),1,4);
 	im.clear(RGBc::c_White);
+
+	/*
 	{
 
 	RGBc color = RGBc::c_Black.getOpacity(0.1f);
@@ -572,14 +669,16 @@ void testImg()
 		
 	cout << "done in : " << mtools::Chronometer() << "\n";
 	}
+	*/
+
+
+
+
+
 	
-
-
-	im.clear(RGBc::c_White);
 	{
-
-	RGBc color = RGBc::c_Black.getOpacity(0.1f);
-	cout << "\n\nFUN";
+	RGBc color = RGBc::c_Black;
+	cout << "\n\nFUN BRESSENHAM";
 	cout << "aa     = " << aa << "\n";
 	cout << "blend  = " << blend << "\n";
 	cout << "tick   = " << tick << "\n";
@@ -593,6 +692,68 @@ void testImg()
 
 	cout << "done in : " << mtools::Chronometer() << "\n";
 	}
+	
+
+
+	{
+	RGBc color = RGBc::c_Black;
+	cout << "\n\nFUN AA";
+	cout << "aa     = " << aa << "\n";
+	cout << "blend  = " << blend << "\n";
+	cout << "tick   = " << tick << "\n";
+	mtools::Chronometer();
+	for (int i = 0;i < N; i++)
+		{
+		iVec2 P1 = tabP1[i];
+		iVec2 P2 = tabP2[i];
+		if (CSLineClip(P1, P2, B)) LineBresenhamAA(im, P1.X(), P1.Y(), P2.X(), P2.Y(), color);
+		}
+
+	cout << "done in : " << mtools::Chronometer() << "\n";
+	}
+
+
+
+
+	{
+	RGBc color = RGBc::c_Red;
+	cout << "\n\nEFLA";
+	cout << "aa     = " << aa << "\n";
+	cout << "blend  = " << blend << "\n";
+	cout << "tick   = " << tick << "\n";
+	mtools::Chronometer();
+	for (int i = 0;i < N; i++)
+		{
+		iVec2 P1 = tabP1[i];
+		iVec2 P2 = tabP2[i];
+		if (CSLineClip(P1, P2, B)) LineEFLA(im, P1.X(), P1.Y(), P2.X(), P2.Y(), color);
+		}
+
+	cout << "done in : " << mtools::Chronometer() << "\n";
+	}
+	
+
+
+
+	{
+
+	RGBc color = RGBc::c_Black;
+	cout << "\n\nFUN";
+	cout << "aa     = " << aa << "\n";
+	cout << "blend  = " << blend << "\n";
+	cout << "tick   = " << tick << "\n";
+	mtools::Chronometer();
+	for (int i = 0;i < N; i++)
+		{
+		iVec2 P1 = tabP1[i];
+		iVec2 P2 = tabP2[i];
+		if (CSLineClip(P1, P2, B)) LineBresenhamAA(im, P1.X(), P1.Y(), P2.X(), P2.Y(), color);
+		}
+
+	cout << "done in : " << mtools::Chronometer() << "\n";
+	}
+
+
 
 	im.clear(RGBc::c_White);
 	{
@@ -626,7 +787,7 @@ void testImg()
 		{
 		iVec2 P1 = tabP1[i];
 		iVec2 P2 = tabP2[i];
-		im.draw_line(P1, P2, color,false, true,1.0f);
+		im.draw_line(P1, P2, color, true, true,1.0f);
 		}
 
 	cout << "done in : " << mtools::Chronometer() << "\n";
@@ -675,6 +836,8 @@ void testImg()
 	tick = 3.0f;
 	
 	tt(aa, blend, tick, N, tabP1, tabP2);
+	
+
 
 	/*
 	LineBresenham(im, x, y, x + 100, y, RGBc::c_Red);
@@ -698,8 +861,6 @@ void testImg()
 	LineBresenham(im, x, y, x - 50, y - 100, RGBc::c_Red);
 	LineBresenham(im, x, y, x - 50, y + 100, RGBc::c_Red);
 	LineBresenham(im, x, y, x + 50, y - 100, RGBc::c_Red);
-
-
 	*/
 
 
@@ -735,9 +896,11 @@ void testImg()
 		x1 = x0 + 100 ;
 		y1 = y0  + 200; 
 
+		float tick = 20;
 
-		//im.draw_line({ x0,y0 }, { x1,y1 }, RGBc::c_Black.getOpacity(0.5), true, true, 5.8);
-		im.draw_line({ x1,y1 }, { x0,y0 }, RGBc::c_Black.getOpacity(0.5), true, true, 5.8);
+
+		im.draw_line({ x0,y0 }, { x1,y1 }, RGBc::c_Black.getOpacity(0.5), true, true, tick);
+		im.draw_line({ x1,y1 }, { x0,y0 }, RGBc::c_Black.getOpacity(0.5), true, true, tick);
 
 		im.setPixel({ x0,y0 }, RGBc::c_Red);
 		im.setPixel({ x1,y1 }, RGBc::c_Red);
@@ -757,12 +920,12 @@ int main(int argc, char *argv[])
 
 
 
-	
+/*	
 	testtick();
 	cout << "Hello World\n";
 	cout.getKey();
 	return 0;
-	
+	*/
 	/*
 	create();
 	cout << "done!\n";
