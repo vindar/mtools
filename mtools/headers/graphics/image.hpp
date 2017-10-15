@@ -1583,23 +1583,24 @@ namespace mtools
 			// fill
 
 
-
-
-
-
 			/**
-			* Draw a line. portion outside the image is clipped.
-			*
-			* @param	P1		   	First point.
-			* @param	P2		   	Second endpoint.
-			* @param	color	   	The color to use.
-			**/
-			inline void draw_line(iVec2 P1, iVec2 P2, RGBc color)
+			 * Draw a line. portion outside the image is clipped.
+			 *
+			 * @param	P1	   	First point.
+			 * @param	P2	   	Second endpoint.
+			 * @param	color  	The color to use.
+			 * @param	draw_P2	true to draw the endpoint P2.
+			 **/
+			inline void draw_line(iVec2 P1, iVec2 P2, RGBc color, bool draw_P2 = true)
 				{
+				if (isEmpty()) return;
+				if (!_csLineClip(P1, P2, iBox2(0, _lx - 1, 0, _ly - 1))) return;
+				if (draw_P2) { setPixel(P2, color); }
+				if (P1 == P2) return;
 				if (P1.X() == P2.X()) { _verticalLine(P1.X(), P1.Y(), P2.Y(), color);  return; }
 				if (P1.Y() == P2.Y()) { _horizontalLine(P1.Y(), P1.X(), P2.X(), color); return; }
-				//_lineBresenham(P1, P2, color);
-				_lineEFLA(P1, P2, color);  // a little faster
+				//_lineEFLA(P1, P2, color);  // a little faster, but must be modified not to draw P2.
+				_lineBresenham(P1, P2, color);
 				}
 
 
@@ -1611,10 +1612,11 @@ namespace mtools
 			* @param	x2		   	x-coord of the second point.
 			* @param	y2		   	y-coord of the second point.
 			* @param	color	   	The color to use.
+			* @param	draw_P2	true to draw the endpoint P2.
 			**/
-			MTOOLS_FORCEINLINE void draw_line(int64 x1, int64 y1, int64 x2, int64 y2, RGBc color)
+			MTOOLS_FORCEINLINE void draw_line(int64 x1, int64 y1, int64 x2, int64 y2, RGBc color, bool draw_P2)
 				{
-				draw_line({ x1, y1 }, { x2, y2 }, color);
+				draw_line({ x1, y1 }, { x2, y2 }, color,draw_P2);
 				}
 
 
@@ -1624,11 +1626,16 @@ namespace mtools
 			* @param	P1		   	First point.
 			* @param	P2		   	Second endpoint.
 			* @param	color	   	The color to use.
+			* @param	draw_P2	true to draw the endpoint P2.
 			* @param	blending   	true to use blending instead of simply copying the color.
 			* @param	antialiased	true to draw an antialised line.
 			**/
-			inline void draw_line(iVec2 P1, iVec2 P2, RGBc color, bool blending, bool antialiased)
+			inline void draw_line(iVec2 P1, iVec2 P2, RGBc color, bool draw_P2, bool blending, bool antialiased)
 				{
+				if (isEmpty()) return;
+				if (!_csLineClip(P1, P2, iBox2(0, _lx - 1, 0, _ly - 1))) return;
+				if (draw_P2) { if (blending) blendPixel(P2, color); else setPixel(P2, color);  }
+				if (P1 == P2) return;
 				if (P1.X() == P2.X())
 					{
 					if (blending) { _verticalLine_blend(P1.X(), P1.Y(), P2.Y(), color); } else { _verticalLine(P1.X(), P1.Y(), P2.Y(), color); }
@@ -1641,14 +1648,12 @@ namespace mtools
 					}
 				if (antialiased)
 					{
-					//if (blending) _lineBresenhamAA_blend(P1, P2, color); else _lineBresenhamAA(P1, P2, color);
-					if (blending) _lineWuAA_blend(P1, P2, color); else _lineWuAA(P1, P2, color); // a little faster
+					if (blending) _lineWuAA_blend(P1, P2, color); else _lineWuAA(P1, P2, color); 
 					return;
 					}
 				else
 					{
-					//if (blending) _lineBresenham_blend(P1, P2, color); else _lineBresenham(P1, P2, color);
-					if (blending) _lineEFLA_blend(P1, P2, color); else _lineEFLA(P1, P2, color); // a little faster
+					if (blending) _lineBresenham_blend(P1, P2, color); else _lineBresenham(P1, P2, color);
 					}
 				}
 
@@ -1662,12 +1667,13 @@ namespace mtools
 			* @param	x2		   	x-coord of the second point.
 			* @param	y2		   	y-coord of the second point.
 			* @param	color	   	The color to use.
+			* @param	draw_P2		true to draw the endpoint P2.
 			* @param	blending   	true to use blending instead of simply copying the color.
 			* @param	antialiased	true to draw an antialised line.
 			**/
-			MTOOLS_FORCEINLINE void draw_line(int64 x1, int64 y1, int64 x2, int64 y2, RGBc color, bool blending, bool antialiased)
+			MTOOLS_FORCEINLINE void draw_line(int64 x1, int64 y1, int64 x2, int64 y2, RGBc color, bool draw_P2, bool blending, bool antialiased)
 				{
-				draw_line({ x1, y1 }, { x2,y2 }, color, blending, antialiased);
+				draw_line({ x1, y1 }, { x2,y2 }, color, draw_P2, blending, antialiased);
 				}
 
 
@@ -1677,23 +1683,34 @@ namespace mtools
 			* @param	P1		   	First point.
 			* @param	P2		   	Second endpoint.
 			* @param	color	   	The color to use.
+			* @param	draw_P2		true to draw the endpoint P2.
 			* @param	blending   	true to use blending instead of simply copying the color.
 			* @param	antialiased	true to draw an antialised line.
 			* @param	tickness   	The tickness of the line (default 1, much slower if other value). A line
-			* 						with non-unit tickness is always antialiased.
+			* 						with non-unit tickness is always antialiased and both endpoint are drawn. 
 			**/
-			inline void draw_line(iVec2 P1, iVec2 P2, RGBc color, bool blending, bool antialiased, float tickness)
+			inline void draw_line(iVec2 P1, iVec2 P2, RGBc color, bool draw_P2, bool blending, bool antialiased, float tickness)
 				{
 				if (tickness <= 0.0f) return;
-				if (tickness == 1.0f) { draw_line(P1, P2, color, blending, antialiased); return; }
+				if (tickness == 1.0f) { draw_line(P1, P2, color, draw_P2, blending, antialiased); return; }
+				if (isEmpty()) return;
+				if (!_csLineClip(P1, P2, iBox2(0, _lx - 1, 0, _ly - 1))) return;
+				if (P1 == P2)
+					{					
+					if (draw_P2)
+						{
+						if (blending) blendPixel(P2, color); else setPixel(P2, color);  // <- improve that, should draw a square or circle of the right diameter instead of ject a point. 
+						}
+					return; 
+					}
 				if (P1.X() == P2.X()) 
 					{ 
-					if (blending) { _verticalLine_blend(P1.X(), P1.Y(), P2.Y(), color, tickness); } else { _verticalLine(P1.X(), P1.Y(), P2.Y(), color, tickness); }
+					if (blending) { _tickVerticalLine_blend(P1.X(), P1.Y(), P2.Y(), color, tickness); } else { _tickVerticalLine(P1.X(), P1.Y(), P2.Y(), color, tickness); }
 					return;
 					}
 				if (P1.Y() == P2.Y()) 
 					{
-					if (blending) { _horizontalLine_blend(P1.Y(), P1.X(), P2.X(), color, tickness); } else { _horizontalLine(P1.Y(), P1.X(), P2.X(), color, tickness); }
+					if (blending) { _tickHorizontalLine_blend(P1.Y(), P1.X(), P2.X(), color, tickness); } else { _tickHorizontalLine(P1.Y(), P1.X(), P2.X(), color, tickness); }
 					return;
 					}
 				if (blending) _tickLineBresenhamAA_blend(P1, P2, tickness, color); else _tickLineBresenhamAA(P1, P2, tickness, color);
@@ -1708,15 +1725,17 @@ namespace mtools
 			* @param	x2		   	x-coord of the second point.
 			* @param	y2		   	y-coord of the second point.
 			* @param	color	   	The color to use.
+			* @param	draw_P2		true to draw the endpoint P2.
 			* @param	blending   	true to use blending instead of simply copying the color.
 			* @param	antialiased	true to draw an antialised line.
 			* @param	tickness   	The tickness of the line (default 1, much slower if other value). A line
-			* 						with non-unit tickness is always antialiased.
+			* 						with non-unit tickness is always antialiased and both endpoint are drawn.
 			**/
-			MTOOLS_FORCEINLINE void draw_line(int64 x1, int64 y1, int64 x2, int64 y2, RGBc color, bool blending, bool antialiased, float tickness)
+			MTOOLS_FORCEINLINE void draw_line(int64 x1, int64 y1, int64 x2, int64 y2, RGBc color, bool draw_P2, bool blending, bool antialiased, float tickness)
 				{
-				draw_line({ x1, y1 }, { x2,y2 }, color, blending, antialiased, tickness);
+				draw_line({ x1, y1 }, { x2,y2 }, color, draw_P2, blending, antialiased, tickness);
 				}
+
 
 
 			/**
@@ -2866,11 +2885,11 @@ namespace mtools
 				}
 
 
-			/* draw a vertical line */
+			/* draw a vertical line, (do not draw (x,y2) ) */
 			MTOOLS_FORCEINLINE void _verticalLine(int64 x, int64 y1, int64 y2, RGBc color)
 				{
 				if ((x < 0) || (x >= _lx)) return;
-				if (y2 < y1) { mtools::swap(y1, y2); }
+				if (y2 < y1) { y2++; mtools::swap(y1, y2); } else { y2--;}
 				if ((y2 < 0) || (y1 >= _ly)) return;
 				y1 = (y1 < 0) ? 0 : y1;
 				y2 = (y2 >= _ly) ? (_ly - 1) : y2;
@@ -2879,11 +2898,11 @@ namespace mtools
 				while (p != q) { (*p) = color; p += _stride; }
 				}
 
-			/* draw a vertical line (use blending) */
+			/* draw a vertical line ((do not draw (x,y2), use blending) */
 			MTOOLS_FORCEINLINE void _verticalLine_blend(int64 x, int64 y1, int64 y2, RGBc color)
 				{
 				if ((x < 0) || (x >= _lx)) return;
-				if (y2 < y1) { mtools::swap(y1, y2); }
+				if (y2 < y1) { y2++; mtools::swap(y1, y2); } else { y2--; }
 				if ((y2 < 0) || (y1 >= _ly)) return;
 				y1 = (y1 < 0) ? 0 : y1;
 				y2 = (y2 >= _ly) ? (_ly - 1) : y2;
@@ -2893,11 +2912,11 @@ namespace mtools
 				}
 
 
-			/* draw a horizontal line */
+			/* draw a horizontal line (do not draw (x2,y) ) */
 			MTOOLS_FORCEINLINE void _horizontalLine(int64 y, int64 x1, int64 x2, RGBc color)
 				{
 				if ((y < 0) || (y >= _ly)) return;
-				if (x2 < x1) { mtools::swap(x1, x2); }
+				if (x2 < x1) { x2++; mtools::swap(x1, x2); } else { x2--; }
 				if ((x2 < 0) || (x1 >= _lx)) return;
 				x1 = (x1 < 0) ? 0 : x1;
 				x2 = (x2 >= _lx) ? (_lx - 1) : x2;
@@ -2907,11 +2926,11 @@ namespace mtools
 				}
 
 
-			/* draw a horizontal line (use blending) */
+			/* draw a horizontal line (do not draw (x2,y), use blending) */
 			MTOOLS_FORCEINLINE void _horizontalLine_blend(int64 y, int64 x1, int64 x2, RGBc color)
 				{
 				if ((y < 0) || (y >= _ly)) return;
-				if (x2 < x1) { mtools::swap(x1, x2); }
+				if (x2 < x1) { x2++; mtools::swap(x1, x2); } else { x2--; }
 				if ((x2 < 0) || (x1 >= _lx)) return;
 				x1 = (x1 < 0) ? 0 : x1;
 				x2 = (x2 >= _lx) ? (_lx - 1) : x2;
@@ -2921,8 +2940,8 @@ namespace mtools
 				}
 
 
-			/* draw a tick vertical line */
-			MTOOLS_FORCEINLINE void _verticalLine(int64 x, int64 y1, int64 y2, RGBc color, float tickness)
+			/* draw a tick vertical line (draw both endpoint) */
+			MTOOLS_FORCEINLINE void _tickVerticalLine(int64 x, int64 y1, int64 y2, RGBc color, float tickness)
 				{
 				// tickness is assumed positive
 				float f = (tickness / 2) + 0.5f;
@@ -2939,8 +2958,8 @@ namespace mtools
 				}
 
 
-			/* draw a tick vertical line (use blending) */
-			MTOOLS_FORCEINLINE void _verticalLine_blend(int64 x, int64 y1, int64 y2, RGBc color, float tickness)
+			/* draw a tick vertical line (draw both endpoint, use blending) */
+			MTOOLS_FORCEINLINE void _tickVerticalLine_blend(int64 x, int64 y1, int64 y2, RGBc color, float tickness)
 				{
 				// tickness is assumed positive
 				float f = (tickness / 2) + 0.5f;
@@ -2957,8 +2976,8 @@ namespace mtools
 				}
 
 
-			/* draw a tick horizontal line */
-			MTOOLS_FORCEINLINE void _horizontalLine(int64 y, int64 x1, int64 x2, RGBc color, float tickness)
+			/* draw a tick horizontal line (draw both endpoint) */
+			MTOOLS_FORCEINLINE void _tickHorizontalLine(int64 y, int64 x1, int64 x2, RGBc color, float tickness)
 				{
 				// tickness is assumed positive
 				float f = (tickness / 2) + 0.5f;
@@ -2975,8 +2994,8 @@ namespace mtools
 				}
 
 
-			/* draw a tick horizontal line (use blending) */
-			MTOOLS_FORCEINLINE void _horizontalLine_blend(int64 y, int64 x1, int64 x2, RGBc color, float tickness)
+			/* draw a tick horizontal line (draw both endpoint, use blending) */
+			MTOOLS_FORCEINLINE void _tickHorizontalLine_blend(int64 y, int64 x1, int64 x2, RGBc color, float tickness)
 				{
 				// tickness is assumed positive
 				float f = (tickness / 2) + 0.5f;
@@ -2993,18 +3012,18 @@ namespace mtools
 				}
 
 
-
 			/**
 			* THE EXTREMELY FAST LINE ALGORITHM Variation E (Addition Fixed Point PreCalc)
 			* Copyright 2001-2, By Po-Han Lin
 			* c.f. http://www.edepot.com
 			*
-			* A little faster than Bressenham (10% increase speed).
+			* A little faster than Bresenham (10% increase speed).
+			* -------------------------------------------------------------------------------------------
+			* TODO : Modify the algorithm not to draw the endpoint before using it in place of bresenham.
+			* -------------------------------------------------------------------------------------------
 			**/
-			MTOOLS_FORCEINLINE void _lineEFLA(iVec2 P1, iVec2 P2, RGBc color)
+			MTOOLS_FORCEINLINE void _lineEFLA_TODO(iVec2 P1, iVec2 P2, RGBc color)
 				{
-				if (isEmpty()) return;
-				if (!_csLineClip(P1, P2, iBox2(0, _lx - 1, 0, _ly - 1))) return;
 				bool yLonger = false;
 				int64 & x = P1.X();
 				int64 & y = P1.Y();
@@ -3042,11 +3061,12 @@ namespace mtools
 			* c.f. http://www.edepot.com
 			*
 			* A little faster than Bressenham (10% increase speed).
+			* -------------------------------------------------------------------------------------------
+			* TODO : Modify the algorithm not to draw the endpoint before using it in place of bresenham.
+			* -------------------------------------------------------------------------------------------
 			**/
-			MTOOLS_FORCEINLINE void _lineEFLA_blend(iVec2 P1, iVec2 P2, RGBc color)
+			MTOOLS_FORCEINLINE void _lineEFLA_blend_TODO(iVec2 P1, iVec2 P2, RGBc color)
 				{
-				if (isEmpty()) return;
-				if (!_csLineClip(P1, P2, iBox2(0, _lx - 1, 0, _ly - 1))) return;
 				bool yLonger = false;
 				int64 & x = P1.X();
 				int64 & y = P1.Y();
@@ -3081,22 +3101,18 @@ namespace mtools
 			/**
 			* Draw a line using Bresenham's algorithm.
 			* Optimized.
+			* Do not draw the endpoint P2.
 			**/
 			MTOOLS_FORCEINLINE void _lineBresenham(iVec2 P1, iVec2 P2, RGBc color)
 				{
-				if (isEmpty()) return;
-				if (!_csLineClip(P1, P2, iBox2(0, _lx - 1, 0, _ly - 1))) return;
-				int64 & x1 = P1.X(); int64 & y1 = P1.Y();
-				int64 & x2 = P2.X(); int64 & y2 = P2.Y();
+				int64 & x1 = P2.X(); int64 & y1 = P2.Y(); // swap P1 and P2 so that (x1,y1) is the endpoint
+				int64 & x2 = P1.X(); int64 & y2 = P1.Y(); //
 				int64 dy = y2 - y1;
 				int64 dx = x2 - x1;
 				int64 stepx, stepy;
-				if (dy < 0) { dy = -dy;  stepy = -1; }
-				else { stepy = 1; }
-				if (dx < 0) { dx = -dx;  stepx = -1; }
-				else { stepx = 1; }
+				if (dy < 0) { dy = -dy;  stepy = -1; } else { stepy = 1; }
+				if (dx < 0) { dx = -dx;  stepx = -1; } else { stepx = 1; }
 				dy <<= 1; dx <<= 1;
-				operator()(x1, y1) = color;
 				if (dx > dy)
 					{
 					int64 fraction = dy - (dx >> 1);
@@ -3118,28 +3134,25 @@ namespace mtools
 						}
 					}
 				}
+
 
 
 			/**
 			* Draw a line using Bresenham's algorithm.
 			* Optimized. No bound check.
 			* Use blending.
+			* Do not draw the endpoint P2.
 			**/
 			MTOOLS_FORCEINLINE void _lineBresenham_blend(iVec2 P1, iVec2 P2, RGBc color)
 				{
-				if (isEmpty()) return;
-				if (!_csLineClip(P1, P2, iBox2(0, _lx - 1, 0, _ly - 1))) return;
-				int64 & x1 = P1.X(); int64 & y1 = P1.Y();
-				int64 & x2 = P2.X(); int64 & y2 = P2.Y();
+				int64 & x1 = P2.X(); int64 & y1 = P2.Y(); // swap P1 and P2 so that (x1,y1) is the endpoint
+				int64 & x2 = P1.X(); int64 & y2 = P1.Y(); //
 				int64 dy = y2 - y1;
 				int64 dx = x2 - x1;
 				int64 stepx, stepy;
-				if (dy < 0) { dy = -dy;  stepy = -1; }
-				else { stepy = 1; }
-				if (dx < 0) { dx = -dx;  stepx = -1; }
-				else { stepx = 1; }
+				if (dy < 0) { dy = -dy;  stepy = -1; } else { stepy = 1; }
+				if (dx < 0) { dx = -dx;  stepx = -1; } else { stepx = 1; }
 				dy <<= 1; dx <<= 1;
-				operator()(x1, y1).blend(color);
 				if (dx > dy)
 					{
 					int64 fraction = dy - (dx >> 1);
@@ -3163,14 +3176,16 @@ namespace mtools
 				}
 
 
+
 			/**
 			* Draw an antialiased line using Bresenham's algorithm.
 			* No bound check.
+			* -------------------------------------------------------------------------------------------
+			* TODO : Modify the algorithm not to draw the endpoint P2.
+			* -------------------------------------------------------------------------------------------
 			**/
-			MTOOLS_FORCEINLINE void _lineBresenhamAA(iVec2 P1, iVec2 P2, RGBc color)
+			MTOOLS_FORCEINLINE void _lineBresenhamAA_TODO(iVec2 P1, iVec2 P2, RGBc color)
 				{
-				if (isEmpty()) return;
-				if (!_csLineClip(P1, P2, iBox2(0, _lx - 1, 0, _ly - 1))) return;
 				int64 & x0 = P1.X(); int64 & y0 = P1.Y();
 				int64 & x1 = P2.X(); int64 & y1 = P2.Y();
 				int64 sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1, x2;
@@ -3242,11 +3257,12 @@ namespace mtools
 			* Draw an antialiased line using Bresenham's algorithm.
 			* No bound check.
 			* Use blending.
+			* -------------------------------------------------------------------------------------------
+			* TODO : Modify the algorithm not to draw the endpoint P2.
+			* -------------------------------------------------------------------------------------------
 			**/
-			MTOOLS_FORCEINLINE void _lineBresenhamAA_blend(iVec2 P1, iVec2 P2, RGBc color)
+			MTOOLS_FORCEINLINE void _lineBresenhamAA_blend_TODO(iVec2 P1, iVec2 P2, RGBc color)
 				{
-				if (isEmpty()) return;
-				if (!_csLineClip(P1, P2, iBox2(0, _lx - 1, 0, _ly - 1))) return;
 				int64 & x0 = P1.X(); int64 & y0 = P1.Y();
 				int64 & x1 = P2.X(); int64 & y1 = P2.Y();
 				int64 sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1, x2;
@@ -3313,11 +3329,18 @@ namespace mtools
 				}
 
 
-			/* antialiased line with Wu algorithm, a little faster than Bressenham AA version (10%) */
+
+
+			/**
+			* Antialiased line with Wu algorithm, a little faster than Bressenham AA version (10%)
+			*
+			* !!! DOES NOT WORK FOR HORIZONTAL AND VERTICAL LINES !!!
+			*
+			* Use blending
+			* do not draw the endpoint P2.
+			**/
 			MTOOLS_FORCEINLINE void _lineWuAA(iVec2 P1, iVec2 P2, RGBc color)
 				{
-				if (isEmpty()) return;
-				if (!_csLineClip(P1, P2, iBox2(0, _lx - 1, 0, _ly - 1))) return;
 				int64 & x0 = P1.X(); int64 & y0 = P1.Y();
 				int64 & x1 = P2.X(); int64 & y1 = P2.Y();
 				operator()(x0, y0) = color;
@@ -3326,26 +3349,16 @@ namespace mtools
 				int64 dir;
 				if (dx >= 0) { dir = 1; } else { dir = -1; dx = -dx; }
 				int64 dy = y1 - y0;
-				if (dy == 0)
-					{
-					while (dx-- != 0) { x0 += dir; operator()(x0, y0) = color; }
-					return;
-					}
-				if (dx == 0)
-					{
-					do { y0++; operator()(x0, y0) = color; } while (--dy != 0);
-					return;
-					}
 				if (dx == dy)
 					{ 
-					do { x0 += dir; y0++; operator()(x0, y0) = color; } while (--dy != 0);
+					while (--dy > 0) { x0 += dir; y0++; operator()(x0, y0) = color; }
 					return;
 					}
 				uint32 err = 0;
 				if (dy > dx)
 					{
 					uint32 inc = (uint32)((dx << 32) / dy);
-					while (--dy)
+					while (--dy > 0)
 						{
 						const uint32 tmp = err;
 						err += inc;
@@ -3360,7 +3373,7 @@ namespace mtools
 				else
 					{
 					uint32 inc = (uint32)((dy << 32) / dx);
-					while (--dx)
+					while (--dx  > 0)
 						{
 						const uint32 tmp = err;
 						err += inc;
@@ -3372,45 +3385,39 @@ namespace mtools
 						operator()(x0, y0) = color;
 						}
 					}
-				operator()(x1, y1) = color;
 				return; 
 				}
 
 
-			/* antialiased line with Wu algorithm, a little faster than Bressenham AA version (10%) */
+
+			/**
+			 * Antialiased line with Wu algorithm, a little faster than Bressenham AA version (10%) 
+			 *
+			 * !!! DOES NOT WORK FOR HORIZONTAL AND VERTICAL LINES !!! 
+			 *
+			 * Use blending
+			 * do not draw the endpoint P2.
+			 **/
 			MTOOLS_FORCEINLINE void _lineWuAA_blend(iVec2 P1, iVec2 P2, RGBc color)
 				{
-				if (isEmpty()) return;
-				if (!_csLineClip(P1, P2, iBox2(0, _lx - 1, 0, _ly - 1))) return;
 				int64 & x0 = P1.X(); int64 & y0 = P1.Y();
 				int64 & x1 = P2.X(); int64 & y1 = P2.Y();
-				operator()(x0, y0).blend(color); // Draw the initial pixel
-				if (y0 > y1) { mtools::swap(y0, y1); mtools::swap(x0, x1); } // swap for line direction 	
+				operator()(x0, y0).blend(color);
+				if (y0 > y1) { mtools::swap(y0, y1); mtools::swap(x0, x1); }
 				int64 dx = x1 - x0;
 				int64 dir;
-				if (dx >= 0) { dir = 1; }
-				else { dir = -1; dx = -dx; } // make dx positive 
+				if (dx >= 0) { dir = 1; } else { dir = -1; dx = -dx; }
 				int64 dy = y1 - y0;
-				if (dy == 0)
-					{
-					while (dx-- != 0) { x0 += dir; operator()(x0, y0).blend(color); }
-					return;
-					}
-				if (dx == 0)
-					{
-					do { y0++; operator()(x0, y0).blend(color); } while (--dy != 0);
-					return;
-					}
 				if (dx == dy)
 					{ // diagonal line
-					do { x0 += dir; y0++; operator()(x0, y0).blend(color); } while (--dy != 0);
+					while(--dy > 0) { x0 += dir; y0++; operator()(x0, y0).blend(color); }
 					return;
 					}
 				uint32 err = 0;
 				if (dy > dx)
 					{
 					uint32 inc = (uint32)((dx << 32) / dy);
-					while (--dy)
+					while (--dy > 0)
 						{
 						const uint32 tmp = err;
 						err += inc;
@@ -3425,7 +3432,7 @@ namespace mtools
 				else
 					{
 					uint32 inc = (uint32)((dy << 32) / dx);
-					while (--dx)
+					while (--dx  > 0)
 						{
 						const uint32 tmp = err;
 						err += inc;
@@ -3437,18 +3444,19 @@ namespace mtools
 						operator()(x0, y0).blend(color);
 						}
 					}
-				operator()(x1, y1).blend(color);
 				return;
 				}
 
 
 			/**
 			* Draw an tick antialiased line using Bresenham's algorithm.
+			* 
+			* -------------------------------------------------------------------------------------------
+			* TODO : endpoints are not very clean, improve it. 
+			* -------------------------------------------------------------------------------------------
 			**/
 			MTOOLS_FORCEINLINE void _tickLineBresenhamAA(iVec2 P1, iVec2 P2, float wd, RGBc color)
 				{
-				if (isEmpty()) return;
-				if (!_csLineClip(P1, P2, iBox2(0, _lx - 1, 0, _ly - 1))) return;
 				int64 & x0 = P1.X(); int64 & y0 = P1.Y();
 				int64 & x1 = P2.X(); int64 & y1 = P2.Y();
 				int64 dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
@@ -3522,11 +3530,13 @@ namespace mtools
 			/**
 			* Draw an tick antialiased line using Bresenham's algorithm.
 			* use blending.
+			* 
+			* -------------------------------------------------------------------------------------------
+			* TODO : endpoints are not very clean, improve it.
+			* -------------------------------------------------------------------------------------------
 			**/
 			MTOOLS_FORCEINLINE void _tickLineBresenhamAA_blend(iVec2 P1, iVec2 P2, float wd, RGBc color)
 				{
-				if (isEmpty()) return;
-				if (!_csLineClip(P1, P2, iBox2(-(int64)(5*wd), _lx - 1 + (int64)(5 * wd), -(int64)(5 * wd), _ly - 1 + (int64)(5 * wd)))) return;
 				int64 & x0 = P1.X(); int64 & y0 = P1.Y();
 				int64 & x1 = P2.X(); int64 & y1 = P2.Y();
 				int64 dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
@@ -3595,6 +3605,8 @@ namespace mtools
 					return;
 					}
 				}
+
+
 
 
 			/*************************************************************

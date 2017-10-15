@@ -876,34 +876,102 @@ void testImg()
 
 
 
+
+
+
 	void testtick()
 	{
 
-		im.resizeRaw(800, 600);
+		im.resizeRaw(1100, 600);
 		im.clear(RGBc::c_White);
 
+		int64 xc = 300;
+		int64 yc = 300;
 
-		int64 x0 = 400;
-		int64 y0 = 300;
+		int64 xd = 800;
+		int64 yd = 300;
 
 		double R = 200;
-		double a = 89;
+		double r = 20;
+
+		bool draw_p2 = false;
+		bool blending = false;
+		bool antialiased = true;
+		float tick = 1.0f;
+		float op = 0.6; 
+
+		for (int a = 0; a < 360; a += 10)
+			{
+			int64 x1 = xc + r*cos(a*TWOPI / 360);
+			int64 y1 = yc + r*sin(a*TWOPI / 360);
+			int64 x2 = xc + R*cos(a*TWOPI / 360);
+			int64 y2 = yc + R*sin(a*TWOPI / 360);
+			im.setPixel({ x2,y2 }, RGBc::c_Red);
+			im.draw_line({ x1,y1 }, { x2,y2 }, RGBc::c_Black.getOpacity(op), draw_p2, blending, antialiased, tick);
+
+			int64 x3 = xd + r*cos(a*TWOPI / 360);
+			int64 y3 = yd + r*sin(a*TWOPI / 360);
+			int64 x4 = xd + R*cos(a*TWOPI / 360);
+			int64 y4 = yd + R*sin(a*TWOPI / 360);
+			im.setPixel({ x3,y3 }, RGBc::c_Red);
+			im.draw_line({ x4,y4 }, { x3,y3 }, RGBc::c_Black.getOpacity(op), draw_p2, blending, antialiased, tick);
+
+			}
 
 
-		int64 x1 = x0 + R*cos(a*TWOPI / 360);
-		int64 y1 = y0 + R*sin(a*TWOPI / 360);
+		{
+		int64 x1 = 10; int64 y1 = 10;
+		int64 x2 = 100; int64 y2 = 10;
+		im.setPixel({ x2,y2 }, RGBc::c_Red);
+		im.draw_line({ x1,y1 }, { x2,y2 }, RGBc::c_Black.getOpacity(op), draw_p2, blending, antialiased, tick);
+		}
 
-		x1 = x0 + 100 ;
-		y1 = y0  + 200; 
 
-		float tick = 20;
+		{
+		int64 x1 = 100; int64 y1 = 20;
+		int64 x2 = 10; int64 y2 = 20;
+		im.setPixel({ x2,y2 }, RGBc::c_Red);
+		im.draw_line({ x1,y1 }, { x2,y2 }, RGBc::c_Black.getOpacity(op), draw_p2, blending, antialiased, tick);
+		}
 
 
-		im.draw_line({ x0,y0 }, { x1,y1 }, RGBc::c_Black.getOpacity(0.5), true, true, tick);
-		im.draw_line({ x1,y1 }, { x0,y0 }, RGBc::c_Black.getOpacity(0.5), true, true, tick);
+		{
+		int64 x1 = 10; int64 y1 = 30;
+		int64 x2 = 10; int64 y2 = 100;
+		im.setPixel({ x2,y2 }, RGBc::c_Red);
+		im.draw_line({ x1,y1 }, { x2,y2 }, RGBc::c_Black.getOpacity(op), draw_p2, blending, antialiased, tick);
+		}
 
-		im.setPixel({ x0,y0 }, RGBc::c_Red);
-		im.setPixel({ x1,y1 }, RGBc::c_Red);
+		{
+		int64 x1 = 30; int64 y1 = 100;
+		int64 x2 = 30; int64 y2 = 30;
+		im.setPixel({ x2,y2 }, RGBc::c_Red);
+		im.draw_line({ x1,y1 }, { x2,y2 }, RGBc::c_Black.getOpacity(op), draw_p2, blending, antialiased, tick);
+		}
+
+
+		{
+		int64 x1 = 40; int64 y1 = 40;
+		int64 x2 = 80; int64 y2 = 80;
+		im.setPixel({ x2,y2 }, RGBc::c_Red);
+		im.draw_line({ x1,y1 }, { x2,y2 }, RGBc::c_Black.getOpacity(op), draw_p2, blending, antialiased, tick);
+		}
+
+		{
+		int64 x1 = 90; int64 y1 = 40;
+		int64 x2 = 50; int64 y2 = 80;
+		im.setPixel({ x2,y2 }, RGBc::c_Red);
+		im.draw_line({ x1,y1 }, { x2,y2 }, RGBc::c_Black.getOpacity(op), draw_p2, blending, antialiased, tick);
+		}
+
+		{
+		int64 x1 = 5; int64 y1 = 5;
+		int64 x2 = 5; int64 y2 = 5;
+		im.setPixel({ x2,y2 }, RGBc::c_Red);
+		im.draw_line({ x1,y1 }, { x2,y2 }, RGBc::c_Black.getOpacity(op), draw_p2, blending, antialiased, tick);
+		}
+
+
 		mtools::Plotter2D plotter;
 		auto P1 = mtools::makePlot2DImage(im, 4, "Img");
 		plotter[P1];
@@ -920,12 +988,12 @@ int main(int argc, char *argv[])
 
 
 
-/*	
+
 	testtick();
 	cout << "Hello World\n";
 	cout.getKey();
 	return 0;
-	*/
+	
 	/*
 	create();
 	cout << "done!\n";
