@@ -1791,12 +1791,6 @@ namespace mtools
 
 
 
-			void fill_interior_triangle(iVec2 P1, iVec2 P2, iVec2 P3, RGBc color)
-				{
-				_fill_interior_triangle(P1, P2, P3, color);
-				}
-
-
 
 
 
@@ -2326,7 +2320,19 @@ namespace mtools
 				return ((_deletepointer != nullptr) ? (*_deletepointer) : 1);
 				}
 
-		private:
+
+
+
+
+
+
+
+//		private:
+
+
+
+
+
 
 			/*************************************************************
 			* MISC PRIVATE METHODS                                       *
@@ -2906,7 +2912,7 @@ namespace mtools
 			**************************************************************/
 
 
-			/* draw a filled rectazngle */
+			/* draw a filled rectangle */
 			MTOOLS_FORCEINLINE void _draw_box(int64 x, int64 y, int64 sx, int64 sy, RGBc boxcolor, bool blend)
 				{
 				if (x < 0) { sx -= x;   x = 0; }
@@ -3145,13 +3151,13 @@ namespace mtools
 			 * 
 			 * - no bound check.
 			 * - Do not draw the endpoint P2.
-			 * - Algorithm is symmetric : the line from P1 to P2 and P2 to P1 are the same (excpet for the
+			 * - Algorithm is symmetric : the line from P1 to P2 and P2 to P1 are the same (except for the
 			 *   endpoint that is not drawn).
 			 **/
 			MTOOLS_FORCEINLINE void _lineBresenham(iVec2 P1, iVec2 P2, RGBc color)
 				{
-				int64 & x2 = P1.X(); int64 & y2 = P1.Y(); // swap P1 and P2 because the algorithm make
-				int64 & x1 = P2.X(); int64 & y1 = P2.Y(); // it easier not to draw the start point.
+				int64 & x1 = P1.X(); int64 & y1 = P1.Y();
+				int64 & x2 = P2.X(); int64 & y2 = P2.Y();
 				int64 dy = y2 - y1;
 				int64 dx = x2 - x1;
 				int64 stepx, stepy;
@@ -3163,9 +3169,8 @@ namespace mtools
 					int64 fraction = dy - (dx >> 1) - ((y2 > y1) ? 1 : 0); // compensate by 1 according to the direction of y to make it symmetric.
 					while (x1 != x2)
 						{
-						if (fraction >= 0) { y1 += stepy; fraction -= dx; }
-						x1 += stepx; fraction += dy;
-						operator()(x1, y1) = color;
+						operator()(x1, y1) =color;
+						if (fraction >= 0) { y1 += stepy; fraction -= dx; } x1 += stepx; fraction += dy;
 						}
 					}
 				else
@@ -3173,9 +3178,8 @@ namespace mtools
 					int64 fraction = dx - (dy >> 1) - ((x2 > x1) ? 1 : 0); // compensate by 1 according to the direction of x to make it symmetric.
 					while (y1 != y2)
 						{
-						if (fraction >= 0) { x1 += stepx; fraction -= dy; }
-						y1 += stepy; fraction += dx;
 						operator()(x1, y1) = color;
+						if (fraction >= 0) { x1 += stepx; fraction -= dy; } y1 += stepy; fraction += dx;
 						}
 					}
 				}
@@ -3185,14 +3189,14 @@ namespace mtools
 			*
 			* - no bound check.
 			* - Do not draw the endpoint P2.
-			* - Algorithm is symmetric : the line from P1 to P2 and P2 to P1 are the same (excpet for the
+			* - Algorithm is symmetric : the line from P1 to P2 and P2 to P1 are the same (except for the
 			*   endpoint that is not drawn).
 			* - use blending instead of overwriting.
 			**/
 			MTOOLS_FORCEINLINE void _lineBresenham_blend(iVec2 P1, iVec2 P2, RGBc color)
 				{
-				int64 & x2 = P1.X(); int64 & y2 = P1.Y(); // swap P1 and P2 because the algorithm make
-				int64 & x1 = P2.X(); int64 & y1 = P2.Y(); // it easier not to draw the start point.
+				int64 & x1 = P1.X(); int64 & y1 = P1.Y();
+				int64 & x2 = P2.X(); int64 & y2 = P2.Y();
 				int64 dy = y2 - y1;
 				int64 dx = x2 - x1;
 				int64 stepx, stepy;
@@ -3204,9 +3208,10 @@ namespace mtools
 					int64 fraction = dy - (dx >> 1) - ((y2 > y1) ? 1 : 0); // compensate by 1 according to the direction of y to make it symmetric.
 					while (x1 != x2)
 						{
-						if (fraction >= 0) { y1 += stepy; fraction -= dx; }
-						x1 += stepx; fraction += dy;
 						operator()(x1, y1).blend(color);
+						if (fraction >= 0) { y1 += stepy; fraction -= dx; } 
+						x1 += stepx; 
+						fraction += dy;
 						}
 					}
 				else
@@ -3214,156 +3219,82 @@ namespace mtools
 					int64 fraction = dx - (dy >> 1) - ((x2 > x1) ? 1 : 0); // compensate by 1 according to the direction of x to make it symmetric.
 					while (y1 != y2)
 						{
-						if (fraction >= 0) { x1 += stepx; fraction -= dy; }
-						y1 += stepy; fraction += dx;
 						operator()(x1, y1).blend(color);
+						if (fraction >= 0) { x1 += stepx; fraction -= dy; } y1 += stepy; fraction += dx;
 						}
 					}
 				}
 
 
-			/* draw an horizontal line from (x1+1,y) to (x2-1,y) */
-			MTOOLS_FORCEINLINE void _hline(int64 x1, int64 x2, int64 y, RGBc color)
+
+			/* draw the Bressenham line (P,Q1) while not drawing over point that belong to line (P,Q2) */
+			void _lineBresenham_avoid(iVec2 P, iVec2 Q1, iVec2 Q2, RGBc color)
 				{
-				RGBc * p = _data + _stride*y + x1 + 1;
-				for (int64 z = (x1 + 1); z < x2; z++) { *p = color; p++; }
-				}
+				int64 xa1 = P.X();  int64 ya1 = P.Y();
+				int64 xb1 = P.X();  int64 yb1 = P.Y();
+				int64 xa2 = Q1.X(); int64 ya2 = Q1.Y();
+				int64 xb2 = Q2.X(); int64 yb2 = Q2.Y();
 
+				int64 dya = ya2 - ya1;
+				int64 dxa = xa2 - xa1;
+				int64 dyb = yb2 - yb1;
+				int64 dxb = xb2 - xb1;
 
+				int64 stepxa, stepya;
+				if (dya < 0) { dya = -dya;  stepya = -1; } else { stepya = 1; }
+				if (dxa < 0) { dxa = -dxa;  stepxa = -1; } else { stepxa = 1; }
+				dya <<= 1; dxa <<= 1;
 
-			/* fill the interior of a triangle */
-			MTOOLS_FORCEINLINE void _fill_interior_triangle(iVec2 P1, iVec2 P2, iVec2 P3, RGBc color)
-				{
-				// order the points by increasing value of y. 
-				if (P2.Y() < P1.Y()) { mtools::swap(P1, P2); }
-				if (P3.Y() < P1.Y()) { mtools::swap(P1, P3); }
-				if (P3.Y() < P2.Y()) { mtools::swap(P2, P3); }
-				// check if we have a triangle with an horizontal base.
-				if ((P1.Y() == P2.Y()) || (P2.Y() == P3.Y()))
-					{ // yes
-					if (P1.Y() == P3.Y()) return; // flat, no interior
-					int64 xa, ya, xb, yb, xc, yc;
-					if (P1.Y() == P2.Y())
+				int64 stepxb, stepyb;
+				if (dyb < 0) { dyb = -dyb;  stepyb = -1; } else { stepyb = 1; }
+				if (dxb < 0) { dxb = -dxb;  stepxb = -1; } else { stepxb = 1; }
+				dyb <<= 1; dxb <<= 1;
+
+				if (dxa > dya)
+					{
+					int64 fractiona = dya - (dxa >> 1) - ((ya2 > ya1) ? 1 : 0);
+					if (dxb > dyb)
 						{
-						xc = P3.X(); yc = P3.Y();
-						if (P1.X() < P2.X())
+						int64 fractionb = dyb - (dxb >> 1) - ((yb2 > yb1) ? 1 : 0);
+						while (xa1 != xa2)
 							{
-							xa = P1.X(); ya = P1.Y();
-							xb = P2.X(); yb = P2.Y();
-							}
-						else
-							{
-							xa = P2.X(); ya = P2.Y();
-							xb = P1.X(); yb = P1.Y();
+							if ((xa1 != xb1) || (ya1 != yb1)) operator()(xa1, ya1).blend(color);
+							if (fractiona >= 0) { ya1 += stepya; fractiona -= dxa; } xa1 += stepxa; fractiona += dya;
+							if (fractionb >= 0) { yb1 += stepyb; fractionb -= dxb; } xb1 += stepxb; fractionb += dyb;							
 							}
 						}
 					else
 						{
-						xc = P1.X(), yc = P1.Y();
-						if (P2.X() < P3.X())
+						int64 fractionb = dxb - (dyb >> 1) - ((xb2 > xb1) ? 1 : 0);
+						while (xa1 != xa2)
 							{
-							xa = P2.X(); ya = P2.Y();
-							xb = P3.X(); yb = P3.Y();
-							}
-						else
-							{
-							xa = P3.X(); ya = P3.Y();
-							xb = P2.X(); yb = P2.Y();
+							if ((xa1 != xb1) || (ya1 != yb1)) operator()(xa1, ya1).blend(color);
+							if (fractiona >= 0) { ya1 += stepya; fractiona -= dxa; } xa1 += stepxa; fractiona += dya;
+							if (fractionb >= 0) { xb1 += stepxb; fractionb -= dyb; } yb1 += stepyb; fractionb += dxb;
 							}
 						}
-					if (xa == xb) return; // flat, non interior
-
-					int64 dyA = yc - ya;
-					int64 dxA = xc - xa;
-					int64 dyB = yc - yb;
-					int64 dxB = xc - xb;
-
-					int64 stepxA, stepyA;
-					if (dyA < 0) { dyA = -dyA;  stepyA = -1; } else { stepyA = 1; }
-					if (dxA < 0) { dxA = -dxA;  stepxA = -1; } else { stepxA = 1; }
-					dyA <<= 1; dxA <<= 1;
-
-					int64 stepxB, stepyB;
-					if (dyB < 0) { dyB = -dyB;  stepyB = -1; } else { stepyB = 1; }
-					if (dxB < 0) { dxB = -dxB;  stepxB = -1; } else { stepxB = 1; }
-					dyB <<= 1; dxB <<= 1;
-
-
-					if (dxA > dyA)
+					}
+				else
+					{
+					int64 fractiona = dxa - (dya >> 1) - ((xa2 > xa1) ? 1 : 0);
+					if (dxb > dyb)
 						{
-						if (dxB > dyB)
+						int64 fractionb = dyb - (dxb >> 1) - ((yb2 > yb1) ? 1 : 0);
+						while (ya1 != ya2)
 							{
-							cout << "A";
-							int64 fractionA = dyA - (dxA >> 1); // dxA > dyA
-							int64 fractionB = dyB - (dxB >> 1); // dxB > dyB
-							while (fractionA < 0) { xa += stepxA; fractionA += dyA; } fractionA -= dxA;	// dxA > dyA
-							while (fractionB < 0) { xb += stepxB; fractionB += dyB; } fractionB -= dxB; // dxB > dyB
-							ya += stepyA;
-							while (ya != yc)
-								{
-								do { xa += stepxA; fractionA += dyA; } while (fractionA < 0); fractionA -= dxA;	// dxA > dyA
-								do { xb += stepxB; fractionB += dyB; } while (fractionB < 0); fractionB -= dxB; // dxB > dyB
-								_hline(xa, xb, ya, color);
-								ya += stepyA;
-								}
-							return;
-							}
-						else
-							{
-							cout << "B";
-							int64 fractionA = dyA - (dxA >> 1); // dxA > dyA
-							int64 fractionB = dxB - (dyB >> 1); // dxB < dyB
-							while (fractionA < 0)  { xa += stepxA; fractionA += dyA; } fractionA -= dxA; // dxA > dyA
-							if (fractionB >= 0) { xb += stepxB; fractionB -= dyB; } fractionB += dxB; // dxB < dyB
-							ya += stepyA;
-							while (ya != yc)
-								{
-								do { xa += stepxA; fractionA += dyA; }	while (fractionA < 0); fractionA -= dxA; // dxA > dyA
-								_hline(xa, xb, ya, color);
-								if (fractionB >= 0) { xb += stepxB; fractionB -= dyB; } fractionB += dxB; // dxB < dyB
-								ya += stepyA;
-								}
-							return;
+							if ((xa1 != xb1) || (ya1 != yb1)) operator()(xa1, ya1).blend(color);
+							if (fractiona >= 0) { xa1 += stepxa; fractiona -= dya; } ya1 += stepya; fractiona += dxa;
+							if (fractionb >= 0) { yb1 += stepyb; fractionb -= dxb; } xb1 += stepxb; fractionb += dyb;
 							}
 						}
 					else
 						{
-						if (dxB > dyB)
+						int64 fractionb = dxb - (dyb >> 1) - ((xb2 > xb1) ? 1 : 0);
+						while (ya1 != ya2)
 							{
-							cout << "C";
-							int64 fractionA = dxA - (dyA >> 1); // dxA < dyA
-							int64 fractionB = dyB - (dxB >> 1); // dxB > dyB
-							if (fractionA >= 0) { xa += stepxA; fractionA -= dyA; } fractionA += dxA; // dxA < dyA
-							while (fractionB < 0) { xb += stepxB; fractionB += dyB; }  fractionB -= dxB; // dxB > dyB
-							ya += stepyA;
-							while (ya != yc)
-								{
-								do { xb += stepxB; fractionB += dyB; } while (fractionB < 0); fractionB -= dxB; // dxB > dyB
-								_hline(xa, xb, ya, color);
-								if (fractionA >= 0) { xa += stepxA; fractionA -= dyA; } fractionA += dxA; // dxA < dyA
-								ya += stepyA;
-								}
-							return;
-							}
-						else
-							{
-							cout << "D";
-							int64 fractionA = dxA - (dyA >> 1); // dxA < dyA
-							int64 fractionB = dxB - (dyB >> 1); // dxB < dyB
-							if (fractionA >= 0) { xa += stepxA; fractionA -= dyA; } fractionA += dxA; // dxA < dyA
-							if (fractionB >= 0) { xb += stepxB; fractionB -= dyB; } fractionB += dxB; // dxB < dyB
-							ya += stepyA;
-							while (ya != yc)
-								{
-								_hline(xa, xb, ya, color);
-								if (fractionA >= 0) { xa += stepxA; fractionA -= dyA; } fractionA += dxA; // dxA < dyA
-								if (fractionB >= 0) { xb += stepxB; fractionB -= dyB; } fractionB += dxB; // dxB < dyB
-								ya += stepyA;
-
-								setPixel(xa, ya, RGBc::c_Green);
-								setPixel(xb, ya, RGBc::c_Green);
-								}
-							return;
+							if ((xa1 != xb1) || (ya1 != yb1)) operator()(xa1, ya1).blend(color);
+							if (fractiona >= 0) { xa1 += stepxa; fractiona -= dya; } ya1 += stepya; fractiona += dxa;
+							if (fractionb >= 0) { xb1 += stepxb; fractionb -= dyb; } yb1 += stepyb; fractionb += dxb;
 							}
 						}
 					}
@@ -3374,156 +3305,140 @@ namespace mtools
 
 
 
-			/**
-			* Draw an antialiased line using Bresenham's algorithm.
-			* No bound check.
-			* -------------------------------------------------------------------------------------------
-			* TODO : Modify the algorithm not to draw the endpoint P2.
-			* -------------------------------------------------------------------------------------------
-			**/
-			MTOOLS_FORCEINLINE void _lineBresenhamAA_TODO(iVec2 P1, iVec2 P2, RGBc color)
+			/* draw an horizontal line from (x1,y) to (x2,y) */
+			MTOOLS_FORCEINLINE void _hline(int64 x1, int64 x2, int64 y, RGBc color, bool invx, bool invy)
 				{
-				int64 & x0 = P1.X(); int64 & y0 = P1.Y();
-				int64 & x1 = P2.X(); int64 & y1 = P2.Y();
-				int64 sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1, x2;
-				int64 dx = abs(x1 - x0), dy = abs(y1 - y0), err = dx*dx + dy*dy;
-				int64 e2 = err == 0 ? 1 : (int64)(0xffff7fl / sqrt(err));
-				dx *= e2; dy *= e2; err = dx - dy;
-				int64 op = mtools::convertAlpha_0xFF_to_0x100(color.comp.A);
-				if (op == 256)
+				if (invy) { y = -y; }
+				if (invx) { auto tmp = -x1; x1 = -x2; x2 = tmp; }
+				RGBc * p = _data + (y*_stride) + x1;
+				while(x1 <= x2) { (*p).blend(color); p++; x1++; }				
+				}
+
+
+
+			/* fill the interior of the angle (Q1,P,Q2) 
+			 * we must have P.Y() < Q1.Y() , Q2.Y()
+			 * or  P.Y() > Q1.Y() , Q2.Y()
+			*/
+			MTOOLS_FORCEINLINE void _fill_interior_angle(iVec2 P, iVec2 Q1, iVec2 Q2, RGBc color,bool fill_last)
+				{
+				// indicator for bresenham line drawing symmetry
+				const int64 ind_xa = ((Q1.X() > P.X()) ? 1 : 0);
+				const int64 ind_ya = ((Q1.Y() > P.Y()) ? 1 : 0);
+				const int64 ind_xb = ((Q2.X() > P.X()) ? 1 : 0);
+				const int64 ind_yb = ((Q2.Y() > P.Y()) ? 1 : 0);
+				// mirror transform if needed
+				bool invx = false;
+				bool invy = false; 				
+				if (P.Y() > Q1.Y())
 					{
-					for (; ; )
+					P.Y() = -P.Y();
+					Q1.Y() = -Q1.Y();
+					Q2.Y() = -Q2.Y();
+					invy = true;
+					}
+				if (Q1.X() > Q2.X())
+					{
+					P.X() = -P.X();
+					Q1.X() = -Q1.X();
+					Q2.X() = -Q2.X();
+					invx = true;
+					}
+				// now we have P.Y() minimum and Q1 to the left of Q2
+				int64 y = P.Y();		// current Y pos
+				int64 xa = P.X();		// current X pos of the left point
+				int64 xb = P.X();		// current pos of the right point
+				int64 ytarget = Q1.Y() + (fill_last ? 1 : 0); // height to reach	
+				// slopes
+				int64 dxa = Q1.X() - P.X();
+				int64 dya = Q1.Y() - P.Y();
+				int64 dxb = Q2.X() - P.X();
+				int64 dyb = Q2.Y() - P.Y();
+				// step directions
+				int64 stepxa, stepya;
+				if (dya < 0) { dya = -dya;  stepya = -1; } else { stepya = 1; }
+				if (dxa < 0) { dxa = -dxa;  stepxa = -1; } else { stepxa = 1; }
+				dya <<= 1; dxa <<= 1;
+				int64 stepxb, stepyb;
+				if (dyb < 0) { dyb = -dyb;  stepyb = -1; } else { stepyb = 1; }
+				if (dxb < 0) { dxb = -dxb;  stepxb = -1; } else { stepxb = 1; }
+				dyb <<= 1; dxb <<= 1;
+
+				if (dxa > dya)
+					{
+					int64 fraca = dya - (dxa >> 1) - ind_ya;
+					if (dxb > dyb)
 						{
-						color.comp.A = (uint8)((255 - (abs(err - dx + dy) >> 16)));
-						operator()(x0, y0) = color;
-						e2 = err; x2 = x0;
-						if (2 * e2 >= -dx) {
-							if (x0 == x1) break;
-							if (e2 + dy < 0xff0000l)
-								{
-								color.comp.A = (uint8)((255 - (int)((e2 + dy) >> 16)));
-								operator()(x0, y0 + sy) = color;
-								}
-							err -= dy; x0 += sx;
+						int64 fracb = dyb - (dxb >> 1) - ind_yb;
+						while(y < ytarget)
+							{
+							int64 pxa = xa; int64 pxb = xb;
+							while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
+							while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
+							const int64 gxa = (stepxa < 0) ? (pxa + 1) : xa;
+							const int64 gxb = (stepxb > 0) ? (pxb - 1) : xb;
+							_hline(gxa, gxb, y, color, invx, invy);
+							y++;
 							}
-						if (2 * e2 <= dy) {
-							if (y0 == y1) break;
-							if (dx - e2 < 0xff0000l)
-								{
-								color.comp.A = (uint8)((255 - (int)((dx - e2) >> 16)));
-								operator()(x2 + sx, y0) = color;
-								}
-							err += dx; y0 += sy;
-							}
+						return;
 						}
-					return;
+					else
+						{
+						int64 fracb = dxb - (dyb >> 1) - ind_xb;
+						while (y < ytarget)
+							{
+							int64 pxa = xa; int64 pxb = xb;
+							while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
+							if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
+							const int64 gxa = (stepxa < 0) ? (pxa + 1) : xa;
+							_hline(gxa, pxb - 1, y, color, invx, invy);
+							y++;
+							}
+						return;
+						}
 					}
 				else
 					{
-					for (; ; )
+					int64 fraca = dxa - (dya >> 1) - ind_xa;
+					if (dxb > dyb)
 						{
-						color.comp.A = (uint8)(((255 - (abs(err - dx + dy) >> 16))*op) >> 8);
-						operator()(x0, y0) = color;
-						e2 = err; x2 = x0;
-						if (2 * e2 >= -dx) {
-							if (x0 == x1) break;
-							if (e2 + dy < 0xff0000l)
-								{
-								color.comp.A = (uint8)(((255 - (int)((e2 + dy) >> 16))*op) >> 8);
-								operator()(x0, y0 + sy) = color;
-								}
-							err -= dy; x0 += sx;
+						int64 fracb = dyb - (dxb >> 1) - ind_yb;
+						while (y < ytarget)
+							{
+							int64 pxa = xa; int64 pxb = xb;
+							if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
+							while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
+							const int64 gxb = (stepxb > 0) ? (pxb - 1) : xb;
+							_hline(pxa + 1, gxb, y, color, invx, invy);
+							y++;
 							}
-						if (2 * e2 <= dy) {
-							if (y0 == y1) break;
-							if (dx - e2 < 0xff0000l)
-								{
-								color.comp.A = (uint8)(((255 - (int)((dx - e2) >> 16))*op) >> 8);
-								operator()(x2 + sx, y0) = color;
-								}
-							err += dx; y0 += sy;
-							}
+						return;
 						}
-					return;
+					else
+						{
+						int64 fracb = dxb - (dyb >> 1) - ind_xb;
+						while (y < ytarget)
+							{
+							_hline(xa + 1, xb - 1, y, color, invx, invy);
+							if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
+							if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
+							y++;
+							}
+						return;
+						}
 					}
+
 				}
 
 
 
-			/**
-			* Draw an antialiased line using Bresenham's algorithm.
-			* No bound check.
-			* Use blending.
-			* -------------------------------------------------------------------------------------------
-			* TODO : Modify the algorithm not to draw the endpoint P2.
-			* -------------------------------------------------------------------------------------------
-			**/
-			MTOOLS_FORCEINLINE void _lineBresenhamAA_blend_TODO(iVec2 P1, iVec2 P2, RGBc color)
-				{
-				int64 & x0 = P1.X(); int64 & y0 = P1.Y();
-				int64 & x1 = P2.X(); int64 & y1 = P2.Y();
-				int64 sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1, x2;
-				int64 dx = abs(x1 - x0), dy = abs(y1 - y0), err = dx*dx + dy*dy;
-				int64 e2 = err == 0 ? 1 : (int64)(0xffff7fl / sqrt(err));
-				dx *= e2; dy *= e2; err = dx - dy;
-				int64 op = mtools::convertAlpha_0xFF_to_0x100(color.comp.A);
-				if (op == 256)
-					{
-					for (; ; )
-						{
-						color.comp.A = (uint8)((255 - (abs(err - dx + dy) >> 16)));
-						operator()(x0, y0).blend(color);
-						e2 = err; x2 = x0;
-						if (2 * e2 >= -dx) {
-							if (x0 == x1) break;
-							if (e2 + dy < 0xff0000l)
-								{
-								color.comp.A = (uint8)((255 - (int)((e2 + dy) >> 16)));
-								operator()(x0, y0 + sy).blend(color);
-								}
-							err -= dy; x0 += sx;
-							}
-						if (2 * e2 <= dy) {
-							if (y0 == y1) break;
-							if (dx - e2 < 0xff0000l)
-								{
-								color.comp.A = (uint8)((255 - (int)((dx - e2) >> 16)));
-								operator()(x2 + sx, y0).blend(color);
-								}
-							err += dx; y0 += sy;
-							}
-						}
-					return;
-					}
-				else
-					{
-					for (; ; )
-						{
-						color.comp.A = (uint8)(((255 - (abs(err - dx + dy) >> 16))*op) >> 8);
-						operator()(x0, y0).blend(color);
-						e2 = err; x2 = x0;
-						if (2 * e2 >= -dx) {
-							if (x0 == x1) break;
-							if (e2 + dy < 0xff0000l)
-								{
-								color.comp.A = (uint8)(((255 - (int)((e2 + dy) >> 16))*op) >> 8);
-								operator()(x0, y0 + sy).blend(color);
-								}
-							err -= dy; x0 += sx;
-							}
-						if (2 * e2 <= dy) {
-							if (y0 == y1) break;
-							if (dx - e2 < 0xff0000l)
-								{
-								color.comp.A = (uint8)(((255 - (int)((dx - e2) >> 16))*op) >> 8);
-								operator()(x2 + sx, y0).blend(color);
-								}
-							err += dx; y0 += sy;
-							}
-						}
-					return;
-					}
-				}
+
+
+
+
+
+
+
 
 
 
