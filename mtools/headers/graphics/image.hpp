@@ -1600,7 +1600,6 @@ namespace mtools
 				if (P1 == P2) return;
 				if (P1.X() == P2.X()) { _verticalLine(P1.X(), P1.Y(), P2.Y(), color);  return; }
 				if (P1.Y() == P2.Y()) { _horizontalLine(P1.Y(), P1.X(), P2.X(), color); return; }
-				//_lineEFLA(P1, P2, color);  // a little faster, but must be modified not to draw P2.
 				_lineBresenham(P1, P2, color);
 				}
 
@@ -3140,224 +3139,90 @@ namespace mtools
 				}
 
 
-			/**
-			* THE EXTREMELY FAST LINE ALGORITHM Variation E (Addition Fixed Point PreCalc)
-			* Copyright 2001-2, By Po-Han Lin
-			* c.f. http://www.edepot.com
-			*
-			* A little faster than Bresenham (10% increase speed).
-			* -------------------------------------------------------------------------------------------
-			* TODO : Modify the algorithm not to draw the endpoint before using it in place of bresenham.
-			* -------------------------------------------------------------------------------------------
-			**/
-			MTOOLS_FORCEINLINE void _lineEFLA_TODO(iVec2 P1, iVec2 P2, RGBc color)
-				{
-				bool yLonger = false;
-				int64 & x = P1.X();
-				int64 & y = P1.Y();
-				int64 shortLen = P2.Y() - y;
-				int64 longLen = P2.X() - x;
-				if (abs(shortLen)>abs(longLen)) { int64 swap = shortLen; shortLen = longLen; longLen = swap; yLonger = true; }
-				int64 decInc;
-				if (longLen == 0) decInc = 0; else decInc = (shortLen << 16) / longLen;
-				if (yLonger)
-					{
-					if (longLen>0)
-						{
-						longLen += y;
-						for (int64 j = 0x8000 + (x << 16);y <= longLen;++y) { operator()(j >> 16, y) = color; j += decInc; }
-						return;
-						}
-					longLen += y;
-					for (int64 j = 0x8000 + (x << 16);y >= longLen;--y) { operator()(j >> 16, y) = color; j -= decInc; }
-					return;
-					}
-				if (longLen>0)
-					{
-					longLen += x;
-					for (int64 j = 0x8000 + (y << 16);x <= longLen;++x) { operator()(x, j >> 16) = color; j += decInc; }
-					return;
-					}
-				longLen += x;
-				for (int64 j = 0x8000 + (y << 16);x >= longLen;--x) { operator()(x, j >> 16) = color; j -= decInc; }
-				}
-
 
 			/**
-			* THE EXTREMELY FAST LINE ALGORITHM Variation E (Addition Fixed Point PreCalc)
-			* Copyright 2001-2, By Po-Han Lin
-			* c.f. http://www.edepot.com
-			*
-			* A little faster than Bressenham (10% increase speed).
-			* -------------------------------------------------------------------------------------------
-			* TODO : Modify the algorithm not to draw the endpoint before using it in place of bresenham.
-			* -------------------------------------------------------------------------------------------
-			**/
-			MTOOLS_FORCEINLINE void _lineEFLA_blend_TODO(iVec2 P1, iVec2 P2, RGBc color)
-				{
-				bool yLonger = false;
-				int64 & x = P1.X();
-				int64 & y = P1.Y();
-				int64 shortLen = P2.Y() - y;
-				int64 longLen = P2.X() - x;
-				if (abs(shortLen)>abs(longLen)) { int64 swap = shortLen; shortLen = longLen; longLen = swap; yLonger = true; }
-				int64 decInc;
-				if (longLen == 0) decInc = 0; else decInc = (shortLen << 16) / longLen;
-				if (yLonger)
-					{
-					if (longLen>0)
-						{
-						longLen += y;
-						for (int64 j = 0x8000 + (x << 16);y <= longLen;++y) { operator()(j >> 16, y).blend(color); j += decInc; }
-						return;
-						}
-					longLen += y;
-					for (int64 j = 0x8000 + (x << 16);y >= longLen;--y) { operator()(j >> 16, y).blend(color); j -= decInc; }
-					return;
-					}
-				if (longLen>0)
-					{
-					longLen += x;
-					for (int64 j = 0x8000 + (y << 16);x <= longLen;++x) { operator()(x, j >> 16).blend(color); j += decInc; }
-					return;
-					}
-				longLen += x;
-				for (int64 j = 0x8000 + (y << 16);x >= longLen;--x) { operator()(x, j >> 16).blend(color); j -= decInc; }
-				}
-
-
-			/**
-			* Draw a line using Bresenham's algorithm.
-			* Optimized.
-			* Do not draw the endpoint P2.
-			* 
-			* Always draw the bresenham line from the point with smaller Y to the one with larger Y. 
-			* (because the line drawn in the other direction may not match). 
-			**/
+			 * Draw a line using Bresenham's algorithm (optimized).
+			 * 
+			 * - no bound check.
+			 * - Do not draw the endpoint P2.
+			 * - Algorithm is symmetric : the line from P1 to P2 and P2 to P1 are the same (excpet for the
+			 *   endpoint that is not drawn).
+			 **/
 			MTOOLS_FORCEINLINE void _lineBresenham(iVec2 P1, iVec2 P2, RGBc color)
 				{
-				operator()(P1) = color; // draw the start point.
-				int64 x1, x2, y1, y2;
-				if (P1.Y() < P2.Y()) // order the point so that y1 < y2. 
-					{
-					x1 = P1.X(); y1 = P1.Y();
-					x2 = P2.X(); y2 = P2.Y();
-					}
-				else
-					{
-					x1 = P2.X(); y1 = P2.Y();
-					x2 = P1.X(); y2 = P1.Y();
-					}
-				int64 dy = y2 - y1; // always positive
+				int64 & x2 = P1.X(); int64 & y2 = P1.Y(); // swap P1 and P2 because the algorithm make
+				int64 & x1 = P2.X(); int64 & y1 = P2.Y(); // it easier not to draw the start point.
+				int64 dy = y2 - y1;
 				int64 dx = x2 - x1;
-				int64 stepx;
+				int64 stepx, stepy;
+				if (dy < 0) { dy = -dy;  stepy = -1; } else { stepy = 1; }
 				if (dx < 0) { dx = -dx;  stepx = -1; } else { stepx = 1; }
 				dy <<= 1; dx <<= 1;
 				if (dx > dy)
 					{
-					const int64 target = x2 - stepx;
-					int64 fraction = dy - (dx >> 1);
-					if (stepx == 1)
+					int64 fraction = dy - (dx >> 1) - ((y2 > y1) ? 1 : 0); // compensate by 1 according to the direction of y to make it symmetric.
+					while (x1 != x2)
 						{
-						while (x1 < target)
-							{
-							if (fraction >= 0) { y1++; fraction -= dx; }
-							x1++; fraction += dy;
-							operator()(x1, y1) = color;
-							}
-						}
-					else
-						{
-						while (x1 > target)
-							{
-							if (fraction >= 0) { y1++; fraction -= dx; }
-							x1--; fraction += dy;
-							operator()(x1, y1) = color;
-							}
+						if (fraction >= 0) { y1 += stepy; fraction -= dx; }
+						x1 += stepx; fraction += dy;
+						operator()(x1, y1) = color;
 						}
 					}
 				else
 					{
-					const int64 target = y2 - 1;
-					int64 fraction = dx - (dy >> 1);
-					while (y1 < target)
+					int64 fraction = dx - (dy >> 1) - ((x2 > x1) ? 1 : 0); // compensate by 1 according to the direction of x to make it symmetric.
+					while (y1 != y2)
 						{
 						if (fraction >= 0) { x1 += stepx; fraction -= dy; }
-						y1++; fraction += dx;
+						y1 += stepy; fraction += dx;
 						operator()(x1, y1) = color;
 						}
 					}
 				}
 
-
 			/**
-			* Draw a line using Bresenham's algorithm.
-			* Optimized.
-			* Do not draw the endpoint P2.
+			* Draw a line using Bresenham's algorithm (optimized).
 			*
-			* Always draw the bresenham line from the point with smaller Y to the one with larger Y.
-			* (because the line drawn in the other direction may not match).
+			* - no bound check.
+			* - Do not draw the endpoint P2.
+			* - Algorithm is symmetric : the line from P1 to P2 and P2 to P1 are the same (excpet for the
+			*   endpoint that is not drawn).
+			* - use blending instead of overwriting.
 			**/
 			MTOOLS_FORCEINLINE void _lineBresenham_blend(iVec2 P1, iVec2 P2, RGBc color)
 				{
-				operator()(P1).blend(color); // draw the start point.
-				int64 x1, x2, y1, y2;
-				if (P1.Y() < P2.Y()) // order the point so that y1 < y2. 
-					{
-					x1 = P1.X(); y1 = P1.Y();
-					x2 = P2.X(); y2 = P2.Y();
-					}
-				else
-					{
-					x1 = P2.X(); y1 = P2.Y();
-					x2 = P1.X(); y2 = P1.Y();
-					}
-				int64 dy = y2 - y1; // always positive
+				int64 & x2 = P1.X(); int64 & y2 = P1.Y(); // swap P1 and P2 because the algorithm make
+				int64 & x1 = P2.X(); int64 & y1 = P2.Y(); // it easier not to draw the start point.
+				int64 dy = y2 - y1;
 				int64 dx = x2 - x1;
-				int64 stepx;
-				if (dx < 0) { dx = -dx;  stepx = -1; }
-				else { stepx = 1; }
+				int64 stepx, stepy;
+				if (dy < 0) { dy = -dy;  stepy = -1; } else { stepy = 1; }
+				if (dx < 0) { dx = -dx;  stepx = -1; } else { stepx = 1; }
 				dy <<= 1; dx <<= 1;
 				if (dx > dy)
 					{
-					const int64 target = x2 - stepx;
-					int64 fraction = dy - (dx >> 1);
-					if (stepx == 1)
+					int64 fraction = dy - (dx >> 1) - ((y2 > y1) ? 1 : 0); // compensate by 1 according to the direction of y to make it symmetric.
+					while (x1 != x2)
 						{
-						while (x1 < target)
-							{
-							if (fraction >= 0) { y1++; fraction -= dx; }
-							x1++; fraction += dy;
-							operator()(x1, y1).blend(color);
-							}
-						}
-					else
-						{
-						while (x1 > target)
-							{
-							if (fraction >= 0) { y1++; fraction -= dx; }
-							x1--; fraction += dy;
-							operator()(x1, y1).blend(color);
-							}
+						if (fraction >= 0) { y1 += stepy; fraction -= dx; }
+						x1 += stepx; fraction += dy;
+						operator()(x1, y1).blend(color);
 						}
 					}
 				else
 					{
-					const int64 target = y2 - 1;
-					int64 fraction = dx - (dy >> 1);
-					while (y1 < target)
+					int64 fraction = dx - (dy >> 1) - ((x2 > x1) ? 1 : 0); // compensate by 1 according to the direction of x to make it symmetric.
+					while (y1 != y2)
 						{
 						if (fraction >= 0) { x1 += stepx; fraction -= dy; }
-						y1++; fraction += dx;
+						y1 += stepy; fraction += dx;
 						operator()(x1, y1).blend(color);
 						}
 					}
 				}
 
 
-
-
-
+			/* draw an horizontal line from (x1+1,y) to (x2-1,y) */
 			MTOOLS_FORCEINLINE void _hline(int64 x1, int64 x2, int64 y, RGBc color)
 				{
 				RGBc * p = _data + _stride*y + x1 + 1;

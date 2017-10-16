@@ -86,12 +86,15 @@ bool CSLineClip(iVec2 & P1, iVec2 & P2, const iBox2 & B)
 
 
 
+   
 /**
  * Draw a line using Bresenham's algorithm. 
  * Optimized. No bound check. 
  * Use blending. 
  **/
-void LineBresenham_blend(Image & im, int64 x1, int64 y1, int64 x2, int64 y2, RGBc color)
+
+
+void LineBresenham(Image & im, int64 x1, int64 y1, int64 x2, int64 y2, RGBc color)
 	{
 	int64 dy = y2 - y1;
 	int64 dx = x2 - x1;
@@ -99,10 +102,10 @@ void LineBresenham_blend(Image & im, int64 x1, int64 y1, int64 x2, int64 y2, RGB
 	if (dy < 0) { dy = -dy;  stepy = -1; } else { stepy = 1; }
 	if (dx < 0) { dx = -dx;  stepx = -1; } else { stepx = 1; }
 	dy <<= 1; dx <<= 1;
-	im(x1, y1).blend(color);
+	im(x1, y1).blend(color); // start point
 	if (dx > dy)
 		{
-		int64 fraction = dy - (dx >> 1);
+		int64 fraction = dy - (dx >> 1) - ((y2 > y1) ? 1 : 0);
 		while (x1 != x2)
 			{
 			if (fraction >= 0) { y1 += stepy; fraction -= dx; }
@@ -112,7 +115,7 @@ void LineBresenham_blend(Image & im, int64 x1, int64 y1, int64 x2, int64 y2, RGB
 		}
 	else 
 		{
-		int64 fraction = dx - (dy >> 1);
+		int64 fraction = dx - (dy >> 1) - ((x2 > x1) ? 1 : 0);
 		while (y1 != y2) 
 			{
 			if (fraction >= 0) { x1 += stepx; fraction -= dy; }
@@ -1062,19 +1065,117 @@ void testriangle()
 
 	}
 
+
+
+
+void test_b()
+	{
+	Image im(1000, 1000);
+	cout << "START\n";
+	int64 A = 10; int64 B = 20;
+	for (int i1 = A; i1 < B; i1++)
+		{
+		for (int j1 = A; j1 < B; j1++)
+			{
+
+			for (int i2 = A; i2 < B; i2++)
+				{
+				for (int j2 = A; j2 < B; j2++)
+					{
+					im.clear(RGBc::c_White);
+					LineBresenham2(im, i1, j1, i2, j2, RGBc::c_Black);
+					LineBresenham2(im, i2, j2, i1, j1, RGBc::c_Red);
+
+					for (int u = A; u < B; u++)
+						{
+						for (int v = A; v < B; v++)
+							{
+							if (im(u, v) == RGBc::c_Black) { cout << "Erreur (" << i1 << ", " << j1 << ") -> (" << i2 << "," << j2 << ")\n";}
+							}
+						}
+					}
+				}
+			}
+		}
+	cout << "DONE\n";
+	}
+
+
+
+
+
+// Inner macro for drawing triangles.
+#define MTOOLS_cimg_for_triangle1(img,xl,xr,y,x0,y0,x1,y1,x2,y2) \
+        for (int y = y0<0?0:y0, \
+               xr = y0>=0?x0:(x0 - y0*(x2 - x0)/(y2 - y0)), \
+               xl = y1>=0?(y0>=0?(y0==y1?x1:x0):(x0 - y0*(x1 - x0)/(y1 - y0))):(x1 - y1*(x2 - x1)/(y2 - y1)), \
+               _sxn=1, \
+               _sxr=1, \
+               _sxl=1, \
+               _dxn = x2>x1?x2-x1:(_sxn=-1,x1 - x2), \
+               _dxr = x2>x0?x2-x0:(_sxr=-1,x0 - x2), \
+               _dxl = x1>x0?x1-x0:(_sxl=-1,x0 - x1), \
+               _dyn = y2-y1, \
+               _dyr = y2-y0, \
+               _dyl = y1-y0, \
+               _counter = (_dxn-=_dyn?_dyn*(_dxn/_dyn):0, \
+                           _dxr-=_dyr?_dyr*(_dxr/_dyr):0, \
+                           _dxl-=_dyl?_dyl*(_dxl/_dyl):0, \
+                           std::min((int)(img)._height - y - 1,y2 - y)), \
+               _errn = _dyn/2, \
+               _errr = _dyr/2, \
+               _errl = _dyl/2, \
+               _rxn = _dyn?(x2-x1)/_dyn:0, \
+               _rxr = _dyr?(x2-x0)/_dyr:0, \
+               _rxl = (y0!=y1 && y1>0)?(_dyl?(x1-x0)/_dyl:0): \
+                                       (_errl=_errn, _dxl=_dxn, _dyl=_dyn, _sxl=_sxn, _rxn); \
+             _counter>=0; --_counter, ++y, \
+               xr+=_rxr+((_errr-=_dxr)<0?_errr+=_dyr,_sxr:0), \
+               xl+=(y!=y1)?_rxl+((_errl-=_dxl)<0?(_errl+=_dyl,_sxl):0): \
+                           (_errl=_errn, _dxl=_dxn, _dyl=_dyn, _sxl=_sxn, _rxl=_rxn, x1-xl))
+
+#define MTOOLS_cimg_init_scanline(color,opacity) \
+    const float _sc_nopacity = cimg::abs((float)opacity), _sc_copacity = 1 - std::max((float)opacity,0.0f); \
+    const ulongT _sc_whd = (ulongT)_width*_height*_depth
+
+#define MTOOLS_cimg_draw_scanline(x0,x1,y,color,opacity,brightness) \
+    _draw_scanline(x0,x1,y,color,opacity,brightness,_sc_nopacity,_sc_copacity,_sc_whd)
+
+
+void draw_triangle(Image & im, iVec2 P0, iVec2 P1, iVec3 P2, RGBc color) 
+	{
+	if (P0.Y() > P1.Y()) { mtools::swap(P0, P1); }
+	if (P0.Y() > P2.Y()) { mtools::swap(P0, P2); }
+	if (P1.Y() > P2.Y()) { mtools::swap(P1, P2); }
+
+	if ((P0.Y() < im.ly())&&(P2.Y() >= 0))
+		{
+
+		if ((nx1 - nx0)*(ny2 - ny0) - (nx2 - nx0)*(ny1 - ny0)<0)
+			_cimg_for_triangle1(*this, xl, xr, y, nx0, ny0, nx1, ny1, nx2, ny2)
+			cimg_draw_scanline(xl, xr, y, color, opacity, nbrightness);
+		else
+			_cimg_for_triangle1(*this, xl, xr, y, nx0, ny0, nx1, ny1, nx2, ny2)
+			cimg_draw_scanline(xr, xl, y, color, opacity, nbrightness);
+		}
+	return *this;
+	}
+
+
 int main(int argc, char *argv[])
 	{
 	MTOOLS_SWAP_THREADS(argc, argv);  // swap main/fltk threads on OSX
 	parseCommandLine(argc, argv, true); // parse the command line, interactive mode
 
-
-	
+	test_b();
+	/*
 	//testtick();
 	testriangle();
 	cout << "Hello World\n";
 	cout.getKey();
 	return 0;
-	
+	*/
+
 	/*
 	create();
 	cout << "done!\n";
