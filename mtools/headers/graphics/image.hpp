@@ -80,6 +80,16 @@ namespace mtools
 
 		public:
 
+
+
+			/******************************************************************************************************************************************************
+			*******************************************************************************************************************************************************
+			*																				   																      *
+			*                                                      CONSTRUCTION / COPY / ASSIGNEMENT                                                              *
+			*																																					  *
+			*******************************************************************************************************************************************************
+			*******************************************************************************************************************************************************/
+
 			/**
 			 * Default constructor.
 			 * 
@@ -319,23 +329,6 @@ namespace mtools
 
 
 			/**
-			 * Make the image standalone by recreating the pixel buffer if need be. After this method, no
-			 * other image share the same pixel buffer with this one.
-			 *
-			 * @param	padding The new padding (only used if the pixel buffer is really re-created, if the
-			 * 					image was already standalone, the current padding is kept).
-			 *
-			 * @return	true if the buffer was re-created and false if the image was already standalone.
-			 */
-			inline bool standalone(int64 padding = 0)
-				{
-				if (!isShared()) return false;
-				*this = get_standalone(padding); // use move assignement operator. 
-				return true;
-				}
-
-
-			/**
 			 * Return a deep copy of the object with its own pixel buffer.
 			 *
 			 * @param	padding padding for the returned image.
@@ -393,25 +386,14 @@ namespace mtools
 				}
 
 
-			/**
-			 * Equality operator.
-			 *
-			 * @param	im The image to compare against.
-			 *
-			 * @return	true if the images are visually equivalent: they have the same size (lx, ly) and the
-			 * 			same pixel color (but the padding may differ).
-			 */
-			inline bool operator==(const Image & im) const
-				{
-				if ((_lx != im._lx) || (_ly != im._ly)) return false;
-				if ((_data == nullptr)|| (_data == im._data)) return true;
-				for (int64 j = 0; j < _ly; j++)
-					{
-					if (memcmp(_data + j*_stride, im._data + j*im._stride, _lx * 4) != 0) return false;
-					}
-				return true;
-				}
 
+			/******************************************************************************************************************************************************
+			*******************************************************************************************************************************************************
+			*																				   																      *
+			*                                             CROPPING / EXPANDING / RAW RESIZING IMAGE                                                               *
+			*																																					  *
+			*******************************************************************************************************************************************************
+			*******************************************************************************************************************************************************/
 
 			/**
 			 * Crop the image.
@@ -603,26 +585,6 @@ namespace mtools
 
 
 			/**
-			 * Swaps the content of the two images. Very fast. 
-			 *
-			 * @param [in,out]	im	The image to swap with
-			 **/
-			inline void swap(Image & im)
-				{
-				if (&im != this)
-					{					
-					mtools::swap<int64>(_lx, im._lx);
-					mtools::swap<int64>(_ly, im._ly);
-					mtools::swap<int64>(_stride, im._stride);
-					mtools::swap<RGBc*>(_data, im._data);
-					mtools::swap<uint32*>(_deletepointer, im._deletepointer);
-					mtools::swap<void*>(_pcairo_surface, im._pcairo_surface);
-					mtools::swap<void*>(_pcairo_context, im._pcairo_context);
-					}
-				}
-
-
-			/**
 			 * Expands the border of an image and set a given color for the new pixels.
 			 * 
 			 * This methods will always recreate the pixel buffer if the image is shared so the resulting
@@ -722,6 +684,16 @@ namespace mtools
 				{
 				resizeRaw(newdim.X(), newdim.Y(), shrinktofit, padding);
 				}
+
+
+
+			/******************************************************************************************************************************************************
+			*******************************************************************************************************************************************************
+			*																				   																      *
+			*                                                      BLITTING / BLENDING / MASKING                                                                  *
+			*																																					  *
+			*******************************************************************************************************************************************************
+			*******************************************************************************************************************************************************/
 
 
 			/**
@@ -1081,6 +1053,16 @@ namespace mtools
 				}
 
 
+
+			/******************************************************************************************************************************************************
+			*******************************************************************************************************************************************************
+			*																				   																      *
+			*                                                                    RESCALING                                                                        *
+			*																																					  *
+			*******************************************************************************************************************************************************
+			*******************************************************************************************************************************************************/
+
+
 			/**
 			 * Rescale this image to a given size.
 			 * 
@@ -1356,96 +1338,15 @@ namespace mtools
 				}
 
 
-			/**
-			 * Find the (closed) minimal bounding rectangle enclosing the image.
-			 *
-			 * @param	bk_color	The 'background' color which is not part of the image.
-			 *
-			 * @return	the minimal bounding box. 
-			 **/
-			inline iBox2 minBoundingBox(RGBc bk_color)
-				{
-				int64 minx = _lx + 1, maxx = -1;
-				int64 miny = _ly + 1, maxy = -1;
-				for (int64 j = 0; j < _ly; j++)
-					{
-					for (int64 i = 0; i < _lx; i++)
-						{
-						if (operator()(i, j) != bk_color)
-							{
-							if (i < minx) minx = i;
-							if (i > maxx) maxx = i;
-							if (j < miny) miny = j;
-							if (j > maxy) maxy = j;
-							}
-						}
-					}
-				return iBox2(minx, maxx, miny, maxy);
-				}
 
+			/******************************************************************************************************************************************************
+			*******************************************************************************************************************************************************
+			*																				   																      *
+			*                                                            TEXT DRAWING METHODS                                                                     *
+			*																																					  *
+			*******************************************************************************************************************************************************
+			*******************************************************************************************************************************************************/
 
-			/**
-			 * Find the (closed) minimal bounding rectangle enclosing the image. Only pixels whose alpha channel is
-			 * not zero are considered part of the image.
-			 *
-			 * @return	the minimal bounding box.
-			 **/
-			inline iBox2 minBoundingBox()
-				{
-				int64 minx = _lx + 1, maxx = -1;
-				int64 miny = _ly + 1, maxy = -1;
-				for (int64 j = 0; j < _ly; j++)
-					{
-					for (int64 i = 0; i < _lx; i++)
-						{
-						if (operator()(i, j).comp.A != 0)
-							{
-							if (i < minx) minx = i;
-							if (i > maxx) maxx = i;
-							if (j < miny) miny = j;
-							if (j > maxy) maxy = j;
-							}
-						}
-					}
-				return iBox2(minx,maxx,miny,maxy);				
-				}
-
-
-			/**
-			* Serializes the image into an OBaseArchive.
-			**/
-			void serialize(OBaseArchive & ar) const
-				{
-				ar << "Image";
-				ar & _lx;
-				ar & _ly;
-				ar & _stride;
-				ar.newline();
-				if ((_lx <= 0) || (_ly <= 0) || (_stride < _lx)) return;
-				for (int64 j = 0; j < _ly; j++)
-					{
-					ar.opaqueArray(_data + _stride*j, _lx);
-					ar.newline();
-					}
-				}
-
-
-			/**
-			* Deserializes the image from a IBaseArchive.
-			**/
-			void deserialize(IBaseArchive & ar)
-				{
-				empty();
-				ar & _lx;
-				ar & _ly;
-				ar & _stride;
-				if ((_lx <= 0) || (_ly <= 0) || (_stride < _lx)) { empty(); return; }
-				_allocate(_ly, _stride, nullptr);
-				for (int64 j = 0; j < _ly; j++)
-					{
-					ar.opaqueArray(_data + _stride*j, _lx);
-					}
-				}
 
 
 			/**
@@ -1576,12 +1477,15 @@ namespace mtools
 
 
 
-			/**
-			* draw geometric figure.
-			*
-			* @return	true if empty, false if not.
-			**/
-			// fill
+
+			/******************************************************************************************************************************************************
+			*******************************************************************************************************************************************************
+			*																				   																      *
+			*                                                                  DRAWING SHAPES                                                                     *
+			*																																					  *
+			*******************************************************************************************************************************************************
+			*******************************************************************************************************************************************************/
+
 
 
 			/**
@@ -1600,7 +1504,7 @@ namespace mtools
 				if (P1 == P2) return;
 				if (P1.X() == P2.X()) { _verticalLine(P1.X(), P1.Y(), P2.Y(), color);  return; }
 				if (P1.Y() == P2.Y()) { _horizontalLine(P1.Y(), P1.X(), P2.X(), color); return; }
-				_lineBresenham(P1, P2, color);
+				_lineBresenham(P1, P2, color,false);
 				}
 
 
@@ -1648,12 +1552,12 @@ namespace mtools
 					}
 				if (antialiased)
 					{
-					if (blending) _lineWuAA_blend(P1, P2, color); else _lineWuAA(P1, P2, color); 
+					if (blending) _lineWuAA_blend(P1, P2, color,false); else _lineWuAA(P1, P2, color, false);
 					return;
 					}
 				else
 					{
-					if ((blending) && (color.comp.A != 255)) _lineBresenham_blend(P1, P2, color); else _lineBresenham(P1, P2, color);
+					if ((blending) && (color.comp.A != 255)) _lineBresenham_blend(P1, P2, color, false); else _lineBresenham(P1, P2, color, false);
 					}
 				}
 
@@ -1748,6 +1652,7 @@ namespace mtools
 			 **/
 			inline void draw_triangle(iVec2 P1, iVec2 P2, iVec2 P3, RGBc color, bool blending, bool antialiased)
 				{
+				// TODO : improve that so that pixel are written only once when blending is on. 
 				draw_line(P1, P2, color, false, blending, antialiased);
 				draw_line(P2, P3, color, false, blending, antialiased);
 				draw_line(P3, P1, color, false, blending, antialiased);
@@ -1774,7 +1679,8 @@ namespace mtools
 
 
 			/**
-			* Draw a filled triangle. Portion outside the image is clipped.
+			* Draw the interior of a triangle. Portion outside the image is clipped.
+			* The boundary lines are not drawn. 
 			*
 			* @param	P1		   	The first point
 			* @param	P2		   	The second point.
@@ -1782,23 +1688,25 @@ namespace mtools
 			* @param	fillcolor  	The fill color.
 			* @param	blending   	true to use blending and false to write over.
 			**/
-			inline void draw_filled_triangle(iVec2 P1, iVec2 P2, iVec2 P3, RGBc fillcolor, bool blending)
+			inline void draw_triangle_interior(iVec2 P1, iVec2 P2, iVec2 P3, RGBc fillcolor, bool blending)
 				{
-				// TODO
+				if (isEmpty()) return;
+				iBox2 B(0, _lx - 1, 0, _ly - 1); 
+				if ((B.isInside(P1)) && (B.isInside(P2)) && (B.isInside(P3)))
+					{
+					if (blending) _draw_triangle_interior<true, true>(P1, P2, P3, fillcolor); else _draw_triangle_interior<false, true>(P1, P2, P3, fillcolor);
+					}
+				else
+					{
+					if (blending) _draw_triangle_interior<true, false>(P1, P2, P3, fillcolor); else _draw_triangle_interior<false, false>(P1, P2, P3, fillcolor);
+					}
 				}
 
 
-
-
-
-
-
-
-
-
 			/**
-			 * Draw a filled triangle. Portion outside the image is clipped.
-			 *
+			* Draw the interior of a triangle. Portion outside the image is clipped.
+			* The boundary lines are not drawn.
+			*
 			 * @param	x1		 	x-coord of the first point.
 			 * @param	y1		 	y-coord of the first point.
 			 * @param	x2		 	x-coord of the second point.
@@ -1808,15 +1716,15 @@ namespace mtools
 			 * @param	fillcolor	The fill color.
 			 * @param	blending 	true to use blending and false to write over.
 			 **/
-			MTOOLS_FORCEINLINE void draw_filled_triangle(int64 x1, int64 y1, int64 x2, int64 y2, int64 x3, int64 y3, RGBc fillcolor, bool blending)
+			MTOOLS_FORCEINLINE void draw_triangle_interior(int64 x1, int64 y1, int64 x2, int64 y2, int64 x3, int64 y3, RGBc fillcolor, bool blending)
 				{
-				draw_filled_triangle({ x1,y1 }, { x2,y2 }, { x3,y3 }, fillcolor, blending);
+				draw_triangle_interior({ x1,y1 }, { x2,y2 }, { x3,y3 }, fillcolor, blending);
 				}
 
 
 			/**
 			* draw a rectangle of given size and color over this image. Portion outside the image
-			* are clipped.
+			* is clipped.
 			*
 			* @param	dest_box	position of the rectangle to draw.
 			* @param	color		the color to use.
@@ -1843,13 +1751,13 @@ namespace mtools
 
 
 			/**
-			 * draw a rectangle of given size and color over this image. Portion outside the image are
+			 * draw a rectangle of given size and color over this image. Portion outside the image is
 			 * clipped.
 			 *
 			 * @param	x		 	x-coordinate of the rectangle upper left corner.
 			 * @param	y		 	y-coordinate of the rectangle upper left corner.
-			 * @param	sx		 	rectangle width.
-			 * @param	sy		 	rectangle height.
+			 * @param	sx		 	rectangle width (if <= 0 nothing is drawn).
+			 * @param	sy		 	rectangle height (if <= 0 nothing is drawn).
 			 * @param	color		the color to use.
 			 * @param	blend	 	true to use blending and false to simply copy the color.
 			 **/
@@ -1861,7 +1769,7 @@ namespace mtools
 
 			/**
 			 * draw a filled rectangle of given size and color over this image. Portion outside the image
-			 * are clipped.
+			 * is clipped.
 			 *
 			 * @param	dest_box	position of the rectangle to draw.
 			 * @param	fillcolor	the color to use.
@@ -1875,12 +1783,12 @@ namespace mtools
 
 			/**
 			 * draw a filled rectangle of given size and color over this image. Portion outside the image
-			 * are clipped.
+			 * is clipped.
 			 *
 			 * @param	x			x-coordinate of the rectangle upper left corner.
 			 * @param	y			y-coordinate of the rectangle upper left corner.
-			 * @param	sx			rectangle width.
-			 * @param	sy			rectangle height.
+			 * @param	sx			rectangle width (if <= 0 nothing is drawn).
+			 * @param	sy			rectangle height (if <= 0 nothing is drawn).
 			 * @param	fillcolor	the color to use.
 			 * @param	blend   	true to use blending and false to simply copy the color.
 			 **/
@@ -1891,110 +1799,14 @@ namespace mtools
 
 
 
-			/**
-			* Saves the image into a file in PNG format.
-			*
-			* @param	filename	name of the file (should have extension "png").
-			*
-			* @return	true if the operation succedded and false if it failed.
-			**/
-			bool _save_png(const std::string & filename) const
-				{
-				if (!_createcairo(false)) return false;
-				return (cairo_surface_write_to_png((cairo_surface_t*)_pcairo_surface, filename.c_str()) == CAIRO_STATUS_SUCCESS);
-				}
 
-
-
-			/**
-			* Load the image from a file in PGN format.
-			*
-			* @param	filename	name of the file (should have extension "png" or "jpg").
-			*
-			* @return	true if the operation succedded and false if it failed (and in this case, the object
-			* 			is set to an empty image).
-			**/
-			bool load_png(const std::string & filename)
-				{
-				empty();
-				cairo_surface_t * psurface = cairo_image_surface_create_from_png(filename.c_str());
-				if (cairo_surface_status(psurface) != CAIRO_STATUS_SUCCESS) { cairo_surface_destroy(psurface); return false; }
-				cairo_format_t format = cairo_image_surface_get_format(psurface);
-				if ((format != CAIRO_FORMAT_ARGB32) && (format != CAIRO_FORMAT_RGB24)) { cairo_surface_destroy(psurface); return false; }
-				_lx = cairo_image_surface_get_width(psurface);
-				_ly = cairo_image_surface_get_height(psurface);
-				_stride = cairo_image_surface_get_stride(psurface);
-				if ((_lx <= 0) || (_ly <= 0) || (_stride % 4 != 0) || (_stride < 4 * _lx)) { empty(); cairo_surface_destroy(psurface); return false; }
-				_stride /= 4;
-				_allocate(_ly, _stride, nullptr);
-				uint32 * psrc = (uint32 *)cairo_image_surface_get_data(psurface);
-				uint32 * pdst = (uint32*)_data;
-				uint32 mask = ((format == CAIRO_FORMAT_RGB24) ? 0xFF000000 : 0);
-				for (int64 j = 0; j < _ly; j++)
-					{
-					for (int64 i = 0;i < _lx; i++)
-						{
-						pdst[i + _stride*j] = (psrc[i + _stride*j] | mask);
-						}
-					}
-				cairo_surface_destroy(psurface);
-				return true;
-				}
-
-
-			/**
-			 * Query if the image is empty
-			 *
-			 * @return	true if empty, false if not.
-			 **/
-			MTOOLS_FORCEINLINE bool isEmpty() const { return(_data == nullptr); }
-
-
-			/**
-			 * Width of the image in pixels. Same as width().
-			 **/
-			MTOOLS_FORCEINLINE int64 lx() const { return _lx; }
-
-
-			/**
-			* Width of the image in pixels. Same as lx().
-			**/
-			MTOOLS_FORCEINLINE int64 width() const { return _lx; }
-
-
-			/**
-			* Height of the image in pixels. Same as height().
-			**/
-			MTOOLS_FORCEINLINE int64 ly() const { return _ly; }
-
-
-			/**
-			* Height of the image in pixels. Same as ly().
-			**/
-			MTOOLS_FORCEINLINE int64 heigth() const { return _ly; }
-
-
-
-			/**
-			 * Horizontal padding of the image: number of uint32 following the end of each horizontal line
-			 * (except the last one).
-			 **/
-			MTOOLS_FORCEINLINE int64 padding() const { return(_stride - _lx); }
-
-
-			/**
-			 * Sets the horizontal padding value for this image.
-			 *
-			 * If the newx padding differs from the previous one, the pixel buffer is re-created.  
-			 *
-			 * @param	padding	The new padding.
-			 **/
-			void setPadding(int64 newpadding)
-				{
-				if (newpadding < 0) newpadding = 0;
-				if (newpadding == padding()) return;
-				*this = Image(*this, false, newpadding);
-				}
+			/******************************************************************************************************************************************************
+			*******************************************************************************************************************************************************
+			*																				   																      *
+			*                                                                 PIXEL ACCESS METHODS                                                                *
+			*																																					  *
+			*******************************************************************************************************************************************************
+			*******************************************************************************************************************************************************/
 
 
 			/**
@@ -2221,6 +2033,338 @@ namespace mtools
 
 
 
+			/******************************************************************************************************************************************************
+			*******************************************************************************************************************************************************
+			*																				   																      *
+			*                                                                    SHARE RELATED METHODS                                                            *
+			*																																					  *
+			*******************************************************************************************************************************************************
+			*******************************************************************************************************************************************************/
+
+
+			/**
+			* Query if the image shares its pixel buffer with another image. Equivalent to checking if
+			* refcount() = 1.
+			*
+			* @return	true if shared, false if not.
+			*/
+			MTOOLS_FORCEINLINE bool isShared() const
+				{
+				return(refcount() != 1);
+				}
+
+
+			/**
+			* Query the number of images sharing the same data buffer.
+			*
+			* @return	Number of image sharing the same data buffer (1 is the image is not shared).
+			*/
+			MTOOLS_FORCEINLINE uint32 refcount() const
+				{
+				return ((_deletepointer != nullptr) ? (*_deletepointer) : 1);
+				}
+
+
+			/**
+			* Make the image standalone by recreating the pixel buffer if need be. After this method, no
+			* other image share the same pixel buffer with this one.
+			*
+			* @param	padding The new padding (only used if the pixel buffer is really re-created, if the
+			* 					image was already standalone, the current padding is kept).
+			*
+			* @return	true if the buffer was re-created and false if the image was already standalone.
+			*/
+			inline bool standalone(int64 padding = 0)
+				{
+				if (!isShared()) return false;
+				*this = get_standalone(padding); // use move assignement operator. 
+				return true;
+				}
+
+
+			/******************************************************************************************************************************************************
+			*******************************************************************************************************************************************************
+			*																				   																      *
+			*                                                          LOADING/SAVING METHODS                                                                     *
+			*																																					  *
+			*******************************************************************************************************************************************************
+			*******************************************************************************************************************************************************/
+
+
+			/**
+			* Saves the image into a file in PNG format.
+			*
+			* @param	filename	name of the file (should have extension "png").
+			*
+			* @return	true if the operation succedded and false if it failed.
+			**/
+			bool _save_png(const std::string & filename) const
+				{
+				if (!_createcairo(false)) return false;
+				return (cairo_surface_write_to_png((cairo_surface_t*)_pcairo_surface, filename.c_str()) == CAIRO_STATUS_SUCCESS);
+				}
+
+
+
+			/**
+			* Load the image from a file in PGN format.
+			*
+			* @param	filename	name of the file (should have extension "png" or "jpg").
+			*
+			* @return	true if the operation succedded and false if it failed (and in this case, the object
+			* 			is set to an empty image).
+			**/
+			bool load_png(const std::string & filename)
+				{
+				empty();
+				cairo_surface_t * psurface = cairo_image_surface_create_from_png(filename.c_str());
+				if (cairo_surface_status(psurface) != CAIRO_STATUS_SUCCESS) { cairo_surface_destroy(psurface); return false; }
+				cairo_format_t format = cairo_image_surface_get_format(psurface);
+				if ((format != CAIRO_FORMAT_ARGB32) && (format != CAIRO_FORMAT_RGB24)) { cairo_surface_destroy(psurface); return false; }
+				_lx = cairo_image_surface_get_width(psurface);
+				_ly = cairo_image_surface_get_height(psurface);
+				_stride = cairo_image_surface_get_stride(psurface);
+				if ((_lx <= 0) || (_ly <= 0) || (_stride % 4 != 0) || (_stride < 4 * _lx)) { empty(); cairo_surface_destroy(psurface); return false; }
+				_stride /= 4;
+				_allocate(_ly, _stride, nullptr);
+				uint32 * psrc = (uint32 *)cairo_image_surface_get_data(psurface);
+				uint32 * pdst = (uint32*)_data;
+				uint32 mask = ((format == CAIRO_FORMAT_RGB24) ? 0xFF000000 : 0);
+				for (int64 j = 0; j < _ly; j++)
+					{
+					for (int64 i = 0;i < _lx; i++)
+						{
+						pdst[i + _stride*j] = (psrc[i + _stride*j] | mask);
+						}
+					}
+				cairo_surface_destroy(psurface);
+				return true;
+				}
+
+
+			/**
+			* Serializes the image into an OBaseArchive.
+			**/
+			void serialize(OBaseArchive & ar) const
+				{
+				ar << "Image";
+				ar & _lx;
+				ar & _ly;
+				ar & _stride;
+				ar.newline();
+				if ((_lx <= 0) || (_ly <= 0) || (_stride < _lx)) return;
+				for (int64 j = 0; j < _ly; j++)
+					{
+					ar.opaqueArray(_data + _stride*j, _lx);
+					ar.newline();
+					}
+				}
+
+
+			/**
+			* Deserializes the image from a IBaseArchive.
+			**/
+			void deserialize(IBaseArchive & ar)
+				{
+				empty();
+				ar & _lx;
+				ar & _ly;
+				ar & _stride;
+				if ((_lx <= 0) || (_ly <= 0) || (_stride < _lx)) { empty(); return; }
+				_allocate(_ly, _stride, nullptr);
+				for (int64 j = 0; j < _ly; j++)
+					{
+					ar.opaqueArray(_data + _stride*j, _lx);
+					}
+				}
+
+
+			/******************************************************************************************************************************************************
+			*******************************************************************************************************************************************************
+			*																				   																      *
+			*                                                                    MISC METHODS                                                                     *
+			*																																					  *
+			*******************************************************************************************************************************************************
+			*******************************************************************************************************************************************************/
+
+
+
+			/**
+			* Width of the image in pixels. Same as width().
+			**/
+			MTOOLS_FORCEINLINE int64 lx() const { return _lx; }
+
+
+			/**
+			* Width of the image in pixels. Same as lx().
+			**/
+			MTOOLS_FORCEINLINE int64 width() const { return _lx; }
+
+
+			/**
+			* Height of the image in pixels. Same as height().
+			**/
+			MTOOLS_FORCEINLINE int64 ly() const { return _ly; }
+
+
+			/**
+			* Height of the image in pixels. Same as ly().
+			**/
+			MTOOLS_FORCEINLINE int64 heigth() const { return _ly; }
+
+
+			/**
+			* Query if the image is empty
+			*
+			* @return	true if empty, false if not.
+			**/
+			MTOOLS_FORCEINLINE bool isEmpty() const { return(_data == nullptr); }
+
+
+			/**
+			 * 	Empty this image (the resulting image has size 0x0).
+			 **/
+			inline void empty()
+				{
+				_removecairo();
+				_deallocate();
+				_lx = 0;
+				_ly = 0;
+				_stride = 0;
+				}
+
+
+			/**
+			* Clears this image to a given color
+			*
+			* @param	bkColor	the color to use.
+			**/
+			inline void clear(RGBc bkColor)
+				{
+				//pixman_fill((uint32_t*)_data, _stride, 32, 0, 0, _lx, _ly, bkColor.color); // slow...
+				_fillRegion(_data, _stride, _lx, _ly, bkColor);
+				}
+
+
+			/**
+			* Horizontal padding of the image: number of uint32 following the end of each horizontal line
+			* (except the last one).
+			**/
+			MTOOLS_FORCEINLINE int64 padding() const { return(_stride - _lx); }
+
+
+			/**
+			* Sets the horizontal padding value for this image.
+			*
+			* If the newx padding differs from the previous one, the pixel buffer is re-created.
+			*
+			* @param	padding	The new padding.
+			**/
+			void setPadding(int64 newpadding)
+				{
+				if (newpadding < 0) newpadding = 0;
+				if (newpadding == padding()) return;
+				*this = Image(*this, false, newpadding);
+				}
+
+
+
+			/**
+			* Equality operator.
+			*
+			* @param	im The image to compare against.
+			*
+			* @return	true if the images are visually equivalent: they have the same size (lx, ly) and the
+			* 			same pixel color (but the padding may differ).
+			*/
+			inline bool operator==(const Image & im) const
+				{
+				if ((_lx != im._lx) || (_ly != im._ly)) return false;
+				if ((_data == nullptr) || (_data == im._data)) return true;
+				for (int64 j = 0; j < _ly; j++)
+					{
+					if (memcmp(_data + j*_stride, im._data + j*im._stride, _lx * 4) != 0) return false;
+					}
+				return true;
+				}
+
+
+			/**
+			* Find the (closed) minimal bounding rectangle enclosing the image.
+			*
+			* @param	bk_color	The 'background' color which is not part of the image.
+			*
+			* @return	the minimal bounding box.
+			**/
+			inline iBox2 minBoundingBox(RGBc bk_color)
+				{
+				int64 minx = _lx + 1, maxx = -1;
+				int64 miny = _ly + 1, maxy = -1;
+				for (int64 j = 0; j < _ly; j++)
+					{
+					for (int64 i = 0; i < _lx; i++)
+						{
+						if (operator()(i, j) != bk_color)
+							{
+							if (i < minx) minx = i;
+							if (i > maxx) maxx = i;
+							if (j < miny) miny = j;
+							if (j > maxy) maxy = j;
+							}
+						}
+					}
+				return iBox2(minx, maxx, miny, maxy);
+				}
+
+
+			/**
+			* Find the (closed) minimal bounding rectangle enclosing the image. Only pixels whose alpha channel is
+			* not zero are considered part of the image.
+			*
+			* @return	the minimal bounding box.
+			**/
+			inline iBox2 minBoundingBox()
+				{
+				int64 minx = _lx + 1, maxx = -1;
+				int64 miny = _ly + 1, maxy = -1;
+				for (int64 j = 0; j < _ly; j++)
+					{
+					for (int64 i = 0; i < _lx; i++)
+						{
+						if (operator()(i, j).comp.A != 0)
+							{
+							if (i < minx) minx = i;
+							if (i > maxx) maxx = i;
+							if (j < miny) miny = j;
+							if (j > maxy) maxy = j;
+							}
+						}
+					}
+				return iBox2(minx, maxx, miny, maxy);
+				}
+
+
+
+			/**
+			* Swaps the content of the two images. Very fast.
+			*
+			* @param [in,out]	im	The image to swap with
+			**/
+			inline void swap(Image & im)
+				{
+				if (&im != this)
+					{
+					mtools::swap<int64>(_lx, im._lx);
+					mtools::swap<int64>(_ly, im._ly);
+					mtools::swap<int64>(_stride, im._stride);
+					mtools::swap<RGBc*>(_data, im._data);
+					mtools::swap<uint32*>(_deletepointer, im._deletepointer);
+					mtools::swap<void*>(_pcairo_surface, im._pcairo_surface);
+					mtools::swap<void*>(_pcairo_context, im._pcairo_context);
+					}
+				}
+
+
 			/** Reverse this image along its Y-axis */
 			void reverseY()
 				{
@@ -2262,30 +2406,6 @@ namespace mtools
 				}
 
 
-
-			/** Empty this image (the resulting image has size 0x0). */
-			inline void empty()
-				{
-				_removecairo();
-				_deallocate();
-				_lx = 0;
-				_ly = 0;
-				_stride = 0;
-				}
-
-
-			/**
-			 * Clears this image to a given color
-			 *
-			 * @param	bkColor	the color to use.
-			 **/
-			inline void clear(RGBc bkColor)
-				{
-				//pixman_fill((uint32_t*)_data, _stride, 32, 0, 0, _lx, _ly, bkColor.color); // slow...
-				_fillRegion(_data, _stride, _lx, _ly, bkColor);
-				}
-
-
 			/**
 			 * Write some info about this image into an std::string.
 			 **/
@@ -2298,27 +2418,6 @@ namespace mtools
 				}
 
 
-			/**
-			 * Query if the image shares its pixel buffer with another image. Equivalent to checking if
-			 * refcount() = 1.
-			 *
-			 * @return	true if shared, false if not.
-			 */
-			MTOOLS_FORCEINLINE bool isShared() const
-				{
-				return(refcount() != 1);
-				}
-
-
-			/**
-			 * Query the number of images sharing the same data buffer.
-			 *
-			 * @return	Number of image sharing the same data buffer (1 is the image is not shared).
-			 */
-			MTOOLS_FORCEINLINE uint32 refcount() const
-				{
-				return ((_deletepointer != nullptr) ? (*_deletepointer) : 1);
-				}
 
 
 
@@ -2327,38 +2426,31 @@ namespace mtools
 
 
 
-//		private:
+
+			/******************************************************************************************************************************************************
+			*******************************************************************************************************************************************************
+			*******************************************************************************************************************************************************
+			*******************************************************************************************************************************************************
+			*******************************************************************************************************************************************************
+			*																				   																      *
+			*                                                                 PRIVATE METHODS                                                                     *
+			*																																					  *
+			*******************************************************************************************************************************************************
+			*******************************************************************************************************************************************************
+			*******************************************************************************************************************************************************
+			*******************************************************************************************************************************************************
+			*******************************************************************************************************************************************************/
+
+
+		private:
 
 
 
-
-
-
-			/*************************************************************
-			* MISC PRIVATE METHODS                                       *
-			*                                                            *
-			**************************************************************/
-
-
-			/* fill a region with a given color */
-			inline static void _fillRegion(RGBc * pdest, int64 dest_stride, int64 sx, int64 sy, RGBc color)
-				{
-				for (int64 j = 0; j < sy; j++)
-					{
-					const int64 offdest = j*dest_stride;
-					for (int64 i = 0; i < sx; i++)
-						{
-						pdest[offdest + i] = color;
-						}
-					}
-				}
-
-
-
-			/*************************************************************
-			* RESCALING                                                  *
-			*                                                            *
-			**************************************************************/
+			/******************************************************************************************************************************************************
+			*																				   																      *
+			*                                                                    RESCALING                                                                        *
+			*																																					  *
+			*******************************************************************************************************************************************************
 
 
 			/* apply nearest neighour scaling. fast ! 
@@ -2745,10 +2837,12 @@ namespace mtools
 				
 
 
-			/*************************************************************
-			* BLITTING / BLENDING / MASKING                              *
-			*                                                            *
-			**************************************************************/
+
+			/******************************************************************************************************************************************************
+			*																				   																      *
+			*                                                          BLITTING / BLENDING / MASKING                                                              *
+			*																																					  *
+			*******************************************************************************************************************************************************/
 
 
 			/* fast blitting of a region, do not work for overlap */
@@ -2851,65 +2945,29 @@ namespace mtools
 				}
 
 
-			/*************************************************************
-			* CAIRO                                                      *
-			* These methods affect: _pcairo_surface, _pcairo_context     *
-			**************************************************************/
 
-			/* tell cairo that the data buffer is possibly dirty */
-			inline void _cairomarkdirty() const
-				{
-				if (_pcairo_surface != nullptr)	cairo_surface_mark_dirty((cairo_surface_t *)_pcairo_surface);
-				}
 
-			/* flush all cairo operation */
-			inline void _cairoflush() const
-				{
-				if (_pcairo_surface != nullptr)	cairo_surface_flush((cairo_surface_t *)_pcairo_surface);
-				}
 
-			/* remove the cairo objects */
-			inline void _removecairo() const
-				{
-				if (_pcairo_context != nullptr) { cairo_destroy((cairo_t *)_pcairo_surface); _pcairo_context = nullptr; }
-				if (_pcairo_surface != nullptr) { cairo_surface_destroy((cairo_surface_t *)_pcairo_surface); _pcairo_surface = nullptr; }
-				}
 
-			/* create the cairo objects if needed */
-			inline bool _createcairo(bool stopOnError) const
+			/******************************************************************************************************************************************************
+			*																				   																      *
+			*                                                                  DRAWING SHAPES                                                                     *
+			*																																					  *
+			*******************************************************************************************************************************************************/
+
+
+			/* fill a region with a given color */
+			inline static void _fillRegion(RGBc * pdest, int64 dest_stride, int64 sx, int64 sy, RGBc color)
 				{
-				if (_pcairo_surface == nullptr)
+				for (int64 j = 0; j < sy; j++)
 					{
-					_pcairo_surface = cairo_image_surface_create_for_data((unsigned char *)_data, CAIRO_FORMAT_ARGB32, (int)_lx, (int)_ly, (int)(4 * _stride));
-					if (cairo_surface_status((cairo_surface_t*)_pcairo_surface) != CAIRO_STATUS_SUCCESS)
+					const int64 offdest = j*dest_stride;
+					for (int64 i = 0; i < sx; i++)
 						{
-						_removecairo();
-						if (stopOnError) MTOOLS_ERROR("Cannot create CAIRO surface");
-						return false;
+						pdest[offdest + i] = color;
 						}
 					}
-				if (_pcairo_context == nullptr)
-					{
-					_pcairo_context = cairo_create((cairo_surface_t*)_pcairo_surface);
-					if (cairo_status((cairo_t*)_pcairo_context) != CAIRO_STATUS_SUCCESS)
-						{
-						_removecairo();
-						if (stopOnError) MTOOLS_ERROR("Cannot create CAIRO context");
-						return false;
-						}
-					}
-				_cairomarkdirty();
-				return true;
 				}
-
-
-
-
-
-			/*************************************************************
-			*                     FORM DRAWING	                         *
-			*                                                            *
-			**************************************************************/
 
 
 			/* draw a filled rectangle */
@@ -2943,10 +3001,12 @@ namespace mtools
 
 
 
-			/*************************************************************
-			*                     LINE DRAWING	                         *
-			*                                                            *
-			**************************************************************/
+
+			/******************************************************************************************************************************************************
+			*																				   																      *
+			*                                                                   LINE DRAWING                                                                      *
+			*																																					  *
+			*******************************************************************************************************************************************************/
 
 
 			/** Used by CSLineClip() to compute the region where the point lies **/
@@ -2971,7 +3031,7 @@ namespace mtools
 			 * @param	B		  	The rectangle to clip into.
 			 *
 			 * @return	true if a line should be drawn and false if it should be discarded. If true, P1 and
-			 * 			P2 are now guaranteed to be inside the closed rectangle B.
+			 * 			P2 are now inside the closed rectangle B and delimit the line to draw. 
 			 **/
 			MTOOLS_FORCEINLINE static bool _csLineClip(iVec2 & P1, iVec2 & P2, const iBox2 & B)
 				{
@@ -3018,7 +3078,7 @@ namespace mtools
 				}
 
 
-			/* draw a vertical line, (do not draw (x,y2) ) */
+			/* draw a vertical line, (do not draw the endpoint (x,y2) ) */
 			MTOOLS_FORCEINLINE void _verticalLine(int64 x, int64 y1, int64 y2, RGBc color)
 				{
 				if ((x < 0) || (x >= _lx)) return;
@@ -3031,7 +3091,7 @@ namespace mtools
 				while (p != q) { (*p) = color; p += _stride; }
 				}
 
-			/* draw a vertical line ((do not draw (x,y2), use blending) */
+			/* draw a vertical line ((do not draw the endpoint (x,y2), use blending) */
 			MTOOLS_FORCEINLINE void _verticalLine_blend(int64 x, int64 y1, int64 y2, RGBc color)
 				{
 				if ((x < 0) || (x >= _lx)) return;
@@ -3045,7 +3105,7 @@ namespace mtools
 				}
 
 
-			/* draw a horizontal line (do not draw (x2,y) ) */
+			/* draw an horizontal line (do not draw the endpoint (x2,y)) */
 			MTOOLS_FORCEINLINE void _horizontalLine(int64 y, int64 x1, int64 x2, RGBc color)
 				{
 				if ((y < 0) || (y >= _ly)) return;
@@ -3059,7 +3119,7 @@ namespace mtools
 				}
 
 
-			/* draw a horizontal line (do not draw (x2,y), use blending) */
+			/* draw an horizontal line (do not draw the endpoint (x2,y), use blending) */
 			MTOOLS_FORCEINLINE void _horizontalLine_blend(int64 y, int64 x1, int64 x2, RGBc color)
 				{
 				if ((y < 0) || (y >= _ly)) return;
@@ -3073,7 +3133,7 @@ namespace mtools
 				}
 
 
-			/* draw a tick vertical line (draw both endpoint) */
+			/* draw a tick vertical line with aliasing (draw both endpoint) */
 			MTOOLS_FORCEINLINE void _tickVerticalLine(int64 x, int64 y1, int64 y2, RGBc color, float tickness)
 				{
 				// tickness is assumed positive
@@ -3091,10 +3151,9 @@ namespace mtools
 				}
 
 
-			/* draw a tick vertical line (draw both endpoint, use blending) */
+			/* draw a tick vertical line with aliasing (draw both endpoint, use blending) */
 			MTOOLS_FORCEINLINE void _tickVerticalLine_blend(int64 x, int64 y1, int64 y2, RGBc color, float tickness)
 				{
-				// tickness is assumed positive
 				float f = (tickness / 2) + 0.5f;
 				int64 d = (int64)f;
 				if (d == 0) { _verticalLine_blend(x, y1, y2, color.getOpacity(color.opacity()*tickness)); return; }
@@ -3109,10 +3168,9 @@ namespace mtools
 				}
 
 
-			/* draw a tick horizontal line (draw both endpoint) */
+			/* draw a tick horizontal line with aliasing (draw both endpoint) */
 			MTOOLS_FORCEINLINE void _tickHorizontalLine(int64 y, int64 x1, int64 x2, RGBc color, float tickness)
 				{
-				// tickness is assumed positive
 				float f = (tickness / 2) + 0.5f;
 				int64 d = (int64)f;
 				if (d == 0) { _horizontalLine(y, x1, x2, color.getOpacity(color.opacity()*tickness)); return; }
@@ -3127,10 +3185,9 @@ namespace mtools
 				}
 
 
-			/* draw a tick horizontal line (draw both endpoint, use blending) */
+			/* draw a tick horizontal line with aliasing (draw both endpoint, use blending) */
 			MTOOLS_FORCEINLINE void _tickHorizontalLine_blend(int64 y, int64 x1, int64 x2, RGBc color, float tickness)
 				{
-				// tickness is assumed positive
 				float f = (tickness / 2) + 0.5f;
 				int64 d = (int64)f;
 				if (d == 0) { _horizontalLine_blend(y, x1, x2, color.getOpacity(color.opacity()*tickness)); return; }
@@ -3147,15 +3204,22 @@ namespace mtools
 
 
 			/**
-			 * Draw a line using Bresenham's algorithm (optimized).
-			 * 
-			 * - no bound check.
-			 * - Do not draw the endpoint P2.
-			 * - Algorithm is symmetric : the line from P1 to P2 and P2 to P1 are the same (except for the
-			 *   endpoint that is not drawn).
-			 **/
-			MTOOLS_FORCEINLINE void _lineBresenham(iVec2 P1, iVec2 P2, RGBc color)
+			* Draw a segment [P1,P2] using Bresenham's algorithm.
+			*
+			* The algorithm is symmetric: the line [P1,P2] is always equal
+			* to the line drawn in the other direction [P2,P1]
+			*
+			* Set draw_last to true to draw the endpoint P2 and to false to draw only
+			* the open segment [P1,P2[.
+			*
+			* This version overwrite the pixel color. 
+			* (about 6 times faster than the blending version).
+			*
+			* Optimized for speed.
+			**/
+			MTOOLS_FORCEINLINE void _lineBresenham(iVec2 P1, iVec2 P2, RGBc color, bool draw_last)
 				{
+				if (draw_last) operator()(P2).blend(color);
 				int64 & x1 = P1.X(); int64 & y1 = P1.Y();
 				int64 & x2 = P2.X(); int64 & y2 = P2.Y();
 				int64 dy = y2 - y1;
@@ -3184,17 +3248,25 @@ namespace mtools
 					}
 				}
 
+
 			/**
-			* Draw a line using Bresenham's algorithm (optimized).
+			* Draw a segment [P1,P2] using Bresenham's algorithm.
+			* Optimized for speed.
 			*
-			* - no bound check.
-			* - Do not draw the endpoint P2.
-			* - Algorithm is symmetric : the line from P1 to P2 and P2 to P1 are the same (except for the
-			*   endpoint that is not drawn).
-			* - use blending instead of overwriting.
+			* The algorithm is symmetric: the line [P1,P2] is always equal 
+			* to the line drawn in the other direction [P2,P1]
+			*
+			* Set draw_last to true to draw the endpoint P2 and to false to draw only
+			* the open segment [P1,P2[. 
+			*
+			* This version uses blending.
+			* (about 6 times slower than the overwritting version). 
+			* 
+			* Optimized for speed.
 			**/
-			MTOOLS_FORCEINLINE void _lineBresenham_blend(iVec2 P1, iVec2 P2, RGBc color)
+			MTOOLS_FORCEINLINE void _lineBresenham_blend(iVec2 P1, iVec2 P2, RGBc color, bool draw_last)
 				{
+				if (draw_last) operator()(P2).blend(color);
 				int64 & x1 = P1.X(); int64 & y1 = P1.Y();
 				int64 & x2 = P2.X(); int64 & y2 = P2.Y();
 				int64 dy = y2 - y1;
@@ -3227,29 +3299,35 @@ namespace mtools
 
 
 
-			/* draw the Bressenham line (P,Q1) while not drawing over point that belong to line (P,Q2) */
-			void _lineBresenham_avoid(iVec2 P, iVec2 Q1, iVec2 Q2, RGBc color)
+			/**
+			 * Draw the segment [P,Q1[ with the bresenham line algorithm while skipping the pixels
+			 * which also belong to the infinite line (P,Q2). 
+			 * 
+			 * If draw_last = false, the endpoint Q1 is never drawn. If set to true, the
+			 * endpoint is drawn provided it does not also belong to (P,Q2). 
+			 * 
+			 * Drawing is performed using the blend() operation. 
+			 * 
+			 * Optimized for speed. 
+			 **/
+			void _lineBresenham_avoid(iVec2 P, iVec2 Q1, iVec2 Q2, RGBc color, bool draw_last)
 				{
 				int64 xa1 = P.X();  int64 ya1 = P.Y();
 				int64 xb1 = P.X();  int64 yb1 = P.Y();
 				int64 xa2 = Q1.X(); int64 ya2 = Q1.Y();
 				int64 xb2 = Q2.X(); int64 yb2 = Q2.Y();
-
 				int64 dya = ya2 - ya1;
 				int64 dxa = xa2 - xa1;
 				int64 dyb = yb2 - yb1;
 				int64 dxb = xb2 - xb1;
-
 				int64 stepxa, stepya;
 				if (dya < 0) { dya = -dya;  stepya = -1; } else { stepya = 1; }
 				if (dxa < 0) { dxa = -dxa;  stepxa = -1; } else { stepxa = 1; }
 				dya <<= 1; dxa <<= 1;
-
 				int64 stepxb, stepyb;
 				if (dyb < 0) { dyb = -dyb;  stepyb = -1; } else { stepyb = 1; }
 				if (dxb < 0) { dxb = -dxb;  stepxb = -1; } else { stepxb = 1; }
 				dyb <<= 1; dxb <<= 1;
-
 				if (dxa > dya)
 					{
 					int64 fractiona = dya - (dxa >> 1) - ((ya2 > ya1) ? 1 : 0);
@@ -3298,29 +3376,86 @@ namespace mtools
 							}
 						}
 					}
+				if ((draw_last) && (xa1 != xb1) || (ya1 != yb1)) operator()(xa1, ya1).blend(color);
 				}
 
 
 
 
 
+			/* draw the interior of the triangle */
+			
+			template<bool blending, bool testinside> void _draw_triangle_interior(iVec2 P1, iVec2 P2, iVec2 P3, RGBc fillcolor)
+				{
+				if (P1.Y() > P2.Y()) { mtools::swap(P1, P2); }
+				if (P1.Y() > P3.Y()) { mtools::swap(P1, P3); }
+				if (P2.Y() > P3.Y()) { mtools::swap(P2, P3); }
+				if (P1.Y() == P3.Y()) return; //flat, nothing to draw. 
+				if (P1.Y() == P2.Y())
+					{
+					_fill_interior_angle<blending, testinside>(P3, P1, P2, fillcolor, false);
+					return;
+					}
+				if (P2.Y() == P3.Y())
+					{
+					_fill_interior_angle<blending, testinside>(P1, P2, P3, fillcolor, false);
+					return;
+					}
+				_fill_interior_angle<blending, testinside>(P1, P2, P3, fillcolor, false);
+				_fill_interior_angle<blending, testinside>(P3, P2, P1, fillcolor, false);
+				return;
+				}
 
-			/* draw an horizontal line from (x1,y) to (x2,y) */
+
+			/* private: used by _fill_interior_angle() */
 			MTOOLS_FORCEINLINE void _hline(int64 x1, int64 x2, int64 y, RGBc color, bool invx, bool invy)
 				{
-				if (invy) { y = -y; }
-				if (invx) { auto tmp = -x1; x1 = -x2; x2 = tmp; }
-				RGBc * p = _data + (y*_stride) + x1;
+				RGBc * p = _data + y*_stride + x1;
 				while(x1 <= x2) { (*p).blend(color); p++; x1++; }				
 				}
 
+			/* private: used by _fill_interior_angle() */
+			MTOOLS_FORCEINLINE void _hline_invx(int64 x1, int64 x2, int64 y, RGBc color, bool invx, bool invy)
+				{
+				RGBc * p = _data + y*_stride - x2;
+				while (x1 <= x2) { (*p).blend(color); p++; x1++; }
+				}
+
+			/* private: used by _fill_interior_angle() */
+			MTOOLS_FORCEINLINE void _hline_invy(int64 x1, int64 x2, int64 y, RGBc color, bool invx, bool invy)
+				{
+				RGBc * p = _data - y*_stride + x1;
+				while (x1 <= x2) { (*p).blend(color); p++; x1++; }
+				}
+
+			/* private: used by _fill_interior_angle() */
+			MTOOLS_FORCEINLINE void _hline_invx_invy(int64 x1, int64 x2, int64 y, RGBc color, bool invx, bool invy)
+				{
+				RGBc * p = _data - y*_stride - x2;
+				while (x1 <= x2) { (*p).blend(color); p++; x1++; }
+				}
 
 
-			/* fill the interior of the angle (Q1,P,Q2) 
-			 * we must have P.Y() < Q1.Y() , Q2.Y()
-			 * or  P.Y() > Q1.Y() , Q2.Y()
-			*/
-			MTOOLS_FORCEINLINE void _fill_interior_angle(iVec2 P, iVec2 Q1, iVec2 Q2, RGBc color,bool fill_last)
+			/**
+			 * Fill the interior delimited by the angle <Q1,P,Q2>
+			 *
+			 * -> THE HEIGHTS P.Y() MUST BE EITHER MINIMAL OR MAXIMAL 
+			 *    AMONG THE 3 POINTS. 
+			 *    
+			 * the filling goes up (or down) until height Q1.Y() is
+			 * reached. (set fill_last to fill also this last line)
+			 * so normally, this means that Q1.Y() should be the
+			 * middle height among the 3 points. 
+			 * 
+			 * The method perform exact filling w.r.t. the Bresenham 
+			 * line algorithm _lineBresenham(). This means that no
+			 * pixel overlap the two lines (P,Q1) and (P,Q2) and no 
+			 * gap is left either. 
+			 * 
+			 * Optimized for speed: uses only integer (additive) 
+			 * operations. 
+			 **/
+			template<bool blending, bool testinside> MTOOLS_FORCEINLINE void _fill_interior_angle(iVec2 P, iVec2 Q1, iVec2 Q2, RGBc color,bool fill_last)
 				{
 				// indicator for bresenham line drawing symmetry
 				const int64 ind_xa = ((Q1.X() > P.X()) ? 1 : 0);
@@ -3337,7 +3472,7 @@ namespace mtools
 					Q2.Y() = -Q2.Y();
 					invy = true;
 					}
-				if (Q1.X() > Q2.X())
+				if ( (Q1.X() - P.X())*(Q2.Y() - P.Y())  > (Q2.X() - P.X())*(Q1.Y() - P.Y()) ) // TODO, remove possible overflow (ok, not likely since we are in 64 bit..)
 					{
 					P.X() = -P.X();
 					Q1.X() = -Q1.X();
@@ -3363,99 +3498,525 @@ namespace mtools
 				if (dyb < 0) { dyb = -dyb;  stepyb = -1; } else { stepyb = 1; }
 				if (dxb < 0) { dxb = -dxb;  stepxb = -1; } else { stepxb = 1; }
 				dyb <<= 1; dxb <<= 1;
-
-				if (dxa > dya)
+				// ok, ready to draw. 
+				if (invx)
 					{
-					int64 fraca = dya - (dxa >> 1) - ind_ya;
-					if (dxb > dyb)
+					if (invy)
 						{
-						int64 fracb = dyb - (dxb >> 1) - ind_yb;
-						while(y < ytarget)
+						// **********************
+						// invx, invy
+						// **********************
+						if (dxa > dya)
 							{
-							int64 pxa = xa; int64 pxb = xb;
-							while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-							while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-							const int64 gxa = (stepxa < 0) ? (pxa + 1) : xa;
-							const int64 gxb = (stepxb > 0) ? (pxb - 1) : xb;
-							_hline(gxa, gxb, y, color, invx, invy);
-							y++;
+							int64 fraca = dya - (dxa >> 1) - ind_ya;
+							if (dxb > dyb)
+								{
+								int64 fracb = dyb - (dxb >> 1) - ind_yb;
+								if (stepxa < 0)
+									{
+									if (stepxb > 0)
+										{
+										while (y < ytarget)
+											{
+											_hline_invx_invy(xa + 1, xb - 1, y, color, invx, invy);
+											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
+											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
+											y++;
+											}
+										}
+									else
+										{
+										while (y < ytarget)
+											{
+											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
+											_hline_invx_invy(xa + 1, xb, y, color, invx, invy);
+											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
+											y++;
+											}
+										}
+									}
+								else
+									{
+									if (stepxb > 0)
+										{
+										while (y < ytarget)
+											{
+											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
+											_hline_invx_invy(xa, xb - 1, y, color, invx, invy);
+											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
+											y++;
+											}
+										}
+									else
+										{
+										while (y < ytarget)
+											{
+											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
+											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
+											_hline_invx_invy(xa, xb, y, color, invx, invy);
+											y++;
+											}
+										}
+									}
+								}
+							else
+								{
+								int64 fracb = dxb - (dyb >> 1) - ind_xb;
+								if (stepxa < 0)
+									{
+									while (y < ytarget)
+										{
+										_hline_invx_invy(xa + 1, xb - 1, y, color, invx, invy);
+										while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
+										if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
+										y++;
+										}
+									}
+								else
+									{
+									while (y < ytarget)
+										{
+										while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
+										_hline_invx_invy(xa, xb - 1, y, color, invx, invy);
+										if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
+										y++;
+										}
+									}
+								}
 							}
-						return;
+						else
+							{
+							int64 fraca = dxa - (dya >> 1) - ind_xa;
+							if (dxb > dyb)
+								{
+								int64 fracb = dyb - (dxb >> 1) - ind_yb;
+								if (stepxb > 0)
+									{
+									while (y < ytarget)
+										{
+										_hline_invx_invy(xa + 1, xb - 1, y, color, invx, invy);
+										while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
+										if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
+										y++;
+										}
+									}
+								else
+									{
+									while (y < ytarget)
+										{
+										while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
+										_hline_invx_invy(xa + 1, xb, y, color, invx, invy);
+										if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
+										y++;
+										}
+									}
+								}
+							else
+								{
+								int64 fracb = dxb - (dyb >> 1) - ind_xb;
+								while (y < ytarget)
+									{
+									_hline_invx_invy(xa + 1, xb - 1, y, color, invx, invy);
+									if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
+									if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
+									y++;
+									}
+								}
+							}
 						}
 					else
 						{
-						int64 fracb = dxb - (dyb >> 1) - ind_xb;
-						while (y < ytarget)
+						// **********************
+						// invx
+						// **********************
+						if (dxa > dya)
 							{
-							int64 pxa = xa; int64 pxb = xb;
-							while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-							if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
-							const int64 gxa = (stepxa < 0) ? (pxa + 1) : xa;
-							_hline(gxa, pxb - 1, y, color, invx, invy);
-							y++;
+							int64 fraca = dya - (dxa >> 1) - ind_ya;
+							if (dxb > dyb)
+								{
+								int64 fracb = dyb - (dxb >> 1) - ind_yb;
+								if (stepxa < 0)
+									{
+									if (stepxb > 0)
+										{
+										while (y < ytarget)
+											{
+											_hline_invx(xa + 1, xb - 1, y, color, invx, invy);
+											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
+											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
+											y++;
+											}
+										}
+									else
+										{
+										while (y < ytarget)
+											{
+											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
+											_hline_invx(xa + 1, xb, y, color, invx, invy);
+											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
+											y++;
+											}
+										}
+									}
+								else
+									{
+									if (stepxb > 0)
+										{
+										while (y < ytarget)
+											{
+											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
+											_hline_invx(xa, xb - 1, y, color, invx, invy);
+											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
+											y++;
+											}
+										}
+									else
+										{
+										while (y < ytarget)
+											{
+											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
+											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
+											_hline_invx(xa, xb, y, color, invx, invy);
+											y++;
+											}
+										}
+									}
+								}
+							else
+								{
+								int64 fracb = dxb - (dyb >> 1) - ind_xb;
+								if (stepxa < 0)
+									{
+									while (y < ytarget)
+										{
+										_hline_invx(xa + 1, xb - 1, y, color, invx, invy);
+										while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
+										if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
+										y++;
+										}
+									}
+								else
+									{
+									while (y < ytarget)
+										{
+										while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
+										_hline_invx(xa, xb - 1, y, color, invx, invy);
+										if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
+										y++;
+										}
+									}
+								}
 							}
-						return;
+						else
+							{
+							int64 fraca = dxa - (dya >> 1) - ind_xa;
+							if (dxb > dyb)
+								{
+								int64 fracb = dyb - (dxb >> 1) - ind_yb;
+								if (stepxb > 0)
+									{
+									while (y < ytarget)
+										{
+										_hline_invx(xa + 1, xb - 1, y, color, invx, invy);
+										while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
+										if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
+										y++;
+										}
+									}
+								else
+									{
+									while (y < ytarget)
+										{
+										while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
+										_hline_invx(xa + 1, xb, y, color, invx, invy);
+										if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
+										y++;
+										}
+									}
+								}
+							else
+								{
+								int64 fracb = dxb - (dyb >> 1) - ind_xb;
+								while (y < ytarget)
+									{
+									_hline_invx(xa + 1, xb - 1, y, color, invx, invy);
+									if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
+									if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
+									y++;
+									}
+								}
+							}
 						}
 					}
 				else
 					{
-					int64 fraca = dxa - (dya >> 1) - ind_xa;
-					if (dxb > dyb)
+					if (invy)
 						{
-						int64 fracb = dyb - (dxb >> 1) - ind_yb;
-						while (y < ytarget)
+						// **********************
+						// invy
+						// **********************
+						if (dxa > dya)
 							{
-							int64 pxa = xa; int64 pxb = xb;
-							if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
-							while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-							const int64 gxb = (stepxb > 0) ? (pxb - 1) : xb;
-							_hline(pxa + 1, gxb, y, color, invx, invy);
-							y++;
+							int64 fraca = dya - (dxa >> 1) - ind_ya;
+							if (dxb > dyb)
+								{
+								int64 fracb = dyb - (dxb >> 1) - ind_yb;
+								if (stepxa < 0)
+									{
+									if (stepxb > 0)
+										{
+										while (y < ytarget)
+											{
+											_hline_invy(xa + 1, xb - 1, y, color, invx, invy);
+											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
+											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
+											y++;
+											}
+										}
+									else
+										{
+										while (y < ytarget)
+											{
+											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
+											_hline_invy(xa + 1, xb, y, color, invx, invy);
+											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
+											y++;
+											}
+										}
+									}
+								else
+									{
+									if (stepxb > 0)
+										{
+										while (y < ytarget)
+											{
+											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
+											_hline_invy(xa, xb - 1, y, color, invx, invy);
+											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
+											y++;
+											}
+										}
+									else
+										{
+										while (y < ytarget)
+											{
+											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
+											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
+											_hline_invy(xa, xb, y, color, invx, invy);
+											y++;
+											}
+										}
+									}
+								}
+							else
+								{
+								int64 fracb = dxb - (dyb >> 1) - ind_xb;
+								if (stepxa < 0)
+									{
+									while (y < ytarget)
+										{
+										_hline_invy(xa + 1, xb - 1, y, color, invx, invy);
+										while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
+										if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
+										y++;
+										}
+									}
+								else
+									{
+									while (y < ytarget)
+										{
+										while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
+										_hline_invy(xa, xb - 1, y, color, invx, invy);
+										if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
+										y++;
+										}
+									}
+								}
 							}
-						return;
+						else
+							{
+							int64 fraca = dxa - (dya >> 1) - ind_xa;
+							if (dxb > dyb)
+								{
+								int64 fracb = dyb - (dxb >> 1) - ind_yb;
+								if (stepxb > 0)
+									{
+									while (y < ytarget)
+										{
+										_hline_invy(xa + 1, xb - 1, y, color, invx, invy);
+										while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
+										if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
+										y++;
+										}
+									}
+								else
+									{
+									while (y < ytarget)
+										{
+										while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
+										_hline_invy(xa + 1, xb, y, color, invx, invy);
+										if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
+										y++;
+										}
+									}
+								}
+							else
+								{
+								int64 fracb = dxb - (dyb >> 1) - ind_xb;
+								while (y < ytarget)
+									{
+									_hline_invy(xa + 1, xb - 1, y, color, invx, invy);
+									if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
+									if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
+									y++;
+									}
+								}
+							}
 						}
 					else
 						{
-						int64 fracb = dxb - (dyb >> 1) - ind_xb;
-						while (y < ytarget)
+						// **********************
+						// none
+						// **********************
+						if (dxa > dya)
 							{
-							_hline(xa + 1, xb - 1, y, color, invx, invy);
-							if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
-							if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
-							y++;
+							int64 fraca = dya - (dxa >> 1) - ind_ya;
+							if (dxb > dyb)
+								{
+								int64 fracb = dyb - (dxb >> 1) - ind_yb;
+								if (stepxa < 0)
+									{
+									if (stepxb > 0)
+										{
+										while (y < ytarget)
+											{
+											_hline(xa + 1, xb - 1, y, color, invx, invy);
+											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
+											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
+											y++;
+											}
+										}
+									else
+										{
+										while (y < ytarget)
+											{
+											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
+											_hline(xa + 1, xb, y, color, invx, invy);
+											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
+											y++;
+											}
+										}
+									}
+								else
+									{
+									if (stepxb > 0)
+										{
+										while (y < ytarget)
+											{
+											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
+											_hline(xa, xb - 1, y, color, invx, invy);
+											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
+											y++;
+											}
+										}
+									else
+										{
+										while (y < ytarget)
+											{
+											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
+											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
+											_hline(xa, xb, y, color, invx, invy);
+											y++;
+											}
+										}
+									}
+								}
+							else
+								{
+								int64 fracb = dxb - (dyb >> 1) - ind_xb;
+								if (stepxa < 0)
+									{
+									while (y < ytarget)
+										{
+										_hline(xa + 1, xb - 1, y, color, invx, invy);
+										while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
+										if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
+										y++;
+										}
+									}
+								else
+									{
+									while (y < ytarget)
+										{
+										while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
+										_hline(xa, xb - 1, y, color, invx, invy);
+										if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
+										y++;
+										}
+									}
+								}
 							}
-						return;
+						else
+							{
+							int64 fraca = dxa - (dya >> 1) - ind_xa;
+							if (dxb > dyb)
+								{
+								int64 fracb = dyb - (dxb >> 1) - ind_yb;
+								if (stepxb > 0)
+									{
+									while (y < ytarget)
+										{
+										_hline(xa + 1, xb - 1, y, color, invx, invy);
+										while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
+										if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
+										y++;
+										}
+									}
+								else
+									{
+									while (y < ytarget)
+										{
+										while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
+										_hline(xa + 1, xb, y, color, invx, invy);
+										if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
+										y++;
+										}
+									}
+								}
+							else
+								{
+								int64 fracb = dxb - (dyb >> 1) - ind_xb;
+								while (y < ytarget)
+									{
+									_hline(xa + 1, xb - 1, y, color, invx, invy);
+									if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
+									if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
+									y++;
+									}
+								}
+							}				
 						}
 					}
-
 				}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 			/**
-			* Antialiased line with Wu algorithm, a little faster than Bressenham AA version (10%)
+			* Draw an antialiased segment [P1,P2] using Wu algorithm.
 			*
-			* !!! DOES NOT WORK FOR HORIZONTAL AND VERTICAL LINES !!!
+			* DOES NOT WORK FOR HORIZONTAL AND VERTICAL LINES WHICH
+			* SHOULD BE DRAWN SEPARATELY.
 			*
-			* Use blending
-			* do not draw the endpoint P2.
+			* Set draw_last to true to draw the last point and to false 
+			* to draw only the open segment [P1,P2[.
+			* 
+			* This version write over the pixel color. 
 			**/
-			MTOOLS_FORCEINLINE void _lineWuAA(iVec2 P1, iVec2 P2, RGBc color)
+			MTOOLS_FORCEINLINE void _lineWuAA(iVec2 P1, iVec2 P2, RGBc color, bool draw_last)
 				{
 				int64 & x0 = P1.X(); int64 & y0 = P1.Y();
 				int64 & x1 = P2.X(); int64 & y1 = P2.Y();
 				operator()(x0, y0) = color;
+				if (draw_last) operator()(x1, y1) = color;
 				if (y0 > y1) { mtools::swap(y0, y1); mtools::swap(x0, x1); }
 				int64 dx = x1 - x0;
 				int64 dir;
@@ -3466,7 +4027,7 @@ namespace mtools
 					while (--dy > 0) { x0 += dir; y0++; operator()(x0, y0) = color; }
 					return;
 					}
-				uint32 err = 0;
+				uint32 err = 0; // important to be 32 bit, do not change !
 				if (dy > dx)
 					{
 					uint32 inc = (uint32)((dx << 32) / dy);
@@ -3501,20 +4062,23 @@ namespace mtools
 				}
 
 
-
-			/**
-			 * Antialiased line with Wu algorithm, a little faster than Bressenham AA version (10%) 
+			 /**
+			 * Draw an antialiased segment [P1,P2] using Wu algorithm.
 			 *
-			 * !!! DOES NOT WORK FOR HORIZONTAL AND VERTICAL LINES !!! 
+			 * DOES NOT WORK FOR HORIZONTAL AND VERTICAL LINES WHICH
+			 * SHOULD BE DRAWN SEPARATELY.
 			 *
-			 * Use blending
-			 * do not draw the endpoint P2.
+			 * Set draw_last to true to draw the last point and to false
+			 * to draw only the open segment [P1,P2[.
+			 *
+			 * This version use blending to draw the line.
 			 **/
-			MTOOLS_FORCEINLINE void _lineWuAA_blend(iVec2 P1, iVec2 P2, RGBc color)
+			MTOOLS_FORCEINLINE void _lineWuAA_blend(iVec2 P1, iVec2 P2, RGBc color, bool draw_last)
 				{
 				int64 & x0 = P1.X(); int64 & y0 = P1.Y();
 				int64 & x1 = P2.X(); int64 & y1 = P2.Y();
 				operator()(x0, y0).blend(color);
+				if (draw_last) operator()(x1, y1) = color;
 				if (y0 > y1) { mtools::swap(y0, y1); mtools::swap(x0, x1); }
 				int64 dx = x1 - x0;
 				int64 dir;
@@ -3525,7 +4089,7 @@ namespace mtools
 					while(--dy > 0) { x0 += dir; y0++; operator()(x0, y0).blend(color); }
 					return;
 					}
-				uint32 err = 0;
+				uint32 err = 0; // important to be 32 bit, do not change !
 				if (dy > dx)
 					{
 					uint32 inc = (uint32)((dx << 32) / dy);
@@ -3560,12 +4124,12 @@ namespace mtools
 				}
 
 
+
 			/**
 			* Draw an tick antialiased line using Bresenham's algorithm.
 			* 
-			* -------------------------------------------------------------------------------------------
-			* TODO : endpoints are not very clean, improve it. 
-			* -------------------------------------------------------------------------------------------
+			* ----------------------------------------------------------
+			* TODO : NOT VERY GOOD, IMPROVE IT. 
 			**/
 			MTOOLS_FORCEINLINE void _tickLineBresenhamAA(iVec2 P1, iVec2 P2, float wd, RGBc color)
 				{
@@ -3643,9 +4207,8 @@ namespace mtools
 			* Draw an tick antialiased line using Bresenham's algorithm.
 			* use blending.
 			* 
-			* -------------------------------------------------------------------------------------------
-			* TODO : endpoints are not very clean, improve it.
-			* -------------------------------------------------------------------------------------------
+			* ----------------------------------------------------------
+			* TODO : NOT VERY GOOD, IMPROVE IT.
 			**/
 			MTOOLS_FORCEINLINE void _tickLineBresenhamAA_blend(iVec2 P1, iVec2 P2, float wd, RGBc color)
 				{
@@ -3720,11 +4283,67 @@ namespace mtools
 
 
 
+			/******************************************************************************************************************************************************
+			*																				   																      *
+			*                                                                       CAIRO                                                                         *
+			* These methods affect: _pcairo_surface, _pcairo_context 		     																				  *
+			*******************************************************************************************************************************************************
 
-			/*************************************************************
-			* MEMORY MANAGEMENT                                          *
-			* These methods affect: _deletepointer and _data             *
-			**************************************************************/
+
+			/* tell cairo that the data buffer is possibly dirty */
+			inline void _cairomarkdirty() const
+				{
+				if (_pcairo_surface != nullptr)	cairo_surface_mark_dirty((cairo_surface_t *)_pcairo_surface);
+				}
+
+			/* flush all cairo operation */
+			inline void _cairoflush() const
+				{
+				if (_pcairo_surface != nullptr)	cairo_surface_flush((cairo_surface_t *)_pcairo_surface);
+				}
+
+			/* remove the cairo objects */
+			inline void _removecairo() const
+				{
+				if (_pcairo_context != nullptr) { cairo_destroy((cairo_t *)_pcairo_surface); _pcairo_context = nullptr; }
+				if (_pcairo_surface != nullptr) { cairo_surface_destroy((cairo_surface_t *)_pcairo_surface); _pcairo_surface = nullptr; }
+				}
+
+			/* create the cairo objects if needed */
+			inline bool _createcairo(bool stopOnError) const
+				{
+				if (_pcairo_surface == nullptr)
+					{
+					_pcairo_surface = cairo_image_surface_create_for_data((unsigned char *)_data, CAIRO_FORMAT_ARGB32, (int)_lx, (int)_ly, (int)(4 * _stride));
+					if (cairo_surface_status((cairo_surface_t*)_pcairo_surface) != CAIRO_STATUS_SUCCESS)
+						{
+						_removecairo();
+						if (stopOnError) MTOOLS_ERROR("Cannot create CAIRO surface");
+						return false;
+						}
+					}
+				if (_pcairo_context == nullptr)
+					{
+					_pcairo_context = cairo_create((cairo_surface_t*)_pcairo_surface);
+					if (cairo_status((cairo_t*)_pcairo_context) != CAIRO_STATUS_SUCCESS)
+						{
+						_removecairo();
+						if (stopOnError) MTOOLS_ERROR("Cannot create CAIRO context");
+						return false;
+						}
+					}
+				_cairomarkdirty();
+				return true;
+				}
+
+
+
+			/*******************************************************************************************************************************************************
+			 *																																					   *
+			 *                                                              MEMORY MANAGEMENT                                                                      *
+			 * These methods affect: _deletepointer and _data                                                                                                      *
+			 *******************************************************************************************************************************************************/
+
 
 			/* allocate memory, updates _data, and _deletepointer */
 			MTOOLS_FORCEINLINE void _allocate(int64 ly, int64 stride, RGBc * databuffer)
@@ -3757,9 +4376,13 @@ namespace mtools
 				}
 
 
-			/********************************************
-			* DATA                                      *
-			********************************************/
+
+			/******************************************************************************************************************************************************
+			*																				   																      *
+			*                                                                       DATA                                                                          *
+			*																																					  *
+			*******************************************************************************************************************************************************/
+
 
 			int64				_lx;						// width of the image in pixels
 			int64				_ly;						// height of the image in pixels

@@ -1055,7 +1055,7 @@ void testriangle()
 
 //	im.draw_triangle(P3, P2, P1, RGBc::c_Red.getOpacity(0.5), true, false);
 	im.draw_triangle(P3, P2, P1, RGBc::c_Red.getOpacity(1),false,false);
-	im._fill_interior_angle(P1, P2, P3, RGBc::c_Black, false);
+	//im._fill_interior_angle(P1, P2, P3, RGBc::c_Black, false);
 
 
 	mtools::Plotter2D plotter;
@@ -1071,29 +1071,36 @@ void testriangle()
 
 void test_b()
 	{
-	Image im(1500, 1000);
-	im.clear(RGBc::c_White);
-
-
-	cout << "START\n";
-
-	iVec2 P(500, 500);
-	iVec2 Q2(720, 300);
-	iVec2 Q1(450, 300);
-
-	im._fill_interior_angle(P, Q1, Q2, RGBc::c_Red.getOpacity(0.5), true);
-
-	im.draw_line(P, Q1, RGBc::c_Green.getOpacity(0.5), true, true, false);
-	im._lineBresenham_avoid(P, Q2, Q1, RGBc::c_Green.getOpacity(0.5));
-	//im.draw_line(P, Q2, RGBc::c_Green.getOpacity(0.5), true, true, false);
-
-	
+	int LX = 80;
+	int LY = 60;
+	Image im(LX, LY);
 
 	mtools::Plotter2D plotter;
 	auto Plot1 = mtools::makePlot2DImage(im, 4, "Img");
 	plotter[Plot1];
 	Plot1.autorangeXY();
-	plotter.plot();
+	plotter.startPlot();
+
+
+	MT2004_64 gen(1);
+
+
+	int e = 20;
+
+	while (1)
+		{
+		im.clear(RGBc::c_White);
+		iVec2 P1(Unif_int(0 - e, LX - 1 + e, gen), Unif_int(0 - e, LY - 1 + e, gen));
+		iVec2 P2(Unif_int(0 - e, LX - 1 + e, gen), Unif_int(0 - e, LY - 1 + e, gen));
+		iVec2 P3(Unif_int(0 - e, LX - 1 + e, gen), Unif_int(0 - e, LY - 1 + e, gen));
+
+		im.draw_triangle(P1, P2, P3, RGBc::c_Green.getOpacity(0.5),true,false);
+		im.draw_triangle_interior(P1, P2, P3, RGBc::c_Red.getOpacity(0.5), true);
+
+		plotter.redraw();
+		cout.getKey();
+		}
+
 
 	}
 
