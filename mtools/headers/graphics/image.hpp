@@ -31,6 +31,7 @@
 #include "../random/classiclaws.hpp"
 #include <cairo.h>
 
+#include "../io/console.hpp"
 
 namespace mtools
 	{
@@ -1638,12 +1639,12 @@ namespace mtools
 				if (P1 == P2) return;
 				if (P1.X() == P2.X())
 					{
-					if (blending) { _verticalLine_blend(P1.X(), P1.Y(), P2.Y(), color); } else { _verticalLine(P1.X(), P1.Y(), P2.Y(), color); }
+					if ((blending)&&(color.comp.A != 255)) { _verticalLine_blend(P1.X(), P1.Y(), P2.Y(), color); } else { _verticalLine(P1.X(), P1.Y(), P2.Y(), color); }
 					return;
 					}
 				if (P1.Y() == P2.Y())
 					{
-					if (blending) { _horizontalLine_blend(P1.Y(), P1.X(), P2.X(), color); } else { _horizontalLine(P1.Y(), P1.X(), P2.X(), color); }
+					if ((blending) && (color.comp.A != 255)) { _horizontalLine_blend(P1.Y(), P1.X(), P2.X(), color); } else { _horizontalLine(P1.Y(), P1.X(), P2.X(), color); }
 					return;
 					}
 				if (antialiased)
@@ -1653,10 +1654,9 @@ namespace mtools
 					}
 				else
 					{
-					if (blending) _lineBresenham_blend(P1, P2, color); else _lineBresenham(P1, P2, color);
+					if ((blending) && (color.comp.A != 255)) _lineBresenham_blend(P1, P2, color); else _lineBresenham(P1, P2, color);
 					}
 				}
-
 
 
 			/**
@@ -1718,7 +1718,7 @@ namespace mtools
 
 
 			/**
-			* Draw a line. portion outside the image is clipped.
+			* Draw a line. Portion outside the image is clipped.
 			*
 			* @param	x1		   	x-coord of the first point.
 			* @param	y1		   	y-coord of the first point.
@@ -1737,35 +1737,163 @@ namespace mtools
 				}
 
 
-
 			/**
-			 * Blend a filled rectangle of given size and color over this image. Portion outside the image
-			 * are clipped.
+			 * Draw a triangle. Portion outside the image is clipped.
 			 *
-			 * @param	dest_box	position of the rectangle to blend over.
-			 * @param	boxcolor	the color to blend over.
-			 * @param	blend   	true to use blending and false to simply copy the color.
+			 * @param	P1		   	The first point
+			 * @param	P2		   	The second point.
+			 * @param	P3		   	The third point.
+			 * @param	color	   	The color.
+			 * @param	blending   	true to use blending and false to write over. 
+			 * @param	antialiased	true to use antialiased lines.
 			 **/
-			inline void draw_filled_rectangle(const iBox2 & dest_box, RGBc boxcolor, bool blend)
+			inline void draw_triangle(iVec2 P1, iVec2 P2, iVec2 P3, RGBc color, bool blending, bool antialiased)
 				{
-				draw_filled_rectangle(dest_box.min[0], dest_box.min[1], dest_box.max[0] - dest_box.min[0] + 1, dest_box.max[1] - dest_box.min[1] + 1, boxcolor, blend);
+				draw_line(P1, P2, color, false, blending, antialiased);
+				draw_line(P2, P3, color, false, blending, antialiased);
+				draw_line(P3, P1, color, false, blending, antialiased);
 				}
 
 
 			/**
-			 * Blend a filled rectangle of given size and color over this image. Portion outside the image
+			* Draw a triangle. Portion outside the image is clipped.
+			*
+			 * @param	x1		   	x-coord of the first point.
+			 * @param	y1		   	y-coord of the first point.
+			 * @param	x2		   	x-coord of the second point.
+			 * @param	y2		   	y-coord of the second point.
+			 * @param	x3		   	x-coord of the third point.
+			 * @param	y3		   	y-coord of the third point.
+			 * @param	color	   	The color.
+			 * @param	blending   	true to use blending and false to write over.
+			 * @param	antialiased	true to use antialiased lines.
+			 **/
+			MTOOLS_FORCEINLINE void draw_triangle(int64 x1, int64 y1, int64 x2, int64 y2, int64 x3, int64 y3, RGBc color, bool blending, bool antialiased)
+				{
+				draw_triangle({ x1,y1 }, { x2,y2 }, { x3,y3 }, color, blending, antialiased);
+				}
+
+
+			/**
+			* Draw a filled triangle. Portion outside the image is clipped.
+			*
+			* @param	P1		   	The first point
+			* @param	P2		   	The second point.
+			* @param	P3		   	The third point.
+			* @param	fillcolor  	The fill color.
+			* @param	blending   	true to use blending and false to write over.
+			**/
+			inline void draw_filled_triangle(iVec2 P1, iVec2 P2, iVec2 P3, RGBc fillcolor, bool blending)
+				{
+				// TODO
+				}
+
+
+
+
+
+			void fill_interior_triangle(iVec2 P1, iVec2 P2, iVec2 P3, RGBc color)
+				{
+				_fill_interior_triangle(P1, P2, P3, color);
+				}
+
+
+
+
+
+
+
+			/**
+			 * Draw a filled triangle. Portion outside the image is clipped.
+			 *
+			 * @param	x1		 	x-coord of the first point.
+			 * @param	y1		 	y-coord of the first point.
+			 * @param	x2		 	x-coord of the second point.
+			 * @param	y2		 	y-coord of the second point.
+			 * @param	x3		 	x-coord of the third point.
+			 * @param	y3		 	y-coord of the third point.
+			 * @param	fillcolor	The fill color.
+			 * @param	blending 	true to use blending and false to write over.
+			 **/
+			MTOOLS_FORCEINLINE void draw_filled_triangle(int64 x1, int64 y1, int64 x2, int64 y2, int64 x3, int64 y3, RGBc fillcolor, bool blending)
+				{
+				draw_filled_triangle({ x1,y1 }, { x2,y2 }, { x3,y3 }, fillcolor, blending);
+				}
+
+
+			/**
+			* draw a rectangle of given size and color over this image. Portion outside the image
+			* are clipped.
+			*
+			* @param	dest_box	position of the rectangle to draw.
+			* @param	color		the color to use.
+			* @param	blend   	true to use blending and false to simply copy the color.
+			**/
+			inline void draw_rectangle(const iBox2 & dest_box, RGBc color, bool blend)
+				{
+				if (dest_box.isEmpty()) return;
+				if ((blend) && (color.comp.A < 255))
+					{
+					draw_line(dest_box.min[0], dest_box.min[1], dest_box.max[0], dest_box.min[1], color, false, true, false);
+					draw_line(dest_box.max[0], dest_box.min[1], dest_box.max[0], dest_box.max[1], color, false, true, false);
+					draw_line(dest_box.max[0], dest_box.max[1], dest_box.min[0], dest_box.max[1], color, false, true, false);
+					draw_line(dest_box.min[0], dest_box.max[1], dest_box.min[0], dest_box.min[1], color, false, true, false);
+					}
+				else
+					{
+					draw_line(dest_box.min[0], dest_box.min[1], dest_box.max[0], dest_box.min[1], color, false);
+					draw_line(dest_box.max[0], dest_box.min[1], dest_box.max[0], dest_box.max[1], color, false);
+					draw_line(dest_box.max[0], dest_box.max[1], dest_box.min[0], dest_box.max[1], color, false);
+					draw_line(dest_box.min[0], dest_box.max[1], dest_box.min[0], dest_box.min[1], color, false);
+					}
+				}
+
+
+			/**
+			 * draw a rectangle of given size and color over this image. Portion outside the image are
+			 * clipped.
+			 *
+			 * @param	x		 	x-coordinate of the rectangle upper left corner.
+			 * @param	y		 	y-coordinate of the rectangle upper left corner.
+			 * @param	sx		 	rectangle width.
+			 * @param	sy		 	rectangle height.
+			 * @param	color		the color to use.
+			 * @param	blend	 	true to use blending and false to simply copy the color.
+			 **/
+			MTOOLS_FORCEINLINE void draw_rectangle(int64 x, int64 y, int64 sx, int64 sy, RGBc color, bool blend)
+				{
+				draw_rectangle(iBox2(x, x + sx - 1, y, y + sy - 1), color, blend);
+				}
+
+
+			/**
+			 * draw a filled rectangle of given size and color over this image. Portion outside the image
+			 * are clipped.
+			 *
+			 * @param	dest_box	position of the rectangle to draw.
+			 * @param	fillcolor	the color to use.
+			 * @param	blend   	true to use blending and false to simply copy the color.
+			 **/
+			MTOOLS_FORCEINLINE void draw_filled_rectangle(const iBox2 & dest_box, RGBc fillcolor, bool blend)
+				{
+				draw_filled_rectangle(dest_box.min[0], dest_box.min[1], dest_box.max[0] - dest_box.min[0] + 1, dest_box.max[1] - dest_box.min[1] + 1, fillcolor, blend);
+				}
+
+
+			/**
+			 * draw a filled rectangle of given size and color over this image. Portion outside the image
 			 * are clipped.
 			 *
 			 * @param	x			x-coordinate of the rectangle upper left corner.
 			 * @param	y			y-coordinate of the rectangle upper left corner.
 			 * @param	sx			rectangle width.
 			 * @param	sy			rectangle height.
-			 * @param	boxcolor	the color to blend over.
+			 * @param	fillcolor	the color to use.
 			 * @param	blend   	true to use blending and false to simply copy the color.
 			 **/
-			inline void draw_filled_rectangle(int64 x,int64 y, int64 sx, int64 sy, RGBc boxcolor, bool blend)
+			inline void draw_filled_rectangle(int64 x,int64 y, int64 sx, int64 sy, RGBc fillcolor, bool blend)
 				{
-				_draw_box(x, y, sx, sy, boxcolor, blend);
+				_draw_box(x, y, sx, sy, fillcolor, blend);
 				}
 
 
@@ -3102,78 +3230,282 @@ namespace mtools
 			* Draw a line using Bresenham's algorithm.
 			* Optimized.
 			* Do not draw the endpoint P2.
+			* 
+			* Always draw the bresenham line from the point with smaller Y to the one with larger Y. 
+			* (because the line drawn in the other direction may not match). 
 			**/
 			MTOOLS_FORCEINLINE void _lineBresenham(iVec2 P1, iVec2 P2, RGBc color)
 				{
-				int64 & x1 = P2.X(); int64 & y1 = P2.Y(); // swap P1 and P2 so that (x1,y1) is the endpoint
-				int64 & x2 = P1.X(); int64 & y2 = P1.Y(); //
-				int64 dy = y2 - y1;
+				operator()(P1) = color; // draw the start point.
+				int64 x1, x2, y1, y2;
+				if (P1.Y() < P2.Y()) // order the point so that y1 < y2. 
+					{
+					x1 = P1.X(); y1 = P1.Y();
+					x2 = P2.X(); y2 = P2.Y();
+					}
+				else
+					{
+					x1 = P2.X(); y1 = P2.Y();
+					x2 = P1.X(); y2 = P1.Y();
+					}
+				int64 dy = y2 - y1; // always positive
 				int64 dx = x2 - x1;
-				int64 stepx, stepy;
-				if (dy < 0) { dy = -dy;  stepy = -1; } else { stepy = 1; }
+				int64 stepx;
 				if (dx < 0) { dx = -dx;  stepx = -1; } else { stepx = 1; }
 				dy <<= 1; dx <<= 1;
 				if (dx > dy)
 					{
+					const int64 target = x2 - stepx;
 					int64 fraction = dy - (dx >> 1);
-					while (x1 != x2)
+					if (stepx == 1)
 						{
-						if (fraction >= 0) { y1 += stepy; fraction -= dx; }
-						x1 += stepx; fraction += dy;
-						operator()(x1, y1) = color;
+						while (x1 < target)
+							{
+							if (fraction >= 0) { y1++; fraction -= dx; }
+							x1++; fraction += dy;
+							operator()(x1, y1) = color;
+							}
+						}
+					else
+						{
+						while (x1 > target)
+							{
+							if (fraction >= 0) { y1++; fraction -= dx; }
+							x1--; fraction += dy;
+							operator()(x1, y1) = color;
+							}
 						}
 					}
 				else
 					{
+					const int64 target = y2 - 1;
 					int64 fraction = dx - (dy >> 1);
-					while (y1 != y2)
+					while (y1 < target)
 						{
 						if (fraction >= 0) { x1 += stepx; fraction -= dy; }
-						y1 += stepy; fraction += dx;
+						y1++; fraction += dx;
 						operator()(x1, y1) = color;
 						}
 					}
 				}
-
 
 
 			/**
 			* Draw a line using Bresenham's algorithm.
-			* Optimized. No bound check.
-			* Use blending.
+			* Optimized.
 			* Do not draw the endpoint P2.
+			*
+			* Always draw the bresenham line from the point with smaller Y to the one with larger Y.
+			* (because the line drawn in the other direction may not match).
 			**/
 			MTOOLS_FORCEINLINE void _lineBresenham_blend(iVec2 P1, iVec2 P2, RGBc color)
 				{
-				int64 & x1 = P2.X(); int64 & y1 = P2.Y(); // swap P1 and P2 so that (x1,y1) is the endpoint
-				int64 & x2 = P1.X(); int64 & y2 = P1.Y(); //
-				int64 dy = y2 - y1;
+				operator()(P1).blend(color); // draw the start point.
+				int64 x1, x2, y1, y2;
+				if (P1.Y() < P2.Y()) // order the point so that y1 < y2. 
+					{
+					x1 = P1.X(); y1 = P1.Y();
+					x2 = P2.X(); y2 = P2.Y();
+					}
+				else
+					{
+					x1 = P2.X(); y1 = P2.Y();
+					x2 = P1.X(); y2 = P1.Y();
+					}
+				int64 dy = y2 - y1; // always positive
 				int64 dx = x2 - x1;
-				int64 stepx, stepy;
-				if (dy < 0) { dy = -dy;  stepy = -1; } else { stepy = 1; }
-				if (dx < 0) { dx = -dx;  stepx = -1; } else { stepx = 1; }
+				int64 stepx;
+				if (dx < 0) { dx = -dx;  stepx = -1; }
+				else { stepx = 1; }
 				dy <<= 1; dx <<= 1;
 				if (dx > dy)
 					{
+					const int64 target = x2 - stepx;
 					int64 fraction = dy - (dx >> 1);
-					while (x1 != x2)
+					if (stepx == 1)
 						{
-						if (fraction >= 0) { y1 += stepy; fraction -= dx; }
-						x1 += stepx; fraction += dy;
-						operator()(x1, y1).blend(color);
+						while (x1 < target)
+							{
+							if (fraction >= 0) { y1++; fraction -= dx; }
+							x1++; fraction += dy;
+							operator()(x1, y1).blend(color);
+							}
+						}
+					else
+						{
+						while (x1 > target)
+							{
+							if (fraction >= 0) { y1++; fraction -= dx; }
+							x1--; fraction += dy;
+							operator()(x1, y1).blend(color);
+							}
 						}
 					}
 				else
 					{
+					const int64 target = y2 - 1;
 					int64 fraction = dx - (dy >> 1);
-					while (y1 != y2)
+					while (y1 < target)
 						{
 						if (fraction >= 0) { x1 += stepx; fraction -= dy; }
-						y1 += stepy; fraction += dx;
+						y1++; fraction += dx;
 						operator()(x1, y1).blend(color);
 						}
 					}
 				}
+
+
+
+
+
+			MTOOLS_FORCEINLINE void _hline(int64 x1, int64 x2, int64 y, RGBc color)
+				{
+				RGBc * p = _data + _stride*y + x1 + 1;
+				for (int64 z = (x1 + 1); z < x2; z++) { *p = color; p++; }
+				}
+
+
+
+			/* fill the interior of a triangle */
+			MTOOLS_FORCEINLINE void _fill_interior_triangle(iVec2 P1, iVec2 P2, iVec2 P3, RGBc color)
+				{
+				// order the points by increasing value of y. 
+				if (P2.Y() < P1.Y()) { mtools::swap(P1, P2); }
+				if (P3.Y() < P1.Y()) { mtools::swap(P1, P3); }
+				if (P3.Y() < P2.Y()) { mtools::swap(P2, P3); }
+				// check if we have a triangle with an horizontal base.
+				if ((P1.Y() == P2.Y()) || (P2.Y() == P3.Y()))
+					{ // yes
+					if (P1.Y() == P3.Y()) return; // flat, no interior
+					int64 xa, ya, xb, yb, xc, yc;
+					if (P1.Y() == P2.Y())
+						{
+						xc = P3.X(); yc = P3.Y();
+						if (P1.X() < P2.X())
+							{
+							xa = P1.X(); ya = P1.Y();
+							xb = P2.X(); yb = P2.Y();
+							}
+						else
+							{
+							xa = P2.X(); ya = P2.Y();
+							xb = P1.X(); yb = P1.Y();
+							}
+						}
+					else
+						{
+						xc = P1.X(), yc = P1.Y();
+						if (P2.X() < P3.X())
+							{
+							xa = P2.X(); ya = P2.Y();
+							xb = P3.X(); yb = P3.Y();
+							}
+						else
+							{
+							xa = P3.X(); ya = P3.Y();
+							xb = P2.X(); yb = P2.Y();
+							}
+						}
+					if (xa == xb) return; // flat, non interior
+
+					int64 dyA = yc - ya;
+					int64 dxA = xc - xa;
+					int64 dyB = yc - yb;
+					int64 dxB = xc - xb;
+
+					int64 stepxA, stepyA;
+					if (dyA < 0) { dyA = -dyA;  stepyA = -1; } else { stepyA = 1; }
+					if (dxA < 0) { dxA = -dxA;  stepxA = -1; } else { stepxA = 1; }
+					dyA <<= 1; dxA <<= 1;
+
+					int64 stepxB, stepyB;
+					if (dyB < 0) { dyB = -dyB;  stepyB = -1; } else { stepyB = 1; }
+					if (dxB < 0) { dxB = -dxB;  stepxB = -1; } else { stepxB = 1; }
+					dyB <<= 1; dxB <<= 1;
+
+
+					if (dxA > dyA)
+						{
+						if (dxB > dyB)
+							{
+							cout << "A";
+							int64 fractionA = dyA - (dxA >> 1); // dxA > dyA
+							int64 fractionB = dyB - (dxB >> 1); // dxB > dyB
+							while (fractionA < 0) { xa += stepxA; fractionA += dyA; } fractionA -= dxA;	// dxA > dyA
+							while (fractionB < 0) { xb += stepxB; fractionB += dyB; } fractionB -= dxB; // dxB > dyB
+							ya += stepyA;
+							while (ya != yc)
+								{
+								do { xa += stepxA; fractionA += dyA; } while (fractionA < 0); fractionA -= dxA;	// dxA > dyA
+								do { xb += stepxB; fractionB += dyB; } while (fractionB < 0); fractionB -= dxB; // dxB > dyB
+								_hline(xa, xb, ya, color);
+								ya += stepyA;
+								}
+							return;
+							}
+						else
+							{
+							cout << "B";
+							int64 fractionA = dyA - (dxA >> 1); // dxA > dyA
+							int64 fractionB = dxB - (dyB >> 1); // dxB < dyB
+							while (fractionA < 0)  { xa += stepxA; fractionA += dyA; } fractionA -= dxA; // dxA > dyA
+							if (fractionB >= 0) { xb += stepxB; fractionB -= dyB; } fractionB += dxB; // dxB < dyB
+							ya += stepyA;
+							while (ya != yc)
+								{
+								do { xa += stepxA; fractionA += dyA; }	while (fractionA < 0); fractionA -= dxA; // dxA > dyA
+								_hline(xa, xb, ya, color);
+								if (fractionB >= 0) { xb += stepxB; fractionB -= dyB; } fractionB += dxB; // dxB < dyB
+								ya += stepyA;
+								}
+							return;
+							}
+						}
+					else
+						{
+						if (dxB > dyB)
+							{
+							cout << "C";
+							int64 fractionA = dxA - (dyA >> 1); // dxA < dyA
+							int64 fractionB = dyB - (dxB >> 1); // dxB > dyB
+							if (fractionA >= 0) { xa += stepxA; fractionA -= dyA; } fractionA += dxA; // dxA < dyA
+							while (fractionB < 0) { xb += stepxB; fractionB += dyB; }  fractionB -= dxB; // dxB > dyB
+							ya += stepyA;
+							while (ya != yc)
+								{
+								do { xb += stepxB; fractionB += dyB; } while (fractionB < 0); fractionB -= dxB; // dxB > dyB
+								_hline(xa, xb, ya, color);
+								if (fractionA >= 0) { xa += stepxA; fractionA -= dyA; } fractionA += dxA; // dxA < dyA
+								ya += stepyA;
+								}
+							return;
+							}
+						else
+							{
+							cout << "D";
+							int64 fractionA = dxA - (dyA >> 1); // dxA < dyA
+							int64 fractionB = dxB - (dyB >> 1); // dxB < dyB
+							if (fractionA >= 0) { xa += stepxA; fractionA -= dyA; } fractionA += dxA; // dxA < dyA
+							if (fractionB >= 0) { xb += stepxB; fractionB -= dyB; } fractionB += dxB; // dxB < dyB
+							ya += stepyA;
+							while (ya != yc)
+								{
+								_hline(xa, xb, ya, color);
+								if (fractionA >= 0) { xa += stepxA; fractionA -= dyA; } fractionA += dxA; // dxA < dyA
+								if (fractionB >= 0) { xb += stepxB; fractionB -= dyB; } fractionB += dxB; // dxB < dyB
+								ya += stepyA;
+
+								setPixel(xa, ya, RGBc::c_Green);
+								setPixel(xb, ya, RGBc::c_Green);
+								}
+							return;
+							}
+						}
+					}
+				}
+
+
+
 
 
 

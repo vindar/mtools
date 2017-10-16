@@ -595,7 +595,7 @@ void tt(bool aa, bool blend, float tick, int N, std::vector<iVec2> & tabP1, std:
 		{
 		iVec2 P1 = tabP1[i];
 		iVec2 P2 = tabP2[i];
-		im.draw_line(P1, P2, color, aa, blend, tick);
+		im.draw_line(P1, P2, color, true, blend, aa, tick);
 		}
 
 	cout << "done in : " << mtools::Chronometer() << "\n";
@@ -755,11 +755,86 @@ void testImg()
 
 
 
+
 	im.clear(RGBc::c_White);
 	{
-
 	RGBc color = RGBc::c_Black.getOpacity(0.1f);
-	cout << "\n\nGG1";
+	blend = false;
+	aa = false;
+	cout << "\n\nGG1\n";
+	cout << "aa     = " << aa << "\n";
+	cout << "blend  = " << blend << "\n";
+	cout << "tick   = " << tick << "\n";
+	mtools::Chronometer();
+	for (int i = 0;i < N; i++)
+		{
+		iVec2 P1 = tabP1[i];
+		iVec2 P2 = tabP2[i];
+		im.draw_line(P1, P2, color, true, blend, aa);
+		}
+	cout << "done in : " << mtools::Chronometer() << "\n";
+	}
+
+	im.clear(RGBc::c_White);
+	{
+	RGBc color = RGBc::c_Black.getOpacity(0.1f);
+	blend = true;
+	aa = false;
+	cout << "\n\nGG2\n";
+	cout << "aa     = " << aa << "\n";
+	cout << "blend  = " << blend << "\n";
+	cout << "tick   = " << tick << "\n";
+	mtools::Chronometer();
+	for (int i = 0;i < N; i++)
+		{
+		iVec2 P1 = tabP1[i];
+		iVec2 P2 = tabP2[i];
+		im.draw_line(P1, P2, color, true, blend, aa);
+		}
+	cout << "done in : " << mtools::Chronometer() << "\n";
+	}
+	im.clear(RGBc::c_White);
+	{
+	RGBc color = RGBc::c_Black.getOpacity(0.1f);
+	blend = false;
+	aa = true;
+	cout << "\n\nGG3\n";
+	cout << "aa     = " << aa << "\n";
+	cout << "blend  = " << blend << "\n";
+	cout << "tick   = " << tick << "\n";
+	mtools::Chronometer();
+	for (int i = 0;i < N; i++)
+		{
+		iVec2 P1 = tabP1[i];
+		iVec2 P2 = tabP2[i];
+		im.draw_line(P1, P2, color, true, blend, aa);
+		}
+	cout << "done in : " << mtools::Chronometer() << "\n";
+	}
+	im.clear(RGBc::c_White);
+	{
+	RGBc color = RGBc::c_Black.getOpacity(0.1f);
+	blend = true;
+	aa = true;
+	cout << "\n\nGG4\n";
+	cout << "aa     = " << aa << "\n";
+	cout << "blend  = " << blend << "\n";
+	cout << "tick   = " << tick << "\n";
+	mtools::Chronometer();
+	for (int i = 0;i < N; i++)
+		{
+		iVec2 P1 = tabP1[i];
+		iVec2 P2 = tabP2[i];
+		im.draw_line(P1, P2, color, true, blend, aa);
+		}
+	cout << "done in : " << mtools::Chronometer() << "\n";
+	}
+	im.clear(RGBc::c_White);
+	{
+	RGBc color = RGBc::c_Black.getOpacity(0.1f);
+	blend = false;
+	aa = false;
+	cout << "\n\nGG5\n";
 	cout << "aa     = " << aa << "\n";
 	cout << "blend  = " << blend << "\n";
 	cout << "tick   = " << tick << "\n";
@@ -770,26 +845,6 @@ void testImg()
 		iVec2 P2 = tabP2[i];
 		im.draw_line(P1, P2, color);
 		}
-
-	cout << "done in : " << mtools::Chronometer() << "\n";
-	}
-
-	im.clear(RGBc::c_White);
-	{
-
-	RGBc color = RGBc::c_Black.getOpacity(0.1f);
-	cout << "\n\nGG2";
-	cout << "aa     = " << aa << "\n";
-	cout << "blend  = " << blend << "\n";
-	cout << "tick   = " << tick << "\n";
-	mtools::Chronometer();
-	for (int i = 0;i < N; i++)
-		{
-		iVec2 P1 = tabP1[i];
-		iVec2 P2 = tabP2[i];
-		im.draw_line(P1, P2, color, true, true,1.0f);
-		}
-
 	cout << "done in : " << mtools::Chronometer() << "\n";
 	}
 
@@ -797,9 +852,6 @@ void testImg()
 	cout << "AAA\n";
 	cout.getKey();
 
-
-
-	tt(aa, blend, tick, N, tabP1, tabP2);
 
 	cout << "AAA2\n";
 	aa = false;
@@ -894,9 +946,9 @@ void testImg()
 		double R = 200;
 		double r = 20;
 
-		bool draw_p2 = false;
+		bool draw_p2 = true;
 		bool blending = false;
-		bool antialiased = true;
+		bool antialiased = false;
 		float tick = 1.0f;
 		float op = 0.6; 
 
@@ -981,15 +1033,44 @@ void testImg()
 
 
 
+
+void testriangle()
+	{
+
+	im.resizeRaw(1100, 800);
+	im.clear(RGBc::c_White);
+
+
+/*	iVec2 P1 = { 300, 500 };
+	iVec2 P2 = { 500, 500 };*/
+	iVec2 P1 = { 300, 100 };
+	iVec2 P2 = { 500, 100 };
+
+	iVec2 P3 = { 200, 150 };
+
+
+//	im.draw_triangle(P3, P2, P1, RGBc::c_Red.getOpacity(0.5), true, false);
+	im.draw_triangle(P3, P2, P1, RGBc::c_Red.getOpacity(1),false,false);
+	im.fill_interior_triangle(P1, P2, P3, RGBc::c_Black);
+
+
+	mtools::Plotter2D plotter;
+	auto Plot1 = mtools::makePlot2DImage(im, 4, "Img");
+	plotter[Plot1];
+	Plot1.autorangeXY();
+	plotter.plot();
+
+	}
+
 int main(int argc, char *argv[])
 	{
 	MTOOLS_SWAP_THREADS(argc, argv);  // swap main/fltk threads on OSX
 	parseCommandLine(argc, argv, true); // parse the command line, interactive mode
 
 
-
-
-	testtick();
+	
+	//testtick();
+	testriangle();
 	cout << "Hello World\n";
 	cout.getKey();
 	return 0;
