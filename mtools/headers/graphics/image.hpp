@@ -3208,12 +3208,6 @@ namespace mtools
 
 
 
-			x0, y0
-
-			dx, dy
-
-
-
 			/**
 			* Draw a segment [P1,P2] using Bresenham's algorithm.
 			*
@@ -3222,9 +3216,6 @@ namespace mtools
 			*
 			* Set draw_last to true to draw the endpoint P2 and to false to draw only
 			* the open segment [P1,P2[.
-			*
-			* This version overwrite the pixel color. 
-			* (about 6 times faster than the blending version).
 			*
 			* Optimized for speed.
 			**/
@@ -3239,9 +3230,9 @@ namespace mtools
 				if (dy < 0) { dy = -dy;  stepy = -1; } else { stepy = 1; }
 				if (dx < 0) { dx = -dx;  stepx = -1; } else { stepx = 1; }
 				dy <<= 1; dx <<= 1;
+				int64 frac = (dx > dy) ? (dy - (dx >> 1) - ((y2 > y1) ? 1 : 0)) : (dx - (dy >> 1) - ((x2 > x1) ? 1 : 0));				
 				if (dx > dy)
 					{
-					int64 frac = dy - (dx >> 1) - ((y2 > y1) ? 1 : 0); // compensate by 1 according to the direction of y to make it symmetric.
 					while (x1 != x2)
 						{
 						_updatePixel<blend, checkrange>(x1, y1,color);
@@ -3250,7 +3241,6 @@ namespace mtools
 					}
 				else
 					{
-					int64 frac = dx - (dy >> 1) - ((x2 > x1) ? 1 : 0); // compensate by 1 according to the direction of x to make it symmetric.
 					while (y1 != y2)
 						{
 						_updatePixel<blend, checkrange>(x1, y1, color);
@@ -3270,8 +3260,6 @@ namespace mtools
 			 *    >1 = remove som more pixels  
 			 *    <0 = extend the line adding stop_before additional pixels.
 			 * 
-			 * Drawing is performed using the blend() operation. 
-			 *
 			 * Optimized for speed. 
 			 **/
 			template<bool blend, bool checkrange> inline void _lineBresenham_avoid(iVec2 P, iVec2 Q, iVec2 P2, RGBc color, int64 stop_before)
@@ -3294,14 +3282,14 @@ namespace mtools
 				if (dyb < 0) { dyb = -dyb;  stepyb = -1; } else { stepyb = 1; }
 				if (dxb < 0) { dxb = -dxb;  stepxb = -1; } else { stepxb = 1; }
 				dyb <<= 1; dxb <<= 1;
+				int64 fraca = (dxa > dya) ? (dya - (dxa >> 1) - ((ya2 > ya1) ? 1 : 0)) : (dxa - (dya >> 1) - ((xa2 > xa1) ? 1 : 0));
+				int64 fracb = (dxb > dyb) ? (dyb - (dxb >> 1) - ((yb2 > yb1) ? 1 : 0)) : (dxb - (dyb >> 1) - ((xb2 > xb1) ? 1 : 0));
 				const int64 lena = abs((dxa > dya) ? (xa2 - xa1) : (ya2 - ya1)) - stop_before;
 				const int64 lenb = abs((dxb > dyb) ? (xb2 - xb1) : (yb2 - yb1));
 				if (dxa > dya)
 					{
-					int64 fraca = dya - (dxa >> 1) - ((ya2 > ya1) ? 1 : 0);
 					if (dxb > dyb)
 						{
-						int64 fracb = dyb - (dxb >> 1) - ((yb2 > yb1) ? 1 : 0);
 						while (l <= lena)
 							{
 							if   ((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) _updatePixel<blend, checkrange>(xa1, ya1,color);
@@ -3312,7 +3300,6 @@ namespace mtools
 						}
 					else
 						{
-						int64 fracb = dxb - (dyb >> 1) - ((xb2 > xb1) ? 1 : 0);
 						while (l <= lena)
 							{
 							if ((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) _updatePixel<blend, checkrange>(xa1, ya1,color);
@@ -3324,10 +3311,8 @@ namespace mtools
 					}
 				else
 					{
-					int64 fraca = dxa - (dya >> 1) - ((xa2 > xa1) ? 1 : 0);
 					if (dxb > dyb)
 						{
-						int64 fracb = dyb - (dxb >> 1) - ((yb2 > yb1) ? 1 : 0);
 						while (l <= lena)
 							{
 							if ((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) _updatePixel<blend, checkrange>(xa1, ya1,color);
@@ -3338,7 +3323,6 @@ namespace mtools
 						}
 					else
 						{
-						int64 fracb = dxb - (dyb >> 1) - ((xb2 > xb1) ? 1 : 0);
 						while (l <= lena)
 							{
 							if ((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) _updatePixel<blend, checkrange>(xa1, ya1,color);
@@ -3360,8 +3344,6 @@ namespace mtools
 			*     1 = draw [P,Q[
 			*    >1 = remove som more pixels
 			*    <0 = extend the line adding stop_before additional pixels.
-			*
-			* Drawing is performed using the blend() operation.
 			*
 			* Optimized for speed.
 			**/
@@ -3395,28 +3377,18 @@ namespace mtools
 				if (dyc < 0) { dyc = -dyc;  stepyc = -1; } else { stepyc = 1; }
 				if (dxc < 0) { dxc = -dxc;  stepxc = -1; } else { stepxc = 1; }
 				dyc <<= 1; dxc <<= 1;
+				int64 fraca = (dxa > dya) ? (dya - (dxa >> 1) - ((ya2 > ya1) ? 1 : 0)) : (dxa - (dya >> 1) - ((xa2 > xa1) ? 1 : 0));
+				int64 fracb = (dxb > dyb) ? (dyb - (dxb >> 1) - ((yb2 > yb1) ? 1 : 0)) : (dxb - (dyb >> 1) - ((xb2 > xb1) ? 1 : 0));
+				int64 fracc = (dxc > dyc) ? (dyc - (dxc >> 1) - ((yc2 > yc1) ? 1 : 0)) : (dxc - (dyc >> 1) - ((xc2 > xc1) ? 1 : 0));
 				const int64 lena = abs((dxa > dya) ? (xa2 - xa1) : (ya2 - ya1)) - stop_before;
 				const int64 lenb = abs((dxb > dyb) ? (xb2 - xb1) : (yb2 - yb1));
 				const int64 lenc = abs((dxc > dyc) ? (xc2 - xc1) : (yc2 - yc1));
-
-				int64 fraca = (dxa > dya) ? (dya - (dxa >> 1) - ((ya2 > ya1) ? 1 : 0))
-					                      : (dxa - (dya >> 1) - ((xa2 > xa1) ? 1 : 0));
-
-				int64 fracb = (dxb > dyb) ? (dyb - (dxb >> 1) - ((yb2 > yb1) ? 1 : 0))
-					                      : (dxb - (dyb >> 1) - ((xb2 > xb1) ? 1 : 0));
-
-				int64 fracc = (dxc > dyc) ? (dyc - (dxc >> 1) - ((yc2 > yc1) ? 1 : 0))
-					                      : (dxc - (dyc >> 1) - ((xc2 > xc1) ? 1 : 0));
-
 				if (dxc > dyc)
 					{
-					int64 fracc = dyc - (dxc >> 1) - ((yc2 > yc1) ? 1 : 0);
 					if (dxa > dya)
 						{
-						int64 fraca = dya - (dxa >> 1) - ((ya2 > ya1) ? 1 : 0);
 						if (dxb > dyb)
 							{
-							int64 fracb = dyb - (dxb >> 1) - ((yb2 > yb1) ? 1 : 0);
 							while (l <= lena)
 								{
 								if (((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) && ((l > lenc) || (xa1 != xc1) || (ya1 != yc1))) _updatePixel<blend, checkrange>(xa1, ya1,color);
@@ -3428,7 +3400,6 @@ namespace mtools
 							}
 						else
 							{
-							int64 fracb = dxb - (dyb >> 1) - ((xb2 > xb1) ? 1 : 0);
 							while (l <= lena)
 								{
 								if (((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) && ((l > lenc) || (xa1 != xc1) || (ya1 != yc1))) _updatePixel<blend, checkrange>(xa1, ya1,color);
@@ -3441,10 +3412,8 @@ namespace mtools
 						}
 					else
 						{
-						int64 fraca = dxa - (dya >> 1) - ((xa2 > xa1) ? 1 : 0);
 						if (dxb > dyb)
 							{
-							int64 fracb = dyb - (dxb >> 1) - ((yb2 > yb1) ? 1 : 0);
 							while (l <= lena)
 								{
 								if (((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) && ((l > lenc) || (xa1 != xc1) || (ya1 != yc1))) _updatePixel<blend, checkrange>(xa1, ya1,color);
@@ -3456,7 +3425,6 @@ namespace mtools
 							}
 						else
 							{
-							int64 fracb = dxb - (dyb >> 1) - ((xb2 > xb1) ? 1 : 0);
 							while (l <= lena)
 								{
 								if (((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) && ((l > lenc) || (xa1 != xc1) || (ya1 != yc1))) _updatePixel<blend, checkrange>(xa1, ya1,color);
@@ -3470,13 +3438,10 @@ namespace mtools
 					}
 				else
 					{
-					int64 fracc = dxc - (dyc >> 1) - ((xc2 > xc1) ? 1 : 0);
 					if (dxa > dya)
 						{
-						int64 fraca = dya - (dxa >> 1) - ((ya2 > ya1) ? 1 : 0);
 						if (dxb > dyb)
 							{
-							int64 fracb = dyb - (dxb >> 1) - ((yb2 > yb1) ? 1 : 0);
 							while (l <= lena)
 								{
 								if (((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) && ((l > lenc) || (xa1 != xc1) || (ya1 != yc1))) _updatePixel<blend, checkrange>(xa1, ya1,color);
@@ -3488,7 +3453,6 @@ namespace mtools
 							}
 						else
 							{
-							int64 fracb = dxb - (dyb >> 1) - ((xb2 > xb1) ? 1 : 0);
 							while (l <= lena)
 								{
 								if (((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) && ((l > lenc) || (xa1 != xc1) || (ya1 != yc1))) _updatePixel<blend, checkrange>(xa1, ya1, color);
@@ -3501,10 +3465,8 @@ namespace mtools
 						}
 					else
 						{
-						int64 fraca = dxa - (dya >> 1) - ((xa2 > xa1) ? 1 : 0);
 						if (dxb > dyb)
 							{
-							int64 fracb = dyb - (dxb >> 1) - ((yb2 > yb1) ? 1 : 0);
 							while (l <= lena)
 								{
 								if (((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) && ((l > lenc) || (xa1 != xc1) || (ya1 != yc1))) _updatePixel<blend, checkrange>(xa1, ya1, color);
@@ -3516,7 +3478,6 @@ namespace mtools
 							}
 						else
 							{
-							int64 fracb = dxb - (dyb >> 1) - ((xb2 > xb1) ? 1 : 0);
 							while (l <= lena)
 								{
 								if (((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) && ((l > lenc) || (xa1 != xc1) || (ya1 != yc1))) _updatePixel<blend, checkrange>(xa1, ya1, color);
