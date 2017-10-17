@@ -1499,12 +1499,11 @@ namespace mtools
 			inline void draw_line(iVec2 P1, iVec2 P2, RGBc color, bool draw_P2 = true)
 				{
 				if (isEmpty()) return;
+				if (P1.X() == P2.X()) { _verticalLine<false, true>(P1.X(), P1.Y(), P2.Y(), color,draw_P2);  return; }
+				if (P1.Y() == P2.Y()) { _horizontalLine<false, true>(P1.Y(), P1.X(), P2.X(), color, draw_P2); return; }
+				iVec2 sP2 = P2;
 				if (!_csLineClip(P1, P2, iBox2(0, _lx - 1, 0, _ly - 1))) return;
-				if (draw_P2) { setPixel(P2, color); }
-				if (P1 == P2) return;
-				if (P1.X() == P2.X()) { _verticalLine(P1.X(), P1.Y(), P2.Y(), color);  return; }
-				if (P1.Y() == P2.Y()) { _horizontalLine(P1.Y(), P1.X(), P2.X(), color); return; }
-				_lineBresenham(P1, P2, color,false);
+				_lineBresenham<false, false>(P1, P2, color, (draw_P2||(P2 != sP2)));
 				}
 
 
@@ -1537,27 +1536,25 @@ namespace mtools
 			inline void draw_line(iVec2 P1, iVec2 P2, RGBc color, bool draw_P2, bool blending, bool antialiased)
 				{
 				if (isEmpty()) return;
+				if (P1.X() == P2.X()) 
+					{ 
+					if ((blending) && (color.comp.A != 255)) { _verticalLine<true, true>(P1.X(), P1.Y(), P2.Y(), color, draw_P2); } else { _verticalLine<false, true>(P1.X(), P1.Y(), P2.Y(), color, draw_P2); }					  
+					return; 
+					}
+				if (P1.Y() == P2.Y()) 
+					{ 
+					if ((blending) && (color.comp.A != 255)) { _horizontalLine<true, true>(P1.Y(), P1.X(), P2.X(), color, draw_P2); } else { _horizontalLine<false, true>(P1.Y(), P1.X(), P2.X(), color, draw_P2); }
+					return;
+					}
+				iVec2 sP2 = P2;
 				if (!_csLineClip(P1, P2, iBox2(0, _lx - 1, 0, _ly - 1))) return;
-				if (draw_P2) { if (blending) blendPixel(P2, color); else setPixel(P2, color);  }
-				if (P1 == P2) return;
-				if (P1.X() == P2.X())
-					{
-					if ((blending)&&(color.comp.A != 255)) { _verticalLine_blend(P1.X(), P1.Y(), P2.Y(), color); } else { _verticalLine(P1.X(), P1.Y(), P2.Y(), color); }
-					return;
-					}
-				if (P1.Y() == P2.Y())
-					{
-					if ((blending) && (color.comp.A != 255)) { _horizontalLine_blend(P1.Y(), P1.X(), P2.X(), color); } else { _horizontalLine(P1.Y(), P1.X(), P2.X(), color); }
-					return;
-					}
 				if (antialiased)
 					{
-					if (blending) _lineWuAA_blend(P1, P2, color,false); else _lineWuAA(P1, P2, color, false);
-					return;
+					if (blending) _lineWuAA<true,false>(P1, P2, color,false); else _lineWuAA<false,false>(P1, P2, color, false);
 					}
 				else
 					{
-					if ((blending) && (color.comp.A != 255)) _lineBresenham_blend(P1, P2, color, false); else _lineBresenham(P1, P2, color, false);
+					if ((blending) && (color.comp.A != 255)) _lineBresenham<true,false>(P1, P2, color, false); else _lineBresenham<false,false>(P1, P2, color, false);
 					}
 				}
 
@@ -1597,26 +1594,19 @@ namespace mtools
 				if (tickness <= 0.0f) return;
 				if (tickness == 1.0f) { draw_line(P1, P2, color, draw_P2, blending, antialiased); return; }
 				if (isEmpty()) return;
-				if (!_csLineClip(P1, P2, iBox2(0, _lx - 1, 0, _ly - 1))) return;
-				if (P1 == P2)
-					{					
-					if (draw_P2)
-						{
-						if (blending) blendPixel(P2, color); else setPixel(P2, color);  // <- improve that, should draw a square or circle of the right diameter instead of ject a point. 
-						}
-					return; 
-					}
-				if (P1.X() == P2.X()) 
-					{ 
-					if (blending) { _tickVerticalLine_blend(P1.X(), P1.Y(), P2.Y(), color, tickness); } else { _tickVerticalLine(P1.X(), P1.Y(), P2.Y(), color, tickness); }
-					return;
-					}
-				if (P1.Y() == P2.Y()) 
+				if (P1.X() == P2.X())
 					{
-					if (blending) { _tickHorizontalLine_blend(P1.Y(), P1.X(), P2.X(), color, tickness); } else { _tickHorizontalLine(P1.Y(), P1.X(), P2.X(), color, tickness); }
+					if ((blending) && (color.comp.A != 255)) { _tickVerticalLine<true, true>(P1.X(), P1.Y(), P2.Y(), color,tickness); } else { _tickVerticalLine<false, true>(P1.X(), P1.Y(), P2.Y(), color, tickness); }
 					return;
 					}
-				if (blending) _tickLineBresenhamAA_blend(P1, P2, tickness, color); else _tickLineBresenhamAA(P1, P2, tickness, color);
+				if (P1.Y() == P2.Y())
+					{
+					if ((blending) && (color.comp.A != 255)) { _tickHorizontalLine<true, true>(P1.Y(), P1.X(), P2.X(), color, tickness); } else { _tickHorizontalLine<false, true>(P1.Y(), P1.X(), P2.X(), color, tickness); }
+					return;
+					}
+				int64 border = (int64)(10 + 2*tickness); // clip a little larger. It doesn't matter since we must check the range inside the _tickLineBresenhamAA() method anyway.
+				if (!_csLineClip(P1, P2, iBox2(-border, _lx - 1 + border, -border, _ly - 1 + border))) return;
+				if ((blending) && (color.comp.A != 255)) _tickLineBresenhamAA<true,true>(P1, P2, tickness, color); else _tickLineBresenhamAA<false,true>(P1, P2, tickness, color);
 				}
 
 
@@ -1652,10 +1642,21 @@ namespace mtools
 			 **/
 			inline void draw_triangle(iVec2 P1, iVec2 P2, iVec2 P3, RGBc color, bool blending, bool antialiased)
 				{
-				// TODO : improve that so that pixel are written only once when blending is on. 
-				draw_line(P1, P2, color, false, blending, antialiased);
-				draw_line(P2, P3, color, false, blending, antialiased);
-				draw_line(P3, P1, color, false, blending, antialiased);
+				iBox2 B(0, _lx - 1, 0, _ly - 1);
+				const bool isP1 = B.isInside(P1);
+				const bool isP2 = B.isInside(P2);
+				const bool isP3 = B.isInside(P3);
+				if (isP1 && isP2) _lineBresenham<true, false>(P1, P2, color, true); else _lineBresenham<true, true>(P1, P2, color, true);
+				if (antialiased || (!blending) || (color.comp.A == 255))
+					{ // just need to draw the 3 lines
+					if (isP2 && isP3) _lineBresenham<false, false>(P2, P3, color, false); else _lineBresenham<false, true>(P2, P3, color, false);
+					if (isP3 && isP1) _lineBresenham<false, false>(P1, P3, color, false); else _lineBresenham<false, true>(P1, P3, color, false);
+					}
+				else
+					{ // Make sure we do not write a pixel twice
+					if (isP2 && isP3) _lineBresenham_avoid<true, false>(P2, P3, P1, color, 0); else _lineBresenham_avoid<true, true>(P2, P3, P1, color, 0);
+					if (isP3 && isP1) _lineBresenham_avoid_both_sides<true, false>(P1, P3, P2, color); else _lineBresenham_avoid_both_sides<true, true>(P1, P3, P2, color);
+					}
 				}
 
 
@@ -1694,11 +1695,11 @@ namespace mtools
 				iBox2 B(0, _lx - 1, 0, _ly - 1); 
 				if ((B.isInside(P1)) && (B.isInside(P2)) && (B.isInside(P3)))
 					{
-					if (blending) _draw_triangle_interior<true, true>(P1, P2, P3, fillcolor); else _draw_triangle_interior<false, true>(P1, P2, P3, fillcolor);
+					if ((blending) && (fillcolor.comp.A != 255)) _draw_triangle_interior<true, false>(P1, P2, P3, fillcolor); else _draw_triangle_interior<false, false>(P1, P2, P3, fillcolor);
 					}
 				else
 					{
-					if (blending) _draw_triangle_interior<true, false>(P1, P2, P3, fillcolor); else _draw_triangle_interior<false, false>(P1, P2, P3, fillcolor);
+					if ((blending) && (fillcolor.comp.A != 255)) _draw_triangle_interior<true, true>(P1, P2, P3, fillcolor); else _draw_triangle_interior<false, true>(P1, P2, P3, fillcolor);
 					}
 				}
 
@@ -3009,6 +3010,40 @@ namespace mtools
 			*******************************************************************************************************************************************************/
 
 
+
+
+
+
+
+			/* update a pixel */
+			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void  _updatePixel(int64 x,int64 y, RGBc color)
+				{
+				// compiler optimizes away the unused cases. 
+				if ((!blend) && (!checkrange)) { operator()(x,y) = color; }
+				if ((!blend) && (checkrange)) { setPixel(x, y, color); }
+				if ((blend) && (!checkrange)) { operator()(x, y).blend(color); }
+				if ((blend) && (checkrange))  { blendPixel(x, y, color); }
+				}
+
+			/* update a pixel */
+			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void  _updatePixel(iVec2 P, RGBc color)
+				{
+				// compiler optimizes away the unused cases. 
+				if ((!blend) && (!checkrange)) { operator()(P) = color; }
+				if ((!blend) && (checkrange)) { setPixel(P, color); }
+				if ((blend) && (!checkrange)) { operator()(P).blend(color); }
+				if ((blend) && (checkrange)) { blendPixel(P, color); }
+				}
+
+			/* update a pixel */
+			template<bool blend> MTOOLS_FORCEINLINE void  _updatePixel(RGBc * p, RGBc color)
+				{
+				// compiler optimizes away the unused cases. 
+				if (!blend) { *p = color; }
+				if (blend)  { (*p).blend(color); }
+				}
+
+
 			/** Used by CSLineClip() to compute the region where the point lies **/
 			MTOOLS_FORCEINLINE static int _csLineClipCode(const iVec2 & P, const iBox2 & B)
 				{
@@ -3039,11 +3074,12 @@ namespace mtools
 				int c2 = _csLineClipCode(P2, B);
 				while (1)
 					{
-					const double m = ((double)(P2.Y() - P1.Y())) / (P2.X() - P1.X());
 					if ((c1 == 0) && (c2 == 0)) { return true; } // both point inside		
 					if ((c1 & c2) != 0) { return false; } //AND of both codes != 0.Line is outside. Reject line
-					int64 x, y;
 					int temp = (c1 == 0) ? c2 : c1; //Decide if point1 is inside, if not, calculate intersection		
+					{
+					int64 x, y;
+					const double m = ((double)(P2.Y() - P1.Y())) / (P2.X() - P1.X());
 					if (temp & 8)
 						{ //Line clips top edge
 						x = P1.X() + (int64)round((B.max[1] - P1.Y()) / m);
@@ -3075,130 +3111,77 @@ namespace mtools
 						c2 = _csLineClipCode(P2, B);
 						}
 					}
+					}
 				}
 
 
 			/* draw a vertical line, (do not draw the endpoint (x,y2) ) */
-			MTOOLS_FORCEINLINE void _verticalLine(int64 x, int64 y1, int64 y2, RGBc color)
+			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void _verticalLine(int64 x, int64 y1, int64 y2, RGBc color, bool draw_P2)
 				{
-				if ((x < 0) || (x >= _lx)) return;
-				if (y2 < y1) { y2++; mtools::swap(y1, y2); } else { y2--;}
-				if ((y2 < 0) || (y1 >= _ly)) return;
-				y1 = (y1 < 0) ? 0 : y1;
-				y2 = (y2 >= _ly) ? (_ly - 1) : y2;
+				if (y2 < y1) { if (!draw_P2) { y2++; } mtools::swap(y1, y2); } else { if (!draw_P2) { y2--; } }
+				if (checkrange)
+					{
+					if ((x < 0) || (x >= _lx)) return;
+					if ((y2 < 0) || (y1 >= _ly)) return;
+					y1 = (y1 < 0) ? 0 : y1;
+					y2 = (y2 >= _ly) ? (_ly - 1) : y2;
+					}
 				RGBc * p		= _data + y1*_stride + x;
-				const RGBc * q	= _data + (y2 + 1)*_stride + x;
-				while (p != q) { (*p) = color; p += _stride; }
-				}
-
-			/* draw a vertical line ((do not draw the endpoint (x,y2), use blending) */
-			MTOOLS_FORCEINLINE void _verticalLine_blend(int64 x, int64 y1, int64 y2, RGBc color)
-				{
-				if ((x < 0) || (x >= _lx)) return;
-				if (y2 < y1) { y2++; mtools::swap(y1, y2); } else { y2--; }
-				if ((y2 < 0) || (y1 >= _ly)) return;
-				y1 = (y1 < 0) ? 0 : y1;
-				y2 = (y2 >= _ly) ? (_ly - 1) : y2;
-				RGBc * p = _data + y1*_stride + x;
-				const RGBc * q = _data + (y2 + 1)*_stride + x;
-				while (p != q) { (*p).blend(color); p += _stride; }
+				int64 s = y2 - y1; 
+				while (s >= 0) { _updatePixel<blend>(p, color); p += _stride; s--; }
 				}
 
 
 			/* draw an horizontal line (do not draw the endpoint (x2,y)) */
-			MTOOLS_FORCEINLINE void _horizontalLine(int64 y, int64 x1, int64 x2, RGBc color)
+			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void _horizontalLine(int64 y, int64 x1, int64 x2, RGBc color, bool draw_P2)
 				{
-				if ((y < 0) || (y >= _ly)) return;
-				if (x2 < x1) { x2++; mtools::swap(x1, x2); } else { x2--; }
-				if ((x2 < 0) || (x1 >= _lx)) return;
-				x1 = (x1 < 0) ? 0 : x1;
-				x2 = (x2 >= _lx) ? (_lx - 1) : x2;
+				if (x2 < x1) { if (!draw_P2) { x2++; }  mtools::swap(x1, x2); } else { if (!draw_P2) x2--; }
+				if (checkrange)
+					{
+					if ((y < 0) || (y >= _ly)) return;
+					if ((x2 < 0) || (x1 >= _lx)) return;
+					x1 = (x1 < 0) ? 0 : x1;
+					x2 = (x2 >= _lx) ? (_lx - 1) : x2;
+					}
 				RGBc * p = _data + y*_stride + x1;
 				const RGBc * q = _data + y*_stride + x2 + 1;
-				while (p != q) { (*p) = color; p++; }
-				}
-
-
-			/* draw an horizontal line (do not draw the endpoint (x2,y), use blending) */
-			MTOOLS_FORCEINLINE void _horizontalLine_blend(int64 y, int64 x1, int64 x2, RGBc color)
-				{
-				if ((y < 0) || (y >= _ly)) return;
-				if (x2 < x1) { x2++; mtools::swap(x1, x2); } else { x2--; }
-				if ((x2 < 0) || (x1 >= _lx)) return;
-				x1 = (x1 < 0) ? 0 : x1;
-				x2 = (x2 >= _lx) ? (_lx - 1) : x2;
-				RGBc * p = _data + y*_stride + x1;
-				const RGBc * q = _data + y*_stride + x2 + 1;
-				while (p != q) { (*p).blend(color); p++; }
+				int64 s = x2 - x1;
+				while (s >= 0) { _updatePixel<blend>(p, color); p++; s--; }
 				}
 
 
 			/* draw a tick vertical line with aliasing (draw both endpoint) */
-			MTOOLS_FORCEINLINE void _tickVerticalLine(int64 x, int64 y1, int64 y2, RGBc color, float tickness)
+			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void _tickVerticalLine(int64 x, int64 y1, int64 y2, RGBc color, float tickness)
 				{
 				// tickness is assumed positive
 				float f = (tickness / 2) + 0.5f;
 				int64 d = (int64)f;
-				if (d == 0) { _verticalLine(x, y1, y2, color.getOpacity(color.opacity()*tickness)); return; }
+				if (d == 0) { _verticalLine<blend, checkrange>(x, y1, y2, color.getOpacity(color.opacity()*tickness),true); return; }
 				int64 xmin = x-d;
 				int64 xmax = x+d;
 				float r = f - d;
 				RGBc c = color.getOpacity(color.opacity()*r);
-				_verticalLine(xmin, y1, y2, c);
+				_verticalLine<blend, checkrange>(xmin, y1, y2, c, true);
 				xmin++;
-				while (xmin < xmax) { _verticalLine(xmin, y1, y2, color); xmin++; }
-				_verticalLine(xmax, y1, y2, c);
-				}
-
-
-			/* draw a tick vertical line with aliasing (draw both endpoint, use blending) */
-			MTOOLS_FORCEINLINE void _tickVerticalLine_blend(int64 x, int64 y1, int64 y2, RGBc color, float tickness)
-				{
-				float f = (tickness / 2) + 0.5f;
-				int64 d = (int64)f;
-				if (d == 0) { _verticalLine_blend(x, y1, y2, color.getOpacity(color.opacity()*tickness)); return; }
-				int64 xmin = x - d;
-				int64 xmax = x + d;
-				float r = f - d;
-				RGBc c = color.getOpacity(color.opacity()*r);
-				_verticalLine_blend(xmin, y1, y2, c);
-				xmin++;
-				while (xmin < xmax) { _verticalLine_blend(xmin, y1, y2, color); xmin++; }
-				_verticalLine_blend(xmax, y1, y2, c);
+				while (xmin < xmax) { _verticalLine<blend, checkrange>(xmin, y1, y2, color, true); xmin++; }
+				_verticalLine<blend, checkrange>(xmax, y1, y2, c, true);
 				}
 
 
 			/* draw a tick horizontal line with aliasing (draw both endpoint) */
-			MTOOLS_FORCEINLINE void _tickHorizontalLine(int64 y, int64 x1, int64 x2, RGBc color, float tickness)
+			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void _tickHorizontalLine(int64 y, int64 x1, int64 x2, RGBc color, float tickness)
 				{
 				float f = (tickness / 2) + 0.5f;
 				int64 d = (int64)f;
-				if (d == 0) { _horizontalLine(y, x1, x2, color.getOpacity(color.opacity()*tickness)); return; }
+				if (d == 0) { _horizontalLine<blend, checkrange>(y, x1, x2, color.getOpacity(color.opacity()*tickness), true); return; }
 				int64 ymin = y - d;
 				int64 ymax = y + d;
 				float r = f - d;
 				RGBc c = color.getOpacity(color.opacity()*r);
-				_horizontalLine(ymin, x1, x2, c);
+				_horizontalLine<blend, checkrange>(ymin, x1, x2, c, true);
 				ymin++;
-				while (ymin < ymax) { _horizontalLine(ymin, x1, x2, color); ymin++; }
-				_horizontalLine(ymax, x1, x2, c);
-				}
-
-
-			/* draw a tick horizontal line with aliasing (draw both endpoint, use blending) */
-			MTOOLS_FORCEINLINE void _tickHorizontalLine_blend(int64 y, int64 x1, int64 x2, RGBc color, float tickness)
-				{
-				float f = (tickness / 2) + 0.5f;
-				int64 d = (int64)f;
-				if (d == 0) { _horizontalLine_blend(y, x1, x2, color.getOpacity(color.opacity()*tickness)); return; }
-				int64 ymin = y - d;
-				int64 ymax = y + d;
-				float r = f - d;
-				RGBc c = color.getOpacity(color.opacity()*r);
-				_horizontalLine_blend(ymin, x1, x2, c);
-				ymin++;
-				while (ymin < ymax) { _horizontalLine(ymin, x1, x2, color); ymin++; }
-				_horizontalLine_blend(ymax, x1, x2, c);
+				while (ymin < ymax) { _horizontalLine<blend, checkrange>(ymin, x1, x2, color, true); ymin++; }
+				_horizontalLine<blend, checkrange>(ymax, x1, x2, c, true);
 				}
 
 
@@ -3217,9 +3200,9 @@ namespace mtools
 			*
 			* Optimized for speed.
 			**/
-			MTOOLS_FORCEINLINE void _lineBresenham(iVec2 P1, iVec2 P2, RGBc color, bool draw_last)
+			template<bool blend, bool checkrange>  MTOOLS_FORCEINLINE void _lineBresenham(iVec2 P1, iVec2 P2, RGBc color, bool draw_last)
 				{
-				if (draw_last) operator()(P2).blend(color);
+				if (draw_last) _updatePixel<blend,checkrange>(P2,color);
 				int64 & x1 = P1.X(); int64 & y1 = P1.Y();
 				int64 & x2 = P2.X(); int64 & y2 = P2.Y();
 				int64 dy = y2 - y1;
@@ -3233,7 +3216,7 @@ namespace mtools
 					int64 frac = dy - (dx >> 1) - ((y2 > y1) ? 1 : 0); // compensate by 1 according to the direction of y to make it symmetric.
 					while (x1 != x2)
 						{
-						operator()(x1, y1) =color;
+						_updatePixel<blend, checkrange>(x1, y1,color);
 						if (frac >= 0) { y1 += stepy; frac -= dx; } x1 += stepx; frac += dy;
 						}
 					}
@@ -3242,7 +3225,7 @@ namespace mtools
 					int64 frac = dx - (dy >> 1) - ((x2 > x1) ? 1 : 0); // compensate by 1 according to the direction of x to make it symmetric.
 					while (y1 != y2)
 						{
-						operator()(x1, y1) = color;
+						_updatePixel<blend, checkrange>(x1, y1, color);
 						if (frac >= 0) { x1 += stepx; frac -= dy; } y1 += stepy; frac += dx;
 						}
 					}
@@ -3250,71 +3233,26 @@ namespace mtools
 
 
 			/**
-			* Draw a segment [P1,P2] using Bresenham's algorithm.
-			* Optimized for speed.
-			*
-			* The algorithm is symmetric: the line [P1,P2] is always equal 
-			* to the line drawn in the other direction [P2,P1]
-			*
-			* Set draw_last to true to draw the endpoint P2 and to false to draw only
-			* the open segment [P1,P2[. 
-			*
-			* This version uses blending.
-			* (about 6 times slower than the overwritting version). 
-			* 
-			* Optimized for speed.
-			**/
-			MTOOLS_FORCEINLINE void _lineBresenham_blend(iVec2 P1, iVec2 P2, RGBc color, bool draw_last)
-				{
-				if (draw_last) operator()(P2).blend(color);
-				int64 & x1 = P1.X(); int64 & y1 = P1.Y();
-				int64 & x2 = P2.X(); int64 & y2 = P2.Y();
-				int64 dy = y2 - y1;
-				int64 dx = x2 - x1;
-				int64 stepx, stepy;
-				if (dy < 0) { dy = -dy;  stepy = -1; } else { stepy = 1; }
-				if (dx < 0) { dx = -dx;  stepx = -1; } else { stepx = 1; }
-				dy <<= 1; dx <<= 1;
-				if (dx > dy)
-					{
-					int64 frac = dy - (dx >> 1) - ((y2 > y1) ? 1 : 0); // compensate by 1 according to the direction of y to make it symmetric.
-					while (x1 != x2)
-						{
-						operator()(x1, y1).blend(color);
-						if (frac >= 0) { y1 += stepy; frac -= dx; } 
-						x1 += stepx; 
-						frac += dy;
-						}
-					}
-				else
-					{
-					int64 frac = dx - (dy >> 1) - ((x2 > x1) ? 1 : 0); // compensate by 1 according to the direction of x to make it symmetric.
-					while (y1 != y2)
-						{
-						operator()(x1, y1).blend(color);
-						if (frac >= 0) { x1 += stepx; frac -= dy; } y1 += stepy; frac += dx;
-						}
-					}
-				}
-
-
-
-			/**
-			 * Draw the segment [P,Q1] with the bresenham line algorithm while skipping the pixels
-			 * which also belong to the segment [P,Q2]. 
+			 * Draw the segment [P,Q] with the bresenham line algorithm while skipping the pixels
+			 * which also belong to the segment [P,P2]. 
 			 * 
-			 * The endpoint Q1 is (possibly) drawn depending on draw_last.
+			 * stop_before represented the number of pixel at the end of the line which are not drawn
+			 * i.e 0 = draw [P,Q], 
+			 *     1 = draw [P,Q[   
+			 *    >1 = remove som more pixels  
+			 *    <0 = extend the line adding stop_before additional pixels.
 			 * 
 			 * Drawing is performed using the blend() operation. 
-			 * 
+			 *
 			 * Optimized for speed. 
 			 **/
-			void _lineBresenham_avoid(iVec2 P, iVec2 Q1, iVec2 Q2, RGBc color, bool draw_last)
+			template<bool blend, bool checkrange> inline void _lineBresenham_avoid(iVec2 P, iVec2 Q, iVec2 P2, RGBc color, int64 stop_before)
 				{
+				if (P == Q) return;
 				int64 xa1 = P.X();  int64 ya1 = P.Y();
 				int64 xb1 = P.X();  int64 yb1 = P.Y();
-				int64 xa2 = Q1.X(); int64 ya2 = Q1.Y();
-				int64 xb2 = Q2.X(); int64 yb2 = Q2.Y();
+				int64 xa2 = Q.X(); int64 ya2 = Q.Y();
+				int64 xb2 = P2.X(); int64 yb2 = P2.Y();
 				int64 dya = ya2 - ya1;
 				int64 dxa = xa2 - xa1;
 				int64 dyb = yb2 - yb1;
@@ -3328,7 +3266,7 @@ namespace mtools
 				if (dyb < 0) { dyb = -dyb;  stepyb = -1; } else { stepyb = 1; }
 				if (dxb < 0) { dxb = -dxb;  stepxb = -1; } else { stepxb = 1; }
 				dyb <<= 1; dxb <<= 1;
-				const int64 lena = abs((dxa > dya) ? (xa2 - xa1) : (ya2 - ya1)) - (draw_last ? 0 : 1);
+				const int64 lena = abs((dxa > dya) ? (xa2 - xa1) : (ya2 - ya1)) - stop_before;
 				const int64 lenb = abs((dxb > dyb) ? (xb2 - xb1) : (yb2 - yb1));
 				if (dxa > dya)
 					{
@@ -3338,7 +3276,7 @@ namespace mtools
 						int64 fracb = dyb - (dxb >> 1) - ((yb2 > yb1) ? 1 : 0);
 						while (l <= lena)
 							{
-							if   ((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) operator()(xa1, ya1).blend(color);
+							if   ((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) _updatePixel<blend, checkrange>(xa1, ya1,color);
 							if (fraca >= 0) { ya1 += stepya; fraca -= dxa; } xa1 += stepxa; fraca += dya;
 							if (fracb >= 0) { yb1 += stepyb; fracb -= dxb; } xb1 += stepxb; fracb += dyb;							
 							l++; 
@@ -3349,7 +3287,7 @@ namespace mtools
 						int64 fracb = dxb - (dyb >> 1) - ((xb2 > xb1) ? 1 : 0);
 						while (l <= lena)
 							{
-							if ((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) operator()(xa1, ya1).blend(color);
+							if ((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) _updatePixel<blend, checkrange>(xa1, ya1,color);
 							if (fraca >= 0) { ya1 += stepya; fraca -= dxa; } xa1 += stepxa; fraca += dya;
 							if (fracb >= 0) { xb1 += stepxb; fracb -= dyb; } yb1 += stepyb; fracb += dxb;
 							l++;
@@ -3364,7 +3302,7 @@ namespace mtools
 						int64 fracb = dyb - (dxb >> 1) - ((yb2 > yb1) ? 1 : 0);
 						while (l <= lena)
 							{
-							if ((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) operator()(xa1, ya1).blend(color);
+							if ((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) _updatePixel<blend, checkrange>(xa1, ya1,color);
 							if (fraca >= 0) { xa1 += stepxa; fraca -= dya; } ya1 += stepya; fraca += dxa;
 							if (fracb >= 0) { yb1 += stepyb; fracb -= dxb; } xb1 += stepxb; fracb += dyb;
 							l++;
@@ -3375,7 +3313,7 @@ namespace mtools
 						int64 fracb = dxb - (dyb >> 1) - ((xb2 > xb1) ? 1 : 0);
 						while (l <= lena)
 							{
-							if ((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) operator()(xa1, ya1).blend(color);
+							if ((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) _updatePixel<blend, checkrange>(xa1, ya1,color);
 							if (fraca >= 0) { xa1 += stepxa; fraca -= dya; } ya1 += stepya; fraca += dxa;
 							if (fracb >= 0) { xb1 += stepxb; fracb -= dyb; } yb1 += stepyb; fracb += dxb;
 							l++;
@@ -3386,23 +3324,30 @@ namespace mtools
 
 
 			/**
-			* Draw the segment [P,Q1] with the bresenham line algorithm while skipping the pixels
-			* which also belong to the segments [P,Q2] and [P,Q3]. 
+			* Draw the segment [P,Q] with the bresenham line algorithm while skipping the pixels
+			* which also belong to the segments [P,P2] and [P,P3]. 
 			*
-			* The endpoint Q1 is (possibly) drawn depending on draw_last.
+			* stop_before represented the number of pixel at the end of the line which are not drawn
+			* i.e 0 = draw [P,Q],
+			*     1 = draw [P,Q[
+			*    >1 = remove som more pixels
+			*    <0 = extend the line adding stop_before additional pixels.
 			*
 			* Drawing is performed using the blend() operation.
 			*
 			* Optimized for speed.
 			**/
-			void _lineBresenham_avoid(iVec2 P, iVec2 Q1, iVec2 Q2, iVec2 Q3, RGBc color, bool draw_last)
+			template<bool blend, bool checkrange> inline void _lineBresenham_avoid(iVec2 P, iVec2 Q, iVec2 P2, iVec2 P3, RGBc color, int64 stop_before)
 				{
+				if ((P2 == P3)||(P3 == P)) { _lineBresenham_avoid<blend, checkrange>(P, Q, P2, color, stop_before); return; }
+				if (P2 == P) { _lineBresenham_avoid<blend, checkrange>(P, Q, P3, color, stop_before); return; }
+				if (P == Q) return;
 				int64 xa1 = P.X();  int64 ya1 = P.Y();
 				int64 xb1 = P.X();  int64 yb1 = P.Y();
 				int64 xc1 = P.X();  int64 yc1 = P.Y();
-				int64 xa2 = Q1.X(); int64 ya2 = Q1.Y();
-				int64 xb2 = Q2.X(); int64 yb2 = Q2.Y();
-				int64 xc2 = Q3.X(); int64 yc2 = Q3.Y();
+				int64 xa2 = Q.X(); int64 ya2 = Q.Y();
+				int64 xb2 = P2.X(); int64 yb2 = P2.Y();
+				int64 xc2 = P3.X(); int64 yc2 = P3.Y();
 				int64 dya = ya2 - ya1;
 				int64 dxa = xa2 - xa1;
 				int64 dyb = yb2 - yb1;
@@ -3422,7 +3367,7 @@ namespace mtools
 				if (dyc < 0) { dyc = -dyc;  stepyc = -1; } else { stepyc = 1; }
 				if (dxc < 0) { dxc = -dxc;  stepxc = -1; } else { stepxc = 1; }
 				dyc <<= 1; dxc <<= 1;
-				const int64 lena = abs((dxa > dya) ? (xa2 - xa1) : (ya2 - ya1)) - (draw_last ? 0 : 1);
+				const int64 lena = abs((dxa > dya) ? (xa2 - xa1) : (ya2 - ya1)) - stop_before;
 				const int64 lenb = abs((dxb > dyb) ? (xb2 - xb1) : (yb2 - yb1));
 				const int64 lenc = abs((dxc > dyc) ? (xc2 - xc1) : (yc2 - yc1));
 				if (dxc > dyc)
@@ -3436,7 +3381,7 @@ namespace mtools
 							int64 fracb = dyb - (dxb >> 1) - ((yb2 > yb1) ? 1 : 0);
 							while (l <= lena)
 								{
-								if (((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) && ((l > lenc) || (xa1 != xc1) || (ya1 != yc1))) operator()(xa1, ya1).blend(color);
+								if (((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) && ((l > lenc) || (xa1 != xc1) || (ya1 != yc1))) _updatePixel<blend, checkrange>(xa1, ya1,color);
 								if (fraca >= 0) { ya1 += stepya; fraca -= dxa; } xa1 += stepxa; fraca += dya;
 								if (fracb >= 0) { yb1 += stepyb; fracb -= dxb; } xb1 += stepxb; fracb += dyb;
 								if (fracc >= 0) { yc1 += stepyc; fracc -= dxc; } xc1 += stepxc; fracc += dyc;
@@ -3448,7 +3393,7 @@ namespace mtools
 							int64 fracb = dxb - (dyb >> 1) - ((xb2 > xb1) ? 1 : 0);
 							while (l <= lena)
 								{
-								if (((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) && ((l > lenc) || (xa1 != xc1) || (ya1 != yc1))) operator()(xa1, ya1).blend(color);
+								if (((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) && ((l > lenc) || (xa1 != xc1) || (ya1 != yc1))) _updatePixel<blend, checkrange>(xa1, ya1,color);
 								if (fraca >= 0) { ya1 += stepya; fraca -= dxa; } xa1 += stepxa; fraca += dya;
 								if (fracb >= 0) { xb1 += stepxb; fracb -= dyb; } yb1 += stepyb; fracb += dxb;
 								if (fracc >= 0) { yc1 += stepyc; fracc -= dxc; } xc1 += stepxc; fracc += dyc;
@@ -3464,7 +3409,7 @@ namespace mtools
 							int64 fracb = dyb - (dxb >> 1) - ((yb2 > yb1) ? 1 : 0);
 							while (l <= lena)
 								{
-								if (((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) && ((l > lenc) || (xa1 != xc1) || (ya1 != yc1))) operator()(xa1, ya1).blend(color);
+								if (((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) && ((l > lenc) || (xa1 != xc1) || (ya1 != yc1))) _updatePixel<blend, checkrange>(xa1, ya1,color);
 								if (fraca >= 0) { xa1 += stepxa; fraca -= dya; } ya1 += stepya; fraca += dxa;
 								if (fracb >= 0) { yb1 += stepyb; fracb -= dxb; } xb1 += stepxb; fracb += dyb;
 								if (fracc >= 0) { yc1 += stepyc; fracc -= dxc; } xc1 += stepxc; fracc += dyc;
@@ -3476,7 +3421,7 @@ namespace mtools
 							int64 fracb = dxb - (dyb >> 1) - ((xb2 > xb1) ? 1 : 0);
 							while (l <= lena)
 								{
-								if (((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) && ((l > lenc) || (xa1 != xc1) || (ya1 != yc1))) operator()(xa1, ya1).blend(color);
+								if (((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) && ((l > lenc) || (xa1 != xc1) || (ya1 != yc1))) _updatePixel<blend, checkrange>(xa1, ya1,color);
 								if (fraca >= 0) { xa1 += stepxa; fraca -= dya; } ya1 += stepya; fraca += dxa;
 								if (fracb >= 0) { xb1 += stepxb; fracb -= dyb; } yb1 += stepyb; fracb += dxb;
 								if (fracc >= 0) { yc1 += stepyc; fracc -= dxc; } xc1 += stepxc; fracc += dyc;
@@ -3496,7 +3441,7 @@ namespace mtools
 							int64 fracb = dyb - (dxb >> 1) - ((yb2 > yb1) ? 1 : 0);
 							while (l <= lena)
 								{
-								if (((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) && ((l > lenc) || (xa1 != xc1) || (ya1 != yc1))) operator()(xa1, ya1).blend(color);
+								if (((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) && ((l > lenc) || (xa1 != xc1) || (ya1 != yc1))) _updatePixel<blend, checkrange>(xa1, ya1,color);
 								if (fraca >= 0) { ya1 += stepya; fraca -= dxa; } xa1 += stepxa; fraca += dya;
 								if (fracb >= 0) { yb1 += stepyb; fracb -= dxb; } xb1 += stepxb; fracb += dyb;
 								if (fracc >= 0) { xc1 += stepxc; fracc -= dyc; } yc1 += stepyc; fracc += dxc;
@@ -3508,7 +3453,7 @@ namespace mtools
 							int64 fracb = dxb - (dyb >> 1) - ((xb2 > xb1) ? 1 : 0);
 							while (l <= lena)
 								{
-								if (((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) && ((l > lenc) || (xa1 != xc1) || (ya1 != yc1))) operator()(xa1, ya1).blend(color);
+								if (((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) && ((l > lenc) || (xa1 != xc1) || (ya1 != yc1))) _updatePixel<blend, checkrange>(xa1, ya1, color);
 								if (fraca >= 0) { ya1 += stepya; fraca -= dxa; } xa1 += stepxa; fraca += dya;
 								if (fracb >= 0) { xb1 += stepxb; fracb -= dyb; } yb1 += stepyb; fracb += dxb;
 								if (fracc >= 0) { xc1 += stepxc; fracc -= dyc; } yc1 += stepyc; fracc += dxc;
@@ -3524,7 +3469,7 @@ namespace mtools
 							int64 fracb = dyb - (dxb >> 1) - ((yb2 > yb1) ? 1 : 0);
 							while (l <= lena)
 								{
-								if (((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) && ((l > lenc) || (xa1 != xc1) || (ya1 != yc1))) operator()(xa1, ya1).blend(color);
+								if (((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) && ((l > lenc) || (xa1 != xc1) || (ya1 != yc1))) _updatePixel<blend, checkrange>(xa1, ya1, color);
 								if (fraca >= 0) { xa1 += stepxa; fraca -= dya; } ya1 += stepya; fraca += dxa;
 								if (fracb >= 0) { yb1 += stepyb; fracb -= dxb; } xb1 += stepxb; fracb += dyb;
 								if (fracc >= 0) { xc1 += stepxc; fracc -= dyc; } yc1 += stepyc; fracc += dxc;
@@ -3536,7 +3481,7 @@ namespace mtools
 							int64 fracb = dxb - (dyb >> 1) - ((xb2 > xb1) ? 1 : 0);
 							while (l <= lena)
 								{
-								if (((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) && ((l > lenc) || (xa1 != xc1) || (ya1 != yc1))) operator()(xa1, ya1).blend(color);
+								if (((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) && ((l > lenc) || (xa1 != xc1) || (ya1 != yc1))) _updatePixel<blend, checkrange>(xa1, ya1, color);
 								if (fraca >= 0) { xa1 += stepxa; fraca -= dya; } ya1 += stepya; fraca += dxa;
 								if (fracb >= 0) { xb1 += stepxb; fracb -= dyb; } yb1 += stepyb; fracb += dxb;
 								if (fracc >= 0) { xc1 += stepxc; fracc -= dyc; } yc1 += stepyc; fracc += dxc;
@@ -3548,17 +3493,135 @@ namespace mtools
 				}
 
 
+			/**
+			 * Return the number of pixels that composed the Bressenham segment [P,Q|.
+			 * closed = true to compute the lenght of [P,Q] and false for [P,Q[. 
+			 **/
+			MTOOLS_FORCEINLINE int64 _lengthBresenham(iVec2 P, iVec2 Q, bool closed = false)
+				{
+				return std::max<int64>(abs(P.X() - Q.X()), abs(P.Y() - Q.Y())) + (closed ? 1 : 0);
+				}
 
 
 
+			/**
+			* Draw the segment [P,Q] with the bresenham line algorithm while skipping the pixels which also
+			* belong to the segments [P,R] and [Q,R];
+			*
+			* Drawing is performed using the blend() operation.
+			* 
+			* Optimized for speed.
+			**/
+			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void _lineBresenham_avoid_both_sides(iVec2 P, iVec2 Q, iVec2 R, RGBc color)
+				{
+				if ((P==Q)||(P == R)||(Q == R)) {  return; }
+				const int64 PQ = _lengthBresenham(P, Q);
+				int64 G = _lengthBresenham(P, R) - _lengthBresenham(Q, R);
+				if (G > PQ) { G = PQ; }
+				else { if (G < -PQ) { G = -PQ; } }
+				int64 lP = 1 + ((PQ + G) >> 1);
+				int64 lQ = 1 + ((PQ - G) >> 1);
+				if (lP + lQ > PQ + 1)
+					{
+					if (lP > lQ) { lP--; } else { lQ--; }
+					}
+				MTOOLS_ASSERT(lP + lQ == PQ + 1);
+				_lineBresenham_avoid<blend, checkrange>(P, Q, R, color, lQ);
+				_lineBresenham_avoid<blend, checkrange>(Q, P, R, color, lP);
+				}
 
 
 
+			/**
+			 * Draw the segment [P,Q] with the bresenham line algorithm while skipping the pixels which also
+			 * belong to the segments [P,P2] and [Q,Q2].
+			 * 
+			 * Drawing is performed using the blend() operation.
+			 * 
+			 * -> If the lines are really close, it is possible that the drawing is not perfect and
+			 *    some pixels over an existing line are drawn (but this only happens for 'degenerate' cases).
+			 * 
+			 * Optimized for speed.
+			 **/
+			template<bool blend, bool checkrange> inline void _lineBresenham_avoid_both_sides(iVec2 P, iVec2 Q, iVec2 P2, iVec2 Q2, RGBc color)
+				{
+				if (P2 == Q2){ _lineBresenham_avoid_both_sides(P, Q, P2, color); return; }
+				if (P == Q) { return; }
+				fVec2 fPQ  =  Q - P; fPQ.normalize();
+				fVec2 fPP2 = P2 - P; fPP2.normalize();
+				fVec2 fQQ2 = Q2 - Q; fQQ2.normalize();
+
+				double prodP = dotProduct(fPQ, fPP2);
+				double prodQ = -dotProduct(fPQ, fQQ2);
+
+				double lP = (2 * prodP) / (sqrt(1 - prodP*prodP));  if (lP < 1) { lP = 1; } else if (lP > 10e15) { lP = 10e15; }
+				int64 iP = (int64)lP; if (iP > _lengthBresenham(P, P2)) { iP = _lengthBresenham(P, P2) + 1; }
+
+				double lQ = (2 * prodQ) / (sqrt(1 - prodQ*prodQ));  if (lQ < 1) { lQ = 1; } else if (lQ > 10e15) { lQ = 10e15; }
+				int64 iQ = (int64)lQ; if (iQ > _lengthBresenham(Q, Q2)) { iQ = _lengthBresenham(Q, Q2) + 1; }
+
+				const int64 lPQ = _lengthBresenham(P, Q);
+				int64 mP = (iP + (lPQ + 1 - iQ)) >> 1; if (mP < 1) { mP = 1; }	else { if (mP > lPQ) mP = lPQ; }
+				int64 mQ = lPQ + 1 - mP;
+				_lineBresenham_avoid<blend, checkrange>(P, Q, P2, color, mQ);
+				_lineBresenham_avoid<blend, checkrange>(Q, P, Q2, color, mP);
+				}
 
 
-			/* draw the interior of the triangle */
-			
-			template<bool blending, bool testinside> void _draw_triangle_interior(iVec2 P1, iVec2 P2, iVec2 P3, RGBc fillcolor)
+
+			/**
+			* Draw the segment [P,Q] with the bresenham line algorithm while skipping the pixels which also
+			* belong to the segments [P,P2], [P,P3] and [Q,Q2], [Q,Q3].
+			*
+			* -> If the lines are really close, it is possible that the drawing is not perfect and
+			*    some pixels over an existing line are drawn (but this only happens for 'degenerate' cases).
+			*
+			* Drawing is performed using the blend() operation.
+			*
+			* Optimized for speed.
+			**/
+			template<bool blend, bool checkrange> inline void _lineBresenham_avoid_both_sides(iVec2 P, iVec2 Q, iVec2 P2, iVec2 P3, iVec2 Q2, iVec2 Q3, RGBc color)
+				{
+				if (P == Q) return;
+				fVec2 fPQ = Q - P; fPQ.normalize();
+				fVec2 fPP2 = P2 - P; fPP2.normalize();
+				fVec2 fPP3 = P3 - P; fPP3.normalize();
+				fVec2 fQQ2 = Q2 - Q; fQQ2.normalize();
+				fVec2 fQQ3 = Q3 - P; fQQ3.normalize();
+
+				double prodP2 = dotProduct(fPQ, fPP2);
+				double prodP3 = dotProduct(fPQ, fPP3);
+				double prodQ2 = -dotProduct(fPQ, fQQ2);
+				double prodQ3 = -dotProduct(fPQ, fQQ3);
+
+				double lP2 = (2 * prodP2) / (sqrt(1 - prodP2*prodP2));  if (lP2 < 1) { lP2 = 1; } else if (lP2 > 10e15) { lP2 = 10e15; }
+				int64 iP2 = (int64)lP2; if (iP2 > _lengthBresenham(P, P2)) { iP2 = _lengthBresenham(P, P2) + 1; }
+				double lP3 = (2 * prodP3) / (sqrt(1 - prodP3*prodP3));  if (lP3 < 1) { lP3 = 1; } else if (lP3 > 10e15) { lP3 = 10e15; }
+				int64 iP3 = (int64)lP3; if (iP3 > _lengthBresenham(P, P3)) { iP3 = _lengthBresenham(P, P3) + 1; }
+				int64 iP = std::max<int64>(iP2, iP3);
+
+				double lQ2 = (2 * prodQ2) / (sqrt(1 - prodQ2*prodQ2));  if (lQ2 < 1) { lQ2 = 1; } else if (lQ2 > 10e15) { lQ2 = 10e15; }
+				int64 iQ2 = (int64)lQ2; if (iQ2 > _lengthBresenham(Q, Q2)) { iQ2 = _lengthBresenham(Q, Q2) + 1; }
+				double lQ3 = (2 * prodQ3) / (sqrt(1 - prodQ3*prodQ3));  if (lQ3 < 1) { lQ3 = 1; } else if (lQ3 > 10e15) { lQ3 = 10e15; }
+				int64 iQ3 = (int64)lQ3; if (iQ3 > _lengthBresenham(Q, Q3)) { iQ3 = _lengthBresenham(Q, Q3) + 1; }
+				int64 iQ = std::max<int64>(iP2, iP3);
+
+				const int64 lPQ = _lengthBresenham(P, Q);
+				int64 mP = (iP + (lPQ + 1 - iQ)) >> 1; if (mP < 1) { mP = 1; }	else { if (mP > lPQ) mP = lPQ; }
+				int64 mQ = lPQ + 1 - mP;
+				_lineBresenham_avoid<blend, checkrange>(P, Q, P2, color, mQ);
+				_lineBresenham_avoid<blend, checkrange>(Q, P, Q2, color, mP);
+				}
+
+
+
+			/**
+			 * Draw the interior of the trangle determined by the 3 Bresenham segments
+			 * [P1,P2], [P2,P3], [P3,P1]. 
+			 * 
+			 * The drawing is perfect (ie only the pixel strictly inside the triangle are draw). 
+			 **/
+			template<bool blend, bool checkrange> inline void _draw_triangle_interior(iVec2 P1, iVec2 P2, iVec2 P3, RGBc fillcolor)
 				{
 				if (P1.Y() > P2.Y()) { mtools::swap(P1, P2); } // reorder by increasing Y value
 				if (P1.Y() > P3.Y()) { mtools::swap(P1, P3); } //
@@ -3566,56 +3629,96 @@ namespace mtools
 				if (P1.Y() == P3.Y()) return; //flat, nothing to draw. 
 				if (P1.Y() == P2.Y())
 					{
-					_fill_interior_angle<blending, testinside>(P3, P1, P2, fillcolor, false);
+					_fill_interior_angle<blend, checkrange>(P3, P1, P2, fillcolor, false);
 					return;
 					}
 				if (P2.Y() == P3.Y())
 					{
-					_fill_interior_angle<blending, testinside>(P1, P2, P3, fillcolor, false);
+					_fill_interior_angle<blend, checkrange>(P1, P2, P3, fillcolor, false);
 					return;
 					}
 				auto a1 = (P2.X() - P1.X())*(P3.Y() - P2.Y()); if (a1 < 0) a1 = -a1;
 				auto a2 = (P3.X() - P2.X())*(P2.Y() - P1.Y()); if (a2 < 0) a2 = -a2;
 				if (a1 > a2)
 					{
-					_fill_interior_angle<blending, testinside>(P3, P2, P1, fillcolor, false);
-					_fill_interior_angle<blending, testinside>(P1, P2, P3, fillcolor, true);
+					_fill_interior_angle<blend, checkrange>(P3, P2, P1, fillcolor, false);
+					_fill_interior_angle<blend, checkrange>(P1, P2, P3, fillcolor, true);
 					}
 				else
 					{
-					_fill_interior_angle<blending, testinside>(P1, P2, P3, fillcolor, false);
-					_fill_interior_angle<blending, testinside>(P3, P2, P1, fillcolor, true);
+					_fill_interior_angle<blend, checkrange>(P1, P2, P3, fillcolor, false);
+					_fill_interior_angle<blend, checkrange>(P3, P2, P1, fillcolor, true);
 					}
 				return;
 				}
 
 
-			/* private: used by _fill_interior_angle() */
-			MTOOLS_FORCEINLINE void _hline(int64 x1, int64 x2, int64 y, RGBc color, bool invx, bool invy)
-				{
+			/* used by _fill_interior_angle() */
+			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void _hline(int64 x1, int64 x2, int64 y, RGBc color, bool invx, bool invy)
+				{ // compiler optimizes away the template conditional statements.
+				if (checkrange)
+					{
+					if ((y < 0) || (y >= _ly)) return;
+					x1 = std::max<int64>(0, x1);
+					x2 = std::min<int64>(_lx - 1, x2);
+					}
 				RGBc * p = _data + y*_stride + x1;
-				while(x1 <= x2) { (*p).blend(color); p++; x1++; }				
+				while(x1 <= x2) 
+					{ 
+					if (blend) { (*p).blend(color); } else { *p = color; }
+					p++; x1++; 
+					}				
 				}
 
-			/* private: used by _fill_interior_angle() */
-			MTOOLS_FORCEINLINE void _hline_invx(int64 x1, int64 x2, int64 y, RGBc color, bool invx, bool invy)
-				{
+			/* used by _fill_interior_angle() */
+			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void _hline_invx(int64 x1, int64 x2, int64 y, RGBc color, bool invx, bool invy)
+				{ // compiler optimizes away the template conditional statements.
+				if (checkrange) 
+					{ 
+					if ((y < 0) || (y >= _ly)) return;
+					x1 = std::max<int64>(-_lx + 1, x1); 
+					x2 = std::min<int64>(0, x2); 
+					}
 				RGBc * p = _data + y*_stride - x2;
-				while (x1 <= x2) { (*p).blend(color); p++; x1++; }
+				while (x1 <= x2) 
+					{ 
+					if (blend) { (*p).blend(color); } else { *p = color; }
+					p++; x1++; 
+					}
 				}
 
-			/* private: used by _fill_interior_angle() */
-			MTOOLS_FORCEINLINE void _hline_invy(int64 x1, int64 x2, int64 y, RGBc color, bool invx, bool invy)
-				{
+			/* used by _fill_interior_angle() */
+			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void _hline_invy(int64 x1, int64 x2, int64 y, RGBc color, bool invx, bool invy)
+				{ // compiler optimizes away the template conditional statements.
+				if (checkrange)
+					{
+					if ((y > 0) || (y <= -_ly)) return;
+					x1 = std::max<int64>(0, x1);
+					x2 = std::min<int64>(_lx - 1, x2);
+					}
 				RGBc * p = _data - y*_stride + x1;
-				while (x1 <= x2) { (*p).blend(color); p++; x1++; }
+				while (x1 <= x2) 
+					{ 
+					if (blend) { (*p).blend(color); } else { *p = color; }
+					p++; x1++; 
+					}
 				}
 
-			/* private: used by _fill_interior_angle() */
-			MTOOLS_FORCEINLINE void _hline_invx_invy(int64 x1, int64 x2, int64 y, RGBc color, bool invx, bool invy)
-				{
+			/* used by _fill_interior_angle() */
+			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void _hline_invx_invy(int64 x1, int64 x2, int64 y, RGBc color, bool invx, bool invy)
+				{ // compiler optimizes away the template conditional statements.
+				if (checkrange)
+					{
+					if ((y > 0) || (y <= -_ly)) return;
+					x1 = std::max<int64>(-_lx + 1, x1);
+					x2 = std::min<int64>(0, x2);
+					}
 				RGBc * p = _data - y*_stride - x2;
-				while (x1 <= x2) { (*p).blend(color); p++; x1++; }
+				while (x1 <= x2) 
+					{ 
+					if (blend) { (*p).blend(color); } else { *p = color; }
+					p++; x1++;
+					}
 				}
 
 
@@ -3638,7 +3741,7 @@ namespace mtools
 			 * Optimized for speed: uses only integer (additive) 
 			 * operations. 
 			 **/
-			template<bool blending, bool testinside> MTOOLS_FORCEINLINE void _fill_interior_angle(iVec2 P, iVec2 Q1, iVec2 Q2, RGBc color,bool fill_last)
+			template<bool blend, bool checkrange> inline void _fill_interior_angle(iVec2 P, iVec2 Q1, iVec2 Q2, RGBc color,bool fill_last)
 				{
 				// indicator for bresenham line drawing symmetry
 				const int64 ind_xa = ((Q1.X() > P.X()) ? 1 : 0);
@@ -3681,6 +3784,28 @@ namespace mtools
 				if (dyb < 0) { dyb = -dyb;  stepyb = -1; } else { stepyb = 1; }
 				if (dxb < 0) { dxb = -dxb;  stepxb = -1; } else { stepxb = 1; }
 				dyb <<= 1; dxb <<= 1;
+				// fix range if required
+				if (checkrange)
+					{
+					if (!invy)
+						{
+						if (ytarget > _ly) { ytarget = _ly; }
+						if (y < 0)
+							{ 
+							// todo
+							// compute xa xb fraca fracb and then set y = 0;
+							}
+						}
+					else
+						{
+						if (ytarget > 1) { ytarget = 1; }
+						if (y < -_ly + 1)
+							{
+							// todo
+							// compute xa xb fraca fracb and then set y = -ly + 1;
+							}
+						}
+					}
 				// ok, ready to draw. 
 				if (invx)
 					{
@@ -3701,7 +3826,7 @@ namespace mtools
 										{
 										while (y < ytarget)
 											{
-											_hline_invx_invy(xa + 1, xb - 1, y, color, invx, invy);
+											_hline_invx_invy<blend,checkrange>(xa + 1, xb - 1, y, color, invx, invy);
 											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
 											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
 											y++;
@@ -3712,7 +3837,7 @@ namespace mtools
 										while (y < ytarget)
 											{
 											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-											_hline_invx_invy(xa + 1, xb, y, color, invx, invy);
+											_hline_invx_invy<blend, checkrange>(xa + 1, xb, y, color, invx, invy);
 											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
 											y++;
 											}
@@ -3725,7 +3850,7 @@ namespace mtools
 										while (y < ytarget)
 											{
 											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-											_hline_invx_invy(xa, xb - 1, y, color, invx, invy);
+											_hline_invx_invy<blend, checkrange>(xa, xb - 1, y, color, invx, invy);
 											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
 											y++;
 											}
@@ -3736,7 +3861,7 @@ namespace mtools
 											{
 											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
 											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-											_hline_invx_invy(xa, xb, y, color, invx, invy);
+											_hline_invx_invy<blend, checkrange>(xa, xb, y, color, invx, invy);
 											y++;
 											}
 										}
@@ -3749,7 +3874,7 @@ namespace mtools
 									{
 									while (y < ytarget)
 										{
-										_hline_invx_invy(xa + 1, xb - 1, y, color, invx, invy);
+										_hline_invx_invy<blend, checkrange>(xa + 1, xb - 1, y, color, invx, invy);
 										while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
 										if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
 										y++;
@@ -3760,7 +3885,7 @@ namespace mtools
 									while (y < ytarget)
 										{
 										while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-										_hline_invx_invy(xa, xb - 1, y, color, invx, invy);
+										_hline_invx_invy<blend, checkrange>(xa, xb - 1, y, color, invx, invy);
 										if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
 										y++;
 										}
@@ -3777,7 +3902,7 @@ namespace mtools
 									{
 									while (y < ytarget)
 										{
-										_hline_invx_invy(xa + 1, xb - 1, y, color, invx, invy);
+										_hline_invx_invy<blend, checkrange>(xa + 1, xb - 1, y, color, invx, invy);
 										while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
 										if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
 										y++;
@@ -3788,7 +3913,7 @@ namespace mtools
 									while (y < ytarget)
 										{
 										while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-										_hline_invx_invy(xa + 1, xb, y, color, invx, invy);
+										_hline_invx_invy<blend, checkrange>(xa + 1, xb, y, color, invx, invy);
 										if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
 										y++;
 										}
@@ -3799,7 +3924,7 @@ namespace mtools
 								int64 fracb = dxb - (dyb >> 1) - ind_xb;
 								while (y < ytarget)
 									{
-									_hline_invx_invy(xa + 1, xb - 1, y, color, invx, invy);
+									_hline_invx_invy<blend, checkrange>(xa + 1, xb - 1, y, color, invx, invy);
 									if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
 									if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
 									y++;
@@ -3824,7 +3949,7 @@ namespace mtools
 										{
 										while (y < ytarget)
 											{
-											_hline_invx(xa + 1, xb - 1, y, color, invx, invy);
+											_hline_invx<blend, checkrange>(xa + 1, xb - 1, y, color, invx, invy);
 											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
 											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
 											y++;
@@ -3835,7 +3960,7 @@ namespace mtools
 										while (y < ytarget)
 											{
 											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-											_hline_invx(xa + 1, xb, y, color, invx, invy);
+											_hline_invx<blend, checkrange>(xa + 1, xb, y, color, invx, invy);
 											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
 											y++;
 											}
@@ -3848,7 +3973,7 @@ namespace mtools
 										while (y < ytarget)
 											{
 											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-											_hline_invx(xa, xb - 1, y, color, invx, invy);
+											_hline_invx<blend, checkrange>(xa, xb - 1, y, color, invx, invy);
 											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
 											y++;
 											}
@@ -3859,7 +3984,7 @@ namespace mtools
 											{
 											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
 											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-											_hline_invx(xa, xb, y, color, invx, invy);
+											_hline_invx<blend, checkrange>(xa, xb, y, color, invx, invy);
 											y++;
 											}
 										}
@@ -3872,7 +3997,7 @@ namespace mtools
 									{
 									while (y < ytarget)
 										{
-										_hline_invx(xa + 1, xb - 1, y, color, invx, invy);
+										_hline_invx<blend, checkrange>(xa + 1, xb - 1, y, color, invx, invy);
 										while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
 										if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
 										y++;
@@ -3883,7 +4008,7 @@ namespace mtools
 									while (y < ytarget)
 										{
 										while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-										_hline_invx(xa, xb - 1, y, color, invx, invy);
+										_hline_invx<blend, checkrange>(xa, xb - 1, y, color, invx, invy);
 										if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
 										y++;
 										}
@@ -3900,7 +4025,7 @@ namespace mtools
 									{
 									while (y < ytarget)
 										{
-										_hline_invx(xa + 1, xb - 1, y, color, invx, invy);
+										_hline_invx<blend, checkrange>(xa + 1, xb - 1, y, color, invx, invy);
 										while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
 										if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
 										y++;
@@ -3911,7 +4036,7 @@ namespace mtools
 									while (y < ytarget)
 										{
 										while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-										_hline_invx(xa + 1, xb, y, color, invx, invy);
+										_hline_invx<blend, checkrange>(xa + 1, xb, y, color, invx, invy);
 										if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
 										y++;
 										}
@@ -3922,7 +4047,7 @@ namespace mtools
 								int64 fracb = dxb - (dyb >> 1) - ind_xb;
 								while (y < ytarget)
 									{
-									_hline_invx(xa + 1, xb - 1, y, color, invx, invy);
+									_hline_invx<blend, checkrange>(xa + 1, xb - 1, y, color, invx, invy);
 									if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
 									if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
 									y++;
@@ -3950,7 +4075,7 @@ namespace mtools
 										{
 										while (y < ytarget)
 											{
-											_hline_invy(xa + 1, xb - 1, y, color, invx, invy);
+											_hline_invy<blend, checkrange>(xa + 1, xb - 1, y, color, invx, invy);
 											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
 											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
 											y++;
@@ -3961,7 +4086,7 @@ namespace mtools
 										while (y < ytarget)
 											{
 											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-											_hline_invy(xa + 1, xb, y, color, invx, invy);
+											_hline_invy<blend, checkrange>(xa + 1, xb, y, color, invx, invy);
 											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
 											y++;
 											}
@@ -3974,7 +4099,7 @@ namespace mtools
 										while (y < ytarget)
 											{
 											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-											_hline_invy(xa, xb - 1, y, color, invx, invy);
+											_hline_invy<blend, checkrange>(xa, xb - 1, y, color, invx, invy);
 											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
 											y++;
 											}
@@ -3985,7 +4110,7 @@ namespace mtools
 											{
 											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
 											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-											_hline_invy(xa, xb, y, color, invx, invy);
+											_hline_invy<blend, checkrange>(xa, xb, y, color, invx, invy);
 											y++;
 											}
 										}
@@ -3998,7 +4123,7 @@ namespace mtools
 									{
 									while (y < ytarget)
 										{
-										_hline_invy(xa + 1, xb - 1, y, color, invx, invy);
+										_hline_invy<blend, checkrange>(xa + 1, xb - 1, y, color, invx, invy);
 										while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
 										if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
 										y++;
@@ -4009,7 +4134,7 @@ namespace mtools
 									while (y < ytarget)
 										{
 										while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-										_hline_invy(xa, xb - 1, y, color, invx, invy);
+										_hline_invy<blend, checkrange>(xa, xb - 1, y, color, invx, invy);
 										if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
 										y++;
 										}
@@ -4026,7 +4151,7 @@ namespace mtools
 									{
 									while (y < ytarget)
 										{
-										_hline_invy(xa + 1, xb - 1, y, color, invx, invy);
+										_hline_invy<blend, checkrange>(xa + 1, xb - 1, y, color, invx, invy);
 										while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
 										if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
 										y++;
@@ -4037,7 +4162,7 @@ namespace mtools
 									while (y < ytarget)
 										{
 										while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-										_hline_invy(xa + 1, xb, y, color, invx, invy);
+										_hline_invy<blend, checkrange>(xa + 1, xb, y, color, invx, invy);
 										if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
 										y++;
 										}
@@ -4048,7 +4173,7 @@ namespace mtools
 								int64 fracb = dxb - (dyb >> 1) - ind_xb;
 								while (y < ytarget)
 									{
-									_hline_invy(xa + 1, xb - 1, y, color, invx, invy);
+									_hline_invy<blend, checkrange>(xa + 1, xb - 1, y, color, invx, invy);
 									if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
 									if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
 									y++;
@@ -4073,7 +4198,7 @@ namespace mtools
 										{
 										while (y < ytarget)
 											{
-											_hline(xa + 1, xb - 1, y, color, invx, invy);
+											_hline<blend, checkrange>(xa + 1, xb - 1, y, color, invx, invy);
 											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
 											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
 											y++;
@@ -4084,7 +4209,7 @@ namespace mtools
 										while (y < ytarget)
 											{
 											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-											_hline(xa + 1, xb, y, color, invx, invy);
+											_hline<blend, checkrange>(xa + 1, xb, y, color, invx, invy);
 											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
 											y++;
 											}
@@ -4097,7 +4222,7 @@ namespace mtools
 										while (y < ytarget)
 											{
 											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-											_hline(xa, xb - 1, y, color, invx, invy);
+											_hline<blend, checkrange>(xa, xb - 1, y, color, invx, invy);
 											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
 											y++;
 											}
@@ -4108,7 +4233,7 @@ namespace mtools
 											{
 											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
 											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-											_hline(xa, xb, y, color, invx, invy);
+											_hline<blend, checkrange>(xa, xb, y, color, invx, invy);
 											y++;
 											}
 										}
@@ -4121,7 +4246,7 @@ namespace mtools
 									{
 									while (y < ytarget)
 										{
-										_hline(xa + 1, xb - 1, y, color, invx, invy);
+										_hline<blend, checkrange>(xa + 1, xb - 1, y, color, invx, invy);
 										while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
 										if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
 										y++;
@@ -4132,7 +4257,7 @@ namespace mtools
 									while (y < ytarget)
 										{
 										while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-										_hline(xa, xb - 1, y, color, invx, invy);
+										_hline<blend, checkrange>(xa, xb - 1, y, color, invx, invy);
 										if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
 										y++;
 										}
@@ -4149,7 +4274,7 @@ namespace mtools
 									{
 									while (y < ytarget)
 										{
-										_hline(xa + 1, xb - 1, y, color, invx, invy);
+										_hline<blend, checkrange>(xa + 1, xb - 1, y, color, invx, invy);
 										while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
 										if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
 										y++;
@@ -4160,7 +4285,7 @@ namespace mtools
 									while (y < ytarget)
 										{
 										while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-										_hline(xa + 1, xb, y, color, invx, invy);
+										_hline<blend, checkrange>(xa + 1, xb, y, color, invx, invy);
 										if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
 										y++;
 										}
@@ -4171,7 +4296,7 @@ namespace mtools
 								int64 fracb = dxb - (dyb >> 1) - ind_xb;
 								while (y < ytarget)
 									{
-									_hline(xa + 1, xb - 1, y, color, invx, invy);
+									_hline<blend, checkrange>(xa + 1, xb - 1, y, color, invx, invy);
 									if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
 									if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
 									y++;
@@ -4181,6 +4306,7 @@ namespace mtools
 						}
 					}
 				}
+
 
 
 			/**
@@ -4194,11 +4320,11 @@ namespace mtools
 			* 
 			* This version write over the pixel color. 
 			**/
-			MTOOLS_FORCEINLINE void _lineWuAA(iVec2 P1, iVec2 P2, RGBc color, bool draw_last)
+			template<bool blend, bool checkrange>  MTOOLS_FORCEINLINE void _lineWuAA(iVec2 P1, iVec2 P2, RGBc color, bool draw_last)
 				{
 				int64 & x0 = P1.X(); int64 & y0 = P1.Y();
 				int64 & x1 = P2.X(); int64 & y1 = P2.Y();
-				operator()(x0, y0) = color;
+				_updatePixel<blend,checkrange>(x0, y0,color);
 				if (draw_last) operator()(x1, y1) = color;
 				if (y0 > y1) { mtools::swap(y0, y1); mtools::swap(x0, x1); }
 				int64 dx = x1 - x0;
@@ -4207,7 +4333,7 @@ namespace mtools
 				int64 dy = y1 - y0;
 				if (dx == dy)
 					{ 
-					while (--dy > 0) { x0 += dir; y0++; operator()(x0, y0) = color; }
+					while (--dy > 0) { x0 += dir; y0++; _updatePixel<blend, checkrange>(x0, y0, color); }
 					return;
 					}
 				uint32 err = 0; // important to be 32 bit, do not change !
@@ -4221,9 +4347,9 @@ namespace mtools
 						if (err <= tmp) { x0 += dir; } // overflow !
 						y0++;
 						color.comp.A = (err >> 24);
-						operator()(x0 + dir, y0) = color;
+						_updatePixel<blend, checkrange>(x0 + dir, y0,color);
 						color.comp.A = 0xFF ^ (color.comp.A);
-						operator()(x0, y0) = color;
+						_updatePixel<blend, checkrange>(x0, y0, color);
 						}
 					}
 				else
@@ -4236,75 +4362,14 @@ namespace mtools
 						if (err <= tmp) { y0++; } // overflow !
 						x0 += dir;
 						color.comp.A = (err >> 24);
-						operator()(x0, y0 + 1) = color;
+						_updatePixel<blend, checkrange>(x0, y0 + 1,color);
 						color.comp.A = 0xFF ^ (color.comp.A);
-						operator()(x0, y0) = color;
+						_updatePixel<blend, checkrange>(x0, y0, color);
 						}
 					}
 				return; 
 				}
 
-
-			 /**
-			 * Draw an antialiased segment [P1,P2] using Wu algorithm.
-			 *
-			 * DOES NOT WORK FOR HORIZONTAL AND VERTICAL LINES WHICH
-			 * SHOULD BE DRAWN SEPARATELY.
-			 *
-			 * Set draw_last to true to draw the last point and to false
-			 * to draw only the open segment [P1,P2[.
-			 *
-			 * This version use blending to draw the line.
-			 **/
-			MTOOLS_FORCEINLINE void _lineWuAA_blend(iVec2 P1, iVec2 P2, RGBc color, bool draw_last)
-				{
-				int64 & x0 = P1.X(); int64 & y0 = P1.Y();
-				int64 & x1 = P2.X(); int64 & y1 = P2.Y();
-				operator()(x0, y0).blend(color);
-				if (draw_last) operator()(x1, y1) = color;
-				if (y0 > y1) { mtools::swap(y0, y1); mtools::swap(x0, x1); }
-				int64 dx = x1 - x0;
-				int64 dir;
-				if (dx >= 0) { dir = 1; } else { dir = -1; dx = -dx; }
-				int64 dy = y1 - y0;
-				if (dx == dy)
-					{ // diagonal line
-					while(--dy > 0) { x0 += dir; y0++; operator()(x0, y0).blend(color); }
-					return;
-					}
-				uint32 err = 0; // important to be 32 bit, do not change !
-				if (dy > dx)
-					{
-					uint32 inc = (uint32)((dx << 32) / dy);
-					while (--dy > 0)
-						{
-						const uint32 tmp = err;
-						err += inc;
-						if (err <= tmp) { x0 += dir; } // overflow !
-						y0++;
-						color.comp.A = (err >> 24);
-						operator()(x0 + dir, y0).blend(color);
-						color.comp.A = 0xFF ^ (color.comp.A);
-						operator()(x0, y0).blend(color);
-						}
-					}
-				else
-					{
-					uint32 inc = (uint32)((dy << 32) / dx);
-					while (--dx  > 0)
-						{
-						const uint32 tmp = err;
-						err += inc;
-						if (err <= tmp) { y0++; } // overflow !
-						x0 += dir;
-						color.comp.A = (err >> 24);
-						operator()(x0, y0 + 1).blend(color);
-						color.comp.A = 0xFF ^ (color.comp.A);
-						operator()(x0, y0).blend(color);
-						}
-					}
-				return;
-				}
 
 
 
@@ -4314,7 +4379,7 @@ namespace mtools
 			* ----------------------------------------------------------
 			* TODO : NOT VERY GOOD, IMPROVE IT. 
 			**/
-			MTOOLS_FORCEINLINE void _tickLineBresenhamAA(iVec2 P1, iVec2 P2, float wd, RGBc color)
+			template<bool blend, bool checkrange>  inline void _tickLineBresenhamAA(iVec2 P1, iVec2 P2, float wd, RGBc color)
 				{
 				int64 & x0 = P1.X(); int64 & y0 = P1.Y();
 				int64 & x1 = P2.X(); int64 & y1 = P2.Y();
@@ -4328,14 +4393,14 @@ namespace mtools
 					for (wd = (wd + 1) / 2; ; )
 						{
 						color.comp.A = (uint8)(255 - std::max<float>(0, 255 * (abs(err - dx + dy) / ed - wd + 1)));
-						setPixel(x0, y0, color);
+						_updatePixel<blend, checkrange>(x0, y0, color);
 						e2 = err; x2 = x0;
 						if (2 * e2 >= -dx)
 							{
 							for (e2 += dy, y2 = y0; e2 < ed*wd && (y1 != y2 || dx > dy); e2 += dx)
 								{
 								color.comp.A = (uint8)(255 - std::max<float>(0, 255 * (abs(e2) / ed - wd + 1)));
-								setPixel(x0, y2 += sy, color);
+								_updatePixel<blend, checkrange>(x0, y2 += sy, color);
 								}
 							if (x0 == x1) break;
 							e2 = err; err -= dy; x0 += sx;
@@ -4345,7 +4410,7 @@ namespace mtools
 							for (e2 = dx - e2; e2 < ed*wd && (x1 != x2 || dx < dy); e2 += dy)
 								{
 								color.comp.A = (uint8)(255 - std::max<float>(0, 255 * (abs(e2) / ed - wd + 1)));
-								setPixel(x2 += sx, y0, color);
+								_updatePixel<blend, checkrange>(x2 += sx, y0, color);
 								}
 							if (y0 == y1) break;
 							err += dx; y0 += sy;
@@ -4358,14 +4423,14 @@ namespace mtools
 					for (wd = (wd + 1) / 2; ; )
 						{
 						color.comp.A = (uint8)((((int32)(255 - std::max<float>(0, 255 * (abs(err - dx + dy) / ed - wd + 1)))) * op) >> 8);
-						setPixel(x0, y0, color);
+						_updatePixel<blend, checkrange>(x0, y0, color);
 						e2 = err; x2 = x0;
 						if (2 * e2 >= -dx)
 							{
 							for (e2 += dy, y2 = y0; e2 < ed*wd && (y1 != y2 || dx > dy); e2 += dx)
 								{
 								color.comp.A = (uint8)((((int32)(255 - std::max<float>(0, 255 * (abs(e2) / ed - wd + 1))))*op) >> 8);
-								setPixel(x0, y2 += sy, color);
+								_updatePixel<blend, checkrange>(x0, y2 += sy, color);
 								}
 							if (x0 == x1) break;
 							e2 = err; err -= dy; x0 += sx;
@@ -4375,7 +4440,7 @@ namespace mtools
 							for (e2 = dx - e2; e2 < ed*wd && (x1 != x2 || dx < dy); e2 += dy)
 								{
 								color.comp.A = (uint8)((((int32)(255 - std::max<float>(0, 255 * (abs(e2) / ed - wd + 1))))*op) >> 8);
-								setPixel(x2 += sx, y0, color);
+								_updatePixel<blend, checkrange>(x2 += sx, y0, color);
 								}
 							if (y0 == y1) break;
 							err += dx; y0 += sy;
@@ -4386,83 +4451,6 @@ namespace mtools
 				}
 
 
-			/**
-			* Draw an tick antialiased line using Bresenham's algorithm.
-			* use blending.
-			* 
-			* ----------------------------------------------------------
-			* TODO : NOT VERY GOOD, IMPROVE IT.
-			**/
-			MTOOLS_FORCEINLINE void _tickLineBresenhamAA_blend(iVec2 P1, iVec2 P2, float wd, RGBc color)
-				{
-				int64 & x0 = P1.X(); int64 & y0 = P1.Y();
-				int64 & x1 = P2.X(); int64 & y1 = P2.Y();
-				int64 dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
-				int64 dy = abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
-				int64 err = dx - dy, e2, x2, y2;
-				float ed = dx + dy == 0 ? 1 : sqrt((float)dx*dx + (float)dy*dy);
-				int64 op = mtools::convertAlpha_0xFF_to_0x100(color.comp.A);
-				if (op == 256)
-					{
-					for (wd = (wd + 1) / 2; ; )
-						{
-						color.comp.A = (uint8)(255 - std::max<float>(0, 255 * (abs(err - dx + dy) / ed - wd + 1)));
-						blendPixel(x0, y0, color);
-						e2 = err; x2 = x0;
-						if (2 * e2 >= -dx)
-							{
-							for (e2 += dy, y2 = y0; e2 < ed*wd && (y1 != y2 || dx > dy); e2 += dx)
-								{
-								color.comp.A = (uint8)(255 - std::max<float>(0, 255 * (abs(e2) / ed - wd + 1)));
-								blendPixel(x0, y2 += sy, color);
-								}
-							if (x0 == x1) break;
-							e2 = err; err -= dy; x0 += sx;
-							}
-						if (2 * e2 <= dy)
-							{
-							for (e2 = dx - e2; e2 < ed*wd && (x1 != x2 || dx < dy); e2 += dy)
-								{
-								color.comp.A = (uint8)(255 - std::max<float>(0, 255 * (abs(e2) / ed - wd + 1)));
-								blendPixel(x2 += sx, y0, color);
-								}
-							if (y0 == y1) break;
-							err += dx; y0 += sy;
-							}
-						}
-					return;
-					}
-				else
-					{
-					for (wd = (wd + 1) / 2; ; )
-						{
-						color.comp.A = (uint8)((((int32)(255 - std::max<float>(0, 255 * (abs(err - dx + dy) / ed - wd + 1)))) * op) >> 8);
-						blendPixel(x0, y0, color);
-						e2 = err; x2 = x0;
-						if (2 * e2 >= -dx)
-							{
-							for (e2 += dy, y2 = y0; e2 < ed*wd && (y1 != y2 || dx > dy); e2 += dx)
-								{
-								color.comp.A = (uint8)((((int32)(255 - std::max<float>(0, 255 * (abs(e2) / ed - wd + 1))))*op) >> 8);
-								blendPixel(x0, y2 += sy, color);
-								}
-							if (x0 == x1) break;
-							e2 = err; err -= dy; x0 += sx;
-							}
-						if (2 * e2 <= dy)
-							{
-							for (e2 = dx - e2; e2 < ed*wd && (x1 != x2 || dx < dy); e2 += dy)
-								{
-								color.comp.A = (uint8)((((int32)(255 - std::max<float>(0, 255 * (abs(e2) / ed - wd + 1))))*op) >> 8);
-								blendPixel(x2 += sx, y0, color);
-								}
-							if (y0 == y1) break;
-							err += dx; y0 += sy;
-							}
-						}
-					return;
-					}
-				}
 
 
 

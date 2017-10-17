@@ -1071,8 +1071,8 @@ void testriangle()
 
 void test_b()
 	{
-	int LX = 300;
-	int LY = 300;
+	int LX = 200;
+	int LY = 200;
 	Image im(LX, LY);
 	im.clear(RGBc::c_White);
 
@@ -1086,15 +1086,6 @@ void test_b()
 
 
 
-	im.setPixel({ 31,31 }, RGBc::c_Red);
-	im.setPixel({ 31,32 }, RGBc::c_Green);
-	im.setPixel({ 32,31 }, RGBc::c_Green);
-
-	im._lineBresenham_avoid({ 1,1 }, { 31,31 }, { 30,30 }, RGBc::c_Black,true);
-
-
-	
-
 	int64 r = LY/5;
 	iVec2 P = { LX / 2, LY / 2 };
 	int N = 1000;
@@ -1104,7 +1095,7 @@ void test_b()
 	Q0.X() = P.X() + r*cos(0);
 	Q0.Y() = P.Y() + r*sin(0);
 
-	im.draw_line(P, Q0, RGBc::c_Black.getOpacity(0.5),true,true,false);
+	im.draw_line(P, Q0, RGBc::c_Black.getOpacity(0.4),true,true,false);
 
 	Q2 = Q0;
 	for (int i = 1; i < N; i++)
@@ -1112,28 +1103,30 @@ void test_b()
 		Q1 = Q2;
 		Q2.X() = P.X() + r*cos(i*TWOPI / N);
 		Q2.Y() = P.Y() + r*sin(i*TWOPI / N);
-		im._lineBresenham_avoid(P, Q2, Q1, Q0, RGBc::c_Black.getOpacity(0.5),true);
+		im._lineBresenham_avoid<true,true>(P, Q2, Q1, Q0, RGBc::c_Black.getOpacity(0.4),0);
 		}
 	
 	plotter.redraw();
+
 	cout.getKey();
-	return;
+
+	int e = 40;
+
 
 
 	MT2004_64 gen(1);
 
 
-	int e = 0;
 
 	while (1)
 		{
-		im.clear(RGBc::c_White);
+		im.clear(RGBc(230,230,230));
 		iVec2 P1(Unif_int(0 - e, LX - 1 + e, gen), Unif_int(0 - e, LY - 1 + e, gen));
 		iVec2 P2(Unif_int(0 - e, LX - 1 + e, gen), Unif_int(0 - e, LY - 1 + e, gen));
 		iVec2 P3(Unif_int(0 - e, LX - 1 + e, gen), Unif_int(0 - e, LY - 1 + e, gen));
 
-		im.draw_triangle(P1, P2, P3, RGBc::c_Green.getOpacity(0.5),true,false);
-		im.draw_triangle_interior(P1, P2, P3, RGBc::c_Red.getOpacity(0.5), true);
+		im.draw_triangle(P1, P2, P3, RGBc::c_Green.getOpacity(0.4),true,false);
+		im.draw_triangle_interior(P1, P2, P3, RGBc::c_Red.getOpacity(0.4), true);
 
 		plotter.redraw();
 		cout.getKey();
