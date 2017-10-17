@@ -2442,7 +2442,7 @@ namespace mtools
 			*******************************************************************************************************************************************************/
 
 
-		private:
+		//private:
 
 
 
@@ -3230,20 +3230,20 @@ namespace mtools
 				dy <<= 1; dx <<= 1;
 				if (dx > dy)
 					{
-					int64 fraction = dy - (dx >> 1) - ((y2 > y1) ? 1 : 0); // compensate by 1 according to the direction of y to make it symmetric.
+					int64 frac = dy - (dx >> 1) - ((y2 > y1) ? 1 : 0); // compensate by 1 according to the direction of y to make it symmetric.
 					while (x1 != x2)
 						{
 						operator()(x1, y1) =color;
-						if (fraction >= 0) { y1 += stepy; fraction -= dx; } x1 += stepx; fraction += dy;
+						if (frac >= 0) { y1 += stepy; frac -= dx; } x1 += stepx; frac += dy;
 						}
 					}
 				else
 					{
-					int64 fraction = dx - (dy >> 1) - ((x2 > x1) ? 1 : 0); // compensate by 1 according to the direction of x to make it symmetric.
+					int64 frac = dx - (dy >> 1) - ((x2 > x1) ? 1 : 0); // compensate by 1 according to the direction of x to make it symmetric.
 					while (y1 != y2)
 						{
 						operator()(x1, y1) = color;
-						if (fraction >= 0) { x1 += stepx; fraction -= dy; } y1 += stepy; fraction += dx;
+						if (frac >= 0) { x1 += stepx; frac -= dy; } y1 += stepy; frac += dx;
 						}
 					}
 				}
@@ -3277,22 +3277,22 @@ namespace mtools
 				dy <<= 1; dx <<= 1;
 				if (dx > dy)
 					{
-					int64 fraction = dy - (dx >> 1) - ((y2 > y1) ? 1 : 0); // compensate by 1 according to the direction of y to make it symmetric.
+					int64 frac = dy - (dx >> 1) - ((y2 > y1) ? 1 : 0); // compensate by 1 according to the direction of y to make it symmetric.
 					while (x1 != x2)
 						{
 						operator()(x1, y1).blend(color);
-						if (fraction >= 0) { y1 += stepy; fraction -= dx; } 
+						if (frac >= 0) { y1 += stepy; frac -= dx; } 
 						x1 += stepx; 
-						fraction += dy;
+						frac += dy;
 						}
 					}
 				else
 					{
-					int64 fraction = dx - (dy >> 1) - ((x2 > x1) ? 1 : 0); // compensate by 1 according to the direction of x to make it symmetric.
+					int64 frac = dx - (dy >> 1) - ((x2 > x1) ? 1 : 0); // compensate by 1 according to the direction of x to make it symmetric.
 					while (y1 != y2)
 						{
 						operator()(x1, y1).blend(color);
-						if (fraction >= 0) { x1 += stepx; fraction -= dy; } y1 += stepy; fraction += dx;
+						if (frac >= 0) { x1 += stepx; frac -= dy; } y1 += stepy; frac += dx;
 						}
 					}
 				}
@@ -3300,11 +3300,10 @@ namespace mtools
 
 
 			/**
-			 * Draw the segment [P,Q1[ with the bresenham line algorithm while skipping the pixels
-			 * which also belong to the infinite line (P,Q2). 
+			 * Draw the segment [P,Q1] with the bresenham line algorithm while skipping the pixels
+			 * which also belong to the segment [P,Q2]. 
 			 * 
-			 * If draw_last = false, the endpoint Q1 is never drawn. If set to true, the
-			 * endpoint is drawn provided it does not also belong to (P,Q2). 
+			 * The endpoint Q1 is (possibly) drawn depending on draw_last.
 			 * 
 			 * Drawing is performed using the blend() operation. 
 			 * 
@@ -3320,6 +3319,7 @@ namespace mtools
 				int64 dxa = xa2 - xa1;
 				int64 dyb = yb2 - yb1;
 				int64 dxb = xb2 - xb1;
+				int64 l = 0;
 				int64 stepxa, stepya;
 				if (dya < 0) { dya = -dya;  stepya = -1; } else { stepya = 1; }
 				if (dxa < 0) { dxa = -dxa;  stepxa = -1; } else { stepxa = 1; }
@@ -3328,56 +3328,229 @@ namespace mtools
 				if (dyb < 0) { dyb = -dyb;  stepyb = -1; } else { stepyb = 1; }
 				if (dxb < 0) { dxb = -dxb;  stepxb = -1; } else { stepxb = 1; }
 				dyb <<= 1; dxb <<= 1;
+				const int64 lena = abs((dxa > dya) ? (xa2 - xa1) : (ya2 - ya1)) - (draw_last ? 0 : 1);
+				const int64 lenb = abs((dxb > dyb) ? (xb2 - xb1) : (yb2 - yb1));
 				if (dxa > dya)
 					{
-					int64 fractiona = dya - (dxa >> 1) - ((ya2 > ya1) ? 1 : 0);
+					int64 fraca = dya - (dxa >> 1) - ((ya2 > ya1) ? 1 : 0);
 					if (dxb > dyb)
 						{
-						int64 fractionb = dyb - (dxb >> 1) - ((yb2 > yb1) ? 1 : 0);
-						while (xa1 != xa2)
+						int64 fracb = dyb - (dxb >> 1) - ((yb2 > yb1) ? 1 : 0);
+						while (l <= lena)
 							{
-							if ((xa1 != xb1) || (ya1 != yb1)) operator()(xa1, ya1).blend(color);
-							if (fractiona >= 0) { ya1 += stepya; fractiona -= dxa; } xa1 += stepxa; fractiona += dya;
-							if (fractionb >= 0) { yb1 += stepyb; fractionb -= dxb; } xb1 += stepxb; fractionb += dyb;							
+							if   ((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) operator()(xa1, ya1).blend(color);
+							if (fraca >= 0) { ya1 += stepya; fraca -= dxa; } xa1 += stepxa; fraca += dya;
+							if (fracb >= 0) { yb1 += stepyb; fracb -= dxb; } xb1 += stepxb; fracb += dyb;							
+							l++; 
 							}
 						}
 					else
 						{
-						int64 fractionb = dxb - (dyb >> 1) - ((xb2 > xb1) ? 1 : 0);
-						while (xa1 != xa2)
+						int64 fracb = dxb - (dyb >> 1) - ((xb2 > xb1) ? 1 : 0);
+						while (l <= lena)
 							{
-							if ((xa1 != xb1) || (ya1 != yb1)) operator()(xa1, ya1).blend(color);
-							if (fractiona >= 0) { ya1 += stepya; fractiona -= dxa; } xa1 += stepxa; fractiona += dya;
-							if (fractionb >= 0) { xb1 += stepxb; fractionb -= dyb; } yb1 += stepyb; fractionb += dxb;
+							if ((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) operator()(xa1, ya1).blend(color);
+							if (fraca >= 0) { ya1 += stepya; fraca -= dxa; } xa1 += stepxa; fraca += dya;
+							if (fracb >= 0) { xb1 += stepxb; fracb -= dyb; } yb1 += stepyb; fracb += dxb;
+							l++;
 							}
 						}
 					}
 				else
 					{
-					int64 fractiona = dxa - (dya >> 1) - ((xa2 > xa1) ? 1 : 0);
+					int64 fraca = dxa - (dya >> 1) - ((xa2 > xa1) ? 1 : 0);
 					if (dxb > dyb)
 						{
-						int64 fractionb = dyb - (dxb >> 1) - ((yb2 > yb1) ? 1 : 0);
-						while (ya1 != ya2)
+						int64 fracb = dyb - (dxb >> 1) - ((yb2 > yb1) ? 1 : 0);
+						while (l <= lena)
 							{
-							if ((xa1 != xb1) || (ya1 != yb1)) operator()(xa1, ya1).blend(color);
-							if (fractiona >= 0) { xa1 += stepxa; fractiona -= dya; } ya1 += stepya; fractiona += dxa;
-							if (fractionb >= 0) { yb1 += stepyb; fractionb -= dxb; } xb1 += stepxb; fractionb += dyb;
+							if ((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) operator()(xa1, ya1).blend(color);
+							if (fraca >= 0) { xa1 += stepxa; fraca -= dya; } ya1 += stepya; fraca += dxa;
+							if (fracb >= 0) { yb1 += stepyb; fracb -= dxb; } xb1 += stepxb; fracb += dyb;
+							l++;
 							}
 						}
 					else
 						{
-						int64 fractionb = dxb - (dyb >> 1) - ((xb2 > xb1) ? 1 : 0);
-						while (ya1 != ya2)
+						int64 fracb = dxb - (dyb >> 1) - ((xb2 > xb1) ? 1 : 0);
+						while (l <= lena)
 							{
-							if ((xa1 != xb1) || (ya1 != yb1)) operator()(xa1, ya1).blend(color);
-							if (fractiona >= 0) { xa1 += stepxa; fractiona -= dya; } ya1 += stepya; fractiona += dxa;
-							if (fractionb >= 0) { xb1 += stepxb; fractionb -= dyb; } yb1 += stepyb; fractionb += dxb;
+							if ((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) operator()(xa1, ya1).blend(color);
+							if (fraca >= 0) { xa1 += stepxa; fraca -= dya; } ya1 += stepya; fraca += dxa;
+							if (fracb >= 0) { xb1 += stepxb; fracb -= dyb; } yb1 += stepyb; fracb += dxb;
+							l++;
 							}
 						}
 					}
-				if ((draw_last) && (xa1 != xb1) || (ya1 != yb1)) operator()(xa1, ya1).blend(color);
 				}
+
+
+			/**
+			* Draw the segment [P,Q1] with the bresenham line algorithm while skipping the pixels
+			* which also belong to the segments [P,Q2] and [P,Q3]. 
+			*
+			* The endpoint Q1 is (possibly) drawn depending on draw_last.
+			*
+			* Drawing is performed using the blend() operation.
+			*
+			* Optimized for speed.
+			**/
+			void _lineBresenham_avoid(iVec2 P, iVec2 Q1, iVec2 Q2, iVec2 Q3, RGBc color, bool draw_last)
+				{
+				int64 xa1 = P.X();  int64 ya1 = P.Y();
+				int64 xb1 = P.X();  int64 yb1 = P.Y();
+				int64 xc1 = P.X();  int64 yc1 = P.Y();
+				int64 xa2 = Q1.X(); int64 ya2 = Q1.Y();
+				int64 xb2 = Q2.X(); int64 yb2 = Q2.Y();
+				int64 xc2 = Q3.X(); int64 yc2 = Q3.Y();
+				int64 dya = ya2 - ya1;
+				int64 dxa = xa2 - xa1;
+				int64 dyb = yb2 - yb1;
+				int64 dxb = xb2 - xb1;
+				int64 dyc = yc2 - yc1;
+				int64 dxc = xc2 - xc1;
+				int64 l = 0;
+				int64 stepxa, stepya;
+				if (dya < 0) { dya = -dya;  stepya = -1; } else { stepya = 1; }
+				if (dxa < 0) { dxa = -dxa;  stepxa = -1; } else { stepxa = 1; }
+				dya <<= 1; dxa <<= 1;
+				int64 stepxb, stepyb;
+				if (dyb < 0) { dyb = -dyb;  stepyb = -1; } else { stepyb = 1; }
+				if (dxb < 0) { dxb = -dxb;  stepxb = -1; } else { stepxb = 1; }
+				dyb <<= 1; dxb <<= 1;
+				int64 stepxc, stepyc;
+				if (dyc < 0) { dyc = -dyc;  stepyc = -1; } else { stepyc = 1; }
+				if (dxc < 0) { dxc = -dxc;  stepxc = -1; } else { stepxc = 1; }
+				dyc <<= 1; dxc <<= 1;
+				const int64 lena = abs((dxa > dya) ? (xa2 - xa1) : (ya2 - ya1)) - (draw_last ? 0 : 1);
+				const int64 lenb = abs((dxb > dyb) ? (xb2 - xb1) : (yb2 - yb1));
+				const int64 lenc = abs((dxc > dyc) ? (xc2 - xc1) : (yc2 - yc1));
+				if (dxc > dyc)
+					{
+					int64 fracc = dyc - (dxc >> 1) - ((yc2 > yc1) ? 1 : 0);
+					if (dxa > dya)
+						{
+						int64 fraca = dya - (dxa >> 1) - ((ya2 > ya1) ? 1 : 0);
+						if (dxb > dyb)
+							{
+							int64 fracb = dyb - (dxb >> 1) - ((yb2 > yb1) ? 1 : 0);
+							while (l <= lena)
+								{
+								if (((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) && ((l > lenc) || (xa1 != xc1) || (ya1 != yc1))) operator()(xa1, ya1).blend(color);
+								if (fraca >= 0) { ya1 += stepya; fraca -= dxa; } xa1 += stepxa; fraca += dya;
+								if (fracb >= 0) { yb1 += stepyb; fracb -= dxb; } xb1 += stepxb; fracb += dyb;
+								if (fracc >= 0) { yc1 += stepyc; fracc -= dxc; } xc1 += stepxc; fracc += dyc;
+								l++;
+								}
+							}
+						else
+							{
+							int64 fracb = dxb - (dyb >> 1) - ((xb2 > xb1) ? 1 : 0);
+							while (l <= lena)
+								{
+								if (((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) && ((l > lenc) || (xa1 != xc1) || (ya1 != yc1))) operator()(xa1, ya1).blend(color);
+								if (fraca >= 0) { ya1 += stepya; fraca -= dxa; } xa1 += stepxa; fraca += dya;
+								if (fracb >= 0) { xb1 += stepxb; fracb -= dyb; } yb1 += stepyb; fracb += dxb;
+								if (fracc >= 0) { yc1 += stepyc; fracc -= dxc; } xc1 += stepxc; fracc += dyc;
+								l++;
+								}
+							}
+						}
+					else
+						{
+						int64 fraca = dxa - (dya >> 1) - ((xa2 > xa1) ? 1 : 0);
+						if (dxb > dyb)
+							{
+							int64 fracb = dyb - (dxb >> 1) - ((yb2 > yb1) ? 1 : 0);
+							while (l <= lena)
+								{
+								if (((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) && ((l > lenc) || (xa1 != xc1) || (ya1 != yc1))) operator()(xa1, ya1).blend(color);
+								if (fraca >= 0) { xa1 += stepxa; fraca -= dya; } ya1 += stepya; fraca += dxa;
+								if (fracb >= 0) { yb1 += stepyb; fracb -= dxb; } xb1 += stepxb; fracb += dyb;
+								if (fracc >= 0) { yc1 += stepyc; fracc -= dxc; } xc1 += stepxc; fracc += dyc;
+								l++;
+								}
+							}
+						else
+							{
+							int64 fracb = dxb - (dyb >> 1) - ((xb2 > xb1) ? 1 : 0);
+							while (l <= lena)
+								{
+								if (((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) && ((l > lenc) || (xa1 != xc1) || (ya1 != yc1))) operator()(xa1, ya1).blend(color);
+								if (fraca >= 0) { xa1 += stepxa; fraca -= dya; } ya1 += stepya; fraca += dxa;
+								if (fracb >= 0) { xb1 += stepxb; fracb -= dyb; } yb1 += stepyb; fracb += dxb;
+								if (fracc >= 0) { yc1 += stepyc; fracc -= dxc; } xc1 += stepxc; fracc += dyc;
+								l++;
+								}
+							}
+						}
+					}
+				else
+					{
+					int64 fracc = dxc - (dyc >> 1) - ((xc2 > xc1) ? 1 : 0);
+					if (dxa > dya)
+						{
+						int64 fraca = dya - (dxa >> 1) - ((ya2 > ya1) ? 1 : 0);
+						if (dxb > dyb)
+							{
+							int64 fracb = dyb - (dxb >> 1) - ((yb2 > yb1) ? 1 : 0);
+							while (l <= lena)
+								{
+								if (((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) && ((l > lenc) || (xa1 != xc1) || (ya1 != yc1))) operator()(xa1, ya1).blend(color);
+								if (fraca >= 0) { ya1 += stepya; fraca -= dxa; } xa1 += stepxa; fraca += dya;
+								if (fracb >= 0) { yb1 += stepyb; fracb -= dxb; } xb1 += stepxb; fracb += dyb;
+								if (fracc >= 0) { xc1 += stepxc; fracc -= dyc; } yc1 += stepyc; fracc += dxc;
+								l++;
+								}
+							}
+						else
+							{
+							int64 fracb = dxb - (dyb >> 1) - ((xb2 > xb1) ? 1 : 0);
+							while (l <= lena)
+								{
+								if (((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) && ((l > lenc) || (xa1 != xc1) || (ya1 != yc1))) operator()(xa1, ya1).blend(color);
+								if (fraca >= 0) { ya1 += stepya; fraca -= dxa; } xa1 += stepxa; fraca += dya;
+								if (fracb >= 0) { xb1 += stepxb; fracb -= dyb; } yb1 += stepyb; fracb += dxb;
+								if (fracc >= 0) { xc1 += stepxc; fracc -= dyc; } yc1 += stepyc; fracc += dxc;
+								l++;
+								}
+							}
+						}
+					else
+						{
+						int64 fraca = dxa - (dya >> 1) - ((xa2 > xa1) ? 1 : 0);
+						if (dxb > dyb)
+							{
+							int64 fracb = dyb - (dxb >> 1) - ((yb2 > yb1) ? 1 : 0);
+							while (l <= lena)
+								{
+								if (((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) && ((l > lenc) || (xa1 != xc1) || (ya1 != yc1))) operator()(xa1, ya1).blend(color);
+								if (fraca >= 0) { xa1 += stepxa; fraca -= dya; } ya1 += stepya; fraca += dxa;
+								if (fracb >= 0) { yb1 += stepyb; fracb -= dxb; } xb1 += stepxb; fracb += dyb;
+								if (fracc >= 0) { xc1 += stepxc; fracc -= dyc; } yc1 += stepyc; fracc += dxc;
+								l++;
+								}
+							}
+						else
+							{
+							int64 fracb = dxb - (dyb >> 1) - ((xb2 > xb1) ? 1 : 0);
+							while (l <= lena)
+								{
+								if (((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) && ((l > lenc) || (xa1 != xc1) || (ya1 != yc1))) operator()(xa1, ya1).blend(color);
+								if (fraca >= 0) { xa1 += stepxa; fraca -= dya; } ya1 += stepya; fraca += dxa;
+								if (fracb >= 0) { xb1 += stepxb; fracb -= dyb; } yb1 += stepyb; fracb += dxb;
+								if (fracc >= 0) { xc1 += stepxc; fracc -= dyc; } yc1 += stepyc; fracc += dxc;
+								l++;
+								}
+							}
+						}
+					}
+				}
+
+
+
+
+
 
 
 
@@ -3387,9 +3560,9 @@ namespace mtools
 			
 			template<bool blending, bool testinside> void _draw_triangle_interior(iVec2 P1, iVec2 P2, iVec2 P3, RGBc fillcolor)
 				{
-				if (P1.Y() > P2.Y()) { mtools::swap(P1, P2); }
-				if (P1.Y() > P3.Y()) { mtools::swap(P1, P3); }
-				if (P2.Y() > P3.Y()) { mtools::swap(P2, P3); }
+				if (P1.Y() > P2.Y()) { mtools::swap(P1, P2); } // reorder by increasing Y value
+				if (P1.Y() > P3.Y()) { mtools::swap(P1, P3); } //
+				if (P2.Y() > P3.Y()) { mtools::swap(P2, P3); } //
 				if (P1.Y() == P3.Y()) return; //flat, nothing to draw. 
 				if (P1.Y() == P2.Y())
 					{
@@ -3401,8 +3574,18 @@ namespace mtools
 					_fill_interior_angle<blending, testinside>(P1, P2, P3, fillcolor, false);
 					return;
 					}
-				_fill_interior_angle<blending, testinside>(P1, P2, P3, fillcolor, false);
-				_fill_interior_angle<blending, testinside>(P3, P2, P1, fillcolor, false);
+				auto a1 = (P2.X() - P1.X())*(P3.Y() - P2.Y()); if (a1 < 0) a1 = -a1;
+				auto a2 = (P3.X() - P2.X())*(P2.Y() - P1.Y()); if (a2 < 0) a2 = -a2;
+				if (a1 > a2)
+					{
+					_fill_interior_angle<blending, testinside>(P3, P2, P1, fillcolor, false);
+					_fill_interior_angle<blending, testinside>(P1, P2, P3, fillcolor, true);
+					}
+				else
+					{
+					_fill_interior_angle<blending, testinside>(P1, P2, P3, fillcolor, false);
+					_fill_interior_angle<blending, testinside>(P3, P2, P1, fillcolor, true);
+					}
 				return;
 				}
 

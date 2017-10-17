@@ -1071,9 +1071,10 @@ void testriangle()
 
 void test_b()
 	{
-	int LX = 80;
-	int LY = 60;
+	int LX = 300;
+	int LY = 300;
 	Image im(LX, LY);
+	im.clear(RGBc::c_White);
 
 	mtools::Plotter2D plotter;
 	auto Plot1 = mtools::makePlot2DImage(im, 4, "Img");
@@ -1082,10 +1083,47 @@ void test_b()
 	plotter.startPlot();
 
 
+
+
+
+	im.setPixel({ 31,31 }, RGBc::c_Red);
+	im.setPixel({ 31,32 }, RGBc::c_Green);
+	im.setPixel({ 32,31 }, RGBc::c_Green);
+
+	im._lineBresenham_avoid({ 1,1 }, { 31,31 }, { 30,30 }, RGBc::c_Black,true);
+
+
+	
+
+	int64 r = LY/5;
+	iVec2 P = { LX / 2, LY / 2 };
+	int N = 1000;
+
+	iVec2 Q0,Q1,Q2; 
+
+	Q0.X() = P.X() + r*cos(0);
+	Q0.Y() = P.Y() + r*sin(0);
+
+	im.draw_line(P, Q0, RGBc::c_Black.getOpacity(0.5),true,true,false);
+
+	Q2 = Q0;
+	for (int i = 1; i < N; i++)
+		{
+		Q1 = Q2;
+		Q2.X() = P.X() + r*cos(i*TWOPI / N);
+		Q2.Y() = P.Y() + r*sin(i*TWOPI / N);
+		im._lineBresenham_avoid(P, Q2, Q1, Q0, RGBc::c_Black.getOpacity(0.5),true);
+		}
+	
+	plotter.redraw();
+	cout.getKey();
+	return;
+
+
 	MT2004_64 gen(1);
 
 
-	int e = 20;
+	int e = 0;
 
 	while (1)
 		{
@@ -1114,6 +1152,7 @@ int main(int argc, char *argv[])
 	parseCommandLine(argc, argv, true); // parse the command line, interactive mode
 
 	test_b();
+	return 0;
 	/*
 	//testtick();
 	testriangle();
