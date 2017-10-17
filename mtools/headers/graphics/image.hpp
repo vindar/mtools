@@ -1646,16 +1646,37 @@ namespace mtools
 				const bool isP1 = B.isInside(P1);
 				const bool isP2 = B.isInside(P2);
 				const bool isP3 = B.isInside(P3);
-				if (isP1 && isP2) _lineBresenham<true, false>(P1, P2, color, true); else _lineBresenham<true, true>(P1, P2, color, true);
-				if (antialiased || (!blending) || (color.comp.A == 255))
-					{ // just need to draw the 3 lines
-					if (isP2 && isP3) _lineBresenham<false, false>(P2, P3, color, false); else _lineBresenham<false, true>(P2, P3, color, false);
-					if (isP3 && isP1) _lineBresenham<false, false>(P1, P3, color, false); else _lineBresenham<false, true>(P1, P3, color, false);
+				if (antialiased)
+					{ // here we can use clipping because we do not care isAA line not perfectly aligned.
+					iBox2 box(0, _lx - 1, 0, _ly - 1);				
+					if ((blending) && (color.comp.A != 255))
+						{
+						iVec2 A, B;
+						A = P1; B = P2; if (_csLineClip(A, B, box)) _lineWuAA<true, false>(A, B, color, true);
+						A = P2; B = P3; if (_csLineClip(A, B, box)) _lineWuAA<true, false>(A, B, color, true);
+						A = P3; B = P1; if (_csLineClip(A, B, box)) _lineWuAA<true, false>(A, B, color, true);
+						}
+					else
+						{
+						iVec2 A, B;
+						A = P1; B = P2; if (_csLineClip(A, B, box)) _lineWuAA<false, false>(A, B, color, true);
+						A = P2; B = P3; if (_csLineClip(A, B, box)) _lineWuAA<false, false>(A, B, color, true);
+						A = P3; B = P1; if (_csLineClip(A, B, box)) _lineWuAA<false, false>(A, B, color, true);
+						}
+					return;
 					}
-				else
-					{ // Make sure we do not write a pixel twice
+				// note: here we cannot use _csLineClip because this could cause the new clipped line to misalign with the interior of the triangle. 
+				if ((blending) && (color.comp.A != 255))
+					{
+					if (isP1 && isP2) _lineBresenham<true, false>(P1, P2, color, true); else _lineBresenham<true, true>(P1, P2, color, true);
 					if (isP2 && isP3) _lineBresenham_avoid<true, false>(P2, P3, P1, color, 0); else _lineBresenham_avoid<true, true>(P2, P3, P1, color, 0);
 					if (isP3 && isP1) _lineBresenham_avoid_both_sides<true, false>(P1, P3, P2, color); else _lineBresenham_avoid_both_sides<true, true>(P1, P3, P2, color);
+					}
+				else 
+					{ // just need to draw the 3 lines
+					if (isP1 && isP2) _lineBresenham<true, false>(P1, P2, color, true); else _lineBresenham<true, true>(P1, P2, color, true);
+					if (isP2 && isP3) _lineBresenham<false, false>(P2, P3, color, false); else _lineBresenham<false, true>(P2, P3, color, false);
+					if (isP3 && isP1) _lineBresenham<false, false>(P1, P3, color, false); else _lineBresenham<false, true>(P1, P3, color, false);
 					}
 				}
 
@@ -3186,6 +3207,13 @@ namespace mtools
 
 
 
+
+			x0, y0
+
+			dx, dy
+
+
+
 			/**
 			* Draw a segment [P1,P2] using Bresenham's algorithm.
 			*
@@ -3370,6 +3398,16 @@ namespace mtools
 				const int64 lena = abs((dxa > dya) ? (xa2 - xa1) : (ya2 - ya1)) - stop_before;
 				const int64 lenb = abs((dxb > dyb) ? (xb2 - xb1) : (yb2 - yb1));
 				const int64 lenc = abs((dxc > dyc) ? (xc2 - xc1) : (yc2 - yc1));
+
+				int64 fraca = (dxa > dya) ? (dya - (dxa >> 1) - ((ya2 > ya1) ? 1 : 0))
+					                      : (dxa - (dya >> 1) - ((xa2 > xa1) ? 1 : 0));
+
+				int64 fracb = (dxb > dyb) ? (dyb - (dxb >> 1) - ((yb2 > yb1) ? 1 : 0))
+					                      : (dxb - (dyb >> 1) - ((xb2 > xb1) ? 1 : 0));
+
+				int64 fracc = (dxc > dyc) ? (dyc - (dxc >> 1) - ((yc2 > yc1) ? 1 : 0))
+					                      : (dxc - (dyc >> 1) - ((xc2 > xc1) ? 1 : 0));
+
 				if (dxc > dyc)
 					{
 					int64 fracc = dyc - (dxc >> 1) - ((yc2 > yc1) ? 1 : 0);

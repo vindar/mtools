@@ -1071,8 +1071,8 @@ void testriangle()
 
 void test_b()
 	{
-	int LX = 200;
-	int LY = 200;
+	int LX = 1000;
+	int LY = 800;
 	Image im(LX, LY);
 	im.clear(RGBc::c_White);
 
@@ -1110,7 +1110,7 @@ void test_b()
 
 	cout.getKey();
 
-	int e = 40;
+	int e = 150;
 
 
 
@@ -1125,7 +1125,7 @@ void test_b()
 		iVec2 P2(Unif_int(0 - e, LX - 1 + e, gen), Unif_int(0 - e, LY - 1 + e, gen));
 		iVec2 P3(Unif_int(0 - e, LX - 1 + e, gen), Unif_int(0 - e, LY - 1 + e, gen));
 
-		im.draw_triangle(P1, P2, P3, RGBc::c_Green.getOpacity(0.4),true,false);
+		im.draw_triangle(P1, P2, P3, RGBc::c_Green.getOpacity(0.4),true,true);
 		im.draw_triangle_interior(P1, P2, P3, RGBc::c_Red.getOpacity(0.4), true);
 
 		plotter.redraw();
