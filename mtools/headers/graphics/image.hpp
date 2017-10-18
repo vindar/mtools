@@ -1642,23 +1642,19 @@ namespace mtools
 			 **/
 			inline void draw_triangle(iVec2 P1, iVec2 P2, iVec2 P3, RGBc color, bool blending, bool antialiased)
 				{
-				iBox2 B(0, _lx - 1, 0, _ly - 1);
-				const bool isP1 = B.isInside(P1);
-				const bool isP2 = B.isInside(P2);
-				const bool isP3 = B.isInside(P3);
+				if (isEmpty()) return;
+				iBox2 box(0, _lx - 1, 0, _ly - 1);
 				if (antialiased)
-					{ // here we can use clipping because we do not care isAA line not perfectly aligned.
-					iBox2 box(0, _lx - 1, 0, _ly - 1);				
+					{ // here we use clipping because we do not care isAA line not perfectly aligned.
+					iVec2 A, B;
 					if ((blending) && (color.comp.A != 255))
 						{
-						iVec2 A, B;
 						A = P1; B = P2; if (_csLineClip(A, B, box)) _lineWuAA<true, false>(A, B, color, true);
 						A = P2; B = P3; if (_csLineClip(A, B, box)) _lineWuAA<true, false>(A, B, color, true);
 						A = P3; B = P1; if (_csLineClip(A, B, box)) _lineWuAA<true, false>(A, B, color, true);
 						}
 					else
 						{
-						iVec2 A, B;
 						A = P1; B = P2; if (_csLineClip(A, B, box)) _lineWuAA<false, false>(A, B, color, true);
 						A = P2; B = P3; if (_csLineClip(A, B, box)) _lineWuAA<false, false>(A, B, color, true);
 						A = P3; B = P1; if (_csLineClip(A, B, box)) _lineWuAA<false, false>(A, B, color, true);
@@ -1666,6 +1662,9 @@ namespace mtools
 					return;
 					}
 				// note: here we cannot use _csLineClip because this could cause the new clipped line to misalign with the interior of the triangle. 
+				const bool isP1 = box.isInside(P1);
+				const bool isP2 = box.isInside(P2);
+				const bool isP3 = box.isInside(P3);
 				if ((blending) && (color.comp.A != 255))
 					{
 					if (isP1 && isP2) _lineBresenham<true, false>(P1, P2, color, true); else _lineBresenham<true, true>(P1, P2, color, true);
@@ -3207,73 +3206,13 @@ namespace mtools
 
 
 
-
-
-
-
-			/* Move for len step along the bresenham line given by (x,y,stepx,stepy,dx,dy,frac).
-			update the value for x,y and frac. */
-			/*
-			MTOOLS_FORCEINLINE void _moveBesenham(int64 & frac, int64 & x, int64 & y, int64 stepx, int64 stepy, int64 dx, int64 dy, int64 len)
-				{
-				if (dx > dy)
-					{
-					x += (stepx*len);
-					frac += (dy*len);
-					int64 u = frac / dx;
-					frac -= (u*dx);
-					if (frac >= dy) { frac -= dx; u++; }
-					y += u*stepy;
-					}
-				else
-					{
-					y += (stepy*len);
-					frac += (dx*len);
-					int64 u = frac / dy;
-					frac -= (u*dy);
-					if (frac >= dx) { frac -= dy; u++; }
-					x += u*stepx;
-					}
-				}
-				*/
-
-
-
-
-			/* 'continu' the bresenham line for at most len step and stop when we reach height ytarget
-			return true if it is possible and false if not . */
-			/*
-			bool moveBresenhamYin(int64 ytarget, int64 & x, int64 & y, int64 stepx, int64 stepy, int64 dx, int64 dy, int64 & frac, int64 & len)
-				{
-				int64 off = y - ytarget;
-				if (off == 0) return true;
-				if ((off > 0) && (stepy > 0)) return false;
-				if ((off < 0) && (stepy < 0)) return false;
-				if (off < 0) { off = -off; }
-
-				if (dx > dy)
-					{ // advance on x at each step 
-
-					}
-				else
-					{ // advance on y at each step.
-					if (off > len) return false;
-					_moveBesenham(frac, x, y, stepx, stepy, dx, dy, off);
-					len -= off;
-					return true;
-					}
-				}
-				*/
-
-
-
 			/* stucture holding info on  a bresenham line */
 			struct _bdir
 				{
-				int64 dx, dy;			// step size
-				int64 stepx, stepy;		// directions
-				int64 rat;				// ratio max(dx,dy)/min(dx,dy)
-				bool x_major;			// true if the line is xmajor and false if y major.
+				int64 dx, dy;			// step size in each direction
+				int64 stepx, stepy;		// directions (+/-1)
+				int64 rat;				// ratio max(dx,dy)/min(dx,dy) to sped up computations
+				bool x_major;			// true if the line is xmajor (ie dx > dy) and false if y major (dy >= dx).
 				};
 
 
@@ -3288,6 +3227,7 @@ namespace mtools
 			/**
 			* Construct the structure containg the info for a bresenham line 
 			* and a position on the line.
+			* The line goes from P1 to P2 and the position is set to P1. 
 			*/
 			MTOOLS_FORCEINLINE void _init_line(const iVec2 P1, const iVec2 P2, _bdir & linedir, _bpos & linepos)
 				{
@@ -3315,9 +3255,9 @@ namespace mtools
 
 
 			/**
-			* Move the position pos by 1 pixel along the given bresenham line.
+			* Move the position pos by 1 pixel along a bresenham line.
 			*
-			* [x_major could be deduced from linedir but is given as template paramter for speed optimization purposes]
+			* [x_major can be deduced from linedir but given as template paramter for speed optimization]
 			*/
 			template<bool x_major> MTOOLS_FORCEINLINE void _move_line(const _bdir & linedir, _bpos & pos)
 				{
@@ -3335,9 +3275,9 @@ namespace mtools
 
 
 			/**
-			 * Move the position pos by one pixel horizontally along the given bresenham line.
+			 * Move the position pos by 1 pixel horizontally along the given bresenham line.
 			 *
-			 * [x_major could be deduced from linedir but is given as template paramter for speed optimization purposes]
+			 * [x_major can be deduced from linedir but given as template paramter for speed optimization]
 			 */
 			template<bool x_major> MTOOLS_FORCEINLINE void _move_line_x_dir(const _bdir & linedir, _bpos & pos)
 				{ 
@@ -3360,9 +3300,9 @@ namespace mtools
 
 
 			/**
-			* Move the position pos by a given number of unit in the horizontal direction
+			* Move the position pos by a given number of pixels horizontal along a bresenham line.
 			*
-			* [x_major could be deduced from linedir but is given as template paramter for speed optimization purposes]
+			* [x_major can be deduced from linedir but given as template paramter for speed optimization]
 			*/
 			template<bool x_major> MTOOLS_FORCEINLINE void _move_line_x_dir(const _bdir & linedir, _bpos & pos, const int64 lenx)
 				{
@@ -3395,7 +3335,7 @@ namespace mtools
 			/**
 			* Move the position pos by one pixel vertically along the given bresenham line.
 			*
-			* [x_major could be deduced from linedir but is given as template paramter for speed optimization purposes]
+			* [x_major can be deduced from linedir but given as template paramter for speed optimization]
 			*/
 			template<bool x_major> MTOOLS_FORCEINLINE void _move_line_y_dir(const _bdir & linedir, _bpos & pos)
 				{
@@ -3418,9 +3358,9 @@ namespace mtools
 
 
 			/**
-			* Move the position pos along a line by a given number of unit in the vertical direction
+			* Move the position pos along a line by a given number of pixels vertically along a bresenham line.
 			*
-			* [x_major could be deduced from linedir but is given as template paramter for speed optimization purposes]
+			* [x_major can be deduced from linedir but given as template paramter for speed optimization]
 			*/
 			template<bool x_major> MTOOLS_FORCEINLINE void _move_line_y_dir(const _bdir & linedir, _bpos & pos, const int64 leny)
 				{
@@ -3451,6 +3391,7 @@ namespace mtools
 
 			/**
 			* Return the number of pixels that composed the Bressenham segment [P,Q|.
+			* 
 			* closed = true to compute the lenght of [P,Q] and false for [P,Q[.
 			**/
 			MTOOLS_FORCEINLINE int64 _lengthBresenham(iVec2 P, iVec2 Q, bool closed = false)
@@ -3463,7 +3404,7 @@ namespace mtools
 			* Draw a segment [P1,P2] using Bresenham's algorithm.
 			*
 			* The algorithm is symmetric: the line [P1,P2] is always equal
-			* to the line drawn in the other direction [P2,P1]
+			* to the line drawn in the other direction [P2,P1].
 			*
 			* Set draw_last to true to draw the endpoint P2 and to false to draw only
 			* the open segment [P1,P2[.
@@ -3837,7 +3778,7 @@ namespace mtools
 			 * Draw the interior of the triangle determined by the 3 Bresenham segments
 			 * [P1,P2], [P2,P3], [P3,P1]. 
 			 * 
-			 * The drawing is perfect (ie only the pixel strictly inside the triangle are draw). 
+			 * The drawing is perfect (ie only the pixel strictly inside the triangle are drawn). 
 			 **/
 			template<bool blend, bool checkrange> inline void _draw_triangle_interior(iVec2 P1, iVec2 P2, iVec2 P3, RGBc fillcolor)
 				{
@@ -3875,9 +3816,9 @@ namespace mtools
 			/* used by _fill_interior_angle() */
 			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void _hline(int64 x1, int64 x2, int64 y, RGBc color)
 				{ // compiler optimizes away the template conditional statements.
+				MTOOLS_ASSERT((y >= 0) && (y < _ly)); // y range should always be ok. 
 				if (checkrange)
-					{
-					if ((y < 0) || (y >= _ly)) return;
+					{ // clamp
 					x1 = std::max<int64>(0, x1);
 					x2 = std::min<int64>(_lx - 1, x2);
 					}
@@ -3890,25 +3831,19 @@ namespace mtools
 				}
 
 
-
 			/**
 			 * Fill the interior delimited by the angle <Q1,P,Q2>
-			 *
-			 * -> THE HEIGHTS P.Y() MUST BE EITHER MINIMAL OR MAXIMAL 
-			 *    AMONG THE 3 POINTS. 
-			 *    
-			 * the filling goes up (or down) until height Q1.Y() is
-			 * reached. (set fill_last to fill also this last line)
-			 * so normally, this means that Q1.Y() should be the
-			 * middle height among the 3 points. 
 			 * 
-			 * The method perform exact filling w.r.t. the Bresenham 
-			 * line algorithm _lineBresenham(). This means that no
-			 * pixel overlap the two lines (P,Q1) and (P,Q2) and no 
-			 * gap is left either. 
+			 * The filling occurs vertically (by scanlines) so the height P.Y()
+			 * should be either minimal or maximal among the 3 points
 			 * 
-			 * Optimized for speed: uses only integer (additive) 
-			 * operations. 
+			 * Filling is performed until height P1.Y() is reached. Parameter fill_last determined whether
+			 * this last line is also filled or not.
+			 * 
+			 * The method perform exact filling w.r.t. the Bresenham segment [P,Q1] and [P,Q2]. so no pixel
+			 * filled overlap these segment and no gap is left in between.
+			 * 
+			 * Optimized for speed.
 			 **/
 			template<bool blend, bool checkrange> inline void _fill_interior_angle(iVec2 P, iVec2 Q1, iVec2 Q2, RGBc color,bool fill_last)
 				{
@@ -4069,24 +4004,27 @@ namespace mtools
 				}
 
 
-
 			/**
-			* Draw an antialiased segment [P1,P2] using Wu algorithm.
-			*
-			* DOES NOT WORK FOR HORIZONTAL AND VERTICAL LINES WHICH
-			* SHOULD BE DRAWN SEPARATELY.
-			*
-			* Set draw_last to true to draw the last point and to false 
-			* to draw only the open segment [P1,P2[.
-			* 
-			* This version write over the pixel color. 
-			**/
+			 * Draw an antialiased segment [P1,P2| using Wu algorithm.
+			 * 
+			 * Set draw_last to true to draw point P2 and to false to draw only the open segment.
+			 **/
 			template<bool blend, bool checkrange>  MTOOLS_FORCEINLINE void _lineWuAA(iVec2 P1, iVec2 P2, RGBc color, bool draw_last)
 				{
 				int64 & x0 = P1.X(); int64 & y0 = P1.Y();
 				int64 & x1 = P2.X(); int64 & y1 = P2.Y();
-				_updatePixel<blend,checkrange>(x0, y0,color);
-				if (draw_last) operator()(x1, y1) = color;
+				if (x0 == x1)
+					{ // must be treated separately
+					_verticalLine<blend, checkrange>(x0, y0, y1, color, draw_last);
+					return;
+					}
+				if (y0 == y1)
+					{ // must be treated separately
+					_horizontalLine<blend, checkrange>(y0, x0, x1, color, draw_last);
+					return;
+					}
+				//_updatePixel<blend,checkrange>(x0, y0,color);
+				//if (draw_last) operator()(x1, y1) = color;
 				if (y0 > y1) { mtools::swap(y0, y1); mtools::swap(x0, x1); }
 				int64 dx = x1 - x0;
 				int64 dir;
@@ -4137,7 +4075,6 @@ namespace mtools
 			/**
 			* Draw an tick antialiased line using Bresenham's algorithm.
 			* 
-			* ----------------------------------------------------------
 			* TODO : NOT VERY GOOD, IMPROVE IT. 
 			**/
 			template<bool blend, bool checkrange>  inline void _tickLineBresenhamAA(iVec2 P1, iVec2 P2, float wd, RGBc color)

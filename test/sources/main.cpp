@@ -1125,7 +1125,7 @@ void test_b()
 
 
 		cout << j << "\n"; 
-		int e = 200;
+		int e = 400;
 		im.clear(RGBc(230,230,230));
 		iVec2 P1(Unif_int(0 - e, LX - 1 + e, gen), Unif_int(0 - e, LY - 1 + e, gen));
 		iVec2 P2(Unif_int(0 - e, LX - 1 + e, gen), Unif_int(0 - e, LY - 1 + e, gen));
