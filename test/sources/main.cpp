@@ -1110,21 +1110,27 @@ void test_b()
 
 	cout.getKey();
 
-	int e = -30;
+	
 
 
 
 	MT2004_64 gen(2);
 
+
+	im.resizeRaw(LX, LY);
 	int j= 0; 
 
 	while (1)
 		{
+
+
 		cout << j << "\n"; 
+		int e = 200;
 		im.clear(RGBc(230,230,230));
 		iVec2 P1(Unif_int(0 - e, LX - 1 + e, gen), Unif_int(0 - e, LY - 1 + e, gen));
 		iVec2 P2(Unif_int(0 - e, LX - 1 + e, gen), Unif_int(0 - e, LY - 1 + e, gen));
 		iVec2 P3(Unif_int(0 - e, LX - 1 + e, gen), Unif_int(0 - e, LY - 1 + e, gen));
+
 
 		im.draw_triangle(P1, P2, P3, RGBc::c_Green.getOpacity(0.4),true,false);
 		im.draw_triangle_interior(P1, P2, P3, RGBc::c_Red.getOpacity(0.1), true);
@@ -1187,7 +1193,7 @@ int main(int argc, char *argv[])
 
 
 
-
+	/*
 	Image im(100, 100); 
 
 	Image::_bdir line;
@@ -1213,7 +1219,7 @@ int main(int argc, char *argv[])
 	cout << "done in : " << mtools::Chronometer() << " for    " << tot << "\n";
 	cout.getKey();
 	return 0;
-
+	*/
 	//test_c();
 
 	test_b();
