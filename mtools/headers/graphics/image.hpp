@@ -3209,6 +3209,64 @@ namespace mtools
 
 
 
+
+
+			/* Move for len step along the bresenham line given by (x,y,stepx,stepy,dx,dy,frac).
+			update the value for x,y and frac. */
+			/*
+			MTOOLS_FORCEINLINE void _moveBesenham(int64 & frac, int64 & x, int64 & y, int64 stepx, int64 stepy, int64 dx, int64 dy, int64 len)
+				{
+				if (dx > dy)
+					{
+					x += (stepx*len);
+					frac += (dy*len);
+					int64 u = frac / dx;
+					frac -= (u*dx);
+					if (frac >= dy) { frac -= dx; u++; }
+					y += u*stepy;
+					}
+				else
+					{
+					y += (stepy*len);
+					frac += (dx*len);
+					int64 u = frac / dy;
+					frac -= (u*dy);
+					if (frac >= dx) { frac -= dy; u++; }
+					x += u*stepx;
+					}
+				}
+				*/
+
+
+
+
+			/* 'continu' the bresenham line for at most len step and stop when we reach height ytarget
+			return true if it is possible and false if not . */
+			/*
+			bool moveBresenhamYin(int64 ytarget, int64 & x, int64 & y, int64 stepx, int64 stepy, int64 dx, int64 dy, int64 & frac, int64 & len)
+				{
+				int64 off = y - ytarget;
+				if (off == 0) return true;
+				if ((off > 0) && (stepy > 0)) return false;
+				if ((off < 0) && (stepy < 0)) return false;
+				if (off < 0) { off = -off; }
+
+				if (dx > dy)
+					{ // advance on x at each step 
+
+					}
+				else
+					{ // advance on y at each step.
+					if (off > len) return false;
+					_moveBesenham(frac, x, y, stepx, stepy, dx, dy, off);
+					len -= off;
+					return true;
+					}
+				}
+				*/
+
+
+
 			/* stucture holding info on  a bresenham line */
 			struct _bdir
 				{
@@ -3340,6 +3398,14 @@ namespace mtools
 				}
 
 
+			/**
+			* Return the number of pixels that composed the Bressenham segment [P,Q|.
+			* closed = true to compute the lenght of [P,Q] and false for [P,Q[.
+			**/
+			MTOOLS_FORCEINLINE int64 _lengthBresenham(iVec2 P, iVec2 Q, bool closed = false)
+				{
+				return std::max<int64>(abs(P.X() - Q.X()), abs(P.Y() - Q.Y())) + (closed ? 1 : 0);
+				}
 
 
 			/**
@@ -3381,61 +3447,6 @@ namespace mtools
 
 
 
-
-
-			/* Move for len step along the bresenham line given by (x,y,stepx,stepy,dx,dy,frac).
-			   update the value for x,y and frac. */
-			MTOOLS_FORCEINLINE void _moveBesenham(int64 & frac, int64 & x, int64 & y, int64 stepx, int64 stepy, int64 dx, int64 dy, int64 len)
-				{
-				if (dx > dy)
-					{
-					x += (stepx*len);
-					frac += (dy*len);
-					int64 u = frac/dx;
-					frac -= (u*dx);
-					if (frac >= dy) { frac -= dx; u++; }
-					y += u*stepy;
-					}
-				else
-					{
-					y += (stepy*len);
-					frac += (dx*len);
-					int64 u = frac/dy;
-					frac -= (u*dy);
-					if (frac >= dx) { frac -= dy; u++; }
-					x += u*stepx;
-					}
-				}
-
-
-	
-
-
-			/* 'continu' the bresenham line for at most len step and stop when we reach height ytarget 
-			   return true if it is possible and false if not . */
-			bool moveBresenhamYin(int64 ytarget, int64 & x, int64 & y, int64 stepx, int64 stepy, int64 dx, int64 dy, int64 & frac, int64 & len)
-				{
-				int64 off = y - ytarget;
-				if (off == 0) return true;
-				if ((off > 0) && (stepy > 0)) return false;
-				if ((off < 0) && (stepy < 0)) return false;
-				if (off < 0) { off = -off; }
-
-				if (dx > dy)
-					{ // advance on x at each step 
-
-					}
-				else
-					{ // advance on y at each step.
-					if (off > len) return false;
-					_moveBesenham(frac, x, y, stepx, stepy, dx, dy, off);
-					len -= off;
-					return true;
-					}
-				}
-
-
-
 			/**
 			 * Draw the segment [P,Q] with the bresenham line algorithm while skipping the pixels
 			 * which also belong to the segment [P,P2]. 
@@ -3443,7 +3454,7 @@ namespace mtools
 			 * stop_before represented the number of pixel at the end of the line which are not drawn
 			 * i.e 0 = draw [P,Q], 
 			 *     1 = draw [P,Q[   
-			 *    >1 = remove som more pixels  
+			 *    >1 = remove more pixels  
 			 *    <0 = extend the line adding stop_before additional pixels.
 			 * 
 			 * Optimized for speed. 
@@ -3451,36 +3462,27 @@ namespace mtools
 			template<bool blend, bool checkrange> inline void _lineBresenham_avoid(iVec2 P, iVec2 Q, iVec2 P2, RGBc color, int64 stop_before)
 				{
 				if (P == Q) return;
-				int64 xa1 = P.X();  int64 ya1 = P.Y();
-				int64 xb1 = P.X();  int64 yb1 = P.Y();
-				int64 xa2 = Q.X(); int64 ya2 = Q.Y();
-				int64 xb2 = P2.X(); int64 yb2 = P2.Y();
-				int64 dya = ya2 - ya1;
-				int64 dxa = xa2 - xa1;
-				int64 dyb = yb2 - yb1;
-				int64 dxb = xb2 - xb1;
+				
+				_bdir linea;
+				_bpos posa;
+				_init_line(P, Q, linea, posa);
+
+				_bdir lineb;
+				_bpos posb;
+				_init_line(P, P2, lineb, posb);
+
+				const int64 lena = _lengthBresenham(P, Q) - stop_before;				
+				const int64 lenb = _lengthBresenham(P, P2);
 				int64 l = 0;
-				int64 stepxa, stepya;
-				if (dya < 0) { dya = -dya;  stepya = -1; } else { stepya = 1; }
-				if (dxa < 0) { dxa = -dxa;  stepxa = -1; } else { stepxa = 1; }
-				dya <<= 1; dxa <<= 1;
-				int64 stepxb, stepyb;
-				if (dyb < 0) { dyb = -dyb;  stepyb = -1; } else { stepyb = 1; }
-				if (dxb < 0) { dxb = -dxb;  stepxb = -1; } else { stepxb = 1; }
-				dyb <<= 1; dxb <<= 1;
-				int64 fraca = (dxa > dya) ? (dya - (dxa >> 1) - ((ya2 > ya1) ? 1 : 0)) : (dxa - (dya >> 1) - ((xa2 > xa1) ? 1 : 0));
-				int64 fracb = (dxb > dyb) ? (dyb - (dxb >> 1) - ((yb2 > yb1) ? 1 : 0)) : (dxb - (dyb >> 1) - ((xb2 > xb1) ? 1 : 0));
-				const int64 lena = abs((dxa > dya) ? (xa2 - xa1) : (ya2 - ya1)) - stop_before;
-				const int64 lenb = abs((dxb > dyb) ? (xb2 - xb1) : (yb2 - yb1));
-				if (dxa > dya)
+				if (linea.x_major)
 					{
-					if (dxb > dyb)
+					if (lineb.x_major)
 						{
 						while (l <= lena)
 							{
-							if   ((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) _updatePixel<blend, checkrange>(xa1, ya1,color);
-							if (fraca >= 0) { ya1 += stepya; fraca -= dxa; } xa1 += stepxa; fraca += dya;
-							if (fracb >= 0) { yb1 += stepyb; fracb -= dxb; } xb1 += stepxb; fracb += dyb;							
+							if ((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) _updatePixel<blend, checkrange>(posa.x, posa.y,color);
+							_move_line<true>(linea, posa);
+							_move_line<true>(lineb, posb);						
 							l++; 
 							}
 						}
@@ -3488,22 +3490,22 @@ namespace mtools
 						{
 						while (l <= lena)
 							{
-							if ((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) _updatePixel<blend, checkrange>(xa1, ya1,color);
-							if (fraca >= 0) { ya1 += stepya; fraca -= dxa; } xa1 += stepxa; fraca += dya;
-							if (fracb >= 0) { xb1 += stepxb; fracb -= dyb; } yb1 += stepyb; fracb += dxb;
+							if ((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) _updatePixel<blend, checkrange>(posa.x, posa.y, color);
+							_move_line<true>(linea, posa);
+							_move_line<false>(lineb, posb);
 							l++;
 							}
 						}
 					}
 				else
 					{
-					if (dxb > dyb)
+					if (lineb.x_major)
 						{
 						while (l <= lena)
 							{
-							if ((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) _updatePixel<blend, checkrange>(xa1, ya1,color);
-							if (fraca >= 0) { xa1 += stepxa; fraca -= dya; } ya1 += stepya; fraca += dxa;
-							if (fracb >= 0) { yb1 += stepyb; fracb -= dxb; } xb1 += stepxb; fracb += dyb;
+							if ((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) _updatePixel<blend, checkrange>(posa.x, posa.y, color);
+							_move_line<false>(linea, posa);
+							_move_line<true>(lineb, posb);
 							l++;
 							}
 						}
@@ -3511,9 +3513,9 @@ namespace mtools
 						{
 						while (l <= lena)
 							{
-							if ((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) _updatePixel<blend, checkrange>(xa1, ya1,color);
-							if (fraca >= 0) { xa1 += stepxa; fraca -= dya; } ya1 += stepya; fraca += dxa;
-							if (fracb >= 0) { xb1 += stepxb; fracb -= dyb; } yb1 += stepyb; fracb += dxb;
+							if ((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) _updatePixel<blend, checkrange>(posa.x, posa.y, color);
+							_move_line<false>(linea, posa);
+							_move_line<false>(lineb, posb);
 							l++;
 							}
 						}
@@ -3538,49 +3540,37 @@ namespace mtools
 				if ((P2 == P3)||(P3 == P)) { _lineBresenham_avoid<blend, checkrange>(P, Q, P2, color, stop_before); return; }
 				if (P2 == P) { _lineBresenham_avoid<blend, checkrange>(P, Q, P3, color, stop_before); return; }
 				if (P == Q) return;
-				int64 xa1 = P.X();  int64 ya1 = P.Y();
-				int64 xb1 = P.X();  int64 yb1 = P.Y();
-				int64 xc1 = P.X();  int64 yc1 = P.Y();
-				int64 xa2 = Q.X(); int64 ya2 = Q.Y();
-				int64 xb2 = P2.X(); int64 yb2 = P2.Y();
-				int64 xc2 = P3.X(); int64 yc2 = P3.Y();
-				int64 dya = ya2 - ya1;
-				int64 dxa = xa2 - xa1;
-				int64 dyb = yb2 - yb1;
-				int64 dxb = xb2 - xb1;
-				int64 dyc = yc2 - yc1;
-				int64 dxc = xc2 - xc1;
+
+				_bdir linea;
+				_bpos posa;
+				_init_line(P, Q, linea, posa);
+
+				_bdir lineb;
+				_bpos posb;
+				_init_line(P, P2, lineb, posb);
+
+				_bdir linec;
+				_bpos posc;
+				_init_line(P, P3, linec, posc);
+
+				const int64 lena = _lengthBresenham(P, Q) - stop_before;
+				const int64 lenb = _lengthBresenham(P, P2);
+				const int64 lenc = _lengthBresenham(P, P3);
+
 				int64 l = 0;
-				int64 stepxa, stepya;
-				if (dya < 0) { dya = -dya;  stepya = -1; } else { stepya = 1; }
-				if (dxa < 0) { dxa = -dxa;  stepxa = -1; } else { stepxa = 1; }
-				dya <<= 1; dxa <<= 1;
-				int64 stepxb, stepyb;
-				if (dyb < 0) { dyb = -dyb;  stepyb = -1; } else { stepyb = 1; }
-				if (dxb < 0) { dxb = -dxb;  stepxb = -1; } else { stepxb = 1; }
-				dyb <<= 1; dxb <<= 1;
-				int64 stepxc, stepyc;
-				if (dyc < 0) { dyc = -dyc;  stepyc = -1; } else { stepyc = 1; }
-				if (dxc < 0) { dxc = -dxc;  stepxc = -1; } else { stepxc = 1; }
-				dyc <<= 1; dxc <<= 1;
-				int64 fraca = (dxa > dya) ? (dya - (dxa >> 1) - ((ya2 > ya1) ? 1 : 0)) : (dxa - (dya >> 1) - ((xa2 > xa1) ? 1 : 0));
-				int64 fracb = (dxb > dyb) ? (dyb - (dxb >> 1) - ((yb2 > yb1) ? 1 : 0)) : (dxb - (dyb >> 1) - ((xb2 > xb1) ? 1 : 0));
-				int64 fracc = (dxc > dyc) ? (dyc - (dxc >> 1) - ((yc2 > yc1) ? 1 : 0)) : (dxc - (dyc >> 1) - ((xc2 > xc1) ? 1 : 0));
-				const int64 lena = abs((dxa > dya) ? (xa2 - xa1) : (ya2 - ya1)) - stop_before;
-				const int64 lenb = abs((dxb > dyb) ? (xb2 - xb1) : (yb2 - yb1));
-				const int64 lenc = abs((dxc > dyc) ? (xc2 - xc1) : (yc2 - yc1));
-				if (dxc > dyc)
+
+				if (linea.x_major)
 					{
-					if (dxa > dya)
+					if (lineb.x_major)
 						{
-						if (dxb > dyb)
+						if (linec.x_major)
 							{
 							while (l <= lena)
 								{
-								if (((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) && ((l > lenc) || (xa1 != xc1) || (ya1 != yc1))) _updatePixel<blend, checkrange>(xa1, ya1,color);
-								if (fraca >= 0) { ya1 += stepya; fraca -= dxa; } xa1 += stepxa; fraca += dya;
-								if (fracb >= 0) { yb1 += stepyb; fracb -= dxb; } xb1 += stepxb; fracb += dyb;
-								if (fracc >= 0) { yc1 += stepyc; fracc -= dxc; } xc1 += stepxc; fracc += dyc;
+								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _updatePixel<blend, checkrange>(posa.x, posa.y,color);
+								_move_line<true>(linea, posa); 
+								_move_line<true>(lineb, posb); 
+								_move_line<true>(linec, posc);
 								l++;
 								}
 							}
@@ -3588,24 +3578,24 @@ namespace mtools
 							{
 							while (l <= lena)
 								{
-								if (((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) && ((l > lenc) || (xa1 != xc1) || (ya1 != yc1))) _updatePixel<blend, checkrange>(xa1, ya1,color);
-								if (fraca >= 0) { ya1 += stepya; fraca -= dxa; } xa1 += stepxa; fraca += dya;
-								if (fracb >= 0) { xb1 += stepxb; fracb -= dyb; } yb1 += stepyb; fracb += dxb;
-								if (fracc >= 0) { yc1 += stepyc; fracc -= dxc; } xc1 += stepxc; fracc += dyc;
+								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _updatePixel<blend, checkrange>(posa.x, posa.y, color);
+								_move_line<true>(linea, posa);
+								_move_line<true>(lineb, posb);
+								_move_line<false>(linec, posc);
 								l++;
 								}
 							}
 						}
 					else
 						{
-						if (dxb > dyb)
+						if (linec.x_major)
 							{
 							while (l <= lena)
 								{
-								if (((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) && ((l > lenc) || (xa1 != xc1) || (ya1 != yc1))) _updatePixel<blend, checkrange>(xa1, ya1,color);
-								if (fraca >= 0) { xa1 += stepxa; fraca -= dya; } ya1 += stepya; fraca += dxa;
-								if (fracb >= 0) { yb1 += stepyb; fracb -= dxb; } xb1 += stepxb; fracb += dyb;
-								if (fracc >= 0) { yc1 += stepyc; fracc -= dxc; } xc1 += stepxc; fracc += dyc;
+								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _updatePixel<blend, checkrange>(posa.x, posa.y, color);
+								_move_line<true>(linea, posa);
+								_move_line<false>(lineb, posb);
+								_move_line<true>(linec, posc);
 								l++;
 								}
 							}
@@ -3613,10 +3603,10 @@ namespace mtools
 							{
 							while (l <= lena)
 								{
-								if (((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) && ((l > lenc) || (xa1 != xc1) || (ya1 != yc1))) _updatePixel<blend, checkrange>(xa1, ya1,color);
-								if (fraca >= 0) { xa1 += stepxa; fraca -= dya; } ya1 += stepya; fraca += dxa;
-								if (fracb >= 0) { xb1 += stepxb; fracb -= dyb; } yb1 += stepyb; fracb += dxb;
-								if (fracc >= 0) { yc1 += stepyc; fracc -= dxc; } xc1 += stepxc; fracc += dyc;
+								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _updatePixel<blend, checkrange>(posa.x, posa.y, color);
+								_move_line<true>(linea, posa);
+								_move_line<false>(lineb, posb);
+								_move_line<false>(linec, posc);
 								l++;
 								}
 							}
@@ -3624,16 +3614,16 @@ namespace mtools
 					}
 				else
 					{
-					if (dxa > dya)
+					if (lineb.x_major)
 						{
-						if (dxb > dyb)
+						if (linec.x_major)
 							{
 							while (l <= lena)
 								{
-								if (((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) && ((l > lenc) || (xa1 != xc1) || (ya1 != yc1))) _updatePixel<blend, checkrange>(xa1, ya1,color);
-								if (fraca >= 0) { ya1 += stepya; fraca -= dxa; } xa1 += stepxa; fraca += dya;
-								if (fracb >= 0) { yb1 += stepyb; fracb -= dxb; } xb1 += stepxb; fracb += dyb;
-								if (fracc >= 0) { xc1 += stepxc; fracc -= dyc; } yc1 += stepyc; fracc += dxc;
+								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _updatePixel<blend, checkrange>(posa.x, posa.y, color);
+								_move_line<false>(linea, posa);
+								_move_line<true>(lineb, posb);
+								_move_line<true>(linec, posc);
 								l++;
 								}
 							}
@@ -3641,24 +3631,24 @@ namespace mtools
 							{
 							while (l <= lena)
 								{
-								if (((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) && ((l > lenc) || (xa1 != xc1) || (ya1 != yc1))) _updatePixel<blend, checkrange>(xa1, ya1, color);
-								if (fraca >= 0) { ya1 += stepya; fraca -= dxa; } xa1 += stepxa; fraca += dya;
-								if (fracb >= 0) { xb1 += stepxb; fracb -= dyb; } yb1 += stepyb; fracb += dxb;
-								if (fracc >= 0) { xc1 += stepxc; fracc -= dyc; } yc1 += stepyc; fracc += dxc;
+								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _updatePixel<blend, checkrange>(posa.x, posa.y, color);
+								_move_line<false>(linea, posa);
+								_move_line<true>(lineb, posb);
+								_move_line<false>(linec, posc);
 								l++;
 								}
 							}
 						}
 					else
 						{
-						if (dxb > dyb)
+						if (linec.x_major)
 							{
 							while (l <= lena)
 								{
-								if (((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) && ((l > lenc) || (xa1 != xc1) || (ya1 != yc1))) _updatePixel<blend, checkrange>(xa1, ya1, color);
-								if (fraca >= 0) { xa1 += stepxa; fraca -= dya; } ya1 += stepya; fraca += dxa;
-								if (fracb >= 0) { yb1 += stepyb; fracb -= dxb; } xb1 += stepxb; fracb += dyb;
-								if (fracc >= 0) { xc1 += stepxc; fracc -= dyc; } yc1 += stepyc; fracc += dxc;
+								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _updatePixel<blend, checkrange>(posa.x, posa.y, color);
+								_move_line<false>(linea, posa);
+								_move_line<false>(lineb, posb);
+								_move_line<true>(linec, posc);
 								l++;
 								}
 							}
@@ -3666,10 +3656,10 @@ namespace mtools
 							{
 							while (l <= lena)
 								{
-								if (((l > lenb) || (xa1 != xb1) || (ya1 != yb1)) && ((l > lenc) || (xa1 != xc1) || (ya1 != yc1))) _updatePixel<blend, checkrange>(xa1, ya1, color);
-								if (fraca >= 0) { xa1 += stepxa; fraca -= dya; } ya1 += stepya; fraca += dxa;
-								if (fracb >= 0) { xb1 += stepxb; fracb -= dyb; } yb1 += stepyb; fracb += dxb;
-								if (fracc >= 0) { xc1 += stepxc; fracc -= dyc; } yc1 += stepyc; fracc += dxc;
+								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _updatePixel<blend, checkrange>(posa.x, posa.y, color);
+								_move_line<false>(linea, posa);
+								_move_line<false>(lineb, posb);
+								_move_line<false>(linec, posc);
 								l++;
 								}
 							}
@@ -3678,14 +3668,6 @@ namespace mtools
 				}
 
 
-			/**
-			 * Return the number of pixels that composed the Bressenham segment [P,Q|.
-			 * closed = true to compute the lenght of [P,Q] and false for [P,Q[. 
-			 **/
-			MTOOLS_FORCEINLINE int64 _lengthBresenham(iVec2 P, iVec2 Q, bool closed = false)
-				{
-				return std::max<int64>(abs(P.X() - Q.X()), abs(P.Y() - Q.Y())) + (closed ? 1 : 0);
-				}
 
 
 
@@ -3801,7 +3783,7 @@ namespace mtools
 
 
 			/**
-			 * Draw the interior of the trangle determined by the 3 Bresenham segments
+			 * Draw the interior of the triangle determined by the 3 Bresenham segments
 			 * [P1,P2], [P2,P3], [P3,P1]. 
 			 * 
 			 * The drawing is perfect (ie only the pixel strictly inside the triangle are draw). 
