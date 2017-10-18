@@ -1125,7 +1125,7 @@ void test_b()
 		iVec2 P2(Unif_int(0 - e, LX - 1 + e, gen), Unif_int(0 - e, LY - 1 + e, gen));
 		iVec2 P3(Unif_int(0 - e, LX - 1 + e, gen), Unif_int(0 - e, LY - 1 + e, gen));
 
-		im.draw_triangle(P1, P2, P3, RGBc::c_Green.getOpacity(0.4),true,true);
+		im.draw_triangle(P1, P2, P3, RGBc::c_Green.getOpacity(0.4),true,false);
 		im.draw_triangle_interior(P1, P2, P3, RGBc::c_Red.getOpacity(0.1), true);
 
 		plotter.redraw();
@@ -1138,11 +1138,53 @@ void test_b()
 
 
 
+void test_c()
+	{
+	im.resizeRaw(800, 600);
+	im.clear(RGBc::c_White);
+
+	MT2004_64 gen(1);
+
+	int N = 10000000;	
+	std::vector<iVec2> tabP1, tabP2;
+	for (int i = 0;i < N; i++)
+		{
+		tabP1.push_back({ Unif_int(0, 799, gen), Unif_int(0, 599, gen) });
+		tabP2.push_back({ Unif_int(0, 799, gen), Unif_int(0, 599, gen) });
+		}
+
+
+	{
+	mtools::Chronometer();
+	for (int i = 0;i < N; i++)
+		{
+		iVec2 P1 = tabP1[i];
+		iVec2 P2 = tabP2[i];
+		im._lineBresenham<false,false>(P1, P2, RGBc::c_Red,true);
+		}
+
+	cout << "done in : " << mtools::Chronometer() << "\n";
+	cout.getKey();
+	}
+
+
+
+
+
+
+
+
+	}
+
+
 
 int main(int argc, char *argv[])
 	{
 	MTOOLS_SWAP_THREADS(argc, argv);  // swap main/fltk threads on OSX
 	parseCommandLine(argc, argv, true); // parse the command line, interactive mode
+
+
+	//test_c();
 
 	test_b();
 	return 0;

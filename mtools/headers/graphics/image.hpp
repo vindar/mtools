@@ -3208,6 +3208,140 @@ namespace mtools
 
 
 
+
+			/* stucture holding info on  a bresenham line */
+			struct _bdir
+				{
+				int64 dx, dy;			// step size
+				int64 stepx, stepy;		// directions
+				int64 rat;				// ratio max(dx,dy)/min(dx,dy)
+				bool x_major;			// true if the line is xmajor and false if y major.
+				};
+
+
+			/* stucture holding a position on a bresenham line */
+			struct _bpos
+				{
+				int64 x, y; // current pos
+				int64 frac; // fractional part
+				};
+
+			
+			/**
+			* Construct the structure containg the info for a bresenham line 
+			* and a position on the line.
+			*/
+			MTOOLS_FORCEINLINE void _init_line(const iVec2 P1, const iVec2 P2, _bdir & linedir, _bpos & linepos)
+				{
+				int64 dx = P2.X() - P1.X(); if (dx < 0) { dx = -dx;  linedir.stepx = -1; } else { linedir.stepx = 1; } dx <<= 1;
+				int64 dy = P2.Y() - P1.Y(); if (dy < 0) { dy = -dy;  linedir.stepy = -1; } else { linedir.stepy = 1; } dy <<= 1;				
+				linedir.dx = dx;
+				linedir.dy = dy;
+				if (dx > dy) 
+					{ 
+					linedir.x_major = true; 
+					linedir.rat = (dy == 0) ? 0 : (dx/dy);  
+					}
+				else 
+					{ 
+					linedir.x_major = false; 
+					linedir.rat = (dx == 0) ? 0 : (dy/dx); 
+					}
+				linepos.x = P1.X();
+				linepos.y = P1.Y();
+				linepos.frac = (linedir.x_major) ? (dy - (dx >> 1) - ((P2.Y() > P1.Y()) ? 1 : 0)) : (dx - (dy >> 1) - ((P2.X() > P1.X()) ? 1 : 0));
+				}
+
+
+
+			/**
+			* Move the position pos by 1 pixel along the given bresenham line.
+			*
+			* [x_major could be deduced from linedir but is given as template paramter for speed optimization purposes]
+			*/
+			template<bool x_major> MTOOLS_FORCEINLINE void _move_line(const _bdir & linedir, _bpos & pos)
+				{
+				if (x_major)
+					{
+					if (pos.frac >= 0) { pos.y += linedir.stepy; pos.frac -= linedir.dx; }
+					pos.x += linedir.stepx; pos.frac += linedir.dy;
+					}
+				else
+					{
+					if (pos.frac >= 0) { pos.x += linedir.stepx; pos.frac -= linedir.dy; }
+					pos.y += linedir.stepy; pos.frac += linedir.dx;
+					}
+				}
+
+
+			/**
+			 * Move the position pos by one pixel horizontally along the given bresenham line.
+			 *
+			 * [x_major could be deduced from linedir but is given as template paramter for speed optimization purposes]
+			 */
+			template<bool x_major, bool use_while_loop> MTOOLS_FORCEINLINE void _move_line_x_dir(const _bdir & linedir, _bpos & pos)
+				{ 
+				MTOOLS_ASSERT(linedir.x_major == x_major);  // make sure tempalte argument supplied is correct. 
+				if (x_major) // compiler optimizes away the template conditionals
+					{
+					if (pos.frac >= 0) { pos.y +=  linedir.stepy; pos.frac -= linedir.dx; }
+					pos.x += linedir.stepx; pos.frac += linedir.dy;
+					}
+				else
+					{
+					if (use_while_loop) // compiler optimizes away the template conditionals
+						{
+						while (pos.frac < dx) { pos.y += linedir.stepy; pos.frac += linedir.dx; } 
+						pos.frac -= linedir.dy; pos.x += linedir.stepx;
+						}
+					else
+						{
+						int64 r = (pos.frac < ((dx << 1) - dy)) ? linedir.rat : ((dx - pos.frac) / dx); // use rat value if just after a step.
+						pos.y += (r*linedir.stepy);
+						pos.frac += (r*linedir.dx);
+						if (pos.frac < dx) { pos.y += linedir.stepy; pos.frac += linedir.dx; }
+						MTOOLS_ASSERT((pos.frac >= linedir.dx)&&(pos.frac < 2*linedir.dx));
+						pos.frac -= linedir.dy;  pos.x += linedir.stepx;
+						}
+					}
+				}
+
+
+			/**
+			* Move the position pos by one pixel vertically along the given bresenham line.
+			*
+			* [x_major could be deduced from linedir but is given as template paramter for speed optimization purposes]
+			*/
+			template<bool x_major, bool use_while_loop> MTOOLS_FORCEINLINE void _move_line_y_dir(const _bdir & linedir, _bpos & pos)
+				{
+				MTOOLS_ASSERT(linedir.x_major == x_major);  // make sure tempalte argument supplied is correct. 
+				if (x_major) // compiler optimizes away the template conditionals
+					{
+					if (use_while_loop) // compiler optimizes away the template conditionals
+						{
+						while (pos.frac < dy) { pos.x += linedir.stepx; pos.frac += linedir.dy; }
+						pos.frac -= linedir.dx; pos.y += linedir.stepy;
+						}
+					else
+						{
+						int64 r = (pos.frac < ((dy << 1) - dx)) ? linedir.rat : ((dy - pos.frac) / dy); // use rat value if just after a step.
+						pos.x += (r*linedir.stepx);
+						pos.frac += (r*linedir.dy);
+						if (pos.frac < dy) { pos.x += linedir.stepx; pos.frac += linedir.dy; }
+						MTOOLS_ASSERT((pos.frac >= linedir.dy) && (pos.frac < 2 * linedir.dy));
+						pos.frac -= linedir.dx;  pos.y += linedir.stepy;
+						}
+					}
+				else
+					{
+					if (pos.frac >= 0) { pos.x += linedir.stepx; pos.frac -= linedir.dy; }
+					pos.y += linedir.stepy; pos.frac += linedir.dx;
+					}
+				}
+
+
+
+
 			/**
 			* Draw a segment [P1,P2] using Bresenham's algorithm.
 			*
@@ -3219,35 +3353,32 @@ namespace mtools
 			*
 			* Optimized for speed.
 			**/
-			template<bool blend, bool checkrange>  MTOOLS_FORCEINLINE void _lineBresenham(iVec2 P1, iVec2 P2, RGBc color, bool draw_last)
+			template<bool blend, bool checkrange>  MTOOLS_FORCEINLINE void _lineBresenham(const iVec2 P1, const iVec2 P2, RGBc color, bool draw_last)
 				{
-				if (draw_last) _updatePixel<blend,checkrange>(P2,color);
-				int64 & x1 = P1.X(); int64 & y1 = P1.Y();
-				int64 & x2 = P2.X(); int64 & y2 = P2.Y();
-				int64 dy = y2 - y1;
-				int64 dx = x2 - x1;
-				int64 stepx, stepy;
-				if (dy < 0) { dy = -dy;  stepy = -1; } else { stepy = 1; }
-				if (dx < 0) { dx = -dx;  stepx = -1; } else { stepx = 1; }
-				dy <<= 1; dx <<= 1;
-				int64 frac = (dx > dy) ? (dy - (dx >> 1) - ((y2 > y1) ? 1 : 0)) : (dx - (dy >> 1) - ((x2 > x1) ? 1 : 0));				
-				if (dx > dy)
+				if (draw_last) _updatePixel<blend, checkrange>(P2, color);
+				int64 x2 = P2.X();
+				int64 y2 = P2.Y();
+				_bdir line;
+				_bpos pos;
+				_init_line(P1, P2, line, pos);
+				if (line.x_major)
 					{
-					while (x1 != x2)
+					while (pos.x != x2)
 						{
-						_updatePixel<blend, checkrange>(x1, y1,color);
-						if (frac >= 0) { y1 += stepy; frac -= dx; } x1 += stepx; frac += dy;
+						_updatePixel<blend, checkrange>(pos.x, pos.y, color);
+						_move_line<true>(line, pos);
 						}
 					}
 				else
 					{
-					while (y1 != y2)
+					while (pos.y != y2)
 						{
-						_updatePixel<blend, checkrange>(x1, y1, color);
-						if (frac >= 0) { x1 += stepx; frac -= dy; } y1 += stepy; frac += dx;
+						_updatePixel<blend, checkrange>(pos.x, pos.y, color);
+						_move_line<false>(line, pos);
 						}
 					}
 				}
+
 
 
 
