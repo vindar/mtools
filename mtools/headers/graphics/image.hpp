@@ -3038,6 +3038,7 @@ namespace mtools
 			/* update a pixel */
 			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void  _updatePixel(int64 x,int64 y, RGBc color)
 				{
+				MTOOLS_ASSERT((checkrange)||((x >= 0)&&(x < _lx)&&(y >= 0) && (y < _ly)));
 				// compiler optimizes away the unused cases. 
 				if ((!blend) && (!checkrange)) { operator()(x,y) = color; }
 				if ((!blend) && (checkrange)) { setPixel(x, y, color); }
@@ -3048,6 +3049,7 @@ namespace mtools
 			/* update a pixel */
 			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void  _updatePixel(iVec2 P, RGBc color)
 				{
+				MTOOLS_ASSERT((checkrange) || ((P.X() >= 0) && (P.X() < _lx) && (P.Y() >= 0) && (P.Y() < _ly)));
 				// compiler optimizes away the unused cases. 
 				if ((!blend) && (!checkrange)) { operator()(P) = color; }
 				if ((!blend) && (checkrange)) { setPixel(P, color); }
@@ -3257,7 +3259,7 @@ namespace mtools
 			/**
 			* Move the position pos by 1 pixel along a bresenham line.
 			*
-			* [x_major can be deduced from linedir but given as template paramter for speed optimization]
+			* [x_major can be deduced from linedir but is given as template paramter for speed optimization]
 			*/
 			template<bool x_major> MTOOLS_FORCEINLINE void _move_line(const _bdir & linedir, _bpos & pos)
 				{
@@ -3276,45 +3278,49 @@ namespace mtools
 
 			/**
 			 * Move the position pos by 1 pixel horizontally along the given bresenham line.
+			 * return the number of pixel traveled by the bresenham line.
 			 *
-			 * [x_major can be deduced from linedir but given as template paramter for speed optimization]
+			 * [x_major can be deduced from linedir but is given as template paramter for speed optimization]
 			 */
-			template<bool x_major> MTOOLS_FORCEINLINE void _move_line_x_dir(const _bdir & linedir, _bpos & pos)
+			template<bool x_major> MTOOLS_FORCEINLINE int64 _move_line_x_dir(const _bdir & linedir, _bpos & pos)
 				{ 
 				MTOOLS_ASSERT(linedir.x_major == x_major);  // make sure tempalte argument supplied is correct. 
 				if (x_major) // compiler optimizes away the template conditionals
 					{
 					if (pos.frac >= 0) { pos.y +=  linedir.stepy; pos.frac -= linedir.dx; }
 					pos.x += linedir.stepx; pos.frac += linedir.dy;
+					return 1;
 					}
 				else
 					{
 					int64 r = (pos.frac < ((linedir.dx << 1) - linedir.dy)) ? linedir.rat : ((linedir.dx - pos.frac) / linedir.dx); // use rat value if just after a step.
 					pos.y += (r*linedir.stepy);
 					pos.frac += (r*linedir.dx);
-					if (pos.frac < linedir.dx) { pos.y += linedir.stepy; pos.frac += linedir.dx; }
+					if (pos.frac < linedir.dx) { pos.y += linedir.stepy; pos.frac += linedir.dx; r++;  }
 					MTOOLS_ASSERT((pos.frac >= linedir.dx)&&(pos.frac < 2*linedir.dx));
 					pos.frac -= linedir.dy;  pos.x += linedir.stepx;
+					return r;
 					}
 				}
 
 
 			/**
 			* Move the position pos by a given number of pixels horizontal along a bresenham line.
-			*
-			* [x_major can be deduced from linedir but given as template paramter for speed optimization]
+			* return the number of pixel traveled by the bresenham line.
+			* do nothing and return 0 if lenx <= 0.
 			*/
-			template<bool x_major> MTOOLS_FORCEINLINE void _move_line_x_dir(const _bdir & linedir, _bpos & pos, const int64 lenx)
+			inline int64 _move_line_x_dir(const _bdir & linedir, _bpos & pos, const int64 lenx)
 				{
-				MTOOLS_ASSERT(linedir.x_major == x_major);  // make sure template argument supplied is correct. 
-				if (x_major) // compiler optimizes away the template conditionals
+				if (lenx <= 0) return 0;
+				if (linedir.x_major)
 					{
 					pos.x    += linedir.stepx*lenx;
 					pos.frac += linedir.dy*lenx;
 					int64 u   = pos.frac / linedir.dx;
 					pos.y    += linedir.stepy*u;
 					pos.frac -= u*linedir.dx;
-					if (pos.frac >= linedir.dy) { pos.frac -= linedir.dx; pos.y++; }
+					if (pos.frac >= linedir.dy) { pos.frac -= linedir.dx; pos.y += linedir.stepy; }
+					return lenx;
 					}
 				else
 					{
@@ -3326,7 +3332,8 @@ namespace mtools
 					if (pos.frac >= linedir.dx) { u++; pos.frac -= linedir.dy; }
 					MTOOLS_ASSERT((u <= lenx) && (u >= lenx - 4));
 					pos.x += u*linedir.stepx;
-					while (u != lenx) { _move_line_x_dir<x_major>(linedir, pos); u++; }
+					while (u != lenx) { k += _move_line_x_dir<false>(linedir, pos); u++; }
+					return k;
 					}
 				}
 
@@ -3334,10 +3341,11 @@ namespace mtools
 
 			/**
 			* Move the position pos by one pixel vertically along the given bresenham line.
+			* return the number of pixel traveled by the bresenham line.
 			*
 			* [x_major can be deduced from linedir but given as template paramter for speed optimization]
 			*/
-			template<bool x_major> MTOOLS_FORCEINLINE void _move_line_y_dir(const _bdir & linedir, _bpos & pos)
+			template<bool x_major> MTOOLS_FORCEINLINE int64 _move_line_y_dir(const _bdir & linedir, _bpos & pos)
 				{
 				MTOOLS_ASSERT(linedir.x_major == x_major);  // make sure tempalte argument supplied is correct. 
 				if (x_major) // compiler optimizes away the template conditionals
@@ -3345,27 +3353,29 @@ namespace mtools
 					int64 r = (pos.frac < ((linedir.dy << 1) - linedir.dx)) ? linedir.rat : ((linedir.dy - pos.frac) / linedir.dy); // use rat value if just after a step.
 					pos.x += (r*linedir.stepx);
 					pos.frac += (r*linedir.dy);
-					if (pos.frac < linedir.dy) { pos.x += linedir.stepx; pos.frac += linedir.dy; }
+					if (pos.frac < linedir.dy) { pos.x += linedir.stepx; pos.frac += linedir.dy; r++; }
 					MTOOLS_ASSERT((pos.frac >= linedir.dy) && (pos.frac < 2 * linedir.dy));
 					pos.frac -= linedir.dx;  pos.y += linedir.stepy;
+					return r;
 					}
 				else
 					{
 					if (pos.frac >= 0) { pos.x += linedir.stepx; pos.frac -= linedir.dy; }
 					pos.y += linedir.stepy; pos.frac += linedir.dx;
+					return 1;
 					}
 				}
 
 
 			/**
 			* Move the position pos along a line by a given number of pixels vertically along a bresenham line.
-			*
-			* [x_major can be deduced from linedir but given as template paramter for speed optimization]
+			* return the number of pixel traveled by the bresenham line.
+			* do nothing and return 0 if leny <= 0.
 			*/
-			template<bool x_major> MTOOLS_FORCEINLINE void _move_line_y_dir(const _bdir & linedir, _bpos & pos, const int64 leny)
+			inline int64 _move_line_y_dir(const _bdir & linedir, _bpos & pos, const int64 leny)
 				{
-				MTOOLS_ASSERT(linedir.x_major == x_major);  // make sure tempalte argument supplied is correct. 
-				if (x_major) // compiler optimizes away the template conditionals
+				if (leny <= 0) return 0; 
+				if (linedir.x_major) // compiler optimizes away the template conditionals
 					{
 					int64 k = ((leny-1)*linedir.dx) / linedir.dy;
 					pos.frac += k*linedir.dy; 
@@ -3375,7 +3385,8 @@ namespace mtools
 					if (pos.frac >= linedir.dy) { u++; pos.frac -= linedir.dx; }					
 					MTOOLS_ASSERT((u <= leny)&&(u >= leny-4)); 
 					pos.y += u*linedir.stepy;
-					while(u != leny) { _move_line_y_dir<x_major>(linedir, pos); u++; }
+					while(u != leny) { k += _move_line_y_dir<true>(linedir, pos); u++; }
+					return k;
 					}
 				else
 					{
@@ -3384,9 +3395,63 @@ namespace mtools
 					int64 u = pos.frac / linedir.dy;
 					pos.x += linedir.stepx*u;
 					pos.frac -= u*linedir.dy;
-					if (pos.frac >= linedir.dx) { pos.frac -= linedir.dy; pos.x++; }
+					if (pos.frac >= linedir.dx) { pos.frac -= linedir.dy; pos.x += linedir.stepx; }
+					return leny;
 					}
 				}
+
+
+			/**
+			 * Move the position until it is in the closed box B. Return the number of step performed by the
+			 * walk or -1 if the line never enters the box. (in this case, pos may be anywhere.)
+			 **/
+			inline int64 _move_inside_box(const _bdir & linedir, _bpos & pos, const iBox2 & B)
+				{
+				if (B.isEmpty()) return -1;
+				if (B.isInside({ pos.x,pos.y })) return 0;
+				int64 tot = 0;
+				if (pos.x < B.min[0])
+					{
+					if (linedir.stepx < 0) return -1;
+					tot += _move_line_x_dir(linedir, pos, B.min[0] - pos.x);
+					}
+				else if (pos.x > B.max[0])
+					{
+					if (linedir.stepx > 0) return -1;
+					tot += _move_line_x_dir(linedir, pos, pos.x - B.max[0]);
+					}
+				if (pos.y < B.min[1])
+					{
+					if (linedir.stepy < 0) return -1;
+					tot += _move_line_y_dir(linedir, pos, B.min[1] - pos.y);
+					}
+				else if (pos.y > B.max[1])
+					{
+					if (linedir.stepy > 0) return -1;
+					tot += _move_line_y_dir(linedir, pos, pos.y - B.max[1]);
+					}
+				if (!B.isInside({ pos.x, pos.y })) return -1;
+				return tot;
+				}
+
+
+			/**
+			 * Compute number of pixel of the line before it exits the box B. If the box is empty of if pos
+			 * is not in it, return 0.
+			 **/
+			inline int64 _lenght_inside_box(const _bdir & linedir, const _bpos & pos, const iBox2 & B)
+				{
+				if (!B.isInside({ pos.x, pos.y })) return 0; 
+				const int64 hx = 1 + ((linedir.stepx > 0) ? (B.max[0] - pos.x) : (pos.x - B.min[0])); // number of horizontal step before exit. 
+				const int64 hy = 1 + ((linedir.stepy > 0) ? (B.max[1] - pos.y) : (pos.y - B.min[1])); // number of vertical step before exit. 
+				_bpos pX = pos; 
+				const int64 nx = _move_line_x_dir(linedir, pX, hx);
+				_bpos pY = pos;
+				const int64 ny = _move_line_y_dir(linedir, pY, hy);
+				return std::min<int64>(nx, ny);
+				}
+
+
 
 
 			/**
@@ -3400,17 +3465,8 @@ namespace mtools
 				}
 
 
-			/**
-			* Draw a segment [P1,P2] using Bresenham's algorithm.
-			*
-			* The algorithm is symmetric: the line [P1,P2] is always equal
-			* to the line drawn in the other direction [P2,P1].
-			*
-			* Set draw_last to true to draw the endpoint P2 and to false to draw only
-			* the open segment [P1,P2[.
-			*
-			* Optimized for speed.
-			**/
+
+
 			template<bool blend, bool checkrange>  MTOOLS_FORCEINLINE void _lineBresenham(const iVec2 P1, const iVec2 P2, RGBc color, bool draw_last)
 				{
 				if (draw_last) _updatePixel<blend, checkrange>(P2, color);
@@ -3432,6 +3488,51 @@ namespace mtools
 					while (pos.y != y2)
 						{
 						_updatePixel<blend, checkrange>(pos.x, pos.y, color);
+						_move_line<false>(line, pos);
+						}
+					}
+				}
+
+			/**
+			* Draw a segment [P1,P2] using Bresenham's algorithm.
+			*
+			* The algorithm is symmetric: the line [P1,P2] is always equal
+			* to the line drawn in the other direction [P2,P1].
+			*
+			* Set draw_last to true to draw the endpoint P2 and to false to draw only
+			* the open segment [P1,P2[.
+			*
+			* Optimized for speed.
+			**/
+			template<bool blend, bool checkrange>  MTOOLS_FORCEINLINE void _lineBresenham2(const iVec2 P1, const iVec2 P2, RGBc color, bool draw_last)
+				{
+
+				int64 y = _lengthBresenham(P1, P2, draw_last);
+				_bdir line;
+				_bpos pos;
+				_init_line(P1, P2, line, pos);
+				if (checkrange)
+					{
+					iBox2 B(0, _lx - 1, 0, _ly - 1);
+					int64 r = _move_inside_box(line, pos, B);
+					if (r < 0) return; // nothing to draw
+					y -= r;
+					y = std::min<int64>(y , _lenght_inside_box(line, pos, B));
+					if (y <= 0) return;
+					}
+				if (line.x_major)
+					{
+					while (--y >= 0)
+						{
+						_updatePixel<blend, false>(pos.x, pos.y, color);
+						_move_line<true>(line, pos);
+						}
+					}
+				else
+					{
+					while (--y >= 0)
+						{
+						_updatePixel<blend, false>(pos.x, pos.y, color);
 						_move_line<false>(line, pos);
 						}
 					}
@@ -3871,8 +3972,8 @@ namespace mtools
 					if ((ytarget <= 0)||(y >= ytarget)) return;
 					if (y < 0)
 						{ // move y up to 0
-						if (linea.x_major) _move_line_y_dir<true>(linea, posa, -y); else _move_line_y_dir<false>(linea, posa, -y);
-						if (lineb.x_major) _move_line_y_dir<true>(lineb, posb, -y); else _move_line_y_dir<false>(lineb, posb, -y);
+						_move_line_y_dir(linea, posa, -y);
+						_move_line_y_dir(lineb, posb, -y);
 						y = 0;
 						MTOOLS_ASSERT((posa.y == y) && (posb.y == y));
 						}
@@ -3883,8 +3984,8 @@ namespace mtools
 					if ((ytarget >= _ly - 1) || (y <= ytarget)) return;
 					if (y > _ly - 1)
 						{ // move y down to ly-1
-						if (linea.x_major) _move_line_y_dir<true>(linea, posa, y - _ly + 1); else _move_line_y_dir<false>(linea, posa, y - _ly + 1);
-						if (lineb.x_major) _move_line_y_dir<true>(lineb, posb, y - _ly + 1); else _move_line_y_dir<false>(lineb, posb, y - _ly + 1);
+						_move_line_y_dir(linea, posa, y - _ly + 1);
+						_move_line_y_dir(lineb, posb, y - _ly + 1);
 						y = _ly - 1;
 						MTOOLS_ASSERT((posa.y == y) && (posb.y == y));
 						}
@@ -4013,18 +4114,10 @@ namespace mtools
 				{
 				int64 & x0 = P1.X(); int64 & y0 = P1.Y();
 				int64 & x1 = P2.X(); int64 & y1 = P2.Y();
-				if (x0 == x1)
-					{ // must be treated separately
-					_verticalLine<blend, checkrange>(x0, y0, y1, color, draw_last);
-					return;
-					}
-				if (y0 == y1)
-					{ // must be treated separately
-					_horizontalLine<blend, checkrange>(y0, x0, x1, color, draw_last);
-					return;
-					}
-				//_updatePixel<blend,checkrange>(x0, y0,color);
-				//if (draw_last) operator()(x1, y1) = color;
+				if (x0 == x1) {  _verticalLine<blend, checkrange>(x0, y0, y1, color, draw_last); return; } // must be treated separately
+				if (y0 == y1) { _horizontalLine<blend, checkrange>(y0, x0, x1, color, draw_last); return; }// 
+				_updatePixel<blend,checkrange>(x0, y0,color);
+				if (draw_last) operator()(x1, y1) = color;
 				if (y0 > y1) { mtools::swap(y0, y1); mtools::swap(x0, x1); }
 				int64 dx = x1 - x0;
 				int64 dir;

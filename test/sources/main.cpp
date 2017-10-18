@@ -1108,13 +1108,13 @@ void test_b()
 	
 	plotter.redraw();
 
-	cout.getKey();
+	//cout.getKey();
 
 	
 
 
 
-	MT2004_64 gen(2);
+	MT2004_64 gen(1234);
 
 
 	im.resizeRaw(LX, LY);
@@ -1127,16 +1127,20 @@ void test_b()
 		cout << j << "\n"; 
 		int e = 400;
 		im.clear(RGBc(230,230,230));
+
 		iVec2 P1(Unif_int(0 - e, LX - 1 + e, gen), Unif_int(0 - e, LY - 1 + e, gen));
 		iVec2 P2(Unif_int(0 - e, LX - 1 + e, gen), Unif_int(0 - e, LY - 1 + e, gen));
 		iVec2 P3(Unif_int(0 - e, LX - 1 + e, gen), Unif_int(0 - e, LY - 1 + e, gen));
-
 
 		im.draw_triangle(P1, P2, P3, RGBc::c_Green.getOpacity(0.4),true,false);
 		im.draw_triangle_interior(P1, P2, P3, RGBc::c_Red.getOpacity(0.1), true);
 
 		plotter.redraw();
+
+		j++;
+
 		cout.getKey();
+
 		}
 
 
