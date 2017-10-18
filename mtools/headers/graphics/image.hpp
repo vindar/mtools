@@ -1501,9 +1501,7 @@ namespace mtools
 				if (isEmpty()) return;
 				if (P1.X() == P2.X()) { _verticalLine<false, true>(P1.X(), P1.Y(), P2.Y(), color,draw_P2);  return; }
 				if (P1.Y() == P2.Y()) { _horizontalLine<false, true>(P1.Y(), P1.X(), P2.X(), color, draw_P2); return; }
-				iVec2 sP2 = P2;
-				if (!_csLineClip(P1, P2, iBox2(0, _lx - 1, 0, _ly - 1))) return;
-				_lineBresenham<false, false>(P1, P2, color, (draw_P2||(P2 != sP2)));
+				_lineBresenham<false, true>(P1, P2, color, draw_P2);
 				}
 
 
@@ -1546,16 +1544,13 @@ namespace mtools
 					if ((blending) && (color.comp.A != 255)) { _horizontalLine<true, true>(P1.Y(), P1.X(), P2.X(), color, draw_P2); } else { _horizontalLine<false, true>(P1.Y(), P1.X(), P2.X(), color, draw_P2); }
 					return;
 					}
-				iVec2 sP2 = P2;
-				if (!_csLineClip(P1, P2, iBox2(0, _lx - 1, 0, _ly - 1))) return;
 				if (antialiased)
 					{
-					if (blending) _lineWuAA<true,false>(P1, P2, color,false); else _lineWuAA<false,false>(P1, P2, color, false);
+					if (!_csLineClip(P1, P2, iBox2(0, _lx - 1, 0, _ly - 1))) return;
+					if (blending) _lineWuAA<true,false>(P1, P2, color, draw_P2); else _lineWuAA<false,false>(P1, P2, color, draw_P2);
 					}
-				else
-					{
-					if ((blending) && (color.comp.A != 255)) _lineBresenham<true,false>(P1, P2, color, false); else _lineBresenham<false,false>(P1, P2, color, false);
-					}
+				if ((blending) && (color.comp.A != 255)) _lineBresenham<true,true>(P1, P2, color, draw_P2); else _lineBresenham<false,true>(P1, P2, color, draw_P2);
+
 				}
 
 
@@ -1662,6 +1657,7 @@ namespace mtools
 					return;
 					}
 				// note: here we cannot use _csLineClip because this could cause the new clipped line to misalign with the interior of the triangle. 
+				// but anyway, the bresenham line drawing method do perfect clipping. 
 				const bool isP1 = box.isInside(P1);
 				const bool isP2 = box.isInside(P2);
 				const bool isP3 = box.isInside(P3);
@@ -1673,7 +1669,7 @@ namespace mtools
 					}
 				else 
 					{ // just need to draw the 3 lines
-					if (isP1 && isP2) _lineBresenham<true, false>(P1, P2, color, true); else _lineBresenham<true, true>(P1, P2, color, true);
+					if (isP1 && isP2) _lineBresenham<false, false>(P1, P2, color, true); else  _lineBresenham<false, true>(P1, P2, color, true);
 					if (isP2 && isP3) _lineBresenham<false, false>(P2, P3, color, false); else _lineBresenham<false, true>(P2, P3, color, false);
 					if (isP3 && isP1) _lineBresenham<false, false>(P1, P3, color, false); else _lineBresenham<false, true>(P1, P3, color, false);
 					}
@@ -3277,6 +3273,32 @@ namespace mtools
 
 
 			/**
+			* Move the position pos by len pixels along a bresenham line.
+			*/
+			inline void _move_line(const _bdir & linedir, _bpos & pos, int64 len)
+				{
+				if (linedir.x_major)
+					{
+					pos.x += linedir.stepx*len;
+					pos.frac += linedir.dy*len;
+					int64 u = pos.frac / linedir.dx;
+					pos.y += linedir.stepy*u;
+					pos.frac -= u*linedir.dx;
+					if (pos.frac >= linedir.dy) { pos.frac -= linedir.dx; pos.y += linedir.stepy; }
+					}
+				else
+					{
+					pos.y += linedir.stepy*len;
+					pos.frac += linedir.dx*len;
+					int64 u = pos.frac / linedir.dy;
+					pos.x += linedir.stepx*u;
+					pos.frac -= u*linedir.dy;
+					if (pos.frac >= linedir.dx) { pos.frac -= linedir.dy; pos.x += linedir.stepx; }
+					}
+				}
+
+
+			/**
 			 * Move the position pos by 1 pixel horizontally along the given bresenham line.
 			 * return the number of pixel traveled by the bresenham line.
 			 *
@@ -3284,7 +3306,8 @@ namespace mtools
 			 */
 			template<bool x_major> MTOOLS_FORCEINLINE int64 _move_line_x_dir(const _bdir & linedir, _bpos & pos)
 				{ 
-				MTOOLS_ASSERT(linedir.x_major == x_major);  // make sure tempalte argument supplied is correct. 
+				MTOOLS_ASSERT(linedir.x_major == x_major);  // make sure template argument supplied is correct. 
+				MTOOLS_ASSERT(linedir.dx > 0); // not a vertical line
 				if (x_major) // compiler optimizes away the template conditionals
 					{
 					if (pos.frac >= 0) { pos.y +=  linedir.stepy; pos.frac -= linedir.dx; }
@@ -3312,6 +3335,7 @@ namespace mtools
 			inline int64 _move_line_x_dir(const _bdir & linedir, _bpos & pos, const int64 lenx)
 				{
 				if (lenx <= 0) return 0;
+				MTOOLS_ASSERT(linedir.dx > 0); // not a vertical line
 				if (linedir.x_major)
 					{
 					pos.x    += linedir.stepx*lenx;
@@ -3348,6 +3372,7 @@ namespace mtools
 			template<bool x_major> MTOOLS_FORCEINLINE int64 _move_line_y_dir(const _bdir & linedir, _bpos & pos)
 				{
 				MTOOLS_ASSERT(linedir.x_major == x_major);  // make sure tempalte argument supplied is correct. 
+				MTOOLS_ASSERT(linedir.dy > 0); // not an horizontal line
 				if (x_major) // compiler optimizes away the template conditionals
 					{
 					int64 r = (pos.frac < ((linedir.dy << 1) - linedir.dx)) ? linedir.rat : ((linedir.dy - pos.frac) / linedir.dy); // use rat value if just after a step.
@@ -3375,6 +3400,7 @@ namespace mtools
 			inline int64 _move_line_y_dir(const _bdir & linedir, _bpos & pos, const int64 leny)
 				{
 				if (leny <= 0) return 0; 
+				MTOOLS_ASSERT(linedir.dy > 0); // not an horizontal line
 				if (linedir.x_major) // compiler optimizes away the template conditionals
 					{
 					int64 k = ((leny-1)*linedir.dx) / linedir.dy;
@@ -3412,22 +3438,22 @@ namespace mtools
 				int64 tot = 0;
 				if (pos.x < B.min[0])
 					{
-					if (linedir.stepx < 0) return -1;
+					if ((linedir.stepx < 0)||(linedir.dx ==0)) return -1;
 					tot += _move_line_x_dir(linedir, pos, B.min[0] - pos.x);
 					}
 				else if (pos.x > B.max[0])
 					{
-					if (linedir.stepx > 0) return -1;
+					if ((linedir.stepx > 0) ||(linedir.dx == 0)) return -1;
 					tot += _move_line_x_dir(linedir, pos, pos.x - B.max[0]);
 					}
 				if (pos.y < B.min[1])
 					{
-					if (linedir.stepy < 0) return -1;
+					if ((linedir.stepy < 0) || (linedir.dy == 0)) return -1;
 					tot += _move_line_y_dir(linedir, pos, B.min[1] - pos.y);
 					}
 				else if (pos.y > B.max[1])
 					{
-					if (linedir.stepy > 0) return -1;
+					if ((linedir.stepy > 0) || (linedir.dy == 0)) return -1;
 					tot += _move_line_y_dir(linedir, pos, pos.y - B.max[1]);
 					}
 				if (!B.isInside({ pos.x, pos.y })) return -1;
@@ -3444,13 +3470,13 @@ namespace mtools
 				if (!B.isInside({ pos.x, pos.y })) return 0; 
 				const int64 hx = 1 + ((linedir.stepx > 0) ? (B.max[0] - pos.x) : (pos.x - B.min[0])); // number of horizontal step before exit. 
 				const int64 hy = 1 + ((linedir.stepy > 0) ? (B.max[1] - pos.y) : (pos.y - B.min[1])); // number of vertical step before exit. 
-				_bpos pX = pos; 
-				const int64 nx = _move_line_x_dir(linedir, pX, hx);
-				_bpos pY = pos;
-				const int64 ny = _move_line_y_dir(linedir, pY, hy);
+				int64 nx = -1, ny = -1;				
+				if (linedir.dx != 0) { _bpos tmp = pos; nx = _move_line_x_dir(linedir, tmp, hx); }
+				if (linedir.dy != 0) { _bpos tmp = pos; ny = _move_line_y_dir(linedir, tmp, hy); }
+				if (nx == -1) { return ny; }
+				if (ny == -1) { return nx; }
 				return std::min<int64>(nx, ny);
 				}
-
 
 
 
@@ -3466,33 +3492,6 @@ namespace mtools
 
 
 
-
-			template<bool blend, bool checkrange>  MTOOLS_FORCEINLINE void _lineBresenham(const iVec2 P1, const iVec2 P2, RGBc color, bool draw_last)
-				{
-				if (draw_last) _updatePixel<blend, checkrange>(P2, color);
-				int64 x2 = P2.X();
-				int64 y2 = P2.Y();
-				_bdir line;
-				_bpos pos;
-				_init_line(P1, P2, line, pos);
-				if (line.x_major)
-					{
-					while (pos.x != x2)
-						{
-						_updatePixel<blend, checkrange>(pos.x, pos.y, color);
-						_move_line<true>(line, pos);
-						}
-					}
-				else
-					{
-					while (pos.y != y2)
-						{
-						_updatePixel<blend, checkrange>(pos.x, pos.y, color);
-						_move_line<false>(line, pos);
-						}
-					}
-				}
-
 			/**
 			* Draw a segment [P1,P2] using Bresenham's algorithm.
 			*
@@ -3504,7 +3503,7 @@ namespace mtools
 			*
 			* Optimized for speed.
 			**/
-			template<bool blend, bool checkrange>  MTOOLS_FORCEINLINE void _lineBresenham2(const iVec2 P1, const iVec2 P2, RGBc color, bool draw_last)
+			template<bool blend, bool checkrange>  MTOOLS_FORCEINLINE void _lineBresenham(const iVec2 P1, const iVec2 P2, RGBc color, bool draw_last)
 				{
 
 				int64 y = _lengthBresenham(P1, P2, draw_last);
@@ -3518,7 +3517,6 @@ namespace mtools
 					if (r < 0) return; // nothing to draw
 					y -= r;
 					y = std::min<int64>(y , _lenght_inside_box(line, pos, B));
-					if (y <= 0) return;
 					}
 				if (line.x_major)
 					{
@@ -3542,7 +3540,7 @@ namespace mtools
 
 			/**
 			 * Draw the segment [P,Q] with the bresenham line algorithm while skipping the pixels
-			 * which also belong to the segment [P,P2]. 
+			 * which also belong to the segment [P,P2]. (Always perfect.)
 			 * 
 			 * stop_before represented the number of pixel at the end of the line which are not drawn
 			 * i.e 0 = draw [P,Q], 
@@ -3564,8 +3562,22 @@ namespace mtools
 				_bpos posb;
 				_init_line(P, P2, lineb, posb);
 
-				const int64 lena = _lengthBresenham(P, Q) - stop_before;				
-				const int64 lenb = _lengthBresenham(P, P2);
+				int64 lena = _lengthBresenham(P, Q,true) - stop_before;	// lenght of the segments
+				int64 lenb = _lengthBresenham(P, P2,true);              // 
+
+				if (checkrange)
+					{
+					iBox2 B(0, _lx - 1, 0, _ly - 1);
+					int64 r = _move_inside_box(linea, posa, B); // move the first line into the box. 
+					if (r < 0) return; // nothing to draw
+					lena -= r;
+					_move_line(lineb, posb, r); // move the second line
+					lenb -= r;
+					lena = std::min<int64>(lena, _lenght_inside_box(linea, posa, B)); // number of pixels still to draw. 
+					}
+
+				lena--;
+				lenb--;
 				int64 l = 0;
 				if (linea.x_major)
 					{
@@ -3573,7 +3585,7 @@ namespace mtools
 						{
 						while (l <= lena)
 							{
-							if ((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) _updatePixel<blend, checkrange>(posa.x, posa.y,color);
+							if ((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) _updatePixel<blend, false>(posa.x, posa.y,color);
 							_move_line<true>(linea, posa);
 							_move_line<true>(lineb, posb);						
 							l++; 
@@ -3583,7 +3595,7 @@ namespace mtools
 						{
 						while (l <= lena)
 							{
-							if ((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) _updatePixel<blend, checkrange>(posa.x, posa.y, color);
+							if ((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) _updatePixel<blend, false>(posa.x, posa.y, color);
 							_move_line<true>(linea, posa);
 							_move_line<false>(lineb, posb);
 							l++;
@@ -3596,7 +3608,7 @@ namespace mtools
 						{
 						while (l <= lena)
 							{
-							if ((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) _updatePixel<blend, checkrange>(posa.x, posa.y, color);
+							if ((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) _updatePixel<blend, false>(posa.x, posa.y, color);
 							_move_line<false>(linea, posa);
 							_move_line<true>(lineb, posb);
 							l++;
@@ -3606,7 +3618,7 @@ namespace mtools
 						{
 						while (l <= lena)
 							{
-							if ((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) _updatePixel<blend, checkrange>(posa.x, posa.y, color);
+							if ((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) _updatePixel<blend, false>(posa.x, posa.y, color);
 							_move_line<false>(linea, posa);
 							_move_line<false>(lineb, posb);
 							l++;
@@ -3618,7 +3630,7 @@ namespace mtools
 
 			/**
 			* Draw the segment [P,Q] with the bresenham line algorithm while skipping the pixels
-			* which also belong to the segments [P,P2] and [P,P3]. 
+			* which also belong to the segments [P,P2] and [P,P3].  (Always perfect.)
 			*
 			* stop_before represented the number of pixel at the end of the line which are not drawn
 			* i.e 0 = draw [P,Q],
@@ -3646,12 +3658,27 @@ namespace mtools
 				_bpos posc;
 				_init_line(P, P3, linec, posc);
 
-				const int64 lena = _lengthBresenham(P, Q) - stop_before;
-				const int64 lenb = _lengthBresenham(P, P2);
-				const int64 lenc = _lengthBresenham(P, P3);
+				int64 lena = _lengthBresenham(P, Q, true) - stop_before;
+				int64 lenb = _lengthBresenham(P, P2, true);
+				int64 lenc = _lengthBresenham(P, P3, true);
 
+				if (checkrange)
+					{
+					iBox2 B(0, _lx - 1, 0, _ly - 1);
+					int64 r = _move_inside_box(linea, posa, B); // move the first line into the box. 
+					if (r < 0) return; // nothing to draw
+					lena -= r;
+					_move_line(lineb, posb, r); // move the second line
+					lenb -= r;
+					_move_line(linec, posc, r); // move the third line
+					lenc -= r;
+					lena = std::min<int64>(lena, _lenght_inside_box(linea, posa, B)); // number of pixels still to draw. 
+					}
+
+				lena--;
+				lenb--;
+				lenc--;
 				int64 l = 0;
-
 				if (linea.x_major)
 					{
 					if (lineb.x_major)
@@ -3660,7 +3687,7 @@ namespace mtools
 							{
 							while (l <= lena)
 								{
-								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _updatePixel<blend, checkrange>(posa.x, posa.y,color);
+								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _updatePixel<blend, false>(posa.x, posa.y,color);
 								_move_line<true>(linea, posa); 
 								_move_line<true>(lineb, posb); 
 								_move_line<true>(linec, posc);
@@ -3671,7 +3698,7 @@ namespace mtools
 							{
 							while (l <= lena)
 								{
-								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _updatePixel<blend, checkrange>(posa.x, posa.y, color);
+								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _updatePixel<blend, false>(posa.x, posa.y, color);
 								_move_line<true>(linea, posa);
 								_move_line<true>(lineb, posb);
 								_move_line<false>(linec, posc);
@@ -3685,7 +3712,7 @@ namespace mtools
 							{
 							while (l <= lena)
 								{
-								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _updatePixel<blend, checkrange>(posa.x, posa.y, color);
+								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _updatePixel<blend, false>(posa.x, posa.y, color);
 								_move_line<true>(linea, posa);
 								_move_line<false>(lineb, posb);
 								_move_line<true>(linec, posc);
@@ -3696,7 +3723,7 @@ namespace mtools
 							{
 							while (l <= lena)
 								{
-								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _updatePixel<blend, checkrange>(posa.x, posa.y, color);
+								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _updatePixel<blend, false>(posa.x, posa.y, color);
 								_move_line<true>(linea, posa);
 								_move_line<false>(lineb, posb);
 								_move_line<false>(linec, posc);
@@ -3713,7 +3740,7 @@ namespace mtools
 							{
 							while (l <= lena)
 								{
-								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _updatePixel<blend, checkrange>(posa.x, posa.y, color);
+								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _updatePixel<blend, false>(posa.x, posa.y, color);
 								_move_line<false>(linea, posa);
 								_move_line<true>(lineb, posb);
 								_move_line<true>(linec, posc);
@@ -3724,7 +3751,7 @@ namespace mtools
 							{
 							while (l <= lena)
 								{
-								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _updatePixel<blend, checkrange>(posa.x, posa.y, color);
+								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _updatePixel<blend, false>(posa.x, posa.y, color);
 								_move_line<false>(linea, posa);
 								_move_line<true>(lineb, posb);
 								_move_line<false>(linec, posc);
@@ -3738,7 +3765,7 @@ namespace mtools
 							{
 							while (l <= lena)
 								{
-								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _updatePixel<blend, checkrange>(posa.x, posa.y, color);
+								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _updatePixel<blend, false>(posa.x, posa.y, color);
 								_move_line<false>(linea, posa);
 								_move_line<false>(lineb, posb);
 								_move_line<true>(linec, posc);
@@ -3749,7 +3776,7 @@ namespace mtools
 							{
 							while (l <= lena)
 								{
-								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _updatePixel<blend, checkrange>(posa.x, posa.y, color);
+								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _updatePixel<blend, false>(posa.x, posa.y, color);
 								_move_line<false>(linea, posa);
 								_move_line<false>(lineb, posb);
 								_move_line<false>(linec, posc);
@@ -3768,7 +3795,7 @@ namespace mtools
 			* Draw the segment [P,Q] with the bresenham line algorithm while skipping the pixels which also
 			* belong to the segments [P,R] and [Q,R];
 			*
-			* Drawing is performed using the blend() operation.
+			* Drawing is performed using the blend() operation. ALways perfect.
 			* 
 			* Optimized for speed.
 			**/
@@ -3918,6 +3945,7 @@ namespace mtools
 			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void _hline(int64 x1, int64 x2, int64 y, RGBc color)
 				{ // compiler optimizes away the template conditional statements.
 				MTOOLS_ASSERT((y >= 0) && (y < _ly)); // y range should always be ok. 
+				MTOOLS_ASSERT((checkrange) || ((x1 >= 0)&&(x2 >= x1)&&(x2 < _lx)));
 				if (checkrange)
 					{ // clamp
 					x1 = std::max<int64>(0, x1);
@@ -3948,6 +3976,7 @@ namespace mtools
 			 **/
 			template<bool blend, bool checkrange> inline void _fill_interior_angle(iVec2 P, iVec2 Q1, iVec2 Q2, RGBc color,bool fill_last)
 				{
+				MTOOLS_ASSERT((P.Y() - Q1.Y())*(P.Y() - Q2.Y()) > 0);
 				int64 dir = (P.Y() > Q1.Y()) ? -1 : 1;				// y direction 
 				int64 y = P.Y();									// starting height
 				int64 ytarget = Q1.Y() + dir*(fill_last ? 1 : 0);	// height to reach	
