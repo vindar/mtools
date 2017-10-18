@@ -3250,6 +3250,61 @@ namespace mtools
 				}
 
 
+
+
+			/* Move for len step along the bresenham line given by (x,y,stepx,stepy,dx,dy,frac).
+			   update the value for x,y and frac. */
+			MTOOLS_FORCEINLINE void _moveBesenham(int64 & frac, int64 & x, int64 & y, int64 stepx, int64 stepy, int64 dx, int64 dy, int64 len)
+				{
+				if (dx > dy)
+					{
+					x += (stepx*len);
+					frac += (dy*len);
+					int64 u = frac/dx;
+					frac -= (u*dx);
+					if (frac >= dy) { frac -= dx; u++; }
+					y += u*stepy;
+					}
+				else
+					{
+					y += (stepy*len);
+					frac += (dx*len);
+					int64 u = frac/dy;
+					frac -= (u*dy);
+					if (frac >= dx) { frac -= dy; u++; }
+					x += u*stepx;
+					}
+				}
+
+
+	
+
+
+			/* 'continu' the bresenham line for at most len step and stop when we reach height ytarget 
+			   return true if it is possible and false if not . */
+			bool moveBresenhamYin(int64 ytarget, int64 & x, int64 & y, int64 stepx, int64 stepy, int64 dx, int64 dy, int64 & frac, int64 & len)
+				{
+				int64 off = y - ytarget;
+				if (off == 0) return true;
+				if ((off > 0) && (stepy > 0)) return false;
+				if ((off < 0) && (stepy < 0)) return false;
+				if (off < 0) { off = -off; }
+
+				if (dx > dy)
+					{ // advance on x at each step 
+
+					}
+				else
+					{ // advance on y at each step.
+					if (off > len) return false;
+					_moveBesenham(frac, x, y, stepx, stepy, dx, dy, off);
+					len -= off;
+					return true;
+					}
+				}
+
+
+
 			/**
 			 * Draw the segment [P,Q] with the bresenham line algorithm while skipping the pixels
 			 * which also belong to the segment [P,P2]. 
@@ -3652,8 +3707,9 @@ namespace mtools
 				}
 
 
+
 			/* used by _fill_interior_angle() */
-			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void _hline(int64 x1, int64 x2, int64 y, RGBc color, bool invx, bool invy)
+			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void _hline(int64 x1, int64 x2, int64 y, RGBc color)
 				{ // compiler optimizes away the template conditional statements.
 				if (checkrange)
 					{
@@ -3670,24 +3726,7 @@ namespace mtools
 				}
 
 			/* used by _fill_interior_angle() */
-			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void _hline_invx(int64 x1, int64 x2, int64 y, RGBc color, bool invx, bool invy)
-				{ // compiler optimizes away the template conditional statements.
-				if (checkrange) 
-					{ 
-					if ((y < 0) || (y >= _ly)) return;
-					x1 = std::max<int64>(-_lx + 1, x1); 
-					x2 = std::min<int64>(0, x2); 
-					}
-				RGBc * p = _data + y*_stride - x2;
-				while (x1 <= x2) 
-					{ 
-					if (blend) { (*p).blend(color); } else { *p = color; }
-					p++; x1++; 
-					}
-				}
-
-			/* used by _fill_interior_angle() */
-			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void _hline_invy(int64 x1, int64 x2, int64 y, RGBc color, bool invx, bool invy)
+			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void _hline_invy(int64 x1, int64 x2, int64 y, RGBc color)
 				{ // compiler optimizes away the template conditional statements.
 				if (checkrange)
 					{
@@ -3703,22 +3742,6 @@ namespace mtools
 					}
 				}
 
-			/* used by _fill_interior_angle() */
-			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void _hline_invx_invy(int64 x1, int64 x2, int64 y, RGBc color, bool invx, bool invy)
-				{ // compiler optimizes away the template conditional statements.
-				if (checkrange)
-					{
-					if ((y > 0) || (y <= -_ly)) return;
-					x1 = std::max<int64>(-_lx + 1, x1);
-					x2 = std::min<int64>(0, x2);
-					}
-				RGBc * p = _data - y*_stride - x2;
-				while (x1 <= x2) 
-					{ 
-					if (blend) { (*p).blend(color); } else { *p = color; }
-					p++; x1++;
-					}
-				}
 
 
 			/**
@@ -3743,12 +3766,11 @@ namespace mtools
 			template<bool blend, bool checkrange> inline void _fill_interior_angle(iVec2 P, iVec2 Q1, iVec2 Q2, RGBc color,bool fill_last)
 				{
 				// indicator for bresenham line drawing symmetry
-				const int64 ind_xa = ((Q1.X() > P.X()) ? 1 : 0);
-				const int64 ind_ya = ((Q1.Y() > P.Y()) ? 1 : 0);
-				const int64 ind_xb = ((Q2.X() > P.X()) ? 1 : 0);
-				const int64 ind_yb = ((Q2.Y() > P.Y()) ? 1 : 0);
+				int64 ind_xa = ((Q1.X() > P.X()) ? 1 : 0);
+				int64 ind_ya = ((Q1.Y() > P.Y()) ? 1 : 0);
+				int64 ind_xb = ((Q2.X() > P.X()) ? 1 : 0);
+				int64 ind_yb = ((Q2.Y() > P.Y()) ? 1 : 0);
 				// mirror transform if needed
-				bool invx = false;
 				bool invy = false; 				
 				if (P.Y() > Q1.Y())
 					{
@@ -3757,18 +3779,17 @@ namespace mtools
 					Q2.Y() = -Q2.Y();
 					invy = true;
 					}
+				int64 ytarget = Q1.Y() + (fill_last ? 1 : 0); // height to reach	
 				if ( (Q1.X() - P.X())*(Q2.Y() - P.Y())  > (Q2.X() - P.X())*(Q1.Y() - P.Y()) ) // TODO, remove possible overflow (ok, not likely since we are in 64 bit..)
 					{
-					P.X() = -P.X();
-					Q1.X() = -Q1.X();
-					Q2.X() = -Q2.X();
-					invx = true;
+					mtools::swap(Q1, Q2);
+					mtools::swap(ind_xa, ind_xb);
+					mtools::swap(ind_ya, ind_yb);
 					}
 				// now we have P.Y() minimum and Q1 to the left of Q2
 				int64 y = P.Y();		// current Y pos
 				int64 xa = P.X();		// current X pos of the left point
 				int64 xb = P.X();		// current pos of the right point
-				int64 ytarget = Q1.Y() + (fill_last ? 1 : 0); // height to reach	
 				// slopes
 				int64 dxa = Q1.X() - P.X();
 				int64 dya = Q1.Y() - P.Y();
@@ -3805,77 +3826,50 @@ namespace mtools
 							}
 						}
 					}
+
+				int64 fraca = (dxa > dya) ? (dya - (dxa >> 1) - ind_ya) : (dxa - (dya >> 1) - ind_xa);
+				int64 fracb = (dxb > dyb) ? (dyb - (dxb >> 1) - ind_yb) : (dxb - (dyb >> 1) - ind_xb);
+
 				// ok, ready to draw. 
-				if (invx)
+				if (invy)
 					{
-					if (invy)
+					// invy
+					if (dxa > dya)
 						{
-						// **********************
-						// invx, invy
-						// **********************
-						if (dxa > dya)
+						if (dxb > dyb)
 							{
-							int64 fraca = dya - (dxa >> 1) - ind_ya;
-							if (dxb > dyb)
+							if (stepxa < 0)
 								{
-								int64 fracb = dyb - (dxb >> 1) - ind_yb;
-								if (stepxa < 0)
+								if (stepxb > 0)
 									{
-									if (stepxb > 0)
+									while (y < ytarget)
 										{
-										while (y < ytarget)
-											{
-											_hline_invx_invy<blend,checkrange>(xa + 1, xb - 1, y, color, invx, invy);
-											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-											y++;
-											}
-										}
-									else
-										{
-										while (y < ytarget)
-											{
-											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-											_hline_invx_invy<blend, checkrange>(xa + 1, xb, y, color, invx, invy);
-											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-											y++;
-											}
+										_hline_invy<blend, checkrange>(xa + 1, xb - 1, y, color);
+										while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
+										while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
+										y++;
 										}
 									}
 								else
 									{
-									if (stepxb > 0)
+									while (y < ytarget)
 										{
-										while (y < ytarget)
-											{
-											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-											_hline_invx_invy<blend, checkrange>(xa, xb - 1, y, color, invx, invy);
-											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-											y++;
-											}
-										}
-									else
-										{
-										while (y < ytarget)
-											{
-											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-											_hline_invx_invy<blend, checkrange>(xa, xb, y, color, invx, invy);
-											y++;
-											}
+										while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
+										_hline_invy<blend, checkrange>(xa + 1, xb, y, color);
+										while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
+										y++;
 										}
 									}
 								}
 							else
 								{
-								int64 fracb = dxb - (dyb >> 1) - ind_xb;
-								if (stepxa < 0)
+								if (stepxb > 0)
 									{
 									while (y < ytarget)
 										{
-										_hline_invx_invy<blend, checkrange>(xa + 1, xb - 1, y, color, invx, invy);
 										while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-										if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
+										_hline_invy<blend, checkrange>(xa, xb - 1, y, color);
+										while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
 										y++;
 										}
 									}
@@ -3884,8 +3878,8 @@ namespace mtools
 									while (y < ytarget)
 										{
 										while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-										_hline_invx_invy<blend, checkrange>(xa, xb - 1, y, color, invx, invy);
-										if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
+										while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
+										_hline_invy<blend, checkrange>(xa, xb, y, color);
 										y++;
 										}
 									}
@@ -3893,38 +3887,22 @@ namespace mtools
 							}
 						else
 							{
-							int64 fraca = dxa - (dya >> 1) - ind_xa;
-							if (dxb > dyb)
+							if (stepxa < 0)
 								{
-								int64 fracb = dyb - (dxb >> 1) - ind_yb;
-								if (stepxb > 0)
+								while (y < ytarget)
 									{
-									while (y < ytarget)
-										{
-										_hline_invx_invy<blend, checkrange>(xa + 1, xb - 1, y, color, invx, invy);
-										while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-										if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
-										y++;
-										}
-									}
-								else
-									{
-									while (y < ytarget)
-										{
-										while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-										_hline_invx_invy<blend, checkrange>(xa + 1, xb, y, color, invx, invy);
-										if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
-										y++;
-										}
+									_hline_invy<blend, checkrange>(xa + 1, xb - 1, y, color);
+									while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
+									if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
+									y++;
 									}
 								}
 							else
 								{
-								int64 fracb = dxb - (dyb >> 1) - ind_xb;
 								while (y < ytarget)
 									{
-									_hline_invx_invy<blend, checkrange>(xa + 1, xb - 1, y, color, invx, invy);
-									if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
+									while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
+									_hline_invy<blend, checkrange>(xa, xb - 1, y, color);
 									if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
 									y++;
 									}
@@ -3933,198 +3911,80 @@ namespace mtools
 						}
 					else
 						{
-						// **********************
-						// invx
-						// **********************
-						if (dxa > dya)
+						if (dxb > dyb)
 							{
-							int64 fraca = dya - (dxa >> 1) - ind_ya;
-							if (dxb > dyb)
+							if (stepxb > 0)
 								{
-								int64 fracb = dyb - (dxb >> 1) - ind_yb;
-								if (stepxa < 0)
+								while (y < ytarget)
 									{
-									if (stepxb > 0)
-										{
-										while (y < ytarget)
-											{
-											_hline_invx<blend, checkrange>(xa + 1, xb - 1, y, color, invx, invy);
-											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-											y++;
-											}
-										}
-									else
-										{
-										while (y < ytarget)
-											{
-											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-											_hline_invx<blend, checkrange>(xa + 1, xb, y, color, invx, invy);
-											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-											y++;
-											}
-										}
-									}
-								else
-									{
-									if (stepxb > 0)
-										{
-										while (y < ytarget)
-											{
-											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-											_hline_invx<blend, checkrange>(xa, xb - 1, y, color, invx, invy);
-											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-											y++;
-											}
-										}
-									else
-										{
-										while (y < ytarget)
-											{
-											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-											_hline_invx<blend, checkrange>(xa, xb, y, color, invx, invy);
-											y++;
-											}
-										}
+									_hline_invy<blend, checkrange>(xa + 1, xb - 1, y, color);
+									while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
+									if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
+									y++;
 									}
 								}
 							else
 								{
-								int64 fracb = dxb - (dyb >> 1) - ind_xb;
-								if (stepxa < 0)
+								while (y < ytarget)
 									{
-									while (y < ytarget)
-										{
-										_hline_invx<blend, checkrange>(xa + 1, xb - 1, y, color, invx, invy);
-										while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-										if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
-										y++;
-										}
-									}
-								else
-									{
-									while (y < ytarget)
-										{
-										while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-										_hline_invx<blend, checkrange>(xa, xb - 1, y, color, invx, invy);
-										if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
-										y++;
-										}
+									while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
+									_hline_invy<blend, checkrange>(xa + 1, xb, y, color);
+									if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
+									y++;
 									}
 								}
 							}
 						else
 							{
-							int64 fraca = dxa - (dya >> 1) - ind_xa;
-							if (dxb > dyb)
+							while (y < ytarget)
 								{
-								int64 fracb = dyb - (dxb >> 1) - ind_yb;
-								if (stepxb > 0)
-									{
-									while (y < ytarget)
-										{
-										_hline_invx<blend, checkrange>(xa + 1, xb - 1, y, color, invx, invy);
-										while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-										if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
-										y++;
-										}
-									}
-								else
-									{
-									while (y < ytarget)
-										{
-										while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-										_hline_invx<blend, checkrange>(xa + 1, xb, y, color, invx, invy);
-										if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
-										y++;
-										}
-									}
-								}
-							else
-								{
-								int64 fracb = dxb - (dyb >> 1) - ind_xb;
-								while (y < ytarget)
-									{
-									_hline_invx<blend, checkrange>(xa + 1, xb - 1, y, color, invx, invy);
-									if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
-									if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
-									y++;
-									}
+								_hline_invy<blend, checkrange>(xa + 1, xb - 1, y, color);
+								if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
+								if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
+								y++;
 								}
 							}
 						}
 					}
 				else
 					{
-					if (invy)
+					// not invy
+					if (dxa > dya)
 						{
-						// **********************
-						// invy
-						// **********************
-						if (dxa > dya)
+						if (dxb > dyb)
 							{
-							int64 fraca = dya - (dxa >> 1) - ind_ya;
-							if (dxb > dyb)
+							if (stepxa < 0)
 								{
-								int64 fracb = dyb - (dxb >> 1) - ind_yb;
-								if (stepxa < 0)
+								if (stepxb > 0)
 									{
-									if (stepxb > 0)
+									while (y < ytarget)
 										{
-										while (y < ytarget)
-											{
-											_hline_invy<blend, checkrange>(xa + 1, xb - 1, y, color, invx, invy);
-											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-											y++;
-											}
-										}
-									else
-										{
-										while (y < ytarget)
-											{
-											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-											_hline_invy<blend, checkrange>(xa + 1, xb, y, color, invx, invy);
-											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-											y++;
-											}
+										_hline<blend, checkrange>(xa + 1, xb - 1, y, color);
+										while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
+										while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
+										y++;
 										}
 									}
 								else
 									{
-									if (stepxb > 0)
+									while (y < ytarget)
 										{
-										while (y < ytarget)
-											{
-											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-											_hline_invy<blend, checkrange>(xa, xb - 1, y, color, invx, invy);
-											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-											y++;
-											}
-										}
-									else
-										{
-										while (y < ytarget)
-											{
-											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-											_hline_invy<blend, checkrange>(xa, xb, y, color, invx, invy);
-											y++;
-											}
+										while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
+										_hline<blend, checkrange>(xa + 1, xb, y, color);
+										while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
+										y++;
 										}
 									}
 								}
 							else
 								{
-								int64 fracb = dxb - (dyb >> 1) - ind_xb;
-								if (stepxa < 0)
+								if (stepxb > 0)
 									{
 									while (y < ytarget)
 										{
-										_hline_invy<blend, checkrange>(xa + 1, xb - 1, y, color, invx, invy);
 										while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-										if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
+										_hline<blend, checkrange>(xa, xb - 1, y, color);
+										while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
 										y++;
 										}
 									}
@@ -4133,8 +3993,8 @@ namespace mtools
 									while (y < ytarget)
 										{
 										while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-										_hline_invy<blend, checkrange>(xa, xb - 1, y, color, invx, invy);
-										if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
+										while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
+										_hline<blend, checkrange>(xa, xb, y, color);
 										y++;
 										}
 									}
@@ -4142,38 +4002,22 @@ namespace mtools
 							}
 						else
 							{
-							int64 fraca = dxa - (dya >> 1) - ind_xa;
-							if (dxb > dyb)
+							if (stepxa < 0)
 								{
-								int64 fracb = dyb - (dxb >> 1) - ind_yb;
-								if (stepxb > 0)
+								while (y < ytarget)
 									{
-									while (y < ytarget)
-										{
-										_hline_invy<blend, checkrange>(xa + 1, xb - 1, y, color, invx, invy);
-										while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-										if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
-										y++;
-										}
-									}
-								else
-									{
-									while (y < ytarget)
-										{
-										while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-										_hline_invy<blend, checkrange>(xa + 1, xb, y, color, invx, invy);
-										if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
-										y++;
-										}
+									_hline<blend, checkrange>(xa + 1, xb - 1, y, color);
+									while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
+									if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
+									y++;
 									}
 								}
 							else
 								{
-								int64 fracb = dxb - (dyb >> 1) - ind_xb;
 								while (y < ytarget)
 									{
-									_hline_invy<blend, checkrange>(xa + 1, xb - 1, y, color, invx, invy);
-									if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
+									while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
+									_hline<blend, checkrange>(xa, xb - 1, y, color);
 									if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
 									y++;
 									}
@@ -4182,126 +4026,39 @@ namespace mtools
 						}
 					else
 						{
-						// **********************
-						// none
-						// **********************
-						if (dxa > dya)
+						if (dxb > dyb)
 							{
-							int64 fraca = dya - (dxa >> 1) - ind_ya;
-							if (dxb > dyb)
+							if (stepxb > 0)
 								{
-								int64 fracb = dyb - (dxb >> 1) - ind_yb;
-								if (stepxa < 0)
+								while (y < ytarget)
 									{
-									if (stepxb > 0)
-										{
-										while (y < ytarget)
-											{
-											_hline<blend, checkrange>(xa + 1, xb - 1, y, color, invx, invy);
-											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-											y++;
-											}
-										}
-									else
-										{
-										while (y < ytarget)
-											{
-											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-											_hline<blend, checkrange>(xa + 1, xb, y, color, invx, invy);
-											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-											y++;
-											}
-										}
-									}
-								else
-									{
-									if (stepxb > 0)
-										{
-										while (y < ytarget)
-											{
-											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-											_hline<blend, checkrange>(xa, xb - 1, y, color, invx, invy);
-											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-											y++;
-											}
-										}
-									else
-										{
-										while (y < ytarget)
-											{
-											while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-											while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-											_hline<blend, checkrange>(xa, xb, y, color, invx, invy);
-											y++;
-											}
-										}
+									_hline<blend, checkrange>(xa + 1, xb - 1, y, color);
+									while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
+									if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
+									y++;
 									}
 								}
 							else
 								{
-								int64 fracb = dxb - (dyb >> 1) - ind_xb;
-								if (stepxa < 0)
+								while (y < ytarget)
 									{
-									while (y < ytarget)
-										{
-										_hline<blend, checkrange>(xa + 1, xb - 1, y, color, invx, invy);
-										while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-										if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
-										y++;
-										}
-									}
-								else
-									{
-									while (y < ytarget)
-										{
-										while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-										_hline<blend, checkrange>(xa, xb - 1, y, color, invx, invy);
-										if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
-										y++;
-										}
+									while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
+									_hline<blend, checkrange>(xa + 1, xb, y, color);
+									if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
+									y++;
 									}
 								}
 							}
 						else
 							{
-							int64 fraca = dxa - (dya >> 1) - ind_xa;
-							if (dxb > dyb)
+							while (y < ytarget)
 								{
-								int64 fracb = dyb - (dxb >> 1) - ind_yb;
-								if (stepxb > 0)
-									{
-									while (y < ytarget)
-										{
-										_hline<blend, checkrange>(xa + 1, xb - 1, y, color, invx, invy);
-										while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-										if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
-										y++;
-										}
-									}
-								else
-									{
-									while (y < ytarget)
-										{
-										while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-										_hline<blend, checkrange>(xa + 1, xb, y, color, invx, invy);
-										if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
-										y++;
-										}
-									}
+								_hline<blend, checkrange>(xa + 1, xb - 1, y, color);
+								if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
+								if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
+								y++;
 								}
-							else
-								{
-								int64 fracb = dxb - (dyb >> 1) - ind_xb;
-								while (y < ytarget)
-									{
-									_hline<blend, checkrange>(xa + 1, xb - 1, y, color, invx, invy);
-									if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
-									if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
-									y++;
-									}
-								}
-							}				
+							}
 						}
 					}
 				}

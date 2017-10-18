@@ -1126,7 +1126,7 @@ void test_b()
 		iVec2 P3(Unif_int(0 - e, LX - 1 + e, gen), Unif_int(0 - e, LY - 1 + e, gen));
 
 		im.draw_triangle(P1, P2, P3, RGBc::c_Green.getOpacity(0.4),true,true);
-		im.draw_triangle_interior(P1, P2, P3, RGBc::c_Red.getOpacity(0.4), true);
+		im.draw_triangle_interior(P1, P2, P3, RGBc::c_Red.getOpacity(0.1), true);
 
 		plotter.redraw();
 		cout.getKey();
