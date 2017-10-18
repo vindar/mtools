@@ -3307,8 +3307,10 @@ namespace mtools
 					}
 				linepos.x = P1.X();
 				linepos.y = P1.Y();
-				linepos.frac = (linedir.x_major) ? (dy - (dx >> 1) - ((P2.Y() > P1.Y()) ? 1 : 0)) : (dx - (dy >> 1) - ((P2.X() > P1.X()) ? 1 : 0));
+				int64 flagdir = (P2.X() > P1.X()) ? 1 : 0; // used to copensante frac so that line [P1,P2] = [P2,P1]. 
+				linepos.frac = ((linedir.x_major) ? (dy - (dx >> 1)) : (dx - (dy >> 1))) - flagdir;
 				}
+
 
 
 
@@ -3337,7 +3339,7 @@ namespace mtools
 			 *
 			 * [x_major could be deduced from linedir but is given as template paramter for speed optimization purposes]
 			 */
-			template<bool x_major, bool use_while_loop> MTOOLS_FORCEINLINE void _move_line_x_dir(const _bdir & linedir, _bpos & pos)
+			template<bool x_major> MTOOLS_FORCEINLINE void _move_line_x_dir(const _bdir & linedir, _bpos & pos)
 				{ 
 				MTOOLS_ASSERT(linedir.x_major == x_major);  // make sure tempalte argument supplied is correct. 
 				if (x_major) // compiler optimizes away the template conditionals
@@ -3347,20 +3349,12 @@ namespace mtools
 					}
 				else
 					{
-					if (use_while_loop) // compiler optimizes away the template conditionals
-						{
-						while (pos.frac < dx) { pos.y += linedir.stepy; pos.frac += linedir.dx; } 
-						pos.frac -= linedir.dy; pos.x += linedir.stepx;
-						}
-					else
-						{
-						int64 r = (pos.frac < ((dx << 1) - dy)) ? linedir.rat : ((dx - pos.frac) / dx); // use rat value if just after a step.
-						pos.y += (r*linedir.stepy);
-						pos.frac += (r*linedir.dx);
-						if (pos.frac < dx) { pos.y += linedir.stepy; pos.frac += linedir.dx; }
-						MTOOLS_ASSERT((pos.frac >= linedir.dx)&&(pos.frac < 2*linedir.dx));
-						pos.frac -= linedir.dy;  pos.x += linedir.stepx;
-						}
+					int64 r = (pos.frac < ((linedir.dx << 1) - linedir.dy)) ? linedir.rat : ((linedir.dx - pos.frac) / linedir.dx); // use rat value if just after a step.
+					pos.y += (r*linedir.stepy);
+					pos.frac += (r*linedir.dx);
+					if (pos.frac < linedir.dx) { pos.y += linedir.stepy; pos.frac += linedir.dx; }
+					MTOOLS_ASSERT((pos.frac >= linedir.dx)&&(pos.frac < 2*linedir.dx));
+					pos.frac -= linedir.dy;  pos.x += linedir.stepx;
 					}
 				}
 
@@ -3370,25 +3364,17 @@ namespace mtools
 			*
 			* [x_major could be deduced from linedir but is given as template paramter for speed optimization purposes]
 			*/
-			template<bool x_major, bool use_while_loop> MTOOLS_FORCEINLINE void _move_line_y_dir(const _bdir & linedir, _bpos & pos)
+			template<bool x_major> MTOOLS_FORCEINLINE void _move_line_y_dir(const _bdir & linedir, _bpos & pos)
 				{
 				MTOOLS_ASSERT(linedir.x_major == x_major);  // make sure tempalte argument supplied is correct. 
 				if (x_major) // compiler optimizes away the template conditionals
 					{
-					if (use_while_loop) // compiler optimizes away the template conditionals
-						{
-						while (pos.frac < dy) { pos.x += linedir.stepx; pos.frac += linedir.dy; }
-						pos.frac -= linedir.dx; pos.y += linedir.stepy;
-						}
-					else
-						{
-						int64 r = (pos.frac < ((dy << 1) - dx)) ? linedir.rat : ((dy - pos.frac) / dy); // use rat value if just after a step.
-						pos.x += (r*linedir.stepx);
-						pos.frac += (r*linedir.dy);
-						if (pos.frac < dy) { pos.x += linedir.stepx; pos.frac += linedir.dy; }
-						MTOOLS_ASSERT((pos.frac >= linedir.dy) && (pos.frac < 2 * linedir.dy));
-						pos.frac -= linedir.dx;  pos.y += linedir.stepy;
-						}
+					int64 r = (pos.frac < ((linedir.dy << 1) - linedir.dx)) ? linedir.rat : ((linedir.dy - pos.frac) / linedir.dy); // use rat value if just after a step.
+					pos.x += (r*linedir.stepx);
+					pos.frac += (r*linedir.dy);
+					if (pos.frac < linedir.dy) { pos.x += linedir.stepx; pos.frac += linedir.dy; }
+					MTOOLS_ASSERT((pos.frac >= linedir.dy) && (pos.frac < 2 * linedir.dy));
+					pos.frac -= linedir.dx;  pos.y += linedir.stepy;
 					}
 				else
 					{
@@ -3878,12 +3864,7 @@ namespace mtools
 			 **/
 			template<bool blend, bool checkrange> inline void _fill_interior_angle(iVec2 P, iVec2 Q1, iVec2 Q2, RGBc color,bool fill_last)
 				{
-				// indicator for bresenham line drawing symmetry
-				int64 ind_xa = ((Q1.X() > P.X()) ? 1 : 0);
-				int64 ind_ya = ((Q1.Y() > P.Y()) ? 1 : 0);
-				int64 ind_xb = ((Q2.X() > P.X()) ? 1 : 0);
-				int64 ind_yb = ((Q2.Y() > P.Y()) ? 1 : 0);
-				// mirror transform if needed
+				// Y - mirror transform if needed
 				bool invy = false; 				
 				if (P.Y() > Q1.Y())
 					{
@@ -3892,74 +3873,40 @@ namespace mtools
 					Q2.Y() = -Q2.Y();
 					invy = true;
 					}
-				int64 ytarget = Q1.Y() + (fill_last ? 1 : 0); // height to reach	
-				if ( (Q1.X() - P.X())*(Q2.Y() - P.Y())  > (Q2.X() - P.X())*(Q1.Y() - P.Y()) ) // TODO, remove possible overflow (ok, not likely since we are in 64 bit..)
+				int64 ytarget = Q1.Y() + (fill_last ? 1 : 0);	// height to reach	
+				if ( (Q1.X() - P.X())*(Q2.Y() - P.Y())  > (Q2.X() - P.X())*(Q1.Y() - P.Y()) ) 
 					{
 					mtools::swap(Q1, Q2);
-					mtools::swap(ind_xa, ind_xb);
-					mtools::swap(ind_ya, ind_yb);
-					}
-				// now we have P.Y() minimum and Q1 to the left of Q2
-				int64 y = P.Y();		// current Y pos
-				int64 xa = P.X();		// current X pos of the left point
-				int64 xb = P.X();		// current pos of the right point
-				// slopes
-				int64 dxa = Q1.X() - P.X();
-				int64 dya = Q1.Y() - P.Y();
-				int64 dxb = Q2.X() - P.X();
-				int64 dyb = Q2.Y() - P.Y();
-				// step directions
-				int64 stepxa, stepya;
-				if (dya < 0) { dya = -dya;  stepya = -1; } else { stepya = 1; }
-				if (dxa < 0) { dxa = -dxa;  stepxa = -1; } else { stepxa = 1; }
-				dya <<= 1; dxa <<= 1;
-				int64 stepxb, stepyb;
-				if (dyb < 0) { dyb = -dyb;  stepyb = -1; } else { stepyb = 1; }
-				if (dxb < 0) { dxb = -dxb;  stepxb = -1; } else { stepxb = 1; }
-				dyb <<= 1; dxb <<= 1;
-				// fix range if required
-				if (checkrange)
-					{
-					if (!invy)
-						{
-						if (ytarget > _ly) { ytarget = _ly; }
-						if (y < 0)
-							{ 
-							// todo
-							// compute xa xb fraca fracb and then set y = 0;
-							}
-						}
-					else
-						{
-						if (ytarget > 1) { ytarget = 1; }
-						if (y < -_ly + 1)
-							{
-							// todo
-							// compute xa xb fraca fracb and then set y = -ly + 1;
-							}
-						}
 					}
 
-				int64 fraca = (dxa > dya) ? (dya - (dxa >> 1) - ind_ya) : (dxa - (dya >> 1) - ind_xa);
-				int64 fracb = (dxb > dyb) ? (dyb - (dxb >> 1) - ind_yb) : (dxb - (dyb >> 1) - ind_xb);
+				_bdir linea;
+				_bpos posa;
+				_init_line(P, Q1, linea, posa);
+
+				_bdir lineb;
+				_bpos posb;
+				_init_line(P, Q2, lineb, posb);
+
+				int64 y = posa.y;								// current Y pos
+				const bool USEWHILE = false;
 
 				// ok, ready to draw. 
 				if (invy)
 					{
 					// invy
-					if (dxa > dya)
+					if (linea.x_major)
 						{
-						if (dxb > dyb)
+						if (lineb.x_major)
 							{
-							if (stepxa < 0)
+							if (linea.stepx < 0)
 								{
-								if (stepxb > 0)
+								if (lineb.stepx > 0)
 									{
 									while (y < ytarget)
 										{
-										_hline_invy<blend, checkrange>(xa + 1, xb - 1, y, color);
-										while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-										while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
+										_hline_invy<blend, checkrange>(posa.x + 1, posb.x - 1, y, color);
+										_move_line_y_dir<true>(linea, posa);
+										_move_line_y_dir<true>(lineb, posb);
 										y++;
 										}
 									}
@@ -3967,22 +3914,22 @@ namespace mtools
 									{
 									while (y < ytarget)
 										{
-										while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-										_hline_invy<blend, checkrange>(xa + 1, xb, y, color);
-										while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
+										_move_line_y_dir<true>(lineb, posb);
+										_hline_invy<blend, checkrange>(posa.x + 1, posb.x, y, color);
+										_move_line_y_dir<true>(linea, posa);
 										y++;
 										}
 									}
 								}
 							else
 								{
-								if (stepxb > 0)
+								if (lineb.stepx > 0)
 									{
 									while (y < ytarget)
 										{
-										while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-										_hline_invy<blend, checkrange>(xa, xb - 1, y, color);
-										while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
+										_move_line_y_dir<true>(linea, posa);
+										_hline_invy<blend, checkrange>(posa.x, posb.x - 1, y, color);
+										_move_line_y_dir<true>(lineb, posb);
 										y++;
 										}
 									}
@@ -3990,9 +3937,9 @@ namespace mtools
 									{
 									while (y < ytarget)
 										{
-										while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-										while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-										_hline_invy<blend, checkrange>(xa, xb, y, color);
+										_move_line_y_dir<true>(linea, posa);
+										_move_line_y_dir<true>(lineb, posb);
+										_hline_invy<blend, checkrange>(posa.x, posb.x, y, color);
 										y++;
 										}
 									}
@@ -4000,13 +3947,13 @@ namespace mtools
 							}
 						else
 							{
-							if (stepxa < 0)
+							if (linea.stepx < 0)
 								{
 								while (y < ytarget)
 									{
-									_hline_invy<blend, checkrange>(xa + 1, xb - 1, y, color);
-									while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-									if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
+									_hline_invy<blend, checkrange>(posa.x + 1, posb.x - 1, y, color);
+									_move_line_y_dir<true>(linea, posa);
+									_move_line_y_dir<false>(lineb, posb);
 									y++;
 									}
 								}
@@ -4014,9 +3961,9 @@ namespace mtools
 								{
 								while (y < ytarget)
 									{
-									while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-									_hline_invy<blend, checkrange>(xa, xb - 1, y, color);
-									if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
+									_move_line_y_dir<true>(linea, posa);
+									_hline_invy<blend, checkrange>(posa.x, posb.x - 1, y, color);
+									_move_line_y_dir<false>(lineb, posb);
 									y++;
 									}
 								}
@@ -4024,15 +3971,15 @@ namespace mtools
 						}
 					else
 						{
-						if (dxb > dyb)
+						if (lineb.x_major)
 							{
-							if (stepxb > 0)
+							if (lineb.stepx > 0)
 								{
 								while (y < ytarget)
 									{
-									_hline_invy<blend, checkrange>(xa + 1, xb - 1, y, color);
-									while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-									if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
+									_hline_invy<blend, checkrange>(posa.x + 1, posb.x - 1, y, color);
+									_move_line_y_dir<true>(lineb, posb);
+									_move_line_y_dir<false>(linea, posa);
 									y++;
 									}
 								}
@@ -4040,9 +3987,9 @@ namespace mtools
 								{
 								while (y < ytarget)
 									{
-									while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-									_hline_invy<blend, checkrange>(xa + 1, xb, y, color);
-									if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
+									_move_line_y_dir<true>(lineb, posb);
+									_hline_invy<blend, checkrange>(posa.x + 1, posb.x, y, color);
+									_move_line_y_dir<false>(linea, posa);
 									y++;
 									}
 								}
@@ -4051,9 +3998,9 @@ namespace mtools
 							{
 							while (y < ytarget)
 								{
-								_hline_invy<blend, checkrange>(xa + 1, xb - 1, y, color);
-								if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
-								if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
+								_hline_invy<blend, checkrange>(posa.x + 1, posb.x - 1, y, color);
+								_move_line_y_dir<false>(lineb, posb);
+								_move_line_y_dir<false>(linea, posa);
 								y++;
 								}
 							}
@@ -4062,19 +4009,19 @@ namespace mtools
 				else
 					{
 					// not invy
-					if (dxa > dya)
+					if (linea.x_major)
 						{
-						if (dxb > dyb)
+						if (lineb.x_major)
 							{
-							if (stepxa < 0)
+							if (linea.stepx < 0)
 								{
-								if (stepxb > 0)
+								if (lineb.stepx > 0)
 									{
 									while (y < ytarget)
 										{
-										_hline<blend, checkrange>(xa + 1, xb - 1, y, color);
-										while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-										while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
+										_hline<blend, checkrange>(posa.x + 1, posb.x - 1, y, color);
+										_move_line_y_dir<true>(linea, posa);
+										_move_line_y_dir<true>(lineb, posb);
 										y++;
 										}
 									}
@@ -4082,22 +4029,22 @@ namespace mtools
 									{
 									while (y < ytarget)
 										{
-										while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-										_hline<blend, checkrange>(xa + 1, xb, y, color);
-										while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
+										_move_line_y_dir<true>(lineb, posb);
+										_hline<blend, checkrange>(posa.x + 1, posb.x, y, color);
+										_move_line_y_dir<true>(linea, posa);
 										y++;
 										}
 									}
 								}
 							else
 								{
-								if (stepxb > 0)
+								if (lineb.stepx > 0)
 									{
 									while (y < ytarget)
 										{
-										while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-										_hline<blend, checkrange>(xa, xb - 1, y, color);
-										while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
+										_move_line_y_dir<true>(linea, posa);
+										_hline<blend, checkrange>(posa.x, posb.x - 1, y, color);
+										_move_line_y_dir<true>(lineb, posb);
 										y++;
 										}
 									}
@@ -4105,9 +4052,9 @@ namespace mtools
 									{
 									while (y < ytarget)
 										{
-										while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-										while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-										_hline<blend, checkrange>(xa, xb, y, color);
+										_move_line_y_dir<true>(linea, posa);
+										_move_line_y_dir<true>(lineb, posb);
+										_hline<blend, checkrange>(posa.x, posb.x, y, color);
 										y++;
 										}
 									}
@@ -4115,13 +4062,13 @@ namespace mtools
 							}
 						else
 							{
-							if (stepxa < 0)
+							if (linea.stepx < 0)
 								{
 								while (y < ytarget)
 									{
-									_hline<blend, checkrange>(xa + 1, xb - 1, y, color);
-									while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-									if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
+									_hline<blend, checkrange>(posa.x + 1, posb.x - 1, y, color);
+									_move_line_y_dir<true>(linea, posa);
+									_move_line_y_dir<false>(lineb, posb);
 									y++;
 									}
 								}
@@ -4129,9 +4076,9 @@ namespace mtools
 								{
 								while (y < ytarget)
 									{
-									while (fraca < 0) { xa += stepxa; fraca += dya; } xa += stepxa; fraca += (dya - dxa);
-									_hline<blend, checkrange>(xa, xb - 1, y, color);
-									if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
+									_move_line_y_dir<true>(linea, posa);
+									_hline<blend, checkrange>(posa.x, posb.x - 1, y, color);
+									_move_line_y_dir<false>(lineb, posb);
 									y++;
 									}
 								}
@@ -4139,15 +4086,15 @@ namespace mtools
 						}
 					else
 						{
-						if (dxb > dyb)
+						if (lineb.x_major)
 							{
-							if (stepxb > 0)
+							if (lineb.stepx > 0)
 								{
 								while (y < ytarget)
 									{
-									_hline<blend, checkrange>(xa + 1, xb - 1, y, color);
-									while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-									if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
+									_hline<blend, checkrange>(posa.x + 1, posb.x - 1, y, color);
+									_move_line_y_dir<true>(lineb, posb);
+									_move_line_y_dir<false>(linea, posa);
 									y++;
 									}
 								}
@@ -4155,9 +4102,9 @@ namespace mtools
 								{
 								while (y < ytarget)
 									{
-									while (fracb < 0) { xb += stepxb; fracb += dyb; } xb += stepxb; fracb += (dyb - dxb);
-									_hline<blend, checkrange>(xa + 1, xb, y, color);
-									if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
+									_move_line_y_dir<true>(lineb, posb);
+									_hline<blend, checkrange>(posa.x + 1, posb.x, y, color);
+									_move_line_y_dir<false>(linea, posa);
 									y++;
 									}
 								}
@@ -4166,9 +4113,9 @@ namespace mtools
 							{
 							while (y < ytarget)
 								{
-								_hline<blend, checkrange>(xa + 1, xb - 1, y, color);
-								if (fraca >= 0) { xa += stepxa; fraca -= dya; }  fraca += dxa;
-								if (fracb >= 0) { xb += stepxb; fracb -= dyb; }  fracb += dxb;
+								_hline<blend, checkrange>(posa.x + 1, posb.x - 1, y, color);
+								_move_line_y_dir<false>(lineb, posb);
+								_move_line_y_dir<false>(linea, posa);
 								y++;
 								}
 							}

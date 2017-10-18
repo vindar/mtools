@@ -1110,16 +1110,17 @@ void test_b()
 
 	cout.getKey();
 
-	int e = 150;
+	int e = -30;
 
 
 
-	MT2004_64 gen(1);
+	MT2004_64 gen(2);
 
-
+	int j= 0; 
 
 	while (1)
 		{
+		cout << j << "\n"; 
 		im.clear(RGBc(230,230,230));
 		iVec2 P1(Unif_int(0 - e, LX - 1 + e, gen), Unif_int(0 - e, LY - 1 + e, gen));
 		iVec2 P2(Unif_int(0 - e, LX - 1 + e, gen), Unif_int(0 - e, LY - 1 + e, gen));
@@ -1183,6 +1184,35 @@ int main(int argc, char *argv[])
 	MTOOLS_SWAP_THREADS(argc, argv);  // swap main/fltk threads on OSX
 	parseCommandLine(argc, argv, true); // parse the command line, interactive mode
 
+
+
+
+
+	Image im(100, 100); 
+
+	Image::_bdir line;
+	Image::_bpos pos;
+
+
+	iVec2 P1(10, 10);
+	iVec2 P2(150, 100);
+
+
+	im._init_line(P1, P2, line, pos);
+
+	int64 N = 100000000;
+	int64 tot = 12;
+	mtools::Chronometer();
+	for (int64 i = 0; i < N; i++)
+		{
+
+		im._move_line_y_dir<true>(line, pos);
+
+		tot += (pos.x >> 2) + (pos.y << 2);
+		}
+	cout << "done in : " << mtools::Chronometer() << " for    " << tot << "\n";
+	cout.getKey();
+	return 0;
 
 	//test_c();
 
