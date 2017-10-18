@@ -3360,6 +3360,39 @@ namespace mtools
 
 
 			/**
+			* Move the position pos by a given number of unit in the horizontal direction
+			*
+			* [x_major could be deduced from linedir but is given as template paramter for speed optimization purposes]
+			*/
+			template<bool x_major> MTOOLS_FORCEINLINE void _move_line_x_dir(const _bdir & linedir, _bpos & pos, const int64 lenx)
+				{
+				MTOOLS_ASSERT(linedir.x_major == x_major);  // make sure template argument supplied is correct. 
+				if (x_major) // compiler optimizes away the template conditionals
+					{
+					pos.x    += linedir.stepx*lenx;
+					pos.frac += linedir.dy*lenx;
+					int64 u   = pos.frac / linedir.dx;
+					pos.y    += linedir.stepy*u;
+					pos.frac -= u*linedir.dx;
+					if (pos.frac >= linedir.dy) { pos.frac -= linedir.dx; pos.y++; }
+					}
+				else
+					{
+					int64 k = ((lenx - 1)*linedir.dy) / linedir.dx;
+					pos.frac += k*linedir.dx;
+					pos.y += k*linedir.stepy;
+					int64 u = pos.frac / linedir.dy;
+					pos.frac -= u*linedir.dy;
+					if (pos.frac >= linedir.dx) { u++; pos.frac -= linedir.dy; }
+					MTOOLS_ASSERT((u <= lenx) && (u >= lenx - 4));
+					pos.x += u*linedir.stepx;
+					while (u != lenx) { _move_line_x_dir<x_major>(linedir, pos); u++; }
+					}
+				}
+
+
+
+			/**
 			* Move the position pos by one pixel vertically along the given bresenham line.
 			*
 			* [x_major could be deduced from linedir but is given as template paramter for speed optimization purposes]
@@ -3380,6 +3413,38 @@ namespace mtools
 					{
 					if (pos.frac >= 0) { pos.x += linedir.stepx; pos.frac -= linedir.dy; }
 					pos.y += linedir.stepy; pos.frac += linedir.dx;
+					}
+				}
+
+
+			/**
+			* Move the position pos along a line by a given number of unit in the vertical direction
+			*
+			* [x_major could be deduced from linedir but is given as template paramter for speed optimization purposes]
+			*/
+			template<bool x_major> MTOOLS_FORCEINLINE void _move_line_y_dir(const _bdir & linedir, _bpos & pos, const int64 leny)
+				{
+				MTOOLS_ASSERT(linedir.x_major == x_major);  // make sure tempalte argument supplied is correct. 
+				if (x_major) // compiler optimizes away the template conditionals
+					{
+					int64 k = ((leny-1)*linedir.dx) / linedir.dy;
+					pos.frac += k*linedir.dy; 
+					pos.x += k*linedir.stepx; 
+					int64 u = pos.frac/linedir.dx;
+					pos.frac -= u*linedir.dx;
+					if (pos.frac >= linedir.dy) { u++; pos.frac -= linedir.dx; }					
+					MTOOLS_ASSERT((u <= leny)&&(u >= leny-4)); 
+					pos.y += u*linedir.stepy;
+					while(u != leny) { _move_line_y_dir<x_major>(linedir, pos); u++; }
+					}
+				else
+					{
+					pos.y += linedir.stepy*leny;
+					pos.frac += linedir.dx*leny;
+					int64 u = pos.frac / linedir.dy;
+					pos.x += linedir.stepx*u;
+					pos.frac -= u*linedir.dy;
+					if (pos.frac >= linedir.dx) { pos.frac -= linedir.dy; pos.x++; }
 					}
 				}
 
@@ -3824,23 +3889,6 @@ namespace mtools
 					}				
 				}
 
-			/* used by _fill_interior_angle() */
-			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void _hline_invy(int64 x1, int64 x2, int64 y, RGBc color)
-				{ // compiler optimizes away the template conditional statements.
-				if (checkrange)
-					{
-					if ((y > 0) || (y <= -_ly)) return;
-					x1 = std::max<int64>(0, x1);
-					x2 = std::min<int64>(_lx - 1, x2);
-					}
-				RGBc * p = _data - y*_stride + x1;
-				while (x1 <= x2) 
-					{ 
-					if (blend) { (*p).blend(color); } else { *p = color; }
-					p++; x1++; 
-					}
-				}
-
 
 
 			/**
@@ -3864,18 +3912,12 @@ namespace mtools
 			 **/
 			template<bool blend, bool checkrange> inline void _fill_interior_angle(iVec2 P, iVec2 Q1, iVec2 Q2, RGBc color,bool fill_last)
 				{
-				// Y - mirror transform if needed
-				bool invy = false; 				
-				if (P.Y() > Q1.Y())
-					{
-					P.Y() = -P.Y();
-					Q1.Y() = -Q1.Y();
-					Q2.Y() = -Q2.Y();
-					invy = true;
-					}
-				int64 ytarget = Q1.Y() + (fill_last ? 1 : 0);	// height to reach	
-				if ( (Q1.X() - P.X())*(Q2.Y() - P.Y())  > (Q2.X() - P.X())*(Q1.Y() - P.Y()) ) 
-					{
+				int64 dir = (P.Y() > Q1.Y()) ? -1 : 1;				// y direction 
+				int64 y = P.Y();									// starting height
+				int64 ytarget = Q1.Y() + dir*(fill_last ? 1 : 0);	// height to reach	
+
+				if ((Q1.X() - P.X())*abs(Q2.Y() - P.Y())  > (Q2.X() - P.X())*abs(Q1.Y() - P.Y()))
+					{ // make sure Q1 is on the left and Q2 on the right. 
 					mtools::swap(Q1, Q2);
 					}
 
@@ -3887,237 +3929,140 @@ namespace mtools
 				_bpos posb;
 				_init_line(P, Q2, lineb, posb);
 
-				int64 y = posa.y;								// current Y pos
-				const bool USEWHILE = false;
-
-				// ok, ready to draw. 
-				if (invy)
+				// fix the range. 
+				if (dir > 0)
 					{
-					// invy
-					if (linea.x_major)
+					if (ytarget >= _ly) { ytarget = _ly; }
+					if ((ytarget <= 0)||(y >= ytarget)) return;
+					if (y < 0)
+						{ // move y up to 0
+						if (linea.x_major) _move_line_y_dir<true>(linea, posa, -y); else _move_line_y_dir<false>(linea, posa, -y);
+						if (lineb.x_major) _move_line_y_dir<true>(lineb, posb, -y); else _move_line_y_dir<false>(lineb, posb, -y);
+						y = 0;
+						MTOOLS_ASSERT((posa.y == y) && (posb.y == y));
+						}
+					}
+				else
+					{
+					if (ytarget < 0) { ytarget = -1; }
+					if ((ytarget >= _ly - 1) || (y <= ytarget)) return;
+					if (y > _ly - 1)
+						{ // move y down to ly-1
+						if (linea.x_major) _move_line_y_dir<true>(linea, posa, y - _ly + 1); else _move_line_y_dir<false>(linea, posa, y - _ly + 1);
+						if (lineb.x_major) _move_line_y_dir<true>(lineb, posb, y - _ly + 1); else _move_line_y_dir<false>(lineb, posb, y - _ly + 1);
+						y = _ly - 1;
+						MTOOLS_ASSERT((posa.y == y) && (posb.y == y));
+						}
+					}
+
+				if (linea.x_major)
+					{
+					if (lineb.x_major)
 						{
-						if (lineb.x_major)
+						if (linea.stepx < 0)
 							{
-							if (linea.stepx < 0)
+							if (lineb.stepx > 0)
 								{
-								if (lineb.stepx > 0)
+								while (y != ytarget)
 									{
-									while (y < ytarget)
-										{
-										_hline_invy<blend, checkrange>(posa.x + 1, posb.x - 1, y, color);
-										_move_line_y_dir<true>(linea, posa);
-										_move_line_y_dir<true>(lineb, posb);
-										y++;
-										}
-									}
-								else
-									{
-									while (y < ytarget)
-										{
-										_move_line_y_dir<true>(lineb, posb);
-										_hline_invy<blend, checkrange>(posa.x + 1, posb.x, y, color);
-										_move_line_y_dir<true>(linea, posa);
-										y++;
-										}
+									_hline<blend, checkrange>(posa.x + 1, posb.x - 1, y, color);
+									_move_line_y_dir<true>(linea, posa);
+									_move_line_y_dir<true>(lineb, posb);
+									y += dir;
 									}
 								}
 							else
 								{
-								if (lineb.stepx > 0)
+								while (y != ytarget)
 									{
-									while (y < ytarget)
-										{
-										_move_line_y_dir<true>(linea, posa);
-										_hline_invy<blend, checkrange>(posa.x, posb.x - 1, y, color);
-										_move_line_y_dir<true>(lineb, posb);
-										y++;
-										}
-									}
-								else
-									{
-									while (y < ytarget)
-										{
-										_move_line_y_dir<true>(linea, posa);
-										_move_line_y_dir<true>(lineb, posb);
-										_hline_invy<blend, checkrange>(posa.x, posb.x, y, color);
-										y++;
-										}
+									_move_line_y_dir<true>(lineb, posb);
+									_hline<blend, checkrange>(posa.x + 1, posb.x, y, color);
+									_move_line_y_dir<true>(linea, posa);
+									y += dir;
 									}
 								}
 							}
 						else
 							{
-							if (linea.stepx < 0)
+							if (lineb.stepx > 0)
 								{
-								while (y < ytarget)
+								while (y != ytarget)
 									{
-									_hline_invy<blend, checkrange>(posa.x + 1, posb.x - 1, y, color);
 									_move_line_y_dir<true>(linea, posa);
-									_move_line_y_dir<false>(lineb, posb);
-									y++;
+									_hline<blend, checkrange>(posa.x, posb.x - 1, y, color);
+									_move_line_y_dir<true>(lineb, posb);
+									y += dir;
 									}
 								}
 							else
 								{
-								while (y < ytarget)
+								while (y != ytarget)
 									{
 									_move_line_y_dir<true>(linea, posa);
-									_hline_invy<blend, checkrange>(posa.x, posb.x - 1, y, color);
-									_move_line_y_dir<false>(lineb, posb);
-									y++;
+									_move_line_y_dir<true>(lineb, posb);
+									_hline<blend, checkrange>(posa.x, posb.x, y, color);
+									y += dir;
 									}
 								}
 							}
 						}
 					else
 						{
-						if (lineb.x_major)
+						if (linea.stepx < 0)
 							{
-							if (lineb.stepx > 0)
+							while (y != ytarget)
 								{
-								while (y < ytarget)
-									{
-									_hline_invy<blend, checkrange>(posa.x + 1, posb.x - 1, y, color);
-									_move_line_y_dir<true>(lineb, posb);
-									_move_line_y_dir<false>(linea, posa);
-									y++;
-									}
-								}
-							else
-								{
-								while (y < ytarget)
-									{
-									_move_line_y_dir<true>(lineb, posb);
-									_hline_invy<blend, checkrange>(posa.x + 1, posb.x, y, color);
-									_move_line_y_dir<false>(linea, posa);
-									y++;
-									}
+								_hline<blend, checkrange>(posa.x + 1, posb.x - 1, y, color);
+								_move_line_y_dir<true>(linea, posa);
+								_move_line_y_dir<false>(lineb, posb);
+								y += dir;
 								}
 							}
 						else
 							{
-							while (y < ytarget)
+							while (y != ytarget)
 								{
-								_hline_invy<blend, checkrange>(posa.x + 1, posb.x - 1, y, color);
+								_move_line_y_dir<true>(linea, posa);
+								_hline<blend, checkrange>(posa.x, posb.x - 1, y, color);
 								_move_line_y_dir<false>(lineb, posb);
-								_move_line_y_dir<false>(linea, posa);
-								y++;
+								y += dir;
 								}
 							}
 						}
 					}
 				else
 					{
-					// not invy
-					if (linea.x_major)
+					if (lineb.x_major)
 						{
-						if (lineb.x_major)
+						if (lineb.stepx > 0)
 							{
-							if (linea.stepx < 0)
+							while (y != ytarget)
 								{
-								if (lineb.stepx > 0)
-									{
-									while (y < ytarget)
-										{
-										_hline<blend, checkrange>(posa.x + 1, posb.x - 1, y, color);
-										_move_line_y_dir<true>(linea, posa);
-										_move_line_y_dir<true>(lineb, posb);
-										y++;
-										}
-									}
-								else
-									{
-									while (y < ytarget)
-										{
-										_move_line_y_dir<true>(lineb, posb);
-										_hline<blend, checkrange>(posa.x + 1, posb.x, y, color);
-										_move_line_y_dir<true>(linea, posa);
-										y++;
-										}
-									}
-								}
-							else
-								{
-								if (lineb.stepx > 0)
-									{
-									while (y < ytarget)
-										{
-										_move_line_y_dir<true>(linea, posa);
-										_hline<blend, checkrange>(posa.x, posb.x - 1, y, color);
-										_move_line_y_dir<true>(lineb, posb);
-										y++;
-										}
-									}
-								else
-									{
-									while (y < ytarget)
-										{
-										_move_line_y_dir<true>(linea, posa);
-										_move_line_y_dir<true>(lineb, posb);
-										_hline<blend, checkrange>(posa.x, posb.x, y, color);
-										y++;
-										}
-									}
+								_hline<blend, checkrange>(posa.x + 1, posb.x - 1, y, color);
+								_move_line_y_dir<true>(lineb, posb);
+								_move_line_y_dir<false>(linea, posa);
+								y += dir;
 								}
 							}
 						else
 							{
-							if (linea.stepx < 0)
+							while (y != ytarget)
 								{
-								while (y < ytarget)
-									{
-									_hline<blend, checkrange>(posa.x + 1, posb.x - 1, y, color);
-									_move_line_y_dir<true>(linea, posa);
-									_move_line_y_dir<false>(lineb, posb);
-									y++;
-									}
-								}
-							else
-								{
-								while (y < ytarget)
-									{
-									_move_line_y_dir<true>(linea, posa);
-									_hline<blend, checkrange>(posa.x, posb.x - 1, y, color);
-									_move_line_y_dir<false>(lineb, posb);
-									y++;
-									}
+								_move_line_y_dir<true>(lineb, posb);
+								_hline<blend, checkrange>(posa.x + 1, posb.x, y, color);
+								_move_line_y_dir<false>(linea, posa);
+								y += dir;
 								}
 							}
 						}
 					else
 						{
-						if (lineb.x_major)
+						while (y != ytarget)
 							{
-							if (lineb.stepx > 0)
-								{
-								while (y < ytarget)
-									{
-									_hline<blend, checkrange>(posa.x + 1, posb.x - 1, y, color);
-									_move_line_y_dir<true>(lineb, posb);
-									_move_line_y_dir<false>(linea, posa);
-									y++;
-									}
-								}
-							else
-								{
-								while (y < ytarget)
-									{
-									_move_line_y_dir<true>(lineb, posb);
-									_hline<blend, checkrange>(posa.x + 1, posb.x, y, color);
-									_move_line_y_dir<false>(linea, posa);
-									y++;
-									}
-								}
-							}
-						else
-							{
-							while (y < ytarget)
-								{
-								_hline<blend, checkrange>(posa.x + 1, posb.x - 1, y, color);
-								_move_line_y_dir<false>(lineb, posb);
-								_move_line_y_dir<false>(linea, posa);
-								y++;
-								}
+							_hline<blend, checkrange>(posa.x + 1, posb.x - 1, y, color);
+							_move_line_y_dir<false>(lineb, posb);
+							_move_line_y_dir<false>(linea, posa);
+							y += dir;
 							}
 						}
 					}
