@@ -255,7 +255,7 @@ namespace mtools
             **/
             inline bool swallowPoint(const Vec<T, N> & pos)
                 {
-				if (B.isEmpty())
+				if (isEmpty())
 					{
 					min = pos;
 					max = pos;
@@ -537,7 +537,7 @@ namespace mtools
 			* Return true if this box is contained into the box B.
 			* An empty box is contained in any box (even an empty one).
 			*/
-			inline bool includedIn(const Box<T, N> & B) const
+			inline bool isIncludedIn(const Box<T, N> & B) const
 				{
 				return B.contain(*this);
 				}
