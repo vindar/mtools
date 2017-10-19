@@ -1720,6 +1720,7 @@ namespace mtools
 				}
 
 
+
 			/**
 			* Draw the interior of a triangle. Portion outside the image is clipped.
 			* The boundary lines are not drawn.
@@ -1737,6 +1738,114 @@ namespace mtools
 				{
 				draw_triangle_interior({ x1,y1 }, { x2,y2 }, { x3,y3 }, fillcolor, blending);
 				}
+
+
+
+			/**
+			* Draw a polygon.
+			*
+			* @param	nbvertices 	Number of vertices in the polygon.
+			* @param	tabPoints  	the list of points in clockwise or counterclockwise order.
+			* @param	color	   	The color tu use.
+			* @param	blending   	true to use blending.
+			* @param	antialiased	true to draw antialiased lines.
+			**/
+			inline void draw_polygon(size_t nbvertices, const iVec2 * tabPoints, RGBc color, bool blending, bool antialiased)
+				{
+				if (isEmpty()) return;
+				if (color.comp.A == 255) blending = false;
+				switch (nbvertices)
+					{
+					case 0: { return; }
+					case 1:
+						{
+						if (blending) blendPixel(*tabPoints, color); else setPixel(*tabPoints, color);
+						return;
+						}
+					case 2:
+						{
+						draw_line(tabPoints[0], tabPoints[1], color, true, blending, antialiased);
+						return;
+						}
+					case 3:
+						{
+						draw_triangle(tabPoints[0], tabPoints[1], tabPoints[2], color, blending, antialiased);
+						return;
+						}
+					default:
+						{
+						iBox2 box(0, _lx - 1, 0, _ly - 1);
+						if (antialiased)
+							{
+							for (size_t i = 0; i < nbvertices; i++)
+								{
+								iVec2 A = tabPoints[i];
+								iVec2 B = tabPoints[(i + 1) % nbvertices];
+								if (_csLineClip(A, B, box)) { if (blending) { _lineWuAA<true, false>(A, B, color, true); } else { _lineWuAA<false, false>(A, B, color, true); } }
+								}
+							return;
+							}
+						if (blending)
+							{
+							_lineBresenham<true, true>(tabPoints[0], tabPoints[1], color, true);
+							for (size_t i = 1; i < nbvertices - 1; i++)
+								{
+								_lineBresenham_avoid<true, true>(tabPoints[i], tabPoints[i + 1], tabPoints[i - 1], color, 0);
+								}
+							_lineBresenham_avoid_both_sides<true, true>(tabPoints[nbvertices - 1], tabPoints[0], tabPoints[nbvertices - 2], tabPoints[1], color);
+							return;
+							}
+						for (size_t i = 0; i < nbvertices; i++)
+							{
+							_lineBresenham<false, true>(tabPoints[i], tabPoints[(i + 1) % nbvertices], color, true);
+							}
+						}
+					}
+				}
+
+
+
+			/**
+			* Fill the interior of a convex polygon. The boundary lines are not drawn.
+			*
+			* @param	nbvertices 	Number of vertices in the polygon.
+			* @param	tabPoints  	the list of points in clockwise or counterclockwise order.
+			* @param	fillcolor  	The color to use.
+			* @param	blending   	true to use blending.
+			**/
+			inline void draw_convex_polygon_interior(size_t nbvertices, const iVec2 * tabPoints, RGBc fillcolor, bool blending)
+				{
+				if (isEmpty() || nbvertices < 3) return;
+				if (fillcolor.comp.A == 255) blending = false;
+				if (nbvertices == 3)
+					{
+					draw_triangle_interior(tabPoints[0], tabPoints[1], tabPoints[2], fillcolor, blending);
+					return;
+					}
+				//Compute the barycenter
+				double X = 0, Y = 0;
+				for (int i = 0; i < nbvertices; i++) { X += tabPoints[i].X(); Y += tabPoints[i].Y(); }
+				iVec2 G((int64)(X / nbvertices), (int64)(Y / nbvertices));
+				for (int i = 0; i < nbvertices; i++)
+					{
+					draw_triangle_interior(tabPoints[i], tabPoints[(i + 1) % nbvertices], G, fillcolor, blending);
+					}
+				if (blending)
+					{
+					_lineBresenham_avoid<true, true>(tabPoints[0], G, tabPoints[nbvertices - 1], tabPoints[1], fillcolor, 0);
+					for (int i = 1; i < nbvertices; i++)
+						{
+						_lineBresenham_avoid_both_sides<true, true>(tabPoints[i], G, tabPoints[i - 1], tabPoints[(i + 1) % nbvertices], tabPoints[0], tabPoints[i - 1], fillcolor);
+						}
+					return;
+					}
+				for (int i = 0; i < nbvertices; i++)
+					{
+					draw_line(G, tabPoints[i], fillcolor, false);
+					}
+				}
+
+
 
 
 			/**
@@ -3027,10 +3136,6 @@ namespace mtools
 
 
 
-
-
-
-
 			/* update a pixel */
 			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void  _updatePixel(int64 x,int64 y, RGBc color)
 				{
@@ -3628,6 +3733,95 @@ namespace mtools
 				}
 
 
+
+
+			/**
+			* Return the max intersection distance between([P,Q] and [P,Q2] starting from P. 
+			**/
+			template<bool checkrange> inline int64 _lineBresenham_max_intersection(iVec2 P, iVec2 Q, iVec2 Q2)
+				{
+				if ((P == Q)||(P == Q2)) return 1;
+
+				_bdir linea;
+				_bpos posa;
+				_init_line(P, Q, linea, posa);
+
+				_bdir lineb;
+				_bpos posb;
+				_init_line(P, Q2, lineb, posb);
+
+				int64 lena = _lengthBresenham(P, Q, true);
+				int64 lenb = _lengthBresenham(P, Q2, true);
+
+				int64 r = 0;
+				if (checkrange)
+					{
+					iBox2 B(0, _lx - 1, 0, _ly - 1);
+					r = _move_inside_box(linea, posa, B); // move the first line into the box. 
+					if (r < 0) return 1; // nothing to draw
+					lena -= r;
+					_move_line(lineb, posb, r); // move the second line
+					lenb -= r;
+					lena = std::min<int64>(lena, _lenght_inside_box(linea, posa, B)); // number of pixels still to draw. 
+					}
+
+				lena--;
+				lenb--;
+				int64 l = 0;
+				int64 maxp = 0;
+				if (linea.x_major)
+					{
+					if (lineb.x_major)
+						{
+						while ((l <= lena)&&(l <= lenb))
+							{
+							if ((posa.x == posb.x) && (posa.y == posb.y)) maxp = l;
+							_move_line<true>(linea, posa);
+							_move_line<true>(lineb, posb);
+							l++;
+							}
+						}
+					else
+						{
+						while ((l <= lena) && (l <= lenb))
+							{
+							if ((posa.x == posb.x) && (posa.y == posb.y)) maxp = l;
+							_move_line<true>(linea, posa);
+							_move_line<false>(lineb, posb);
+							l++;
+							}
+						}
+					}
+				else
+					{
+					if (lineb.x_major)
+						{
+						while ((l <= lena) && (l <= lenb))
+							{
+							if ((posa.x == posb.x) && (posa.y == posb.y)) maxp = l;
+							_move_line<false>(linea, posa);
+							_move_line<true>(lineb, posb);
+							l++;
+							}
+						}
+					else
+						{
+						while ((l <= lena) && (l <= lenb))
+							{
+							if ((posa.x == posb.x) && (posa.y == posb.y)) maxp = l;
+							_move_line<false>(linea, posa);
+							_move_line<false>(lineb, posb);
+							l++;
+							}
+						}
+					}
+				if (maxp == 0) return 1;
+				return r + maxp + 1;
+				}
+
+
+
+
 			/**
 			* Draw the segment [P,Q] with the bresenham line algorithm while skipping the pixels
 			* which also belong to the segments [P,P2] and [P,P3].  (Always perfect.)
@@ -3832,26 +4026,14 @@ namespace mtools
 			 **/
 			template<bool blend, bool checkrange> inline void _lineBresenham_avoid_both_sides(iVec2 P, iVec2 Q, iVec2 P2, iVec2 Q2, RGBc color)
 				{
-				if (P2 == Q2){ _lineBresenham_avoid_both_sides(P, Q, P2, color); return; }
-				if (P == Q) { return; }
-				fVec2 fPQ  =  Q - P; fPQ.normalize();
-				fVec2 fPP2 = P2 - P; fPP2.normalize();
-				fVec2 fQQ2 = Q2 - Q; fQQ2.normalize();
-
-				double prodP = dotProduct(fPQ, fPP2);
-				double prodQ = -dotProduct(fPQ, fQQ2);
-
-				double lP = (2 * prodP) / (sqrt(1 - prodP*prodP));  if (lP < 1) { lP = 1; } else if (lP > 10e15) { lP = 10e15; }
-				int64 iP = (int64)lP; if (iP > _lengthBresenham(P, P2)) { iP = _lengthBresenham(P, P2) + 1; }
-
-				double lQ = (2 * prodQ) / (sqrt(1 - prodQ*prodQ));  if (lQ < 1) { lQ = 1; } else if (lQ > 10e15) { lQ = 10e15; }
-				int64 iQ = (int64)lQ; if (iQ > _lengthBresenham(Q, Q2)) { iQ = _lengthBresenham(Q, Q2) + 1; }
-
-				const int64 lPQ = _lengthBresenham(P, Q);
-				int64 mP = (iP + (lPQ + 1 - iQ)) >> 1; if (mP < 1) { mP = 1; }	else { if (mP > lPQ) mP = lPQ; }
-				int64 mQ = lPQ + 1 - mP;
-				_lineBresenham_avoid<blend, checkrange>(P, Q, P2, color, mQ);
-				_lineBresenham_avoid<blend, checkrange>(Q, P, Q2, color, mP);
+				const int64 L = _lengthBresenham(P, Q);				
+				int64 pl = _lineBresenham_max_intersection<checkrange>(P, Q, P2);
+				if (pl > L) { pl = L; } else if (pl < 1) pl = 1;
+				int64 ql = _lineBresenham_max_intersection<checkrange>(Q, P, Q2);
+				if (ql > L) { ql = L; } else if (ql < 1) ql = 1;
+				int64 M = (pl + ((L+1) - ql)) >> 1;
+				_lineBresenham_avoid<blend, checkrange>(P, Q, P2, color, L + 1 - M);
+				_lineBresenham_avoid<blend, checkrange>(Q, P, Q2, color, M);
 				}
 
 
@@ -3869,35 +4051,32 @@ namespace mtools
 			**/
 			template<bool blend, bool checkrange> inline void _lineBresenham_avoid_both_sides(iVec2 P, iVec2 Q, iVec2 P2, iVec2 P3, iVec2 Q2, iVec2 Q3, RGBc color)
 				{
+				const int64 L = _lengthBresenham(P, Q);
+				
+				int64 pl2 = _lineBresenham_max_intersection<checkrange>(P, Q, P2);
+				if (pl2 > L) { pl2 = L; } else if (pl2 < 1) pl2 = 1;
+				int64 pl3 = _lineBresenham_max_intersection<checkrange>(P, Q, P3);
+				if (pl3 > L) { pl3 = L; } else if (pl3 < 1) pl3 = 1;
+				int64 pl = std::max<int64>(pl2, pl3);
+
+				int64 ql2 = _lineBresenham_max_intersection<checkrange>(Q, P, Q2);
+				if (ql2 > L) { ql2 = L; } else if (ql2 < 1) ql2 = 1;
+				int64 ql3 = _lineBresenham_max_intersection<checkrange>(Q, P, Q3);
+				if (ql3 > L) { ql3 = L; } else if (ql3 < 1) ql3 = 1;
+				int64 ql = std::max<int64>(ql2, ql3);
+
+				int64 M = (pl + ((L + 1) - ql)) >> 1;
+				_lineBresenham_avoid<blend, checkrange>(P, Q, P2, P3, color, L + 1 - M);
+				_lineBresenham_avoid<blend, checkrange>(Q, P, Q2, Q3, color, M);
+
+				/*
 				if (P == Q) return;
-				fVec2 fPQ = Q - P; fPQ.normalize();
-				fVec2 fPP2 = P2 - P; fPP2.normalize();
-				fVec2 fPP3 = P3 - P; fPP3.normalize();
-				fVec2 fQQ2 = Q2 - Q; fQQ2.normalize();
-				fVec2 fQQ3 = Q3 - P; fQQ3.normalize();
-
-				double prodP2 = dotProduct(fPQ, fPP2);
-				double prodP3 = dotProduct(fPQ, fPP3);
-				double prodQ2 = -dotProduct(fPQ, fQQ2);
-				double prodQ3 = -dotProduct(fPQ, fQQ3);
-
-				double lP2 = (2 * prodP2) / (sqrt(1 - prodP2*prodP2));  if (lP2 < 1) { lP2 = 1; } else if (lP2 > 10e15) { lP2 = 10e15; }
-				int64 iP2 = (int64)lP2; if (iP2 > _lengthBresenham(P, P2)) { iP2 = _lengthBresenham(P, P2) + 1; }
-				double lP3 = (2 * prodP3) / (sqrt(1 - prodP3*prodP3));  if (lP3 < 1) { lP3 = 1; } else if (lP3 > 10e15) { lP3 = 10e15; }
-				int64 iP3 = (int64)lP3; if (iP3 > _lengthBresenham(P, P3)) { iP3 = _lengthBresenham(P, P3) + 1; }
-				int64 iP = std::max<int64>(iP2, iP3);
-
-				double lQ2 = (2 * prodQ2) / (sqrt(1 - prodQ2*prodQ2));  if (lQ2 < 1) { lQ2 = 1; } else if (lQ2 > 10e15) { lQ2 = 10e15; }
-				int64 iQ2 = (int64)lQ2; if (iQ2 > _lengthBresenham(Q, Q2)) { iQ2 = _lengthBresenham(Q, Q2) + 1; }
-				double lQ3 = (2 * prodQ3) / (sqrt(1 - prodQ3*prodQ3));  if (lQ3 < 1) { lQ3 = 1; } else if (lQ3 > 10e15) { lQ3 = 10e15; }
-				int64 iQ3 = (int64)lQ3; if (iQ3 > _lengthBresenham(Q, Q3)) { iQ3 = _lengthBresenham(Q, Q3) + 1; }
-				int64 iQ = std::max<int64>(iP2, iP3);
-
-				const int64 lPQ = _lengthBresenham(P, Q);
-				int64 mP = (iP + (lPQ + 1 - iQ)) >> 1; if (mP < 1) { mP = 1; }	else { if (mP > lPQ) mP = lPQ; }
-				int64 mQ = lPQ + 1 - mP;
-				_lineBresenham_avoid<blend, checkrange>(P, Q, P2, color, mQ);
-				_lineBresenham_avoid<blend, checkrange>(Q, P, Q2, color, mP);
+				const int64 L = _lengthBresenham(P, Q);
+				int64 mQ = L/2;
+				int64 mP = L + 1 - mQ;
+				_lineBresenham_avoid<blend, checkrange>(P, Q, P2, P3, color, mQ);
+				_lineBresenham_avoid<blend, checkrange>(Q, P, Q2, Q3, color, mP);
+				*/
 				}
 
 
