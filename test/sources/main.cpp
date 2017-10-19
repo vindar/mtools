@@ -1156,7 +1156,7 @@ void test_b()
 
 		int64 a = 50;
 		int64 b = 50;
-
+		/*
 
 		im.draw_circle({ 450, 500 }, 80, RGBc::c_Blue.getOpacity(0.1),true);
 
@@ -1167,10 +1167,25 @@ void test_b()
 		
 		iBox2 BB(100, 451, 300, 522);
 
+
 		im.draw_filled_rectangle(BB, RGBc::c_Green.getOpacity(0.05),true);
 		im.draw_rectangle(BB, RGBc::c_Blue.getOpacity(1),true);
 		im.draw_filled_ellipse_in_rect(BB, RGBc::c_Red.getOpacity(0.5), true, RGBc::c_Black.getOpacity(0.3));
 
+		*/
+
+		int64 xmin = 400;
+		int64 xmax = 550; 
+		int64 ymin = 300;
+		int64 ymax = 401;
+
+		iBox2 BB(xmin,xmax,ymin,ymax);
+		im.draw_filled_rectangle(BB, RGBc::c_Green.getOpacity(0.05), true);
+		im.draw_rectangle(BB, RGBc::c_Blue.getOpacity(1), true);
+
+		im._draw_ellipse_in_rect_AA<true,true>(xmin, ymin, xmax, ymax, RGBc::c_Red.getOpacity(0.3));
+
+		//im._draw_circle_AA<true,true>(500, 500, 100, RGBc::c_Red);
 
 		plotter.redraw();
 

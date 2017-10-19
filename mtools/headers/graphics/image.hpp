@@ -3539,6 +3539,20 @@ namespace mtools
 
 
 
+
+			/** update a pixel **/
+			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void  _updatePixel(int64 x, int64 y, RGBc color, int32 op)
+				{
+				MTOOLS_ASSERT(op >= 0);
+				MTOOLS_ASSERT((checkrange) || ((x >= 0) && (x < _lx) && (y >= 0) && (y < _ly)));
+				// compiler optimizes away the unused cases. 
+				if ((!blend) && (!checkrange)) { op *= color.comp.A; op >>= 8; color.comp.A = (uint8)op; operator()(x, y) = color; }
+				if ((!blend) && (checkrange)) { op *= color.comp.A; op >>= 8; color.comp.A = (uint8)op; setPixel(x, y, color); }
+				if ((blend) && (!checkrange)) { operator()(x, y).blend(color, (uint32)op); }
+				if ((blend) && (checkrange)) { blendPixel(x, y, color, (uint32)op); }
+				}
+
+
 			/** update a pixel **/
 			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void  _updatePixel(int64 x,int64 y, RGBc color)
 				{
@@ -4885,6 +4899,168 @@ namespace mtools
 					}
 				while (x < 0);
 				}
+
+
+
+			/* draw an antialiased circle */
+			template<bool blend, bool checkrange> void _draw_circle_AA(int xm, int ym, int r, RGBc color)
+				{ 
+				int64 x = -r, y = 0;
+				int64 x2, e2, err = 2 - 2 * r;
+				int32 i;
+				r = 1 - err;
+				do 
+					{
+					i = 256 * abs(err - 2 * (x + y) - 2) / r;
+					i = 256 - i;
+					_updatePixel<blend, checkrange>(xm - x, ym + y, color, i);
+					_updatePixel<blend, checkrange>(xm - y, ym - x, color, i);
+					_updatePixel<blend, checkrange>(xm + x, ym - y, color, i);
+					_updatePixel<blend, checkrange>(xm + y, ym + x, color, i);
+					e2 = err; x2 = x;
+					if (err + y > 0) {
+						i = 256 * (err - 2 * x - 1) / r;
+						if (i <= 256) {
+							i = 256 - i;
+							_updatePixel<blend, checkrange>(xm - x, ym + y + 1, color, i);
+							_updatePixel<blend, checkrange>(xm - y - 1, ym - x, color, i);
+							_updatePixel<blend, checkrange>(xm + x, ym - y - 1, color, i);
+							_updatePixel<blend, checkrange>(xm + y + 1, ym + x, color, i);
+							}
+						err += ++x * 2 + 1;
+						}
+					if (e2 + x2 <= 0) {
+						i = 256 * (2 * y + 3 - e2) / r;
+						if (i <= 256) {
+							i = 256 - i;
+							_updatePixel<blend, checkrange>(xm - x2 - 1, ym + y, color, i);
+							_updatePixel<blend, checkrange>(xm - y, ym - x2 - 1, color, i);
+							_updatePixel<blend, checkrange>(xm + x2 + 1, ym - y, color, i);
+							_updatePixel<blend, checkrange>(xm + y, ym + x2 + 1, color, i);
+							}
+						err += ++y * 2 + 1;
+						}
+					}
+				while (x < 0);
+				}
+
+
+			/* draw an antialiased ellipse inside a rectangle */
+			/*
+			template<bool blend, bool checkrange> void _draw_ellipse_in_rect_AA(int64 x0, int64 y0, int64 x1, int64 y1, RGBc color)
+				{ 
+				int64 a = std::abs<int64>(x1 - x0), b = std::abs<int64>(y1 - y0), b1 = b & 1;
+				float dx = 4 * (a - 1.0)*b*b, dy = 4 * (b1 + 1)*a*a;
+				float ed, i, err = b1*a*a - dx + dy; 
+				bool f;
+				if (a == 0 || b == 0) return _lineBresenham<blend,checkrange>({ x0, y0 }, { x1, y1 },color,true);
+				if (x0 > x1) { x0 = x1; x1 += a; }
+				if (y0 > y1) y0 = y1;
+				y0 += (b + 1) / 2; y1 = y0 - b1;
+				a = 8 * a*a; b1 = 8 * b*b;
+				for (;;) 
+					{ 
+					i = std::min<float>(dx, dy); ed = std::max<float>(dx, dy);
+					if (y0 == y1 + 1 && err > dy && a > b1) ed = 256 * 4. / a;
+					else ed = 256 / (ed + 2 * ed*i*i / (4 * ed*ed + i*i));
+					i = ed*fabs(err + dx - dy);
+					int32 op = (int32)(256 - i);
+					_updatePixel<blend, checkrange>(x0, y0, color, op);
+					_updatePixel<blend, checkrange>(x0, y1, color, op);
+					_updatePixel<blend, checkrange>(x1, y0, color, op);
+					_updatePixel<blend, checkrange>(x1, y1, color, op);
+					if (f = 2 * err + dy >= 0) 
+						{
+						if (x0 >= x1) break;
+						i = ed*(err + dx);
+						if (i < 256)
+							{
+							int32 op = (int32)(256 - i);
+							_updatePixel<blend, checkrange>(x0, y0 + 1, color, op);
+							_updatePixel<blend, checkrange>(x0, y1 - 1, color, op);
+							_updatePixel<blend, checkrange>(x1, y0 + 1, color, op);
+							_updatePixel<blend, checkrange>(x1, y1 - 1, color, op);
+							}          
+						}
+					if (2 * err <= dx) 
+						{                                           
+						i = ed*(dy - err);
+						if (i < 256) 
+							{
+							int32 op = (int32)(256 - i);
+							_updatePixel<blend, checkrange>(x0 + 1, y0, color, op);
+							_updatePixel<blend, checkrange>(x0 + 1, y1, color, op);
+							_updatePixel<blend, checkrange>(x1 - 1, y0, color, op);
+							_updatePixel<blend, checkrange>(x1 - 1, y1, color, op);
+							}
+						y0++; y1--; err += dy += a;
+						}
+					if (f) { x0++; x1--; err -= dx -= b1; }
+					}
+				if (--x0 == x1++)
+					while (y0 - y1 < b) 
+						{
+						i = 256 * 4 * fabs(err + dx) / b1; 
+						int32 op = (int32)(256 - i);
+						if (op > 0)
+							{
+							_updatePixel<blend, checkrange>(x0, ++y0, color, op);
+							_updatePixel<blend, checkrange>(x1, y0, color, op);
+							_updatePixel<blend, checkrange>(x0, --y1, color, op);
+							_updatePixel<blend, checkrange>(x1, y1, color, op);
+							}
+						err += dy += a;
+						}
+				}
+				*/
+
+				template<bool blend, bool checkrange> void _draw_ellipse_in_rect_AA(int64 x0, int64 y0, int64 x1, int64 y1, RGBc color)
+					{ 
+					long a = abs(x1 - x0), b = abs(y1 - y0), b1 = b & 1;
+					float dx = 4 * (a - 1.0)*b*b, dy = 4 * (b1 + 1)*a*a;
+					float ed, i, err = b1*a*a - dx + dy; 
+					bool f;
+
+					if (a == 0 || b == 0) return plotLine(x0, y0, x1, y1);
+					if (x0 > x1) { x0 = x1; x1 += a; }
+					if (y0 > y1) y0 = y1;
+					y0 += (b + 1) / 2; y1 = y0 - b1; 
+					a = 8 * a*a; b1 = 8 * b*b;
+
+					for (;;) {
+						i = min(dx, dy); ed = max(dx, dy);
+						if (y0 == y1 + 1 && err > dy && a > b1) ed = 255 * 4. / a;           /* x-tip */
+						else ed = 255 / (ed + 2 * ed*i*i / (4 * ed*ed + i*i));             /* approximation */
+						i = ed*fabs(err + dx - dy);           /* get intensity value by pixel error */
+						setPixelAA(x0, y0, i); setPixelAA(x0, y1, i);
+						setPixelAA(x1, y0, i); setPixelAA(x1, y1, i);
+
+						if (f = 2 * err + dy >= 0) {                  /* x step, remember condition */
+							if (x0 >= x1) break;
+							i = ed*(err + dx);
+							if (i < 255) {
+								setPixelAA(x0, y0 + 1, i); setPixelAA(x0, y1 - 1, i);
+								setPixelAA(x1, y0 + 1, i); setPixelAA(x1, y1 - 1, i);
+								}          /* do error increment later since values are still needed */
+							}
+						if (2 * err <= dx) {                                            /* y step */
+							i = ed*(dy - err);
+							if (i < 255) {
+								setPixelAA(x0 + 1, y0, i); setPixelAA(x1 - 1, y0, i);
+								setPixelAA(x0 + 1, y1, i); setPixelAA(x1 - 1, y1, i);
+								}
+							y0++; y1--; err += dy += a;
+							}
+						if (f) { x0++; x1--; err -= dx -= b1; }            /* x error increment */
+						}
+					if (--x0 == x1++)                       /* too early stop of flat ellipses */
+						while (y0 - y1 < b) {
+							i = 255 * 4 * fabs(err + dx) / b1;               /* -> finish tip of ellipse */
+							setPixelAA(x0, ++y0, i); setPixelAA(x1, y0, i);
+							setPixelAA(x0, --y1, i); setPixelAA(x1, y1, i);
+							err += dy += a;
+							}
+					}
 
 
 			/** Elipse, draw both the ellipse and its interior   
