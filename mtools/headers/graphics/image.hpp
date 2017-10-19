@@ -2362,6 +2362,30 @@ namespace mtools
 				}
 
 
+			/**
+			 * Draw a quadratic (rational) Bezier curve.
+			 *
+			 * @param	P1				The first point.
+			 * @param	P2				The second point.
+			 * @param	PC				The control point.
+			 * @param	wc				The control point weight. Must be positive (faster for wc = 1 =
+			 * 							classic quad Bezier curve).
+			 * @param	color			The color to use
+			 * @param	blending		true to use blending.
+			 * @param	antialiasing	true to use antialiasing.
+			 **/
+			void draw_quad_bezier(iVec2 P1, iVec2 P2, iVec3 PC, float wc, RGBc color, bool blending, bool antialiasing)
+				{
+				if ((isEmpty()) || (wc <= 0)) return;
+
+				iBox2 B;
+	
+				_plotQuadBezier<true, true,true>(0, 0, 0, 0, 0, 0, RGBc::c_Red);
+				_plotQuadRationalBezier<true,true,true>(0, 0, 0, 0, 0, 0, 0.1f, RGBc::c_Red);
+				}
+
+
+
 
 
 
@@ -4819,12 +4843,46 @@ namespace mtools
 				}
 
 
+			/**
+			* Draw an tick antialiased line using Bresenham's algorithm.
+			* The end point is drawn.
+			* A little slower and 'ticker' than Wu's algorithm
+			*  adapted from Alois Zingl  (http://members.chello.at/easyfilter/bresenham.html)
+			**/
+			template<bool blend, bool checkrange>  inline void _lineBresenhamAA(iVec2 P1, iVec2 P2, RGBc color)
+				{
+				int64 & x0 = P1.X(); int64 & y0 = P1.Y();
+				int64 & x1 = P2.X(); int64 & y1 = P2.Y();
+				int64 sx = ((x0 < x1) ? 1 : -1), sy = ((y0 < y1) ? 1 : -1), x2;
+				int64 dx = abs(x1 - x0), dy = abs(y1 - y0), err = dx*dx + dy*dy;
+				int64 e2 = err == 0 ? 1 : ((int64)(0xffff7fl / sqrt(err)));
+				dx *= e2; dy *= e2; err = dx - dy;
+				for (; ; )
+					{
+					_updatePixel<blend, checkrange>(x0, y0, color, 256 - (int32)mtools::convertAlpha_0xFF_to_0x100((uint32)(abs(err - dx + dy) >> 16)));
+					e2 = err; x2 = x0;
+					if (2 * e2 >= -dx)
+						{
+						if (x0 == x1) break;
+						if (e2 + dy < 0xff0000l) _updatePixel<blend, checkrange>(x0, y0 + sy, color, 256 - (int32)mtools::convertAlpha_0xFF_to_0x100((uint32)((e2 + dy) >> 16)));
+						err -= dy; x0 += sx;
+						}
+					if (2 * e2 <= dy)
+						{
+						if (y0 == y1) break;
+						if (dx - e2 < 0xff0000l) _updatePixel<blend, checkrange>(x2 + sx, y0, color, 256 - (int32)mtools::convertAlpha_0xFF_to_0x100((uint32)((dx - e2) >> 16)));
+						err += dx; y0 += sy;
+						}
+					}
+				}
 
 
 			/**
 			* Draw an tick antialiased line using Bresenham's algorithm.
 			* 
 			* TODO : NOT VERY GOOD, IMPROVE IT. 
+			* 
+			*  adapted from Alois Zingl  (http://members.chello.at/easyfilter/bresenham.html) 
 			**/
 			template<bool blend, bool checkrange>  inline void _tickLineBresenhamAA(iVec2 P1, iVec2 P2, float wd, RGBc color)
 				{
@@ -4896,12 +4954,13 @@ namespace mtools
 					return;
 					}
 				}
-
-
-
-
 			
-			/** circle, draw both the circle and its interior **/ 
+
+
+			/**
+			 * Draw circle. both interior and outline.
+			 *  adapted from Alois Zingl  (http://members.chello.at/easyfilter/bresenham.html)
+			 **/
 			template<bool blend, bool checkrange,bool outline, bool fill>  inline  void _draw_circle(int64 xm, int64 ym, int64 r, RGBc color, RGBc fillcolor)
 				{
 				int64 x = -r, y = 0, err = 2 - 2 * r;
@@ -4941,7 +5000,10 @@ namespace mtools
 
 
 
-			/* draw an antialiased circle */
+			/**
+			 * Draw an antialiased circle
+			 * adapted from Alois Zingl  (http://members.chello.at/easyfilter/bresenham.html)
+			 **/
 			template<bool blend, bool checkrange> void _draw_circle_AA(int64 xm, int64 ym, int64 r, RGBc color)
 				{ 
 				int64 x = -r, y = 0;
@@ -4950,7 +5012,7 @@ namespace mtools
 				r = 1 - err;
 				do 
 					{
-					i = 256 * abs(err - 2 * (x + y) - 2) / r;
+					i = (int32)(256 * abs(err - 2 * (x + y) - 2) / r);
 					i = 256 - i;
 					_updatePixel<blend, checkrange>(xm - x, ym + y, color, i);
 					_updatePixel<blend, checkrange>(xm - y, ym - x, color, i);
@@ -4958,7 +5020,7 @@ namespace mtools
 					_updatePixel<blend, checkrange>(xm + y, ym + x, color, i);
 					e2 = err; x2 = x;
 					if (err + y > 0) {
-						i = 256 * (err - 2 * x - 1) / r;
+						i = (int32)(256 * (err - 2 * x - 1) / r);
 						if (i <= 256) {
 							i = 256 - i;
 							_updatePixel<blend, checkrange>(xm - x, ym + y + 1, color, i);
@@ -4969,7 +5031,7 @@ namespace mtools
 						err += ++x * 2 + 1;
 						}
 					if (e2 + x2 <= 0) {
-						i = 256 * (2 * y + 3 - e2) / r;
+						i = (int32)(256 * (2 * y + 3 - e2) / r);
 						if (i <= 256) {
 							i = 256 - i;
 							_updatePixel<blend, checkrange>(xm - x2 - 1, ym + y, color, i);
@@ -4985,10 +5047,13 @@ namespace mtools
 
 
 
-			/** Elipse, draw both the ellipse and its interior   
-			    set incx = 1 to increse the x-diameter by 1 
-				set incx = 1 to increase the y-diameter by 1  
-			**/
+			/**
+			 * Draw an ellipse, outline and interior
+			 * set incx = 1 to increse the x-diameter by 1
+			 * set incx = 1 to increase the y-diameter by 1  -> to make it fit a rectangle (cheat!).
+			 *
+			 * adapted from Alois Zingl  (http://members.chello.at/easyfilter/bresenham.html)
+			 **/
 			template<bool blend, bool checkrange, bool outline, bool fill, int64 incx, int64 incy>  inline  void _draw_ellipse(int64 xm, int64 ym, int64 a, int64 b, RGBc color, RGBc fillcolor)
 				{
 				int64 x = -a, y = 0;
@@ -5068,14 +5133,18 @@ namespace mtools
 						}
 					}
 				}
-
+			
 		
-			/* draw an antialiased ellipse inside a rectangle */
+
+			/**
+			 * Draw an antialiased ellipse inside a rectangle 
+			 * adapted from Alois Zingl  (http://members.chello.at/easyfilter/bresenham.html)
+			 **/
 			template<bool blend, bool checkrange> void _draw_ellipse_in_rect_AA(int64 x0, int64 y0, int64 x1, int64 y1, RGBc color)
 				{
 				int64 a = abs(x1 - x0), b = abs(y1 - y0), b1 = b & 1;
-				float dx = 4 * (a - 1.0)*b*b, dy = 4 * (b1 + 1)*a*a;
-				float ed, i, err = b1*a*a - dx + dy;
+				double dx = (double)(4 * (a - 1.0)*b*b), dy = (double)(4 * (b1 + 1)*a*a);
+				double ed, i, err = b1*a*a - dx + dy;
 				bool f;
 				if (a == 0 || b == 0) return _lineBresenham<blend, checkrange>({ x0, y0 }, { x1, y1 }, color, true);
 				if (x0 > x1) { x0 = x1; x1 += a; }
@@ -5084,7 +5153,7 @@ namespace mtools
 				a = 8 * a*a; b1 = 8 * b*b;
 				for (;;)
 					{
-					i = std::min<float>(dx, dy); ed = std::max<float>(dx, dy);
+					i = std::min<double>(dx, dy); ed = std::max<double>(dx, dy);
 					if (y0 == y1 + 1 && err > dy && a > b1) ed = 256 * 4. / a;
 					else ed = 256 / (ed + 2 * ed*i*i / (4 * ed*ed + i*i));
 					i = ed*fabs(err + dx - dy);
@@ -5137,6 +5206,303 @@ namespace mtools
 						}
 				}
 
+			
+
+			/**
+			 * Plot a limited quadratic Bezier segment, used by _plotQuadBezier.
+			 * adapted from Alois Zingl  (http://members.chello.at/easyfilter/bresenham.html)
+			 **/
+			template<bool blend, bool checkrange> void _plotQuadBezierSeg(int64 x0, int64 y0, int64 x1, int64 y1, int64 x2, int64 y2, RGBc color)
+				{                                  
+				int64 sx = x2 - x1, sy = y2 - y1;
+				int64 xx = x0 - x1, yy = y0 - y1, xy;
+				double dx, dy, err, cur = (double)(xx*sy - yy*sx);
+				if (sx*sx + sy*sy > xx*xx + yy*yy) 
+					{
+					x2 = x0; x0 = sx + x1; y2 = y0; y0 = sy + y1; cur = -cur;
+					}
+				if (cur != 0) 
+					{
+					xx += sx; xx *= sx = x0 < x2 ? 1 : -1;
+					yy += sy; yy *= sy = y0 < y2 ? 1 : -1;
+					xy = 2 * xx*yy; xx *= xx; yy *= yy;
+					if (cur*sx*sy < 0) 
+						{
+						xx = -xx; yy = -yy; xy = -xy; cur = -cur;
+						}
+					dx = 4.0*sy*cur*(x1 - x0) + xx - xy;
+					dy = 4.0*sx*cur*(y0 - y1) + yy - xy;
+					xx += xx; yy += yy; err = dx + dy + xy;
+					do {
+						_updatePixel<blend, checkrange>(x0, y0, color);
+						if (x0 == x2 && y0 == y2) return;
+						y1 = 2 * err < dx;
+						if (2 * err > dy) { x0 += sx; dx -= xy; err += dy += yy; }
+						if (y1) { y0 += sy; dy -= xy; err += dx += xx; }
+						}
+					while (dy < 0 && dx > 0);
+					}
+				_lineBresenham<blend, checkrange>({ x0, y0 }, { x2, y2 }, color, true);
+				}
+
+
+			/**
+			* Plot a limited anti-aliased quadratic Bezier segment, used by _plotQuadBezier.
+			* adapted from Alois Zingl  (http://members.chello.at/easyfilter/bresenham.html)
+			**/
+			template<bool blend, bool checkrange> void _plotQuadBezierSegAA(int64 x0, int64 y0, int64 x1, int64 y1, int64 x2, int64 y2, RGBc color)
+				{
+				int64 sx = x2 - x1, sy = y2 - y1;
+				int64 xx = x0 - x1, yy = y0 - y1, xy;
+				double dx, dy, err, ed, cur = (double)(xx*sy - yy*sx);
+				if (sx*sx + sy*sy > xx*xx + yy*yy) 
+					{
+					x2 = x0; x0 = sx + x1; y2 = y0; y0 = sy + y1; cur = -cur;
+					}
+				if (cur != 0)
+					{
+					xx += sx; xx *= sx = x0 < x2 ? 1 : -1;
+					yy += sy; yy *= sy = y0 < y2 ? 1 : -1;
+					xy = 2 * xx*yy; xx *= xx; yy *= yy;
+					if (cur*sx*sy < 0) 
+						{
+						xx = -xx; yy = -yy; xy = -xy; cur = -cur;
+						}
+					dx = 4.0*sy*(x1 - x0)*cur + xx - xy;
+					dy = 4.0*sx*(y0 - y1)*cur + yy - xy;
+					xx += xx; yy += yy; err = dx + dy + xy;
+					do {
+						cur = fmin(dx + xy, -xy - dy);
+						ed = fmax(dx + xy, -xy - dy);
+						ed += 2 * ed*cur*cur / (4 * ed*ed + cur*cur);
+						_updatePixel<blend, checkrange>(x0, y0, color, (int32)(256 - 256*fabs(err - dx - dy - xy)/ed));
+						if (x0 == x2 || y0 == y2) break;
+						x1 = x0; cur = dx - err; y1 = 2 * err + dy < 0;
+						if (2 * err + dx > 0) 
+							{
+							if (err - dy < ed) _updatePixel<blend, checkrange>(x0, y0 + sy, color, (int32)(256 - 256*fabs(err - dy)/ed));
+							x0 += sx; dx -= xy; err += dy += yy;
+							}
+						if (y1) 
+							{
+							if (cur < ed) _updatePixel<blend, checkrange>(x1 + sx, y0, color, (int32)(256 - 256*fabs(cur)/ed));
+							y0 += sy; dy -= xy; err += dx += xx;
+							}
+						}
+					while (dy < dx);
+					}
+				_lineBresenhamAA<blend, checkrange>({ x0, y0 }, { x2, y2 }, color);
+				}
+
+
+			/**
+			 * Plot any quadratic Bezier curve 
+		 	 * adapted from Alois Zingl  (http://members.chello.at/easyfilter/bresenham.html) 
+		 	 **/
+			template<bool blend, bool checkrange, bool antialiasing> void _plotQuadBezier(int64 x0, int64 y0, int64 x1, int64 y1, int64 x2, int64 y2, RGBc color)
+				{                                          
+				int64 x = x0 - x1, y = y0 - y1;
+				double t = (double)(x0 - 2 * x1 + x2), r;
+				if (x*(x2 - x1) > 0) 
+					{
+					if (y*(y2 - y1) > 0)
+						if (fabs((y0 - 2 * y1 + y2) / t*x) > abs(y)) 
+							{
+							x0 = x2; x2 = x + x1; y0 = y2; y2 = y + y1;
+							}
+					t = (x0 - x1) / t;
+					r = (1 - t)*((1 - t)*y0 + 2.0*t*y1) + t*t*y2;
+					t = (x0*x2 - x1*x1)*t / (x0 - x1);
+					x = (int64)floor(t + 0.5); y = (int64)floor(r + 0.5);
+					r = (y1 - y0)*(t - x0) / (x1 - x0) + y0;
+					if (antialiasing) { _plotQuadBezierSegAA<blend, checkrange>(x0, y0, x, (int64)floor(r + 0.5), x, y, color); } else { _plotQuadBezierSeg<blend, checkrange>(x0, y0, x, (int64)floor(r + 0.5), x, y, color); }
+					r = (y1 - y2)*(t - x2) / (x1 - x2) + y2;
+					x0 = x1 = x; y0 = y; y1 = (int64)floor(r + 0.5);
+					}
+				if ((y0 - y1)*(y2 - y1) > 0) 
+					{
+					t = (double)(y0 - 2 * y1 + y2); t = (y0 - y1) / t;
+					r = (1 - t)*((1 - t)*x0 + 2.0*t*x1) + t*t*x2;
+					t = (y0*y2 - y1*y1)*t / (y0 - y1);
+					x = (int64)floor(r + 0.5); y = (int64)floor(t + 0.5);
+					r = (x1 - x0)*(t - y0) / (y1 - y0) + x0;
+					if (antialiasing) { _plotQuadBezierSegAA<blend, checkrange>(x0, y0, (int64)floor(r + 0.5), y, x, y, color); } else { _plotQuadBezierSeg<blend, checkrange>(x0, y0, (int64)floor(r + 0.5), y, x, y, color); }
+					r = (x1 - x2)*(t - y2) / (y1 - y2) + x2;
+					x0 = x; x1 = (int64)floor(r + 0.5); y0 = y1 = y;
+					}
+				if (antialiasing) { _plotQuadBezierSegAA<blend, checkrange>(x0, y0, x1, y1, x2, y2, color); } else { _plotQuadBezierSeg<blend, checkrange>(x0, y0, x1, y1, x2, y2, color); }
+				}
+
+
+			/**
+			* draw a limited rational Bezier segment, squared weight. Used by _plotQuadRationalBezier().
+			* adapted from Alois Zingl  (http://members.chello.at/easyfilter/bresenham.html)
+			**/
+			template<bool blend, bool checkrange> void _plotQuadRationalBezierSeg(int64 x0, int64 y0, int64 x1, int64 y1, int64 x2, int64 y2, double w, RGBc color)
+				{
+				int64 sx = x2 - x1, sy = y2 - y1;
+				double dx = (double)(x0 - x2), dy = (double)(y0 - y2), xx = (double)(x0 - x1), yy = (double)(y0 - y1);
+				double xy = xx*sy + yy*sx, cur = xx*sy - yy*sx, err;
+				if (cur != 0.0 && w > 0.0) 
+					{
+					if (sx*sx + sy*sy > xx*xx + yy*yy) 
+						{
+						x2 = x0; x0 -= (int64)dx; y2 = y0; y0 -= (int64)dy; cur = -cur;
+						}
+					xx = 2.0*(4.0*w*sx*xx + dx*dx);
+					yy = 2.0*(4.0*w*sy*yy + dy*dy);
+					sx = x0 < x2 ? 1 : -1;
+					sy = y0 < y2 ? 1 : -1;
+					xy = -2.0*sx*sy*(2.0*w*xy + dx*dy);
+					if (cur*sx*sy < 0.0) 
+						{
+						xx = -xx; yy = -yy; xy = -xy; cur = -cur;
+						}
+					dx = 4.0*w*(x1 - x0)*sy*cur + xx / 2.0 + xy;
+					dy = 4.0*w*(y0 - y1)*sx*cur + yy / 2.0 + xy;
+
+					if (w < 0.5 && (dy > xy || dx < xy)) 
+						{
+						cur = (w + 1.0) / 2.0; w = sqrt(w); xy = 1.0 / (w + 1.0);
+						sx = (int64)floor((x0 + 2.0*w*x1 + x2)*xy / 2.0 + 0.5);
+						sy = (int64)floor((y0 + 2.0*w*y1 + y2)*xy / 2.0 + 0.5);
+						dx = floor((w*x1 + x0)*xy + 0.5); dy = floor((y1*w + y0)*xy + 0.5);
+						_plotQuadRationalBezierSeg<blend, checkrange>(x0, y0, (int64)dx, (int64)dy, sx, sy, cur, color);
+						dx = floor((w*x1 + x2)*xy + 0.5); dy = floor((y1*w + y2)*xy + 0.5);
+						_plotQuadRationalBezierSeg<blend, checkrange>(sx, sy, (int64)dx, (int64)dy, x2, y2, cur, color);
+						return;
+						}
+					err = dx + dy - xy;
+					do {
+						_updatePixel<blend, checkrange>(x0, y0, color);
+						if (x0 == x2 && y0 == y2) return;
+						x1 = 2 * err > dy; y1 = 2 * (err + yy) < -dy;
+						if (2 * err < dx || y1) { y0 += sy; dy += xy; err += dx += xx; }
+						if (2 * err > dx || x1) { x0 += sx; dx += xy; err += dy += yy; }
+						}
+					while (dy <= xy && dx >= xy); 
+					}
+				_lineBresenham<blend, checkrange>({ x0, y0 }, { x2, y2 }, color, true);
+				}
+
+
+
+			/**
+			* draw an anti-aliased limited rational Bezier segment, squared weight. Used by _plotQuadRationalBezier().
+			* adapted from Alois Zingl  (http://members.chello.at/easyfilter/bresenham.html)
+			**/
+			template<bool blend, bool checkrange> void _plotQuadRationalBezierSegAA(int64 x0, int64 y0, int64 x1, int64 y1, int64 x2, int64 y2, double w, RGBc color)
+				{
+				int64 sx = x2 - x1, sy = y2 - y1;
+				double dx = (double)(x0 - x2), dy = (double)(y0 - y2), xx = (double)(x0 - x1), yy = (double)(y0 - y1);
+				double xy = xx*sy + yy*sx, cur = xx*sy - yy*sx, err, ed;
+				bool f;
+				if (cur != 0.0 && w > 0.0) 
+					{
+					if (sx*sx + sy*sy > xx*xx + yy*yy) 
+						{
+						x2 = x0; x0 -= (int64)dx; y2 = y0; y0 -= (int64)dy; cur = -cur;
+						}
+					xx = 2.0*(4.0*w*sx*xx + dx*dx);
+					yy = 2.0*(4.0*w*sy*yy + dy*dy);
+					sx = x0 < x2 ? 1 : -1;
+					sy = y0 < y2 ? 1 : -1;
+					xy = -2.0*sx*sy*(2.0*w*xy + dx*dy);
+					if (cur*sx*sy < 0) { xx = -xx; yy = -yy; cur = -cur; xy = -xy; }
+					dx = 4.0*w*(x1 - x0)*sy*cur + xx / 2.0 + xy;
+					dy = 4.0*w*(y0 - y1)*sx*cur + yy / 2.0 + xy;
+					if (w < 0.5 && dy > dx) 
+						{
+						cur = (w + 1.0) / 2.0; w = sqrt(w); xy = 1.0 / (w + 1.0);
+						sx = (int64)floor((x0 + 2.0*w*x1 + x2)*xy / 2.0 + 0.5);
+						sy = (int64)floor((y0 + 2.0*w*y1 + y2)*xy / 2.0 + 0.5);
+						dx = floor((w*x1 + x0)*xy + 0.5); dy = floor((y1*w + y0)*xy + 0.5);
+						_plotQuadRationalBezierSegAA<blend,checkrange>(x0, y0, (int64)dx, (int64)dy, sx, sy, cur, color);
+						dx = floor((w*x1 + x2)*xy + 0.5); dy = floor((y1*w + y2)*xy + 0.5);
+						return _plotQuadRationalBezierSegAA<blend, checkrange>(sx, sy, (int64)dx, (int64)dy, x2, y2, cur, color);
+						}
+					err = dx + dy - xy;
+					do {
+						cur = fmin(dx - xy, xy - dy); ed = fmax(dx - xy, xy - dy);
+						ed += 2 * ed*cur*cur / (4.*ed*ed + cur*cur);
+						x1 = (int64)(256 * fabs(err - dx - dy + xy) / ed);
+						if (x1 <= 256) _updatePixel<blend, checkrange>(x0, y0, color, (int32)(256 - x1));
+						if (f = 2 * err + dy < 0) 
+							{
+							if (y0 == y2) return;
+							if (dx - err < ed) _updatePixel<blend, checkrange>(x0 + sx, y0, color, 256 - (int32)(256 * fabs(dx - err) / ed));
+							}
+						if (2 * err + dx > 0) 
+							{
+							if (x0 == x2) return;
+							if (err - dy < ed) _updatePixel<blend, checkrange>(x0, y0 + sy, color, 256 - (int32)(256 * fabs(err - dy) / ed));
+							x0 += sx; dx += xy; err += dy += yy;
+							}
+						if (f) { y0 += sy; dy += xy; err += dx += xx; }
+						}
+					while (dy < dx);
+					}
+				_lineBresenhamAA<blend, checkrange>({ x0, y0 }, { x2, y2 }, color);
+				}
+
+
+
+
+			/**
+			* Plot any quadratic rational Bezier curve.
+			* adapted from Alois Zingl  (http://members.chello.at/easyfilter/bresenham.html)
+			**/
+			template<bool blend, bool checkrange, bool antialiasing> void _plotQuadRationalBezier(int64 x0, int64 y0, int64 x1, int64 y1, int64 x2, int64 y2, double w, RGBc color)
+				{
+				int64 x = x0 - 2 * x1 + x2, y = y0 - 2 * y1 + y2;
+				double xx = (double)(x0 - x1), yy = (double)(y0 - y1), ww, t, q;
+				if (xx*(x2 - x1) > 0) 
+					{
+					if (yy*(y2 - y1) > 0)
+						if (fabs(xx*y) > fabs(yy*x)) 
+							{
+							x0 = x2; x2 = (int64)(xx + x1); y0 = y2; y2 = (int64)(yy + y1);
+							}
+					if (x0 == x2 || w == 1.0) t = (x0 - x1) / (double)x;
+					else 
+						{
+						q = sqrt(4.0*w*w*(x0 - x1)*(x2 - x1) + (x2 - x0)*(x2 - x0));
+						if (x1 < x0) q = -q;
+						t = (2.0*w*(x0 - x1) - x0 + x2 + q) / (2.0*(1.0 - w)*(x2 - x0));
+						}
+					q = 1.0 / (2.0*t*(1.0 - t)*(w - 1.0) + 1.0);
+					xx = (t*t*(x0 - 2.0*w*x1 + x2) + 2.0*t*(w*x1 - x0) + x0)*q;
+					yy = (t*t*(y0 - 2.0*w*y1 + y2) + 2.0*t*(w*y1 - y0) + y0)*q;
+					ww = t*(w - 1.0) + 1.0; ww *= ww*q;
+					w = ((1.0 - t)*(w - 1.0) + 1.0)*sqrt(q);
+					x = (int64)floor(xx + 0.5); y = (int64)floor(yy + 0.5);
+					yy = (xx - x0)*(y1 - y0) / (x1 - x0) + y0;
+					if (antialiasing) { _plotQuadRationalBezierSegAA<blend, checkrange>(x0, y0, x, (int64)floor(yy + 0.5), x, y, ww, color); } else { _plotQuadRationalBezierSeg<blend, checkrange>(x0, y0, x, (int64)floor(yy + 0.5), x, y, ww, color); }
+					yy = (xx - x2)*(y1 - y2) / (x1 - x2) + y2;
+					y1 = (int64)floor(yy + 0.5); x0 = x1 = x; y0 = y;
+					}
+				if ((y0 - y1)*(y2 - y1) > 0) 
+					{
+					if (y0 == y2 || w == 1.0) t = (y0 - y1) / (y0 - 2.0*y1 + y2);
+					else 
+						{
+						q = sqrt(4.0*w*w*(y0 - y1)*(y2 - y1) + (y2 - y0)*(y2 - y0));
+						if (y1 < y0) q = -q;
+						t = (2.0*w*(y0 - y1) - y0 + y2 + q) / (2.0*(1.0 - w)*(y2 - y0));
+						}
+					q = 1.0 / (2.0*t*(1.0 - t)*(w - 1.0) + 1.0);
+					xx = (t*t*(x0 - 2.0*w*x1 + x2) + 2.0*t*(w*x1 - x0) + x0)*q;
+					yy = (t*t*(y0 - 2.0*w*y1 + y2) + 2.0*t*(w*y1 - y0) + y0)*q;
+					ww = t*(w - 1.0) + 1.0; ww *= ww*q;
+					w = ((1.0 - t)*(w - 1.0) + 1.0)*sqrt(q);
+					x = (int64)floor(xx + 0.5); y = (int64)floor(yy + 0.5);
+					xx = (x1 - x0)*(yy - y0) / (y1 - y0) + x0;
+					if (antialiasing) { _plotQuadRationalBezierSegAA<blend, checkrange>(x0, y0, (int64)floor(xx + 0.5), y, x, y, ww, color); } else { _plotQuadRationalBezierSeg<blend, checkrange>(x0, y0, (int64)floor(xx + 0.5), y, x, y, ww, color); }
+					xx = (x1 - x2)*(yy - y2) / (y1 - y2) + x2;
+					x1 = (int64)floor(xx + 0.5); x0 = x; y0 = y1 = y;
+					}
+				if (antialiasing) { _plotQuadRationalBezierSegAA<blend, checkrange>(x0, y0, x1, y1, x2, y2, w*w, color); } else { _plotQuadRationalBezierSeg<blend, checkrange>(x0, y0, x1, y1, x2, y2, w*w, color); }
+				}
 
 
 
@@ -5192,7 +5558,6 @@ namespace mtools
 				_cairomarkdirty();
 				return true;
 				}
-
 
 
 			/*******************************************************************************************************************************************************
