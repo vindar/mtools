@@ -334,6 +334,7 @@ namespace mtools
 
             /**
             * Return the length in direction i. May be negatice if empty.
+			* this is the same as max[i] - min[i].
             **/
             inline T l(size_t i) const { return(max[i] - min[i]); }
 
@@ -500,6 +501,32 @@ namespace mtools
                     }
                 return b;
                 }
+
+
+			/**
+			 * Return true if this box contain the box B. 
+			 * An empty B is contained in any box (even an empty one). 
+			 */
+			inline bool contain(const Box<T,N> & B) const
+				{
+				if (B.isEmpty()) return true;
+				if (isEmpty()) return false;
+				for (size_t i = 0; i < N; i++)
+					{
+					if ((B.min[i] < min[i]) || (B.max[i] > max[i])) { return false; }
+					}
+				return true;
+				}
+
+
+			/**
+			* Return true if this box is contained into the box B.
+			* An empty box is contained in any box (even an empty one).
+			*/
+			inline bool includedIn(const Box<T, N> & B) const
+				{
+				return B.contain(*this);
+				}
 
 
             /**
