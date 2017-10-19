@@ -93,7 +93,7 @@ namespace mtools
             /**
             * Constructor. minV and maxV are the value in each directions.
             **/
-     //       Box(const T & minV, const T & maxV) : min(minV), max(maxV) { return; }
+     //       Box(const T & minV, const T & maxV) : min(minV), max(maxV) { return; } // too error prone...
 
 
             /**
@@ -106,7 +106,13 @@ namespace mtools
                     for (size_t i = 0; i < N; i++) { if (min[i] > max[i]) { auto temp = min[i]; min[i] = max[i]; max[i] = temp; } }
                     }
                 }
-                
+
+
+			/**
+			 * Constructor from a single point. 
+			 **/
+			Box(const Vec<T, N> & vec) : min(vec), max(vec) {}
+
 
             /**
             * Constructor. Specific for dimension 2.
@@ -249,6 +255,12 @@ namespace mtools
             **/
             inline bool swallowPoint(const Vec<T, N> & pos)
                 {
+				if (B.isEmpty())
+					{
+					min = pos;
+					max = pos;
+					return true;
+					}
                 bool b = false;
                 for (size_t i = 0; i < N; i++)
                     {
@@ -265,10 +277,12 @@ namespace mtools
             *
             * @param   B    The box to swallow.
             *
-            * @return  true if the point was swallowed and false if it was already contained in the rectangle.
+            * @return  true if the box was really swallowed and false if it was already contained in the rectangle.
             **/
             inline bool swallowBox(const Box<T,N> & B)
                 {
+				if (B.isEmpty()) return false;
+				if (isEmpty()) { *this = B; return true; }
                 bool b = false;
                 for (size_t i = 0; i < N; i++)
                     {
