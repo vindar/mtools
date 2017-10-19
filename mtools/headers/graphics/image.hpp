@@ -1920,8 +1920,411 @@ namespace mtools
 			 **/
 			inline void draw_filled_rectangle(int64 x,int64 y, int64 sx, int64 sy, RGBc fillcolor, bool blend)
 				{
+				if (isEmpty()) return;
 				_draw_box(x, y, sx, sy, fillcolor, blend);
 				}
+
+
+			/**
+			 * Draw a circle.
+			 *
+			 * @param	P	  position of the center
+			 * @param	r	  radius
+			 * @param	color color to use
+			 * @param	blend true to use blending. 
+			 */
+			inline void draw_circle(iVec2 P, int64 r, RGBc color, bool blend)
+				{
+				if (isEmpty() || (r < 1)) return;
+				iBox2 mbr(P.X() - r, P.X() + r, P.Y() - r, P.Y() + r);
+				if (!mbr.includedIn(iBox2(0, _lx - 1, 0, _ly - 1)))
+					{ // not included
+					if (blend) _draw_circle<true, true, true, false>(P.X(), P.Y(), r, color, RGBc::c_White); else _draw_circle<false, true, true, false>(P.X(), P.Y(), r, color, RGBc::c_White);
+					return;
+					}
+				// included, no need to check range
+				if (blend) _draw_circle<true, false, true, false>(P.X(), P.Y(), r, color, RGBc::c_White); else _draw_circle<false, false, true, false>(P.X(), P.Y(), r, color, RGBc::c_White);
+				}
+
+
+			/**
+			 * Draw a filled circle. The circle border is not drawn if color_border is not specified.
+			 *
+			 * @param	P			   position of the center.
+			 * @param	r			   radius.
+			 * @param	color_interior color of the interior.
+			 * @param	blend		   true to use blending.
+			 */
+			inline void draw_filled_circle(iVec2 P, int64 r, RGBc color_interior, bool blend)
+				{
+				if (isEmpty() || (r < 1)) return;
+				iBox2 mbr(P.X() - r, P.X() + r, P.Y() - r, P.Y() + r);
+				if (!mbr.includedIn(iBox2(0, _lx - 1, 0, _ly - 1)))
+					{ // not included
+					if (blend) _draw_circle<true, true, false, true>(P.X(), P.Y(), r, RGBc::c_White, color_interior); else _draw_circle<false, true, false, true>(P.X(), P.Y(), r, RGBc::c_White, color_interior);
+					return;
+					}
+				// included, no need to check range
+				if (blend) _draw_circle<true, false, false, true>(P.X(), P.Y(), r, RGBc::c_White, color_interior); else _draw_circle<false, false, false, true>(P.X(), P.Y(), r, RGBc::c_White, color_interior);
+				return;
+				}
+
+
+			/**
+			 * Draw a filled circle. The circle border is not drawn if color_border is not specified.
+			 *
+			 * @param	P			   position of the center.
+			 * @param	r			   radius.
+			 * @param	color_interior color of the interior.
+			 * @param	blend		   true to use blending.
+			 * @param	color_border   color for the border.
+			 */
+			inline void draw_filled_circle(iVec2 P, int64 r, RGBc color_interior, bool blend, RGBc color_border)
+				{
+				if (isEmpty() || (r < 1)) return;
+				iBox2 mbr(P.X() - r, P.X() + r, P.Y() - r, P.Y() + r);
+				if (!mbr.includedIn(iBox2(0, _lx - 1, 0, _ly - 1)))
+					{ // not included
+					if (blend) _draw_circle<true, true, true, true>(P.X(), P.Y(), r, color_border, color_interior); else _draw_circle<false, true, true, true>(P.X(), P.Y(), r, color_border, color_interior);
+					return;
+					}
+				// included, no need to check range
+				if (blend) _draw_circle<true, false, true, true>(P.X(), P.Y(), r, color_border, color_interior); else _draw_circle<false, false, true, true>(P.X(), P.Y(), r, color_border, color_interior);
+				return;
+				}
+
+
+
+
+			/**
+			 * Draw an ellipse.
+			 *
+			 * @param	P	  position of the center.
+			 * @param	rx    the x-radius.
+			 * @param	ry    The y-radius.
+			 * @param	color color to use.
+			 * @param	blend true to use blending.
+			 */
+			inline void draw_ellipse(iVec2 P, int64 rx, int64 ry, RGBc color, bool blend)
+				{
+				if (isEmpty() || (rx < 1) || (ry < 1)) return;
+				iBox2 mbr(P.X() - rx, P.X() + rx, P.Y() - ry, P.Y() + ry);
+				if (!mbr.includedIn(iBox2(0, _lx - 1, 0, _ly - 1)))
+					{ // not included
+					if (blend) _draw_ellipse<true, true, true, false,0,0>(P.X(), P.Y(), rx, ry, color, RGBc::c_White); else _draw_ellipse<false, true, true, false, 0, 0>(P.X(), P.Y(), rx, ry, color, RGBc::c_White);
+					return;
+					}
+				// included, no need to check range
+				if (blend) _draw_ellipse<true, false, true, false,0,0>(P.X(), P.Y(), rx, ry, color, RGBc::c_White); else _draw_ellipse<false, false, true, false,0,0>(P.X(), P.Y(), rx, ry, color, RGBc::c_White);
+				}
+
+
+			/**
+			 * Draw a filled ellipse. The border is not drawn if color_border is not specified.
+			 *
+			 * @param	P			   position of the center.
+			 * @param	rx			   the x-radius.
+			 * @param	ry			   The y-radius.
+			 * @param	color_interior color of the interior.
+			 * @param	blend		   true to use blending.
+			 */
+			inline void draw_filled_ellipse(iVec2 P, int64 rx, int64 ry, RGBc color_interior, bool blend)
+				{
+				if (isEmpty() || (rx < 1) || (ry < 1)) return;
+				iBox2 mbr(P.X() - rx, P.X() + rx, P.Y() - ry, P.Y() + ry);
+				if (!mbr.includedIn(iBox2(0, _lx - 1, 0, _ly - 1)))
+					{ // not included
+					if (blend) _draw_ellipse<true, true, false, true, 0, 0>(P.X(), P.Y(), rx, ry, RGBc::c_White, color_interior); else _draw_ellipse<false, true, false, true, 0, 0>(P.X(), P.Y(), rx, ry, RGBc::c_White, color_interior);
+					return;
+					}
+				// included, no need to check range
+				if (blend) _draw_ellipse<true, false, false, true,0,0>(P.X(), P.Y(), rx, ry, RGBc::c_White, color_interior); else _draw_ellipse<false, false, false, true,0,0>(P.X(), P.Y(), rx, ry, RGBc::c_White, color_interior);
+				return;
+				}
+
+
+			/**
+			 * Draw a filled ellipse. The border is not drawn if color_border is not specified.
+			 *
+			 * @param	P			   position of the center.
+			 * @param	rx			   the x-radius.
+			 * @param	ry			   The y-radius.
+			 * @param	color_interior color of the interior.
+			 * @param	blend		   true to use blending.
+			 * @param	color_border   The color of the border.
+			 */
+			inline void draw_filled_ellipse(iVec2 P, int64 rx, int64 ry, RGBc color_interior, bool blend, RGBc color_border)
+				{
+				if ((isEmpty()) ||(rx < 1) || (ry < 1)) return;
+				iBox2 mbr(P.X() - rx, P.X() + rx, P.Y() - ry, P.Y() + ry);
+				if (!mbr.includedIn(iBox2(0, _lx - 1, 0, _ly - 1)))
+					{ // not included
+					if (blend) _draw_ellipse<true, true, true, true, 0, 0>(P.X(), P.Y(), rx, ry, color_border, color_interior); else _draw_ellipse<false, true, true, true, 0, 0>(P.X(), P.Y(), rx, ry, color_border, color_interior);
+					return;
+					}
+				// included, no need to check range
+				if (blend) _draw_ellipse<true, false, true, true, 0, 0>(P.X(), P.Y(), rx, ry, color_border, color_interior); else _draw_ellipse<false, false, true, true, 0, 0>(P.X(), P.Y(), rx, ry, color_border, color_interior);
+				return;
+				}
+
+
+			/**
+			 * Draw an ellipse with a given bounding box.
+			 *
+			 * @param	B	  The box to fit the ellipse into. 
+			 * @param	color color to use.
+			 * @param	blend true to use blending.
+			 */
+			inline void draw_ellipse_in_rect(const iBox2 & B, RGBc color, bool blend)
+				{
+				if ((isEmpty())||(B.isEmpty())) return;
+				int64 lx = B.max[0] - B.min[0];
+				int64 rx = lx/2;
+				int64 mx = B.min[0] + rx;
+				bool incx = (lx % 2 != 0);
+				int64 ly = B.max[1] - B.min[1];
+				int64 ry = ly / 2;
+				int64 my = B.min[1] + ry;
+				bool incy = (ly % 2 != 0);
+				if (!B.includedIn(iBox2(0, _lx - 1, 0, _ly - 1)))
+					{ // not included
+					if (incx)
+						{
+						const int64 INCX = 1;
+						if (incy)
+							{
+							const int64 INCY = 1;
+							if (blend) _draw_ellipse<true, true, true, false, INCX, INCY>(mx, my, rx, ry, color, RGBc::c_White); else _draw_ellipse<false, true, true, false, INCX, INCY>(mx, my, rx, ry, color, RGBc::c_White);
+							}
+						else
+							{
+							const int64 INCY = 0;
+							if (blend) _draw_ellipse<true, true, true, false, INCX, INCY>(mx, my, rx, ry, color, RGBc::c_White); else _draw_ellipse<false, true, true, false, INCX, INCY>(mx, my, rx, ry, color, RGBc::c_White);
+							}
+						}
+					else
+						{
+						const int64 INCX = 0;
+						if (incy)
+							{
+							const int64 INCY = 1;
+							if (blend) _draw_ellipse<true, true, true, false, INCX, INCY>(mx, my, rx, ry, color, RGBc::c_White); else _draw_ellipse<false, true, true, false, INCX, INCY>(mx, my, rx, ry, color, RGBc::c_White);
+							}
+						else
+							{
+							const int64 INCY = 0;
+							if (blend) _draw_ellipse<true, true, true, false, INCX, INCY>(mx, my, rx, ry, color, RGBc::c_White); else _draw_ellipse<false, true, true, false, INCX, INCY>(mx, my, rx, ry, color, RGBc::c_White);
+							}
+						}
+					}
+				else
+					{
+					if (incx)
+						{
+						const int64 INCX = 1;
+						if (incy)
+							{
+							const int64 INCY = 1;
+							if (blend) _draw_ellipse<true, false, true, false, INCX, INCY>(mx, my, rx, ry, color, RGBc::c_White); else _draw_ellipse<false, false, true, false, INCX, INCY>(mx, my, rx, ry, color, RGBc::c_White);
+							}
+						else
+							{
+							const int64 INCY = 0;
+							if (blend) _draw_ellipse<true, false, true, false, INCX, INCY>(mx, my, rx, ry, color, RGBc::c_White); else _draw_ellipse<false,false, true, false, INCX, INCY>(mx, my, rx, ry, color, RGBc::c_White);
+							}
+						}
+					else
+						{
+						const int64 INCX = 0;
+						if (incy)
+							{
+							const int64 INCY = 1;
+							if (blend) _draw_ellipse<true, false, true, false, INCX, INCY>(mx, my, rx, ry, color, RGBc::c_White); else _draw_ellipse<false, false, true, false, INCX, INCY>(mx, my, rx, ry, color, RGBc::c_White);
+							}
+						else
+							{
+							const int64 INCY = 0;
+							if (blend) _draw_ellipse<true, false, true, false, INCX, INCY>(mx, my, rx, ry, color, RGBc::c_White); else _draw_ellipse<false, false, true, false, INCX, INCY>(mx, my, rx, ry, color, RGBc::c_White);
+							}
+						}
+					}
+				return;
+				}
+
+
+			/**
+			 * Draw the interior of a ellipse with a given bounding box. If color_border is not given, the
+			 * border of the ellipse is not drawn.
+			 *
+			 * @param	B			   The box to fit the ellipse into.
+			 * @param	color_interior color of the interior.
+			 * @param	blend		   true to use blending.
+			 */
+			inline void draw_filled_ellipse_in_rect(const iBox2 & B, RGBc color_interior, bool blend)
+				{
+				if ((isEmpty()) || (B.isEmpty())) return;
+				int64 lx = B.max[0] - B.min[0];
+				int64 rx = lx / 2;
+				int64 mx = B.min[0] + rx;
+				bool incx = (lx % 2 != 0);
+				int64 ly = B.max[1] - B.min[1];
+				int64 ry = ly / 2;
+				int64 my = B.min[1] + ry;
+				bool incy = (ly % 2 != 0);
+				if (!B.includedIn(iBox2(0, _lx - 1, 0, _ly - 1)))
+					{ // not included
+					if (incx)
+						{
+						const int64 INCX = 1;
+						if (incy)
+							{
+							const int64 INCY = 1;
+							if (blend) _draw_ellipse<true, true, false, true, INCX, INCY>(mx, my, rx, ry, RGBc::c_White, color_interior); else _draw_ellipse<false, true, false, true, INCX, INCY>(mx, my, rx, ry, RGBc::c_White, color_interior);
+							}
+						else
+							{
+							const int64 INCY = 0;
+							if (blend) _draw_ellipse<true, true, false, true, INCX, INCY>(mx, my, rx, ry, RGBc::c_White, color_interior); else _draw_ellipse<false, true, false, true, INCX, INCY>(mx, my, rx, ry, RGBc::c_White, color_interior);
+							}
+						}
+					else
+						{
+						const int64 INCX = 0;
+						if (incy)
+							{
+							const int64 INCY = 1;
+							if (blend) _draw_ellipse<true, true, false, true, INCX, INCY>(mx, my, rx, ry, RGBc::c_White, color_interior); else _draw_ellipse<false, true, false, true, INCX, INCY>(mx, my, rx, ry, RGBc::c_White, color_interior);
+							}
+						else
+							{
+							const int64 INCY = 0;
+							if (blend) _draw_ellipse<true, true, false, true, INCX, INCY>(mx, my, rx, ry, RGBc::c_White, color_interior); else _draw_ellipse<false, true, false, true, INCX, INCY>(mx, my, rx, ry, RGBc::c_White, color_interior);
+							}
+						}
+					}
+				else
+					{
+					if (incx)
+						{
+						const int64 INCX = 1;
+						if (incy)
+							{
+							const int64 INCY = 1;
+							if (blend) _draw_ellipse<true, false, false, true, INCX, INCY>(mx, my, rx, ry, RGBc::c_White, color_interior); else _draw_ellipse<false, false, false, true, INCX, INCY>(mx, my, rx, ry, RGBc::c_White, color_interior);
+							}
+						else
+							{
+							const int64 INCY = 0;
+							if (blend) _draw_ellipse<true, false, false, true, INCX, INCY>(mx, my, rx, ry, RGBc::c_White, color_interior); else _draw_ellipse<false, false, false, true, INCX, INCY>(mx, my, rx, ry, RGBc::c_White, color_interior);
+							}
+						}
+					else
+						{
+						const int64 INCX = 0;
+						if (incy)
+							{
+							const int64 INCY = 1;
+							if (blend) _draw_ellipse<true, false, false,true, INCX, INCY>(mx, my, rx, ry, RGBc::c_White, color_interior); else _draw_ellipse<false, false, false, true, INCX, INCY>(mx, my, rx, ry, RGBc::c_White, color_interior);
+							}
+						else
+							{
+							const int64 INCY = 0;
+							if (blend) _draw_ellipse<true, false, false, true, INCX, INCY>(mx, my, rx, ry, RGBc::c_White, color_interior); else _draw_ellipse<false, false, false, true, INCX, INCY>(mx, my, rx, ry, RGBc::c_White, color_interior);
+							}
+						}
+					}
+				return;
+				}
+
+
+			/**
+			 * Draw the interior of a ellipse with a given bounding box. If color_border is not given, the
+			 * border of the ellipse is not drawn.
+			 *
+			 * @param	B			   The box to fit the ellipse into.
+			 * @param	color_interior color of the interior.
+			 * @param	blend		   true to use blending.
+			 * @param	color_border   Color of the border. 
+			 */
+			inline void draw_filled_ellipse_in_rect(const iBox2 & B, RGBc color_interior, bool blend, RGBc color_border)
+				{
+				if ((isEmpty()) || (B.isEmpty())) return;
+				int64 lx = B.max[0] - B.min[0];
+				int64 rx = lx / 2;
+				int64 mx = B.min[0] + rx;
+				bool incx = (lx % 2 != 0);
+				int64 ly = B.max[1] - B.min[1];
+				int64 ry = ly / 2;
+				int64 my = B.min[1] + ry;
+				bool incy = (ly % 2 != 0);
+				if (!B.includedIn(iBox2(0, _lx - 1, 0, _ly - 1)))
+					{ // not included
+					if (incx)
+						{
+						const int64 INCX = 1;
+						if (incy)
+							{
+							const int64 INCY = 1;
+							if (blend) _draw_ellipse<true, true, true, true, INCX, INCY>(mx, my, rx, ry, color_border, color_interior); else _draw_ellipse<false, true, true, true, INCX, INCY>(mx, my, rx, ry, color_border, color_interior);
+							}
+						else
+							{
+							const int64 INCY = 0;
+							if (blend) _draw_ellipse<true, true, true, true, INCX, INCY>(mx, my, rx, ry, color_border, color_interior); else _draw_ellipse<false, true, true, true, INCX, INCY>(mx, my, rx, ry, color_border, color_interior);
+							}
+						}
+					else
+						{
+						const int64 INCX = 0;
+						if (incy)
+							{
+							const int64 INCY = 1;
+							if (blend) _draw_ellipse<true, true, true, true, INCX, INCY>(mx, my, rx, ry, color_border, color_interior); else _draw_ellipse<false, true, true, true, INCX, INCY>(mx, my, rx, ry, color_border, color_interior);
+							}
+						else
+							{
+							const int64 INCY = 0;
+							if (blend) _draw_ellipse<true, true, true, true, INCX, INCY>(mx, my, rx, ry, color_border, color_interior); else _draw_ellipse<false, true, true, true, INCX, INCY>(mx, my, rx, ry, color_border, color_interior);
+							}
+						}
+					}
+				else
+					{
+					if (incx)
+						{
+						const int64 INCX = 1;
+						if (incy)
+							{
+							const int64 INCY = 1;
+							if (blend) _draw_ellipse<true, false, true, true, INCX, INCY>(mx, my, rx, ry, color_border, color_interior); else _draw_ellipse<false, false, true, true, INCX, INCY>(mx, my, rx, ry, color_border, color_interior);
+							}
+						else
+							{
+							const int64 INCY = 0;
+							if (blend) _draw_ellipse<true, false, true, true, INCX, INCY>(mx, my, rx, ry, color_border, color_interior); else _draw_ellipse<false, false, true, true, INCX, INCY>(mx, my, rx, ry, color_border, color_interior);
+							}
+						}
+					else
+						{
+						const int64 INCX = 0;
+						if (incy)
+							{
+							const int64 INCY = 1;
+							if (blend) _draw_ellipse<true, false, true, true, INCX, INCY>(mx, my, rx, ry, color_border, color_interior); else _draw_ellipse<false, false, true, true, INCX, INCY>(mx, my, rx, ry, color_border, color_interior);
+							}
+						else
+							{
+							const int64 INCY = 0;
+							if (blend) _draw_ellipse<true, false, true, true, INCX, INCY>(mx, my, rx, ry, color_border, color_interior); else _draw_ellipse<false, false, true, true, INCX, INCY>(mx, my, rx, ry, color_border, color_interior);
+							}
+						}
+					}
+				return;
+				}
+
+
+
+
 
 
 
@@ -3136,7 +3539,7 @@ namespace mtools
 
 
 
-			/* update a pixel */
+			/** update a pixel **/
 			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void  _updatePixel(int64 x,int64 y, RGBc color)
 				{
 				MTOOLS_ASSERT((checkrange)||((x >= 0)&&(x < _lx)&&(y >= 0) && (y < _ly)));
@@ -3147,7 +3550,7 @@ namespace mtools
 				if ((blend) && (checkrange))  { blendPixel(x, y, color); }
 				}
 
-			/* update a pixel */
+			/** update a pixel **/
 			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void  _updatePixel(iVec2 P, RGBc color)
 				{
 				MTOOLS_ASSERT((checkrange) || ((P.X() >= 0) && (P.X() < _lx) && (P.Y() >= 0) && (P.Y() < _ly)));
@@ -3158,12 +3561,33 @@ namespace mtools
 				if ((blend) && (checkrange)) { blendPixel(P, color); }
 				}
 
-			/* update a pixel */
+			/** update a pixel **/
 			template<bool blend> MTOOLS_FORCEINLINE void  _updatePixel(RGBc * p, RGBc color)
 				{
 				// compiler optimizes away the unused cases. 
 				if (!blend) { *p = color; }
 				if (blend)  { (*p).blend(color); }
+				}
+
+
+			/** draw the line [x1,x2] x {y}, nothing if x2 < x1. **/
+			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void _hline(int64 x1, int64 x2, int64 y, RGBc color)
+				{ // compiler optimizes away the template conditional statements.
+				MTOOLS_ASSERT((checkrange) || ((y >= 0) && (y < _ly))); // y range should always be ok. 
+				MTOOLS_ASSERT((checkrange) || ((x1 >= 0) && (x2 < _lx)) || (x2 < x1));
+				if (checkrange)
+					{ // clamp
+					x1 = std::max<int64>(0, x1);
+					x2 = std::min<int64>(_lx - 1, x2);
+					if ((y < 0) || (y >= _ly)) return;
+					}
+				RGBc * p = _data + y*_stride + x1;
+				while (x1 <= x2)
+					{
+					if (blend) { (*p).blend(color); }
+					else { *p = color; }
+					p++; x1++;
+					}
 				}
 
 
@@ -3736,23 +4160,19 @@ namespace mtools
 
 
 			/**
-			* Return the max intersection distance between([P,Q] and [P,Q2] starting from P. 
+			* Return the max distance from P where [P,Q] and [P,Q2] intersect. 
 			**/
-			template<bool checkrange> inline int64 _lineBresenham_max_intersection(iVec2 P, iVec2 Q, iVec2 Q2)
+			template<bool checkrange> inline int64 _lineBresenham_find_max_intersection(iVec2 P, iVec2 Q, iVec2 Q2)
 				{
 				if ((P == Q)||(P == Q2)) return 1;
-
 				_bdir linea;
 				_bpos posa;
 				_init_line(P, Q, linea, posa);
-
 				_bdir lineb;
 				_bpos posb;
 				_init_line(P, Q2, lineb, posb);
-
 				int64 lena = _lengthBresenham(P, Q, true);
 				int64 lenb = _lengthBresenham(P, Q2, true);
-
 				int64 r = 0;
 				if (checkrange)
 					{
@@ -3764,7 +4184,6 @@ namespace mtools
 					lenb -= r;
 					lena = std::min<int64>(lena, _lenght_inside_box(linea, posa, B)); // number of pixels still to draw. 
 					}
-
 				lena--;
 				lenb--;
 				int64 l = 0;
@@ -3773,9 +4192,11 @@ namespace mtools
 					{
 					if (lineb.x_major)
 						{
-						while ((l <= lena)&&(l <= lenb))
+						int64 o = 0;
+						while ((o <= 1) && (l <= lena) && (l <= lenb))
 							{
-							if ((posa.x == posb.x) && (posa.y == posb.y)) maxp = l;
+							o = abs(posa.x  - posb.x) + abs(posa.y - posb.y);
+							if (o == 0) maxp = l;
 							_move_line<true>(linea, posa);
 							_move_line<true>(lineb, posb);
 							l++;
@@ -3783,9 +4204,11 @@ namespace mtools
 						}
 					else
 						{
-						while ((l <= lena) && (l <= lenb))
+						int64 o = 0;
+						while ((o <= 1) && (l <= lena) && (l <= lenb))
 							{
-							if ((posa.x == posb.x) && (posa.y == posb.y)) maxp = l;
+							o = abs(posa.x - posb.x) + abs(posa.y - posb.y);
+							if (o == 0) maxp = l;
 							_move_line<true>(linea, posa);
 							_move_line<false>(lineb, posb);
 							l++;
@@ -3796,9 +4219,11 @@ namespace mtools
 					{
 					if (lineb.x_major)
 						{
-						while ((l <= lena) && (l <= lenb))
+						int64 o = 0;
+						while ((o <= 1) && (l <= lena) && (l <= lenb))
 							{
-							if ((posa.x == posb.x) && (posa.y == posb.y)) maxp = l;
+							o = abs(posa.x - posb.x) + abs(posa.y - posb.y);
+							if (o == 0) maxp = l;
 							_move_line<false>(linea, posa);
 							_move_line<true>(lineb, posb);
 							l++;
@@ -3806,17 +4231,18 @@ namespace mtools
 						}
 					else
 						{
-						while ((l <= lena) && (l <= lenb))
+						int64 o = 0;
+						while ((o <= 1) && (l <= lena) && (l <= lenb))
 							{
-							if ((posa.x == posb.x) && (posa.y == posb.y)) maxp = l;
+							o = abs(posa.x - posb.x) + abs(posa.y - posb.y);
+							if (o == 0) maxp = l;
 							_move_line<false>(linea, posa);
 							_move_line<false>(lineb, posb);
 							l++;
 							}
 						}
 					}
-				if (maxp == 0) return 1;
-				return r + maxp + 1;
+				return ((maxp == 0) ? 1 : (r + maxp));
 				}
 
 
@@ -4027,11 +4453,11 @@ namespace mtools
 			template<bool blend, bool checkrange> inline void _lineBresenham_avoid_both_sides(iVec2 P, iVec2 Q, iVec2 P2, iVec2 Q2, RGBc color)
 				{
 				const int64 L = _lengthBresenham(P, Q);				
-				int64 pl = _lineBresenham_max_intersection<checkrange>(P, Q, P2);
+				int64 pl = _lineBresenham_find_max_intersection<checkrange>(P, Q, P2);
 				if (pl > L) { pl = L; } else if (pl < 1) pl = 1;
-				int64 ql = _lineBresenham_max_intersection<checkrange>(Q, P, Q2);
+				int64 ql = _lineBresenham_find_max_intersection<checkrange>(Q, P, Q2);
 				if (ql > L) { ql = L; } else if (ql < 1) ql = 1;
-				int64 M = (pl + ((L+1) - ql)) >> 1;
+				int64 M = (pl + ((L+1) - ql)) >> 1; // much faster and usually good to just take M = L/2; 
 				_lineBresenham_avoid<blend, checkrange>(P, Q, P2, color, L + 1 - M);
 				_lineBresenham_avoid<blend, checkrange>(Q, P, Q2, color, M);
 				}
@@ -4052,31 +4478,20 @@ namespace mtools
 			template<bool blend, bool checkrange> inline void _lineBresenham_avoid_both_sides(iVec2 P, iVec2 Q, iVec2 P2, iVec2 P3, iVec2 Q2, iVec2 Q3, RGBc color)
 				{
 				const int64 L = _lengthBresenham(P, Q);
-				
-				int64 pl2 = _lineBresenham_max_intersection<checkrange>(P, Q, P2);
+				int64 pl2 = _lineBresenham_find_max_intersection<checkrange>(P, Q, P2);
 				if (pl2 > L) { pl2 = L; } else if (pl2 < 1) pl2 = 1;
-				int64 pl3 = _lineBresenham_max_intersection<checkrange>(P, Q, P3);
+				int64 pl3 = _lineBresenham_find_max_intersection<checkrange>(P, Q, P3);
 				if (pl3 > L) { pl3 = L; } else if (pl3 < 1) pl3 = 1;
 				int64 pl = std::max<int64>(pl2, pl3);
-
-				int64 ql2 = _lineBresenham_max_intersection<checkrange>(Q, P, Q2);
+				int64 ql2 = _lineBresenham_find_max_intersection<checkrange>(Q, P, Q2);
 				if (ql2 > L) { ql2 = L; } else if (ql2 < 1) ql2 = 1;
-				int64 ql3 = _lineBresenham_max_intersection<checkrange>(Q, P, Q3);
+				int64 ql3 = _lineBresenham_find_max_intersection<checkrange>(Q, P, Q3);
 				if (ql3 > L) { ql3 = L; } else if (ql3 < 1) ql3 = 1;
 				int64 ql = std::max<int64>(ql2, ql3);
-
-				int64 M = (pl + ((L + 1) - ql)) >> 1;
+				int64 M = (pl + ((L + 1) - ql)) >> 1; // much faster and usually good to just take M = L/2; 
 				_lineBresenham_avoid<blend, checkrange>(P, Q, P2, P3, color, L + 1 - M);
 				_lineBresenham_avoid<blend, checkrange>(Q, P, Q2, Q3, color, M);
-
-				/*
-				if (P == Q) return;
-				const int64 L = _lengthBresenham(P, Q);
-				int64 mQ = L/2;
-				int64 mP = L + 1 - mQ;
-				_lineBresenham_avoid<blend, checkrange>(P, Q, P2, P3, color, mQ);
-				_lineBresenham_avoid<blend, checkrange>(Q, P, Q2, Q3, color, mP);
-				*/
+				
 				}
 
 
@@ -4116,26 +4531,6 @@ namespace mtools
 					_fill_interior_angle<blend, checkrange>(P3, P2, P1, fillcolor, true);
 					}
 				return;
-				}
-
-
-
-			/* used by _fill_interior_angle() */
-			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void _hline(int64 x1, int64 x2, int64 y, RGBc color)
-				{ // compiler optimizes away the template conditional statements.
-				MTOOLS_ASSERT((y >= 0) && (y < _ly)); // y range should always be ok. 
-				MTOOLS_ASSERT((checkrange) || ((x1 >= 0)&&(x2 >= x1)&&(x2 < _lx)));
-				if (checkrange)
-					{ // clamp
-					x1 = std::max<int64>(0, x1);
-					x2 = std::min<int64>(_lx - 1, x2);
-					}
-				RGBc * p = _data + y*_stride + x1;
-				while(x1 <= x2) 
-					{ 
-					if (blend) { (*p).blend(color); } else { *p = color; }
-					p++; x1++; 
-					}				
 				}
 
 
@@ -4450,81 +4845,133 @@ namespace mtools
 				}
 
 
-			/**
-			 * Plot an ellipse.
-			 **/
-			template<bool blend, bool checkrange>  inline  void _plotOptimizedEllipse(int64 xm, int64 ym, int64 a, int64 b)
-				{
-				int64 x = -a, y = 0;
-				int64 e2 = b, dx = (1 + 2 * x)*e2*e2;
-				int64 dy = x*x, err = dx + dy;
-				int64 a2 = a*a, b2 = b*b;
-				do {
-					_updatePixel<blend, checkrange>(xm - x, ym + y, color);
-					_updatePixel<blend, checkrange>(xm + x, ym + y, color);
-					_updatePixel<blend, checkrange>(xm + x, ym - y, color);
-					_updatePixel<blend, checkrange>(xm - x, ym - y, color);
-					e2 = 2 * err;
-					if (e2 >= dx) { x++; err += dx += 2 * b2; }
-					if (e2 <= dy) { y++; err += dy += 2 * a2; }
-					}
-				while (x <= 0);
-				while (y++ < b) 
-					{
-					_updatePixel<blend, checkrange>(xm, ym + y, color);
-					_updatePixel<blend, checkrange>(xm, ym - y, color);
-					}
-				}
 
 
-			void plotCircle(int64 xm, int64 ym, int64 r)
+			
+			/** circle, draw both the circle and its interior **/ 
+			template<bool blend, bool checkrange,bool outline, bool fill>  inline  void _draw_circle(int64 xm, int64 ym, int64 r, RGBc color, RGBc fillcolor)
 				{
-				int x = -r, y = 0, err = 2 - 2 * r;                /* bottom left to top right */
+				int64 x = -r, y = 0, err = 2 - 2 * r;
 				do {
-					_updatePixel<blend, checkrange>(xm - x, ym + y, color);
-					_updatePixel<blend, checkrange>(xm - y, ym - x, color);
-					_updatePixel<blend, checkrange>(xm + x, ym - y, color);
-					_updatePixel<blend, checkrange>(xm + y, ym + x, color);
+					if (outline)
+						{
+						_updatePixel<blend, checkrange>(xm - x, ym + y, color);
+						_updatePixel<blend, checkrange>(xm - y, ym - x, color);
+						_updatePixel<blend, checkrange>(xm + x, ym - y, color);
+						_updatePixel<blend, checkrange>(xm + y, ym + x, color);
+						}					
 					r = err;
-					if (r <= y) err += ++y * 2 + 1;                             /* e_xy+e_y < 0 */
-					if (r > x || err > y)                  /* e_xy+e_x > 0 or no 2nd y-step */
-						err += ++x * 2 + 1;                                     /* -> x-step now */
+					if (r <= y) 
+						{ 
+						if (fill)
+							{
+							_hline<blend, checkrange>(xm, xm - x - 1, ym + y, fillcolor);
+							_hline<blend, checkrange>(xm + x + 1, xm - 1, ym - y, fillcolor);
+							}
+						err += ++y * 2 + 1;  
+						}
+					if (r > x || err > y) 
+						{ 
+						err += ++x * 2 + 1; 
+						if (fill)
+							{
+							if (x)
+								{
+								_hline<blend, checkrange>(xm - y + 1, xm - 1, ym - x, fillcolor);
+								_hline<blend, checkrange>(xm, xm + y - 1, ym + x, fillcolor);
+								}
+							}
+						}					
 					}
 				while (x < 0);
 				}
 
 
-
-			void plotEllipseRect(int x0, int y0, int x1, int y1)
-				{                              /* rectangular parameter enclosing the ellipse */
-				long a = abs(x1 - x0), b = abs(y1 - y0), b1 = b & 1;                 /* diameter */
-				double dx = 4 * (1.0 - a)*b*b, dy = 4 * (b1 + 1)*a*a;           /* error increment */
-				double err = dx + dy + b1*a*a, e2;                          /* error of 1.step */
-
-				if (x0 > x1) { x0 = x1; x1 += a; }        /* if called with swapped points */
-				if (y0 > y1) y0 = y1;                                  /* .. exchange them */
-				y0 += (b + 1) / 2; y1 = y0 - b1;                               /* starting pixel */
-				a = 8 * a*a; b1 = 8 * b*b;
-
-				do {
-					setPixel(x1, y0);                                      /*   I. Quadrant */
-					setPixel(x0, y0);                                      /*  II. Quadrant */
-					setPixel(x0, y1);                                      /* III. Quadrant */
-					setPixel(x1, y1);                                      /*  IV. Quadrant */
+			/** Elipse, draw both the ellipse and its interior   
+			    set incx = 1 to increse the x-diameter by 1 
+				set incx = 1 to increase the y-diameter by 1  
+			**/
+			template<bool blend, bool checkrange, bool outline, bool fill, int64 incx, int64 incy>  inline  void _draw_ellipse(int64 xm, int64 ym, int64 a, int64 b, RGBc color, RGBc fillcolor)
+				{
+				int64 x = -a, y = 0;
+				int64 e2 = b, dx = (1 + 2 * x)*e2*e2;
+				int64 dy = x*x, err = dx + dy;
+				int64 twoasquare = 2 * a*a, twobsquare = 2 * b*b;
+				while (x < -1)
+					{
 					e2 = 2 * err;
-					if (e2 <= dy) { y0++; y1--; err += dy += a; }                 /* y step */
-					if (e2 >= dx || 2 * err > dy) { x0++; x1--; err += dx += b1; }  /* x step */
-					}
-				while (x0 <= x1);
-
-					while (y0 - y1 <= b) {                /* too early stop of flat ellipses a=1 */
-						setPixel(x0 - 1, y0);                         /* -> finish tip of ellipse */
-						setPixel(x1 + 1, y0++);
-						setPixel(x0 - 1, y1);
-						setPixel(x1 + 1, y1--);
+					int64 nx = x;
+					if (e2 >= dx) { nx++; err += dx += twobsquare; }
+					if (e2 <= dy)
+						{
+						if (fill)
+							{
+							_hline<blend, checkrange>(xm + x + 1, xm - x - 1 + incx, ym + y + incy, fillcolor);
+							if (y) _hline<blend, checkrange>(xm + x + 1, xm - x - 1 + incx, ym - y, fillcolor);
+							}
+						y++; err += dy += twoasquare;
 						}
+					x = nx;
+					if (outline)
+						{
+						_updatePixel<blend, checkrange>(xm - x + incx, ym + y + incy, color);
+						_updatePixel<blend, checkrange>(xm + x , ym + y + incy, color);
+						_updatePixel<blend, checkrange>(xm + x, ym - y, color);
+						_updatePixel<blend, checkrange>(xm - x + incx, ym - y, color);
+						}
+					}
+				if (fill)
+					{
+					if (y != b)
+						{
+						_updatePixel<blend, checkrange>(xm, ym + y + incy, fillcolor);
+						_updatePixel<blend, checkrange>(xm, ym - y, fillcolor);
+						if (incx)
+							{
+							_updatePixel<blend, checkrange>(xm + 1, ym + y + incy, fillcolor);
+							_updatePixel<blend, checkrange>(xm + 1, ym - y, fillcolor);
+							}
+						}
+					if (incy)
+						{
+						_hline<blend, checkrange>(xm - a + 1, xm + a + incx - 1, ym, fillcolor);
+						}
+					}
+				if (outline)
+					{
+					_updatePixel<blend, checkrange>(xm - a, ym, color);
+					_updatePixel<blend, checkrange>(xm + a + incx, ym, color);
+					_updatePixel<blend, checkrange>(xm, ym - b, color);
+					_updatePixel<blend, checkrange>(xm, ym + b + incy, color);
+					if (incx)
+						{
+						_updatePixel<blend, checkrange>(xm + 1, ym - b, color);
+						_updatePixel<blend, checkrange>(xm + 1, ym + b + incy, color);
+						}
+					if (incy)
+						{
+						_updatePixel<blend, checkrange>(xm + a + incx, ym + 1, color);
+						_updatePixel<blend, checkrange>(xm - a, ym + 1, color);
+						}
+					}
+				int64 sy = y;
+				while (y++ < b)
+					{
+					_updatePixel<blend, checkrange>(xm, ym + y + incy, color);
+					_updatePixel<blend, checkrange>(xm, ym - y, color);
+					}
+				if (incx)
+					{
+					y = sy;
+					while (y++ < b)
+						{
+						_updatePixel<blend, checkrange>(xm + 1, ym + y + incy, color);
+						_updatePixel<blend, checkrange>(xm + 1, ym - y, color);
+						}
+					}
 				}
 
+		
 
 
 
