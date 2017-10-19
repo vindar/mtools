@@ -1938,7 +1938,7 @@ namespace mtools
 				{
 				if (isEmpty() || (r < 1)) return;
 				iBox2 mbr(P.X() - r, P.X() + r, P.Y() - r, P.Y() + r);
-				if (!mbr.includedIn(iBox2(0, _lx - 1, 0, _ly - 1)))
+				if (!mbr.isIncludedIn(iBox2(0, _lx - 1, 0, _ly - 1)))
 					{ // not included
 					if (antialiasing)
 						{
@@ -1974,7 +1974,7 @@ namespace mtools
 				{
 				if (isEmpty() || (r < 1)) return;
 				iBox2 mbr(P.X() - r, P.X() + r, P.Y() - r, P.Y() + r);
-				if (!mbr.includedIn(iBox2(0, _lx - 1, 0, _ly - 1)))
+				if (!mbr.isIncludedIn(iBox2(0, _lx - 1, 0, _ly - 1)))
 					{ // not included
 					if (blend) _draw_circle<true, true, false, true>(P.X(), P.Y(), r, RGBc::c_White, color_interior); else _draw_circle<false, true, false, true>(P.X(), P.Y(), r, RGBc::c_White, color_interior);
 					return;
@@ -1998,7 +1998,7 @@ namespace mtools
 				{
 				if (isEmpty() || (r < 1)) return;
 				iBox2 mbr(P.X() - r, P.X() + r, P.Y() - r, P.Y() + r);
-				if (!mbr.includedIn(iBox2(0, _lx - 1, 0, _ly - 1)))
+				if (!mbr.isIncludedIn(iBox2(0, _lx - 1, 0, _ly - 1)))
 					{ // not included
 					if (blend) _draw_circle<true, true, true, true>(P.X(), P.Y(), r, color_border, color_interior); else _draw_circle<false, true, true, true>(P.X(), P.Y(), r, color_border, color_interior);
 					return;
@@ -2023,7 +2023,7 @@ namespace mtools
 				{
 				if (isEmpty() || (rx < 1) || (ry < 1)) return;
 				iBox2 mbr(P.X() - rx, P.X() + rx, P.Y() - ry, P.Y() + ry);
-				if (!mbr.includedIn(iBox2(0, _lx - 1, 0, _ly - 1)))
+				if (!mbr.isIncludedIn(iBox2(0, _lx - 1, 0, _ly - 1)))
 					{ // not included
 					if (antialiasing)
 						{
@@ -2060,7 +2060,7 @@ namespace mtools
 				{
 				if (isEmpty() || (rx < 1) || (ry < 1)) return;
 				iBox2 mbr(P.X() - rx, P.X() + rx, P.Y() - ry, P.Y() + ry);
-				if (!mbr.includedIn(iBox2(0, _lx - 1, 0, _ly - 1)))
+				if (!mbr.isIncludedIn(iBox2(0, _lx - 1, 0, _ly - 1)))
 					{ // not included
 					if (blend) _draw_ellipse<true, true, false, true, 0, 0>(P.X(), P.Y(), rx, ry, RGBc::c_White, color_interior); else _draw_ellipse<false, true, false, true, 0, 0>(P.X(), P.Y(), rx, ry, RGBc::c_White, color_interior);
 					return;
@@ -2085,7 +2085,7 @@ namespace mtools
 				{
 				if ((isEmpty()) ||(rx < 1) || (ry < 1)) return;
 				iBox2 mbr(P.X() - rx, P.X() + rx, P.Y() - ry, P.Y() + ry);
-				if (!mbr.includedIn(iBox2(0, _lx - 1, 0, _ly - 1)))
+				if (!mbr.isIncludedIn(iBox2(0, _lx - 1, 0, _ly - 1)))
 					{ // not included
 					if (blend) _draw_ellipse<true, true, true, true, 0, 0>(P.X(), P.Y(), rx, ry, color_border, color_interior); else _draw_ellipse<false, true, true, true, 0, 0>(P.X(), P.Y(), rx, ry, color_border, color_interior);
 					return;
@@ -2115,7 +2115,7 @@ namespace mtools
 				int64 ry = ly / 2;
 				int64 my = B.min[1] + ry;
 				bool incy = (ly % 2 != 0);
-				if (!B.includedIn(iBox2(0, _lx - 1, 0, _ly - 1)))
+				if (!B.isIncludedIn(iBox2(0, _lx - 1, 0, _ly - 1)))
 					{ // not included
 					if (antialiasing)
 						{
@@ -2210,7 +2210,7 @@ namespace mtools
 				int64 ry = ly / 2;
 				int64 my = B.min[1] + ry;
 				bool incy = (ly % 2 != 0);
-				if (!B.includedIn(iBox2(0, _lx - 1, 0, _ly - 1)))
+				if (!B.isIncludedIn(iBox2(0, _lx - 1, 0, _ly - 1)))
 					{ // not included
 					if (incx)
 						{
@@ -2296,7 +2296,7 @@ namespace mtools
 				int64 ry = ly / 2;
 				int64 my = B.min[1] + ry;
 				bool incy = (ly % 2 != 0);
-				if (!B.includedIn(iBox2(0, _lx - 1, 0, _ly - 1)))
+				if (!B.isIncludedIn(iBox2(0, _lx - 1, 0, _ly - 1)))
 					{ // not included
 					if (incx)
 						{
@@ -2374,14 +2374,64 @@ namespace mtools
 			 * @param	blending		true to use blending.
 			 * @param	antialiasing	true to use antialiasing.
 			 **/
-			void draw_quad_bezier(iVec2 P1, iVec2 P2, iVec3 PC, float wc, RGBc color, bool blending, bool antialiasing)
+			void draw_quad_bezier(iVec2 P1, iVec2 P2, iVec2 PC, float wc, RGBc color, bool blending, bool antialiasing)
 				{
 				if ((isEmpty()) || (wc <= 0)) return;
+				iBox2 B(P1);
+				B.swallowPoint(P2);
+				B.swallowPoint(PC);
 
-				iBox2 B;
-	
-				_plotQuadBezier<true, true,true>(0, 0, 0, 0, 0, 0, RGBc::c_Red);
-				_plotQuadRationalBezier<true,true,true>(0, 0, 0, 0, 0, 0, 0.1f, RGBc::c_Red);
+				if (!B.isIncludedIn(iBox2(0, _lx - 1, 0, _ly - 1)))
+					{ // not included, must check
+					if (antialiasing)
+						{
+						if (wc == 1)
+							{
+							if (blending)  _plotQuadBezier<true, true, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color); else _plotQuadBezier<false, true, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color);
+							}
+						else
+							{
+							if (blending)  _plotQuadRationalBezier<true, true, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color); else _plotQuadRationalBezier<false, true, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color);
+							}
+						}
+					else
+						{
+						if (wc == 1)
+							{
+							if (blending)  _plotQuadBezier<true, true, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color); else _plotQuadBezier<false, true, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color);
+							}
+						else
+							{
+							if (blending)  _plotQuadRationalBezier<true, true, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color); else _plotQuadRationalBezier<false, true, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color);
+							}
+						}
+					}
+				else
+					{
+					// no need to check
+					if (antialiasing)
+						{
+						if (wc == 1)
+							{
+							if (blending)  _plotQuadBezier<true, false, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color); else _plotQuadBezier<false, false, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color);
+							}
+						else
+							{
+							if (blending)  _plotQuadRationalBezier<true, false, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color); else _plotQuadRationalBezier<false, false, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color);
+							}
+						}
+					else
+						{
+						if (wc == 1)
+							{
+							if (blending)  _plotQuadBezier<true, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color); else _plotQuadBezier<false, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color);
+							}
+						else
+							{
+							if (blending)  _plotQuadRationalBezier<true, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color); else _plotQuadRationalBezier<false, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color);
+							}
+						}
+					}
 				}
 
 
