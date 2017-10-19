@@ -1928,22 +1928,37 @@ namespace mtools
 			/**
 			 * Draw a circle.
 			 *
-			 * @param	P	  position of the center
-			 * @param	r	  radius
-			 * @param	color color to use
-			 * @param	blend true to use blending. 
-			 */
-			inline void draw_circle(iVec2 P, int64 r, RGBc color, bool blend)
+			 * @param	P				position of the center.
+			 * @param	r				radius.
+			 * @param	color			color to use.
+			 * @param	blend			true to use blending.
+			 * @param	antialiasing	true to use antialiasing.
+			 **/
+			inline void draw_circle(iVec2 P, int64 r, RGBc color, bool blend, bool antialiasing)
 				{
 				if (isEmpty() || (r < 1)) return;
 				iBox2 mbr(P.X() - r, P.X() + r, P.Y() - r, P.Y() + r);
 				if (!mbr.includedIn(iBox2(0, _lx - 1, 0, _ly - 1)))
 					{ // not included
-					if (blend) _draw_circle<true, true, true, false>(P.X(), P.Y(), r, color, RGBc::c_White); else _draw_circle<false, true, true, false>(P.X(), P.Y(), r, color, RGBc::c_White);
+					if (antialiasing)
+						{
+						if (blend) _draw_circle_AA<true, true>(P.X(), P.Y(), r, color); else _draw_circle_AA<false, true>(P.X(), P.Y(), r, color);
+						}
+					else
+						{
+						if (blend) _draw_circle<true, true, true, false>(P.X(), P.Y(), r, color, RGBc::c_White); else _draw_circle<false, true, true, false>(P.X(), P.Y(), r, color, RGBc::c_White);
+						}
 					return;
 					}
 				// included, no need to check range
-				if (blend) _draw_circle<true, false, true, false>(P.X(), P.Y(), r, color, RGBc::c_White); else _draw_circle<false, false, true, false>(P.X(), P.Y(), r, color, RGBc::c_White);
+				if (antialiasing)
+					{
+					if (blend) _draw_circle_AA<true, false>(P.X(), P.Y(), r, color); else _draw_circle_AA<false, false>(P.X(), P.Y(), r, color);
+					}
+				else
+					{
+					if (blend) _draw_circle<true, false, true, false>(P.X(), P.Y(), r, color, RGBc::c_White); else _draw_circle<false, false, true, false>(P.X(), P.Y(), r, color, RGBc::c_White);
+					}
 				}
 
 
@@ -1994,28 +2009,41 @@ namespace mtools
 				}
 
 
-
-
 			/**
 			 * Draw an ellipse.
 			 *
-			 * @param	P	  position of the center.
-			 * @param	rx    the x-radius.
-			 * @param	ry    The y-radius.
-			 * @param	color color to use.
-			 * @param	blend true to use blending.
-			 */
-			inline void draw_ellipse(iVec2 P, int64 rx, int64 ry, RGBc color, bool blend)
+			 * @param	P				position of the center.
+			 * @param	rx				the x-radius.
+			 * @param	ry				The y-radius.
+			 * @param	color			color to use.
+			 * @param	blend			true to use blending.
+			 * @param	antialiasing	true to use antialiasing.
+			 **/
+			inline void draw_ellipse(iVec2 P, int64 rx, int64 ry, RGBc color, bool blend, bool antialiasing)
 				{
 				if (isEmpty() || (rx < 1) || (ry < 1)) return;
 				iBox2 mbr(P.X() - rx, P.X() + rx, P.Y() - ry, P.Y() + ry);
 				if (!mbr.includedIn(iBox2(0, _lx - 1, 0, _ly - 1)))
 					{ // not included
-					if (blend) _draw_ellipse<true, true, true, false,0,0>(P.X(), P.Y(), rx, ry, color, RGBc::c_White); else _draw_ellipse<false, true, true, false, 0, 0>(P.X(), P.Y(), rx, ry, color, RGBc::c_White);
+					if (antialiasing)
+						{
+						if (blend) _draw_ellipse_in_rect_AA<true, true>(P.X() - rx, P.Y() - ry, P.X() + rx, P.Y() + ry, color); else _draw_ellipse_in_rect_AA<false, true>(P.X() - rx, P.Y() - ry, P.X() + rx, P.Y() + ry, color);
+						}
+					else
+						{
+						if (blend) _draw_ellipse<true, true, true, false, 0, 0>(P.X(), P.Y(), rx, ry, color, RGBc::c_White); else _draw_ellipse<false, true, true, false, 0, 0>(P.X(), P.Y(), rx, ry, color, RGBc::c_White);
+						}
 					return;
 					}
 				// included, no need to check range
-				if (blend) _draw_ellipse<true, false, true, false,0,0>(P.X(), P.Y(), rx, ry, color, RGBc::c_White); else _draw_ellipse<false, false, true, false,0,0>(P.X(), P.Y(), rx, ry, color, RGBc::c_White);
+				if (antialiasing)
+					{
+					if (blend) _draw_ellipse_in_rect_AA<true, false>(P.X() - rx, P.Y() - ry, P.X() + rx, P.Y() + ry, color); else _draw_ellipse_in_rect_AA<false, false>(P.X() - rx, P.Y() - ry, P.X() + rx, P.Y() + ry, color);
+					}
+				else
+					{
+					if (blend) _draw_ellipse<true, false, true, false, 0, 0>(P.X(), P.Y(), rx, ry, color, RGBc::c_White); else _draw_ellipse<false, false, true, false, 0, 0>(P.X(), P.Y(), rx, ry, color, RGBc::c_White);
+					}
 				}
 
 
@@ -2071,11 +2099,12 @@ namespace mtools
 			/**
 			 * Draw an ellipse with a given bounding box.
 			 *
-			 * @param	B	  The box to fit the ellipse into. 
-			 * @param	color color to use.
-			 * @param	blend true to use blending.
-			 */
-			inline void draw_ellipse_in_rect(const iBox2 & B, RGBc color, bool blend)
+			 * @param	B				The box to fit the ellipse into.
+			 * @param	color			color to use.
+			 * @param	blend			true to use blending.
+			 * @param	antialiasing	true to use antialiasing.
+			 **/
+			inline void draw_ellipse_in_rect(const iBox2 & B, RGBc color, bool blend, bool antialiasing)
 				{
 				if ((isEmpty())||(B.isEmpty())) return;
 				int64 lx = B.max[0] - B.min[0];
@@ -2088,6 +2117,11 @@ namespace mtools
 				bool incy = (ly % 2 != 0);
 				if (!B.includedIn(iBox2(0, _lx - 1, 0, _ly - 1)))
 					{ // not included
+					if (antialiasing)
+						{
+						if (blend) _draw_ellipse_in_rect_AA<true, true>(B.min[0],B.min[1],B.max[0],B.max[1], color); else _draw_ellipse_in_rect_AA<false, true>(B.min[0], B.min[1], B.max[0], B.max[1], color);
+						return;
+						}
 					if (incx)
 						{
 						const int64 INCX = 1;
@@ -2119,6 +2153,11 @@ namespace mtools
 					}
 				else
 					{
+					if (antialiasing)
+						{
+						if (blend) _draw_ellipse_in_rect_AA<true, false>(B.min[0], B.min[1], B.max[0], B.max[1], color); else _draw_ellipse_in_rect_AA<false, false>(B.min[0], B.min[1], B.max[0], B.max[1], color);
+						return;
+						}
 					if (incx)
 						{
 						const int64 INCX = 1;
@@ -4903,7 +4942,7 @@ namespace mtools
 
 
 			/* draw an antialiased circle */
-			template<bool blend, bool checkrange> void _draw_circle_AA(int xm, int ym, int r, RGBc color)
+			template<bool blend, bool checkrange> void _draw_circle_AA(int64 xm, int64 ym, int64 r, RGBc color)
 				{ 
 				int64 x = -r, y = 0;
 				int64 x2, e2, err = 2 - 2 * r;
@@ -4944,123 +4983,6 @@ namespace mtools
 				while (x < 0);
 				}
 
-
-			/* draw an antialiased ellipse inside a rectangle */
-			/*
-			template<bool blend, bool checkrange> void _draw_ellipse_in_rect_AA(int64 x0, int64 y0, int64 x1, int64 y1, RGBc color)
-				{ 
-				int64 a = std::abs<int64>(x1 - x0), b = std::abs<int64>(y1 - y0), b1 = b & 1;
-				float dx = 4 * (a - 1.0)*b*b, dy = 4 * (b1 + 1)*a*a;
-				float ed, i, err = b1*a*a - dx + dy; 
-				bool f;
-				if (a == 0 || b == 0) return _lineBresenham<blend,checkrange>({ x0, y0 }, { x1, y1 },color,true);
-				if (x0 > x1) { x0 = x1; x1 += a; }
-				if (y0 > y1) y0 = y1;
-				y0 += (b + 1) / 2; y1 = y0 - b1;
-				a = 8 * a*a; b1 = 8 * b*b;
-				for (;;) 
-					{ 
-					i = std::min<float>(dx, dy); ed = std::max<float>(dx, dy);
-					if (y0 == y1 + 1 && err > dy && a > b1) ed = 256 * 4. / a;
-					else ed = 256 / (ed + 2 * ed*i*i / (4 * ed*ed + i*i));
-					i = ed*fabs(err + dx - dy);
-					int32 op = (int32)(256 - i);
-					_updatePixel<blend, checkrange>(x0, y0, color, op);
-					_updatePixel<blend, checkrange>(x0, y1, color, op);
-					_updatePixel<blend, checkrange>(x1, y0, color, op);
-					_updatePixel<blend, checkrange>(x1, y1, color, op);
-					if (f = 2 * err + dy >= 0) 
-						{
-						if (x0 >= x1) break;
-						i = ed*(err + dx);
-						if (i < 256)
-							{
-							int32 op = (int32)(256 - i);
-							_updatePixel<blend, checkrange>(x0, y0 + 1, color, op);
-							_updatePixel<blend, checkrange>(x0, y1 - 1, color, op);
-							_updatePixel<blend, checkrange>(x1, y0 + 1, color, op);
-							_updatePixel<blend, checkrange>(x1, y1 - 1, color, op);
-							}          
-						}
-					if (2 * err <= dx) 
-						{                                           
-						i = ed*(dy - err);
-						if (i < 256) 
-							{
-							int32 op = (int32)(256 - i);
-							_updatePixel<blend, checkrange>(x0 + 1, y0, color, op);
-							_updatePixel<blend, checkrange>(x0 + 1, y1, color, op);
-							_updatePixel<blend, checkrange>(x1 - 1, y0, color, op);
-							_updatePixel<blend, checkrange>(x1 - 1, y1, color, op);
-							}
-						y0++; y1--; err += dy += a;
-						}
-					if (f) { x0++; x1--; err -= dx -= b1; }
-					}
-				if (--x0 == x1++)
-					while (y0 - y1 < b) 
-						{
-						i = 256 * 4 * fabs(err + dx) / b1; 
-						int32 op = (int32)(256 - i);
-						if (op > 0)
-							{
-							_updatePixel<blend, checkrange>(x0, ++y0, color, op);
-							_updatePixel<blend, checkrange>(x1, y0, color, op);
-							_updatePixel<blend, checkrange>(x0, --y1, color, op);
-							_updatePixel<blend, checkrange>(x1, y1, color, op);
-							}
-						err += dy += a;
-						}
-				}
-				*/
-
-				template<bool blend, bool checkrange> void _draw_ellipse_in_rect_AA(int64 x0, int64 y0, int64 x1, int64 y1, RGBc color)
-					{ 
-					long a = abs(x1 - x0), b = abs(y1 - y0), b1 = b & 1;
-					float dx = 4 * (a - 1.0)*b*b, dy = 4 * (b1 + 1)*a*a;
-					float ed, i, err = b1*a*a - dx + dy; 
-					bool f;
-
-					if (a == 0 || b == 0) return plotLine(x0, y0, x1, y1);
-					if (x0 > x1) { x0 = x1; x1 += a; }
-					if (y0 > y1) y0 = y1;
-					y0 += (b + 1) / 2; y1 = y0 - b1; 
-					a = 8 * a*a; b1 = 8 * b*b;
-
-					for (;;) {
-						i = min(dx, dy); ed = max(dx, dy);
-						if (y0 == y1 + 1 && err > dy && a > b1) ed = 255 * 4. / a;           /* x-tip */
-						else ed = 255 / (ed + 2 * ed*i*i / (4 * ed*ed + i*i));             /* approximation */
-						i = ed*fabs(err + dx - dy);           /* get intensity value by pixel error */
-						setPixelAA(x0, y0, i); setPixelAA(x0, y1, i);
-						setPixelAA(x1, y0, i); setPixelAA(x1, y1, i);
-
-						if (f = 2 * err + dy >= 0) {                  /* x step, remember condition */
-							if (x0 >= x1) break;
-							i = ed*(err + dx);
-							if (i < 255) {
-								setPixelAA(x0, y0 + 1, i); setPixelAA(x0, y1 - 1, i);
-								setPixelAA(x1, y0 + 1, i); setPixelAA(x1, y1 - 1, i);
-								}          /* do error increment later since values are still needed */
-							}
-						if (2 * err <= dx) {                                            /* y step */
-							i = ed*(dy - err);
-							if (i < 255) {
-								setPixelAA(x0 + 1, y0, i); setPixelAA(x1 - 1, y0, i);
-								setPixelAA(x0 + 1, y1, i); setPixelAA(x1 - 1, y1, i);
-								}
-							y0++; y1--; err += dy += a;
-							}
-						if (f) { x0++; x1--; err -= dx -= b1; }            /* x error increment */
-						}
-					if (--x0 == x1++)                       /* too early stop of flat ellipses */
-						while (y0 - y1 < b) {
-							i = 255 * 4 * fabs(err + dx) / b1;               /* -> finish tip of ellipse */
-							setPixelAA(x0, ++y0, i); setPixelAA(x1, y0, i);
-							setPixelAA(x0, --y1, i); setPixelAA(x1, y1, i);
-							err += dy += a;
-							}
-					}
 
 
 			/** Elipse, draw both the ellipse and its interior   
@@ -5148,6 +5070,72 @@ namespace mtools
 				}
 
 		
+			/* draw an antialiased ellipse inside a rectangle */
+			template<bool blend, bool checkrange> void _draw_ellipse_in_rect_AA(int64 x0, int64 y0, int64 x1, int64 y1, RGBc color)
+				{
+				int64 a = abs(x1 - x0), b = abs(y1 - y0), b1 = b & 1;
+				float dx = 4 * (a - 1.0)*b*b, dy = 4 * (b1 + 1)*a*a;
+				float ed, i, err = b1*a*a - dx + dy;
+				bool f;
+				if (a == 0 || b == 0) return _lineBresenham<blend, checkrange>({ x0, y0 }, { x1, y1 }, color, true);
+				if (x0 > x1) { x0 = x1; x1 += a; }
+				if (y0 > y1) y0 = y1;
+				y0 += (b + 1) / 2; y1 = y0 - b1;
+				a = 8 * a*a; b1 = 8 * b*b;
+				for (;;)
+					{
+					i = std::min<float>(dx, dy); ed = std::max<float>(dx, dy);
+					if (y0 == y1 + 1 && err > dy && a > b1) ed = 256 * 4. / a;
+					else ed = 256 / (ed + 2 * ed*i*i / (4 * ed*ed + i*i));
+					i = ed*fabs(err + dx - dy);
+					int32 op = (int32)(256 - i);
+					_updatePixel<blend, checkrange>(x0, y0, color, op);
+					_updatePixel<blend, checkrange>(x0, y1, color, op);
+					_updatePixel<blend, checkrange>(x1, y0, color, op);
+					_updatePixel<blend, checkrange>(x1, y1, color, op);
+					if (f = 2 * err + dy >= 0)
+						{
+						if (x0 >= x1) break;
+						i = ed*(err + dx);
+						if (i < 256)
+							{
+							int32 op = (int32)(256 - i);
+							_updatePixel<blend, checkrange>(x0, y0 + 1, color, op);
+							_updatePixel<blend, checkrange>(x0, y1 - 1, color, op);
+							_updatePixel<blend, checkrange>(x1, y0 + 1, color, op);
+							_updatePixel<blend, checkrange>(x1, y1 - 1, color, op);
+							}
+						}
+					if (2 * err <= dx)
+						{
+						i = ed*(dy - err);
+						if (i < 256)
+							{
+							int32 op = (int32)(256 - i);
+							_updatePixel<blend, checkrange>(x0 + 1, y0, color, op);
+							_updatePixel<blend, checkrange>(x0 + 1, y1, color, op);
+							_updatePixel<blend, checkrange>(x1 - 1, y0, color, op);
+							_updatePixel<blend, checkrange>(x1 - 1, y1, color, op);
+							}
+						y0++; y1--; err += dy += a;
+						}
+					if (f) { x0++; x1--; err -= dx -= b1; }
+					}
+				if (--x0 == x1++)
+					while (y0 - y1 < b)
+						{
+						i = 256 * 4 * fabs(err + dx) / b1;
+						int32 op = (int32)(256 - i);
+						if (op > 0)
+							{
+							_updatePixel<blend, checkrange>(x0, ++y0, color, op);
+							_updatePixel<blend, checkrange>(x1, y0, color, op);
+							_updatePixel<blend, checkrange>(x0, --y1, color, op);
+							_updatePixel<blend, checkrange>(x1, y1, color, op);
+							}
+						err += dy += a;
+						}
+				}
 
 
 

@@ -1183,9 +1183,7 @@ void test_b()
 		im.draw_filled_rectangle(BB, RGBc::c_Green.getOpacity(0.05), true);
 		im.draw_rectangle(BB, RGBc::c_Blue.getOpacity(1), true);
 
-		im._draw_ellipse_in_rect_AA<true,true>(xmin, ymin, xmax, ymax, RGBc::c_Red.getOpacity(0.3));
-
-		//im._draw_circle_AA<true,true>(500, 500, 100, RGBc::c_Red);
+		im.draw_ellipse_in_rect(BB, RGBc::c_Green, true, true);
 
 		plotter.redraw();
 
