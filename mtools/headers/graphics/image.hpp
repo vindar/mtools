@@ -4450,6 +4450,82 @@ namespace mtools
 				}
 
 
+			/**
+			 * Plot an ellipse.
+			 **/
+			template<bool blend, bool checkrange>  inline  void _plotOptimizedEllipse(int64 xm, int64 ym, int64 a, int64 b)
+				{
+				int64 x = -a, y = 0;
+				int64 e2 = b, dx = (1 + 2 * x)*e2*e2;
+				int64 dy = x*x, err = dx + dy;
+				int64 a2 = a*a, b2 = b*b;
+				do {
+					_updatePixel<blend, checkrange>(xm - x, ym + y, color);
+					_updatePixel<blend, checkrange>(xm + x, ym + y, color);
+					_updatePixel<blend, checkrange>(xm + x, ym - y, color);
+					_updatePixel<blend, checkrange>(xm - x, ym - y, color);
+					e2 = 2 * err;
+					if (e2 >= dx) { x++; err += dx += 2 * b2; }
+					if (e2 <= dy) { y++; err += dy += 2 * a2; }
+					}
+				while (x <= 0);
+				while (y++ < b) 
+					{
+					_updatePixel<blend, checkrange>(xm, ym + y, color);
+					_updatePixel<blend, checkrange>(xm, ym - y, color);
+					}
+				}
+
+
+			void plotCircle(int64 xm, int64 ym, int64 r)
+				{
+				int x = -r, y = 0, err = 2 - 2 * r;                /* bottom left to top right */
+				do {
+					_updatePixel<blend, checkrange>(xm - x, ym + y, color);
+					_updatePixel<blend, checkrange>(xm - y, ym - x, color);
+					_updatePixel<blend, checkrange>(xm + x, ym - y, color);
+					_updatePixel<blend, checkrange>(xm + y, ym + x, color);
+					r = err;
+					if (r <= y) err += ++y * 2 + 1;                             /* e_xy+e_y < 0 */
+					if (r > x || err > y)                  /* e_xy+e_x > 0 or no 2nd y-step */
+						err += ++x * 2 + 1;                                     /* -> x-step now */
+					}
+				while (x < 0);
+				}
+
+
+
+			void plotEllipseRect(int x0, int y0, int x1, int y1)
+				{                              /* rectangular parameter enclosing the ellipse */
+				long a = abs(x1 - x0), b = abs(y1 - y0), b1 = b & 1;                 /* diameter */
+				double dx = 4 * (1.0 - a)*b*b, dy = 4 * (b1 + 1)*a*a;           /* error increment */
+				double err = dx + dy + b1*a*a, e2;                          /* error of 1.step */
+
+				if (x0 > x1) { x0 = x1; x1 += a; }        /* if called with swapped points */
+				if (y0 > y1) y0 = y1;                                  /* .. exchange them */
+				y0 += (b + 1) / 2; y1 = y0 - b1;                               /* starting pixel */
+				a = 8 * a*a; b1 = 8 * b*b;
+
+				do {
+					setPixel(x1, y0);                                      /*   I. Quadrant */
+					setPixel(x0, y0);                                      /*  II. Quadrant */
+					setPixel(x0, y1);                                      /* III. Quadrant */
+					setPixel(x1, y1);                                      /*  IV. Quadrant */
+					e2 = 2 * err;
+					if (e2 <= dy) { y0++; y1--; err += dy += a; }                 /* y step */
+					if (e2 >= dx || 2 * err > dy) { x0++; x1--; err += dx += b1; }  /* x step */
+					}
+				while (x0 <= x1);
+
+					while (y0 - y1 <= b) {                /* too early stop of flat ellipses a=1 */
+						setPixel(x0 - 1, y0);                         /* -> finish tip of ellipse */
+						setPixel(x1 + 1, y0++);
+						setPixel(x0 - 1, y1);
+						setPixel(x1 + 1, y1--);
+						}
+				}
+
+
 
 
 
