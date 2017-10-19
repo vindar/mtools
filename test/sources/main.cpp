@@ -1112,11 +1112,7 @@ void test_b()
 	//cout.getKey();
 
 	
-
-
-
 	MT2004_64 gen(14987);
-
 
 	im.resizeRaw(LX, LY);
 	int j= 0; 
@@ -1124,22 +1120,57 @@ void test_b()
 	while (1)
 		{
 
-
-		cout << j << "\n"; 
-		int e = -200;
 		im.clear(RGBc(230,230,230));
 
-
-		iVec2 tabP[1000];
-
-		for (int i = 0; i < 1000; i++)
+		/*
+		int N = 100000;
+		mtools::Chronometer();
+		for (int i = 0;i < N; i++)
 			{
-			tabP[i] = iVec2(Unif_int(0 - e, LX - 1 + e, gen), Unif_int(0 - e, LY - 1 + e, gen));
+			im._plotCircle<true, true>(500, 500, 5, RGBc::c_Red.getOpacity(0.3));
 			}
+		cout << "bre = " << mtools::Chronometer() << "\n";
 
 
-		im.draw_polygon(4, tabP, RGBc::c_Red.getOpacity(0.2),true, false);
-		im.draw_convex_polygon_interior(4, tabP, RGBc::c_Green.getOpacity(0.2), true);
+		mtools::Chronometer();
+		for (int i = 0;i < N; i++)
+			{
+			im._plotCircle_midpointalgo<true, true>(500, 500, 5, RGBc::c_Green.getOpacity(0.3));
+			}
+		cout << "mid = " << mtools::Chronometer() << "\n";
+		*/
+
+		int64 xm = 500;
+		int64 ym = 500;
+		int64 r = 1;
+
+		/*
+		for (int k = 0; k < 30; k++)
+			{
+			im._plotFilledCircle<true, true, true, true>(xm, ym, r, RGBc::c_Green.getOpacity(0.3), RGBc::c_Red.getOpacity(0.2));
+			r++;
+			xm += 2*r + 5;
+			}
+			*/
+
+
+		int64 a = 50;
+		int64 b = 50;
+
+
+		im.draw_circle({ 450, 500 }, 80, RGBc::c_Blue.getOpacity(0.1),true);
+
+		im.draw_filled_circle({ 500,500 }, 100, RGBc::c_Green.getOpacity(0.1), true, RGBc::c_Red.getOpacity(0.2));
+
+		im.draw_ellipse({ 630, 500 }, 90, 40,  RGBc::c_Cyan.getOpacity(0.1), true);
+
+		
+		iBox2 BB(100, 451, 300, 522);
+
+		im.draw_filled_rectangle(BB, RGBc::c_Green.getOpacity(0.05),true);
+		im.draw_rectangle(BB, RGBc::c_Blue.getOpacity(1),true);
+		im.draw_filled_ellipse_in_rect(BB, RGBc::c_Red.getOpacity(0.5), true, RGBc::c_Black.getOpacity(0.3));
+
 
 		plotter.redraw();
 
