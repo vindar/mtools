@@ -129,9 +129,6 @@ void LineBresenham(Image & im, int64 x1, int64 y1, int64 x2, int64 y2, RGBc colo
 
 
 
-/* 
-*/ 
-
 
 /**
 * THE EXTREMELY FAST LINE ALGORITHM Variation E (Addition Fixed Point PreCalc)
@@ -1120,7 +1117,7 @@ void test_b()
 	while (1)
 		{
 
-		im.clear(RGBc(230,230,230));
+		im.clear(RGBc(230, 230, 230));
 
 		/*
 		int N = 100000;
@@ -1164,7 +1161,7 @@ void test_b()
 
 		im.draw_ellipse({ 630, 500 }, 90, 40,  RGBc::c_Cyan.getOpacity(0.1), true);
 
-		
+
 		iBox2 BB(100, 451, 300, 522);
 
 
@@ -1174,16 +1171,19 @@ void test_b()
 
 		*/
 
-		int64 xmin = 400;
-		int64 xmax = 550; 
-		int64 ymin = 300;
-		int64 ymax = 401;
+		int64 xmin = 397;
+		int64 xmax = 900;
+		int64 ymin = 217;
+		int64 ymax = 1200;
 
-		iBox2 BB(xmin,xmax,ymin,ymax);
+		iBox2 BB(xmin, xmax, ymin, ymax);
 		im.draw_filled_rectangle(BB, RGBc::c_Green.getOpacity(0.05), true);
 		im.draw_rectangle(BB, RGBc::c_Blue.getOpacity(1), true);
 
-		im.draw_ellipse_in_rect(BB, RGBc::c_Green, true, true);
+		im.draw_ellipse_in_rect(BB, RGBc::c_Green, true, false);
+
+
+		im.draw_quad_bezier({ BB.min[0], BB.min[1] }, { BB.max[0], BB.max[1] }, { 460,600 }, 0.25, RGBc::c_Black.getOpacity(0.3), true, true);
 
 		plotter.redraw();
 
