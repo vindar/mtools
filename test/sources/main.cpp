@@ -1183,7 +1183,12 @@ void test_b()
 		im.draw_ellipse_in_rect(BB, RGBc::c_Green, true, false);
 
 
-		im.draw_quad_bezier({ BB.min[0], BB.min[1] }, { BB.max[0], BB.min[1] }, { 460,600 }, 0.2, RGBc::c_Black.getOpacity(0.3), false, false,false);
+		Chronometer();
+		for (int k = 0;k < 100000;k++)
+			{
+			im.draw_cubic_bezier({ BB.min[0], BB.min[1] }, { BB.max[0], BB.min[1] }, { 900,600 }, { 100,600 }, RGBc::c_Black.getOpacity(0.3), true,true, true);
+			}
+		cout << "done in " << Chronometer() << "\n";
 
 		plotter.redraw();
 

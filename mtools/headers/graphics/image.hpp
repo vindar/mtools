@@ -2378,66 +2378,83 @@ namespace mtools
 			void draw_quad_bezier(iVec2 P1, iVec2 P2, iVec2 PC, float wc, RGBc color, bool draw_P2, bool blending, bool antialiasing)
 				{
 				if ((isEmpty()) || (wc <= 0)) return;
+				if (antialiasing) // if using antialiasing, we always check the range (and its cost is negligible compared to the antialiasing computations).
+					{
+					if (wc == 1)
+						{
+						if (blending)  _plotQuadBezier<true, true, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2); else _plotQuadBezier<false, true, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2);
+						}
+					else
+						{
+						if (blending)  _plotQuadRationalBezier<true, true, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2); else _plotQuadRationalBezier<false, true, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2);
+						}
+					return;
+					}
+				// check if we stay inside the image to remove bound check is possible
 				iBox2 B(P1);
 				B.swallowPoint(P2);
 				B.swallowPoint(PC);
 				if (!B.isIncludedIn(iBox2(0, _lx - 1, 0, _ly - 1)))
-					{ // not included, must check
-					if (antialiasing)
+					{ // must check bounds
+					if (wc == 1)
 						{
-						if (wc == 1)
-							{
-							if (blending)  _plotQuadBezier<true, true, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2); else _plotQuadBezier<false, true, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2);
-							}
-						else
-							{
-							if (blending)  _plotQuadRationalBezier<true, true, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2); else _plotQuadRationalBezier<false, true, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2);
-							}
+						if (blending)  _plotQuadBezier<true, true, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2); else _plotQuadBezier<false, true, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2);
 						}
 					else
 						{
-						if (wc == 1)
-							{
-							if (blending)  _plotQuadBezier<true, true, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2); else _plotQuadBezier<false, true, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2);
-							}
-						else
-							{
-							if (blending)  _plotQuadRationalBezier<true, true, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2); else _plotQuadRationalBezier<false, true, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2);
-							}
+						if (blending)  _plotQuadRationalBezier<true, true, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2); else _plotQuadRationalBezier<false, true, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2);
 						}
+					return;
+					}
+				// no need to check bounds
+				if (wc == 1)
+					{
+					if (blending)  _plotQuadBezier<true, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2); else _plotQuadBezier<false, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2);
 					}
 				else
 					{
-					// no need to check
-					if (antialiasing)
-						{
-						if (wc == 1)
-							{
-							if (blending)  _plotQuadBezier<true, false, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2); else _plotQuadBezier<false, false, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2);
-							}
-						else
-							{
-							if (blending)  _plotQuadRationalBezier<true, false, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2); else _plotQuadRationalBezier<false, false, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2);
-							}
-						}
-					else
-						{
-						if (wc == 1)
-							{
-							if (blending)  _plotQuadBezier<true, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2); else _plotQuadBezier<false, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2);
-							}
-						else
-							{
-							if (blending)  _plotQuadRationalBezier<true, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2); else _plotQuadRationalBezier<false, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2);
-							}
-						}
+					if (blending)  _plotQuadRationalBezier<true, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2); else _plotQuadRationalBezier<false, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2);
 					}
+				return;
 				}
 
 
 
-
-
+			/**
+			* Draw a cubic Bezier curve.
+			*
+			* @param	P1				The first point.
+			* @param	P2				The second point.
+			* @param	PA				The first control point.
+			* @param	PB				The second control point.
+			* @param	color			The color to use
+			* @param	draw_P2			true to draw the endpoint P2.
+			* @param	blending		true to use blending.
+			* @param	antialiasing	true to use antialiasing.
+			**/
+			void draw_cubic_bezier(iVec2 P1, iVec2 P2, iVec2 PA, iVec2 PB,  RGBc color, bool draw_P2, bool blending, bool antialiasing)
+				{
+				if (isEmpty()) return;
+				if (antialiasing) // if using antialiasing, we always check the range (and its cost is negligible compared to the antialiasing computations).
+					{
+					if (blending)  _plotCubicBezier<true, true, true>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2); else _plotCubicBezier<false, true, true>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2);
+					return;
+					}
+				// check if we stay inside the image to remove bound check is possible
+				iBox2 B(P1);
+				B.swallowPoint(P2);
+				B.swallowPoint(PA);
+				B.swallowPoint(PB);
+				if (!B.isIncludedIn(iBox2(0, _lx - 1, 0, _ly - 1)))
+					{ // must check bounds
+					if (blending)  _plotCubicBezier<true, true, false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2); else _plotCubicBezier<false, true, false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2);
+					return;
+					}
+				// no need to check bounds
+				if (blending)  _plotCubicBezier<true, false, false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2); else _plotCubicBezier<false, false, false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2);
+				return;
+				}
+			
 
 
 
@@ -5397,7 +5414,8 @@ namespace mtools
 			/**
 			 * Plot any quadratic Bezier curve 
 		 	 * adapted from Alois Zingl  (http://members.chello.at/easyfilter/bresenham.html) 
-		 	 **/
+			 * change: do not draw always the endpoint (x2,y2)
+			 **/
 			template<bool blend, bool checkrange, bool antialiasing> void _plotQuadBezier(int64 x0, int64 y0, int64 x1, int64 y1, int64 x2, int64 y2, RGBc color, bool draw_P2)
 				{    
 				if (draw_P2) { _updatePixel<blend, checkrange>(x2, y2, color); }
@@ -5438,6 +5456,7 @@ namespace mtools
 			/**
 			* draw a limited rational Bezier segment, squared weight. Used by _plotQuadRationalBezier().
 			* adapted from Alois Zingl  (http://members.chello.at/easyfilter/bresenham.html)
+			* change: do not draw the endpoint (x2,y2)
 			**/
 			template<bool blend, bool checkrange> void _plotQuadRationalBezierSeg(int64 x0, int64 y0, int64 x1, int64 y1, int64 x2, int64 y2, double w, RGBc color)
 				{
@@ -5511,6 +5530,7 @@ namespace mtools
 			/**
 			* draw an anti-aliased limited rational Bezier segment, squared weight. Used by _plotQuadRationalBezier().
 			* adapted from Alois Zingl  (http://members.chello.at/easyfilter/bresenham.html)
+			* change: do not draw the endpoint (x2,y2)
 			**/
 			template<bool blend, bool checkrange> void _plotQuadRationalBezierSegAA(int64 x0, int64 y0, int64 x1, int64 y1, int64 x2, int64 y2, double w, RGBc color)
 				{
@@ -5601,6 +5621,7 @@ namespace mtools
 			/**
 			* Plot any quadratic rational Bezier curve.
 			* adapted from Alois Zingl  (http://members.chello.at/easyfilter/bresenham.html)
+			* change: do not draw always the endpoint (x2,y2)
 			**/
 			template<bool blend, bool checkrange, bool antialiasing> void _plotQuadRationalBezier(int64 x0, int64 y0, int64 x1, int64 y1, int64 x2, int64 y2, double w, RGBc color, bool draw_P2)
 				{
@@ -5655,6 +5676,217 @@ namespace mtools
 					}
 				if (antialiasing) { _plotQuadRationalBezierSegAA<blend, checkrange>(x0, y0, x1, y1, x2, y2, w*w, color); } else { _plotQuadRationalBezierSeg<blend, checkrange>(x0, y0, x1, y1, x2, y2, w*w, color); }
 				}
+
+
+
+			/**
+			* Plot a limited cubic Bezier segment.
+			* adapted from Alois Zingl  (http://members.chello.at/easyfilter/bresenham.html)
+			* change: do not draw always the endpoint (x2,y2)
+			**/
+			template<bool blend, bool checkrange> void _plotCubicBezierSeg(int64 x0, int64 y0, double x1, double y1, double x2, double y2, int64 x3, int64 y3, RGBc color)
+				{
+				if ((x0 == x3) && (y0 == y3)) return;
+				int64 sax3 = x3, say3 = y3;
+				int64 f, fx, fy, leg = 1;
+				int64 sx = x0 < x3 ? 1 : -1, sy = y0 < y3 ? 1 : -1;
+				double xc = -fabs(x0 + x1 - x2 - x3), xa = xc - 4 * sx*(x1 - x2), xb = sx*(x0 - x1 - x2 + x3);
+				double yc = -fabs(y0 + y1 - y2 - y3), ya = yc - 4 * sy*(y1 - y2), yb = sy*(y0 - y1 - y2 + y3);
+				double ab, ac, bc, cb, xx, xy, yy, dx, dy, ex, *pxy, EP = 0.01;
+				if (xa == 0 && ya == 0)
+					{
+					sx = (int64)floor((3 * x1 - x0 + 1) / 2); sy = (int64)floor((3 * y1 - y0 + 1) / 2);
+					_plotQuadBezierSeg<blend, checkrange>(x0, y0, sx, sy, x3, y3,color);
+					return;
+					}
+				x1 = (x1 - x0)*(x1 - x0) + (y1 - y0)*(y1 - y0) + 1;
+				x2 = (x2 - x3)*(x2 - x3) + (y2 - y3)*(y2 - y3) + 1;
+				do {
+					ab = xa*yb - xb*ya; ac = xa*yc - xc*ya; bc = xb*yc - xc*yb;
+					ex = ab*(ab + ac - 3 * bc) + ac*ac;
+					f = (ex > 0) ? 1 : (int64)sqrt(1 + 1024 / x1);
+					ab *= f; ac *= f; bc *= f; ex *= f*f;
+					xy = 9 * (ab + ac + bc) / 8; cb = 8 * (xa - ya);
+					dx = 27 * (8 * ab*(yb*yb - ya*yc) + ex*(ya + 2 * yb + yc)) / 64 - ya*ya*(xy - ya);
+					dy = 27 * (8 * ab*(xb*xb - xa*xc) - ex*(xa + 2 * xb + xc)) / 64 - xa*xa*(xy + xa);
+					xx = 3 * (3 * ab*(3 * yb*yb - ya*ya - 2 * ya*yc) - ya*(3 * ac*(ya + yb) + ya*cb)) / 4;
+					yy = 3 * (3 * ab*(3 * xb*xb - xa*xa - 2 * xa*xc) - xa*(3 * ac*(xa + xb) + xa*cb)) / 4;
+					xy = xa*ya*(6 * ab + 6 * ac - 3 * bc + cb); ac = ya*ya; cb = xa*xa;
+					xy = 3 * (xy + 9 * f*(cb*yb*yc - xb*xc*ac) - 18 * xb*yb*ab) / 8;
+					if (ex < 0) { dx = -dx; dy = -dy; xx = -xx; yy = -yy; xy = -xy; ac = -ac; cb = -cb; }
+					ab = 6 * ya*ac; ac = -6 * xa*ac; bc = 6 * ya*cb; cb = -6 * xa*cb;
+					dx += xy; ex = dx + dy; dy += xy; /* error of 1st step */
+					for (pxy = &xy, fx = fy = f; x0 != x3 && y0 != y3; )
+						{
+						if ((x0 != sax3) || (y0 != say3)) _updatePixel<blend, checkrange>(x0, y0, color);
+						do {
+							if (dx > *pxy || dy < *pxy) goto exit;
+							y1 = 2 * ex - dy;
+							if (2 * ex >= dx) { fx--; ex += dx += xx; dy += xy += ac; yy += bc; xx += ab; }
+							if (y1 <= 0) { fy--; ex += dy += yy; dx += xy += bc; xx += ac; yy += cb; }
+							}
+						while (fx > 0 && fy > 0);
+							if (2 * fx <= f) { x0 += sx; fx += f; }
+							if (2 * fy <= f) { y0 += sy; fy += f; }
+							if (pxy == &xy && dx < 0 && dy > 0) pxy = &EP;
+						}
+				exit:
+					xx = (double)x0; x0 = x3; x3 = (int64)xx; sx = -sx; xb = -xb;
+					yy = (double)y0; y0 = y3; y3 = (int64)yy; sy = -sy; yb = -yb; x1 = x2;
+					}
+				while (leg--);
+				if ((x0 == sax3) && (y0 == say3)) { _lineBresenham<blend, checkrange>({ x3, y3 }, { x0, y0 }, color, false); }
+				else if ((x3 == sax3) && (y3 == say3)) { _lineBresenham<blend, checkrange>({ x0, y0 }, { x3, y3 }, color, false); }
+				else _lineBresenham<blend, checkrange>({ x0, y0 }, { x3, y3 }, color, true);
+				}
+
+
+			/**
+			* Plot a limited anti-aliased cubic Bezier segment.
+			* adapted from Alois Zingl  (http://members.chello.at/easyfilter/bresenham.html)
+			* change: do not draw always the endpoint (x2,y2)
+			**/
+			template<bool blend, bool checkrange> void _plotCubicBezierSegAA(int64 x0, int64 y0, double x1, double y1, double x2, double y2, int64 x3, int64 y3, RGBc color)
+				{
+				if ((x0 == x3) && (y0 == y3)) return;
+				int64 sax3 = x3, say3 = y3;
+				int64 f, fx, fy, leg = 1;
+				int64 sx = x0 < x3 ? 1 : -1, sy = y0 < y3 ? 1 : -1;
+				double xc = -fabs(x0 + x1 - x2 - x3), xa = xc - 4 * sx*(x1 - x2), xb = sx*(x0 - x1 - x2 + x3);
+				double yc = -fabs(y0 + y1 - y2 - y3), ya = yc - 4 * sy*(y1 - y2), yb = sy*(y0 - y1 - y2 + y3);
+				double ab, ac, bc, ba, xx, xy, yy, dx, dy, ex, px, py, ed, ip, EP = 0.01;
+				if (xa == 0 && ya == 0)
+					{
+					sx = (int64)floor((3 * x1 - x0 + 1) / 2); sy = (int64)floor((3 * y1 - y0 + 1) / 2);
+					_plotQuadBezierSegAA<blend, checkrange>(x0, y0, sx, sy, x3, y3, color);
+					return;
+					}
+				x1 = (x1 - x0)*(x1 - x0) + (y1 - y0)*(y1 - y0) + 1;
+				x2 = (x2 - x3)*(x2 - x3) + (y2 - y3)*(y2 - y3) + 1;
+
+				do {
+					ab = xa*yb - xb*ya; ac = xa*yc - xc*ya; bc = xb*yc - xc*yb;
+					ip = 4 * ab*bc - ac*ac;
+					ex = ab*(ab + ac - 3 * bc) + ac*ac;
+					f = ((ex > 0) ? 1 : (int64)sqrt(1 + 1024 / x1));
+					ab *= f; ac *= f; bc *= f; ex *= f*f;
+					xy = 9 * (ab + ac + bc) / 8; ba = 8 * (xa - ya);
+					dx = 27 * (8 * ab*(yb*yb - ya*yc) + ex*(ya + 2 * yb + yc)) / 64 - ya*ya*(xy - ya);
+					dy = 27 * (8 * ab*(xb*xb - xa*xc) - ex*(xa + 2 * xb + xc)) / 64 - xa*xa*(xy + xa);
+					xx = 3 * (3 * ab*(3 * yb*yb - ya*ya - 2 * ya*yc) - ya*(3 * ac*(ya + yb) + ya*ba)) / 4;
+					yy = 3 * (3 * ab*(3 * xb*xb - xa*xa - 2 * xa*xc) - xa*(3 * ac*(xa + xb) + xa*ba)) / 4;
+					xy = xa*ya*(6 * ab + 6 * ac - 3 * bc + ba); ac = ya*ya; ba = xa*xa;
+					xy = 3 * (xy + 9 * f*(ba*yb*yc - xb*xc*ac) - 18 * xb*yb*ab) / 8;
+					if (ex < 0) { dx = -dx; dy = -dy; xx = -xx; yy = -yy; xy = -xy; ac = -ac; ba = -ba; }
+					ab = 6 * ya*ac; ac = -6 * xa*ac; bc = 6 * ya*ba; ba = -6 * xa*ba;
+					dx += xy; ex = dx + dy; dy += xy;
+					for (fx = fy = f; x0 != x3 && y0 != y3; )
+						{
+						y1 = fmin(fabs(xy - dx), fabs(dy - xy));
+						ed = fmax(fabs(xy - dx), fabs(dy - xy));
+						ed = f*(ed + 2 * ed*y1*y1 / (4 * ed*ed + y1*y1));
+						y1 = 256 * fabs(ex - (f - fx + 1)*dx - (f - fy + 1)*dy + f*xy) / ed;
+						if (y1 <= 256) { if ((x0 != sax3) || (y0 != say3)) _updatePixel<blend, checkrange>(x0, y0, color, (int32)(256-y1)); }
+						px = fabs(ex - (f - fx + 1)*dx + (fy - 1)*dy);
+						py = fabs(ex + (fx - 1)*dx - (f - fy + 1)*dy);
+						y2 = (double)y0;
+						do {
+							if (ip >= -EP) if (dx + xx > xy || dy + yy < xy) goto exit;
+							y1 = 2 * ex + dx;
+							if (2 * ex + dy > 0) { fx--; ex += dx += xx; dy += xy += ac; yy += bc; xx += ab; }
+							else if (y1 > 0) goto exit;
+							if (y1 <= 0) { fy--; ex += dy += yy; dx += xy += bc; xx += ac; yy += ba; }
+							}
+						while (fx > 0 && fy > 0);
+							if (2 * fy <= f)
+								{
+								if (py < ed) _updatePixel<blend, checkrange>((int64)(x0 + sx), y0, color, (int32)(256 - 256*py/ed));
+								y0 += sy; fy += f;
+								}
+							if (2 * fx <= f)
+								{
+								if (px < ed) _updatePixel<blend, checkrange>(x0, (int64)(y2 + sy), color, (int32)(256 - 256*px/ed));
+								x0 += sx; fx += f;
+								}
+						}
+					break;
+				exit:
+					if (2 * ex < dy && 2 * fy <= f + 2)
+						{						
+						if (py < ed) _updatePixel<blend, checkrange>((int64)(x0 + sx), y0, color, (int32)(256 - 256*py/ed));
+						y0 += sy;
+						}
+					if (2 * ex > dx && 2 * fx <= f + 2)
+						{
+						if (px < ed) _updatePixel<blend, checkrange>(x0, (int64)(y2 + sy), color, (int32)(256 - 256*px/ed));
+						x0 += sx;
+						}
+					xx = (double)x0; x0 = x3; x3 = (int64)xx; sx = -sx; xb = -xb;
+					yy = (double)y0; y0 = y3; y3 = (int64)yy; sy = -sy; yb = -yb; x1 = x2;
+					}
+				while (leg--);
+				if ((x0 == sax3) && (y0 == say3)) { _lineWuAA<blend, checkrange>({ x3, y3 }, { x0, y0 }, color, false); }
+				else if ((x3 == sax3) && (y3 == say3)) { _lineWuAA<blend, checkrange>({ x0, y0 }, { x3, y3 }, color, false); }
+				else _lineWuAA<blend, checkrange>({ x0, y0 }, { x3, y3 }, color, true);
+				}
+
+
+			/**
+			* Plot any cubic Bezier curve.
+			* adapted from Alois Zingl  (http://members.chello.at/easyfilter/bresenham.html)
+			* change: do not draw always the endpoint (x2,y2)
+			**/
+			template<bool blend, bool checkrange, bool antialiasing> void _plotCubicBezier(int64 x0, int64 y0, int64 x1, int64 y1, int64 x2, int64 y2, int64 x3, int64 y3, RGBc color, bool draw_P2)
+				{
+				if (draw_P2) { _updatePixel<blend, checkrange>(x3, y3, color); }
+				if ((x0 == x3) && (y0 == y3)) return;
+				int64 n = 0, i = 0;
+				int64 xc = x0 + x1 - x2 - x3, xa = xc - 4 * (x1 - x2);
+				int64 xb = x0 - x1 - x2 + x3, xd = xb + 4 * (x1 + x2);
+				int64 yc = y0 + y1 - y2 - y3, ya = yc - 4 * (y1 - y2);
+				int64 yb = y0 - y1 - y2 + y3, yd = yb + 4 * (y1 + y2);
+				double fx0 = (double)x0, fx1, fx2, fx3, fy0 = (double)y0, fy1, fy2, fy3;
+				double t1 = (double)(xb*xb - xa*xc), t2, t[6];
+				if (xa == 0) { if (abs(xc) < 2 * abs(xb)) t[n++] = xc / (2.0*xb); }
+				else if (t1 > 0.0)
+					{
+					t2 = sqrt(t1);
+					t1 = (xb - t2) / xa; if (fabs(t1) < 1.0) t[n++] = t1;
+					t1 = (xb + t2) / xa; if (fabs(t1) < 1.0) t[n++] = t1;
+					}
+				t1 = (double)(yb*yb - ya*yc);
+				if (ya == 0) { if (abs(yc) < 2 * abs(yb)) t[n++] = yc / (2.0*yb); }
+				else if (t1 > 0.0)
+					{
+					t2 = sqrt(t1);
+					t1 = (yb - t2) / ya; if (fabs(t1) < 1.0) t[n++] = t1;
+					t1 = (yb + t2) / ya; if (fabs(t1) < 1.0) t[n++] = t1;
+					}
+				for (i = 1; i < n; i++) if ((t1 = t[i - 1]) > t[i]) { t[i - 1] = t[i]; t[i] = t1; i = 0; }
+				t1 = -1.0; t[n] = 1.0;
+				for (i = 0; i <= n; i++)
+					{
+					t2 = t[i];
+					fx1 = (t1*(t1*xb - 2 * xc) - t2*(t1*(t1*xa - 2 * xb) + xc) + xd) / 8 - fx0;
+					fy1 = (t1*(t1*yb - 2 * yc) - t2*(t1*(t1*ya - 2 * yb) + yc) + yd) / 8 - fy0;
+					fx2 = (t2*(t2*xb - 2 * xc) - t1*(t2*(t2*xa - 2 * xb) + xc) + xd) / 8 - fx0;
+					fy2 = (t2*(t2*yb - 2 * yc) - t1*(t2*(t2*ya - 2 * yb) + yc) + yd) / 8 - fy0;
+					fx0 -= fx3 = (t2*(t2*(3 * xb - t2*xa) - 3 * xc) + xd) / 8;
+					fy0 -= fy3 = (t2*(t2*(3 * yb - t2*ya) - 3 * yc) + yd) / 8;
+					x3 = (int64)floor(fx3 + 0.5); y3 = (int64)floor(fy3 + 0.5);
+					if (fx0 != 0.0) { fx1 *= fx0 = (x0 - x3) / fx0; fx2 *= fx0; }
+					if (fy0 != 0.0) { fy1 *= fy0 = (y0 - y3) / fy0; fy2 *= fy0; }
+					if (x0 != x3 || y0 != y3)
+						{
+						if (antialiasing) { _plotCubicBezierSegAA<blend, checkrange>(x0, y0, x0 + fx1, y0 + fy1, x0 + fx2, y0 + fy2, x3, y3,color); }
+						else { _plotCubicBezierSeg<blend, checkrange>(x0, y0, x0 + fx1, y0 + fy1, x0 + fx2, y0 + fy2, x3, y3,color); }
+						}
+					x0 = x3; y0 = y3; fx0 = fx3; fy0 = fy3; t1 = t2;
+					}
+				}
+
+
+
 
 
 
