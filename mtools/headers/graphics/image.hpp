@@ -4344,6 +4344,21 @@ namespace mtools
 				}
 
 
+			/**
+			 * Compute the position of the next pixel after P on a Bresenham segment [P,Q].
+			 * if P = Q, return P. 
+			 **/
+			MTOOLS_FORCEINLINE iVec2 _nextPosInLine(iVec2 P, iVec2 Q)
+				{
+				if (P == Q) return P;
+				_bdir line;
+				_bpos pos;
+				_init_line(P, Q, line, pos);
+				if (line.x_major) _move_line<true>(line, pos); else _move_line<false>(line, pos);
+				return iVec2(pos.x, pos.y);
+				}
+
+
 
 			/**
 			* Draw a segment [P1,P2] using Bresenham's algorithm.
@@ -4356,22 +4371,17 @@ namespace mtools
 			*
 			* Optimized for speed.
 			**/
-			template<bool blend, bool checkrange>  MTOOLS_FORCEINLINE void _lineBresenham(const iVec2 P1, const iVec2 P2, RGBc color, bool draw_last, bool draw_first = true)
+			template<bool blend, bool checkrange>  MTOOLS_FORCEINLINE void _lineBresenham(const iVec2 P1, const iVec2 P2, RGBc color, bool draw_last)
 				{
 				if (P1 == P2)
 					{
-					if ((draw_first)&&(draw_last)) _updatePixel<blend, checkrange>(P1, color);
+					if (draw_last) _updatePixel<blend, checkrange>(P1, color);
 					return;
 					}
 				int64 y = _lengthBresenham(P1, P2, draw_last);
 				_bdir line;
 				_bpos pos;
 				_init_line(P1, P2, line, pos);
-				if (!draw_first) 
-					{ 
-					if (line.x_major) _move_line<true>(line, pos); else _move_line<false>(line, pos);
-					y--; 
-					}
 				if (checkrange)
 					{
 					iBox2 B(0, _lx - 1, 0, _ly - 1);
@@ -4415,18 +4425,14 @@ namespace mtools
 			template<bool blend, bool checkrange> inline void _lineBresenham_avoid(iVec2 P, iVec2 Q, iVec2 P2, RGBc color, int64 stop_before)
 				{
 				if (P == Q) return;
-
 				_bdir linea;
 				_bpos posa;
 				_init_line(P, Q, linea, posa);
-
 				_bdir lineb;
 				_bpos posb;
 				_init_line(P, P2, lineb, posb);
-
 				int64 lena = _lengthBresenham(P, Q,true) - stop_before;	// lenght of the segments
 				int64 lenb = _lengthBresenham(P, P2,true);              // 
-
 				if (checkrange)
 					{
 					iBox2 B(0, _lx - 1, 0, _ly - 1);
@@ -5046,22 +5052,13 @@ namespace mtools
 			 * 
 			 * Set draw_last to true to draw point P2 and to false to draw only the open segment.
 			 **/
-			template<bool blend, bool checkrange>  MTOOLS_FORCEINLINE void _lineWuAA(iVec2 P1, iVec2 P2, RGBc color, bool draw_last, bool draw_first = true)
+			template<bool blend, bool checkrange>  MTOOLS_FORCEINLINE void _lineWuAA(iVec2 P1, iVec2 P2, RGBc color, bool draw_last)
 				{
 				int64 & x0 = P1.X(); int64 & y0 = P1.Y();
 				int64 & x1 = P2.X(); int64 & y1 = P2.Y();
-				if (x0 == x1) 
-					{ // must be treated separately
-					if (!draw_first) { if (y0 < y1) y0++; else { if (y0 > y1) y0--; else return; } }
-					_verticalLine<blend, checkrange>(x0, y0, y1, color, draw_last); 
-					return; 
-					} 
-				if (y0 == y1) 
-					{ // must be treated separately
-					if (!draw_first) { if (x0 < x1) x0++; else { if (x0 > x1) x0--; else return; } }
-					_horizontalLine<blend, checkrange>(y0, x0, x1, color, draw_last); return; 
-					}
-				if (draw_first) _updatePixel<blend, checkrange>(x0, y0,color);
+				if (x0 == x1) {  _verticalLine<blend, checkrange>(x0, y0, y1, color, draw_last); return; }   // must be treated separately
+				if (y0 == y1) {  _horizontalLine<blend, checkrange>(y0, x0, x1, color, draw_last); return; } //
+				_updatePixel<blend, checkrange>(x0, y0,color);
 				if (draw_last)  _updatePixel<blend, checkrange>(x1, y1,color);
 				if (y0 > y1) { mtools::swap(y0, y1); mtools::swap(x0, x1); }
 				int64 dx = x1 - x0;
@@ -5109,7 +5106,7 @@ namespace mtools
 
 
 			/**
-			* Draw an tick antialiased line using Bresenham's algorithm.
+			* Draw an antialiased line using Bresenham's algorithm.
 			* The end point is drawn.
 			* A little slower and 'ticker' than Wu's algorithm
 			*  adapted from Alois Zingl  (http://members.chello.at/easyfilter/bresenham.html)
