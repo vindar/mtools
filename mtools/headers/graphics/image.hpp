@@ -1804,6 +1804,19 @@ namespace mtools
 				}
 
 
+			/**
+			 * Draw a polygon.
+			 *
+			 * @param	tabPoints  	std vector of polygon vertice in clockwise or counterclockwise order.
+			 * @param	color	   	The color tu use.
+			 * @param	blending   	true to use blending.
+			 * @param	antialiased	true to draw antialiased lines.
+			 **/
+			MTOOLS_FORCEINLINE void draw_polygon(const std::vector<iVec2> & tabPoints, RGBc color, bool blending, bool antialiased)
+				{
+				draw_polygon(tabPoints.size(), tabPoints.data(), color, blending, antialiased);
+				}
+
 
 			/**
 			* Fill the interior of a convex polygon. The boundary lines are not drawn.
@@ -1843,6 +1856,20 @@ namespace mtools
 					{
 					draw_line(G, tabPoints[i], fillcolor, false);
 					}
+				}
+
+
+			/**
+			* Fill the interior of a convex polygon. The edge are not drawn.
+			*
+			* @param	tabPoints  	std vector of polygon vertice in clockwise or counterclockwise order.
+			* @param	color	   	The color tu use.
+			* @param	blending   	true to use blending.
+			* @param	antialiased	true to draw antialiased lines.
+			**/
+			MTOOLS_FORCEINLINE void draw_convex_polygon_interior(const std::vector<iVec2> & tabPoints, RGBc fillcolor, bool blending)
+				{
+				draw_convex_polygon_interior(tabPoints.size(), tabPoints.data(), fillcolor, blending);
 				}
 
 
@@ -2456,6 +2483,156 @@ namespace mtools
 				}
 			
 
+
+			/**
+			 * Draw a quadratic spline.
+			 *
+			 * @param	nbpoints	   	number of point to interpolated
+			 * @param	tabPoints	   	array of points to interpolate. 
+			 * @param	color		   	The color tu use.
+			 * @param	draw_last_point	true to draw the last point.
+			 * @param	blending	   	true to use blending.
+			 * @param	antialiased	   	true to use anti-aliasing.
+			 **/
+			inline void draw_quad_spline(size_t nbpoints, const iVec2 * tabPoints, RGBc color, bool draw_last_point, bool blending, bool antialiased)
+				{
+				if (isEmpty()) return;
+				switch(nbpoints)
+					{
+					case 0: {return;}
+					case 1:
+						{
+						if (draw_last_point)
+							{
+							if (blending) blendPixel(tabPoints[0], color); else setPixel(tabPoints[0], color);
+							}
+						return;
+						}
+					case 2:
+						{
+						draw_line(tabPoints[0], tabPoints[1], color, draw_last_point,blending,antialiased);
+						return;
+						}
+					default:
+						{
+						// we make a copy of the array because the drawing method destroy it.
+						const size_t STATIC_SIZE = 32;
+						int64 static_tabX[STATIC_SIZE]; int64 * tabX = static_tabX;
+						int64 static_tabY[STATIC_SIZE]; int64 * tabY = static_tabY;
+						if (nbpoints > STATIC_SIZE)
+							{ // use dynamic array instead. 
+							tabX = new int64[nbpoints];
+							tabY = new int64[nbpoints];
+							}
+						for (size_t k = 0; k < nbpoints; k++) { tabX[k] = tabPoints[k].X();  tabY[k] = tabPoints[k].Y(); }
+						// TODO : find a way to compute a convex envelop for the spline so that we can easily check if checkrange
+						// is needed. For the time being, we always check the range....
+						if (antialiased)
+							{
+							if (blending) _plotQuadSpline<true,true,true>(nbpoints - 1, tabX, tabY, color, draw_last_point); else _plotQuadSpline<false, true, true>(nbpoints - 1, tabX, tabY, color, draw_last_point);
+							}
+						else
+							{
+							if (blending) _plotQuadSpline<true, true, false>(nbpoints - 1, tabX, tabY, color, draw_last_point); else _plotQuadSpline<false, true, false>(nbpoints - 1, tabX, tabY, color, draw_last_point);
+							}						
+						if (tabX != static_tabX) { delete[] tabX; delete[] tabY; } // release memory if dynamically allocated. 
+						return;
+						}
+					}
+				}
+
+
+			/**
+			* Draw a quadratic spline.
+			*
+			* @param	tabPoints	   	std vector containing the points interpolated by the spline.
+			* @param	color		   	The color tu use.
+			* @param	draw_last_point	true to draw the last point.
+			* @param	blending	   	true to use blending.
+			* @param	antialiased	   	true to use anti-aliasing.
+			**/
+			MTOOLS_FORCEINLINE void draw_quad_spline(const std::vector<iVec2> & tabPoints, RGBc color, bool draw_last_point, bool blending, bool antialiased)
+				{
+				draw_quad_spline(tabPoints.size(), tabPoints.data(), color, draw_last_point, blending, antialiased);
+				}
+
+
+			/**
+			* Draw a cubic spline.
+			*
+			* @param	nbpoints	   	number of point to interpolated
+			* @param	tabPoints	   	array of points to interpolate.
+			* @param	color		   	The color tu use.
+			* @param	draw_last_point	true to draw the last point.
+			* @param	blending	   	true to use blending.
+			* @param	antialiased	   	true to use anti-aliasing.
+			**/
+			MTOOLS_FORCEINLINE void draw_cubic_spline(size_t nbpoints, const iVec2 * tabPoints, RGBc color, bool draw_last_point, bool blending, bool antialiased)
+				{
+				if (isEmpty()) return;
+				switch (nbpoints)
+					{
+					case 0: {return;}
+					case 1:
+						{
+						if (draw_last_point)
+							{
+							if (blending) blendPixel(tabPoints[0], color); else setPixel(tabPoints[0], color);
+							}
+						return;
+						}
+					case 2:
+						{
+						draw_line(tabPoints[0], tabPoints[1], color, draw_last_point, blending, antialiased);
+						return;
+						}
+					case 3:
+						{
+						draw_quad_spline(nbpoints, tabPoints, color, draw_last_point, blending, antialiased);
+						return;
+						}
+					default:
+						{
+						// we make a copy of the array because the drawing method destroy it.
+						const size_t STATIC_SIZE = 32;
+						int64 static_tabX[STATIC_SIZE]; int64 * tabX = static_tabX;
+						int64 static_tabY[STATIC_SIZE]; int64 * tabY = static_tabY;
+						if (nbpoints > STATIC_SIZE)
+							{ // use dynamic array instead. 
+							tabX = new int64[nbpoints];
+							tabY = new int64[nbpoints];
+							}
+						for (size_t k = 0; k < nbpoints; k++) { tabX[k] = tabPoints[k].X();  tabY[k] = tabPoints[k].Y(); }
+						// TODO : find a way to compute a convex envelop for the spline so that we can easily check if checkrange
+						// is needed. For the time being, we always check the range....
+						if (antialiased)
+							{
+							if (blending) _plotCubicSpline<true, true, true>(nbpoints - 1, tabX, tabY, color, draw_last_point); else _plotCubicSpline<false, true, true>(nbpoints - 1, tabX, tabY, color, draw_last_point);
+							}
+						else
+							{
+							if (blending) _plotCubicSpline<true, true, false>(nbpoints - 1, tabX, tabY, color, draw_last_point); else _plotCubicSpline<false, true, false>(nbpoints - 1, tabX, tabY, color, draw_last_point);
+							}
+						if (tabX != static_tabX) { delete[] tabX; delete[] tabY; } // release memory if dynamically allocated. 
+						return;
+						}
+					}
+				}
+
+
+			/**
+			* Draw a cubic spline.
+			*
+			* @param	tabPoints	   	std vector containing the points interpolated by the spline.
+			* @param	color		   	The color tu use.
+			* @param	draw_last_point	true to draw the last point.
+			* @param	blending	   	true to use blending.
+			* @param	antialiased	   	true to use anti-aliasing.
+			**/
+			inline void draw_cubic_spline(const std::vector<iVec2> & tabPoints, RGBc color, bool draw_last_point, bool blending, bool antialiased)
+				{
+				draw_cubic_spline(tabPoints.size(), tabPoints.data(), color, draw_last_point, blending, antialiased);
+				}
 
 
 
@@ -5885,6 +6062,85 @@ namespace mtools
 					}
 				}
 
+
+
+			/**
+			* plot quadratic spline, destroys input arrays x,y.
+			* adapted from Alois Zingl  (http://members.chello.at/easyfilter/bresenham.html)
+			* change: do not draw always the endpoint (x2,y2)
+			**/
+			template<bool blend, bool checkrange, bool antialiasing> void _plotQuadSpline(int64 n, int64 x[], int64 y[], RGBc color, bool draw_last)
+				{
+				if (draw_last) { _updatePixel<blend, checkrange>(x[n], y[n], color); }
+				const int64 M_MAX = 6;
+				double mi = 1, m[M_MAX];
+				int64 i, x0, y0, x1, y1, x2 = x[n], y2 = y[n];
+				x[1] = x0 = 8 * x[1] - 2 * x[0];
+				y[1] = y0 = 8 * y[1] - 2 * y[0];
+				for (i = 2; i < n; i++) 
+					{
+					if (i - 2 < M_MAX) m[i - 2] = mi = 1.0 / (6.0 - mi);
+					x[i] = x0 = (int64)floor(8 * x[i] - x0*mi + 0.5);
+					y[i] = y0 = (int64)floor(8 * y[i] - y0*mi + 0.5);
+					}
+				x1 = (int64)(floor((x0 - 2 * x2) / (5.0 - mi) + 0.5)); 
+				y1 = (int64)(floor((y0 - 2 * y2) / (5.0 - mi) + 0.5));
+				for (i = n - 2; i > 0; i--) 
+					{
+					if (i <= M_MAX) mi = m[i - 1];
+					x0 = (int64)floor((x[i] - x1)*mi + 0.5);
+					y0 = (int64)floor((y[i] - y1)*mi + 0.5);
+					_plotQuadBezier<blend, checkrange, antialiasing>((x0 + x1) / 2, (y0 + y1) / 2, x1, y1, x2, y2,color, false);
+					x2 = (x0 + x1) / 2; x1 = x0;
+					y2 = (y0 + y1) / 2; y1 = y0;
+					}
+				_plotQuadBezier<blend, checkrange, antialiasing>(x[0], y[0], x1, y1, x2, y2,color, false);
+				}
+
+
+
+
+			/**
+			* plot cubic spline, destroys input arrays x,y.
+			* adapted from Alois Zingl  (http://members.chello.at/easyfilter/bresenham.html)
+			* change: do not draw always the endpoint (x2,y2)
+			**/
+			template<bool blend, bool checkrange, bool antialiasing> void _plotCubicSpline(int64 n, int64 x[], int64 y[], RGBc color, bool draw_last)
+				{
+				if (draw_last) { _updatePixel<blend, checkrange>(x[n], y[n], color); }
+				const int64 M_MAX = 6;
+				double mi = 0.25, m[M_MAX];
+				int64 x3 = x[n - 1], y3 = y[n - 1], x4 = x[n], y4 = y[n];
+				int64 i, x0, y0, x1, y1, x2, y2;
+				x[1] = x0 = 12 * x[1] - 3 * x[0];
+				y[1] = y0 = 12 * y[1] - 3 * y[0];
+				for (i = 2; i < n; i++) 
+					{
+					if (i - 2 < M_MAX) m[i - 2] = mi = 0.25 / (2.0 - mi);
+					x[i] = x0 = (int64)floor(12 * x[i] - 2 * x0*mi + 0.5);
+					y[i] = y0 = (int64)floor(12 * y[i] - 2 * y0*mi + 0.5);
+					}
+				x2 = (int64)(floor((x0 - 3 * x4) / (7 - 4 * mi) + 0.5));
+				y2 = (int64)(floor((y0 - 3 * y4) / (7 - 4 * mi) + 0.5));
+				_plotCubicBezier<blend, checkrange, antialiasing>(x3, y3, (x2 + x4) / 2, (y2 + y4) / 2, x4, y4, x4, y4,color, false);
+				if (n - 3 < M_MAX) mi = m[n - 3];
+				x1 = (int64)floor((x[n - 2] - 2 * x2)*mi + 0.5);
+				y1 = (int64)floor((y[n - 2] - 2 * y2)*mi + 0.5);
+				for (i = n - 3; i > 0; i--) 
+					{
+					if (i <= M_MAX) mi = m[i - 1];
+					x0 = (int64)floor((x[i] - 2 * x1)*mi + 0.5);
+					y0 = (int64)floor((y[i] - 2 * y1)*mi + 0.5);
+					x4 = (int64)floor((x0 + 4 * x1 + x2 + 3) / 6.0);
+					y4 = (int64)floor((y0 + 4 * y1 + y2 + 3) / 6.0);
+					_plotCubicBezier<blend, checkrange, antialiasing>(x4, y4, (int64)floor((2 * x1 + x2) / 3 + 0.5), (int64)floor((2 * y1 + y2) / 3 + 0.5), (int64)floor((x1 + 2 * x2) / 3 + 0.5), (int64)floor((y1 + 2 * y2) / 3 + 0.5), x3, y3, color, false);
+					x3 = x4; y3 = y4; x2 = x1; y2 = y1; x1 = x0; y1 = y0;
+					}
+				x0 = x[0]; x4 = (int64)floor((3 * x0 + 7 * x1 + 2 * x2 + 6) / 12.0);
+				y0 = y[0]; y4 = (int64)floor((3 * y0 + 7 * y1 + 2 * y2 + 6) / 12.0);
+				_plotCubicBezier<blend, checkrange, antialiasing>(x4, y4, (int64)floor((2 * x1 + x2) / 3 + 0.5), (int64)floor((2 * y1 + y2) / 3 + 0.5), (int64)floor((x1 + 2 * x2) / 3 + 0.5), (int64)floor((y1 + 2 * y2) / 3 + 0.5), x3, y3, color, false);
+				_plotCubicBezier<blend, checkrange, antialiasing>(x0, y0, x0, y0, (x0 + x1) / 2, (y0 + y1) / 2, x4, y4, color, false);
+				}
 
 
 

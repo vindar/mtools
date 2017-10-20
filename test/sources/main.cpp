@@ -1183,11 +1183,26 @@ void test_b()
 		im.draw_ellipse_in_rect(BB, RGBc::c_Green, true, false);
 
 
+		std::vector<iVec2> tab;
+
+		tab.push_back({100,100}); 		
+		tab.push_back({ 200, 200 });
+		tab.push_back({ 300, 150 });
+		tab.push_back({ 350, 600 });
+		tab.push_back({ 250, 700 });
+		tab.push_back({ 200, 400 });
+		tab.push_back({ 500, 400 });
+
+
+
+		for (int j = 0;j < tab.size(); j++) im.setPixel(tab[j], RGBc::c_Black.getOpacity(0.2));
+
 		Chronometer();
-		for (int k = 0;k < 100000;k++)
+		//for (int k = 0;k < 100000;k++)
 			{
-			im.draw_cubic_bezier({ BB.min[0], BB.min[1] }, { BB.max[0], BB.min[1] }, { 900,600 }, { 100,600 }, RGBc::c_Black.getOpacity(0.3), true,true, true);
-			}
+			im.draw_quad_spline(tab, RGBc::c_Red.getOpacity(0.3), true, true, false);
+			im.draw_cubic_spline(tab, RGBc::c_Green.getOpacity(0.3), false, true, true);
+		}
 		cout << "done in " << Chronometer() << "\n";
 
 		plotter.redraw();
