@@ -1174,7 +1174,7 @@ void test_b()
 		int64 xmin = 397;
 		int64 xmax = 900;
 		int64 ymin = 217;
-		int64 ymax = 1200;
+		int64 ymax = 600;
 
 		iBox2 BB(xmin, xmax, ymin, ymax);
 		im.draw_filled_rectangle(BB, RGBc::c_Green.getOpacity(0.05), true);
@@ -1183,7 +1183,7 @@ void test_b()
 		im.draw_ellipse_in_rect(BB, RGBc::c_Green, true, false);
 
 
-		im.draw_quad_bezier({ BB.min[0], BB.min[1] }, { BB.max[0], BB.max[1] }, { 460,600 }, 0.25, RGBc::c_Black.getOpacity(0.3), true, true);
+		im.draw_quad_bezier({ BB.min[0], BB.min[1] }, { BB.max[0], BB.min[1] }, { 460,600 }, 0.2, RGBc::c_Black.getOpacity(0.3), false, false,false);
 
 		plotter.redraw();
 
