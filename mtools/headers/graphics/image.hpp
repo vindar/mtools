@@ -3847,9 +3847,95 @@ namespace mtools
 
 
 
+
+			/** update a pixel : compiler optimizes away all conditionnals **/
+			template<bool BLEND, bool CHECKRANGE, bool USE_OP, bool USE_PEN> MTOOLS_FORCEINLINE void  _updatePixel(int64 x, int64 y, RGBc color, int32 op, int32 penwidth)
+				{
+				MTOOLS_ASSERT((!USE_PEN)||(penwidth >0));
+				MTOOLS_ASSERT((!USE_OP) || ((op > = 0) && (op <= 256)));
+				if (USE_PEN)
+					{
+					if (USE_OP) { op *= color.comp.A; op >>= 8; color.comp.A = (uint8)op; }
+					const int64 d = penwidth;
+					if (CHECKRANGE)
+						{
+						const int64 xmin = (x < d) ? 0 : (x - d);
+						const int64 xmax = (x >= _lx - d) ? (_lx - 1) : (x + d);
+						const int64 ymin = (y < d) ? 0 : (y - d);
+						const int64 ymax = (y >= _ly - d) ? (_ly - 1) : (y + d);
+						const int64 sx = xmax - xmin;
+						const int64 sy = ymax - ymin;
+						RGBc * p = _data + ymin*_stride + xmin;
+						for (int64 j = 0; j <= sy; j++)
+							{
+							for (int64 i = 0; i <= sx; i++)
+								{
+								if (BLEND) { p[i].blend(color); }
+								else { p[i] = color; }
+								}
+							p += _stride;
+							}
+						return;
+						}
+					else
+						{
+						MTOOLS_ASSERT((x - d >= 0) && (x + d < _lx) && (y - d >= 0) && (y +d < _ly));
+						const int64 L = (d << 1);
+						RGBc * p = _data + (y - d)*_stride + x - d;
+						for (int64 j = 0; j <= L; j++)
+							{
+							for (int64 i = 0; i <= L; i++)
+								{
+								if (BLEND) { p[i].blend(color); }
+								else { p[i] = color; }
+								}
+							p += _stride;
+							}
+						return;
+						}
+					}
+				else
+					{
+					if (CHECKRANGE)
+						{
+						if (USE_OP)
+							{
+							if (BLEND) { blendPixel(x,y,color, (uint32)op); return;  } else { op *= color.comp.A; op >>= 8; color.comp.A = (uint8)op;  setPixel(x, y, color); return; }
+							}
+						else
+							{
+							if (BLEND) { blendPixel(x, y, color); return; } else { setPixel(x, y, color); return; }
+							}
+						}
+					else
+						{
+						MTOOLS_ASSERT((x >= 0) && (x < _lx) && (y >= 0) && (y < _ly));
+						if (USE_OP)
+							{
+							if (BLEND) { operator()(x, y).blend(color, (uint32)op); return; } else { op *= color.comp.A; op >>= 8; color.comp.A = (uint8)op;  operator()(x, y) = color; return; }
+							}
+						else
+							{
+							if (BLEND) { operator()(x, y).blend(color); return; } else { operator()(x, y) = color;return; }
+							}
+						}
+					}
+				}
+
+			
+
+
+
+
+
+
+
 			/** update a pixel **/
 			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void  _updatePixel(int64 x, int64 y, RGBc color, int32 op)
 				{
+				_updatePixel<blend, checkrange, true, true>(x, y, color, op, 1);
+				return;
+
 				MTOOLS_ASSERT(op >= 0);
 				MTOOLS_ASSERT((checkrange) || ((x >= 0) && (x < _lx) && (y >= 0) && (y < _ly)));
 				// compiler optimizes away the unused cases. 
@@ -3863,6 +3949,9 @@ namespace mtools
 			/** update a pixel **/
 			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void  _updatePixel(int64 x,int64 y, RGBc color)
 				{
+				_updatePixel<blend, checkrange, false, true>(x, y, color, 0, 1);
+				return;
+
 				MTOOLS_ASSERT((checkrange)||((x >= 0)&&(x < _lx)&&(y >= 0) && (y < _ly)));
 				// compiler optimizes away the unused cases. 
 				if ((!blend) && (!checkrange)) { operator()(x,y) = color; }
@@ -3874,6 +3963,10 @@ namespace mtools
 			/** update a pixel **/
 			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void  _updatePixel(iVec2 P, RGBc color)
 				{
+				_updatePixel<blend, checkrange, false, true>(P.X(), P.Y(), color, 0, 1);
+				return;
+
+
 				MTOOLS_ASSERT((checkrange) || ((P.X() >= 0) && (P.X() < _lx) && (P.Y() >= 0) && (P.Y() < _ly)));
 				// compiler optimizes away the unused cases. 
 				if ((!blend) && (!checkrange)) { operator()(P) = color; }
@@ -3882,13 +3975,16 @@ namespace mtools
 				if ((blend) && (checkrange)) { blendPixel(P, color); }
 				}
 
+
 			/** update a pixel **/
 			template<bool blend> MTOOLS_FORCEINLINE void  _updatePixel(RGBc * p, RGBc color)
 				{
+
 				// compiler optimizes away the unused cases. 
 				if (!blend) { *p = color; }
 				if (blend)  { (*p).blend(color); }
 				}
+
 
 
 			/** draw the line [x1,x2] x {y}, nothing if x2 < x1. **/
@@ -5056,8 +5152,6 @@ namespace mtools
 				{
 				int64 & x0 = P1.X(); int64 & y0 = P1.Y();
 				int64 & x1 = P2.X(); int64 & y1 = P2.Y();
-				if (x0 == x1) {  _verticalLine<blend, checkrange>(x0, y0, y1, color, draw_last); return; }   // must be treated separately
-				if (y0 == y1) {  _horizontalLine<blend, checkrange>(y0, x0, x1, color, draw_last); return; } //
 				_updatePixel<blend, checkrange>(x0, y0,color);
 				if (draw_last)  _updatePixel<blend, checkrange>(x1, y1,color);
 				if (y0 > y1) { mtools::swap(y0, y1); mtools::swap(x0, x1); }
@@ -5065,6 +5159,16 @@ namespace mtools
 				int64 dir;
 				if (dx >= 0) { dir = 1; } else { dir = -1; dx = -dx; }
 				int64 dy = y1 - y0;
+				if (dx == 0)
+					{
+					while (--dy > 0) { y0++; _updatePixel<blend, checkrange>(x0, y0, color); }
+					return;
+					}
+				if (dy == 0)
+					{
+					while (--dx > 0) { x0 += dir; _updatePixel<blend, checkrange>(x0, y0, color); }
+					return;
+					}
 				if (dx == dy)
 					{ 
 					while (--dy > 0) { x0 += dir; y0++; _updatePixel<blend, checkrange>(x0, y0, color); }
@@ -5111,7 +5215,7 @@ namespace mtools
 			* A little slower and 'ticker' than Wu's algorithm
 			*  adapted from Alois Zingl  (http://members.chello.at/easyfilter/bresenham.html)
 			**/
-			template<bool blend, bool checkrange>  inline void _lineBresenhamAA(iVec2 P1, iVec2 P2, RGBc color)
+			template<bool blend, bool checkrange>  inline void _lineBresenhamAA(iVec2 P1, iVec2 P2, RGBc color, bool draw_last)
 				{
 				int64 & x0 = P1.X(); int64 & y0 = P1.Y();
 				int64 & x1 = P2.X(); int64 & y1 = P2.Y();
@@ -5119,21 +5223,47 @@ namespace mtools
 				int64 dx = abs(x1 - x0), dy = abs(y1 - y0), err = dx*dx + dy*dy;
 				int64 e2 = err == 0 ? 1 : ((int64)(0xffff7fl / sqrt(err)));
 				dx *= e2; dy *= e2; err = dx - dy;
-				for (; ; )
+				if (draw_last)
 					{
-					_updatePixel<blend, checkrange>(x0, y0, color, 256 - (int32)mtools::convertAlpha_0xFF_to_0x100((uint32)(abs(err - dx + dy) >> 16)));
-					e2 = err; x2 = x0;
-					if (2 * e2 >= -dx)
+					for (; ; )
 						{
-						if (x0 == x1) break;
-						if (e2 + dy < 0xff0000l) _updatePixel<blend, checkrange>(x0, y0 + sy, color, 256 - (int32)mtools::convertAlpha_0xFF_to_0x100((uint32)((e2 + dy) >> 16)));
-						err -= dy; x0 += sx;
+						_updatePixel<blend, checkrange>(x0, y0, color, 256 - (int32)mtools::convertAlpha_0xFF_to_0x100((uint32)(abs(err - dx + dy) >> 16)));
+						e2 = err; x2 = x0;
+						if (2 * e2 >= -dx)
+							{
+							if (x0 == x1) break;
+							if (e2 + dy < 0xff0000l) _updatePixel<blend, checkrange>(x0, y0 + sy, color, 256 - (int32)mtools::convertAlpha_0xFF_to_0x100((uint32)((e2 + dy) >> 16)));
+							err -= dy; x0 += sx;
+							}
+						if (2 * e2 <= dy)
+							{
+							if (y0 == y1) break;
+							if (dx - e2 < 0xff0000l) _updatePixel<blend, checkrange>(x2 + sx, y0, color, 256 - (int32)mtools::convertAlpha_0xFF_to_0x100((uint32)((dx - e2) >> 16)));
+							err += dx; y0 += sy;
+							}
 						}
-					if (2 * e2 <= dy)
+					}				
+				else
+					{
+					for (; ; )
 						{
-						if (y0 == y1) break;
-						if (dx - e2 < 0xff0000l) _updatePixel<blend, checkrange>(x2 + sx, y0, color, 256 - (int32)mtools::convertAlpha_0xFF_to_0x100((uint32)((dx - e2) >> 16)));
-						err += dx; y0 += sy;
+						int64 ssx = x0;
+						int64 ssy = y0;
+						int32 ssc = 256 - (int32)mtools::convertAlpha_0xFF_to_0x100((uint32)(abs(err - dx + dy) >> 16));
+						e2 = err; x2 = x0;
+						if (2 * e2 >= -dx)
+							{
+							if (x0 == x1) break;
+							if (e2 + dy < 0xff0000l) _updatePixel<blend, checkrange>(x0, y0 + sy, color, 256 - (int32)mtools::convertAlpha_0xFF_to_0x100((uint32)((e2 + dy) >> 16)));
+							err -= dy; x0 += sx;
+							}
+						if (2 * e2 <= dy)
+							{
+							if (y0 == y1) break;
+							if (dx - e2 < 0xff0000l) _updatePixel<blend, checkrange>(x2 + sx, y0, color, 256 - (int32)mtools::convertAlpha_0xFF_to_0x100((uint32)((dx - e2) >> 16)));
+							err += dx; y0 += sy;
+							}
+						_updatePixel<blend, checkrange>(ssx, ssy, color, ssc);
 						}
 					}
 				}
@@ -5534,7 +5664,7 @@ namespace mtools
 				double dx, dy, err, ed, cur = (double)(xx*sy - yy*sx);
 				if (cur == 0)
 					{
-					_lineWuAA<blend, checkrange>({ x0, y0 }, { x2, y2 }, color, false);
+					_lineBresenhamAA<blend, checkrange>({ x0, y0 }, { x2, y2 }, color, false);
 					return;
 					}
 				bool sw = false;
@@ -5581,7 +5711,7 @@ namespace mtools
 						y0 += sy; dy -= xy; err += dx += xx;
 						}
 					}
-				_lineWuAA<blend, checkrange>({ x0, y0 }, { x2, y2 }, color, sw);
+				_lineBresenhamAA<blend, checkrange>({ x0, y0 }, { x2, y2 }, color, sw);
 				}
 
 
@@ -5715,7 +5845,7 @@ namespace mtools
 				bool f;
 				if ((cur == 0) || (w <= 0.0))
 					{
-					_lineWuAA<blend, checkrange>({ x0, y0 }, { x2, y2 }, color, false);
+					_lineBresenhamAA<blend, checkrange>({ x0, y0 }, { x2, y2 }, color, false);
 					return;
 					}
 				bool sw = false;
@@ -5786,7 +5916,7 @@ namespace mtools
 						}
 					if (f) { y0 += sy; dy += xy; err += dx += xx; }
 					}				
-				_lineWuAA<blend, checkrange>({ x0, y0 }, { x2, y2 }, color, sw);
+				_lineBresenhamAA<blend, checkrange>({ x0, y0 }, { x2, y2 }, color, sw);
 				}
 
 
@@ -5998,10 +6128,10 @@ namespace mtools
 					xx = (double)x0; x0 = x3; x3 = (int64)xx; sx = -sx; xb = -xb;
 					yy = (double)y0; y0 = y3; y3 = (int64)yy; sy = -sy; yb = -yb; x1 = x2;
 					}
-				while (leg--);
-				if ((x0 == sax3) && (y0 == say3)) { _lineWuAA<blend, checkrange>({ x3, y3 }, { x0, y0 }, color, false); }
-				else if ((x3 == sax3) && (y3 == say3)) { _lineWuAA<blend, checkrange>({ x0, y0 }, { x3, y3 }, color, false); }
-				else _lineWuAA<blend, checkrange>({ x0, y0 }, { x3, y3 }, color, true);
+				while (leg--);					
+				if ((x0 == sax3) && (y0 == say3)) {  _lineBresenhamAA<blend, checkrange>({ x3, y3 }, { x0, y0 }, color, false); }
+				else if ((x3 == sax3) && (y3 == say3)) { _lineBresenhamAA<blend, checkrange>({ x0, y0 }, { x3, y3 }, color, false); }
+				else _lineBresenhamAA<blend, checkrange>({ x0, y0 }, { x3, y3 }, color, true);
 				}
 
 
