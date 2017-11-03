@@ -1493,7 +1493,7 @@ namespace mtools
 			 * @param	blending	true to use blending.
 			 * @param	penwidth	The pen width (radius of the square: 0 = single pixel). 
 			 **/
-			void draw_dot(iVec2 P, RGBc color, bool blending, int32 penwidth)
+			void draw_dot(iVec2 P, RGBc color, bool blending, int32 penwidth = 0)
 				{
 				if (isEmpty()) return;
 				if (penwidth <= 0)
@@ -1520,15 +1520,14 @@ namespace mtools
 			inline void draw_horizontal_line(int64 y, int64 x1, int64 x2, RGBc color, bool draw_P2, bool blending)
 				{
 				if (isEmpty()) return;
-				if (blending) _horizontalLine<true, true>(y, x1, x2, color, draw_P2); else _horizontalLine<false, true>(y, x1, x2, color, draw_P2);
+				if ((blending) && (color.comp.A != 255)) _horizontalLine<true, true>(y, x1, x2, color, draw_P2); else _horizontalLine<false, true>(y, x1, x2, color, draw_P2);
 				}
 
 
 			/**
 			 * Draw a (tick) horizontal line.
 			 * 
-			 * The line is antialiased is tickness is not an odd integer. Choose tickness = 2*penwidth + 1
-			 * to match the width use when drawing with a pen for the other methods.
+			 * The tickness correspond to the penwidth of the other method (but here it may also be non-integer using antialiasing).
 			 *
 			 * @param	y			The y coordinate of the line.
 			 * @param	x1			x value of the start point.
@@ -1541,7 +1540,7 @@ namespace mtools
 			inline void draw_horizontal_line(int64 y, int64 x1, int64 x2, RGBc color, bool draw_P2, bool blending, float tickness)
 				{
 				if (isEmpty()) return;
-				if (blending) _tickHorizontalLine<true, true>(y, x1, x2, color, draw_P2, tickness); else _tickHorizontalLine<false, true>(y, x1, x2, color, draw_P2, tickness);
+				if ((blending) && (color.comp.A != 255)) _tickHorizontalLine<true, true>(y, x1, x2, color, draw_P2, 2*tickness + 1); else _tickHorizontalLine<false, true>(y, x1, x2, color, draw_P2, 2*tickness + 1);
 				}
 
 
@@ -1558,15 +1557,14 @@ namespace mtools
 			inline void draw_vertical_line(int64 x, int64 y1, int64 y2, RGBc color, bool draw_P2, bool blending)
 				{
 				if (isEmpty()) return;
-				if (blending) _verticalLine<true, true>(x,y1,y2, color, draw_P2); else _verticalLine<false, true>(x,y1,y2, color, draw_P2);
+				if ((blending) && (color.comp.A != 255)) _verticalLine<true, true>(x,y1,y2, color, draw_P2); else _verticalLine<false, true>(x,y1,y2, color, draw_P2);
 				}
 
 
 			/**
 			 * Draw a (tick) vertical line.
 			 * 
-			 * The line is antialiased is tickness is not an odd integer. Choose tickness = 2*penwidth + 1
-			 * to match the width use when drawing with a pen for the other methods.
+			 * The tickness correspond to the penwidth of the other method (but here it may also be non-integer using antialiasing).
 			 *
 			 * @param	x			The x coordinate of the line.
 			 * @param	y1			y value of the start point.
@@ -1579,12 +1577,12 @@ namespace mtools
 			inline void draw_vertical_line(int64 x, int64 y1, int64 y2, RGBc color, bool draw_P2, bool blending, float tickness)
 				{
 				if (isEmpty()) return;
-				if (blending) _tickVerticalLine<true, true>(x, y1, y2, color, draw_P2, tickness); else _tickVerticalLine<false, true>(x, y1, y2, color, draw_P2, tickness);
+				if ((blending) && (color.comp.A != 255)) _tickVerticalLine<true, true>(x, y1, y2, color, draw_P2, 2*tickness  + 1); else _tickVerticalLine<false, true>(x, y1, y2, color, draw_P2, 2*tickness + 1);
 				}
 
 
 			/**
-			 * Draw a line. portion outside the image is clipped.
+			 * Draw a line.
 			 *
 			 * @param	P1	   	First point.
 			 * @param	P2	   	Second endpoint.
@@ -1599,7 +1597,7 @@ namespace mtools
 
 
 			/**
-			* Draw a line. portion outside the image is clipped.
+			* Draw a line. 
 			*
 			* @param	x1		   	x-coord of the first point.
 			* @param	y1		   	y-coord of the first point.
@@ -1615,7 +1613,7 @@ namespace mtools
 
 
 			/**
-			 * Draw a line. portion outside the image is clipped.
+			 * Draw a line. 
 			 *
 			 * @param	P1		   	First point.
 			 * @param	P2		   	Second endpoint.
@@ -1625,15 +1623,16 @@ namespace mtools
 			 * @param	antialiased	true to draw an antialised line.
 			 * @param	penwidth   	The pen width (0 = unit width)
 			 **/
-			inline void draw_line(iVec2 P1, iVec2 P2, RGBc color, bool draw_P2, bool blending, bool antialiased, int32 penwidth)
+			inline void draw_line(iVec2 P1, iVec2 P2, RGBc color, bool draw_P2, bool blending, bool antialiased, int32 penwidth = 0)
 				{
 				if (isEmpty()) return;
 				if (penwidth <= 0)
 					{
 					if (antialiased)
 						{
-						if (!_csLineClip(P1, P2, iBox2(-10, _lx + 10, -10, _ly + 10))) return; // choose box to big to fix offset error. 
-						if (blending) _lineBresenhamAA<true, true, false>(P1, P2, color, draw_P2, 0); else _lineBresenhamAA<false, true, false>(P1, P2, color, draw_P2, 0);
+						const int64 of = 10;
+						if (!_csLineClip(P1, P2, iBox2(-of, _lx - 1 + of, -of, _ly - 1 + of))) return; // choose box bigger to diminish clipping error. 
+						if ((blending) && (color.comp.A != 255)) _lineBresenhamAA<true, true, false>(P1, P2, color, draw_P2, 0); else _lineBresenhamAA<false, true, false>(P1, P2, color, draw_P2, 0);
 						return;
 						}
 					if ((blending) && (color.comp.A != 255)) _lineBresenham<true, true, false>(P1, P2, color, draw_P2, 0); else _lineBresenham<false, true, false>(P1, P2, color, draw_P2, 0);
@@ -1642,7 +1641,8 @@ namespace mtools
 				
 				if (antialiased)
 					{
-					if (!_csLineClip(P1, P2, iBox2(-10 - 2*penwidth, _lx + 10 + 2*penwidth, -10 - 2*penwidth, _ly + 10 + 2*penwidth))) return; // choose box to big to fix offset erro and contain the whole pen
+					const int64 of = 10 + 2 * penwidth;
+					if (!_csLineClip(P1, P2, iBox2(-of, _lx - 1 + of, -of, _ly - 1 + of))) return; // choose box bigger to diminish clipping error. 
 					if (blending) _lineBresenhamAA<true, true, true>(P1, P2, color, draw_P2, penwidth); else _lineBresenhamAA<false, true, true>(P1, P2, color, draw_P2, penwidth);
 					return;
 					}
@@ -1664,7 +1664,7 @@ namespace mtools
 			 * @param	antialiased	true to draw an antialised line.
 			 * @param	penwidth   	The pen width (0 = unit width)
 			 **/
-			MTOOLS_FORCEINLINE void draw_line(int64 x1, int64 y1, int64 x2, int64 y2, RGBc color, bool draw_P2, bool blending, bool antialiased, int32 penwidth)
+			MTOOLS_FORCEINLINE void draw_line(int64 x1, int64 y1, int64 x2, int64 y2, RGBc color, bool draw_P2, bool blending, bool antialiased, int32 penwidth = 0)
 				{
 				draw_line({ x1, y1 }, { x2,y2 }, color, draw_P2, blending, antialiased, penwidth);
 				}
@@ -1684,74 +1684,78 @@ namespace mtools
 			 * @param	antialiasing	true to use antialiasing.
 			 * @param	penwidth		The pen width (0 = unit width)
 			 **/
-			void draw_quad_bezier(iVec2 P1, iVec2 P2, iVec2 PC, float wc, RGBc color, bool draw_P2, bool blending, bool antialiasing, int32 penwidth)
+			void draw_quad_bezier(iVec2 P1, iVec2 P2, iVec2 PC, float wc, RGBc color, bool draw_P2, bool blending, bool antialiasing, int32 penwidth = 0)
 				{
 				if ((isEmpty()) || (wc <= 0)) return;
+				iBox2 mbr(P1);
+				mbr.swallowPoint(P2);
+				mbr.swallowPoint(PC);
+				iBox2 B(0, _lx - 1, 0, _ly - 1);
 				if (penwidth <= 0)
 					{
+					if (intersectionRect(mbr,B).isEmpty()) return;  // nothing to draw
 					if (antialiasing) // if using antialiasing, we always check the range (and its cost is negligible compared to the antialiasing computations).
 						{
 						if (wc == 1)
 							{
-							if (blending)  _plotQuadBezier<true, true, true, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotQuadBezier<false, true, true, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
+							if ((blending) && (color.comp.A != 255))  _plotQuadBezier<true, true, true, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotQuadBezier<false, true, true, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
 							}
 						else
 							{
-							if (blending)  _plotQuadRationalBezier<true, true, true, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth); else _plotQuadRationalBezier<false, true, true, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth);
+							if ((blending) && (color.comp.A != 255))  _plotQuadRationalBezier<true, true, true, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth); else _plotQuadRationalBezier<false, true, true, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth);
 							}
 						return;
 						}
-					// check if we stay inside the image to remove bound check is possible
-					iBox2 B(P1);
-					B.swallowPoint(P2);
-					B.swallowPoint(PC);
-					if (!B.isIncludedIn(iBox2(0, _lx - 1, 0, _ly - 1)))
+					// check if we stay inside the image to remove bound check if possible
+					if (!mbr.isIncludedIn(B))
 						{ // must check bounds
 						if (wc == 1)
 							{
-							if (blending)  _plotQuadBezier<true, true, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotQuadBezier<false, true, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
+							if ((blending) && (color.comp.A != 255))  _plotQuadBezier<true, true, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotQuadBezier<false, true, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
 							}
 						else
 							{
-							if (blending)  _plotQuadRationalBezier<true, true, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth); else _plotQuadRationalBezier<false, true, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth);
+							if ((blending) && (color.comp.A != 255))  _plotQuadRationalBezier<true, true, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth); else _plotQuadRationalBezier<false, true, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth);
 							}
 						return;
 						}
 					// no need to check bounds
 					if (wc == 1)
 						{
-						if (blending)  _plotQuadBezier<true, false, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotQuadBezier<false, false, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
+						if ((blending) && (color.comp.A != 255))  _plotQuadBezier<true, false, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotQuadBezier<false, false, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
 						}
 					else
 						{
-						if (blending)  _plotQuadRationalBezier<true, false, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth); else _plotQuadRationalBezier<false, false, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth);
+						if ((blending) && (color.comp.A != 255))  _plotQuadRationalBezier<true, false, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth); else _plotQuadRationalBezier<false, false, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth);
 						}
 					return;
 					}
-				// penwidth >= 1. always check bounds.
-				if (antialiasing) 
+				// penwidth >= 1
+				mbr.enlarge(penwidth);
+				if (intersectionRect(mbr, B).isEmpty()) return;  // nothing to draw
+				// always check range since cost is negligible compared to using a large pen. 
+				if (antialiasing)
 					{
 					if (wc == 1)
 						{
-						if (blending)  _plotQuadBezier<true, true, true, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotQuadBezier<false, true, true, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
+						if ((blending) && (color.comp.A != 255))  _plotQuadBezier<true, true, true, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotQuadBezier<false, true, true, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
 						}
 					else
 						{
-						if (blending)  _plotQuadRationalBezier<true, true, true, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth); else _plotQuadRationalBezier<false, true, true, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth);
+						if ((blending) && (color.comp.A != 255))  _plotQuadRationalBezier<true, true, true, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth); else _plotQuadRationalBezier<false, true, true, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth);
 						}
 					return;
 					}
 				if (wc == 1)
 					{
-					if (blending)  _plotQuadBezier<true, true, false, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotQuadBezier<false, true, false, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
+					if ((blending) && (color.comp.A != 255))  _plotQuadBezier<true, true, false, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotQuadBezier<false, true, false, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
 					}
 				else
 					{
-					if (blending)  _plotQuadRationalBezier<true, true, false, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth); else _plotQuadRationalBezier<false, true, false, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth);
+					if ((blending) && (color.comp.A != 255))  _plotQuadRationalBezier<true, true, false, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth); else _plotQuadRationalBezier<false, true, false, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth);
 					}
 				return;
 				}
-
 
 
 			/**
@@ -1767,37 +1771,42 @@ namespace mtools
 			* @param	antialiasing	true to use antialiasing.
 			* @param	penwidth		The pen width (0 = unit width)
 			**/
-			void draw_cubic_bezier(iVec2 P1, iVec2 P2, iVec2 PA, iVec2 PB,  RGBc color, bool draw_P2, bool blending, bool antialiasing, int32 penwidth)
+			void draw_cubic_bezier(iVec2 P1, iVec2 P2, iVec2 PA, iVec2 PB,  RGBc color, bool draw_P2, bool blending, bool antialiasing, int32 penwidth = 0)
 				{
 				if (isEmpty()) return;
+				iBox2 mbr(P1);
+				mbr.swallowPoint(P2);
+				mbr.swallowPoint(PA);
+				mbr.swallowPoint(PB);
+				iBox2 B(0, _lx - 1, 0, _ly - 1);
 				if (penwidth <= 0)
 					{
+					if (intersectionRect(mbr, B).isEmpty()) return;  // nothing to draw
 					if (antialiasing) // if using antialiasing, we always check the range (and its cost is negligible compared to the antialiasing computations).
 						{
-						if (blending)  _plotCubicBezier<true, true, true,false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotCubicBezier<false, true, true, false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
+						if ((blending) && (color.comp.A != 255))  _plotCubicBezier<true, true, true,false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotCubicBezier<false, true, true, false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
 						return;
 						}
 					// check if we stay inside the image to remove bound check is possible
-					iBox2 B(P1);
-					B.swallowPoint(P2);
-					B.swallowPoint(PA);
-					B.swallowPoint(PB);
-					if (!B.isIncludedIn(iBox2(0, _lx - 1, 0, _ly - 1)))
+					if (!mbr.isIncludedIn(B))
 						{ // must check bounds
-						if (blending)  _plotCubicBezier<true, true, false, false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotCubicBezier<false, true, false, false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
+						if ((blending) && (color.comp.A != 255))  _plotCubicBezier<true, true, false, false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotCubicBezier<false, true, false, false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
 						return;
 						}
 					// no need to check bounds
-					if (blending)  _plotCubicBezier<true, false, false, false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotCubicBezier<false, false, false, false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
+					if ((blending) && (color.comp.A != 255))  _plotCubicBezier<true, false, false, false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotCubicBezier<false, false, false, false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
 					return;
 					}
-				// use pen width, always check bounds
+				// use large pen
+				mbr.enlarge(penwidth);
+				if (intersectionRect(mbr, B).isEmpty()) return;  // nothing to draw
+				//always check bounds
 				if (antialiasing) 
 					{
-					if (blending)  _plotCubicBezier<true, true, true, true>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotCubicBezier<false, true, true, true>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
+					if ((blending) && (color.comp.A != 255)) _plotCubicBezier<true, true, true, true>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotCubicBezier<false, true, true, true>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
 					return;
 					}
-				if (blending)  _plotCubicBezier<true, true, false, true>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotCubicBezier<false, true, false, true>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
+				if ((blending) && (color.comp.A != 255)) _plotCubicBezier<true, true, false, true>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotCubicBezier<false, true, false, true>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
 				}
 			
 
@@ -1812,7 +1821,7 @@ namespace mtools
 			 * @param	antialiased	   	true to use anti-aliasing.
 			 * @param	penwidth		The pen width (0 = unit width)
 			 **/
-			inline void draw_quad_spline(size_t nbpoints, const iVec2 * tabPoints, RGBc color, bool draw_last_point, bool blending, bool antialiased, int32 penwidth)
+			inline void draw_quad_spline(size_t nbpoints, const iVec2 * tabPoints, RGBc color, bool draw_last_point, bool blending, bool antialiased, int32 penwidth = 0)
 				{
 				if (isEmpty()) return;
 				switch(nbpoints)
@@ -1843,28 +1852,27 @@ namespace mtools
 							tabY = new int64[nbpoints];
 							}
 						for (size_t k = 0; k < nbpoints; k++) { tabX[k] = tabPoints[k].X();  tabY[k] = tabPoints[k].Y(); }
-						// TODO : find a way to compute a convex envelop for the spline so that we can easily check if checkrange
-						// is needed. For the time being, we always check the range....				
+						// always check the range
 						if (penwidth <= 0)
 							{
 							if (antialiased)
 								{
-								if (blending) _plotQuadSpline<true, true, true, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotQuadSpline<false, true, true, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
+								if ((blending) && (color.comp.A != 255)) _plotQuadSpline<true, true, true, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotQuadSpline<false, true, true, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
 								}
 							else
 								{
-								if (blending) _plotQuadSpline<true, true, false, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotQuadSpline<false, true, false, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
+								if ((blending) && (color.comp.A != 255)) _plotQuadSpline<true, true, false, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotQuadSpline<false, true, false, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
 								}
 							}
 						else
 							{
 							if (antialiased)
 								{
-								if (blending) _plotQuadSpline<true, true, true, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotQuadSpline<false, true, true, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
+								if ((blending) && (color.comp.A != 255)) _plotQuadSpline<true, true, true, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotQuadSpline<false, true, true, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
 								}
 							else
 								{
-								if (blending) _plotQuadSpline<true, true, false, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotQuadSpline<false, true, false, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
+								if ((blending) && (color.comp.A != 255)) _plotQuadSpline<true, true, false, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotQuadSpline<false, true, false, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
 								}
 							}
 						if (tabX != static_tabX) { delete[] tabX; delete[] tabY; } // release memory if dynamically allocated. 
@@ -1884,7 +1892,7 @@ namespace mtools
 			* @param	antialiased	   	true to use anti-aliasing.
 			* @param	penwidth		The pen width (0 = unit width)
 			**/
-			MTOOLS_FORCEINLINE void draw_quad_spline(const std::vector<iVec2> & tabPoints, RGBc color, bool draw_last_point, bool blending, bool antialiased, int32 penwidth)
+			MTOOLS_FORCEINLINE void draw_quad_spline(const std::vector<iVec2> & tabPoints, RGBc color, bool draw_last_point, bool blending, bool antialiased, int32 penwidth = 0)
 				{
 				draw_quad_spline(tabPoints.size(), tabPoints.data(), color, draw_last_point, blending, antialiased, penwidth);
 				}
@@ -1901,7 +1909,7 @@ namespace mtools
 			* @param	antialiased	   	true to use anti-aliasing.
 			* @param	penwidth		The pen width (0 = unit width)
 			**/
-			inline void draw_cubic_spline(size_t nbpoints, const iVec2 * tabPoints, RGBc color, bool draw_last_point, bool blending, bool antialiased, int32 penwidth)
+			inline void draw_cubic_spline(size_t nbpoints, const iVec2 * tabPoints, RGBc color, bool draw_last_point, bool blending, bool antialiased, int32 penwidth = 0)
 				{
 				if (isEmpty()) return;
 				switch (nbpoints)
@@ -1937,28 +1945,27 @@ namespace mtools
 							tabY = new int64[nbpoints];
 							}
 						for (size_t k = 0; k < nbpoints; k++) { tabX[k] = tabPoints[k].X();  tabY[k] = tabPoints[k].Y(); }
-						// TODO : find a way to compute a convex envelop for the spline so that we can easily check if checkrange
-						// is needed. For the time being, we always check the range....
+						// always check the range....
 						if (penwidth <= 0)
 							{
 							if (antialiased)
 								{
-								if (blending) _plotCubicSpline<true, true, true, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotCubicSpline<false, true, true, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
+								if ((blending) && (color.comp.A != 255)) _plotCubicSpline<true, true, true, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotCubicSpline<false, true, true, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
 								}
 							else
 								{
-								if (blending) _plotCubicSpline<true, true, false, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotCubicSpline<false, true, false, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
+								if ((blending) && (color.comp.A != 255)) _plotCubicSpline<true, true, false, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotCubicSpline<false, true, false, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
 								}
 							}
 						else
 							{
 							if (antialiased)
 								{
-								if (blending) _plotCubicSpline<true, true, true, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotCubicSpline<false, true, true, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
+								if ((blending) && (color.comp.A != 255)) _plotCubicSpline<true, true, true, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotCubicSpline<false, true, true, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
 								}
 							else
 								{
-								if (blending) _plotCubicSpline<true, true, false, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotCubicSpline<false, true, false, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
+								if ((blending) && (color.comp.A != 255)) _plotCubicSpline<true, true, false, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotCubicSpline<false, true, false, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
 								}
 							}
 						if (tabX != static_tabX) { delete[] tabX; delete[] tabY; } // release memory if dynamically allocated. 
@@ -1978,7 +1985,7 @@ namespace mtools
 			* @param	antialiased	   	true to use anti-aliasing.
 			* @param	penwidth		The pen width (0 = unit width)
 			**/
-			MTOOLS_FORCEINLINE void draw_cubic_spline(const std::vector<iVec2> & tabPoints, RGBc color, bool draw_last_point, bool blending, bool antialiased, int32 penwidth)
+			MTOOLS_FORCEINLINE void draw_cubic_spline(const std::vector<iVec2> & tabPoints, RGBc color, bool draw_last_point, bool blending, bool antialiased, int32 penwidth = 0)
 				{
 				draw_cubic_spline(tabPoints.size(), tabPoints.data(), color, draw_last_point, blending, antialiased, penwidth);
 				}
@@ -1995,24 +2002,66 @@ namespace mtools
 			*******************************************************************************************************************************************************/
 
 
+			/**
+			 * draw a rectangle of given size and color over this image. Portion outside the image is
+			 * clipped.
+			 *
+			 * @param	dest_box	position of the rectangle to draw.
+			 * @param	color   	the color to use.
+			 * @param	blend   	true to use blending and false to simply copy the color.
+			 * @param	penwidth	The pen width (0 = unit width)
+			 **/
+			inline void draw_rectangle(const iBox2 & dest_box, RGBc color, bool blend, int32 penwidth = 0)
+				{
+				if (dest_box.isEmpty()) return;
+				if (penwidth <= 0) penwidth = 0;
+				if (color.comp.A == 255) blend = false;
+				float tickness = (float)penwidth;
+				draw_horizontal_line(dest_box.min[1], dest_box.min[0] - penwidth, dest_box.max[0] + penwidth, color, true, blend, tickness);
+				draw_horizontal_line(dest_box.max[1], dest_box.min[0] - penwidth, dest_box.max[0] + penwidth, color, true, blend, tickness);
+				draw_vertical_line(dest_box.min[0], dest_box.min[1] + penwidth + 1, dest_box.max[1] - penwidth - 1, color, true, blend, tickness);
+				draw_vertical_line(dest_box.max[0], dest_box.min[1] + penwidth + 1, dest_box.max[1] - penwidth - 1, color, true, blend, tickness);
+				}
+
 
 			/**
-			* draw a filled rectangle of given size and color over this image. Portion outside the image
-			* is clipped.
+			 * draw a rectangle of given size and color over this image. Portion outside the image is
+			 * clipped.
+			 *
+			 * @param	x			x-coordinate of the rectangle upper left corner.
+			 * @param	y			y-coordinate of the rectangle upper left corner.
+			 * @param	sx			rectangle width (if <= 0 nothing is drawn).
+			 * @param	sy			rectangle height (if <= 0 nothing is drawn).
+			 * @param	color   	the color to use.
+			 * @param	blend   	true to use blending and false to simply copy the color.
+			 * @param	penwidth	The pen width (0 = unit width)
+			 **/
+			MTOOLS_FORCEINLINE void draw_rectangle(int64 x, int64 y, int64 sx, int64 sy, RGBc color, bool blend, int32 penwidth)
+				{
+				draw_rectangle(iBox2(x, x + sx - 1, y, y + sy - 1), color, blend, penwidth);
+				}
+
+
+			/**
+			* Fill the interior of a rectangle rectangle. Portion outside the image is clipped.
+			*
+			* The boundary of the rectangle is not drawn. To fill the whole rectangle with its boundary, use draw_box() instead.
 			*
 			* @param	dest_box	position of the rectangle to draw.
 			* @param	fillcolor	the color to use.
 			* @param	blend   	true to use blending and false to simply copy the color.
 			**/
-			MTOOLS_FORCEINLINE void draw_filled_rectangle(const iBox2 & dest_box, RGBc fillcolor, bool blend)
+			MTOOLS_FORCEINLINE void fill_rectangle(const iBox2 & dest_box, RGBc fillcolor, bool blend)
 				{
-				draw_filled_rectangle(dest_box.min[0], dest_box.min[1], dest_box.max[0] - dest_box.min[0] + 1, dest_box.max[1] - dest_box.min[1] + 1, fillcolor, blend);
+				fill_rectangle(dest_box.min[0], dest_box.min[1], dest_box.max[0] - dest_box.min[0] + 1, dest_box.max[1] - dest_box.min[1] + 1, fillcolor, blend);
 				}
 
 
 			/**
 			* draw a filled rectangle of given size and color over this image. Portion outside the image
 			* is clipped.
+			*
+			* The boundary of the rectangle is not drawn. To fill the whole rectangle with its boundary, use draw_box() instead.
 			*
 			* @param	x			x-coordinate of the rectangle upper left corner.
 			* @param	y			y-coordinate of the rectangle upper left corner.
@@ -2021,10 +2070,736 @@ namespace mtools
 			* @param	fillcolor	the color to use.
 			* @param	blend   	true to use blending and false to simply copy the color.
 			**/
-			inline void draw_filled_rectangle(int64 x, int64 y, int64 sx, int64 sy, RGBc fillcolor, bool blend)
+			inline void fill_rectangle(int64 x, int64 y, int64 sx, int64 sy, RGBc fillcolor, bool blend)
+				{
+				if (isEmpty()) return;
+				_draw_box(x + 1, y + 1, sx - 2, sy - 2, fillcolor, blend);
+				}
+
+
+			/**
+			* Fill a (closed) box with a given color. Portion outside the image is clipped.
+			*
+			* @param	dest_box 	position of the rectangle to draw.
+			* @param	fillcolor	the color to use.
+			* @param	blend	 	true to use blending and false to simply copy the color.
+			**/
+			MTOOLS_FORCEINLINE void draw_box(const iBox2 & dest_box, RGBc fillcolor, bool blend)
+				{
+				draw_box(dest_box.min[0], dest_box.min[1], dest_box.max[0] - dest_box.min[0] + 1, dest_box.max[1] - dest_box.min[1] + 1, fillcolor, blend);
+				}
+
+
+			/**
+			 * Fill a (closed) box with a given color. Portion outside the image is clipped.
+			 * 
+			 * @param	x		 	x-coordinate of the rectangle upper left corner.
+			 * @param	y		 	y-coordinate of the rectangle upper left corner.
+			 * @param	sx		 	rectangle width (if <= 0 nothing is drawn).
+			 * @param	sy		 	rectangle height (if <= 0 nothing is drawn).
+			 * @param	fillcolor	the color to use.
+			 * @param	blend	 	true to use blending and false to simply copy the color.
+			 **/
+			inline void draw_box(int64 x, int64 y, int64 sx, int64 sy, RGBc fillcolor, bool blend)
 				{
 				if (isEmpty()) return;
 				_draw_box(x, y, sx, sy, fillcolor, blend);
+				}
+
+
+			/**
+			 * Draw a triangle. Portion outside the image is clipped.
+			 *
+			 * @param	P1		   	The first point.
+			 * @param	P2		   	The second point.
+			 * @param	P3		   	The third point.
+			 * @param	color	   	The color.
+			 * @param	blending   	true to use blending and false to write over.
+			 * @param	antialiased	true to use antialiased lines.
+			 * @param	penwidth   	The pen width (0 = unit width)
+			 **/
+			inline void draw_triangle(iVec2 P1, iVec2 P2, iVec2 P3, RGBc color, bool blending, bool antialiased, int32 penwidth)
+				{
+				if (isEmpty()) return;
+				if ((penwidth <= 0)&&(!antialiased)&&(blending)&& (color.comp.A != 255))
+					{ // draw without overlap
+					_lineBresenham<true, true, false>(P1, P2, color, true, penwidth);
+					_lineBresenham_avoid<true, true>(P2, P3, P1, color, 0);
+					_lineBresenham_avoid_both_sides<true, true>(P1, P3, P2, color);
+					return;
+					}
+				// default drawing
+				draw_line(P1, P2, color, false, blending, antialiased, penwidth);
+				draw_line(P2, P3, color, false, blending, antialiased, penwidth);
+				draw_line(P3, P1, color, false, blending, antialiased, penwidth);
+				return;
+				}
+
+
+			/**
+			 * Draw a triangle. Portion outside the image is clipped.
+			 *
+			 * @param	x1		   	x-coord of the first point.
+			 * @param	y1		   	y-coord of the first point.
+			 * @param	x2		   	x-coord of the second point.
+			 * @param	y2		   	y-coord of the second point.
+			 * @param	x3		   	x-coord of the third point.
+			 * @param	y3		   	y-coord of the third point.
+			 * @param	color	   	The color.
+			 * @param	blending   	true to use blending and false to write over.
+			 * @param	antialiased	true to use antialiased lines.
+			 * @param	penwidth   	The pen width (0 = unit width)
+			 **/
+			MTOOLS_FORCEINLINE void draw_triangle(int64 x1, int64 y1, int64 x2, int64 y2, int64 x3, int64 y3, RGBc color, bool blending, bool antialiased, int32 penwidth)
+				{
+				draw_triangle({ x1,y1 }, { x2,y2 }, { x3,y3 }, color, blending, antialiased, penwidth);
+				}
+
+
+			/**
+			* Fill the interior of a triangle. Portion outside the image is clipped.
+			*
+			* Only the interior is filled, the boundary lines are not drawn/filled.
+			*
+			* @param	P1		   	The first point
+			* @param	P2		   	The second point.
+			* @param	P3		   	The third point.
+			* @param	fillcolor  	The fill color.
+			* @param	blending   	true to use blending and false to write over.
+			**/
+			inline void fill_triangle(iVec2 P1, iVec2 P2, iVec2 P3, RGBc fillcolor, bool blending)
+				{
+				if (isEmpty()) return;
+				iBox2 mbr(P1);
+				mbr.enlargeWith(P2);
+				mbr.enlargeWith(P3);
+				iBox2 B(0, _lx - 1, 0, _ly - 1);
+				if (intersectionRect(mbr, B).isEmpty()) return; // nothing to draw. 
+				if (mbr.isIncludedIn(B))
+					{
+					if ((blending) && (fillcolor.comp.A != 255)) _draw_triangle_interior<true, false>(P1, P2, P3, fillcolor); else _draw_triangle_interior<false, false>(P1, P2, P3, fillcolor);
+					}
+				else
+					{
+					if ((blending) && (fillcolor.comp.A != 255)) _draw_triangle_interior<true, true>(P1, P2, P3, fillcolor); else _draw_triangle_interior<false, true>(P1, P2, P3, fillcolor);
+					}
+				}
+
+
+
+			/**
+			* Fill the interior of a triangle. Portion outside the image is clipped.
+			* 
+			* Only the interior is filled, the boundary lines are not drawn/filled.
+			*
+			* @param	x1		 	x-coord of the first point.
+			* @param	y1		 	y-coord of the first point.
+			* @param	x2		 	x-coord of the second point.
+			* @param	y2		 	y-coord of the second point.
+			* @param	x3		 	x-coord of the third point.
+			* @param	y3		 	y-coord of the third point.
+			* @param	fillcolor	The fill color.
+			* @param	blending 	true to use blending and false to write over.
+			**/
+			MTOOLS_FORCEINLINE void fill_triangle(int64 x1, int64 y1, int64 x2, int64 y2, int64 x3, int64 y3, RGBc fillcolor, bool blending)
+				{
+				fill_triangle({ x1,y1 }, { x2,y2 }, { x3,y3 }, fillcolor, blending);
+				}
+
+
+			/**
+			 * Draw a polygon.
+			 *
+			 * @param	nbvertices 	Number of vertices in the polygon.
+			 * @param	tabPoints  	the list of points in clockwise or counterclockwise order.
+			 * @param	color	   	The color tu use.
+			 * @param	blending   	true to use blending.
+			 * @param	antialiased	true to draw antialiased lines.
+			 * @param	penwidth   	The pen width (0 = unit width)
+			 **/
+			inline void draw_polygon(size_t nbvertices, const iVec2 * tabPoints, RGBc color, bool blending, bool antialiased, int32 penwidth)
+				{
+				if (isEmpty()) return;
+				if (color.comp.A == 255) blending = false;
+				switch (nbvertices)
+					{
+					case 0: { return; }
+					case 1:
+						{
+						draw_dot(*tabPoints, color, blending, penwidth);
+						return;
+						}
+					case 2:
+						{
+						draw_line(tabPoints[0], tabPoints[1], color, true, blending, antialiased, penwidth);
+						return;
+						}
+					case 3:
+						{
+						draw_triangle(tabPoints[0], tabPoints[1], tabPoints[2], color, blending, antialiased, penwidth);
+						return;
+						}
+					default:
+						{
+						if ((penwidth <= 0) && (!antialiased) && (blending) && (color.comp.A != 255))
+							{ // draw without overlap
+							_lineBresenham<true, true,false>(tabPoints[0], tabPoints[1], color, true, penwidth);
+							for (size_t i = 1; i < nbvertices - 1; i++)
+								{
+								_lineBresenham_avoid<true, true>(tabPoints[i], tabPoints[i + 1], tabPoints[i - 1], color, 0);
+								}
+							_lineBresenham_avoid_both_sides<true, true>(tabPoints[nbvertices - 1], tabPoints[0], tabPoints[nbvertices - 2], tabPoints[1], color);
+							return;
+							}
+						for (size_t i = 0; i < nbvertices; i++)
+							{
+							draw_line(tabPoints[i], tabPoints[(i + 1) % nbvertices], color, false, blending, antialiased, penwidth);
+							}
+						return;
+						}
+					}
+				}
+
+
+			/**
+			 * Draw a polygon.
+			 *
+			 * @param	tabPoints  	std vector of polygon vertice in clockwise or counterclockwise order.
+			 * @param	color	   	The color tu use.
+			 * @param	blending   	true to use blending.
+			 * @param	antialiased	true to draw antialiased lines.
+			 * @param	penwidth   	The pen width (0 = unit width)
+			 **/
+			MTOOLS_FORCEINLINE void draw_polygon(const std::vector<iVec2> & tabPoints, RGBc color, bool blending, bool antialiased, int32 penwidth)
+				{
+				draw_polygon(tabPoints.size(), tabPoints.data(), color, blending, antialiased, penwidth);
+				}
+
+
+			/**
+			* Fill the interior of a convex polygon. The boundary lines are not drawn.
+			*
+			* @param	nbvertices 	Number of vertices in the polygon.
+			* @param	tabPoints  	the list of points in clockwise or counterclockwise order.
+			* @param	fillcolor  	The color to use.
+			* @param	blending   	true to use blending.
+			**/
+			inline void fill_convex_polygon(size_t nbvertices, const iVec2 * tabPoints, RGBc fillcolor, bool blending)
+				{
+				if (isEmpty() || nbvertices < 3) return;
+				if (fillcolor.comp.A == 255) blending = false;
+				if (nbvertices == 3)
+					{
+					fill_triangle(tabPoints[0], tabPoints[1], tabPoints[2], fillcolor, blending);
+					return;
+					}
+				//Compute the barycenter
+				double X = 0, Y = 0;
+				for (int i = 0; i < nbvertices; i++) { X += tabPoints[i].X(); Y += tabPoints[i].Y(); }
+				iVec2 G((int64)(X / nbvertices), (int64)(Y / nbvertices));
+				for (int i = 0; i < nbvertices; i++)
+					{
+					fill_triangle(tabPoints[i], tabPoints[(i + 1) % nbvertices], G, fillcolor, blending);
+					}
+				if (blending)
+					{
+					_lineBresenham_avoid<true, true>(tabPoints[0], G, tabPoints[nbvertices - 1], tabPoints[1], fillcolor, 0);
+					for (int i = 1; i < nbvertices; i++)
+						{
+						_lineBresenham_avoid_both_sides<true, true>(tabPoints[i], G, tabPoints[i - 1], tabPoints[(i + 1) % nbvertices], tabPoints[0], tabPoints[i - 1], fillcolor);
+						}
+					return;
+					}
+				for (int i = 0; i < nbvertices; i++)
+					{
+					draw_line(G, tabPoints[i], fillcolor, false);
+					}
+				}
+
+
+			/**
+			* Fill the interior of a convex polygon. The edge are not drawn.
+			*
+			* @param	tabPoints  	std vector of polygon vertice in clockwise or counterclockwise order.
+			* @param	color	   	The color tu use.
+			* @param	blending   	true to use blending.
+			* @param	antialiased	true to draw antialiased lines.
+			**/
+			MTOOLS_FORCEINLINE void fill_convex_polygon(const std::vector<iVec2> & tabPoints, RGBc fillcolor, bool blending)
+				{
+				fill_convex_polygon(tabPoints.size(), tabPoints.data(), fillcolor, blending);
+				}
+
+
+			/**
+			 * Draw a circle.
+			 *
+			 * @param	P				position of the center.
+			 * @param	r				radius.
+			 * @param	color			color to use.
+			 * @param	blend			true to use blending.
+			 * @param	antialiasing	true to use antialiasing.
+			 * @param	penwidth		The pen width (0 = unit width)
+			 **/
+			inline void draw_circle(iVec2 P, int64 r, RGBc color, bool blend, bool antialiasing, int32 penwidth)
+				{
+				if (isEmpty() || (r < 1)) return;
+				iBox2 mbr(P);
+				mbr.enlarge(r);
+				iBox2 B(0, _lx - 1, 0, _ly - 1);
+				if (penwidth > 0)
+					{ // large pen
+					mbr.enlarge(penwidth);
+					if (intersectionRect(mbr, B).isEmpty()) return;  // nothing to draw
+					if (!mbr.isIncludedIn(B))
+						{ // not included
+						if (antialiasing)
+							{
+							if (blend) _draw_circle_AA<true, true,true>(P.X(), P.Y(), r, color, penwidth); else _draw_circle_AA<false, true, true>(P.X(), P.Y(), r, color, penwidth);
+							}
+						else
+							{
+							if (blend) _draw_circle<true, true, true, false,true>(P.X(), P.Y(), r, color, RGBc::c_White, penwidth); else _draw_circle<false, true, true, false, true>(P.X(), P.Y(), r, color, RGBc::c_White, penwidth);
+							}
+						return;
+						}
+					// included, no need to check range
+					if (antialiasing)
+						{
+						if (blend) _draw_circle_AA<true, false,true>(P.X(), P.Y(), r, color, penwidth); else _draw_circle_AA<false, false, true>(P.X(), P.Y(), r, color, penwidth);
+						}
+					else
+						{
+						if (blend) _draw_circle<true, false, true, false, true>(P.X(), P.Y(), r, color, RGBc::c_White, penwidth); else _draw_circle<false, false, true, false, true>(P.X(), P.Y(), r, color, RGBc::c_White, penwidth);
+						}
+					return;
+					}
+				// unit pen
+				if (intersectionRect(B, mbr).isEmpty()) return;
+				if (!mbr.isIncludedIn(B))
+					{ // not included
+					if (antialiasing)
+						{
+						if (blend) _draw_circle_AA<true, true, false>(P.X(), P.Y(), r, color, penwidth); else _draw_circle_AA<false, true, false>(P.X(), P.Y(), r, color, penwidth);
+						}
+					else
+						{
+						if (blend) _draw_circle<true, true, true, false, false>(P.X(), P.Y(), r, color, RGBc::c_White, penwidth); else _draw_circle<false, true, true, false, false>(P.X(), P.Y(), r, color, RGBc::c_White, penwidth);
+						}
+					return;
+					}
+				// included, no need to check range
+				if (antialiasing)
+					{
+					if (blend) _draw_circle_AA<true, false, false>(P.X(), P.Y(), r, color, penwidth); else _draw_circle_AA<false, false, false>(P.X(), P.Y(), r, color, penwidth);
+					}
+				else
+					{
+					if (blend) _draw_circle<true, false, true, false, false>(P.X(), P.Y(), r, color, RGBc::c_White, penwidth); else _draw_circle<false, false, true, false, false>(P.X(), P.Y(), r, color, RGBc::c_White, penwidth);
+					}
+				return;
+				}
+
+
+			/**
+			* Fill the interior of a circle. 
+			* 
+			* The circle border is not drawn, use draw_filled_circle to draw both border and interior simultaneously.
+			*
+			* @param	P			   position of the center.
+			* @param	r			   radius.
+			* @param	color_interior color of the interior.
+			* @param	blend		   true to use blending.
+			*/
+			inline void fill_circle(iVec2 P, int64 r, RGBc color_interior, bool blend)
+				{
+				if (isEmpty() || (r < 1)) return;
+				iBox2 mbr(P.X() - r, P.X() + r, P.Y() - r, P.Y() + r);
+				iBox2 B(0, _lx - 1, 0, _ly - 1);
+				if (intersectionRect(B, mbr).isEmpty()) return;
+				if (!mbr.isIncludedIn(B))
+					{ // not included
+					if (blend) _draw_circle<true, true, false, true, false>(P.X(), P.Y(), r, RGBc::c_White, color_interior, 0); else _draw_circle<false, true, false, true, false>(P.X(), P.Y(), r, RGBc::c_White, color_interior, 0);
+					return;
+					}
+				// included, no need to check range
+				if (blend) _draw_circle<true, false, false, true, false>(P.X(), P.Y(), r, RGBc::c_White, color_interior, 0); else _draw_circle<false, false, false, true, false>(P.X(), P.Y(), r, RGBc::c_White, color_interior,0);
+				return;
+				}
+
+
+			/**
+			 * Draw a filled circle. The border and the interior color may be different.
+			 *
+			 * @param	P			  	position of the center.
+			 * @param	r			  	radius.
+			 * @param	color_border  	color for the border.
+			 * @param	color_interior	color of the interior.
+			 * @param	blend		  	true to use blending.
+			 **/
+			inline void draw_filled_circle(iVec2 P, int64 r, RGBc color_border, RGBc color_interior, bool blend)
+				{
+				if (isEmpty() || (r < 1)) return;
+				iBox2 mbr(P.X() - r, P.X() + r, P.Y() - r, P.Y() + r);
+				iBox2 B(0, _lx - 1, 0, _ly - 1);
+				if (intersectionRect(B, mbr).isEmpty()) return;
+				if (!mbr.isIncludedIn(B))
+					{ // not included
+					if (blend) _draw_circle<true, true, true, true, false>(P.X(), P.Y(), r, color_border, color_interior,0); else _draw_circle<false, true, true, true, false>(P.X(), P.Y(), r, color_border, color_interior, 0);
+					return;
+					}
+				// included, no need to check range
+				if (blend) _draw_circle<true, false, true, true, false>(P.X(), P.Y(), r, color_border, color_interior,0); else _draw_circle<false, false, true, true, false>(P.X(), P.Y(), r, color_border, color_interior,0);
+				return;
+				}
+
+
+			/**
+			 * Draw an ellipse.
+			 *
+			 * @param	P				position of the center.
+			 * @param	rx				the x-radius.
+			 * @param	ry				The y-radius.
+			 * @param	color			color to use.
+			 * @param	blend			true to use blending.
+			 * @param	antialiasing	true to use antialiasing.
+			 * @param	penwidth		The pen width (0 = unit width)
+			 **/
+			inline void draw_ellipse(iVec2 P, int64 rx, int64 ry, RGBc color, bool blend, bool antialiasing, int32 penwidth)
+				{
+				if (isEmpty() || (rx < 1) || (ry < 1)) return;
+				iBox2 mbr(P.X() - rx, P.X() + rx, P.Y() - ry, P.Y() + ry);
+				iBox2 B(0, _lx - 1, 0, _ly - 1);
+				if (penwidth > 0)
+					{ // large pen
+					mbr.enlarge(penwidth);
+					if (intersectionRect(mbr, B).isEmpty()) return;
+					if (!mbr.isIncludedIn(B))
+						{ // not included
+						if (antialiasing)
+							{
+							if (blend) _draw_ellipse_in_rect_AA<true, true,true>(P.X() - rx, P.Y() - ry, P.X() + rx, P.Y() + ry, color, penwidth); else _draw_ellipse_in_rect_AA<false, true, true>(P.X() - rx, P.Y() - ry, P.X() + rx, P.Y() + ry, color, penwidth);
+							}
+						else
+							{
+							if (blend) _draw_ellipse<true, true, true, false, 0, 0, true>(P.X(), P.Y(), rx, ry, color, RGBc::c_White, penwidth); else _draw_ellipse<false, true, true, false, 0, 0, true>(P.X(), P.Y(), rx, ry, color, RGBc::c_White, penwidth);
+							}
+						return;
+						}
+					// included, no need to check range
+					if (antialiasing)
+						{
+						if (blend) _draw_ellipse_in_rect_AA<true, false, true>(P.X() - rx, P.Y() - ry, P.X() + rx, P.Y() + ry, color, penwidth); else _draw_ellipse_in_rect_AA<false, false, true>(P.X() - rx, P.Y() - ry, P.X() + rx, P.Y() + ry, color, penwidth);
+						}
+					else
+						{
+						if (blend) _draw_ellipse<true, false, true, false, 0, 0, true>(P.X(), P.Y(), rx, ry, color, RGBc::c_White, penwidth); else _draw_ellipse<false, false, true, false, 0, 0, true>(P.X(), P.Y(), rx, ry, color, RGBc::c_White, penwidth);
+						}
+					return;
+					}
+				if (intersectionRect(mbr, B).isEmpty()) return;
+				if (!mbr.isIncludedIn(B))
+					{ // not included
+					if (antialiasing)
+						{
+						if (blend) _draw_ellipse_in_rect_AA<true, true, false>(P.X() - rx, P.Y() - ry, P.X() + rx, P.Y() + ry, color, penwidth); else _draw_ellipse_in_rect_AA<false, true, false>(P.X() - rx, P.Y() - ry, P.X() + rx, P.Y() + ry, color, penwidth);
+						}
+					else
+						{
+						if (blend) _draw_ellipse<true, true, true, false, 0, 0, false>(P.X(), P.Y(), rx, ry, color, RGBc::c_White, penwidth); else _draw_ellipse<false, true, true, false, 0, 0, false>(P.X(), P.Y(), rx, ry, color, RGBc::c_White, penwidth);
+						}
+					return;
+					}
+				// included, no need to check range
+				if (antialiasing)
+					{
+					if (blend) _draw_ellipse_in_rect_AA<true, false, false>(P.X() - rx, P.Y() - ry, P.X() + rx, P.Y() + ry, color, penwidth); else _draw_ellipse_in_rect_AA<false, false, false>(P.X() - rx, P.Y() - ry, P.X() + rx, P.Y() + ry, color, penwidth);
+					}
+				else
+					{
+					if (blend) _draw_ellipse<true, false, true, false, 0, 0, false>(P.X(), P.Y(), rx, ry, color, RGBc::c_White, penwidth); else _draw_ellipse<false, false, true, false, 0, 0, false>(P.X(), P.Y(), rx, ry, color, RGBc::c_White, penwidth);
+					}
+				return;
+				}
+
+
+			/**
+			* Fill the interior of an ellipse.
+			*
+			* @param	P			   position of the center.
+			* @param	rx			   the x-radius.
+			* @param	ry			   The y-radius.
+			* @param	color_interior color of the interior.
+			* @param	blend		   true to use blending.
+			*/
+			inline void fill_ellipse(iVec2 P, int64 rx, int64 ry, RGBc color_interior, bool blend)
+				{
+				if (isEmpty() || (rx < 1) || (ry < 1)) return;
+				iBox2 mbr(P.X() - rx, P.X() + rx, P.Y() - ry, P.Y() + ry);
+				iBox2 B(0, _lx - 1, 0, _ly - 1);
+				if (intersectionRect(mbr, B).isEmpty()) return;
+				if (!mbr.isIncludedIn(B))
+					{ // not included
+					if (blend) _draw_ellipse<true, true, false, true, 0, 0, false>(P.X(), P.Y(), rx, ry, RGBc::c_White, color_interior, 0); else _draw_ellipse<false, true, false, true, 0, 0, false>(P.X(), P.Y(), rx, ry, RGBc::c_White, color_interior, 0);
+					return;
+					}
+				// included, no need to check range
+				if (blend) _draw_ellipse<true, false, false, true, 0, 0, false>(P.X(), P.Y(), rx, ry, RGBc::c_White, color_interior, 0); else _draw_ellipse<false, false, false, true, 0, 0, false>(P.X(), P.Y(), rx, ry, RGBc::c_White, color_interior, 0);
+				return;
+				}
+
+
+			/**
+			* Draw an ellipse together with its interior (with different colors). 
+			*
+			* @param	P			   position of the center.
+			* @param	rx			   the x-radius.
+			* @param	ry			   The y-radius.
+			* @param	color_border   The color of the border.
+			* @param	color_interior color of the interior.
+			* @param	blend		   true to use blending.
+			*/
+			inline void draw_filled_ellipse(iVec2 P, int64 rx, int64 ry, RGBc color_border, RGBc color_interior, bool blend)
+				{
+				if ((isEmpty()) || (rx < 1) || (ry < 1)) return;
+				iBox2 mbr(P.X() - rx, P.X() + rx, P.Y() - ry, P.Y() + ry);
+				iBox2 B(0, _lx - 1, 0, _ly - 1);
+				if (intersectionRect(mbr, B).isEmpty()) return;
+				if (!mbr.isIncludedIn(B))
+					{ // not included
+					if (blend) _draw_ellipse<true, true, true, true, 0, 0, false>(P.X(), P.Y(), rx, ry, color_border, color_interior, 0); else _draw_ellipse<false, true, true, true, 0, 0, false>(P.X(), P.Y(), rx, ry, color_border, color_interior, 0);
+					return;
+					}
+				// included, no need to check range
+				if (blend) _draw_ellipse<true, false, true, true, 0, 0, false>(P.X(), P.Y(), rx, ry, color_border, color_interior, 0); else _draw_ellipse<false, false, true, true, 0, 0, false>(P.X(), P.Y(), rx, ry, color_border, color_interior, 0);
+				return;
+				}
+
+
+			/**
+			 * Draw an ellipse with a given bounding box.
+			 * 
+			 * When using pen with non zero witdh, the ellipse exits the rectangle since the pen is centered
+			 * on this rectangle. Substract penwidth to the margin of the rectanlge to fit the ellipse
+			 * inside exactly.
+			 *
+			 * @param	B				The box to fit the ellipse into.
+			 * @param	color			color to use.
+			 * @param	blend			true to use blending.
+			 * @param	antialiasing	true to use antialiasing.
+			 * @param	penwidth		The pen width (0 = unit width)
+			 **/
+			inline void draw_ellipse_in_rect(const iBox2 & B, RGBc color, bool blend, bool antialiasing, int32 penwidth)
+				{
+				if ((isEmpty()) || (B.isEmpty())) return;
+				int64 lx = B.max[0] - B.min[0];
+				int64 rx = lx / 2;
+				int64 mx = B.min[0] + rx;
+				bool incx = (lx % 2 != 0);
+				int64 ly = B.max[1] - B.min[1];
+				int64 ry = ly / 2;
+				int64 my = B.min[1] + ry;
+				bool incy = (ly % 2 != 0);
+				iBox2 mbr = B;
+				iBox2 imB(0, _lx - 1, 0, _ly - 1);
+				if (penwidth > 0)
+					{
+					const bool usepen = true;
+					mbr.enlarge(penwidth);
+					if (intersectionRect(mbr, imB).isEmpty()) return;
+					if (!mbr.isIncludedIn(imB))
+						{ // not included
+						if (antialiasing)
+							{
+							if (blend) _draw_ellipse_in_rect_AA<true, true, usepen>(B.min[0], B.min[1], B.max[0], B.max[1], color, penwidth); else _draw_ellipse_in_rect_AA<false, true, usepen>(B.min[0], B.min[1], B.max[0], B.max[1], color, penwidth);
+							return;
+							}
+						if (incx)
+							{
+							const int64 INCX = 1;
+							if (incy) { const int64 INCY = 1; if (blend) _draw_ellipse<true, true, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); else _draw_ellipse<false, true, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); }
+							else { const int64 INCY = 0; if (blend) _draw_ellipse<true, true, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); else _draw_ellipse<false, true, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); }
+							}
+						else
+							{
+							const int64 INCX = 0;
+							if (incy) {	const int64 INCY = 1; if (blend) _draw_ellipse<true, true, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); else _draw_ellipse<false, true, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); }
+							else { const int64 INCY = 0; if (blend) _draw_ellipse<true, true, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); else _draw_ellipse<false, true, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); }
+							}
+						return;
+						}
+					// included
+					if (antialiasing)
+						{
+						if (blend) _draw_ellipse_in_rect_AA<true, false, usepen>(B.min[0], B.min[1], B.max[0], B.max[1], color, penwidth); else _draw_ellipse_in_rect_AA<false, false, usepen>(B.min[0], B.min[1], B.max[0], B.max[1], color, penwidth);
+						return;
+						}
+					if (incx)
+						{
+						const int64 INCX = 1;
+						if (incy) { const int64 INCY = 1; if (blend) _draw_ellipse<true, false, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); else _draw_ellipse<false, false, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); }
+						else { const int64 INCY = 0; if (blend) _draw_ellipse<true, false, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); else _draw_ellipse<false, false, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); }
+						}
+					else
+						{
+						const int64 INCX = 0;
+						if (incy) { const int64 INCY = 1; if (blend) _draw_ellipse<true, false, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); else _draw_ellipse<false, false, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); }
+						else { const int64 INCY = 0; if (blend) _draw_ellipse<true, false, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); else _draw_ellipse<false, false, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); }
+						}
+					return;
+					}
+				// normal pen
+				const bool usepen = false;
+				if (intersectionRect(mbr, imB).isEmpty()) return;
+				if (!mbr.isIncludedIn(imB))
+					{ // not included
+					if (antialiasing)
+						{
+						if (blend) _draw_ellipse_in_rect_AA<true, true, usepen>(B.min[0], B.min[1], B.max[0], B.max[1], color, penwidth); else _draw_ellipse_in_rect_AA<false, true, usepen>(B.min[0], B.min[1], B.max[0], B.max[1], color, penwidth);
+						return;
+						}
+					if (incx)
+						{
+						const int64 INCX = 1;
+						if (incy) { const int64 INCY = 1; if (blend) _draw_ellipse<true, true, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); else _draw_ellipse<false, true, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); }
+						else { const int64 INCY = 0; if (blend) _draw_ellipse<true, true, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); else _draw_ellipse<false, true, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); }
+						}
+					else
+						{
+						const int64 INCX = 0;
+						if (incy) { const int64 INCY = 1; if (blend) _draw_ellipse<true, true, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); else _draw_ellipse<false, true, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); }
+						else { const int64 INCY = 0; if (blend) _draw_ellipse<true, true, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); else _draw_ellipse<false, true, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); }
+						}
+					return;
+					}
+				// included
+				if (antialiasing)
+					{
+					if (blend) _draw_ellipse_in_rect_AA<true, false, usepen>(B.min[0], B.min[1], B.max[0], B.max[1], color, penwidth); else _draw_ellipse_in_rect_AA<false, false, usepen>(B.min[0], B.min[1], B.max[0], B.max[1], color, penwidth);
+					return;
+					}
+				if (incx)
+					{
+					const int64 INCX = 1;
+					if (incy) { const int64 INCY = 1; if (blend) _draw_ellipse<true, false, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); else _draw_ellipse<false, false, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); }
+					else { const int64 INCY = 0; if (blend) _draw_ellipse<true, false, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); else _draw_ellipse<false, false, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); }
+					}
+				else
+					{
+					const int64 INCX = 0;
+					if (incy) { const int64 INCY = 1; if (blend) _draw_ellipse<true, false, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); else _draw_ellipse<false, false, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); }
+					else { const int64 INCY = 0; if (blend) _draw_ellipse<true, false, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); else _draw_ellipse<false, false, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); }
+					}
+				return;
+				}
+
+
+			/**
+			* Fill the interior of a ellipse with a given bounding box.
+			*
+			* @param	B			   The box to fit the ellipse into.
+			* @param	color_interior color of the interior.
+			* @param	blend		   true to use blending.
+			*/
+			inline void fill_ellipse_in_rect(const iBox2 & B, RGBc color_interior, bool blend)
+				{
+				if ((isEmpty()) || (B.isEmpty())) return;
+				int64 lx = B.max[0] - B.min[0];
+				int64 rx = lx / 2;
+				int64 mx = B.min[0] + rx;
+				bool incx = (lx % 2 != 0);
+				int64 ly = B.max[1] - B.min[1];
+				int64 ry = ly / 2;
+				int64 my = B.min[1] + ry;
+				bool incy = (ly % 2 != 0);
+				iBox2 imB(0, _lx - 1, 0, _ly - 1);
+				if (intersectionRect(B, imB).isEmpty()) return;
+				if (!B.isIncludedIn(imB))
+					{ // not included
+					if (incx)
+						{
+						const int64 INCX = 1;
+						if (incy) { const int64 INCY = 1; if (blend) _draw_ellipse<true, true, false, true, INCX, INCY, false>(mx, my, rx, ry, RGBc::c_White, color_interior,0); else _draw_ellipse<false, true, false, true, INCX, INCY, false>(mx, my, rx, ry, RGBc::c_White, color_interior, 0); }
+						else { const int64 INCY = 0; if (blend) _draw_ellipse<true, true, false, true, INCX, INCY, false>(mx, my, rx, ry, RGBc::c_White, color_interior, 0); else _draw_ellipse<false, true, false, true, INCX, INCY, false>(mx, my, rx, ry, RGBc::c_White, color_interior, 0); }
+						}
+					else
+						{
+						const int64 INCX = 0;
+						if (incy) { const int64 INCY = 1; if (blend) _draw_ellipse<true, true, false, true, INCX, INCY, false>(mx, my, rx, ry, RGBc::c_White, color_interior, 0); else _draw_ellipse<false, true, false, true, INCX, INCY, false>(mx, my, rx, ry, RGBc::c_White, color_interior, 0); }
+						else { const int64 INCY = 0; if (blend) _draw_ellipse<true, true, false, true, INCX, INCY, false>(mx, my, rx, ry, RGBc::c_White, color_interior, 0); else _draw_ellipse<false, true, false, true, INCX, INCY, false>(mx, my, rx, ry, RGBc::c_White, color_interior, 0); }
+						}
+					}
+				else
+					{
+					if (incx)
+						{
+						const int64 INCX = 1;
+						if (incy) { const int64 INCY = 1; if (blend) _draw_ellipse<true, false, false, true, INCX, INCY, false>(mx, my, rx, ry, RGBc::c_White, color_interior, 0); else _draw_ellipse<false, false, false, true, INCX, INCY, false>(mx, my, rx, ry, RGBc::c_White, color_interior, 0); }
+						else { const int64 INCY = 0; if (blend) _draw_ellipse<true, false, false, true, INCX, INCY, false>(mx, my, rx, ry, RGBc::c_White, color_interior, 0); else _draw_ellipse<false, false, false, true, INCX, INCY, false>(mx, my, rx, ry, RGBc::c_White, color_interior, 0); }
+						}
+					else
+						{
+						const int64 INCX = 0;
+						if (incy) { const int64 INCY = 1; if (blend) _draw_ellipse<true, false, false, true, INCX, INCY, false>(mx, my, rx, ry, RGBc::c_White, color_interior, 0); else _draw_ellipse<false, false, false, true, INCX, INCY, false>(mx, my, rx, ry, RGBc::c_White, color_interior, 0); }
+						else { const int64 INCY = 0; if (blend) _draw_ellipse<true, false, false, true, INCX, INCY, false>(mx, my, rx, ry, RGBc::c_White, color_interior, 0); else _draw_ellipse<false, false, false, true, INCX, INCY, false>(mx, my, rx, ry, RGBc::c_White, color_interior, 0); }
+						}
+					}
+				return;
+				}
+
+
+			/**
+			* Draw the boundary and fill the interior of an ellipse inside a rectangle simultaneously.
+			*
+			* @param	B			   The box to fit the ellipse into.
+			* @param	color_border   Color of the border.
+			* @param	color_interior color of the interior.
+			* @param	blend		   true to use blending.
+			*/
+			inline void draw_filled_ellipse_in_rect(const iBox2 & B, RGBc color_border, RGBc color_interior, bool blend)
+				{
+				if ((isEmpty()) || (B.isEmpty())) return;
+				int64 lx = B.max[0] - B.min[0];
+				int64 rx = lx / 2;
+				int64 mx = B.min[0] + rx;
+				bool incx = (lx % 2 != 0);
+				int64 ly = B.max[1] - B.min[1];
+				int64 ry = ly / 2;
+				int64 my = B.min[1] + ry;
+				bool incy = (ly % 2 != 0);
+				iBox2 imB(0, _lx - 1, 0, _ly - 1);
+				if (intersectionRect(B, imB).isEmpty()) return;
+				if (!B.isIncludedIn(imB))
+					{ // not included
+					if (incx)
+						{
+						const int64 INCX = 1;
+						if (incy) { const int64 INCY = 1; if (blend) _draw_ellipse<true, true, true, true, INCX, INCY, false>(mx, my, rx, ry, color_border, color_interior, 0); else _draw_ellipse<false, true, true, true, INCX, INCY, false>(mx, my, rx, ry, color_border, color_interior, 0); }
+						else { const int64 INCY = 0; if (blend) _draw_ellipse<true, true, true, true, INCX, INCY, false>(mx, my, rx, ry, color_border, color_interior, 0); else _draw_ellipse<false, true, true, true, INCX, INCY, false>(mx, my, rx, ry, color_border, color_interior, 0); }
+						}
+					else
+						{
+						const int64 INCX = 0; 
+						if (incy) { const int64 INCY = 1; if (blend) _draw_ellipse<true, true, true, true, INCX, INCY, false>(mx, my, rx, ry, color_border, color_interior, 0); else _draw_ellipse<false, true, true, true, INCX, INCY, false>(mx, my, rx, ry, color_border, color_interior, 0); }
+						else { const int64 INCY = 0; if (blend) _draw_ellipse<true, true, true, true, INCX, INCY, false>(mx, my, rx, ry, color_border, color_interior, 0); else _draw_ellipse<false, true, true, true, INCX, INCY, false>(mx, my, rx, ry, color_border, color_interior, 0); }
+						}
+					}
+				else
+					{
+					if (incx)
+						{
+						const int64 INCX = 1;
+						if (incy) { const int64 INCY = 1; if (blend) _draw_ellipse<true, false, true, true, INCX, INCY, false>(mx, my, rx, ry, color_border, color_interior, 0); else _draw_ellipse<false, false, true, true, INCX, INCY, false>(mx, my, rx, ry, color_border, color_interior, 0); }
+						else { const int64 INCY = 0; if (blend) _draw_ellipse<true, false, true, true, INCX, INCY, false>(mx, my, rx, ry, color_border, color_interior, 0); else _draw_ellipse<false, false, true, true, INCX, INCY, false>(mx, my, rx, ry, color_border, color_interior, 0); }
+						}
+					else
+						{
+						const int64 INCX = 0;
+						if (incy) { const int64 INCY = 1; if (blend) _draw_ellipse<true, false, true, true, INCX, INCY, false>(mx, my, rx, ry, color_border, color_interior, 0); else _draw_ellipse<false, false, true, true, INCX, INCY, false>(mx, my, rx, ry, color_border, color_interior, 0); }
+						else { const int64 INCY = 0; if (blend) _draw_ellipse<true, false, true, true, INCX, INCY, false>(mx, my, rx, ry, color_border, color_interior, 0); else _draw_ellipse<false, false, true, true, INCX, INCY, false>(mx, my, rx, ry, color_border, color_interior, 0); }
+						}
+					}
+				return;
 				}
 
 
@@ -4514,7 +5289,7 @@ namespace mtools
 			 * 
 			 * Set draw_last to true to draw point P2 and to false to draw only the open segment.
 			 **/
-			template<bool blend, bool checkrange, bool usepen>  MTOOLS_FORCEINLINE void _lineWuAA(iVec2 P1, iVec2 P2, RGBc color, bool draw_last, int32 penwidth)
+/*			template<bool blend, bool checkrange, bool usepen>  MTOOLS_FORCEINLINE void _lineWuAA(iVec2 P1, iVec2 P2, RGBc color, bool draw_last, int32 penwidth)
 				{
 				int64 & x0 = P1.X(); int64 & y0 = P1.Y();
 				int64 & x1 = P2.X(); int64 & y1 = P2.Y();
@@ -4557,7 +5332,7 @@ namespace mtools
 					}
 				return; 
 				}
-
+*/
 
 
 
@@ -4706,16 +5481,16 @@ namespace mtools
 			 * Draw circle. both interior and outline.
 			 *  adapted from Alois Zingl  (http://members.chello.at/easyfilter/bresenham.html)
 			 **/
-			template<bool blend, bool checkrange,bool outline, bool fill>  inline  void _draw_circle(int64 xm, int64 ym, int64 r, RGBc color, RGBc fillcolor)
+			template<bool blend, bool checkrange,bool outline, bool fill, bool usepen>  inline  void _draw_circle(int64 xm, int64 ym, int64 r, RGBc color, RGBc fillcolor, int32 penwidth)
 				{
 				int64 x = -r, y = 0, err = 2 - 2 * r;
 				do {
 					if (outline)
 						{
-						_updatePixel<blend, checkrange>(xm - x, ym + y, color);
-						_updatePixel<blend, checkrange>(xm - y, ym - x, color);
-						_updatePixel<blend, checkrange>(xm + x, ym - y, color);
-						_updatePixel<blend, checkrange>(xm + y, ym + x, color);
+						_updatePixel<blend, checkrange, false, usepen>(xm - x, ym + y, color, 0, penwidth);
+						_updatePixel<blend, checkrange, false, usepen>(xm - y, ym - x, color, 0, penwidth);
+						_updatePixel<blend, checkrange, false, usepen>(xm + x, ym - y, color, 0, penwidth);
+						_updatePixel<blend, checkrange, false, usepen>(xm + y, ym + x, color, 0, penwidth);
 						}					
 					r = err;
 					if (r <= y) 
@@ -4749,7 +5524,7 @@ namespace mtools
 			 * Draw an antialiased circle
 			 * adapted from Alois Zingl  (http://members.chello.at/easyfilter/bresenham.html)
 			 **/
-			template<bool blend, bool checkrange> void _draw_circle_AA(int64 xm, int64 ym, int64 r, RGBc color)
+			template<bool blend, bool checkrange, bool usepen> void _draw_circle_AA(int64 xm, int64 ym, int64 r, RGBc color, int32 penwidth)
 				{ 
 				int64 x = -r, y = 0;
 				int64 x2, e2, err = 2 - 2 * r;
@@ -4759,30 +5534,34 @@ namespace mtools
 					{
 					i = (int32)(256 * abs(err - 2 * (x + y) - 2) / r);
 					i = 256 - i;
-					_updatePixel<blend, checkrange>(xm - x, ym + y, color, i);
-					_updatePixel<blend, checkrange>(xm - y, ym - x, color, i);
-					_updatePixel<blend, checkrange>(xm + x, ym - y, color, i);
-					_updatePixel<blend, checkrange>(xm + y, ym + x, color, i);
+					_updatePixel<blend, checkrange, true, usepen>(xm - x, ym + y, color, i, penwidth);
+					_updatePixel<blend, checkrange, true, usepen>(xm - y, ym - x, color, i, penwidth);
+					_updatePixel<blend, checkrange, true, usepen>(xm + x, ym - y, color, i, penwidth);
+					_updatePixel<blend, checkrange, true, usepen>(xm + y, ym + x, color, i, penwidth);
 					e2 = err; x2 = x;
-					if (err + y > 0) {
+					if (err + y > 0) 
+						{
 						i = (int32)(256 * (err - 2 * x - 1) / r);
-						if (i <= 256) {
+						if (i <= 256) 
+							{
 							i = 256 - i;
-							_updatePixel<blend, checkrange>(xm - x, ym + y + 1, color, i);
-							_updatePixel<blend, checkrange>(xm - y - 1, ym - x, color, i);
-							_updatePixel<blend, checkrange>(xm + x, ym - y - 1, color, i);
-							_updatePixel<blend, checkrange>(xm + y + 1, ym + x, color, i);
+							_updatePixel<blend, checkrange, true, usepen>(xm - x, ym + y + 1, color, i, penwidth);
+							_updatePixel<blend, checkrange, true, usepen>(xm - y - 1, ym - x, color, i, penwidth);
+							_updatePixel<blend, checkrange, true, usepen>(xm + x, ym - y - 1, color, i, penwidth);
+							_updatePixel<blend, checkrange, true, usepen>(xm + y + 1, ym + x, color, i, penwidth);
 							}
 						err += ++x * 2 + 1;
 						}
-					if (e2 + x2 <= 0) {
+					if (e2 + x2 <= 0) 
+						{
 						i = (int32)(256 * (2 * y + 3 - e2) / r);
-						if (i <= 256) {
+						if (i <= 256) 
+							{
 							i = 256 - i;
-							_updatePixel<blend, checkrange>(xm - x2 - 1, ym + y, color, i);
-							_updatePixel<blend, checkrange>(xm - y, ym - x2 - 1, color, i);
-							_updatePixel<blend, checkrange>(xm + x2 + 1, ym - y, color, i);
-							_updatePixel<blend, checkrange>(xm + y, ym + x2 + 1, color, i);
+							_updatePixel<blend, checkrange, true, usepen>(xm - x2 - 1, ym + y, color, i, penwidth);
+							_updatePixel<blend, checkrange, true, usepen>(xm - y, ym - x2 - 1, color, i, penwidth);
+							_updatePixel<blend, checkrange, true, usepen>(xm + x2 + 1, ym - y, color, i, penwidth);
+							_updatePixel<blend, checkrange, true, usepen>(xm + y, ym + x2 + 1, color, i, penwidth);
 							}
 						err += ++y * 2 + 1;
 						}
@@ -4795,11 +5574,11 @@ namespace mtools
 			/**
 			 * Draw an ellipse, outline and interior
 			 * set incx = 1 to increse the x-diameter by 1
-			 * set incx = 1 to increase the y-diameter by 1  -> to make it fit a rectangle (cheat!).
+			 * set incy = 1 to increase the y-diameter by 1  -> to make it fit a rectangle (cheat!).
 			 *
 			 * adapted from Alois Zingl  (http://members.chello.at/easyfilter/bresenham.html)
 			 **/
-			template<bool blend, bool checkrange, bool outline, bool fill, int64 incx, int64 incy>  inline  void _draw_ellipse(int64 xm, int64 ym, int64 a, int64 b, RGBc color, RGBc fillcolor)
+			template<bool blend, bool checkrange, bool outline, bool fill, int64 incx, int64 incy, bool usepen>  inline  void _draw_ellipse(int64 xm, int64 ym, int64 a, int64 b, RGBc color, RGBc fillcolor, int32 penwidth)
 				{
 				int64 x = -a, y = 0;
 				int64 e2 = b, dx = (1 + 2 * x)*e2*e2;
@@ -4822,22 +5601,22 @@ namespace mtools
 					x = nx;
 					if (outline)
 						{
-						_updatePixel<blend, checkrange>(xm - x + incx, ym + y + incy, color);
-						_updatePixel<blend, checkrange>(xm + x , ym + y + incy, color);
-						_updatePixel<blend, checkrange>(xm + x, ym - y, color);
-						_updatePixel<blend, checkrange>(xm - x + incx, ym - y, color);
+						_updatePixel<blend, checkrange, false, usepen>(xm - x + incx, ym + y + incy, color, 0, penwidth);
+						_updatePixel<blend, checkrange, false, usepen>(xm + x , ym + y + incy, color, 0, penwidth);
+						_updatePixel<blend, checkrange, false, usepen>(xm + x, ym - y, color, 0, penwidth);
+						_updatePixel<blend, checkrange, false, usepen>(xm - x + incx, ym - y, color, 0, penwidth);
 						}
 					}
 				if (fill)
 					{
 					if (y != b)
 						{
-						_updatePixel<blend, checkrange>(xm, ym + y + incy, fillcolor);
-						_updatePixel<blend, checkrange>(xm, ym - y, fillcolor);
+						_updatePixel<blend, checkrange, false, usepen>(xm, ym + y + incy, fillcolor, 0, penwidth);
+						_updatePixel<blend, checkrange, false, usepen>(xm, ym - y, fillcolor, 0, penwidth);
 						if (incx)
 							{
-							_updatePixel<blend, checkrange>(xm + 1, ym + y + incy, fillcolor);
-							_updatePixel<blend, checkrange>(xm + 1, ym - y, fillcolor);
+							_updatePixel<blend, checkrange, false, usepen>(xm + 1, ym + y + incy, fillcolor, 0, penwidth);
+							_updatePixel<blend, checkrange, false, usepen>(xm + 1, ym - y, fillcolor, 0, penwidth);
 							}
 						}
 					if (incy)
@@ -4847,34 +5626,34 @@ namespace mtools
 					}
 				if (outline)
 					{
-					_updatePixel<blend, checkrange>(xm - a, ym, color);
-					_updatePixel<blend, checkrange>(xm + a + incx, ym, color);
-					_updatePixel<blend, checkrange>(xm, ym - b, color);
-					_updatePixel<blend, checkrange>(xm, ym + b + incy, color);
+					_updatePixel<blend, checkrange, false, usepen>(xm - a, ym, color, 0, penwidth);
+					_updatePixel<blend, checkrange, false, usepen>(xm + a + incx, ym, color, 0, penwidth);
+					_updatePixel<blend, checkrange, false, usepen>(xm, ym - b, color, 0, penwidth);
+					_updatePixel<blend, checkrange, false, usepen>(xm, ym + b + incy, color, 0, penwidth);
 					if (incx)
 						{
-						_updatePixel<blend, checkrange>(xm + 1, ym - b, color);
-						_updatePixel<blend, checkrange>(xm + 1, ym + b + incy, color);
+						_updatePixel<blend, checkrange, false, usepen>(xm + 1, ym - b, color, 0, penwidth);
+						_updatePixel<blend, checkrange, false, usepen>(xm + 1, ym + b + incy, color, 0, penwidth);
 						}
 					if (incy)
 						{
-						_updatePixel<blend, checkrange>(xm + a + incx, ym + 1, color);
-						_updatePixel<blend, checkrange>(xm - a, ym + 1, color);
+						_updatePixel<blend, checkrange, false, usepen>(xm + a + incx, ym + 1, color, 0, penwidth);
+						_updatePixel<blend, checkrange, false, usepen>(xm - a, ym + 1, color, 0, penwidth);
 						}
 					}
 				int64 sy = y;
 				while (y++ < b)
 					{
-					_updatePixel<blend, checkrange>(xm, ym + y + incy, color);
-					_updatePixel<blend, checkrange>(xm, ym - y, color);
+					_updatePixel<blend, checkrange, false, usepen>(xm, ym + y + incy, color, 0, penwidth);
+					_updatePixel<blend, checkrange, false, usepen>(xm, ym - y, color, 0, penwidth);
 					}
 				if (incx)
 					{
 					y = sy;
 					while (y++ < b)
 						{
-						_updatePixel<blend, checkrange>(xm + 1, ym + y + incy, color);
-						_updatePixel<blend, checkrange>(xm + 1, ym - y, color);
+						_updatePixel<blend, checkrange, false, usepen>(xm + 1, ym + y + incy, color, 0, penwidth);
+						_updatePixel<blend, checkrange, false, usepen>(xm + 1, ym - y, color, 0, penwidth);
 						}
 					}
 				}
@@ -4885,13 +5664,13 @@ namespace mtools
 			 * Draw an antialiased ellipse inside a rectangle 
 			 * adapted from Alois Zingl  (http://members.chello.at/easyfilter/bresenham.html)
 			 **/
-			template<bool blend, bool checkrange> void _draw_ellipse_in_rect_AA(int64 x0, int64 y0, int64 x1, int64 y1, RGBc color)
+			template<bool blend, bool checkrange, bool usepen> void _draw_ellipse_in_rect_AA(int64 x0, int64 y0, int64 x1, int64 y1, RGBc color, int32 penwidth)
 				{
 				int64 a = abs(x1 - x0), b = abs(y1 - y0), b1 = b & 1;
 				double dx = (double)(4 * (a - 1.0)*b*b), dy = (double)(4 * (b1 + 1)*a*a);
 				double ed, i, err = b1*a*a - dx + dy;
 				bool f;
-				if (a == 0 || b == 0) return _lineBresenham<blend, checkrange>({ x0, y0 }, { x1, y1 }, color, true);
+				if (a == 0 || b == 0) return _lineBresenham<blend, checkrange,usepen>({ x0, y0 }, { x1, y1 }, color, true, penwidth);
 				if (x0 > x1) { x0 = x1; x1 += a; }
 				if (y0 > y1) y0 = y1;
 				y0 += (b + 1) / 2; y1 = y0 - b1;
@@ -4903,10 +5682,10 @@ namespace mtools
 					else ed = 256 / (ed + 2 * ed*i*i / (4 * ed*ed + i*i));
 					i = ed*fabs(err + dx - dy);
 					int32 op = (int32)(256 - i);
-					_updatePixel<blend, checkrange>(x0, y0, color, op);
-					_updatePixel<blend, checkrange>(x0, y1, color, op);
-					_updatePixel<blend, checkrange>(x1, y0, color, op);
-					_updatePixel<blend, checkrange>(x1, y1, color, op);
+					_updatePixel<blend, checkrange, true, usepen>(x0, y0, color, op, penwidth);
+					_updatePixel<blend, checkrange, true, usepen>(x0, y1, color, op, penwidth);
+					_updatePixel<blend, checkrange, true, usepen>(x1, y0, color, op, penwidth);
+					_updatePixel<blend, checkrange, true, usepen>(x1, y1, color, op, penwidth);
 					if (f = 2 * err + dy >= 0)
 						{
 						if (x0 >= x1) break;
@@ -4914,10 +5693,10 @@ namespace mtools
 						if (i < 256)
 							{
 							int32 op = (int32)(256 - i);
-							_updatePixel<blend, checkrange>(x0, y0 + 1, color, op);
-							_updatePixel<blend, checkrange>(x0, y1 - 1, color, op);
-							_updatePixel<blend, checkrange>(x1, y0 + 1, color, op);
-							_updatePixel<blend, checkrange>(x1, y1 - 1, color, op);
+							_updatePixel<blend, checkrange, true, usepen>(x0, y0 + 1, color, op, penwidth);
+							_updatePixel<blend, checkrange, true, usepen>(x0, y1 - 1, color, op, penwidth);
+							_updatePixel<blend, checkrange, true, usepen>(x1, y0 + 1, color, op, penwidth);
+							_updatePixel<blend, checkrange, true, usepen>(x1, y1 - 1, color, op, penwidth);
 							}
 						}
 					if (2 * err <= dx)
@@ -4926,10 +5705,10 @@ namespace mtools
 						if (i < 256)
 							{
 							int32 op = (int32)(256 - i);
-							_updatePixel<blend, checkrange>(x0 + 1, y0, color, op);
-							_updatePixel<blend, checkrange>(x0 + 1, y1, color, op);
-							_updatePixel<blend, checkrange>(x1 - 1, y0, color, op);
-							_updatePixel<blend, checkrange>(x1 - 1, y1, color, op);
+							_updatePixel<blend, checkrange, true, usepen>(x0 + 1, y0, color, op, penwidth);
+							_updatePixel<blend, checkrange, true, usepen>(x0 + 1, y1, color, op, penwidth);
+							_updatePixel<blend, checkrange, true, usepen>(x1 - 1, y0, color, op, penwidth);
+							_updatePixel<blend, checkrange, true, usepen>(x1 - 1, y1, color, op, penwidth);
 							}
 						y0++; y1--; err += dy += a;
 						}
@@ -4942,10 +5721,10 @@ namespace mtools
 						int32 op = (int32)(256 - i);
 						if (op > 0)
 							{
-							_updatePixel<blend, checkrange>(x0, ++y0, color, op);
-							_updatePixel<blend, checkrange>(x1, y0, color, op);
-							_updatePixel<blend, checkrange>(x0, --y1, color, op);
-							_updatePixel<blend, checkrange>(x1, y1, color, op);
+							_updatePixel<blend, checkrange, true, usepen>(x0, ++y0, color, op, penwidth);
+							_updatePixel<blend, checkrange, true, usepen>(x1, y0, color, op, penwidth);
+							_updatePixel<blend, checkrange, true, usepen>(x0, --y1, color, op, penwidth);
+							_updatePixel<blend, checkrange, true, usepen>(x1, y1, color, op, penwidth);
 							}
 						err += dy += a;
 						}
@@ -5074,7 +5853,15 @@ namespace mtools
 			 * change: do not draw always the endpoint (x2,y2)
 			 **/
 			template<bool blend, bool checkrange, bool antialiasing, bool usepen> void _plotQuadBezier(int64 x0, int64 y0, int64 x1, int64 y1, int64 x2, int64 y2, RGBc color, bool draw_P2, int32 penwidth)
-				{    
+				{  
+				if (checkrange)
+					{ // check if we can discard the whole curve
+					iBox2 mbr({ x0,y0 });
+					mbr.swallowPoint({ x1,y1 });
+					mbr.swallowPoint({ x2,y2 });
+					if ((usepen) && (penwidth > 0)) mbr.enlarge(penwidth);
+					if (intersectionRect(mbr, iBox2(0, _lx - 1, 0, _ly - 1)).isEmpty()) return;  // nothing to draw
+					}
 				if (draw_P2) { _updatePixel<blend, checkrange, false, usepen>(x2, y2, color, 0, penwidth); }
 				if ((x0 == x2) && (y0 == y2)) { return; }
 				int64 x = x0 - x1, y = y0 - y1;
@@ -5282,6 +6069,14 @@ namespace mtools
 			**/
 			template<bool blend, bool checkrange, bool antialiasing, bool usepen> void _plotQuadRationalBezier(int64 x0, int64 y0, int64 x1, int64 y1, int64 x2, int64 y2, double w, RGBc color, bool draw_P2, int32 penwidth)
 				{
+				if (checkrange)
+					{ // check if we can discard the whole curve
+					iBox2 mbr({ x0,y0 });
+					mbr.swallowPoint({ x1,y1 });
+					mbr.swallowPoint({ x2,y2 });
+					if ((usepen) && (penwidth > 0)) mbr.enlarge(penwidth);
+					if (intersectionRect(mbr, iBox2(0, _lx - 1, 0, _ly - 1)).isEmpty()) return;  // nothing to draw
+					}
 				if (draw_P2) { _updatePixel<blend, checkrange, false, usepen>(x2, y2, color, 0, penwidth); }
 				if ((x0 == x2) && (y0 == y2)) { return; }
 				int64 x = x0 - 2 * x1 + x2, y = y0 - 2 * y1 + y2;
@@ -5495,6 +6290,15 @@ namespace mtools
 			**/
 			template<bool blend, bool checkrange, bool antialiasing, bool usepen> void _plotCubicBezier(int64 x0, int64 y0, int64 x1, int64 y1, int64 x2, int64 y2, int64 x3, int64 y3, RGBc color, bool draw_P2, int32 penwidth)
 				{
+				if (checkrange)
+					{ // check if we can discard the whole curve
+					iBox2 mbr({ x0,y0 });
+					mbr.swallowPoint({ x1,y1 });
+					mbr.swallowPoint({ x2,y2 });
+					mbr.swallowPoint({ x3,y3 });
+					if ((usepen) && (penwidth > 0)) mbr.enlarge(penwidth);
+					if (intersectionRect(mbr, iBox2(0, _lx - 1, 0, _ly - 1)).isEmpty()) return;  // nothing to draw
+					}
 				if (draw_P2) { _updatePixel<blend, checkrange, false, usepen>(x3, y3, color, 0, penwidth); }
 				if ((x0 == x3) && (y0 == y3)) return;
 				int64 n = 0, i = 0;
