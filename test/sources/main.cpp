@@ -617,7 +617,8 @@ void testImg()
 
 
 	iBox2 B(0, 799, 0, 599);
-	im.draw_filled_rectangle(B, RGBc(220, 220, 220),false);
+	im.draw_rectangle(B, RGBc(2, 2, 200), false,2);
+	im.fill_rectangle(B, RGBc(220, 220, 220),false);
 
 	MT2004_64 gen(1);
 
@@ -1153,21 +1154,21 @@ void test_b()
 
 		int64 a = 50;
 		int64 b = 50;
+		
+
+
+		im.draw_ellipse({ 630, 500 }, 90, 40,  RGBc::c_Cyan.getOpacity(0.5), true,false,0);
+
+		{
+		iBox2 BB(100, 451, 300, 522);
+		im.draw_filled_ellipse_in_rect(BB, RGBc::c_Black.getOpacity(0.3), RGBc::c_Red.getOpacity(0.5), true);
+		}
 		/*
 
-		im.draw_circle({ 450, 500 }, 80, RGBc::c_Blue.getOpacity(0.1),true);
-
-		im.draw_filled_circle({ 500,500 }, 100, RGBc::c_Green.getOpacity(0.1), true, RGBc::c_Red.getOpacity(0.2));
-
-		im.draw_ellipse({ 630, 500 }, 90, 40,  RGBc::c_Cyan.getOpacity(0.1), true);
-
-
-		iBox2 BB(100, 451, 300, 522);
 
 
 		im.draw_filled_rectangle(BB, RGBc::c_Green.getOpacity(0.05),true);
 		im.draw_rectangle(BB, RGBc::c_Blue.getOpacity(1),true);
-		im.draw_filled_ellipse_in_rect(BB, RGBc::c_Red.getOpacity(0.5), true, RGBc::c_Black.getOpacity(0.3));
 
 		*/
 
@@ -1177,10 +1178,17 @@ void test_b()
 		int64 ymax = 600;
 
 		iBox2 BB(xmin, xmax, ymin, ymax);
-		im.draw_filled_rectangle(BB, RGBc::c_Green.getOpacity(0.05), true);
-//		im.draw_rectangle(BB, RGBc::c_Blue.getOpacity(1), true);
+		im.fill_rectangle(BB, RGBc::c_Green.getOpacity(0.1), true);
+		im.draw_rectangle(BB, RGBc::c_Blue.getOpacity(0.2), true);
 
 //		im.draw_ellipse_in_rect(BB, RGBc::c_Green, true, true);
+
+
+
+		im.fill_circle({ 450, 500 }, 90, RGBc::c_Red.getOpacity(0.1), true);
+		im.draw_circle({ 450, 500 }, 80, RGBc::c_Blue.getOpacity(0.01), true,false,1);
+
+		//im.draw_filled_circle({ 500,500 }, 100, RGBc::c_Green.getOpacity(0.1), RGBc::c_Red.getOpacity(0.2), true);
 
 
 		std::vector<iVec2> tab;
