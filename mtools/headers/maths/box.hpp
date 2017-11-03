@@ -293,6 +293,20 @@ namespace mtools
                 }
 
 
+			/**
+			 * Move each boundary of the box by a given offset. 
+			 * an empty box may become not empty after this operation...
+			 *
+			 * @param	offset	The offset. positive to enlarge and negative to reduce the margin.
+			 **/
+			inline void enlarge(int64 offset)
+				{
+				for (size_t i = 0; i < N; i++)
+					{
+					min[i] -= offset;
+					max[i] += offset;
+					}
+				}
 
             /**
             * Try to enlarge the rectangle using points from another rectangle if possible. By definition,
