@@ -772,7 +772,7 @@ void testImg()
 		{
 		iVec2 P1 = tabP1[i];
 		iVec2 P2 = tabP2[i];
-		im.draw_line(P1, P2, color, true, blend, aa);
+		im.draw_line(P1, P2, color, true, blend, aa, 0);
 		}
 	cout << "done in : " << mtools::Chronometer() << "\n";
 	}
@@ -791,7 +791,7 @@ void testImg()
 		{
 		iVec2 P1 = tabP1[i];
 		iVec2 P2 = tabP2[i];
-		im.draw_line(P1, P2, color, true, blend, aa);
+		im.draw_line(P1, P2, color, true, blend, aa, 0);
 		}
 	cout << "done in : " << mtools::Chronometer() << "\n";
 	}
@@ -809,7 +809,7 @@ void testImg()
 		{
 		iVec2 P1 = tabP1[i];
 		iVec2 P2 = tabP2[i];
-		im.draw_line(P1, P2, color, true, blend, aa);
+		im.draw_line(P1, P2, color, true, blend, aa, 0);
 		}
 	cout << "done in : " << mtools::Chronometer() << "\n";
 	}
@@ -827,7 +827,7 @@ void testImg()
 		{
 		iVec2 P1 = tabP1[i];
 		iVec2 P2 = tabP2[i];
-		im.draw_line(P1, P2, color, true, blend, aa);
+		im.draw_line(P1, P2, color, true, blend, aa, 0);
 		}
 	cout << "done in : " << mtools::Chronometer() << "\n";
 	}
@@ -845,7 +845,7 @@ void testImg()
 		{
 		iVec2 P1 = tabP1[i];
 		iVec2 P2 = tabP2[i];
-		im.draw_line(P1, P2, color);
+		im.draw_line(P1, P2, color, true);
 		}
 	cout << "done in : " << mtools::Chronometer() << "\n";
 	}
@@ -1052,7 +1052,7 @@ void testriangle()
 
 
 //	im.draw_triangle(P3, P2, P1, RGBc::c_Red.getOpacity(0.5), true, false);
-	im.draw_triangle(P3, P2, P1, RGBc::c_Red.getOpacity(1),false,false);
+//	im.draw_triangle(P3, P2, P1, RGBc::c_Red.getOpacity(1),false,false);
 	//im._fill_interior_angle(P1, P2, P3, RGBc::c_Black, false);
 
 
@@ -1093,7 +1093,7 @@ void test_b()
 	Q0.X() = P.X() + r*cos(0);
 	Q0.Y() = P.Y() + r*sin(0);
 
-	im.draw_line(P, Q0, RGBc::c_Black.getOpacity(0.4),true,true,false);
+	im.draw_line(P, Q0, RGBc::c_Black.getOpacity(0.4),true,true,false, 0);
 
 	Q2 = Q0;
 	for (int i = 1; i < N; i++)
@@ -1178,20 +1178,20 @@ void test_b()
 
 		iBox2 BB(xmin, xmax, ymin, ymax);
 		im.draw_filled_rectangle(BB, RGBc::c_Green.getOpacity(0.05), true);
-		im.draw_rectangle(BB, RGBc::c_Blue.getOpacity(1), true);
+//		im.draw_rectangle(BB, RGBc::c_Blue.getOpacity(1), true);
 
-		im.draw_ellipse_in_rect(BB, RGBc::c_Green, true, true);
+//		im.draw_ellipse_in_rect(BB, RGBc::c_Green, true, true);
 
 
 		std::vector<iVec2> tab;
 
-		tab.push_back({100,100}); 		
+		tab.push_back({0,0}); 		
 		tab.push_back({ 200, 200 });
 		tab.push_back({ 300, 150 });
 		tab.push_back({ 350, 600 });
 		tab.push_back({ 250, 700 });
 		tab.push_back({ 200, 400 });
-		tab.push_back({ 500, 400 });
+		tab.push_back({ 1000, 800 });
 
 
 
@@ -1199,8 +1199,8 @@ void test_b()
 		Chronometer();
 		//for (int k = 0;k < 100000;k++)
 			{
-			im.draw_quad_spline(tab, RGBc::c_Red.getOpacity(1.0), true, true, false);
-			im.draw_cubic_spline(tab, RGBc::c_Green.getOpacity(0.2), false, true, true);
+			im.draw_quad_spline(tab, RGBc::c_Red.getOpacity(1.0), true, true, false,2);
+			im.draw_cubic_spline(tab, RGBc::c_Green.getOpacity(0.2), false, true, true,2);
 		}
 		cout << "done in " << Chronometer() << "\n";
 
@@ -1242,7 +1242,7 @@ void test_c()
 		{
 		iVec2 P1 = tabP1[i];
 		iVec2 P2 = tabP2[i];
-		im._lineBresenham<false,false>(P1, P2, RGBc::c_Red,true);
+		im._lineBresenham<false,false,false>(P1, P2, RGBc::c_Red,true,0);
 		}
 
 	cout << "done in : " << mtools::Chronometer() << "\n";
