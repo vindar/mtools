@@ -449,7 +449,7 @@ namespace mtools
 
 			std::set<int>		_nativeset;				// set that keep tracks of native fonts
 			std::vector<Font>	_fonts;					// vector of fonts. 
-
+			std::mutex			_mut;					// mutex for mutlithread access to global font objects. 
 		};
 
 

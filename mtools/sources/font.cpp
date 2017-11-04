@@ -187,9 +187,6 @@ namespace mtools
 
 
 
-
-
-
 	const Font & FontFamily::operator()(int fontsize, int  method)
 		{
 		if ((fontsize <= 0) || (fontsize > MAX_FONT_SIZE) || (_nativeset.size() == 0)) return _fonts[0];
@@ -207,8 +204,11 @@ namespace mtools
 		}
 
 
+
+
 	void FontFamily::_empty()
 		{
+		std::lock_guard<std::mutex> lock(_mut); // mutex lock for concurrent access. 
 		_nativeset.clear();
 		_fonts.clear();
 		_fonts.resize(MAX_FONT_SIZE + 1);
@@ -217,6 +217,8 @@ namespace mtools
 
 	void FontFamily::_constructFont(int fontsize)
 		{
+		std::lock_guard<std::mutex> lock(_mut); // mutex lock for concurrent access. 
+		if (!(_fonts[fontsize].isEmpty())) return; // already created, nothing to do.
 		auto it = _nativeset.lower_bound(fontsize);
 		if (it == _nativeset.end())
 			{ // past the largest one. 
@@ -225,10 +227,6 @@ namespace mtools
 			}
 		_fonts[fontsize].createFrom(_fonts[*it], fontsize);
 		}
-
-
-
-
 
 
 
