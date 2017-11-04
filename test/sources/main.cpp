@@ -1155,7 +1155,7 @@ void test_b()
 		int64 a = 50;
 		int64 b = 50;
 		
-
+		im.checkerboard();
 
 		im.draw_ellipse({ 630, 500 }, 90, 40,  RGBc::c_Cyan.getOpacity(0.5), true,false,0);
 
