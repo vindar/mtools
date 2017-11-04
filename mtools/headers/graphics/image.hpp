@@ -3259,6 +3259,38 @@ namespace mtools
 
 
 			/**
+			* Fill the image with a checkerboard pattern. 
+			* Default colors are two slightly distincts shades of gray.
+			*
+			* @param   color1      The first color.
+			* @param   color2      The second color.
+			* @param   sizeSquare  The side lengh of an elementary square.
+			*
+			* @return  The image for chaining.
+			**/
+			void checkerboard(mtools::RGBc color1 = mtools::RGBc(200, 200, 200, 255), mtools::RGBc color2 = mtools::RGBc(220, 220, 220, 255), int64 sizeSquare = 50)
+				{
+				if (isEmpty()) return;
+				if (color1 == color2) { clear(color1); return; }
+				int64 nx = 0, ny = 0, cy = 0, cx = 0;
+				RGBc * p = _data;
+				for (int64 j = 0; j < _ly; j++)
+					{
+					cx = cy; nx = 0;
+					for (int64 i = 0; i < _lx; i++)
+						{
+						p[i] = ((cx == 0) ? color1 : color2);
+						if ((++nx) == sizeSquare) { cx = 1 - cx; nx = 0; }
+						}
+					p += _stride;
+					if ((++ny) == sizeSquare) { cy = 1 - cy; ny = 0; }
+					}
+				return;
+				}
+
+
+
+			/**
 			* Horizontal padding of the image: number of uint32 following the end of each horizontal line
 			* (except the last one).
 			**/
