@@ -1502,6 +1502,7 @@ namespace mtools
 					}
 				else
 					{
+					_correctPenOpacity(color, penwidth);
 					if ((blending) && (color.comp.A != 255)) _updatePixel<true, true, false, true>(P.X(), P.Y(), color, 0, 0); else _updatePixel<false, true, false, true>(P.X(), P.Y(), color, 0, penwidth);
 					}
 				}
@@ -1638,7 +1639,7 @@ namespace mtools
 					if ((blending) && (color.comp.A != 255)) _lineBresenham<true, true, false>(P1, P2, color, draw_P2, 0); else _lineBresenham<false, true, false>(P1, P2, color, draw_P2, 0);
 					return;
 					}
-				
+				_correctPenOpacity(color, penwidth);
 				if (antialiased)
 					{
 					const int64 of = 10 + 2 * penwidth;
@@ -1731,6 +1732,7 @@ namespace mtools
 					return;
 					}
 				// penwidth >= 1
+				_correctPenOpacity(color, penwidth);
 				mbr.enlarge(penwidth);
 				if (intersectionRect(mbr, B).isEmpty()) return;  // nothing to draw
 				// always check range since cost is negligible compared to using a large pen. 
@@ -1798,6 +1800,7 @@ namespace mtools
 					return;
 					}
 				// use large pen
+				_correctPenOpacity(color, penwidth);
 				mbr.enlarge(penwidth);
 				if (intersectionRect(mbr, B).isEmpty()) return;  // nothing to draw
 				//always check bounds
@@ -1866,6 +1869,7 @@ namespace mtools
 							}
 						else
 							{
+							_correctPenOpacity(color, penwidth);
 							if (antialiased)
 								{
 								if ((blending) && (color.comp.A != 255)) _plotQuadSpline<true, true, true, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotQuadSpline<false, true, true, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
@@ -1959,6 +1963,7 @@ namespace mtools
 							}
 						else
 							{
+							_correctPenOpacity(color, penwidth);
 							if (antialiased)
 								{
 								if ((blending) && (color.comp.A != 255)) _plotCubicSpline<true, true, true, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotCubicSpline<false, true, true, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
@@ -2118,7 +2123,7 @@ namespace mtools
 			 * @param	antialiased	true to use antialiased lines.
 			 * @param	penwidth   	The pen width (0 = unit width)
 			 **/
-			inline void draw_triangle(iVec2 P1, iVec2 P2, iVec2 P3, RGBc color, bool blending, bool antialiased, int32 penwidth)
+			inline void draw_triangle(iVec2 P1, iVec2 P2, iVec2 P3, RGBc color, bool blending, bool antialiased, int32 penwidth = 0)
 				{
 				if (isEmpty()) return;
 				if ((penwidth <= 0)&&(!antialiased)&&(blending)&& (color.comp.A != 255))
@@ -2150,7 +2155,7 @@ namespace mtools
 			 * @param	antialiased	true to use antialiased lines.
 			 * @param	penwidth   	The pen width (0 = unit width)
 			 **/
-			MTOOLS_FORCEINLINE void draw_triangle(int64 x1, int64 y1, int64 x2, int64 y2, int64 x3, int64 y3, RGBc color, bool blending, bool antialiased, int32 penwidth)
+			MTOOLS_FORCEINLINE void draw_triangle(int64 x1, int64 y1, int64 x2, int64 y2, int64 x3, int64 y3, RGBc color, bool blending, bool antialiased, int32 penwidth = 0)
 				{
 				draw_triangle({ x1,y1 }, { x2,y2 }, { x3,y3 }, color, blending, antialiased, penwidth);
 				}
@@ -2217,7 +2222,7 @@ namespace mtools
 			 * @param	antialiased	true to draw antialiased lines.
 			 * @param	penwidth   	The pen width (0 = unit width)
 			 **/
-			inline void draw_polygon(size_t nbvertices, const iVec2 * tabPoints, RGBc color, bool blending, bool antialiased, int32 penwidth)
+			inline void draw_polygon(size_t nbvertices, const iVec2 * tabPoints, RGBc color, bool blending, bool antialiased, int32 penwidth = 0)
 				{
 				if (isEmpty()) return;
 				if (color.comp.A == 255) blending = false;
@@ -2270,7 +2275,7 @@ namespace mtools
 			 * @param	antialiased	true to draw antialiased lines.
 			 * @param	penwidth   	The pen width (0 = unit width)
 			 **/
-			MTOOLS_FORCEINLINE void draw_polygon(const std::vector<iVec2> & tabPoints, RGBc color, bool blending, bool antialiased, int32 penwidth)
+			MTOOLS_FORCEINLINE void draw_polygon(const std::vector<iVec2> & tabPoints, RGBc color, bool blending, bool antialiased, int32 penwidth = 0)
 				{
 				draw_polygon(tabPoints.size(), tabPoints.data(), color, blending, antialiased, penwidth);
 				}
@@ -2341,7 +2346,7 @@ namespace mtools
 			 * @param	antialiasing	true to use antialiasing.
 			 * @param	penwidth		The pen width (0 = unit width)
 			 **/
-			inline void draw_circle(iVec2 P, int64 r, RGBc color, bool blend, bool antialiasing, int32 penwidth)
+			inline void draw_circle(iVec2 P, int64 r, RGBc color, bool blend, bool antialiasing, int32 penwidth = 0)
 				{
 				if (isEmpty() || (r < 1)) return;
 				iBox2 mbr(P);
@@ -2349,6 +2354,7 @@ namespace mtools
 				iBox2 B(0, _lx - 1, 0, _ly - 1);
 				if (penwidth > 0)
 					{ // large pen
+					_correctPenOpacity(color, penwidth);
 					mbr.enlarge(penwidth);
 					if (intersectionRect(mbr, B).isEmpty()) return;  // nothing to draw
 					if (!mbr.isIncludedIn(B))
@@ -2465,13 +2471,14 @@ namespace mtools
 			 * @param	antialiasing	true to use antialiasing.
 			 * @param	penwidth		The pen width (0 = unit width)
 			 **/
-			inline void draw_ellipse(iVec2 P, int64 rx, int64 ry, RGBc color, bool blend, bool antialiasing, int32 penwidth)
+			inline void draw_ellipse(iVec2 P, int64 rx, int64 ry, RGBc color, bool blend, bool antialiasing, int32 penwidth = 0)
 				{
 				if (isEmpty() || (rx < 1) || (ry < 1)) return;
 				iBox2 mbr(P.X() - rx, P.X() + rx, P.Y() - ry, P.Y() + ry);
 				iBox2 B(0, _lx - 1, 0, _ly - 1);
 				if (penwidth > 0)
 					{ // large pen
+					_correctPenOpacity(color, penwidth);
 					mbr.enlarge(penwidth);
 					if (intersectionRect(mbr, B).isEmpty()) return;
 					if (!mbr.isIncludedIn(B))
@@ -2589,7 +2596,7 @@ namespace mtools
 			 * @param	antialiasing	true to use antialiasing.
 			 * @param	penwidth		The pen width (0 = unit width)
 			 **/
-			inline void draw_ellipse_in_rect(const iBox2 & B, RGBc color, bool blend, bool antialiasing, int32 penwidth)
+			inline void draw_ellipse_in_rect(const iBox2 & B, RGBc color, bool blend, bool antialiasing, int32 penwidth = 0)
 				{
 				if ((isEmpty()) || (B.isEmpty())) return;
 				int64 lx = B.max[0] - B.min[0];
@@ -2605,6 +2612,7 @@ namespace mtools
 				if (penwidth > 0)
 					{
 					const bool usepen = true;
+					_correctPenOpacity(color, penwidth);
 					mbr.enlarge(penwidth);
 					if (intersectionRect(mbr, imB).isEmpty()) return;
 					if (!mbr.isIncludedIn(imB))
@@ -4013,6 +4021,15 @@ namespace mtools
 			*******************************************************************************************************************************************************/
 
 
+
+
+			/** change the opacity to match with the pen width **/ 
+			MTOOLS_FORCEINLINE void  _correctPenOpacity(RGBc & color, int32 penwidth)
+				{
+				if ((penwidth <= 0) || (color.comp.A <= 1) || (color.comp.A == 255)) return;
+				uint8 a =  (uint8)(255*(1.0 - pow(1.0 - ((double)color.comp.A / 255.0), 1.0 / (2*penwidth + 1.0))));
+				color.comp.A = (a == 0) ? 1 : a;
+				}
 
 
 
