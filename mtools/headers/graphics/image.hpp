@@ -5252,7 +5252,7 @@ namespace mtools
 			 * 
 			 * Set draw_last to true to draw point P2 and to false to draw only the open segment.
 			 **/
-/*			template<bool blend, bool checkrange, bool usepen>  MTOOLS_FORCEINLINE void _lineWuAA(iVec2 P1, iVec2 P2, RGBc color, bool draw_last, int32 penwidth)
+			template<bool blend, bool checkrange, bool usepen>  MTOOLS_FORCEINLINE void _lineWuAA(iVec2 P1, iVec2 P2, RGBc color, bool draw_last, int32 penwidth)
 				{
 				int64 & x0 = P1.X(); int64 & y0 = P1.Y();
 				int64 & x1 = P2.X(); int64 & y1 = P2.Y();
@@ -5295,7 +5295,7 @@ namespace mtools
 					}
 				return; 
 				}
-*/
+
 
 
 
