@@ -3960,63 +3960,9 @@ namespace mtools
 
 
 
-
 			/******************************************************************************************************************************************************
 			*																				   																      *
-			*                                                                  DRAWING SHAPES                                                                     *
-			*																																					  *
-			*******************************************************************************************************************************************************/
-
-
-			/* fill a region with a given color */
-			inline static void _fillRegion(RGBc * pdest, int64 dest_stride, int64 sx, int64 sy, RGBc color)
-				{
-				for (int64 j = 0; j < sy; j++)
-					{
-					const int64 offdest = j*dest_stride;
-					for (int64 i = 0; i < sx; i++)
-						{
-						pdest[offdest + i] = color;
-						}
-					}
-				}
-
-
-			/* draw a filled rectangle */
-			MTOOLS_FORCEINLINE void _draw_box(int64 x, int64 y, int64 sx, int64 sy, RGBc boxcolor, bool blend)
-				{
-				if (x < 0) { sx -= x;   x = 0; }
-				if (y < 0) { sy -= y;   y = 0; }
-				if ((boxcolor.comp.A == 0) || (x >= _lx) || (y >= _ly)) return;
-				sx -= std::max<int64>(0, (x + sx - _lx));
-				sy -= std::max<int64>(0, (y + sy - _ly));
-				if ((sx <= 0) || (sy <= 0)) return;
-				RGBc * p = _data + _stride*y + x;
-				if (blend && (boxcolor.comp.A < 255))
-					{
-					for (int64 j = 0; j < sy; j++)
-						{
-						for (int64 i = 0; i < sx; i++) { p[i].blend(boxcolor); }
-						p += _stride;
-						}
-					}
-				else
-					{
-					for (int64 j = 0; j < sy; j++)
-						{
-						for (int64 i = 0; i < sx; i++) { p[i] = boxcolor; }
-						p += _stride;
-						}
-					}
-				}
-
-
-
-
-
-			/******************************************************************************************************************************************************
-			*																				   																      *
-			*                                                                   LINE DRAWING                                                                      *
+			*                                                                   LINE AND CURVE DRAWING                                                                      *
 			*																																					  *
 			*******************************************************************************************************************************************************/
 
@@ -5495,261 +5441,6 @@ namespace mtools
 
 
 			/**
-			 * Draw circle. both interior and outline.
-			 *  adapted from Alois Zingl  (http://members.chello.at/easyfilter/bresenham.html)
-			 **/
-			template<bool blend, bool checkrange,bool outline, bool fill, bool usepen>  inline  void _draw_circle(int64 xm, int64 ym, int64 r, RGBc color, RGBc fillcolor, int32 penwidth)
-				{
-				int64 x = -r, y = 0, err = 2 - 2 * r;
-				do {
-					if (outline)
-						{
-						_updatePixel<blend, checkrange, false, usepen>(xm - x, ym + y, color, 0, penwidth);
-						_updatePixel<blend, checkrange, false, usepen>(xm - y, ym - x, color, 0, penwidth);
-						_updatePixel<blend, checkrange, false, usepen>(xm + x, ym - y, color, 0, penwidth);
-						_updatePixel<blend, checkrange, false, usepen>(xm + y, ym + x, color, 0, penwidth);
-						}					
-					r = err;
-					if (r <= y) 
-						{ 
-						if (fill)
-							{
-							_hline<blend, checkrange>(xm, xm - x - 1, ym + y, fillcolor);
-							_hline<blend, checkrange>(xm + x + 1, xm - 1, ym - y, fillcolor);
-							}
-						err += ++y * 2 + 1;  
-						}
-					if (r > x || err > y) 
-						{ 
-						err += ++x * 2 + 1; 
-						if (fill)
-							{
-							if (x)
-								{
-								_hline<blend, checkrange>(xm - y + 1, xm - 1, ym - x, fillcolor);
-								_hline<blend, checkrange>(xm, xm + y - 1, ym + x, fillcolor);
-								}
-							}
-						}					
-					}
-				while (x < 0);
-				}
-
-
-
-			/**
-			 * Draw an antialiased circle
-			 * adapted from Alois Zingl  (http://members.chello.at/easyfilter/bresenham.html)
-			 **/
-			template<bool blend, bool checkrange, bool usepen> void _draw_circle_AA(int64 xm, int64 ym, int64 r, RGBc color, int32 penwidth)
-				{ 
-				int64 x = -r, y = 0;
-				int64 x2, e2, err = 2 - 2 * r;
-				int32 i;
-				r = 1 - err;
-				do 
-					{
-					i = (int32)(256 * abs(err - 2 * (x + y) - 2) / r);
-					i = 256 - i;
-					_updatePixel<blend, checkrange, true, usepen>(xm - x, ym + y, color, i, penwidth);
-					_updatePixel<blend, checkrange, true, usepen>(xm - y, ym - x, color, i, penwidth);
-					_updatePixel<blend, checkrange, true, usepen>(xm + x, ym - y, color, i, penwidth);
-					_updatePixel<blend, checkrange, true, usepen>(xm + y, ym + x, color, i, penwidth);
-					e2 = err; x2 = x;
-					if (err + y > 0) 
-						{
-						i = (int32)(256 * (err - 2 * x - 1) / r);
-						if (i <= 256) 
-							{
-							i = 256 - i;
-							_updatePixel<blend, checkrange, true, usepen>(xm - x, ym + y + 1, color, i, penwidth);
-							_updatePixel<blend, checkrange, true, usepen>(xm - y - 1, ym - x, color, i, penwidth);
-							_updatePixel<blend, checkrange, true, usepen>(xm + x, ym - y - 1, color, i, penwidth);
-							_updatePixel<blend, checkrange, true, usepen>(xm + y + 1, ym + x, color, i, penwidth);
-							}
-						err += ++x * 2 + 1;
-						}
-					if (e2 + x2 <= 0) 
-						{
-						i = (int32)(256 * (2 * y + 3 - e2) / r);
-						if (i <= 256) 
-							{
-							i = 256 - i;
-							_updatePixel<blend, checkrange, true, usepen>(xm - x2 - 1, ym + y, color, i, penwidth);
-							_updatePixel<blend, checkrange, true, usepen>(xm - y, ym - x2 - 1, color, i, penwidth);
-							_updatePixel<blend, checkrange, true, usepen>(xm + x2 + 1, ym - y, color, i, penwidth);
-							_updatePixel<blend, checkrange, true, usepen>(xm + y, ym + x2 + 1, color, i, penwidth);
-							}
-						err += ++y * 2 + 1;
-						}
-					}
-				while (x < 0);
-				}
-
-
-
-			/**
-			 * Draw an ellipse, outline and interior
-			 * set incx = 1 to increse the x-diameter by 1
-			 * set incy = 1 to increase the y-diameter by 1  -> to make it fit a rectangle (cheat!).
-			 *
-			 * adapted from Alois Zingl  (http://members.chello.at/easyfilter/bresenham.html)
-			 **/
-			template<bool blend, bool checkrange, bool outline, bool fill, int64 incx, int64 incy, bool usepen>  inline  void _draw_ellipse(int64 xm, int64 ym, int64 a, int64 b, RGBc color, RGBc fillcolor, int32 penwidth)
-				{
-				int64 x = -a, y = 0;
-				int64 e2 = b, dx = (1 + 2 * x)*e2*e2;
-				int64 dy = x*x, err = dx + dy;
-				int64 twoasquare = 2 * a*a, twobsquare = 2 * b*b;
-				while (x < -1)
-					{
-					e2 = 2 * err;
-					int64 nx = x;
-					if (e2 >= dx) { nx++; err += dx += twobsquare; }
-					if (e2 <= dy)
-						{
-						if (fill)
-							{
-							_hline<blend, checkrange>(xm + x + 1, xm - x - 1 + incx, ym + y + incy, fillcolor);
-							if (y) _hline<blend, checkrange>(xm + x + 1, xm - x - 1 + incx, ym - y, fillcolor);
-							}
-						y++; err += dy += twoasquare;
-						}
-					x = nx;
-					if (outline)
-						{
-						_updatePixel<blend, checkrange, false, usepen>(xm - x + incx, ym + y + incy, color, 0, penwidth);
-						_updatePixel<blend, checkrange, false, usepen>(xm + x , ym + y + incy, color, 0, penwidth);
-						_updatePixel<blend, checkrange, false, usepen>(xm + x, ym - y, color, 0, penwidth);
-						_updatePixel<blend, checkrange, false, usepen>(xm - x + incx, ym - y, color, 0, penwidth);
-						}
-					}
-				if (fill)
-					{
-					if (y != b)
-						{
-						_updatePixel<blend, checkrange, false, usepen>(xm, ym + y + incy, fillcolor, 0, penwidth);
-						_updatePixel<blend, checkrange, false, usepen>(xm, ym - y, fillcolor, 0, penwidth);
-						if (incx)
-							{
-							_updatePixel<blend, checkrange, false, usepen>(xm + 1, ym + y + incy, fillcolor, 0, penwidth);
-							_updatePixel<blend, checkrange, false, usepen>(xm + 1, ym - y, fillcolor, 0, penwidth);
-							}
-						}
-					if (incy)
-						{
-						_hline<blend, checkrange>(xm - a + 1, xm + a + incx - 1, ym, fillcolor);
-						}
-					}
-				if (outline)
-					{
-					_updatePixel<blend, checkrange, false, usepen>(xm - a, ym, color, 0, penwidth);
-					_updatePixel<blend, checkrange, false, usepen>(xm + a + incx, ym, color, 0, penwidth);
-					_updatePixel<blend, checkrange, false, usepen>(xm, ym - b, color, 0, penwidth);
-					_updatePixel<blend, checkrange, false, usepen>(xm, ym + b + incy, color, 0, penwidth);
-					if (incx)
-						{
-						_updatePixel<blend, checkrange, false, usepen>(xm + 1, ym - b, color, 0, penwidth);
-						_updatePixel<blend, checkrange, false, usepen>(xm + 1, ym + b + incy, color, 0, penwidth);
-						}
-					if (incy)
-						{
-						_updatePixel<blend, checkrange, false, usepen>(xm + a + incx, ym + 1, color, 0, penwidth);
-						_updatePixel<blend, checkrange, false, usepen>(xm - a, ym + 1, color, 0, penwidth);
-						}
-					}
-				int64 sy = y;
-				while (y++ < b)
-					{
-					_updatePixel<blend, checkrange, false, usepen>(xm, ym + y + incy, color, 0, penwidth);
-					_updatePixel<blend, checkrange, false, usepen>(xm, ym - y, color, 0, penwidth);
-					}
-				if (incx)
-					{
-					y = sy;
-					while (y++ < b)
-						{
-						_updatePixel<blend, checkrange, false, usepen>(xm + 1, ym + y + incy, color, 0, penwidth);
-						_updatePixel<blend, checkrange, false, usepen>(xm + 1, ym - y, color, 0, penwidth);
-						}
-					}
-				}
-			
-		
-
-			/**
-			 * Draw an antialiased ellipse inside a rectangle 
-			 * adapted from Alois Zingl  (http://members.chello.at/easyfilter/bresenham.html)
-			 **/
-			template<bool blend, bool checkrange, bool usepen> void _draw_ellipse_in_rect_AA(int64 x0, int64 y0, int64 x1, int64 y1, RGBc color, int32 penwidth)
-				{
-				int64 a = abs(x1 - x0), b = abs(y1 - y0), b1 = b & 1;
-				double dx = (double)(4 * (a - 1.0)*b*b), dy = (double)(4 * (b1 + 1)*a*a);
-				double ed, i, err = b1*a*a - dx + dy;
-				bool f;
-				if (a == 0 || b == 0) return _lineBresenham<blend, checkrange,usepen>({ x0, y0 }, { x1, y1 }, color, true, penwidth);
-				if (x0 > x1) { x0 = x1; x1 += a; }
-				if (y0 > y1) y0 = y1;
-				y0 += (b + 1) / 2; y1 = y0 - b1;
-				a = 8 * a*a; b1 = 8 * b*b;
-				for (;;)
-					{
-					i = std::min<double>(dx, dy); ed = std::max<double>(dx, dy);
-					if (y0 == y1 + 1 && err > dy && a > b1) ed = 256 * 4. / a;
-					else ed = 256 / (ed + 2 * ed*i*i / (4 * ed*ed + i*i));
-					i = ed*fabs(err + dx - dy);
-					int32 op = (int32)(256 - i);
-					_updatePixel<blend, checkrange, true, usepen>(x0, y0, color, op, penwidth);
-					_updatePixel<blend, checkrange, true, usepen>(x0, y1, color, op, penwidth);
-					_updatePixel<blend, checkrange, true, usepen>(x1, y0, color, op, penwidth);
-					_updatePixel<blend, checkrange, true, usepen>(x1, y1, color, op, penwidth);
-					if (f = 2 * err + dy >= 0)
-						{
-						if (x0 >= x1) break;
-						i = ed*(err + dx);
-						if (i < 256)
-							{
-							int32 op = (int32)(256 - i);
-							_updatePixel<blend, checkrange, true, usepen>(x0, y0 + 1, color, op, penwidth);
-							_updatePixel<blend, checkrange, true, usepen>(x0, y1 - 1, color, op, penwidth);
-							_updatePixel<blend, checkrange, true, usepen>(x1, y0 + 1, color, op, penwidth);
-							_updatePixel<blend, checkrange, true, usepen>(x1, y1 - 1, color, op, penwidth);
-							}
-						}
-					if (2 * err <= dx)
-						{
-						i = ed*(dy - err);
-						if (i < 256)
-							{
-							int32 op = (int32)(256 - i);
-							_updatePixel<blend, checkrange, true, usepen>(x0 + 1, y0, color, op, penwidth);
-							_updatePixel<blend, checkrange, true, usepen>(x0 + 1, y1, color, op, penwidth);
-							_updatePixel<blend, checkrange, true, usepen>(x1 - 1, y0, color, op, penwidth);
-							_updatePixel<blend, checkrange, true, usepen>(x1 - 1, y1, color, op, penwidth);
-							}
-						y0++; y1--; err += dy += a;
-						}
-					if (f) { x0++; x1--; err -= dx -= b1; }
-					}
-				if (--x0 == x1++)
-					while (y0 - y1 < b)
-						{
-						i = 256 * 4 * fabs(err + dx) / b1;
-						int32 op = (int32)(256 - i);
-						if (op > 0)
-							{
-							_updatePixel<blend, checkrange, true, usepen>(x0, ++y0, color, op, penwidth);
-							_updatePixel<blend, checkrange, true, usepen>(x1, y0, color, op, penwidth);
-							_updatePixel<blend, checkrange, true, usepen>(x0, --y1, color, op, penwidth);
-							_updatePixel<blend, checkrange, true, usepen>(x1, y1, color, op, penwidth);
-							}
-						err += dy += a;
-						}
-				}
-
-			
-
-			/**
 			 * Plot a limited quadratic Bezier segment, used by _plotQuadBezier.
 			 * adapted from Alois Zingl  (http://members.chello.at/easyfilter/bresenham.html)
 			 * change: do not draw the endpoint (x2,y2)
@@ -6444,6 +6135,312 @@ namespace mtools
 				}
 
 
+
+
+
+			/******************************************************************************************************************************************************
+			*																				   																      *
+			*                                                                  DRAWING SHAPES                                                                     *
+			*																																					  *
+			*******************************************************************************************************************************************************/
+
+
+			/* fill a region with a given color */
+			inline static void _fillRegion(RGBc * pdest, int64 dest_stride, int64 sx, int64 sy, RGBc color)
+				{
+				for (int64 j = 0; j < sy; j++)
+					{
+					const int64 offdest = j*dest_stride;
+					for (int64 i = 0; i < sx; i++)
+						{
+						pdest[offdest + i] = color;
+						}
+					}
+				}
+
+
+			/* draw a filled rectangle */
+			MTOOLS_FORCEINLINE void _draw_box(int64 x, int64 y, int64 sx, int64 sy, RGBc boxcolor, bool blend)
+				{
+				if (x < 0) { sx -= x;   x = 0; }
+				if (y < 0) { sy -= y;   y = 0; }
+				if ((boxcolor.comp.A == 0) || (x >= _lx) || (y >= _ly)) return;
+				sx -= std::max<int64>(0, (x + sx - _lx));
+				sy -= std::max<int64>(0, (y + sy - _ly));
+				if ((sx <= 0) || (sy <= 0)) return;
+				RGBc * p = _data + _stride*y + x;
+				if (blend && (boxcolor.comp.A < 255))
+					{
+					for (int64 j = 0; j < sy; j++)
+						{
+						for (int64 i = 0; i < sx; i++) { p[i].blend(boxcolor); }
+						p += _stride;
+						}
+					}
+				else
+					{
+					for (int64 j = 0; j < sy; j++)
+						{
+						for (int64 i = 0; i < sx; i++) { p[i] = boxcolor; }
+						p += _stride;
+						}
+					}
+				}
+
+
+
+			/**
+			* Draw circle. both interior and outline.
+			*  adapted from Alois Zingl  (http://members.chello.at/easyfilter/bresenham.html)
+			**/
+			template<bool blend, bool checkrange, bool outline, bool fill, bool usepen>  inline  void _draw_circle(int64 xm, int64 ym, int64 r, RGBc color, RGBc fillcolor, int32 penwidth)
+				{
+				int64 x = -r, y = 0, err = 2 - 2 * r;
+				do {
+					if (outline)
+						{
+						_updatePixel<blend, checkrange, false, usepen>(xm - x, ym + y, color, 0, penwidth);
+						_updatePixel<blend, checkrange, false, usepen>(xm - y, ym - x, color, 0, penwidth);
+						_updatePixel<blend, checkrange, false, usepen>(xm + x, ym - y, color, 0, penwidth);
+						_updatePixel<blend, checkrange, false, usepen>(xm + y, ym + x, color, 0, penwidth);
+						}
+					r = err;
+					if (r <= y)
+						{
+						if (fill)
+							{
+							_hline<blend, checkrange>(xm, xm - x - 1, ym + y, fillcolor);
+							_hline<blend, checkrange>(xm + x + 1, xm - 1, ym - y, fillcolor);
+							}
+						err += ++y * 2 + 1;
+						}
+					if (r > x || err > y)
+						{
+						err += ++x * 2 + 1;
+						if (fill)
+							{
+							if (x)
+								{
+								_hline<blend, checkrange>(xm - y + 1, xm - 1, ym - x, fillcolor);
+								_hline<blend, checkrange>(xm, xm + y - 1, ym + x, fillcolor);
+								}
+							}
+						}
+					}
+				while (x < 0);
+				}
+
+
+
+			/**
+			* Draw an antialiased circle
+			* adapted from Alois Zingl  (http://members.chello.at/easyfilter/bresenham.html)
+			**/
+			template<bool blend, bool checkrange, bool usepen> void _draw_circle_AA(int64 xm, int64 ym, int64 r, RGBc color, int32 penwidth)
+				{
+				int64 x = -r, y = 0;
+				int64 x2, e2, err = 2 - 2 * r;
+				int32 i;
+				r = 1 - err;
+				do
+					{
+					i = (int32)(256 * abs(err - 2 * (x + y) - 2) / r);
+					i = 256 - i;
+					_updatePixel<blend, checkrange, true, usepen>(xm - x, ym + y, color, i, penwidth);
+					_updatePixel<blend, checkrange, true, usepen>(xm - y, ym - x, color, i, penwidth);
+					_updatePixel<blend, checkrange, true, usepen>(xm + x, ym - y, color, i, penwidth);
+					_updatePixel<blend, checkrange, true, usepen>(xm + y, ym + x, color, i, penwidth);
+					e2 = err; x2 = x;
+					if (err + y > 0)
+						{
+						i = (int32)(256 * (err - 2 * x - 1) / r);
+						if (i <= 256)
+							{
+							i = 256 - i;
+							_updatePixel<blend, checkrange, true, usepen>(xm - x, ym + y + 1, color, i, penwidth);
+							_updatePixel<blend, checkrange, true, usepen>(xm - y - 1, ym - x, color, i, penwidth);
+							_updatePixel<blend, checkrange, true, usepen>(xm + x, ym - y - 1, color, i, penwidth);
+							_updatePixel<blend, checkrange, true, usepen>(xm + y + 1, ym + x, color, i, penwidth);
+							}
+						err += ++x * 2 + 1;
+						}
+					if (e2 + x2 <= 0)
+						{
+						i = (int32)(256 * (2 * y + 3 - e2) / r);
+						if (i <= 256)
+							{
+							i = 256 - i;
+							_updatePixel<blend, checkrange, true, usepen>(xm - x2 - 1, ym + y, color, i, penwidth);
+							_updatePixel<blend, checkrange, true, usepen>(xm - y, ym - x2 - 1, color, i, penwidth);
+							_updatePixel<blend, checkrange, true, usepen>(xm + x2 + 1, ym - y, color, i, penwidth);
+							_updatePixel<blend, checkrange, true, usepen>(xm + y, ym + x2 + 1, color, i, penwidth);
+							}
+						err += ++y * 2 + 1;
+						}
+					}
+				while (x < 0);
+				}
+
+
+
+			/**
+			* Draw an ellipse, outline and interior
+			* set incx = 1 to increse the x-diameter by 1
+			* set incy = 1 to increase the y-diameter by 1  -> to make it fit a rectangle (cheat!).
+			*
+			* adapted from Alois Zingl  (http://members.chello.at/easyfilter/bresenham.html)
+			**/
+			template<bool blend, bool checkrange, bool outline, bool fill, int64 incx, int64 incy, bool usepen>  inline  void _draw_ellipse(int64 xm, int64 ym, int64 a, int64 b, RGBc color, RGBc fillcolor, int32 penwidth)
+				{
+				int64 x = -a, y = 0;
+				int64 e2 = b, dx = (1 + 2 * x)*e2*e2;
+				int64 dy = x*x, err = dx + dy;
+				int64 twoasquare = 2 * a*a, twobsquare = 2 * b*b;
+				while (x < -1)
+					{
+					e2 = 2 * err;
+					int64 nx = x;
+					if (e2 >= dx) { nx++; err += dx += twobsquare; }
+					if (e2 <= dy)
+						{
+						if (fill)
+							{
+							_hline<blend, checkrange>(xm + x + 1, xm - x - 1 + incx, ym + y + incy, fillcolor);
+							if (y) _hline<blend, checkrange>(xm + x + 1, xm - x - 1 + incx, ym - y, fillcolor);
+							}
+						y++; err += dy += twoasquare;
+						}
+					x = nx;
+					if (outline)
+						{
+						_updatePixel<blend, checkrange, false, usepen>(xm - x + incx, ym + y + incy, color, 0, penwidth);
+						_updatePixel<blend, checkrange, false, usepen>(xm + x, ym + y + incy, color, 0, penwidth);
+						_updatePixel<blend, checkrange, false, usepen>(xm + x, ym - y, color, 0, penwidth);
+						_updatePixel<blend, checkrange, false, usepen>(xm - x + incx, ym - y, color, 0, penwidth);
+						}
+					}
+				if (fill)
+					{
+					if (y != b)
+						{
+						_updatePixel<blend, checkrange, false, usepen>(xm, ym + y + incy, fillcolor, 0, penwidth);
+						_updatePixel<blend, checkrange, false, usepen>(xm, ym - y, fillcolor, 0, penwidth);
+						if (incx)
+							{
+							_updatePixel<blend, checkrange, false, usepen>(xm + 1, ym + y + incy, fillcolor, 0, penwidth);
+							_updatePixel<blend, checkrange, false, usepen>(xm + 1, ym - y, fillcolor, 0, penwidth);
+							}
+						}
+					if (incy)
+						{
+						_hline<blend, checkrange>(xm - a + 1, xm + a + incx - 1, ym, fillcolor);
+						}
+					}
+				if (outline)
+					{
+					_updatePixel<blend, checkrange, false, usepen>(xm - a, ym, color, 0, penwidth);
+					_updatePixel<blend, checkrange, false, usepen>(xm + a + incx, ym, color, 0, penwidth);
+					_updatePixel<blend, checkrange, false, usepen>(xm, ym - b, color, 0, penwidth);
+					_updatePixel<blend, checkrange, false, usepen>(xm, ym + b + incy, color, 0, penwidth);
+					if (incx)
+						{
+						_updatePixel<blend, checkrange, false, usepen>(xm + 1, ym - b, color, 0, penwidth);
+						_updatePixel<blend, checkrange, false, usepen>(xm + 1, ym + b + incy, color, 0, penwidth);
+						}
+					if (incy)
+						{
+						_updatePixel<blend, checkrange, false, usepen>(xm + a + incx, ym + 1, color, 0, penwidth);
+						_updatePixel<blend, checkrange, false, usepen>(xm - a, ym + 1, color, 0, penwidth);
+						}
+					}
+				int64 sy = y;
+				while (y++ < b)
+					{
+					_updatePixel<blend, checkrange, false, usepen>(xm, ym + y + incy, color, 0, penwidth);
+					_updatePixel<blend, checkrange, false, usepen>(xm, ym - y, color, 0, penwidth);
+					}
+				if (incx)
+					{
+					y = sy;
+					while (y++ < b)
+						{
+						_updatePixel<blend, checkrange, false, usepen>(xm + 1, ym + y + incy, color, 0, penwidth);
+						_updatePixel<blend, checkrange, false, usepen>(xm + 1, ym - y, color, 0, penwidth);
+						}
+					}
+				}
+
+
+
+			/**
+			* Draw an antialiased ellipse inside a rectangle
+			* adapted from Alois Zingl  (http://members.chello.at/easyfilter/bresenham.html)
+			**/
+			template<bool blend, bool checkrange, bool usepen> void _draw_ellipse_in_rect_AA(int64 x0, int64 y0, int64 x1, int64 y1, RGBc color, int32 penwidth)
+				{
+				int64 a = abs(x1 - x0), b = abs(y1 - y0), b1 = b & 1;
+				double dx = (double)(4 * (a - 1.0)*b*b), dy = (double)(4 * (b1 + 1)*a*a);
+				double ed, i, err = b1*a*a - dx + dy;
+				bool f;
+				if (a == 0 || b == 0) return _lineBresenham<blend, checkrange, usepen>({ x0, y0 }, { x1, y1 }, color, true, penwidth);
+				if (x0 > x1) { x0 = x1; x1 += a; }
+				if (y0 > y1) y0 = y1;
+				y0 += (b + 1) / 2; y1 = y0 - b1;
+				a = 8 * a*a; b1 = 8 * b*b;
+				for (;;)
+					{
+					i = std::min<double>(dx, dy); ed = std::max<double>(dx, dy);
+					if (y0 == y1 + 1 && err > dy && a > b1) ed = 256 * 4. / a;
+					else ed = 256 / (ed + 2 * ed*i*i / (4 * ed*ed + i*i));
+					i = ed*fabs(err + dx - dy);
+					int32 op = (int32)(256 - i);
+					_updatePixel<blend, checkrange, true, usepen>(x0, y0, color, op, penwidth);
+					_updatePixel<blend, checkrange, true, usepen>(x0, y1, color, op, penwidth);
+					_updatePixel<blend, checkrange, true, usepen>(x1, y0, color, op, penwidth);
+					_updatePixel<blend, checkrange, true, usepen>(x1, y1, color, op, penwidth);
+					if (f = 2 * err + dy >= 0)
+						{
+						if (x0 >= x1) break;
+						i = ed*(err + dx);
+						if (i < 256)
+							{
+							int32 op = (int32)(256 - i);
+							_updatePixel<blend, checkrange, true, usepen>(x0, y0 + 1, color, op, penwidth);
+							_updatePixel<blend, checkrange, true, usepen>(x0, y1 - 1, color, op, penwidth);
+							_updatePixel<blend, checkrange, true, usepen>(x1, y0 + 1, color, op, penwidth);
+							_updatePixel<blend, checkrange, true, usepen>(x1, y1 - 1, color, op, penwidth);
+							}
+						}
+					if (2 * err <= dx)
+						{
+						i = ed*(dy - err);
+						if (i < 256)
+							{
+							int32 op = (int32)(256 - i);
+							_updatePixel<blend, checkrange, true, usepen>(x0 + 1, y0, color, op, penwidth);
+							_updatePixel<blend, checkrange, true, usepen>(x0 + 1, y1, color, op, penwidth);
+							_updatePixel<blend, checkrange, true, usepen>(x1 - 1, y0, color, op, penwidth);
+							_updatePixel<blend, checkrange, true, usepen>(x1 - 1, y1, color, op, penwidth);
+							}
+						y0++; y1--; err += dy += a;
+						}
+					if (f) { x0++; x1--; err -= dx -= b1; }
+					}
+				if (--x0 == x1++)
+					while (y0 - y1 < b)
+						{
+						i = 256 * 4 * fabs(err + dx) / b1;
+						int32 op = (int32)(256 - i);
+						if (op > 0)
+							{
+							_updatePixel<blend, checkrange, true, usepen>(x0, ++y0, color, op, penwidth);
+							_updatePixel<blend, checkrange, true, usepen>(x1, y0, color, op, penwidth);
+							_updatePixel<blend, checkrange, true, usepen>(x0, --y1, color, op, penwidth);
+							_updatePixel<blend, checkrange, true, usepen>(x1, y1, color, op, penwidth);
+							}
+						err += dy += a;
+						}
+				}
 
 
 
