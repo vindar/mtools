@@ -33,6 +33,9 @@
 
 #include "../io/console.hpp"
 
+#include "../graphics/customcimg.hpp"
+
+
 namespace mtools
 	{
 
@@ -107,9 +110,9 @@ namespace mtools
 			 * @param	filename Name of the file (must have extension "png" or "jpg"). If the operation fails,
 			 * 					 the image is empty.
 			 */
-			inline Image(const std::string & filename) : Image()
+			inline Image(const char * filename) : Image()
 				{
-				load_png(filename);
+				load(filename);
 				}
 
 
@@ -342,28 +345,40 @@ namespace mtools
 
 
 			/**
+			* Move the content of this image into anotheer image. This image is left empty.
+			*
+			* @param [in,out]	dest Destination image (its current content is discarded).
+			*/
+			inline void move_to(Image & dest)
+				{
+				if (this != &dest)
+					{
+					dest.empty();
+					dest._lx = _lx;
+					dest._ly = _ly;
+					dest._stride = _stride;
+					dest._data = _data;
+					dest._deletepointer = _deletepointer;
+					dest._pcairo_surface = _pcairo_surface;
+					dest._pcairo_context = _pcairo_context;
+					_lx = 0;
+					_ly = 0;
+					_stride = 0;
+					_data = nullptr;
+					_deletepointer = nullptr;
+					_pcairo_context = nullptr;
+					_pcairo_surface = nullptr;
+					}
+				return;
+				}
+
+
+			/**
 			 * Move assignment operator.
 			 **/
 			inline Image & operator=(Image && source)
 				{
-				if (this != &source)
-					{
-					empty();
-					_lx = source._lx;
-					_ly = source._ly;
-					_stride = source._stride;
-					_data = source._data;
-					_deletepointer = source._deletepointer;
-					_pcairo_surface = source._pcairo_surface;
-					_pcairo_context = source._pcairo_context;
-					source._lx = 0;
-					source._ly = 0;
-					source._stride = 0;
-					source._data = nullptr;
-					source._deletepointer = nullptr;
-					source._pcairo_context = nullptr;
-					source._pcairo_surface = nullptr;
-					}
+				source.move_to(*this);
 				return *this;
 				}
 
@@ -384,7 +399,6 @@ namespace mtools
 					}
 				return *this;
 				}
-
 
 
 			/******************************************************************************************************************************************************
@@ -685,6 +699,87 @@ namespace mtools
 				resizeRaw(newdim.X(), newdim.Y(), shrinktofit, padding);
 				}
 
+
+
+			/******************************************************************************************************************************************************
+			*******************************************************************************************************************************************************
+			*																				   																      *
+			*                                                             CImg CONVERSION                                                                 *
+			*																																					  *
+			*******************************************************************************************************************************************************
+			*******************************************************************************************************************************************************/
+
+
+			/**
+			 * Initialize this image from a CImg image. current image content is discarded.
+			 *
+			 * @param	im The source CImg image.
+			 */
+			void fromCImg(const cimg_library::CImg<unsigned char> & im)
+				{
+				empty(); 
+				if (im.is_empty()) return; 
+				resizeRaw(im.width(), im.height(),true,0);
+				RGBc * pdest = _data;
+				const size_t pad = _stride - _lx;
+				const unsigned char * pR = im.data(0, 0, 0, 0);
+				const unsigned char * pG = im.data(0, 0, 0, 1);
+				const unsigned char * pB = im.data(0, 0, 0, 2);
+				if (im.spectrum() == 3)
+					{
+					for (int64 j = 0; j < _ly; j++)
+						{
+						for (int64 i = 0; i < _lx; i++) { *(pdest++) = RGBc(*(pR++), *(pG++), *(pB++), 255); }
+						pdest += pad;
+						}						
+					return;
+					}
+				if (im.spectrum() == 4)
+					{
+					const unsigned char * pA = im.data(0, 0, 0, 3);
+					for (int64 j = 0; j < _ly; j++)
+						{
+						for (int64 i = 0; i < _lx; i++) { *(pdest++) = RGBc(*(pR++), *(pG++), *(pB++), *(pA++)); }
+						pdest += pad;
+						}
+					return;
+					}
+				MTOOLS_DEBUG("Invalid CImg image");
+				clear(RGBc::c_White);
+				return;
+				}
+
+
+			/**
+			 * Copy the content of this image into a CImg image.
+			 *
+			 * @param [in,out]	im The destination CImg image. Its current content is discarded and its
+			 * 					   number of channels is set to 4.
+			 */
+			void toCImg(cimg_library::CImg<unsigned char> & im) const
+				{
+				if (isEmpty()) { im.assign(); return; }
+				im.assign(_lx, _ly, 1, 4);
+				const RGBc * psrc = _data;
+				const size_t pad = _stride - _lx;
+				unsigned char * pR = im.data(0, 0, 0, 0);
+				unsigned char * pG = im.data(0, 0, 0, 1);
+				unsigned char * pB = im.data(0, 0, 0, 2);
+				unsigned char * pA = im.data(0, 0, 0, 3);
+				for (int64 j = 0; j < _ly; j++)
+					{
+					for (int64 i = 0; i < _lx; i++)
+						{
+						const RGBc col = *(psrc++);
+						*(pR++) = col.comp.R;
+						*(pG++) = col.comp.G;
+						*(pB++) = col.comp.B;
+						*(pA++) = col.comp.A;
+						}
+					psrc += pad;
+					}
+				return;
+				}
 
 
 			/******************************************************************************************************************************************************
@@ -2834,6 +2929,68 @@ namespace mtools
 
 
 			/**
+			 * Return a pointer to a given pixel in the image. No bound check.
+			 *
+			 * @param	x The x coordinate.
+			 * @param	y The y coordinate.
+			 *
+			 * @return	a pointer to the correpsonding image pixel.
+			 */
+			MTOOLS_FORCEINLINE const RGBc * offset(int64 x, int64 y) const 
+				{ 
+				MTOOLS_ASSERT(!isEmpty());
+				MTOOLS_ASSERT((x >= 0) && (x < _lx));
+				MTOOLS_ASSERT((y >= 0) && (y < _ly));
+				return _data + (y*_stride) + x;
+				}
+
+
+			/**
+			* Return a pointer to a given pixel in the image. No bound check.
+			*
+			* @param	x The x coordinate.
+			* @param	y The y coordinate.
+			*
+			* @return	a pointer to the correpsonding image pixel.
+			*/
+			MTOOLS_FORCEINLINE RGBc * offset(int64 x, int64 y)
+				{
+				MTOOLS_ASSERT(!isEmpty());
+				MTOOLS_ASSERT((x >= 0) && (x < _lx));
+				MTOOLS_ASSERT((y >= 0) && (y < _ly));
+				return _data + (y*_stride) + x;
+				}
+
+
+
+			/**
+			 * Return a pointer to a given pixel in the image. No bound check.
+			 *
+			 * @param	pos The position.
+			 *
+			 * @return	a pointer to the correpsonding image pixel.
+			 */
+			MTOOLS_FORCEINLINE const RGBc * offset(iVec2 pos) const
+				{
+				return offset(pos.X(), pos.Y());
+				}
+
+
+			/**
+			* Return a pointer to a given pixel in the image. No bound check.
+			*
+			* @param	pos The position.
+			*
+			* @return	a pointer to the correpsonding image pixel.
+			*/
+			MTOOLS_FORCEINLINE RGBc * offset(iVec2 pos)
+				{
+				return offset(pos.X(), pos.Y());
+				}
+
+	
+
+			/**
 			 * Get the color at a given position.
 			 * No bound check !
 			 *
@@ -3105,31 +3262,33 @@ namespace mtools
 
 			/**
 			* Saves the image into a file in PNG format.
+			* uses cairo.
 			*
 			* @param	filename	name of the file (should have extension "png").
 			*
 			* @return	true if the operation succedded and false if it failed.
 			**/
-			bool _save_png(const std::string & filename) const
+			bool save_png(const char * filename) const
 				{
 				if (!_createcairo(false)) return false;
-				return (cairo_surface_write_to_png((cairo_surface_t*)_pcairo_surface, filename.c_str()) == CAIRO_STATUS_SUCCESS);
+				return (cairo_surface_write_to_png((cairo_surface_t*)_pcairo_surface, filename) == CAIRO_STATUS_SUCCESS);
 				}
 
 
 
 			/**
 			* Load the image from a file in PGN format.
-			*
+			* uses cairo. 
+			* 
 			* @param	filename	name of the file (should have extension "png" or "jpg").
 			*
 			* @return	true if the operation succedded and false if it failed (and in this case, the object
 			* 			is set to an empty image).
 			**/
-			bool load_png(const std::string & filename)
+			bool load_png(const char * filename)
 				{
 				empty();
-				cairo_surface_t * psurface = cairo_image_surface_create_from_png(filename.c_str());
+				cairo_surface_t * psurface = cairo_image_surface_create_from_png(filename);
 				if (cairo_surface_status(psurface) != CAIRO_STATUS_SUCCESS) { cairo_surface_destroy(psurface); return false; }
 				cairo_format_t format = cairo_image_surface_get_format(psurface);
 				if ((format != CAIRO_FORMAT_ARGB32) && (format != CAIRO_FORMAT_RGB24)) { cairo_surface_destroy(psurface); return false; }
@@ -3151,6 +3310,36 @@ namespace mtools
 					}
 				cairo_surface_destroy(psurface);
 				return true;
+				}
+
+
+			/**
+			 * Saves the image into a file. uses CImg's save method (hence support all formats supported by
+			 * CImg).
+			 *
+			 * @param	filename name of the file.
+			 * @param	number   number to apped to the file name (if positive)
+			 * @param	digits   number of digits to use.
+			 */
+			void save(const char * filename, const int number = -1, const unsigned int digits = 6) const
+				{
+				cimg_library::CImg<unsigned char> im;
+				toCImg(im);
+				im.save(filename, number, digits);
+				}
+
+
+			/**
+			 * Load the image from a file. Uses CImg's load method (hence support all formats supported by
+			 * CImg).
+			 *
+			 * @param	filename name of the file.
+			 */
+			void load(const char * filename)
+				{
+				cimg_library::CImg<unsigned char> im;
+				im.load(filename);
+				fromCImg(im);
 				}
 
 
@@ -3231,6 +3420,29 @@ namespace mtools
 			* @return	true if empty, false if not.
 			**/
 			MTOOLS_FORCEINLINE bool isEmpty() const { return(_data == nullptr); }
+
+
+			/**
+			 * Return the number of pixels in this image. 
+			 * use memorySize() to get number of bytes used by the obejct.
+			 *
+			 * @return	the number of pixels in the images. 
+			 */
+			MTOOLS_FORCEINLINE int64 size() const
+				{
+				return (isEmpty() ? 0 : _lx*_ly);
+				}
+
+
+			/**
+			 * Return the total memory occupies by this object.
+			 *
+			 * @return	the number of bytes used by the object.
+			 */
+			MTOOLS_FORCEINLINE int64 memorySize() const
+				{
+				return sizeof(Image)  + (!isEmpty() ? 0 : 4*_ly*_stride);
+				}
 
 
 			/**
