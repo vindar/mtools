@@ -116,9 +116,9 @@ namespace mtools
     template<typename t> Img(const Img<t> &img, const bool is_shared) : cimg_library::CImg<T>(img, is_shared) {}
 
 
-	cimg_library::CImg<T> & get_cimg() { return *((cimg_library::CImg<T> *)this); }
+	//cimg_library::CImg<T> & get_cimg() { return *((cimg_library::CImg<T> *)this); }
 
-	cimg_library::CImg<T> & get_cimg() const { return *((const cimg_library::CImg<T> *)this); }
+	//cimg_library::CImg<T> & get_cimg() const { return *((const cimg_library::CImg<T> *)this); }
 
     Img<T>& move_to(Img<T>& img) 
         {
