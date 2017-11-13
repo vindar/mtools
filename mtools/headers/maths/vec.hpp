@@ -520,6 +520,33 @@ namespace mtools
     typedef fVec<3> fVec3;
 
 
+
+
+
+
+	/**
+	* Compute the intersection of two lines.
+	*
+	* @param   LA1     First point on line A.
+	* @param   LA2     Second point on line A.
+	* @param   LB1     First point on line B.
+	* @param   LB2     Second point on line B.
+	* @param [out] P   Buffer to put the intersection Point.
+	*
+	* @return  true the lines intersect and false if they are paralell.
+	**/
+	MTOOLS_FORCEINLINE bool intersection(mtools::fVec2 LA1, mtools::fVec2 LA2, mtools::fVec2 LB1, mtools::fVec2 LB2, mtools::fVec2 & P)
+		{
+		const double a1 = LA2.Y() - LA1.Y();
+		const double b1 = LA1.X() - LA2.X();
+		const double a2 = LB2.Y() - LB1.Y();
+		const double b2 = LB1.X() - LB2.X();
+		const double delta = a1*b2 - a2*b1; if (delta == 0) { return false; }
+		const double c1 = LA1.X()*a1 + LA1.Y()*b1; const double c2 = LB1.X()*a2 + LB1.Y()*b2;
+		P.X() = (b2*c1 - b1*c2) / delta;
+		P.Y() = (a1*c2 - a2*c1) / delta;
+		return true;
+		}
 }
 
 
