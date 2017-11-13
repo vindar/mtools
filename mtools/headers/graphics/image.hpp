@@ -759,7 +759,7 @@ namespace mtools
 			void toCImg(cimg_library::CImg<unsigned char> & im) const
 				{
 				if (isEmpty()) { im.assign(); return; }
-				im.assign(_lx, _ly, 1, 4);
+				im.assign((unsigned int)_lx, (unsigned int)_ly, 1, 4);
 				const RGBc * psrc = _data;
 				const size_t pad = _stride - _lx;
 				unsigned char * pR = im.data(0, 0, 0, 0);
@@ -3415,6 +3415,22 @@ namespace mtools
 
 
 			/**
+			* Return the image size into a iVec2 structure.
+			**/
+			MTOOLS_FORCEINLINE mtools::iVec2 dimension() const { return mtools::iVec2(_lx, _ly); }
+
+
+			/**
+			* return the image aspect ratio lx/ly.
+			**/
+			MTOOLS_FORCEINLINE double aspectRatio() const
+				{
+				if (isEmpty()) { MTOOLS_DEBUG("Image::aspectRatio() called with empty image !"); return 1.0; }
+				return(((double)_lx) / (double)_ly); 
+				}
+
+
+			/**
 			* Query if the image is empty
 			*
 			* @return	true if empty, false if not.
@@ -3458,11 +3474,25 @@ namespace mtools
 				}
 
 
+
 			/**
-			* Clears this image to a given color
+			* Return the first color of the image.
+			* If the image is empty return Transparent_White otherwise return the color at coord (0,0).
 			*
-			* @param	bkColor	the color to use.
+			* @return  The main color.
 			**/
+			MTOOLS_FORCEINLINE RGBc toRGBc() const
+				{
+				if (isEmpty()) return RGBc::c_TransparentWhite;
+				return getPixel({ 0,0 });
+				}
+
+
+			/**
+			 * Clears this image to a given color.
+			 *
+			 * @param	bkColor	the color to use.
+			 **/
 			inline void clear(RGBc bkColor)
 				{
 				//pixman_fill((uint32_t*)_data, _stride, 32, 0, 0, _lx, _ly, bkColor.color); // slow...
@@ -3678,6 +3708,54 @@ namespace mtools
 
 
 
+			/******************************************************************************************************************************************************
+			*******************************************************************************************************************************************************
+			*																				   																      *
+			*                                                              CANVAS RELATED METHODS                                                                 *
+			*																																					  *
+			*******************************************************************************************************************************************************
+			*******************************************************************************************************************************************************/
+
+
+			/**
+			* Return the position (i,j) of the pixel in the image associated with the absolute coordinate
+			* (x,y) w.r.t. to a mapping rectangle R.
+			*
+			* @param   R       the rectangle defining the range represented by the image.
+			* @param   coord   the absolute coordinate to transform.
+			*
+			* @return  the associated pixel the image (no clipping, may be outside of the image).
+			**/
+			MTOOLS_FORCEINLINE mtools::iVec2 canvas_getImageCoord(const mtools::fBox2 & R, const mtools::fVec2 & coord) const { return R.absToPixel(coord, dimension()); }
+
+
+			/**
+			* Return the absolute position of a pixel (i,j) of the image according to a mapping rectangle R.
+			*
+			* @param   R       the rectangle defining the range represented by the image.
+			* @param   pixpos  The position of the pixel in the image.
+			*
+			* @return  the associated absolute coordinate.
+			**/
+			MTOOLS_FORCEINLINE mtools::fVec2 canvas_getAbsCoord(const mtools::fBox2 & R, const mtools::iVec2 & pixpos) const { return R.pixelToAbs(pixpos, dimension()); }
+
+
+			/**
+			* Return an enlarged rectangle of R with the same centering but such that the ratio of the
+			* returned  rectangle match the ratio of the image.
+			*
+			* @param   R   the original rectangle.
+			*
+			* @return  A possibly enlarged rectangle (with same centering) with same aspect ratio as the
+			*          image.
+			**/
+			MTOOLS_FORCEINLINE mtools::fBox2 canvas_respectImageAspectRatio(const mtools::fBox2 & R) const { return(R.fixedRatioEnclosingRect(aspectRatio())); }
+
+
+			/**
+			* The canonical range rectangle corresponding to the image size
+			**/
+			MTOOLS_FORCEINLINE mtools::fBox2 canvas_getCanonicalRange() const { MTOOLS_ASSERT((_lx > 0) && (_ly > 0)); return mtools::fBox2(0, (double)_lx, 0, (double)_ly); }
 
 
 
