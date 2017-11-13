@@ -1191,6 +1191,8 @@ void test_b()
 		//im.draw_filled_circle({ 500,500 }, 100, RGBc::c_Green.getOpacity(0.1), RGBc::c_Red.getOpacity(0.2), true);
 
 
+		im.draw_text({ 150, 100 }, "Hello World\n", MTOOLS_TEXT_TOPLEFT, RGBc::c_Red, 10);
+
 		std::vector<iVec2> tab;
 
 		tab.push_back({0,0}); 		
@@ -1273,7 +1275,7 @@ int main(int argc, char *argv[])
 	MTOOLS_SWAP_THREADS(argc, argv);  // swap main/fltk threads on OSX
 	parseCommandLine(argc, argv, true); // parse the command line, interactive mode
 
-
+	/*
 	{
 	Image imm("lenna.jpg");
 	Plotter2D plotter;
@@ -1284,7 +1286,7 @@ int main(int argc, char *argv[])
 	imm.save("len.png");
 	}
 
-
+	*/
 
 	/*
 	Image im(100, 100); 

@@ -225,17 +225,18 @@ namespace mtools
 
 
 			/**
-			* Draw background of the rectangle that enclosed a given text. Color bkcolor is blend over the
-			* image.
-			*
-			* @param [in,out]	im	The image to draw onto.
-			* @param	x		  	x coordinate of the text reference position.
-			* @param	y		  	y coordinate of the text reference position.
-			* @param	txt		  	the text.
-			* @param	txt_pos   	Positioning method (combination of MTOOLS_TEXT_XCENTER, MTOOLS_TEXT_LEFT, MTOOLS_TEXT_RIGHT, MTOOLS_TEXT_TOP, MTOOLS_TEXT_BOTTOM,
-			* 						MTOOLS_TEXT_YCENTER).
-			* @param	bkcolor   	The color to blend over.
-			**/
+			 * Draw background of the rectangle that enclosed a given text. Color bkcolor is blend over the
+			 * image.
+			 *
+			 * @param [in,out]	im	The image to draw onto.
+			 * @param	x		  	x coordinate of the text reference position.
+			 * @param	y		  	y coordinate of the text reference position.
+			 * @param	txt		  	the text.
+			 * @param	txt_pos   	Positioning method (combination of MTOOLS_TEXT_XCENTER, MTOOLS_TEXT_LEFT,
+			 * 						MTOOLS_TEXT_RIGHT, MTOOLS_TEXT_TOP, MTOOLS_TEXT_BOTTOM,
+			 * 						MTOOLS_TEXT_YCENTER).
+			 * @param	bkcolor   	The color to blend over.
+			 **/
 			void drawBackground(Image & im, int64 x, int64 y, const std::string & txt, int txt_pos, RGBc bkcolor) const
 				{
 				drawBackground(im, { x,y }, txt, txt_pos, bkcolor);
@@ -362,7 +363,7 @@ namespace mtools
 			/**
 			 * Serialization of the object.
 			 **/
-			void serialize(OBaseArchive & ar)
+			void serialize(OBaseArchive & ar) const
 				{
 				ar & _nativeset.size();
 				for (auto it = _nativeset.begin(); it != _nativeset.end(); it++)
@@ -379,6 +380,7 @@ namespace mtools
 			void deserialize(IBaseArchive & ar)
 				{
 				_empty();
+				std::lock_guard<std::mutex> lock(_mut); // mutex lock for concurrent access. 
 				size_t l; ar & l;
 				for (int i = 0;i < l; i++)
 					{
@@ -396,6 +398,7 @@ namespace mtools
 			 **/
 			void insertFont(const Font & font)
 				{
+				std::lock_guard<std::mutex> lock(_mut); // mutex lock for concurrent access. 
 				const int size = font.fontsize();
 				if ((size <= 0)||(size >= MAX_FONT_SIZE)) return; 
 				_fonts[size] = font;
@@ -423,10 +426,29 @@ namespace mtools
 			 * @param	method  	method to choose the font in case no native font matches this size. One
 			 * 						of MTOOLS_EXACT_FONT, MTOOLS_NATIVE_FONT_BELOW, MTOOLS_NATIVE_FONT_ABOVE.
 			 *
-			 * @return	A reference to the matching font. If fontsize is negative or larger than
-			 * 			MAX_FONT_SIZE, return an empty font.
+			 * @return	A reference to the matching font. If fontsize is negative return the empty font with
+			 * 			size 0 and if larger than MAX_FONT_SIZE, return the largest font matching the
+			 * 			criteria.
 			 **/
-			const Font & operator()(int fontsize, int  method = MTOOLS_NATIVE_FONT_BELOW);
+			inline const Font & operator()(int fontsize, int  method = MTOOLS_NATIVE_FONT_BELOW)
+				{
+				int fs = nearestSize(fontsize, method);
+				if (_fonts[fontsize].isEmpty()) { _constructFont(fs); }
+				return _fonts[fs];
+				}
+
+
+			/**
+			 * Return the size of the nearest font matching the method criteria. This is the size of the
+			 * font returned when calling operator() with the same arguments.
+			 *
+			 * @param	fontsize	the requested size of the font.
+			 * @param	method  	method to choose the font in case no native font matches this size. One
+			 * 						of MTOOLS_EXACT_FONT, MTOOLS_NATIVE_FONT_BELOW, MTOOLS_NATIVE_FONT_ABOVE.
+			 *
+			 * @return	The corresponding size.
+			 **/
+			int nearestSize(int fontsize, int  method = MTOOLS_NATIVE_FONT_BELOW) const;
 
 
 			/**
@@ -435,9 +457,9 @@ namespace mtools
 			std::set<int> nativeSizeSet() const { return _nativeset; }
 
 
-		private:
-
 			static const int MAX_FONT_SIZE = 4096;  ///< maximum font size. 
+
+		private:
 
 
 			/* Empty the object. */
@@ -468,6 +490,22 @@ namespace mtools
 		const Font & gFont(int fontsize, int  method = MTOOLS_NATIVE_FONT_BELOW);
 
 
+		/**
+		 * Compute the global font required size in order to adjust a text to a given box.
+		 * 
+		 * Set boxsize.X() (resp boxsize.Y() ) to negative value for removing a constrain on X (resp Y).
+		 * Use minheight and maxheight for addtionnal constrained on the size of the font.
+		 *
+		 * @param	text	 	The text.
+		 * @param	boxsize  	the size of the box.
+		 * @param	method   	method to choose the font in case no native font matches this size. One
+		 * 						of MTOOLS_EXACT_FONT, MTOOLS_NATIVE_FONT_BELOW, MTOOLS_NATIVE_FONT_ABOVE.
+		 * @param	minheight	The optional minimum font height requested.
+		 * @param	maxheight	The optional maximum font height requsted.
+		 *
+		 * @return	the font height.
+		 **/
+		int gFontFindSize(const std::string & text, mtools::iVec2 boxsize, int  method = MTOOLS_NATIVE_FONT_BELOW, int minheight = 0, int maxheight = FontFamily::MAX_FONT_SIZE);
 
 
 	}

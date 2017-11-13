@@ -187,23 +187,23 @@ namespace mtools
 
 
 
-	const Font & FontFamily::operator()(int fontsize, int  method)
+
+
+
+	int FontFamily::nearestSize(int fontsize, int  method) const 
 		{
-		if ((fontsize <= 0) || (fontsize > MAX_FONT_SIZE) || (_nativeset.size() == 0)) return _fonts[0];
 		if (method == MTOOLS_EXACT_FONT)
 			{
-			if (_fonts[fontsize].isEmpty()) { _constructFont(fontsize); }
-			return _fonts[fontsize];
+			if (fontsize <= 0) return 0;
+			if (fontsize >= MAX_FONT_SIZE) return MAX_FONT_SIZE;
+			return fontsize;
 			}
+		if (_nativeset.size() == 0) return 0;
 		auto it = _nativeset.lower_bound(fontsize);
-		if (it == _nativeset.end()) { return _fonts[*(_nativeset.rbegin())]; } // past the last element, return the largest. 
-		if (method = MTOOLS_NATIVE_FONT_ABOVE) { return _fonts[*it]; }
-		if (it == _nativeset.begin()) { return _fonts[*it]; } // return the smallest available
-		it--;
-		return _fonts[*it];
+		if (it == _nativeset.end()) { return *(_nativeset.rbegin()); } // past the last element, return the largest. 
+		if ((method = MTOOLS_NATIVE_FONT_ABOVE)||(it == _nativeset.begin())) { return *it; }
+		return *(--it);
 		}
-
-
 
 
 	void FontFamily::_empty()
@@ -217,6 +217,7 @@ namespace mtools
 
 	void FontFamily::_constructFont(int fontsize)
 		{
+		if (fontsize == 0) return;
 		std::lock_guard<std::mutex> lock(_mut); // mutex lock for concurrent access. 
 		if (!(_fonts[fontsize].isEmpty())) return; // already created, nothing to do.
 		auto it = _nativeset.lower_bound(fontsize);
@@ -233,18 +234,56 @@ namespace mtools
 	namespace internals_font
 		{
 
-		/* the buffer containing the font data */
+		/* the buffer containing the global font data */
 		extern const p_char OPEN_SANS_FONT_DATA[9680];
+
+		/* pointer to the global font family object */
+		FontFamily * _gfont = nullptr;
+
+		/* make sure _gfont is created */ 
+		inline void _creategFont()
+			{
+			static std::mutex mut;
+			if (internals_font::_gfont == nullptr)
+				{
+				std::lock_guard<std::mutex> lock(mut); // mutex lock for concurrent access. 
+				if (internals_font::_gfont == nullptr) internals_font::_gfont = new FontFamily(ICPPArchive(internals_font::OPEN_SANS_FONT_DATA));
+				}
+			}
 
 		}
 
 
 	const Font & gFont(int fontsize, int  method)
 		{
-		static FontFamily * _gfont = new FontFamily(ICPPArchive(internals_font::OPEN_SANS_FONT_DATA));
-		return _gfont->operator()(fontsize,method);
+		internals_font::_creategFont();
+		return internals_font::_gfont->operator()(fontsize,method);
 		}
 
+
+
+	int gFontFindSize(const std::string & text, mtools::iVec2 boxsize, int  method, int minheight, int maxheight)
+		{
+		internals_font::_creategFont();
+		if (minheight < 0) minheight = 0;
+		if (maxheight > FontFamily::MAX_FONT_SIZE) maxheight = FontFamily::MAX_FONT_SIZE;
+		MTOOLS_INSURE(minheight <= maxheight);
+
+		if ((text.length() == 0) || ((boxsize.X()<0) && (boxsize.Y()<0)))  return internals_font::_gfont->nearestSize(maxheight, method);
+		if ((boxsize.Y() >= 0) && (boxsize.Y()<maxheight)) { maxheight = (int)boxsize.Y(); }
+		mtools::iVec2 TS = gFont(maxheight, method).textDimension(text);
+		if (((boxsize.X() < 0) || (TS.X() <= boxsize.X())) && ((boxsize.Y()<0) || (TS.Y() <= boxsize.Y()))) return internals_font::_gfont->nearestSize(maxheight, method);
+		TS = gFont(minheight, method).textDimension(text);
+		if  (((boxsize.X() >= 0) && (TS.X() > boxsize.X())) || ((boxsize.Y() >= 0) && (TS.Y() > boxsize.Y()))) return internals_font::_gfont->nearestSize(minheight, method);
+		while (maxheight - minheight >1) 
+			{
+			unsigned int f = (maxheight + minheight) / 2;
+			TS = gFont(f, method).textDimension(text);
+			if (((boxsize.X()<0) || (TS.X() <= boxsize.X())) && ((boxsize.Y()<0) || (TS.Y() <= boxsize.Y()))) { minheight = f; }
+			else { maxheight = f; }
+			}
+		return internals_font::_gfont->nearestSize(minheight, method);
+		}
 
 
 
