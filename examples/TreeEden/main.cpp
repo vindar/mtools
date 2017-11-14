@@ -29,10 +29,10 @@ public:
     TreeEdenCluster() : N(0), Grid(), Urn(), gen() { clear(); image.resize(1, 1, 1, 3, -1); }
 
     /* load from a file */
-    void load(const std::string & filename) { IArchive ar(filename); ar & (*this); }
+    void load(const std::string & filename) { IFileArchive ar(filename); ar & (*this); }
 
     /* save into a file */
-    void save(const std::string & filename) { OArchive ar(filename); ar & (*this); }
+    void save(const std::string & filename) { OFileArchive ar(filename); ar & (*this); }
 
     /* restart from scratch */
     void clear()

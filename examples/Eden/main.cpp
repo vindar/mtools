@@ -14,10 +14,10 @@ class EdenCluster
     EdenCluster() : N(0), Grid(5, 5, false), Urn(), gen() { clear(); }
 
     /* load from a file */
-    void load(const std::string & filename) { IArchive ar(filename); ar & (*this); }
+    void load(const std::string & filename) { IFileArchive ar(filename); ar & (*this); }
 
     /* save into a file */
-    void save(const std::string & filename) { OArchive ar(filename); ar & (*this); }
+    void save(const std::string & filename) { OFileArchive ar(filename); ar & (*this); }
 
     /* restart from scratch */
     void clear()
