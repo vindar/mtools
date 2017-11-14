@@ -272,7 +272,7 @@ namespace mtools
         /**
          * Makes the color fully transparent.
          **/
-		inline void makeTransparent() { color &= 0x00FFFFFF; }
+		MTOOLS_FORCEINLINE void makeTransparent() { color &= 0x00FFFFFF; }
 
 
         /**
@@ -280,13 +280,13 @@ namespace mtools
          *
          * @return  The same color but with its alpha channel set to 0.
          **/
-		inline RGBc getTransparent() const { return RGBc(color & 0x00FFFFFF); }
+		MTOOLS_FORCEINLINE RGBc getTransparent() const { return RGBc(color & 0x00FFFFFF); }
 
 
         /**
          * Makes the color fully opaque.
          **/
-		inline void makeOpaque() { color |= 0xFF000000; }
+		MTOOLS_FORCEINLINE void makeOpaque() { color |= 0xFF000000; }
 
 
         /**
@@ -294,13 +294,13 @@ namespace mtools
          *
          * @return  The same color but with its alpha channel set to 255.
          **/
-		inline RGBc getOpaque() const { return RGBc(color | 0xFF000000); }
+		MTOOLS_FORCEINLINE RGBc getOpaque() const { return RGBc(color | 0xFF000000); }
 
 
         /**
          * Give the color the default transparency (DEFAULTALPHA).
          **/
-        inline void makeDefaultTransparency() { comp.A = DEFAULTALPHA; }
+		MTOOLS_FORCEINLINE void makeDefaultTransparency() { comp.A = DEFAULTALPHA; }
 
 
         /**
@@ -308,7 +308,7 @@ namespace mtools
          *
          * @return  The opacity between 0.0 (fully transparent) and 1.0 (fully opaque). 
          **/
-        inline float opacity() const { return ((float)comp.A)/(255.0f); }
+		MTOOLS_FORCEINLINE float opacity() const { return ((float)comp.A)/(255.0f); }
 
 
         /**
@@ -316,7 +316,7 @@ namespace mtools
          *
          * @param   o   the opacity between 0.0 (transparent) and 1.0 (opaque)
          **/
-        inline void opacity(float o) { MTOOLS_ASSERT((o >= 0.0f) && (o <= 1.0f)); comp.A = (uint8)(o * 255); }
+		MTOOLS_FORCEINLINE void opacity(float o) { MTOOLS_ASSERT((o >= 0.0f) && (o <= 1.0f)); comp.A = (uint8)(o * 255); }
 
 
 		/**
@@ -324,7 +324,7 @@ namespace mtools
 		*
 		* @param   o   the opacity between 0.0 (transparent) and 1.0 (opaque)
 		**/
-		inline RGBc getOpacity(float o) const { MTOOLS_ASSERT((o >= 0.0f) && (o <= 1.0f)); return RGBc((color & 0x00FFFFFF) | ((uint32)(o * 255)) << 24); }
+		MTOOLS_FORCEINLINE RGBc getOpacity(float o) const { MTOOLS_ASSERT((o >= 0.0f) && (o <= 1.0f)); return RGBc((color & 0x00FFFFFF) | ((uint32)(o * 255)) << 24); }
 
 
 		/**
@@ -332,7 +332,7 @@ namespace mtools
 		*
 		* @param   o   the multiplication factor between 0.0f and 1.0f.
 		**/
-		inline void multOpacity(float o) { MTOOLS_ASSERT((o >= 0.0f) && (o <= 1.0f)); comp.A = (uint8)(comp.A * o); }
+		MTOOLS_FORCEINLINE void multOpacity(float o) { MTOOLS_ASSERT((o >= 0.0f) && (o <= 1.0f)); comp.A = (uint8)(comp.A * o); }
 
 
 		/**
@@ -340,7 +340,7 @@ namespace mtools
 		*
 		* @param   o   the multiplication factor between 0.0f and 1.0f.
 		**/
-		inline RGBc getMultOpacity(float o) { MTOOLS_ASSERT((o >= 0.0f) && (o <= 1.0f)); return RGBc((color & 0x00FFFFFF) | ((uint32)(o * comp.A)) << 24); }
+		MTOOLS_FORCEINLINE RGBc getMultOpacity(float o) { MTOOLS_ASSERT((o >= 0.0f) && (o <= 1.0f)); return RGBc((color & 0x00FFFFFF) | ((uint32)(o * comp.A)) << 24); }
 
 
 		/**
