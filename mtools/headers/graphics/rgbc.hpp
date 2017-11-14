@@ -319,12 +319,28 @@ namespace mtools
         inline void opacity(float o) { MTOOLS_ASSERT((o >= 0.0f) && (o <= 1.0f)); comp.A = (uint8)(o * 255); }
 
 
-        /**
-         * Return the same color but with a given opacity.
-         *
-         * @param   o   the opacity between 0.0 (transparent) and 1.0 (opaque)
-         **/
-        inline RGBc getOpacity(float o) const { MTOOLS_ASSERT((o >= 0.0f) && (o <= 1.0f)); return RGBc((color & 0x00FFFFFF) | ((uint32)(o * 255)) << 24); }
+		/**
+		* Return the same color but with a given opacity.
+		*
+		* @param   o   the opacity between 0.0 (transparent) and 1.0 (opaque)
+		**/
+		inline RGBc getOpacity(float o) const { MTOOLS_ASSERT((o >= 0.0f) && (o <= 1.0f)); return RGBc((color & 0x00FFFFFF) | ((uint32)(o * 255)) << 24); }
+
+
+		/**
+		* Multiply the opacity by a given factor. 
+		*
+		* @param   o   the multiplication factor between 0.0f and 1.0f.
+		**/
+		inline void multOpacity(float o) { MTOOLS_ASSERT((o >= 0.0f) && (o <= 1.0f)); comp.A = (uint8)(comp.A * o); }
+
+
+		/**
+		* Return the same color but with its opacity multiplied by a given factor.
+		*
+		* @param   o   the multiplication factor between 0.0f and 1.0f.
+		**/
+		inline RGBc getMultOpacity(float o) { MTOOLS_ASSERT((o >= 0.0f) && (o <= 1.0f)); return RGBc((color & 0x00FFFFFF) | ((uint32)(o * comp.A)) << 24); }
 
 
 		/**
@@ -652,7 +668,7 @@ namespace mtools
      *
      * @return  the same color but with its alpha channel set to 0.
      **/
-    inline RGBc transparent(mtools::RGBc color) { return color.getTransparent(); }
+	MTOOLS_FORCEINLINE RGBc transparent(mtools::RGBc color) { return color.getTransparent(); }
 
 
     /**
@@ -662,7 +678,7 @@ namespace mtools
      *
      * @return the same color but with its alpha channel set to 255.
      **/
-    inline RGBc opaque(mtools::RGBc color) { return color.getOpaque(); }
+	MTOOLS_FORCEINLINE RGBc opaque(mtools::RGBc color) { return color.getOpaque(); }
 
 
     /**
@@ -673,38 +689,18 @@ namespace mtools
     *
     * @return the same color with the new opacity
     **/
-    inline RGBc opacity(mtools::RGBc color, float op) { return color.getOpacity(op); }
+	MTOOLS_FORCEINLINE RGBc opacity(mtools::RGBc color, float op) { return color.getOpacity(op); }
 
 
-
-    /**
-    * Return the blended color using the 'A over B' operator.
-    *
-    * ************* DEPRECATED ****************
+	/**
+	* Helper function. Return the same color with the opacity multiply by a given factor.
 	*
-    * @param   A       The first color.
-    * @param   B       The second color 
-    *
-    * @return the 'A over B' color
-    **/
-	/*
-    inline RGBc blendOver(RGBc A, RGBc B) { return A.over(B); }
-	*/
-
-    /**
-     * Return the blended color using the 'A over B' operator.
-     *
-	 * ************* DEPRECATED ****************
-	 *
-	 * @param   A   The first color.
-     * @param   B   The second color.
-     * @param   op  The opacity to mutiply color A with before blending.
-     *
-     * @return  the 'A over B' color.
-     **/
-	/*
-	inline RGBc blendOver(RGBc A, RGBc B, float op) { return A.over(B,op); }
-	*/
+	* @param   color   The color.
+	* @param   op      The multiplication factor for the opacity between 0.0f and 1.0f.
+	*
+	* @return the same color with the new opacity.
+	**/
+	MTOOLS_FORCEINLINE RGBc multOpacity(mtools::RGBc color, float op) { return color.getMultOpacity(op); }
 
 
 	/**
@@ -715,7 +711,7 @@ namespace mtools
 	*
 	* @return	the resulting (opaque) color obtainec by blending colorB over colorA.
 	**/
-	inline RGBc blend(RGBc colorA, RGBc colorB)
+	MTOOLS_FORCEINLINE RGBc blend(RGBc colorA, RGBc colorB)
 		{
 		return colorA.get_blend(colorB);
 		}
@@ -734,7 +730,7 @@ namespace mtools
 	*
 	* @return	the resulting (opaque) color obtained by blending colorB over colorA.
 	**/
-	inline RGBc blend(RGBc colorA, RGBc colorB, uint32 opacity)
+	MTOOLS_FORCEINLINE RGBc blend(RGBc colorA, RGBc colorB, uint32 opacity)
 		{
 		return colorA.get_blend(colorB,opacity);
 		}
@@ -752,7 +748,7 @@ namespace mtools
 	*
 	* @return	the resulting (opaque) color obtained by blending colorB over colorA.
 	**/
-	inline RGBc blend(RGBc colorA, RGBc colorB, float opacity)
+	MTOOLS_FORCEINLINE RGBc blend(RGBc colorA, RGBc colorB, float opacity)
 		{
 		return colorA.get_blend(colorB, opacity);
 		}
@@ -762,7 +758,7 @@ namespace mtools
     /**
     * Multiplication operator. Component per component.
     **/
-    inline RGBc operator*(float f, RGBc coul)
+    MTOOLS_FORCEINLINE RGBc operator*(float f, RGBc coul)
         {
         return RGBc((uint8)(coul.comp.R * f), (uint8)(coul.comp.G * f), (uint8)(coul.comp.B * f), (uint8)(coul.comp.A * f));
         }
