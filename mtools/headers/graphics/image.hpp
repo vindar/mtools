@@ -1635,7 +1635,7 @@ namespace mtools
 			 **/
 			inline void draw_horizontal_line(int64 y, int64 x1, int64 x2, RGBc color, bool draw_P2, bool blending, float tickness)
 				{
-				if (tickness == 0.0f) draw_horizontal_line(y, x1, x2, color, draw_P2, blending);
+				if (tickness == 0.0f) { draw_horizontal_line(y, x1, x2, color, draw_P2, blending); return; }
 				if (isEmpty() || (tickness <0)) return;
 				if (blending) _tickHorizontalLine<true, true>(y, x1, x2, color, draw_P2, 2*tickness + 1); else _tickHorizontalLine<false, true>(y, x1, x2, color, draw_P2, 2*tickness + 1);
 				}
@@ -1673,7 +1673,7 @@ namespace mtools
 			 **/
 			inline void draw_vertical_line(int64 x, int64 y1, int64 y2, RGBc color, bool draw_P2, bool blending, float tickness)
 				{
-				if (tickness == 0.0f) draw_vertical_line(x, y1, y2, color, draw_P2, blending);
+				if (tickness == 0.0f) { draw_vertical_line(x, y1, y2, color, draw_P2, blending); return; }
 				if (isEmpty() || (tickness <0)) return;
 				if (blending) _tickVerticalLine<true, true>(x, y1, y2, color, draw_P2, 2*tickness  + 1); else _tickVerticalLine<false, true>(x, y1, y2, color, draw_P2, 2*tickness + 1);
 				}
@@ -3898,7 +3898,7 @@ namespace mtools
 			**/
 			MTOOLS_FORCEINLINE void canvas_draw_vertical_line(const mtools::fBox2 & R, double x, double y1, double y2, RGBc color, bool draw_P2, bool blending, float tickness = 0.0f)
 				{
-				const iVec2 P1 = R.absToPixel({ x,y2 }, dimension());
+				const iVec2 P1 = R.absToPixel({ x,y1 }, dimension());
 				const iVec2 P2 = R.absToPixel({ x,y2 }, dimension());
 				draw_vertical_line(P1.X(), P1.Y(), P2.Y(), color, draw_P2, blending, tickness);
 				}
@@ -4366,16 +4366,11 @@ namespace mtools
 				}
 
 
-
-
 			/**
 			* Draw the axes on an image.
 			*
 			* @param   R           The rect representing the range of the image.
 			* @param   color       The color.
-			* @param   opacity     The opacity.
-			*
-			* @return  the image for chaining.
 			**/
 			inline void canvas_draw_axes(const mtools::fBox2 & R, mtools::RGBc color = RGBc::c_Black)
 				{
@@ -4391,17 +4386,26 @@ namespace mtools
 			*
 			* @param   R           The rect representing the range of the image.
 			* @param   color       The color.
-			* @param   opacity     The opacity.
-			*
-			* @return  the image for chaining.
 			**/
-			inline void canvas_draw_grid(const mtools::fBox2 & R, mtools::RGBc color = mtools::RGBc::c_Gray, float opacity = 0.5)
+			inline void canvas_draw_grid(const mtools::fBox2 & R, mtools::RGBc color = mtools::RGBc::c_Gray.getOpacity(0.5))
 				{
-				/*
-				if (R.lx() <= this->width() / 2) { mtools::int64 i = (mtools::int64)R.min[0] - 2; while (i < (mtools::int64)R.max[0] + 2) { fBox2_drawVerticalLine(R, (double)i, color, opacity); i++; } }
-				if (R.ly() <= this->height() / 2) { mtools::int64 j = (mtools::int64)R.min[1] - 2; while (j < (mtools::int64)R.max[1] + 2) { fBox2_drawHorizontalLine(R, (double)j, color, opacity); j++; } }
-				return(*this);
-				*/
+				if (isEmpty()) return;
+				const double ex  = R.max[0] - R.min[0];
+				const double xmin = R.min[0] - ex;
+				const double xmax = R.max[0] + ex;
+				const double ey = R.max[1] - R.min[1];
+				const double ymin = R.min[1] - ey;
+				const double ymax = R.max[1] + ey;
+				if (R.lx() <= _lx / 2) 
+					{ 
+					mtools::int64 i = (mtools::int64)R.min[0] - 2; 
+					while (i++ < (mtools::int64)R.max[0] + 2) { canvas_draw_vertical_line(R, (double)i,ymin,ymax, color,true,true); } 
+					}
+				if (R.ly() <= _ly / 2) 
+					{ 
+					mtools::int64 j = (mtools::int64)R.min[1] - 2; 
+					while (j++ < (mtools::int64)R.max[1] + 2) { canvas_draw_horizontal_line(R, (double)j, xmin,xmax, color, true,true); } 
+					};
 				}
 
 
@@ -4410,17 +4414,27 @@ namespace mtools
 			*
 			* @param   R           The rect representing the range of the image.
 			* @param   color       The color.
-			* @param   opacity     The opacity.
-			*
-			* @return  the image for chaining.
 			**/
-			inline void canvas_drawCells(const mtools::fBox2 & R, mtools::RGBc color = mtools::RGBc::c_Gray, float opacity = 0.5)
+			inline void canvas_draw_cells(const mtools::fBox2 & R, mtools::RGBc color = mtools::RGBc::c_Gray.getOpacity(0.5))
 				{
-				/*
-				if (R.lx() <= this->width() / 2) { mtools::int64 i = (mtools::int64)R.min[0] - 2; while (i < (mtools::int64)R.max[0] + 2) { fBox2_drawVerticalLine(R, i - 0.5, color, opacity); i++; } }
-				if (R.ly() <= this->height() / 2) { mtools::int64 j = (mtools::int64)R.min[1] - 2; while (j < (mtools::int64)R.max[1] + 2) { fBox2_drawHorizontalLine(R, j - 0.5, color, opacity); j++; } }
-				return(*this);
-				*/
+				if (isEmpty()) return;
+				const double ex = R.max[0] - R.min[0];
+				const double xmin = R.min[0] - ex;
+				const double xmax = R.max[0] + ex;
+				const double ey = R.max[1] - R.min[1];
+				const double ymin = R.min[1] - ey;
+				const double ymax = R.max[1] + ey;
+				if (R.lx() <= _lx / 2) 
+					{ 
+					mtools::int64 i = (mtools::int64)R.min[0] - 2; 
+					while (i++ < (mtools::int64)R.max[0] + 2) { canvas_draw_vertical_line(R, i - 0.5, ymin, ymax, color, true,true); }
+					}
+				if (R.ly() <= _ly / 2) 
+					{ 
+					mtools::int64 j = (mtools::int64)R.min[1] - 2; 
+					while (j++ < (mtools::int64)R.max[1] + 2) { canvas_draw_horizontal_line(R, j - 0.5, xmin, xmax, color, true, true); }
+					}
+
 				}
 
 

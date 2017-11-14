@@ -1191,7 +1191,7 @@ void test_b()
 		//im.draw_filled_circle({ 500,500 }, 100, RGBc::c_Green.getOpacity(0.1), RGBc::c_Red.getOpacity(0.2), true);
 
 
-		im.draw_text({ 150, 100 }, "Hello World\n", MTOOLS_TEXT_TOPLEFT, RGBc::c_Red, 10);
+		im.draw_text({ 150, 100 }, "Hello World\n", MTOOLS_TEXT_TOPLEFT, RGBc::c_Red, 20);
 
 		std::vector<iVec2> tab;
 
@@ -1203,6 +1203,14 @@ void test_b()
 		tab.push_back({ 200, 400 });
 		tab.push_back({ 1000, 800 });
 
+
+		fBox2 R(-10, 30, -50, 50);
+
+
+
+		im.canvas_draw_grid(R);
+		im.canvas_draw_cells(R,RGBc::c_Green.getMultOpacity(0.5));
+		im.canvas_draw_axes(R, RGBc::c_Red);
 
 
 
