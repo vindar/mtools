@@ -858,10 +858,11 @@ namespace mtools
     *
     * @return  the font height.
     **/
-    unsigned int fBox2_computeFontSize(const mtools::fBox2 & R, const std::string & text, mtools::fVec2 boxsize, bool variable_width = true, unsigned int minheight = 5, unsigned int maxheight = 256)
+/*    unsigned int fBox2_computeFontSize(const mtools::fBox2 & R, const std::string & text, mtools::fVec2 boxsize, bool variable_width = true, unsigned int minheight = 5, unsigned int maxheight = 256)
         {
         return computeFontSize(text, getImageCoord(R, boxsize) - getImageCoord(R, { 0, 0 }), variable_width, minheight, maxheight);
         }
+*/
 
 
     /**
@@ -876,13 +877,13 @@ namespace mtools
     *
     * @return The image for chaining.
     **/
-    Img<T>& fBox2_floodFill(const mtools::fBox2 & R, mtools::fVec2 Pos, mtools::RGBc color, const float opacity = 1, const float sigma = 0, const bool is_high_connexity = false)
+ /*   Img<T>& fBox2_floodFill(const mtools::fBox2 & R, mtools::fVec2 Pos, mtools::RGBc color, const float opacity = 1, const float sigma = 0, const bool is_high_connexity = false)
         {
         mtools::iVec2 P = getImageCoord(R, Pos);
         this->draw_fill((int)P.X(), (int)P.Y(), color.buf(), opacity, sigma, false);
         return(*this);
         }
-
+*/
 
     /**
     * draw a point on the image. Use absolute coordinate.
