@@ -1637,7 +1637,7 @@ namespace mtools
 				{
 				if (tickness == 0.0f) draw_horizontal_line(y, x1, x2, color, draw_P2, blending);
 				if (isEmpty() || (tickness <0)) return;
-				if ((blending) && (color.comp.A != 255)) _tickHorizontalLine<true, true>(y, x1, x2, color, draw_P2, 2*tickness + 1); else _tickHorizontalLine<false, true>(y, x1, x2, color, draw_P2, 2*tickness + 1);
+				if (blending) _tickHorizontalLine<true, true>(y, x1, x2, color, draw_P2, 2*tickness + 1); else _tickHorizontalLine<false, true>(y, x1, x2, color, draw_P2, 2*tickness + 1);
 				}
 
 
@@ -1675,7 +1675,7 @@ namespace mtools
 				{
 				if (tickness == 0.0f) draw_vertical_line(x, y1, y2, color, draw_P2, blending);
 				if (isEmpty() || (tickness <0)) return;
-				if ((blending) && (color.comp.A != 255)) _tickVerticalLine<true, true>(x, y1, y2, color, draw_P2, 2*tickness  + 1); else _tickVerticalLine<false, true>(x, y1, y2, color, draw_P2, 2*tickness + 1);
+				if (blending) _tickVerticalLine<true, true>(x, y1, y2, color, draw_P2, 2*tickness  + 1); else _tickVerticalLine<false, true>(x, y1, y2, color, draw_P2, 2*tickness + 1);
 				}
 
 
@@ -1730,7 +1730,7 @@ namespace mtools
 						{
 						const int64 of = 10;
 						if (!_csLineClip(P1, P2, iBox2(-of, _lx - 1 + of, -of, _ly - 1 + of))) return; // choose box bigger to diminish clipping error. 
-						if ((blending) && (color.comp.A != 255)) _lineBresenhamAA<true, true, false>(P1, P2, color, draw_P2, 0); else _lineBresenhamAA<false, true, false>(P1, P2, color, draw_P2, 0);
+						if (blending) _lineBresenhamAA<true, true, false>(P1, P2, color, draw_P2, 0); else _lineBresenhamAA<false, true, false>(P1, P2, color, draw_P2, 0);
 						return;
 						}
 					if ((blending) && (color.comp.A != 255)) _lineBresenham<true, true, false>(P1, P2, color, draw_P2, 0); else _lineBresenham<false, true, false>(P1, P2, color, draw_P2, 0);
@@ -1796,11 +1796,11 @@ namespace mtools
 						{
 						if (wc == 1)
 							{
-							if ((blending) && (color.comp.A != 255))  _plotQuadBezier<true, true, true, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotQuadBezier<false, true, true, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
+							if (blending)  _plotQuadBezier<true, true, true, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotQuadBezier<false, true, true, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
 							}
 						else
 							{
-							if ((blending) && (color.comp.A != 255))  _plotQuadRationalBezier<true, true, true, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth); else _plotQuadRationalBezier<false, true, true, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth);
+							if (blending)  _plotQuadRationalBezier<true, true, true, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth); else _plotQuadRationalBezier<false, true, true, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth);
 							}
 						return;
 						}
@@ -1837,11 +1837,11 @@ namespace mtools
 					{
 					if (wc == 1)
 						{
-						if ((blending) && (color.comp.A != 255))  _plotQuadBezier<true, true, true, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotQuadBezier<false, true, true, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
+						if (blending)  _plotQuadBezier<true, true, true, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotQuadBezier<false, true, true, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
 						}
 					else
 						{
-						if ((blending) && (color.comp.A != 255))  _plotQuadRationalBezier<true, true, true, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth); else _plotQuadRationalBezier<false, true, true, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth);
+						if (blending)  _plotQuadRationalBezier<true, true, true, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth); else _plotQuadRationalBezier<false, true, true, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth);
 						}
 					return;
 					}
@@ -1883,13 +1883,13 @@ namespace mtools
 					if (intersectionRect(mbr, B).isEmpty()) return;  // nothing to draw
 					if (antialiasing) // if using antialiasing, we always check the range (and its cost is negligible compared to the antialiasing computations).
 						{
-						if ((blending) && (color.comp.A != 255))  _plotCubicBezier<true, true, true,false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotCubicBezier<false, true, true, false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
+						if (blending) _plotCubicBezier<true, true, true,false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotCubicBezier<false, true, true, false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
 						return;
 						}
 					// check if we stay inside the image to remove bound check is possible
 					if (!mbr.isIncludedIn(B))
 						{ // must check bounds
-						if ((blending) && (color.comp.A != 255))  _plotCubicBezier<true, true, false, false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotCubicBezier<false, true, false, false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
+						if ((blending) && (color.comp.A != 255)) _plotCubicBezier<true, true, false, false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotCubicBezier<false, true, false, false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
 						return;
 						}
 					// no need to check bounds
@@ -1903,7 +1903,7 @@ namespace mtools
 				//always check bounds
 				if (antialiasing) 
 					{
-					if ((blending) && (color.comp.A != 255)) _plotCubicBezier<true, true, true, true>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotCubicBezier<false, true, true, true>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
+					if (blending) _plotCubicBezier<true, true, true, true>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotCubicBezier<false, true, true, true>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
 					return;
 					}
 				if ((blending) && (color.comp.A != 255)) _plotCubicBezier<true, true, false, true>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotCubicBezier<false, true, false, true>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
@@ -1957,7 +1957,7 @@ namespace mtools
 							{
 							if (antialiased)
 								{
-								if ((blending) && (color.comp.A != 255)) _plotQuadSpline<true, true, true, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotQuadSpline<false, true, true, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
+								if (blending) _plotQuadSpline<true, true, true, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotQuadSpline<false, true, true, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
 								}
 							else
 								{
@@ -1969,7 +1969,7 @@ namespace mtools
 							_correctPenOpacity(color, penwidth);
 							if (antialiased)
 								{
-								if ((blending) && (color.comp.A != 255)) _plotQuadSpline<true, true, true, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotQuadSpline<false, true, true, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
+								if (blending) _plotQuadSpline<true, true, true, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotQuadSpline<false, true, true, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
 								}
 							else
 								{
@@ -2051,7 +2051,7 @@ namespace mtools
 							{
 							if (antialiased)
 								{
-								if ((blending) && (color.comp.A != 255)) _plotCubicSpline<true, true, true, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotCubicSpline<false, true, true, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
+								if (blending)  _plotCubicSpline<true, true, true, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotCubicSpline<false, true, true, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
 								}
 							else
 								{
@@ -2063,7 +2063,7 @@ namespace mtools
 							_correctPenOpacity(color, penwidth);
 							if (antialiased)
 								{
-								if ((blending) && (color.comp.A != 255)) _plotCubicSpline<true, true, true, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotCubicSpline<false, true, true, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
+								if (blending) _plotCubicSpline<true, true, true, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotCubicSpline<false, true, true, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
 								}
 							else
 								{
@@ -2322,7 +2322,7 @@ namespace mtools
 			inline void draw_polygon(size_t nbvertices, const iVec2 * tabPoints, RGBc color, bool blending, bool antialiased, int32 penwidth = 0)
 				{
 				if (isEmpty()) return;
-				if (color.comp.A == 255) blending = false;
+				if ((color.comp.A == 255)&&(!antialiased)) blending = false;
 				switch (nbvertices)
 					{
 					case 0: { return; }
