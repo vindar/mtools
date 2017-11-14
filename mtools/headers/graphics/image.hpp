@@ -3986,7 +3986,7 @@ namespace mtools
 			MTOOLS_FORCEINLINE void canvas_draw_cubic_bezier(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, fVec2 PA, fVec2 PB, RGBc color, bool draw_P2, bool blending, bool antialiasing, int32 penwidth = 0)
 				{
 				const auto dim = dimension();
-				draw_cubic_bezier(R.absToPixel(P1, dim), R.absToPixel(P2, dim), R.absToPixel(PA, dim), R.absToPixel(PB, dim), wc, color, draw_P2, blending, antialiasing, penwidth);
+				draw_cubic_bezier(R.absToPixel(P1, dim), R.absToPixel(P2, dim), R.absToPixel(PA, dim), R.absToPixel(PB, dim), color, draw_P2, blending, antialiasing, penwidth);
 				}
 
 
@@ -4052,26 +4052,7 @@ namespace mtools
 			 **/
 			MTOOLS_FORCEINLINE void canvas_draw_rectangle(const mtools::fBox2 & R, const fBox2 & dest_box, RGBc color, bool blend, int32 penwidth = 0)
 				{
-				}
-
-
-			/**
-			 * draw a rectangle of given size and color over this image. Portion outside the image is
-			 * clipped.
-			 * 
-			 * Use absolute coordinate (canvas method).
-			 *
-			 * @param	R			the absolute range represented in the image.
-			 * @param	x			x-coordinate of the rectangle upper left corner.
-			 * @param	y			y-coordinate of the rectangle upper left corner.
-			 * @param	sx			rectangle width (if <= 0 nothing is drawn).
-			 * @param	sy			rectangle height (if <= 0 nothing is drawn).
-			 * @param	color   	the color to use.
-			 * @param	blend   	true to use blending and false to simply copy the color.
-			 * @param	penwidth	The pen width (0 = unit width)
-			 **/
-			MTOOLS_FORCEINLINE void canvas_draw_rectangle(const mtools::fBox2 & R, double x, double y, double sx, double sy, RGBc color, bool blend, int32 penwidth)
-				{
+				draw_rectangle(R.absToPixel(dest_box,dimension()), color, blend, penwidth);
 				}
 
 
@@ -4090,28 +4071,7 @@ namespace mtools
 			 **/
 			MTOOLS_FORCEINLINE void canvas_fill_rectangle(const mtools::fBox2 & R, const fBox2 & dest_box, RGBc fillcolor, bool blend)
 				{
-				}
-
-
-			/**
-			 * draw a filled rectangle of given size and color over this image. Portion outside the image is
-			 * clipped.
-			 * 
-			 * The boundary of the rectangle is not drawn. To fill the whole rectangle with its boundary,
-			 * use draw_box() instead.
-			 * 
-			 * Use absolute coordinate (canvas method).
-			 *
-			 * @param	R		 	the absolute range represented in the image.
-			 * @param	x		 	x-coordinate of the rectangle upper left corner.
-			 * @param	y		 	y-coordinate of the rectangle upper left corner.
-			 * @param	sx		 	rectangle width (if <= 0 nothing is drawn).
-			 * @param	sy		 	rectangle height (if <= 0 nothing is drawn).
-			 * @param	fillcolor	the color to use.
-			 * @param	blend	 	true to use blending and false to simply copy the color.
-			 **/
-			MTOOLS_FORCEINLINE void canvas_fill_rectangle(const mtools::fBox2 & R, double x, double y, double sx, double sy, RGBc fillcolor, bool blend)
-				{
+				fill_rectangle(R.absToPixel(dest_box, dimension()), fillcolor, blend);
 				}
 
 
@@ -4127,24 +4087,7 @@ namespace mtools
 			 **/
 			MTOOLS_FORCEINLINE void canvas_draw_box(const mtools::fBox2 & R, const fBox2 & dest_box, RGBc fillcolor, bool blend)
 				{
-				}
-
-
-			/**
-			 * Fill a (closed) box with a given color. Portion outside the image is clipped.
-			 * 
-			 * Use absolute coordinate (canvas method).
-			 *
-			 * @param	R		 	the absolute range represented in the image.
-			 * @param	x		 	x-coordinate of the rectangle upper left corner.
-			 * @param	y		 	y-coordinate of the rectangle upper left corner.
-			 * @param	sx		 	rectangle width (if <= 0 nothing is drawn).
-			 * @param	sy		 	rectangle height (if <= 0 nothing is drawn).
-			 * @param	fillcolor	the color to use.
-			 * @param	blend	 	true to use blending and false to simply copy the color.
-			 **/
-			MTOOLS_FORCEINLINE void canvas_draw_box(const mtools::fBox2 & R, double x, double y, double sx, double sy, RGBc fillcolor, bool blend)
-				{
+				draw_box(R.absToPixel(dest_box, dimension()), fillcolor, blend);
 				}
 
 
@@ -4164,6 +4107,8 @@ namespace mtools
 			 **/
 			MTOOLS_FORCEINLINE void canvas_draw_triangle(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, fVec2 P3, RGBc color, bool blending, bool antialiased, int32 penwidth = 0)
 				{
+				const auto dim = dimension();
+				draw_triangle(R.absToPixel(P1, dim), R.absToPixel(P2, dim), R.absToPixel(P3, dim), color, blending, antialiased, penwidth);
 				}
 
 
@@ -4183,6 +4128,8 @@ namespace mtools
 			 **/
 			MTOOLS_FORCEINLINE void canvas_fill_triangle(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, fVec2 P3, RGBc fillcolor, bool blending)
 				{
+				const auto dim = dimension();
+				fill_triangle(R.absToPixel(P1, dim), R.absToPixel(P2, dim), R.absToPixel(P3, dim), fillcolor, blending);
 				}
 
 
@@ -4198,9 +4145,16 @@ namespace mtools
 			* @param	antialiased	true to draw antialiased lines.
 			* @param	penwidth   	The pen width (0 = unit width)
 			**/
-			MTOOLS_FORCEINLINE void canvas_draw_polygon(const mtools::fBox2 & R, const std::vector<iVec2> & tabPoints, RGBc color, bool blending, bool antialiased, int32 penwidth = 0)
+			MTOOLS_FORCEINLINE void canvas_draw_polygon(const mtools::fBox2 & R, const std::vector<fVec2> & tabPoints, RGBc color, bool blending, bool antialiased, int32 penwidth = 0)
 				{
+				const auto dim = dimension();
+				const size_t N = tabPoints.size();
+				std::vector<iVec2> tab;
+				tab.reserve(N);
+				for (size_t i = 0; i < N; i++) { tab.push_back(R.absToPixel(tabPoints[i], dim)); }
+				draw_polygon(tab, color, blending, antialiased, penwidth);
 				}
+
 
 
 			/**
@@ -4214,8 +4168,14 @@ namespace mtools
 			* @param	blending   	true to use blending.
 			* @param	antialiased	true to draw antialiased lines.
 			**/
-			MTOOLS_FORCEINLINE void canvas_fill_convex_polygon(const mtools::fBox2 & R, const std::vector<iVec2> & tabPoints, RGBc fillcolor, bool blending)
+			MTOOLS_FORCEINLINE void canvas_fill_convex_polygon(const mtools::fBox2 & R, const std::vector<fVec2> & tabPoints, RGBc fillcolor, bool blending)
 				{
+				const auto dim = dimension();
+				const size_t N = tabPoints.size();
+				std::vector<iVec2> tab;
+				tab.reserve(N);
+				for (size_t i = 0; i < N; i++) { tab.push_back(R.absToPixel(tabPoints[i], dim)); }
+				fill_convex_polygon(tab, fillcolor, blending);
 				}
 
 
@@ -4232,8 +4192,12 @@ namespace mtools
 			* @param	antialiasing	true to use antialiasing.
 			* @param	penwidth		The pen width (0 = unit width)
 			**/
-			MTOOLS_FORCEINLINE void canvas_draw_circle(const mtools::fBox2 & R, iVec2 P, int64 r, RGBc color, bool blend, bool antialiasing, int32 penwidth = 0)
+			MTOOLS_FORCEINLINE void canvas_draw_circle(const mtools::fBox2 & R, fVec2 P, double r, RGBc color, bool blend, bool antialiasing, int32 penwidth = 0)
 				{
+				const auto dim = dimension();
+				const int64 irx = R.absToPixel_lenghtX(r, dim);
+				const int64 iry = R.absToPixel_lenghtY(r, dim);
+				draw_ellipse(R.absToPixel(P, dim), irx, iry, color, blend, antialiasing, penwidth);
 				}
 
 
@@ -4250,8 +4214,12 @@ namespace mtools
 			* @param	color_interior color of the interior.
 			* @param	blend		   true to use blending.
 			*/
-			MTOOLS_FORCEINLINE void canvas_fill_circle(const mtools::fBox2 & R, iVec2 P, int64 r, RGBc color_interior, bool blend)
+			MTOOLS_FORCEINLINE void canvas_fill_circle(const mtools::fBox2 & R, fVec2 P, double r, RGBc color_interior, bool blend)
 				{
+				const auto dim = dimension();
+				const int64 irx = R.absToPixel_lenghtX(r, dim);
+				const int64 iry = R.absToPixel_lenghtY(r, dim);
+				fill_ellipse(R.absToPixel(P, dim), irx, iry, color_interior, blend);
 				}
 
 
@@ -4267,8 +4235,12 @@ namespace mtools
 			* @param	color_interior	color of the interior.
 			* @param	blend		  	true to use blending.
 			**/
-			MTOOLS_FORCEINLINE void canvas_draw_filled_circle(const mtools::fBox2 & R, iVec2 P, int64 r, RGBc color_border, RGBc color_interior, bool blend)
+			MTOOLS_FORCEINLINE void canvas_draw_filled_circle(const mtools::fBox2 & R, fVec2 P, double r, RGBc color_border, RGBc color_interior, bool blend)
 				{
+				const auto dim = dimension();
+				const int64 irx = R.absToPixel_lenghtX(r, dim);
+				const int64 iry = R.absToPixel_lenghtY(r, dim);
+				draw_filled_ellipse(R.absToPixel(P, dim), irx, iry, color_border, color_interior, blend);
 				}
 
 
@@ -4286,8 +4258,12 @@ namespace mtools
 			* @param	antialiasing	true to use antialiasing.
 			* @param	penwidth		The pen width (0 = unit width)
 			**/
-			MTOOLS_FORCEINLINE void canvas_draw_ellipse(const mtools::fBox2 & R, iVec2 P, int64 rx, int64 ry, RGBc color, bool blend, bool antialiasing, int32 penwidth = 0)
+			MTOOLS_FORCEINLINE void canvas_draw_ellipse(const mtools::fBox2 & R, fVec2 P, double rx, double ry, RGBc color, bool blend, bool antialiasing, int32 penwidth = 0)
 				{
+				const auto dim = dimension();
+				const int64 irx = R.absToPixel_lenghtX(rx, dim);
+				const int64 iry = R.absToPixel_lenghtY(ry, dim);
+				draw_ellipse(R.absToPixel(P, dim), irx, iry, color, blend, antialiasing, penwidth);
 				}
 
 
@@ -4303,8 +4279,12 @@ namespace mtools
 			* @param	color_interior color of the interior.
 			* @param	blend		   true to use blending.
 			*/
-			MTOOLS_FORCEINLINE void canvas_fill_ellipse(const mtools::fBox2 & R, iVec2 P, int64 rx, int64 ry, RGBc color_interior, bool blend)
+			MTOOLS_FORCEINLINE void canvas_fill_ellipse(const mtools::fBox2 & R, fVec2 P, double rx, double ry, RGBc color_interior, bool blend)
 				{
+				const auto dim = dimension();
+				const int64 irx = R.absToPixel_lenghtX(rx, dim);
+				const int64 iry = R.absToPixel_lenghtY(ry, dim);
+				fill_ellipse(R.absToPixel(P, dim), irx, iry, color_interior, blend);
 				}
 
 
@@ -4321,8 +4301,12 @@ namespace mtools
 			* @param	color_interior color of the interior.
 			* @param	blend		   true to use blending.
 			*/
-			MTOOLS_FORCEINLINE void canvas_draw_filled_ellipse(const mtools::fBox2 & R, iVec2 P, int64 rx, int64 ry, RGBc color_border, RGBc color_interior, bool blend)
+			MTOOLS_FORCEINLINE void canvas_draw_filled_ellipse(const mtools::fBox2 & R, fVec2 P, double rx, double ry, RGBc color_border, RGBc color_interior, bool blend)
 				{
+				const auto dim = dimension();
+				const int64 irx = R.absToPixel_lenghtX(rx, dim);
+				const int64 iry = R.absToPixel_lenghtY(ry, dim);
+				draw_filled_ellipse(R.absToPixel(P, dim), irx, iry, color_border, color_interior, blend);
 				}
 
 
@@ -4342,8 +4326,9 @@ namespace mtools
 			* @param	antialiasing	true to use antialiasing.
 			* @param	penwidth		The pen width (0 = unit width)
 			**/
-			MTOOLS_FORCEINLINE void canvas_draw_ellipse_in_rect(const mtools::fBox2 & R, const iBox2 & B, RGBc color, bool blend, bool antialiasing, int32 penwidth = 0)
+			MTOOLS_FORCEINLINE void canvas_draw_ellipse_in_rect(const mtools::fBox2 & R, const fBox2 & B, RGBc color, bool blend, bool antialiasing, int32 penwidth = 0)
 				{
+				draw_ellipse_in_rect(R.absToPixel(B,dimension()), color, blend, antialiasing, penwidth);
 				}
 
 
@@ -4357,9 +4342,11 @@ namespace mtools
 			* @param	color_interior color of the interior.
 			* @param	blend		   true to use blending.
 			*/
-			MTOOLS_FORCEINLINE void canvas_fill_ellipse_in_rect(const mtools::fBox2 & R, const iBox2 & B, RGBc color_interior, bool blend)
+			MTOOLS_FORCEINLINE void canvas_fill_ellipse_in_rect(const mtools::fBox2 & R, const fBox2 & B, RGBc color_interior, bool blend)
 				{
+				fill_ellipse_in_rect(R.absToPixel(B, dimension()), color_interior, blend);
 				}
+
 
 
 			/**
@@ -4373,10 +4360,68 @@ namespace mtools
 			* @param	color_interior color of the interior.
 			* @param	blend		   true to use blending.
 			*/
-			MTOOLS_FORCEINLINE void canvas_draw_filled_ellipse_in_rect(const mtools::fBox2 & R, const iBox2 & B, RGBc color_border, RGBc color_interior, bool blend)
+			MTOOLS_FORCEINLINE void canvas_draw_filled_ellipse_in_rect(const mtools::fBox2 & R, const fBox2 & B, RGBc color_border, RGBc color_interior, bool blend)
 				{
+				draw_filled_ellipse_in_rect(R.absToPixel(B, dimension()), color_border, color_interior, blend);
 				}
 
+
+
+
+			/**
+			* Draw the axes on an image.
+			*
+			* @param   R           The rect representing the range of the image.
+			* @param   color       The color.
+			* @param   opacity     The opacity.
+			*
+			* @return  the image for chaining.
+			**/
+			inline void canvas_draw_axes(const mtools::fBox2 & R, mtools::RGBc color = RGBc::c_Black)
+				{
+				const double ex = R.max[0] - R.min[0];
+				const double ey = R.max[1] - R.min[1];
+				canvas_draw_horizontal_line(R, 0, R.min[0] - ex, R.max[0] + ex, color, true, true);
+				canvas_draw_vertical_line(R, 0, R.min[1] - ey, R.max[1] + ey, color, true, true);
+				}
+
+
+			/**
+			* Draw the integer grid (ie line of the form (x,j) and (i,y)) where (i,j) are integers.
+			*
+			* @param   R           The rect representing the range of the image.
+			* @param   color       The color.
+			* @param   opacity     The opacity.
+			*
+			* @return  the image for chaining.
+			**/
+			inline void canvas_draw_grid(const mtools::fBox2 & R, mtools::RGBc color = mtools::RGBc::c_Gray, float opacity = 0.5)
+				{
+				/*
+				if (R.lx() <= this->width() / 2) { mtools::int64 i = (mtools::int64)R.min[0] - 2; while (i < (mtools::int64)R.max[0] + 2) { fBox2_drawVerticalLine(R, (double)i, color, opacity); i++; } }
+				if (R.ly() <= this->height() / 2) { mtools::int64 j = (mtools::int64)R.min[1] - 2; while (j < (mtools::int64)R.max[1] + 2) { fBox2_drawHorizontalLine(R, (double)j, color, opacity); j++; } }
+				return(*this);
+				*/
+				}
+
+
+			/**
+			* Draw the cells around integer points ie draw line of the form (x,j+1/2) and (i+1/2,y)
+			*
+			* @param   R           The rect representing the range of the image.
+			* @param   color       The color.
+			* @param   opacity     The opacity.
+			*
+			* @return  the image for chaining.
+			**/
+			inline void canvas_drawCells(const mtools::fBox2 & R, mtools::RGBc color = mtools::RGBc::c_Gray, float opacity = 0.5)
+				{
+				/*
+				if (R.lx() <= this->width() / 2) { mtools::int64 i = (mtools::int64)R.min[0] - 2; while (i < (mtools::int64)R.max[0] + 2) { fBox2_drawVerticalLine(R, i - 0.5, color, opacity); i++; } }
+				if (R.ly() <= this->height() / 2) { mtools::int64 j = (mtools::int64)R.min[1] - 2; while (j < (mtools::int64)R.max[1] + 2) { fBox2_drawHorizontalLine(R, j - 0.5, color, opacity); j++; } }
+				return(*this);
+				*/
+				}
 
 
 			/******************************************************************************************************************************************************
