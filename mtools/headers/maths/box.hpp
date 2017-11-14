@@ -583,10 +583,10 @@ namespace mtools
             inline fBox2 fixedRatioEnclosingRect(double lxperly) const
                 {
                 static_assert(N == 2, "dimension N must be exactly 2.");
-                double lx = (double)(max[0] - min[0]);
-                double ly = (double)(max[1] - min[1]);
+                const double lx = (double)(max[0] - min[0]);
+                const double ly = (double)(max[1] - min[1]);
                 if ((lx <= 0.0) || (ly <= 0.0)) return fBox2();
-                double rat = lx/ly;
+                const double rat = lx/ly;
                 if (rat < lxperly) { return fBox2( ((double)(min[0] + max[0]))/2.0 - ly*lxperly/2.0, ((double)(min[0] + max[0]))/2.0 + ly*lxperly/2.0, (double)min[1], (double)max[1]); }
                 return fBox2( (double)min[0], (double)max[0], ((double)(min[1] + max[1]))/2.0 - (lx/lxperly)/2.0, ((double)(min[1] + max[1]))/2.0 + (lx/lxperly)/2.0);
                 }
@@ -602,13 +602,41 @@ namespace mtools
             inline fBox2 fixedRatioEnclosedRect(double lxperly) const
                 {
                 static_assert(N == 2, "dimension N must be exactly 2.");
-                double lx = (double)(max[0] - min[0]);
-                double ly = (double)(max[1] - min[1]);
+                const double lx = (double)(max[0] - min[0]);
+                const double ly = (double)(max[1] - min[1]);
                 if ((lx <= 0.0) || (ly <= 0.0)) return fBox2();
-                double rat = lx/ly;
+                const double rat = lx/ly;
                 if (rat < lxperly) { return fBox2((double)min[0], (double)max[0], ((double)(min[1] + max[1]))/2.0 - (lx/lxperly)/2.0, ((double)(min[1] + max[1]))/2.0 + (lx/lxperly)/2.0); }
                 return fBox2(((double)(min[0] + max[0]))/2.0 - ly*lxperly/2.0, ((double)(min[0] + max[0])) / 2.0 + ly*lxperly/2.0, (double)min[1], (double)max[1]);
                 }
+
+
+			/**
+			 * Converts a lenght from absolute to pixel lenght (in the x direction).
+			 */
+			inline int64 absToPixel_lenghtX(double dx, const iVec2 & scrSize) const
+				{
+				static_assert(N == 2, "dimension N must be exactly 2.");
+				const double lx = (double)(max[0] - min[0]);
+				MTOOLS_ASSERT(lx > 0.0);
+				double x = floor( (dx/lx)*scrSize.X() + 0.5); 
+				if (x < -2000000000) { x = -2000000000; } else if (x > +2000000000) { x = +2000000000; } // dirty, for overflow
+				return (int64)x;
+				}
+
+
+			/**
+			* Converts a lenght from absolute to pixel lenght (in the y direction).
+			*/
+			inline int64 absToPixel_lenghtY(double dy, const iVec2 & scrSize) const
+				{
+				static_assert(N == 2, "dimension N must be exactly 2.");
+				const double ly = (double)(max[1] - min[1]);
+				MTOOLS_ASSERT(ly > 0.0);
+				double y = floor((dy / ly)*scrSize.Y() + 0.5);
+				if (y < -2000000000) { y = -2000000000; } else if (y > +2000000000) { y = +2000000000; } // dirty, for overflow
+				return (int64)y;
+				}
 
 
             /**
@@ -621,16 +649,36 @@ namespace mtools
             * @return  An iVec2 containing the the coordinate the pixel in the screen. No clipping, The
             *          returned value may be outside of [0,lx]x[0,ly].
             **/
-            iVec2 absToPixel(const fVec2 & absCoord, const iVec2 & scrSize) const
+			inline iVec2 absToPixel(const fVec2 & absCoord, const iVec2 & scrSize) const
                 {
                 static_assert(N == 2, "dimension N must be exactly 2.");
-                double lx = (double)(max[0] - min[0]);
-                double ly = (double)(max[1] - min[1]);
+                const double lx = (double)(max[0] - min[0]);
+                const double ly = (double)(max[1] - min[1]);
                 MTOOLS_ASSERT((lx > 0.0) && (ly > 0.0));
                 double x = floor((((absCoord.X() - min[0]) / lx)*scrSize.X()) + 0.5); if (x < -2000000000) { x = -2000000000; } else if (x > +2000000000) { x = +2000000000; } // dirty, for overflow
                 double y = floor((((absCoord.Y() - min[1]) / ly)*scrSize.Y()) + 0.5); if (y < -2000000000) { y = -2000000000; } else if (y > +2000000000) { y = +2000000000; } // dirty, for overflow
                 return iVec2((int64)x, scrSize.Y() - 1 - (int64)(y));
                 }
+
+
+
+			/**
+			* Converts a box from absolute position into its associated position inside a screen.
+			*
+			 * @param	absBox		the box in aboslute position.
+			 * @param   scrSize     Size of the screen in pixels (lx,ly).
+			 *
+			 * @return	the corresponding box in pixel units. 
+			 */
+			inline fBox2 absToPixel(const fBox2 & absBox, const iVec2 & scrSize) const
+				{
+				static_assert(N == 2, "dimension N must be exactly 2.");
+				const iVec2 Pmin = absToPixel({absBox.min[0],absBox.max[1]}, scrSize);
+				const iVec2 Pmax = absToPixel({absBox.max[0],absBox.min[1]}, scrSize);
+				return iBox2(Pmin.X(), Pmax.X(), Pmin.Y(), Pmax.Y());				
+				}
+
+
 
 
             /**
@@ -641,14 +689,14 @@ namespace mtools
             *
             * @return  A fVec2 containing the absolute position of this pixel.
             **/
-            fVec2 pixelToAbs(const iVec2 & pixCoord, const iVec2 & scrSize) const
+			inline fVec2 pixelToAbs(const iVec2 & pixCoord, const iVec2 & scrSize) const
                 {
                 static_assert(N == 2, "dimension N must be exactly 2.");
-                double lx = (double)(max[0] - min[0]);
-                double ly = (double)(max[1] - min[1]);
+                const double lx = (double)(max[0] - min[0]);
+                const double ly = (double)(max[1] - min[1]);
                 MTOOLS_ASSERT((lx > 0.0) && (ly > 0.0));
-                double x = min[0] + lx*((double)(2 * pixCoord.X() + 1) / ((double)(2 * scrSize.X())));
-                double y = min[1] + ly*((double)(2 * (scrSize.Y() - 1 - pixCoord.Y()) + 1) / ((double)(2 * scrSize.Y())));
+                const double x = min[0] + lx*((double)(2 * pixCoord.X() + 1) / ((double)(2 * scrSize.X())));
+                const double y = min[1] + ly*((double)(2 * (scrSize.Y() - 1 - pixCoord.Y()) + 1) / ((double)(2 * scrSize.Y())));
                 return fVec2(x, y);
                 }
 
