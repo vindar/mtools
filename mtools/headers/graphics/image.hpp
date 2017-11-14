@@ -4367,27 +4367,12 @@ namespace mtools
 
 
 			/**
-			* Draw the axes on an image.
-			*
-			* @param   R           The rect representing the range of the image.
-			* @param   color       The color.
-			**/
-			inline void canvas_draw_axes(const mtools::fBox2 & R, mtools::RGBc color = RGBc::c_Black)
-				{
-				const double ex = R.max[0] - R.min[0];
-				const double ey = R.max[1] - R.min[1];
-				canvas_draw_horizontal_line(R, 0, R.min[0] - ex, R.max[0] + ex, color, true, true);
-				canvas_draw_vertical_line(R, 0, R.min[1] - ey, R.max[1] + ey, color, true, true);
-				}
-
-
-			/**
 			* Draw the integer grid (ie line of the form (x,j) and (i,y)) where (i,j) are integers.
 			*
 			* @param   R           The rect representing the range of the image.
 			* @param   color       The color.
 			**/
-			inline void canvas_draw_grid(const mtools::fBox2 & R, mtools::RGBc color = mtools::RGBc::c_Gray.getOpacity(0.5))
+			inline void canvas_draw_grid(const mtools::fBox2 & R, mtools::RGBc color = mtools::RGBc::c_Gray.getOpacity(0.5f))
 				{
 				if (isEmpty()) return;
 				const double ex  = R.max[0] - R.min[0];
@@ -4415,7 +4400,7 @@ namespace mtools
 			* @param   R           The rect representing the range of the image.
 			* @param   color       The color.
 			**/
-			inline void canvas_draw_cells(const mtools::fBox2 & R, mtools::RGBc color = mtools::RGBc::c_Gray.getOpacity(0.5))
+			inline void canvas_draw_cells(const mtools::fBox2 & R, mtools::RGBc color = mtools::RGBc::c_Gray.getOpacity(0.5f))
 				{
 				if (isEmpty()) return;
 				const double ex = R.max[0] - R.min[0];
@@ -4424,18 +4409,108 @@ namespace mtools
 				const double ey = R.max[1] - R.min[1];
 				const double ymin = R.min[1] - ey;
 				const double ymax = R.max[1] + ey;
-				if (R.lx() <= _lx / 2) 
-					{ 
-					mtools::int64 i = (mtools::int64)R.min[0] - 2; 
-					while (i++ < (mtools::int64)R.max[0] + 2) { canvas_draw_vertical_line(R, i - 0.5, ymin, ymax, color, true,true); }
+				if (R.lx() <= _lx / 2)
+					{
+					mtools::int64 i = (mtools::int64)R.min[0] - 2;
+					while (i++ < (mtools::int64)R.max[0] + 2) { canvas_draw_vertical_line(R, i - 0.5, ymin, ymax, color, true, true); }
 					}
-				if (R.ly() <= _ly / 2) 
-					{ 
-					mtools::int64 j = (mtools::int64)R.min[1] - 2; 
+				if (R.ly() <= _ly / 2)
+					{
+					mtools::int64 j = (mtools::int64)R.min[1] - 2;
 					while (j++ < (mtools::int64)R.max[1] + 2) { canvas_draw_horizontal_line(R, j - 0.5, xmin, xmax, color, true, true); }
 					}
-
 				}
+
+
+			/**
+			* Draw the axes on an image.
+			*
+			* @param   R           The rect representing the range of the image.
+			* @param   color       The color.
+			**/
+			inline void canvas_draw_axes(const mtools::fBox2 & R, float scaling = 1.0f, mtools::RGBc color = RGBc::c_Black)
+				{
+				float tick = (scaling < 4.0f) ? 0.0f : ((scaling - 1) / 8);
+				const double ex = R.max[0] - R.min[0];
+				const double ey = R.max[1] - R.min[1];
+				canvas_draw_horizontal_line(R, 0, R.min[0] - ex, R.max[0] + ex, color, true, true, tick);
+				canvas_draw_vertical_line(R, 0, R.min[1] - ey, R.max[1] + ey, color, true, true, tick);
+				}
+
+
+			/**
+			* Add the graduations on the axis.
+			*
+			* @param   R       The rect representing the range of the image.
+			* @param   scaling The scaling factor for the graduation size (default 1.0). Note that there is
+			*                  already a scaling of the graduation w.r.t. the image size. This parameter
+			*                  enables to multiply the automatic scaling with a new factor.
+			* @param   color   The color.
+			**/
+			void canvas_draw_graduations(const mtools::fBox2 & R, float scaling = 1.0f, mtools::RGBc color = mtools::RGBc::c_Black)
+				{
+				scaling = scaling*((float)(std::sqrt(_lx*_ly) / 1000.0));
+				float tick = (scaling < 4.0f) ? 0.0f : ((scaling - 1) / 8);
+				int64 gradsize = 1 + (int64)(3 * scaling);
+				const int64 winx = _lx, winy = _ly;
+				int64 py = winy - 1 - (int64)ceil(((-R.min[1]) / (R.max[1] - R.min[1]))*winy - ((double)1.0 / 2.0));
+				int64 px = (int64)ceil(((-R.min[0]) / (R.max[0] - R.min[0]))*winx - ((double)1.0 / 2.0));
+				if ((px > -1) && (px < winx))
+					{
+					int64 l, zz; double k, xx, kk, pp, xx2, op, v1, v2;
+					op = ::log10(R.ly()); 
+					if (op<0) { l = ((int64)(op)) - 1; } else { l = ((int64)(op)); }
+					k = ::pow(10.0, (double)(l));
+					v1 = floor(R.min[1] / k); v1 = v1 - 1; v2 = floor(R.max[1] / k);
+					v2 = v2 + 1;
+					kk = k; pp = kk / 5;
+					if ((v2 - v1) < 5) { kk = k / 2; pp = kk / 5; } else { if ((v2 - v1) > 8) { kk = k * 2; pp = kk / 2; v1 = ((v1 / 2) * 2) - 2; } }
+					xx = k*v1; xx2 = k*v1;
+					while (xx2 <= (R.max[1] + 2 * k))
+						{
+						xx = xx + kk; xx2 = xx2 + pp;
+						zz = (int64)R.absToPixel(mtools::fVec2(0, xx), mtools::iVec2(winx, winy)).Y();
+						if ((zz >= -10) && (zz < winy + 10)) { if (xx != 0) { draw_horizontal_line(zz, px - 2 * gradsize, px + 2 * gradsize, color, true, true,tick); } }
+						zz = (int64)R.absToPixel(mtools::fVec2(0, xx2), mtools::iVec2(winx, winy)).Y();
+						if ((zz > -2) && (zz < winy + 1)) { if (xx2 != 0) { draw_horizontal_line(zz, px - gradsize, px + gradsize, color, true, true,tick); } }
+						}
+					}
+				if ((py > -1) && (py < winy))
+					{
+					int64 l, zz; double k, xx, kk, pp, xx2, op, v1, v2;
+					op = ::log10(R.lx()); 
+					if (op<0) { l = ((int64)op) - 1; } else { l = (int64)op; }
+					k = ::pow(10.0, (double)(l));
+					v1 = floor(R.min[0] / k);  v1 = v1 - 1; v2 = floor(R.max[0] / k);  v2 = v2 + 1;
+					kk = k; pp = kk / 5;
+					if ((v2 - v1) < 5) { kk = k / 2; pp = kk / 5; } else { if ((v2 - v1) > 8) { kk = k * 2; pp = kk / 2; v1 = ((v1 / 2) * 2) - 2; } }
+					xx = k*v1; xx2 = k*v1;
+					while (xx2 <= (R.max[0] + 2 * k))
+						{
+						xx = xx + kk; xx2 = xx2 + pp;
+						zz = (int64)R.absToPixel(mtools::fVec2(xx, 0), mtools::iVec2(winx, winy)).X();
+						if ((zz >= -30) && (zz < winx + 30)) { if (xx != 0) { draw_vertical_line(zz, py - 2 * gradsize, py + 2 * gradsize, color, true, true, tick);} }
+						zz = (int64)R.absToPixel(mtools::fVec2(xx2, 0), mtools::iVec2(winx, winy)).X();
+						if ((zz > -2) && (zz < winx + 1)) { if (xx2 != 0) { draw_vertical_line(zz, py - gradsize, py + gradsize, color, true, true, tick);} }
+						}
+					}
+				}
+
+
+			/**
+			* Draw the numbering on the axis.
+			*
+			* @param   R       The rect representing the range of the image.
+			* @param   scaling The scaling factor for the numbers. (default 1.0). Note that there is already
+			*                  a scaling of the font w.r.t. the image size. This parameter enables to
+			*                  multiply this automatic scaling with a new factor.
+			* @param   color   The color.
+			* @param   opacity The opacity.
+			*
+			* @return  the image for chaining.
+			**/
+			void canvas_draw_numbers(const mtools::fBox2 & R, float scaling = 1.0, mtools::RGBc color = mtools::RGBc::c_Black);
+
 
 
 			/******************************************************************************************************************************************************

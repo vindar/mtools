@@ -1204,13 +1204,18 @@ void test_b()
 		tab.push_back({ 1000, 800 });
 
 
-		fBox2 R(-10, 30, -50, 50);
+		fBox2 R(-10, 30, -50, 60);
 
 
 
-		im.canvas_draw_grid(R);
+		im.canvas_draw_grid(R, RGBc::c_Cyan);
 		im.canvas_draw_cells(R,RGBc::c_Green.getMultOpacity(0.5));
-		im.canvas_draw_axes(R, RGBc::c_Red);
+
+
+		float sc = 1.0f; 
+		im.canvas_draw_axes(R, sc);
+		im.canvas_draw_graduations(R,sc);
+		im.canvas_draw_numbers(R, sc);
 
 
 
