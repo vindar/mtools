@@ -340,7 +340,7 @@ namespace mtools
 		*
 		* @param   o   the multiplication factor between 0.0f and 1.0f.
 		**/
-		MTOOLS_FORCEINLINE RGBc getMultOpacity(float o) { MTOOLS_ASSERT((o >= 0.0f) && (o <= 1.0f)); return RGBc((color & 0x00FFFFFF) | ((uint32)(o * comp.A)) << 24); }
+		MTOOLS_FORCEINLINE RGBc getMultOpacity(float o) const { MTOOLS_ASSERT((o >= 0.0f) && (o <= 1.0f)); return RGBc((color & 0x00FFFFFF) | ((uint32)(o * comp.A)) << 24); }
 
 
 		/**
