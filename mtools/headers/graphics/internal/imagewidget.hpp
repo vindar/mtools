@@ -73,35 +73,6 @@ namespace mtools
 
 
 
-			/*****************************
-			For compatibility only
-			******************************/
-
-			/**
-			* Set the image to display. The image is cached into an offscreen buffer used when the window
-			*must be redrawn. This method is threadsafe.
-			*
-			* @param   im  the new image to display, nullptr for no image at all.
-			**/
-			void setImage(Img<unsigned char> * im = nullptr);
-
-
-			/**
-			* Set the image to display. The color of each pixel is 32bit and correspond to the sum of
-			* nbRounds 8 bit colors. Useful for dislaying incomplete/stochastic images.
-			*
-			* @param [in,out]  im  (Optional) the new image to display, the value of each 32bit color is
-			*                      divided by nbRound to get the value of the color displayed on the screen.
-			* @param   nbRounds    The number of rounds for each pixel.
-			**/
-			void setImage32(Img<uint32> * im = nullptr, int nbRounds = 0);
-
-
-			/*****************************
-			******************************/
-
-
-
             /**
              * Set the image to display. The image is cached into an offscreen buffer used when the window
              * must be redrawn. This method is threadsafe.
@@ -115,6 +86,9 @@ namespace mtools
              * Set the image to display. The color of each pixel is 32bit and correspond to the sum of
              * nbRounds 8 bit colors. Useful for dislaying incomplete/stochastic images.
              *
+             * !!! All pixels are assumed to have the same normalization (the method uses the value of normData(0,0) for 
+             * all pixels !!!!
+             * 
              * @param [in,out]  im  the new image to display or nullptr to remove it.
              **/
             void setImage(const ProgressImg * im = nullptr);

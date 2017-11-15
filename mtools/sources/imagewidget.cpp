@@ -135,7 +135,7 @@ namespace mtools
         void ImageWidget::_drawLine_callback2(void * data, int x, int y, int w, uchar *buf)
             {
 			const ProgressImg * im = (const ProgressImg *)data;
-			const uint32  nb = *(im->normData(x,y)) + 1;
+			const uint32  nb = *(im->normData()) + 1; // all pixels have the same normaliszation
 			const RGBc64 * p = im->imData(x, y);
 			uchar * d = buf;
 			switch (nb)
@@ -193,46 +193,9 @@ namespace mtools
 
 
 
-		void ImageWidget::setImage(Img<unsigned char> * im)
-			{
-			if ((im == nullptr) || (im->spectrum() < 3) || (im->spectrum() >4) || (im->width() <= 0) || (im->height() <= 0)) setImage((const Image *)nullptr);		
-			Image tmpim(im->width(), im->height());
-			bool fc = (im->spectrum() == 4);
-			for (int j = 0; j < im->height(); j++)
-				{
-				for (int i = 0; i < im->width(); i++)
-					{
-					RGBc & color = *(tmpim.offset(i, j));
-					color.comp.R = (uint8)(*(im->data(i, j, 0, 0)));
-					color.comp.G = (uint8)(*(im->data(i, j, 0, 1)));
-					color.comp.B = (uint8)(*(im->data(i, j, 0, 2)));
-					color.comp.A = 255;
-					}
-				}
 
-			setImage(&tmpim);
 
-			}
 
-		void ImageWidget::setImage32(Img<uint32> * im, int nbRounds)
-			{
-			if ((nbRounds == 0)||(im == nullptr)||(im->spectrum() < 3)||(im->spectrum() >4) ||(im->width() <= 0)||(im->height() <= 0)) setImage((const Image *)nullptr);
-			ProgressImg tmpim(im->width(), im->height());
-			bool fc = (im->spectrum() == 4);
-			for (int j = 0; j < im->height(); j++)
-				{
-				for (int i = 0; i < im->width(); i++)
-					{
-					RGBc64 & color = *(tmpim.imData(i, j));
-					color.comp.R = (uint16)(*(im->data(i, j, 0, 0)));
-					color.comp.G = (uint16)(*(im->data(i, j, 0, 1)));
-					color.comp.B = (uint16)(*(im->data(i, j, 0, 2)));
-					color.comp.A = 255;
-					*(tmpim.normData(i, j)) = nbRounds - 1;
-					}
-				}
-			setImage(&tmpim);
-			}
 
 
     }

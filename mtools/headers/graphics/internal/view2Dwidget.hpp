@@ -172,12 +172,24 @@ namespace mtools
 
 
             /**
+             
+			 FOR COMPATIBLITY ONLY, TO REMOVE. 
+
              * Improve the quality of the image displayed in the ImageWidget object. Every call to this
              * method create a new sampling to the image combines with the previous ones.
              *
              * @param [in,out]  im  the image.
              **/
             void improveImageFactor(Img<unsigned char> * im);
+
+
+			/**
+			* Improve the quality of the image displayed in the ImageWidget object. Every call to this
+			* method create a new sampling to the image combines with the previous ones.
+			*
+			* @param [in,out]  im  the image.
+			**/
+			void improveImageFactor(const Image * im);
 
 
             /**
@@ -246,14 +258,14 @@ namespace mtools
 
             std::atomic<int> _zoomFactor; // the zoom factor : the image is ZoomFactor time larger than the view.
 
-            int _nbRounds;  // number of round in _stocIm
-            bool _discardIm; // true is the next call to improvImagefactor must overwrite the previous image.
+            int _nbRounds;				// number of round in _stocIm
+            bool _discardIm;			// true is the next call to improvImagefactor must overwrite the previous image.
+            ProgressImg * _stocIm;		// double image buffer
+            ProgressImg * _stocImAlt;	//
 
-            Img<uint32> * _stocIm;     // double image buffer
-            Img<uint32> * _stocImAlt;  //
-            fBox2 _stocR;  // range associated with _stocIm
+            fBox2 _stocR;				// range associated with _stocIm
 
-            FastRNG _g_fgen; // fast RNG
+            FastRNG _g_fgen;			// fast RNG
 
         };
 

@@ -47,8 +47,8 @@ namespace mtools
             _nbRounds(0),
             _discardIm(true)
             {
-            _stocIm = new Img<uint32>(1, 1, 1, 3);
-            _stocImAlt = new Img<uint32>(1, 1, 1, 3);
+            _stocIm = new ProgressImg(1, 1);
+            _stocImAlt = new ProgressImg(1, 1);
             }
 
 
@@ -132,87 +132,155 @@ namespace mtools
             }
 
 
-
-
         void View2DWidget::redrawView()
             {
             redraw(); flush();
             }
 
 
-
-
         void View2DWidget::discardImage() { _discardIm = true; }
 
 
-        void View2DWidget::improveImageFactor(Img<unsigned char> * im)
+
+		/************* FOR COMPATIBILITY ONLY *******/
+		void View2DWidget::improveImageFactor(Img<unsigned char> * im)
+			{
+			if ((im == nullptr) || (im->spectrum() < 3) || (im->spectrum() > 4) || (im->width() <= 0) || (im->height() <= 0)) 
+				{
+				improveImageFactor((const Image *)nullptr); 
+				return;
+				}
+			Image tmpim(im->width(), im->height());
+			bool fc = (im->spectrum() == 4);
+			for (int j = 0; j < im->height(); j++)
+				{
+				for (int i = 0; i < im->width(); i++)
+					{
+					RGBc & color = *(tmpim.offset(i, j));
+					color.comp.R = (uint8)(*(im->data(i, j, 0, 0)));
+					color.comp.G = (uint8)(*(im->data(i, j, 0, 1)));
+					color.comp.B = (uint8)(*(im->data(i, j, 0, 2)));
+					color.comp.A = 255;
+					}
+				}
+			improveImageFactor(&tmpim);
+			}
+
+
+
+        void View2DWidget::improveImageFactor(const Image * im)
             {
-            if ((im == nullptr) || (im->width() <= 0) || (im->height() <= 0) || (im->spectrum() < 3)) { setImage((const Image *)nullptr); _stocR.clear(); _nbRounds = 0; _discardIm = false; return; }
+            if ((im == nullptr) || (im->isEmpty())) { setImage((const Image *)nullptr); _stocR.clear(); _nbRounds = 0; _discardIm = false; return; }
             _stocR = _RM->getRange(); // save the range for this image
             if ((_stocIm->width() * _zoomFactor != im->width()) || (_stocIm->height()*_zoomFactor != im->height()))
                 { // resize needed, in this case, we also reset _nbRounds 
-                _stocIm->resize(im->width() / _zoomFactor, im->height() / _zoomFactor, 1, 3, -1);
+                _stocIm->resize(im->width() / _zoomFactor, im->height() / _zoomFactor,false);
                 _nbRounds = 0;
                 }
-            if (_zoomFactor == 1)
+
+			const int64 lx = _stocIm->width();
+			const int64 ly = _stocIm->height();
+			RGBc64 * pdest = _stocIm->imData();
+			
+			if (_zoomFactor == 1)
                 { // case : no zoom
-                for (int j = 0;j < _stocIm->height(); j++)
-                    {
-                    for (int i = 0;i < _stocIm->width(); i++)
-                        {
-                        _stocIm->operator()(i, j, 0, 0) = (uint32)(im->operator()(i, j, 0, 0));
-                        _stocIm->operator()(i, j, 0, 1) = (uint32)(im->operator()(i, j, 0, 1));
-                        _stocIm->operator()(i, j, 0, 2) = (uint32)(im->operator()(i, j, 0, 2));
-                        }
-                    }
-                _nbRounds = 1;
-                setImage32(_stocIm, _nbRounds);
-                _discardIm =false;
+				const RGBc * psrc = im->data();
+				const int64 pad = im->padding();
+				for (int64 j = 0; j < ly; j++)
+					{
+					for (int64 i = 0; i < lx; i++) 
+						{
+						*(pdest++) = *(psrc++);
+						}
+					psrc += pad;
+					}
+				*_stocIm->normData() = 0;
+				_nbRounds = 1;
+				setImage(_stocIm);
+				_discardIm =false;
+				redrawView();
                 return;
                 }
-            if ((_discardIm)||(_nbRounds <= 0))
+
+			if ((_discardIm)||(_nbRounds <= 0))
                 { // zoom, first time we draw
-                int rx = _zoomFactor / 2, ry = _zoomFactor / 2;
-                for (int j = 0;j < _stocIm->height(); j++)
+				const int64 rx = _zoomFactor/2, ry = _zoomFactor/2;
+                for (int64 j = 0; j < ly; j++)
                     {
-                    for (int i = 0;i < _stocIm->width(); i++)
+                    for (int64 i = 0; i < lx; i++)
                         {
-                        _stocIm->operator()(i, j, 0, 0) = (uint32)(im->operator()(i*_zoomFactor + rx, j*_zoomFactor + ry, 0, 0));
-                        _stocIm->operator()(i, j, 0, 1) = (uint32)(im->operator()(i*_zoomFactor + rx, j*_zoomFactor + ry, 0, 1));
-                        _stocIm->operator()(i, j, 0, 2) = (uint32)(im->operator()(i*_zoomFactor + rx, j*_zoomFactor + ry, 0, 2));
+						*(pdest++) = im->operator()(i*_zoomFactor + rx, j*_zoomFactor + ry);
                         }
                     }
-                _nbRounds = 1;
-                setImage32(_stocIm, _nbRounds);
+				*_stocIm->normData() = 0;
+				_nbRounds = 1;
+                setImage(_stocIm);
                 _discardIm = false;
+				redrawView();
                 return;
                 }
+
+			if (_nbRounds == 1)
+				{ // improve once so that the number of improvement is always even from now on.
+				for (int64 j = 0; j < ly; j++)
+					{
+					for (int64 i = 0; i < lx; i++)
+						{
+						const int64 rx = (int64)floor(_g_fgen.unif()*_zoomFactor);
+						const int64 ry = (int64)floor(_g_fgen.unif()*_zoomFactor);
+						(pdest++)->add(im->operator()(i*_zoomFactor + rx, j*_zoomFactor + ry));
+						}
+					}
+				_nbRounds = 2;
+				*_stocIm->normData() = 1;
+				setImage(_stocIm);
+				redrawView();
+				return;
+				}
+
             const int NBR = 4;
-            for (int j = 0;j < _stocIm->height(); j++)
+			if (_nbRounds> 10)
+				{ // divide by 2 if needed. 
+				_nbRounds >>= 1;
+				const int64 l = lx*ly;
+				RGBc64 * p = _stocIm->imData();
+				for (int64 i = 0; i<l; i++) 
+					{  
+					p->comp.R >>= 1;
+					p->comp.G >>= 1;
+					p->comp.B >>= 1;
+					p->comp.A >>= 1;
+					p++;
+					}
+				*_stocIm->normData() = _nbRounds - 1;
+				}
+
+            for (int64 j = 0; j < ly; j++)
                 { // zoom, improving the image
-                for (int i = 0;i < _stocIm->width(); i++)
+                for (int64 i = 0; i < lx; i++)
                     {
-                    for (int k = 0;k < NBR;k++)
-                        {
-                        int rx = (int)floor(_g_fgen.unif()*_zoomFactor);
-                        int ry = (int)floor(_g_fgen.unif()*_zoomFactor);
-                        _stocIm->operator()(i, j, 0, 0) += (uint32)(im->operator()(i*_zoomFactor + rx, j*_zoomFactor + ry, 0, 0));
-                        _stocIm->operator()(i, j, 0, 1) += (uint32)(im->operator()(i*_zoomFactor + rx, j*_zoomFactor + ry, 0, 1));
-                        _stocIm->operator()(i, j, 0, 2) += (uint32)(im->operator()(i*_zoomFactor + rx, j*_zoomFactor + ry, 0, 2));
-                        }
+					for (int k = 0; k < NBR; k++)
+						{
+						int64 rx = (int64)floor(_g_fgen.unif()*_zoomFactor);
+						int64 ry = (int64)floor(_g_fgen.unif()*_zoomFactor);
+						(pdest)->add(im->operator()(i*_zoomFactor + rx, j*_zoomFactor + ry));
+						}
+					pdest++;
                     }
                 }
             _nbRounds += NBR;
-            setImage32(_stocIm, _nbRounds);
+			*_stocIm->normData() = _nbRounds - 1;
+			setImage(_stocIm);
             redrawView();
             }
+
 
 
         void View2DWidget::displayMovedImage(RGBc bkColor)
         {
             fBox2 _stocRalt = _RM->getRange(); // current range
             if ((_stocRalt == _stocR) && (_stocIm->width() == w()) && (_stocIm->height() == h())) { return; } // nothing to do
-            _stocImAlt->resize(w(),h(), 1, 3, -1); // make the alt image to the current view size
+            _stocImAlt->resize(w(),h()); // make the alt image to the current view size
             _stocImAlt->clear(bkColor); // clear to the correct bk
             fBox2 subR = mtools::intersectionRect(_stocRalt, _stocR); // the intersection rectangle
             if ((!subR.isEmpty())&&(_nbRounds >0))
@@ -230,15 +298,18 @@ namespace mtools
                     const double sty = ((double)(iR1.max[1] - iR1.min[1])) / ((double)(iR2.max[1] - iR2.min[1]));
                     const int j1 = (int)iR2.min[1]; const int j2 = (int)iR2.max[1];
                     const int i1 = (int)iR2.min[0]; const int i2 = (int)iR2.max[0];
-                        for (int j = j1; j < j2; j++)
+                    for (int j = j1; j < j2; j++)
                         {
                         int y = (int)(iR1.min[1] + (int)floor((j - iR2.min[1])*sty));
                         for (int i = i1; i < i2; i++)
                             {
                             int x = (int)(iR1.min[0] + (int)floor((i - iR2.min[0])*stx));
-                            _stocImAlt->operator()(i, j, 0, 0) = _stocIm->operator()(x, y, 0, 0)/_nbRounds;
-                            _stocImAlt->operator()(i, j, 0, 1) = _stocIm->operator()(x, y, 0, 1)/_nbRounds;
-                            _stocImAlt->operator()(i, j, 0, 2) = _stocIm->operator()(x, y, 0, 2)/_nbRounds;
+							const RGBc64 & srccol = *_stocIm->imData(x, y);
+							RGBc64 & dstcol = *_stocImAlt->imData(i, j);
+							dstcol.comp.R = srccol.comp.R / _nbRounds;
+							dstcol.comp.G = srccol.comp.G / _nbRounds;
+							dstcol.comp.B = srccol.comp.B / _nbRounds;
+							dstcol.comp.A = 255;
                             }
                         }
                     }
@@ -246,7 +317,7 @@ namespace mtools
             swapStocIm(); // swap the image
             _nbRounds = 1; // set the number of round to 1 for display
             _stocR = _RM->getRange(); // save the range for this new image
-            setImage32(_stocIm, _nbRounds); // display
+            setImage(_stocIm); // display
             redrawView(); // and refresh the view
             return;
         }

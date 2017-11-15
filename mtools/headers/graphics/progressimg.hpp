@@ -131,7 +131,7 @@ namespace mtools
             * Raw image resizing. Keep the current buffer if the new size is smaller than the previous one,
             * allocate another buffer otherwise.
             **/
-            void resize(size_t newLX, size_t newLY)
+            void resize(size_t newLX, size_t newLY, bool trytokeepbuffer= true)
                 {
                 if ((newLX <= 0) || (newLY <= 0))
                     {
@@ -140,7 +140,7 @@ namespace mtools
                     _width = 0; _height = 0;
                     return;
                     }
-                if ((newLX*newLY) > (_width*_height))
+                if ((!trytokeepbuffer)||((newLX*newLY) > (_width*_height)))
                     {
                     size_t l = newLX*newLY;
                     delete[] _normData; _normData = new uint8[l];
