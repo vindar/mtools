@@ -3413,7 +3413,7 @@ namespace mtools
 			/**
 			* Height of the image in pixels. Same as ly().
 			**/
-			MTOOLS_FORCEINLINE int64 heigth() const { return _ly; }
+			MTOOLS_FORCEINLINE int64 height() const { return _ly; }
 
 
 			/**
