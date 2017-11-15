@@ -33,7 +33,7 @@ namespace mtools
     {
 
 
-        View2DWidget::View2DWidget(int X, int Y, int W, int H) : CImgWidget(X, Y, W, H),
+        View2DWidget::View2DWidget(int X, int Y, int W, int H) : ImageWidget(X, Y, W, H),
             _crossOn(false),
             _prevMouse(-1, -1),
             _currentMouse(-1,-1),
@@ -147,7 +147,7 @@ namespace mtools
 
         void View2DWidget::improveImageFactor(Img<unsigned char> * im)
             {
-            if ((im == nullptr) || (im->width() <= 0) || (im->height() <= 0) || (im->spectrum() < 3)) { setImage(nullptr); _stocR.clear(); _nbRounds = 0; _discardIm = false; return; }
+            if ((im == nullptr) || (im->width() <= 0) || (im->height() <= 0) || (im->spectrum() < 3)) { setImage((const Image *)nullptr); _stocR.clear(); _nbRounds = 0; _discardIm = false; return; }
             _stocR = _RM->getRange(); // save the range for this image
             if ((_stocIm->width() * _zoomFactor != im->width()) || (_stocIm->height()*_zoomFactor != im->height()))
                 { // resize needed, in this case, we also reset _nbRounds 
@@ -280,7 +280,7 @@ namespace mtools
 
         int View2DWidget::handle(int e)
                 {
-                if (_RM == nullptr) return CImgWidget::handle(e); // no range manager, disabled the widget and ignore events.
+                if (_RM == nullptr) return ImageWidget::handle(e); // no range manager, disabled the widget and ignore events.
                 switch (e)
                     {
                     case FL_LEAVE: { _saveMouse(); if (_zoomOn) { _zoomOn = false; redrawView(); } return 1; }
@@ -433,7 +433,7 @@ namespace mtools
                         }
                     case FL_KEYUP: return 1;
                     }
-                return CImgWidget::handle(e);
+                return ImageWidget::handle(e);
                 }
 
 
@@ -463,7 +463,7 @@ namespace mtools
                         }
                     }
                 }
-            else { CImgWidget::draw(); } // redraw the whole thing otherwise
+            else { ImageWidget::draw(); } // redraw the whole thing otherwise
             _zoom2 = { -1, -1 };
             _prevMouse = { -1, -1 };
             if (_RM == nullptr) { return; }

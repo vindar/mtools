@@ -22,7 +22,7 @@
 
 #include "../../maths/box.hpp"
 #include "../../maths/vec.hpp"
-#include "cimgwidget.hpp"
+#include "imagewidget.hpp"
 #include "rangemanager.hpp"
 #include "../../random/gen_fastRNG.hpp"
 
@@ -35,9 +35,9 @@ namespace mtools
         /**
          * A  FLTK widget used to display a 2 dimensional region.
          * 
-         * - The widget display a `CImg` image which can be updated using the `setImage()` method
-         * (derived from CImgWidget). The image is cached so it does not need to be shared and can be
-         * disposed of (or modified) after a call to `setImage()`.
+         * - The widget display an image which can be updated using the `setImage()` method
+         * The image is cached so it does not need to be shared and can be disposed of (or modified) after 
+         * a call to `setImage()`.
          * - The widget keep track of the range displayed via a base class `RangeManager`. THe widget is
          * inactive until a Range Manager is inserted using the `setRangeManager()` method.
          * - mouse and key events are use to modify the range manager which in turn call its
@@ -45,7 +45,7 @@ namespace mtools
          * - it is possible to set callbacks to watch for changes of the fixed ratio flag, cross flag and
          * also capture key events to are unused by the widget.
          **/
-        class View2DWidget : public CImgWidget
+        class View2DWidget : public ImageWidget
         {
 
         public:
@@ -172,7 +172,7 @@ namespace mtools
 
 
             /**
-             * Improve the quality of the image displayed in the CImgWidget object. Every call to this
+             * Improve the quality of the image displayed in the ImageWidget object. Every call to this
              * method create a new sampling to the image combines with the previous ones.
              *
              * @param [in,out]  im  the image.
