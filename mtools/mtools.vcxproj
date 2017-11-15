@@ -185,6 +185,7 @@
     <ClInclude Include="headers\graphics\internal\drawable2DInterface.hpp" />
     <ClInclude Include="headers\graphics\internal\drawable2Dobject.hpp" />
     <ClInclude Include="headers\graphics\internal\getcolorselector.hpp" />
+    <ClInclude Include="headers\graphics\internal\imagewidget.hpp" />
     <ClInclude Include="headers\graphics\internal\plot2Dbasegraph.hpp" />
     <ClInclude Include="headers\graphics\internal\plotter2Dobj.hpp" />
     <ClInclude Include="headers\graphics\internal\rangemanager.hpp" />
@@ -266,6 +267,7 @@
     <ClCompile Include="sources\fltkSupervisor.cpp" />
     <ClCompile Include="sources\font.cpp" />
     <ClCompile Include="sources\image.cpp" />
+    <ClCompile Include="sources\imagewidget.cpp" />
     <ClCompile Include="sources\interpolation.cpp" />
     <ClCompile Include="sources\logfile.cpp" />
     <ClCompile Include="sources\openCL.cpp" />

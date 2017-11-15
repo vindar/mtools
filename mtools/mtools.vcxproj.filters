@@ -312,6 +312,9 @@
     <ClInclude Include="headers\graphics\font.hpp">
       <Filter>Header Files\graphics</Filter>
     </ClInclude>
+    <ClInclude Include="headers\graphics\internal\imagewidget.hpp">
+      <Filter>Header Files\graphics\internal</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\console.cpp">
@@ -405,6 +408,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="sources\image.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\imagewidget.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
