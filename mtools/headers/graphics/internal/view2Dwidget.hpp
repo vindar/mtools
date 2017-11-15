@@ -172,8 +172,9 @@ namespace mtools
 
 
             /**
-             
+             ************************************************************
 			 FOR COMPATIBLITY ONLY, TO REMOVE. 
+			 ************************************************************
 
              * Improve the quality of the image displayed in the ImageWidget object. Every call to this
              * method create a new sampling to the image combines with the previous ones.

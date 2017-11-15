@@ -142,7 +142,11 @@ namespace mtools
 
 
 
-		/************* FOR COMPATIBILITY ONLY *******/
+		/*
+            ************************************************************
+			 FOR COMPATIBLITY ONLY, TO REMOVE. 
+			 ************************************************************
+		*/
 		void View2DWidget::improveImageFactor(Img<unsigned char> * im)
 			{
 			if ((im == nullptr) || (im->spectrum() < 3) || (im->spectrum() > 4) || (im->width() <= 0) || (im->height() <= 0)) 
@@ -220,28 +224,29 @@ namespace mtools
                 return;
                 }
 
-			if (_nbRounds == 1)
-				{ // improve once so that the number of improvement is always even from now on.
+			const int NBR = 4;
+			const int M = 255 / (2*NBR);
+
+			if (_nbRounds < NBR)
+				{ // improve by 1 until the number of improvement is exactly NBR.
 				for (int64 j = 0; j < ly; j++)
 					{
 					for (int64 i = 0; i < lx; i++)
 						{
-						const int64 rx = (int64)floor(_g_fgen.unif()*_zoomFactor);
-						const int64 ry = (int64)floor(_g_fgen.unif()*_zoomFactor);
+						int64 rx = (int64)floor(_g_fgen.unif()*_zoomFactor);
+						int64 ry = (int64)floor(_g_fgen.unif()*_zoomFactor);
 						(pdest++)->add(im->operator()(i*_zoomFactor + rx, j*_zoomFactor + ry));
 						}
 					}
-				_nbRounds = 2;
-				*_stocIm->normData() = 1;
+				_nbRounds++;
+				*_stocIm->normData() = _nbRounds - 1;
 				setImage(_stocIm);
 				redrawView();
 				return;
 				}
 
-            const int NBR = 4;
-			if (_nbRounds> 10)
-				{ // divide by 2 if needed. 
-				_nbRounds >>= 1;
+			if (_nbRounds >= M*2*NBR)
+				{ // divide by 2 
 				const int64 l = lx*ly;
 				RGBc64 * p = _stocIm->imData();
 				for (int64 i = 0; i<l; i++) 
@@ -252,6 +257,7 @@ namespace mtools
 					p->comp.A >>= 1;
 					p++;
 					}
+				_nbRounds /= 2;
 				*_stocIm->normData() = _nbRounds - 1;
 				}
 
