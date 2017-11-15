@@ -245,7 +245,7 @@ namespace mtools
     }
 
 
-        int Plot2DGrid::drawOnto(Img<unsigned char> & im, float opacity)
+        int Plot2DGrid::drawOnto(Image & im, float opacity)
         {
             MTOOLS_ASSERT((im.width() == _imageSize.X()) && (im.height() == _imageSize.Y()));
             const int MINPXL = 5;

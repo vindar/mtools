@@ -24,7 +24,8 @@
 #include "../../maths/vec.hpp"
 #include "../../maths/box.hpp"
 #include "../../misc/error.hpp"
-#include "../customcimg.hpp"
+
+#include "../image.hpp"
 
 #include "drawable2Dobject.hpp"
 
@@ -84,7 +85,7 @@ namespace internals_graphics
          *
          * @return  The quality of the drawing made (0 = nothing drawn, 100 = perfect drawing).
          **/
-        virtual int drawOnto( Img<unsigned char> & im, float opacity = 1.0) = 0;
+        virtual int drawOnto( Image & im, float opacity = 1.0) = 0;
 
 
         /**
@@ -144,7 +145,7 @@ namespace internals_graphics
 
             virtual void resetDrawing() override { _obj->resetDrawing(); }
 
-            virtual int drawOnto(Img<unsigned char> & im, float opacity = 1.0) override { return _obj->drawOnto(im, opacity); };
+            virtual int drawOnto(Image & im, float opacity = 1.0) override { return _obj->drawOnto(im, opacity); };
 
             virtual int quality() const override { return _obj->quality(); }
 
@@ -181,7 +182,7 @@ namespace internals_graphics
 			
 		virtual void resetDrawing() override { _obj->resetDrawing(); }
 			
-        virtual int drawOnto( Img<unsigned char> & im, float opacity = 1.0) override { return _obj->drawOnto(im, opacity);};
+        virtual int drawOnto( Image & im, float opacity = 1.0) override { return _obj->drawOnto(im, opacity);};
 
         virtual int quality() const override { return _obj->quality(); }
 			

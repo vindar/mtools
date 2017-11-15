@@ -243,7 +243,7 @@ namespace mtools
             }
 
 
-        int Plot2DBaseGraph::drawOnto(Img<unsigned char> & im, float opacity)
+        int Plot2DBaseGraph::drawOnto(Image & im, float opacity)
             {
             if (_drawOver)  { _drawOverOrBelow(true, im, _range, _drawOverColor, _drawOverOpacity*opacity); }
             if (_drawUnder) { _drawOverOrBelow(false, im, _range, _drawUnderColor, _drawUnderOpacity*opacity); }
@@ -534,19 +534,19 @@ namespace mtools
             }
 
 
-        void Plot2DBaseGraph::_drawPoint(int i, int j, Img<unsigned char> & im, const RGBc & coul, const float opacity, const int tickness)
+        void Plot2DBaseGraph::_drawPoint(int i, int j, Image & im, const RGBc & coul, const float opacity, const int tickness)
             {
             if (tickness <= 1) { im.drawPoint(iVec2(i, j), coul, opacity); } else { im.drawPointCirclePen(iVec2(i, j), tickness-1, coul, opacity); }
             }
 
 
-        void Plot2DBaseGraph::_drawLine(int i, int j1, int j2, Img<unsigned char> & im, const RGBc & coul, const float opacity, const int tickness)
+        void Plot2DBaseGraph::_drawLine(int i, int j1, int j2, Image & im, const RGBc & coul, const float opacity, const int tickness)
             {
             if (tickness <= 1) { im.drawLine(iVec2(i, j1), iVec2(i + 1, j2), coul, opacity); } else { im.drawLineCirclePen(iVec2(i, j1), iVec2(i + 1, j2), tickness-1, coul, opacity); }
             }
 
 
-        void Plot2DBaseGraph::_dicho(int j0, int i1, int i2, int j3, double x0, double x3, int depth, Img<unsigned char> & im, const fBox2 & R, const RGBc & coul, const float & opacity, const int & tickness)
+        void Plot2DBaseGraph::_dicho(int j0, int i1, int i2, int j3, double x0, double x3, int depth, Image & im, const fBox2 & R, const RGBc & coul, const float & opacity, const int & tickness)
             {
                 if (depth <= 0) return;
                 double esp = (x3 - x0)/3.0;
@@ -579,7 +579,7 @@ namespace mtools
             }
 
 
-        void Plot2DBaseGraph::_drawWithDicho(int depth, Img<unsigned char> & im, const fBox2 & R, const RGBc coul, const float opacity, const int tickness)
+        void Plot2DBaseGraph::_drawWithDicho(int depth, Image & im, const fBox2 & R, const RGBc coul, const float opacity, const int tickness)
             {
             double eps = R.lx() / im.width();
             double x1 = R.min[0] + (eps / 2.0);
@@ -603,7 +603,7 @@ namespace mtools
             }
 
 
-        void Plot2DBaseGraph::_drawWithInterpolation(int depth, Img<unsigned char> & im, const fBox2 & R, const RGBc coul, const float opacity, const int tickness)
+        void Plot2DBaseGraph::_drawWithInterpolation(int depth, Image & im, const fBox2 & R, const RGBc coul, const float opacity, const int tickness)
             {
                 double eps = R.lx() / im.width();
                 double x1 = R.min[0] + (eps / 2.0);
@@ -623,7 +623,7 @@ namespace mtools
             }
 
 
-        void Plot2DBaseGraph::_drawOverOrBelow(bool over, Img<unsigned char> & im, const fBox2 & R, RGBc coul, const float opacity)
+        void Plot2DBaseGraph::_drawOverOrBelow(bool over, Image & im, const fBox2 & R, RGBc coul, const float opacity)
             {
             double eps = R.lx() / im.width();
             double x = R.min[0] + (eps / 2.0);

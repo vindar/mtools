@@ -38,7 +38,7 @@ namespace mtools
 
 
     /**
-     * Plot Object which encapsulate a Img<unsigned char> image. The image is either centered at
+     * Plot Object which encapsulate a CImg image. The image is either centered at
      * the origin or such that its bottom left corner is at the origin.
      * It is possible to change the image even while being displayed or to remove it by passing nullptr.
      **/
@@ -173,7 +173,7 @@ namespace mtools
 
 		virtual void resetDrawing() override;
 
-		virtual int drawOnto(Img<unsigned char> & im, float opacity = 1.0) override;
+		virtual int drawOnto(Image & im, float opacity = 1.0) override;
 
 		virtual int quality() const override;
 

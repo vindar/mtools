@@ -165,7 +165,7 @@ namespace mtools
 
 			virtual void resetDrawing() override;
 
-			virtual int drawOnto(Img<unsigned char> & im, float opacity = 1.0) override;
+			virtual int drawOnto(Image & im, float opacity = 1.0) override;
 
 			virtual int quality() const override;
 

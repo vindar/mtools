@@ -345,7 +345,7 @@ namespace mtools
             }
 
 
-        int Plotter2DObj::drawOnto(Img<unsigned char> & im)
+        int Plotter2DObj::drawOnto(Image & im)
             {
             if ((pnot)_ownercb == nullptr) return 0;  // do nothing if not inserted
             MTOOLS_ASSERT(((Drawable2DInterface*)_di) != nullptr);

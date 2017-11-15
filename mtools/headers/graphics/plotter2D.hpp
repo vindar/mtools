@@ -24,7 +24,7 @@
 #include "../maths/vec.hpp"
 #include "../maths/box.hpp"
 #include "../misc/error.hpp"
-#include "customcimg.hpp"
+#include "image.hpp"
 #include "internal/rangemanager.hpp"
 #include "plot2Daxes.hpp"
 #include "plot2Dgrid.hpp"
@@ -446,7 +446,7 @@ class Plotter2D
 	* Sleep(100);
 	* P.exportImg(im);
 	**/
-	void exportImg(mtools::Img<unsigned char> & im);
+	void exportImg(Image & im);
 
 
 

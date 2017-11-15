@@ -22,7 +22,7 @@
 #include "../misc/internal/mtools_export.hpp"
 #include "../misc/internal/threadworker.hpp"
 #include "internal/drawable2DInterface.hpp"
-#include "customcimg.hpp"
+#include "image.hpp"
 #include "rgbc.hpp"
 #include "../maths/vec.hpp"
 #include "../maths/box.hpp"

@@ -161,7 +161,7 @@ namespace mtools
 				}
 
 
-			virtual int drawOnto(Img<unsigned char> & im, float opacity = 1.0) override
+			virtual int drawOnto(Image & im, float opacity = 1.0) override
 				{
 				int q = _LD->progress();
 				_proImg->blit(im, opacity, true);

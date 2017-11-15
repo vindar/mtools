@@ -24,7 +24,7 @@
 #include "../../maths/vec.hpp"
 #include "../../maths/box.hpp"
 #include "../../misc/error.hpp"
-#include "../customcimg.hpp"
+#include "../image.hpp"
 
 #include <atomic>
 
@@ -87,7 +87,7 @@ namespace internals_graphics
          *
          * @return  The quality of the drawing made (0 = nothing drawn, 100 = perfect drawing).
          **/
-        virtual int drawOnto(Img<unsigned char> & im, float opacity = 1.0) = 0;
+        virtual int drawOnto(Image & im, float opacity = 1.0) = 0;
 
 
         /**
@@ -200,7 +200,7 @@ namespace internals_graphics
          *
          * @return  The quality of the drawing made (0 = nothing drawn, 100 = perfect drawing).
          **/
-        int drawOnto(Img<unsigned char> & im, float opacity = 1.0);
+        int drawOnto(Image & im, float opacity = 1.0);
 
 
         /**

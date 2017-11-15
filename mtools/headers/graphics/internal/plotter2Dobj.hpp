@@ -22,7 +22,7 @@
 
 #include "../../maths/vec.hpp"
 #include "../../maths/box.hpp"
-#include "../customcimg.hpp"
+#include "../image.hpp"
 #include "drawable2DInterface.hpp"
 #include "rangemanager.hpp"
 #include "../../misc/internal/forward_fltk.hpp"
@@ -338,7 +338,7 @@ namespace mtools
              * @return  the quality of the drawing between 0 (nothing drawn) and 100 (perfect drawing).
              *          Return 100 if we did not draw anything because the object is disabled.
              **/
-            int drawOnto(Img<unsigned char> & im);
+            int drawOnto(Image & im);
 
 
             /**

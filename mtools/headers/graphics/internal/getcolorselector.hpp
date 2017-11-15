@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "../customcimg.hpp"
+#include "../image.hpp"
 #include "../rgbc.hpp"
 #include "../../maths/vec.hpp"
 #include "../../maths/box.hpp"
@@ -209,18 +209,18 @@ namespace mtools
         *
         * The signature below are recognized with the following order:
         *
-        *  [const] Im<Tim> * getImage([const]iVec2 [&] pos, const iVec2 [&] imSize, void* & data)
-        *  [const] Im<Tim> * getImage([const]iVec2 [&] pos, const iVec2 [&] imSize)
-        *  [const] Im<Tim> * getImage([const] int64 [&] x,[const] int64 [&] y,[const] int64 [&] imLX,[const] int64 [&] imLY, void* & data)
-        *  [const] Im<Tim> * getImage([const] int64 [&] x,[const] int64 [&] y,[const] int64 [&] imLX,[const] int64 [&] imLY)
-        *  [const] Im<Tim> * operator()([const]iVec2 [&] pos, const iVec2 [&] imSize, void* & data)
-        *  [const] Im<Tim> * operator()([const]iVec2 [&] pos, const iVec2 [&] imSize)
-        *  [const] Im<Tim> * operator()([const] int64 [&] x,[const] int64 [&] y,[const] int64 [&] imLX,[const] int64 [&] imLY, void* & data)
-        *  [const] Im<Tim> * operator()([const] int64 [&] x,[const] int64 [&] y,[const] int64 [&] imLX,[const] int64 [&] imLY)
+        *  [const] Image * getImage([const]iVec2 [&] pos, const iVec2 [&] imSize, void* & data)
+        *  [const] Image * getImage([const]iVec2 [&] pos, const iVec2 [&] imSize)
+        *  [const] Image * getImage([const] int64 [&] x,[const] int64 [&] y,[const] int64 [&] imLX,[const] int64 [&] imLY, void* & data)
+        *  [const] Image * getImage([const] int64 [&] x,[const] int64 [&] y,[const] int64 [&] imLX,[const] int64 [&] imLY)
+        *  [const] Image * operator()([const]iVec2 [&] pos, const iVec2 [&] imSize, void* & data)
+        *  [const] Image * operator()([const]iVec2 [&] pos, const iVec2 [&] imSize)
+        *  [const] Image * operator()([const] int64 [&] x,[const] int64 [&] y,[const] int64 [&] imLX,[const] int64 [&] imLY, void* & data)
+        *  [const] Image * operator()([const] int64 [&] x,[const] int64 [&] y,[const] int64 [&] imLX,[const] int64 [&] imLY)
         **/
-        template<typename T, typename Tim> class GetImageSelector
+        template<typename T> class GetImageSelector
             {
-            using im = Img<Tim>;
+            using im = Image;
             typedef typename std::decay<im>::type decayim;
 
             static void * dumptr;
@@ -308,8 +308,8 @@ namespace mtools
         *  RGBc operator()([const] int64 [&] x,[const] int64 [&] y, void* & data)
         *  RGBc operator()([const] int64 [&] x,[const] int64 [&] y)
         *
-        *  If none if the method above are found, try to find a getImage() method GetImageSelector<T,unsigned char>
-        *  and convert to resulting image to a single color using the Img<unsigned char>::toRGBc() method
+        *  If none if the method above are found, try to find a getImage() method with GetImageSelector<T>
+        *  and convert the resulting image to a single color using the Image::toRGBc() method
         **/
         template<typename T> class GetColorSelector
             {
@@ -357,7 +357,7 @@ namespace mtools
             static mtools::RGBc call7(T & obj, const iVec2 & pos, void * &data, mtools::metaprog::dummy<true> D) { return obj(pos.X(), pos.Y(), data); }
             static mtools::RGBc call8(T & obj, const iVec2 & pos, void * &data, mtools::metaprog::dummy<true> D) { return obj(pos.X(), pos.Y()); }
             static mtools::RGBc call9(T & obj, const iVec2 & pos, void * &data, mtools::metaprog::dummy<true> D) {
-                const mtools::Img<unsigned char> * im = GetImageSelector<T, unsigned char>::call(obj, pos, { 1,1 }, data);
+                const mtools::Image * im = GetImageSelector<T>::call(obj, pos, { 1,1 }, data);
                 return ((im == nullptr) ? RGBc::c_TransparentWhite : im->toRGBc());
                 }
 
@@ -368,7 +368,7 @@ namespace mtools
             static mtools::RGBc call5(T & obj, const iVec2 & pos, void * &data, mtools::metaprog::dummy<false> D) { return call6(obj, pos, data, mtools::metaprog::dummy<version6>()); }
             static mtools::RGBc call6(T & obj, const iVec2 & pos, void * &data, mtools::metaprog::dummy<false> D) { return call7(obj, pos, data, mtools::metaprog::dummy<version7>()); }
             static mtools::RGBc call7(T & obj, const iVec2 & pos, void * &data, mtools::metaprog::dummy<false> D) { return call8(obj, pos, data, mtools::metaprog::dummy<version8>()); }
-            static mtools::RGBc call8(T & obj, const iVec2 & pos, void * &data, mtools::metaprog::dummy<false> D) { return call9(obj, pos, data, mtools::metaprog::dummy<GetImageSelector<T, unsigned char>::has_getImage>()); }
+            static mtools::RGBc call8(T & obj, const iVec2 & pos, void * &data, mtools::metaprog::dummy<false> D) { return call9(obj, pos, data, mtools::metaprog::dummy<GetImageSelector<T>::has_getImage>()); }
             static mtools::RGBc call9(T & obj, const iVec2 & pos, void * &data, mtools::metaprog::dummy<false> D) { MTOOLS_DEBUG("GetColorSelector: No getImage()/getColor() found."); return RGBc::c_TransparentWhite; }
 
             public:

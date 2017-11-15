@@ -22,7 +22,7 @@
 #include "../misc/internal/mtools_export.hpp"
 #include "../misc/internal/threadworker.hpp"
 #include "internal/drawable2DInterface.hpp"
-#include "customcimg.hpp"
+#include "image.hpp"
 #include "rgbc.hpp"
 #include "progressimg.hpp"
 #include "../maths/vec.hpp"
@@ -67,7 +67,7 @@ namespace mtools
              **/
             SiteDrawer(ObjType * obj, void * opaque) : _obj(obj), _opaque(opaque), _validParam(false)
                 {
-                static_assert(mtools::GetImageSelector<ObjType, unsigned char>::has_getImage, "The object must be implement one of the getImage() method recognized by GetImageSelector.");
+                static_assert(mtools::GetImageSelector<ObjType>::has_getImage, "The object must be implement one of the getImage() method recognized by GetImageSelector.");
                 }
 
 
@@ -127,7 +127,7 @@ namespace mtools
              *
              * @return  Quality of the image (0 if no image or invalid parameters).
              **/
-            int drawOnto(Img<unsigned char> & im, float opacity = 1.0)
+            int drawOnto(Image & im, float opacity = 1.0)
                 {
 
                 return 1;
@@ -205,7 +205,7 @@ namespace mtools
 
 
             Img<unsigned char>  _exact_qbuf;			// quality buffer of the same size as exact_im: 0 = not drawn. 1 = dirty. 2 = clean 
-            Img<unsigned char>  _exact_im;		    	// the non-rescaled image of size (_wr.lx()*_exact_sx , _wr.ly()*_exact_sy)
+            Image				_exact_im;	    		// the non-rescaled image of size (_wr.lx()*_exact_sx , _wr.ly()*_exact_sy)
             int					_exact_sx, _exact_sy;	// size of a site image in the exact image
             iBox2				_exact_r;				// the rectangle describing the sites in the exact_image
             int					_exact_qi, _exact_qj;	// position we continue from for improving quality

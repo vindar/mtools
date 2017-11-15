@@ -202,7 +202,7 @@ namespace mtools
         /**
          * Override of the drawOnto() method from the Drawable2DObject interface
          **/
-        virtual int drawOnto(Img<unsigned char> & im, float opacity = 1.0);
+        virtual int drawOnto(Image & im, float opacity = 1.0);
 
 
         /**

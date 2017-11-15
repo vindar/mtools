@@ -345,6 +345,18 @@ namespace mtools
 
 
 			/**
+			 * Make a deep copy of im into this object.
+			 * Same as *this = im.get_standalone();
+			 * 
+			 * @param	im	The image to copy. 
+			 **/
+			inline void assign(const Image & im)
+				{
+				*this = im.get_standalone();
+				}
+
+
+			/**
 			* Move the content of this image into anotheer image. This image is left empty.
 			*
 			* @param [in,out]	dest Destination image (its current content is discarded).

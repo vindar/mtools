@@ -139,7 +139,7 @@ namespace mtools
 		}
 
 
-	int Plot2DImage::drawOnto(Img<unsigned char> & im, float opacity)
+	int Plot2DImage::drawOnto(Image & im, float opacity)
 		{
 		int q = _PD->progress();
 		_proImg->blit(im, opacity, true);

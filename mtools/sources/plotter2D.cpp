@@ -263,13 +263,13 @@ namespace mtools
             void doRedraw();
 
 			/* export the current image */
-			void exportImg(mtools::Img<unsigned char> * im);
+			void exportImg(mtools::Image * im);
 
 
             Plotter2DWindow(const Plotter2DWindow &) = delete;              // no copy
             Plotter2DWindow & operator=(const Plotter2DWindow &) = delete;  //
 
-            Img<unsigned char> * _mainImage;           // the view image
+            Image * _mainImage;						 // the view image
             std::atomic<int>      _mainImageQuality; // the quality of this image.
 
             std::atomic<RangeManager*> _RM;        // the associated range manager. Constructed in ctor and destroyed in dtor
@@ -573,7 +573,7 @@ namespace mtools
         void Plotter2DWindow::setImageSize(int lx, int ly, int ch)
         {
             if (lx*ly*ch == 0) { if (_mainImage != nullptr) { delete _mainImage; _mainImage = nullptr; } return; }
-            if (_mainImage == nullptr) { _mainImage = new Img<unsigned char>(lx, ly, 1, ch); } else { _mainImage->resize(lx, ly, 1, ch, -1); }
+            if (_mainImage == nullptr) { _mainImage = new Image(lx, ly); } else { _mainImage->resizeRaw(lx, ly, true); }
         }
 
 
@@ -1819,7 +1819,7 @@ namespace mtools
 
 
 
-		void Plotter2DWindow::exportImg(mtools::Img<unsigned char> * im)
+		void Plotter2DWindow::exportImg(Image * im)
 			{
 			im->assign(*_mainImage);
 			return;
@@ -2091,9 +2091,9 @@ namespace mtools
 	int Plotter2D::quality() const { return (_plotterWin->_mainImageQuality); }
 
 
-	void Plotter2D::exportImg(mtools::Img<unsigned char> & im)
+	void Plotter2D::exportImg(mtools::Image & im)
 		{
-		mtools::IndirectMemberProc<internals_graphics::Plotter2DWindow, mtools::Img<unsigned char> *> proxy(*_plotterWin, &internals_graphics::Plotter2DWindow::exportImg, &im);
+		mtools::IndirectMemberProc<internals_graphics::Plotter2DWindow, mtools::Image *> proxy(*_plotterWin, &internals_graphics::Plotter2DWindow::exportImg, &im);
 		mtools::runInFltkThread(proxy);
 		return;
 		}

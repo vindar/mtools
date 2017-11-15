@@ -22,7 +22,7 @@
 
 #include "../misc/internal/mtools_export.hpp"
 #include "internal/drawable2Dobject.hpp"
-#include "customcimg.hpp"
+#include "image.hpp"
 #include "rgbc.hpp"
 #include "../maths/vec.hpp"
 #include "../maths/box.hpp"
@@ -42,12 +42,12 @@ namespace mtools
 
 
 /**
- * Draws part of a lattice object into into a CImg image. This class implement the
+ * Draws part of a lattice object into into a Image object. This class implement the
  * Drawable2DObject interface.
  * 
  * - The parameters of the drawing are set using the `setImageType` , `setParam`, `ResetDrawing`
  * method. THe method `work` is used to create the drawing itself. The actual warping of the
- * image into a given CImg image is performed using the `drawOnto` method which is quite fast.
+ * image into a given Image object is performed using the `drawOnto` method which is quite fast.
  * 
  * - All the public methods of this class are thread-safe : they can be called simultaneously
  * from any thread and the call are lined up. In particular, the `work` method can be time
@@ -60,7 +60,7 @@ namespace mtools
  * drawing on 3 channel images.
  * 
  * - If TYPEIMAGE is selected, the plotter can request an image of the sites by calling the
- * object method `const Img<unsigned char> * getImage(iVec pos,iVec size)` if it is present.
+ * object method `const Image * getImage(iVec pos,iVec size)` if it is present.
  * The presence of this method is automatically detected by the drawer. If it cannot find it, if
  * falls back using the `getColor` method and simply draw a square of the given color.
  * 
@@ -72,68 +72,12 @@ namespace mtools
  * is usually interesting to redraw on a single image which is resized when needed (this will
  * happen only when the range/size of the drawing changes).
  * 
- * - The `getImage` method must return a pointer to a CImg image. It can be nullptr: in this
- * case, the drawer interpret this as the site being completely transparent. If the returned
- * pointer is not null, then it must point to a 3 or 4 channel image. If the image only has 3
- * channel, a fourth, completely opaque channel is added by the plotter when drawing the lattice
- * on a 4 channel images.
+ * - The `getImage` method must return a pointer to a Image object. It can be nullptr: in this
+ * case, the drawer interpret this as the site being completely transparent.
  *
- * @par Example
- * @code{.cpp}
-using namespace mtools;
-
-RGBc colorCircle(iVec2 pos)
-    { // color red inside a circle of radius 100 around the origin, (transparent) white outside
-    if (pos.norm() < 100) { return RGBc::c_Red; }
-    return RGBc::c_TransparentWhite;
-    }
-
-const Img<unsigned char> * imageCircle(iVec2 pos, iVec2 size)
-    { // no image outside of the circle. Small red 'site circle' inside with transprent background
-    static Img<unsigned char>  im;
-    im.resize((int)size.X(), (int)size.Y(), 1, 4, -1); // resize if needed, we just use 4 channel so we can use transparency
-    EdgeSiteImage ES;
-    if (pos.norm() < 100) { ES.site(true).makeImage(im, size); }
-    else { return nullptr; } // red site of nothing
-    return(&im);
-    }
-
-int main()
-    {
-    fBox2 r(-200, 200, -200, 200);						        // the range displayed
-    Img<unsigned char> image(1000, 800, 1, 4, false);	// the image, use only 4 channels for trnasparency
-    LatticeDrawer<LatticeObjImage<colorCircle, imageCircle> > LD(nullptr); // create the drawer
-    LD.setParam(r, iVec2(1000, 800));                           // set the parameters
-    int drawtype = 0, isaxe = 1, isgrid = 0, iscell = 1; // flags
-    CImgDisplay DD(image); // display
-    while ((!DD.is_closed())) {
-        uint32 k = DD.key();
-        if ((DD.is_key(cimg_library::cimg::keyA))) { isaxe = 1 - isaxe; std::this_thread::sleep_for(std::chrono::milliseconds(50)); }   // type A for toggle axe (with graduations)
-        if ((DD.is_key(cimg_library::cimg::keyG))) { isgrid = 1 - isgrid; std::this_thread::sleep_for(std::chrono::milliseconds(50)); } // type G for toggle grid
-        if ((DD.is_key(cimg_library::cimg::keyC))) { iscell = 1 - iscell; std::this_thread::sleep_for(std::chrono::milliseconds(50)); } // type C for toggle cell
-        if (DD.is_key(cimg_library::cimg::keyESC)) { LD.resetDrawing(); } // [ESC] to force complete redraw
-        if (DD.is_key(cimg_library::cimg::keyENTER)) { drawtype = 1 - drawtype; LD.setImageType(drawtype); std::this_thread::sleep_for(std::chrono::milliseconds(50)); } // enter to change the type of drawing
-        if (DD.is_key(cimg_library::cimg::keyARROWUP)) { double sh = r.ly() / 20; r.min[1] += sh; r.max[1] += sh; LD.setParam(r, iVec2(1000, 800)); } // move n the four directions
-        if (DD.is_key(cimg_library::cimg::keyARROWDOWN)) { double sh = r.ly() / 20; r.min[1] -= sh; r.max[1] -= sh; LD.setParam(r, iVec2(1000, 800)); } //
-        if (DD.is_key(cimg_library::cimg::keyARROWLEFT)) { double sh = r.lx() / 20; r.min[0] -= sh; r.max[0] -= sh; LD.setParam(r, iVec2(1000, 800)); } //
-        if (DD.is_key(cimg_library::cimg::keyARROWRIGHT)) { double sh = r.lx() / 20; r.min[0] += sh; r.max[0] += sh; LD.setParam(r, iVec2(1000, 800)); } //
-        if (DD.is_key(cimg_library::cimg::keyPAGEDOWN)) { double lx = r.max[0] - r.min[0]; double ly = r.max[1] - r.min[1]; r.min[0] = r.min[0] - (lx / 8.0); r.max[0] = r.max[0] + (lx / 8.0); r.min[1] = r.min[1] - (ly / 8.0);  r.max[1] = r.max[1] + (ly / 8.0); LD.setParam(r, iVec2(1000, 800)); }
-        if (DD.is_key(cimg_library::cimg::keyPAGEUP)) { if ((r.lx()>0.5) && (r.ly()>0.5)) { double lx = r.max[0] - r.min[0]; double ly = r.max[1] - r.min[1]; r.min[0] = r.min[0] + (lx / 10.0); r.max[0] = r.max[0] - (lx / 10.0); r.min[1] = r.min[1] + (ly / 10.0); r.max[1] = r.max[1] - (ly / 10.0); } LD.setParam(r, iVec2(1000, 800)); }
-        std::cout << "quality = " << LD.work(50) << "\n"; // work a little bit
-        image.checkerboard(); // draw a gray checker board so we can see the "transparency !"
-        LD.drawOnto(image, 1.0); // draw onto the image with full opacity
-        if (isaxe) { image.fBox2_drawAxes(r).fBox2_drawGraduations(r).fBox2_drawNumbers(r); }
-        if (isgrid) { image.fBox2_drawGrid(r); }
-        if (iscell) { image.fBox2_drawCells(r); }
-        DD.display(image);
-        }
-    return 0;
-    }
- *@endcode
  *        
- * @tparam  LatticeObj  Type of the lattice object. Can be any class provided that it defines the 
- *                      method `RGBc getColor(iVec2 pos)` method and possibly (but not necessary) a 
- *                      method `const Img<unsigned char> * getImage(iVec2 pos,iVec2 size)`.
+ * @tparam  LatticeObj  Type of the lattice object. Can be any class provided that satisfy the 
+ * 						requierement of GetColorSelector and possible GetImageSelector.
  **/
 template<class LatticeObj> class LatticeDrawer : public mtools::internals_graphics::Drawable2DObject
 {
@@ -148,7 +92,7 @@ public:
     static const int REMOVE_BLACK = 2;       ///< remove transparent color treated as transparent black
 
     static const bool HAS_GETCOLOR = mtools::GetColorSelector<LatticeObj>::has_getColor;
-    static const bool HAS_GETIMAGE = mtools::GetImageSelector<LatticeObj, unsigned char>::has_getImage;
+    static const bool HAS_GETIMAGE = mtools::GetImageSelector<LatticeObj>::has_getImage;
 
     /**
      * Constructor. Set the lattice object that will be drawn. 
@@ -383,24 +327,22 @@ public:
 
     /**
      * Draw onto a given image. This method does not "compute" anything. It simply warp the current
-     * drawing onto a given cimg image.
+     * drawing onto a given image.
      * 
-     * The provided cimg image must have 3 or 4 channel and the same size as that set via
-     * setParam(). The current drawing of the plane has its opacity channel multiplied by the
-     * opacity parameter and is then superposed with the current content of im using the A over B
-     * operation. If im has only 3 channel, it is considered as having full opacity.
-     *
-     * @param [in,out]  im  The image to draw onto (must be a 3 or 4 channel image and it size must
+	 * the image must have the same size as that set via setParam(). 
+	 * The current drawing of the plane has its opacity channel multiplied by the opacity parameter 
+	 * and is then superposed with the current content of im using the A over B operation. 
+	 * 
+     * @param [in,out]  im  The image to draw onto and it size must
      *                      be equal to the size previously set via the setParam() method.
      * @param   opacity     The opacity that should be applied to the picture prior to drawing onto
      *                      im. If set to 0.0, then the method returns without drawing anything.
      *
      * @return  The quality of the drawing performed (0 = nothing drawn, 100 = perfect drawing).
      **/
-    virtual int drawOnto(Img<unsigned char> & im, float opacity = 1.0) override
+    virtual int drawOnto(Image & im, float opacity = 1.0) override
         {
         MTOOLS_ASSERT((im.width() == _g_imSize.X()) && (im.height() == _g_imSize.Y()));
-        MTOOLS_ASSERT((im.spectrum() == 3) || (im.spectrum() == 4));
         ++_g_requestAbort; // request immediate stop of the work method if active.
             {
             std::lock_guard<std::timed_mutex> lg(_g_lock); // and wait until we aquire the lock 
@@ -764,8 +706,8 @@ inline void _addInt16Buf(uint32 x,uint32 y,uint32 R,uint32 G,uint32 B,uint32 A)
 
 
 
-/* the main method for warping the pixel image to the cimg image*/
-void _drawOntoPixel(Img<unsigned char> & im, float opacity)
+/* the main method for warping the pixel image to Image object */
+void _drawOntoPixel(Image & im, float opacity)
     {
     MTOOLS_ASSERT((im.spectrum() == 3) || (im.spectrum() == 4));
     _workPixel(0); // make sure everything is in sync. 
@@ -810,7 +752,7 @@ inline unsigned char  _blendcolor4(unsigned char & A, float opA, unsigned char B
 /* warp the buffer onto an image using _qi,_qj,_counter1 and _counter2 
    method when im has four channels : use transparency and A over B operation 
  */
-inline void _warpInt16Buf_4channel(Img<unsigned char> & im, float op) const
+inline void _warpInt16Buf_4channel(Image & im, float op) const
 {
     MTOOLS_ASSERT(im.spectrum() == 4);
     MTOOLS_ASSERT(op > 0.0f);
@@ -932,7 +874,7 @@ inline void _blendcolor3(unsigned char & A, unsigned char B, float opB,float op,
 /* warp the buffer onto an image using _qi,_qj,_counter1 and _counter2 :
 method when im has 3 channels (same as if the fourth channel was completely opaque)
 */
-inline void _warpInt16Buf_3channel(Img<unsigned char> & im, float op) const
+inline void _warpInt16Buf_3channel(Image & im, float op) const
 {
     MTOOLS_ASSERT(im.spectrum() == 3);
     MTOOLS_ASSERT(op > 0.0f);
@@ -1032,8 +974,8 @@ inline void _warpInt16Buf_3channel(Img<unsigned char> & im, float op) const
 // ****************************************************************
 
 /* for the image drawer */
-Img<unsigned char> _exact_qbuf;			// quality buffer of the same size as exact_im: 0 = not drawn. 1 = dirty. 2 = clean 
-Img<unsigned char> _exact_im;		    	// the non-rescaled image of size (_wr.lx()*_exact_sx , _wr.ly()*_exact_sy)
+Img<unsigned char> _exact_qbuf;			    // quality buffer of the same size as exact_im: 0 = not drawn. 1 = dirty. 2 = clean 
+Image               _exact_im;		    	// the non-rescaled image of size (_wr.lx()*_exact_sx , _wr.ly()*_exact_sy)
 int					_exact_sx,_exact_sy;	// size of a site image in the exact image
 iBox2				_exact_r;				// the rectangle describing the sites in the exact_image
 int					_exact_qi,_exact_qj;	// position we continue from for improving quality
@@ -1043,17 +985,17 @@ uint32              _exact_Q23;             // number of images of good quality
 
 
 /* version when LatticeObj implement the getImage method */
-inline const Img<unsigned char > * _getimage(int64 i, int64 j, int lx, int ly, mtools::metaprog::dummy<true> D)
+inline const Image * _getimage(int64 i, int64 j, int lx, int ly, mtools::metaprog::dummy<true> D)
     {
     const iVec2 pos(i, j);
     if (!_g_domR.isInside(pos)) return nullptr;
     void * data = nullptr;
-    return mtools::GetImageSelector<LatticeObj, unsigned char>::call(*_g_obj, pos, { lx, ly }, data);
+    return mtools::GetImageSelector<LatticeObj>::call(*_g_obj, pos, { lx, ly }, data);
     }
 
 
 /* fallback method when LatticeObj does not implement getImage() method */
-inline const Img<unsigned char> * _getimage(int64 i, int64 j, int lx, int ly, mtools::metaprog::dummy<false> D)
+inline const Image * _getimage(int64 i, int64 j, int lx, int ly, mtools::metaprog::dummy<false> D)
     {
     MTOOLS_INSURE(false);
     return(nullptr);
@@ -1287,7 +1229,7 @@ void _qualityImageDraw() const
 
 
 
-inline void _drawOntoImage(Img<unsigned char> & im, float op) 
+inline void _drawOntoImage(Image & im, float op) 
 {
     MTOOLS_ASSERT((im.spectrum() == 3) || (im.spectrum() == 4));
     MTOOLS_ASSERT((im.width() == _g_imSize.X()) && (im.height() == _g_imSize.Y()));

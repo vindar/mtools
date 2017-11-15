@@ -141,37 +141,6 @@ namespace mtools
         void View2DWidget::discardImage() { _discardIm = true; }
 
 
-
-		/*
-            ************************************************************
-			 FOR COMPATIBLITY ONLY, TO REMOVE. 
-			 ************************************************************
-		*/
-		void View2DWidget::improveImageFactor(Img<unsigned char> * im)
-			{
-			if ((im == nullptr) || (im->spectrum() < 3) || (im->spectrum() > 4) || (im->width() <= 0) || (im->height() <= 0)) 
-				{
-				improveImageFactor((const Image *)nullptr); 
-				return;
-				}
-			Image tmpim(im->width(), im->height());
-			bool fc = (im->spectrum() == 4);
-			for (int j = 0; j < im->height(); j++)
-				{
-				for (int i = 0; i < im->width(); i++)
-					{
-					RGBc & color = *(tmpim.offset(i, j));
-					color.comp.R = (uint8)(*(im->data(i, j, 0, 0)));
-					color.comp.G = (uint8)(*(im->data(i, j, 0, 1)));
-					color.comp.B = (uint8)(*(im->data(i, j, 0, 2)));
-					color.comp.A = 255;
-					}
-				}
-			improveImageFactor(&tmpim);
-			}
-
-
-
         void View2DWidget::improveImageFactor(const Image * im)
             {
             if ((im == nullptr) || (im->isEmpty())) { setImage((const Image *)nullptr); _stocR.clear(); _nbRounds = 0; _discardIm = false; return; }

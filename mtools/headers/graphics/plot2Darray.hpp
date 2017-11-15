@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "image.hpp"
 #include "../misc/internal/mtools_export.hpp"
 #include "../maths/vec.hpp"
 #include "internal/plotter2Dobj.hpp"

@@ -155,51 +155,8 @@ namespace mtools
     /**
      * Plot Object which encapsulate a Lattice object.
      *
-     * @code{.cpp}
-     * mtools::RGBc colorBigCircle(mtools::iVec2 pos)
-     *    {
-     *    if (pos.norm() < 100) return mtools::RGBc::jetPalette(pos.norm() / 100);
-     *    return mtools::RGBc::c_TransparentWhite;
-     *    }
-     *
-     * const Img<unsigned char> * imageBigCircle(mtools::iVec2 pos, mtools::iVec2 size)
-     *    {
-     *    static Img<unsigned char>  im; mtools::EdgeSiteImage ES;
-     *    if (pos.norm() < 100) { mtools::EdgeSiteImage ES; ES.site(true, mtools::RGBc::jetPalette(pos.norm() / 100)).text("A").makeImage(im, size); return &im; }
-     *    return nullptr;
-     *    }
-     *
-     * class Strip
-     *    {
-     *    public:
-     *    mtools::RGBc getColor(mtools::iVec2 pos) // could also be static so we would not have to create an instance of the object.
-     *        {
-     *        if ((pos.X() <= 50) && (pos.X() >= -50)) return mtools::RGBc::c_Gray;
-     *        return mtools::RGBc::c_TransparentWhite;
-     *        }
-     *    };
-     *
-     * int main()
-     *    {
-     *    Plotter2D P;  // the plotter
-     *    Plot2DLattice< mtools::LatticeObjImage<colorBigCircle,imageBigCircle> > L1(nullptr, "Big Circle"); // encapsulate the method into an object. We do not need to create an instance and can just pass nullptr since the method are static.
-     *    Strip strip; // strip object
-     *    Plot2DLattice< Strip> L2(&strip, "Strip"); // the second lattice object. This one has getColor() has a non-static member and no getImage method.
-     *    P[L1][L2]; // insert both objects in the plotter.
-     *    P.range().setRange(mtools::fBox2(-150, 150, -150, 150)); // change the range
-     *    P.range().setRatio1(); // we want a 1:1 aspect ratio.
-     *    P.fourChannelImage(true); // use four channel image for better handling of transparency (in particular for the transparent white when there is nothing in the lattice).
-     *    L2.opacity(0.5); //make the strip half transparent.
-     *    P.solidBackGroundColor(mtools::RGBc::c_Black); // use a black background
-     *    P.plot(); // display the plot.
-     *    return 0;
-     *    }
-     * @endcode.
-     *
      * @tparam  T   Object which fulfills the same requirements as those needed by the LatticeDrawer
-     *              class. it must implement the `RGBc getColor(iVec2 pos)` method and possibly the
-     *              `const Img<unsigned char> * getImage(iVec2 pos, iVec2 size)` methods (in staitc
-     *              or non-static form).
+     *              class. 
      **/
     template< typename T > class  Plot2DLattice : public internals_graphics::Plot2DLatticeBase
         {
@@ -209,10 +166,7 @@ namespace mtools
             /**
              * Constructor. Pointer version : permit to pass nullptr if the methods are static.
              *
-             * @param [in,out]  obj The lattice object that must fullfill the requirement of LatticeDrawer :
-             *                      it must implement the `RGBc getColor(iVec2 pos)` method and possibly the
-             *                      `const Img<unsigned char> * getImage(iVec2 pos, iVec2 size)` method. The
-             *                      lattice object must survive the plot.
+             * @param [in,out]  obj The lattice object that must fullfill the requirement of LatticeDrawer 
              * @param   name        The name of the plot.
              **/
             Plot2DLattice(T * obj, std::string name = "Lattice") : Plot2DLatticeBase(name),  _LD(nullptr), _encD(nullptr)
@@ -224,10 +178,7 @@ namespace mtools
             /**
              * Constructor. Reference verison
              *
-             * @param [in,out]  obj The lattice object that must fullfill the requirement of LatticeDrawer :
-             *                      it must implement the `RGBc getColor(iVec2 pos)` method and possibly the
-             *                      `const Img<unsigned char> * getImage(iVec2 pos, iVec2 size)` method. The
-             *                      lattice object must survive the plot.
+             * @param [in,out]  obj The lattice object that must fullfill the requirement of LatticeDrawer
              * @param   name        The name of the plot.
              **/
             Plot2DLattice(T & obj, std::string name = "Lattice") : Plot2DLatticeBase(name), _LD(nullptr), _encD(nullptr)
