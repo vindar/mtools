@@ -205,14 +205,45 @@ namespace mtools
             **/
             inline RGBc64 * imData() { return _imData; }
 
+			/**
+			* Return a pointer to the color buffer.
+			**/
+			inline const RGBc64 * imData() const { return _imData; }
 
-            /**
+
+			/**
+			* Return a pointer a position in the color buffer
+			**/
+			inline RGBc64 * imData(int64 x, int64 y) { return _imData + x + y*_width; }
+
+			/**
+			* Return a pointer a position in the color buffer
+			**/
+			inline const RGBc64 * imData(int64 x, int64 y) const { return _imData + x + y*_width;}
+
+			/**
             * Return a pointer to the normalization buffer.
             **/
             inline uint8 * normData() { return _normData; }
 
+			/**
+			* Return a pointer to the normalization buffer.
+			**/
+			inline const uint8 * normData() const { return _normData; }
 
-            /**
+
+			/**
+			* Return a pointer to a position in the normalization buffer.
+			**/
+			inline uint8 * normData(int64 x,int64 y) { return _normData + x + y*_width; }
+
+			/**
+			* Return a pointer to a position in the normalization buffer.
+			**/
+			inline const uint8 * normData(int64 x, int64 y) const { return _normData + x + y*_width; }
+
+			
+			/**
              * Normalises a portion of the image so that the multiplying factor for each pixel of the sub
              * image 1.
              *
