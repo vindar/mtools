@@ -194,6 +194,12 @@ namespace mtools
             inline size_t width()  const { return _width; }
 
 
+			/**
+			 * Query if the image is empty
+			 */
+			inline bool isEmpty() const { return (_height*_width == 0); }
+
+
             /**
             * Return a pointer to the color buffer.
             **/
