@@ -141,7 +141,7 @@ namespace mtools
 		 * @param	c the color
 		 * @param	N normalisation value (must be >0). 
 		 */
-		MTOOLS_FORCEINLINE RGBc(const RGBc64 & c, uint8 N);
+		MTOOLS_FORCEINLINE RGBc(const RGBc64 & c, uint32 N);
 
         /**
          * Raw constructor from int32
@@ -196,7 +196,7 @@ namespace mtools
 		 * @param	coul The color in RGBc64 format
 		 * @param	N    The normalization (must be >0). 
 		 */
-		MTOOLS_FORCEINLINE void RGBc::fromRGBc64(const RGBc64 & coul, const uint8 N);
+		MTOOLS_FORCEINLINE void RGBc::fromRGBc64(const RGBc64 & coul, const uint32 N);
 
 
 
@@ -476,7 +476,7 @@ namespace mtools
 		 *
 		 * @return	The blended color.
 		 */
-		MTOOLS_FORCEINLINE RGBc get_blend(const RGBc64 & colorB, const uint8 N, const uint32 opacity) const;
+		MTOOLS_FORCEINLINE RGBc get_blend(const RGBc64 & colorB, const uint32 N, const uint32 opacity) const;
 
 
 
@@ -491,7 +491,7 @@ namespace mtools
 		 * 					the range [0, 0x100] (use convertAlpha_0xFF_to_0x100() to convert a value in
 		 * 					[0,0xFF] to this range).
 		 */
-		MTOOLS_FORCEINLINE void blend(const RGBc64 & colorB, const uint8 N, const uint32 opacity);
+		MTOOLS_FORCEINLINE void blend(const RGBc64 & colorB, const uint32 N, const uint32 opacity);
 
 
 		/**
@@ -507,7 +507,7 @@ namespace mtools
 		 *
 		 * @return	The blended color.
 		 */
-		MTOOLS_FORCEINLINE RGBc RGBc::get_blend_removeWhite(const RGBc64 & coul, const uint8 N, const float op) const;
+		MTOOLS_FORCEINLINE RGBc RGBc::get_blend_removeWhite(const RGBc64 & coul, const uint32 N, const float op) const;
 
 
 		/**
@@ -521,7 +521,7 @@ namespace mtools
 		 * @param	N    Normalisation to use (must be >0).
 		 * @param	op   The opacity to multiply before blending, must be in the range [0.0f, 1.0f].
 		 */
-		MTOOLS_FORCEINLINE void RGBc::blend_removeWhite(const RGBc64 & coul, const uint8 N, const float op);
+		MTOOLS_FORCEINLINE void RGBc::blend_removeWhite(const RGBc64 & coul, const uint32 N, const float op);
 
 
 		/**
@@ -537,7 +537,7 @@ namespace mtools
 		*
 		* @return	The blended color.
 		*/
-		MTOOLS_FORCEINLINE RGBc RGBc::get_blend_removeBlack(const RGBc64 & coul, const uint8 N, const float op) const;
+		MTOOLS_FORCEINLINE RGBc RGBc::get_blend_removeBlack(const RGBc64 & coul, const uint32 N, const float op) const;
 
 
 		/**
@@ -551,7 +551,7 @@ namespace mtools
 		 * @param	N    Normalisation to use (must be >0).
 		 * @param	op   The opacity to multiply before blending, must be in the range [0.0f, 1.0f].
 		 */
-		MTOOLS_FORCEINLINE void RGBc::blend_removeBlack(const RGBc64 & coul, const uint8 N, const float op);
+		MTOOLS_FORCEINLINE void RGBc::blend_removeBlack(const RGBc64 & coul, const uint32 N, const float op);
 
 
 
@@ -1074,7 +1074,7 @@ union RGBc64
         }
 
 
-	MTOOLS_FORCEINLINE RGBc::RGBc(const RGBc64 & c, uint8 N)
+	MTOOLS_FORCEINLINE RGBc::RGBc(const RGBc64 & c, uint32 N)
 		{
 		fromRGBc64(c, N);
 		}
@@ -1091,7 +1091,7 @@ union RGBc64
 		}
 
 
-	MTOOLS_FORCEINLINE void RGBc::fromRGBc64(const RGBc64 & coul, const uint8 N)
+	MTOOLS_FORCEINLINE void RGBc::fromRGBc64(const RGBc64 & coul, const uint32 N)
 		{
 		comp.R = (uint8)(coul.comp.R / N);
 		comp.G = (uint8)(coul.comp.G / N);
@@ -1100,7 +1100,7 @@ union RGBc64
 		}
 
 
-	MTOOLS_FORCEINLINE RGBc RGBc::get_blend(const RGBc64 & colorB, const uint8 N, const uint32 opacity) const
+	MTOOLS_FORCEINLINE RGBc RGBc::get_blend(const RGBc64 & colorB, const uint32 N, const uint32 opacity) const
 		{
 		const uint32 alpha = (opacity*colorB.comp.A) / N;
 		const uint32 beta = (256 * 255) - alpha;
@@ -1113,14 +1113,14 @@ union RGBc64
 		}
 
 
-	MTOOLS_FORCEINLINE void RGBc::blend(const RGBc64 & colorB, const uint8 N, const uint32 opacity)
+	MTOOLS_FORCEINLINE void RGBc::blend(const RGBc64 & colorB, const uint32 N, const uint32 opacity)
 		{
 		(*this) = get_blend(colorB, N, opacity);
 		}
 
 
 
-	MTOOLS_FORCEINLINE RGBc RGBc::get_blend_removeWhite(const RGBc64 & coul, const uint8 N, const float op) const
+	MTOOLS_FORCEINLINE RGBc RGBc::get_blend_removeWhite(const RGBc64 & coul, const uint32 N, const float op) const
 		{
 		if (coul.comp.A == 0) return *this;
 		const float g = ((float)(N * 255)) / ((float)coul.comp.A);
@@ -1136,14 +1136,14 @@ union RGBc64
 			255);
 		}
 
-	MTOOLS_FORCEINLINE void RGBc::blend_removeWhite(const RGBc64 & coul, const uint8 N, const float op)
+	MTOOLS_FORCEINLINE void RGBc::blend_removeWhite(const RGBc64 & coul, const uint32 N, const float op)
 		{
 		*this = get_blend_removeWhite(coul, N, op);
 		}
 
 
 	/* blending and artificially removing fully transparent black pixel */
-	MTOOLS_FORCEINLINE RGBc RGBc::get_blend_removeBlack(const RGBc64 & coul, const uint8 N, const float op) const
+	MTOOLS_FORCEINLINE RGBc RGBc::get_blend_removeBlack(const RGBc64 & coul, const uint32 N, const float op) const
 		{
 		if (coul.comp.A == 0) return *this;
 		const float g = ((float)(N * 255)) / ((float)coul.comp.A);
@@ -1161,7 +1161,7 @@ union RGBc64
 		}
 
 
-	MTOOLS_FORCEINLINE void RGBc::blend_removeBlack(const RGBc64 & coul, const uint8 N, const float op)
+	MTOOLS_FORCEINLINE void RGBc::blend_removeBlack(const RGBc64 & coul, const uint32 N, const float op)
 		{
 		*this = get_blend_removeBlack(coul, N, op);
 		}
