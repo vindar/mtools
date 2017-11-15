@@ -109,6 +109,15 @@ namespace mtools
 
     /**************** FORWARD TO CIMG ********************/
 
+
+	private:
+
+
+		Img & operator=(const Img & im);
+
+		
+	public:
+
     /** Constructors */
     Img() : cimg_library::CImg<T>() {}
     Img(int x, int y, int z, int c) : cimg_library::CImg<T>(x,y,z,c) {}
