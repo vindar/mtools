@@ -181,7 +181,6 @@
     <ClInclude Include="headers\graphics\edgesiteimage.hpp" />
     <ClInclude Include="headers\graphics\font.hpp" />
     <ClInclude Include="headers\graphics\image.hpp" />
-    <ClInclude Include="headers\graphics\internal\cimgwidget.hpp" />
     <ClInclude Include="headers\graphics\internal\drawable2DInterface.hpp" />
     <ClInclude Include="headers\graphics\internal\drawable2Dobject.hpp" />
     <ClInclude Include="headers\graphics\internal\getcolorselector.hpp" />
@@ -258,7 +257,6 @@
     <ClInclude Include="stdafx_mtools.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="sources\cimgwidget.cpp" />
     <ClCompile Include="sources\console.cpp" />
     <ClCompile Include="sources\drawable2Dobject.cpp" />
     <ClCompile Include="sources\edgesiteimage.cpp" />

@@ -264,9 +264,6 @@
     <ClInclude Include="headers\random\internal\SRW_exitGridZ2_data.hpp">
       <Filter>Header Files\random\internal</Filter>
     </ClInclude>
-    <ClInclude Include="headers\graphics\internal\cimgwidget.hpp">
-      <Filter>Header Files\graphics\internal</Filter>
-    </ClInclude>
     <ClInclude Include="headers\graphics\internal\drawable2DInterface.hpp">
       <Filter>Header Files\graphics\internal</Filter>
     </ClInclude>
@@ -339,9 +336,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="sources\logfile.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="sources\cimgwidget.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="sources\rangemanager.cpp">
