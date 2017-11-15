@@ -25,6 +25,7 @@
 #include "../misc/error.hpp"
 #include "../maths/vec.hpp"
 #include "rgbc.hpp"
+#include "image.hpp"
 #include "customcimg.hpp"
 
 
@@ -91,7 +92,7 @@ namespace mtools
 
 
             /**
-            * Assignement operator. Make a deep copy
+            * Assignment operator. Make a deep copy
             **/
             ProgressImg & operator=(const ProgressImg & im)
                 {
@@ -210,7 +211,7 @@ namespace mtools
              * image 1.
              *
              * @param   subBox  The sub box describing the portion to normalize. If empty, nothing is done.
-             *                  If the box is too large, it is clipped insidde the image.
+             *                  If the box is too large, it is clipped inside the image.
              **/
             void normalize(iBox2 subBox)
                 {
@@ -253,7 +254,7 @@ namespace mtools
              * @param   blitType    Type of blitting. One of BLIT_CLASSIC, BLIT_REMOVE_TRANSPARENT_WHITE or
              *                      BLIT_REMOVE_TRANSPARENT_BLACK.
              **/
-            void blit(Img<unsigned char> & im, float op = 1.0, bool reverse = true, int blitType = BLIT_CLASSIC)
+            void blit(Img<unsigned char> & im, float op = 1.0f, bool reverse = true, int blitType = BLIT_CLASSIC)
                 {
                 switch (blitType)
                     {
@@ -265,7 +266,96 @@ namespace mtools
                 }
 
 
+			/**
+			* Blit the ProgressImg into a Image. Both images must have the same size.
+			*
+			* @param [in,out]  im  The destination image. Must have the same size as this. Can be a 3 or 4
+			*                      channel image. If it exist, the alpha channel is set to full opacity.
+			* @param   op          opacity to multiply the progressImg with before blitting.
+			* @param   reverse     true to reverse the y axis.
+			* @param   blitType    Type of blitting. One of BLIT_CLASSIC, BLIT_REMOVE_TRANSPARENT_WHITE or
+			*                      BLIT_REMOVE_TRANSPARENT_BLACK.
+			**/
+
+			void blit(Image & im, float op = 1.0f, bool reverse = true, int blitType = BLIT_CLASSIC)
+				{
+				switch (blitType)
+					{
+					case BLIT_CLASSIC: { blit_classic(im, op, reverse); return; }
+					case BLIT_REMOVE_TRANSPARENT_WHITE: { blit_removeWhite(im, op, reverse); return; }
+					case BLIT_REMOVE_TRANSPARENT_BLACK: { blit_removeBlack(im, op, reverse); return; }
+					}
+				MTOOLS_ERROR("Illegal blitType argument...");
+				}
+
+
         private:
+
+
+			/* blitting procedure, traditionnal blending version */
+			void blit_classic(Image & im, float op, bool reverse)
+				{
+				const uint32 op32 = (uint32)(256 * op);
+				if ((op32 == 0) || (im.isEmpty()) || (width() == 0) || (height() == 0)) return;
+				const int64 lx = im.lx(); MTOOLS_INSURE(lx == width());
+				const int64 ly = im.ly(); MTOOLS_INSURE(ly == height());
+				const int64 str = (reverse) ? (-im.stride()) : (im.stride());
+				RGBc64 * psrc = _imData;
+				uint8 *	 qsrc = _normData;
+				RGBc *	 pdst = im.data() + ((reverse) ? (im.stride()*(ly - 1)) : 0);
+				for (int64 j = 0; j < ly; j++)
+					{
+					for (int64 i = 0; i < lx; i++)
+						{
+						pdst[i].blend(*(psrc++), (*(qsrc++)) + 1, op32);
+						}
+					pdst += str;
+					}
+				}
+
+
+			/* blitting procedure, remove fully transparent white pixel */
+			void blit_removeWhite(Image & im, const float op = 1.0f, bool reverse = true)
+				{
+				if ((op <= 0.0f) || (im.isEmpty()) || (width() == 0) || (height() == 0)) return;
+				const int64 lx = im.lx(); MTOOLS_INSURE(lx == width());
+				const int64 ly = im.ly(); MTOOLS_INSURE(ly == height());
+				const int64 str = (reverse) ? (-im.stride()) : (im.stride());
+				RGBc64 * psrc = _imData;
+				uint8 *	 qsrc = _normData;
+				RGBc *	 pdst = im.data() + ((reverse) ? (im.stride()*(ly - 1)) : 0);
+				for (int64 j = 0; j < ly; j++)
+					{
+					for (int64 i = 0; i < lx; i++)
+						{
+						pdst[i].blend_removeWhite(*(psrc++), (*(qsrc++)) + 1, op);
+						}
+					pdst += str;
+					}
+				}
+
+
+			/* blitting procedure, remove fully transparent black pixel */
+			void blit_removeBlack(Image & im, const float op = 1.0f, bool reverse = true)
+				{
+				if ((op <= 0.0f) || (im.isEmpty()) || (width() == 0) || (height() == 0)) return;
+				const int64 lx = im.lx(); MTOOLS_INSURE(lx == width());
+				const int64 ly = im.ly(); MTOOLS_INSURE(ly == height());
+				const int64 str = (reverse) ? (-im.stride()) : (im.stride());
+				RGBc64 * psrc = _imData;
+				uint8 *	 qsrc = _normData;
+				RGBc *	 pdst = im.data() + ((reverse) ? (im.stride()*(ly - 1)) : 0);
+				for (int64 j = 0; j < ly; j++)
+					{
+					for (int64 i = 0; i < lx; i++)
+						{
+						pdst[i].blend_removeBlack(*(psrc++), (*(qsrc++)) + 1, op);
+						}
+					pdst += str;
+					}
+				}
+
+
 
 
             /* blitting procedure, traditionnal blending version */
@@ -331,6 +421,12 @@ namespace mtools
                     }
                 MTOOLS_ERROR("incorrect number of channel in the image");
                 }
+
+
+
+
+
+
 
 
             /* blitting procedure, remove fully transparent white pixel */
