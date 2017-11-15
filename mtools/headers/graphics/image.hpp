@@ -3542,6 +3542,16 @@ namespace mtools
 
 
 			/**
+			 * return the number of uint32 for each line of tghe image. we have the relation:
+			 * 
+			 * stride() = width() + padding()
+			 *
+			 * @return	the image stride
+			 */
+			MTOOLS_FORCEINLINE int64 stride() const { return(_stride); }
+
+
+			/**
 			* Sets the horizontal padding value for this image.
 			*
 			* If the newx padding differs from the previous one, the pixel buffer is re-created.
