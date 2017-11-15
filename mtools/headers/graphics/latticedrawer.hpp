@@ -709,44 +709,14 @@ inline void _addInt16Buf(uint32 x,uint32 y,uint32 R,uint32 G,uint32 B,uint32 A)
 /* the main method for warping the pixel image to Image object */
 void _drawOntoPixel(Image & im, float opacity)
     {
-    MTOOLS_ASSERT((im.spectrum() == 3) || (im.spectrum() == 4));
     _workPixel(0); // make sure everything is in sync. 
     if (_g_current_quality > 0)
         {
-        if (im.spectrum() == 4) { _warpInt16Buf_4channel(im, opacity); } else { _warpInt16Buf_3channel(im, opacity); }
+        _warpInt16Buf_4channel(im, opacity); 
         }
     return;
     }
 
-
-/* make B -> A and return the resulting opacity */
-inline unsigned char _blendcolor4(unsigned char & A, float opA, unsigned char B, float opB ) const
-    {
-    float o = opB + opA*(1 - opB); //resulting opacity
-    if (o == 0)  return 0;
-    A = (unsigned char)((B*opB + A*opA*(1 - opB))/o);
-    return (unsigned char)(255 * o);
-    }
-
-
-/* make B -> A and return the resulting opacity
- * modify the opacity and artificialy remove transparent white/black */
-inline unsigned char  _blendcolor4(unsigned char & A, float opA, unsigned char B, float opB,float op, float opacify, int removeColor) const
-    {
-    if (opB <= 0.0f) return (unsigned char)(255 * opA);
-    opB = 1.0f - (1.0f - opB)/opacify;
-    float C;
-    switch(removeColor)
-        {
-        case REMOVE_WHITE: { C = (1.0f/opB)*(B - 255) + 255; break; }
-        case REMOVE_BLACK: { C = (1.0f/opB)*B; break; }
-        default: { C = (float)B; break; }
-        }
-    opB *=op;
-    float o = opB + opA*(1 - opB); //resulting opacity
-    A = (unsigned char)((C*opB + A*opA*(1 - opB))/o);
-    return (unsigned char)(255 * o);
-    }
 
 
 /* warp the buffer onto an image using _qi,_qj,_counter1 and _counter2 
@@ -754,7 +724,6 @@ inline unsigned char  _blendcolor4(unsigned char & A, float opA, unsigned char B
  */
 inline void _warpInt16Buf_4channel(Image & im, float op) const
 {
-    MTOOLS_ASSERT(im.spectrum() == 4);
     MTOOLS_ASSERT(op > 0.0f);
     const int removeColor = _g_removeColor;
     const float opacify = _g_opacify;
@@ -763,206 +732,98 @@ inline void _warpInt16Buf_4channel(Image & im, float op) const
     const size_t dxy = (size_t)(dx * _int16_buffer_dim.Y());
     const size_t l1 = _qi + (dx*_qj);
     const size_t l2 = (dxy)-l1;
-    if (l1>0)
+	MTOOLS_INSURE(im.padding() == 0);
+	const uint32 op32 = (uint32)(op * 256);
+	if (l1>0)
         {
-        unsigned char * pdest0 = im.data(0, 0, 0, 0);
-        unsigned char * pdest1 = im.data(0, 0, 0, 1);
-        unsigned char * pdest2 = im.data(0, 0, 0, 2);
-        unsigned char * pdest_opa = im.data(0, 0, 0, 3);
+		RGBc * pdest = im.data();
         uint16 * psource0 = _int16_buffer;
         uint16 * psource1 = _int16_buffer + dxy;
         uint16 * psource2 = _int16_buffer + 2*dxy;
         uint16 * psource_opb = _int16_buffer + 3 * dxy;
-        if (_counter1 == 0) {/* memset(pdest,0,l1); */ } else
+        if (_counter1 != 0)
             {
-            if (_counter1 == 1) 
-                { 
-                for (size_t i = 0; i < l1; i++) 
-                    { 
-                    const float g = (((float)(*psource_opb)) / 255);
-                    const float h = ((po*(*pdest_opa)) / 255);
-                    _blendcolor4((*pdest0), h, (unsigned char)(*psource0), g, op,opacify,removeColor);
-                    _blendcolor4((*pdest1), h, (unsigned char)(*psource1), g, op,opacify,removeColor);
-                    (*pdest_opa) = _blendcolor4((*pdest2), h, (unsigned char)(*psource2), g, op,opacify,removeColor);
-                    ++pdest0; ++pdest1; ++pdest2; ++pdest_opa;
-                    ++psource0; ++psource1; ++psource2; ++psource_opb;
-                    } 
-                }
-            else 
-               { 
-               for (size_t i = 0; i < l1; i++) 
-                    { 
-                    const float g = (((float)(*psource_opb) / _counter1) / 255);
-                    const float h = ((po*(*pdest_opa)) / 255);
-                    _blendcolor4((*pdest0), h, (unsigned char)((*psource0) / _counter1), g, op,opacify,removeColor);
-                    _blendcolor4((*pdest1), h, (unsigned char)((*psource1) / _counter1), g, op,opacify,removeColor);
-                    (*pdest_opa) = _blendcolor4((*pdest2), h, (unsigned char)((*psource2) / _counter1), g, op,opacify,removeColor);
-                    ++pdest0; ++pdest1; ++pdest2; ++pdest_opa;
-                    ++psource0; ++psource1; ++psource2; ++psource_opb;
-                    } 
-                }
-            }
+			switch (removeColor)
+				{
+				case REMOVE_WHITE:
+					{
+					for (size_t i = 0; i < l1; i++)
+						{
+						RGBc64 src64(*psource0, *psource1, *psource2, *psource_opb);
+						pdest->blend_removeWhite(src64, _counter1, op);
+						++pdest; ++psource0; ++psource1; ++psource2; ++psource_opb;
+						}
+					break;
+					}
+				case REMOVE_BLACK:
+					{
+					for (size_t i = 0; i < l1; i++)
+						{
+						RGBc64 src64(*psource0, *psource1, *psource2, *psource_opb);
+						pdest->blend_removeBlack(src64, _counter1, op);
+						++pdest; ++psource0; ++psource1; ++psource2; ++psource_opb;
+						}
+					break;
+					}
+				default:
+					{
+					for (size_t i = 0; i < l1; i++)
+						{
+						RGBc64 src64(*psource0, *psource1, *psource2, *psource_opb);
+						pdest->blend(src64, _counter1, op32);
+						++pdest; ++psource0; ++psource1; ++psource2; ++psource_opb;
+						}
+					break;
+					}
+				}
+			}
         }
     if (l2>0)
         {
-        unsigned char * pdest0 = im.data(_qi, _qj, 0, 0);
-        unsigned char * pdest1 = im.data(_qi, _qj, 0, 1);
-        unsigned char * pdest2 = im.data(_qi, _qj, 0, 2);
-        unsigned char * pdest_opa = im.data(_qi, _qj, 0, 3);
+		RGBc * pdest = im.offset(_qi, _qj);
         uint16 * psource0 = _int16_buffer +  + l1;
         uint16 * psource1 = _int16_buffer + dxy + l1;
         uint16 * psource2 = _int16_buffer + 2*dxy + l1;
         uint16 * psource_opb = _int16_buffer + 3*dxy + l1;
-        if (_counter2 == 0) {/* memset(pdest,0,l2); */ } else
+        if (_counter2 != 0) 
             {
-            if (_counter2 == 1) 
-                {
-                for (size_t i = 0; i<l2; i++) 
-                    { 
-                    const float g = ((float)(*psource_opb)) / 255;
-                    const float h = (po*(*pdest_opa)) / 255;
-                    _blendcolor4((*pdest0), h , (unsigned char)(*psource0), g, op,opacify,removeColor);
-                    _blendcolor4((*pdest1), h, (unsigned char)(*psource1), g, op,opacify,removeColor);
-                    (*pdest_opa) = _blendcolor4((*pdest2), h, (unsigned char)(*psource2), g, op,opacify,removeColor);
-                    ++pdest0; ++pdest1; ++pdest2; ++pdest_opa;
-                    ++psource0; ++psource1; ++psource2; ++psource_opb;
-                    }
-                }
-            else 
-                { 
-                for (size_t i = 0; i<l2; i++) 
-                    { 
-                    const float g = ((float)(*psource_opb) / _counter2) / 255;
-                    const float h = (po*(*pdest_opa)) / 255;
-                    _blendcolor4((*pdest0), h , (unsigned char)((*psource0) / _counter2), g, op,opacify,removeColor);
-                    _blendcolor4((*pdest1), h , (unsigned char)((*psource1) / _counter2), g, op,opacify,removeColor);
-                    (*pdest_opa) = _blendcolor4((*pdest2), h , (unsigned char)((*psource2) / _counter2), g, op,opacify,removeColor);
-                    ++pdest0; ++pdest1; ++pdest2; ++pdest_opa;
-                    ++psource0; ++psource1; ++psource2; ++psource_opb;
-                    }
-                }
+			switch (removeColor)
+				{
+				case REMOVE_WHITE:
+					{
+					for (size_t i = 0; i<l2; i++)
+						{
+						RGBc64 src64(*psource0, *psource1, *psource2, *psource_opb);
+						pdest->blend_removeWhite(src64, _counter2, op);
+						++pdest; ++psource0; ++psource1; ++psource2; ++psource_opb;
+						}
+					break;
+					}
+				case REMOVE_BLACK:
+					{
+					for (size_t i = 0; i<l2; i++)
+						{
+						RGBc64 src64(*psource0, *psource1, *psource2, *psource_opb);
+						pdest->blend_removeBlack(src64, _counter2, op);
+						++pdest; ++psource0; ++psource1; ++psource2; ++psource_opb;
+						}
+					break;
+					}
+				default:
+					{
+					for (size_t i = 0; i<l2; i++)
+						{
+						RGBc64 src64(*psource0, *psource1, *psource2, *psource_opb);
+						pdest->blend(src64, _counter2, op32);
+						++pdest; ++psource0; ++psource1; ++psource2; ++psource_opb;
+						}
+					break;
+					}
+				}
             }
          }
     return;
 }
-
-
-/* make B -> A when A has full opacity */
-inline void _blendcolor3(unsigned char & A, unsigned char B, float opB) const
-    {
-    A = (unsigned char)(B*opB + A*(1.0 - opB));
-    }
-
-
-/* make B -> A when A has full opacity
- * modify the opacity and artificialy remove transparent white/black */
-inline void _blendcolor3(unsigned char & A, unsigned char B, float opB,float op, float opacify, int removeColor) const
-    {
-    if (opB > 0)
-        {
-        opB = 1.0f - (1.0f - opB)/opacify;
-        switch(removeColor)
-            {
-            case REMOVE_WHITE: { float C = (1.0f/opB)*(B - 255) + 255; A = (unsigned char)(C*op*opB + A*(1.0f - op*opB)); return; }
-            case REMOVE_BLACK: { float C = (1.0f/opB)*B; A = (unsigned char)(C*op*opB + A*(1.0f - op*opB)); return; }
-            default: { A = (unsigned char)(B*op*opB + A*(1.0f - op*opB)); return; }
-            }
-        }
-    }
-
-
-/* warp the buffer onto an image using _qi,_qj,_counter1 and _counter2 :
-method when im has 3 channels (same as if the fourth channel was completely opaque)
-*/
-inline void _warpInt16Buf_3channel(Image & im, float op) const
-{
-    MTOOLS_ASSERT(im.spectrum() == 3);
-    MTOOLS_ASSERT(op > 0.0f);
-    const int removeColor = _g_removeColor;
-    const float opacify = _g_opacify;
-    const size_t dx = (size_t)_int16_buffer_dim.X();
-    const size_t dxy = (size_t)(dx * _int16_buffer_dim.Y());
-    const size_t l1 = _qi + (dx*_qj);
-    const size_t l2 = (dxy)-l1;
-    if (l1>0)
-    {
-        unsigned char * pdest0 = im.data(0, 0, 0, 0);
-        unsigned char * pdest1 = im.data(0, 0, 0, 1);
-        unsigned char * pdest2 = im.data(0, 0, 0, 2);
-        uint16 * psource0 = _int16_buffer;
-        uint16 * psource1 = _int16_buffer + dxy;
-        uint16 * psource2 = _int16_buffer + 2 * dxy;
-        uint16 * psource_opb = _int16_buffer + 3 * dxy;
-        if (_counter1 == 0) {/* memset(pdest,0,l1); */ }
-        else
-        {
-            if (_counter1 == 1)
-            {
-            for (size_t i = 0; i < l1; i++)
-                {
-                    const float g = (((float)(*psource_opb)) / 255);
-                    _blendcolor3((*pdest0), (unsigned char)(*psource0), g, op,opacify,removeColor);
-                    _blendcolor3((*pdest1), (unsigned char)(*psource1), g, op,opacify,removeColor);
-                    _blendcolor3((*pdest2), (unsigned char)(*psource2), g, op,opacify,removeColor);
-                    ++pdest0; ++pdest1; ++pdest2;
-                    ++psource0; ++psource1; ++psource2; ++psource_opb;
-                }
-            }
-            else
-            {
-                for (size_t i = 0; i < l1; i++)
-                {
-                    const float g = (((float)(*psource_opb) / _counter1) / 255);
-                    _blendcolor3((*pdest0), (unsigned char)((*psource0) / _counter1), g, op,opacify,removeColor);
-                    _blendcolor3((*pdest1), (unsigned char)((*psource1) / _counter1), g, op,opacify,removeColor);
-                    _blendcolor3((*pdest2), (unsigned char)((*psource2) / _counter1), g, op,opacify,removeColor);
-                    ++pdest0; ++pdest1; ++pdest2;
-                    ++psource0; ++psource1; ++psource2; ++psource_opb;
-                }
-            }
-        }
-    }
-    if (l2>0)
-    {
-        unsigned char * pdest0 = im.data(_qi, _qj, 0, 0);
-        unsigned char * pdest1 = im.data(_qi, _qj, 0, 1);
-        unsigned char * pdest2 = im.data(_qi, _qj, 0, 2);
-        uint16 * psource0 = _int16_buffer + +l1;
-        uint16 * psource1 = _int16_buffer + dxy + l1;
-        uint16 * psource2 = _int16_buffer + 2 * dxy + l1;
-        uint16 * psource_opb = _int16_buffer + 3 * dxy + l1;
-        if (_counter2 == 0) {/* memset(pdest,0,l2); */ }
-        else
-        {
-            if (_counter2 == 1)
-            {
-                for (size_t i = 0; i<l2; i++)
-                {
-                    const float g = ((float)(*psource_opb)) / 255;
-                    _blendcolor3((*pdest0), (unsigned char)(*psource0), g, op,opacify,removeColor);
-                    _blendcolor3((*pdest1), (unsigned char)(*psource1), g, op,opacify,removeColor);
-                    _blendcolor3((*pdest2), (unsigned char)(*psource2), g, op,opacify,removeColor);
-                    ++pdest0; ++pdest1; ++pdest2;
-                    ++psource0; ++psource1; ++psource2; ++psource_opb;
-                }
-            }
-            else
-            {
-                for (size_t i = 0; i<l2; i++)
-                {
-                    const float g = ((float)(*psource_opb) / _counter2) / 255;
-                    _blendcolor3((*pdest0), (unsigned char)((*psource0) / _counter2), g, op,opacify,removeColor);
-                    _blendcolor3((*pdest1), (unsigned char)((*psource1) / _counter2), g, op,opacify,removeColor);
-                    _blendcolor3((*pdest2), (unsigned char)((*psource2) / _counter2), g, op,opacify,removeColor);
-                    ++pdest0; ++pdest1; ++pdest2;
-                    ++psource0; ++psource1; ++psource2; ++psource_opb;
-                }
-            }
-        }
-    }
-    return;
-}
-
 
 
 
@@ -1015,7 +876,6 @@ void _improveImage(int maxtime_ms)
 			case 0:
 				{
 				bool fixstart = true;
-
                 const int _exact_qbuf_width = _exact_qbuf.width();
                 const int _exact_qbuf_height = _exact_qbuf.height();
                 for (int j = 0; j<_exact_qbuf_height; ++j)
@@ -1026,30 +886,19 @@ void _improveImage(int maxtime_ms)
 					if (_exact_qbuf(i,j) == 0) // site must be redrawn
 						{
                         --_exact_Q0;
-                        const Img<unsigned char>  * spr = _getimage(_exact_r.min[0] + i, _exact_r.min[1] + j, _exact_sx, _exact_sy, metaprog::dummy< HAS_GETIMAGE >());
-                        if (spr == nullptr) { _exact_qbuf(i, j) = 3; ++_exact_Q23; } // no image, don't do anything
+                        const Image * spr = _getimage(_exact_r.min[0] + i, _exact_r.min[1] + j, _exact_sx, _exact_sy, metaprog::dummy< HAS_GETIMAGE >());
+                        if ((spr == nullptr)||(spr->isEmpty())) { _exact_qbuf(i, j) = 3; ++_exact_Q23; } // no image, don't do anything
                         else
                             {
-                            MTOOLS_ASSERT((spr->spectrum() == 3) || (spr->spectrum() == 4));
-                            MTOOLS_ASSERT(spr->height()*spr->width() > 0);
                             if ((spr->width() == _exact_sx) && (spr->height() == _exact_sy))
                                 { // good, image is at the right size. We do not need to copy it.
                                 _exact_qbuf(i, j) = 2; ++_exact_Q23;
-                                _exact_im.draw_image(_exact_sx*i, _exact_sy*(_exact_qbuf.height() - 1 - j), 0, 0, *spr); // copy
+								_exact_im.blit(*spr, _exact_sx*i, _exact_sy*(_exact_qbuf.height() - 1 - j));
                                 } 
                             else
                                 { // not at the right dimension, we resize before blitting
                                 _exact_qbuf(i, j) = 1;
-                                Img<unsigned char> sprite = (*spr).get_resize(_exact_sx, _exact_sy, 1, spr->spectrum(), 1); //fast resizing
-                                _exact_im.draw_image(_exact_sx*i, _exact_sy*(_exact_qbuf.height() - 1 - j), 0, 0, sprite); // copy
-                                }
-                            if (spr->spectrum() == 3) // fill the last channel with 255 (opaque) if the sprite only has 3 channel
-                                {
-                                const int mxmin = _exact_sx*i;
-                                const int mxmax = mxmin + _exact_sx;
-                                const int mymin = _exact_sy*(_exact_qbuf.height() - 1 - j);
-                                const int mymax = mymin + _exact_sy;
-                                for (int mj = mymin; mj < mymax; mj++) { for (int mi = mxmin; mi < mxmax; mi++) { _exact_im(mi, mj, 0, 3) = 255; } }
+								_exact_im.blit_rescaled(0, *spr, _exact_sx*i, _exact_sy*(_exact_qbuf.height() - 1 - j), _exact_sx, _exact_sy); // fast rescaling then blit.
                                 }
                             }
                         }
@@ -1072,29 +921,18 @@ void _improveImage(int maxtime_ms)
 					if (_exact_qbuf(i,j) == 1) // site must be redrawn
 						{
                         _exact_Q23++;
-                        const Img<unsigned char>  * spr = _getimage(_exact_r.min[0] + i, _exact_r.min[1] + j, _exact_sx, _exact_sy, metaprog::dummy< HAS_GETIMAGE >());
-                        if (spr == nullptr) { _exact_qbuf(i, j) = 3; } // no image (a change in the lattice occured betwen phase 0 and 1) don't do anything
+                        const Image * spr = _getimage(_exact_r.min[0] + i, _exact_r.min[1] + j, _exact_sx, _exact_sy, metaprog::dummy< HAS_GETIMAGE >());
+                        if ((spr == nullptr) || (spr->isEmpty())) { _exact_qbuf(i, j) = 3; } // no image (a change in the lattice occured betwen phase 0 and 1) don't do anything
                         else
                             {
-                            MTOOLS_ASSERT((spr->spectrum() == 3) || (spr->spectrum() == 4));
-                            MTOOLS_ASSERT(spr->height()*spr->width() > 0);
                             _exact_qbuf(i, j) = 2;
                             if ((spr->width() == _exact_sx) && (spr->height() == _exact_sy))
                                 { // weird, this second time it is at the right dimension... anyway, that's good for us... 
-                                _exact_im.draw_image(_exact_sx*i, _exact_sy*(_exact_qbuf.height() - 1 - j), 0, 0, *spr); // copy
+								_exact_im.blit(*spr, _exact_sx*i, _exact_sy*(_exact_qbuf.height() - 1 - j)); // copy
                                 }
                             else
                                 { // still not at the right dimension, we resize before blitting
-                                Img<unsigned char> sprite = (*spr).get_resize(_exact_sx, _exact_sy, 1, (*spr).spectrum(), 5); //quality resizing
-                                _exact_im.draw_image(_exact_sx*i, _exact_sy*(_exact_qbuf.height() - 1 - j), 0, 0, sprite); // copy
-                                }
-                            if (spr->spectrum() == 3) // fill the last channel with 255 (opaque) if the sprite only has 3 channel
-                                {
-                                const int mxmin = _exact_sx*i;
-                                const int mxmax = mxmin + _exact_sx;
-                                const int mymin = _exact_sy*(_exact_qbuf.height() - 1 - j);
-                                const int mymax = mymin + _exact_sy;
-                                for (int mj = mymin; mj < mymax; mj++) { for (int mi = mxmin; mi < mxmax; mi++) { _exact_im(mi, mj, 0, 3) = 255; } }
+								_exact_im.blit_rescaled(0, *spr, _exact_sx*i, _exact_sy*(_exact_qbuf.height() - 1 - j), _exact_sx, _exact_sy); // high quality rescaling then blit.
                                 }
                             }
 						}
@@ -1120,7 +958,7 @@ void _improveImage(int maxtime_ms)
 /* return true if we should try to keep part of the old image and blit it into the new one */
 inline bool _keepOldImage(int newim_lx,int newim_ly) const
 	{
-	if ((((int64)newim_lx)*(newim_ly)*4)  > (1024*1024*128)) {return false;} // do not keep if it needs to create a buffers larger than 128MB
+	if ((((int64)newim_lx)*(newim_ly)*4)  > (1024*1024*512)) {return false;} // do not keep if it needs to create a buffers larger than 512MB
 	return true;
 	}
 
@@ -1139,11 +977,9 @@ void _redrawImage(iBox2 new_wr, int new_sx, int new_sy, int maxtime_ms)
     _exact_phase = 0;
     if ((!_g_redraw_im) && (_keepOldImage(new_im_x, new_im_y)) && (prevphase >= 1))
         { // we try to keep something from the previous image
-        Img<unsigned char> new_im(new_im_x, new_im_y, 1, 4, 255);
+        Image new_im(new_im_x, new_im_y);
         Img<unsigned char> new_qbuf((int32)new_wr.lx() + 1, (int32)new_wr.ly() + 1, 1, 1, 0);  // create buffer with zeros
         // there has been some change but we may be able to keep something
-        //const int32 im_x = _exact_im.width();   // size of the current image
-        //const int32 im_y = _exact_im.height();	//
         bool samescale = ((new_sx == _exact_sx) && (new_sy == _exact_sy)); // true if we are on the same scale as before
         iBox2 in_newR = new_wr.relativeSubRect(_exact_r); // the intersection rectangle seen as a sub rectangle of the new site rectangle
         iBox2 in_oldR = _exact_r.relativeSubRect(new_wr); // the intersection rectangle seen as a sub rectangle of the old site rectangle
@@ -1158,15 +994,23 @@ void _redrawImage(iBox2 new_wr, int new_sx, int new_sy, int maxtime_ms)
                 }
             if (!samescale)
                 {
-                _exact_im.crop((int32)in_oldR.min[0]*_exact_sx, (int32)(_exact_r.ly() - in_oldR.max[1])*_exact_sy, 0, 0, (int32)(in_oldR.max[0] + 1)*_exact_sx - 1, (int32)(_exact_r.ly() - in_oldR.min[1] + 1)*_exact_sy - 1, 0, 3); // crop the old image keeping only the part we reuse  
-                _exact_im.resize((int32)(in_newR.lx() + 1)*new_sx, (int32)(in_newR.ly() + 1)*new_sy, 1, 4, 1); // resize quickly (bad quality resizing)
-                new_im.draw_image((int32)in_newR.min[0]*new_sx, new_im.height() - _exact_im.height() - (int32)in_newR.min[1]*new_sy, 0, 0, _exact_im); // copy it at the right position in the new image
+				_exact_im.crop(iBox2(
+					 in_oldR.min[0] * _exact_sx,
+					(in_oldR.max[0] + 1)*_exact_sx - 1,
+					(_exact_r.ly() - in_oldR.max[1])*_exact_sy,
+					(_exact_r.ly() - in_oldR.min[1] + 1)*_exact_sy - 1), true); // crop the old image keeping only the part we reuse  
+				new_im.blit_rescaled(0, _exact_im,
+					in_newR.min[0] * new_sx, new_im.height() - _exact_im.height() - (int32)in_newR.min[1] * new_sy,
+					(in_newR.lx() + 1)*new_sx, (int32)(in_newR.ly() + 1)*new_sy);  // resize and blit at the right position in the new image. 
                 }
             else
                 {
-                _exact_im.crop((int32)in_oldR.min[0]*_exact_sx, (int32)(_exact_r.ly() - in_oldR.max[1])*_exact_sy, 0, 0, (int32)(in_oldR.max[0] + 1)*_exact_sx - 1, (int32)(_exact_r.ly() - in_oldR.min[1] + 1)*_exact_sy - 1, 0, 3); // crop the old image keeping only the part we reuse
-                //const int Z = new_im.height() - _exact_im.height() - (int32)in_newR.min[1]*new_sy;
-                new_im.draw_image((int32)in_newR.min[0]*new_sx, new_im.height() - _exact_im.height() - (int32)in_newR.min[1]*new_sy, 0, 0, _exact_im); // copy it at the right position in the new image
+				_exact_im.crop(iBox2(
+					in_oldR.min[0] * _exact_sx,
+					(in_oldR.max[0] + 1)*_exact_sx - 1,
+					(_exact_r.ly() - in_oldR.max[1])*_exact_sy,
+					(_exact_r.ly() - in_oldR.min[1] + 1)*_exact_sy - 1), true); // crop the old image keeping only the part we reuse  
+				new_im.blit(_exact_im, in_newR.min[0] * new_sx, new_im.height() - _exact_im.height() - (int32)in_newR.min[1] * new_sy); // copy it at the right position in the new image
                 }
             }
         new_qbuf.move_to(_exact_qbuf);
@@ -1177,7 +1021,8 @@ void _redrawImage(iBox2 new_wr, int new_sx, int new_sy, int maxtime_ms)
     else
         { // we start from scratch
         _g_redraw_im = false;
-        _exact_im.assign(new_im_x, new_im_y, 1, 4, 0); // blank image with 4 channel RGB(0,0,0,0)
+		_exact_im.resizeRaw(new_im_x, new_im_y, true); // blank image with 4 channel RGB(0,0,0,0)
+		_exact_im.clear(RGBc(0, 0, 0, 0));
         _exact_qbuf.assign((int32)new_wr.lx() + 1, (int32)new_wr.ly() + 1, 1, 1, 0);
         }
     // done, we update the member and start improving the image
@@ -1231,10 +1076,9 @@ void _qualityImageDraw() const
 
 inline void _drawOntoImage(Image & im, float op) 
 {
-    MTOOLS_ASSERT((im.spectrum() == 3) || (im.spectrum() == 4));
     MTOOLS_ASSERT((im.width() == _g_imSize.X()) && (im.height() == _g_imSize.Y()));
     _workImage(0); // make sure everything is in sync. 
-        if (_g_current_quality > 0)
+    if (_g_current_quality > 0)
         {
         iBox2 ir = _g_r.integerEnclosingRect(); // compute the enclosing integer rectangle	
         fBox2 fir(ir.min[0] - 0.5, ir.max[0] + 0.5, ir.min[1] - 0.5, ir.max[1] + 0.5); // this is exactly the region drawn by _exact_im
@@ -1245,58 +1089,33 @@ inline void _drawOntoImage(Image & im, float op)
         const int pymax = (int)(((rr.max[1]) / fir.ly())*_exact_im.height());
         const int ax = pxmin;
         const int bx = pxmax - 1;
-        const int ay = _exact_im.height() - pymax;
-        const int by = _exact_im.height() - 1 - pymin;
+        const int ay = (int)_exact_im.height() - pymax;
+        const int by = (int)_exact_im.height() - 1 - pymin;
         const int lx = bx - ax + 1;
         const int ly = by - ay + 1;
-        const int nx = im.width();
-        const int ny = im.height();
+        const int nx = (int)im.width();
+        const int ny = (int)im.height();
         // we must resize the portion [ax, bx]x[ay, by] of _exact_im to size (nx,ny) and put it in im.
         const double stepx = ((double)lx)/((double)nx);
         const double stepy = ((double)ly)/((double)ny);
         // iterate over the pixels of im
-        if (im.spectrum() == 3)
-            { // 3 channel image.
-            const int _im_width = im.width(); 
-            const int _im_height = im.height();
-            for(int j = 0; j<_im_height; ++j)
-                for (int i = 0; i<_im_width; ++i)
-                    {
-                    const int x = ax + (int)(stepx*i);  // the corresponding pixel in exactim 
-                    const int y = ay + (int)(stepy*j);  //
-                    const int qqi = x / _exact_sx;                           // the associated quality buffer
-                    const int qqy = _exact_qbuf.height() - 1 - y / _exact_sy;  //
-                    if ((_exact_qbuf(qqi, qqy) != 3) && (_exact_qbuf(qqi, qqy) != 0))  // skip pixels that belong to sites without image or not yet drawn
-                        {
-                        const float g = _exact_im(x, y, 0, 3)*op / 255;
-                        _blendcolor3(im(i, j, 0, 0), _exact_im(x, y, 0, 0), g);
-                        _blendcolor3(im(i, j, 0, 1), _exact_im(x, y, 0, 1), g);
-                        _blendcolor3(im(i, j, 0, 2), _exact_im(x, y, 0, 2), g);
-                        }
-                    }
-            }
-        else
-            { // 4 channel image.
-                const float po = 1;
-                const int _im_width = im.width();
-                const int _im_height = im.height();
-                for (int j = 0; j<_im_height; ++j)
-                    for (int i = 0; i<_im_width; ++i)
-                    {
-                    const int x = ax + (int)(stepx*i);  // the corresponding pixel in exactim 
-                    const int y = ay + (int)(stepy*j);  //
-                    const int qqi = x / _exact_sx;                           // the associated quality buffer
-                    const int qqy = _exact_qbuf.height() - 1 - y / _exact_sy;  //
-                    if ((_exact_qbuf(qqi, qqy) != 3) && (_exact_qbuf(qqi, qqy) != 0))  // skip pixels that belong to sites without image or not yet drawn
-                        {
-                        const float g = _exact_im(x, y, 0, 3)*op / 255;
-                        const float h = im(i, j, 0, 3)*po / 255;
-                        _blendcolor4(im(i, j, 0, 0), h , _exact_im(x, y, 0, 0), g);
-                        _blendcolor4(im(i, j, 0, 1), h, _exact_im(x, y, 0, 1), g);
-                        im(i, j, 0, 3) = _blendcolor4(im(i, j, 0, 2), h, _exact_im(x, y, 0, 2), g);
-                        }
-                    }
-            }
+		const uint32 op32 = (uint32)(256 * op);
+		const int _im_width = (int)im.width();
+		const int _im_height = (int)im.height();
+		for (int j = 0; j < _im_height; ++j)
+			{
+			for (int i = 0; i < _im_width; ++i)
+				{
+				const int x = ax + (int)(stepx*i);  // the corresponding pixel in exactim 
+				const int y = ay + (int)(stepy*j);  //
+				const int qqi = x / _exact_sx;                           // the associated quality buffer
+				const int qqy = _exact_qbuf.height() - 1 - y / _exact_sy;  //
+				if ((_exact_qbuf(qqi, qqy) != 3) && (_exact_qbuf(qqi, qqy) != 0))  // skip pixels that belong to sites without image or not yet drawn
+					{
+					im.blendPixel(i, j, _exact_im(x, y), op32);
+					}
+				}
+			}
         }
     return;
 }

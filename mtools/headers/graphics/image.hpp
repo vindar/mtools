@@ -1175,14 +1175,16 @@ namespace mtools
 			 * 
 			 * This method discard the current data buffer an create another one.
 			 *
-			 * @param	quality   	0 for (fast) low quality and 1 for (slow) high quality rescaling.
+			 * @param	quality   	in [0,10]. 0 = low quality (fast) and 10 = max quality (slow).
 			 * @param	newlx	  	new image width.
 			 * @param	newly	  	new image height.
 			 * @param	newpadding	horizontal padding.
+			 *
+			 * @return	The real quality of the rescaling performed. At least quality but may be higher.
 			 **/
-			inline void rescale(int quality, int64 newlx, int64 newly, int64 newpadding = 0)
+			inline int rescale(int quality, int64 newlx, int64 newly, int64 newpadding = 0)
 				{
-				rescale(quality, newlx, newly, 0, 0, _lx, _ly, newpadding);
+				return rescale(quality, newlx, newly, 0, 0, _lx, _ly, newpadding);
 				}
 
 
@@ -1191,13 +1193,15 @@ namespace mtools
 			 * 
 			 * This method discard the current data buffer an create another one.
 			 *
-			 * @param	quality   	0 for (fast) low quality and 1 for (slow) high quality rescaling.
-			 * @param	newsize   	new image size. 
+			 * @param	quality  	in [0,10]. 0 = low quality (fast) and 10 = max quality (slow).
+			 * @param	newsize   	new image size.
 			 * @param	newpadding	horizontal padding.
+			 *
+			 * @return	The real quality of the rescaling performed. At least quality but may be higher.
 			 **/
-			inline void rescale(int quality, const iVec2 & newsize, int64 newpadding = 0)
+			inline int rescale(int quality, const iVec2 & newsize, int64 newpadding = 0)
 				{
-				rescale(quality, newsize.X(), newsize.Y(), 0, 0, _lx, _ly, newpadding);
+				return rescale(quality, newsize.X(), newsize.Y(), 0, 0, _lx, _ly, newpadding);
 				}
 
 
@@ -1206,7 +1210,7 @@ namespace mtools
 			 * 
 			 * This method discard the current data buffer an create another one.
 			 *
-			 * @param	quality   	0 for (fast) low quality and 1 for (slow) high quality rescaling.
+			 * @param	quality  	in [0,10]. 0 = low quality (fast) and 10 = max quality (slow).
 			 * @param	newlx	  	new image width.
 			 * @param	newly	  	new image height.
 			 * @param	x		  	x-coord of the upper left corner of the rectangle to crop.
@@ -1214,10 +1218,16 @@ namespace mtools
 			 * @param	sx		  	width of the rectangle to crop.
 			 * @param	sy		  	height of the rectangle to crop.
 			 * @param	newpadding	horizontal padding.
+			 *
+			 * @return	The real quality of the rescaling performed. At least quality but may be higher.
 			 **/
-			inline void rescale(int quality, int64 newlx, int64 newly, int64 x, int64 y, int64 sx, int64 sy, int64 newpadding = 0)
+			inline int rescale(int quality, int64 newlx, int64 newly, int64 x, int64 y, int64 sx, int64 sy, int64 newpadding = 0)
 				{
-				*this = get_rescale(quality, newlx, newly, x, y, sx, sy, newpadding);
+				if ((newlx <= 0) || (newly <= 0)) { empty();  return 10; }
+				Image im(newlx, newly, newpadding);
+				int q = im.blit_rescaled(quality, *this, 0, 0, newlx, newly, x, y, sx, sy);
+				*this = im; 
+				return q;
 				}
 
 
@@ -1226,14 +1236,16 @@ namespace mtools
 			 * 
 			 * This method discard the current data buffer an create another one.
 			 *
-			 * @param	quality   	0 for (fast) low quality and 1 for (slow) high quality rescaling.
+			 * @param	quality  	in [0,10]. 0 = low quality (fast) and 10 = max quality (slow).
 			 * @param	newsize   	new image size.
 			 * @param	B		  	rectangle to crop.
 			 * @param	newpadding	horizontal padding.
+			 * 						
+			 * @return	The real quality of the rescaling performed. At least quality but may be higher.
 			 **/
-			inline void rescale(int quality, const iVec2 & newsize, const iBox2 & B, int64 newpadding = 0)
+			inline int rescale(int quality, const iVec2 & newsize, const iBox2 & B, int64 newpadding = 0)
 				{
-				*this = get_rescale(quality, newsize.X(), newsize.Y(), B.min[0], B.min[1], B.max[0] - B.min[0] + 1, B.max[1] - B.min[1] + 1, newpadding);  
+				return rescale(quality, newsize.X(), newsize.Y(), B.min[0], B.min[1], B.max[0] - B.min[0] + 1, B.max[1] - B.min[1] + 1, newpadding);
 				}
 
 
@@ -1241,7 +1253,7 @@ namespace mtools
 			 * Return a copy of this image rescaled to a given size using the fastest method available (low
 			 * quality).
 			 *
-			 * @param	quality   	0 for (fast) low quality and 1 for (slow) high quality rescaling.
+			 * @param	quality  	in [0,10]. 0 = low quality (fast) and 10 = max quality (slow).
 			 * @param	newlx	  	returned image width.
 			 * @param	newly	  	returned image height.
 			 * @param	newpadding	horizontal padding.
@@ -1258,7 +1270,7 @@ namespace mtools
 			* Return a copy of this image rescaled to a given size using the fastest method available (low
 			* quality).
 			*
-			* @param	quality   	0 for (fast) low quality and 1 for (slow) high quality rescaling.
+			* @param	quality  	in [0,10]. 0 = low quality (fast) and 10 = max quality (slow).
 			* @param	newsize   	new image size.
 			* @param	newpadding	horizontal padding.
 			*
@@ -1273,7 +1285,7 @@ namespace mtools
 			/**
 			* Return a copy of a portion of this image, rescaled to a given size.
 			*
-			* @param	quality   	0 for (fast) low quality and 1 for (slow) high quality rescaling.
+			* @param	quality  	in [0,10]. 0 = low quality (fast) and 10 = max quality (slow).
 			* @param	newlx	  	returned image width.
 			* @param	newly	  	returned image height.
 			* @param	x		  	x-coord of the upper left corner of the rectangle to rescale.
@@ -1297,7 +1309,7 @@ namespace mtools
 			/**
 			 * Return a copy of a portion of this image, rescaled to a given size.
 			 *
-			 * @param	quality   	0 for (fast) low quality and 1 for (slow) high quality rescaling.
+			 * @param	quality  	in [0,10]. 0 = low quality (fast) and 10 = max quality (slow).
 			 * @param	newsize   	new image size.
 			 * @param	B		  	rectangle to rescale.
 			 * @param	newpadding	horizontal padding.
@@ -1314,7 +1326,7 @@ namespace mtools
 			/**
 			 * Rescale a sprite image and then blit it onto this image.
 			 *
-			 * @param	quality	0 for (fast) low quality and 1 for (slow) high quality rescaling.
+			 * @param	quality  	in [0,10]. 0 = low quality (fast) and 10 = max quality (slow).
 			 * @param	sprite 	The sprite image to rescale and then blit.
 			 * @param	dest_x 	x-coord of the upper left corner of the destination rectangle.
 			 * @param	dest_y 	y-coord of the upper left corner of the destination rectangle.
@@ -1332,7 +1344,7 @@ namespace mtools
 			/**
 			 * Rescale a sprite image and then blit it onto this image.
 			 *
-			 * @param	quality 	0 for (fast) low quality and 1 for (slow) high quality rescaling.
+			 * @param	quality  	in [0,10]. 0 = low quality (fast) and 10 = max quality (slow).
 			 * @param	sprite  	The sprite image to rescale and then blit.
 			 * @param	dest_box	The destination rectangle.
 			 *
@@ -1347,7 +1359,7 @@ namespace mtools
 			/**
 			 * Rescale a portion of a sprite image and then blit it onto this image.
 			 *
-			 * @param	quality  	in [0,5]. 0 = low quality (fast) and 5 = max quality (slow).
+			 * @param	quality  	in [0,10]. 0 = low quality (fast) and 10 = max quality (slow).
 			 * @param	sprite   	The sprite image.
 			 * @param	dest_x   	x-coord of the upper left corner of the destination rectangle.
 			 * @param	dest_y   	y-coord of the upper left corner of the destination rectangle.
@@ -1431,7 +1443,7 @@ namespace mtools
 			/**
 			* Rescale a portion of a sprite image and then blit it onto this image.
 			*
-			* @param	quality   	in [0,5]. 0 = low quality (fast) and 5 = max quality (slow).
+			* @param	quality  	in [0,10]. 0 = low quality (fast) and 10 = max quality (slow).
 			* @param	sprite	  	The sprite image.
 			* @param	dest_box	The destination rectangle.
 			* @param	sprite_box	The rectangle part of the sprite to rescale and blit.
@@ -4394,9 +4406,10 @@ namespace mtools
 			* @param   R           The rect representing the range of the image.
 			* @param   color       The color.
 			**/
-			inline void canvas_draw_grid(const mtools::fBox2 & R, mtools::RGBc color = mtools::RGBc::c_Gray.getOpacity(0.5f))
+			inline void canvas_draw_grid(const mtools::fBox2 & R, mtools::RGBc color = mtools::RGBc::c_Gray, float opacity = 0.5f)
 				{
 				if (isEmpty()) return;
+				color.multOpacity(opacity);
 				const double ex  = R.max[0] - R.min[0];
 				const double xmin = R.min[0] - ex;
 				const double xmax = R.max[0] + ex;
@@ -4422,9 +4435,10 @@ namespace mtools
 			* @param   R           The rect representing the range of the image.
 			* @param   color       The color.
 			**/
-			inline void canvas_draw_cells(const mtools::fBox2 & R, mtools::RGBc color = mtools::RGBc::c_Gray.getOpacity(0.5f))
+			inline void canvas_draw_cells(const mtools::fBox2 & R, mtools::RGBc color = mtools::RGBc::c_Gray, float opacity = 0.5f)
 				{
 				if (isEmpty()) return;
+				color.multOpacity(opacity);
 				const double ex = R.max[0] - R.min[0];
 				const double xmin = R.min[0] - ex;
 				const double xmax = R.max[0] + ex;
@@ -4450,8 +4464,9 @@ namespace mtools
 			* @param   R           The rect representing the range of the image.
 			* @param   color       The color.
 			**/
-			inline void canvas_draw_axes(const mtools::fBox2 & R, float scaling = 1.0f, mtools::RGBc color = RGBc::c_Black)
+			inline void canvas_draw_axes(const mtools::fBox2 & R, float scaling = 1.0f, mtools::RGBc color = RGBc::c_Black, float opacity = 1.0f)
 				{
+				color.multOpacity(opacity);
 				float tick = (scaling < 4.0f) ? 0.0f : ((scaling - 1) / 8);
 				const double ex = R.max[0] - R.min[0];
 				const double ey = R.max[1] - R.min[1];
@@ -4469,8 +4484,9 @@ namespace mtools
 			*                  enables to multiply the automatic scaling with a new factor.
 			* @param   color   The color.
 			**/
-			void canvas_draw_graduations(const mtools::fBox2 & R, float scaling = 1.0f, mtools::RGBc color = mtools::RGBc::c_Black)
+			void canvas_draw_graduations(const mtools::fBox2 & R, float scaling = 1.0f, mtools::RGBc color = mtools::RGBc::c_Black, float opacity = 1.0f)
 				{
+				color.multOpacity(opacity);
 				scaling = scaling*((float)(std::sqrt(_lx*_ly) / 1000.0));
 				float tick = (scaling < 4.0f) ? 0.0f : ((scaling - 1) / 8);
 				int64 gradsize = 1 + (int64)(3 * scaling);
@@ -4531,7 +4547,7 @@ namespace mtools
 			*
 			* @return  the image for chaining.
 			**/
-			void canvas_draw_numbers(const mtools::fBox2 & R, float scaling = 1.0, mtools::RGBc color = mtools::RGBc::c_Black);
+			void canvas_draw_numbers(const mtools::fBox2 & R, float scaling = 1.0, mtools::RGBc color = mtools::RGBc::c_Black, float opacity = 1.0f);
 
 
 

@@ -54,7 +54,7 @@ namespace mtools
 
 
 
-	void Image::canvas_draw_numbers(const mtools::fBox2 & R, float scaling, mtools::RGBc color)
+	void Image::canvas_draw_numbers(const mtools::fBox2 & R, float scaling, mtools::RGBc color, float opacity)
 		{
 		scaling = scaling*((float)(std::sqrt(_lx*_ly) / 1000.0));
 		int64 gradsize = 1 +(int64)(3 * scaling);

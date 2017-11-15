@@ -26,7 +26,6 @@
 #include "../maths/vec.hpp"
 #include "rgbc.hpp"
 #include "image.hpp"
-#include "customcimg.hpp"
 
 
 namespace mtools
@@ -281,27 +280,6 @@ namespace mtools
                 }
 
 
-            /**
-             * Blit the ProgressImg into a Img. Both images must have the same size.
-             *
-             * @param [in,out]  im  The destination image. Must have the same size as this. Can be a 3 or 4
-             *                      channel image. If it exist, the alpha channel is set to full opacity.
-             * @param   op          opacity to multiply the progressImg with before blitting.
-             * @param   reverse     true to reverse the y axis.
-             * @param   blitType    Type of blitting. One of BLIT_CLASSIC, BLIT_REMOVE_TRANSPARENT_WHITE or
-             *                      BLIT_REMOVE_TRANSPARENT_BLACK.
-             **/
-            void blit(Img<unsigned char> & im, float op = 1.0f, bool reverse = true, int blitType = BLIT_CLASSIC)
-                {
-                switch (blitType)
-                    {
-                    case BLIT_CLASSIC: { blit_classic(im, op, reverse); return; }
-                    case BLIT_REMOVE_TRANSPARENT_WHITE: { blit_removeWhite(im, op, reverse); return; }
-                    case BLIT_REMOVE_TRANSPARENT_BLACK: { blit_removeBlack(im, op, reverse); return; }
-                    }
-                MTOOLS_ERROR("Illegal blitType argument...");
-                }
-
 
 			/**
 			* Blit the ProgressImg into a Image. Both images must have the same size.
@@ -344,7 +322,7 @@ namespace mtools
 					{
 					for (int64 i = 0; i < lx; i++)
 						{
-						pdst[i].blend(*(psrc++), (*(qsrc++)) + 1, op32);
+						pdst[i].blend(*(psrc++), (uint32)(*(qsrc++)) + 1, op32);
 						}
 					pdst += str;
 					}
@@ -365,7 +343,7 @@ namespace mtools
 					{
 					for (int64 i = 0; i < lx; i++)
 						{
-						pdst[i].blend_removeWhite(*(psrc++), (*(qsrc++)) + 1, op);
+						pdst[i].blend_removeWhite(*(psrc++), (uint32)(*(qsrc++)) + 1, op);
 						}
 					pdst += str;
 					}
@@ -386,264 +364,12 @@ namespace mtools
 					{
 					for (int64 i = 0; i < lx; i++)
 						{
-						pdst[i].blend_removeBlack(*(psrc++), (*(qsrc++)) + 1, op);
+						pdst[i].blend_removeBlack(*(psrc++), (uint32)(*(qsrc++)) + 1, op);
 						}
 					pdst += str;
 					}
 				}
 
-
-
-
-            /* blitting procedure, traditionnal blending version */
-            void blit_classic(Img<unsigned char> & im, float op = 1.0, bool reverse = true)
-                {
-                const uint32 op32 = (uint32)(255.0f*op);
-                if (op32 == 0) return;
-                const size_t lx = (size_t)im.width();
-                const size_t ly = (size_t)im.height();
-				if ((lx <= 0) || (ly <= 0)) return;
-                MTOOLS_ASSERT(lx == width());
-                MTOOLS_ASSERT(ly == height());
-                const size_t l = (size_t)lx*ly;
-                if (im.spectrum() == 3)
-                    {
-                    if (!reverse)
-                        {
-                        unsigned char * p1 = im.data();
-                        unsigned char * p2 = im.data() + l;
-                        unsigned char * p3 = im.data() + 2 * l;
-                        for (size_t z = 0; z < l; z++) { _fastblend(_imData[z], (uint32)_normData[z] + 1, op32, p1[z], p2[z], p3[z]); }
-                        return;
-                        }
-                    else
-                        {
-                        unsigned char * p1 = im.data() + (l - lx);
-                        unsigned char * p2 = im.data() + (2 * l - lx);
-                        unsigned char * p3 = im.data() + (3 * l - lx);
-                        size_t z = 0;
-                        for (size_t j = 0;j < ly; j++)
-                            {
-                            for (size_t i = 0; i < lx; i++) { _fastblend(_imData[z], (uint32)_normData[z] + 1, op32, p1[i], p2[i], p3[i]); z++; }
-                            p1 -= lx; p2 -= lx; p3 -= lx;
-                            }
-                        }
-                    return;
-                    }
-                if (im.spectrum() == 4)
-                    {
-                    if (!reverse)
-                        {
-                        unsigned char * p1 = im.data();
-                        unsigned char * p2 = im.data() + l;
-                        unsigned char * p3 = im.data() + 2 * l;
-                        unsigned char * p4 = im.data() + 3 * l;
-                        for (size_t z = 0; z < l; z++) { _fastblend(_imData[z], (uint32)_normData[z] + 1, op32, p1[z], p2[z], p3[z]); p4[z] = 255; }
-                        return;
-                        }
-                    else
-                        {
-                        unsigned char * p1 = im.data() + (l - lx);
-                        unsigned char * p2 = im.data() + (2 * l - lx);
-                        unsigned char * p3 = im.data() + (3 * l - lx);
-                        unsigned char * p4 = im.data() + (4 * l - lx);
-                        size_t z = 0;
-                        for (size_t j = 0;j < ly; j++)
-                            {
-                            for (size_t i = 0; i < lx; i++) { _fastblend(_imData[z], (uint32)_normData[z] + 1, op32, p1[i], p2[i], p3[i]); p4[z] = 255; z++; }
-                            p1 -= lx; p2 -= lx; p3 -= lx; p4 -= lx;
-                            }
-                        }
-                    return;
-                    }
-                MTOOLS_ERROR("incorrect number of channel in the image");
-                }
-
-
-
-
-
-
-
-
-            /* blitting procedure, remove fully transparent white pixel */
-            void blit_removeWhite(Img<unsigned char> & im, const float op = 1.0f, bool reverse = true)
-                {
-                if (op <= 0.0f) return;
-                const size_t lx = (size_t)im.width();
-                const size_t ly = (size_t)im.height();
-                if ((lx <= 0) || (ly <= 0)) return;
-                MTOOLS_ASSERT(lx == height());
-                MTOOLS_ASSERT(ly == width());
-                const size_t l = (size_t)lx*ly;
-                if (im.spectrum() == 3)
-                    {
-                    if (!reverse)
-                        {
-                        unsigned char * p1 = im.data();
-                        unsigned char * p2 = im.data() + l;
-                        unsigned char * p3 = im.data() + 2 * l;
-                        for (size_t z = 0; z < l; z++) { _blend_removeWhite(_imData[z], (uint32)_normData[z] + 1, op, p1[z], p2[z], p3[z]); }
-                        return;
-                        }
-                    else
-                        {
-                        unsigned char * p1 = im.data() + (l - lx);
-                        unsigned char * p2 = im.data() + (2 * l - lx);
-                        unsigned char * p3 = im.data() + (3 * l - lx);
-                        size_t z = 0;
-                        for (size_t j = 0;j < ly; j++)
-                            {
-                            for (size_t i = 0; i < lx; i++) { _blend_removeWhite(_imData[z], (uint32)_normData[z] + 1, op, p1[i], p2[i], p3[i]); z++; }
-                            p1 -= lx; p2 -= lx; p3 -= lx;
-                            }
-                        }
-                    return;
-                    }
-                if (im.spectrum() == 4)
-                    {
-                    if (!reverse)
-                        {
-                        unsigned char * p1 = im.data();
-                        unsigned char * p2 = im.data() + l;
-                        unsigned char * p3 = im.data() + 2 * l;
-                        unsigned char * p4 = im.data() + 3 * l;
-                        for (size_t z = 0; z < l; z++) { _blend_removeWhite(_imData[z], (uint32)_normData[z] + 1, op, p1[z], p2[z], p3[z]); p4[z] = 255; }
-                        return;
-                        }
-                    else
-                        {
-                        unsigned char * p1 = im.data() + (l - lx);
-                        unsigned char * p2 = im.data() + (2 * l - lx);
-                        unsigned char * p3 = im.data() + (3 * l - lx);
-                        unsigned char * p4 = im.data() + (4 * l - lx);
-                        size_t z = 0;
-                        for (size_t j = 0;j < ly; j++)
-                            {
-                            for (size_t i = 0; i < lx; i++) { _blend_removeWhite(_imData[z], (uint32)_normData[z] + 1, op, p1[i], p2[i], p3[i]); p4[z] = 255; z++; }
-                            p1 -= lx; p2 -= lx; p3 -= lx; p4 -= lx;
-                            }
-                        }
-                    return;
-                    }
-                MTOOLS_ERROR("incorrect number of channel in the image");
-                }
-
-
-            /* blitting procedure, remove fully transparent black pixel */
-            void blit_removeBlack(Img<unsigned char> & im, const float op = 1.0f, bool reverse = true)
-                {
-                if (op <= 0.0f) return;
-                const size_t lx = (size_t)im.width();
-                const size_t ly = (size_t)im.height();
-                if ((lx <= 0) || (ly <= 0)) return;
-                MTOOLS_ASSERT(lx == height());
-                MTOOLS_ASSERT(ly == width());
-                const size_t l = (size_t)lx*ly;
-                if (im.spectrum() == 3)
-                    {
-                    if (!reverse)
-                        {
-                        unsigned char * p1 = im.data();
-                        unsigned char * p2 = im.data() + l;
-                        unsigned char * p3 = im.data() + 2 * l;
-                        for (size_t z = 0; z < l; z++) { _blend_removeBlack(_imData[z], (uint32)_normData[z] + 1, op, p1[z], p2[z], p3[z]); }
-                        return;
-                        }
-                    else
-                        {
-                        unsigned char * p1 = im.data() + (l - lx);
-                        unsigned char * p2 = im.data() + (2 * l - lx);
-                        unsigned char * p3 = im.data() + (3 * l - lx);
-                        size_t z = 0;
-                        for (size_t j = 0;j < ly; j++)
-                            {
-                            for (size_t i = 0; i < lx; i++) { _blend_removeBlack(_imData[z], (uint32)_normData[z] + 1, op, p1[i], p2[i], p3[i]); z++; }
-                            p1 -= lx; p2 -= lx; p3 -= lx;
-                            }
-                        }
-                    return;
-                    }
-                if (im.spectrum() == 4)
-                    {
-                    if (!reverse)
-                        {
-                        unsigned char * p1 = im.data();
-                        unsigned char * p2 = im.data() + l;
-                        unsigned char * p3 = im.data() + 2 * l;
-                        unsigned char * p4 = im.data() + 3 * l;
-                        for (size_t z = 0; z < l; z++) { _blend_removeBlack(_imData[z], (uint32)_normData[z] + 1, op, p1[z], p2[z], p3[z]); p4[z] = 255; }
-                        return;
-                        }
-                    else
-                        {
-                        unsigned char * p1 = im.data() + (l - lx);
-                        unsigned char * p2 = im.data() + (2 * l - lx);
-                        unsigned char * p3 = im.data() + (3 * l - lx);
-                        unsigned char * p4 = im.data() + (4 * l - lx);
-                        size_t z = 0;
-                        for (size_t j = 0;j < ly; j++)
-                            {
-                            for (size_t i = 0; i < lx; i++) { _blend_removeBlack(_imData[z], (uint32)_normData[z] + 1, op, p1[i], p2[i], p3[i]); p4[z] = 255; z++; }
-                            p1 -= lx; p2 -= lx; p3 -= lx; p4 -= lx;
-                            }
-                        }
-                    return;
-                    }
-                MTOOLS_ERROR("incorrect number of channel in the image");
-                }
-
-
-                /* blending and artificially removing fully transparent white pixel */
-                inline void _blend_removeWhite(const RGBc64 & coul, const uint32 N, float op, uint8 & R, uint8 & G, uint8 & B)
-                    {
-                    if (coul.comp.A == 0) return;
-                    const float g = ((float)(N * 255))/((float)coul.comp.A);
-                    const float nR = g*(((float)coul.comp.R / N) - 255) + 255;
-                    const float nG = g*(((float)coul.comp.G / N) - 255) + 255;
-                    const float nB = g*(((float)coul.comp.B / N) - 255) + 255;                    
-                    const float alpha = op/g;
-                    const float beta = 1.0f - alpha;
-                    R = (uint8)(beta*R + (alpha*nR));
-                    G = (uint8)(beta*G + (alpha*nG));
-                    B = (uint8)(beta*B + (alpha*nB));
-                    }
-
-
-                /* blending and artificially removing fully transparent black pixel */
-                inline void _blend_removeBlack(const RGBc64 & coul, const uint32 N, float op, uint8 & R, uint8 & G, uint8 & B)
-                    {
-                    if (coul.comp.A == 0) return;
-                    const float g = ((float)(N * 255)) / ((float)coul.comp.A);
-                    const float nR = g*((float)coul.comp.R / N);
-                    const float nG = g*((float)coul.comp.G / N);
-                    const float nB = g*((float)coul.comp.B / N);
-                    const float alpha = op/g;
-                    const float beta = 1.0f - alpha;
-                    R = (uint8)(beta*R + (alpha*nR));
-                    G = (uint8)(beta*G + (alpha*nG));
-                    B = (uint8)(beta*B + (alpha*nB));
-                    }
-
-
-                /* classic blending operation */
-                inline void _fastblend(const RGBc64 & coul, const uint32 N, const uint32 op, uint8 & R, uint8 & G, uint8 & B)
-                    {
-                    const uint32 alpha = (op*coul.comp.A) / N;
-                    const uint32 beta = (255 * 255) - alpha;
-                    R = (beta*R + (alpha*coul.comp.R) / N) / (255 * 255);
-                    G = (beta*G + (alpha*coul.comp.G) / N) / (255 * 255);
-                    B = (beta*B + (alpha*coul.comp.B) / N) / (255 * 255);
-                    }
-
-
-                /* fast copy */
-                inline void _fastcopy(const RGBc64 & coul, const uint32 N, uint8 & R, uint8 & G, uint8 & B)
-                    {
-                    R = coul.comp.R / N;
-                    G = coul.comp.G / N;
-                    B = coul.comp.B / N;
-                    }
 
 
                 /* different types of blitting */

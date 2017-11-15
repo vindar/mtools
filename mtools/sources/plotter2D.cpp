@@ -1801,8 +1801,8 @@ namespace mtools
             if (((int)_nbchannels) == n) { return; }
             _w_fourchannels->value((n == 4) ? 1 : 0);
             _nbchannels = n;
-            int W = _mainImage->width();
-            int H = _mainImage->height();
+            int W = (int)_mainImage->width();
+            int H = (int)_mainImage->height();
             setImageSize(W, H, n);    // resize if needed
             updateView();
         }

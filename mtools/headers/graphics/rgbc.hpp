@@ -1106,9 +1106,9 @@ union RGBc64
 		const uint32 beta = (256 * 255) - alpha;
 		const uint32 divN = N*(256 * 255);
 		return RGBc(
-			(uint8)((beta*comp.R + (alpha*colorB.comp.R)) / divN),
-			(uint8)((beta*comp.G + (alpha*colorB.comp.G)) / divN),
-			(uint8)((beta*comp.B + (alpha*colorB.comp.B)) / divN),
+			(uint8)((beta*comp.R*N + (alpha*colorB.comp.R)) / divN),
+			(uint8)((beta*comp.G*N + (alpha*colorB.comp.G)) / divN),
+			(uint8)((beta*comp.B*N + (alpha*colorB.comp.B)) / divN),
 			255);
 		}
 

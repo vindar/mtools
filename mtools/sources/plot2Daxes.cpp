@@ -172,9 +172,9 @@ namespace mtools
 
         int Plot2DAxes::drawOnto(Image & im, float opacity)
             {
-            im.fBox2_drawAxes(_range, _gradColor, opacity);
-            if (_gradStatus) im.fBox2_drawGraduations(_range, _scaling, _gradColor, opacity);
-            if (_numStatus) im.fBox2_drawNumbers(_range, _scaling, _numColor, opacity);
+			im.canvas_draw_axes(_range, _scaling, _gradColor, opacity);
+			if (_gradStatus) im.canvas_draw_graduations(_range, _scaling, _gradColor, opacity);			
+			if (_numStatus) im.canvas_draw_numbers(_range, _scaling, _numColor, opacity);
             return 100;
             }
 

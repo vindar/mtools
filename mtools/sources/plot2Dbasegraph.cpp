@@ -536,14 +536,14 @@ namespace mtools
 
         void Plot2DBaseGraph::_drawPoint(int i, int j, Image & im, const RGBc & coul, const float opacity, const int tickness)
             {
-            if (tickness <= 1) { im.drawPoint(iVec2(i, j), coul, opacity); } else { im.drawPointCirclePen(iVec2(i, j), tickness-1, coul, opacity); }
-            }
+            if (tickness <= 1) { im.draw_dot(iVec2(i, j), coul.getMultOpacity(opacity), true, 0); } else { im.draw_dot(iVec2(i, j), coul.getMultOpacity(opacity), true, tickness - 1); }
+			}
 
 
         void Plot2DBaseGraph::_drawLine(int i, int j1, int j2, Image & im, const RGBc & coul, const float opacity, const int tickness)
             {
-            if (tickness <= 1) { im.drawLine(iVec2(i, j1), iVec2(i + 1, j2), coul, opacity); } else { im.drawLineCirclePen(iVec2(i, j1), iVec2(i + 1, j2), tickness-1, coul, opacity); }
-            }
+            if (tickness <= 1) { im.draw_line(iVec2(i, j1), iVec2(i + 1, j2), coul.getMultOpacity(opacity), false, true,false,0); } else { im.draw_line(iVec2(i, j1), iVec2(i + 1, j2), coul.getMultOpacity(opacity), false, true, true, tickness - 1); }			
+			}
 
 
         void Plot2DBaseGraph::_dicho(int j0, int i1, int i2, int j3, double x0, double x3, int depth, Image & im, const fBox2 & R, const RGBc & coul, const float & opacity, const int & tickness)
@@ -554,9 +554,10 @@ namespace mtools
                 double x2 = x3 - esp;
                 double y1 = _function(x1);
                 double y2 = _function(x2);
+				const int ly = (int)im.height();
 
-                int j1 = ((y1 >= R.min[1]) && (y1 <= R.max[1])) ? (im.height() - 1 - (int)floor((y1 - R.min[1]) / R.ly()*im.height() + 0.5)) : ((y1 >= R.max[1]) ? -tickness - 1 : im.height() + tickness);
-                int j2 = ((y2 >= R.min[1]) && (y2 <= R.max[1])) ? (im.height() - 1 - (int)floor((y2 - R.min[1]) / R.ly()*im.height() + 0.5)) : ((y2 >= R.max[1]) ? -tickness - 1 : im.height() + tickness);
+                int j1 = ((y1 >= R.min[1]) && (y1 <= R.max[1])) ? (ly - 1 - (int)floor((y1 - R.min[1]) / R.ly()*ly + 0.5)) : ((y1 >= R.max[1]) ? -tickness - 1 : ly + tickness);
+                int j2 = ((y2 >= R.min[1]) && (y2 <= R.max[1])) ? (ly - 1 - (int)floor((y2 - R.min[1]) / R.ly()*ly + 0.5)) : ((y2 >= R.max[1]) ? -tickness - 1 : ly + tickness);
 
                 if (j1 != j0) _drawPoint(i1, j1, im, coul, opacity,tickness);
                 if (j2 != j3)
@@ -584,13 +585,16 @@ namespace mtools
             double eps = R.lx() / im.width();
             double x1 = R.min[0] + (eps / 2.0);
             double y1 = _function(x1);
-            int j1 = ((y1 >= R.min[1]) && (y1 <= R.max[1])) ? (im.height() - 1 - (int)floor((y1 - R.min[1]) / R.ly()*im.height() + 0.5)) : ((y1 >= R.max[1]) ? -1 - tickness : im.height()+tickness);
+			const int ly = (int)im.height();
+
+
+            int j1 = ((y1 >= R.min[1]) && (y1 <= R.max[1])) ? (ly - 1 - (int)floor((y1 - R.min[1]) / R.ly()*ly + 0.5)) : ((y1 >= R.max[1]) ? -1 - tickness : ly +tickness);
             _drawPoint(0, j1, im, coul, opacity, tickness);
             for (int i = 1; i < im.width(); i++)
                 {
                 double x2 = x1 + eps;
                 double y2 = _function(x2);
-                int j2 = ((y2 >= R.min[1]) && (y2 <= R.max[1])) ? (im.height() - 1 - (int)floor((y2 - R.min[1]) / R.ly()*im.height() + 0.5)) : ((y2 >= R.max[1]) ? -1 - tickness : im.height() + tickness);
+                int j2 = ((y2 >= R.min[1]) && (y2 <= R.max[1])) ? (ly - 1 - (int)floor((y2 - R.min[1]) / R.ly()*ly + 0.5)) : ((y2 >= R.max[1]) ? -1 - tickness : ly + tickness);
                 _drawPoint(i, j2, im, coul, opacity, tickness);
                 if ((j2 - j1 > 1) || (j2 - j1 < -1))
                     {
@@ -608,13 +612,14 @@ namespace mtools
                 double eps = R.lx() / im.width();
                 double x1 = R.min[0] + (eps / 2.0);
                 double y1 = _function(x1);
-                int j1 = ((y1 >= R.min[1]) && (y1 <= R.max[1])) ? (im.height() - 1 - (int)floor((y1 - R.min[1]) / R.ly()*im.height() + 0.5)) : ((y1 >= R.max[1]) ? -1 - tickness : im.height() + tickness);
+				const int ly = (int)im.height();				
+				int j1 = ((y1 >= R.min[1]) && (y1 <= R.max[1])) ? (ly - 1 - (int)floor((y1 - R.min[1]) / R.ly()*ly + 0.5)) : ((y1 >= R.max[1]) ? -1 - tickness : ly + tickness);
                 _drawPoint(0, j1, im, coul, opacity, tickness);
                 for (int i = 1; i < im.width(); i++)
                 {
                     double x2 = x1 + eps;
                     double y2 = _function(x2);
-                    int j2 = ((y2 >= R.min[1]) && (y2 <= R.max[1])) ? (im.height() - 1 - (int)floor((y2 - R.min[1]) / R.ly()*im.height() + 0.5)) : ((y2 >= R.max[1]) ? -1-tickness : im.height() + tickness);
+                    int j2 = ((y2 >= R.min[1]) && (y2 <= R.max[1])) ? (ly - 1 - (int)floor((y2 - R.min[1]) / R.ly()*ly + 0.5)) : ((y2 >= R.max[1]) ? -1-tickness : ly + tickness);
                     if ((!std::isnan(y1)) && (!std::isnan(y2))) _drawLine(i - 1, j1, j2, im, coul, opacity, tickness);
                     x1 = x2;
                     y1 = y2;
@@ -625,15 +630,20 @@ namespace mtools
 
         void Plot2DBaseGraph::_drawOverOrBelow(bool over, Image & im, const fBox2 & R, RGBc coul, const float opacity)
             {
+			coul.multOpacity(opacity);
             double eps = R.lx() / im.width();
             double x = R.min[0] + (eps / 2.0);
-            for (int i = 0; i < im.width(); i++)
+			const int ly = (int)im.height();
+			for (int i = 0; i < im.width(); i++)
                 {
                 double y = _function(x);
-                int j = ((y >= R.min[1]) && (y <= R.max[1])) ? (im.height() - 1 - (int)floor((y - R.min[1]) / R.ly()*im.height() + 0.5)) : ((y >= R.max[1]) ? -1 : im.height());
+                int j = ((y >= R.min[1]) && (y <= R.max[1])) ? (ly - 1 - (int)floor((y - R.min[1]) / R.ly()*ly + 0.5)) : ((y >= R.max[1]) ? -1 : ly);
                 if (!std::isnan(y))
                     {
-                    if (over) im.drawLine(iVec2(i, -1), iVec2(i, j - 1), coul, opacity); else im.drawLine(iVec2(i, im.height()), iVec2(i, j + 1), coul, opacity);
+					if (over)
+						im.draw_vertical_line(i, -1, j - 1, coul, true, true);
+					else
+						im.draw_vertical_line(i, j+1, ly, coul, true, true);
                     }
                 x += eps;
                 }

@@ -249,7 +249,8 @@ namespace mtools
         {
             MTOOLS_ASSERT((im.width() == _imageSize.X()) && (im.height() == _imageSize.Y()));
             const int MINPXL = 5;
-
+			const int64 ly = im.height();
+			RGBc color = ((RGBc)_color).getMultOpacity(opacity);
             double pxlx = _imageSize.X() / _range.lx();
             if (pxlx*_hspace >= (double)MINPXL)
                 { // ok, we should draw the vertical lines
@@ -263,14 +264,14 @@ namespace mtools
                             {
                             if (i >= 0)
                                 {
-                                im.drawVerticalLine(i, _color, opacity);
+								im.draw_vertical_line(i, 0, ly, color, false, true);
                                 }
                             }
                         else
                             {
                             if (_imageSize.X())
                                 {
-                                im.drawVerticalLine(i+1, _color, opacity);
+								im.draw_vertical_line(i+1, 0, ly, color, false, true);
                                 }
                             }
                         i += (MINPXL - 3);
@@ -278,7 +279,8 @@ namespace mtools
                     }
                 }
 
-            double pxly = _imageSize.Y() / _range.ly();
+			const int64 lx = im.width();
+			double pxly = _imageSize.Y() / _range.ly();
             if (pxly*_vspace >= (double)MINPXL)
                 { // ok, we should draw the horizontal lines
                 for (int i = -1; i < _imageSize.Y(); i++)
@@ -291,14 +293,14 @@ namespace mtools
                             {
                             if (i >= 0)
                                 {
-                                im.drawHorizontalLine(i, _color, opacity);
+								im.draw_horizontal_line(i, 0, lx, color, false, true);
                                 }
                             }
                         else
                             {
                             if (_imageSize.Y())
                                 {
-                                im.drawHorizontalLine(i+1, _color, opacity);
+								im.draw_horizontal_line(i+1, 0, lx, color, false, true);
                                 }
                             }
                         i += (MINPXL - 3);
