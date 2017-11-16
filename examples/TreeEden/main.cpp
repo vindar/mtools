@@ -26,7 +26,7 @@ class TreeEdenCluster
 {
 public:
     /* construct, initially empty cluster */
-    TreeEdenCluster() : N(0), Grid(), Urn(), gen() { clear(); image.resize(1, 1, 1, 3, -1); }
+    TreeEdenCluster() : N(0), Grid(), Urn(), gen() { clear(); image.resizeRaw(1, 1, true); }
 
     /* load from a file */
     void load(const std::string & filename) { IFileArchive ar(filename); ar & (*this); }
@@ -83,7 +83,7 @@ public:
         }
 
     /* detail : image associated with a site */
-    const Img<unsigned char> * getImage(mtools::iVec2 pos, mtools::iVec2 size)
+    const Image * getImage(mtools::iVec2 pos, mtools::iVec2 size)
         {
         auto v = Grid.peek(pos);
         if ((v == nullptr) || ((*v).N == 0)) return nullptr;
@@ -107,7 +107,7 @@ private:
     Grid_basic<2,siteInfo> Grid;                 // the 2D grid
     RandomUrn<iVec2> Urn;                        // list of neighour sites of the current domain
     MT2004_64 gen;                               // random number generator
-    Img<unsigned char> image;                    // the cimg image to draw sites
+    Image image;								 // the image to draw sites
 };
 
 

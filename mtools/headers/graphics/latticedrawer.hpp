@@ -979,6 +979,7 @@ void _redrawImage(iBox2 new_wr, int new_sx, int new_sy, int maxtime_ms)
     if ((!_g_redraw_im) && (_keepOldImage(new_im_x, new_im_y)) && (prevphase >= 1))
         { // we try to keep something from the previous image
         Image new_im(new_im_x, new_im_y);
+		new_im.clear(RGBc::c_TransparentWhite);
         cimg_library::CImg<uint8> new_qbuf((int32)new_wr.lx() + 1, (int32)new_wr.ly() + 1, 1, 1, 0);  // create buffer with zeros
         // there has been some change but we may be able to keep something
         bool samescale = ((new_sx == _exact_sx) && (new_sy == _exact_sy)); // true if we are on the same scale as before
@@ -986,13 +987,16 @@ void _redrawImage(iBox2 new_wr, int new_sx, int new_sy, int maxtime_ms)
         iBox2 in_oldR = _exact_r.relativeSubRect(new_wr); // the intersection rectangle seen as a sub rectangle of the old site rectangle
         if (!in_newR.isEmpty()) // intersection is not empty, we fill the new quality with what we keep from the old image
             {
-            for (int i = 0; i < (in_newR.lx() + 1); i++)  for (int j = 0; j < (in_newR.ly() + 1); j++)
-                {
-                unsigned char v = _exact_qbuf((int32)in_oldR.min[0] + i, (int32)in_oldR.min[1] + j); // get the quality of the site
-                if ((v == 2) && (!samescale)) { v = 1; } // downgrade quality if we are changing scale
-                if (v != 0) { --_exact_Q0; if (v >= 2) { ++_exact_Q23; } }
-                new_qbuf((int32)in_newR.min[0] + i, (int32)in_newR.min[1] + j) = v; // save the quality in the new quality buffer
-                }
+			for (int i = 0; i < (in_newR.lx() + 1); i++)
+				{
+				for (int j = 0; j < (in_newR.ly() + 1); j++)
+					{
+					unsigned char v = _exact_qbuf((int32)in_oldR.min[0] + i, (int32)in_oldR.min[1] + j); // get the quality of the site
+					if ((v == 2) && (!samescale)) { v = 1; } // downgrade quality if we are changing scale
+					if (v != 0) { --_exact_Q0; if (v >= 2) { ++_exact_Q23; } }
+					new_qbuf((int32)in_newR.min[0] + i, (int32)in_newR.min[1] + j) = v; // save the quality in the new quality buffer
+					}
+				}
             if (!samescale)
                 {
 				_exact_im.crop(iBox2(
@@ -1000,9 +1004,17 @@ void _redrawImage(iBox2 new_wr, int new_sx, int new_sy, int maxtime_ms)
 					(in_oldR.max[0] + 1)*_exact_sx - 1,
 					(_exact_r.ly() - in_oldR.max[1])*_exact_sy,
 					(_exact_r.ly() - in_oldR.min[1] + 1)*_exact_sy - 1), true); // crop the old image keeping only the part we reuse  
+				
+				_exact_im.rescale(0, (in_newR.lx() + 1)*new_sx, (int32)(in_newR.ly() + 1)*new_sy);
+				new_im.blit(_exact_im, in_newR.min[0] * new_sx, new_im.height() - _exact_im.height() - (int32)in_newR.min[1] * new_sy);
+				
+				/*
 				new_im.blit_rescaled(0, _exact_im,
 					in_newR.min[0] * new_sx, new_im.height() - _exact_im.height() - (int32)in_newR.min[1] * new_sy,
-					(in_newR.lx() + 1)*new_sx, (int32)(in_newR.ly() + 1)*new_sy);  // resize and blit at the right position in the new image. 
+					(in_newR.lx() + 1)*new_sx, (in_newR.ly() + 1)*new_sy);  // resize and blit at the right position in the new image. 
+				*/
+
+
                 }
             else
                 {

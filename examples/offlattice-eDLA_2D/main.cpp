@@ -44,7 +44,7 @@ double eps;                         // distance under which particles stick toge
 MT2004_64 gen;                      // random number generator
 Grid_basic<2, siteInfo, 2> Grid;    // the main grid 
 int64 NN = 0;                       // current number of particles
-Img<unsigned char> im;              // image for drawing
+Image im;                           // image for drawing
 void * hintpeek = nullptr;          // used for safe peeking of the grid.
 double maxd = 0.0;                  // current maximal distance from the origin of any particule center.
 
@@ -74,17 +74,19 @@ struct eDLAPLot
         {
         auto p = Grid.peek({ i,j }, hintpeek);
         if ((p == nullptr) || (p->N[0] == 0)) return;
-        if (!b) { b = true; im.resize((int)size.X(), (int)size.Y(), 1, 4); im.clear(RGBc::c_TransparentWhite); }
-        im.fBox2_draw_circle(R, p->pos[0], RAD, RGBc::jetPalette(p->N[0], 1, NN), 1.0, true);
+        if (!b) { b = true; im.resizeRaw((int64)size.X(), (int64)size.Y(), true); im.clear(RGBc::c_TransparentWhite); }
+		RGBc cc = RGBc::jetPalette(p->N[0], 1, NN);
+		im.canvas_draw_filled_circle(R, p->pos[0], RAD, cc, cc, true);
         for (size_t t = 1; t < NBPARTICLESPERBOX; t++)
             {
             if (p->N[t] == 0) return;
-            im.fBox2_draw_circle(R, p->pos[t], RAD, RGBc::jetPalette(p->N[t], 1, NN), 1.0, true);
+			RGBc cc2 = RGBc::jetPalette(p->N[t], 1, NN);
+			im.canvas_draw_filled_circle(R, p->pos[t], RAD, cc2, cc2, true);
             }
         }
 
     /* draw a site */
-    inline const Img<unsigned char> * getImage(mtools::iVec2 pos, mtools::iVec2 size)
+    inline const Image * getImage(mtools::iVec2 pos, mtools::iVec2 size)
         {
         bool b = false;
         fBox2 R((double)pos.X() - 0.5, (double)pos.X() + 0.5, (double)pos.Y() - 0.5, (double)pos.Y() + 0.5);

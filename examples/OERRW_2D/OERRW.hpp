@@ -33,7 +33,7 @@ class longOERRW
             N = 0;
             pos = { 0,0 };
             G.reset(maskfull, maskfull, false);
-            im.resize(1, 1, 1, 3);
+            im.resizeRaw(1, 1, true);
             }
 
 
@@ -185,7 +185,7 @@ class longOERRW
         iVec2 pos;							// current position of the walk
         mtools::Grid_factor<2,char,1,RR> G; // The lattice 
 
-        mutable Img<unsigned char>  im;	    // image for drawing
+        mutable Image  im;					// image for drawing
         mutable MT2004_64  gen;				// the random number generator
     };
 

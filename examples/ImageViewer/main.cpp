@@ -10,7 +10,7 @@ using namespace mtools;
 /* display the image in filename */
 void display(const std::string & filename)
     {
-    Img<unsigned char> im;
+    Image im;
     try
         {
         mtools::ProgressBar<int> PB(0, 1, std::string("Loading file [") + toString(filename) + "]", true);
@@ -18,7 +18,7 @@ void display(const std::string & filename)
         im.load(filename.c_str());
         }
     catch (...) { return; }
-    auto image = makePlot2DCImg(im, 1, mtools::toString(filename));
+    auto image = makePlot2DImage(im, 1, mtools::toString(filename));
     Plotter2D Plotter;
     Plotter.useSolidBackground(false);
     Plotter[image];
