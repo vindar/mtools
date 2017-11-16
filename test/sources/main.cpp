@@ -43,6 +43,8 @@ struct LERRWPlot
 		const siteInfo * S = G.peek(p);
 		if ((S == nullptr) || (S->V == 0)) return nullptr;
 		EdgeSiteImage ES;
+
+		
 		//if (pos == p) { ES.bkColor(RGBc::c_Black.getOpacity(0.5)); }      // uncomment to display the current position
 		ES.site(true, RGBc::jetPaletteLog(S->V, 0, maxV, logscale));
 		ES.text(mtools::toString(S->V)).textColor(RGBc::c_White);
@@ -54,6 +56,15 @@ struct LERRWPlot
 		if (down > 1.0) { ES.down(ES.EDGE, RGBc::jetPaletteLog(down / maxE, logscale)); }
 		if (left > 1.0) { ES.left(ES.EDGE, RGBc::jetPaletteLog(left / maxE, logscale)); ES.textleft(mtools::toString((int64)((left - 1) / delta))); }
 		if (right > 1.0) { ES.right(ES.EDGE, RGBc::jetPaletteLog(right / maxE, logscale)); }
+		
+
+		/*
+		ES.siteColor(RGBc::c_Orange);
+		//ES.up(ES.EDGE, RGBc::c_Red);
+		ES.down(ES.EDGE, RGBc::c_Blue);
+		//ES.left(ES.EDGE, RGBc::c_Green);
+		ES.right(ES.EDGE, RGBc::c_Yellow);
+		*/
 		ES.makeImage(image, size);
 		return(&image);
 	}
