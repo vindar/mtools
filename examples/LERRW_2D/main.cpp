@@ -28,7 +28,7 @@ int64 range = 1;                // number of distincts site visited.
 iBox2 R;                        // rectangle enclosing the trace of the walk
 Grid_basic<2, siteInfo> G;      // the grid
 MT2004_64 gen;                  // random generator
-Img<unsigned char> image;       // image for detailled plot
+Image image;       // image for detailled plot
 
 
 
@@ -44,7 +44,7 @@ struct LERRWPlot
 
 
     /* detail : image associated with a site */
-    static const Img<unsigned char> * getImage(mtools::iVec2 p, mtools::iVec2 size)
+    static const Image * getImage(mtools::iVec2 p, mtools::iVec2 size)
         {
         const siteInfo * S = G.peek(p);
         if ((S == nullptr) || (S->V == 0)) return nullptr;
@@ -78,7 +78,7 @@ void makeLERRW(uint64 steps, double d)
     range = 0;
     R.clear();
     G.reset();
-    image.resize(1, 1, 1, 3, -1);
+    image.resizeRaw(1, 1);
     pos = { 0, 0 };
     // main loop
     for (uint64 n = 0; n < steps; n++)

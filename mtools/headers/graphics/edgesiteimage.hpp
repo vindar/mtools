@@ -23,7 +23,8 @@
 #include "../misc/internal/mtools_export.hpp"
 #include "../misc/error.hpp"
 #include "../maths/vec.hpp"
-#include "customcimg.hpp"
+#include "image.hpp"
+#include "font.hpp"
 
 
 namespace mtools
@@ -39,26 +40,6 @@ namespace mtools
      * - The color of each element can be customized.
      *
      * Once every parameters of the image are set, it is created using the makeImage() method.
-     *
-     * @par Example
-     * @code{.cpp}
-     * int main()
-     * {
-     *  EdgeSiteImage ES;
-     *  ES.site(true, RGBc::c_Gray);		       // draw a gray center site
-     *  ES.left(ES.NOEDGE, RGBc::c_Green);         // green edge on the left
-     *  ES.right(ES.EDGE);	            	       // outgoing arrow on the right (black)
-     *  ES.up(ES.ARROW_OUTGOING);			       // ingoing arrow up (black)
-     *  ES.text("Center text", RGBc::c_Purple);	   // the center text  in purple
-     *  ES.textup("up text");					   // up text (black)
-     *  ES.textleft("left text");				   // left text (black)
-     *  ES.textdown("this is my\ntext :-)");       // another text down
-     *  Img<unsigned char> image;   // the cim image to draw into
-     *  ES.makeImage(image, 200, 300);			   // draw it with size (200x300)
-     *  CImgDisplay Disp(image); while (!Disp.is_closed()) { Sleep(1); }	// display on the screen
-     *  return 0
-     *  }
-     * @endcode.
      **/
 	class EdgeSiteImage
 	{
@@ -296,7 +277,7 @@ namespace mtools
      *
      * @return  a reference to im.
      **/
-    Img<unsigned char> & makeImage(Img<unsigned char> & im) const;
+    Image & makeImage(Image & im) const;
 
 
     /**
@@ -308,7 +289,7 @@ namespace mtools
      *
      * @return  a reference to im.
      **/
-    Img<unsigned char> & makeImage(Img<unsigned char> & im, iVec2 size) const;
+    Image & makeImage(Image & im, iVec2 size) const;
 
 
 	private:
@@ -317,17 +298,17 @@ namespace mtools
     // PRIVATE PART
     //
     //
-    inline void _drawArrow(RGBc coul, TypeEdge type, int direction, Img<unsigned char> & im, double kx, double ky) const;
-    inline void _draw_extArrow(RGBc coul, int direction, Img<unsigned char> & im, double kx, double ky) const;
-    inline void _draw_intArrowSite(RGBc coul, int direction, Img<unsigned char> & im, double kx, double ky) const;
-    inline void _draw_intArrow(RGBc coul, int direction, Img<unsigned char> & im, double kx, double ky) const;
-    inline void _draw_extEdge(RGBc coul, int direction, Img<unsigned char> & im, double kx, double ky) const;
-    inline void _draw_centerEdge(RGBc coul, int direction, Img<unsigned char> & im, double kx, double ky) const;
-    inline void _draw_insideEdge(RGBc coul, int direction, Img<unsigned char> & im, double kx, double ky) const;
-    inline void _draw_centerNoSite(RGBc coul, Img<unsigned char> & im, double kx, double ky) const;
-    inline void _draw_centerSite(RGBc coul, Img<unsigned char> & im, double kx, double ky) const;
-    inline void _draw_rect(double x0, double y0, double x1, double y1, RGBc coul, int direction, Img<unsigned char> & im, double kx, double ky)  const;
-    inline void _draw_triangle(double x0, double y0, double x1, double y1, double x2, double y2, RGBc coul, int direction, Img<unsigned char> & im, double kx, double ky) const;
+    inline void _drawArrow(RGBc coul, TypeEdge type, int direction, Image & im, double kx, double ky) const;
+    inline void _draw_extArrow(RGBc coul, int direction, Image & im, double kx, double ky) const;
+    inline void _draw_intArrowSite(RGBc coul, int direction, Image & im, double kx, double ky) const;
+    inline void _draw_intArrow(RGBc coul, int direction, Image & im, double kx, double ky) const;
+    inline void _draw_extEdge(RGBc coul, int direction, Image & im, double kx, double ky) const;
+    inline void _draw_centerEdge(RGBc coul, int direction, Image & im, double kx, double ky) const;
+    inline void _draw_insideEdge(RGBc coul, int direction, Image & im, double kx, double ky) const;
+    inline void _draw_centerNoSite(RGBc coul, Image & im, double kx, double ky) const;
+    inline void _draw_centerSite(RGBc coul, Image & im, double kx, double ky) const;
+    inline void _draw_rect(double x0, double y0, double x1, double y1, RGBc coul, int direction, Image & im, double kx, double ky)  const;
+    inline void _draw_triangle(double x0, double y0, double x1, double y1, double x2, double y2, RGBc coul, int direction, Image & im, double kx, double ky) const;
 
     TypeEdge    _up, _down, _left, _right;                      // type of edges.
 	bool        _site;                                          // is there a central site.
