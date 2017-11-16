@@ -36,7 +36,6 @@
 #include "mobius.hpp"
 #include "../random/gen_fastRNG.hpp"
 #include "../random/classiclaws.hpp"
-#include "../graphics/customcimg.hpp"
 
 #include "../extensions/openCL.hpp" // openCL extension
 #include "internal/circlePacking.cl.hpp"	    // the openCL program source.

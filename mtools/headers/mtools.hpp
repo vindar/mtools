@@ -22,8 +22,6 @@
 // auto-generated configuration file.
 #include "mtools_config.hpp"
 
-// CImg
-#include "graphics/customcimg.hpp"
 
 // containers
 #include "containers/grid_basic.hpp"
@@ -80,8 +78,8 @@
 #include "extensions/openCL.hpp"
 
 // graphics
-#include "graphics/font.hpp"
 #include "graphics/image.hpp"
+#include "graphics/font.hpp"
 #include "graphics/progressimg.hpp"
 #include "graphics/simpleBMP.hpp"
 #include "graphics/edgesiteimage.hpp"

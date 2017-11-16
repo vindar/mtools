@@ -161,6 +161,7 @@ int main(int argc, char *argv[])
 	MTOOLS_SWAP_THREADS(argc, argv);
 	parseCommandLine(argc, argv, true);
 
+	/*
 	cimg_library::CImg<unsigned char> imm("lenna.jpg");
 	auto P3 = makePlot2DCImg(imm);
 
@@ -169,9 +170,9 @@ int main(int argc, char *argv[])
 
 	plotter.autorangeXY();
 	plotter.plot();
+	*/
 
-
-	/*
+	
 	cout << "*******************************************************\n";
 	cout << " Simulation of a Linearly Reinforced Random Walk on Z^2\n";
 	cout << "*******************************************************\n\n";
@@ -180,7 +181,7 @@ int main(int argc, char *argv[])
 	makeLERRW(N, delta);
 	return 0;
 
-	*/
+	
 	}
 
 /* end of file main.cpp */

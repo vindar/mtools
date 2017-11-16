@@ -24,7 +24,7 @@
 #include "misc/error.hpp"
 #include "misc/indirectcall.hpp"
 #include "io/internal/fltkSupervisor.hpp"
-#include "graphics/customcimg.hpp"
+#include "graphics/image.hpp"
 #include "graphics/internal/drawable2Dobject.hpp"
 #include "graphics/internal/rangemanager.hpp"
 #include "graphics/internal/rgbc_flcolor.hpp"

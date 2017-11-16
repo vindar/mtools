@@ -69,7 +69,6 @@
 #include "png.h"        // libpng
 #include "jpeglib.h"    // libjpeg
 
-#include "headers/graphics/customcimg.hpp"
 */
 
 

@@ -33,8 +33,6 @@
 
 #include "../io/console.hpp"
 
-#include "../graphics/customcimg.hpp"
-
 
 // use libpng
 #define cimg_use_png

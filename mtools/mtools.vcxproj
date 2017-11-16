@@ -177,7 +177,6 @@
     <ClInclude Include="headers\containers\randomurn.hpp" />
     <ClInclude Include="headers\containers\RWtreegraph.hpp" />
     <ClInclude Include="headers\extensions\openCL.hpp" />
-    <ClInclude Include="headers\graphics\customcimg.hpp" />
     <ClInclude Include="headers\graphics\edgesiteimage.hpp" />
     <ClInclude Include="headers\graphics\font.hpp" />
     <ClInclude Include="headers\graphics\image.hpp" />

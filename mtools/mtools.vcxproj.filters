@@ -60,9 +60,6 @@
     <ClInclude Include="headers\containers\grid_factor.hpp">
       <Filter>Header Files\containers</Filter>
     </ClInclude>
-    <ClInclude Include="headers\graphics\customcimg.hpp">
-      <Filter>Header Files\graphics</Filter>
-    </ClInclude>
     <ClInclude Include="headers\graphics\edgesiteimage.hpp">
       <Filter>Header Files\graphics</Filter>
     </ClInclude>
