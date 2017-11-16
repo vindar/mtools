@@ -1411,15 +1411,118 @@ namespace mtools
 				if (quality <= 0) quality = 0; else if (quality >= MAX_QUALITY) quality = MAX_QUALITY;
 				if ((dest_sx <= 0) || (dest_sy <= 0)) return MAX_QUALITY; 
 				if ((sprite_sx <= 0) || (sprite_sy <= 0)) return MAX_QUALITY;
-				MTOOLS_INSURE(&sprite != this);
+				if ((dest_x >= lx()) || (dest_y >= ly())) return MAX_QUALITY;
+				if ((sprite_x >= sprite.lx()) || (sprite_y >= sprite.ly())) return MAX_QUALITY;
+				if ((dest_x + dest_sx <= 0) || (dest_y + dest_sy <= 0)) return MAX_QUALITY;
+				if ((sprite_x + sprite_sx <= 0) || (sprite_y + sprite_sy <= 0)) return MAX_QUALITY;
 
+				if (overlapMemoryWith(sprite))
+					{ // this and sprite overlap so we must make a copy of sprite
+					return blit_rescaled(quality, sprite.get_standalone(), dest_x, dest_y, dest_sx, dest_sy, sprite_x, sprite_y, sprite_sx, sprite_sy);
+					}
 
-				if (dest_x)
+				if (dest_x < 0)
+					{
+					int64 new_dest_sx = dest_sx + dest_x;
+					if (new_dest_sx <= 0) return MAX_QUALITY;
+					int64 new_dest_x = 0;
+					int64 new_sprite_sx = (int64)(sprite_sx * ((double)new_dest_sx) / ((double)dest_sx));
+					if (new_sprite_sx <= 0) return MAX_QUALITY;
+					int64 new_sprite_x = sprite_x + (int64)(sprite_sx * ((double)(-dest_x)) / ((double)(dest_sx)));
+					dest_x = new_dest_x;
+					dest_sx = new_dest_sx;
+					sprite_x = new_sprite_x;
+					sprite_sx = new_sprite_sx;
+					}
+
+				if (dest_y < 0)
+					{
+					int64 new_dest_sy = dest_sy + dest_y;
+					if (new_dest_sy <= 0) return MAX_QUALITY;
+					int64 new_dest_y = 0;
+					int64 new_sprite_sy = (int64)(sprite_sy * ((double)new_dest_sy) / ((double)dest_sy));
+					if (new_sprite_sy <= 0) return MAX_QUALITY;
+					int64 new_sprite_y = sprite_y + (int64)(sprite_sy * ((double)(-dest_y)) / ((double)(dest_sy)));
+					dest_y = new_dest_y;
+					dest_sy = new_dest_sy;
+					sprite_y = new_sprite_y;
+					sprite_sy = new_sprite_sy;
+					}
+
+				if (sprite_x < 0)
+					{
+					int64 new_sprite_sx = sprite_sx + sprite_x;
+					if (new_sprite_sx <= 0) return MAX_QUALITY;
+					int64 new_sprite_x = 0;
+					int64 new_dest_sx = (int64)(dest_sx * ((double)new_sprite_sx) / ((double)sprite_sx));
+					if (new_dest_sx <= 0) return MAX_QUALITY;
+					int64 new_dest_x = dest_x + (int64)(dest_sx * ((double)(-sprite_x)) / ((double)(sprite_sx)));
+					dest_x = new_dest_x;
+					dest_sx = new_dest_sx;
+					sprite_x = new_sprite_x;
+					sprite_sx = new_sprite_sx;
+					}
+
+				if (sprite_y < 0)
+					{
+					int64 new_sprite_sy = sprite_sy + sprite_y;
+					if (new_sprite_sy <= 0) return MAX_QUALITY;
+					int64 new_sprite_y = 0;
+					int64 new_dest_sy = (int64)(dest_sy * ((double)new_sprite_sy) / ((double)sprite_sy));
+					if (new_dest_sy <= 0) return MAX_QUALITY;
+					int64 new_dest_y = dest_y + (int64)(dest_sy * ((double)(-sprite_y)) / ((double)(sprite_sy)));
+					dest_y = new_dest_y;
+					dest_sy = new_dest_sy;
+					sprite_y = new_sprite_y;
+					sprite_sy = new_sprite_sy;
+					}
+
+				if (dest_x + dest_sx > lx())
+					{
+					int64 new_dest_sx = lx() - dest_x;
+					if (new_dest_sx <= 0) return MAX_QUALITY;
+					int64 new_sprite_sx = (int64)(sprite_sx * ((double)new_dest_sx) / ((double)dest_sx));
+					if (new_sprite_sx <= 0) return MAX_QUALITY;
+					dest_sx = new_dest_sx;
+					sprite_sx = new_sprite_sx;
+					}
+			
+				if (dest_y + dest_sy > ly())
+					{
+					int64 new_dest_sy = ly() - dest_y;
+					if (new_dest_sy <= 0) return MAX_QUALITY;
+					int64 new_sprite_sy = (int64)(sprite_sy * ((double)new_dest_sy) / ((double)dest_sy));
+					if (new_sprite_sy <= 0) return MAX_QUALITY;
+					dest_sy = new_dest_sy;
+					sprite_sy = new_sprite_sy;
+					}
+
+				if (sprite_x + sprite_sx > sprite.lx())
+					{
+					int64 new_sprite_sx = sprite.lx() - sprite_x;
+					if (new_sprite_sx <= 0) return MAX_QUALITY;
+					int64 new_dest_sx = (int64)(dest_sx * ((double)new_sprite_sx) / ((double)sprite_sx));
+					if (new_dest_sx <= 0) return MAX_QUALITY;
+					dest_sx = new_dest_sx;
+					sprite_sx = new_sprite_sx;
+					}
+
+				if (sprite_y + sprite_sy > sprite.ly())
+					{
+					int64 new_sprite_sy = sprite.ly() - sprite_y;
+					if (new_sprite_sy <= 0) return MAX_QUALITY;
+					int64 new_dest_sy = (int64)(dest_sy * ((double)new_sprite_sy) / ((double)sprite_sy));
+					if (new_dest_sy <= 0) return MAX_QUALITY;
+					dest_sy = new_dest_sy;
+					sprite_sy = new_sprite_sy;
+					}
+
+				// normally, this should never fail but we make sure nevertheless since it cost nothing
+				// compared the rest of the method.
 				MTOOLS_INSURE((dest_x >= 0) && (dest_x + dest_sx <= lx()));
 				MTOOLS_INSURE((dest_y >= 0) && (dest_y + dest_sy <= ly()));
 				MTOOLS_INSURE((sprite_x >= 0) && (sprite_x + sprite_sx <= sprite.lx()));
 				MTOOLS_INSURE((sprite_y >= 0) && (sprite_y + sprite_sy <= sprite.ly()));
-
 
 				if ((dest_sx == sprite_sx) && (dest_sy == sprite_sy))
 					{ // no rescaling
@@ -3287,6 +3390,47 @@ namespace mtools
 				}
 
 
+			/**
+			 * Query is both image share the same memory buffer.
+			 *
+			 * @param	im The image to check against.
+			 *
+			 * @return	true if they share the same memory buffer and false otherwise.
+			 */
+			MTOOLS_FORCEINLINE bool shareBufferWith(const Image & im) const
+				{
+				if (isEmpty() ||(_deletepointer == nullptr)) return false;
+				return (im._deletepointer == _deletepointer);
+				}
+
+
+			/**
+			 * Query if the memory buffer of two images overlap. This is more precise than shareBuffer()
+			 * because two images may share the same buffer but can still use distinct memory region.  
+			 *
+			 * @param	im The image to compare against.
+			 *
+			 * @return	true if some pixel are shared and false otherwise. 
+			 */
+			MTOOLS_FORCEINLINE bool overlapMemoryWith(const Image & im) const
+				{
+				if (!shareBufferWith(im)) return false;
+				MTOOLS_INSURE(_stride == im._stride);
+
+				int64 offa = _data - (RGBc*)_deletepointer; 
+				MTOOLS_INSURE(offa >= 0);
+				int64 xa = offa % _stride, ya = offa / _stride;
+				iBox2 Ba(xa, xa + _lx - 1, ya, ya + _ly - 1);
+
+				int64 offb = im._data - (RGBc*)im._deletepointer; 
+				MTOOLS_INSURE(offb >= 0);
+				int64 xb = offb % _stride, yb = offb / _stride;
+				iBox2 Bb(xb, xb + im._lx - 1, yb, yb + im._ly - 1);
+
+				return(!(intersectionRect(Ba, Bb).isEmpty()));
+				}
+
+			
 			/**
 			* Query the number of images sharing the same data buffer.
 			*
