@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "image.hpp"
 #include "../misc/internal/mtools_export.hpp"
 #include "internal/plotter2Dobj.hpp"
 #include "internal/drawable2DInterface.hpp"
@@ -59,7 +60,7 @@ namespace mtools
 		 * @param   nbthread    The number of threads to use for drawing.
          * @param   name        The name of the plot
          **/
-		Plot2DCImg(Img<unsigned char> * im, int nbthreads = 1, std::string name = "CImg image");
+		Plot2DCImg(cimg_library::CImg<unsigned char> * im, int nbthreads = 1, std::string name = "CImg image");
 
 
         /**
@@ -69,7 +70,7 @@ namespace mtools
 		* @param   nbthread    The number of threads to use for drawing.
         * @param   name        The name of the plot
         **/
-		Plot2DCImg(Img<unsigned char> & im, int nbthreads = 1, std::string name = "CImg image");
+		Plot2DCImg(cimg_library::CImg<unsigned char> & im, int nbthreads = 1, std::string name = "CImg image");
 
 
         /**
@@ -89,14 +90,14 @@ namespace mtools
          * @param [in,out]  im  The new image or nullptr if there is none. The previous image (if any) is
          *                      NOT deleted.
          **/
-		void image(Img<unsigned char> * im);
+		void image(cimg_library::CImg<unsigned char> * im);
 
         /**
         * Change the image (reference version).
         *
         * @param [in,out]  im  The new image.
         **/
-		void image(Img<unsigned char> & im);
+		void image(cimg_library::CImg<unsigned char> & im);
 
 
         /**
@@ -104,7 +105,7 @@ namespace mtools
          *
          * @return  a pointer to the current image or nullptr it there is none.
          **/
-		Img<unsigned char> * image() const;
+		cimg_library::CImg<unsigned char> * image() const;
 
 
         /**
@@ -211,7 +212,7 @@ namespace mtools
 
 
         std::atomic<int>  _typepos;                      // position of the image wrt the origin
-        Img<unsigned char> * _im;                        // pointer to the source image
+		cimg_library::CImg<unsigned char> * _im;         // pointer to the source image
 
 		PixelDrawer<Plot2DCImg> * _PD;					 // the pixel drawer
 		ProgressImg * _proImg;							 // the progress image
@@ -227,7 +228,7 @@ namespace mtools
 	/**
 	* Factory function for a constructing a plot2DCImg image from a CImg object. Reference version
 	**/
-	inline Plot2DCImg makePlot2DCImg(Img<unsigned char> & im, int nbthreads = 1, std::string name = "CImg image")
+	inline Plot2DCImg makePlot2DCImg(cimg_library::CImg<unsigned char> & im, int nbthreads = 1, std::string name = "CImg image")
 		{
 		return Plot2DCImg(im, nbthreads, name);
 		}
@@ -236,7 +237,7 @@ namespace mtools
 	/**
 	* Factory function for a constructing a plot2DCImg image from a CImg object. Pointer version
 	**/
-	inline Plot2DCImg makePlot2DCImg(Img<unsigned char> * im, int nbthreads = 1, std::string name = "CImg image")
+	inline Plot2DCImg makePlot2DCImg(cimg_library::CImg<unsigned char> * im, int nbthreads = 1, std::string name = "CImg image")
 		{
 		return Plot2DCImg(im, nbthreads, name);
 		}

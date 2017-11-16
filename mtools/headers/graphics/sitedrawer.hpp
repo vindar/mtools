@@ -204,7 +204,7 @@ namespace mtools
 
 
 
-            Img<unsigned char>  _exact_qbuf;			// quality buffer of the same size as exact_im: 0 = not drawn. 1 = dirty. 2 = clean 
+            cimg_library::CImg<unsigned char>  _exact_qbuf;	// quality buffer of the same size as exact_im: 0 = not drawn. 1 = dirty. 2 = clean 
             Image				_exact_im;	    		// the non-rescaled image of size (_wr.lx()*_exact_sx , _wr.ly()*_exact_sy)
             int					_exact_sx, _exact_sy;	// size of a site image in the exact image
             iBox2				_exact_r;				// the rectangle describing the sites in the exact_image

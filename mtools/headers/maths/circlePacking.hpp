@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "../graphics/image.hpp"
 #include "../misc/internal/mtools_export.hpp"
 #include "../misc/misc.hpp" 
 #include "../misc/stringfct.hpp" 
@@ -717,13 +718,21 @@ namespace mtools
 	* @param	firstIndex 	First index of the sub-graph to draw (included)
 	* @param	lastIndex  	Last index of the sub-graph to draw (excluded) or -1 = until the end.
 	**/
-	template<typename FPTYPE> void drawCirclePacking_Circles(mtools::Img<unsigned char> & img, const mtools::Box<FPTYPE, 2> & R, const std::vector<Circle<FPTYPE> > circles, const std::vector<std::vector<int> > & gr, bool filled, RGBc color, float opacity = 1.0f, int firstIndex = 0, int lastIndex = -1)
+	template<typename FPTYPE> void drawCirclePacking_Circles(Image & img, const mtools::Box<FPTYPE, 2> & R, const std::vector<Circle<FPTYPE> > circles, const std::vector<std::vector<int> > & gr, bool filled, RGBc color, float opacity = 1.0f, int firstIndex = 0, int lastIndex = -1)
 		{
+		color.multOpacity(opacity);
 		MTOOLS_ASSERT(circles.size() == gr.size());
 		if ((lastIndex < 0) || (lastIndex > (int)(gr.size()))) lastIndex = (int)(gr.size());
 		for (int i = firstIndex; i < lastIndex; i++)
 			{
-			img.fBox2_draw_circle(R, circles[i].center, circles[i].radius, color, opacity, filled);
+			if (filled)
+				{
+				img.canvas_draw_filled_circle(R, circles[i].center, circles[i].radius, color, color,true);
+				}
+			else
+				{
+				img.canvas_draw_circle(R, circles[i].center, circles[i].radius, color, true, false);
+				}
 			}
 		}
 
@@ -742,15 +751,16 @@ namespace mtools
 	* @param	firstIndex 	First index of the sub-graph to draw (included)
 	* @param	lastIndex  	Last index of the sub-graph to draw (excluded) or -1 = until the end.
 	**/
-	template<typename FPTYPE> void drawCirclePacking_Graph(mtools::Img<unsigned char> & img, const mtools::Box<FPTYPE, 2> & R, const std::vector<Circle<FPTYPE> > circles, const std::vector<std::vector<int> > & gr, RGBc color, float opacity = 1.0f, int firstIndex = 0, int lastIndex = -1)
+	template<typename FPTYPE> void drawCirclePacking_Graph(Image & img, const mtools::Box<FPTYPE, 2> & R, const std::vector<Circle<FPTYPE> > circles, const std::vector<std::vector<int> > & gr, RGBc color, float opacity = 1.0f, int firstIndex = 0, int lastIndex = -1)
 		{
+		color.multOpacity(opacity);
 		MTOOLS_ASSERT(circles.size() == gr.size());
 		if ((lastIndex < 0) || (lastIndex > (int)(gr.size()))) lastIndex = (int)(gr.size());
 		for (int i = firstIndex; i < lastIndex; i++)
 			{
 			for (auto it = gr[i].begin(); it != gr[i].end(); ++it)
 				{
-				if ((*it >= firstIndex) && (*it < lastIndex)) { img.fBox2_drawLine(R, circles[i].center, circles[*it].center, color, opacity); }
+				if ((*it >= firstIndex) && (*it < lastIndex)) { img.canvas_draw_line(R, circles[i].center, circles[*it].center, color, true); }
 				}
 			}
 		}
@@ -770,13 +780,14 @@ namespace mtools
 	* @param	firstIndex 	First index of the sub-graph to draw (included)
 	* @param	lastIndex  	Last index of the sub-graph to draw (excluded) or -1 = until the end.
 	**/
-	template<typename FPTYPE> void drawCirclePacking_Labels(mtools::Img<unsigned char> & img, const mtools::Box<FPTYPE, 2> & R, const std::vector<Circle<FPTYPE> > circles, const std::vector<std::vector<int> > & gr, int fontsize, RGBc color, float opacity = 1.0f, int firstIndex = 0, int lastIndex = -1)
+	template<typename FPTYPE> void drawCirclePacking_Labels(Image & img, const mtools::Box<FPTYPE, 2> & R, const std::vector<Circle<FPTYPE> > circles, const std::vector<std::vector<int> > & gr, int fontsize, RGBc color, float opacity = 1.0f, int firstIndex = 0, int lastIndex = -1)
 		{
+		color.multOpacity(opacity);
 		MTOOLS_ASSERT(circles.size() == gr.size());
 		if ((lastIndex < 0) || (lastIndex > (int)(gr.size() - 1))) lastIndex = (int)(gr.size());
 		for (int i = firstIndex; i < lastIndex; i++)
 			{
-			img.fBox2_drawText(R, mtools::toString(i), circles[i].center, 'c', 'c', fontsize, true, color, opacity);
+			img.canvas_draw_text(R, circles[i].center, mtools::toString(i), MTOOLS_TEXT_CENTER, color, fontsize);
 			}
 		}
 

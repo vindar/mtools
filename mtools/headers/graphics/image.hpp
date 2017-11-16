@@ -36,6 +36,38 @@
 #include "../graphics/customcimg.hpp"
 
 
+// use libpng
+#define cimg_use_png
+// use libjpeg
+#define cimg_use_jpeg
+
+// use openmp (only for GCC for the time being)
+#if defined __GNUC__ && !defined __clang__
+#define cimg_use_openmp
+#endif
+
+#if defined (_MSC_VER) 
+#pragma warning( push )				// disable some warnings
+#pragma warning( disable : 4146 )	//
+#pragma warning( disable : 4197 )	//
+#pragma warning( disable : 4244 )	//
+#pragma warning( disable : 4267 )	//
+#pragma warning( disable : 4305 )	//
+#pragma warning( disable : 4309 )	//
+#pragma warning( disable : 4312 )	//
+#pragma warning( disable : 4319 )	//
+#pragma warning( disable : 4723 )	//
+#endif
+
+#include <CImg.h>	    // the header for the cimg library
+#undef min
+#undef max
+
+#if defined (_MSC_VER) 
+#pragma warning( pop )
+#endif
+
+
 namespace mtools
 	{
 

@@ -37,14 +37,14 @@ namespace mtools
 
 
 
-	Plot2DCImg::Plot2DCImg(Img<unsigned char> * im, int nbthreads, std::string name) : internals_graphics::Plotter2DObj(name), _typepos(TYPEBOTTOMLEFT), _im(im), _PD(nullptr), _proImg(nullptr)
+	Plot2DCImg::Plot2DCImg(cimg_library::CImg<unsigned char> * im, int nbthreads, std::string name) : internals_graphics::Plotter2DObj(name), _typepos(TYPEBOTTOMLEFT), _im(im), _PD(nullptr), _proImg(nullptr)
 		{
 		_PD = new PixelDrawer<Plot2DCImg>(this, nbthreads);
 		_proImg = new ProgressImg();
 		}
 
 
-	Plot2DCImg::Plot2DCImg(Img<unsigned char> & im, int nbthreads, std::string name) : internals_graphics::Plotter2DObj(name), _typepos(TYPEBOTTOMLEFT), _im(&im), _PD(nullptr), _proImg(nullptr)
+	Plot2DCImg::Plot2DCImg(cimg_library::CImg<unsigned char> & im, int nbthreads, std::string name) : internals_graphics::Plotter2DObj(name), _typepos(TYPEBOTTOMLEFT), _im(&im), _PD(nullptr), _proImg(nullptr)
 		{
 		_PD = new PixelDrawer<Plot2DCImg>(this, nbthreads);
 		_proImg = new ProgressImg();
@@ -66,7 +66,7 @@ namespace mtools
 		}
 
 
-	void Plot2DCImg::image(Img<unsigned char> * im)
+	void Plot2DCImg::image(cimg_library::CImg<unsigned char> * im)
 		{
 		enable(false);
 		_im = im;
@@ -75,7 +75,7 @@ namespace mtools
 		}
 
 
-	void Plot2DCImg::image(Img<unsigned char> & im)
+	void Plot2DCImg::image(cimg_library::CImg<unsigned char> & im)
 		{
 		enable(false);
 		_im = &im;
@@ -84,7 +84,7 @@ namespace mtools
 		}
 
 
-	Img<unsigned char> * Plot2DCImg::image() const { return _im; }
+	cimg_library::CImg<unsigned char> * Plot2DCImg::image() const { return _im; }
 
 
 	void Plot2DCImg::position(int posType)
