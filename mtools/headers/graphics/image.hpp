@@ -860,7 +860,7 @@ namespace mtools
 				sy -= std::max<int64>(0, (sprite_y + sy - sprite._ly));
 				if ((sx <= 0) || (sy <= 0)) return;
 				//pixman_blt((uint32_t *)sprite._data, (uint32_t *)_data, sprite._stride , _stride , 32, 32, sprite_x, sprite_y, dest_x, dest_y, sx, sy);  // supper than the blit function below, (strange...)
-				_blitRegion(_data + (dest_y*_stride) + dest_x, _stride, sprite._data + (sprite_y*_stride) + sprite_x, sprite._stride, sx, sy);
+				_blitRegion(_data + (dest_y*_stride) + dest_x, _stride, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, sx, sy);
 				}
 
 
@@ -987,7 +987,7 @@ namespace mtools
 				sx -= std::max<int64>(0, (sprite_x + sx - sprite._lx));
 				sy -= std::max<int64>(0, (sprite_y + sy - sprite._ly));
 				if ((sx <= 0) || (sy <= 0)) return;
-				_blendRegionUp(_data + (dest_y*_stride) + dest_x, _stride, sprite._data + (sprite_y*_stride) + sprite_x, sprite._stride, sx, sy,opacity);
+				_blendRegionUp(_data + (dest_y*_stride) + dest_x, _stride, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, sx, sy,opacity);
 				}
 
 
@@ -1121,7 +1121,7 @@ namespace mtools
 				sx -= std::max<int64>(0, (sprite_x + sx - sprite._lx));
 				sy -= std::max<int64>(0, (sprite_y + sy - sprite._ly));
 				if ((sx <= 0) || (sy <= 0)) return;
-				_maskRegion(_data + (dest_y*_stride) + dest_x, _stride, sprite._data + (sprite_y*_stride) + sprite_x, sprite._stride, sx, sy, color);
+				_maskRegion(_data + (dest_y*_stride) + dest_x, _stride, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, sx, sy, color);
 				}
 
 
@@ -1556,7 +1556,7 @@ namespace mtools
 
 				if ((dest_sx == sprite_sx) && (dest_sy == sprite_sy))
 					{ // no rescaling
-					_blitRegion(_data + (dest_y*_stride) + dest_x, _stride, sprite._data + (sprite_y*_stride) + sprite_x, sprite._stride, dest_sx, dest_sy);
+					_blitRegion(_data + (dest_y*_stride) + dest_x, _stride, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, dest_sx, dest_sy);
 					return MAX_QUALITY;
 					}
 				if ((dest_sx <= sprite_sx) && (dest_sy <= sprite_sy))
