@@ -91,12 +91,6 @@ namespace mtools
 
 
             /**
-            * Constructor. minV and maxV are the value in each directions.
-            **/
-     //       Box(const T & minV, const T & maxV) : min(minV), max(maxV) { return; } // too error prone...
-
-
-            /**
             * Constructor from min and max points.
             **/
             Box(const Vec<T, N> & minVec, const Vec<T, N> & maxVec, bool reorderIfNeeded) : min(minVec), max(maxVec)
@@ -121,7 +115,21 @@ namespace mtools
                 {
                 static_assert(N == 2, "dimension must be equal to 2");
                 }
-            
+
+			/**
+			* Constructor. Specific for dimension 2.
+			**/
+			Box(const T & xmin, const T & xmax, const T & ymin, const T & ymax, bool reorderifneeded) : min(xmin, ymin), max(xmax, ymax)
+				{
+				static_assert(N == 2, "dimension must be equal to 2");
+				if (reorderifneeded)
+					{
+					if (min[0] > max[0]) mtools::swap(min[0], max[0]);
+					if (min[1] > max[1]) mtools::swap(min[1], max[1]);
+					}
+				}
+
+
 
            /**
             * Default copy constructor.
