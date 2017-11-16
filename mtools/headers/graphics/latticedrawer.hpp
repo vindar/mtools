@@ -999,22 +999,18 @@ void _redrawImage(iBox2 new_wr, int new_sx, int new_sy, int maxtime_ms)
 				}
             if (!samescale)
                 {
-				_exact_im.crop(iBox2(
-					 in_oldR.min[0] * _exact_sx,
-					(in_oldR.max[0] + 1)*_exact_sx - 1,
-					(_exact_r.ly() - in_oldR.max[1])*_exact_sy,
-					(_exact_r.ly() - in_oldR.min[1] + 1)*_exact_sy - 1), true); // crop the old image keeping only the part we reuse  
-				
-				_exact_im.rescale(0, (in_newR.lx() + 1)*new_sx, (int32)(in_newR.ly() + 1)*new_sy);
-				new_im.blit(_exact_im, in_newR.min[0] * new_sx, new_im.height() - _exact_im.height() - (int32)in_newR.min[1] * new_sy);
-				
-				/*
-				new_im.blit_rescaled(0, _exact_im,
-					in_newR.min[0] * new_sx, new_im.height() - _exact_im.height() - (int32)in_newR.min[1] * new_sy,
-					(in_newR.lx() + 1)*new_sx, (in_newR.ly() + 1)*new_sy);  // resize and blit at the right position in the new image. 
-				*/
-
-
+				const int64 keep_xmin = in_oldR.min[0] * _exact_sx;
+				const int64 keep_xmax = (in_oldR.max[0] + 1)*_exact_sx - 1;
+				const int64 keep_ymin = (_exact_r.ly() - in_oldR.max[1])*_exact_sy;
+				const int64 keep_ymax = (_exact_r.ly() - in_oldR.min[1] + 1)*_exact_sy - 1;
+				_exact_im.crop(iBox2(keep_xmin, keep_xmax, keep_ymin, keep_ymax, true), true);				
+				const int64 resize_sx = (in_newR.lx() + 1)*new_sx;
+				const int64 resize_sy = (in_newR.ly() + 1)*new_sy;
+				const int64 destpos_x = in_newR.min[0] * new_sx;
+				const int64 destpos_y = new_im.height() - resize_sy - in_newR.min[1] * new_sy;
+					//_exact_im.rescale(0, resize_sx, resize_sy);
+					//new_im.blit(_exact_im, destpos_x, destpos_y);
+				new_im.blit_rescaled(0, _exact_im, destpos_x, destpos_y, resize_sx, resize_sy);  // faster
                 }
             else
                 {
