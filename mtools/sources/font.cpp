@@ -266,8 +266,9 @@ namespace mtools
 		{
 		internals_font::_creategFont();
 		if (minheight < 0) minheight = 0;
-		if (maxheight > FontFamily::MAX_FONT_SIZE) maxheight = FontFamily::MAX_FONT_SIZE;
-		MTOOLS_INSURE(minheight <= maxheight);
+		if (maxheight > FontFamily::MAX_FONT_SIZE) maxheight = FontFamily::MAX_FONT_SIZE;		
+		if (minheight > maxheight) return 0;
+		if (minheight == maxheight) return maxheight;
 
 		if ((text.length() == 0) || ((boxsize.X()<0) && (boxsize.Y()<0)))  return internals_font::_gfont->nearestSize(maxheight, method);
 		if ((boxsize.Y() >= 0) && (boxsize.Y()<maxheight)) { maxheight = (int)boxsize.Y(); }

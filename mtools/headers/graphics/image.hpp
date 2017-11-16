@@ -1175,6 +1175,9 @@ namespace mtools
 			 * 
 			 * This method discard the current data buffer an create another one.
 			 *
+			 * All input paramters are valid : regions outside of the source or destination image are
+			 * automatically discarded (considered transparent).
+			 *
 			 * @param	quality   	in [0,10]. 0 = low quality (fast) and 10 = max quality (slow).
 			 * @param	newlx	  	new image width.
 			 * @param	newly	  	new image height.
@@ -1193,6 +1196,9 @@ namespace mtools
 			 * 
 			 * This method discard the current data buffer an create another one.
 			 *
+			 * All input paramters are valid : regions outside of the source or destination image are
+			 * automatically discarded (considered transparent).
+			 *
 			 * @param	quality  	in [0,10]. 0 = low quality (fast) and 10 = max quality (slow).
 			 * @param	newsize   	new image size.
 			 * @param	newpadding	horizontal padding.
@@ -1209,6 +1215,9 @@ namespace mtools
 			 * Crop a portion of this image and rescale it to a given size.
 			 * 
 			 * This method discard the current data buffer an create another one.
+			 *
+			 * All input paramters are valid : regions outside of the source or destination image are
+			 * automatically discarded (considered transparent).
 			 *
 			 * @param	quality  	in [0,10]. 0 = low quality (fast) and 10 = max quality (slow).
 			 * @param	newlx	  	new image width.
@@ -1236,6 +1245,9 @@ namespace mtools
 			 * 
 			 * This method discard the current data buffer an create another one.
 			 *
+			 * All input paramters are valid : regions outside of the source or destination image are
+			 * automatically discarded (considered transparent).
+			 *
 			 * @param	quality  	in [0,10]. 0 = low quality (fast) and 10 = max quality (slow).
 			 * @param	newsize   	new image size.
 			 * @param	B		  	rectangle to crop.
@@ -1252,6 +1264,9 @@ namespace mtools
 			/**
 			 * Return a copy of this image rescaled to a given size using the fastest method available (low
 			 * quality).
+			 *
+			 * All input paramters are valid : regions outside of the source or destination image are
+			 * automatically discarded (considered transparent).
 			 *
 			 * @param	quality  	in [0,10]. 0 = low quality (fast) and 10 = max quality (slow).
 			 * @param	newlx	  	returned image width.
@@ -1270,6 +1285,9 @@ namespace mtools
 			* Return a copy of this image rescaled to a given size using the fastest method available (low
 			* quality).
 			*
+			* All input paramters are valid : regions outside of the source or destination image are
+			* automatically discarded (considered transparent).
+			*
 			* @param	quality  	in [0,10]. 0 = low quality (fast) and 10 = max quality (slow).
 			* @param	newsize   	new image size.
 			* @param	newpadding	horizontal padding.
@@ -1284,6 +1302,9 @@ namespace mtools
 
 			/**
 			* Return a copy of a portion of this image, rescaled to a given size.
+			*
+			* All input paramters are valid : regions outside of the source or destination image are
+			* automatically discarded (considered transparent).
 			*
 			* @param	quality  	in [0,10]. 0 = low quality (fast) and 10 = max quality (slow).
 			* @param	newlx	  	returned image width.
@@ -1309,6 +1330,9 @@ namespace mtools
 			/**
 			 * Return a copy of a portion of this image, rescaled to a given size.
 			 *
+			 * All input paramters are valid : regions outside of the source or destination image are
+			 * automatically discarded (considered transparent).
+			 *
 			 * @param	quality  	in [0,10]. 0 = low quality (fast) and 10 = max quality (slow).
 			 * @param	newsize   	new image size.
 			 * @param	B		  	rectangle to rescale.
@@ -1325,6 +1349,9 @@ namespace mtools
 
 			/**
 			 * Rescale a sprite image and then blit it onto this image.
+			 *
+			 * All input paramters are valid : regions outside of the source or destination image are
+			 * automatically discarded (considered transparent).
 			 *
 			 * @param	quality  	in [0,10]. 0 = low quality (fast) and 10 = max quality (slow).
 			 * @param	sprite 	The sprite image to rescale and then blit.
@@ -1344,6 +1371,9 @@ namespace mtools
 			/**
 			 * Rescale a sprite image and then blit it onto this image.
 			 *
+			 * All input paramters are valid : regions outside of the source or destination image are
+			 * automatically discarded (considered transparent).
+			 *
 			 * @param	quality  	in [0,10]. 0 = low quality (fast) and 10 = max quality (slow).
 			 * @param	sprite  	The sprite image to rescale and then blit.
 			 * @param	dest_box	The destination rectangle.
@@ -1358,6 +1388,9 @@ namespace mtools
 
 			/**
 			 * Rescale a portion of a sprite image and then blit it onto this image.
+			 *
+			 * All input paramters are valid : regions outside of the source or destination image are
+			 * automatically discarded (considered transparent).
 			 *
 			 * @param	quality  	in [0,10]. 0 = low quality (fast) and 10 = max quality (slow).
 			 * @param	sprite   	The sprite image.
@@ -1379,10 +1412,15 @@ namespace mtools
 				if ((dest_sx <= 0) || (dest_sy <= 0)) return MAX_QUALITY; 
 				if ((sprite_sx <= 0) || (sprite_sy <= 0)) return MAX_QUALITY;
 				MTOOLS_INSURE(&sprite != this);
+
+
+				if (dest_x)
 				MTOOLS_INSURE((dest_x >= 0) && (dest_x + dest_sx <= lx()));
 				MTOOLS_INSURE((dest_y >= 0) && (dest_y + dest_sy <= ly()));
 				MTOOLS_INSURE((sprite_x >= 0) && (sprite_x + sprite_sx <= sprite.lx()));
 				MTOOLS_INSURE((sprite_y >= 0) && (sprite_y + sprite_sy <= sprite.ly()));
+
+
 				if ((dest_sx == sprite_sx) && (dest_sy == sprite_sy))
 					{ // no rescaling
 					_blitRegion(_data + (dest_y*_stride) + dest_x, _stride, sprite._data + (sprite_y*_stride) + sprite_x, sprite._stride, dest_sx, dest_sy);
