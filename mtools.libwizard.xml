@@ -15,7 +15,6 @@
 <LIB filename = "mtools64.lib" config = "x64" />
 <LIB filename = "mtools64d.lib" config = "x64d" />	
 <MISC_COMPILER_OPTION option = "/Zm400" config = "all" />
-<PREPROCESSOR option = "MTOOLS_VERSION=2" config = "all" />
 <MAIN_CPP>
 // Uncomment 'define MTOOLS_BASIC_CONSOLE' in stdafx.h to disable mtools's console
 #include "mtools.hpp"  
