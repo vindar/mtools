@@ -280,27 +280,38 @@ void createTree()
 
 
 /* convert a coord to an image pixel */
-iVec2 toImage(double x, double t, Img<unsigned char> & image) { fBox2 R(0, X, 0, T); iVec2 pos = image.getImageCoord(R, { x,t }); pos.Y() = LY-1 - pos.Y(); return pos; }
+iVec2 toImage(double x, double t, Image & image) 
+	{ 
+	fBox2 R(0, X, 0, T); 
+	iVec2 pos = image.canvas_getImageCoord(R, { x,t }); pos.Y() = LY-1 - pos.Y(); 
+	return pos; 
+	}
 
 
 /* draw the hammersley lines */
-void drawPoints(Img<unsigned char> & image, float op = 1.0)
+void drawPoints(Image & image, float op = 1.0)
     {
     cout << "drawing the points... ";
     fBox2 R(0, X, 0, T);
     for (auto it = PPPSet.begin(); it != PPPSet.end(); it++)
         {
         pPoissonPoint pp = it->adr();
-        if ((pp->father() != nullptr)&&(pp->father()->lastused() ==  pp)) 
-        image.fBox2_draw_circle(R, { pp->x, pp->t }, T / 1000, RGBc::c_Red, op);
-        else 
-        image.fBox2_draw_circle(R, { pp->x, pp->t }, T / 1000, RGBc::c_Blue,op);
+		RGBc coul;
+		if ((pp->father() != nullptr) && (pp->father()->lastused() == pp))
+			{
+			coul = RGBc::c_Red.getMultOpacity(op);
+			}
+		else
+			{
+			coul = RGBc::c_Blue.getMultOpacity(op);
+			}
+		image.canvas_draw_filled_circle(R, { pp->x, pp->t }, T / 1000, coul, coul, true);
         }
-    cout << "ok!\n\n";
+	cout << "ok!\n\n";
     }
 
 /* draw the hammersley lines */
-void drawLines(Img<unsigned char> & image, float op = 0.8)
+void drawLines(Image & image, float op = 0.8)
     {
     cout << "drawing the lines... ";
     fBox2 R(0, X, 0, T);
@@ -308,20 +319,32 @@ void drawLines(Img<unsigned char> & image, float op = 0.8)
         {
         pPoissonPoint pp = it->adr();
         RGBc coul = RGBc::c_Black;
+		coul.multOpacity(op);
         // horizontal lines
-        if (pp->father() == nullptr) { image.fBox2_drawLine(R, { 0.0, pp->t }, { pp->x, pp->t }, coul,op); } // line going to the left border
-        else { image.fBox2_drawLine(R, { pp->father()->x, pp->t }, { pp->x, pp->t }, coul,op); } // normal horizontal line
+        if (pp->father() == nullptr) 
+			{ // line going to the left border
+			image.canvas_draw_line(R, { 0.0, pp->t }, { pp->x, pp->t }, coul, true);
+			}
+        else 
+			{ // normal horizontal line
+			image.canvas_draw_line(R, { pp->father()->x, pp->t }, { pp->x, pp->t }, coul, true);
+			}
         // vertical lines
-        if (pp->remaining() > 0) { image.fBox2_drawLine(R, { pp->x, pp->t }, { pp->x, T }, coul,op); } // line going to the top
-        else { image.fBox2_drawLine(R, { pp->x, pp->t }, { pp->x, pp->lastused()->t }, coul,op); } // normal vertical line
-        
-        image.fBox2_draw_circle(R, { pp->x, pp->t }, T/1000, RGBc::c_Red);   // draw the points
-        }
-    cout << "ok!\n\n";
-    }
+        if (pp->remaining() > 0) 
+			{ // line going to the top
+			image.canvas_draw_line(R, { pp->x, pp->t }, { pp->x, T }, coul, true);
+			}
+        else 
+			{ // normal vertical line
+			image.canvas_draw_line(R, { pp->x, pp->t }, { pp->x, pp->lastused()->t }, coul, true);
+			}        
+		image.canvas_draw_filled_circle(R, { pp->x, pp->t }, T / 1000, RGBc::c_Red, RGBc::c_Red, true);
+		}
+	cout << "ok!\n\n";
+	}
 
 /* color the trees */
-void drawTrees(Img<unsigned char> & image, float op = 0.3)
+void drawTrees(Image & image, float op = 0.3)
     {
     cout << "drawing the trees... ";
     std::vector<double> mintab,maxtab;
@@ -369,7 +392,7 @@ void drawTrees(Img<unsigned char> & image, float op = 0.3)
         for (int l = std::max(0, j); l <= LY; l++) { maxtab[l] = p->x; }
         // fill the image
         RGBc coul;
-        if (kk % 2 == 0) { coul = RGBc::c_Red; } else { coul = RGBc::c_Green; }    
+		if (kk % 2 == 0) { coul = RGBc::c_Red.getMultOpacity(op); } else { coul = RGBc::c_Green.getMultOpacity(op); }
         bool colored = false;
         for (int i = 0; i < LY; i++)
             {
@@ -377,7 +400,7 @@ void drawTrees(Img<unsigned char> & image, float op = 0.3)
                { 
                Q = toImage(mintab[i], 0, image);
                Q2 = toImage(maxtab[i], 0, image);
-               image.drawLine({ Q.X() + 1, LY -2 - i }, { Q2.X() , LY - 2 -i }, coul,op); 
+			   image.draw_line({ Q.X() + 1, LY -2 - i }, { Q2.X() , LY - 2 -i }, coul,true); 
                colored = true;
                }
             }
@@ -420,15 +443,15 @@ int main(int argc, char *argv[])
     createSink();       // create the sink points
     createTree();       // construct the genealogy 
 
-    Img<unsigned char> image(LX, LY, 1, 4); image.clear(RGBc::c_White);
-    Img<unsigned char> image_trees(LX, LY, 1, 4); image_trees.clear(RGBc::c_TransparentWhite);
+    Image image(LX, LY); image.clear(RGBc::c_White);
+    Image image_trees(LX, LY); image_trees.clear(RGBc::c_TransparentWhite);
 
     drawLines(image);
     drawPoints(image);
-  //  drawTrees(image_trees);       // uncomment to color the tree alternatively
+    drawTrees(image_trees);       // uncomment to color the tree alternatively
 
-    auto im = makePlot2DCImg(image, 1, "lines");
-    auto imTrees = makePlot2DCImg(image_trees, 1, "trees");
+    auto im = makePlot2DImage(image, 1, "lines");
+    auto imTrees = makePlot2DImage(image_trees, 1, "trees");
 
     Plotter2D Plotter;
     Plotter.axesObject(false);
