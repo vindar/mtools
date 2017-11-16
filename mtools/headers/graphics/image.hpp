@@ -3391,7 +3391,22 @@ namespace mtools
 
 
 			/**
+			 * Determines if the image use an external memory buffer.
+			 *
+			 * @return	true if the memory buffer was supplied when creating the image and false if it is
+			 * 			created and managed by the Image object.
+			 */
+			MTOOLS_FORCEINLINE bool useExternalBuffer() const
+				{
+				return _isExternalBuffer();
+				}
+
+
+			/**
 			 * Query is both image share the same memory buffer.
+			 * 
+			 * This does not mean that there pixel intersect since they could be distincts sub-images using
+			 * the same memory buffer. Use instead overlapMemoryWith() to detect if some pixels are shared.
 			 *
 			 * @param	im The image to check against.
 			 *
@@ -3399,9 +3414,11 @@ namespace mtools
 			 */
 			MTOOLS_FORCEINLINE bool shareBufferWith(const Image & im) const
 				{
-				if (isEmpty() ||(_deletepointer == nullptr)) return false;
-				return (im._deletepointer == _deletepointer);
+				uint32 * p1 = _beginOriginalBuffer();
+				uint32 * p2 = im._beginOriginalBuffer();
+				return ((p1 == p2) && (p1 != nullptr));
 				}
+				
 
 
 			/**
@@ -3415,14 +3432,16 @@ namespace mtools
 			MTOOLS_FORCEINLINE bool overlapMemoryWith(const Image & im) const
 				{
 				if (!shareBufferWith(im)) return false;
+				// ok, both image have the same memory buffer. 
+				RGBc * p = (RGBc *)_beginOriginalBuffer();
 				MTOOLS_INSURE(_stride == im._stride);
 
-				int64 offa = _data - (RGBc*)_deletepointer; 
+				int64 offa = (int64)(_data - p) - 4;
 				MTOOLS_INSURE(offa >= 0);
 				int64 xa = offa % _stride, ya = offa / _stride;
 				iBox2 Ba(xa, xa + _lx - 1, ya, ya + _ly - 1);
 
-				int64 offb = im._data - (RGBc*)im._deletepointer; 
+				int64 offb = (int64)(im._data - p) - 4; 
 				MTOOLS_INSURE(offb >= 0);
 				int64 xb = offb % _stride, yb = offb / _stride;
 				iBox2 Bb(xb, xb + im._lx - 1, yb, yb + im._ly - 1);
@@ -7799,13 +7818,32 @@ namespace mtools
 			 *******************************************************************************************************************************************************/
 
 
+			/* return the initial position of the beginning of the memory buffer, or nullptr if there are none. */
+			MTOOLS_FORCEINLINE uint32 * _beginOriginalBuffer() const
+				{
+				if ((_data == nullptr) || (_deletepointer == nullptr)) return nullptr;				
+				uint32 * p = ((uint32**)_deletepointer)[1];
+				return p + ((p == _deletepointer) ? 4 : 0);
+				}
+
+
+			/* return true is the memory buffer is external */
+			MTOOLS_FORCEINLINE bool _isExternalBuffer() const
+				{
+				if ((_data == nullptr) || (_deletepointer == nullptr)) return false;
+				uint32 * p = ((uint32**)_deletepointer)[1];
+				return (p != _deletepointer);
+				}
+
+
 			/* allocate memory, updates _data, and _deletepointer */
 			MTOOLS_FORCEINLINE void _allocate(int64 ly, int64 stride, RGBc * databuffer)
 				{
 				size_t memsize = 16 + (size_t)((databuffer == nullptr) ? (4*ly*stride) : 0); // 16 byte + the image buffer size if needed.
 				_deletepointer = (uint32*)malloc(memsize);
 				if (_deletepointer == nullptr) { MTOOLS_ERROR(std::string("malloc error: cannot allocate ") + mtools::toStringMemSize(memsize)); }
-				(*_deletepointer) = 1; // set reference count to 1
+				_deletepointer[0] = 1; // set reference count to 1
+				((uint32**)_deletepointer)[1] = (databuffer == nullptr) ? _deletepointer : (uint32*)databuffer; // use to track the beginning of the buffer. 
 				_data = (databuffer == nullptr) ? ((RGBc*)(_deletepointer + 4)) : databuffer; // if allocated, buffer start 16 bytes (4 uint32) after the deletepointr.
 				}
 
