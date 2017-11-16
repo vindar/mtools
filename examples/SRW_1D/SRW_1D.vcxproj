@@ -96,7 +96,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>CAIRO_WIN32_STATIC_BUILD;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CAIRO_LIB)/source/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(FREETYPE_LIB)/source/include/freetype/;$(LIBJPEG_LIB)/source/;$(LIBPNG_LIB)/source/;$(MTOOLS_LIB)/mtools/headers/;$(OPENCL_LIB)/;$(OPENCL_ROOT_INCLUDE)/;$(PIXMAN_LIB)/source/pixman/;$(ZLIB_LIB)/source/</AdditionalIncludeDirectories>
       <AdditionalOptions>/Zm400 %(AdditionalOptions)</AdditionalOptions>
       <OpenMPSupport>true</OpenMPSupport>
@@ -117,7 +117,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>CAIRO_WIN32_STATIC_BUILD;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CAIRO_LIB)/source/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(FREETYPE_LIB)/source/include/freetype/;$(LIBJPEG_LIB)/source/;$(LIBPNG_LIB)/source/;$(MTOOLS_LIB)/mtools/headers/;$(OPENCL_LIB)/;$(OPENCL_ROOT_INCLUDE)/;$(PIXMAN_LIB)/source/pixman/;$(ZLIB_LIB)/source/</AdditionalIncludeDirectories>
       <AdditionalOptions>/Zm400 %(AdditionalOptions)</AdditionalOptions>
       <OpenMPSupport>true</OpenMPSupport>
@@ -140,7 +140,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>CAIRO_WIN32_STATIC_BUILD;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CAIRO_LIB)/source/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(FREETYPE_LIB)/source/include/freetype/;$(LIBJPEG_LIB)/source/;$(LIBPNG_LIB)/source/;$(MTOOLS_LIB)/mtools/headers/;$(OPENCL_LIB)/;$(OPENCL_ROOT_INCLUDE)/;$(PIXMAN_LIB)/source/pixman/;$(ZLIB_LIB)/source/</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
       <AdditionalOptions>/Zm400 %(AdditionalOptions)</AdditionalOptions>
@@ -166,7 +166,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>CAIRO_WIN32_STATIC_BUILD;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CAIRO_LIB)/source/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(FREETYPE_LIB)/source/include/freetype/;$(LIBJPEG_LIB)/source/;$(LIBPNG_LIB)/source/;$(MTOOLS_LIB)/mtools/headers/;$(OPENCL_LIB)/;$(OPENCL_ROOT_INCLUDE)/;$(PIXMAN_LIB)/source/pixman/;$(ZLIB_LIB)/source/</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
       <AdditionalOptions>/Zm400 %(AdditionalOptions)</AdditionalOptions>
