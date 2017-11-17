@@ -7738,7 +7738,7 @@ namespace mtools
 					_updatePixel<blend, checkrange, true, usepen>(x0, y1, color, op, penwidth);
 					_updatePixel<blend, checkrange, true, usepen>(x1, y0, color, op, penwidth);
 					_updatePixel<blend, checkrange, true, usepen>(x1, y1, color, op, penwidth);
-					f = (2 * err + dy >= 0)
+					f = (2 * err + dy >= 0);
 					if (f)
 						{
 						if (x0 >= x1) break;
