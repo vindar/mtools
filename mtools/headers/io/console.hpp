@@ -18,19 +18,19 @@
 // along with mtools  If not, see <http://www.gnu.org/licenses/>.
 
 
+
+
+
 /**************************************************************************
 *
-* Define the preprocessor directive MTOOLS_BASIC_CONSOLE to disable FLTK's 
-* cout console and fall back on using stdout.
+* Define the preprocessor directive MTOOLS_BASIC_CONSOLE in mtools_config.hpp
+* to disable FLTK's cout console and fall back on using stdout.
 *
-* 
-* !!! When using precompiled header, put #define MTOOLS_BASIC_CONSOLE
-* inside the stdafx.h file otherwise the directive is overwritten. !!!
-* 
 ***************************************************************************/
 
 #pragma once
 
+#include "../mtools_config.hpp"
 #include "../misc/internal/mtools_export.hpp"
 #include "internal/fltkSupervisor.hpp" // make sure sentnel object for fltk thread created before the global watch object
 #include "logfile.hpp"
