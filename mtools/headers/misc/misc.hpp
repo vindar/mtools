@@ -31,7 +31,7 @@
 #if defined (_MSC_VER) 
 #define MTOOLS_FORCEINLINE __forceinline
 #else
-#define MTOOLS_FORCEINLINE __attribute__((always_inline))
+#define MTOOLS_FORCEINLINE __attribute__((always_inline)) inline
 #endif
 
 
