@@ -308,7 +308,7 @@ namespace mtools
 
 
 			/**
-			/* Called when there is some serialized data to process.
+			* Called when there is some serialized data to process.
 			* Must be overloaded in the derived class.
 			**/
 			virtual void output(std::string & str) { MTOOLS_ERROR("Base virtual method OBaseArchive::output() should not be called!"); }
