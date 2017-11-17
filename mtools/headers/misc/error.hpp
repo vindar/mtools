@@ -114,10 +114,12 @@ namespace mtools
  **/
 #define MTOOLS_INSURE(_ex) ((void)( (!!(_ex)) || (mtools::internals_error::_insures(__FILE__ , __LINE__,(#_ex))) ))
 
-
-#ifndef NDEBUG
+#ifndef NDEBUG 
+#ifndef MTOOLS_DEBUG_IN_RELEASEMODE
 #define MTOOLS_DEBUG_IN_RELEASEMODE
 #endif
+#endif
+
 #ifdef MTOOLS_DEBUG_IN_RELEASEMODE
 /**
  * DEBUG macro for printing out info on clog
