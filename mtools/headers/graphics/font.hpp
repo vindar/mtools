@@ -382,7 +382,7 @@ namespace mtools
 				_empty();
 				std::lock_guard<std::mutex> lock(_mut); // mutex lock for concurrent access. 
 				size_t l; ar & l;
-				for (int i = 0;i < l; i++)
+				for (size_t i = 0; i < l; i++)
 					{
 					int fs; ar & fs;
 					_nativeset.insert(fs);

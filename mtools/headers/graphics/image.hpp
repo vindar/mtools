@@ -763,7 +763,7 @@ namespace mtools
 				if (im.is_empty()) return; 
 				resizeRaw(im.width(), im.height(),true,0);
 				RGBc * pdest = _data;
-				const size_t pad = _stride - _lx;
+				const size_t pad = (size_t)(_stride - _lx);
 				const unsigned char * pR = im.data(0, 0, 0, 0);
 				const unsigned char * pG = im.data(0, 0, 0, 1);
 				const unsigned char * pB = im.data(0, 0, 0, 2);
@@ -803,7 +803,7 @@ namespace mtools
 				if (isEmpty()) { im.assign(); return; }
 				im.assign((unsigned int)_lx, (unsigned int)_ly, 1, 4);
 				const RGBc * psrc = _data;
-				const size_t pad = _stride - _lx;
+				const size_t pad = (size_t)(_stride - _lx);
 				unsigned char * pR = im.data(0, 0, 0, 0);
 				unsigned char * pG = im.data(0, 0, 0, 1);
 				unsigned char * pB = im.data(0, 0, 0, 2);
@@ -2592,22 +2592,22 @@ namespace mtools
 					}
 				//Compute the barycenter
 				double X = 0, Y = 0;
-				for (int i = 0; i < nbvertices; i++) { X += tabPoints[i].X(); Y += tabPoints[i].Y(); }
+				for (size_t i = 0; i < nbvertices; i++) { X += tabPoints[i].X(); Y += tabPoints[i].Y(); }
 				iVec2 G((int64)(X / nbvertices), (int64)(Y / nbvertices));
-				for (int i = 0; i < nbvertices; i++)
+				for (size_t i = 0; i < nbvertices; i++)
 					{
 					fill_triangle(tabPoints[i], tabPoints[(i + 1) % nbvertices], G, fillcolor, blending);
 					}
 				if (blending)
 					{
 					_lineBresenham_avoid<true, true>(tabPoints[0], G, tabPoints[nbvertices - 1], tabPoints[1], fillcolor, 0);
-					for (int i = 1; i < nbvertices; i++)
+					for (size_t i = 1; i < nbvertices; i++)
 						{
 						_lineBresenham_avoid_both_sides<true, true>(tabPoints[i], G, tabPoints[i - 1], tabPoints[(i + 1) % nbvertices], tabPoints[0], tabPoints[i - 1], fillcolor);
 						}
 					return;
 					}
-				for (int i = 0; i < nbvertices; i++)
+				for (size_t i = 0; i < nbvertices; i++)
 					{
 					draw_line(G, tabPoints[i], fillcolor, false);
 					}
@@ -3613,7 +3613,7 @@ namespace mtools
 				if ((_lx <= 0) || (_ly <= 0) || (_stride < _lx)) return;
 				for (int64 j = 0; j < _ly; j++)
 					{
-					ar.opaqueArray(_data + _stride*j, _lx);
+					ar.opaqueArray(_data + _stride*j, (size_t)_lx);
 					ar.newline();
 					}
 				}
@@ -3632,7 +3632,7 @@ namespace mtools
 				_allocate(_ly, _stride, nullptr);
 				for (int64 j = 0; j < _ly; j++)
 					{
-					ar.opaqueArray(_data + _stride*j, _lx);
+					ar.opaqueArray(_data + _stride*j, (size_t)_lx);
 					}
 				}
 
@@ -3836,7 +3836,7 @@ namespace mtools
 				if ((_data == nullptr) || (_data == im._data)) return true;
 				for (int64 j = 0; j < _ly; j++)
 					{
-					if (memcmp(_data + j*_stride, im._data + j*im._stride, _lx * 4) != 0) return false;
+					if (memcmp(_data + j*_stride, im._data + j*im._stride, (size_t)(_lx * 4)) != 0) return false;
 					}
 				return true;
 				}
@@ -3952,7 +3952,7 @@ namespace mtools
 						{
 						RGBc * psrc = _data + _stride*j;
 						RGBc * pdst = im._data + im._stride*(_ly - 1 - j);
-						memcpy(pdst, psrc, _lx * 4);
+						memcpy(pdst, psrc, (size_t)(_lx * 4));
 						}
 					}
 				return im;
@@ -5024,7 +5024,7 @@ namespace mtools
 			template<uint64 BIT_FP = 40, uint64 BIT_FP_REDUCE = 10, uint64 BIT_DIV = 50, bool USE_FUNCION_CALL = false, typename READ_FUNCTOR = _dummy_read_functor, typename WRITE_FUNCTOR = _dummy_write_functor> 
 			static void _boxaverage_downscaling_FP32(RGBc * dest_data, uint64 dest_stride, uint64 dest_sx, uint64 dest_sy, RGBc * src_data, uint64 src_stride, uint64 src_sx, uint64 src_sy, READ_FUNCTOR funread = _dummy_read_functor(), WRITE_FUNCTOR funwrite = _dummy_write_functor())
 				{
-					size_t tmpsize = 16 * (dest_sx + 1);
+					size_t tmpsize = (size_t)(16 * (dest_sx + 1));
 					uint32 * tmp = (uint32*)malloc(tmpsize);
 					MTOOLS_ASSERT(tmp != nullptr);
 					MTOOLS_ASSERT(((uint64)tmp) % 16 == 0); // temporary buffer must be 16 bytes aligned. 
@@ -5114,7 +5114,7 @@ namespace mtools
 									funwrite(k, dj, c1 + (c2 << 8) + (c3 << 16) + (c4 << 24));
 									}
 								}
-							memset(tmp, 0, (dest_sx + 1) * 16); // clear the temporary buffer							
+							memset(tmp, 0, (size_t)((dest_sx + 1) * 16)); // clear the temporary buffer							
 							// redo the line for the remainders
 							uint64 epsx = 0;
 							uint64 di = 0;
@@ -5211,7 +5211,7 @@ namespace mtools
 				// memcpy for each line
 				for (int64 j = 0; j < sy; j++)
 					{
-					memcpy(pdest + j*dest_stride, psrc + j*src_stride, 4 * sx);
+					memcpy(pdest + j*dest_stride, psrc + j*src_stride, (size_t)(4 * sx));
 					}
 				}
 

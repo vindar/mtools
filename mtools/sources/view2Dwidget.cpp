@@ -147,7 +147,7 @@ namespace mtools
             _stocR = _RM->getRange(); // save the range for this image
             if ((_stocIm->width() * _zoomFactor != im->width()) || (_stocIm->height()*_zoomFactor != im->height()))
                 { // resize needed, in this case, we also reset _nbRounds 
-                _stocIm->resize(im->width() / _zoomFactor, im->height() / _zoomFactor,false);
+                _stocIm->resize((size_t)(im->width() / _zoomFactor), (size_t)(im->height() / _zoomFactor),false);
                 _nbRounds = 0;
                 }
 
