@@ -165,7 +165,7 @@ namespace mtools
 			dst_len -= CHUNKSIZE;
 			}
 		if (dst_len > 0) { tab.push_back(mtools::memoryToString(dst, dst_len)); }
-		std::string res("const p_char ");
+		std::string res("const cp_char ");
 		res += _name + "[" + mtools::toString(tab.size() + 2) + "] = { ";
 		res += "\"" + mtools::toString(tab.size()) + "\", \"" + mtools::toString(src_len)  + "\"";
 		for (size_t i = 0; i < tab.size(); i++)

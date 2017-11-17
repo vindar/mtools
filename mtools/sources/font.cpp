@@ -232,7 +232,7 @@ namespace mtools
 		{
 
 		/* the buffer containing the global font data */
-		extern const p_char OPEN_SANS_FONT_DATA[9680];
+		extern const cp_char OPEN_SANS_FONT_DATA[9680];
 
 		/* pointer to the global font family object */
 		FontFamily * _gfont = nullptr;
