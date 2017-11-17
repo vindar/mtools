@@ -18,8 +18,6 @@
 // along with mtools  If not, see <http://www.gnu.org/licenses/>.
 
 
-#pragma once
-
 #include "stdafx_mtools.h"
 
 #include "misc/misc.hpp"
