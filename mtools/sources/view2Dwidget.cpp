@@ -145,7 +145,7 @@ namespace mtools
             {
             if ((im == nullptr) || (im->isEmpty())) { setImage((const Image *)nullptr); _stocR.clear(); _nbRounds = 0; _discardIm = false; return; }
             _stocR = _RM->getRange(); // save the range for this image
-            if ((_stocIm->width() * _zoomFactor != im->width()) || (_stocIm->height()*_zoomFactor != im->height()))
+            if (((int64)(_stocIm->width() * _zoomFactor) != im->width()) || ((int64)(_stocIm->height()*_zoomFactor) != im->height()))
                 { // resize needed, in this case, we also reset _nbRounds 
                 _stocIm->resize((size_t)(im->width() / _zoomFactor), (size_t)(im->height() / _zoomFactor),false);
                 _nbRounds = 0;
@@ -254,8 +254,8 @@ namespace mtools
         void View2DWidget::displayMovedImage(RGBc bkColor)
         {
             fBox2 _stocRalt = _RM->getRange(); // current range
-            if ((_stocRalt == _stocR) && (_stocIm->width() == w()) && (_stocIm->height() == h())) { return; } // nothing to do
-            _stocImAlt->resize(w(),h()); // make the alt image to the current view size
+            if ((_stocRalt == _stocR) && (_stocIm->width() == (size_t)w()) && (_stocIm->height() == (size_t)h())) { return; } // nothing to do
+            _stocImAlt->resize((size_t)w(),(size_t)h()); // make the alt image to the current view size
             _stocImAlt->clear(bkColor); // clear to the correct bk
             fBox2 subR = mtools::intersectionRect(_stocRalt, _stocR); // the intersection rectangle
             if ((!subR.isEmpty())&&(_nbRounds >0))
