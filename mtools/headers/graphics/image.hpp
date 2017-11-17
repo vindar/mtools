@@ -7090,7 +7090,8 @@ namespace mtools
 						return;
 						}
 					if (x1 <= 256) _updatePixel<blend, checkrange, true, usepen>(x0, y0, color, (int32)(256 - x1), penwidth);
-					if (f = 2 * err + dy < 0)  
+					f = (2 * err + dy < 0);
+					if (f)  
 						{
 						if (y0 == y2) return;
 						if (dx - err < ed) _updatePixel<blend, checkrange, true, usepen>(x0 + sx, y0, color, 256 - (int32)(256 * fabs(dx - err) / ed), penwidth);
@@ -7737,7 +7738,8 @@ namespace mtools
 					_updatePixel<blend, checkrange, true, usepen>(x0, y1, color, op, penwidth);
 					_updatePixel<blend, checkrange, true, usepen>(x1, y0, color, op, penwidth);
 					_updatePixel<blend, checkrange, true, usepen>(x1, y1, color, op, penwidth);
-					if (f = 2 * err + dy >= 0)
+					f = (2 * err + dy >= 0)
+					if (f)
 						{
 						if (x0 >= x1) break;
 						i = ed*(err + dx);
