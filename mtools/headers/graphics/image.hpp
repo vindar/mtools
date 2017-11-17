@@ -5429,12 +5429,12 @@ namespace mtools
 			MTOOLS_FORCEINLINE static int _csLineClipCode(const iVec2 & P, const iBox2 & B)
 				{
 				int c = 0;
-				const int64 x = P.X();
-				const int64 y = P.Y();
-				if (x < B.min[0]) c |= 1;
-				if (x > B.max[0]) c |= 2;
-				if (y < B.min[1]) c |= 4;
-				if (y > B.max[1]) c |= 8;
+				const int64 xx = P.X();
+				const int64 yy = P.Y();
+				if (xx < B.min[0]) c |= 1;
+				if (xx > B.max[0]) c |= 2;
+				if (yy < B.min[1]) c |= 4;
+				if (yy > B.max[1]) c |= 8;
 				return c;
 				}
 
@@ -5459,7 +5459,7 @@ namespace mtools
 					if ((c1 & c2) != 0) { return false; } //AND of both codes != 0.Line is outside. Reject line
 					int temp = (c1 == 0) ? c2 : c1; //Decide if point1 is inside, if not, calculate intersection		
 					{
-					int64 x, y;
+					int64 x = 0, y = 0;
 					const double m = ((double)(P2.Y() - P1.Y())) / (P2.X() - P1.X());
 					if (temp & 8)
 						{ //Line clips top edge
