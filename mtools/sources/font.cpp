@@ -244,7 +244,8 @@ namespace mtools
 			if (internals_font::_gfont == nullptr)
 				{
 				std::lock_guard<std::mutex> lock(mut); // mutex lock for concurrent access. 
-				if (internals_font::_gfont == nullptr) internals_font::_gfont = new FontFamily(ICPPArchive(internals_font::OPEN_SANS_FONT_DATA));
+				ICPPArchive ar(internals_font::OPEN_SANS_FONT_DATA);
+				if (internals_font::_gfont == nullptr) internals_font::_gfont = new FontFamily(ar);
 				}
 			}
 
