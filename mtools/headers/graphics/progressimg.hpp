@@ -312,8 +312,8 @@ namespace mtools
 				{
 				const uint32 op32 = (uint32)(256 * op);
 				if ((op32 == 0) || (im.isEmpty()) || (width() == 0) || (height() == 0)) return;
-				const int64 lx = im.lx(); MTOOLS_INSURE(lx == width());
-				const int64 ly = im.ly(); MTOOLS_INSURE(ly == height());
+				const int64 lx = im.lx(); MTOOLS_INSURE(lx == (int64)width());
+				const int64 ly = im.ly(); MTOOLS_INSURE(ly == (int64)height());
 				const int64 str = (reverse) ? (-im.stride()) : (im.stride());
 				RGBc64 * psrc = _imData;
 				uint8 *	 qsrc = _normData;
@@ -333,8 +333,8 @@ namespace mtools
 			void blit_removeWhite(Image & im, const float op = 1.0f, bool reverse = true)
 				{
 				if ((op <= 0.0f) || (im.isEmpty()) || (width() == 0) || (height() == 0)) return;
-				const int64 lx = im.lx(); MTOOLS_INSURE(lx == width());
-				const int64 ly = im.ly(); MTOOLS_INSURE(ly == height());
+				const int64 lx = im.lx(); MTOOLS_INSURE(lx == (int64)width());
+				const int64 ly = im.ly(); MTOOLS_INSURE(ly == (int64)height());
 				const int64 str = (reverse) ? (-im.stride()) : (im.stride());
 				RGBc64 * psrc = _imData;
 				uint8 *	 qsrc = _normData;
@@ -354,8 +354,8 @@ namespace mtools
 			void blit_removeBlack(Image & im, const float op = 1.0f, bool reverse = true)
 				{
 				if ((op <= 0.0f) || (im.isEmpty()) || (width() == 0) || (height() == 0)) return;
-				const int64 lx = im.lx(); MTOOLS_INSURE(lx == width());
-				const int64 ly = im.ly(); MTOOLS_INSURE(ly == height());
+				const int64 lx = im.lx(); MTOOLS_INSURE(lx == (int64)width());
+				const int64 ly = im.ly(); MTOOLS_INSURE(ly == (int64)height());
 				const int64 str = (reverse) ? (-im.stride()) : (im.stride());
 				RGBc64 * psrc = _imData;
 				uint8 *	 qsrc = _normData;
