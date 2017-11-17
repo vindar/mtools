@@ -82,6 +82,11 @@ set /p MTOOLSVERSION=<./VERSION
 echo ^#define MTOOLS_VERSION %MTOOLSVERSION%    1>>  ./mtools/headers/mtools_config.hpp
 call:newline
 
+echo // Uncomment the next line to disable FLTK console and fall back to cout. 1>> ./mtools/headers/mtools_config.hpp
+echo //^#define MTOOLS_BASIC_CONSOLE            1>>  ./mtools/headers/mtools_config.hpp
+
+call:newline
+
 if %use_sse% equ y (
 	echo // SSE instruction set support ENABLED  1>> ./mtools/headers/mtools_config.hpp
 	echo ^#define MTOOLS_USE_SSE                 1>> ./mtools/headers/mtools_config.hpp
