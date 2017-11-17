@@ -532,7 +532,7 @@ namespace mtools
         #elif defined(MTOOLS_HASCONIO)
         ch = _getch();
         if ((ch == 0) || (ch == 0xE0)) { return(_getch() + 66536); }
-        #elif
+        #else
         ch = std::getchar(); // fallback
         #endif
         if (ch == 10) { ch = 13; }  // map 10 and 13 to 13 (enter key)
