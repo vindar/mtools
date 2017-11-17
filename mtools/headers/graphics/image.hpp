@@ -4978,6 +4978,10 @@ namespace mtools
 					}
 				}
 
+			/* dummy (default) functors */
+			struct _dummy_read_functor { RGBc operator()(uint64 x, uint64 y) { return  RGBc::c_Black; } };
+			struct _dummy_write_functor { void operator()(uint64 x, uint64 y, RGBc color) { return; } };
+
 
 			/* call _boxaverage_downscaling_FP32 with the correct template parameters for BIT_FP and BIT_DIV */
 			template<uint64 BIT_FP_REDUCE, bool USE_FUNCION_CALL = false, typename READ_FUNCTOR = _dummy_read_functor, typename WRITE_FUNCTOR = _dummy_write_functor>
@@ -5000,12 +5004,6 @@ namespace mtools
 					default: { _boxaverage_downscaling_FP32<40, BIT_FP_REDUCE, 54, USE_FUNCION_CALL>(dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_sx, src_sy, funread, funwrite); return; }
 					}
 				}
-
-
-		
-			/* dummy (default) functors */
-			struct _dummy_read_functor { RGBc operator()(uint64 x, uint64 y) { return  RGBc::c_Black; } };
-			struct _dummy_write_functor { void operator()(uint64 x, uint64 y, RGBc color) { return; } };
 
 
 			/* Downscaling using box average algorithm. 
@@ -5286,7 +5284,6 @@ namespace mtools
 			/* mask a region */
 			MTOOLS_FORCEINLINE static void _maskRegion(RGBc * pdest, int64 dest_stride, RGBc * psrc, int64 src_stride, int64 sx, int64 sy, RGBc color)
 				{
-				uint32 uop = mtools::convertAlpha_0xFF_to_0x100(color.comp.A);
 				for (int64 j = 0; j < sy; j++)
 					{
 					for (int64 i = 0; i < sx; i++)
@@ -5528,7 +5525,6 @@ namespace mtools
 					x2 = (x2 >= _lx) ? (_lx - 1) : x2;
 					}
 				RGBc * p = _data + y*_stride + x1;
-				const RGBc * q = _data + y*_stride + x2 + 1;
 				int64 s = x2 - x1;
 				while (s >= 0) { _updatePixel2<blend>(p, color); p++; s--; }
 				}
@@ -7791,7 +7787,7 @@ namespace mtools
 			*																				   																      *
 			*                                                                       CAIRO                                                                         *
 			* These methods affect: _pcairo_surface, _pcairo_context 		     																				  *
-			*******************************************************************************************************************************************************
+			*******************************************************************************************************************************************************/
 
 
 			/* tell cairo that the data buffer is possibly dirty */
