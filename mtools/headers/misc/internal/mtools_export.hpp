@@ -40,7 +40,7 @@
 	#if defined (_MSC_VER) 
 		#define MTOOLS_DLL __declspec(dllimport)
 	#else
-		define MTOOLS_DLL
+		#define MTOOLS_DLL
 	#endif
 
 #endif
