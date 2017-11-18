@@ -37,7 +37,7 @@ namespace mtools
 	#ifdef _DEBUG
 	#define CHECKCONSISTENCY checkConsistency();
 	#else
-	#define CHECKCONSISTENCY (0);
+	#define CHECKCONSISTENCY doNothing();
 	#endif
 
 
@@ -994,8 +994,8 @@ namespace mtools
 				MTOOLS_INSURE(isPermutationVector(_alpha));
 				for (size_t i = 0;i < l; i++)
 					{
-					MTOOLS_INSURE(_alpha[i] != i);
-					MTOOLS_INSURE(_alpha[_alpha[i]] == i);
+					MTOOLS_INSURE(_alpha[i] != (int)i);
+					MTOOLS_INSURE(_alpha[_alpha[i]] == (int)i);
 					}
 
 				// _sigma can be any permutation
@@ -1026,7 +1026,7 @@ namespace mtools
 							}
 						}
 					}
-				MTOOLS_INSURE(vs.size() == _nbvertices);
+				MTOOLS_INSURE(vs.size() == (size_t)_nbvertices);
 				}
 
 				{ // check that the face vector is ok.
