@@ -176,7 +176,7 @@ namespace mtools
 	 * 
 	 * Useful for (condtional) macro definition when it should compile to nothing.
 	 **/
-	void doNothing() {}
+	inline void doNothing() {}
 
 
 
