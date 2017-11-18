@@ -701,7 +701,7 @@ namespace mtools
 				const int nv = (ne - 2) / 3 + 1;    // number of inner vertices. 
 				std::list< std::pair<int, int> > buds; // position of the buds and number of inner edges following them
 				for (int i = 0; i < 2 * ne; i++) { if (_sigma[i] == i) { buds.push_back({ i,0 }); } } // find the positions of the buds
-				MTOOLS_INSURE(buds.size() == nv * 2);
+				MTOOLS_INSURE(buds.size() == (size_t)(nv * 2));
 				auto it = buds.begin();
 				for (int i = 0; i < nv * 2 - 1; i++)
 					{
@@ -1051,7 +1051,7 @@ namespace mtools
 							}
 						}
 					}
-				MTOOLS_INSURE(fs.size() == _nbfaces);
+				MTOOLS_INSURE(fs.size() == (size_t)_nbfaces);
 				}
 				return;
 				}
