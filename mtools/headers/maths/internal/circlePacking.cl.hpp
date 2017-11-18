@@ -18,11 +18,16 @@
 // along with mtools  If not, see <http://www.gnu.org/licenses/>.
 
 
-namespace mtools 
+
+#ifdef MTOOLS_HAS_OPENCL
+
+
+namespace mtools
 	{
 
 	namespace internals_circlepacking
 		{
+
 
 
 		/* The openCL program for circle packing
@@ -214,6 +219,8 @@ __kernel void accelerate( __global FPTYPE g_radiiTab1[NBVERTICES],  __global FPT
 		}
 
 	}
+
+#endif 
 
 
 /* end of file */
