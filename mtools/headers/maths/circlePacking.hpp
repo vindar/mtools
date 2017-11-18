@@ -225,7 +225,7 @@ namespace mtools
 		{
 		size_t l = (int)gr.size();
 		MTOOLS_INSURE((rad.size() == l) && (boundary.size() == l));
-		CONST FPTYPE twopi = (2 * acos((FPTYPE)-1));
+		const FPTYPE twopi = (2 * acos((FPTYPE)-1));
 		FPTYPE e = (FPTYPE)0;
 		FPTYPE C = (FPTYPE)0;
 		for (int i = 0; i < l; ++i) // use Kahan summation algorithm
@@ -270,7 +270,7 @@ namespace mtools
 		{
 		size_t l = (int)gr.size();
 		MTOOLS_INSURE((rad.size() == l) && (boundary.size() == l));
-		CONST FPTYPE twopi = (2 * acos((FPTYPE)-1));
+		const FPTYPE twopi = (2 * acos((FPTYPE)-1));
 		FPTYPE e = (FPTYPE)0;
 		FPTYPE C = (FPTYPE)0;
 		for (int i = 0; i < l; ++i) // use Kahan summation algorithm
