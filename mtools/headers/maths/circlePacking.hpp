@@ -786,7 +786,8 @@ namespace mtools
 		if ((lastIndex < 0) || (lastIndex > (int)(gr.size() - 1))) lastIndex = (int)(gr.size());
 		for (int i = firstIndex; i < lastIndex; i++)
 			{
-			img.canvas_draw_text(R, circles[i].center, mtools::toString(i), MTOOLS_TEXT_CENTER, color, fontsize);
+
+			img.canvas_draw_text(R, circles[i].center, mtools::toString(i), MTOOLS_TEXT_XCENTER| MTOOLS_TEXT_YCENTER, color, fontsize);
 			}
 		}
 
