@@ -126,7 +126,7 @@ namespace mtools
 		/** Compute the L2 error for the angle sum for all vertices on the range [0,N-1] **/
 		template<typename FPTYPE, typename GRAPH> FPTYPE errorL2euclidian(const GRAPH & gr, const std::vector<FPTYPE> & rad, const int N)
 			{
-			CONST FPTYPE twopi = (2*acos((FPTYPE)-1));
+			const FPTYPE twopi = (2*acos((FPTYPE)-1));
 			FPTYPE e = (FPTYPE)0;
 			FPTYPE C = (FPTYPE)0;
 			for (int i = 0; i < N; ++i) // use Kahan summation algorithm
@@ -147,7 +147,7 @@ namespace mtools
 		/** Compute the L1 error for the angle sum for all vertices on the range [0,N-1] **/
 		template<typename GRAPH, typename FPTYPE> FPTYPE errorL1euclidian(const GRAPH & gr, const std::vector<FPTYPE> & rad, const int N)
 			{
-			CONST FPTYPE twopi = 2 * acos((FPTYPE)-1);
+			const FPTYPE twopi = 2 * acos((FPTYPE)-1);
 			FPTYPE e = (FPTYPE)0;
 			FPTYPE C = (FPTYPE)0;
 			for (int i = 0; i < N; ++i) // use Kahan summation algorithm

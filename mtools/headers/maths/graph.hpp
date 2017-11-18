@@ -42,7 +42,7 @@ namespace mtools
 
 
 	/**
-	 * Return true if j is a neighour of i. SErach by iterating among the neighbour of i
+	 * Return true if j is a neighour of i. Search by iterating among the neighbour of i
 	 * which is linear in the degree of i. 
 	 *
 	 * @param	graph	The graph.
@@ -53,8 +53,8 @@ namespace mtools
 	 **/
 	template<typename GRAPH> bool isNeighbour(const GRAPH & graph, int i, int j)
 		{
-		const size_t l = gr[i].size();
-		for (size_t k = 0; k < l; k++) { if (gr[i][k] == j) return true; }
+		const size_t l = graph[i].size();
+		for (size_t k = 0; k < l; k++) { if (graph[i][k] == j) return true; }
 		return false;
 		}
 
@@ -338,8 +338,8 @@ namespace mtools
 
 
 	/**
-	/* As above but without indication on the connectness and max distance.
-	**/
+	 * As above but without indication on the connectness and max distance.
+	 **/
 	template<typename GRAPH> std::vector<int> computeGraphDistances(const GRAPH & gr, int rootVertex)
 		{
 		bool b;

@@ -277,7 +277,6 @@ namespace mtools
 	 **/
 	inline double hyperbolicIHPT_CDF(int64 k, double theta)
 		{
-		const double kk = (double)k;
 		if (k < -1) return 0.0;
 		const double alpha = 1 - 2 * theta;
 		if (k <= 0) { return alpha; }

@@ -53,7 +53,7 @@ namespace mtools
 		
 
 		/**   
-		/* Constructor. Construct the tranformation z -> (z - c)/(conj(c)z - 1).
+		 * Constructor. Construct the tranformation z -> (z - c)/(conj(c)z - 1).
 		 * This swaps c and 0  while preserving the unit disk if |c| < 1.
 		 **/
 		Mobius(const mtools::complex<T> & c) : a((T)1.0), b(-c), c(std::conj(c)), d((T)(-1.0)) {}

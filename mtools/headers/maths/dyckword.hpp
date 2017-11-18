@@ -54,8 +54,8 @@ namespace mtools
 		public:
 
 			/** default ctor. Empty dyck word with 1 ups and weight 1.  
-			/** The corresponding tree is reduced to a single edge.
-			**/
+			 *  The corresponding tree is reduced to a single edge.
+			 **/
 			DyckWord() : _weight(1), _nup(1), _root(0), _vec(3, 0)
 				{
 				_vec[0] = 1;
@@ -63,8 +63,8 @@ namespace mtools
 
 
 			/** ctor. Construct a simple simple dyck word of a given lenght and weight.  
-			/** All the ups are first, followed by all the down.
-			**/
+			 * All the ups are first, followed by all the down.
+			 **/
 			DyckWord(int nup, int weight = 1) : _weight(weight), _nup(nup), _root(0)
 				{
 				MTOOLS_ASSERT(weight > 0);
