@@ -57,6 +57,11 @@
 #pragma warning( disable : 4723 )	//
 #endif
 
+// disable CImg's graphic capabilility when in console mode only. 
+#ifdef MTOOLS_BASIC_CONSOLE
+#define cimg_display 0		
+#endif
+
 #include <CImg.h>	    // the header for the cimg library
 #undef min
 #undef max
