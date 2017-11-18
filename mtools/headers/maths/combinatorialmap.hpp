@@ -1136,7 +1136,7 @@ namespace mtools
 					const int e = _alpha[dartIndexTarget];
 					const int f = _sigma[e];
 					const int v1 = _vertices[a];
-					const int v2 = _vertices[c];
+					//const int v2 = _vertices[c];
 					const int v3 = _vertices[e];
 					_alpha[l + 0] = l + 1;  _alpha[l + 1] = l + 0;
 					_sigma[a] = l + 0; _sigma[l + 0] = b;
@@ -1166,7 +1166,7 @@ namespace mtools
 					const int d = _sigma[c];
 					const int e = _alpha[dartIndexTarget];
 					const int f = _sigma[e]; // equal to dartIndexBase here
-					const int v1 = _vertices[a];
+					//const int v1 = _vertices[a];
 					const int v2 = _vertices[c];
 					const int v3 = _vertices[e];
 					_alpha[l + 0] = l + 1;  _alpha[l + 1] = l + 0;

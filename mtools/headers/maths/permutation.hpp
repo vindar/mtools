@@ -66,7 +66,7 @@ namespace mtools
 		for (size_t i = l - 1; i > 0; --i)
 			{
 			size_t j = (size_t)(Unif(gen)*(i + 1));
-			std::remove_reference<decltype(vec[0])>::type temp(vec[i]);
+			typename std::remove_reference<decltype(vec[0])>::type temp(vec[i]);
 			vec[i] = vec[j];
 			vec[j] = temp;
 			}
@@ -181,7 +181,7 @@ namespace mtools
 		 **/
 		template<class random_t> inline void shuffle(random_t & gen)
 			{
-			if (_perm.size() != 0) { mtools::randomShuffle(_perm); _recomputeInvert(); }
+			if (_perm.size() != 0) { mtools::randomShuffle(_perm,gen); _recomputeInvert(); }
 			}
 
 
