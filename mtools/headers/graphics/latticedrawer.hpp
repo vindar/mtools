@@ -727,8 +727,8 @@ inline void _warpInt16Buf_4channel(Image & im, float op) const
 {
     MTOOLS_ASSERT(op > 0.0f);
     const int removeColor = _g_removeColor;
-    const float opacify = _g_opacify;
-    const float po = 1.0f;
+    //const float opacify = _g_opacify;
+    //const float po = 1.0f;
     const size_t dx = (size_t)_int16_buffer_dim.X();
     const size_t dxy = (size_t)(dx * _int16_buffer_dim.Y());
     const size_t l1 = _qi + (dx*_qj);

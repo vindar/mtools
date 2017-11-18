@@ -150,7 +150,7 @@ namespace mtools
 			const char r = *(p + off);
 			const char g = *(p + off + lxy);
 			const char b = *(p + off + 2*lxy);
-			const char a = ((_im->spectrum() < 4) ? 255 : (*(p + off + 3*lxy)));
+			const char a = ((_im->spectrum() < 4) ? (const char)255 : (*(p + off + 3*lxy)));
 			return RGBc(r, g, b, a);
             }
 
