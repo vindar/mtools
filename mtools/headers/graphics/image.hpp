@@ -57,10 +57,12 @@
 #pragma warning( disable : 4723 )	//
 #endif
 
-// disable CImg's graphic capabilility when in console mode only. 
-#ifdef MTOOLS_BASIC_CONSOLE
+// disable CImg's graphic capabilility when in console mode only
+// or when using osx.
+#if defined MTOOLS_BASIC_CONSOLE || defined __APPLE__
 #define cimg_display 0		
 #endif
+
 
 #include <CImg.h>	    // the header for the cimg library
 #undef min
