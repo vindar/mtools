@@ -543,7 +543,7 @@ namespace mtools
 
 
 	/**
-	/* 
+	 * 
 	 *  ********************
 	 *  INCOMPLET : NE PLACE PAS TOUT LES RADII. (MANQUE CEUX QUI SONT SEPARE DU SITE CENTRAL PAR DES CERCLE FRONTIERE).
 	 *  ********************
@@ -1021,7 +1021,7 @@ namespace mtools
 							for (size_t i = 0; i < nb; ++i) { _rad[i] += lambda*(_rad[i] - _rad0[i]); } 
 							fl = 0;
 							}
-						#endif ENDIF
+						#endif
 						}
 					if ((_verbose)&&((iter % stepIter == 0)||(c < eps)||(iter == maxIteration)))
 						{
