@@ -131,14 +131,14 @@ namespace mtools
 				if (it1 != _pmap->begin())
 					{
 					it1--;
-					double x0 = (double)it1->first;
-					double y0 = (double)it1->second;
+				    x0 = (double)it1->first;
+					y0 = (double)it1->second;
 					}
 				it2++;
 				if (it2 != _pmap->end())
 					{
-					double x3 = (double)it2->first;
-					double y3 = (double)it2->second;
+					x3 = (double)it2->first;
+					y3 = (double)it2->second;
 					}
 				if (t == INTERPOLATION_CUBIC) return cubicInterpolation(x, fVec2(x0, y0), fVec2(x1, y1), fVec2(x2, y2), fVec2(x3, y3));
 				return monotoneCubicInterpolation(x, fVec2(x0, y0), fVec2(x1, y1), fVec2(x2, y2), fVec2(x3, y3));
