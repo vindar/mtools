@@ -170,7 +170,13 @@ namespace mtools
 	 **/
 	template<typename T> void swap(T & a, T & b) { T c(a); a = b; b = c; }
 
-	   
+
+	/**
+	 * This method does nothing !
+	 * 
+	 * Useful for (condtional) macro definition when it should compile to nothing.
+	 **/
+	void doNothing() {}
 
 
 
