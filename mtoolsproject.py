@@ -71,7 +71,7 @@ CPP_FILES := $(filter-out stdafx.cpp,$(ALL_FILES))
 WORKDIR = `pwd`
 CXX = g++
 
-CXXFLAGS = -std=c++11 -Wall `fltk-config --cxxflags` `pkg-config cairo --cflags` `pkg-config pixman-1 --cflags` -Dcimg_display=0
+CXXFLAGS = -std=c++11 -Wall `fltk-config --cxxflags` `pkg-config cairo --cflags` `pkg-config pixman-1 --cflags`
 LDFLAGS =   -lmtools `fltk-config --ldstaticflags` `pkg-config cairo --libs` -lfreetype -ljpeg -lpng `pkg-config pixman-1 --libs` -lz
 
 CHECKCOMPILERGCC = $(shell $(CXX) --version | grep 'GCC\|gcc\|g++')
@@ -397,23 +397,6 @@ stdafxhFile = r"""
 #pragma warning( pop )
 #endif
 
-// *** libpng ***
-#include "png.h"
-
-// *** pixman ***
-#include "pixman.h"
-
-// *** cairo ***
-#include "cairo.h"
-
-// *** zlib ***
-#include "zlib.h"
-
-// *** libjpeg ***
-#include "jpeglib.h"
-
-// *** mtools ***
-#include "mtools.hpp"
 
 /* end of file stdafx.h */
 """
