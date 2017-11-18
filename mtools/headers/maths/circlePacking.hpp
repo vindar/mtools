@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "../graphics/font.hpp"
 #include "../graphics/image.hpp"
 #include "../misc/internal/mtools_export.hpp"
 #include "../misc/misc.hpp" 
@@ -787,7 +788,7 @@ namespace mtools
 		for (int i = firstIndex; i < lastIndex; i++)
 			{
 
-			img.canvas_draw_text(R, circles[i].center, mtools::toString(i), MTOOLS_TEXT_XCENTER| MTOOLS_TEXT_YCENTER, color, fontsize);
+			img.canvas_draw_text(R, circles[i].center, mtools::toString(i), mtools::MTOOLS_TEXT_CENTER, color, fontsize);
 			}
 		}
 

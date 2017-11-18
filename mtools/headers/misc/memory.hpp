@@ -24,6 +24,7 @@
 #include "error.hpp"
 #include "metaprog.hpp"
 
+#include <cstddef>
 #include <cstdlib>
 #include <string>
 #include <utility>
