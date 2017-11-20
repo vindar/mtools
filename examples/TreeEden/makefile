@@ -8,7 +8,7 @@ CPP_FILES := $(filter-out stdafx.cpp,$(ALL_FILES))
 WORKDIR = `pwd`
 CXX = g++
 
-CXXFLAGS = -std=c++17 -Wall  `fltk-config --cxxflags` `pkg-config cairo --cflags` `pkg-config pixman-1 --cflags`
+CXXFLAGS = -std=c++1z -Wall  `fltk-config --cxxflags` `pkg-config cairo --cflags` `pkg-config pixman-1 --cflags`
 LDFLAGS =   -lmtools `fltk-config --ldstaticflags` `pkg-config cairo --libs` -lfreetype -ljpeg -lpng `pkg-config pixman-1 --libs` -lz
 
 CHECKCOMPILERGCC = $(shell $(CXX) --version | grep 'GCC\|gcc\|g++')
