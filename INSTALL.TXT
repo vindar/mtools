@@ -130,7 +130,7 @@ its sub-folder.
   
 8) To build, the examples, run the script:
 
-	../examples/makeall.sh
+	MTOOLSDIR/examples/makeall.sh
 
 
 
@@ -169,6 +169,10 @@ The python script 'mtoolsproject.py' located at the base of the mtools directory
 can be used to create an empty project with the correct options. The project
 created contain a minimal 'main.cpp' file as well as a VS2015 solution for windows
 and a makefile for Linux and OSX.
+
+TODO : the makefile created by the python script created check if mtools uses OpenCL. 
+       If so, -lOpenCL should be added to the linker option for the linux/osX makefile. 
+
 
 
 
