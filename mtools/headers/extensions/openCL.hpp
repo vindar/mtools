@@ -52,7 +52,7 @@ class Error
 
 	#include <OpenCL/cl.hpp>
 
-#elif 
+#else 
 
 	#if __has_include(<CL/cl2.hpp>)
 		#include <CL/cl2.hpp>
