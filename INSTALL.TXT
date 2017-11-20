@@ -4,85 +4,80 @@
 *                                                                 *
 *******************************************************************
 
-The library depend on a few external libraries which are readily available:
+The library depend on a few external libraries:
 
     - CImg (http://cimg.eu) [image library]
     - fltk (http://www.fltk.org) [gui library]
     - zlib (http://www.zlib.net) [compression library]
     - libpng (http://www.libpng.org) [reading/writing png images]
     - libjpeg (http://www.ijg.org/) [reading/writing jpeg images]
-    - cairo (http://cairographics.org/) [2D graphics library]
+    - cairo (http://cairographics.org/) [2D graphics]
 
-optionally
+and optionally
     
-    - openCL (https://www.khronos.org/opencl/) [programming on GPU]
+    - openCL (https://www.khronos.org/opencl/) [GPU programming]
     
 
 
 *****************************************************
 *                    On Windows                     *
 *****************************************************
-[tested on Windows 7/10 with VS2015 Community]
+[tested on Windows 10 with VS2015 Community]
 
 1) Installation of the external libraries
 
 The repository 'https://github.com/vindar/mtools-dependencies' contain VS2015
-builds of all the required library. Just put the 'mtools-dependencies/' folder 
-where you want and then run the 'setup-mtools-dependencies.bat' script with admin. 
-rights and follow the instructions.
+builds of all the required library. Copy the 'mtools-dependencies/' folder where 
+you want and then run the 'setup-mtools-dependencies.bat' script with admin. rights 
+and follow the instructions.
 
 NOTE: In order to use the openCL extension, an openCL SDK (either Intel's, NVIDIA's
-or AMD's) must be installed before running 'setup-mtools-dependencies.bat'. See 
-'/openCL/install-howto.txt' for details on how to install the SDK.
+or AMD's) must be installed BEFORE running 'setup-mtools-dependencies.bat'. Check
+'/openCL/install-howto.txt' for details.
 
 
 2) Building mtools
 
-First, you must run the 'setup-mtools.bat'script with admin. rights to
-indicate where mtools will be located.
+Run the 'setup-mtools.bat' script with admin. rights.
 
-Open the mtools.sln file at the root of the mtools source tree with VS2015.
-The solution contain two projects: the library itself and a test project which
-can be used for testing the library. Set 'test' as the start project for the
-solution (right click on test in the solution window and set it as the start
-project). There are several build configurations:
+Open the mtools.sln solution file located at the root of the mtools source tree.
+The solution contain two projects: the library itself and a test project. Set 
+'test' as the start project for the solution (right click on test in the solution 
+window and set it as the start project). The usual build options are a available:
 
-  - debug/release : Build the mtools library for debug or release mode.
-  - Win32/x64 : Build for 32 or 64 bits.
+  - debug/release : Build for debug or release mode.
+  - Win32/x64 : Build for 32 or 64 bits instruction set.
 
-Build all the configurations that you wish to use. Hopefully it should compile
-without errors... You can now run the test program to test the library.
+Build all the configurations needed. Hopefully it should compile without errors. 
+You can then now run the test program to check if things work ok.
 
 
 3) Building the examples.
 
-The examples/ directory contains simple projects demonstrating how to use the
-library. The solution file Examples.sln contain all the example projects and 
-should compile without trouble for every configuration for which mtools was 
-build.
-
+They are located in the examples/ directory. The solution file Examples.sln contain 
+all the example projects. There is also a .sln for specific to each example inside 
+its sub-folder.
 
 
 *****************************************************
 *                     On Linux                      *
 *****************************************************
-[tested on Linux Mint 17.3 with GCC >= 5.1]
+[tested on Ubuntu /Linux Mint]
 
 1) Make sure you use a recent version of gcc. Version 5 or later is needed.
-   Unfortunately, the current version of GCC on Linux Mint is 4.8. You can 
-   install the lastest version with:
+   You can install the lastest version with:
    
         sudo add-apt-repository ppa:ubuntu-toolchain-r/test
         sudo apt-get update
-        sudo apt-get install gcc-5 g++-5
-        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 10
-        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-5 10
+        sudo apt-get install gcc-7 g++-7
+        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 10
+        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-7 10
    
 
-2) Make sure that pkg-config and the following libraries are installed: libmesa, 
-   libpng, libjpeg, freetype, pixman, cairo. You can use the following command:
+2) Make sure that pkg-config and the following libraries are installed:  
+   libmesa, libpng, libjpeg, freetype, pixman, cairo. 
     
-        sudo apt-get install python pkg-config libfreetype6-dev libglu1-mesa-dev libpng12-dev libjpeg-dev libpixman-1-dev libcairo2-dev
+        sudo apt-get install python pkg-config libfreetype6-dev libglu1-mesa-dev libpng16-dev libjpeg-dev libpixman-1-dev libcairo2-dev
        
        
 3) The version of fltk installed via apt-get is outdated. It is best to build it 
@@ -95,7 +90,7 @@ build.
 
 		
 4) The version of CImg installed via apt-get is also outdated. However, the library
-   consist of a single header. Just download the latest version from http://cimg.eu 
+   consist of a single header file. Download the latest version from http://cimg.eu 
    and copy the file 'CImg.h' to /usr/local/include.
   
   
@@ -106,7 +101,7 @@ build.
    this will build the library and the test program.
   
   
-6) You can now install the library in /usr/local with the command 
+6) You can install the library in /usr/local with the command 
 
        sudo make install
 	   
@@ -135,14 +130,13 @@ build.
 *****************************************************
 *                     On OSX                        *
 *****************************************************
-[tested on OSX Yosemite with Clang]
-I do not know OSX very well but the following steps worked for me...
+[tested on OSX High Sierra]
+
 
 1) Make sure Xcode is installed with Clang and the corresponding toolchain.
 
 
-2) Install the libraries mtools depends on. I used homebrew (http://brew.sh)
-   to do it and it worked nicely. The following command install everything:
+2) Install the libraries mtools depends on. I used homebrew (http://brew.sh).
    
        brew install python pkg-config glib libpng libjpeg freetype cimg pixman cairo fltk
 
@@ -153,12 +147,9 @@ I do not know OSX very well but the following steps worked for me...
    
        export CPATH="$CPATH:/usr/local/include"
        export LIBRARY_PATH="$LIBRARY_PATH:/usr/local/lib"
-       
-    
-4) Open a new terminal to reload .bash_profile. 
 
-
-5) Goto step 5 of the linux installation procedure...
+	   
+4) Goto step 5 of the linux installation procedure...
 
 
   
@@ -186,13 +177,13 @@ and the first instruction of main() MUST be:
                      MTOOLS_SWAP_THREADS(argc,argv).
                  
 Otherwise, no graphics will be displayed. This macro make it so that main() is
-now run on an auxiliary thread (the main thread being used by fltk for displaying
-graphics). This means in particular that global objects constructors are not called
-with the same thread that run main(). Be careful...
+now run on an auxiliary thread (and the main thread is used by fltk for displaying
+graphics). This means, in particular, that global objects constructors are not called
+with the same thread that run main(), so be careful...
 
-On Windows and Linux, inverting thread is not needed as child threads are allowed
-to use the system resources. Therefore, the macro is disabled and does nothing. It
-can be omitted but keeping it make the program compatible also with OSX.
+On Windows and Linux, inverting thread is not needed since child threads are allowed
+to use the system resources. Thus, the macro is disabled but keeping it is harmless 
+while making the program also compatible with OSX.
 
 
                      **********************************
