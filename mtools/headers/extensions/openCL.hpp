@@ -42,21 +42,27 @@ class Error
 
 
 // openCL c++ header
-#ifdef __APPLE__
-	#include <OpenCL/cl.hpp>
-#else
-
-	#if defined (_MSC_VER) 
+#if defined (_MSC_VER) 
 	#pragma warning( push )				
 	#pragma warning( disable : 4996 )	
-	#endif
-
 	#include <CL/cl.hpp>
-
-	#if defined (_MSC_VER) 
 	#pragma warning( pop )
+
+#elif defined  __APPLE__
+
+	#include <OpenCL/cl.hpp>
+
+#elif 
+
+	#if __has_include(<CL/cl2.hpp>)
+		#include <CL/cl2.hpp>
+	#elif __has_include(<CL/cl.hpp>)
+		#include <CL/cl.hpp>
+	#else
+		#error "Cannot find OpenCL headers!"
 	#endif
 
+	
 #endif
 
 
