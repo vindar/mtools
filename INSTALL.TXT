@@ -66,7 +66,7 @@ its sub-folder.
 *****************************************************
 *                     On Linux                      *
 *****************************************************
-[tested on Ubuntu /Linux Mint]
+[tested on Ubuntu /Linux Mint/ Debian-like distrib..]
 
 1) Make sure you use a recent version of gcc. Version 6 or later is needed.
    You can install the lastest version (gcc-7 at the time of writing) with:
@@ -97,20 +97,24 @@ its sub-folder.
    consist of a single header file. Download the latest version from http://cimg.eu 
    and copy the file 'CImg.h' to /usr/local/include.
   
-  
-5) cd into mtools root directory and run the script 'setup-mtools.sh' to configure the
-   library.
+ 
+5) Install the openCL drivers if you want to use it in mtools. 
 
+
+6) cd into mtools root directory and run the script 'setup-mtools.sh' to configure the
+   library.
+   
 		./setup-mtools.sh
-		
-6) cd into mtools's /linux sub-directory and then run 
+
+
+7) cd into mtools's /linux sub-directory and then run 
    		
         make
 		
    this will build the library and the test program.
   
   
-7) You can install the library in /usr/local with the command 
+8) You can install the library in /usr/local with the command 
 
        sudo make install
 	   
@@ -128,7 +132,7 @@ its sub-folder.
   where MTOOLSDIR is mtools's directory. 
   
   
-8) To build, the examples, run the script:
+9) To build the examples, run the script:
 
 	MTOOLSDIR/examples/makeall.sh
 
