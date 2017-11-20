@@ -21,7 +21,7 @@ PCHDIR_MTOOLS = ../mtools
 PCHFILE_MTOOLS = stdafx_mtools.h
 PCHOBJ_MTOOLS = $(OBJDIR_MTOOLS)/$(PCHFILE_MTOOLS).gch
 INC_MTOOLS = -I$(OBJDIR_MTOOLS) -I$(HEADERDIR_MTOOLS)
-CXXFLAGS_MTOOLS = -std=c++14 -Wall `fltk-config --cxxflags` `pkg-config cairo --cflags` `pkg-config pixman-1 --cflags` -I../mtools
+CXXFLAGS_MTOOLS = -std=c++17 -Wall `fltk-config --cxxflags` `pkg-config cairo --cflags` `pkg-config pixman-1 --cflags` -I../mtools
 
 SRCDIR_TEST = ../test/sources
 OBJDIR_TEST = $(OBJDIR)/test
@@ -34,7 +34,7 @@ PCHFILE_TEST = stdafx_test.h
 PCHOBJ_TEST = $(OBJDIR_TEST)/$(PCHFILE_TEST).gch
 INC_TEST = -I$(OBJDIR_TEST) -I$(HEADERDIR_MTOOLS)
 
-CXXFLAGS_TEST = -std=c++14 -Wall `fltk-config --cxxflags` `pkg-config cairo --cflags` `pkg-config pixman-1 --cflags` -I../test
+CXXFLAGS_TEST = -std=c++17 -Wall `fltk-config --cxxflags` `pkg-config cairo --cflags` `pkg-config pixman-1 --cflags` -I../test
 
 LDFLAGS_TEST =  $(OUT_MTOOLS) `fltk-config --ldstaticflags` `pkg-config cairo --libs` `pkg-config pixman-1 --libs` -lfreetype -ljpeg -lpng -lz
 
