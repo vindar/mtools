@@ -5078,7 +5078,8 @@ namespace mtools
 							auto off = 4 * di;
 							const uint32 aera1 = p1y*p1x;
 							const uint32 aera2 = p1y*p2x;
-							#ifdef MTOOLS_USE_SSE
+							// only VS specific code for the moment. TODO : make this portable...
+							#if defined MTOOLS_USE_SSE && defined _MSC_VER
 								{							
 								__m128i * sse_tmp = reinterpret_cast<__m128i*>(tmp + off);
 								__m128i v = _mm_set_epi32((coul >> 24) & 0xFF, (coul >> 16) & 0xFF, (coul >> 8) & 0xFF, coul & 0xFF);
@@ -5142,7 +5143,8 @@ namespace mtools
 								auto off = 4 * di;
 								const uint32 aera1 = p2y*p1x;
 								const uint32 aera2 = p2y*p2x;
-								#ifdef MTOOLS_USE_SSE
+								// only VS specific code for the moment. TODO : make this portable...
+								#if defined MTOOLS_USE_SSE && defined _MSC_VER
 									{
 									__m128i * sse_tmp = reinterpret_cast<__m128i*>(tmp + off);
 									__m128i v = _mm_set_epi32((coul >> 24) & 0xFF, (coul >> 16) & 0xFF, (coul >> 8) & 0xFF, coul & 0xFF);

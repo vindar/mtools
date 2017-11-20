@@ -36,11 +36,15 @@ or AMD's) must be installed BEFORE running 'setup-mtools-dependencies.bat'. Chec
 '/openCL/install-howto.txt' for details.
 
 
-2) Building mtools
+2) Configuring mtools
 
-Run the 'setup-mtools.bat' script with admin. rights.
+Run the 'setup-mtools.bat' script located at the root of the mtools source tree
+with admin rights to configure the library. 
 
-Open the mtools.sln solution file located at the root of the mtools source tree.
+
+3) Building the library. 
+
+Open the 'mtools.sln' solution file located at the root of the mtools source tree.
 The solution contain two projects: the library itself and a test project. Set 
 'test' as the start project for the solution (right click on test in the solution 
 window and set it as the start project). The usual build options are a available:
@@ -49,10 +53,10 @@ window and set it as the start project). The usual build options are a available
   - Win32/x64 : Build for 32 or 64 bits instruction set.
 
 Build all the configurations needed. Hopefully it should compile without errors. 
-You can then now run the test program to check if things work ok.
+You can then now run the test program to check if things are working ok.
 
 
-3) Building the examples.
+4) Building the examples.
 
 They are located in the examples/ directory. The solution file Examples.sln contain 
 all the example projects. There is also a .sln for specific to each example inside 
@@ -64,8 +68,8 @@ its sub-folder.
 *****************************************************
 [tested on Ubuntu /Linux Mint]
 
-1) Make sure you use a recent version of gcc. Version 5 or later is needed.
-   You can install the lastest version with:
+1) Make sure you use a recent version of gcc. Version 6 or later is needed.
+   You can install the lastest version (gcc-7 at the time of writing) with:
    
         sudo add-apt-repository ppa:ubuntu-toolchain-r/test
         sudo apt-get update
@@ -74,7 +78,7 @@ its sub-folder.
         sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-7 10
    
 
-2) Make sure that pkg-config and the following libraries are installed:  
+2) Make sure that python, pkg-config and the following libraries are installed:  
    libmesa, libpng, libjpeg, freetype, pixman, cairo. 
     
         sudo apt-get install python pkg-config libfreetype6-dev libglu1-mesa-dev libpng-dev libjpeg-dev libpixman-1-dev libcairo2-dev
@@ -94,14 +98,19 @@ its sub-folder.
    and copy the file 'CImg.h' to /usr/local/include.
   
   
-5) cd into mtools's /linux directory and then run 
-   
+5) cd into mtools root directory and run the script 'setup-mtools.sh' to configure the
+   library.
+
+		./setup-mtools.sh
+		
+6) cd into mtools's /linux sub-directory and then run 
+   		
         make
 		
    this will build the library and the test program.
   
   
-6) You can install the library in /usr/local with the command 
+7) You can install the library in /usr/local with the command 
 
        sudo make install
 	   
@@ -119,11 +128,10 @@ its sub-folder.
   where MTOOLSDIR is mtools's directory. 
   
   
-7) Once the library is installed, you can build each example separately
-   with the 'make' command inside its sud-directory or all the examples 
-   simultaneously using the './makeall.sh' command located in the root 
-   example/ sub-directory. Use './makeall.sh clean' to clean up everything 
-   at once.
+8) To build, the examples, run the script:
+
+	../examples/makeall.sh
+
 
 
    
