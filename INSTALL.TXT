@@ -77,7 +77,7 @@ its sub-folder.
 2) Make sure that pkg-config and the following libraries are installed:  
    libmesa, libpng, libjpeg, freetype, pixman, cairo. 
     
-        sudo apt-get install python pkg-config libfreetype6-dev libglu1-mesa-dev libpng16-dev libjpeg-dev libpixman-1-dev libcairo2-dev
+        sudo apt-get install python pkg-config libfreetype6-dev libglu1-mesa-dev libpng-dev libjpeg-dev libpixman-1-dev libcairo2-dev
        
        
 3) The version of fltk installed via apt-get is outdated. It is best to build it 
