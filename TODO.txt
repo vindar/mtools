@@ -1,0 +1,21 @@
+
+*********
+TODO LIST
+*********
+
+
+- finish the SiteDrawer class,
+- create a new LatticeDawer class that cointain both SiteDrawer and PixelDrawer class. 
+- create a Plot2DLattice object that encapsulate the new LatticeDrawer object. 
+
+- finish the Extab class
+
+- solve openCL lib include problem on osX and linux
+
+- create a floodFill method for the Image class. 
+
+- improve the ProgressImg class
+
+- cleanup the CombinatorialMap and Graph classes. 
+
+- complete the Circle Packing classes. 
