@@ -56,9 +56,7 @@ namespace mtools
  * class for a generic implementation.
  * 
  * - The template LatticeObj must implement a method `getColor()` which return the
- * color associated with a given site. The method should be made as fast as possible. The fourth
- * channel of the returned color will be used when drawing on 4 channel images and ignored when
- * drawing on 3 channel images.
+ * color associated with a given site. The method should be made as fast as possible.
  * 
  * - If TYPEIMAGE is selected, the plotter can request an image of the sites by calling the
  * object method `const Image * getImage(iVec pos,iVec size)` if it is present.
@@ -1030,7 +1028,7 @@ void _redrawImage(iBox2 new_wr, int new_sx, int new_sy, int maxtime_ms)
     else
         { // we start from scratch
         _g_redraw_im = false;
-		_exact_im.resizeRaw(new_im_x, new_im_y, true); // blank image with 4 channel RGB(0,0,0,0)
+		_exact_im.resizeRaw(new_im_x, new_im_y, true); // blank image
 		_exact_im.clear(RGBc(0, 0, 0, 0));
         _exact_qbuf.assign((int32)new_wr.lx() + 1, (int32)new_wr.ly() + 1, 1, 1, 0);
         }

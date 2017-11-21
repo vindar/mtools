@@ -81,7 +81,7 @@ namespace internals_graphics
          * be as fast as possible  (eventually indicating that it is incomplete by returning a number
          * smaller than 100).
          *
-         * @param [in,out]  im  The image to draw onto (must accept both 3 or 4 channel images).
+         * @param [in,out]  im  The image to draw onto.
          * @param   opacity     The opacity that should be applied to the picture before drawing onto im.
          *                      Hence, if opacity = 1.0, overwrite im and if opacity = 0.0 do nothing.
          *
@@ -194,7 +194,7 @@ namespace internals_graphics
          * be as fast as possible  (eventually indicating that it is incomplete by returning a number
          * smaller than 100).
          *
-         * @param [in,out]  im  The image to draw onto (must accept both 3 or 4 channel images).
+         * @param [in,out]  im  The image to draw onto.
          * @param   opacity     The opacity that should be applied to the picture before drawing onto im.
          *                      Hence, if opacity = 1.0, overwrite im and if opacity = 0.0 do nothing.
          *

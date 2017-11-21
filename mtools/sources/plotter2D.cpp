@@ -304,7 +304,6 @@ namespace mtools
             Fl_Button *_w_autorangeY;            // widget button "autorange"
             Fl_Button *_w_autorangeXY;            // widget button "autorange"
             Fl_Check_Button *_w_showmouse;      // widget check button "show the mouse position"
-            Fl_Check_Button *_w_fourchannels;   // widget check button "use 4 channel images"
             Fl_Check_Button *_w_solidback;      // widget check button "use a solid background color"
             Fl_Button * _w_solidbackColor;      // wideget button for choosing the solid background color
             Fl_Check_Button *_w_addAxesObj;     // widget "add axes" check button
@@ -664,14 +663,11 @@ namespace mtools
             _w_center->labelfont(0);
             _w_center->callback(centerCB_static, this);
 
-
-
-            auto _w_borderrange2 = new Fl_Box(5, 240, 290, 175);
+            auto _w_borderrange2 = new Fl_Box(5, 240, 290, 155);
             _w_borderrange2->box(FL_UP_BOX);
             _w_borderrange2->labelfont(0);
             _w_borderrange2->labelsize(16);
             _w_borderrange2->align(Fl_Align(FL_ALIGN_TOP_LEFT));
-
 
             _w_showmouse = new Fl_Check_Button(15, 246+3, 220, 15, "Show the mouse position");
             _w_showmouse->down_box(FL_DOWN_BOX);
@@ -681,26 +677,17 @@ namespace mtools
             _w_showmouse->callback(showmouseCB_static, this);
             _w_showmouse->when(FL_WHEN_CHANGED);
 
-            _w_fourchannels = new Fl_Check_Button(15, 267 + 3, 200, 15, "Use a 4 channels RGBA image");
-            _w_fourchannels->down_box(FL_DOWN_BOX);
-            _w_fourchannels->labelfont(0);
-            _w_fourchannels->labelsize(11);
-            _w_fourchannels->color2(FL_RED);
-            _w_fourchannels->callback(fourchannelsCB_static, this);
-            _w_fourchannels->when(FL_WHEN_CHANGED);
-
-
-            _w_solidback = new Fl_Check_Button(15, 288 + 3, 185, 15, "Use a solid background color");
+            _w_solidback = new Fl_Check_Button(15, 267 + 3, 185, 15, "Use a solid background color");
             _w_solidback->down_box(FL_DOWN_BOX);
             _w_solidback->labelfont(0);
             _w_solidback->labelsize(11);
             _w_solidback->color2(FL_RED);
             _w_solidback->callback(solidbackCB_static, this);
             _w_solidback->when(FL_WHEN_CHANGED);
-            _w_solidbackColor = new Fl_Button(200, 288 + 3, 15, 15);
+            _w_solidbackColor = new Fl_Button(200, 267 + 3, 15, 15);
             _w_solidbackColor->callback(solidbackColorCB_static, this);
 
-            _w_addAxesObj = new Fl_Check_Button(15, 309 + 3, 185, 15, "Add a Plotter2DAxes object on top");
+            _w_addAxesObj = new Fl_Check_Button(15, 288 + 3, 185, 15, "Add a Plotter2DAxes object on top");
             _w_addAxesObj->down_box(FL_DOWN_BOX);
             _w_addAxesObj->labelfont(0);
             _w_addAxesObj->labelsize(11);
@@ -708,7 +695,7 @@ namespace mtools
             _w_addAxesObj->callback(addAxesCB_static, this);
             _w_addAxesObj->when(FL_WHEN_CHANGED);
 
-            _w_addGridObj = new Fl_Check_Button(15, 330 + 3, 185, 15, "Add a Plotter2DGrid object on top");
+            _w_addGridObj = new Fl_Check_Button(15, 309 + 3, 185, 15, "Add a Plotter2DGrid object on top");
             _w_addGridObj->down_box(FL_DOWN_BOX);
             _w_addGridObj->labelfont(0);
             _w_addGridObj->labelsize(11);
@@ -716,12 +703,12 @@ namespace mtools
             _w_addGridObj->callback(addGridCB_static, this);
             _w_addGridObj->when(FL_WHEN_CHANGED);
 
-            auto _w_refreshlabel = new Fl_Box(15, 291 + 25 + 37 + 3, 125, 17, "Refresh rate (per min.)");
+            auto _w_refreshlabel = new Fl_Box(15, 291 + 5 + 37 + 3, 125, 17, "Refresh rate (per min.)");
             _w_refreshlabel->align(Fl_Align(FL_ALIGN_INSIDE | FL_ALIGN_LEFT));
             _w_refreshlabel->labelfont(0);
             _w_refreshlabel->labelsize(11);
 
-            _w_refreshscale = new Fl_Value_Slider(140, 292 + 25 + 37 + 3, 105, 17, nullptr);
+            _w_refreshscale = new Fl_Value_Slider(140, 292 + 5 + 37 + 3, 105, 17, nullptr);
             _w_refreshscale->labelfont(0);
             _w_refreshscale->labelsize(11);
             _w_refreshscale->align(Fl_Align(FL_ALIGN_RIGHT));
@@ -733,30 +720,30 @@ namespace mtools
             _w_refreshscale->color2(FL_RED);
             _w_refreshscale->callback(refreshscaleCB_static, this);
 
-            _w_nowRefresh = new Fl_Button(250, 290 + 25 + 37 + 3, 35, 21, "now!");
+            _w_nowRefresh = new Fl_Button(250, 290 + 5 + 37 + 3, 35, 21, "now!");
             _w_nowRefresh->labelsize(11);
             _w_nowRefresh->labelfont(0);
             _w_nowRefresh->callback(nowrefreshCB_static, this);
 
             int L = 83;
-            _w_autorangeX = new Fl_Button(16, 380 + 5, L, 21, "range X");
+            _w_autorangeX = new Fl_Button(16, 360 + 5, L, 21, "range X");
             _w_autorangeX->labelsize(12);
             _w_autorangeX->labelfont(0);
             _w_autorangeX->callback(autorangeXCB_static, this);
 
-            _w_autorangeY = new Fl_Button(26 +L, 380 + 5, L, 21, "range Y");
+            _w_autorangeY = new Fl_Button(26 +L, 360 + 5, L, 21, "range Y");
             _w_autorangeY->labelsize(12);
             _w_autorangeY->labelfont(0);
             _w_autorangeY->callback(autorangeYCB_static, this);
 
-            _w_autorangeXY = new Fl_Button(36 + L*2, 380 + 5, L , 21, "range X/Y");
+            _w_autorangeXY = new Fl_Button(36 + L*2, 360 + 5, L , 21, "range X/Y");
             _w_autorangeXY->labelsize(12);
             _w_autorangeXY->labelfont(0);
             _w_autorangeXY->callback(autorangeXYCB_static, this);
 
             _obj_width = 303 - Fl::scrollbar_size();
-            int h = H - 360 - 50 - 55 - 50;
-            _w_objWin = new Fl_Window(Fl::scrollbar_size(), 360 + 55+10, _obj_width, h);
+            int h = H - 360 - 50 - 25 - 50;
+            _w_objWin = new Fl_Window(Fl::scrollbar_size(), 340 + 55+10, _obj_width, h);
             _w_scrollWin = new Fl_Scroll(0, 0, _obj_width, h);
             _w_scrollWin->labelfont(0);
             _w_scrollWin->labelsize(16);
@@ -1325,17 +1312,6 @@ namespace mtools
         int Plotter2DWindow::getZoomFactor() const { return _PW->zoomFactor(); }
 
 
-
-
-        /* called when the "Use 4 channels images check button value changes */
-        void Plotter2DWindow::fourchannelsCB_static(Fl_Widget* W, void* p) { MTOOLS_ASSERT(p != nullptr); ((Plotter2DWindow *)p)->fourchannelsCB(W); }
-        void Plotter2DWindow::fourchannelsCB(Fl_Widget* W)
-        {
-            fourChannelImage(((Fl_Check_Button *)W)->value() != 0); // set the number of chanels accordingly
-            _PW->take_focus();
-        }
-
-
         /* called when the "Show mouse position check button value changes */
         void Plotter2DWindow::showmouseCB_static(Fl_Widget* W, void* p) { MTOOLS_ASSERT(p != nullptr); ((Plotter2DWindow *)p)->showmouseCB(W); }
         void Plotter2DWindow::showmouseCB(Fl_Widget* W)
@@ -1794,19 +1770,6 @@ namespace mtools
         }
 
 
-        /* set image with 3 or 4 channels */
-        void Plotter2DWindow::fourChannelImage(bool use4)
-        {
-            int n = (use4 ? 4 : 3);
-            if (((int)_nbchannels) == n) { return; }
-            _w_fourchannels->value((n == 4) ? 1 : 0);
-            _nbchannels = n;
-            int W = (int)_mainImage->width();
-            int H = (int)_mainImage->height();
-            setImageSize(W, H, n);    // resize if needed
-            updateView();
-        }
-
 
         /* set the text "keep aspect ratio : xxx */
         void Plotter2DWindow::setRatioTextLabel()
@@ -1915,19 +1878,6 @@ namespace mtools
 
 
     void Plotter2D::remove(internals_graphics::Plotter2DObj & obj) { remove(&obj); }
-
-
-    bool Plotter2D::fourChannelImage() const
-        {
-        return(((int)_plotterWin->_nbchannels) == 4);
-        }
-
-
-    void Plotter2D::fourChannelImage(bool use4)
-        {
-        mtools::IndirectMemberProc<internals_graphics::Plotter2DWindow, bool> proxy(*_plotterWin, &internals_graphics::Plotter2DWindow::fourChannelImage, use4);
-        mtools::runInFltkThread(proxy);
-        }
 
 
     void Plotter2D::useSolidBackground(bool use)

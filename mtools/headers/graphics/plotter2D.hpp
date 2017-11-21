@@ -214,20 +214,6 @@ class Plotter2D
 
 
     /**
-     * Return true is the plotter is using 4 channels images and false if we use only 3 channels.
-     **/
-    bool fourChannelImage() const;
-
-
-    /**
-     * Set the number of channels to use for the image.
-     *
-     * @param   use4    true to use 4 channels and false to use only 3 channels (default 3 channels).
-     **/
-    void fourChannelImage(bool use4);
-
-
-    /**
      * Decide whether we use a solid backgournd. If not, a default gray checkerboard is drawn as the
      * background.
      *
