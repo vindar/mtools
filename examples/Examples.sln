@@ -27,6 +27,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SRW_1D", "SRW_1D\SRW_1D.vcx
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TreeEden", "TreeEden\TreeEden.vcxproj", "{B67CB838-068C-43CC-AD7B-B65229BFC4AF}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "infiniteNoodle", "infiniteNoodle\infiniteNoodle.vcxproj", "{95E75218-93D8-45BA-95D3-90E4AA51CD4F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -131,6 +133,14 @@ Global
 		{B67CB838-068C-43CC-AD7B-B65229BFC4AF}.Release|x64.Build.0 = Release|x64
 		{B67CB838-068C-43CC-AD7B-B65229BFC4AF}.Release|x86.ActiveCfg = Release|Win32
 		{B67CB838-068C-43CC-AD7B-B65229BFC4AF}.Release|x86.Build.0 = Release|Win32
+		{95E75218-93D8-45BA-95D3-90E4AA51CD4F}.Debug|x64.ActiveCfg = Debug|x64
+		{95E75218-93D8-45BA-95D3-90E4AA51CD4F}.Debug|x64.Build.0 = Debug|x64
+		{95E75218-93D8-45BA-95D3-90E4AA51CD4F}.Debug|x86.ActiveCfg = Debug|Win32
+		{95E75218-93D8-45BA-95D3-90E4AA51CD4F}.Debug|x86.Build.0 = Debug|Win32
+		{95E75218-93D8-45BA-95D3-90E4AA51CD4F}.Release|x64.ActiveCfg = Release|x64
+		{95E75218-93D8-45BA-95D3-90E4AA51CD4F}.Release|x64.Build.0 = Release|x64
+		{95E75218-93D8-45BA-95D3-90E4AA51CD4F}.Release|x86.ActiveCfg = Release|Win32
+		{95E75218-93D8-45BA-95D3-90E4AA51CD4F}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
