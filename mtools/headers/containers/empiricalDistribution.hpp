@@ -154,7 +154,7 @@ class IntegerEmpiricalDistribution
 		**/
 		void save(std::string filename, uint32 index = 0) const
 			{
-			if (index != 0) filename += std::string("-") + toString(index);
+			if (index != 0) filename += std::string("-") + mtools::toString(index);
 			OFileArchive ar(filename);
 			ar & (*this);
 			}
@@ -170,7 +170,7 @@ class IntegerEmpiricalDistribution
 		**/
 		void load_and_append(std::string filename, uint32 index = 0)
 			{
-			if (index != 0) filename += std::string("-") + toString(index);
+			if (index != 0) filename += std::string("-") + mtools::toString(index);
 			IntegerEmpiricalDistribution ED;
 			IFileArchive ar(filename);
 			ar & ED;
@@ -285,13 +285,23 @@ class IntegerEmpiricalDistribution
 		/**
 		* Return the total number of insertion performed.
 		**/
-		MTOOLS_FORCEINLINE int64 nbInsertion() const { return _nb_plus + _nb_minus + _nb_plus_infinity + _nb_minus_infinity; }
+		MTOOLS_FORCEINLINE uint64 nbInsertion() const { return _nb_plus + _nb_minus + _nb_plus_infinity + _nb_minus_infinity; }
 
 
 		/**
 		* Return the number of (strictly) positive value inserted. 
 		**/
-		MTOOLS_FORCEINLINE uint64 nbPositive() const { return _nb_plus - nbZeros();  }
+		MTOOLS_FORCEINLINE uint64 nbPositive() const { return _nb_plus - nbZero();  }
+
+
+		/**
+		* Return the empirical probability of being (strictly) positive and finite.
+		**/
+		MTOOLS_FORCEINLINE double probaPositive() const			
+			{
+			uint64 N = nbInsertion();
+			return (N == 0) ? 0.0 : ((double)nbPositive()) / N;
+			}
 
 
 		/**
@@ -301,21 +311,62 @@ class IntegerEmpiricalDistribution
 
 
 		/**
-		* Return the number of values that are zero.
+		* Return the empirical probability of being (strictly) negative and finite.
 		**/
-		MTOOLS_FORCEINLINE uint64 nbZeros() const { return ((_tab_plus.size() > 0) ? _tab_plus[0] : 0); }
+		MTOOLS_FORCEINLINE double probaNegative() const
+			{
+			uint64 N = nbInsertion();
+			return (N == 0) ? 0.0 : ((double)nbNegative()) / N;
+			}
 
 
 		/**
-		* Return the number of values inserted that are +infty.
+		* Return the number of values that are zero.
+		**/
+		MTOOLS_FORCEINLINE uint64 nbZero() const { return ((_tab_plus.size() > 0) ? _tab_plus[0] : 0); }
+
+
+		/**
+		* Return the empirical probability of being equal to 0.
+		**/
+		MTOOLS_FORCEINLINE double probaZero() const
+			{
+			uint64 N = nbInsertion();
+			return (N == 0) ? 0.0 : ((double)nbZero()) / N;
+			}
+
+
+		/**
+		* Return the number of values inserted that are equal to +infty.
 		**/
 		MTOOLS_FORCEINLINE uint64 nbPlusInfinity() const { return _nb_plus_infinity; }
 
 
 		/**
-		* Return the number of values inserted that are -infty.
+		* Return the empirical probability of being equal to +infty.
+		**/
+		MTOOLS_FORCEINLINE double probaPlusInfinity() const
+		{
+			uint64 N = nbInsertion();
+			return (N == 0) ? 0.0 : ((double)nbPlusInfinity()) / N;
+		}
+
+
+		/**
+		* Return the number of values inserted that are equal to -infty.
 		**/
 		MTOOLS_FORCEINLINE uint64 nbMinusInfinity() const { return _nb_minus_infinity; }
+
+
+
+		/**
+		* Return the empirical probability of being equal to -infty.
+		**/
+		MTOOLS_FORCEINLINE double probaMinusInfinity() const
+		{
+			uint64 N = nbInsertion();
+			return (N == 0) ? 0.0 : ((double)nbMinusInfinity()) / N;
+		}
 
 
 		/**
@@ -637,7 +688,34 @@ class IntegerEmpiricalDistribution
 		}
 
 
+		/**
+		 * Print information about this object into an std::string. 
+		 **/
+		std::string toString() const
+			{
+			std::string s("IntegerEmpiricalDistribution [L="); s += mtools::toString(spacing()) + "]";
+			if (isEmpty()) return s +" EMPTY !\n"; 
+			s += std::string("\n - memory usage : ") + toStringMemSize(memoryFootprint()) + "\n";
+			s += std::string(" - number of entries = ") + mtools::toString(nbInsertion()) + "]\n";
+			s += std::string(" - range of values = [") + mtools::toString(minVal()) + " , " + mtools::toString(maxVal())  +  ")\n";
+			s += std::string(" - E[X]   = ") + mtools::toString(expectation(ROUND_MIDDLE)) + "   (min " + mtools::toString(expectation(ROUND_MIDDLE)) + "  , max " + mtools::toString(expectation(ROUND_ABOVE)) + ")\n";
+			s += std::string(" - Var[X] = ") + mtools::toString(variance()) + "\n";
+			s += std::string(" - P(X = -infty) = ") + mtools::toString(probaMinusInfinity()) + "  \t(" + mtools::toString(nbMinusInfinity()) + " values)\n";
+			s += std::string(" - P(X = +infty) = ") + mtools::toString(probaPlusInfinity()) + "   \t(" + mtools::toString(nbPlusInfinity()) + " values)\n";
+			s += std::string(" - P(X = 0) = ") + mtools::toString(probaZero()) + "   \t(" + mtools::toString(nbZero()) + " values)\n";
+			s += std::string(" - P(X < 0) = ") + mtools::toString(probaNegative()) + "   \t(" + mtools::toString(nbNegative()) + " values)\n";
+			s += std::string(" - P(X > 0) = ") + mtools::toString(probaPositive()) + "   \t(" + mtools::toString(nbPositive()) + " values)\n";
+			return s;
+			}
 
+
+		/**
+		 * Return the number of bytes used by this object. 
+		 **/
+		uint64 memoryFootprint() const
+			{
+			return sizeof(IntegerEmpiricalDistribution) + sizeof(uint64)*(_tab_plus.capacity() + _tab_minus.capacity() + _cdf_plus.capacity() + _cdf_minus.capacity());
+			}
 
 
 		static const int ROUND_BELOW = 0;		// rounding modes. 
