@@ -29,6 +29,7 @@
 #include "containers/bitgraphZ2.hpp"
 #include "containers/randomurn.hpp"
 #include "containers/RWtreegraph.hpp"
+#include "containers/empiricalDistribution.hpp"
 #include "containers/extab.hpp"
 
 //i.o.

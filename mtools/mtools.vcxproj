@@ -170,6 +170,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="headers\containers\bitgraphZ2.hpp" />
+    <ClInclude Include="headers\containers\empiricalDistribution.hpp" />
     <ClInclude Include="headers\containers\extab.hpp" />
     <ClInclude Include="headers\containers\grid_basic.hpp" />
     <ClInclude Include="headers\containers\grid_factor.hpp" />
