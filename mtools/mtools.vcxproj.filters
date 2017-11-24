@@ -309,6 +309,9 @@
     <ClInclude Include="headers\graphics\internal\imagewidget.hpp">
       <Filter>Header Files\graphics\internal</Filter>
     </ClInclude>
+    <ClInclude Include="headers\containers\empiricalDistribution.hpp">
+      <Filter>Header Files\containers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\console.cpp">
