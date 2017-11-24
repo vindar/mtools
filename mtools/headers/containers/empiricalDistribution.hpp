@@ -52,6 +52,9 @@ class IntegerEmpiricalDistribution
 	public:
 
 
+		static const uint64 DEFAULT_LOGSPACING = 16;	// default spacing is 2^16 = 65536. 
+
+
 		/**
 		 * Constructor. Create an empty distribution. 
 		 *
@@ -59,7 +62,7 @@ class IntegerEmpiricalDistribution
 		 * 						object saves every value on [0, L[, then every 2 values on [L, 3L[, every 4
 		 * 						values on [3L, 7L[, every 8 values on [7L, 15L[  ...
 		 **/
-		IntegerEmpiricalDistribution(uint64 logspacing = 14) : EXP(logspacing),  _tab_plus(), _tab_minus(), _cdf_plus(), _cdf_minus(), _nb_plus(0), _nb_minus(0), _nb_plus_infinity(0), _nb_minus_infinity(0), _minval(std::numeric_limits<int64>::max()), _maxval(std::numeric_limits<int64>::min())
+		IntegerEmpiricalDistribution(uint64 logspacing = DEFAULT_LOGSPACING) : EXP(logspacing),  _tab_plus(), _tab_minus(), _cdf_plus(), _cdf_minus(), _nb_plus(0), _nb_minus(0), _nb_plus_infinity(0), _nb_minus_infinity(0), _minval(std::numeric_limits<int64>::max()), _maxval(std::numeric_limits<int64>::min())
 			{
 			MTOOLS_INSURE(logspacing >= 2);
 			MTOOLS_INSURE(logspacing <= 62);
