@@ -222,7 +222,7 @@ int main(int argc, char *argv[])
 
 	std::string filename = std::string("noodle-L") + toString(L) + ".png";
 	cout << "-> Saving image as : [" << filename << "]... ";
-	//im.save(filename.c_str());
+	im.save(filename.c_str());
 	cout << "done.\n";
 
 	cout << "\n\n";
