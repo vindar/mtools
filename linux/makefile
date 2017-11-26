@@ -68,6 +68,7 @@ before_mtools:
 	@echo "****************************************"
 	@test -d $(OUTDIR_MTOOLS) || mkdir -p $(OUTDIR_MTOOLS)
 	@test -d $(OBJDIR_MTOOLS) || mkdir -p $(OBJDIR_MTOOLS)
+    @echo "using CXXFLAGS : "
 
 before_mtools_debug: 
 	@echo
