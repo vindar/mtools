@@ -52,6 +52,37 @@ void makeArcTab(std::vector<int> & tab)
 	}
 
 
+
+/* construct an arc vector with pairs (-i,i) */
+void makeArcTabDeterministe(std::vector<int> & tab)
+{
+	tab.resize(L);
+	int nl = L;
+	if (nl % 2 != 0) { tab[L - 1] = L; nl--; }
+
+	for (int j = 0; j < nl / 2; j++)
+	{
+		tab[j] = nl - 1 - j;
+		tab[nl - 1 - j] = j;
+	}
+}
+
+
+/* construct an arc vector with pairs (i,i+1) */
+void makeArcTabEdouard(std::vector<int> & tab)
+{
+	tab.resize(L);
+	int nl = L;
+	if (nl % 2 != 0) { tab[L - 1] = L; nl--; }
+
+	for (int j = 0; j < nl; j += 2)
+	{
+		tab[j] = j + 1;
+		tab[j + 1] = j;
+	}
+}
+
+
 /* explore the a cluster going down first, return the number of distinct site visited
   (not including the start site and return the final site which may be -1 or L */
 std::pair<int,int> follow_cluster_down(int startpos, int label)
