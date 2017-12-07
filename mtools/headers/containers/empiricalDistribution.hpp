@@ -174,30 +174,45 @@ class IntegerEmpiricalDistribution
 			{
 			if (index != 0) filename += std::string("-") + mtools::toString(index);
 			LogFile out(filename, false, true, false);
-			out << "Empirical distribution of an integer random variable.\n";
+			out << "********************************************************\n";
+			out << "* Empirical distribution of an integer random variable *\n";
+			out << "********************************************************\n\n";
 			out << " - number of realizations recorded = " << nbInsertion() << "\n";
 			out << " - minimal recorded (finite) value = " << minVal() << "\n";
 			out << " - maximal recorded (finite) value = " << maxVal() << "\n";
-			if (nbPlusInfinity()>0) out << " - number of realization that are +\\infty = " << nbPlusInfinity() << "\n";
 			if (nbMinusInfinity()>0) out << " - number of realization that are -\\infty = " << nbMinusInfinity() << "\n";
+			if (nbPlusInfinity()>0) out << " - number of realization that are +\\infty = " << nbPlusInfinity() << "\n";
 			out << " - empirical mean E[X] = " << expectation(ROUND_MIDDLE) << "\n";
 			out << " - empirical variance V[X] = " << variance() << "\n\n\n";
 			out << "list of entries.\n";
-			out << "format : position x (or interval I) , number of entries at x (or in I)\n\n";
+			out << "format : position x (or interval [xmin,xmax]) , number of entries at x (or in I)\n\n";
 			if (nbMinusInfinity() > 0) { out << "-\\infty , " << nbMinusInfinity() << "\n"; }
-			for (size_t i = 0; i < _cdf_minus.size() - 1; i++)
+			int64 min;
+			uint64 ls; 
+			for (size_t i = 1; i < _tab_minus.size(); i++)
 				{
-				size_t j = _cdf_minus.size() - 1 - i;
-				out << "[" << j << "] , " << _cdf_plus[j];
+				size_t j = _tab_minus.size() - i;
+				if (_tab_minus[j] >0)
+					{
+					_rangeIndex(-((int64)j), min, ls);
+					if (ls == 0) out << min; else out << "[" << min << ", " << min + (1LL << ls) - 1 << "]";
+					out << ", " << _tab_minus[j] << "\n";
+					}
 				}
-
-			for (size_t i = 0; i < _cdf_plus.size(); i++)
+			for (size_t i = 0; i < _tab_plus.size(); i++)
 				{
-				out << "[" << i << "] , " << _cdf_plus[i];
+				_rangeIndex(i, min, ls);
+				if (_tab_plus[i] >0)
+					{
+					if (ls == 0) out << min; else out << "[" << min << ", " << min + (1LL << ls) - 1 << "]";
+					out << ", " << _tab_plus[i] << "\n";
+					}
 				}
 			if (nbPlusInfinity() > 0) { out << "+\\infty , " << nbPlusInfinity() << "\n"; }
-			out << "\n*** end of empirical distribution ****\n";
-			}
+			out << "********************************************************\n";
+			out << "*           end of empirical distribution file         *\n";
+			out << "********************************************************\n\n";
+		}
 
 		/**
 		* Append the content of a file to the current emprical distribution. 
@@ -848,6 +863,29 @@ class IntegerEmpiricalDistribution
 			}
 
 
+		/**
+		* Return the range of values saved at position i in the array.
+		* (als for negative values)
+		* 
+		* Once the method returns, the range of value is exactly [min, min + 2^logstep [.
+		*
+		* @param	i		   	Position of the index whose range is queried.
+		* @param [out]	min	   	Variable to put the minum value of the range.
+		* @param [out]	logstep	logarithm (in base 2) of the size of the range.
+		**/
+		MTOOLS_FORCEINLINE void _rangeIndex(const int64 i, int64 & min, uint64 & logstep) const
+		{
+		uint64 umin;
+		if (i >= 0)
+			{
+			_rangeIndex((uint64)i, umin, logstep);			
+			min = umin;
+			return;
+			}
+		_rangeIndex((uint64)(-i), umin, logstep);
+		min = -((int64)umin) - (int64)(1LL << logstep)  + 1;
+		return;
+		}
 
 		uint64 EXP;						// L = 2^EXP,save every value on [0,L[, every 2 value on [L,3L[, every 4 values on [3L, 7L[, every 8 values on [7L,15L[ ...
 

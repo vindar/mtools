@@ -163,8 +163,20 @@ int main(int argc, char *argv[])
 
 	cout << "hello\n"; 
 	IntegerEmpiricalDistribution ED; 
+	
+	ED[-65539];
+	ED[-65540];
+	ED[-65537];
+	ED[-65536];
+	ED[-65535];
+	ED[-65534];
+	ED[-65533];
 
-	ED[-10000123];
+	ED[-3];
+	ED[-3];
+	ED[-1];
+
+
 	ED[0];	ED[0]; ED[0]; ED[0];
 
 	ED[1];	ED[1];
@@ -174,6 +186,10 @@ int main(int argc, char *argv[])
 	ED[123457];
 
 	ED[222222223];
+
+	ED.insert_plus_infinity();
+	ED.insert_plus_infinity();
+	ED.insert_minus_infinity();
 
 	ED.save_csv_format("test.txt");
 
