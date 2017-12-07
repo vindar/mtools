@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.22823.1
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "infiniteNoodle", "infiniteNoodle.vcxproj", "{{124CDC13-9C07-434F-A383-5A2C9B8B10BF}}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "infiniteNoodle", "infiniteNoodle.vcxproj", "{95E75218-93D8-45BA-95D3-90E4AA51CD4F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -13,14 +13,14 @@ Global
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{{124CDC13-9C07-434F-A383-5A2C9B8B10BF}}.Debug|Win32.ActiveCfg = Debug|Win32
-		{{124CDC13-9C07-434F-A383-5A2C9B8B10BF}}.Debug|Win32.Build.0 = Debug|Win32
-		{{124CDC13-9C07-434F-A383-5A2C9B8B10BF}}.Debug|x64.ActiveCfg = Debug|x64
-		{{124CDC13-9C07-434F-A383-5A2C9B8B10BF}}.Debug|x64.Build.0 = Debug|x64
-		{{124CDC13-9C07-434F-A383-5A2C9B8B10BF}}.Release|Win32.ActiveCfg = Release|Win32
-		{{124CDC13-9C07-434F-A383-5A2C9B8B10BF}}.Release|Win32.Build.0 = Release|Win32
-		{{124CDC13-9C07-434F-A383-5A2C9B8B10BF}}.Release|x64.ActiveCfg = Release|x64
-		{{124CDC13-9C07-434F-A383-5A2C9B8B10BF}}.Release|x64.Build.0 = Release|x64
+		{95E75218-93D8-45BA-95D3-90E4AA51CD4F}.Debug|Win32.ActiveCfg = Debug|Win32
+		{95E75218-93D8-45BA-95D3-90E4AA51CD4F}.Debug|Win32.Build.0 = Debug|Win32
+		{95E75218-93D8-45BA-95D3-90E4AA51CD4F}.Debug|x64.ActiveCfg = Debug|x64
+		{95E75218-93D8-45BA-95D3-90E4AA51CD4F}.Debug|x64.Build.0 = Debug|x64
+		{95E75218-93D8-45BA-95D3-90E4AA51CD4F}.Release|Win32.ActiveCfg = Release|Win32
+		{95E75218-93D8-45BA-95D3-90E4AA51CD4F}.Release|Win32.Build.0 = Release|Win32
+		{95E75218-93D8-45BA-95D3-90E4AA51CD4F}.Release|x64.ActiveCfg = Release|x64
+		{95E75218-93D8-45BA-95D3-90E4AA51CD4F}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
