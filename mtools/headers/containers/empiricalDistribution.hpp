@@ -25,6 +25,7 @@
 #include "../misc/stringfct.hpp"
 #include "../io/serialization.hpp"
 #include "../io/fileio.hpp"
+#include "../io/logfile.hpp"
 
 #include <string>
 #include <vector>
@@ -162,6 +163,41 @@ class IntegerEmpiricalDistribution
 			ar & (*this);
 			}
 
+
+		/**
+		 * Saves a the distribution in human readable CSV format.
+		 *
+		 * @param	filename	Name of the file,
+		 * @param	index   	optional index to append to the filename.
+		 **/
+		void save_csv_format(std::string filename, uint32 index = 0) const
+			{
+			if (index != 0) filename += std::string("-") + mtools::toString(index);
+			LogFile out(filename, false, true, false);
+			out << "Empirical distribution of an integer random variable.\n";
+			out << " - number of realizations recorded = " << nbInsertion() << "\n";
+			out << " - minimal recorded (finite) value = " << minVal() << "\n";
+			out << " - maximal recorded (finite) value = " << maxVal() << "\n";
+			if (nbPlusInfinity()>0) out << " - number of realization that are +\\infty = " << nbPlusInfinity() << "\n";
+			if (nbMinusInfinity()>0) out << " - number of realization that are -\\infty = " << nbMinusInfinity() << "\n";
+			out << " - empirical mean E[X] = " << expectation(ROUND_MIDDLE) << "\n";
+			out << " - empirical variance V[X] = " << variance() << "\n\n\n";
+			out << "list of entries.\n";
+			out << "format : position x (or interval I) , number of entries at x (or in I)\n\n";
+			if (nbMinusInfinity() > 0) { out << "-\\infty , " << nbMinusInfinity() << "\n"; }
+			for (size_t i = 0; i < _cdf_minus.size() - 1; i++)
+				{
+				size_t j = _cdf_minus.size() - 1 - i;
+				out << "[" << j << "] , " << _cdf_plus[j];
+				}
+
+			for (size_t i = 0; i < _cdf_plus.size(); i++)
+				{
+				out << "[" << i << "] , " << _cdf_plus[i];
+				}
+			if (nbPlusInfinity() > 0) { out << "+\\infty , " << nbPlusInfinity() << "\n"; }
+			out << "\n*** end of empirical distribution ****\n";
+			}
 
 		/**
 		* Append the content of a file to the current emprical distribution. 

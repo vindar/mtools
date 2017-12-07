@@ -161,6 +161,27 @@ int main(int argc, char *argv[])
 	MTOOLS_SWAP_THREADS(argc, argv);
 	parseCommandLine(argc, argv, true);
 
+	cout << "hello\n"; 
+	IntegerEmpiricalDistribution ED; 
+
+	ED[-10000123];
+	ED[0];	ED[0]; ED[0]; ED[0];
+
+	ED[1];	ED[1];
+	ED[3];
+
+	ED[123456];
+	ED[123457];
+
+	ED[222222223];
+
+	ED.save_csv_format("test.txt");
+
+	cout << "yop\n";
+	cout.getKey();
+
+	return 0; 
+
 	/*
 	cimg_library::CImg<unsigned char> imm("lenna.jpg");
 	auto P3 = makePlot2DCImg(imm);
