@@ -80,7 +80,7 @@ std::string get_cxxflags()
 	// cairo
 	if (MTOOLS_USE_CAIRO) fl += sp + exec_command("pkg-config cairo --cflags");
 
-	return fl;
+	return fl + sp;
 	}
 
 
@@ -101,6 +101,9 @@ std::string get_ldflags()
 	// cairo
 	if (MTOOLS_USE_CAIRO) fl += sp + exec_command("pkg-config cairo --libs");
 
+	// openmp 
+	if (MTOOLS_USE_OPENMP) fl += sp + "-fopenmp ";
+
 	// openCL
 	if (MTOOLS_USE_OPENCL) fl += sp + "-lOpenCL";
 	 
@@ -113,7 +116,7 @@ std::string get_ldflags()
 	// zlib
 	fl += sp + "-lz";
 
-	return fl;
+	return fl + sp;
 }
 
 
