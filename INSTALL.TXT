@@ -125,8 +125,8 @@ its sub-folder.
    Alternatively, if you do not wish to install the library, you can just
    add the following 3 lines to your .bash_profile/.bashrc : 
    
+       export PATH="$PATH:MTOOLSDIR/tools/bin"
        export CPATH="$CPATH:MTOOLSDIR/mtools/headers"
-       export PATH="$PATH:MTOOLSDIR/mtools"
        export LIBRARY_PATH="$LIBRARY_PATH:MTOOLSDIR/mtools/linux/lib"
   
   where MTOOLSDIR is mtools's directory. 
@@ -157,6 +157,7 @@ its sub-folder.
    in my compiler search path so I needed to add the following two lines
    to my .bash_profile. 
    
+       export PATH="$PATH:/usr/local/bin"
        export CPATH="$CPATH:/usr/local/include"
        export LIBRARY_PATH="$LIBRARY_PATH:/usr/local/lib"
 
@@ -169,14 +170,9 @@ its sub-folder.
 *        Using mtools in a new project              *
 *****************************************************
 
-The python script 'mtoolsproject.py' located at the base of the mtools directory
-can be used to create an empty project with the correct options. The project
-created contain a minimal 'main.cpp' file as well as a VS2015 solution for windows
-and a makefile for Linux and OSX.
-
-TODO : the makefile created by the python script created check if mtools uses OpenCL. 
-       If so, -lOpenCL should be added to the linker option for the linux/osX makefile. 
-
+The python script 'mtoolsproject.py' located in /tools can be used to create an empty 
+project with the correct options. The project created contain a minimal 'main.cpp' file 
+as well as a VS2015 solution for windows and a makefile for Linux and OSX.
 
 
 
