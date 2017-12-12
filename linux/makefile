@@ -108,21 +108,21 @@ msg:
 	@echo "****************************************"
 	@echo "****************************************"
 	@echo
-	@echo "You can now install the library with"
+	@echo "You can now install the library to usr/local with "
 	@echo
-	@echo "         sudo make install [prefix=/usr/local]"
+	@echo "         sudo make install [--prefix=/usr/local]"
+	@echo 
+	@echo "If you do not wish to install the library, add the following" lines to your 
+	@echo ".profile / .bash_profile / .bashrc"
 	@echo
-	@echo "or, if you do not wish to install the library, add the following"
-	@echo "lines to your .profile / .bash_profile / .bashrc"
-	@echo
+	@echo '         export PATH="$$PATH:$(BASE_DIR)/tools/bin/"'
 	@echo '         export CPATH="$$CPATH:$(BASE_DIR)/mtools/headers/"'
-	@echo '         export PATH="$$PATH:$(BASE_DIR)"'
 	@echo '         export LIBRARY_PATH="$$LIBRARY_PATH:$(BASE_DIR)/linux/lib"'
 	@echo
 	@echo "Subsequently, you can:"
 	@echo
 	@echo "   - Build the examples with '../examples/makeall.sh'."
-	@echo "   - Create a new empty project with the python script '../mtoolsproject.py'."
+	@echo "   - Create a new empty project with the python script '../tools/mtoolsproject.py'."
 	@echo
 
 
@@ -200,7 +200,7 @@ install:
 	@test -d $(prefix)/lib || mkdir -p $(prefix)/lib
 	@test -d $(prefix)/include || mkdir -p $(prefix)/include
 	@test -d $(prefix)/include/mtools || mkdir -p $(prefix)/include/mtools
-	@install -m 0755 ../mtoolsproject.py $(prefix)/bin
+	@install -m 0755 $(TOOLSDIR_MTOOLS)/mtoolsproject.py $(prefix)/bin
 	@install -m 0755 $(TOOLSBIN_MTOOLS)/mtools-config $(prefix)/bin
 	@install -m 0755 $(OUT_MTOOLS) $(prefix)/lib
 	@cp -r $(HEADERDIR_MTOOLS)/* $(prefix)/include/mtools
@@ -211,7 +211,7 @@ install:
 	@echo
 	@echo "    - Run 'make uninstall' to remove the library"
 	@echo "    - Build the example with '../examples/makeall.sh'"
-	@echo "    - Create an empty project with '../mtoolsproject.py'"
+	@echo "    - Create an stub project with '../tools/mtoolsproject.py'"
 	@echo
 	
 
