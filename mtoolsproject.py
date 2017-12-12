@@ -35,15 +35,12 @@ mainFile = r"""
  * [PROJECT_NAME] project
  ***********************************************/
 
-#include "stdafx.h" // precompiled headers
-
-// mtools main header, define MTOOLS_BASIC_CONSOLE to disable mtools's graphic console
 #include "mtools.hpp" 
 
 
 int main(int argc, char *argv[]) 
     {
-    MTOOLS_SWAP_THREADS(argc,argv);   // required on OSX, does nothing on Linux/Windows
+    MTOOLS_SWAP_THREADS(argc,argv); // required on OSX, does nothing on Linux/Windows
     mtools::parseCommandLine(argc,argv,true); // parse the command line, interactive mode
 	
     mtools::cout << "Hello World\n"; 
@@ -71,34 +68,22 @@ CPP_FILES := $(filter-out stdafx.cpp,$(ALL_FILES))
 WORKDIR = `pwd`
 CXX = g++
 
-CXXFLAGS = -std=c++1z -Wall `fltk-config --cxxflags` `pkg-config cairo --cflags` `pkg-config pixman-1 --cflags`
-LDFLAGS =   -lmtools `fltk-config --ldstaticflags` `pkg-config cairo --libs` -lfreetype -ljpeg -lpng `pkg-config pixman-1 --libs` -lz
+CXXFLAGS = -Wall `mtools-config --cxxflags`
+LDFLAGS = `mtools-config --ldflags`
 
 CHECKCOMPILERGCC = $(shell $(CXX) --version | grep 'GCC\|gcc\|g++')
 ifneq ("$(CHECKCOMPILERGCC)","")
 # gcc specific options
     LDFLAGS += -latomic
-    CXXFLAGS += -fopenmp
 endif
 
-CHECKCOMPILERLLVM = $(shell $(CXX) --version | grep 'LLVM\|clang')
-ifneq ("$(CHECKCOMPILERLLVM)","")
-# clang specific options
-endif
-
-.PHONY: release nographics debug debug_nographics buildprog clean
+.PHONY: release debug buildprog clean
 
 release: CXXFLAGS += -O2 -DNDEBUG
 release: buildprog
 
-nographics: CXXFLAGS += -O2 -DNDEBUG -DMTOOLS_BASIC_CONSOLE
-nographics: buildprog
-
 debug: CXXFLAGS += -g -DDEBUG
 debug: buildprog
-
-debug_nographics: CXXFLAGS += -g -DDEBUG -DMTOOLS_BASIC_CONSOLE
-debug_nographics: buildprog
 
 buildprog: $(OUTFILE)
 
@@ -154,118 +139,188 @@ EndGlobal
 vcxprojFile = r"""<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
-    <ProjectConfiguration Include="Debug|Win32"> <Configuration>Debug</Configuration> <Platform>Win32</Platform> </ProjectConfiguration> 
-	<ProjectConfiguration Include="Debug|x64"> <Configuration>Debug</Configuration> <Platform>x64</Platform> </ProjectConfiguration>
-    <ProjectConfiguration Include="Release|Win32"> <Configuration>Release</Configuration> <Platform>Win32</Platform> </ProjectConfiguration>
-    <ProjectConfiguration Include="Release|x64"> <Configuration>Release</Configuration> <Platform>x64</Platform> </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{[PROJECT_GUID]}</ProjectGuid> <Keyword>Win32Proj</Keyword> <RootNamespace>[PROJECT_NAME]</RootNamespace> <TargetPlatformVersion>8.1</TargetPlatformVersion>
+    <ProjectGuid>[PROJECT_GUID]</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>[PROJECT_NAME]</RootNamespace>
+    <TargetPlatformVersion>8.1</TargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration"> <ConfigurationType>Application</ConfigurationType> <UseDebugLibraries>true</UseDebugLibraries> <PlatformToolset>v140</PlatformToolset> <CharacterSet>NotSet</CharacterSet> </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration"> <ConfigurationType>Application</ConfigurationType> <UseDebugLibraries>true</UseDebugLibraries> <PlatformToolset>v140</PlatformToolset> <CharacterSet>NotSet</CharacterSet> </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration"> <ConfigurationType>Application</ConfigurationType> <UseDebugLibraries>false</UseDebugLibraries> <PlatformToolset>v140</PlatformToolset> <WholeProgramOptimization>true</WholeProgramOptimization> <CharacterSet>NotSet</CharacterSet> </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration"> <ConfigurationType>Application</ConfigurationType> <UseDebugLibraries>false</UseDebugLibraries> <PlatformToolset>v140</PlatformToolset> <WholeProgramOptimization>true</WholeProgramOptimization> <CharacterSet>NotSet</CharacterSet> </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>NotSet</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>NotSet</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>NotSet</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>NotSet</CharacterSet>
+  </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-  <ImportGroup Label="ExtensionSettings"> </ImportGroup>
-  <ImportGroup Label="Shared"> </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'"> <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" /> </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets"> <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" /> </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'"> <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" /> </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets"> <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" /> </ImportGroup>
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'"> <LinkIncremental>true</LinkIncremental> <OutDir>$(ProjectDir)build\$(Platform)\</OutDir> <IntDir>$(ProjectDir)build\$(Platform)\temp\$(Configuration)\</IntDir> <TargetName>$(ProjectName)-debug</TargetName> </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'"> <LinkIncremental>true</LinkIncremental> <OutDir>$(ProjectDir)build\$(Platform)\</OutDir> <IntDir>$(ProjectDir)build\$(Platform)\temp\$(Configuration)\</IntDir> <TargetName>$(ProjectName)-debug</TargetName> </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'"> <LinkIncremental>false</LinkIncremental> <OutDir>$(ProjectDir)build\$(Platform)\</OutDir> <IntDir>$(ProjectDir)build\$(Platform)\temp\$(Configuration)\</IntDir> </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'"> <LinkIncremental>false</LinkIncremental> <OutDir>$(ProjectDir)build\$(Platform)\</OutDir> <IntDir>$(ProjectDir)build\$(Platform)\temp\$(Configuration)\</IntDir> </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(ProjectDir)build\$(Platform)\</OutDir>
+    <IntDir>$(ProjectDir)build\$(Platform)\temp\$(Configuration)\</IntDir>
+    <TargetName>$(ProjectName)-debug</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(ProjectDir)build\$(Platform)\</OutDir>
+    <IntDir>$(ProjectDir)build\$(Platform)\temp\$(Configuration)\</IntDir>
+    <TargetName>$(ProjectName)-debug</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(ProjectDir)build\$(Platform)\</OutDir>
+    <IntDir>$(ProjectDir)build\$(Platform)\temp\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(ProjectDir)build\$(Platform)\</OutDir>
+    <IntDir>$(ProjectDir)build\$(Platform)\temp\$(Configuration)\</IntDir>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader> <WarningLevel>Level3</WarningLevel> <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(CAIRO_LIB)/source/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(FREETYPE_LIB)/source/include/freetype/;$(LIBJPEG_LIB)/source/;$(LIBPNG_LIB)/source/;$(MTOOLS_LIB)/mtools/headers/;$(PIXMAN_LIB)/source/pixman/;$(ZLIB_LIB)/source/</AdditionalIncludeDirectories>
-	  <AdditionalOptions>/Zm400 %(AdditionalOptions)</AdditionalOptions>
-	  <OpenMPSupport>true</OpenMPSupport>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>CAIRO_WIN32_STATIC_BUILD;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(CAIRO_LIB)/source/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(FREETYPE_LIB)/source/include/freetype/;$(LIBJPEG_LIB)/source/;$(LIBPNG_LIB)/source/;$(MTOOLS_LIB)/mtools/headers/;$(OPENCL_LIB)/;$(OPENCL_ROOT_INCLUDE)/;$(PIXMAN_LIB)/source/pixman/;$(ZLIB_LIB)/source/</AdditionalIncludeDirectories>
+      <AdditionalOptions>/Zm400 %(AdditionalOptions)</AdditionalOptions>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem> <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(CAIRO_LIB)/win32/;$(FLTK_LIB)/win32/;$(FREETYPE_LIB)/win32/;$(LIBJPEG_LIB)/win32/;$(LIBPNG_LIB)/win32/;$(MTOOLS_LIB)/mtools/lib/;$(PIXMAN_LIB)/win32/;$(ZLIB_LIB)/win32/</AdditionalLibraryDirectories>
-      <AdditionalDependencies>cairod.lib;fltkd.lib;fltkgld.lib;fltkimagesd.lib;fltkjpegd.lib;freetyped.lib;libpngd.lib;mtools32d.lib;pixmand.lib;zlibd.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-	  <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>	  	  
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(CAIRO_LIB)/win32/;$(FLTK_LIB)/win32/;$(FREETYPE_LIB)/win32/;$(LIBJPEG_LIB)/win32/;$(LIBPNG_LIB)/win32/;$(MTOOLS_LIB)/mtools/lib/;$(OPENCL_ROOT_LIB_WIN32)/;$(PIXMAN_LIB)/win32/;$(ZLIB_LIB)/win32/</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(OPENCL_LIB_NAME);cairod.lib;fltkd.lib;fltkgld.lib;fltkimagesd.lib;fltkjpegd.lib;freetyped.lib;libpngd.lib;mtools32d.lib;pixmand.lib;zlibd.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
     </Link>
-	<Manifest>
+    <Manifest>
       <EnableDpiAwareness>true</EnableDpiAwareness>
     </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader> <WarningLevel>Level3</WarningLevel> <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(CAIRO_LIB)/source/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(FREETYPE_LIB)/source/include/freetype/;$(LIBJPEG_LIB)/source/;$(LIBPNG_LIB)/source/;$(MTOOLS_LIB)/mtools/headers/;$(PIXMAN_LIB)/source/pixman/;$(ZLIB_LIB)/source/</AdditionalIncludeDirectories>
-	  <AdditionalOptions>/Zm400 %(AdditionalOptions)</AdditionalOptions>
-	  <OpenMPSupport>true</OpenMPSupport>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>CAIRO_WIN32_STATIC_BUILD;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(CAIRO_LIB)/source/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(FREETYPE_LIB)/source/include/freetype/;$(LIBJPEG_LIB)/source/;$(LIBPNG_LIB)/source/;$(MTOOLS_LIB)/mtools/headers/;$(OPENCL_LIB)/;$(OPENCL_ROOT_INCLUDE)/;$(PIXMAN_LIB)/source/pixman/;$(ZLIB_LIB)/source/</AdditionalIncludeDirectories>
+      <AdditionalOptions>/Zm400 %(AdditionalOptions)</AdditionalOptions>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem> <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(CAIRO_LIB)/x64/;$(FLTK_LIB)/x64/;$(FREETYPE_LIB)/x64/;$(LIBJPEG_LIB)/x64/;$(LIBPNG_LIB)/x64/;$(MTOOLS_LIB)/mtools/lib/;$(PIXMAN_LIB)/x64/;$(ZLIB_LIB)/x64/</AdditionalLibraryDirectories>
-      <AdditionalDependencies>cairod.lib;fltkd.lib;fltkgld.lib;fltkimagesd.lib;fltkjpegd.lib;freetyped.lib;libpngd.lib;mtools64d.lib;pixmand.lib;zlibd.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-	  <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>	  	  
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(CAIRO_LIB)/x64/;$(FLTK_LIB)/x64/;$(FREETYPE_LIB)/x64/;$(LIBJPEG_LIB)/x64/;$(LIBPNG_LIB)/x64/;$(MTOOLS_LIB)/mtools/lib/;$(OPENCL_ROOT_LIB_X64)/;$(PIXMAN_LIB)/x64/;$(ZLIB_LIB)/x64/</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(OPENCL_LIB_NAME);cairod.lib;fltkd.lib;fltkgld.lib;fltkimagesd.lib;fltkjpegd.lib;freetyped.lib;libpngd.lib;mtools64d.lib;pixmand.lib;zlibd.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
     </Link>
-	<Manifest>
+    <Manifest>
       <EnableDpiAwareness>true</EnableDpiAwareness>
     </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel> <PrecompiledHeader>Use</PrecompiledHeader> <Optimization>MaxSpeed</Optimization> <FunctionLevelLinking>true</FunctionLevelLinking> <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(CAIRO_LIB)/source/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(FREETYPE_LIB)/source/include/freetype/;$(LIBJPEG_LIB)/source/;$(LIBPNG_LIB)/source/;$(MTOOLS_LIB)/mtools/headers/;$(PIXMAN_LIB)/source/pixman/;$(ZLIB_LIB)/source/</AdditionalIncludeDirectories>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>CAIRO_WIN32_STATIC_BUILD;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(CAIRO_LIB)/source/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(FREETYPE_LIB)/source/include/freetype/;$(LIBJPEG_LIB)/source/;$(LIBPNG_LIB)/source/;$(MTOOLS_LIB)/mtools/headers/;$(OPENCL_LIB)/;$(OPENCL_ROOT_INCLUDE)/;$(PIXMAN_LIB)/source/pixman/;$(ZLIB_LIB)/source/</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
-	  <AdditionalOptions>/Zm400 %(AdditionalOptions)</AdditionalOptions>
-	  <OpenMPSupport>true</OpenMPSupport>
+      <AdditionalOptions>/Zm400 %(AdditionalOptions)</AdditionalOptions>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem> <GenerateDebugInformation>true</GenerateDebugInformation> <EnableCOMDATFolding>true</EnableCOMDATFolding> <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(CAIRO_LIB)/win32/;$(FLTK_LIB)/win32/;$(FREETYPE_LIB)/win32/;$(LIBJPEG_LIB)/win32/;$(LIBPNG_LIB)/win32/;$(MTOOLS_LIB)/mtools/lib/;$(PIXMAN_LIB)/win32/;$(ZLIB_LIB)/win32/</AdditionalLibraryDirectories>
-      <AdditionalDependencies>cairo.lib;fltk.lib;fltkgl.lib;fltkimages.lib;fltkjpeg.lib;freetype.lib;libpng.lib;mtools32.lib;pixman.lib;zlib.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-	  <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>	  
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>$(CAIRO_LIB)/win32/;$(FLTK_LIB)/win32/;$(FREETYPE_LIB)/win32/;$(LIBJPEG_LIB)/win32/;$(LIBPNG_LIB)/win32/;$(MTOOLS_LIB)/mtools/lib/;$(OPENCL_ROOT_LIB_WIN32)/;$(PIXMAN_LIB)/win32/;$(ZLIB_LIB)/win32/</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(OPENCL_LIB_NAME);cairo.lib;fltk.lib;fltkgl.lib;fltkimages.lib;fltkjpeg.lib;freetype.lib;libpng.lib;mtools32.lib;pixman.lib;zlib.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
     </Link>
-	<Manifest>
+    <Manifest>
       <EnableDpiAwareness>true</EnableDpiAwareness>
     </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel> <PrecompiledHeader>Use</PrecompiledHeader> <Optimization>MaxSpeed</Optimization> <FunctionLevelLinking>true</FunctionLevelLinking> <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(CAIRO_LIB)/source/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(FREETYPE_LIB)/source/include/freetype/;$(LIBJPEG_LIB)/source/;$(LIBPNG_LIB)/source/;$(MTOOLS_LIB)/mtools/headers/;$(PIXMAN_LIB)/source/pixman/;$(ZLIB_LIB)/source/</AdditionalIncludeDirectories>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>CAIRO_WIN32_STATIC_BUILD;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(CAIRO_LIB)/source/;$(CIMG_LIB)/source/;$(FLTK_LIB)/source/;$(FREETYPE_LIB)/source/include/freetype/;$(LIBJPEG_LIB)/source/;$(LIBPNG_LIB)/source/;$(MTOOLS_LIB)/mtools/headers/;$(OPENCL_LIB)/;$(OPENCL_ROOT_INCLUDE)/;$(PIXMAN_LIB)/source/pixman/;$(ZLIB_LIB)/source/</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
-	  <AdditionalOptions>/Zm400 %(AdditionalOptions)</AdditionalOptions>
-	  <OpenMPSupport>true</OpenMPSupport>
+      <AdditionalOptions>/Zm400 %(AdditionalOptions)</AdditionalOptions>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem> <GenerateDebugInformation>true</GenerateDebugInformation> <EnableCOMDATFolding>true</EnableCOMDATFolding> <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(CAIRO_LIB)/x64/;$(FLTK_LIB)/x64/;$(FREETYPE_LIB)/x64/;$(LIBJPEG_LIB)/x64/;$(LIBPNG_LIB)/x64/;$(MTOOLS_LIB)/mtools/lib/;$(PIXMAN_LIB)/x64/;$(ZLIB_LIB)/x64/</AdditionalLibraryDirectories>
-      <AdditionalDependencies>cairo.lib;fltk.lib;fltkgl.lib;fltkimages.lib;fltkjpeg.lib;freetype.lib;libpng.lib;mtools64.lib;pixman.lib;zlib.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-	  <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>	  
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>$(CAIRO_LIB)/x64/;$(FLTK_LIB)/x64/;$(FREETYPE_LIB)/x64/;$(LIBJPEG_LIB)/x64/;$(LIBPNG_LIB)/x64/;$(MTOOLS_LIB)/mtools/lib/;$(OPENCL_ROOT_LIB_X64)/;$(PIXMAN_LIB)/x64/;$(ZLIB_LIB)/x64/</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(OPENCL_LIB_NAME);cairo.lib;fltk.lib;fltkgl.lib;fltkimages.lib;fltkjpeg.lib;freetype.lib;libpng.lib;mtools64.lib;pixman.lib;zlib.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
     </Link>
-	<Manifest>
+    <Manifest>
       <EnableDpiAwareness>true</EnableDpiAwareness>
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="stdafx.h" />
-
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="stdafx.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
-    </ClCompile>
-	
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
@@ -274,137 +329,9 @@ vcxprojFile = r"""<?xml version="1.0" encoding="utf-8"?>
 """
 
 
-#################################################
-#                                               #
-# [project].vcxproj.filters                     #
-#                                               #
-#################################################
-vcxfiltersFile = r"""<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
-    </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
-
-</ItemGroup>
-<ItemGroup>
-<ClInclude Include="stdafx.h"> <Filter>Header Files</Filter> </ClInclude>
-
-</ItemGroup>
-<ItemGroup>
-<ClCompile Include="stdafx.cpp"> <Filter>Source Files</Filter> </ClCompile>
-<ClCompile Include="main.cpp"> <Filter>Source Files</Filter> </ClCompile>
-
-</ItemGroup>
-</Project>
-"""
-
-
-#################################################
-#                                               #
-# stdafx.cpp                                    #
-#                                               #
-#################################################
-stdafxcppFile = r"""
-// precompiled header file.
-#include "stdafx.h"
-"""
-
-
-#################################################
-#                                               #
-# stdafx.h                                      #
-#                                               #
-#################################################
-stdafxhFile = r"""
-// precompiled header
-#pragma once
-
-// *** STL ***
-#include <cstdlib>
-#include <cstdio>
-#include <ctime>
-#include <cmath>  
-#include <cwchar>
-#include <locale>
-
-#include <utility>
-#include <type_traits>
-#include <typeinfo>
-#include <string>
-#include <algorithm>
-#include <limits>
-#include <initializer_list>
-#include <chrono>
-
-#include <ostream>
-#include <fstream>
-#include <iostream>
-
-#include <mutex>
-#include <atomic>
-#include <thread>
-#include <condition_variable>
-
-#include <array>
-#include <vector>
-#include <deque>
-#include <forward_list>
-#include <list>
-#include <stack>
-#include <queue>
-#include <set>
-#include <map>
-#include <unordered_set>
-#include <unordered_map>
-
-
-// *** fltk ***
-#if defined (_MSC_VER) 
-#pragma warning( push )
-#pragma warning( disable : 4312 )
-#pragma warning( disable : 4319 )
-#endif
-#include "FL/Fl.H"
-#include "FL/Fl_Window.H"
-#include "FL/Fl_Double_Window.H"
-#include "FL/Fl_Box.H"
-#include "FL/Fl_Input.H"
-#include "FL/Fl_Button.H"
-#include "FL/Fl_Check_Button.H"
-#include "FL/Fl_Round_Button.H"
-#include "FL/Fl_Toggle_Button.H"
-#include "FL/Fl_Value_Slider.H"
-#include "FL/Fl_Scroll.H"
-#include "FL/Fl_Progress.H"
-#include "FL/Fl_Pack.H"
-#include "FL/Fl_Text_Display.H"
-#include "FL/fl_ask.H"
-#include "FL/Fl_Color_Chooser.H"
-#include "FL/Fl_File_Chooser.H"
-#include "FL/filename.H"
-#include "FL/fl_draw.H"
-#if defined (_MSC_VER) 
-#pragma warning( pop )
-#endif
-
-
-/* end of file stdafx.h */
-"""
-
-
 
 ############################################################################
-# the python script itself 
+# the python script
 
 import os
 import shutil
