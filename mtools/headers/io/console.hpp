@@ -19,12 +19,10 @@
 
 
 
-
-
 /**************************************************************************
 *
-* Define the preprocessor directive MTOOLS_BASIC_CONSOLE in mtools_config.hpp
-* to disable FLTK's cout console and fall back on using stdout.
+* When MTOOLS_BASIC_CONSOLE is non zero, Fltk's cout console is disable and 
+* we fall back on using stdout.
 *
 ***************************************************************************/
 
@@ -332,7 +330,7 @@ namespace mtools
         {
 
         /**
-        * Replaces the Console class when MTOOLS_BASIC_CONSOLE is set.
+        * Replaces the Console class when MTOOLS_BASIC_CONSOLE is non-zero.
         **/
         class ConsoleBasic
             {
@@ -462,12 +460,12 @@ namespace mtools
 
  
   
-#ifndef MTOOLS_BASIC_CONSOLE
-    /* 'advanced' FLTK cout console */
-    static internals_console::CoutConsole cout; ///< static object redirecting to the "cout" Console present in each compilation unit containing console.hpp. 
+#if (MTOOLS_BASIC_CONSOLE)
+		/* 'basic' default stdout console */
+		static internals_console::CoutConsoleBasic cout; ///< static object redirecting to the "cout" Console present in each compilation unit containing console.hpp. 
 #else
-    /* 'basic' default stdout console */
-    static internals_console::CoutConsoleBasic cout; ///< static object redirecting to the "cout" Console present in each compilation unit containing console.hpp. 
+		/* 'advanced' FLTK cout console */
+		static internals_console::CoutConsole cout; ///< static object redirecting to the "cout" Console present in each compilation unit containing console.hpp. 													
 #endif
 
 

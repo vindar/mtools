@@ -22,7 +22,7 @@
 #include "../mtools_config.hpp"
 
 
-#ifdef MTOOLS_HAS_OPENCL
+#if (MTOOLS_USE_OPENCL)
 
 #include "../misc/internal/mtools_export.hpp"
 

@@ -22,7 +22,7 @@
 #include "extensions/openCL.hpp"
 
 // only if openCL is installed.
-#ifdef MTOOLS_HAS_OPENCL
+#if (MTOOLS_USE_OPENCL)
 
 #include "misc/error.hpp"
 #include "io/console.hpp"

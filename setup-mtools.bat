@@ -17,7 +17,8 @@ echo.
 
 IF NOT DEFINED MTOOLS_DEPENDENCIES_PATH (
 echo ************* ERROR ***************
-echo This script must be run AFTER running 'setup-mtools-dependencies.bat'. 
+echo Could not find the env. var. for the libraries that mtools depends on.
+echo Did you forget to run the script 'setup-mtools-dependencies.bat' ?
 echo Aborting...
 echo ***********************************
 	pause > nul
@@ -78,27 +79,33 @@ echo ^#pragma once 1>>  ./mtools/headers/mtools_config.hpp
 call:newline
 call:newline
 
+::- mtools version
 set /p MTOOLSVERSION=<./VERSION
 echo ^#define MTOOLS_VERSION %MTOOLSVERSION%    1>>  ./mtools/headers/mtools_config.hpp
 call:newline
 
-echo // Uncomment the next line to disable FLTK console and fall back to cout. 1>> ./mtools/headers/mtools_config.hpp
-echo //^#define MTOOLS_BASIC_CONSOLE            1>>  ./mtools/headers/mtools_config.hpp
-
+::- MTOOLS_BASIC_CONSOLE flag (disabled on windows)
+echo ^#define MTOOLS_BASIC_CONSOLE 0          1>>  ./mtools/headers/mtools_config.hpp
 call:newline
 
+::- MTOOLS_USE_SSE flag
 if %use_sse% equ y (
-	echo // SSE instruction set support ENABLED  1>> ./mtools/headers/mtools_config.hpp
-	echo ^#define MTOOLS_USE_SSE                 1>> ./mtools/headers/mtools_config.hpp
+	echo ^#define MTOOLS_USE_SSE 1              1>> ./mtools/headers/mtools_config.hpp
 	)
 if not %use_sse% equ y (
-	echo // SSE instruction set support DISABLED 1>> ./mtools/headers/mtools_config.hpp
-	echo //^#define MTOOLS_USE_SSE               1>> ./mtools/headers/mtools_config.hpp
+	echo ^#define MTOOLS_USE_SSE 0               1>> ./mtools/headers/mtools_config.hpp
 	)
 call:newline
-		
-::-- ADD OPENCL CONFIG FILE
-		
+
+::- MTOOLS_USE_OPENMP flag (disable on windows)
+echo ^#define MTOOLS_USE_OPENMP 0             1>>  ./mtools/headers/mtools_config.hpp
+call:newline
+
+::- MTOOLS_USE_CAIRO flag (disabled for the time being)
+echo ^#define MTOOLS_USE_CAIRO 0             1>>  ./mtools/headers/mtools_config.hpp
+call:newline
+
+::-- ADD OPENCL CONFIG FILE		
 type "%OPENCL_LIB%\mtools_config_opencl.txt"     1>> ./mtools/headers/mtools_config.hpp
 
 :: -- END OF mtools_config.hpp

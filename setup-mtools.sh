@@ -67,31 +67,42 @@ MTOOLSVERSION=`cat ./VERSION`
 echo "#define MTOOLS_VERSION $MTOOLSVERSION"  >> ./mtools/headers/mtools_config.hpp
 echo "" >> ./mtools/headers/mtools_config.hpp
 
-echo "// Uncomment the next line to disable FLTK console and fall back to cout." >> ./mtools/headers/mtools_config.hpp
-
+# MTOOLS_BASIC_CONSOLE
 if ask "Do you want to disable graphics (MTOOLS_BASIC_CONSOLE) ?"; then
-	echo "#define MTOOLS_BASIC_CONSOLE" >>  ./mtools/headers/mtools_config.hpp
+	echo "#define MTOOLS_BASIC_CONSOLE 1" >>  ./mtools/headers/mtools_config.hpp
 else
-	echo "//#define MTOOLS_BASIC_CONSOLE" >>  ./mtools/headers/mtools_config.hpp
+	echo "#define MTOOLS_BASIC_CONSOLE 0" >>  ./mtools/headers/mtools_config.hpp
 fi
 echo "" >> ./mtools/headers/mtools_config.hpp
 
+# MTOOLS_USE_SSE
 if ask "Do you want to use the SSE instruction set ?"; then
-	echo "// SSE instruction set support ENABLED"  >> ./mtools/headers/mtools_config.hpp
-	echo "#define MTOOLS_USE_SSE" >> ./mtools/headers/mtools_config.hpp
+	echo "#define MTOOLS_USE_SSE 1" >> ./mtools/headers/mtools_config.hpp
 else
-	echo "// SSE instruction set support DISABLE"  >> ./mtools/headers/mtools_config.hpp
-	echo "//#define MTOOLS_USE_SSE" >> ./mtools/headers/mtools_config.hpp
+	echo "#define MTOOLS_USE_SSE 0" >> ./mtools/headers/mtools_config.hpp
 fi
 echo "" >> ./mtools/headers/mtools_config.hpp
 
 
-if ask "Do you want to add openCL support ?"; then
-	echo "// yes, openCL is installed"  >> ./mtools/headers/mtools_config.hpp
-	echo "#define MTOOLS_HAS_OPENCL" >> ./mtools/headers/mtools_config.hpp
+# MTOOLS_USE_OPENMP
+if ask "Do you want to use OpenMP ?"; then
+	echo "#define MTOOLS_USE_OPENMP 1" >> ./mtools/headers/mtools_config.hpp
 else
-	echo "// no, openCL is NOT installed"  >> ./mtools/headers/mtools_config.hpp
-	echo "//#define MTOOLS_HAS_OPENCL" >> ./mtools/headers/mtools_config.hpp
+	echo "#define MTOOLS_USE_OPENMP 0" >> ./mtools/headers/mtools_config.hpp
+fi
+echo "" >> ./mtools/headers/mtools_config.hpp
+
+
+# MTOOLS_USE_CAIRO (disabled)
+echo "#define MTOOLS_USE_CAIRO 0" >> ./mtools/headers/mtools_config.hpp
+echo "" >> ./mtools/headers/mtools_config.hpp
+
+
+# MTOOLS_USE_OPENCL
+if ask "Do you want to add openCL support ?"; then
+	echo "#define MTOOLS_USE_OPENCL 1" >> ./mtools/headers/mtools_config.hpp
+else
+	echo "#define MTOOLS_USE_OPENCL 0" >> ./mtools/headers/mtools_config.hpp
 fi
 echo "" >> ./mtools/headers/mtools_config.hpp
 

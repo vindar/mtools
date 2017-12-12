@@ -29,7 +29,10 @@
 #include "../io/serialization.hpp"
 #include "../random/gen_fastRNG.hpp"
 #include "../random/classiclaws.hpp"
+
+#if (MTOOLS_USE_CAIRO)
 #include <cairo.h>
+#endif
 
 #include "../io/console.hpp"
 
@@ -39,9 +42,11 @@
 // use libjpeg
 #define cimg_use_jpeg
 
+#if (MTOOLS_USE_OPENMP)
 // use openmp (only for GCC for the time being)
-#if defined __GNUC__ && !defined __clang__
+#if defined __GNUC__ && !defined __clang__ 
 #define cimg_use_openmp
+#endif
 #endif
 
 #if defined (_MSC_VER) 
@@ -59,10 +64,9 @@
 
 // disable CImg's graphic capabilility when in console mode only
 // or when using osx.
-#if defined MTOOLS_BASIC_CONSOLE || defined __APPLE__
+#if (MTOOLS_BASIC_CONSOLE) || defined __APPLE__
 #define cimg_display 0		
 #endif
-
 
 #include <CImg.h>	    // the header for the cimg library
 #undef min
@@ -112,7 +116,7 @@ namespace mtools
 	 * object share the same pixel buffer.
 	 *   
 	 *  ************************************* SSE optimizations ************************************
-	 * define MTOOLS_USE_SSE in the preprocessor options to activate these optimizations.   
+	 * used if  MTOOLS_USE_SSE is non zero. 
 	 * 
 	 **/
 	class Image
@@ -3523,6 +3527,7 @@ namespace mtools
 			*******************************************************************************************************************************************************
 			*******************************************************************************************************************************************************/
 
+#if (MTOOLS_USE_CAIRO)
 
 			/**
 			* Saves the image into a file in PNG format.
@@ -3575,6 +3580,9 @@ namespace mtools
 				cairo_surface_destroy(psurface);
 				return true;
 				}
+
+
+#endif 
 
 
 			/**
@@ -5014,7 +5022,7 @@ namespace mtools
 
 
 			/* Downscaling using box average algorithm. 
-			   Optimized for SSE 4.2 (todo: optimize for AVX2). SSE is enabled is MTOOLS_USE_SSE is defined.
+			   Optimized for SSE 4.2 (todo: optimize for AVX2). SSE is enabled if MTOOLS_USE_SSE is non zero.
 			   The method uses only integer calculation 
 			   - BIT_FP : number of bits for computing position and aera in fixed position.(40 is good). 
 			   - BIT_FP_REDUCE : number of bits of the aera multiplied by the color of each pixel (must decrease as the ratio of the aera of src/dest increase). 
@@ -5079,7 +5087,7 @@ namespace mtools
 							const uint32 aera1 = p1y*p1x;
 							const uint32 aera2 = p1y*p2x;
 							// only VS specific code for the moment. TODO : make this portable...
-							#if defined MTOOLS_USE_SSE && defined _MSC_VER
+							#if (MTOOLS_USE_SSE) && defined _MSC_VER
 								{							
 								__m128i * sse_tmp = reinterpret_cast<__m128i*>(tmp + off);
 								__m128i v = _mm_set_epi32((coul >> 24) & 0xFF, (coul >> 16) & 0xFF, (coul >> 8) & 0xFF, coul & 0xFF);
@@ -5089,6 +5097,7 @@ namespace mtools
 								_mm_store_si128(sse_tmp + 1, _mm_add_epi32(_mm_load_si128(sse_tmp + 1), _mm_mullo_epi32(a2, v)));
 								}
 							#else					
+								{
 								tmp[off] += aera1*(coul & 0xFF);
 								tmp[off + 1] += aera1*((coul >> 8) & 0xFF);
 								tmp[off + 2] += aera1*((coul >> 16) & 0xFF);
@@ -5097,6 +5106,7 @@ namespace mtools
 								tmp[off + 5] += aera2*((coul >> 8) & 0xFF);
 								tmp[off + 6] += aera2*((coul >> 16) & 0xFF);
 								tmp[off + 7] += aera2*((coul >> 24) & 0xFF);
+								}
 							#endif				
 							di += overflowx;
 							epsx -= LX*overflowx;
@@ -5144,7 +5154,7 @@ namespace mtools
 								const uint32 aera1 = p2y*p1x;
 								const uint32 aera2 = p2y*p2x;
 								// only VS specific code for the moment. TODO : make this portable...
-								#if defined MTOOLS_USE_SSE && defined _MSC_VER
+								#if (MTOOLS_USE_SSE) && defined _MSC_VER
 									{
 									__m128i * sse_tmp = reinterpret_cast<__m128i*>(tmp + off);
 									__m128i v = _mm_set_epi32((coul >> 24) & 0xFF, (coul >> 16) & 0xFF, (coul >> 8) & 0xFF, coul & 0xFF);
@@ -5153,8 +5163,9 @@ namespace mtools
 									__m128i a2 = _mm_set1_epi32(aera2);
 									_mm_store_si128(sse_tmp + 1, _mm_add_epi32(_mm_load_si128(sse_tmp + 1), _mm_mullo_epi32(a2, v)));
 									}
-								#else					
-									tmp[off]     += aera1*(coul & 0xFF);
+								#else
+									{
+									tmp[off] += aera1*(coul & 0xFF);
 									tmp[off + 1] += aera1*((coul >> 8) & 0xFF);
 									tmp[off + 2] += aera1*((coul >> 16) & 0xFF);
 									tmp[off + 3] += aera1*((coul >> 24) & 0xFF);
@@ -5162,6 +5173,7 @@ namespace mtools
 									tmp[off + 5] += aera2*((coul >> 8) & 0xFF);
 									tmp[off + 6] += aera2*((coul >> 16) & 0xFF);
 									tmp[off + 7] += aera2*((coul >> 24) & 0xFF);
+									}
 								#endif				
 								di += overflowx;
 								epsx -= LX*overflowx;
@@ -7800,6 +7812,7 @@ namespace mtools
 			* These methods affect: _pcairo_surface, _pcairo_context 		     																				  *
 			*******************************************************************************************************************************************************/
 
+#if (MTOOLS_USE_CAIRO)
 
 			/* tell cairo that the data buffer is possibly dirty */
 			inline void _cairomarkdirty() const
@@ -7846,6 +7859,17 @@ namespace mtools
 				_cairomarkdirty();
 				return true;
 				}
+
+#else
+
+			inline void _removecairo() const
+				{
+				_pcairo_context = nullptr;
+				_pcairo_surface = nullptr;
+				}
+
+
+#endif
 
 
 			/*******************************************************************************************************************************************************

@@ -44,7 +44,7 @@ namespace mtools
     inline void _stopWithMsg(const std::string & title, const std::string & msg)
         {
         display(title, msg);
-        #ifndef MTOOLS_BASIC_CONSOLE
+        #if (MTOOLS_BASIC_CONSOLE == 0)
         displayGraphics(title, msg);
         #endif
         exit(EXIT_FAILURE);

@@ -403,11 +403,12 @@ namespace mtools
         namespace internals_watch
             {
 
-#ifndef MTOOLS_BASIC_CONSOLE
-    #define NOBASICWATCH() ((void)0)
+#if (MTOOLS_BASIC_CONSOLE)
+#define NOBASICWATCH() return
 #else 
-    #define NOBASICWATCH() return
+#define NOBASICWATCH() ((void)0)
 #endif
+
 
             /* used to create the global singleton watch window */
             class GlobalWatchWindow
