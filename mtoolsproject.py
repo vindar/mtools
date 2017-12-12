@@ -389,9 +389,6 @@ repl(mainFile,"main.cpp")
 repl(makeFile,"makefile")
 repl(slnFile, project_name + ".sln")
 repl(vcxprojFile, project_name + ".vcxproj")
-repl(vcxfiltersFile, project_name + ".vcxproj.filters")
-repl(stdafxcppFile,"stdafx.cpp")
-repl(stdafxhFile,"stdafx.h")
 
 #done !
 print "\n*** Project " + project_name + " created ! ***"
