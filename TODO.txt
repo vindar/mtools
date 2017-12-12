@@ -8,9 +8,9 @@ TODO LIST
 - create a new LatticeDawer class that cointain both SiteDrawer and PixelDrawer class. 
 - create a Plot2DLattice object that encapsulate the new LatticeDrawer object. 
 
-- finish the Extab class
+- create the RealEmpiricalDistribution class. 
 
-- solve openCL lib include problem on osX and linux
+- finish the Extab class
 
 - create a floodFill method for the Image class. 
 
