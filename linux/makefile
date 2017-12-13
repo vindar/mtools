@@ -69,7 +69,7 @@ mtools-config:
 	@echo "****    Building mtools-config      ****"
 	@echo "****************************************"
 	@test -d $(TOOLSBIN_MTOOLS) || mkdir -p $(TOOLSBIN_MTOOLS)
-	$(LD) -Wall -O2 $(TOOLSDIR_MTOOLS)/mtools-config.cpp -o $(TOOLSBIN_MTOOLS)/mtools-config
+	$(LD) -std=c++1z -Wall -O2 $(TOOLSDIR_MTOOLS)/mtools-config.cpp -o $(TOOLSBIN_MTOOLS)/mtools-config
 
 
 
