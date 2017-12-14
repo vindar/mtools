@@ -165,21 +165,8 @@ struct A
 
 
 
-template<typename T> struct TestAlign
-	{
-	char 	a;
-	T 	    b;
-	};
 
 
-/**
- * Compute the required alignement (in byte) for a given type. 
- *
- * @tparam	T	Generic type parameter.
- *
- * @return	A size_t.
- */
-template<typename T > constexpr size_t reqAlign() { return sizeof(TestAlign<T>) - sizeof(T); }
 
 
 
@@ -190,14 +177,15 @@ int main(int argc, char *argv[])
 
 	MTOOLS_SWAP_THREADS(argc, argv);
 	parseCommandLine(argc, argv, true);
+	A TT[3];
 
-	A TT[3]; 
-
-	cout << "sizeof(A) = " << sizeof(A) << "\n"; 
+	cout << "sizeof(A) = " << sizeof(A) << "\n";
 	cout << "sizeof(A[3]) = " << sizeof(TT) << "\n";
-	cout << "align = " << reqAlign<void*>() << "\n";
+	cout << "align = " << metaprog::reqAlign<A>() << "\n";
 	cout.getKey();
 	return 0;
+
+
 
 
 
