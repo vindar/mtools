@@ -45,15 +45,12 @@ namespace mtools
     {
 
 
-
-
-
 		template<typename T> struct TestAlign
 			{
 			char 	a;
 			T 	    b;
 			};
-
+		
 
 		/**
 		* Compute the required alignement (in byte) for a given type.
