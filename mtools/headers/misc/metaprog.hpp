@@ -44,6 +44,28 @@ namespace mtools
     namespace metaprog
     {
 
+
+
+
+
+		template<typename T> struct TestAlign
+			{
+			char 	a;
+			T 	    b;
+			};
+
+
+		/**
+		* Compute the required alignement (in byte) for a given type.
+		*
+		* @tparam	T	type to compute the alignement.
+		*
+		* @return	alignement (in bytes).
+		*/
+		template<typename T > constexpr size_t reqAlign() { return sizeof(TestAlign<T>) - sizeof(T); }
+
+
+
         template<bool B> class dummy {};        ///< dummy class, useful for method overload depending on template parameter. 
         template<int K> class dummint {};       ///< dummy class, useful for method overload depending on template parameter. 
 
