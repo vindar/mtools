@@ -37,7 +37,7 @@ namespace mtools
 
     /**
     * Macro that convert KB to bytes
-    **/
+    **/ 
     #define MEM_KB(_nb) (1024*_nb)
 
     /**
@@ -87,12 +87,12 @@ namespace mtools
 				/** Move constructor **/
 				CstSizeMemoryPool(CstSizeMemoryPool && csmp) : _m_allocatedobj(csmp._m_allocatedobj), _m_totmem(csmp._m_totmem), _m_firstfree(csmp._m_firstfree), _m_currentpool(csmp._m_currentpool), _m_firstpool(csmp._m_firstpool), _m_index(csmp._m_index)
 					{
-					_m_allocatedobj = 0;
-					_m_totmem = 0;
-					_m_firstfree = nullptr;
-					_m_currentpool = nullptr;
-					_m_firstpool = nullptr;
-					_m_index = POOLSIZE;
+					csmp._m_allocatedobj = 0;
+					csmp._m_totmem = 0;
+					csmp._m_firstfree = nullptr;
+					csmp._m_currentpool = nullptr;
+					csmp._m_firstpool = nullptr;
+					csmp._m_index = POOLSIZE;
 					}
 
 				
@@ -122,10 +122,39 @@ namespace mtools
                     }
 
 
+				/**
+				 * Allocate memory for an element of type T and construct it with the copy ctor.
+				 *
+				 * @param	val copy this element
+				 *
+				 * @return	a pointer to the newly contructed element in the memory pool.
+				 */
+				template<typename T> T * allocate(const T& val) 				
+					{
+					MTOOLS_ASSERT(sizeof(T) <= UNITALLOCSIZE);
+					void * p = malloc();
+					::new((T*)p) T(val); 
+					}
+
+
+				/**
+				 * Allocate memory for an element of type T and construct it with given paramters.
+				 *
+				 * @param	args The constructor paramters. 
+				 *
+				 * @return	a pointer to the newly contructed element in the memory pool.
+				 */
+				template<typename T, typename... Args> T * allocate(Args&&... args)
+					{
+					MTOOLS_ASSERT(sizeof(T) <= UNITALLOCSIZE);
+					::new((T*)p) T(std::forward<Args>(args)...);
+					}
+
+
                 /**
                  * Free a previously malloced memory (of UNITALLOCSIZE bytes).
                  *
-                 * @param [in,out]  p   pointer to the memory portien to free. 
+                 * @param [in,out]  p   pointer to the memory portion to free. 
                  **/
                 inline void free(void * p)
                     {
@@ -135,6 +164,18 @@ namespace mtools
                     _getnextfake((_pfakeT)p) = _m_firstfree;
                     _m_firstfree = (_pfakeT)p;
                     }
+
+
+				/**
+				 * Call the destructor ~T on *p and then free the associatd memory.
+				 *
+				 * @param [in,out]	p Pointer to the object in the memeory pool to destroy and free memory.
+				 */
+				template<typename T> void destroyAndFree(T * p)
+					{
+					p->~T();
+					free(p);
+					}
 
 
                 /**
@@ -161,7 +202,7 @@ namespace mtools
 
 
                 /**
-                 * Free all allocated memeory but call destructor ~T() on all allocated memory before releasing
+                 * Free all allocated memory but call destructor ~T() on all allocated memory before releasing
                  * it.
                  *
                  * @tparam  T   Type of object stored in memory (i.e. type of dtor called).
@@ -219,7 +260,7 @@ namespace mtools
 
                 /**
                  * Return the total memory size malloced by the allocator object. This quantity never decrease
-                 * since memory is not release until destruction of the allocator.
+                 * unless freeAll() or destoyAndFreeAll() is called with flag releaseMemoryToOS set to true.
                  *
                  * @return  The number of bytes consumed by the allocator.
                  **/
@@ -319,6 +360,11 @@ namespace mtools
                 _pfakeT & _getnextfake(_pfakeT f) { return (*((_pfakeT *)f)); } // get the fake T written a the adress of the fake T !
 
             };
+
+
+
+
+
 
 
 
