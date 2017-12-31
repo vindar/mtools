@@ -178,8 +178,12 @@ struct A
 * \tparam T            The element type.
 * \tparam Compare      A comparator functor class that returns true if lhs < rhs.
 */
+
+
+
 template <unsigned NumElements, class Compare = void> class StaticSort
 	{
+
 	template <class A, class C> struct Swap
 		{
 		template <class T> inline void s(T &v0, T &v1)
@@ -220,14 +224,7 @@ template <unsigned NumElements, class Compare = void> class StaticSort
 	template <class A, class C, int I, int J> struct PB <A, C, I, J, 1, 1>
 		{
 		inline PB(A &a) { Swap<A, C> s(a, I - 1, J - 1); }
-
-	
-	
-	
-	
-	
-	
-	};
+		};
 
 	template <class A, class C, int I, int J> struct PB <A, C, I, J, 1, 2>
 		{
@@ -256,6 +253,7 @@ template <unsigned NumElements, class Compare = void> class StaticSort
 		};
 
 	public:
+
 		/**
 		* Sorts the array/container arr.
 		* \param  arr  The array/container to be sorted.
@@ -318,6 +316,31 @@ int main(int argc, const char * argv[])
 
 
 
+
+void fillcircle(Image & im, iBox2 B, iVec2 P, int64 r, RGBc coul)
+	{
+	int64 r2 = r*r + r; 
+	for (int64 y = B.min[1]; y <= B.max[1]; y++)
+		{
+		const int64 b2 = (y - P.Y())*(y - P.Y());
+		int64 xmin = B.min[0];
+		int64 xmax = B.max[0];
+
+		while( (xmin - P.X())*(xmin - P.X()) 
+			)
+		if (b2 < ) 
+
+		const int64 a = x - P.X();
+
+		auto l = a*a + b*b; 
+		(y - )
+
+		y*y + x*x + 
+		}
+
+}
+
+
 int main(int argc, char *argv[])
 {
 
@@ -329,13 +352,13 @@ int main(int argc, char *argv[])
 
 	im.clear(RGBc::c_Gray);
 
-	int64 NS = 100; 
-	int64 m = 10;
+	int64 NS = 10; 
+	int64 m = 1000000;
 	Chronometer();
 	for (int64 n = 0; n < NS; n++)
 		{
-//		im.draw_triangle({ -m*n - 1000, -m*n - 1000 }, { m*n + 1000, m*n + 1000 }, { 400,300 }, RGBc::c_Blue, true, true, 0);
-		im.fill_triangle({ -m*n - 1000, -m*n - 1000 }, { m*n + 1000, m*n + 1000 }, { 400,300 }, RGBc::c_Blue,false);
+		im.fill_circle({ 300,300 }, 1000 + NS*m, RGBc::c_Cyan, true);
+//		im.fill_triangle({ -m*n - 1000, -m*n - 1000 }, { m*n + 1000, m*n + 1000 }, { 400,300 }, RGBc::c_Blue,false);
 		}
 
 	cout << " done in << " << Chronometer() << "\n";
