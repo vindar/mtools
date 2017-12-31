@@ -42,6 +42,7 @@
 #include "io/serialport.hpp"
 
 // maths
+#include "maths/rootSolver.hpp"
 #include "maths/vec.hpp"
 #include "maths/box.hpp"
 #include "maths/sqrmatrix.hpp"

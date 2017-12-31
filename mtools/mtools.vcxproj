@@ -229,6 +229,7 @@
     <ClInclude Include="headers\maths\graph.hpp" />
     <ClInclude Include="headers\maths\permutation.hpp" />
     <ClInclude Include="headers\maths\dyckword.hpp" />
+    <ClInclude Include="headers\maths\rootSolver.hpp" />
     <ClInclude Include="headers\maths\specialFunctions.hpp" />
     <ClInclude Include="headers\maths\sqrmatrix.hpp" />
     <ClInclude Include="headers\maths\vec.hpp" />

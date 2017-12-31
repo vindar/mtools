@@ -312,6 +312,9 @@
     <ClInclude Include="headers\containers\empiricalDistribution.hpp">
       <Filter>Header Files\containers</Filter>
     </ClInclude>
+    <ClInclude Include="headers\maths\rootSolver.hpp">
+      <Filter>Header Files\maths</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\console.cpp">
