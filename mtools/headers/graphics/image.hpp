@@ -2479,8 +2479,8 @@ namespace mtools
 				{
 				if (isEmpty()) return;
 				iBox2 mbr(P1);
-				mbr.enlargeWith(P2);
-				mbr.enlargeWith(P3);
+				mbr.swallowPoint(P2);
+				mbr.swallowPoint(P3);
 				iBox2 B(0, _lx - 1, 0, _ly - 1);
 				if (intersectionRect(mbr, B).isEmpty()) return; // nothing to draw. 
 				if (mbr.isIncludedIn(B))

@@ -277,7 +277,7 @@ template <unsigned NumElements, class Compare = void> class StaticSort
 
 #include <iostream>
 #include <vector>
-
+/*
 int main(int argc, const char * argv[])
 {
 	enum { NumValues = 32 };
@@ -314,23 +314,51 @@ int main(int argc, const char * argv[])
 
 	return 0;
 }
-
+*/
 
 
 
 int main(int argc, char *argv[])
 {
 
-
-
 	MTOOLS_SWAP_THREADS(argc, argv);
 	parseCommandLine(argc, argv, true);
+
+
+	Image im(800, 600);
+
+	im.clear(RGBc::c_Gray);
+
+	int64 NS = 100; 
+	int64 m = 10;
+	Chronometer();
+	for (int64 n = 0; n < NS; n++)
+		{
+//		im.draw_triangle({ -m*n - 1000, -m*n - 1000 }, { m*n + 1000, m*n + 1000 }, { 400,300 }, RGBc::c_Blue, true, true, 0);
+		im.fill_triangle({ -m*n - 1000, -m*n - 1000 }, { m*n + 1000, m*n + 1000 }, { 400,300 }, RGBc::c_Blue,false);
+		}
+
+	cout << " done in << " << Chronometer() << "\n";
+
+	auto P1 = makePlot2DImage(im, 1, "Image");
+
+	Plotter2D plotter; 
+
+	plotter[P1];
+	plotter.autorangeXY();
+	plotter.plot();
+
+	return 0;
+
+	/*
 	A TT[3];
 
 	cout << "sizeof(A) = " << sizeof(A) << "\n";
 	cout << "sizeof(A[3]) = " << sizeof(TT) << "\n";
 	cout << "align = " << metaprog::reqAlign<A>() << "\n";
 	cout.getKey();
+	*/
+	
 	return 0;
 
 
