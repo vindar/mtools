@@ -277,6 +277,7 @@
     <ClCompile Include="sources\plot2Dgrid.cpp" />
     <ClCompile Include="sources\plot2Dimage.cpp" />
     <ClCompile Include="sources\plot2Dlattice.cpp" />
+    <ClCompile Include="sources\rootSolver.cpp" />
     <ClCompile Include="sources\serialization.cpp" />
     <ClCompile Include="sources\serialport.cpp" />
     <ClCompile Include="sources\view2Dwidget.cpp" />

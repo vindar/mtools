@@ -316,7 +316,7 @@ int main(int argc, const char * argv[])
 
 
 
-
+/*
 void fillcircle(Image & im, iBox2 B, iVec2 P, int64 r, RGBc coul)
 	{
 	int64 r2 = r*r + r; 
@@ -339,6 +339,7 @@ void fillcircle(Image & im, iBox2 B, iVec2 P, int64 r, RGBc coul)
 		}
 
 }
+*/
 
 
 int main(int argc, char *argv[])
@@ -346,6 +347,25 @@ int main(int argc, char *argv[])
 
 	MTOOLS_SWAP_THREADS(argc, argv);
 	parseCommandLine(argc, argv, true);
+
+
+
+	double k = 0;
+	double a = 1; 
+	double b = 0; 
+	double c = 1;
+
+	double x0 = mtools::NaN, x1 = mtools::NaN, x2 = mtools::NaN;
+
+	int r = mtools::gsl_poly_solve_cubic(k, a, b, c, &x0, &x1, &x2);
+
+	cout << "number of roots = " << r << "\n";
+	cout << "x0 = " << x0 << "\n";
+	cout << "x1 = " << x1 << "\n";
+	cout << "x2 = " << x2 << "\n";
+
+	cout.getKey(); 
+	return 0; 
 
 
 	Image im(800, 600);

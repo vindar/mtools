@@ -20,67 +20,50 @@
 
 #pragma once
 
-#include "../misc/internal/mtools_export.hpp"
-
-#include <math.h>
 
 namespace mtools
 {
 
+	/**
+	 * Finds the real roots of a.x^2 + b.x + c = 0.  
+	 * 
+	 * Roots are returned ordered by increasing values. Values of x0,x1 is not modified if the root
+	 * does not exist. By convention, the null polynom has no roots (returns 0 and x0,x1 are
+	 * untouched).
+	 * 
+	 * Taken from poly/solve_quadratic.c in the GSL Library. https://www.gnu.org/software/gsl/.
+	 *
+	 * @param	a		  	coeff. of x^2.
+	 * @param	b		  	coeff. of x.
+	 * @param	c		  	coeff. of 1.
+	 * @param [in,out]	x0	the smallest real root (if it exist).
+	 * @param [in,out]	x1	the largest real root (if it exist).
+	 *
+	 * @return	The number of real roots (either 0 or 2).
+	 **/
+	int gsl_poly_solve_quadratic(double a, double b, double c, double *x0, double *x1);
 
 
-/**
- * finds the real roots of a x^2 + b x + c = 0
- * Return the number of real roots.
- * Roots are returned ordered.
- * 
- * Taken from poly/solve_quadratic.c in the GSL Library. 
- * https://www.gnu.org/software/gsl/
- **/
-inline int gsl_poly_solve_quadratic (double a, double b, double c, double *x0, double *x1)
-	{
-	if (a == 0) /* Handle linear case */
-		{
-		if (b == 0) { return 0; } else { *x0 = -c / b; return 1; };
-		}
-    const double disc = b * b - 4 * a * c;    
-    if (disc > 0)
-		{
-		if (b == 0)
-			{
-			const double r = sqrt (-c / a);
-			*x0 = -r;
-			*x1 =  r;
-			}
-        else
-			{
-			const double sgnb = (b > 0 ? 1 : -1);
-			const double temp = -0.5 * (b + sgnb * sqrt (disc));
-			const double r1 = temp / a ;
-			const double r2 = c / temp ;
-			if (r1 < r2) 
-				{
-				*x0 = r1 ;
-				*x1 = r2 ;
-				} 
-            else 
-				{
-				*x0 = r2 ;
-				*x1 = r1 ;
-				}
-			}
-        return 2;
-		}
-    else if (disc == 0) 
-		{
-        *x0 = -0.5 * b / a ;
-        *x1 = -0.5 * b / a ;
-        return 2 ;
-		}
-    else return 0;
-	}
-
-
+	/**
+	 * Finds the real roots of k.x^3 + a.x^2 + b.x + c = 0.
+	 *
+	 * Roots are returned ordered by increasing values. Values of x0,x1,x2 is not modified if the
+	 * root does not exist. By convention, the null polynom has no roots (returns 0 and x0,x1,x2 are
+	 * untouched).
+	 *
+	 * Taken from poly/solve_cubic.c in the GSL Library. https://www.gnu.org/software/gsl/.
+	 *
+	 * @param	k		  	coeff. of x^3.
+	 * @param	a		  	coeff. of x^2.
+	 * @param	b		  	coeff. of x.
+	 * @param	c		  	coeff. of 1.
+	 * @param [in,out]	x0	The smallest real root (if is exists).
+	 * @param [in,out]	x1	The second smallest real root (if it exists).
+	 * @param [in,out]	x2	The largest root (it it exists).
+	 *
+	 * @return	The number of real roots.
+	 **/
+	int gsl_poly_solve_cubic(double k, double a, double b, double c, double *x0, double *x1, double *x2);
 
 
 }
@@ -88,4 +71,6 @@ inline int gsl_poly_solve_quadratic (double a, double b, double c, double *x0, d
 
 
 /* end of file */
+
+
 
