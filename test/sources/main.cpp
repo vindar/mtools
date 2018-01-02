@@ -318,6 +318,280 @@ int main(int argc, const char * argv[])
 
 
 
+
+class TestImage : public Image
+	{
+
+	public:
+
+
+
+	TestImage(int64 lx, int64 ly) : Image(lx, ly) {}
+	
+
+	/**
+	* Fill the interior of a circle.
+	*
+	* The circle border is not drawn, use draw_filled_circle to draw both border and interior simultaneously.
+	*
+	* @param	P			   position of the center.
+	* @param	r			   radius.
+	* @param	color_interior color of the interior.
+	* @param	blend		   true to use blending.
+	*/
+	inline void fill_circle_new(iVec2 P, int64 r, RGBc color_interior, bool blend)
+		{
+		if (isEmpty() || (r < 1)) return;
+		iBox2 circleBox(P.X() - r, P.X() + r, P.Y() - r, P.Y() + r);
+		iBox2 imBox = imageBox();
+		iBox2 B = intersectionRect(circleBox, imBox);
+		if (B.isEmpty()) return; // nothing to draw. 
+		if (circleBox.isIncludedIn(imBox))
+			{ // circle is completely inside the image
+			if (blend) _draw_circle<true, false, false, true, false>(P.X(), P.Y(), r, RGBc::c_White, color_interior, 0); else _draw_circle<false, false, false, true, false>(P.X(), P.Y(), r, RGBc::c_White, color_interior, 0);
+			return;
+			}
+		// partial drawing, use alternative drawing method
+		if (blend) _draw_circle2<true, false, true, false>(B, P, r, RGBc::c_White, color_interior, 0); else _draw_circle2<false, false, true, false>(B, P, r, RGBc::c_White, color_interior, 0);
+		return;
+		}
+
+
+
+	/**
+	* Draw a filled circle. The border and the interior color may be different.
+	*
+	* @param	P			  	position of the center.
+	* @param	r			  	radius.
+	* @param	color_border  	color for the border.
+	* @param	color_interior	color of the interior.
+	* @param	blend		  	true to use blending.
+	**/
+	inline void draw_filled_circle_new(iVec2 P, int64 r, RGBc color_border, RGBc color_interior, bool blend)
+		{
+		if (isEmpty() || (r < 1)) return;
+		iBox2 circleBox(P.X() - r, P.X() + r, P.Y() - r, P.Y() + r);
+		iBox2 imBox = imageBox();
+		iBox2 B = intersectionRect(circleBox, imBox);
+		if (B.isEmpty()) return; // nothing to draw. 
+		if (circleBox.isIncludedIn(imBox))
+			{ // circle is completely inside the image
+			if (blend) _draw_circle<true, false, true, true, false>(P.X(), P.Y(), r, color_border, color_interior, 0); else _draw_circle<false, false, true, true, false>(P.X(), P.Y(), r, color_border, color_interior, 0);
+			return;
+			}
+		// partial drawing, use alternative drawing method
+		if (blend) _draw_circle2<true, true, true, false>(B, P, r, color_border, color_interior, 0); else _draw_circle2<false, false, true, false>(B, P, r, color_border, color_interior, 0);
+		return;
+		}
+
+
+	/**
+	* Draw a circle.
+	*
+	* @param	P				position of the center.
+	* @param	r				radius.
+	* @param	color			color to use.
+	* @param	blend			true to use blending.
+	* @param	antialiasing	true to use antialiasing.
+	* @param	penwidth		The pen width (0 = unit width)
+	**/
+	inline void draw_circle_new(iVec2 P, int64 r, RGBc color, bool blend, bool antialiasing, int32 penwidth = 0)
+		{
+		if (isEmpty() || (r < 1)) return;
+		iBox2 circleBox(P.X() - r, P.X() + r, P.Y() - r, P.Y() + r);
+		iBox2 imBox = imageBox();
+		if (penwidth > 0)
+			{ // large pen
+			_correctPenOpacity(color, penwidth);
+			circleBox.enlarge(penwidth);
+			iBox2 B = intersectionRect(circleBox, imBox);
+			if (B.isEmpty()) return; // nothing to draw.
+			if (circleBox.isIncludedIn(imBox))
+				{ // included
+				if (antialiasing)
+					{
+					if (blend) _draw_circle_AA<true, false, true>(P.X(), P.Y(), r, color, penwidth); else _draw_circle_AA<false, false, true>(P.X(), P.Y(), r, color, penwidth);
+					}
+				else
+					{
+					if (blend) _draw_circle<true, false, true, false, true>(P.X(), P.Y(), r, color, RGBc::c_White, penwidth); else _draw_circle<false, false, true, false, true>(P.X(), P.Y(), r, color, RGBc::c_White, penwidth);
+					}
+				return;
+				}
+			// not included
+			if (antialiasing)
+				{
+				if (blend) _draw_circle2_AA<true, true>(B, P, r, color, penwidth); else _draw_circle2_AA<false, true>(B, P, r, color, penwidth);
+				}
+			else
+				{
+				if (blend) _draw_circle2<true, true, false, true>(B, P, r, color, RGBc::c_White, penwidth); else _draw_circle2<false, true, false, true>(B, P, r, color, RGBc::c_White, penwidth);
+				}			
+			return;
+			}
+		iBox2 B = intersectionRect(circleBox, imBox);
+		if (B.isEmpty()) return; // nothing to draw.
+		if (circleBox.isIncludedIn(imBox))
+			{ // included
+			if (antialiasing)
+				{
+				if (blend) _draw_circle_AA<true, false, false>(P.X(), P.Y(), r, color, 0); else _draw_circle_AA<false, false, false>(P.X(), P.Y(), r, color, 0);
+				}
+			else
+				{
+				if (blend) _draw_circle<true, false, true, false, false>(P.X(), P.Y(), r, color, RGBc::c_White, 0); else _draw_circle<false, false, true, false, false>(P.X(), P.Y(), r, color, RGBc::c_White, 0);
+				}
+			return;
+			}
+		// not included
+		if (antialiasing)
+			{
+			if (blend) _draw_circle2_AA<true, false>(B, P, r, color, 0); else _draw_circle2_AA<false, false>(B, P, r, color, 0);
+			}
+		else
+			{
+			if (blend) _draw_circle2<true, true, false, false>(B, P, r, color, RGBc::c_White, 0); else _draw_circle2<false, true, false, false>(B, P, r, color, RGBc::c_White, 0);
+			}
+		return;
+		}
+
+
+
+	template<bool blend, bool outline, bool fill, bool usepen>  inline  void _draw_circle2(iBox2 B, iVec2 P, int64 r, RGBc color, RGBc fillcolor, int32 penwidth)
+		{
+		const int64 FALLBACK_MINRADIUS = 5;
+		if (r < FALLBACK_MINRADIUS)
+			{ // fallback for small value. 
+			_draw_circle<blend, true, outline, fill, usepen>(P.X(), P.Y(), r, color, fillcolor, penwidth);
+			return;
+			}
+		const double r2 = (double)r*r;
+		for (int64 y = B.min[1]; y <= B.max[1]; y++)
+			{
+			const int64 dy = y - P.Y();
+			const double absdy = (double)((dy > 0) ? dy : -dy);
+			const double dy2 = (double)(dy*dy);
+			double ly = dy2 - absdy + 0.25;
+			double Ly = dy2 + absdy + 0.25;
+			int64 xmin = B.min[0];
+			int64 xmax = B.max[0];
+			while (1)
+				{
+				int64 dx = xmin - P.X();
+				const double absdx = (double)((dx > 0) ? dx : -dx);
+				const double dx2 = (double)(dx*dx);
+				const double lx = dx2 - absdx + 0.25;
+				const double Lx = dx2 + absdx + 0.25;
+				if ((Lx + Ly <= r2)||(xmax < xmin)) break;
+				if (outline) { if ((lx + Ly < r2)||(Lx + ly < r2)) { _updatePixel<blend, false, false, usepen>(xmin, y, color, 255, penwidth); } }
+				xmin++;
+				}
+			while (1)
+				{
+				int64 dx = xmax - P.X();
+				const double absdx = (double)((dx > 0) ? dx : -dx);
+				const double dx2 = (double)(dx*dx);
+				const double lx = dx2 - absdx + 0.25;
+				const double Lx = dx2 + absdx + 0.25;
+				if ((Lx + Ly <= r2) || (xmax <= xmin)) break;
+				if (outline) { if ((lx + Ly < r2)|| (Lx + ly < r2)) { _updatePixel<blend, false, false, usepen>(xmax, y, color, 255, penwidth); } }
+				xmax--;
+				}
+
+			if (fill) { if (xmin < xmax) { _hline<blend, false>(xmin, xmax, y, fillcolor); } }
+			}
+		}
+
+
+	template<bool blend, bool usepen> void _draw_circle2_AA(iBox2 B, iVec2 P, int64 r, RGBc color, int32 penwidth)
+		{
+		MTOOLS_ERROR("not imp"); 
+		}
+
+
+
+	/*
+	void fill_circle2(iVec2 P, int64 r, RGBc color, bool blend)
+	{
+		iBox2 circleBox(P.X() - r, P.X() + r, P.Y() - r, P.Y() + r);
+		iBox2 imBox = imageBox();
+		if (circleBox.isIncludedIn(imBox))
+		{ // circle is completely inside the image
+
+		}
+		iBox2 B = intersectionRect(circleBox, imBox);
+		if (B.isEmpty()) return; // nothing to draw. 
+								 // partial drawing
+		const int64 r2 = r*r - r;
+		const int64 R2 = r*r + r;
+		for (int64 y = B.min[1]; y <= B.max[1]; y++)
+		{
+			const int64 e = r2 - (y - P.Y())*(y - P.Y());
+			int64 xmin = B.min[0];
+			int64 xmax = B.max[0];
+			while ((xmin <= xmax) && ((xmin - P.X())*(xmin - P.X()) > e))
+			{
+
+				{double d = sqrt((xmin - P.X())*(xmin - P.X()) + (y - P.Y())*(y - P.Y())) - r;
+				if (d < 0) d = -d;
+				if (d < 1) { _updatePixel<true, false, true, false>(xmin, y, RGBc::c_Green.getOpacity(0.5), 256 - (int32)(256 * d), 0); }
+				}
+
+				
+				if ((xmin - P.X())*(xmin - P.X()) + (y - P.Y())*(y - P.Y()) < R2)
+				{
+				_updatePixel<true, false, false, false>(xmin, y, RGBc::c_Green.getOpacity(0.5), 255, 0);
+				}
+				
+
+				xmin++;
+
+				{double d = sqrt((xmin - P.X())*(xmin - P.X()) + (y - P.Y())*(y - P.Y())) - r;
+				if (d < 0) d = -d;
+				if (d < 1) { _updatePixel<true, false, true, false>(xmin, y, RGBc::c_Green.getOpacity(0.5), 256 - (int32)(256 * d), 0); }
+				}
+
+			}
+			while ((xmax >  xmin) && ((xmax - P.X())*(xmax - P.X()) > e))
+			{
+
+				{double d = sqrt((xmax - P.X())*(xmax - P.X()) + (y - P.Y())*(y - P.Y())) - r;
+				if (d < 0) d = -d;
+				if (d < 1) { _updatePixel<true, false, true, false>(xmax, y, RGBc::c_Green.getOpacity(0.5), 256 - (int32)(256 * d), 0); }
+				}
+
+				
+				if ((xmax - P.X())*(xmax - P.X()) + (y - P.Y())*(y - P.Y()) < R2)
+				{
+				_updatePixel<true, false, false, false>(xmax, y, RGBc::c_Green.getOpacity(0.5), 255, 0);
+				}
+				
+				xmax--;
+
+				{double d = sqrt((xmax - P.X())*(xmax - P.X()) + (y - P.Y())*(y - P.Y())) - r;
+				if (d < 0) d = -d;
+				if (d < 1) { _updatePixel<true, false, true, false>(xmax, y, RGBc::c_Green.getOpacity(0.5), 256 - (int32)(256 * d), 0); }
+				}
+
+
+			}
+			if (xmin < xmax) { _hline<true, false>(xmin, xmax, y, color); }
+		}
+	}
+	*/
+
+
+
+	};
+
+
+
+
+
+
+
+
+
 int main(int argc, char *argv[])
 {
 
@@ -326,7 +600,7 @@ int main(int argc, char *argv[])
 
 
 
-	Image im(800, 600);
+	TestImage im(501, 500);
 
 	im.clear(RGBc::c_Gray);
 
@@ -352,9 +626,11 @@ int main(int argc, char *argv[])
 	int64 rr = 12;
 
 
-	im.fill_circle({ 300,300 }, rr, RGBc::c_Red.getOpacity(0.5), true);
-	im.draw_circle({ 300,300 }, rr, RGBc::c_Green.getOpacity(0.5), true,true);
-	im.fill_circle2({ 321,300 }, rr, RGBc::c_Red.getOpacity(0.5), true);
+	//im.fill_circle_new({ 400,300 }, 100, RGBc::c_White, false);
+	im.draw_filled_circle_new({ 400,300 }, 3, RGBc::c_Red.getOpacity(0.1), RGBc::c_Blue, true);
+	im.draw_filled_circle({ 380,300 }, 3, RGBc::c_Red.getOpacity(0.1), RGBc::c_Blue, true);
+	//im.draw_circle({ 400,300 }, 100, RGBc::c_Green.getOpacity(0.1), true, false);
+	//im.draw_filled_circle_new({ 5,7 }, 256, RGBc::c_Green.getOpacity(0.5), RGBc::c_Red.getOpacity(0.5), true);
 
 	auto P1 = makePlot2DImage(im, 1, "Image");
 
