@@ -1994,7 +1994,7 @@ namespace mtools
 				iBox2 mbr(P1);
 				mbr.swallowPoint(P2);
 				mbr.swallowPoint(PC);
-				iBox2 B(0, _lx - 1, 0, _ly - 1);
+				iBox2 B = imageBox();
 				if (penwidth <= 0)
 					{
 					if (intersectionRect(mbr,B).isEmpty()) return;  // nothing to draw
@@ -2083,7 +2083,7 @@ namespace mtools
 				mbr.swallowPoint(P2);
 				mbr.swallowPoint(PA);
 				mbr.swallowPoint(PB);
-				iBox2 B(0, _lx - 1, 0, _ly - 1);
+				iBox2 B = imageBox();
 				if (penwidth <= 0)
 					{
 					if (intersectionRect(mbr, B).isEmpty()) return;  // nothing to draw
@@ -2481,7 +2481,7 @@ namespace mtools
 				iBox2 mbr(P1);
 				mbr.swallowPoint(P2);
 				mbr.swallowPoint(P3);
-				iBox2 B(0, _lx - 1, 0, _ly - 1);
+				iBox2 B= imageBox();
 				if (intersectionRect(mbr, B).isEmpty()) return; // nothing to draw. 
 				if (mbr.isIncludedIn(B))
 					{
@@ -2636,6 +2636,76 @@ namespace mtools
 			MTOOLS_FORCEINLINE void fill_convex_polygon(const std::vector<iVec2> & tabPoints, RGBc fillcolor, bool blending)
 				{
 				fill_convex_polygon(tabPoints.size(), tabPoints.data(), fillcolor, blending);
+				}
+
+	
+
+			void fill_circle2(iVec2 P, int64 r, RGBc color, bool blend)
+				{
+				iBox2 circleBox(P.X() - r, P.X() + r, P.Y() - r, P.Y() + r);
+				iBox2 imBox = imageBox();
+				if (circleBox.isIncludedIn(imBox))
+					{ // circle is completely inside the image
+
+					}
+				iBox2 B = intersectionRect(circleBox, imBox);
+				if (B.isEmpty()) return; // nothing to draw. 
+				// partial drawing
+				const int64 r2 = r*r - r;
+				const int64 R2 = r*r + r;
+				for (int64 y = B.min[1]; y <= B.max[1]; y++)
+					{
+					const int64 e = r2 - (y - P.Y())*(y - P.Y());
+					int64 xmin = B.min[0];
+					int64 xmax = B.max[0];
+					while ((xmin <= xmax) && ((xmin - P.X())*(xmin - P.X()) > e)) 
+						{ 
+
+							{double d = sqrt((xmin - P.X())*(xmin - P.X()) + (y - P.Y())*(y - P.Y())) - r;
+							if (d < 0) d = -d;
+							if (d < 1) { _updatePixel<true, false, true, false>(xmin, y, RGBc::c_Green.getOpacity(0.5), 256 - (int32)(256 * d), 0); }
+							}
+
+						/*
+						if ((xmin - P.X())*(xmin - P.X()) + (y - P.Y())*(y - P.Y()) < R2)
+							{
+							_updatePixel<true, false, false, false>(xmin, y, RGBc::c_Green.getOpacity(0.5), 255, 0);
+							}
+						*/
+
+						xmin++; 
+
+						{double d = sqrt((xmin - P.X())*(xmin - P.X()) + (y - P.Y())*(y - P.Y())) - r;
+						if (d < 0) d = -d;
+						if (d < 1) { _updatePixel<true, false, true, false>(xmin, y, RGBc::c_Green.getOpacity(0.5), 256 - (int32)(256 * d), 0); }
+						}
+
+						}
+					while ((xmax >  xmin) && ((xmax - P.X())*(xmax - P.X()) > e)) 
+						{ 
+
+						{double d = sqrt((xmax - P.X())*(xmax - P.X()) + (y - P.Y())*(y - P.Y())) - r; 
+						if (d < 0) d = -d;
+						if (d < 1) { _updatePixel<true, false, true, false>(xmax, y, RGBc::c_Green.getOpacity(0.5), 256 - (int32)(256 * d), 0); }
+						}
+
+						/*
+						if ((xmax - P.X())*(xmax - P.X()) + (y - P.Y())*(y - P.Y()) < R2)
+							{
+							_updatePixel<true, false, false, false>(xmax, y, RGBc::c_Green.getOpacity(0.5), 255, 0);
+							}
+						*/
+						xmax--; 
+
+						{double d = sqrt((xmax - P.X())*(xmax - P.X()) + (y - P.Y())*(y - P.Y())) - r;
+						if (d < 0) d = -d;
+						if (d < 1) { _updatePixel<true, false, true, false>(xmax, y, RGBc::c_Green.getOpacity(0.5), 256 - (int32)(256 * d), 0); }
+						}
+
+
+						}
+					if (xmin < xmax) { _hline<true, false>(xmin, xmax, y, color); }
+					}
 				}
 
 
@@ -3690,6 +3760,12 @@ namespace mtools
 			* Return the image size into a iVec2 structure.
 			**/
 			MTOOLS_FORCEINLINE mtools::iVec2 dimension() const { return mtools::iVec2(_lx, _ly); }
+
+
+			/**
+			* Return a iBox2 representing the image size i.e. iBox2(0, lx()-1, 0, ly() - 1)
+			**/
+			MTOOLS_FORCEINLINE iBox2 imageBox() const { return iBox2(0, _lx - 1, 0, _ly - 1); }
 
 
 			/**
