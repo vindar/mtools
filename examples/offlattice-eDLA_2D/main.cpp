@@ -164,7 +164,7 @@ void addParticules(int64 nb)
             double d;
             while((d = pos.norm()) > 2*maxd + 3)
                 {
-                if (pos.norm() > 5000 + (500*maxd)) { pos /= 1.2; } else { move(pos, d - maxd + 2); }
+                if (pos.norm() > 5000 + (500*maxd)) { pos /= 1.2; } else { move(pos, d - maxd - 2); }
                 }
 
             int64 i = (int64)floor(pos.X() + 0.5);  // center of the integer square containing
