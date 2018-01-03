@@ -6,6 +6,9 @@ TODO LIST
 
 - finish the SiteDrawer class,
 - create a new LatticeDawer class that cointain both SiteDrawer and PixelDrawer class. 
+
+- LatticeDrawer : improve large zoom in siteimage mode (and do not simply replace the image by a single color)
+
 - create a Plot2DLattice object that encapsulate the new LatticeDrawer object. 
 
 - create the RealEmpiricalDistribution class. 
