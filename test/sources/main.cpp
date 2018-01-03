@@ -357,7 +357,6 @@ class TestImage : public Image
 		}
 
 
-
 	/**
 	* Draw a filled circle. The border and the interior color may be different.
 	*
@@ -419,6 +418,19 @@ class TestImage : public Image
 				return;
 				}
 			// not included
+			if (B.area() * 64 > circleBox.area())
+				{ // still faster to use draw everything using the first method and checking the range
+				if (antialiasing)
+					{
+					if (blend) _draw_circle_AA<true, true, true>(P.X(), P.Y(), r, color, penwidth); else _draw_circle_AA<false, true, true>(P.X(), P.Y(), r, color, penwidth);
+					}
+				else
+					{
+					if (blend) _draw_circle<true, true, true, false, true>(P.X(), P.Y(), r, color, RGBc::c_White, penwidth); else _draw_circle<false, true, true, false, true>(P.X(), P.Y(), r, color, RGBc::c_White, penwidth);
+					}
+				return;
+				}
+			// use alternate method
 			if (antialiasing)
 				{
 				if (blend) _draw_circle2_AA<true, true>(B, P, r, color, penwidth); else _draw_circle2_AA<false, true>(B, P, r, color, penwidth);
@@ -444,6 +456,19 @@ class TestImage : public Image
 			return;
 			}
 		// not included
+		if (B.area() * 64 > circleBox.area())
+			{ // still faster to use draw everything using the first method and checking the range
+			if (antialiasing)
+				{
+				if (blend) _draw_circle_AA<true, true, false>(P.X(), P.Y(), r, color, 0); else _draw_circle_AA<false, true, false>(P.X(), P.Y(), r, color, 0);
+				}
+			else
+				{
+				if (blend) _draw_circle<true, true, true, false, false>(P.X(), P.Y(), r, color, RGBc::c_White, 0); else _draw_circle<false, true, true, false, false>(P.X(), P.Y(), r, color, RGBc::c_White, 0);
+				}
+			return;
+			}
+		// use alternate method
 		if (antialiasing)
 			{
 			if (blend) _draw_circle2_AA<true, false>(B, P, r, color, 0); else _draw_circle2_AA<false, false>(B, P, r, color, 0);
@@ -457,128 +482,7 @@ class TestImage : public Image
 
 
 
-	template<bool blend, bool outline, bool fill, bool usepen>  inline  void _draw_circle2(iBox2 B, iVec2 P, int64 r, RGBc color, RGBc fillcolor, int32 penwidth)
-		{
-		const int64 FALLBACK_MINRADIUS = 5;
-		if (r < FALLBACK_MINRADIUS)
-			{ // fallback for small value. 
-			_draw_circle<blend, true, outline, fill, usepen>(P.X(), P.Y(), r, color, fillcolor, penwidth);
-			return;
-			}
-		const double r2 = (double)r*r;
-		for (int64 y = B.min[1]; y <= B.max[1]; y++)
-			{
-			const int64 dy = y - P.Y();
-			const double absdy = (double)((dy > 0) ? dy : -dy);
-			const double dy2 = (double)(dy*dy);
-			double ly = dy2 - absdy + 0.25;
-			double Ly = dy2 + absdy + 0.25;
-			int64 xmin = B.min[0];
-			int64 xmax = B.max[0];
-			while (1)
-				{
-				int64 dx = xmin - P.X();
-				const double absdx = (double)((dx > 0) ? dx : -dx);
-				const double dx2 = (double)(dx*dx);
-				const double lx = dx2 - absdx + 0.25;
-				const double Lx = dx2 + absdx + 0.25;
-				if ((Lx + Ly <= r2)||(xmax < xmin)) break;
-				if (outline) { if ((lx + Ly < r2)||(Lx + ly < r2)) { _updatePixel<blend, false, false, usepen>(xmin, y, color, 255, penwidth); } }
-				xmin++;
-				}
-			while (1)
-				{
-				int64 dx = xmax - P.X();
-				const double absdx = (double)((dx > 0) ? dx : -dx);
-				const double dx2 = (double)(dx*dx);
-				const double lx = dx2 - absdx + 0.25;
-				const double Lx = dx2 + absdx + 0.25;
-				if ((Lx + Ly <= r2) || (xmax <= xmin)) break;
-				if (outline) { if ((lx + Ly < r2)|| (Lx + ly < r2)) { _updatePixel<blend, false, false, usepen>(xmax, y, color, 255, penwidth); } }
-				xmax--;
-				}
 
-			if (fill) { if (xmin < xmax) { _hline<blend, false>(xmin, xmax, y, fillcolor); } }
-			}
-		}
-
-
-	template<bool blend, bool usepen> void _draw_circle2_AA(iBox2 B, iVec2 P, int64 r, RGBc color, int32 penwidth)
-		{
-		MTOOLS_ERROR("not imp"); 
-		}
-
-
-
-	/*
-	void fill_circle2(iVec2 P, int64 r, RGBc color, bool blend)
-	{
-		iBox2 circleBox(P.X() - r, P.X() + r, P.Y() - r, P.Y() + r);
-		iBox2 imBox = imageBox();
-		if (circleBox.isIncludedIn(imBox))
-		{ // circle is completely inside the image
-
-		}
-		iBox2 B = intersectionRect(circleBox, imBox);
-		if (B.isEmpty()) return; // nothing to draw. 
-								 // partial drawing
-		const int64 r2 = r*r - r;
-		const int64 R2 = r*r + r;
-		for (int64 y = B.min[1]; y <= B.max[1]; y++)
-		{
-			const int64 e = r2 - (y - P.Y())*(y - P.Y());
-			int64 xmin = B.min[0];
-			int64 xmax = B.max[0];
-			while ((xmin <= xmax) && ((xmin - P.X())*(xmin - P.X()) > e))
-			{
-
-				{double d = sqrt((xmin - P.X())*(xmin - P.X()) + (y - P.Y())*(y - P.Y())) - r;
-				if (d < 0) d = -d;
-				if (d < 1) { _updatePixel<true, false, true, false>(xmin, y, RGBc::c_Green.getOpacity(0.5), 256 - (int32)(256 * d), 0); }
-				}
-
-				
-				if ((xmin - P.X())*(xmin - P.X()) + (y - P.Y())*(y - P.Y()) < R2)
-				{
-				_updatePixel<true, false, false, false>(xmin, y, RGBc::c_Green.getOpacity(0.5), 255, 0);
-				}
-				
-
-				xmin++;
-
-				{double d = sqrt((xmin - P.X())*(xmin - P.X()) + (y - P.Y())*(y - P.Y())) - r;
-				if (d < 0) d = -d;
-				if (d < 1) { _updatePixel<true, false, true, false>(xmin, y, RGBc::c_Green.getOpacity(0.5), 256 - (int32)(256 * d), 0); }
-				}
-
-			}
-			while ((xmax >  xmin) && ((xmax - P.X())*(xmax - P.X()) > e))
-			{
-
-				{double d = sqrt((xmax - P.X())*(xmax - P.X()) + (y - P.Y())*(y - P.Y())) - r;
-				if (d < 0) d = -d;
-				if (d < 1) { _updatePixel<true, false, true, false>(xmax, y, RGBc::c_Green.getOpacity(0.5), 256 - (int32)(256 * d), 0); }
-				}
-
-				
-				if ((xmax - P.X())*(xmax - P.X()) + (y - P.Y())*(y - P.Y()) < R2)
-				{
-				_updatePixel<true, false, false, false>(xmax, y, RGBc::c_Green.getOpacity(0.5), 255, 0);
-				}
-				
-				xmax--;
-
-				{double d = sqrt((xmax - P.X())*(xmax - P.X()) + (y - P.Y())*(y - P.Y())) - r;
-				if (d < 0) d = -d;
-				if (d < 1) { _updatePixel<true, false, true, false>(xmax, y, RGBc::c_Green.getOpacity(0.5), 256 - (int32)(256 * d), 0); }
-				}
-
-
-			}
-			if (xmin < xmax) { _hline<true, false>(xmin, xmax, y, color); }
-		}
-	}
-	*/
 
 
 
@@ -587,7 +491,7 @@ class TestImage : public Image
 
 
 
-
+	
 
 
 
@@ -600,23 +504,26 @@ int main(int argc, char *argv[])
 
 
 
-	TestImage im(501, 500);
+	TestImage im(1000, 1000);
 
-	im.clear(RGBc::c_Gray);
+	im.clear(RGBc::c_White);
 
-	/*
-	int64 NS = 5000; 
-	//int64 m = 1000000;
+	
+	int64 NS = 10000; 
+	int64 m = 1000000;
+
+	int64 x0 = 200000;
 	Chronometer();
 	for (int64 n = 0; n < NS; n++)
 		{
-		im.fill_circle({ 300,300 }, 601, RGBc::c_Cyan, true);
-//		im.fill_triangle({ -m*n - 1000, -m*n - 1000 }, { m*n + 1000, m*n + 1000 }, { 400,300 }, RGBc::c_Blue,false);
+		im.draw_circle({ -x0 ,300 }, x0 + 300, RGBc::c_Cyan, true,true,0);
+		//im.draw_circle({ -x0 ,320 }, x0 + 300, RGBc::c_Cyan, true, true, 0);
+		//		im.fill_triangle({ -m*n - 1000, -m*n - 1000 }, { m*n + 1000, m*n + 1000 }, { 400,300 }, RGBc::c_Blue,false);
 		}
 
 	cout << " done in << " << Chronometer() << "\n";
 	
-	*/
+	
 
 
 	//im.draw_circle({ 300,300 }, 5, RGBc::c_Blue.getOpacity(0.5), true, false, 0);
@@ -627,8 +534,8 @@ int main(int argc, char *argv[])
 
 
 	//im.fill_circle_new({ 400,300 }, 100, RGBc::c_White, false);
-	im.draw_filled_circle_new({ 400,300 }, 3, RGBc::c_Red.getOpacity(0.1), RGBc::c_Blue, true);
-	im.draw_filled_circle({ 380,300 }, 3, RGBc::c_Red.getOpacity(0.1), RGBc::c_Blue, true);
+	//im.draw_filled_circle_new({ 400,300 }, 600, RGBc::c_Red.getOpacity(0.1), RGBc::c_Blue, true);
+	//im.draw_filled_circle({ 380,300 }, 100, RGBc::c_Red.getOpacity(0.1), RGBc::c_Blue, true);
 	//im.draw_circle({ 400,300 }, 100, RGBc::c_Green.getOpacity(0.1), true, false);
 	//im.draw_filled_circle_new({ 5,7 }, 256, RGBc::c_Green.getOpacity(0.5), RGBc::c_Red.getOpacity(0.5), true);
 
