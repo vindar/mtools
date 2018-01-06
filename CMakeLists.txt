@@ -5,7 +5,7 @@
 #
 ###############################################################################
 ###############################################################################
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.10.1)
 
 message(STATUS "")
 message(STATUS "*********************************")
@@ -66,7 +66,6 @@ message(STATUS "")
 # load the custom find modules (for cimg and cairo). 
 set( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake )
 
-message(STATUS "module path = ${CMAKE_MODULE_PATH}")
 
 ###########
 # REQUIRED
@@ -130,10 +129,10 @@ endif ()
 
 option(USE_SSE "use SSE specific code" OFF)    
 if (USE_SSE)
-    set(MTOOLS_USE_SSE 1)
+    set(MTOOLS_SSE 1)
     message(STATUS "  USE_SSE = 1       (enable specific SSE code)")
 else ()
-    set(MTOOLS_USE_SSE 0)
+    set(MTOOLS_SSE 0)
     message(STATUS "  USE_SSE = 0       (disable specific SSE code)")
 endif ()
 
@@ -204,20 +203,36 @@ file(GLOB_RECURSE _test_mtools_hpp_files ./test/*.hpp ./test/*.h)
 ###############################################################################
 add_library(mtools ${_mtools_cpp_files} ${_mtools_hpp_files})
 
-target_link_libraries(mtools PUBLIC ${ZLIB_LIBRARIES})
+
+target_link_libraries(mtools PUBLIC ZLIB::ZLIB)
+
 target_link_libraries(mtools PUBLIC ${FLTK_LIBRARIES})
-target_link_libraries(mtools PUBLIC ${PNG_LIBRARIES})
+target_include_directories(mtools PUBLIC ${FLTK_INCLUDE_DIR})
+
+target_link_libraries(mtools PUBLIC PNG::PNG)
+
 target_link_libraries(mtools PUBLIC ${JPEG_LIBRARIES})
+target_include_directories(mtools PUBLIC ${JPEG_INCLUDE_DIR})
+
 target_link_libraries(mtools PUBLIC ${CAIRO_LIBRARIES})
+target_include_directories(mtools PUBLIC ${CAIRO_INCLUDE_DIRS})
+
+target_include_directories(mtools PUBLIC ${CIMG_INCLUDE_DIR})
 
 target_include_directories(mtools PUBLIC ./include)
 
-target_include_directories(mtools PUBLIC ${ZLIB_INCLUDE_DIRS})
-target_include_directories(mtools PUBLIC ${FLTK_INCLUDE_DIR})
-target_include_directories(mtools PUBLIC ${PNG_INCLUDE_DIRS})
-target_include_directories(mtools PUBLIC ${JPEG_INCLUDE_DIR})
-target_include_directories(mtools PUBLIC ${CAIRO_INCLUDE_DIRS})
-target_include_directories(mtools PUBLIC ${CIMG_INCLUDE_DIR})
+
+if (USE_OPENGL)
+    target_link_libraries(mtools PUBLIC OpenGL::GL)
+endif ()
+
+if (USE_OPENCL)
+    target_link_libraries(mtools PUBLIC OpenCL::OpenCL)
+endif ()
+
+if (USE_OPENMP)
+    target_link_libraries(mtools PUBLIC OpenMP::OpenMP_CXX)
+endif ()
 
 
 ###############################################################################
