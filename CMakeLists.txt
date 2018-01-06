@@ -60,6 +60,11 @@ project(mtools)
 # load the custom find modules (for cimg and cairo). 
 set( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/modules )
 
+
+###########
+# REQUIRED
+###########
+
 # zlib 
 find_package(ZLIB REQUIRED)
 
@@ -79,6 +84,108 @@ find_package(CAIRO REQUIRED)
 
 #cimg
 find_package(CIMG REQUIRED)
+
+
+###########
+# OPTIONAL
+###########
+
+#opengl 
+find_package(OpenGL)
+
+#opencl
+find_package(OpenCL)
+
+#openmp
+find_package(OpenMP)
+
+
+###############################################################################
+# query instruction set
+###############################################################################
+
+find_package(SSE)
+
+
+###############################################################################
+# set the configuration options
+###############################################################################
+
+
+if (OPENGL_FOUND)
+    set(CONF_DEFAULT_OPENGL ON)
+else()
+    set(CONF_DEFAULT_OPENGL OFF)
+endif()
+
+if (OpenCL_FOUND)
+    set(CONF_DEFAULT_OPENGL ON)
+else()
+    set(CONF_DEFAULT_OPENGL OFF)
+endif()
+
+if (OpenMP_FOUND)
+    set(CONF_DEFAULT_OPENGL ON)
+else()
+    set(CONF_DEFAULT_OPENGL OFF)
+endif()
+
+
+option(USE_OPENCL "build with opencl support" ${CONF_DEFAULT_OPENCL})
+option(USE_OPENGL "build with opengl support" ${CONF_DEFAULT_OPENGL})
+option(USE_OPENMP "build with openmp support" ${CONF_DEFAULT_OPENMP})
+option(USE_SSE "build with SSE instrution set support" OFF)
+option(BASIC_CONSOLE "build console only mode (no graphics)" OFF)
+
+
+
+###############################################################################
+# create the configuration file mtools_config.hpp
+###############################################################################
+
+
+if (USE_OPENCL)
+    set(MTOOLS_USE_OPENCL 1)
+    message(STATUS "CONFIGURATION : OPENCL = ON")
+else()
+    set(MTOOLS_USE_OPENCL 0)
+    message(STATUS "CONFIGURATION : OPENCL = OFF")
+endif()
+
+if (USE_OPENGL)
+    set(MTOOLS_USE_OPENGL 1)
+    message(STATUS "CONFIGURATION : OPENGL = ON")    
+else()
+    set(MTOOLS_USE_OPENGL 0)
+    message(STATUS "CONFIGURATION : OPENGL = OFF")
+endif()
+
+if (USE_OPENMP)
+    set(MTOOLS_USE_OPENMP 1)
+    message(STATUS "CONFIGURATION : OPENMP = ON")    
+else()
+    set(MTOOLS_USE_OPENMP 0)
+    message(STATUS "CONFIGURATION : OPENMP = OFF")    
+endif()
+
+if (USE_SSE)
+    set(MTOOLS_USE_SSE 1)
+    message(STATUS "CONFIGURATION : SSE = ON")        
+else()
+    set(MTOOLS_USE_SSE 0)
+    message(STATUS "CONFIGURATION : SSE = OFF")        
+endif()
+
+if (BASIC_CONSOLE)
+    set(MTOOLS_BASIC_CONSOLE 1)
+    message(STATUS "CONFIGURATION : CONSOLE MODE")        
+else()
+    set(MTOOLS_BASIC_CONSOLE 0)
+    message(STATUS "CONFIGURATION : GRAPHIC MODE")        
+endif()
+
+
+configure_file(mtools_config.hpp.in "${CMAKE_SOURCE_DIR}/include/mtools_config.hpp" @ONLY)
 
 
 
@@ -132,69 +239,6 @@ target_link_libraries(test_mtools mtools)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-
-
-
-###############################################################################
-# set the configuration options
-###############################################################################
-
-option(OPT_USE_OPENCL "build with opencl support" OFF)
-option(OPT_USE_OPENGL "build with opengl support" ON)
-option(OPT_USE_OPENMP "build with openmp support" OFF)
-option(OPT_USE_SSE "build with SSE instrution set support" OFF)
-option(OPT_BASIC_CONSOLE "build console only mode (no graphics)" OFF)
-
-
-
-###############################################################################
-# create the configuation file mtools_config.hpp
-###############################################################################
-
-
-if (OPT_USE_OPENCL)
-    set(MTOOLS_USE_OPENCL 1)
-    message(STATUS "CONFIGURATION : OPENCL = ON")
-else()
-    set(MTOOLS_USE_OPENCL 0)
-    message(STATUS "CONFIGURATION : OPENCL = OFF")
-endif()
-
-if (OPT_USE_OPENGL)
-    set(MTOOLS_USE_OPENGL 1)
-    message(STATUS "CONFIGURATION : OPENGL = ON")    
-else()
-    set(MTOOLS_USE_OPENGL 0)
-    message(STATUS "CONFIGURATION : OPENGL = OFF")
-endif()
-
-if (OPT_USE_OPENMP)
-    set(MTOOLS_USE_OPENMP 1)
-    message(STATUS "CONFIGURATION : OPENMP = ON")    
-else()
-    set(MTOOLS_USE_OPENMP 0)
-    message(STATUS "CONFIGURATION : OPENMP = OFF")    
-endif()
-
-if (OPT_USE_SSE)
-    set(MTOOLS_USE_SSE 1)
-    message(STATUS "CONFIGURATION : SSE = ON")        
-else()
-    set(MTOOLS_USE_SSE 0)
-    message(STATUS "CONFIGURATION : SSE = OFF")        
-endif()
-
-if (OPT_BASIC_CONSOLE)
-    set(MTOOLS_BASIC_CONSOLE 1)
-    message(STATUS "CONFIGURATION : CONSOLE MODE")        
-else()
-    set(MTOOLS_BASIC_CONSOLE 0)
-    message(STATUS "CONFIGURATION : GRAPHIC MODE")        
-endif()
-
-
-configure_file(mtools_config.hpp.in "${CMAKE_SOURCE_DIR}/include/mtools_config.hpp" @ONLY)
-
 
 
 ###############################################################################
