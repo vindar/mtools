@@ -7,8 +7,6 @@
  * 
  ***********************************************/
 
-#include "stdafx.h"
-
 #include "mtools.hpp"  
 using namespace mtools;
 

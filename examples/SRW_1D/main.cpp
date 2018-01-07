@@ -1,7 +1,6 @@
 /***********************************************
  * Project : SRW_1D 
  ***********************************************/
-#include "stdafx.h" // pre-compiled header. 
 
 #include "mtools.hpp"
 using namespace mtools;

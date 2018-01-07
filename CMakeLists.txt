@@ -8,9 +8,9 @@
 cmake_minimum_required(VERSION 3.10.1)
 
 message(STATUS "")
-message(STATUS "*********************************")
-message(STATUS "* STARTING MTOOLS CONFIGURATION *")
-message(STATUS "*********************************")
+message(STATUS "********************************************")
+message(STATUS "*           MTOOLS CONFIGURATION           *")
+message(STATUS "********************************************")
 message(STATUS "")
 
 
@@ -45,7 +45,8 @@ endif()
 ###############################################################################
 file(READ VERSION MTOOLS_VERSION 10)
 message(STATUS "")
-message(STATUS "building mtools version ${MTOOLS_VERSION}")
+message(STATUS "Configuring the library [version ${MTOOLS_VERSION}]")
+message(STATUS "-------------------------------------")
 message(STATUS "")
 
 
@@ -299,10 +300,16 @@ MARK_AS_ADVANCED(FLTK_INCLUDE_DIR)
 
 
 
+###############################################################################
+# configure the examples
+###############################################################################
+add_subdirectory(./examples EXCLUDE_FROM_ALL)
+
+
 message(STATUS "")
-message(STATUS "*********************************")
-message(STATUS "*  FINISHED CONFIGURING MTOOLS  *")
-message(STATUS "*********************************")
+message(STATUS "********************************************")
+message(STATUS "*      MTOOLS CONFIGURATION COMPLETED      *")
+message(STATUS "********************************************")
 message(STATUS "")
 
 ###############################################################################

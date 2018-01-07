@@ -2,8 +2,6 @@
  * Project : offlattice-eDLA
  ***********************************************/
 
-#include "stdafx.h"
-
 #include "mtools.hpp"  
 using namespace mtools;
 

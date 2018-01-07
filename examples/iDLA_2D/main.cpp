@@ -3,8 +3,6 @@
  * date : Wed Dec 16 00:01:14 2015
  ***********************************************/
 
-#include "stdafx.h"
-
 #include "mtools.hpp"  
 using namespace mtools;
 

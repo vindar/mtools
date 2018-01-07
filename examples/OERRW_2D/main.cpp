@@ -2,7 +2,6 @@
  * Project : OERRW_2D
  * Simulation of a Once Reinforced Random Walk on Z2
  ***********************************************/
-#include "stdafx.h" // pre-compiled header. 
 
 #include "mtools.hpp"
 using namespace mtools;

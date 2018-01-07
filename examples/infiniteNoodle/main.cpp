@@ -6,10 +6,6 @@
  * https://arxiv.org/pdf/1701.01083.pdf
  ***********************************************/
 
-#include "stdafx.h"
-
-// *** Library mtools ***
-// Uncomment 'define MTOOLS_BASIC_CONSOLE' in stdafx.h to disable mtools's console
 #include "mtools.hpp"  
 using namespace mtools;
 

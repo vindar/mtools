@@ -1,7 +1,6 @@
 /***********************************************
  * Project : CMPonZ2
  ***********************************************/
-#include "stdafx.h" // pre-compiled header. 
 
 #include "mtools.hpp"
 using namespace mtools;

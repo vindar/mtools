@@ -3,8 +3,6 @@
  * Simulation of a Linearly edge reinforced 
  * random walk on Z^2
  ***********************************************/
-#include "stdafx.h" // pre-compiled header. 
-
 
 #include "mtools.hpp"
 using namespace mtools;
