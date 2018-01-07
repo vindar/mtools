@@ -629,7 +629,6 @@ int main(int argc, char *argv[])
 
 
 /*
-#include "stdafx_test.h"
 
 #include "mtools.hpp"
 

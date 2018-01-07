@@ -18,14 +18,14 @@
 // along with mtools  If not, see <http://www.gnu.org/licenses/>.
 
 
-#include "stdafx_mtools.h"
-
 #include "misc/error.hpp"
 #include "misc/indirectcall.hpp"
 #include "io/internal/fltkSupervisor.hpp"
 #include "misc/stringfct.hpp"
 
 #include <FL/Fl.H>
+
+#include <mutex>
 
 namespace mtools
     {

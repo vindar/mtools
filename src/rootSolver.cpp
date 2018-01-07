@@ -18,8 +18,6 @@
 // along with mtools  If not, see <http://www.gnu.org/licenses/>.
 
 
-#include "stdafx_mtools.h"
-
 #include "misc/internal/mtools_export.hpp"
 #include "maths/rootSolver.hpp"
 #include "misc/misc.hpp"

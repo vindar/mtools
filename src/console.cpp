@@ -18,8 +18,6 @@
 // along with mtools  If not, see <http://www.gnu.org/licenses/>.
 
 
-#include "stdafx_mtools.h"
-
 #include "io/internal/fltkSupervisor.hpp"
 #include "misc/stringfct.hpp"
 #include "misc/indirectcall.hpp"
@@ -50,6 +48,8 @@
 #include <FL/Fl_Toggle_Button.H>
 #include <FL/Fl_Text_Display.H>
 #include <FL/fl_ask.H>
+
+#include <iostream>
 
 namespace mtools
 {

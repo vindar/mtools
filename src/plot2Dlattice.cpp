@@ -18,9 +18,6 @@
 // along with mtools  If not, see <http://www.gnu.org/licenses/>.
 
 
-#include "stdafx_mtools.h"
-
-
 #include "graphics/internal/plotter2Dobj.hpp"
 #include "graphics/internal/drawable2Dobject.hpp"
 #include "graphics/latticedrawer.hpp"

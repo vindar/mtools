@@ -18,8 +18,6 @@
 // along with mtools  If not, see <http://www.gnu.org/licenses/>.
 
 
-#include "stdafx_mtools.h"
-
 #include "graphics/image.hpp"
 #include "graphics/plotter2D.hpp"
 #include "graphics/internal/plotter2Dobj.hpp"

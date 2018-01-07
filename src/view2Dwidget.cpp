@@ -18,8 +18,6 @@
 // along with mtools  If not, see <http://www.gnu.org/licenses/>.
 
 
-#include "stdafx_mtools.h"
-
 #include "graphics/internal/view2Dwidget.hpp"
 #include "misc/error.hpp"
 #include "random/gen_fastRNG.hpp"

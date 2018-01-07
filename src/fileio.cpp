@@ -18,8 +18,6 @@
 // along with mtools  If not, see <http://www.gnu.org/licenses/>.
 
 
-#include "stdafx_mtools.h"
-
 #include "misc/stringfct.hpp"
 #include "io/fileio.hpp"
 
@@ -30,6 +28,10 @@
 #endif
 
 #include <FL/filename.H>
+#include <fstream>
+#include <streambuf>
+#include <iterator>
+
 
 namespace mtools
 {

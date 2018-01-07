@@ -18,8 +18,6 @@
 // along with mtools  If not, see <http://www.gnu.org/licenses/>.
 
 
-#include "stdafx_mtools.h"
-
 #include "misc/timefct.hpp"
 #include "misc/indirectcall.hpp"
 #include "io/internal/fltkSupervisor.hpp"
@@ -58,6 +56,7 @@
 //#include <FL/filename.H>
 //#include <FL/fl_draw.H>
 
+#include <thread>
 
 namespace mtools
 {

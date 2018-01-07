@@ -18,8 +18,6 @@
 // along with mtools  If not, see <http://www.gnu.org/licenses/>.
 
 
-#include "stdafx_mtools.h"
-
 #include "io/watch.hpp"
 #include "misc/timefct.hpp"
 #include "misc/stringfct.hpp"
