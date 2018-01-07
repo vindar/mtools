@@ -821,8 +821,15 @@ namespace mtools
         if (input_enc == enc_utf8)
             {
             #if defined (COMPILER_HAS_CODECVT)
+			#if defined (_MSC_VER)
+			#pragma warning (push)
+			#pragma warning (disable:4996)
+			#endif
             std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
             return(converter.from_bytes(s));
+			#if defined (_MSC_VER)
+			#pragma warning (pop)
+			#endif
             #else
             //TODO, for the time being, we just convert as if in iso 8859-1 ....
             #endif

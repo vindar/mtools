@@ -93,8 +93,15 @@ namespace mtools
                 if (output_enc == enc_utf8)
                     {
                     #if defined (COMPILER_HAS_CODECVT)
+					#if defined (_MSC_VER)
+					#pragma warning (push)
+					#pragma warning (disable:4996)
+					#endif
                     std::wstring_convert<std::codecvt_utf8<wchar_t>> converter; return(converter.to_bytes(ws));
-                    #else
+					#if defined (_MSC_VER)
+					#pragma warning (pop)
+					#endif
+					#else
                     std::string s; s.reserve(ws.size()+1);
                     for (auto wit = ws.begin(); wit != ws.end(); wit++)
                         {
