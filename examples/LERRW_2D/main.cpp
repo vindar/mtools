@@ -4,7 +4,7 @@
  * random walk on Z^2
  ***********************************************/
 
-#include "mtools.hpp"
+#include "mtools/mtools.hpp"
 using namespace mtools;
 
 

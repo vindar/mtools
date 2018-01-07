@@ -3,7 +3,7 @@
  * Simulation of a Once Reinforced Random Walk on Z2
  ***********************************************/
 
-#include "mtools.hpp"
+#include "mtools/mtools.hpp"
 using namespace mtools;
 
 #include "OERRW.hpp"

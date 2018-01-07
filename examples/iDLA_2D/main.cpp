@@ -3,7 +3,7 @@
  * date : Wed Dec 16 00:01:14 2015
  ***********************************************/
 
-#include "mtools.hpp"  
+#include "mtools/mtools.hpp"  
 using namespace mtools;
 
 MT2004_64  gen;	// the random number generator

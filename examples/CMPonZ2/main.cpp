@@ -2,7 +2,7 @@
  * Project : CMPonZ2
  ***********************************************/
 
-#include "mtools.hpp"
+#include "mtools/mtools.hpp"
 using namespace mtools;
 
 #include "CMPMerger.hpp"

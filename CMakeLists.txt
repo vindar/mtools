@@ -182,7 +182,7 @@ message(STATUS "")
 # create the configuration file mtools_config.hpp
 ###############################################################################
 
-configure_file(mtools_config.hpp.in "${CMAKE_SOURCE_DIR}/include/mtools_config.hpp" @ONLY)
+configure_file(mtools_config.hpp.in "${CMAKE_SOURCE_DIR}/include/mtools/mtools_config.hpp" @ONLY)
 
 
 ###############################################################################
@@ -199,10 +199,50 @@ file(GLOB_RECURSE _test_mtools_cpp_files ./test/*.cpp)
 file(GLOB_RECURSE _test_mtools_hpp_files ./test/*.hpp ./test/*.h)
 
 
+
+
+###############################################################################
+# set installation path. 
+###############################################################################
+
+if ( WIN32 )
+    set(DEFAULT_INSTALL_TYPE ON)
+else()
+    set(DEFAULT_INSTALL_TYPE OFF)
+endif()
+
+option(MTOOLS_LOCAL_INSTALL "local installation" ${DEFAULT_INSTALL_TYPE})    
+
+if (MTOOLS_LOCAL_INSTALL)
+    message(STATUS "")
+    message(STATUS "mtools is installed locally.")
+    message(STATUS "")
+else()
+    message(STATUS "")
+    message(STATUS "Library will be installed in [${CMAKE_INSTALL_PREFIX}].")
+    message(STATUS "")    
+endif()
+
+
 ###############################################################################
 # create the library
 ###############################################################################
+
+
 add_library(mtools ${_mtools_cpp_files} ${_mtools_hpp_files})
+
+target_include_directories(mtools PRIVATE ./include/mtools)         # for commodity, so that cpp source file of the lib do not need to subdir mtools. 
+
+if (MTOOLS_LOCAL_INSTALL)
+    # windows (no system wide installation)
+    target_include_directories(mtools PUBLIC                            
+                               $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>       # - local include dir : when building mtools, test and the example
+                               $<INSTALL_INTERFACE:include> )                               # - same but not prefixed : for the exported target 
+else()
+    target_include_directories(mtools PUBLIC                            
+                               $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>       # - local include dir : when building mtools, test and the example
+                               $<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/include> )       # - install include dir : for the exported target 
+endif()
 
 
 target_link_libraries(mtools PUBLIC ZLIB::ZLIB)
@@ -220,8 +260,6 @@ target_include_directories(mtools PUBLIC ${CAIRO_INCLUDE_DIRS})
 
 target_include_directories(mtools PUBLIC ${CIMG_INCLUDE_DIR})
 
-target_include_directories(mtools PUBLIC ./include)
-
 
 if (USE_OPENGL)
     target_link_libraries(mtools PUBLIC OpenGL::GL)
@@ -234,6 +272,30 @@ endif ()
 if (USE_OPENMP)
     target_link_libraries(mtools PUBLIC OpenMP::OpenMP_CXX)
 endif ()
+
+
+
+###############################################################################
+# installation of the library
+###############################################################################
+
+
+if (MTOOLS_LOCAL_INSTALL)
+
+    export(TARGETS mtools FILE mtools-config.cmake)    # export the package
+    export(EXPORT mtools FILE mtools-config.cmake)    # export the package
+    export(PACKAGE mtools)                              # register the package
+
+else()
+
+    set(_include_install_dir "include/mtools")
+    set(_lib_install_dir "lib/mtools")
+    
+    install(TARGETS mtools EXPORT mtools DESTINATION ${_lib_install_dir})
+    install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/mtools"  DESTINATION "include")
+    install(EXPORT mtools DESTINATION ${_lib_install_dir})
+
+endif()
 
 
 ###############################################################################

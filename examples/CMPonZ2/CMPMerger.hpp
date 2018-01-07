@@ -15,7 +15,7 @@
 #include <set>
 #include <list>
 
-#include "mtools.hpp"
+#include "mtools/mtools.hpp"
 
 /**
  * Forward declaration of a CMP cluster structure.

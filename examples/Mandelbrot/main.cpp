@@ -2,7 +2,7 @@
  * Project : Mandelbrot
  ***********************************************/
 
-#include "mtools.hpp"
+#include "mtools/mtools.hpp"
 using namespace mtools;
 
 

@@ -2,7 +2,7 @@
  * Project : Eden
  ***********************************************/
 
-#include "mtools.hpp"
+#include "mtools/mtools.hpp"
 using namespace mtools;
 
 /* Eden model : FPP with exp. weights */
