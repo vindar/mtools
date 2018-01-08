@@ -86,9 +86,6 @@ find_package(PNG REQUIRED)
 # libjpeg
 find_package(JPEG REQUIRED)
 
-# cairo
-find_package(CAIRO REQUIRED)
-
 #cimg
 find_package(CIMG REQUIRED)
 
@@ -100,6 +97,9 @@ find_package(CIMG REQUIRED)
 message(STATUS "")
 message(STATUS "Checking optional libraries.")
 message(STATUS "")
+
+# cairo
+find_package(CAIRO)
 
 #opengl 
 find_package(OpenGL)
@@ -128,6 +128,7 @@ else ()
     message(STATUS "  CONSOLE_ONLY = 0  (graphic mode)")
 endif ()
 
+
 option(USE_SSE "use SSE specific code" OFF)    
 if (USE_SSE)
     set(MTOOLS_SSE 1)
@@ -135,6 +136,18 @@ if (USE_SSE)
 else ()
     set(MTOOLS_SSE 0)
     message(STATUS "  USE_SSE = 0       (disable specific SSE code)")
+endif ()
+
+
+if (CAIRO_FOUND)
+    option(USE_CAIRO "build with Cairo support" ON)    
+endif()
+if (USE_CAIRO)
+    set(MTOOLS_CAIRO 1)
+    message(STATUS "  USE_CAIRO = 1    (enabled)")
+else ()
+    set(MTOOLS_CAIRO 0)
+    message(STATUS "  USE_CAIRO = 0    (disabled)")
 endif ()
 
 
@@ -215,7 +228,7 @@ option(MTOOLS_LOCAL_INSTALL "local installation" ${DEFAULT_INSTALL_TYPE})
 
 if (MTOOLS_LOCAL_INSTALL)
     message(STATUS "")
-    message(STATUS "mtools is installed locally.")
+    message(STATUS "mtools will be installed locally.")
     message(STATUS "")
 else()
     message(STATUS "")
@@ -234,43 +247,62 @@ add_library(mtools ${_mtools_cpp_files} ${_mtools_hpp_files})
 target_include_directories(mtools PRIVATE ./include/mtools)         # for commodity, so that cpp source file of the lib do not need to subdir mtools. 
 
 if (MTOOLS_LOCAL_INSTALL)
-    # windows (no system wide installation)
-    target_include_directories(mtools PUBLIC                            
-                               $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>       # - local include dir : when building mtools, test and the example
-                               $<INSTALL_INTERFACE:include> )                               # - same but not prefixed : for the exported target 
+    # local installation
+    target_include_directories(mtools PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)		# - local include directory
 else()
+	# system wide installation
     target_include_directories(mtools PUBLIC                            
-                               $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>       # - local include dir : when building mtools, test and the example
-                               $<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/include> )       # - install include dir : for the exported target 
+                               $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>   # - local include dir : when building mtools, test and the example
+                               $<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/include> )   # - install include dir : for the exported target 
 endif()
 
+# link with zlib
+# target_link_libraries(mtools PUBLIC ZLIB::ZLIB) <-- do not use because export are not forwarded. 
+target_link_libraries(mtools PUBLIC ${ZLIB_LIBRARIES})
+target_include_directories(mtools PUBLIC ${ZLIB_INCLUDE_DIRS})
 
-target_link_libraries(mtools PUBLIC ZLIB::ZLIB)
-
+#link with fltk
 target_link_libraries(mtools PUBLIC ${FLTK_LIBRARIES})
 target_include_directories(mtools PUBLIC ${FLTK_INCLUDE_DIR})
 
-target_link_libraries(mtools PUBLIC PNG::PNG)
+#link with libpng
+# target_link_libraries(mtools PUBLIC PNG::PNG)  <-- do not use because export are not forwarded. 
+target_link_libraries(mtools PUBLIC ${PNG_LIBRARIES})
+target_include_directories(mtools PUBLIC ${PNG_INCLUDE_DIRS})
+target_compile_definitions(mtools PUBLIC ${PNG_DEFINITIONS})
 
+#link with libjpeg
 target_link_libraries(mtools PUBLIC ${JPEG_LIBRARIES})
 target_include_directories(mtools PUBLIC ${JPEG_INCLUDE_DIR})
 
-target_link_libraries(mtools PUBLIC ${CAIRO_LIBRARIES})
-target_include_directories(mtools PUBLIC ${CAIRO_INCLUDE_DIRS})
-
+#link with cimg
 target_include_directories(mtools PUBLIC ${CIMG_INCLUDE_DIR})
 
+#link with cairo
+if (USE_CAIRO)
+	target_link_libraries(mtools PUBLIC ${CAIRO_LIBRARIES})
+	target_include_directories(mtools PUBLIC ${CAIRO_INCLUDE_DIRS})
+endif ()
 
+#link with opengl
 if (USE_OPENGL)
-    target_link_libraries(mtools PUBLIC OpenGL::GL)
+    # target_link_libraries(mtools PUBLIC OpenGL::GL) <-- do not use because export are not forwarded.
+	target_link_libraries(mtools PUBLIC ${OPENGL_LIBRARIES})
+	target_include_directories(mtools PUBLIC ${OPENGL_INCLUDE_DIR})	
 endif ()
 
+#link with opencl
 if (USE_OPENCL)
-    target_link_libraries(mtools PUBLIC OpenCL::OpenCL)
+    # target_link_libraries(mtools PUBLIC OpenCL::OpenCL) <-- do not use because export are not forwarded.
+	target_link_libraries(mtools PUBLIC ${OpenCL_LIBRARIES})
+	target_include_directories(mtools PUBLIC ${OpenCL_INCLUDE_DIRS})
 endif ()
 
+#link with openmp
 if (USE_OPENMP)
-    target_link_libraries(mtools PUBLIC OpenMP::OpenMP_CXX)
+    # target_link_libraries(mtools PUBLIC OpenMP::OpenMP_CXX) <-- do not use because export are not forwarded.
+	target_link_libraries(mtools PUBLIC ${OpenMP_CXX_LIBRARIES})
+	target_compile_options(mtools PUBLIC ${OpenMP_CXX_FLAGS})
 endif ()
 
 
@@ -282,8 +314,7 @@ endif ()
 
 if (MTOOLS_LOCAL_INSTALL)
 
-    export(TARGETS mtools FILE mtools-config.cmake)    # export the package
-    export(EXPORT mtools FILE mtools-config.cmake)    # export the package
+    export(TARGETS mtools FILE mtools-config.cmake)    	# export the package
     export(PACKAGE mtools)                              # register the package
 
 else()

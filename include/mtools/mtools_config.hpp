@@ -10,6 +10,8 @@
  
 #define MTOOLS_BASIC_CONSOLE 0
  
+#define MTOOLS_USE_CAIRO 1 
+ 
 #define MTOOLS_USE_SSE 0 
 /* #undef MTOOLS_SSE_VERSION */
  
@@ -17,7 +19,7 @@
 #define MTOOLS_OPENMP_VERSION 2.0 
 
 #define MTOOLS_USE_OPENCL 1 
-#define MTOOLS_OPENCL_VERSION 1.2 
+#define MTOOLS_OPENCL_VERSION 2.0 
 
 #define MTOOLS_USE_OPENGL 1 
 
