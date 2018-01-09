@@ -36,6 +36,7 @@
 #include <mutex>
 #include <atomic>
 #include <string>
+#include <thread>
 
 namespace mtools
     {
