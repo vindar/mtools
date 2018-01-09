@@ -72,15 +72,6 @@ set( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake )
 ###########
 
 
-# libatomic is needed on linux/osx
-if (NOT WIN32)
-	find_library(ATOMIC_LIB NAMES atomic atomic.so.1 libatomic.so.1)
-	
-	if (ATOMIC_LIB)
-		message(STATUS "Found libatomic: ${ATOMIC_LIB}")
-	endif()
-endif()
-
 # zlib 
 find_package(ZLIB REQUIRED)
 
@@ -265,12 +256,13 @@ else()
                                $<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/include> )   # - install include dir : for the exported target 
 endif()
 
-# link with libatomic on osx/linux if found...
-if (NOT WIN32)
-	if (ATOMIC_LIB)
+
+# link with libatomic on gcc
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 	target_link_libraries(mtools PUBLIC atomic)
 	endif ()
 endif()
+
 
 # link with zlib
 # target_link_libraries(mtools PUBLIC ZLIB::ZLIB) <-- do not use because export are not forwarded. 
