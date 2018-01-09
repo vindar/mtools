@@ -26,6 +26,7 @@
 #include <utility>
 #include <functional>
 #include <atomic>
+#include <tuple>
 
 
 namespace mtools
