@@ -255,6 +255,9 @@ else()
                                $<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/include> )   # - install include dir : for the exported target 
 endif()
 
+# link with libatomic on osx/gcc
+target_link_libraries(mtools PUBLIC atomic)
+
 # link with zlib
 # target_link_libraries(mtools PUBLIC ZLIB::ZLIB) <-- do not use because export are not forwarded. 
 target_link_libraries(mtools PUBLIC ${ZLIB_LIBRARIES})
@@ -306,18 +309,19 @@ endif ()
 
 
 ###############################################################################
-# Request recent C++ features
+# C++ compile features
 ###############################################################################
 if (NOT WIN32)
-	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -Wall")
+	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -Wall") 	# build everything with warning enables 
+	target_compile_options(mtools PUBLIC "-std=c++11")	# recent C++ features
 	if (NOT CMAKE_BUILD_TYPE)
 		set(CMAKE_BUILD_TYPE Release)
 	endif ()
-endif ()
-
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)	 
+elseif ()
+	set(CMAKE_CXX_STANDARD 14)
+	set(CMAKE_CXX_STANDARD_REQUIRED ON)
+	set(CMAKE_CXX_EXTENSIONS OFF)	 
+endif()
 
 
 ###############################################################################
