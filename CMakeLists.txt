@@ -305,6 +305,21 @@ if (USE_OPENMP)
 endif ()
 
 
+###############################################################################
+# Request recent C++ features
+###############################################################################
+if (NOT WIN32)
+	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall")
+	if (NOT CMAKE_BUILD_TYPE)
+		set(CMAKE_BUILD_TYPE Release)
+	endif()
+else ()
+	# not working on clang...
+	set(CMAKE_CXX_STANDARD 14)
+	set(CMAKE_CXX_STANDARD_REQUIRED ON)
+	set(CMAKE_CXX_EXTENSIONS OFF)
+endif ()	 
+
 
 ###############################################################################
 # installation of the library
@@ -323,7 +338,7 @@ else()
     
     install(TARGETS mtools EXPORT mtools DESTINATION ${_lib_install_dir})
     install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/mtools"  DESTINATION "include")
-    install(EXPORT mtools DESTINATION ${_lib_install_dir})
+    install(EXPORT mtools DESTINATION ${_lib_install_dir} FILE mtools-config.cmake)
 
 endif()
 
@@ -334,22 +349,6 @@ endif()
 add_executable(test_mtools ${_test_mtools_cpp_files} ${_test_mtools_hpp_files})
 
 target_link_libraries(test_mtools mtools)
-
-
-###############################################################################
-# Request recent C++ features
-###############################################################################
-if (NOT WIN32)
-	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall")
-	if (NOT CMAKE_BUILD_TYPE)
-		set(CMAKE_BUILD_TYPE Release)
-	endif()
-else ()
-	# not working on clang...
-	set(CMAKE_CXX_STANDARD 14)
-	set(CMAKE_CXX_STANDARD_REQUIRED ON)
-	set(CMAKE_CXX_EXTENSIONS OFF)
-endif ()	 
 
 
 
