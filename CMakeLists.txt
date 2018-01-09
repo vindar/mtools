@@ -260,7 +260,6 @@ endif()
 # link with libatomic on gcc
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 	target_link_libraries(mtools PUBLIC atomic)
-	endif ()
 endif()
 
 
