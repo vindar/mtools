@@ -147,6 +147,7 @@ namespace mtools
 		template<typename T, typename... Args> T * allocate(Args&&... args)
 		{
 			MTOOLS_ASSERT(sizeof(T) <= UNITALLOCSIZE);
+			void * p = malloc();
 			::new((T*)p) T(std::forward<Args>(args)...);
 		}
 
