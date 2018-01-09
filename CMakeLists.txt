@@ -8,9 +8,9 @@
 cmake_minimum_required(VERSION 3.10.1)
 
 message(STATUS "")
-message(STATUS "********************************************")
-message(STATUS "*           MTOOLS CONFIGURATION           *")
-message(STATUS "********************************************")
+message(STATUS "************************************************")
+message(STATUS "*             MTOOLS CONFIGURATION             *")
+message(STATUS "************************************************")
 message(STATUS "")
 
 
@@ -70,6 +70,16 @@ set( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake )
 ###########
 # REQUIRED
 ###########
+
+
+# libatomic is needed on linux/osx
+if (NOT WIN32)
+	find_library(ATOMIC_LIB NAMES atomic atomic.so.1 libatomic.so.1)
+	
+	if (ATOMIC_LIB)
+		message(STATUS "Found libatomic: ${ATOMIC_LIB}")
+	endif()
+endif()
 
 # zlib 
 find_package(ZLIB REQUIRED)
@@ -255,8 +265,12 @@ else()
                                $<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/include> )   # - install include dir : for the exported target 
 endif()
 
-# link with libatomic on osx/gcc
-target_link_libraries(mtools PUBLIC atomic)
+# link with libatomic on osx/linux if found...
+if (NOT WIN32)
+	if (ATOMIC_LIB)
+	target_link_libraries(mtools PUBLIC atomic)
+	endif ()
+endif()
 
 # link with zlib
 # target_link_libraries(mtools PUBLIC ZLIB::ZLIB) <-- do not use because export are not forwarded. 
@@ -408,13 +422,39 @@ MARK_AS_ADVANCED(FLTK_INCLUDE_DIR)
 ###############################################################################
 add_subdirectory(./examples EXCLUDE_FROM_ALL)
 
-
-message(STATUS "")
-message(STATUS "********************************************")
-message(STATUS "*      MTOOLS CONFIGURATION COMPLETED      *")
-message(STATUS "********************************************")
-message(STATUS "")
-
+if (NOT WIN32)
+	message(STATUS "")
+	message(STATUS "************************************************")
+	message(STATUS "*      MTOOLS CONFIGURATION COMPLETED          *")
+	message(STATUS "*                                              *")
+	message(STATUS "* - Run 'make' to build the library.           *")
+	if (MTOOLS_LOCAL_INSTALL)
+	message(STATUS "* - No installation (use the local build tree) *")
+	else()
+	message(STATUS "* - Then install it with '(sudo) make install' *")
+	endif()
+	message(STATUS "*                                              *")
+	message(STATUS "* Use 'make' inside ./examples to build the    *")
+	message(STATUS "* examples                                     *")
+	message(STATUS "************************************************")
+	message(STATUS "")
+else ()
+	message(STATUS "")
+	message(STATUS "************************************************")
+	message(STATUS "*      MTOOLS CONFIGURATION COMPLETED          *")
+	message(STATUS "*                                              *")
+	message(STATUS "* - open mtools.sln to build the library       *")
+	if (MTOOLS_LOCAL_INSTALL)
+	message(STATUS "* - No installation (use the local build tree) *")
+	else()
+	message(STATUS "* - and install it with the INSTALL script     *")
+	endif()
+	message(STATUS "*                                              *")
+	message(STATUS "* - open solution ./examples/examples.sln to   *")
+	message(STATUS "*   build the examples                                   *")
+	message(STATUS "************************************************")
+	message(STATUS "")
+endif()
 ###############################################################################
 #end of file
 ###############################################################################
