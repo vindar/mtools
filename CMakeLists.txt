@@ -241,7 +241,7 @@ endif()
 ###############################################################################
 
 
-add_library(mtools ${_mtools_cpp_files} ${_mtools_hpp_files})
+add_library(mtools STATIC ${_mtools_cpp_files} ${_mtools_hpp_files})
 
 target_include_directories(mtools PRIVATE ./include/mtools)         # for commodity, so that cpp source file of the lib do not need to subdir mtools. 
 
@@ -341,7 +341,7 @@ target_link_libraries(test_mtools mtools)
 ###############################################################################
 if (NOT WIN32)
 	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
-else
+else ()
 	# not working on clang...
 	set(CMAKE_CXX_STANDARD 17)
 	set(CMAKE_CXX_STANDARD_REQUIRED ON)
