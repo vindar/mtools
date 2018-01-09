@@ -24,6 +24,7 @@
 #include "../../misc/error.hpp"
 #include "../../misc/indirectcall.hpp"
 
+#include <thread>
 
 // If we are on OSX, we must swap threads as only the master thread is allowed to
 // allocate graphic resources
