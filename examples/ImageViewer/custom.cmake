@@ -4,7 +4,7 @@
 if (WIN32)
     add_executable(${projectname} WIN32 ${projectdir}/main.cpp)        
 else ()
-    add_executable(${projectname} main.cpp)        
+    add_executable(${projectname} ${projectdir}/main.cpp)        
 endif ()
 
         
