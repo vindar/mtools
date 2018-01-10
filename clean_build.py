@@ -1,4 +1,4 @@
-import shutils
+import shutil
 import os
 
 if (os.path.isdir("build")):
