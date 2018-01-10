@@ -13,6 +13,9 @@ if sys.platform.startswith('win32'):
 	carg.insert(2,'x64');
 
 # invoque cmake with the correct arguments
+if (! os.path.exists(project_dir)):
+	os.makedirs('build')
+	
 os.chdir(os.getcwd() + "/build")
 subprocess.call(carg)
 
