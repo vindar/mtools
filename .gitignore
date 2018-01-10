@@ -38,5 +38,4 @@ ipch/
 *.vspx
 *.opendb
 
-mtools/headers/mtools_config.hpp
-
+/include/mtools/mtools_config.hpp
