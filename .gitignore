@@ -19,6 +19,9 @@ examples/*/*.[Bb][Mm][pp]
 [Oo]bj/
 [Ee]xe/
 
+[Bb]uild/*
+!/build/build_directory
+
 .vs/
 
 [Tt]est[Rr]esult*/
