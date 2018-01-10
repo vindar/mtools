@@ -207,7 +207,7 @@ if (MTOOLS_LOCAL_INSTALL)
     message(STATUS "")
 else()
     message(STATUS "")
-    message(STATUS "Library will be installed in [${CMAKE_INSTALL_PREFIX}].")
+    message(STATUS "mtools will be installed in [${CMAKE_INSTALL_PREFIX}].")
     message(STATUS "")    
 endif()
 
@@ -318,7 +318,9 @@ else()
 
     set(_include_install_dir "include/mtools")
     set(_lib_install_dir "lib/mtools")
+	set(_tools_install_dir "bin")
     
+    install(PROGRAMS "${CMAKE_CURRENT_SOURCE_DIR}/tools/mtools-project.py" DESTINATION ${_tools_install_dir})
     install(TARGETS mtools EXPORT mtools DESTINATION ${_lib_install_dir})
     install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/mtools"  DESTINATION "include")
     install(EXPORT mtools DESTINATION ${_lib_install_dir} FILE mtools-config.cmake)
@@ -337,11 +339,7 @@ add_executable(test_mtools ${_test_mtools_cpp_files} ${_test_mtools_hpp_files})
 
 target_link_libraries(test_mtools mtools)
 
-
-
-###############################################################################
-# define test_mtools as the startup project in visual studio
-###############################################################################
+# set test_mtools as the startup project in visual studio
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT test_mtools)
 
 
@@ -405,6 +403,8 @@ if (NOT WIN32)
 	message(STATUS "* - Run 'make' to build the library.           *")
 	if (MTOOLS_LOCAL_INSTALL)
 	message(STATUS "* - No installation (use the local build tree) *")
+	message(STATUS "*   Add the '/tools' subdir to PATH to use the *")	
+	message(STATUS "*   script 'mtools-config.py'.                 *")	
 	else()
 	message(STATUS "* - Then install it with '(sudo) make install' *")
 	endif()
@@ -421,6 +421,8 @@ else ()
 	message(STATUS "* - open mtools.sln to build the library       *")
 	if (MTOOLS_LOCAL_INSTALL)
 	message(STATUS "* - No installation (use the local build tree) *")
+	message(STATUS "*   Add the '/tools' subdir to PATH to use the *")	
+	message(STATUS "*   script 'mtools-config.py'.                 *")		
 	else()
 	message(STATUS "* - and install it with the INSTALL script     *")
 	endif()
