@@ -87,7 +87,7 @@ find_package(PNG REQUIRED)
 find_package(JPEG REQUIRED)
 
 #cimg
-find_package(CIMG REQUIRED)
+find_package(CImg REQUIRED)
 
 
 ###########
@@ -99,7 +99,7 @@ message(STATUS "Checking optional libraries.")
 message(STATUS "")
 
 # cairo
-find_package(CAIRO)
+find_package(Cairo)
 
 #opengl 
 find_package(OpenGL)
