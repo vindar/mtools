@@ -7,7 +7,7 @@ if (os.path.isdir("build")):
     shutil.rmtree('build')
 
 os.makedirs('build')
-with open('build/build_directory','a'):
+with open('build/build_directory','w'):
     os.utime('build/build_directory', None)
 
 
