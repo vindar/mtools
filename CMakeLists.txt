@@ -40,7 +40,7 @@ endif()
 	 
 	      
 ###############################################################################
-# Read mtools version
+# Project name and version
 ###############################################################################
 file(READ VERSION MTOOLS_VERSION 10)
 message(STATUS "")
@@ -48,10 +48,6 @@ message(STATUS "Configuring the library [version ${MTOOLS_VERSION}]")
 message(STATUS "-------------------------------------")
 message(STATUS "")
 
-
-###############################################################################
-# Project name
-###############################################################################
 project(mtools)
 
 
@@ -59,18 +55,15 @@ project(mtools)
 # Locate the external libraries needed. 
 ###############################################################################
 
-message(STATUS "")
-message(STATUS "Checking external dependencies.")
-message(STATUS "")
 
 # load the custom find modules (for cimg and cairo). 
 set( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake )
 
 
-###########
-# REQUIRED
-###########
-
+#### REQUIRED ####
+message(STATUS "")
+message(STATUS "Checking external dependencies.")
+message(STATUS "")
 
 # zlib 
 find_package(ZLIB REQUIRED)
@@ -89,11 +82,7 @@ find_package(JPEG REQUIRED)
 #cimg
 find_package(CImg REQUIRED)
 
-
-###########
-# OPTIONAL
-###########
-
+#### OPTIONAL ####
 message(STATUS "")
 message(STATUS "Checking optional libraries.")
 message(STATUS "")
@@ -112,7 +101,7 @@ find_package(OpenMP)
 
 
 ###############################################################################
-# set the configuration options
+# set the configuration options and create mtools-config.hpp
 ###############################################################################
 
 message(STATUS "")
@@ -190,11 +179,6 @@ endif ()
 
 message(STATUS "")
 
-
-###############################################################################
-# create the configuration file mtools_config.hpp
-###############################################################################
-
 configure_file(mtools_config.hpp.in "${CMAKE_SOURCE_DIR}/include/mtools/mtools_config.hpp" @ONLY)
 
 
@@ -203,15 +187,6 @@ configure_file(mtools_config.hpp.in "${CMAKE_SOURCE_DIR}/include/mtools/mtools_c
 ###############################################################################
 file(GLOB_RECURSE _mtools_cpp_files ./src/*.cpp)
 file(GLOB_RECURSE _mtools_hpp_files ./include/*.hpp ./include/*.h)
-
-
-###############################################################################
-# list all sources and header files of the test project
-###############################################################################
-file(GLOB_RECURSE _test_mtools_cpp_files ./test/*.cpp)
-file(GLOB_RECURSE _test_mtools_hpp_files ./test/*.hpp ./test/*.h)
-
-
 
 
 ###############################################################################
@@ -351,9 +326,13 @@ else()
 endif()
 
 
+
 ###############################################################################
-# create the test project
+# test project.
 ###############################################################################
+file(GLOB_RECURSE _test_mtools_cpp_files ./test/*.cpp)
+file(GLOB_RECURSE _test_mtools_hpp_files ./test/*.hpp ./test/*.h)
+
 add_executable(test_mtools ${_test_mtools_cpp_files} ${_test_mtools_hpp_files})
 
 target_link_libraries(test_mtools mtools)
@@ -413,6 +392,11 @@ MARK_AS_ADVANCED(FLTK_INCLUDE_DIR)
 ###############################################################################
 add_subdirectory(./examples EXCLUDE_FROM_ALL)
 
+
+
+###############################################################################
+# display infos
+###############################################################################
 if (NOT WIN32)
 	message(STATUS "")
 	message(STATUS "************************************************")
@@ -446,7 +430,9 @@ else ()
 	message(STATUS "************************************************")
 	message(STATUS "")
 endif()
+
 ###############################################################################
 #end of file
 ###############################################################################
+
 
