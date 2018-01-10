@@ -199,9 +199,9 @@ else()
     set(DEFAULT_INSTALL_TYPE OFF)
 endif()
 
-option(MTOOLS_LOCAL_INSTALL "local installation" ${DEFAULT_INSTALL_TYPE})    
+option(LOCAL_INSTALL "local installation" ${DEFAULT_INSTALL_TYPE})    
 
-if (MTOOLS_LOCAL_INSTALL)
+if (LOCAL_INSTALL)
     message(STATUS "")
     message(STATUS "mtools will be installed locally.")
     message(STATUS "")
@@ -221,7 +221,7 @@ add_library(mtools STATIC ${_mtools_cpp_files} ${_mtools_hpp_files})
 
 target_include_directories(mtools PRIVATE ./include/mtools)         # for commodity, so that cpp source file of the lib do not need to subdir mtools. 
 
-if (MTOOLS_LOCAL_INSTALL)
+if (LOCAL_INSTALL)
     # local installation
     target_include_directories(mtools PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)		# - local include directory
 else()
@@ -309,7 +309,7 @@ endif()
 ###############################################################################
 
 
-if (MTOOLS_LOCAL_INSTALL)
+if (LOCAL_INSTALL)
 
     export(TARGETS mtools FILE mtools-config.cmake)    	# export the package
     export(PACKAGE mtools)                              # register the package
@@ -401,7 +401,7 @@ if (NOT WIN32)
 	message(STATUS "*      MTOOLS CONFIGURATION COMPLETED          *")
 	message(STATUS "*                                              *")
 	message(STATUS "* - Run 'make' to build the library.           *")
-	if (MTOOLS_LOCAL_INSTALL)
+	if (LOCAL_INSTALL)
 	message(STATUS "* - No installation (use the local build tree) *")
 	message(STATUS "*   Add the '/tools' subdir to PATH to use the *")	
 	message(STATUS "*   script 'mtools-config.py'.                 *")	
@@ -419,7 +419,7 @@ else ()
 	message(STATUS "*      MTOOLS CONFIGURATION COMPLETED          *")
 	message(STATUS "*                                              *")
 	message(STATUS "* - open mtools.sln to build the library       *")
-	if (MTOOLS_LOCAL_INSTALL)
+	if (LOCAL_INSTALL)
 	message(STATUS "* - No installation (use the local build tree) *")
 	message(STATUS "*   Add the '/tools' subdir to PATH to use the *")	
 	message(STATUS "*   script 'mtools-config.py'.                 *")		
