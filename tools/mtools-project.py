@@ -175,7 +175,7 @@ except:
 repl(mainFile,"main.cpp")
 repl(cmakeFile,"CMakeLists.txt")
 
-# run the cmake command to build project the files
+# run the cmake command to build project files
 os.chdir(project_build)
 if sys.platform.startswith('win32'):
 	import subprocess

@@ -6,7 +6,7 @@
  
 #pragma once 
  
-#define MTOOLS_VERSION 3
+#define MTOOLS_VERSION 3.1
  
 #define MTOOLS_BASIC_CONSOLE 0
  
