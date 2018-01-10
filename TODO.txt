@@ -3,6 +3,7 @@
 TODO LIST
 *********
 
+- solve bug line not drawn on osx
 
 - finish the SiteDrawer class,
 - create a new LatticeDawer class that cointain both SiteDrawer and PixelDrawer class. 
