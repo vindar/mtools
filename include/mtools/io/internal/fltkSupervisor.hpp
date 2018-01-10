@@ -25,7 +25,7 @@
 #include "../../misc/indirectcall.hpp"
 
 #include <thread>
-
+#include <condition_variable>
 // If we are on OSX, we must swap threads as only the master thread is allowed to
 // allocate graphic resources
 #ifdef __APPLE__
