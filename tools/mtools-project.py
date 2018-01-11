@@ -193,7 +193,10 @@ else:
 #done !
 print "\n*** Project " + project_name + " created ! ***"
 print "***  the project files are located in the '\\build' directory\n"
-raw_input("Press Enter to continue...")
+
+if sys.platform.startswith('win32'):
+	raw_input("Press Enter to continue...")
+
 # end of script mtools-project.py
 ############################################################################
 
