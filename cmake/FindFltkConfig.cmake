@@ -30,3 +30,7 @@ else ()
 
 endif()
 
+# Hide advanced variables from CMake GUIs
+MARK_AS_ADVANCED(FLTKCONFIG_PROG)
+
+
