@@ -71,7 +71,7 @@ find_package(ZLIB REQUIRED)
 # fltk, but we do not need fluid nor forms
 set(FLTK_SKIP_FLUID TRUE)
 set(FLTK_SKIP_FORMS TRUE)
-find_package(FLTK REQUIRED)
+find_package(FltkConfig REQUIRED)
 
 # libpng
 find_package(PNG REQUIRED)
@@ -246,6 +246,7 @@ target_include_directories(mtools PUBLIC ${ZLIB_INCLUDE_DIRS})
 #link with fltk
 target_link_libraries(mtools PUBLIC ${FLTK_LIBRARIES})
 target_include_directories(mtools PUBLIC ${FLTK_INCLUDE_DIR})
+target_compile_options(mtools PUBLIC ${FLTK_OPTIONS})
 
 #link with libpng
 # target_link_libraries(mtools PUBLIC PNG::PNG)  <-- do not use because export are not forwarded. 
