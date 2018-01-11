@@ -319,12 +319,15 @@ else()
 
     set(_include_install_dir "include/mtools")
     set(_lib_install_dir "lib/mtools")
-	set(_tools_install_dir "bin")
+    set(_tools_install_dir "bin")
     
     install(PROGRAMS "${CMAKE_CURRENT_SOURCE_DIR}/tools/mtools-project.py" DESTINATION ${_tools_install_dir})
     install(TARGETS mtools EXPORT mtools DESTINATION ${_lib_install_dir})
     install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/mtools"  DESTINATION "include")
-    install(EXPORT mtools DESTINATION ${_lib_install_dir} FILE mtools-config.cmake)
+    install(EXPORT mtools DESTINATION ${_lib_install_dir} FILE mtools-export.cmake)
+    file(WRITE  "${CMAKE_CURRENT_BINARY_DIR}/mtools-config.cmake" 
+         "set(MTOOLS_CXX_COMPILER \"${CMAKE_CXX_COMPILER}\")\nset(MTOOLS_C_COMPILER \"${CMAKE_C_COMPILER}\")\ninclude(\$\{CMAKE_CURRENT_LIST_DIR\}/mtools-export.cmake)" ) 
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/mtools-config.cmake" DESTINATION ${_lib_install_dir})
 
 endif()
 
