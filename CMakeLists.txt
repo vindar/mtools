@@ -312,7 +312,9 @@ endif()
 
 if (LOCAL_INSTALL)
 
-    export(TARGETS mtools FILE mtools-config.cmake)    	# export the package
+    export(TARGETS mtools FILE mtools-export.cmake)    	# export the package
+    file(WRITE  "${CMAKE_CURRENT_BINARY_DIR}/mtools-config.cmake"
+         "set(MTOOLS_CXX_COMPILER \"${CMAKE_CXX_COMPILER}\")\nset(MTOOLS_C_COMPILER \"${CMAKE_C_COMPILER}\")\ninclude(\$\{CMAKE_CURRENT_LIST_DIR\}/mtools-export.cmake)" )
     export(PACKAGE mtools)                              # register the package
 
 else()
