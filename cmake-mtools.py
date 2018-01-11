@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+#
+# Invoque cmake to build the library
+# usage: ./cmake-mtools [CMAKE_OPTIONS...]
+#
 
 import sys
 import os
@@ -18,6 +22,9 @@ if sys.platform.startswith('win32'):
 if (not os.path.exists('build')):
 	os.makedirs('build')
 	
-os.chdir(os.getcwd() + "/build")
+
+abspath = os.path.abspath(__file__)
+dname = os.path.dirname(abspath)
+os.chdir(dname + "/build")
 subprocess.call(carg)
 

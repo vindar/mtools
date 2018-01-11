@@ -86,10 +86,16 @@ if (NOT WIN32)
 	endif ()
 endif()
 
+find_package(mtools REQUIRED)
+
+# use the same compilers as that used for compiling mtools
+set(CMAKE_CXX_COMPILER "${MTOOLS_CXX_COMPILER}")
+set(CMAKE_C_COMPILER "${MTOOLS_C_COMPILER}")
+
 project([PROJECT_NAME_PLH])
+
 add_executable("${PROJECT_NAME}" main.cpp)
 
-find_package(mtools REQUIRED)
 target_link_libraries("${PROJECT_NAME}" mtools)
 
 
