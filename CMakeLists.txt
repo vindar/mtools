@@ -36,6 +36,10 @@ if( WIN32 )
 	else()
 		message(STATUS "Windows: vcpkg not found.")	
 	endif()
+        
+    # only Debug and Release configurations
+    SET(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "" FORCE)
+
 endif()
 	 
 	      
@@ -193,21 +197,16 @@ file(GLOB_RECURSE _mtools_hpp_files ./include/*.hpp ./include/*.h)
 # set installation path. 
 ###############################################################################
 
-if ( WIN32 )
-    set(DEFAULT_INSTALL_TYPE ON)
-else()
-    set(DEFAULT_INSTALL_TYPE OFF)
-endif()
 
-option(LOCAL_INSTALL "local installation" ${DEFAULT_INSTALL_TYPE})    
+option(LOCAL_INSTALL "local installation" ON)    
 
 if (LOCAL_INSTALL)
     message(STATUS "")
-    message(STATUS "mtools will be installed locally.")
+    message(STATUS "mtools will be installed locally (LOCAL_INSTALL = 1)")
     message(STATUS "")
 else()
     message(STATUS "")
-    message(STATUS "mtools will be installed in [${CMAKE_INSTALL_PREFIX}].")
+    message(STATUS "mtools will be installed in [${CMAKE_INSTALL_PREFIX}] (LOCAL_INSTALL = 0).")
     message(STATUS "")    
 endif()
 
