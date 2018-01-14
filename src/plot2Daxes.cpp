@@ -36,8 +36,8 @@ namespace mtools
 
     const bool Plot2DAxes::DEFAULT_GRAD_SHOW = true;
     const bool Plot2DAxes::DEFAULT_NUM_SHOW = true;
-    const RGBc Plot2DAxes::DEFAULT_GRAD_COLOR = RGBc::c_Black;
-    const RGBc Plot2DAxes::DEFAULT_NUM_COLOR = RGBc::c_Black;
+    const RGBc Plot2DAxes::DEFAULT_GRAD_COLOR = RGBc(0, 0, 0, 255); // do not use RGBc::c_Black because of 
+    const RGBc Plot2DAxes::DEFAULT_NUM_COLOR = RGBc(0, 0, 0, 255);  // initialization order fiasco
     const float Plot2DAxes::DEFAULT_SCALING = 1.0;
 
 
