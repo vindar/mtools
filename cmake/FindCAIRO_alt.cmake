@@ -3,33 +3,69 @@
 #
 #  CAIRO_FOUND and CAIRO_alt_FOUND - system has cairo
 #  CAIRO_INCLUDE_DIRS - the cairo include directory
-#  CAIRO_LIBRARIES - Link these to use cairo
-#
-# Define CAIRO_MIN_VERSION for which version desired.
+#  CAIRO_LIBRARIES - the required libraries
 #
 
-find_package(PkgConfig)
 
-IF (PKG_CONFIG_FOUND)
-	PKG_SEARCH_MODULE(CAIRO cairo)
-ENDIF(PKG_CONFIG_FOUND)
 
-IF(NOT CAIRO_FOUND AND NOT PKG_CONFIG_FOUND)
-	FIND_PATH(CAIRO_INCLUDE_DIRS cairo.h)
-	FIND_LIBRARY(CAIRO_LIBRARIES cairo)
 
-	# Report results
-	IF(CAIRO_LIBRARIES AND CAIRO_INCLUDE_DIRS)
-		SET(CAIRO_FOUND 1)
-		MESSAGE(STATUS "Found Cairo: ${CAIRO_LIBRARIES}")
-	ELSE(CAIRO_LIBRARIES AND CAIRO_INCLUDE_DIRS)	
-		MESSAGE(SEND_ERROR "Could not find Cairo")
-	ENDIF(CAIRO_LIBRARIES AND CAIRO_INCLUDE_DIRS)
-ENDIF(NOT CAIRO_FOUND AND NOT PKG_CONFIG_FOUND)
+if (_vcpkg_dir)
 
-IF (CAIRO_FOUND)
-	SET(CAIRO_alt_FOUND 1)
-ENDIF()	
+	# using vcpkg, bypass usual find method to allwo both debug and release build
+	
+	find_library(CAIRO_MAIN_LIBRARY_RELEASE  cairo)
+	find_library(CAIRO_MAIN_LIBRARY_DEBUG  cairod)
+	find_library(CAIRO_PIXMAN_LIBRARY_RELEASE  pixman)
+	find_library(CAIRO_PIXMAN_LIBRARY_DEBUG  pixmand)
+	
+	find_path(CAIRO_INCLUDE_DIRS "cairo.h")
 
-# Hide advanced variables from CMake GUIs
-MARK_AS_ADVANCED(CAIRO_LIBRARIES CAIRO_INCLUDE_DIRS)
+	if(CAIRO_INCLUDE_DIRS AND CAIRO_MAIN_LIBRARY_RELEASE AND CAIRO_MAIN_LIBRARY_DEBUG AND CAIRO_PIXMAN_LIBRARY_RELEASE AND CAIRO_PIXMAN_LIBRARY_DEBUG)
+	
+		set(CAIRO_LIBRARY_RELEASE "{CAIRO_MAIN_LIBRARY_RELEASE}" "{CAIRO_PIXMAN_LIBRARY_RELEASE}")
+		set(CAIRO_LIBRARY_DEBUG "{CAIRO_MAIN_LIBRARY_DEBUG}" "{CAIRO_PIXMAN_LIBRARY_DEBUG}")
+		
+		# Create CAIRO_LIBRARIES from CAIRO_LIBRARY_DEBUG and CAIRO_LIBRARY_RELEASE
+		select_library_configurations(CAIRO)		
+		
+		get_filename_component(CAIRO_R_PATH "${CAIRO_MAIN_LIBRARY_RELEASE}" DIRECTORY)
+		get_filename_component(CAIRO_D_PATH "${CAIRO_MAIN_LIBRARY_DEBUG}" DIRECTORY)		
+		message(STATUS "Found CAIRO (via vcpkg): release [${CAIRO_R_PATH}]  debug [${CAIRO_D_PATH}]")
+		
+		set(CAIRO_FOUND 1)
+		set(CAIRO_alt_FOUND 1)
+
+	else()
+	
+		message(STATUS "CAIRO NOT found.)")
+
+	endif()	
+			
+	
+else()
+
+	find_package(PkgConfig)
+
+	if (PKG_CONFIG_FOUND)
+		pkg_search_module(CAIRO cairo)
+	endif()
+
+	if (NOT CAIRO_FOUND AND NOT PKG_CONFIG_FOUND)
+		find_path(CAIRO_INCLUDE_DIRS cairo.h)
+		find_library(CAIRO_LIBRARIES cairo)
+
+		if (CAIRO_LIBRARIES AND CAIRO_INCLUDE_DIRS)
+			set(CAIRO_FOUND 1)
+			message(STATUS "Found Cairo: ${CAIRO_LIBRARIES}")
+		else()	
+			message(SEND_ERROR "Could not find Cairo")
+		endif()
+	endif()
+
+if (CAIRO_FOUND)
+	set(CAIRO_alt_FOUND 1)
+endif()	
+
+
+mark_as_advanced(CAIRO_LIBRARIES CAIRO_INCLUDE_DIRS)
+

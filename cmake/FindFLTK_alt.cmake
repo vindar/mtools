@@ -3,6 +3,15 @@
 # if not, try to use fltk-config
 # otherwise, fall back to the official cmake module FindFLTK
 #
+# if found, set FLTK_FOUND and FLTK_alt_FOUND
+#
+# define also
+#
+#     FLTK_OPTIONS
+#     FLTK_LIBRARIES
+#     FLTK_INCLUDE_DIR
+#
+
 
 macro(findfltklib FLTKLIBNAME FLTKLIBFILE)
 	find_library(${FLTKLIBNAME}  ${FLTKLIBFILE})
@@ -36,6 +45,7 @@ if (_vcpkg_dir)
 	set(FLTK_LIBRARY_RELEASE "${FLTK_MAIN_LIBRARY_RELEASE}" "${FLTK_GL_LIBRARY_RELEASE}" "${FLTK_IMAGES_LIBRARY_RELEASE}" "${FLTK_FORMS_LIBRARY_RELEASE}" "comctl32" "opengl32" "glu32")
 	set(FLTK_LIBRARY_DEBUG "${FLTK_MAIN_LIBRARY_DEBUG}" "${FLTK_GL_LIBRARY_DEBUG}" "${FLTK_IMAGES_LIBRARY_DEBUG}" "${FLTK_FORMS_LIBRARY_DEBUG}" "comctl32" "opengl32" "glu32")
 		
+	# Create FLTK_LIBRARIES from FLTK_LIBRARY_DEBUG and FLTK_LIBRARY_RELEASE
 	select_library_configurations(FLTK)		
 		
 	get_filename_component(FLTK_R_PATH "${FLTK_MAIN_LIBRARY_RELEASE}" DIRECTORY)
@@ -45,16 +55,17 @@ if (_vcpkg_dir)
 	set(FLTK_FOUND 1)
 	set(FLTK_alt_FOUND 1)
 
-	MARK_AS_ADVANCED(FLTK_D_PATH)
-	MARK_AS_ADVANCED(FLTK_R_PATH)
-	MARK_AS_ADVANCED(FLTK_MAIN_LIBRARY_RELEASE)
-	MARK_AS_ADVANCED(FLTK_MAIN_LIBRARY_DEBUG)
-	MARK_AS_ADVANCED(FLTK_GL_LIBRARY_RELEASE)
-	MARK_AS_ADVANCED(FLTK_GL_LIBRARY_DEBUG)
-	MARK_AS_ADVANCED(FLTK_IMAGES_LIBRARY_RELEASE)
-	MARK_AS_ADVANCED(FLTK_IMAGES_LIBRARY_DEBUG)
-	MARK_AS_ADVANCED(FLTK_FORMS_LIBRARY_RELEASE)
-	MARK_AS_ADVANCED(FLTK_FORMS_LIBRARY_DEBUG)
+	mark_as_advanced
+	mark_as_advanced(FLTK_D_PATH)
+	mark_as_advanced(FLTK_R_PATH)
+	mark_as_advanced(FLTK_MAIN_LIBRARY_RELEASE)
+	mark_as_advanced(FLTK_MAIN_LIBRARY_DEBUG)
+	mark_as_advanced(FLTK_GL_LIBRARY_RELEASE)
+	mark_as_advanced(FLTK_GL_LIBRARY_DEBUG)
+	mark_as_advanced(FLTK_IMAGES_LIBRARY_RELEASE)
+	mark_as_advanced(FLTK_IMAGES_LIBRARY_DEBUG)
+	mark_as_advanced(FLTK_FORMS_LIBRARY_RELEASE)
+	mark_as_advanced(FLTK_FORMS_LIBRARY_DEBUG)
 	
 	
 else()
@@ -91,9 +102,9 @@ else()
 
 	endif()
 
+	mark_as_advanced(FLTKCONFIG_PROG)
+
 endif()
 
-# Hide advanced variables from CMake GUIs
-MARK_AS_ADVANCED(FLTKCONFIG_PROG)
 
 

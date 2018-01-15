@@ -5,23 +5,18 @@
 #  CIMG_INCLUDE_DIR - the cimg include directory
 #
 
-FIND_PATH(CIMG_INCLUDE_DIR CImg.h)
+find_path(CIMG_INCLUDE_DIR CImg.h)
 
-# Report results
-IF(CIMG_INCLUDE_DIR)
-	SET(CIMG_FOUND 1)
-	MESSAGE(STATUS "Found CImg: ${CIMG_INCLUDE_DIR}")
-ELSE(CIMG_INCLUDE_DIR)	
-	IF(CImg_FIND_REQUIRED)
-		MESSAGE(SEND_ERROR "Could not find CImg")
-	ELSE(CImg_FIND_REQUIRED)
-		MESSAGE(STATUS "Could not find CImg")	
-	ENDIF(CImg_FIND_REQUIRED)
-ENDIF(CIMG_INCLUDE_DIR)
+if(CIMG_INCLUDE_DIR)
+	set(CIMG_FOUND 1)
+	message(STATUS "Found CImg: ${CIMG_INCLUDE_DIR}")
+else()	
+	message(FATAL_ERROR "Could not find CImg")
+endif()
 
-IF (CIMG_FOUND)
-	SET(CIMG_alt_FOUND 1)
-ENDIF()
+if (CIMG_FOUND)
+	set(CIMG_alt_FOUND 1)
+endif()
 
-# Hide advanced variables from CMake GUIs
-MARK_AS_ADVANCED(CIMG_INCLUDE_DIR)
+mark_as_advanced(CIMG_INCLUDE_DIR)
+
