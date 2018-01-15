@@ -1,7 +1,7 @@
 # - Try to find the cairo library
 # Once done this will define
 #
-#  CAIRO_FOUND - system has cairo
+#  CAIRO_FOUND and CAIRO_alt_FOUND - system has cairo
 #  CAIRO_INCLUDE_DIRS - the cairo include directory
 #  CAIRO_LIBRARIES - Link these to use cairo
 #
@@ -21,19 +21,15 @@ IF(NOT CAIRO_FOUND AND NOT PKG_CONFIG_FOUND)
 	# Report results
 	IF(CAIRO_LIBRARIES AND CAIRO_INCLUDE_DIRS)
 		SET(CAIRO_FOUND 1)
-		IF(NOT Cairo_FIND_QUIETLY)
-			MESSAGE(STATUS "Found Cairo: ${CAIRO_LIBRARIES}")
-		ENDIF(NOT Cairo_FIND_QUIETLY)
+		MESSAGE(STATUS "Found Cairo: ${CAIRO_LIBRARIES}")
 	ELSE(CAIRO_LIBRARIES AND CAIRO_INCLUDE_DIRS)	
-		IF(Cairo_FIND_REQUIRED)
-			MESSAGE(SEND_ERROR "Could not find Cairo")
-		ELSE(Cairo_FIND_REQUIRED)
-			IF(NOT Cairo_FIND_QUIETLY)
-				MESSAGE(STATUS "Could not find Cairo")	
-			ENDIF(NOT Cairo_FIND_QUIETLY)
-		ENDIF(Cairo_FIND_REQUIRED)
+		MESSAGE(SEND_ERROR "Could not find Cairo")
 	ENDIF(CAIRO_LIBRARIES AND CAIRO_INCLUDE_DIRS)
 ENDIF(NOT CAIRO_FOUND AND NOT PKG_CONFIG_FOUND)
+
+IF (CAIRO_FOUND)
+	SET(CAIRO_alt_FOUND 1)
+ENDIF()	
 
 # Hide advanced variables from CMake GUIs
 MARK_AS_ADVANCED(CAIRO_LIBRARIES CAIRO_INCLUDE_DIRS)

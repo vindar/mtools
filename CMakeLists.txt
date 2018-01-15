@@ -72,27 +72,25 @@ message(STATUS "")
 # zlib 
 find_package(ZLIB REQUIRED)
 
-# fltk, but we do not need fluid nor forms
-set(FLTK_SKIP_FLUID TRUE)
-set(FLTK_SKIP_FORMS TRUE)
-find_package(FltkConfig REQUIRED)
+# fltk, use custom find method
+find_package(FLTK_alt REQUIRED)
 
 # libpng
 find_package(PNG REQUIRED)
 
-# libjpeg
-find_package(JPEG REQUIRED)
+# libjpeg, use custom find method 
+find_package(JPEG_alt REQUIRED)
 
-#cimg
-find_package(CImg REQUIRED)
+# cimg, use custom find method 
+find_package(CIMG_alt REQUIRED)
 
 #### OPTIONAL ####
 message(STATUS "")
 message(STATUS "Checking optional libraries.")
 message(STATUS "")
 
-# cairo
-find_package(Cairo)
+# cairo, use custom find method 
+find_package(CAIRO_alt)
 
 #opengl 
 find_package(OpenGL)
