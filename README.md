@@ -86,8 +86,8 @@ int main(int argc, char *argv[])
 ![screenshot of helloWorldDemo](./examples/HelloWorldDemo/helloWorldDemo.png)
 
 ### Building the library
-The library is cross-platform. It works under Linux (GCC) and Windows (VS2015) and OSX (Clang/GCC) and depends on a few other libraries, mainly [CImg](http://cimg.eu/), [FLTK](http://www.fltk.org). The library uses recent C++ features so a (fairly) up to date compiler is required to build it. See '[INSTALL.TXT](https://github.com/vindar/mtools/blob/master/INSTALL.TXT)' for detailed instructions on how to build the library. 
-Once the library is built, the python script `mtools/mtools-project.py` can be used to created new projects that link against mtools.
+The library is cross-platform. It works under Linux (GCC) and Windows (VS2015/17) and OSX (Clang/GCC) and depends on a few other libraries, mainly [CImg](http://cimg.eu/) and [FLTK](http://www.fltk.org). The library uses recent C++ features so a (fairly) up to date compiler is required to build it. See '[INSTALL.TXT](https://github.com/vindar/mtools/blob/master/INSTALL.TXT)' for details on how to build the library. 
+Once the library is built, the python script `tools/mtools-project.py` can be used to created new cross-platform projects that link against mtools.
 
 ### What else...
 If you are looking for a nice C++ library that you can use to make simulations and create graphics, I strongly recommend that you look at [Vincent Beffara's simulation library](http://github.com/vbeffara/Simulations). It is very similar to mine and does pretty much the same things. If I had known about it a few years ago, I would probably now just use it and would never have written this one... In fact, while putting this library together, I borrowed the ideas of 'watch windows' and simple command-line parser from Vincent's library. There are many other neat features so go have a look at it.
