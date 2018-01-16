@@ -1,5 +1,5 @@
 *********************************************************************
-*                      INSTALLING MTOOLS                            *
+*                        INSTALLING MTOOLS                          *
 *                                                                   *
 * Copyright 2015 Arvind Singh                                       * 
 *                                                                   *
@@ -17,7 +17,6 @@
 *                                                                   *
 * You should have received a copy of the GNU General Public License *
 * along with mtools  If not, see <http://www.gnu.org/licenses/>.    *
-*                                                                   *
 *********************************************************************
 
 
@@ -48,7 +47,7 @@ A recent version of CMake is required (>= 3.10).
 Several flag can be set to configure the library: 
 
     - CONSOLE_ONLY [default 0] 
-      If set to 1, this flag disable the graphic mtools::cout console. 
+      If set to 1, this flag disable mtools::cout console. 
    
     - USE_SSE [default  0]
       Experimental, if set to 1, use SSE specific code. 
@@ -77,11 +76,11 @@ the environment variable CMAKE_CXX_COMPILER
 
 Examples: 
 
- cmake-mtools                                    [default build
+ cmake-mtools                                    [default build]
  cmake-mtools -DCONSOLE_ONLY=1 -DUSE_CAIRO=0     [no graphics and do not use cairo]
  cmake-mtools -DLOCAL_INSTALL=0                  [default build, install at default location]
  cmake-mtools -DUSE_OPENCL=0 -DCMAKE_CXX_COMPILER=/usr/bin/g++-7 [no opencl and use G++7 to build]
-	
+ cmake-mtools -DLOCAL_INSTALL=0	-DCMAKE_INSTALL_PREFIX=/usr/local  [custom install dir]
 	
 
 	
@@ -92,56 +91,50 @@ Examples:
 
 1) Make sure you use a recent version of gcc. Version 7 or later should do. 
    
-2) Make sure that python, pkg-config and the required libraries are installed.
+2) Make sure that cmake, python, pkg-config and the required libraries are 
+   installed (at least Zlib, libPNG, libJPEG, FLTK and Cimg)   
      - FLTK version should be at least 1.3.4
      - CImg is header only: just copy CImg.h somewhere the compiler can find it. 
-
 		
 3) Generate the makefiles
 
          cd mtools
          ./cmake-mtools [-DOPTION1 -DOPTION2 ...]
-	   
-	
+	   	
 4) Build the library
     
          make [-j N]
-
 		 
 5) If LOCAL_INSTALL=0, install the library with
 	  
          [sudo] make install
-	  
-	  
+	  	  
 4) build the examples
 
          cd examples
          make [-j N]
 	
-
 	
 *******************************************************************
 *                 Building the library on OSX                     *
 *******************************************************************
 
-1) All the support libraries can be installed with homebrew (http://brew.sh).
-   For instance:
+1) All the support libraries can be installed with homebrew 
+   (http://brew.sh). For instance:
    
          brew install python pkg-config glib libpng libjpeg freetype cimg pixman cairo fltk
-
 		
-2) gcc is recommended over clang (although both compiler should work)
-   It can be installed with
+2) gcc is recommended over clang (although both compiler should 
+   work). It can be installed with
 
          brew install gcc
 
-   
-3) Generate the makefiles, select the correct compiler with the CMAKE_CXX_COMPILER variable. 
+3) Generate the makefiles, select the correct compiler with the 
+   CMAKE_CXX_COMPILER variable. 
 
          cd mtools
          ./cmake-mtools [-DCMAKE_CXX_COMPILER=/usr/local/g++-7 -...]
 	   
-	
 4) Build the library
     
          make [-j N]
@@ -149,8 +142,7 @@ Examples:
 5) If LOCAL_INSTALL=0, install the library with
 	  
          [sudo] make install
-	  
-	  
+	  	  
 4) build the examples
 
          cd examples
@@ -159,78 +151,75 @@ Examples:
 
 		 
 *******************************************************************
-*              Building on Windows, with VS 2017                  *
+*              Building on Windows, with VS 2015/17               *
 *******************************************************************
 
-1) Install CMake (and, optionally Git). 
+1) Install CMake (and optionally Git for updating vcpkg). 
 
-2) Installing the support libraries
+2) Installing the support libraries:
 
    The easiest way it to use Microsoft's vcpkg package manager. 
    Installation is straightforward: open a powershell where vcpkg 
-   should go and type
+   should go and type:
    
-         git clone https://github.com/Microsoft/vcpkg
-         cd vcpkg
-         .\bootstrap-vcpkg.bat
-         .\vcpkg.exe integrate install
-         .\vcpkg.exe integrate powershell
+        git clone https://github.com/Microsoft/vcpkg
+        cd vcpkg
+        .\bootstrap-vcpkg.bat
+        .\vcpkg.exe integrate install
+        .\vcpkg.exe integrate powershell
 	
-    The library should be build for the triplet x64-windows. To make it  
-	the default triplet, create a system environment variable: 
+   The library should be build for the triplet [x64-windows]. To make 
+   it  the default triplet, create a system environment variable: 
 	
-	     VCPKG_DEFAULT_TRIPLET=x86-windows
+        VCPKG_DEFAULT_TRIPLET=x86-windows
 	
-	You MUST also create the system environment variable:
+   You MUST also create the system environment variable:
 	
-	     VCPKG_DIR=path\to\vcpkg\root\dir
+        VCPKG_DIR="path\to\vcpkg\root\dir"
 		
-	the external librairies can now be installed with, for instance, 
+   the external librairies can now be installed with, for instance, 
 	
-	     .\vcpkg.exe install zlib libpng libjpeg-turbo fltk opengl pixman cairo cimg 
+        .\vcpkg.exe install zlib libpng libjpeg-turbo fltk opengl pixman cairo cimg 
 		 
-	All set !
+   All set !
 	
-
 2) Generate the Visual studio solution files:
 
-         cd mtools
-         ./cmake-mtools [-DOPTION1 -DOPTION2 ...]
-	   
+        cd mtools
+        ./cmake-mtools [-DOPTION1 -DOPTION2 ...]	   
 	
-4) Use mtools/build/mtools.sln and build the library. 
-   If LOCAL_INSTALL=0 was given to cmake, the library is installed by running the 
-   project INSTALL inside the solution.
+4) Use mtools/build/mtools.sln VS solution file to build the library. 
+   If LOCAL_INSTALL=0 was given to cmake, the library is installed by 
+   running the project labelled INSTALL inside the solution.
 		 
 5) Use mtools/build/examples/examples.sln to build the examples. 
 	  
-
 
   
 *******************************************************************
 *               Using mtools in a new project                     *
 *******************************************************************
 
-The library be found by CMake using the usual find_package() function. 
-However, the simplest way to create a new project that is compatible 
-with Windows/Linux/OSX is to use the script mtools-project.py located in 
+The library can be found by CMake using the usual find_package() 
+function. However, the simplest way to create a new project that is 
+cross-platform is to use the script mtools-project.py located in 
 the /tools sub-directory (it is convenient to export mtools/tools/ to 
-PATH to that the script can be called from anywhere). Type,
+PATH so that the script can be called from anywhere). Then type:
          
-		 mtools-project.py [projectname]    create projectname
-		 cd [projectname]/build             enter the build sub-directory
-		 cmake ..                           run CMake to configure the project
+        mtools-project.py [projectname]    create projectname
+        cd [projectname]/build             enter the build directory
+        cmake ..                           configure the project
 
 On linux/OSX, use
 		 
-         make
+        make
 
 and on windows, use the VS solution file
 
-         /build/[projectname].sln
+        /build/[projectname].sln
 		 
-Then, as the project grows, customize the CMakeLists.txt located in the root 
-directory to suit your needs. 
+Then, as the project grows, customize the CMakeLists.txt located in 
+the root directory to suit your needs. 
   
 
   
@@ -238,7 +227,7 @@ directory to suit your needs.
 * ABOUT THE MTOOLS_SWAP_THREAD() MACRO                            *
 *******************************************************************  
   
-This macro 
+The macro 
  
      MTOOLS_SWAP_THREADS()
 
@@ -251,13 +240,13 @@ function.
 
 Remarks: 
 
-     - The macro is disabled on Linux and Windows and it can be removed
-     safely. However, it does no harm to keep it and it make the code 
-	 cross-plaftorm. 
+     - The macro is disabled on Linux and Windows and it can be 
+     removed safely. However, it does no harm to keep it and it 
+     make the code cross-plaftorm. 
    
-     - Beware that, on OSX, the macro is active hence the global objects 
-     are constructed with the main thread which is NOT the one that runs 
-	 the main() function !
+     - Beware that, on OSX, the macro is active hence the global 
+     objects are constructed with the main thread which is NOT 
+     the one that runs the main() function !
    
   
   
