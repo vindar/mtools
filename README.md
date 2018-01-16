@@ -83,6 +83,7 @@ int main(int argc, char *argv[])
   return 0;
   }
 ````
+![screenshot of helloWorldDemo](./examples/HelloWorldDemo/helloWorldDemo.png)
 
 ### Building the library
 The library is cross-platform. It works under Linux (GCC) and Windows (VS2015) and OSX (Clang/GCC) and depends on a few other libraries, mainly [CImg](http://cimg.eu/), [FLTK](http://www.fltk.org). The library uses recent C++ features so a (fairly) up to date compiler is required to build it. See '[INSTALL.TXT](https://github.com/vindar/mtools/blob/master/INSTALL.TXT)' for detailed instructions on how to build the library. 
