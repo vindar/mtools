@@ -55,7 +55,6 @@ if (_vcpkg_dir)
 	set(FLTK_FOUND 1)
 	set(FLTK_alt_FOUND 1)
 
-	mark_as_advanced
 	mark_as_advanced(FLTK_D_PATH)
 	mark_as_advanced(FLTK_R_PATH)
 	mark_as_advanced(FLTK_MAIN_LIBRARY_RELEASE)

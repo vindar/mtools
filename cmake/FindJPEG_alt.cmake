@@ -10,13 +10,15 @@ if (_vcpkg_dir)
 
 	# using vcpkg, bypass usual find method to allwo both debug and release build
 	
-	find_library(JPEG_LIBRARY_RELEASE  turnojpeg)
-	find_library(JPEG_LIBRARY_DEBUG  turbojpeg)
-	
 	find_path(JPEG_INCLUDE_DIR "jpeglib.h")
-
-	if(JPEG_INCLUDE_DIR AND JPEG_LIBRARY_RELEASE AND JPEG_LIBRARY_DEBUG)
+	
+	
+	if(JPEG_INCLUDE_DIR)
 			
+		get_filename_component(JPEG_BASE_PATH "${JPEG_INCLUDE_DIR}" DIRECTORY)
+		set(JPEG_LIBRARY_RELEASE  "${JPEG_BASE_PATH}/lib/turbojpeg.lib")
+		set(JPEG_LIBRARY_DEBUG  "${JPEG_BASE_PATH}/debug/lib/turbojpeg.lib")
+
 		# Create JPEG_LIBRARIES from JPEG_LIBRARY_DEBUG and JPEG_LIBRARY_RELEASE
 		select_library_configurations(JPEG)		
 		
@@ -29,7 +31,7 @@ if (_vcpkg_dir)
 
 	else()
 	
-		message(FATAL_ERROR "JPEG NOT found.)")
+		message(FATAL_ERROR "libjpeg not found (using vcpkg)")
 
 	endif()	
 			

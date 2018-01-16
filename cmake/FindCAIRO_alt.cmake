@@ -7,16 +7,43 @@
 #
 
 
+macro(find_library_flag LIBNAME LIBFILE FLAG)
+
+	find_library(TMPLIBNAME  ${LIBFILE})
+	if(NOT TMPLIBNAME)
+		set(FLAG 0)
+	else()
+		set(LIBNAME ${LIBNAME} ${TMPLIBNAME})
+	endif()	
+	message(STATUS "TMPLIBNAME : ${TMPLIBNAME}")
+endmacro()
 
 
-if (_vcpkg_dir)
 
-	# using vcpkg, bypass usual find method to allwo both debug and release build
+if (VCPKG_TOOLCHAIN)
+
+	# using vcpkg, bypass usual find method to manage both debug and release build
 	
-	find_library(CAIRO_MAIN_LIBRARY_RELEASE  cairo)
-	find_library(CAIRO_MAIN_LIBRARY_DEBUG  cairod)
-	find_library(CAIRO_PIXMAN_LIBRARY_RELEASE  pixman)
-	find_library(CAIRO_PIXMAN_LIBRARY_DEBUG  pixmand)
+	set (FOUND_ALL_LIB 1)
+	set (CAIRO_LIBRARY_RELEASE "")
+	set (CAIRO_LIBRARY_DEBUG "")
+	
+	find_library_flag(CAIRO_LIBRARY_RELEASE  cairo FOUND_ALL_LIB)
+	message(STATUS "CAIRO_LIBRARY_RELEASE : ${CAIRO_LIBRARY_RELEASE}")
+	message(STATUS "CAIRO_LIBRARY_DEBUG : ${CAIRO_LIBRARY_DEBUG}")
+	find_library_flag(CAIRO_LIBRARY_RELEASE  pixman FOUND_ALL_LIB)
+	message(STATUS "CAIRO_LIBRARY_RELEASE : ${CAIRO_LIBRARY_RELEASE}")
+	message(STATUS "CAIRO_LIBRARY_DEBUG : ${CAIRO_LIBRARY_DEBUG}")
+	find_library_flag(CAIRO_LIBRARY_DEBUG  cairod FOUND_ALL_LIB)
+	message(STATUS "CAIRO_LIBRARY_RELEASE : ${CAIRO_LIBRARY_RELEASE}")
+	message(STATUS "CAIRO_LIBRARY_DEBUG : ${CAIRO_LIBRARY_DEBUG}")
+	find_library_flag(CAIRO_LIBRARY_DEBUG  pixmand FOUND_ALL_LIB)
+	message(STATUS "CAIRO_LIBRARY_RELEASE : ${CAIRO_LIBRARY_RELEASE}")
+	message(STATUS "CAIRO_LIBRARY_DEBUG : ${CAIRO_LIBRARY_DEBUG}")
+	
+	if (NOT FOUND_ALL_LIB)
+		message(status "cairo NOT found")
+	endif()
 	
 	find_path(CAIRO_INCLUDE_DIRS "cairo.h")
 
@@ -62,10 +89,13 @@ else()
 		endif()
 	endif()
 
-if (CAIRO_FOUND)
-	set(CAIRO_alt_FOUND 1)
-endif()	
+	if (CAIRO_FOUND)
+		set(CAIRO_alt_FOUND 1)
+	endif()	
+
+endif()
 
 
 mark_as_advanced(CAIRO_LIBRARIES CAIRO_INCLUDE_DIRS)
+
 
