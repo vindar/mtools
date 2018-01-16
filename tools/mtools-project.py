@@ -60,8 +60,8 @@ cmakeFile = r"""################################################
 
 cmake_minimum_required(VERSION 3.10.1)
 
-# look for vcpkg on windows
 if( WIN32 )
+	# look for vcpkg on windows
 	if (DEFINED ENV{VCPKG_DIR})
 		string(REPLACE "\\" "/" _vcpkg_dir "$ENV{VCPKG_DIR}")
 	else ()
@@ -76,6 +76,10 @@ if( WIN32 )
 	else()
 		message(STATUS "Windows: vcpkg not found.")	
 	endif()
+	
+    # only Debug and Release configurations
+    SET(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "" FORCE)
+	
 endif()
 
 # use the same compilers as that used for compiling mtools
