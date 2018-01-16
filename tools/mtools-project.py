@@ -137,8 +137,8 @@ else:
 	
 # display an error msg
 def error(msg):
-	print "*** ERROR ***"
-	print msg
+	print("*** ERROR ***")
+	print(msg)
 	raw_input("Press Enter to continue...")
 	sys.exit(0)
 	
@@ -191,8 +191,8 @@ else:
 	
 	
 #done !
-print "\n*** Project " + project_name + " created ! ***"
-print "***  the project files are located in the '\\build' directory\n"
+print("\n*** Project " + project_name + " created ! ***")
+print("    the project files are located in the '\\build' directory\n")
 
 if sys.platform.startswith('win32'):
 	raw_input("Press Enter to continue...")
