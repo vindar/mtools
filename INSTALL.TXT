@@ -47,29 +47,28 @@ A recent version of CMake is required (>= 3.10).
 
 Several flag can be set to configure the library: 
 
- - CONSOLE_ONLY [default 0] 
-   If set to 1, this flag disable the graphic mtools::cout console. 
+    - CONSOLE_ONLY [default 0] 
+      If set to 1, this flag disable the graphic mtools::cout console. 
    
- - USE_SSE [default  0]
-   Experimental, if set to 1, use SSE specific code. 
+    - USE_SSE [default  0]
+      Experimental, if set to 1, use SSE specific code. 
    
- - USE_CAIRO [default = 1 if Cairo present, 0 otherwise]
-   If set to 1, use the Cairo library. 
+    - USE_CAIRO [default = 1 if Cairo present, 0 otherwise]
+      If set to 1, use the Cairo library. 
 
- - USE_OPENGL [default = 1 if OpenGL present, 0 otherwise]
-   If set to 1, use OpenGL. 
+    - USE_OPENGL [default = 1 if OpenGL present, 0 otherwise]
+      If set to 1, use OpenGL. 
    
- - USE_OPENCL [default = 1 if OpenCL present, 0 otherwise]
-   If set to 1, use OpenCL for specific GPU accelerated code.
+    - USE_OPENCL [default = 1 if OpenCL present, 0 otherwise]
+      If set to 1, use OpenCL for specific GPU accelerated code.
    
- - USE_OPENMP [default = 1 if OpenMP supported, 0 otherwise]
-   If set to 1, use OpenMP. 
+    - USE_OPENMP [default = 1 if OpenMP supported, 0 otherwise]
+      If set to 1, use OpenMP. 
 
-
- - LOCAL_INSTALL [default 1] 
-   By default the library in not installed but used directly from 
-   the build tree. If LOCAL_INSTALL=0, then the library will be 
-   installed inside the directory pointed by CMAKE_INSTALL_PREFIX. 
+    - LOCAL_INSTALL [default 1] 
+      By default the library in not installed but used directly from 
+      the build tree. If LOCAL_INSTALL=0, then the library will be 
+      installed inside the directory pointed by CMAKE_INSTALL_PREFIX. 
  
    
 The compiler to use to build the library can be specified by setting
@@ -94,8 +93,8 @@ Examples:
 1) Make sure you use a recent version of gcc. Version 7 or later should do. 
    
 2) Make sure that python, pkg-config and the required libraries are installed.
-    - FLTK version should be at least 1.3.4
-    - CImg is header only: just copy CImg.h somewhere the compiler can find it. 
+     - FLTK version should be at least 1.3.4
+     - CImg is header only: just copy CImg.h somewhere the compiler can find it. 
 
 		
 3) Generate the makefiles
@@ -128,13 +127,13 @@ Examples:
 1) All the support libraries can be installed with homebrew (http://brew.sh).
    For instance:
    
-        brew install python pkg-config glib libpng libjpeg freetype cimg pixman cairo fltk
+         brew install python pkg-config glib libpng libjpeg freetype cimg pixman cairo fltk
 
 		
 2) gcc is recommended over clang (although both compiler should work)
    It can be installed with
 
-        brew install gcc
+         brew install gcc
 
    
 3) Generate the makefiles, select the correct compiler with the CMAKE_CXX_COMPILER variable. 
@@ -245,10 +244,10 @@ This macro
 
 should be put on the top of the source file containing the main() 
 entry point. it is a dirty dirty hack to deal with the restriction
-on OSX that only the main thread can handle graphics. Thus, this 
-macro pre-emt the main thread and use it on the background for 
-drawing graphics whereas an alternate thread is created that run 
-the main() function. 
+that only the main thread can handle graphics on OSX. this macro
+preempt the main thread and use it on the background for drawing 
+graphics whereas an alternate thread is created that run the main() 
+function. 
 
 Remarks: 
 
