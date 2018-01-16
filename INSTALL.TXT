@@ -98,25 +98,25 @@ Examples:
 
 		
 3) Generate the makefiles
-    
-	     cd mtools
+
+         cd mtools
          ./cmake-mtools [-DOPTION1 -DOPTION2 ...]
 	   
 	
 4) Build the library
     
-	     make [-j N]
+         make [-j N]
 
 		 
 5) If LOCAL_INSTALL=0, install the library with
 	  
-        [sudo] make install
+         [sudo] make install
 	  
 	  
 4) build the examples
 
          cd examples
-	     make [-j N]
+         make [-j N]
 	
 
 	
@@ -137,14 +137,14 @@ Examples:
 
    
 3) Generate the makefiles, select the correct compiler with the CMAKE_CXX_COMPILER variable. 
-    
-	     cd mtools
+
+         cd mtools
          ./cmake-mtools [-DCMAKE_CXX_COMPILER=/usr/local/g++-7 -...]
 	   
 	
 4) Build the library
     
-	     make [-j N]
+         make [-j N]
 	  
 5) If LOCAL_INSTALL=0, install the library with
 	  
@@ -154,7 +154,7 @@ Examples:
 4) build the examples
 
          cd examples
-	     make [-j N]
+         make [-j N]
 
 
 		 
@@ -173,8 +173,8 @@ Examples:
          git clone https://github.com/Microsoft/vcpkg
          cd vcpkg
          .\bootstrap-vcpkg.bat
-		 .\vcpkg.exe integrate install
-		 .\vcpkg.exe integrate powershell
+         .\vcpkg.exe integrate install
+         .\vcpkg.exe integrate powershell
 	
     The library should be build for the triplet x64-windows. To make it  
 	the default triplet, create a system environment variable: 
@@ -194,7 +194,7 @@ Examples:
 
 2) Generate the Visual studio solution files:
 
-	     cd mtools
+         cd mtools
          ./cmake-mtools [-DOPTION1 -DOPTION2 ...]
 	   
 	
@@ -218,8 +218,8 @@ the /tools sub-directory (it is convenient to export mtools/tools/ to
 PATH to that the script can be called from anywhere). Type,
          
 		 mtools-project.py [projectname]    create projectname
-		 cd [projectname]/build			    enter the build sub-directory
-		 cmake ..						    run CMake to configure the project
+		 cd [projectname]/build             enter the build sub-directory
+		 cmake ..                           run CMake to configure the project
 
 On linux/OSX, use
 		 
