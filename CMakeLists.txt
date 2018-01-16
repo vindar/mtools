@@ -1,16 +1,18 @@
 ###############################################################################
 ###############################################################################
 #
-#                       CMakeList for mtools. 
+#                       CMakeList for mtools library 
 #
 ###############################################################################
 ###############################################################################
 cmake_minimum_required(VERSION 3.10.1)
 
 message(STATUS "")
-message(STATUS "************************************************")
-message(STATUS "*             MTOOLS CONFIGURATION             *")
-message(STATUS "************************************************")
+message(STATUS "***************************************************************")
+message(STATUS "*                                                             *")
+message(STATUS "*                   MTOOLS CONFIGURATION                      *")
+message(STATUS "*                                                             *")
+message(STATUS "***************************************************************")
 message(STATUS "")
 
 
@@ -48,7 +50,7 @@ endif()
 ###############################################################################
 file(READ VERSION MTOOLS_VERSION 10)
 message(STATUS "")
-message(STATUS "Configuring the library [version ${MTOOLS_VERSION}]")
+message(STATUS "library version: ${MTOOLS_VERSION}")
 message(STATUS "-------------------------------------")
 message(STATUS "")
 
@@ -84,6 +86,20 @@ find_package(JPEG_alt REQUIRED)
 # cimg, use custom find method 
 find_package(CIMG_alt REQUIRED)
 
+if (NOT ZLIB_FOUND OR NOT FLTK_FOUND OR NOT PNG_FOUND OR NOT JPEG_FOUND OR NOT CIMG_FOUND)
+	message(STATUS "")
+	message(STATUS "***************************************************************")	
+	message(STATUS "*                           ERROR                             *")
+	message(STATUS "***************************************************************")
+	message(STATUS "Some required libraries could not be found.")
+	message(FATAL_ERROR "Aborting configuration script..." )
+else()
+	message(STATUS "")
+	message(STATUS "OK. All required library present.")
+	message(STATUS "-------------------------------------")
+	message(STATUS "")
+endif()
+
 #### OPTIONAL ####
 message(STATUS "")
 message(STATUS "Checking optional libraries.")
@@ -106,27 +122,20 @@ find_package(OpenMP)
 # set the configuration options and create mtools-config.hpp
 ###############################################################################
 
-message(STATUS "")
-message(STATUS "compilation options:")
-message(STATUS "")
 
 option(CONSOLE_ONLY "console only mode" OFF)    
 if (CONSOLE_ONLY)
     set(MTOOLS_BASIC_CONSOLE 1)
-    message(STATUS "  CONSOLE_ONLY = 1  (console mode)")
 else ()
     set(MTOOLS_BASIC_CONSOLE 0)
-    message(STATUS "  CONSOLE_ONLY = 0  (graphic mode)")
 endif ()
 
 
 option(USE_SSE "use SSE specific code" OFF)    
 if (USE_SSE)
     set(MTOOLS_SSE 1)
-    message(STATUS "  USE_SSE = 1       (enable specific SSE code)")
 else ()
     set(MTOOLS_SSE 0)
-    message(STATUS "  USE_SSE = 0       (disable specific SSE code)")
 endif ()
 
 
@@ -135,10 +144,8 @@ if (CAIRO_FOUND)
 endif()
 if (USE_CAIRO)
     set(MTOOLS_CAIRO 1)
-    message(STATUS "  USE_CAIRO = 1     (enabled)")
 else ()
     set(MTOOLS_CAIRO 0)
-    message(STATUS "  USE_CAIRO = 0     (disabled)")
 endif ()
 
 
@@ -147,10 +154,8 @@ if (OpenGL_OpenGL_FOUND)
 endif()
 if (USE_OPENGL)
     set(MTOOLS_OPENGL 1)
-    message(STATUS "  USE_OPENGL = 1    (enabled)")
 else ()
     set(MTOOLS_OPENGL 0)
-    message(STATUS "  USE_OPENGL = 0    (disabled)")
 endif ()
 
 
@@ -160,10 +165,8 @@ if (OpenCL_FOUND)
 endif()
 if (USE_OPENCL)
     set(MTOOLS_OPENCL 1)
-    message(STATUS "  USE_OPENCL = 1    (enabled, version ${MTOOLS_OPENCL_VERSION})")
 else ()
     set(MTOOLS_OPENCL 0)
-    message(STATUS "  USE_OPENCL = 0    (disabled)")
 endif ()
 
 
@@ -173,10 +176,8 @@ if (OpenMP_CXX_FOUND)
 endif()
 if (USE_OPENMP)
     set(MTOOLS_OPENMP 1)
-    message(STATUS "  USE_OPENMP = 1    (enabled, version ${MTOOLS_OPENMP_VERSION})")
 else ()
     set(MTOOLS_OPENMP 0)
-    message(STATUS "  USE_OPENMP = 0    (disabled)")
 endif ()
 
 message(STATUS "")
@@ -192,31 +193,14 @@ file(GLOB_RECURSE _mtools_hpp_files ./include/*.hpp ./include/*.h)
 
 
 ###############################################################################
-# set installation path. 
-###############################################################################
-
-
-option(LOCAL_INSTALL "local installation" ON)    
-
-if (LOCAL_INSTALL)
-    message(STATUS "")
-    message(STATUS "mtools will be installed locally (LOCAL_INSTALL = 1)")
-    message(STATUS "")
-else()
-    message(STATUS "")
-    message(STATUS "mtools will be installed in [${CMAKE_INSTALL_PREFIX}] (LOCAL_INSTALL = 0).")
-    message(STATUS "")    
-endif()
-
-
-###############################################################################
 # create the library
 ###############################################################################
-
 
 add_library(mtools STATIC ${_mtools_cpp_files} ${_mtools_hpp_files})
 
 target_include_directories(mtools PRIVATE ./include/mtools)         # for commodity, so that cpp source file of the lib do not need to subdir mtools. 
+
+option(LOCAL_INSTALL "local installation" ON)    
 
 if (LOCAL_INSTALL)
     # local installation
@@ -394,52 +378,98 @@ MARK_AS_ADVANCED(FLTK_INCLUDE_DIR)
 add_subdirectory(./examples EXCLUDE_FROM_ALL)
 
 
-
 ###############################################################################
 # display infos
 ###############################################################################
-if (NOT WIN32)
-	message(STATUS "")
-	message(STATUS "************************************************")
-	message(STATUS "*      MTOOLS CONFIGURATION COMPLETED          *")
-	message(STATUS "*                                              *")
-	message(STATUS "* - Run 'make' inside the subdirectory 'build' *")
-	message(STATUS "*   to build the library                       *")
-	message(STATUS "*                                              *")
-	if (LOCAL_INSTALL)
-	message(STATUS "* - No installation (use the local build tree) *")
-	message(STATUS "*   Add the '/tools' subdir to PATH to use the *")	
-	message(STATUS "*   script 'mtools-config.py'.                 *")	
-	message(STATUS "*                                              *")
-	else()
-	message(STATUS "* - Then install it with '(sudo) make install' *")
-	endif()
-	message(STATUS "*                                              *")
-	message(STATUS "* Use 'make' inside ./examples to build the    *")
-	message(STATUS "* examples                                     *")
-	message(STATUS "************************************************")
-	message(STATUS "")
+
+message(STATUS "")
+message(STATUS "compilation options:")
+message(STATUS "-------------------------------------")
+message(STATUS "")
+
+if (CONSOLE_ONLY)
+    message(STATUS "  CONSOLE_ONLY = 1  (console mode)")
 else ()
-	message(STATUS "")
-	message(STATUS "************************************************")
-	message(STATUS "*      MTOOLS CONFIGURATION COMPLETED          *")
-	message(STATUS "*                                              *")
-	message(STATUS "* - open 'built/mtools.sln' to build the lib.  *")
-	message(STATUS "*                                              *")
-	if (LOCAL_INSTALL)
-	message(STATUS "* - No installation (use the local build tree) *")
-	message(STATUS "*   Add the '/tools' subdir to PATH to use the *")	
-	message(STATUS "*   script 'mtools-config.py'.                 *")		
-	message(STATUS "*                                              *")
-	else()
-	message(STATUS "* - and install it with the INSTALL script     *")
-	endif()
-	message(STATUS "*                                              *")
-	message(STATUS "* - open solution ./examples/examples.sln to   *")
-	message(STATUS "*   build the examples                         *")
-	message(STATUS "************************************************")
-	message(STATUS "")
+    message(STATUS "  CONSOLE_ONLY = 0  (graphic mode)")
+endif ()
+
+if (USE_SSE)
+    message(STATUS "  USE_SSE = 1       (enable specific SSE code)")
+else ()
+    message(STATUS "  USE_SSE = 0       (disable specific SSE code)")
+endif ()
+
+if (USE_CAIRO)
+    message(STATUS "  USE_CAIRO = 1     (enabled)")
+else ()
+    message(STATUS "  USE_CAIRO = 0     (disabled)")
+endif ()
+
+if (USE_OPENGL)
+    message(STATUS "  USE_OPENGL = 1    (enabled)")
+else ()
+    message(STATUS "  USE_OPENGL = 0    (disabled)")
+endif ()
+
+if (USE_OPENCL)
+    message(STATUS "  USE_OPENCL = 1    (enabled, version ${MTOOLS_OPENCL_VERSION})")
+else ()
+    message(STATUS "  USE_OPENCL = 0    (disabled)")
+endif ()
+
+if (USE_OPENMP)
+    message(STATUS "  USE_OPENMP = 1    (enabled, version ${MTOOLS_OPENMP_VERSION})")
+else ()
+    message(STATUS "  USE_OPENMP = 0    (disabled)")
+endif ()
+
+message(STATUS "")
+
+if (LOCAL_INSTALL)
+    message(STATUS "")
+    message(STATUS "  LOCAL_INSTALL = 1  -> mtools will used locally (no installation)")
+    message(STATUS "")
+else()
+    message(STATUS "")
+    message(STATUS "  LOCAL_INSTALL = 0  -> mtools will be installed in")
+	message(STATUS "  CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}")
+    message(STATUS "")    
 endif()
+
+	message(STATUS "")
+	message(STATUS "****************************************************************")
+	message(STATUS "*                     CONFIGURATION DONE.                      *")
+	message(STATUS "*                                                              *")
+if (NOT WIN32)
+	message(STATUS "* - Run 'make' inside the '/build' sub-directory to build the  *")
+	message(STATUS "*   library                                                    *")
+	message(STATUS "*                                                              *")
+	if (LOCAL_INSTALL)
+	message(STATUS "* - No installation (use the local build tree)                 *")
+	message(STATUS "*   Add the '/tools' subdir to PATH to use 'mtools-config.py'  *")	
+	message(STATUS "*                                                              *")
+	else()
+	message(STATUS "* - Then install it with '[sudo] make install'                 *")
+	endif()
+	message(STATUS "*                                                              *")
+	message(STATUS "* - Run 'make all' inside './examples' to build the examples   *")
+else ()
+	message(STATUS "* - Open the solution '/built/mtools.sln' to build the library *")
+	message(STATUS "*                                                              *")
+	if (LOCAL_INSTALL)
+	message(STATUS "* - No installation (use the local build tree)                 *")
+	message(STATUS "*   Add the '/tools' subdir to PATH to use 'mtools-config.py'  *")		
+	message(STATUS "*                                                              *")
+	else()
+	message(STATUS "* - Then install with the INSTALL project inside the solution  *")
+	endif()
+	message(STATUS "*                                                              *")
+	message(STATUS "* - Open the solution file ./examples/examples.sln to build    *")
+	message(STATUS "*   the examples                                               *")
+endif()
+	message(STATUS "*                                                              *")
+	message(STATUS "****************************************************************")
+	message(STATUS "")
 
 ###############################################################################
 #end of file
