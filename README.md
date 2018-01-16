@@ -10,7 +10,7 @@
 
 This repository contain a collection of C++ classes I created for simulations of exotic stochastic processes and for displaying graphics. It consists of code that I accumulated over the years which I finally decided to gather inside a library (hence the sometimes incoherent naming convention that switches between camelCase and snake_case).  
 
-Using the library is pretty straightforward. Every class/function is located under the `mtools` namespace. The `#include "mtools.hpp"` directive includes all other required headers. Th library itself is divided in several components:
+Using the library is pretty straightforward. Every class/function is located under the `mtools` namespace. The `#include "mtools.hpp"` directive includes all other required headers. The library itself is divided into several components:
 
   - **randomgen/** : Implementation of some classical random number generators such as the Mersenne Twister, Xorgen... and some classes to generate specific probability distributions such as stable laws, distribution of SRW...
 
