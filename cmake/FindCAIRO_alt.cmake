@@ -49,11 +49,16 @@ endif()
 if (NOT CAIRO_FOUND)
 	#try to find cairo the usual way
 	
-	find_package(PkgConfig)
+	find_package(PkgConfig QUIET)
 
 	if (PKG_CONFIG_FOUND)
 	
 		pkg_search_module(CAIRO cairo QUIET)
+		if (CAIRO_FOUND)
+			list (GET CAIRO_LIBRARIES 0 RELPATH)
+			message(STATUS "Found CAIRO (pkg-config): [${RELPATH}]")		
+			set(CAIRO_FOUND 1)
+		endif()
 	
 	else()
 	
@@ -86,6 +91,7 @@ else()
 endif()
 
 mark_as_advanced(CAIRO_LIBRARIES CAIRO_INCLUDE_DIRS)
+mark_as_advanced(TMPLIBNAME)
 
 
 
