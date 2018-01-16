@@ -1,202 +1,266 @@
-*******************************************************************
-*                                                                 *
-*                    INSTALLATION OF MTOOLS                       *
-*                                                                 *
-*******************************************************************
+*********************************************************************
+*                      INSTALLING MTOOLS                            *
+*                                                                   *
+* Copyright 2015 Arvind Singh                                       * 
+*                                                                   *
+* This file is part of the mtools library.                          *
+*                                                                   *
+* mtools is free software: you can redistribute it and/or modify    *
+* it under the terms of the GNU General Public License as published *
+* by the Free Software Foundation, either version 3 of the License, *
+* or (at your option) any later version.                            *
+*                                                                   *
+* This library is distributed in the hope that it will be useful,   *
+* but WITHOUT ANY WARRANTY; without even the implied warranty of    *
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the      *
+* GNU General Public License for more details.                      *
+*                                                                   *
+* You should have received a copy of the GNU General Public License *
+* along with mtools  If not, see <http://www.gnu.org/licenses/>.    *
+*                                                                   *
+*********************************************************************
+
 
 The library depend on a few external libraries:
 
-    - CImg (http://cimg.eu) [image library]
-    - fltk (http://www.fltk.org) [gui library]
-    - zlib (http://www.zlib.net) [compression library]
-    - libpng (http://www.libpng.org) [reading/writing png images]
-    - libjpeg (http://www.ijg.org/) [reading/writing jpeg images]
-    - cairo (http://cairographics.org/) [2D graphics]
+    - CImg (http://cimg.eu)
+    - fltk (http://www.fltk.org)
+    - zlib (http://www.zlib.net)
+    - libpng (http://www.libpng.org)
+    - libjpeg (http://www.ijg.org/)
 
 and optionally
     
-    - openCL (https://www.khronos.org/opencl/) [GPU programming]
+    - openCL (https://www.khronos.org/opencl/)
+    - openGL (https://www.opengl.org/)
+    - cairo (http://cairographics.org/)
     
 
+	
+*********************************************************************
+*                          CMAKE OPTIONS                            *
+*********************************************************************
+	
+	
+The library project files are generated with CMake (https://cmake.org/)
+A recent version of CMake is required (>= 3.10). 
 
-*****************************************************
-*                    On Windows                     *
-*****************************************************
-[tested on Windows 10 with VS2015 Community]
+Several flag can be set to configure the library: 
 
-1) Installation of the external libraries
-
-The repository 'https://github.com/vindar/mtools-dependencies' contain VS2015
-builds of all the required library. Copy the 'mtools-dependencies/' folder where 
-you want and then run the 'setup-mtools-dependencies.bat' script with admin. rights 
-and follow the instructions.
-
-NOTE: In order to use the openCL extension, an openCL SDK (either Intel's, NVIDIA's
-or AMD's) must be installed BEFORE running 'setup-mtools-dependencies.bat'. Check
-'/openCL/install-howto.txt' for details.
-
-
-2) Configuring mtools
-
-Run the 'setup-mtools.bat' script located at the root of the mtools source tree
-with admin rights to configure the library. 
-
-
-3) Building the library. 
-
-Open the 'mtools.sln' solution file located at the root of the mtools source tree.
-The solution contain two projects: the library itself and a test project. Set 
-'test' as the start project for the solution (right click on test in the solution 
-window and set it as the start project). The usual build options are a available:
-
-  - debug/release : Build for debug or release mode.
-  - Win32/x64 : Build for 32 or 64 bits instruction set.
-
-Build all the configurations needed. Hopefully it should compile without errors. 
-You can then now run the test program to check if things are working ok.
-
-
-4) Building the examples.
-
-They are located in the examples/ directory. The solution file Examples.sln contain 
-all the example projects. There is also a .sln for specific to each example inside 
-its sub-folder.
-
-
-*****************************************************
-*                     On Linux                      *
-*****************************************************
-[tested on Ubuntu /Linux Mint/ Debian-like distrib..]
-
-1) Make sure you use a recent version of gcc. Version 6 or later is needed.
-   You can install the lastest version (gcc-7 at the time of writing) with:
+ - CONSOLE_ONLY [default 0] 
+   If set to 1, this flag disable the graphic mtools::cout console. 
    
-        sudo add-apt-repository ppa:ubuntu-toolchain-r/test
-        sudo apt-get update
-        sudo apt-get install gcc-7 g++-7
-        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 10
-        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-7 10
+ - USE_SSE [default  0]
+   Experimental, if set to 1, use SSE specific code. 
    
+ - USE_CAIRO [default = 1 if Cairo present, 0 otherwise]
+   If set to 1, use the Cairo library. 
 
-2) Make sure that python, pkg-config and the following libraries are installed:  
-   libmesa, libpng, libjpeg, freetype, pixman, cairo. 
-    
-        sudo apt-get install python pkg-config libfreetype6-dev libglu1-mesa-dev libpng-dev libjpeg-dev libpixman-1-dev libcairo2-dev
-       
-       
-3) The version of fltk installed via apt-get is outdated. It is best to build it 
-   directly from the sources which can be download at: http://www.fltk.org/. The
-   build steps are:
+ - USE_OPENGL [default = 1 if OpenGL present, 0 otherwise]
+   If set to 1, use OpenGL. 
    
-        ./configure --enable-threads --enable-cairo
-        make
-        sudo make install
+ - USE_OPENCL [default = 1 if OpenCL present, 0 otherwise]
+   If set to 1, use OpenCL for specific GPU accelerated code.
+   
+ - USE_OPENMP [default = 1 if OpenMP supported, 0 otherwise]
+   If set to 1, use OpenMP. 
 
-		
-4) The version of CImg installed via apt-get is also outdated. However, the library
-   consist of a single header file. Download the latest version from http://cimg.eu 
-   and copy the file 'CImg.h' to /usr/local/include.
-  
+
+ - LOCAL_INSTALL [default 1] 
+   By default the library in not installed but used directly from 
+   the build tree. If LOCAL_INSTALL=0, then the library will be 
+   installed inside the directory pointed by CMAKE_INSTALL_PREFIX. 
  
-5) Install the openCL drivers if you want to use it in mtools. 
-
-
-6) cd into mtools root directory and run the script 'setup-mtools.sh' to configure the
-   library.
    
-		./setup-mtools.sh
+The compiler to use to build the library can be specified by setting
+the environment variable CMAKE_CXX_COMPILER 
 
 
-7) cd into mtools's /linux sub-directory and then run 
-   		
-        make
+Examples: 
+
+ cmake-mtools                                    [default build
+ cmake-mtools -DCONSOLE_ONLY=1 -DUSE_CAIRO=0     [no graphics and do not use cairo]
+ cmake-mtools -DLOCAL_INSTALL=0                  [default build, install at default location]
+ cmake-mtools -DUSE_OPENCL=0 -DCMAKE_CXX_COMPILER=/usr/bin/g++-7 [no opencl and use G++7 to build]
+	
+	
+
+	
+*********************************************************************
+*              Building the library on Linux (and co)               *
+*********************************************************************
+
+
+1) Make sure you use a recent version of gcc. Version 7 or later should do. 
+   
+2) Make sure that python, pkg-config and the required libraries are installed.
+    - FLTK version should be at least 1.3.4
+    - CImg is header only: just copy CImg.h somewhere the compiler can find it. 
+
 		
-   this will build the library and the test program.
-  
-  
-8) You can install the library in /usr/local with the command 
-
-       sudo make install
+3) Generate the makefiles
+    
+	     cd mtools
+         ./cmake-mtools [-DOPTION1 -DOPTION2 ...]
 	   
-   or you can install it somewhere else by specifying the install dir with
+	
+4) Build the library
+    
+	     make [-j N]
+
+		 
+5) If LOCAL_INSTALL=0, install the library with
+	  
+        [sudo] make install
+	  
+	  
+4) build the examples
+
+         cd examples
+	     make [-j N]
+	
+
+	
+*******************************************************************
+*                 Building the library on OSX                     *
+*******************************************************************
+
+1) All the support libraries can be installed with homebrew (http://brew.sh).
+   For instance:
    
-       [sudo] make install prefix=/my/path
+        brew install python pkg-config glib libpng libjpeg freetype cimg pixman cairo fltk
+
+		
+2) gcc is recommended over clang (although both compiler should work)
+   It can be installed with
+
+        brew install gcc
+
+   
+3) Generate the makefiles, select the correct compiler with the CMAKE_CXX_COMPILER variable. 
+    
+	     cd mtools
+         ./cmake-mtools [-DCMAKE_CXX_COMPILER=/usr/local/g++-7 -...]
 	   
-   Alternatively, if you do not wish to install the library, you can just
-   add the following 3 lines to your .bash_profile/.bashrc : 
+	
+4) Build the library
+    
+	     make [-j N]
+	  
+5) If LOCAL_INSTALL=0, install the library with
+	  
+         [sudo] make install
+	  
+	  
+4) build the examples
+
+         cd examples
+	     make [-j N]
+
+
+		 
+*******************************************************************
+*              Building on Windows, with VS 2017                  *
+*******************************************************************
+
+1) Install CMake (and, optionally Git). 
+
+2) Installing the support libraries
+
+   The easiest way it to use Microsoft's vcpkg package manager. 
+   Installation is straightforward: open a powershell where vcpkg 
+   should go and type
    
-       export PATH="$PATH:MTOOLSDIR/tools/bin"
-       export CPATH="$CPATH:MTOOLSDIR/mtools/headers"
-       export LIBRARY_PATH="$LIBRARY_PATH:MTOOLSDIR/mtools/linux/lib"
-  
-  where MTOOLSDIR is mtools's directory. 
-  
-  
-9) To build the examples, run the script:
+         git clone https://github.com/Microsoft/vcpkg
+         cd vcpkg
+         .\bootstrap-vcpkg.bat
+		 .\vcpkg.exe integrate install
+		 .\vcpkg.exe integrate powershell
+	
+    The library should be build for the triplet x64-windows. To make it  
+	the default triplet, create a system environment variable: 
+	
+	     VCPKG_DEFAULT_TRIPLET=x86-windows
+	
+	You MUST also create the system environment variable:
+	
+	     VCPKG_DIR=path\to\vcpkg\root\dir
+		
+	the external librairies can now be installed with, for instance, 
+	
+	     .\vcpkg.exe install zlib libpng libjpeg-turbo fltk opengl pixman cairo cimg 
+		 
+	All set !
+	
 
-	MTOOLSDIR/examples/makeall.sh
+2) Generate the Visual studio solution files:
 
-
-
-   
-*****************************************************
-*                     On OSX                        *
-*****************************************************
-[tested on OSX High Sierra]
-
-
-1) Make sure Xcode is installed with Clang and the corresponding toolchain.
-
-
-2) Install the libraries mtools depends on. I used homebrew (http://brew.sh).
-   
-       brew install python pkg-config glib libpng libjpeg freetype cimg pixman cairo fltk
-
-        
-3) By default, the libraries were symlinked to /usr/local which was not 
-   in my compiler search path so I needed to add the following two lines
-   to my .bash_profile. 
-   
-       export PATH="$PATH:/usr/local/bin"
-       export CPATH="$CPATH:/usr/local/include"
-       export LIBRARY_PATH="$LIBRARY_PATH:/usr/local/lib"
-
+	     cd mtools
+         ./cmake-mtools [-DOPTION1 -DOPTION2 ...]
 	   
-4) Goto step 5 of the linux installation procedure...
+	
+4) Use mtools/build/mtools.sln and build the library. 
+   If LOCAL_INSTALL=0 was given to cmake, the library is installed by running the 
+   project INSTALL inside the solution.
+		 
+5) Use mtools/build/examples/examples.sln to build the examples. 
+	  
 
 
   
-*****************************************************
-*        Using mtools in a new project              *
-*****************************************************
+*******************************************************************
+*               Using mtools in a new project                     *
+*******************************************************************
 
-The python script 'mtoolsproject.py' located in /tools can be used to create an empty 
-project with the correct options. The project created contain a minimal 'main.cpp' file 
-as well as a VS2015 solution for windows and a makefile for Linux and OSX.
+The library be found by CMake using the usual find_package() function. 
+However, the simplest way to create a new project that is compatible 
+with Windows/Linux/OSX is to use the script mtools-project.py located in 
+the /tools sub-directory (it is convenient to export mtools/tools/ to 
+PATH to that the script can be called from anywhere). Type,
+         
+		 mtools-project.py [projectname]    create projectname
+		 cd [projectname]/build			    enter the build sub-directory
+		 cmake ..						    run CMake to configure the project
 
+On linux/OSX, use
+		 
+         make
 
+and on windows, use the VS solution file
 
-                     **********************************
-                     ******* WARNING [ON OSX] *********
-                     **********************************
-                        
-When using mtools on OSX, the programm MUST use the main entry point with signature:
+         /build/[projectname].sln
+		 
+Then, as the project grows, customize the CMakeLists.txt located in the root 
+directory to suit your needs. 
+  
 
-                     int main(int argc, char *argv[])
+  
+*******************************************************************
+* ABOUT THE MTOOLS_SWAP_THREAD() MACRO                            *
+*******************************************************************  
+  
+This macro 
+ 
+     MTOOLS_SWAP_THREADS()
 
-and the first instruction of main() MUST be:
+should be put on the top of the source file containing the main() 
+entry point. it is a dirty dirty hack to deal with the restriction
+on OSX that only the main thread can handle graphics. Thus, this 
+macro pre-emt the main thread and use it on the background for 
+drawing graphics whereas an alternate thread is created that run 
+the main() function. 
 
-                     MTOOLS_SWAP_THREADS(argc,argv).
-                 
-Otherwise, no graphics will be displayed. This macro make it so that main() is
-now run on an auxiliary thread (and the main thread is used by fltk for displaying
-graphics). This means, in particular, that global objects constructors are not called
-with the same thread that run main(), so be careful...
+Remarks: 
 
-On Windows and Linux, inverting thread is not needed since child threads are allowed
-to use the system resources. Thus, the macro is disabled but keeping it is harmless 
-while making the program also compatible with OSX.
-
-
-                     **********************************
-
+     - The macro is disabled on Linux and Windows and it can be removed
+     safely. However, it does no harm to keep it and it make the code 
+	 cross-plaftorm. 
+   
+     - Beware that, on OSX, the macro is active hence the global objects 
+     are constructed with the main thread which is NOT the one that runs 
+	 the main() function !
+   
+  
+  
+  
+  
