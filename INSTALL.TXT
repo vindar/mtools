@@ -229,14 +229,13 @@ the root directory to suit your needs.
   
 The macro 
  
-     MTOOLS_SWAP_THREADS()
+     MTOOLS_SWAP_THREADS(argc, argv)
 
-should be put on the top of the source file containing the main() 
-entry point. it is a dirty dirty hack to deal with the restriction
-that only the main thread can handle graphics on OSX. this macro
-preempt the main thread and use it on the background for drawing 
-graphics whereas an alternate thread is created that run the main() 
-function. 
+should be the first line inside the main(int argc, char *argv[]) 
+function. it is a dirty dirty hack to deal with the restriction that 
+only the main thread can handle graphics on OSX. this macro preempt 
+the main thread and use it on the background for drawing graphics 
+while an alternate thread is created to run the main() function. 
 
 Remarks: 
 
