@@ -276,6 +276,15 @@ namespace mtools
 		}
 
 
+
+		/**
+		* Return the number of objects/chunks allocated in the memory pool.
+		*
+		* @return  the number of object currently allocated. 
+		**/
+		inline size_t size() const { return _m_allocatedobj; }
+
+
 		/**
 		* Return the memory size currently allocated.
 		*
@@ -622,11 +631,11 @@ namespace mtools
 		size_type max_size() const { return size_type(-1); } // DO NOT CHANGE : putting some other value here seems to mess with the STL containers...
 
 
-															 /**
-															 * Return the memory size currently allocated.
-															 *
-															 * @return  the number of bytes currently allocated.
-															 **/
+		/**
+		 * Return the memory size currently allocated.
+		 *
+		 * @return  the number of bytes currently allocated.
+		 **/
 		inline size_t used() const { return (_memPool->used()); }
 
 
