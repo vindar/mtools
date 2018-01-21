@@ -243,34 +243,38 @@ namespace mtools
 			while (p != _m_currentpool)
 			{
 				for (size_t i = 0; i < POOLSIZE; i++)
-				{
-					_pfakeT f = (p->tab + i); if ((((size_t)_getnextfake(f)) % 2) != 0) { ((T*)f)->~T(); }
-				}
+					{
+					_pfakeT f = (p->tab + i); 
+					if ((((size_t)_getnextfake(f)) & 1) != 0)  { ((T*)f)->~T(); _getnextfake(f) = _pfakeT(1); }
+					}
 				p = p->next;
 			}
 			for (size_t i = 0; i < _m_index; i++)
-			{
-				_pfakeT f = (p->tab + i); if ((((size_t)_getnextfake(f)) % 2) != 0) { ((T*)f)->~T(); }
-			}
+				{
+				_pfakeT f = (p->tab + i); 
+				if ((((size_t)_getnextfake(f)) & 1) != 0) { ((T*)f)->~T(); _getnextfake(f) = _pfakeT(1); }
+				}
 			// iterate over the list of free site and put every lowest bit to 1
 			while (_m_firstfree != nullptr)
-			{
+				{
 				_pfakeT  f = _getnextfake(_m_firstfree); _getnextfake(_m_firstfree) = ((_pfakeT)(1)); _m_firstfree = f;
-			}
+				}
 			// we call the dtor for all the sites with lower bit = 0, these are exactly the site whose dtor has not yet been called.
 			p = _m_firstpool;
 			while (p != _m_currentpool)
 			{
 				for (size_t i = 0; i < POOLSIZE; i++)
-				{
-					_pfakeT f = (p->tab + i); if ((((size_t)_getnextfake(f)) % 2) == 0) { ((T*)f)->~T(); }
-				}
+					{
+					_pfakeT f = (p->tab + i); 
+					if ((((size_t)_getnextfake(f)) & 1) == 0) { ((T*)f)->~T(); }
+					}
 				p = p->next;
 			}
 			for (size_t i = 0; i < _m_index; i++)
-			{
-				_pfakeT f = (p->tab + i); if ((((size_t)_getnextfake(f)) % 2) == 0) { ((T*)f)->~T(); }
-			}
+				{
+				_pfakeT f = (p->tab + i); 
+				if ((((size_t)_getnextfake(f)) & 1) == 0) { ((T*)f)->~T(); }
+				}
 			// finally, we release the memory to the allocator (and, optionnaly to the OS). 
 			freeAll(releaseMemoryToOS);
 		}
