@@ -75,8 +75,9 @@ namespace mtools
 	* @tparam  POOLSIZE        Number of chunks in each pool. When a pool is full, a new one is
 	*                          created (default: each pool uses 50MB).
 	**/
-	template<size_t UNITALLOCSIZE, size_t POOLSIZE = MEM_MB(50) / UNITALLOCSIZE + 1 > class CstSizeMemoryPool
+	template<size_t UNITALLOCSIZE, size_t POOLSIZE = MEM_MB(50) / UNITALLOCSIZE + 1, bool CALLDTORSONEXIT = false> class CstSizeMemoryPool
 	{
+
 
 	public:
 
@@ -86,18 +87,42 @@ namespace mtools
 
 		/** Move constructor **/
 		CstSizeMemoryPool(CstSizeMemoryPool && csmp) : _m_allocatedobj(csmp._m_allocatedobj), _m_totmem(csmp._m_totmem), _m_firstfree(csmp._m_firstfree), _m_currentpool(csmp._m_currentpool), _m_firstpool(csmp._m_firstpool), _m_index(csmp._m_index)
-		{
+			{
 			csmp._m_allocatedobj = 0;
 			csmp._m_totmem = 0;
 			csmp._m_firstfree = nullptr;
 			csmp._m_currentpool = nullptr;
 			csmp._m_firstpool = nullptr;
 			csmp._m_index = POOLSIZE;
-		}
+			}
 
 
-		/** Destructor. */
-		~CstSizeMemoryPool() { freeAll(true); }
+		/** Destructor. If template param CALLDTORSONEXIT is false, allocated memory is 
+		 * released without calling the objects destructors, othersise dtors are called. 
+		 **/
+		~CstSizeMemoryPool() 
+			{
+			_freemem(*this);
+			}
+
+
+		/** Move assignement operator. Discard current content. Dtor are called depending on CALLDTORSONEXIT. */
+		CstSizeMemoryPool & operator=(CstSizeMemoryPool && csmp) 			
+			{
+			_freemem(*this);
+			_m_allocatedobj = csmp._m_allocatedobj;
+			_m_totmem = csmp._m_totmem;
+			_m_firstfree = csmp._m_firstfree;
+			_m_currentpool = csmp._m_currentpool;
+			_m_firstpool = csmp._m_firstpool;
+			_m_index = csmp._m_index;
+			csmp._m_allocatedobj = 0;
+			csmp._m_totmem = 0;
+			csmp._m_firstfree = nullptr;
+			csmp._m_currentpool = nullptr;
+			csmp._m_firstpool = nullptr;
+			csmp._m_index = POOLSIZE;
+			}
 
 
 		/**
@@ -199,7 +224,7 @@ namespace mtools
 				_m_index = POOLSIZE;
 				_m_totmem = 0;
 			}
-		}
+		}	
 
 
 		/**
@@ -309,7 +334,21 @@ namespace mtools
 	private:
 
 
-		// get/create the next memory pool
+		/** release memory to OS without calling the dtors.  External static method so that non error is raised if dtors is private. */
+		template<size_t UNITALLOCSIZE, size_t POOLSIZE> static void _freemem(CstSizeMemoryPool<UNITALLOCSIZE, POOLSIZE, false> & mp)
+			{
+			mp.freeAll(true);
+			}
+
+
+		/** release memory to OS and call the dtors.  External static method so that non error is raised if dtors is private. */
+		template<size_t UNITALLOCSIZE, size_t POOLSIZE> static void _freemem(CstSizeMemoryPool<UNITALLOCSIZE, POOLSIZE, true> & mp)
+			{
+			mp.destroyAndFreeAll(true);
+			}
+
+
+		/** get/create the next memory pool */
 		void _nextPool()
 		{
 			if (_m_currentpool == nullptr)
