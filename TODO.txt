@@ -21,3 +21,5 @@ TODO LIST
 - cleanup the CombinatorialMap and Graph classes. 
 
 - complete the Circle Packing classes. 
+
+- improve offspring drawing for ellipse and bezier/spline draw method for the image class. 
