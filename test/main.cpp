@@ -257,6 +257,8 @@ void lol()
 	addAndDecimate(N);
 
 
+	cout << mempool << "\n";
+
 	cout << "size of tset : " << tset.size() << "\n";
 	cout << "allocated    : " << mempool.size() << "\n";
 	cout << "iterated : " << mempool.iterateOver(fun) << "\n";
