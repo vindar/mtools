@@ -733,6 +733,7 @@ class TestImage : public Image
 
 		fBox2 B;
 
+		B = { -100,110,100,380 };
 
 
 		for (int i = 0; i < 500; i += 50)
