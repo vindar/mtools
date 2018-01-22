@@ -196,10 +196,10 @@ namespace mtools
 		* @param [in,out]	p Pointer to the object in the memeory pool to destroy and free memory.
 		*/
 		template<typename T> void destroyAndFree(T * p)
-		{
+			{
 			p->~T();
 			free(p);
-		}
+			}
 
 
 		/**
@@ -209,7 +209,7 @@ namespace mtools
 		*                              false).
 		**/
 		inline void freeAll(bool releaseMemoryToOS = false)
-		{
+			{
 			if (_m_firstpool == nullptr) return;
 			_m_firstfree = nullptr;
 			_m_currentpool = _m_firstpool;
@@ -222,7 +222,7 @@ namespace mtools
 				_m_index = POOLSIZE;
 				_m_totmem = 0;
 				}
-		}	
+			}	
 
 
 		/**
@@ -377,13 +377,13 @@ namespace mtools
 		* @return  A std::string that with info about the current object state.
 		**/
 		std::string toString() const
-		{
+			{
 			std::string s = std::string("CstSizeMemoryPool<") + mtools::toString(UNITALLOCSIZE) + ", " + mtools::toString(POOLSIZE) + ">\n";
 			s += std::string(" - number of chunks : ") + mtools::toString(_m_allocatedobj) + " (in " + mtools::toString(footprint() / sizeof(_pool)) + " pools)\n";
 			s += std::string(" - memory allocated : ") + toStringMemSize(used()) + "\n";
 			s += std::string(" - memory footprint : ") + toStringMemSize(footprint()) + "\n";
 			return s;
-		}
+			}
 
 
 		/**
@@ -397,48 +397,48 @@ namespace mtools
 		* @return	true if it points to some memory inside the pool and false otherwise.
 		**/
 		bool isInPool(void * p) const
-		{
+			{
 			const uintptr_t uip = (uintptr_t)p;
 			_pool * cpool = _m_firstpool;
 			while (cpool != nullptr)
-			{
+				{
 				const uintptr_t uimin = (uintptr_t)(cpool->tab);
 				const uintptr_t uimax = (uintptr_t)(cpool->tab + POOLSIZE);
 				if ((uip >= uimin) && (uip < uimax)) return true;
 				cpool = cpool->next;
-			}
+				}
 			return false;
-		}
+			}
 
 	private:
 
 
 		/** get/create the next memory pool */
 		void _nextPool()
-		{
-			if (_m_currentpool == nullptr)
 			{
+			if (_m_currentpool == nullptr)
+				{
 				_m_currentpool = (_pool*)std::malloc(sizeof(_pool));
 				if (_m_currentpool == nullptr) { MTOOLS_DEBUG("SingleObjectAllocator, bad_alloc"); throw std::bad_alloc(); }
 				MTOOLS_ASSERT(((size_t)_m_currentpool) % 2 == 0); // alignement is at least mod 2
 				_m_totmem += sizeof(_pool);
 				_m_firstpool = _m_currentpool;
 				_m_currentpool->next = nullptr;
-			}
+				}
 			else
-			{
-				if (_m_currentpool->next == nullptr)
 				{
+				if (_m_currentpool->next == nullptr)
+					{
 					_m_currentpool->next = (_pool*)std::malloc(sizeof(_pool));
 					if (_m_currentpool == nullptr) { MTOOLS_DEBUG("SingleObjectAllocator, bad_alloc"); throw std::bad_alloc(); }
 					MTOOLS_ASSERT(((size_t)_m_currentpool->next) % 2 == 0); // alignement is at least mod 2
 					_m_totmem += sizeof(_pool);
 					_m_currentpool->next->next = nullptr;
-				}
+					}
 				_m_currentpool = _m_currentpool->next;
-			}
+				}
 			_m_index = 0;
-		}
+			}
 
 
 		CstSizeMemoryPool(const CstSizeMemoryPool &) = delete;                  // no copy
@@ -449,10 +449,10 @@ namespace mtools
 		typedef _fakeT * _pfakeT; // pointer of placeholder
 
 		struct _pool // memory pool
-		{
+			{
 			_fakeT      tab[POOLSIZE];
 			_pool *     next;
-		};
+			};
 
 		size_t      _m_allocatedobj;    // number of object currently allocated.
 		size_t      _m_totmem;          // total memory used by the allocator. 
