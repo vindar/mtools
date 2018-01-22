@@ -288,6 +288,7 @@ namespace mtools
 		* compatible with a call of the form 'fun(T)'.
 		*
 		* !!! THE LOWER BIT OF EACH CHUNK MUST NOT BE MODIFIED INSIDE fun()
+		*     OTHERWISE OBJECTS MIGHT BE CALLED TWICE !!!
 		*
 		* @return  the number of call to fun = number of object currently allocated = size(). 
 		**/
