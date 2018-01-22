@@ -282,6 +282,24 @@ namespace mtools
 
 
 		/**
+		* Iterate over all allocated objects/chunk. 
+		*
+		* Call function 'fun' on each object. The function must have a signature 
+		* compatible with a call of the form 'fun(T)'.
+		*
+		* !!! THE LOWER BIT OF EACH CHUNK MUST NOT BE MODIFIED INSIDE fun()
+		*
+		* @return  the number of call to fun = number of object currently allocated = size(). 
+		**/
+		template<typename FUNCTION, typename T> void iterateOver(FUNCTION fun)
+			{
+			// TODO.
+			MTOOLS_ERROR("not yet implemented");
+			return size();
+			}
+
+
+		/**
 		* Return the number of objects/chunks allocated in the memory pool.
 		*
 		* @return  the number of object currently allocated. 
