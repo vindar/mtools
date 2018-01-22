@@ -63,7 +63,6 @@ namespace mtools
 
 
 
-
 	/**
 	* A simple (but fast) memory pool.
 	*
@@ -75,9 +74,8 @@ namespace mtools
 	* @tparam  POOLSIZE        Number of chunks in each pool. When a pool is full, a new one is
 	*                          created (default: each pool uses 50MB).
 	**/
-	template<size_t UNITALLOCSIZE, size_t POOLSIZE = MEM_MB(50) / UNITALLOCSIZE + 1, bool CALLDTORSONEXIT = false> class CstSizeMemoryPool
+	template<size_t UNITALLOCSIZE, size_t POOLSIZE = MEM_MB(50) / UNITALLOCSIZE + 1> class CstSizeMemoryPool
 	{
-
 
 	public:
 
@@ -97,19 +95,18 @@ namespace mtools
 			}
 
 
-		/** Destructor. If template param CALLDTORSONEXIT is false, allocated memory is 
-		 * released without calling the objects destructors, othersise dtors are called. 
-		 **/
+		/** Destructor. Release all memory to OS without calling dtors.  **/
 		~CstSizeMemoryPool() 
 			{
-			_freemem(*this);
+			freeAll(true);
 			}
 
 
-		/** Move assignement operator. Discard current content. Dtor are called depending on CALLDTORSONEXIT. */
+		/** Move assignement operator. Discard current content without calling dtors. */
 		CstSizeMemoryPool & operator=(CstSizeMemoryPool && csmp) 			
 			{
-			_freemem(*this);
+			if (&csmp == this) return;
+			freeAll(true);	// release memory without calling dtors
 			_m_allocatedobj = csmp._m_allocatedobj;
 			_m_totmem = csmp._m_totmem;
 			_m_firstfree = csmp._m_firstfree;
@@ -131,20 +128,19 @@ namespace mtools
 		* @return  a pointer to the allocated memory
 		**/
 		inline void * malloc()
-		{
+			{
 			++_m_allocatedobj;
 			if (_m_firstfree != nullptr)
-			{
+				{
 				_pfakeT p = _m_firstfree;
 				_m_firstfree = _getnextfake(_m_firstfree);
 				return p;
-			}
+				}
 			if (_m_index == POOLSIZE) { _nextPool(); }
 			auto r = _m_currentpool->tab + _m_index;
 			_m_index++;
 			return r;
-
-		}
+			}
 
 
 		/**
@@ -155,26 +151,28 @@ namespace mtools
 		* @return	a pointer to the newly contructed element in the memory pool.
 		*/
 		template<typename T> T * allocate(const T& val)
-		{
+			{
 			MTOOLS_ASSERT(sizeof(T) <= UNITALLOCSIZE);
-			void * p = malloc();
-			::new((T*)p) T(val);
-		}
+			T * p = (T*)malloc();
+			::new(p) T(val);
+			return p; 
+			}
 
 
 		/**
 		* Allocate memory for an element of type T and construct it with given paramters.
-		*
+		* 
 		* @param	args The constructor paramters.
 		*
 		* @return	a pointer to the newly contructed element in the memory pool.
 		*/
 		template<typename T, typename... Args> T * allocate(Args&&... args)
-		{
+			{
 			MTOOLS_ASSERT(sizeof(T) <= UNITALLOCSIZE);
-			void * p = malloc();
-			::new((T*)p) T(std::forward<Args>(args)...);
-		}
+			T * p = (T*)malloc();
+			::new(p) T(std::forward<Args>(args)...);
+			return p;
+			}
 
 
 		/**
@@ -183,13 +181,13 @@ namespace mtools
 		* @param [in,out]  p   pointer to the memory portion to free.
 		**/
 		inline void free(void * p)
-		{
+			{
 			MTOOLS_ASSERT(_m_firstpool != nullptr);
 			MTOOLS_ASSERT(_m_allocatedobj > 0);
 			--_m_allocatedobj;
 			_getnextfake((_pfakeT)p) = _m_firstfree;
 			_m_firstfree = (_pfakeT)p;
-		}
+			}
 
 
 		/**
@@ -218,12 +216,12 @@ namespace mtools
 			_m_allocatedobj = 0;
 			_m_index = 0;
 			if (releaseMemoryToOS)
-			{
+				{
 				while (_m_firstpool != nullptr) { _pool * p = _m_firstpool; _m_firstpool = _m_firstpool->next; std::free(p); }
 				_m_firstpool = nullptr;
 				_m_index = POOLSIZE;
 				_m_totmem = 0;
-			}
+				}
 		}	
 
 
@@ -234,69 +232,117 @@ namespace mtools
 		* @tparam  T   Type of object stored in memory (i.e. type of dtor called).
 		* @param   releaseMemoryToOS   true to release malloced memory to the operating system (default
 		*                              false).
+		*                              
+		* @return the number of destructor called (= number of object that were allocated). 
 		**/
-		template<typename T> void destroyAndFreeAll(bool releaseMemoryToOS = false)
-		{
-			if (_m_firstpool == nullptr) return;
+		template<typename T> size_t destroyAndFreeAll(bool releaseMemoryToOS = false)
+			{
+			if (_m_firstpool == nullptr) return 0;
 			// we call the dtor for all the sites with lower bit set since they cannot be free sites (memory adresses are aligned mod 2)
 			_pool * p = _m_firstpool;
+			size_t destroyed = 0;
 			while (p != _m_currentpool)
 			{
 				for (size_t i = 0; i < POOLSIZE; i++)
 					{
 					_pfakeT f = (p->tab + i); 
-					if ((((size_t)_getnextfake(f)) & 1) != 0)  { ((T*)f)->~T(); _getnextfake(f) = _pfakeT(1); }
+					if ((((size_t)_getnextfake(f)) & 1) != 0) { ((T*)f)->~T();  _getnextfakevalue(f) = 1;  destroyed++; }
 					}
 				p = p->next;
 			}
 			for (size_t i = 0; i < _m_index; i++)
 				{
 				_pfakeT f = (p->tab + i); 
-				if ((((size_t)_getnextfake(f)) & 1) != 0) { ((T*)f)->~T(); _getnextfake(f) = _pfakeT(1); }
+				if ((((size_t)_getnextfake(f)) & 1) != 0) { ((T*)f)->~T(); _getnextfakevalue(f) = 1; destroyed++; }
 				}
 			// iterate over the list of free site and put every lowest bit to 1
 			while (_m_firstfree != nullptr)
 				{
-				_pfakeT  f = _getnextfake(_m_firstfree); _getnextfake(_m_firstfree) = ((_pfakeT)(1)); _m_firstfree = f;
+				_pfakeT  f = _getnextfake(_m_firstfree); _getnextfakevalue(_m_firstfree) = 1;  _m_firstfree = f;
 				}
 			// we call the dtor for all the sites with lower bit = 0, these are exactly the site whose dtor has not yet been called.
 			p = _m_firstpool;
 			while (p != _m_currentpool)
-			{
+				{
 				for (size_t i = 0; i < POOLSIZE; i++)
 					{
 					_pfakeT f = (p->tab + i); 
-					if ((((size_t)_getnextfake(f)) & 1) == 0) { ((T*)f)->~T(); }
+					if ((_getnextfakevalue(f) & 1) == 0) { ((T*)f)->~T(); destroyed++; }
 					}
 				p = p->next;
-			}
+				}
 			for (size_t i = 0; i < _m_index; i++)
 				{
 				_pfakeT f = (p->tab + i); 
-				if ((((size_t)_getnextfake(f)) & 1) == 0) { ((T*)f)->~T(); }
+				if ((_getnextfakevalue(f) & 1) == 0) { ((T*)f)->~T(); destroyed++; }
 				}
-			// finally, we release the memory to the allocator (and, optionnaly to the OS). 
+			MTOOLS_ASSERT(destroyed == _m_allocatedobj); // normally, all destructors have been called
+			// finally, we release the memory to the allocator (and, optionnaly to the OS). 			 
 			freeAll(releaseMemoryToOS);
-		}
-
+			return destroyed; 
+			}
 
 
 		/**
-		* Iterate over all allocated objects/chunk. 
-		*
-		* Call function 'fun' on each object. The function must have a signature 
-		* compatible with a call of the form 'fun(T)'.
-		*
-		* !!! THE LOWER BIT OF EACH CHUNK MUST NOT BE MODIFIED INSIDE fun()
-		*     OTHERWISE OBJECTS MIGHT BE CALLED TWICE !!!
-		*
-		* @return  the number of call to fun = number of object currently allocated = size(). 
-		**/
-		template<typename FUNCTION, typename T> void iterateOver(FUNCTION fun)
+		 * Iterate over all currently allocated objects.
+		 * 
+		 * !!! THE LOWER BIT OF EACH CHUNK/OBJECT MUST NOT BE MODIFIED INSIDE fun() !!!
+		 *
+		 * @tparam	FUNCTION Type of the function.
+		 * @param	fun function to call on each object currently allocated, must accept call of the form 'fun(void * p)'. 
+		 *
+		 * @return	the number of call to fun() = number of object currently allocated = size().
+		 */
+		template<typename FUNCTION> size_t iterateOver(FUNCTION fun)
 			{
-			// TODO.
-			MTOOLS_ERROR("not yet implemented");
-			return size();
+			if (_m_firstpool == nullptr) return 0;
+			// we call fun with all object whose lowest bit is set since they cannot represent free site (memory adresses are aligned mod 2)
+			_pool * p = _m_firstpool;
+			size_t called = 0;
+			while (p != _m_currentpool)
+				{
+				for (size_t i = 0; i < POOLSIZE; i++)
+					{
+					_pfakeT f = (p->tab + i);
+					if ((_getnextfakevalue(f) & 1) != 0) { fun((void *)f); MTOOLS_INSURE((_getnextfakevalue(f) & 1) != 0);  called++; } // if this insure fails, this means that fun() changed the lowest bit of the object: FORBIDDEN !
+					}
+				p = p->next;
+				}
+			for (size_t i = 0; i < _m_index; i++)
+				{
+				_pfakeT f = (p->tab + i);
+				if ((_getnextfakevalue(f) & 1) != 0) { fun((void *)f); MTOOLS_INSURE((_getnextfakevalue(f) & 1) != 0);  called++; } // if this insure fails, this means that fun() changed the lowest bit of the object: FORBIDDEN !
+				}
+			// iterate over the list of free site and set the lowest bit to 1.			
+			_pfakeT q = _m_firstfree;
+			while (q != nullptr)
+				{
+				_pfakeT  f = _getnextfake(q);  MTOOLS_ASSERT((_getnextfakevalue(q) & 1) == 0);  (_getnextfakevalue(q))++; q = f;
+				}
+			// we call the dtor for all the sites with lower bit = 0, these are exactly the site whose dtor has not yet been called.
+			p = _m_firstpool;
+			while (p != _m_currentpool)
+				{
+				for (size_t i = 0; i < POOLSIZE; i++)
+					{
+					_pfakeT f = (p->tab + i);
+					if ((_getnextfakevalue(f) & 1) == 0) { fun((void *)f); MTOOLS_INSURE((_getnextfakevalue(f) & 1) == 0);  called++; } // if this insure fails, this means that fun() changed the lowest bit of the object: FORBIDDEN !
+					}
+				p = p->next;
+				}
+			for (size_t i = 0; i < _m_index; i++)
+				{
+				_pfakeT f = (p->tab + i);
+				if ((_getnextfakevalue(f) & 1) == 0) { fun((void *)f); MTOOLS_INSURE((_getnextfakevalue(f) & 1) == 0);  called++; } // if this insure fails, this means that fun() changed the lowest bit of the object: FORBIDDEN !
+				}
+			// iterate over the list of free site and restore the lowest bit to 0. 
+			q = _m_firstfree;
+			while (q != nullptr)
+				{
+				MTOOLS_ASSERT((_getnextfakevalue(q) & 1) != 0);  (_getnextfakevalue(q))--; q = _getnextfake(q);
+				}
+			MTOOLS_ASSERT(called == _m_allocatedobj); // normally, all destructor have been called
+			return called;
 			}
 
 
@@ -366,20 +412,6 @@ namespace mtools
 	private:
 
 
-		/** release memory to OS without calling the dtors.  External static method so that non error is raised if dtors is private. */
-		template<size_t UNITALLOCSIZE, size_t POOLSIZE> static void _freemem(CstSizeMemoryPool<UNITALLOCSIZE, POOLSIZE, false> & mp)
-			{
-			mp.freeAll(true);
-			}
-
-
-		/** release memory to OS and call the dtors.  External static method so that non error is raised if dtors is private. */
-		template<size_t UNITALLOCSIZE, size_t POOLSIZE> static void _freemem(CstSizeMemoryPool<UNITALLOCSIZE, POOLSIZE, true> & mp)
-			{
-			mp.destroyAndFreeAll(true);
-			}
-
-
 		/** get/create the next memory pool */
 		void _nextPool()
 		{
@@ -431,7 +463,13 @@ namespace mtools
 
 		_pfakeT & _getnextfake(_pfakeT f) { return (*((_pfakeT *)f)); } // get the fake T written a the adress of the fake T !
 
+		size_t & _getnextfakevalue(_pfakeT f) { return(*((size_t *)f)); } // get the fake T written a the adress of the fake T casted as a size_t !
+
+
+		
 	};
+
+
 
 
 
