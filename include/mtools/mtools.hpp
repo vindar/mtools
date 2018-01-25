@@ -23,15 +23,6 @@
 #include "mtools_config.hpp"
 
 
-// containers
-#include "containers/grid_basic.hpp"
-#include "containers/grid_factor.hpp"
-#include "containers/bitgraphZ2.hpp"
-#include "containers/randomurn.hpp"
-#include "containers/RWtreegraph.hpp"
-#include "containers/empiricalDistribution.hpp"
-#include "containers/extab.hpp"
-
 //i.o.
 #include "io/console.hpp"
 #include "io/fileio.hpp"
@@ -40,6 +31,7 @@
 #include "io/commandarg.hpp"
 #include "io/watch.hpp"
 #include "io/serialport.hpp"
+
 
 // maths
 #include "maths/rootSolver.hpp"
@@ -56,6 +48,7 @@
 #include "maths/graph.hpp"
 #include "maths/circlePacking.hpp"
 
+
 //misc
 #include "misc/error.hpp"
 #include "misc/stringfct.hpp"
@@ -65,6 +58,7 @@
 #include "misc/metaprog.hpp"
 #include "misc/misc.hpp"
 #include "misc/timefct.hpp"
+
 
 // random
 #include "random/gen_mt2002_32.hpp"
@@ -76,8 +70,10 @@
 #include "random/peelinglaw.hpp"
 #include "random/krikunlaw.hpp"
 
+
 //extensions
 #include "extensions/openCL.hpp"
+
 
 // graphics
 #include "graphics/image.hpp"
@@ -106,6 +102,16 @@
 #include "graphics/plot2Dimage.hpp"
 #include "graphics/plot2Dcimg.hpp"
 
+
+// containers
+#include "containers/grid_basic.hpp"
+#include "containers/grid_factor.hpp"
+#include "containers/bitgraphZ2.hpp"
+#include "containers/randomurn.hpp"
+#include "containers/RWtreegraph.hpp"
+#include "containers/empiricalDistribution.hpp"
+#include "containers/extab.hpp"
+#include "containers/treefigure.hpp"
 
 
 /* end of file */
