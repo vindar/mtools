@@ -37,7 +37,28 @@
 namespace mtools
 {
 
-
+	/**
+	 * TreeFigure class. 
+	 * 
+	 * Container for 'spatial data': hold objects associated with a bounding box. 
+	 * 
+	 * The container is 'tree-like' and organized in such way: 
+	 *   -  Fast iteration through object that intersect/contain/are contained in a given region. 
+	 *   -  When iterating through a region, larger object are returned earlier than smaller ones.  
+	 *
+	 * - Contrarily to a r-tree, splitting of region is binary, as in a  which insure that the distance of R^2
+	 *   is still reflected in the tree structure. 
+	 * - Contrarily to the usual quadtree, region represented by the subnodes of a node overlap so that small  
+	 *   objects cannot get stuck in big nodes because they intersect their boundaries. 
+	 * 
+	 * This class if useful to store figure objects (such a line/rectangle/point...) cf the 
+	 * plot2DFigure class. 
+	 * 
+	 * @tparam	T	   template parameter representing the type of objects contained in the container.
+	 * @tparam	N	   Max number of 'reducible' object per node (typically between 2 and 100). 
+	 * @tparam	TFloat Type use for floating point computation (default double).
+	 * 				   
+	 */
 	template<class T, int N = 10, class TFloat = double> class TreeFigure
 	{
 
@@ -59,6 +80,7 @@ namespace mtools
 		**/
 		struct BoundedObject
 			{
+			BoundedObject() : boundingbox(), object() {}
 			BoundedObject(const BBox & bbox, const T & obj) : boundingbox(bbox), object(obj) {}
 
 			BBox	boundingbox;
@@ -123,20 +145,34 @@ namespace mtools
 
 
 		/**
-		* Serialize this object.
+		* Serialize this object into an archive.
 		**/
-		void serialize(OBaseArchive & ar, const int version = 0)
+		void serialize(OBaseArchive & ar, const int version = 0) const
 			{
-			// TODO
+			ar << std::string("TreeFigure< ") + typeid(T).name() + ", " + mtools::toString(N) + ", " + typeid(TFloat).name() + ">\n";
+			ar & size(); // number of items
+			size_t nb = iterate_all([&ar](const BoundedObject & bo) -> void  { ar & bo.boundingbox; ar & bo.object; }); 
+			ar << std::string("\nend of TreeFigure\n");
+			MTOOLS_ASSERT(nb == size());
 			}
 
 
 		/**
-		* Deserialize this object.
+		* Deserialize this object. 
+		* 
+		* The object is NOT EMPTIED before de-serializing so the content of the archive is added 
+		* to the existing content. 
 		**/
 		void deserialize(IBaseArchive & ar)
 			{
-			// TODO
+			size_t nb; ar & nb; // number of items to add
+			for (size_t i = 0; i < nb; i++)
+				{
+				BoundedObject bo; 
+				ar & bo.boundingbox;
+				ar & bo.object;
+				insert(bo);
+				}
 			}
 
 
@@ -145,7 +181,7 @@ namespace mtools
 		* 
 		* A copy of object is made with the copy constructor.
 		**/
-		void insert(const BBox & boundingbox, const T & object)
+		MTOOLS_FORCEINLINE void insert(const BBox & boundingbox, const T & object)
 			{
 			insert({ boundingbox , object });
 			}
@@ -158,6 +194,7 @@ namespace mtools
 		**/
 		void insert(const BoundedObject & boundedObject)
 			{
+			MTOOLS_INSURE(!(boundedObject.boundingbox.isEmpty())); // bounding box should not be empty. 
 			// create new roots until we contain the object's bounding box
 			while (!(_rootNode->_bbox.contain(boundedObject.boundingbox))) { _reRootUp(); }
 			// start from the root and go down
@@ -191,6 +228,7 @@ namespace mtools
 		 */
 		template<typename FUNCTION> size_t iterate_intersect(BBox box, FUNCTION fun) const
 			{
+			MTOOLS_INSURE(!(box.isEmpty())); // box should not be empty.
 			std::vector<_TreeNode* > stack1; 
 			std::vector<_TreeNode* > stack2;
 			std::vector<_TreeNode* > * pcurrentStack = &stack1;
@@ -244,7 +282,8 @@ namespace mtools
 		*/
 		template<typename FUNCTION> size_t iterate_contained_in(const BBox & box, FUNCTION fun) const
 			{
-			std::vector<_TreeNode* > stack1; 
+			MTOOLS_INSURE(!(box.isEmpty())); // box should not be empty.
+			std::vector<_TreeNode* > stack1;
 			std::vector<_TreeNode* > stack2;
 			std::vector<_TreeNode* > * pcurrentStack = &stack1;
 			std::vector<_TreeNode* > * pnextStack = &stack2;
@@ -297,7 +336,8 @@ namespace mtools
 		*/
 		template<typename FUNCTION> size_t iterate_contain(const BBox & box, FUNCTION fun) const
 			{
-			std::vector<_TreeNode* > stack1; 
+			MTOOLS_INSURE(!(box.isEmpty())); // box should not be empty.
+			std::vector<_TreeNode* > stack1;
 			std::vector<_TreeNode* > stack2;
 			std::vector<_TreeNode* > * pcurrentStack = &stack1;
 			std::vector<_TreeNode* > * pnextStack = &stack2;
@@ -389,7 +429,7 @@ namespace mtools
 
 
 		/**
-		* Query the number of object currently inserted.
+		* Query the number of objects currently inserted.
 		**/
 		size_t size() const { return _listNodePool.size(); }
 
@@ -414,9 +454,9 @@ namespace mtools
 
 
 		/**
-		* Draw the tree structure into an image. For debug purpose only.
+		* Draw the tree structure into an image. For debug purposes.
 		**/
-		void drawTreeDebug(Image & im, fBox2 R) const 
+		void drawTreeDebug(Image & im, fBox2 R, RGBc objColor = RGBc::c_Blue, RGBc treeColor = RGBc::c_Red) const 
 			{ 
 			std::vector<_TreeNode* > stack1; 
 			std::vector<_TreeNode* > stack2;
@@ -430,7 +470,7 @@ namespace mtools
 				for (size_t i = 0; i < currentsize; i++)
 					{
 					_TreeNode * node = pcurrentStack->operator[](i);
-					_drawNodedebug(im, R, node, RGBc::c_Red, RGBc(180, 180, 180).getOpacity(0.1), RGBc::c_Blue.getOpacity(0.5), RGBc::c_Orange.getOpacity(0.5));
+					_drawNodedebug(im, R, node, treeColor , RGBc(180, 180, 180).getOpacity(0.1f), objColor, objColor);
 					for (int j = 0; j < 15; j++)
 						{
 						if (node->_son[j] != nullptr) { pnextStack->push_back(node->_son[j]);  }
@@ -564,8 +604,6 @@ namespace mtools
 			node->_nb_irreducible--;
 			return LN->_next;
 			}
-
-
 
 
 		/** deal with overflowing node. (Recursive version, to be improved). */
@@ -730,7 +768,7 @@ namespace mtools
 		* @param 		  	inb   	The bounding box to test.
 		* @param 		  	outb  	The out box that contains inb.
 		*
-		* @return	The correponding index numbered as follow.
+		* @return	The corresponding index numbered as follow.
 		*
 		*    | 12 | 13 | 14 |
 		*    |    |    |    |
@@ -802,7 +840,6 @@ namespace mtools
 
 			return rx + 4 * ry;
 			}
-
 
 
 		/**************************************************************************************************

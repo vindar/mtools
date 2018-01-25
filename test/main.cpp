@@ -173,7 +173,7 @@ class TestImage : public Image
 
 	MT2004_64 gen;
 
-
+#define NN 1
 
 
 	int main(int argc, char *argv[])
@@ -181,27 +181,47 @@ class TestImage : public Image
 		MTOOLS_SWAP_THREADS(argc, argv); // required on OSX, does nothing on Linux/Windows
 		mtools::parseCommandLine(argc, argv, true); // parse the command line, interactive mode
 
-		TreeFigure<void *,5> TF;
+		TreeFigure<int, NN> TF;
 
-		int n = 1000; 
+		int n = 1000;
 
 
 		cout << "inserting...\n";
 		mtools::Chronometer();
+
+		{
+			cout << "DEserializing...\n";
+			IFileArchive ar("testTreeAR.txt");
+			ar & TF;
+			cout << "OK...\n";
+		}
+
+		/*
 		for (int i = 0; i < n; i++)
-			{
+		{
 			double xc = Unif(gen) * (Unif(gen) - 0.5) * 20;
 			double yc = Unif(gen) * (Unif(gen) - 0.5) * 12;
 			double lx = Unif(gen); lx *= lx;
 			double ly = Unif(gen); ly *= ly;
 			lx = 0.1; ly = 0.1;
-			TF.insert({xc - lx, xc + lx, yc - ly, yc + ly}, nullptr);
-			}
+			TF.insert({ xc - lx, xc + lx, yc - ly, yc + ly }, 0);
+		}
 
 
-		TF.insert({ 1, 2, 1, 1.6 }, nullptr);
+		for (int i = 0; i < n / 10; i++)
+		{
+			double yc = Unif(gen) * 5;
+			double lx = 10 * Unif(gen)* Unif(gen);
+			TF.insert({ 0, lx, yc, yc }, 0);
+		}
 
-		cout << "done in " << durationToString(mtools::Chronometer(),true) << "\n";
+		*/
+		
+		cout << TF << "\n";
+
+		//	TF.insert({ 1, 2, 1, 1.6 }, nullptr);
+
+		cout << "done in " << durationToString(mtools::Chronometer(), true) << "\n";
 
 
 		fBox2 R = TF.mainBoundingBox();
@@ -212,25 +232,33 @@ class TestImage : public Image
 
 		cout << "Drawing...\n";
 		mtools::Chronometer();
-		TF.drawTreeDebug(im, R);
+		TF.drawTreeDebug(im, R, RGBc::c_TransparentWhite);
 		cout << "done in " << durationToString(mtools::Chronometer(), true) << "\n";
 
 
 		cout << "Visiting...\n";
 		mtools::Chronometer();
-		cout << "visited = " << TF.iterate_intersect({-5,5,0,5},  [&](const TreeFigure<void *, 5>::BoundedObject & bo) -> void { im.canvas_draw_box(R, bo.boundingbox, RGBc::c_Green.getOpacity(0.5), true);  return; });
+		cout << "visited = " << TF.iterate_intersect({ -5,5,0,5 }, [&](const TreeFigure<int, NN>::BoundedObject & bo) -> void { im.canvas_draw_box(R, bo.boundingbox, RGBc::c_Green.getOpacity(0.5f), true);  return; });
 		cout << "done in " << durationToString(mtools::Chronometer(), true) << "\n";
 
 		cout << "Visiting...\n";
 		mtools::Chronometer();
-		cout << "visited = " << TF.iterate_contained_in({ -5,5,0,5 }, [&](const TreeFigure<void *, 5>::BoundedObject & bo) -> void { im.canvas_draw_box(R, bo.boundingbox, RGBc::c_Blue.getOpacity(0.5), true);  return; });
+		cout << "visited = " << TF.iterate_contained_in({ -5,5,0,5 }, [&](const TreeFigure<int, NN>::BoundedObject & bo) -> void { im.canvas_draw_box(R, bo.boundingbox, RGBc::c_Blue.getOpacity(0.5f), true);  return; });
 		cout << "done in " << durationToString(mtools::Chronometer(), true) << "\n";
 
 		cout << "Visiting...\n";
 		mtools::Chronometer();
-		cout << "visited = " << TF.iterate_contain({ 1,1.01,1.5,1.51 }, [&](const TreeFigure<void *, 5>::BoundedObject & bo) -> void { im.canvas_draw_box(R, bo.boundingbox, RGBc::c_Yellow.getOpacity(0.2), true);  return; });
+		cout << "visited = " << TF.iterate_contain({ 1,1.01,1.5,1.51 }, [&](const TreeFigure<int, NN>::BoundedObject & bo) -> void { im.canvas_draw_box(R, bo.boundingbox, RGBc::c_Yellow.getOpacity(0.2f), true);  return; });
 		cout << "done in " << durationToString(mtools::Chronometer(), true) << "\n";
 
+		/*
+		{
+		cout << "serializing...\n";
+		OFileArchive ar("testTreeAR.txt");
+		ar & TF;
+		cout << "OK...\n";
+		}
+		*/
 		auto P1 = makePlot2DImage(im);
 		Plotter2D plotter;
 		plotter[P1];
