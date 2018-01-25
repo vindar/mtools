@@ -26,6 +26,7 @@
 #include "../maths/box.hpp"
 #include "image.hpp"
 #include "font.hpp"
+#include "../containers/treefigure.hpp"
 
 
 namespace mtools

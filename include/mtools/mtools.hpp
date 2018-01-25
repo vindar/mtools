@@ -85,9 +85,7 @@
 #include "graphics/planedrawer.hpp"
 #include "graphics/pixeldrawer.hpp"
 #include "graphics/sitedrawer.hpp"
-
 #include "graphics/latticedrawer.hpp" // deprecated.
-
 #include "graphics/rgbc.hpp"
 #include "graphics/plotter2D.hpp"
 #include "graphics/plot2Daxes.hpp"
@@ -101,6 +99,7 @@
 #include "graphics/plot2Dlattice.hpp"
 #include "graphics/plot2Dimage.hpp"
 #include "graphics/plot2Dcimg.hpp"
+#include "graphics/figure.hpp"
 
 
 // containers
