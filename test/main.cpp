@@ -329,19 +329,105 @@ class TestImage : public Image
 		 * Iterate over all objects whose bounding box intersect 'box'. 
 		 * the function 'fun' must be callable in the form 'fun(boundedObject)'.
 		 */
-		template<typename FUNCTION> size_t iterate_intersect(BBox box, FUNCTION fun)
+		template<typename FUNCTION> size_t iterate_intersect(BBox box, FUNCTION fun) const
 			{
-			return 0;
+			std::vector<_TreeNode* > stack1; 
+			std::vector<_TreeNode* > stack2;
+			std::vector<_TreeNode* > * pcurrentStack = &stack1;
+			std::vector<_TreeNode* > * pnextStack = &stack2;
+			if (intersectionRect(_rootNode->_bbox, box).isEmpty()) return 0;
+			pcurrentStack->push_back(_rootNode);
+			size_t nb = 0;
+			while (1)
+				{
+				const size_t currentsize = pcurrentStack->size();
+				if (currentsize == 0)
+					{
+					MTOOLS_ASSERT(nb == size());
+					return nb;
+					}
+				for (size_t i = 0; i < currentsize; i++)
+					{
+					_TreeNode * node = pcurrentStack->operator[](i);					
+					_ListNode * LN = node->_first_irreducible;
+					while (LN != nullptr) 
+						{ 
+						if (!(intersectionRect(LN->_bobj.boundingbox, box).isEmpty())) { fun(LN->_bobj); nb++; }
+						LN = LN->_next; 
+						}
+					LN = node->_first_reducible;
+					while (LN != nullptr) 
+						{ 
+						if (!(intersectionRect(LN->_bobj.boundingbox, box).isEmpty())) { fun(LN->_bobj); nb++; }
+						LN = LN->_next; 
+						}
+					for (int j = 0; j < 15; j++)
+						{
+						if (node->_son[j] != nullptr) 
+							{
+							if (!(intersectionRect(node->_son[j]->_bbox, box).isEmpty()))
+								{
+								pnextStack->push_back(node->_son[j]);
+								}
+							}
+						}
+					}
+				pcurrentStack->clear();
+				mtools::swap(pcurrentStack, pnextStack);
+				}
 			}
 
 
 		/**
-		* Iterate over all objects whose bounding box is contianed in 'box'.
+		* Iterate over all objects whose bounding box is contained in 'box'.
 		* the function 'fun' must be callable in the form 'fun(boundedObject)'.
 		*/
-		template<typename FUNCTION> size_t iterate_contained_in(const BBox & box, FUNCTION fun)
+		template<typename FUNCTION> size_t iterate_contained_in(const BBox & box, FUNCTION fun) const
 			{
-			return 0;
+			std::vector<_TreeNode* > stack1; 
+			std::vector<_TreeNode* > stack2;
+			std::vector<_TreeNode* > * pcurrentStack = &stack1;
+			std::vector<_TreeNode* > * pnextStack = &stack2;
+			if (intersectionRect(_rootNode->_bbox, box).isEmpty()) return 0;
+			pcurrentStack->push_back(_rootNode);
+			size_t nb = 0;
+			while (1)
+				{
+				const size_t currentsize = pcurrentStack->size();
+				if (currentsize == 0)
+					{
+					MTOOLS_ASSERT(nb == size());
+					return nb;
+					}
+				for (size_t i = 0; i < currentsize; i++)
+					{
+					_TreeNode * node = pcurrentStack->operator[](i);					
+					_ListNode * LN = node->_first_irreducible;
+					while (LN != nullptr) 
+						{ 
+						if (box.contain(LN->_bobj.boundingbox)) { fun(LN->_bobj); nb++; }
+						LN = LN->_next; 
+						}
+					LN = node->_first_reducible;
+					while (LN != nullptr) 
+						{ 
+						if (box.contain(LN->_bobj.boundingbox)) { fun(LN->_bobj); nb++; }
+						LN = LN->_next; 
+						}
+					for (int j = 0; j < 15; j++)
+						{
+						if (node->_son[j] != nullptr) 
+							{
+							if (!(intersectionRect(node->_son[j]->_bbox, box).isEmpty()))
+								{
+								pnextStack->push_back(node->_son[j]);
+								}
+							}
+						}
+					}
+				pcurrentStack->clear();
+				mtools::swap(pcurrentStack, pnextStack);
+				}
 			}
 
 
@@ -349,9 +435,52 @@ class TestImage : public Image
 		* Iterate over all objects whose bounding box contain 'box'.
 		* the function 'fun' must be callable in the form 'fun(boundedObject)'.
 		*/
-		template<typename FUNCTION> size_t iterate_contain(const BBox & box, FUNCTION fun)
+		template<typename FUNCTION> size_t iterate_contain(const BBox & box, FUNCTION fun) const
 			{
-			return 0;
+			std::vector<_TreeNode* > stack1; 
+			std::vector<_TreeNode* > stack2;
+			std::vector<_TreeNode* > * pcurrentStack = &stack1;
+			std::vector<_TreeNode* > * pnextStack = &stack2;
+			if (intersectionRect(_rootNode->_bbox, box).isEmpty()) return 0;
+			pcurrentStack->push_back(_rootNode);
+			size_t nb = 0;
+			while (1)
+				{
+				const size_t currentsize = pcurrentStack->size();
+				if (currentsize == 0)
+					{
+					MTOOLS_ASSERT(nb == size());
+					return nb;
+					}
+				for (size_t i = 0; i < currentsize; i++)
+					{
+					_TreeNode * node = pcurrentStack->operator[](i);					
+					_ListNode * LN = node->_first_irreducible;
+					while (LN != nullptr) 
+						{ 
+						if (LN->_bobj.boundingbox.contain(box)) { fun(LN->_bobj); nb++; }
+						LN = LN->_next; 
+						}
+					LN = node->_first_reducible;
+					while (LN != nullptr) 
+						{ 
+						if (LN->_bobj.boundingbox.contain(box)) { fun(LN->_bobj); nb++; }
+						LN = LN->_next; 
+						}
+					for (int j = 0; j < 15; j++)
+						{
+						if (node->_son[j] != nullptr) 
+							{
+							if (node->_son[j]->_bbox.contain(box))
+								{
+								pnextStack->push_back(node->_son[j]);
+								}
+							}
+						}
+					}
+				pcurrentStack->clear();
+				mtools::swap(pcurrentStack, pnextStack);
+				}
 			}
 
 
@@ -393,8 +522,6 @@ class TestImage : public Image
 			}
 
 
-
-
 		/**
 		* Return the main bounding box that contains all items currently inserted.
 		**/
@@ -431,7 +558,27 @@ class TestImage : public Image
 		**/
 		void drawTreeDebug(Image & im, fBox2 R) const 
 			{ 
-			_drawTreedebug(im, R, _rootNode); 
+			std::vector<_TreeNode* > stack1; 
+			std::vector<_TreeNode* > stack2;
+			std::vector<_TreeNode* > * pcurrentStack = &stack1;
+			std::vector<_TreeNode* > * pnextStack = &stack2;
+			pcurrentStack->push_back(_rootNode);
+			while (1)
+				{
+				const size_t currentsize = pcurrentStack->size();
+				if (currentsize == 0) { return; }
+				for (size_t i = 0; i < currentsize; i++)
+					{
+					_TreeNode * node = pcurrentStack->operator[](i);
+					_drawNodedebug(im, R, node, RGBc::c_Red, RGBc(180, 180, 180).getOpacity(0.1), RGBc::c_Blue.getOpacity(0.5), RGBc::c_Orange.getOpacity(0.5));
+					for (int j = 0; j < 15; j++)
+						{
+						if (node->_son[j] != nullptr) { pnextStack->push_back(node->_son[j]);  }
+						}
+					}
+				pcurrentStack->clear();
+				mtools::swap(pcurrentStack, pnextStack);
+				}
 			}
 
 
@@ -714,13 +861,6 @@ class TestImage : public Image
 				}
 			}
 
-		/* draw the tree, for debug purpose only. */
-		void _drawTreedebug(Image & im, fBox2 R, _TreeNode * node) const
-			{
-			if (node == nullptr) return; 
-			_drawNodedebug(im, R, node, RGBc::c_Red, RGBc(180, 180, 180).getOpacity(0.1), RGBc::c_Blue.getOpacity(0.5), RGBc::c_Orange.getOpacity(0.5));
-			for (int i = 0; i < 15; i++) { _drawTreedebug(im, R, node->_son[i]); }
-			}
 
 
 
@@ -835,7 +975,7 @@ class TestImage : public Image
 
 		TreeFigure<void *,5> TF;
 
-		int n = 5000; 
+		int n = 1000; 
 
 
 		cout << "inserting...\n";
@@ -846,9 +986,13 @@ class TestImage : public Image
 			double yc = Unif(gen) * (Unif(gen) - 0.5) * 12;
 			double lx = Unif(gen); lx *= lx;
 			double ly = Unif(gen); ly *= ly;
-			lx = 0; ly = 0;
+			lx = 0.1; ly = 0.1;
 			TF.insert({xc - lx, xc + lx, yc - ly, yc + ly}, nullptr);
 			}
+
+
+		TF.insert({ 1, 2, 1, 1.6 }, nullptr);
+
 		cout << "done in " << durationToString(mtools::Chronometer(),true) << "\n";
 
 
@@ -866,9 +1010,18 @@ class TestImage : public Image
 
 		cout << "Visiting...\n";
 		mtools::Chronometer();
-		cout << "visited = " << TF.iterate_all([&](const TreeFigure<void *, 5>::BoundedObject & bo) -> void { im.canvas_draw_box(R, bo.boundingbox, RGBc::c_Green, true);  return; });
+		cout << "visited = " << TF.iterate_intersect({-5,5,0,5},  [&](const TreeFigure<void *, 5>::BoundedObject & bo) -> void { im.canvas_draw_box(R, bo.boundingbox, RGBc::c_Green.getOpacity(0.5), true);  return; });
 		cout << "done in " << durationToString(mtools::Chronometer(), true) << "\n";
 
+		cout << "Visiting...\n";
+		mtools::Chronometer();
+		cout << "visited = " << TF.iterate_contained_in({ -5,5,0,5 }, [&](const TreeFigure<void *, 5>::BoundedObject & bo) -> void { im.canvas_draw_box(R, bo.boundingbox, RGBc::c_Blue.getOpacity(0.5), true);  return; });
+		cout << "done in " << durationToString(mtools::Chronometer(), true) << "\n";
+
+		cout << "Visiting...\n";
+		mtools::Chronometer();
+		cout << "visited = " << TF.iterate_contain({ 1,1.01,1.5,1.51 }, [&](const TreeFigure<void *, 5>::BoundedObject & bo) -> void { im.canvas_draw_box(R, bo.boundingbox, RGBc::c_Yellow.getOpacity(0.2), true);  return; });
+		cout << "done in " << durationToString(mtools::Chronometer(), true) << "\n";
 
 		auto P1 = makePlot2DImage(im);
 		Plotter2D plotter;
