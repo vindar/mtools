@@ -172,15 +172,17 @@ class TestImage : public Image
 
 
 
-	template<class T, int N = 50, class TFloat = double> class TreeFigure
-	{
 
-		struct _ListNode;	// forward declarations.
-		struct _BaseNode;	//
+
+
+
+
+
+	template<class T, int N = 10, class TFloat = double> class TreeFigure
+	{
 
 
 	public:
-
 
 		/**************************************************************************************************
 		* Public structures
@@ -196,20 +198,19 @@ class TestImage : public Image
 		* An object together, with its bounding box
 		**/
 		struct BoundedObject
-		{
-			BoundedObject(const T & obj, const BBox & bbox) : object(obj), boundingbox(bbox) {}
+			{
+			BoundedObject(const BBox & bbox, const T & obj) : boundingbox(bbox), object(obj) {}
 
 			BBox	boundingbox;
 			T		object;
-		};
+			};
 
 
 
 		/**************************************************************************************************
 		* Public Methods
 		**************************************************************************************************/
-
-
+		
 
 		/**
 		* Default constructor, create an empty object.
@@ -232,9 +233,7 @@ class TestImage : public Image
 		/**
 		* Move constructor.
 		**/
-		TreeFigure(const TreeFigure && TF) : _callDtors(TF._callDtors), _rootNode(TF._rootNode),
-			_treeNodePool(std::forward<decltype(_treeNodePool)>(TF._sqrNodePool)),
-			_listNodePool(std::forward<decltype(_listNodePool)>(TF._listNodePool))
+		TreeFigure(const TreeFigure && TF) : _callDtors(TF._callDtors), _rootNode(TF._rootNode), _treeNodePool(std::forward<decltype(_treeNodePool)>(TF._sqrNodePool)), _listNodePool(std::forward<decltype(_listNodePool)>(TF._listNodePool))
 			{
 			TF._rootNode = nullptr;
 			}
@@ -267,29 +266,40 @@ class TestImage : public Image
 		* Serialize this object.
 		**/
 		void serialize(OBaseArchive & ar, const int version = 0)
-		{
+			{
 			// TODO
-		}
+			}
 
 
 		/**
 		* Deserialize this object.
 		**/
 		void deserialize(IBaseArchive & ar)
-		{
+			{
 			// TODO
-		}
-
+			}
 
 
 		/**
-		* Insert an object. A copy of obj is made with the copy constructor.
-		* Return a handle to the object.
+		* Insert an object. 
+		* 
+		* A copy of object is made with the copy constructor.
+		**/
+		void insert(const BBox & boundingbox, const T & object)
+			{
+			insert({ boundingbox , object });
+			}
+
+
+		/**
+		* Insert a bounded object.
+		* 
+		* A copy is made with the copy constructor.
 		**/
 		void insert(const BoundedObject & boundedObject)
 			{
 			// create new roots until we contain the object's bounding box
-			while (!(_rootNode->_bbox.contains(boundedObject.boundingbox))) { _reRootUp(); }
+			while (!(_rootNode->_bbox.contain(boundedObject.boundingbox))) { _reRootUp(); }
 			// start from the root and go down
 			_TreeNode * node = _rootNode;
 			while (1)
@@ -307,6 +317,7 @@ class TestImage : public Image
 					_addReducible(boundedObject, node);
 					// and check for overflow
 					if (node->_nb_reducible + node->_nb_irreducible > N) _overflow(node);
+					return;
 					}
 				// go to the correct son and continue
 				node = node->_son[i]; 
@@ -314,6 +325,48 @@ class TestImage : public Image
 			}
 
 
+		/**
+		 * Iterate over all objects whose bounding box intersect 'box'. 
+		 * the function 'fun' must ba callable in the form 'fun(boundedObject)'.
+		 */
+		template<typename FUNCTION> size_t iterate_intersect(BBox box, FUNCTION fun)
+			{
+
+			}
+
+		/**
+		* Iterate over all objects whose bounding box is contianed in 'box'.
+		* the function 'fun' must ba callable in the form 'fun(boundedObject)'.
+		*/
+		template<typename FUNCTION> size_t iterate_contained_in(BBox box, FUNCTION fun);
+			{
+
+			}
+
+
+		/**
+		* Iterate over all objects whose bounding box contain 'box'.
+		* the function 'fun' must ba callable in the form 'fun(boundedObject)'.
+		*/
+		template<typename FUNCTION> size_t iterate_contain(BBox box, FUNCTION fun);
+			{
+
+			}
+
+
+		/**
+		* Iterate over all objects.
+		* the function 'fun' must ba callable in the form 'fun(boundedObject)'.
+		*/
+		template<typename FUNCTION> size_t iterate_all(FUNCTION fun);
+			{
+
+			}
+
+		/**
+		* Return the main bounding box that contains all items currently inserted.
+		**/
+		BBox mainBoundingBox() const  { return _rootNode->_bbox; }
 
 
 		/**
@@ -331,18 +384,23 @@ class TestImage : public Image
 		/**
 		* Print information about this object into a string.
 		**/
-		std::string toString(bool debug = false)
-		{
+		std::string toString() const
+			{
 			std::string s = std::string("TreeFigure<") + typeid(T).name() + ", " + mtools::toString(N) + ", " + typeid(TFloat).name() + ">\n";
 			s += std::string(" - object inserted : ") + mtools::toString(size()) + "\n";
 			s += std::string(" - memory used : ") + mtools::toStringMemSize(footprint()) + "\n";
 			s += std::string(" - main bounding box : ") + mtools::toString(_rootNode->_bbox) + "\n";
-			if (!debug) { return s + "---\n"; }
+			return s + "---\n"; 
+			}
 
-			// TODO
 
-			return s;
-		}
+		/**
+		* Draw the tree structure into an image. For debug purpose only.
+		**/
+		void drawTreeDebug(Image & im, fBox2 R) const 
+			{ 
+			_drawTreedebug(im, R, _rootNode); 
+			}
 
 
 
@@ -350,7 +408,7 @@ class TestImage : public Image
 		* Private implementation.
 		**************************************************************************************************/
 
-	//private:
+	private:
 
 
 		TreeFigure(const TreeFigure & TF) = delete;				// no copy
@@ -360,21 +418,21 @@ class TestImage : public Image
 
 		/** structure for doubly chained list of bounded objects. */
 		struct _ListNode
-		{
+			{
 			/** ctor. */
 			_ListNode(const BoundedObject & bobj) : _prev(nullptr), _next(nullptr), _bobj(bobj) {}
 
 			_ListNode *   _prev;	// next item in the list, nullptr if there are none. 
 			_ListNode *   _next;	// next item in the list, nullptr if there are none. 
 			BoundedObject _bobj;	// the bounded object.
-		};
+			};
 
 
 		/** base class for square and rectangle nodes. */
 		struct _TreeNode
-		{
+			{
 			/** ctor. */
-			_TreeNode(const BBox & bbox) : _bbox(bbox), _first_reducible(nullptr), _last_reducible, _first_irreducible(nullptr), _nb_reducible(0), _nb_irreducible(0), _son {nullptr} {}
+			_TreeNode(const BBox & bbox) : _bbox(bbox), _first_reducible(nullptr), _last_reducible(nullptr), _first_irreducible(nullptr), _nb_reducible(0), _nb_irreducible(0), _son {nullptr} {}
 
 			BBox		_bbox;				// the node bounding box
 			_ListNode *	_first_reducible;	// pointeur to the first reducible item
@@ -383,15 +441,15 @@ class TestImage : public Image
 			size_t		_nb_reducible;		// number of reducible items
 			size_t		_nb_irreducible;	// number of irreducible items
 			_TreeNode *	_son[15];			// pointer to the sons
+			};
 
-		};
 
 
-		/** Add a new list node at the end of the list of reducible node. */
-		void _addReducible(const BoundedObject & bo, _TreeNode * node)
+		/** link a reducible node at the end */
+		inline void _linkReducible(_ListNode * LN, _TreeNode * node)
 			{
-			_ListNode * LN = (_ListNode *)_listNodePool.malloc();
-			::new(LN) _ListNode(boundedObject);
+			MTOOLS_ASSERT(LN != nullptr);
+			MTOOLS_ASSERT(node != nullptr);
 			if (node->_last_reducible == nullptr)
 				{
 				MTOOLS_ASSERT(node->_first_reducible == nullptr);
@@ -401,49 +459,125 @@ class TestImage : public Image
 				{
 				node->_last_reducible->_next = LN;
 				}
-			LN->prev = node->_last_reducible;
+			LN->_prev = node->_last_reducible;
+			LN->_next = nullptr;
 			node->_last_reducible = LN;
 			node->_nb_reducible++;
 			}
 
 
-		/** Add a new list node at the beginning of the list of irreducible node. */
-		void _addIrreducible(const BoundedObject & bo, _TreeNode * node)
+		/** Add a new list node at the end of the list of reducible node. */
+		inline void _addReducible(const BoundedObject & bo, _TreeNode * node)
 			{
-			MTOOLS_ASSERT(node != nullptr);
 			_ListNode * LN = (_ListNode *)_listNodePool.malloc();
-			::new(LN) _ListNode(boundedObject);
-			if (node->_first_irreducible != nullptr)
+			::new(LN) _ListNode(bo);
+			_linkReducible(LN, node);
+			}
+
+
+		/** remove a reducible node from the chain and return its successor. */
+		inline _ListNode * unlinkReducible(_ListNode * LN, _TreeNode * node)
 			{
+			MTOOLS_ASSERT(LN != nullptr);
+			MTOOLS_ASSERT(node != nullptr);
+			if (LN->_prev != nullptr) { LN->_prev->_next = LN->_next; } else { node->_first_reducible = LN->_next; }
+			if (LN->_next != nullptr) { LN->_next->_prev = LN->_prev; } else {  node->_last_reducible = LN->_prev; }
+			node->_nb_reducible--;
+			return LN->_next;
+			}
+
+
+
+		/** Add a new list node at the beginning of the list of irreducible node. */
+		inline void _linkIrreducible(_ListNode * LN, _TreeNode * node)
+			{
+			MTOOLS_ASSERT(LN != nullptr);
+			MTOOLS_ASSERT(node != nullptr);
+			if (node->_first_irreducible != nullptr)
+				{
 				MTOOLS_ASSERT(node->_first_irreducible->_prev == nullptr);
 				node->_first_irreducible->_prev = LN;
-			}
+				}
 			LN->_next = node->_first_irreducible;
-			node->_first_reducible = LN;
+			LN->_prev = nullptr;
+			node->_first_irreducible = LN;
 			node->_nb_irreducible++;
 			}
 
 
-		/* remove a reducible node from the chain and return its successor. */
-		_ListNode * unlinkReducible(_ListNode * LN, _TreeNode * node)
+		/** Add a new list node at the beginning of the list of irreducible node. */
+		inline void _addIrreducible(const BoundedObject & bo, _TreeNode * node)
 			{
-			MTOOLS_ASSERT(LN != nullptr);
 			MTOOLS_ASSERT(node != nullptr);
-			if (LN->prev != nullptr) { LN->_prev->_next = LN->_next; } else { node->_first_reducible = LN->_next; }
-			if (LN->next != nullptr) { LN->_next->_prev = LN->_prev; } else {  node->_last_reducible = LN->_prev; }
-			node->_nb_reducible--;
-			return LN->next;
+			_ListNode * LN = (_ListNode *)_listNodePool.malloc();
+			::new(LN) _ListNode(bo);
+			_linkIrreducible(LN, node);
 			}
 
-		/* remove an irreducible node from the chain and return its successor. */
-		_ListNode * unlinkIrreducible(_ListNode * LN, _TreeNode * node)
+
+		/** remove an irreducible node from the chain and return its successor. */
+		inline _ListNode * unlinkIrreducible(_ListNode * LN, _TreeNode * node)
 			{
 			MTOOLS_ASSERT(LN != nullptr);
 			MTOOLS_ASSERT(node != nullptr);
-			if (LN->prev != nullptr) { LN->_prev->_next = LN->_next; } else { node->_first_irreducible = LN->_next; }
-			if (LN->next != nullptr) { LN->_next->_prev = LN->_prev; }
+			if (LN->_prev != nullptr) { LN->_prev->_next = LN->_next; } else { node->_first_irreducible = LN->_next; }
+			if (LN->_next != nullptr) { LN->_next->_prev = LN->_prev; }
 			node->_nb_irreducible--;
-			return LN->next;
+			return LN->_next;
+			}
+
+
+
+
+		/** deal with overflowing node. (Recursive version, to be improved). */
+		void _overflow(_TreeNode * node)
+			{
+			MTOOLS_ASSERT(node != nullptr);
+			if ((node->_nb_reducible == 0) ||(node->_nb_reducible + node->_nb_irreducible <= N)) return; // no overflow: nothing to do. 
+			size_t nb = (node->_nb_irreducible >= N) ? (node->_nb_reducible) : (node->_nb_reducible + node->_nb_irreducible - N); // number of reducible items to dispatch
+			_ListNode * LN = node->_first_reducible;
+			for (size_t k = 0; k<nb; k++)
+				{
+				MTOOLS_ASSERT(LN != nullptr);
+				int index = _getIndex(LN->_bobj.boundingbox, node->_bbox); // get the son index
+				MTOOLS_ASSERT(index >= 0);
+				MTOOLS_ASSERT(index < 15);
+				if (node->_son[index] == nullptr) { _createChildNode(node, index); } // create the son since it does not exist yet. 
+				_ListNode * nextLN = unlinkReducible(LN, node);	// unlink from node
+				int newindex = _getIndex(LN->_bobj.boundingbox, node->_son[index]->_bbox); // get the index inside the child node. 
+				if (newindex == 15)
+					{ // the item is now irreducible, good :)
+					_linkIrreducible(LN, node->_son[index]);
+					}
+				else
+					{ // the item is still reducible in the subnode
+					_linkReducible(LN, node->_son[index]);
+					}
+				LN = nextLN;
+				}
+			// and we deal with the possible overflow of the child nodes. 
+			for (int i = 0; i < 15; i++)
+				{
+				if (node->_son[i] != nullptr) _overflow(node->_son[i]);
+				}
+			}
+
+
+		/** Release all allocated memory and set pointers to nullptr. */
+		void _reset()
+			{
+			_treeNodePool.freeAll();
+			if (_callDtors) _listNodePool.destroyAndFreeAll<_ListNode>(); else _listNodePool.freeAll();
+			_rootNode = nullptr;
+			}
+
+
+		/** Create the initial root of the tree */
+		void _createRoot()
+			{
+			MTOOLS_ASSERT(_rootNode == nullptr);
+			_rootNode = (_TreeNode *)_treeNodePool.malloc();
+			::new(_rootNode) _TreeNode({ (TFloat)-1, (TFloat)1, (TFloat)-1, (TFloat)1 });
 			}
 
 
@@ -455,55 +589,13 @@ class TestImage : public Image
 			MTOOLS_ASSERT(node != nullptr);
 			MTOOLS_ASSERT(node->_son[index] == nullptr);
 			_TreeNode * nn = (_TreeNode *)_treeNodePool.malloc();
-			::new(nn) _TreeNode(_getSubBox(index,node->_bbox));
+			::new(nn) _TreeNode(_getSubBox(index, node->_bbox));
 			node->_son[index] = nn;
 			return;
 			}
 
 
-		/** deal with overflowing node. (Recursive version, could be improved). */
-		void _overflow(_TreeNode * node)
-		{
-			MTOOLS_ASSERT(node != nullptr);
-			if (node->_nb_reducible + node->_nb_irreducible <= N) return; // no overflow, nothing to do. 
-			size_t nb = (node->_nb_irreducible >= N) ? (node->_nb_reducible) : (node->_nb_reducible + node->_nb_irreducible - N); // number of reducible item to dispatch
-			for (size_t k = 0; k<nb; k++)
-				{
-
-				}
-			node->_nb_reducible -= nb;
-			// and we deal with the possible overflow of the child nodes. 
-			for (int i = 0; i < 15; i++)
-				{
-				if (node->_son[i] != nullptr) overflow(node->_son[i]);
-				}
-			}
-
-
-
-		/** release all allocated memory and set pointers to nullptr. */
-		void _reset()
-			{
-			_treeNodePool.freeAll();
-			if (_callDtors) _listNodePool.destroyAndFreeAll<_ListNode>(); else _listNodePool.freeAll();
-			_rootNode = nullptr;
-			}
-
-
-		/**   
-		 * create the initial root of the tree 
-		 **/
-		void _createRoot()
-			{
-			MTOOLS_ASSERT((_rootNode == nullptr) && (_currentNode == nullptr));
-			_rootNode = (_TreeNode *)_treeNodePool.malloc();
-			::new(_rootNode) _TreeNode({ (TFloat)-1, (TFloat)1, (TFloat)-1, (TFloat)1 });
-			}
-
-
-		/**   
-		 * Create the father of the root and set it as the new root.
-		 **/
+		/** Create the father of the root and set it as the new root. */
 		void _reRootUp()
 			{
 			_TreeNode * newrootnode = (_TreeNode *)_treeNodePool.malloc();
@@ -530,8 +622,8 @@ class TestImage : public Image
 		 **/
 		static inline BBox _getSubBox(int index, const BBox & box)
 			{
-			MTOOLS_ASSERT(i >= 0);
-			MTOOLS_ASSERT(i < 15);
+			MTOOLS_ASSERT(index >= 0);
+			MTOOLS_ASSERT(index < 15);
 			TFloat ex = (box.max[0] - box.min[0]) / 4;
 			TFloat ox = box.min[0];
 			TFloat ax = ox + ex;
@@ -569,6 +661,35 @@ class TestImage : public Image
 				}
 			return subbox;
 			}
+
+
+		/** draw a node into an image. For debug purpose only. */
+		void _drawNodedebug(Image & im, fBox2 R, _TreeNode * node, RGBc nodecolor, RGBc nodecolorinterior, RGBc obj_red, RGBc obj_irred) const
+			{
+			im.canvas_draw_box(R, node->_bbox, nodecolorinterior, true);
+			im.canvas_draw_rectangle(R, node->_bbox, nodecolor, true, 1);
+			_ListNode * LN = node->_first_reducible; 
+			while (LN != nullptr)
+				{
+				im.canvas_draw_box(R, LN->_bobj.boundingbox, obj_red, true);
+				LN = LN->_next;
+				}
+			LN = node->_first_irreducible;
+			while (LN != nullptr)
+				{
+				im.canvas_draw_box(R, LN->_bobj.boundingbox, obj_irred, true);
+				LN = LN->_next;
+				}
+			}
+
+		/* draw the tree, for debug purpose only. */
+		void _drawTreedebug(Image & im, fBox2 R, _TreeNode * node) const
+			{
+			if (node == nullptr) return; 
+			_drawNodedebug(im, R, node, RGBc::c_Red, RGBc(200, 200, 200).getOpacity(0.1), RGBc::c_Blue.getOpacity(0.5), RGBc::c_Orange.getOpacity(0.5));
+			for (int i = 0; i < 15; i++) { _drawTreedebug(im, R, node->_son[i]); }
+			}
+
 
 
 		/**
@@ -670,60 +791,7 @@ class TestImage : public Image
 
 
 
-
-
-
-
-	void testindex(fBox2 & tb)
-	{
-		fBox2 out = { -100, 500 , 100 , 700 };
-
-		Image im(800, 800);
-		im.clear(RGBc::c_White);
-
-		fBox2 R = { -200, 600 , 0 , 800 };
-
-
-		im.canvas_draw_box(R, out, RGBc(240, 240, 240), false);
-		im.canvas_draw_rectangle(R, out, RGBc::c_Black, false, 1);
-
-		double ox = out.min[0];
-		double ax = ox + out.lx() / 4;
-		double bx = ox + 2 * out.lx() / 4;
-		double cx = ox + 3 * out.lx() / 4;
-		double dx = out.max[0];
-
-		double oy = out.min[1];
-		double ay = oy + out.ly() / 4;
-		double by = oy + 2 * out.ly() / 4;
-		double cy = oy + 3 * out.ly() / 4;
-		double dy = out.max[1];
-
-		im.canvas_draw_line(R, { ax,oy }, { ax,dy }, RGBc::c_Black, true, false, false, 1);
-		im.canvas_draw_line(R, { bx,oy }, { bx,dy }, RGBc::c_Black, true, false, false, 1);
-		im.canvas_draw_line(R, { cx,oy }, { cx,dy }, RGBc::c_Black, true, false, false, 1);
-
-		im.canvas_draw_line(R, { ox,ay }, { dx,ay }, RGBc::c_Black, true, false, false, 1);
-		im.canvas_draw_line(R, { ox,by }, { dx,by }, RGBc::c_Black, true, false, false, 1);
-		im.canvas_draw_line(R, { ox,cy }, { dx,cy }, RGBc::c_Black, true, false, false, 1);
-
-		fBox2 subbox;
-		int ind = TreeFigure<void *>::_getIndex(tb, out);
-		subbox = TreeFigure<void *>::_getSubBox(ind, out);
-
-		im.canvas_draw_box(R, subbox, RGBc(180, 180, 180), false);
-		im.canvas_draw_box(R, tb, RGBc::c_Red, false);
-
-
-		auto P1 = makePlot2DImage(im);
-		Plotter2D plotter;
-		plotter[P1];
-		plotter.autorangeXY();
-		plotter.range().zoomOut();
-		plotter.plot();
-
-
-	}
+	MT2004_64 gen;
 
 
 
@@ -733,28 +801,42 @@ class TestImage : public Image
 		MTOOLS_SWAP_THREADS(argc, argv); // required on OSX, does nothing on Linux/Windows
 		mtools::parseCommandLine(argc, argv, true); // parse the command line, interactive mode
 
-		TreeFigure<void *> TF;
+		TreeFigure<void *,5> TF;
 
-		fBox2 B;
-
-		B = { -100,110,100,380 };
+		int n = 10000000; 
 
 
-		for (int i = 0; i < 500; i += 50)
-		{
-			for (int j = 0; j < 400; j += 50)
+		cout << "inserting...\n";
+		mtools::Chronometer();
+		for (int i = 0; i < n; i++)
 			{
-				fVec2 T(i, j);
-				fBox2 C = B;
-				C.min += T;
-				C.max += T;
-				testindex(C);
+			double xc = -5 + 10 * Unif(gen);
+			double yc = -3 + 6 * Unif(gen);
+			double lx = Unif(gen); lx *= lx;
+			double ly = Unif(gen); ly *= ly;
+			lx = 0; ly = 0;
+			TF.insert({xc - lx, xc + lx, yc - ly, yc + ly}, nullptr);
 			}
+		cout << "done in " << durationToString(mtools::Chronometer(),true) << "\n";
 
-		}
+		fBox2 R = TF.mainBoundingBox();
+		R = mtools::zoomOut(R);
+
+		Image im(10000, 10000);
+		im.clear(RGBc::c_White);
+
+		cout << "Drawing...\n";
+		mtools::Chronometer();
+		TF.drawTreeDebug(im, R);
+		cout << "done in " << durationToString(mtools::Chronometer(), true) << "\n";
 
 
-
+		auto P1 = makePlot2DImage(im);
+		Plotter2D plotter;
+		plotter[P1];
+		plotter.autorangeXY();
+		plotter.range().zoomOut();
+		plotter.plot();
 
 		mtools::cout << "Hello World\n";
 		mtools::cout.getKey();
