@@ -282,109 +282,38 @@ class TestImage : public Image
 
 
 
-
-
-		/* INSERTION ALGORITHM
-		*
-		* -> B bounding box of the item to insert.
-		*
-		* 1) Set C = root bounding box.
-		* 2) While C does not contain B, C= parent(C) = new root.
-		* 3) If B is irreducible in C, insert B in C. END.
-		* 4) If child(B | C) exist, set C = child(B | C) and goto 3.
-		* 5) If number of item X in C is larger than N. Sort up to N - X reducible items into sub boxes.
-		*
-		* Rectification d'un noeud avec plus de N enfants.
-		* - Si tout les item sont irreductible, ne fait rien.
-		* - Sinon, dispatch les item reductible (en commencant par les + anciens) dans les noueud enfant
-		* - et s'arretant lorsque le noueud pere a de nouveua N enfants (ou lorque qu'il n'y a plus d'item reductible
-		*   a dispatcher. ). Rectfie recursivmeent otu les noueud fils.
-		*
-		*/
-		
-
 		/**
 		* Insert an object. A copy of obj is made with the copy constructor.
 		* Return a handle to the object.
 		**/
 		void insert(const BoundedObject & boundedObject)
 			{
-			// augment the root (if needed) until we contain the object's bounding box
+			// create new roots until we contain the object's bounding box
 			while (!(_rootNode->_bbox.contains(boundedObject.boundingbox))) { _reRootUp(); }
-			// start from the root
+			// start from the root and go down
 			_TreeNode * node = _rootNode;
-			// and go down 
 			while (1)
 				{
 				int i = _getIndex(boundedObject.boundingbox, node->_bbox);
 				if (i == 15)
 					{ // irreducible item, we just put it there (in front)
-					_ListNode * LN = (_ListNode *)_listNodePool.malloc();
-					::new(LN) _ListNode(boundedObject);
-					if (node->_first_irreducible != nullptr)
-						{
-						MTOOLS_ASSERT(node->_first_irreducible->_prev == nullptr);
-						node->_first_irreducible->_prev = LN;
-						}
-					LN->_next = node->_first_irreducible;
-					node->_first_reducible = LN;
-					node->_nb_irreducible++;
+					_addIrreducible(boundedObject, node);
+					// deal with overflowing nodes if needed.  
+					if ((node->_nb_reducible >0) &&(node->_nb_reducible + node->_nb_irreducible > N)) _overflow(node);
 					return;
 					}
-				if (node->_son[i] != nullptr)
-					{ // son was already created, go into it and continue
-					node = node->_son[i]; 
-					continue; 
+				if (node->_son[i] == nullptr)
+					{ // son not created. Put reducible object right here. 
+					_addReducible(boundedObject, node);
+					// and check for overflow
+					if (node->_nb_reducible + node->_nb_irreducible > N) _overflow(node);
 					}
-				// son was not yet created, put reducible item here (in the back)
-				_ListNode * LN = (_ListNode *)_listNodePool.malloc();
-				::new(LN) _ListNode(boundedObject);
-				if (node->_last_reducible == nullptr)
-					{
-					MTOOLS_ASSERT(node->_first_reducible == nullptr);
-					node->_first_reducible = LN;
-					}
-				else
-					{
-					node->_last_reducible->_next = LN;
-					LN->prev = node->_last_reducible;
-					}
-				node->_last_reducible = LN;
-				node->_nb_reducible++;
-				// deal with overflowing nodes (test right now if overflowing before calling overflow(), redundant with the first line of overflow() but prevent a possibly useless function call. 
-				if (node->_nb_reducible + node->_nb_irreducible > N) _overflow(node); 
+				// go to the correct son and continue
+				node = node->_son[i]; 
 				}
 			}
 
 
-		/** deal with overflowing node. (Recursive version, could be improved). */
-		void _overflow(_TreeNode * node)
-			{
-			MTOOLS_ASSERT(node != nullptr);
-			if (node->_nb_reducible + node->_nb_irreducible <= N) return; // no overflow, nothing to do. 
-			size_t nb = (node->_nb_irreducible >= N) ? (node->_nb_reducible) : (node->_nb_reducible + node->_nb_irreducible - N); // number of reducible item to dispatch
-			for (size_t k=0; k<nb; k++)
-				{
-
-				}
-			node->_nb_reducible -= nb;
-			// and we deal with the possible overflow of the child nodes. 
-			if (node->_son[0] != nullptr) overflow(node->_son[0]);
-			if (node->_son[1] != nullptr) overflow(node->_son[1]);
-			if (node->_son[2] != nullptr) overflow(node->_son[2]);
-			if (node->_son[3] != nullptr) overflow(node->_son[3]);
-			if (node->_son[4] != nullptr) overflow(node->_son[4]);
-			if (node->_son[5] != nullptr) overflow(node->_son[5]);
-			if (node->_son[6] != nullptr) overflow(node->_son[6]);
-			if (node->_son[7] != nullptr) overflow(node->_son[7]);
-			if (node->_son[8] != nullptr) overflow(node->_son[8]);
-			if (node->_son[9] != nullptr) overflow(node->_son[9]);
-			if (node->_son[10] != nullptr) overflow(node->_son[10]);
-			if (node->_son[11] != nullptr) overflow(node->_son[11]);
-			if (node->_son[12] != nullptr) overflow(node->_son[12]);
-			if (node->_son[13] != nullptr) overflow(node->_son[13]);
-			if (node->_son[14] != nullptr) overflow(node->_son[14]);
-			}
 
 
 		/**
@@ -456,6 +385,99 @@ class TestImage : public Image
 			_TreeNode *	_son[15];			// pointer to the sons
 
 		};
+
+
+		/** Add a new list node at the end of the list of reducible node. */
+		void _addReducible(const BoundedObject & bo, _TreeNode * node)
+			{
+			_ListNode * LN = (_ListNode *)_listNodePool.malloc();
+			::new(LN) _ListNode(boundedObject);
+			if (node->_last_reducible == nullptr)
+				{
+				MTOOLS_ASSERT(node->_first_reducible == nullptr);
+				node->_first_reducible = LN;
+				}
+			else
+				{
+				node->_last_reducible->_next = LN;
+				}
+			LN->prev = node->_last_reducible;
+			node->_last_reducible = LN;
+			node->_nb_reducible++;
+			}
+
+
+		/** Add a new list node at the beginning of the list of irreducible node. */
+		void _addIrreducible(const BoundedObject & bo, _TreeNode * node)
+			{
+			MTOOLS_ASSERT(node != nullptr);
+			_ListNode * LN = (_ListNode *)_listNodePool.malloc();
+			::new(LN) _ListNode(boundedObject);
+			if (node->_first_irreducible != nullptr)
+			{
+				MTOOLS_ASSERT(node->_first_irreducible->_prev == nullptr);
+				node->_first_irreducible->_prev = LN;
+			}
+			LN->_next = node->_first_irreducible;
+			node->_first_reducible = LN;
+			node->_nb_irreducible++;
+			}
+
+
+		/* remove a reducible node from the chain and return its successor. */
+		_ListNode * unlinkReducible(_ListNode * LN, _TreeNode * node)
+			{
+			MTOOLS_ASSERT(LN != nullptr);
+			MTOOLS_ASSERT(node != nullptr);
+			if (LN->prev != nullptr) { LN->_prev->_next = LN->_next; } else { node->_first_reducible = LN->_next; }
+			if (LN->next != nullptr) { LN->_next->_prev = LN->_prev; } else {  node->_last_reducible = LN->_prev; }
+			node->_nb_reducible--;
+			return LN->next;
+			}
+
+		/* remove an irreducible node from the chain and return its successor. */
+		_ListNode * unlinkIrreducible(_ListNode * LN, _TreeNode * node)
+			{
+			MTOOLS_ASSERT(LN != nullptr);
+			MTOOLS_ASSERT(node != nullptr);
+			if (LN->prev != nullptr) { LN->_prev->_next = LN->_next; } else { node->_first_irreducible = LN->_next; }
+			if (LN->next != nullptr) { LN->_next->_prev = LN->_prev; }
+			node->_nb_irreducible--;
+			return LN->next;
+			}
+
+
+		/** create a given child node of a node */
+		void _createChildNode(_TreeNode * node, int index)
+			{
+			MTOOLS_ASSERT(index >= 0);
+			MTOOLS_ASSERT(index < 15);
+			MTOOLS_ASSERT(node != nullptr);
+			MTOOLS_ASSERT(node->_son[index] == nullptr);
+			_TreeNode * nn = (_TreeNode *)_treeNodePool.malloc();
+			::new(nn) _TreeNode(_getSubBox(index,node->_bbox));
+			node->_son[index] = nn;
+			return;
+			}
+
+
+		/** deal with overflowing node. (Recursive version, could be improved). */
+		void _overflow(_TreeNode * node)
+		{
+			MTOOLS_ASSERT(node != nullptr);
+			if (node->_nb_reducible + node->_nb_irreducible <= N) return; // no overflow, nothing to do. 
+			size_t nb = (node->_nb_irreducible >= N) ? (node->_nb_reducible) : (node->_nb_reducible + node->_nb_irreducible - N); // number of reducible item to dispatch
+			for (size_t k = 0; k<nb; k++)
+				{
+
+				}
+			node->_nb_reducible -= nb;
+			// and we deal with the possible overflow of the child nodes. 
+			for (int i = 0; i < 15; i++)
+				{
+				if (node->_son[i] != nullptr) overflow(node->_son[i]);
+				}
+			}
 
 
 
