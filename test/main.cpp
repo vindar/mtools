@@ -188,15 +188,15 @@ class TestImage : public Image
 
 		cout << "inserting...\n";
 		mtools::Chronometer();
-
+		/*
 		{
 			cout << "DEserializing...\n";
 			IFileArchive ar("testTreeAR.txt");
 			ar & TF;
 			cout << "OK...\n";
 		}
-
-		/*
+		*/
+		
 		for (int i = 0; i < n; i++)
 		{
 			double xc = Unif(gen) * (Unif(gen) - 0.5) * 20;
@@ -215,7 +215,7 @@ class TestImage : public Image
 			TF.insert({ 0, lx, yc, yc }, 0);
 		}
 
-		*/
+		
 		
 		cout << TF << "\n";
 

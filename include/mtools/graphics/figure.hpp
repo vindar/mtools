@@ -40,7 +40,7 @@ namespace mtools
     public:
 
         Figure() {}
-        ~Figure()
+		~Figure() {}
 
 	private:
 
