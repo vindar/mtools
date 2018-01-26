@@ -32,26 +32,18 @@
 namespace mtools
 {
 	/**
-	 * Convert a value in the range [0,0xFF] to the range [0,0x100].
-	 * 
-	 * Maps 0 to 0 and 0xFF to 0x100.
-	 *
+	 * Convert a value in the range [0,0xFF] to the range [0,0x100]. Maps 0 to 0 and 0xFF to 0x100.
 	 * convertAlpha_0x100_to_0xFF( convertAlpha_0xFF_to_0x100(v)) = v.
 	 *
 	 * @param	v	The value in [0,0xFF].
 	 *
 	 * @return	The scaled value in [0,0x100].
 	 **/
-	MTOOLS_FORCEINLINE uint32 convertAlpha_0xFF_to_0x100(uint32 v)
-		{
-		return(v + ((v & 128) >> 7));
-		}
+	MTOOLS_FORCEINLINE uint32 convertAlpha_0xFF_to_0x100(uint32 v) { return(v + ((v & 128) >> 7)); }
 
 
 	/**
-	* Convert a value in the range [0,0xFF] to the range [0,0x100].
-	*
-	* Maps 0 to 0 and 0xFF to 0x100.
+	* Convert a value in the range [0,0xFF] to the range [0,0x100]. Maps 0 to 0 and 0xFF to 0x100.
 	* 
 	* convertAlpha_0x100_to_0xFF( convertAlpha_0xFF_to_0x100(v)) = v.
 	* 
@@ -59,14 +51,13 @@ namespace mtools
 	*
 	* @return	The scaled value in [0,0xFF].
 	 **/
-	MTOOLS_FORCEINLINE uint32 convertAlpha_0x100_to_0xFF(uint32 v)
-		{
-		return(v - (((~(v - 128)) >> 31)));
-		}
+	MTOOLS_FORCEINLINE uint32 convertAlpha_0x100_to_0xFF(uint32 v) { return(v - (((~(v - 128)) >> 31))); }
 
 
     /* forward definition */
     union RGBc64;
+
+
 
     /**
      * A color in BGRA format.
@@ -78,7 +69,11 @@ namespace mtools
 
     public:
 
+
         /**
+         ****************************************************************************
+         * LAYOUT
+         **************************************************************************** 
          * Color seen as a uint32. Low byte is Blue, high byte is Alpha.  
          * 
          * 31--------------------------------0
@@ -99,10 +94,14 @@ namespace mtools
             } comp;
 
 
-        static const uint8 DEFAULTALPHA = 255;      ///< default value for transparency : fully opaque
         static const uint8 OPAQUEALPHA = 255;       ///< fully opaque
         static const uint8 TRANSPARENTALPHA = 0;    ///< fully transparent
 
+
+
+		/****************************************************************************
+		* CONSTRUCTOR / CONVERSION
+		*****************************************************************************/
 
         /**
          * Default constructor.
@@ -116,9 +115,9 @@ namespace mtools
          * @param   r   color red.
          * @param   g   color green.
          * @param   b   color black.
-         * @param   a   alpha channel in 0..255 (DEFAULTALPHA)
+         * @param   a   alpha channel in 0..255 
          **/
-        RGBc(uint8 r, uint8 g, uint8 b, uint8 a = DEFAULTALPHA) : comp{b,g,r,a} {}
+        RGBc(uint8 r, uint8 g, uint8 b, uint8 a = OPAQUEALPHA) : comp{b,g,r,a} {}
 
 
         /**
@@ -132,7 +131,7 @@ namespace mtools
          *
          * @param   c   The color.
          **/
-		MTOOLS_FORCEINLINE RGBc(const RGBc64 & c);
+		RGBc(const RGBc64 & c) { fromRGBc64(c); }
 
 
 		/**
@@ -141,7 +140,8 @@ namespace mtools
 		 * @param	c the color
 		 * @param	N normalisation value (must be >0). 
 		 */
-		MTOOLS_FORCEINLINE RGBc(const RGBc64 & c, uint32 N);
+		RGBc(const RGBc64 & c, uint32 N) { fromRGBc64(c, N); }
+
 
         /**
          * Raw constructor from int32
@@ -199,7 +199,6 @@ namespace mtools
 		MTOOLS_FORCEINLINE void fromRGBc64(const RGBc64 & coul, const uint32 N);
 
 
-
         /**
          * The buffer for the B G R A color.
          **/
@@ -210,6 +209,11 @@ namespace mtools
          * The buffer for the B G R A color (const version).
          **/
         inline const unsigned char* buf() const { return((unsigned char *)&color); }
+
+
+		/****************************************************************************
+		* COMPARISON
+		*****************************************************************************/
 
 
         /**
@@ -224,96 +228,45 @@ namespace mtools
         inline bool operator!=(const RGBc & c) const { return (color != c.color); }
 
 
-        /**
-        * Unary plus operator. Do nothing.
-        **/
-        inline RGBc operator+() { return (*this); }
 
 
-        /**
-        * Unary minus operator. Component per component.
-        **/
-        inline RGBc operator-() { return RGBc(-comp.R, -comp.G, -comp.B, -comp.A); }
+		/****************************************************************************
+		* OPACITY
+		*
+		* All these methods assume PREMULTIPLIED ALPHA colors !
+		*****************************************************************************/
 
 
-        /**
-        * Addition operator. Component per component.
-        **/
-        inline RGBc operator+(RGBc coul)
-            {
-            return RGBc(comp.R + coul.comp.R, comp.G + coul.comp.G, comp.B + coul.comp.B, comp.A + coul.comp.A);
-            }
+		/** Convert a color that is not premultiplied to its premultiplied version */
+		MTOOLS_FORCEINLINE void premultiply()
+			{
+			comp.R = (((uint32)comp.R) * comp.A) / 255;
+			comp.G = (((uint32)comp.G) * comp.A) / 255;
+			comp.B = (((uint32)comp.B) * comp.A) / 255;
+
+			/* Faster, but not the inverse of unpremultiply()
+			const uint32 opa  = color & 0xFF000000;
+			const uint32 o = convertAlpha_0xFF_to_0x100(color >> 24); // opacity in the range 0..256
+			uint32 g = (color & 0x0000FF00) >> 8;
+			uint32 rb = color & 0x00FF00FF;
+			uint32 sg = o * g;
+			uint32 srb = o * rb;
+			sg = sg & 0x0000FF00;
+			srb = (srb >> 8) & 0x00FF00FF;
+			return (sg | srb | opa);
+			*/			
+			}
 
 
-        /**
-        * Addition assignment operator. Component per component.
-        **/
-        inline RGBc & operator+=(RGBc coul)
-            {
-            comp.R += coul.comp.R; comp.G += coul.comp.G; comp.B += coul.comp.B; comp.A += coul.comp.A; // slow
-            return *this;
-            }
-
-
-        /**
-        * Subtraction operator. Component per component.
-        **/
-        inline RGBc operator-(RGBc coul)
-            {
-            return RGBc(comp.R - coul.comp.R, comp.G - coul.comp.G, comp.B - coul.comp.B, comp.A - coul.comp.A); // slow
-            }
-
-
-        /**
-        * Subtraction assignment operator. Component per component.
-        **/
-        inline RGBc & operator-=(RGBc coul)
-            {
-            comp.R -= coul.comp.R; comp.G -= coul.comp.G; comp.B -= coul.comp.B; comp.A -= coul.comp.A; // slow
-            return *this;
-            }
-
-
-        /**
-         * Convert the RGBc object into a std::string.
-         *
-         * @return  A std::string that represent the color in the form "RGB(rrr,ggg,bbb)".
-         **/
-        std::string toString() const { return std::string("RGBc(") + mtools::toString(comp.R) + "," + mtools::toString(comp.G) + "," + mtools::toString(comp.B) + ":" + mtools::toString(opacity()) + ")"; }
-
-
-        /**
-         * Makes the color fully transparent.
-         **/
-		MTOOLS_FORCEINLINE void makeTransparent() { color &= 0x00FFFFFF; }
-
-
-        /**
-         * Return the same color but transparent
-         *
-         * @return  The same color but with its alpha channel set to 0.
-         **/
-		MTOOLS_FORCEINLINE RGBc getTransparent() const { return RGBc(color & 0x00FFFFFF); }
-
-
-        /**
-         * Makes the color fully opaque.
-         **/
-		MTOOLS_FORCEINLINE void makeOpaque() { color |= 0xFF000000; }
-
-
-        /**
-         * Return the same color but opaque
-         *
-         * @return  The same color but with its alpha channel set to 255.
-         **/
-		MTOOLS_FORCEINLINE RGBc getOpaque() const { return RGBc(color | 0xFF000000); }
-
-
-        /**
-         * Give the color the default transparency (DEFAULTALPHA).
-         **/
-		MTOOLS_FORCEINLINE void makeDefaultTransparency() { comp.A = DEFAULTALPHA; }
+		/** Convert a premultiplied color to its non-premultiplied version */
+		MTOOLS_FORCEINLINE void unpremultiply()
+			{
+			MTOOLS_ASSERT((comp.R <= comp.A) && (comp.G <= comp.A) && (comp.B <= comp.A)); 
+			if (comp.A == 0) return;
+			comp.R = (((uint32)comp.R) * 255) / comp.A;
+			comp.G = (((uint32)comp.G) * 255) / comp.A;
+			comp.B = (((uint32)comp.B) * 255) / comp.A;
+			}
 
 
         /**
@@ -325,11 +278,22 @@ namespace mtools
 
 
         /**
-         * Set the opacity of the color.
-         *
+         * Change opacity of the color. Create a pre-multiplied color !
+         * 
+         * Slow : faster to use multOpacity() to change the opacity.
+		 *
          * @param   o   the opacity between 0.0 (transparent) and 1.0 (opaque)
          **/
-		MTOOLS_FORCEINLINE void opacity(float o) { MTOOLS_ASSERT((o >= 0.0f) && (o <= 1.0f)); comp.A = (uint8)(o * 255); }
+		MTOOLS_FORCEINLINE void opacity(float o) 
+			{ 
+			MTOOLS_ASSERT((o >= 0.0f) && (o <= 1.0f)); 
+			float mo = o * 255.0f;
+			float mult = (comp.A == 0) ? 1.0f : (mo / ((float)comp.A));
+			comp.A = (uint8)mo;
+			comp.R = (uint8)(comp.R*mult);
+			comp.G = (uint8)(comp.G*mult);
+			comp.B = (uint8)(comp.B*mult);
+			}
 
 
 		/**
@@ -337,7 +301,24 @@ namespace mtools
 		*
 		* @param   o   the opacity between 0.0 (transparent) and 1.0 (opaque)
 		**/
-		MTOOLS_FORCEINLINE RGBc getOpacity(float o) const { MTOOLS_ASSERT((o >= 0.0f) && (o <= 1.0f)); return RGBc((color & 0x00FFFFFF) | ((uint32)(o * 255)) << 24); }
+		MTOOLS_FORCEINLINE RGBc getOpacity(float o) const 
+			{ 
+			MTOOLS_ASSERT((o >= 0.0f) && (o <= 1.0f)); 
+			float mo = o * 255.0f;
+			float mult = (comp.A == 0) ? 1.0f : (mo/((float)comp.A));
+			return RGBc((uint8)(comp.R*mult), (uint8)(comp.G*mult), (uint8)(comp.B*mult), (uint8)mo);
+			}
+
+
+		/**
+		* Return the same color but completely opaque.
+		*
+		* @param   o   the opacity between 0.0 (transparent) and 1.0 (opaque)
+		**/
+		MTOOLS_FORCEINLINE RGBc getOpaque() const
+			{
+			return getOpacity(1.0f);
+			}
 
 
 		/**
@@ -345,7 +326,14 @@ namespace mtools
 		*
 		* @param   o   the multiplication factor between 0.0f and 1.0f.
 		**/
-		MTOOLS_FORCEINLINE void multOpacity(float o) { MTOOLS_ASSERT((o >= 0.0f) && (o <= 1.0f)); comp.A = (uint8)(comp.A * o); }
+		MTOOLS_FORCEINLINE void multOpacity(float o) 
+			{ 
+			MTOOLS_ASSERT((o >= 0.0f) && (o <= 1.0f));
+			comp.B *= (uint8)(comp.B * o);
+			comp.G *= (uint8)(comp.G * o);
+			comp.R *= (uint8)(comp.R * o);
+			comp.A *= (uint8)(comp.A * o);
+			}
 
 
 		/**
@@ -353,30 +341,36 @@ namespace mtools
 		*
 		* @param   o   the multiplication factor between 0.0f and 1.0f.
 		**/
-		MTOOLS_FORCEINLINE RGBc getMultOpacity(float o) const { MTOOLS_ASSERT((o >= 0.0f) && (o <= 1.0f)); return RGBc((color & 0x00FFFFFF) | ((uint32)(o * comp.A)) << 24); }
+		MTOOLS_FORCEINLINE RGBc getMultOpacity(float o) const 
+			{ 
+			MTOOLS_ASSERT((o >= 0.0f) && (o <= 1.0f)); 
+			return RGBc((uint8)(comp.R * o), (uint8)(comp.G * o), (uint8)(comp.B * o), (uint8)(comp.A * o));
+			}
+
+
+
+		/****************************************************************************
+		* ALPHA BLENDING
+		* 
+		* All these methods assume PREMULTIPLIED ALPHA colors !
+		*****************************************************************************/
 
 
 		/**
 		 * Blends colorB over this color.
-		 * 
-		 * The opacity of the bottom (ie this color) is ignored.  
+		 * Colors are assumed to have pre-multiplied alpha.
 		 *
 		 * @param	colorB	The 'top' color to blend over this one.
 		 **/
 		MTOOLS_FORCEINLINE void blend(const RGBc colorB)
 			{
-			const uint32 o = convertAlpha_0xFF_to_0x100(colorB.color >> 24); // opacity of b in the range [0,0x100]
-			const uint32 invo = 0x100 - o; // again in the range [0,0x100]
-			const uint32 br = ((invo*(color & 0x00FF00FF)) + (o*(colorB.color & 0x00FF00FF))) >> 8; // blend blue and red together.
-			const uint32 g = ((invo*(color & 0x0000FF00)) + (o*(colorB.color & 0x0000FF00))) >> 8; // blend green  
-			color = ((br & 0x00FF00FF) | (g & 0x0000FF00) | 0xFF000000); // return the blend, fully opaque. 
+			(*this) = get_blend(colorB);
 			}
 
 
 		/**
 		 * Blends colorB over this color.
-		 * 
-		 * The opacity of the bottom (ie this color) is ignored.
+		 * Colors are assumed to have pre-multiplied alpha.
 		 *
 		 * @param	colorB 	The 'top' color to blend over this one.
 		 * @param	opacity	The opacity to multiply colorB alpha channel with before blending, must be in
@@ -391,8 +385,7 @@ namespace mtools
 
 		/**
 		* Blends colorB over this color.
-		*
-		* The opacity of the bottom (ie this color) is ignored.
+		* Colors are assumed to have pre-multiplied alpha.
 		*
 		* @param	colorB 	The 'top' color to blend over this one.
 		* @param	opacity	The opacity to multiply colorB alpha channel with before blending, must be in
@@ -406,8 +399,7 @@ namespace mtools
 
 		/**
 		 * Return the color obtained by blending colorB over this one.
-		 * 
-		 * The opacity of the this color is ignored.
+		 * Colors are assumed to have pre-multiplied alpha.
 		 *
 		 * @param	colorB	The 'top' color to blend over this one.
 		 *
@@ -415,18 +407,20 @@ namespace mtools
 		 **/
 		MTOOLS_FORCEINLINE RGBc get_blend(const RGBc colorB) const
 			{
-			const uint32 o = convertAlpha_0xFF_to_0x100(colorB.color >> 24); // opacity of b in the range [0,0x100]
-			const uint32 invo = 0x100 - o; // again in the range [0,0x100]
-			const uint32 br = ((invo*(color & 0x00FF00FF)) + (o*(colorB.color & 0x00FF00FF))) >> 8; // blend blue and red together.
-			const uint32 g = ((invo*(color & 0x0000FF00)) + (o*(colorB.color & 0x0000FF00))) >> 8; // blend green  
-			return ((br & 0x00FF00FF) | (g & 0x0000FF00) | 0xFF000000); // return the blend, fully opaque. 
+			const uint32 o = 0x100 - convertAlpha_0xFF_to_0x100(colorB.color >> 24); 
+			uint32 ag = (color & 0xFF00FF00) >> 8;
+			uint32 rb = color & 0x00FF00FF;
+			uint32 sag = o * ag;
+			uint32 srb = o * rb;
+			sag = sag & 0xFF00FF00;
+			srb = (srb >> 8) & 0x00FF00FF;
+			return (sag | srb) + colorB.color;
 			}
 
 
 		/**
 		 * Return the color obtained by blending colorB over this one.
-		 * 
-		 * The opacity of the this color is ignored.
+		 * Colors are assumed to have pre-multiplied alpha.
 		 *
 		 * @param	colorB 	The 'top' color to blend over this one.
 		 * @param	opacity	The opacity to multiply colorB alpha channel with before blending, must be in
@@ -437,18 +431,29 @@ namespace mtools
 		 **/
 		MTOOLS_FORCEINLINE RGBc get_blend(const RGBc colorB, const uint32 opacity) const
 			{
-			const uint32 o = (convertAlpha_0xFF_to_0x100(colorB.color >> 24) * opacity) >> 8; // opacity of b in the range [0,0x100]
-			const uint32 invo = 0x100 - o; // again in the range [0,0x100]
-			const uint32 br = ((invo*(color & 0x00FF00FF)) + (o*(colorB.color & 0x00FF00FF))) >> 8; // blend blue and red together.
-			const uint32 g = ((invo*(color & 0x0000FF00)) + (o*(colorB.color & 0x0000FF00))) >> 8; // blend green  
-			return ((br & 0x00FF00FF) | (g & 0x0000FF00) | 0xFF000000); // return the blend, fully opaque. 
+			MTOOLS_ASSERT((opacity >= 0) && (opacity <= 256));
+			// premultiply colorB by opacity			
+			uint32 Bag = (colorB.color & 0xFF00FF00) >> 8;
+			uint32 Brb = (colorB.color & 0x00FF00FF);
+			uint32 Bsag = opacity * Bag;
+			uint32 Bsrb = opacity * Brb;
+			Bsag = Bsag & 0xFF00FF00;
+			Bsrb = (Bsrb >> 8) & 0x00FF00FF;			
+			// blend
+			const uint32 o = 0x100 - convertAlpha_0xFF_to_0x100(Bsag >> 24);
+			uint32 ag = (color & 0xFF00FF00) >> 8;
+			uint32 rb = color & 0x00FF00FF;
+			uint32 sag = o * ag;
+			uint32 srb = o * rb;
+			sag = sag & 0xFF00FF00;
+			srb = (srb >> 8) & 0x00FF00FF;
+			return (sag | srb) + (Bsag | Bsrb);
 			}
 
 
 		/**
 		* Return the color obtained by blending colorB over this one.
-		*
-		* The opacity of the this color is ignored.
+		* Colors are assumed to have pre-multiplied alpha.
 		*
 		* @param	colorB 	The 'top' color to blend over this one.
 		* @param	opacity	The opacity to multiply colorB alpha channel with before blending, must be in
@@ -459,14 +464,14 @@ namespace mtools
 		**/
 		MTOOLS_FORCEINLINE RGBc get_blend(const RGBc colorB, const float opacity) const
 			{
+			MTOOLS_ASSERT((opacity >= 0.0f) && (opacity <= 1.0f));
 			return get_blend(colorB, (uint32)(256 * opacity));
 			}
 
 
 		/**
 		 * Return the color obtained by blending colorB in RGBc64 format over this one.
-		 * 
-		 * The opacity of this color is ignored and the returned color is fully opaque.
+		 * Colors are assumed to have pre-multiplied alpha.
 		 *
 		 * @param	colorB  The 'top' color to blend over this one, in RGBc64 format.
 		 * @param	N	    Normalisation to use with colorB (must be >0).
@@ -478,12 +483,10 @@ namespace mtools
 		 */
 		MTOOLS_FORCEINLINE RGBc get_blend(const RGBc64 & colorB, const uint32 N, const uint32 opacity) const;
 
-
-
+ 
 		/**
 		 * blend colorB (in RGBc64 format) over this color.
-		 * 
-		 * The opacity of this color is ignored and set to fully opaque.
+		 * Colors are assumed to have pre-multiplied alpha.
 		 *
 		 * @param	colorB  The 'top' color to blend over this one, in RGBc64 format.
 		 * @param	N	    Normalisation to use with colorB (must be >0).
@@ -491,14 +494,15 @@ namespace mtools
 		 * 					the range [0, 0x100] (use convertAlpha_0xFF_to_0x100() to convert a value in
 		 * 					[0,0xFF] to this range).
 		 */
-		MTOOLS_FORCEINLINE void blend(const RGBc64 & colorB, const uint32 N, const uint32 opacity);
+		MTOOLS_FORCEINLINE void blend(const RGBc64 & colorB, const uint32 N, const uint32 opacity)
+			{
+			*this = get_blend(colorB,  N, opacity);
+			}
 
 
 		/**
 		 * Return the color obtained by blending colorB in RGBc64 format over this one while artificially
 		 * removing all the fully transparent white pixels that compose coul.
-		 * 
-		 * The opacity of this color is ignored and the returned color is fully opaque.
 		 *
 		 * @param	coul The 'top' color to blend over this one, in RGBc64 format. All transparent white
 		 * 				 pixels are removed.
@@ -513,22 +517,21 @@ namespace mtools
 		/**
 		 * Blend colorB (in RGBc64 format) over this color while artificially removing all the fully
 		 * transparent white pixels that compose coul.
-		 * 
-		 * The opacity of this color is ignored and the returned color is fully opaque.
 		 *
 		 * @param	coul The 'top' color to blend over this one, in RGBc64 format. All transparent white
 		 * 				 pixels are removed.
 		 * @param	N    Normalisation to use (must be >0).
 		 * @param	op   The opacity to multiply before blending, must be in the range [0.0f, 1.0f].
 		 */
-		MTOOLS_FORCEINLINE void blend_removeWhite(const RGBc64 & coul, const uint32 N, const float op);
+		MTOOLS_FORCEINLINE void blend_removeWhite(const RGBc64 & coul, const uint32 N, const float op)
+			{
+			*this = get_blend_removeWhite(coul, N,  op);
+			}
 
 
 		/**
 		* Return the color obtained by blending colorB in RGBc64 format over this one while artificially
 		* removing all the fully transparent black pixels that compose coul.
-		*
-		* The opacity of this color is ignored and the returned color is fully opaque.
 		*
 		* @param	coul The 'top' color to blend over this one, in RGBc64 format. All transparent black
 		* 				 pixels are removed.
@@ -543,67 +546,24 @@ namespace mtools
 		/**
 		 * Blend colorB (in RGBc64 format) over this color while artificially removing all the fully
 		 * transparent black pixels that compose coul.
-		 * 
-		 * The opacity of this color is ignored and the returned color is fully opaque.
 		 *
 		 * @param	coul The 'top' color to blend over this one, in RGBc64 format. All transparent black
 		 * 				 pixels are removed.
 		 * @param	N    Normalisation to use (must be >0).
 		 * @param	op   The opacity to multiply before blending, must be in the range [0.0f, 1.0f].
 		 */
-		MTOOLS_FORCEINLINE void blend_removeBlack(const RGBc64 & coul, const uint32 N, const float op);
-
-
-
-
-
-        /**
-        * Create a blending with another background color using the 'over' operator.
-        *
-		* ************* DEPRECATED ****************
-		*
-        * @param   B       The color to blend over (background color)
-        *
-        * @return the 'this over B' color
-        **/
-/*        inline RGBc over(RGBc coulB) const
-            {
-			return coulB.get_blend(*this);
-            const float op = opacity();
-            const float po = 1.0f - op;
-            const float opB = coulB.opacity();
-            const float nop = op + opB*po;
-            const int nR = (int)((comp.R*op + coulB.comp.R*opB*po) / nop);
-            const int nG = (int)((comp.G*op + coulB.comp.G*opB*po) / nop);
-            const int nB = (int)((comp.B*op + coulB.comp.B*opB*po) / nop);
-            return RGBc(nR, nG, nB, (int)(255*nop));
-            }
-*/
-
-
-       /**
-        * Create a blending with another background color using the 'over' operator.
-        *
-        * ************* DEPRECATED ****************
-		*
-        * @param   B       The color to blend over (background color)
-        * @param   opa     The opacity to mutiply the color with before blending.
-        *
-        * @return the 'this over B' color
-        **/
-/*		inline RGBc over(RGBc coulB, float opa) const
-            {
-			return coulB.get_blend(*this,opa);
-			const float op = opacity()*opa;
-            const float po = 1.0f - op;
-            const float opB = coulB.opacity();
-            const float nop = op + opB*po;
-            const int nR = (int)((comp.R*op + coulB.comp.R*opB*po) / nop);
-            const int nG = (int)((comp.G*op + coulB.comp.G*opB*po) / nop);
-            const int nB = (int)((comp.B*op + coulB.comp.B*opB*po) / nop);
-            return RGBc(nR, nG, nB, (int)(255 * nop));
+		MTOOLS_FORCEINLINE void blend_removeBlack(const RGBc64 & coul, const uint32 N, const float op)
+			{
+			*this = get_blend_removeBlack(coul, N, op);
 			}
-*/
+
+
+
+
+		/****************************************************************************
+		* PALETTE METHODS
+		*****************************************************************************/
+
 
         /**
          * A color of the palette in linear scale for a value between
@@ -722,6 +682,20 @@ namespace mtools
             return tab[i%32];
             }
 
+
+
+		/****************************************************************************
+		* MISC
+		*****************************************************************************/
+
+		/**
+		* Convert the RGBc object into a std::string.
+		*
+		* @return  A std::string that represent the color in the form "RGB(rrr,ggg,bbb)".
+		**/
+		std::string toString() const { return std::string("RGBc(") + mtools::toString(comp.R) + "," + mtools::toString(comp.G) + "," + mtools::toString(comp.B) + ":" + mtools::toString(opacity()) + ")"; }
+
+
         /**
          * Serialize/deserialize the object. The method work for boost and the custom serialization classe. 
          * (the method is used for both serialization and deserialization).
@@ -733,6 +707,11 @@ namespace mtools
             ar & comp.B;
             ar & comp.A;
             }
+
+
+		/****************************************************************************
+		* PREDEFINED COLORS
+		*****************************************************************************/
 
 
         static const RGBc c_Black;            ///< color black
@@ -753,43 +732,23 @@ namespace mtools
         static const RGBc c_Gray;             ///< color gray
         static const RGBc c_Silver;           ///< color silver
         static const RGBc c_Navy;             ///< color navy blue
-        static const RGBc c_TransparentWhite; ///< transparent white color
-        static const RGBc c_TransparentBlack; ///< transparent white color
-        static const RGBc c_TransparentRed;   ///< transparent white color
-        static const RGBc c_TransparentGreen; ///< transparent white color
-        static const RGBc c_TransparentBlue;  ///< transparent white color
-
-
-
-
+		static const RGBc c_Transparent;	  ///< fully transparent color
 
 
     };
 
 
-    /**
-     * Helper function, return a transparent version of the color.
-     *
-     * @param   color   The color.
-     *
-     * @return  the same color but with its alpha channel set to 0.
-     **/
-	MTOOLS_FORCEINLINE RGBc transparent(mtools::RGBc color) { return color.getTransparent(); }
+
+
+	/****************************************************************************
+	* EXTERNAL (HELPER) FUNCTIONS. 
+	*****************************************************************************/
 
 
     /**
-     * Helper function. Return an opaque version of the color
-     *
-     * @param   color   The color.
-     *
-     * @return the same color but with its alpha channel set to 255.
-     **/
-	MTOOLS_FORCEINLINE RGBc opaque(mtools::RGBc color) { return color.getOpaque(); }
-
-
-    /**
-    * Helper function. Return the same color with a given opacity.
-    *
+    * Return the same color with a given opacity.
+	* Colors are assumed to have pre-multiplied alpha.
+	*
     * @param   color   The color.
     * @param   op      The new opacity between 0.0f and 1.0f
     *
@@ -799,7 +758,8 @@ namespace mtools
 
 
 	/**
-	* Helper function. Return the same color with the opacity multiply by a given factor.
+	* Return the same color with the opacity multiplied by a given factor.
+	* Colors are assumed to have pre-multiplied alpha.
 	*
 	* @param   color   The color.
 	* @param   op      The multiplication factor for the opacity between 0.0f and 1.0f.
@@ -810,64 +770,47 @@ namespace mtools
 
 
 	/**
-	* Blend color B over color A. (color A is assumed fully opaque).
+	* Blend color B over color A.
+	* Colors are assumed to have pre-multiplied alpha.
 	*
-	* @param	colorA	bottom color (considered opaque).
+	* @param	colorA	bottom color.
 	* @param	colorB	top color.
 	*
-	* @return	the resulting (opaque) color obtainec by blending colorB over colorA.
+	* @return  colorB over colorA.
 	**/
-	MTOOLS_FORCEINLINE RGBc blend(RGBc colorA, RGBc colorB)
-		{
-		return colorA.get_blend(colorB);
-		}
+	MTOOLS_FORCEINLINE RGBc blend(RGBc colorA, RGBc colorB) { return colorA.get_blend(colorB); }
 
 
 	/**
-	* Blend color B over color A. (color A is assumed fully opaque).
+	* Blend color B over color A.
+	* Colors are assumed to have pre-multiplied alpha.
 	*
-	* The alpha channel of color B is previously multiplied by opacity before blending.
-	*
-	* @param	colorA 	bottom color (considered opaque).
+	* @param	colorA 	bottom color.
 	* @param	colorB 	top color.
-	* @param	opacity	The opacity to multiply with colorB original opacity before blending. Must be
+	* @param	opacity	The opacity to multiply colorB before blending. Must be
 	* 					in the range [0x100] (use convertAlpha_0xFF_to_0x100() to convert from uchar
 	* 					to this range).
 	*
-	* @return	the resulting (opaque) color obtained by blending colorB over colorA.
+	* @return  colorB over colorA.
 	**/
-	MTOOLS_FORCEINLINE RGBc blend(RGBc colorA, RGBc colorB, uint32 opacity)
-		{
-		return colorA.get_blend(colorB,opacity);
-		}
+	MTOOLS_FORCEINLINE RGBc blend(RGBc colorA, RGBc colorB, uint32 opacity) { return colorA.get_blend(colorB,opacity); }
 
 
 	/**
-	* Blend color B over color A. (color A is assumed fully opaque).
+	* Blend color B over color A.
+	* Colors are assumed to have pre-multiplied alpha.
 	*
-	* The alpha channel of color B is previously multiplied by opacity before blending.
-	*
-	* @param	colorA 	bottom color (considered opaque).
+	* @param	colorA 	bottom color.
 	* @param	colorB 	top color.
-	* @param	opacity	The opacity to multiply with colorB original opacity before blending. Must be
-	* 					in the range [0.0f,1.0f].
+	* @param	opacity	The opacity to multiply colorB before blending. Must be
+	* 					in the range [0.0f,1.0f]
 	*
-	* @return	the resulting (opaque) color obtained by blending colorB over colorA.
+	* @return  colorB over colorA.
 	**/
-	MTOOLS_FORCEINLINE RGBc blend(RGBc colorA, RGBc colorB, float opacity)
-		{
-		return colorA.get_blend(colorB, opacity);
-		}
+	MTOOLS_FORCEINLINE RGBc blend(RGBc colorA, RGBc colorB, float opacity) { return colorA.get_blend(colorB, opacity); }
 
 
 
-    /**
-    * Multiplication operator. Component per component.
-    **/
-    MTOOLS_FORCEINLINE RGBc operator*(float f, RGBc coul)
-        {
-        return RGBc((uint8)(coul.comp.R * f), (uint8)(coul.comp.G * f), (uint8)(coul.comp.B * f), (uint8)(coul.comp.A * f));
-        }
 
 
 
@@ -882,7 +825,10 @@ union RGBc64
     public:
 
         /*
-        * Color ordered in BGRA layout
+		*****************************************************************************
+		* LAYOUT
+		*****************************************************************************
+		* Color ordered in BGRA layout
         */
         uint64 color;
 
@@ -894,7 +840,13 @@ union RGBc64
             uint16 A;    // word 4 : alpha. (high word in uint64)
             } comp;
 
-        static const uint8 DEFAULTALPHA = 255; ///< default value for transparency : fully opaque
+		static const uint8 OPAQUEALPHA = 255;       ///< fully opaque
+		static const uint8 TRANSPARENTALPHA = 0;    ///< fully transparent
+		
+
+		/****************************************************************************
+		* CONSTRUCTOR / CONVERSION
+		*****************************************************************************/
 
 
         /** Default constructor. */
@@ -911,9 +863,9 @@ union RGBc64
         * @param   r   color red.
         * @param   g   color green.
         * @param   b   color black.
-        * @param   a   alpha channel (DEFAULTALPHA)
+        * @param   a   alpha channel.
         **/
-        RGBc64(uint16 r, uint16 g, uint16 b, uint16 a = DEFAULTALPHA)
+        RGBc64(uint16 r, uint16 g, uint16 b, uint16 a = OPAQUEALPHA)
             {
             color = ((uint64)b) + (((uint64)g) << 16) + (((uint64)r) << 32) + (((uint64)a) << 48);
             }
@@ -959,13 +911,31 @@ union RGBc64
 
 
         /**
-         * Converts the color into a RGBc. Truncate all bits over the 8 first bits of each component.
+         * Converts the color into a RGBc without normalization.
          **/
-        explicit inline operator RGBc() const 
-            {
-            return RGBc(*this);
-            }
+        explicit inline operator RGBc() const { return RGBc(*this); }
 
+
+		/**
+		* Get the color in RGBc format without normalization.
+		**/
+		inline RGBc getRGBc() { return RGBc(*this);  }
+
+
+		/**
+		* Get the color in RGBc format and normalize it with a given multiplier n.
+		**/
+		inline RGBc getRGBc(int n)
+			{
+			RGBc64 c(*this);
+			c.normalize(n);
+			return RGBc(c);
+			}
+
+
+		/****************************************************************************
+		* COMPARISON
+		*****************************************************************************/
 
         /**
         * Equality operator.
@@ -979,10 +949,10 @@ union RGBc64
         inline bool operator!=(const RGBc & c) const { return (color != c.color); }
 
 
-        /**
-        * Convert the RGBc64 object into a std::string.
-        **/
-        std::string toString() const { return std::string("RGBc64(") + mtools::toString(comp.R) + "," + mtools::toString(comp.G) + "," + mtools::toString(comp.B) + "," + mtools::toString(comp.A) + ")"; }
+
+		/****************************************************************************
+		* TRANSFORMATION / NORMALIZATION
+		*****************************************************************************/
 
 
         /**
@@ -1031,23 +1001,14 @@ union RGBc64
 
 
 
-        /**
-        * Get the color in RGBc format without normalization.
-        **/
-        inline RGBc getRGBc()
-            {
-            return RGBc(*this);
-            }
+		/****************************************************************************
+		* MISC
+		*****************************************************************************/
 
-        /**
-         * Get the color in RGBc format and normalize it with a given multiplier n. 
-         **/
-        inline RGBc getRGBc(int n)
-            {
-            RGBc64 c(*this);
-            c.normalize(n);
-            return RGBc(c);
-            }
+		/**
+		* Convert the RGBc64 object into a std::string.
+		**/
+		std::string toString() const { return std::string("RGBc64(") + mtools::toString(comp.R) + "," + mtools::toString(comp.G) + "," + mtools::toString(comp.B) + "," + mtools::toString(comp.A) + ")"; }
 
 
         /**
@@ -1067,17 +1028,9 @@ union RGBc64
 
 
 
-
-	MTOOLS_FORCEINLINE RGBc::RGBc(const RGBc64 & c)
-        {
-		fromRGBc64(c);
-        }
-
-
-	MTOOLS_FORCEINLINE RGBc::RGBc(const RGBc64 & c, uint32 N)
-		{
-		fromRGBc64(c, N);
-		}
+	/****************************************************************************
+	* IMPLEMENTATION OF METHODS THAT DEPEND ON RGBc AND RGBc64
+	*****************************************************************************/
 
 
 	MTOOLS_FORCEINLINE void RGBc::fromRGBc64(const RGBc64 & coul)
@@ -1102,26 +1055,13 @@ union RGBc64
 
 	MTOOLS_FORCEINLINE RGBc RGBc::get_blend(const RGBc64 & colorB, const uint32 N, const uint32 opacity) const
 		{
-		const uint32 alpha = (opacity*colorB.comp.A) / N;
-		const uint32 beta = (256 * 255) - alpha;
-		const uint32 divN = N*(256 * 255);
-		return RGBc(
-			(uint8)((beta*comp.R*N + (alpha*colorB.comp.R)) / divN),
-			(uint8)((beta*comp.G*N + (alpha*colorB.comp.G)) / divN),
-			(uint8)((beta*comp.B*N + (alpha*colorB.comp.B)) / divN),
-			255);
+		return get_blend(RGBc(colorB, N), opacity);
 		}
-
-
-	MTOOLS_FORCEINLINE void RGBc::blend(const RGBc64 & colorB, const uint32 N, const uint32 opacity)
-		{
-		(*this) = get_blend(colorB, N, opacity);
-		}
-
 
 
 	MTOOLS_FORCEINLINE RGBc RGBc::get_blend_removeWhite(const RGBc64 & coul, const uint32 N, const float op) const
 		{
+		MTOOLS_DEBUG("*** DEPRECATED METHOD [RGBc RGBc::get_blend_removeWhite] ***");
 		if (coul.comp.A == 0) return *this;
 		const float g = ((float)(N * 255)) / ((float)coul.comp.A);
 		const float nR = g*(((float)coul.comp.R / N) - 255) + 255;
@@ -1136,15 +1076,11 @@ union RGBc64
 			255);
 		}
 
-	MTOOLS_FORCEINLINE void RGBc::blend_removeWhite(const RGBc64 & coul, const uint32 N, const float op)
-		{
-		*this = get_blend_removeWhite(coul, N, op);
-		}
-
 
 	/* blending and artificially removing fully transparent black pixel */
 	MTOOLS_FORCEINLINE RGBc RGBc::get_blend_removeBlack(const RGBc64 & coul, const uint32 N, const float op) const
 		{
+		MTOOLS_DEBUG("*** DEPRECATED METHOD [RGBc RGBc::get_blend_removeBlack] ***");
 		if (coul.comp.A == 0) return *this;
 		const float g = ((float)(N * 255)) / ((float)coul.comp.A);
 		const float goverN = g / N;
@@ -1158,12 +1094,6 @@ union RGBc64
 			(uint8)(beta*comp.G + (alpha*nG)),
 			(uint8)(beta*comp.B + (alpha*nB)),
 			255);
-		}
-
-
-	MTOOLS_FORCEINLINE void RGBc::blend_removeBlack(const RGBc64 & coul, const uint32 N, const float op)
-		{
-		*this = get_blend_removeBlack(coul, N, op);
 		}
 
 
