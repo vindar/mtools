@@ -395,7 +395,7 @@ namespace mtools
                 }
             if ((pnot)_ownercb == nullptr) return;  // return if not inserted
             RGBc coul = nameWidgetColor();
-            if (coul == RGBc::c_Transparent) { return; }
+            if (coul.isTransparent()) { return; }
             _nameBox->color(toFlColor(coul));
             if ((int)coul.comp.R + (int)coul.comp.G + (int)coul.comp.B < 300)
                 {
