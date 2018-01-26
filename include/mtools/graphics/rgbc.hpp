@@ -240,21 +240,9 @@ namespace mtools
 		/** Convert a color that is not premultiplied to its premultiplied version */
 		MTOOLS_FORCEINLINE void premultiply()
 			{
-			comp.R = (((uint32)comp.R) * comp.A) / 255;
-			comp.G = (((uint32)comp.G) * comp.A) / 255;
-			comp.B = (((uint32)comp.B) * comp.A) / 255;
-
-			/* Faster, but not the inverse of unpremultiply()
-			const uint32 opa  = color & 0xFF000000;
-			const uint32 o = convertAlpha_0xFF_to_0x100(color >> 24); // opacity in the range 0..256
-			uint32 g = (color & 0x0000FF00) >> 8;
-			uint32 rb = color & 0x00FF00FF;
-			uint32 sg = o * g;
-			uint32 srb = o * rb;
-			sg = sg & 0x0000FF00;
-			srb = (srb >> 8) & 0x00FF00FF;
-			return (sg | srb | opa);
-			*/			
+			comp.R = (uint8)((((uint32)comp.R) * comp.A) / 255);
+			comp.G = (uint8)((((uint32)comp.G) * comp.A) / 255);
+			comp.B = (uint8)((((uint32)comp.B) * comp.A) / 255);
 			}
 
 
@@ -263,10 +251,28 @@ namespace mtools
 			{
 			MTOOLS_ASSERT((comp.R <= comp.A) && (comp.G <= comp.A) && (comp.B <= comp.A)); 
 			if (comp.A == 0) return;
-			comp.R = (((uint32)comp.R) * 255) / comp.A;
-			comp.G = (((uint32)comp.G) * 255) / comp.A;
-			comp.B = (((uint32)comp.B) * 255) / comp.A;
+			comp.R = (uint8)((((uint32)comp.R) * 255) / comp.A);
+			comp.G = (uint8)((((uint32)comp.G) * 255) / comp.A);
+			comp.B = (uint8)((((uint32)comp.B) * 255) / comp.A);
 			}
+
+
+
+		/**
+		* Query if the color is fully opaque
+		*
+		* @return	True if opaque, false if not.
+		**/
+		MTOOLS_FORCEINLINE bool isOpaque() const { return(comp.A== 255); }
+
+
+		/**
+		 * Query if the color is fully transparent
+		 *
+		 * @return	True if transparent, false if not.
+		 **/
+		MTOOLS_FORCEINLINE bool isTransparent() const { return(comp.A == 0); }
+
 
 
         /**
@@ -284,20 +290,11 @@ namespace mtools
 		 *
          * @param   o   the opacity between 0.0 (transparent) and 1.0 (opaque)
          **/
-		MTOOLS_FORCEINLINE void opacity(float o) 
-			{ 
-			MTOOLS_ASSERT((o >= 0.0f) && (o <= 1.0f)); 
-			float mo = o * 255.0f;
-			float mult = (comp.A == 0) ? 1.0f : (mo / ((float)comp.A));
-			comp.A = (uint8)mo;
-			comp.R = (uint8)(comp.R*mult);
-			comp.G = (uint8)(comp.G*mult);
-			comp.B = (uint8)(comp.B*mult);
-			}
+		MTOOLS_FORCEINLINE void opacity(float o) { *this = getOpacity(o); }
 
 
 		/**
-		* Return the same color but with a given opacity.
+		* Return the same color but with a given opacity (with premultiplied alpha).
 		*
 		* @param   o   the opacity between 0.0 (transparent) and 1.0 (opaque)
 		**/
@@ -305,7 +302,7 @@ namespace mtools
 			{ 
 			MTOOLS_ASSERT((o >= 0.0f) && (o <= 1.0f)); 
 			float mo = o * 255.0f;
-			float mult = (comp.A == 0) ? 1.0f : (mo/((float)comp.A));
+			float mult = (comp.A == 0) ? 0.0f : (mo/((float)comp.A));
 			return RGBc((uint8)(comp.R*mult), (uint8)(comp.G*mult), (uint8)(comp.B*mult), (uint8)mo);
 			}
 
@@ -315,10 +312,7 @@ namespace mtools
 		*
 		* @param   o   the opacity between 0.0 (transparent) and 1.0 (opaque)
 		**/
-		MTOOLS_FORCEINLINE RGBc getOpaque() const
-			{
-			return getOpacity(1.0f);
-			}
+		MTOOLS_FORCEINLINE RGBc getOpaque() const { return getOpacity(1.0f); }
 
 
 		/**
@@ -326,14 +320,7 @@ namespace mtools
 		*
 		* @param   o   the multiplication factor between 0.0f and 1.0f.
 		**/
-		MTOOLS_FORCEINLINE void multOpacity(float o) 
-			{ 
-			MTOOLS_ASSERT((o >= 0.0f) && (o <= 1.0f));
-			comp.B *= (uint8)(comp.B * o);
-			comp.G *= (uint8)(comp.G * o);
-			comp.R *= (uint8)(comp.R * o);
-			comp.A *= (uint8)(comp.A * o);
-			}
+		MTOOLS_FORCEINLINE void multOpacity(float o) { *this = getMultOpacity(o); }
 
 
 		/**
@@ -344,9 +331,37 @@ namespace mtools
 		MTOOLS_FORCEINLINE RGBc getMultOpacity(float o) const 
 			{ 
 			MTOOLS_ASSERT((o >= 0.0f) && (o <= 1.0f)); 
-			return RGBc((uint8)(comp.R * o), (uint8)(comp.G * o), (uint8)(comp.B * o), (uint8)(comp.A * o));
+			uint32 op = (uint32)(256 * o); 
+			return getMultOpacityInt(op);
 			}
 
+
+		/**
+		* Multiply the opacity by a given factor.
+		*
+		* @param   op   the multiplication factor in the range [0, 0x100] (use convertAlpha_0xFF_to_0x100() 
+		* 				to convert a value in [0,0xFF] to this range).
+		**/
+		MTOOLS_FORCEINLINE void multOpacityInt(uint32 op) { *this = getMultOpacityInt(op); }
+
+
+		/**
+		* Return the same color but with its opacity multiplied by a given factor.
+		*
+		* @param   op   the multiplication factor in the range [0, 0x100] (use convertAlpha_0xFF_to_0x100()
+		* 				to convert a value in [0,0xFF] to this range).
+		**/
+		MTOOLS_FORCEINLINE RGBc getMultOpacityInt(uint32 op) const
+		{
+			MTOOLS_ASSERT((op >= 0) && (op <= 256));
+			uint32 ag = (color & 0xFF00FF00) >> 8;
+			uint32 rb = color & 0x00FF00FF;
+			uint32 sag = op * ag;
+			uint32 srb = op * rb;
+			sag = sag & 0xFF00FF00;
+			srb = (srb >> 8) & 0x00FF00FF;
+			return sag | srb;
+		}
 
 
 		/****************************************************************************
@@ -362,10 +377,7 @@ namespace mtools
 		 *
 		 * @param	colorB	The 'top' color to blend over this one.
 		 **/
-		MTOOLS_FORCEINLINE void blend(const RGBc colorB)
-			{
-			(*this) = get_blend(colorB);
-			}
+		MTOOLS_FORCEINLINE void blend(const RGBc colorB) { (*this) = get_blend(colorB); }
 
 
 		/**
@@ -377,10 +389,7 @@ namespace mtools
 		 * 					the range [0, 0x100] (use convertAlpha_0xFF_to_0x100() to convert a value in
 		 * 					[0,0xFF] to this range).
 		 **/
-		MTOOLS_FORCEINLINE void blend(const RGBc colorB, const uint32 opacity)
-			{
-			(*this) = get_blend(colorB,opacity);
-			}
+		MTOOLS_FORCEINLINE void blend(const RGBc colorB, const uint32 opacity) { (*this) = get_blend(colorB,opacity); }
 
 
 		/**
@@ -391,10 +400,7 @@ namespace mtools
 		* @param	opacity	The opacity to multiply colorB alpha channel with before blending, must be in
 		* 					the range [0,1.0f].
 		**/
-		MTOOLS_FORCEINLINE void blend(const RGBc colorB, const float opacity)
-			{
-			(*this) = get_blend(colorB, opacity);
-			}
+		MTOOLS_FORCEINLINE void blend(const RGBc colorB, const float opacity) {	(*this) = get_blend(colorB, opacity); }
 
 
 		/**
@@ -494,10 +500,7 @@ namespace mtools
 		 * 					the range [0, 0x100] (use convertAlpha_0xFF_to_0x100() to convert a value in
 		 * 					[0,0xFF] to this range).
 		 */
-		MTOOLS_FORCEINLINE void blend(const RGBc64 & colorB, const uint32 N, const uint32 opacity)
-			{
-			*this = get_blend(colorB,  N, opacity);
-			}
+		MTOOLS_FORCEINLINE void blend(const RGBc64 & colorB, const uint32 N, const uint32 opacity) { *this = get_blend(colorB,  N, opacity); }
 
 
 		/**
@@ -523,10 +526,7 @@ namespace mtools
 		 * @param	N    Normalisation to use (must be >0).
 		 * @param	op   The opacity to multiply before blending, must be in the range [0.0f, 1.0f].
 		 */
-		MTOOLS_FORCEINLINE void blend_removeWhite(const RGBc64 & coul, const uint32 N, const float op)
-			{
-			*this = get_blend_removeWhite(coul, N,  op);
-			}
+		MTOOLS_FORCEINLINE void blend_removeWhite(const RGBc64 & coul, const uint32 N, const float op) { *this = get_blend_removeWhite(coul, N,  op); }
 
 
 		/**
@@ -552,10 +552,7 @@ namespace mtools
 		 * @param	N    Normalisation to use (must be >0).
 		 * @param	op   The opacity to multiply before blending, must be in the range [0.0f, 1.0f].
 		 */
-		MTOOLS_FORCEINLINE void blend_removeBlack(const RGBc64 & coul, const uint32 N, const float op)
-			{
-			*this = get_blend_removeBlack(coul, N, op);
-			}
+		MTOOLS_FORCEINLINE void blend_removeBlack(const RGBc64 & coul, const uint32 N, const float op) { *this = get_blend_removeBlack(coul, N, op); }
 
 
 
