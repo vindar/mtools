@@ -5368,8 +5368,8 @@ namespace mtools
 			MTOOLS_FORCEINLINE void  _correctPenOpacity(RGBc & color, int32 penwidth)
 				{
 				if ((penwidth <= 0) || (color.comp.A <= 1) || (color.comp.A == 255)) return;
-				uint8 a =  (uint8)(255*(1.0 - pow(1.0 - ((double)color.comp.A / 255.0), 1.0 / (2*penwidth + 1.0))));
-				color.comp.A = (a == 0) ? 1 : a;
+				float a =  1.0f - pow(1.0f - ((float)color.comp.A / 255.0f), 1.0f / (2*penwidth + 1.0f));				
+				color.opacity(a);
 				}
 
 
@@ -5382,7 +5382,7 @@ namespace mtools
 				MTOOLS_ASSERT((!USE_OP) || ((op >= 0) && (op <= 256)));
 				if (USE_PEN)
 					{
-					if (USE_OP) { op *= color.comp.A; op >>= 8; color.comp.A = (uint8)op; }
+					if (USE_OP) { color.multOpacityInt(op); }
 					const int64 d = penwidth;
 					if (CHECKRANGE)
 						{
