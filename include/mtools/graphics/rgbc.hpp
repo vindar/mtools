@@ -117,7 +117,12 @@ namespace mtools
          * @param   b   color black.
          * @param   a   alpha channel in 0..255 
          **/
-        RGBc(uint8 r, uint8 g, uint8 b, uint8 a = OPAQUEALPHA) : comp{b,g,r,a} {}
+        RGBc(uint8 r, uint8 g, uint8 b, uint8 a = OPAQUEALPHA) : comp{b,g,r,a} 
+			{
+			MTOOLS_ASSERT(comp.R <= comp.A);
+			MTOOLS_ASSERT(comp.G <= comp.A);
+			MTOOLS_ASSERT(comp.B <= comp.A);
+			}
 
 
         /**
@@ -158,13 +163,23 @@ namespace mtools
         /**
          * Constructor from a buffer. Use all 4 bytes.
          **/
-        RGBc(const unsigned char * p) : color(*((uint32*)p)) {}
+        RGBc(const unsigned char * p) : color(*((uint32*)p)) 
+			{
+			MTOOLS_ASSERT(comp.R <= comp.A);
+			MTOOLS_ASSERT(comp.G <= comp.A);
+			MTOOLS_ASSERT(comp.B <= comp.A);
+			}
         
 
         /**
          * Constructor from a buffer. Use only 3 bytes and set the alpha value separately
          **/
-        RGBc(const unsigned char * p, unsigned char a) : comp{ p[0], p[1], p[2], a } {}
+        RGBc(const unsigned char * p, unsigned char a) : comp{ p[0], p[1], p[2], a } 
+			{
+			MTOOLS_ASSERT(comp.R <= comp.A);
+			MTOOLS_ASSERT(comp.G <= comp.A);
+			MTOOLS_ASSERT(comp.B <= comp.A);
+			}
 
 
         /**
@@ -179,7 +194,14 @@ namespace mtools
          * @warning The buffer must have size at least 4 !
          * @param   p   The buffer of size 3 with p[0] = blue, p[1] = green, p[2] = red, p[3] = alpha.
          **/
-        RGBc & operator=(const unsigned char * p) { color = *((uint32*)p);  return(*this); }
+        RGBc & operator=(const unsigned char * p) 
+			{ 
+			color = *((uint32*)p);  
+			MTOOLS_ASSERT(comp.R <= comp.A);
+			MTOOLS_ASSERT(comp.G <= comp.A);
+			MTOOLS_ASSERT(comp.B <= comp.A);
+			return(*this); 
+			}
 
 
 		/**
@@ -711,7 +733,10 @@ namespace mtools
             ar & comp.G;
             ar & comp.B;
             ar & comp.A;
-            }
+			MTOOLS_ASSERT(comp.R <= comp.A);
+			MTOOLS_ASSERT(comp.G <= comp.A);
+			MTOOLS_ASSERT(comp.B <= comp.A);
+			}
 
 
 		/****************************************************************************
@@ -859,7 +884,12 @@ union RGBc64
 
 
         /** Constructor from uint64 */
-        RGBc64(uint64 col) : color(col) {}
+        RGBc64(uint64 col) : color(col) 
+			{
+			MTOOLS_ASSERT(comp.R <= comp.A);
+			MTOOLS_ASSERT(comp.G <= comp.A);
+			MTOOLS_ASSERT(comp.B <= comp.A);
+			}
 
 
         /**
@@ -873,6 +903,9 @@ union RGBc64
         RGBc64(uint16 r, uint16 g, uint16 b, uint16 a = OPAQUEALPHA)
             {
             color = ((uint64)b) + (((uint64)g) << 16) + (((uint64)r) << 32) + (((uint64)a) << 48);
+			MTOOLS_ASSERT(comp.R <= comp.A);
+			MTOOLS_ASSERT(comp.G <= comp.A);
+			MTOOLS_ASSERT(comp.B <= comp.A);
             }
 
 
@@ -1026,6 +1059,9 @@ union RGBc64
             ar & comp.G;
             ar & comp.B;
             ar & comp.A;
+			MTOOLS_ASSERT(comp.R <= comp.A);
+			MTOOLS_ASSERT(comp.G <= comp.A);
+			MTOOLS_ASSERT(comp.B <= comp.A);
             }
 
     };
@@ -1046,6 +1082,9 @@ union RGBc64
 			((cc >> 16) & (((uint64)255) << 16)) +
 			((cc >> 24) & (((uint64)255) << 24));
 		color = (uint32)(r);
+		MTOOLS_ASSERT(comp.R <= comp.A);
+		MTOOLS_ASSERT(comp.G <= comp.A);
+		MTOOLS_ASSERT(comp.B <= comp.A);
 		}
 
 
