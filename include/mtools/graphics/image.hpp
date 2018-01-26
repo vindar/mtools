@@ -766,9 +766,10 @@ namespace mtools
 			/**
 			 * Initialize this image from a CImg image. current image content is discarded.
 			 *
-			 * @param	im The source CImg image.
-			 */
-			void fromCImg(const cimg_library::CImg<unsigned char> & im)
+			 * @param	im		   	The source CImg image.
+			 * @param	premult		(Optional) True to perform alpha pre-multiplication during conversion.
+			 **/
+			void fromCImg(const cimg_library::CImg<unsigned char> & im, bool premult = true)
 				{
 				empty(); 
 				if (im.is_empty()) return; 
@@ -790,10 +791,21 @@ namespace mtools
 				if (im.spectrum() == 4)
 					{
 					const unsigned char * pA = im.data(0, 0, 0, 3);
-					for (int64 j = 0; j < _ly; j++)
+					if (premult)
 						{
-						for (int64 i = 0; i < _lx; i++) { *(pdest++) = RGBc(*(pR++), *(pG++), *(pB++), *(pA++)); }
-						pdest += pad;
+						for (int64 j = 0; j < _ly; j++)
+							{
+							for (int64 i = 0; i < _lx; i++) { RGBc cc = RGBc(*(pR++), *(pG++), *(pB++), *(pA++)); cc.premultiply();  *(pdest++) = cc; }
+							pdest += pad;
+							}
+						}
+					else
+						{
+						for (int64 j = 0; j < _ly; j++)
+							{
+							for (int64 i = 0; i < _lx; i++) { *(pdest++) = RGBc(*(pR++), *(pG++), *(pB++), *(pA++)); }
+							pdest += pad;
+							}
 						}
 					return;
 					}
@@ -806,10 +818,12 @@ namespace mtools
 			/**
 			 * Copy the content of this image into a CImg image.
 			 *
-			 * @param [in,out]	im The destination CImg image. Its current content is discarded and its
-			 * 					   number of channels is set to 4.
-			 */
-			void toCImg(cimg_library::CImg<unsigned char> & im) const
+			 * @param [in,out]	im				  	The destination CImg image. Its current content is
+			 * 										discarded and its number of channels is set to 4.
+			 * @param 		  	remove_premul   	(Optional) True to remove alpha channel premultiplication
+			 * 										when converting.
+			 **/
+			void toCImg(cimg_library::CImg<unsigned char> & im, bool remove_premult = true) const
 				{
 				if (isEmpty()) { im.assign(); return; }
 				im.assign((unsigned int)_lx, (unsigned int)_ly, 1, 4);
@@ -819,17 +833,29 @@ namespace mtools
 				unsigned char * pG = im.data(0, 0, 0, 1);
 				unsigned char * pB = im.data(0, 0, 0, 2);
 				unsigned char * pA = im.data(0, 0, 0, 3);
-				for (int64 j = 0; j < _ly; j++)
+				if (remove_premult)
 					{
-					for (int64 i = 0; i < _lx; i++)
+					for (int64 j = 0; j < _ly; j++)
 						{
-						const RGBc col = *(psrc++);
-						*(pR++) = col.comp.R;
-						*(pG++) = col.comp.G;
-						*(pB++) = col.comp.B;
-						*(pA++) = col.comp.A;
+						for (int64 i = 0; i < _lx; i++)
+							{
+							RGBc col = *(psrc++); col.unpremultiply();
+							*(pR++) = col.comp.R; *(pG++) = col.comp.G; *(pB++) = col.comp.B; *(pA++) = col.comp.A;
+							}
+						psrc += pad;
 						}
-					psrc += pad;
+					}
+				else
+					{
+					for (int64 j = 0; j < _ly; j++)
+						{
+						for (int64 i = 0; i < _lx; i++)
+							{
+							RGBc col = *(psrc++);
+							*(pR++) = col.comp.R; *(pG++) = col.comp.G; *(pB++) = col.comp.B; *(pA++) = col.comp.A;
+							}
+						psrc += pad;
+						}
 					}
 				return;
 				}
@@ -3566,12 +3592,13 @@ namespace mtools
 			*
 			* @return	true if the operation succedded and false if it failed.
 			**/
+			/*
 			bool save_png(const char * filename) const
 				{
 				if (!_createcairo(false)) return false;
 				return (cairo_surface_write_to_png((cairo_surface_t*)_pcairo_surface, filename) == CAIRO_STATUS_SUCCESS);
 				}
-
+			*/
 
 
 			/**
@@ -3583,6 +3610,7 @@ namespace mtools
 			* @return	true if the operation succedded and false if it failed (and in this case, the object
 			* 			is set to an empty image).
 			**/
+			/*
 			bool load_png(const char * filename)
 				{
 				empty();
@@ -3609,7 +3637,7 @@ namespace mtools
 				cairo_surface_destroy(psurface);
 				return true;
 				}
-
+			*/
 
 #endif 
 
