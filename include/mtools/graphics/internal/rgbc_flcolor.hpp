@@ -32,9 +32,9 @@ namespace mtools
 		/* convert from Fl_Color to RGBc */
 		inline RGBc fromFlColor(Fl_Color c, uint8 a)
 			{
-			uint8 r, g, b;
-			Fl::get_color(c, r, g, b);
-			return RGBc(r, g, b, a);
+			RGBc coul; coul.comp.A = 255;
+			Fl::get_color(c, coul.comp.R, coul.comp.G, coul.comp.B);
+			return coul.getMultOpacityInt((uint32)a + 1);
 			}
 
 
