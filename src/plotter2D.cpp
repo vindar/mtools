@@ -1158,6 +1158,7 @@ namespace mtools
         void Plotter2DWindow::solidbackColorCB(Fl_Widget* W)
         {
         RGBc Coul = ((RGBc)_solidBKcolor);
+		Coul.comp.A = 255;
         if (fl_color_chooser("Axes Color", Coul.comp.R, Coul.comp.G, Coul.comp.B, 1) != 0)
             {
             _solidBKcolor = Coul.getOpaque();

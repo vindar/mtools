@@ -514,6 +514,7 @@ namespace mtools
         void Plot2DGrid::_colorCB(Fl_Widget * W)
             {
             RGBc coul = _color;
+			coul.comp.A = 255;
             if (fl_color_chooser("Axes Color", coul.comp.R, coul.comp.G, coul.comp.B, 1) != 0)
                 {
                 color(coul);

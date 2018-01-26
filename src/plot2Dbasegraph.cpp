@@ -460,6 +460,7 @@ namespace mtools
         void Plot2DBaseGraph::_overColorButtonCB(Fl_Widget * W)
                 {
                 RGBc coul = _drawOverColor;
+				coul.comp.A = 255; 
                 if (fl_color_chooser("Color to use", coul.comp.R , coul.comp.G, coul.comp.B, 1) != 0)
                     {
                     _drawOverColor = coul;
@@ -475,7 +476,8 @@ namespace mtools
         void Plot2DBaseGraph::_underColorButtonCB(Fl_Widget * W)
                 {
                 RGBc coul = _drawUnderColor;
-                if (fl_color_chooser("Color to use", coul.comp.R , coul.comp.G, coul.comp.B, 1) != 0)
+				coul.comp.A = 255;
+				if (fl_color_chooser("Color to use", coul.comp.R , coul.comp.G, coul.comp.B, 1) != 0)
                     {
                     _drawUnderColor = coul;
                     _underColorButton->color(toFlColor(coul));

@@ -817,6 +817,7 @@ namespace mtools
         void Plotter2DObjWithColor::colorCB(Fl_Widget * W)
             {
             RGBc coul = _color;
+			coul.comp.A = 255;
             if (fl_color_chooser("Plot color", coul.comp.R, coul.comp.G, coul.comp.B, 1) != 0) { color(coul); } else { yieldFocus(); }
             }
 
