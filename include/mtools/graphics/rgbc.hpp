@@ -283,6 +283,15 @@ namespace mtools
 		MTOOLS_FORCEINLINE float opacity() const { return ((float)comp.A)/(255.0f); }
 
 
+		/**
+		* Return the opacity of the color as a int
+		*
+		* @return  The opacity in the range [0x00, 0x100].
+		**/
+		MTOOLS_FORCEINLINE float opacityInt() const { return convertAlpha_0xFF_to_0x100(comp.A); }
+
+
+
         /**
          * Change opacity of the color. Create a pre-multiplied color !
          * 
@@ -413,7 +422,7 @@ namespace mtools
 		 **/
 		MTOOLS_FORCEINLINE RGBc get_blend(const RGBc colorB) const
 			{
-			const uint32 o = 0x100 - convertAlpha_0xFF_to_0x100(colorB.color >> 24); 
+			const uint32 o = 0x100 - convertAlpha_0xFF_to_0x100(colorB.comp.A); 
 			uint32 ag = (color & 0xFF00FF00) >> 8;
 			uint32 rb = color & 0x00FF00FF;
 			uint32 sag = o * ag;
