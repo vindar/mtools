@@ -15,6 +15,83 @@ class TestImage : public Image
 	TestImage(int64 lx, int64 ly) : Image(lx, ly) {}
 	
 
+
+			/**
+			* Draw an ellipse. Alternative method that only draw the portion inside the box B.
+			* Used for large ellipse (larger than the image size). 
+			**/
+			template<bool blend, bool outline, bool fill, bool usepen>  inline  void _draw_ellipse2(iBox2 B, iVec2 P, int64 rx, int ry, RGBc color, RGBc fillcolor, int32 penwidth)
+			{
+				/*
+				const int64 FALLBACK_MINRADIUS = 5;
+				if (r < FALLBACK_MINRADIUS)
+				{ // fallback for small value. 
+					_draw_circle<blend, true, outline, fill, usepen>(P.X(), P.Y(), r, color, fillcolor, penwidth);
+					return;
+				}
+				*/
+				const double rx2 = ((double)rx)*rx;
+				const double ry2 = ((double)ry)*ry;
+				int64 xmin = B.min[0];
+				int64 xmax = B.max[0];
+				for (int64 y = B.min[1]; y <= B.max[1]; y++)
+				{
+					if (xmin > xmax) { xmin = B.min[0]; xmax = B.max[0]; }
+					const double dy = (double)(y - P.Y());
+					const double absdy = ((dy > 0) ? dy : -dy);
+					const double dy2 = (dy*dy);
+					double ly = dy2 - absdy + 0.25;
+					double Ly = dy2 + absdy + 0.25;
+					while (1)
+					{
+						double dx = (double)(xmin - P.X());
+						const double absdx = ((dx > 0) ? dx : -dx);
+						const double dx2 = dx*dx;
+						const double lx = dx2 - absdx + 0.25;
+						if ((xmin == B.min[0]) || (lx/rx2 + ly/ry2 > 1.0)) break;
+						xmin--;
+					}
+					while (1)
+					{
+						const double dx = (double)(xmin - P.X());
+						const double absdx = ((dx > 0) ? dx : -dx);
+						const double dx2 = dx*dx;
+						const double lx = dx2 - absdx + 0.25;
+						const double Lx = dx2 + absdx + 0.25;
+						if ((Lx/rx2 + Ly/ry2 <= 1.0) || (xmax < xmin)) break;
+						if (outline) { if ((lx/rx2 + Ly/ry2 < 1.0) || (Lx/rx2 + ly/ry2 < 1.0)) { _updatePixel<blend, usepen, false, usepen>(xmin, y, color, 255, penwidth); } }
+						xmin++;
+					}
+					while (1)
+					{
+						const double dx = (double)(xmax - P.X());
+						const double absdx = ((dx > 0) ? dx : -dx);
+						const double dx2 = dx*dx;
+						const double lx = dx2 - absdx + 0.25;
+						if ((xmax == B.max[0]) || (lx/rx2 + ly/ry2 > 1.0)) break;
+						xmax++;
+					}
+					while (1)
+					{
+						const double dx = (double)(xmax - P.X());
+						const double absdx = ((dx > 0) ? dx : -dx);
+						const double dx2 = dx*dx;
+						const double lx = dx2 - absdx + 0.25;
+						const double Lx = dx2 + absdx + 0.25;
+						if ((Lx/rx2 + Ly/ry2 <= 1.0) || (xmax <= xmin)) break;
+						if (outline) { if ((lx/rx2 + Ly/ry2 < 1.0) || (Lx/rx2 + ly/ry2 < 1.0)) { _updatePixel<blend, usepen, false, usepen>(xmax, y, color, 255, penwidth); } }
+						xmax--;
+					}
+
+					if (fill) { if (xmin < xmax) { _hline<blend, false>(xmin, xmax, y, fillcolor); } }
+				}
+			}
+
+
+
+
+
+
 	/**
 	* Fill the interior of a circle.
 	*
@@ -183,10 +260,39 @@ class TestImage : public Image
 		cout << "Hello from the console !";     // print on mtools::cout console (saved in cout.text)
 
 
+
+
+
+		TestImage im(800, 600);
+		im.clear(RGBc::c_White);
+
+
+		iBox2 B(100, 400, 100, 500);
+		iVec2 P(300, 250);
+		int rx = 100;
+		int ry = 150;
+
+		im.draw_box(B, RGBc::c_Gray, true);
+		im._draw_ellipse2(B, P, rx, ry, RGBc::c_Red, RGBc::c_Blue, 0);
+
+		auto P = makePlot2DImage(im, 6);   // Encapsulate the image inside a 'plottable' object.	
+		Plotter2D plotter;              // Create a plotter object
+		plotter.axesObject(false);      // Remove the axe system.
+		plotter[P];                     // Add the image to the list of objects to draw.  	
+		plotter.autorangeXY();          // Set the plotter range to fit the image.
+		plotter.plot();                 // start interactive display.
+
+
+
+		return 0;
+
+
+
+/*
 		{
 			Image im("hello.png");
 			im.rescale(10, { im.lx() * 10,im.ly() * 10 });
-			auto P = makePlot2DImage(im);   // Encapsulate the image inside a 'plottable' object.	
+			auto P = makePlot2DImage(im,6);   // Encapsulate the image inside a 'plottable' object.	
 			Plotter2D plotter;              // Create a plotter object
 			plotter.axesObject(false);      // Remove the axe system.
 			plotter[P];                     // Add the image to the list of objects to draw.  	
@@ -220,22 +326,8 @@ class TestImage : public Image
 			plotter.plot();                 // start interactive display.
 		}
 		return 0;
-
-		/*
-		RGBc64 coul(100, 110, 120, 130);
-		cout << coul  << "\n";
-
-		RGBc coulbk(200, 210, 220, 230);
-		cout << coulbk << "\n";
-
-		auto res = coulbk.get_blend(coul,1,256);
-		cout << res << "\n";
-
-		cout.getKey(); 
-
-		return 0; 
 		*/
-		
+
 		TreeFigure<int, NN> TF;
 
 		int n = 1000;

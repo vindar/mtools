@@ -7714,7 +7714,6 @@ namespace mtools
 			**/
 			template<bool blend, bool outline, bool fill, bool usepen>  inline  void _draw_circle2(iBox2 B, iVec2 P, int64 r, RGBc color, RGBc fillcolor, int32 penwidth)
 			{
-				//cout << "222\n";
 				const int64 FALLBACK_MINRADIUS = 5;
 				if (r < FALLBACK_MINRADIUS)
 				{ // fallback for small value. 
@@ -7784,7 +7783,6 @@ namespace mtools
 			**/
 			template<bool blend, bool usepen> void _draw_circle2_AA(iBox2 B, iVec2 P, int64 r, RGBc color, int32 penwidth)
 			{
-				//cout << "AA3";
 				const int64 FALLBACK_MINRADIUS = 5;
 				if (r < FALLBACK_MINRADIUS)
 				{ // fallback for small value. 
