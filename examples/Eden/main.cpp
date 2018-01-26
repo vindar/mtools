@@ -62,7 +62,7 @@ class EdenCluster
     RGBc getColor(iVec2 pos)
         {
         auto v = Grid.safePeek(pos);
-        if ((v == nullptr) || ((*v) == 0)) return RGBc::c_TransparentWhite; else return RGBc::jetPalette(*v, 1, 5);
+        if ((v == nullptr) || ((*v) == 0)) return RGBc::c_Transparent; else return RGBc::jetPalette(*v, 1, 5);
         }
 
     private:
@@ -79,7 +79,7 @@ EdenCluster EC; // the Eden cluster object
 RGBc colorCircle(iVec2 pos)
     {
     const double Pi = 3.14159265358979;
-    if (pos.X()*pos.X() + pos.Y()*pos.Y() <= EC.size() / Pi) return RGBc::c_Cyan; else return RGBc::c_TransparentWhite;
+    if (pos.X()*pos.X() + pos.Y()*pos.Y() <= EC.size() / Pi) return RGBc::c_Cyan; else return RGBc::c_Transparent;
     }
 
 

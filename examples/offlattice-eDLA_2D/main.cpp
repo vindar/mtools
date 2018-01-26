@@ -56,9 +56,9 @@ struct eDLAPLot
     inline RGBc getColor(iVec2 pos)
         {
         auto p = Grid.peek(pos, hintpeek);
-        if (p == nullptr) return RGBc::c_TransparentBlack;
+        if (p == nullptr) return RGBc::c_Transparent;
         int64 maxV = p->N[0];
-        if (maxV == 0) return RGBc::c_TransparentBlack;
+        if (maxV == 0) return RGBc::c_Transparent;
         for (size_t t = 1; t < NBPARTICLESPERBOX; t++)
             {
             auto V = p->N[t];
@@ -72,7 +72,7 @@ struct eDLAPLot
         {
         auto p = Grid.peek({ i,j }, hintpeek);
         if ((p == nullptr) || (p->N[0] == 0)) return;
-        if (!b) { b = true; im.resizeRaw((int64)size.X(), (int64)size.Y(), true); im.clear(RGBc::c_TransparentWhite); }
+        if (!b) { b = true; im.resizeRaw((int64)size.X(), (int64)size.Y(), true); im.clear(RGBc::c_Transparent); }
 		RGBc cc = RGBc::jetPalette(p->N[0], 1, NN);
 		im.canvas_draw_filled_circle(R, p->pos[0], RAD, cc, cc, true);
         for (size_t t = 1; t < NBPARTICLESPERBOX; t++)

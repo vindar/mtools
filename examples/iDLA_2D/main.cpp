@@ -46,7 +46,7 @@ void makeCluster(int nb)
 RGBc colorCluster(iVec2 pos)
     {
     auto p = Grid.peek(pos);
-    if ((p == nullptr)||(*p == 0)) return RGBc::c_TransparentWhite;
+    if ((p == nullptr)||(*p == 0)) return RGBc::c_Transparent;
     return RGBc::c_Red;
     }
 
@@ -55,7 +55,7 @@ RGBc colorCluster(iVec2 pos)
 RGBc colorCircle(iVec2 pos)
     {
     if (PI*(pos.X()*pos.X() + pos.Y()*pos.Y()) <= N) return RGBc::c_Blue;
-    return RGBc::c_TransparentWhite;
+    return RGBc::c_Transparent;
     }
 
 

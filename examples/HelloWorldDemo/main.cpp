@@ -16,9 +16,9 @@ int main(int argc, char *argv[])
   // draw on the image
   im.fill_ellipse_in_rect({ 100,400,50,550 }, RGBc::c_Cyan, false);
   im.draw_ellipse_in_rect({ 100,400,50,550 }, RGBc::c_Green, true, true, 4);
-  im.draw_text({400, 300}, "Hello\n  World!",MTOOLS_TEXT_CENTER,RGBc::c_Red.getOpacity(0.7), 200);
+  im.draw_text({400, 300}, "Hello\n  World!",MTOOLS_TEXT_CENTER,RGBc::c_Red.getOpacity(0.7f), 200);
   im.draw_cubic_spline({ {10,10},{100,100},{200,30},{300,100}, {600,10} , {700,300},
-      {720, 500}, {600, 480}, {400,500} }, RGBc::c_Yellow.getOpacity(0.5), true, true, true, 3);
+      {720, 500}, {600, 480}, {400,500} }, RGBc::c_Yellow.getOpacity(0.5f), true, true, true, 3);
 	
   // display the image
   auto P = makePlot2DImage(im);   // Encapsulate the image inside a 'plottable' object.	

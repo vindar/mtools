@@ -158,7 +158,7 @@ class longOERRW
         inline RGBc getColor(iVec2 p) const
             {
             const char * s = G.peek(p);
-            if ((s == nullptr)||(isEmpty(*s))) return RGBc::c_TransparentWhite;
+            if ((s == nullptr)||(isEmpty(*s))) return RGBc::c_Transparent;
             return RGBc::c_Red;
             }
 

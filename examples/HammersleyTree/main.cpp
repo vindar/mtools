@@ -442,7 +442,7 @@ int main(int argc, char *argv[])
     createTree();       // construct the genealogy 
 
     Image image(LX, LY); image.clear(RGBc::c_White);
-    Image image_trees(LX, LY); image_trees.clear(RGBc::c_TransparentWhite);
+    Image image_trees(LX, LY); image_trees.clear(RGBc::c_Transparent);
 
     drawLines(image);
     drawPoints(image);

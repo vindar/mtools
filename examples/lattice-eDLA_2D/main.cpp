@@ -78,8 +78,8 @@ inline void addParticules(int64 nb)
 RGBc colorFct(iVec2 pos)
     {
     auto p = Grid.peek(pos);
-    if (p == nullptr) return RGBc::c_TransparentBlack;
-    if (*p == 0) return RGBc::c_TransparentBlack;
+    if (p == nullptr) return RGBc::c_Transparent;
+    if (*p == 0) return RGBc::c_Transparent;
     return RGBc::jetPalette(*p, 0, N);
     }
 

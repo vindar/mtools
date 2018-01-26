@@ -77,7 +77,7 @@ public:
     RGBc getColor(iVec2 pos)
         {
         auto v = Grid.peek(pos);
-        if ((v == nullptr) || ((*v).N == 0)) return RGBc::c_TransparentWhite; else return RGBc::jetPalette((*v).N, 1, N);
+        if ((v == nullptr) || ((*v).N == 0)) return RGBc::c_Transparent; else return RGBc::jetPalette((*v).N, 1, N);
         }
 
     /* detail : image associated with a site */

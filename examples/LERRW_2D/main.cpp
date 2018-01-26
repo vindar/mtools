@@ -36,7 +36,7 @@ struct LERRWPlot
     static RGBc getColor(iVec2 pos)
         {
         const siteInfo * S = G.peek(pos);
-        if ((S == nullptr) || (S->V == 0)) return RGBc::c_TransparentWhite;
+        if ((S == nullptr) || (S->V == 0)) return RGBc::c_Transparent;
         return RGBc::jetPaletteLog(S->V, 0, maxV, logscale); // light logarithmic scale
         }
 

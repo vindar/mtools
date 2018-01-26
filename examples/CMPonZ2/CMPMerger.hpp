@@ -91,7 +91,7 @@ template<typename T,int NBCOLOR = 1> struct CMPHook
         **/
         CMPHook() : _cmp_tag(0), _cmp_next(nullptr), _cmp_prev(nullptr)
             {
-            for (int i = 0;i < NBCOLOR; i++) {_cmp_color[i] = RGBc::c_TransparentWhite;}
+            for (int i = 0;i < NBCOLOR; i++) {_cmp_color[i] = RGBc::c_Transparent;}
             }
 
         /**
