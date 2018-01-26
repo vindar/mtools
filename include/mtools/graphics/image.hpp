@@ -1797,14 +1797,15 @@ namespace mtools
 			void draw_dot(iVec2 P, RGBc color, bool blending, int32 penwidth = 0)
 				{
 				if (isEmpty()) return;
+				if (color.isOpaque()) { blending = false; }
 				if (penwidth <= 0)
 					{
-					if ((blending) && (color.comp.A != 255)) _updatePixel<true, true, false, false>(P.X(), P.Y(), color, 0, 0); else _updatePixel<false, true, false, false>(P.X(), P.Y(), color, 0, penwidth);
+					if (blending) _updatePixel<true, true, false, false>(P.X(), P.Y(), color, 0, 0); else _updatePixel<false, true, false, false>(P.X(), P.Y(), color, 0, penwidth);
 					}
 				else
 					{
 					_correctPenOpacity(color, penwidth);
-					if ((blending) && (color.comp.A != 255)) _updatePixel<true, true, false, true>(P.X(), P.Y(), color, 0, 0); else _updatePixel<false, true, false, true>(P.X(), P.Y(), color, 0, penwidth);
+					if (blending) _updatePixel<true, true, false, true>(P.X(), P.Y(), color, 0, 0); else _updatePixel<false, true, false, true>(P.X(), P.Y(), color, 0, penwidth);
 					}
 				}
 
@@ -1822,7 +1823,7 @@ namespace mtools
 			inline void draw_horizontal_line(int64 y, int64 x1, int64 x2, RGBc color, bool draw_P2, bool blending)
 				{
 				if (isEmpty()) return;
-				if ((blending) && (color.comp.A != 255)) _horizontalLine<true, true>(y, x1, x2, color, draw_P2); else _horizontalLine<false, true>(y, x1, x2, color, draw_P2);
+				if ((blending) && (!color.isOpaque())) _horizontalLine<true, true>(y, x1, x2, color, draw_P2); else _horizontalLine<false, true>(y, x1, x2, color, draw_P2);
 				}
 
 
@@ -1860,7 +1861,7 @@ namespace mtools
 			inline void draw_vertical_line(int64 x, int64 y1, int64 y2, RGBc color, bool draw_P2, bool blending)
 				{
 				if (isEmpty()) return;
-				if ((blending) && (color.comp.A != 255)) _verticalLine<true, true>(x,y1,y2, color, draw_P2); else _verticalLine<false, true>(x,y1,y2, color, draw_P2);
+				if ((blending) && (!color.isOpaque())) _verticalLine<true, true>(x,y1,y2, color, draw_P2); else _verticalLine<false, true>(x,y1,y2, color, draw_P2);
 				}
 
 
@@ -1939,7 +1940,7 @@ namespace mtools
 						if (blending) _lineBresenhamAA<true, true, false>(P1, P2, color, draw_P2, 0); else _lineBresenhamAA<false, true, false>(P1, P2, color, draw_P2, 0);
 						return;
 						}
-					if ((blending) && (color.comp.A != 255)) _lineBresenham<true, true, false>(P1, P2, color, draw_P2, 0); else _lineBresenham<false, true, false>(P1, P2, color, draw_P2, 0);
+					if ((blending) && (!color.isOpaque())) _lineBresenham<true, true, false>(P1, P2, color, draw_P2, 0); else _lineBresenham<false, true, false>(P1, P2, color, draw_P2, 0);
 					return;
 					}
 				_correctPenOpacity(color, penwidth);
@@ -1950,7 +1951,7 @@ namespace mtools
 					if (blending) _lineBresenhamAA<true, true, true>(P1, P2, color, draw_P2, penwidth); else _lineBresenhamAA<false, true, true>(P1, P2, color, draw_P2, penwidth);
 					return;
 					}
-				if ((blending) && (color.comp.A != 255)) _lineBresenham<true,true, true>(P1, P2, color, draw_P2, penwidth); else _lineBresenham<false,true, true>(P1, P2, color, draw_P2, penwidth);
+				if ((blending) && (!color.isOpaque())) _lineBresenham<true,true, true>(P1, P2, color, draw_P2, penwidth); else _lineBresenham<false,true, true>(P1, P2, color, draw_P2, penwidth);
 				return;
 				}
 
@@ -2015,22 +2016,22 @@ namespace mtools
 						{ // must check bounds
 						if (wc == 1)
 							{
-							if ((blending) && (color.comp.A != 255))  _plotQuadBezier<true, true, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotQuadBezier<false, true, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
+							if ((blending) && (!color.isOpaque()))  _plotQuadBezier<true, true, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotQuadBezier<false, true, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
 							}
 						else
 							{
-							if ((blending) && (color.comp.A != 255))  _plotQuadRationalBezier<true, true, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth); else _plotQuadRationalBezier<false, true, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth);
+							if ((blending) && (!color.isOpaque()))  _plotQuadRationalBezier<true, true, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth); else _plotQuadRationalBezier<false, true, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth);
 							}
 						return;
 						}
 					// no need to check bounds
 					if (wc == 1)
 						{
-						if ((blending) && (color.comp.A != 255))  _plotQuadBezier<true, false, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotQuadBezier<false, false, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
+						if ((blending) && (!color.isOpaque()))  _plotQuadBezier<true, false, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotQuadBezier<false, false, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
 						}
 					else
 						{
-						if ((blending) && (color.comp.A != 255))  _plotQuadRationalBezier<true, false, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth); else _plotQuadRationalBezier<false, false, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth);
+						if ((blending) && (!color.isOpaque()))  _plotQuadRationalBezier<true, false, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth); else _plotQuadRationalBezier<false, false, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth);
 						}
 					return;
 					}
@@ -2053,11 +2054,11 @@ namespace mtools
 					}
 				if (wc == 1)
 					{
-					if ((blending) && (color.comp.A != 255))  _plotQuadBezier<true, true, false, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotQuadBezier<false, true, false, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
+					if ((blending) && (!color.isOpaque()))  _plotQuadBezier<true, true, false, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotQuadBezier<false, true, false, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
 					}
 				else
 					{
-					if ((blending) && (color.comp.A != 255))  _plotQuadRationalBezier<true, true, false, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth); else _plotQuadRationalBezier<false, true, false, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth);
+					if ((blending) && (!color.isOpaque()))  _plotQuadRationalBezier<true, true, false, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth); else _plotQuadRationalBezier<false, true, false, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth);
 					}
 				return;
 				}
@@ -2095,11 +2096,11 @@ namespace mtools
 					// check if we stay inside the image to remove bound check is possible
 					if (!mbr.isIncludedIn(B))
 						{ // must check bounds
-						if ((blending) && (color.comp.A != 255)) _plotCubicBezier<true, true, false, false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotCubicBezier<false, true, false, false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
+						if ((blending) && (!color.isOpaque())) _plotCubicBezier<true, true, false, false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotCubicBezier<false, true, false, false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
 						return;
 						}
 					// no need to check bounds
-					if ((blending) && (color.comp.A != 255))  _plotCubicBezier<true, false, false, false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotCubicBezier<false, false, false, false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
+					if ((blending) && (!color.isOpaque()))  _plotCubicBezier<true, false, false, false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotCubicBezier<false, false, false, false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
 					return;
 					}
 				// use large pen
@@ -2112,7 +2113,7 @@ namespace mtools
 					if (blending) _plotCubicBezier<true, true, true, true>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotCubicBezier<false, true, true, true>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
 					return;
 					}
-				if ((blending) && (color.comp.A != 255)) _plotCubicBezier<true, true, false, true>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotCubicBezier<false, true, false, true>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
+				if ((blending) && (!color.isOpaque())) _plotCubicBezier<true, true, false, true>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotCubicBezier<false, true, false, true>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
 				}
 			
 
@@ -2167,7 +2168,7 @@ namespace mtools
 								}
 							else
 								{
-								if ((blending) && (color.comp.A != 255)) _plotQuadSpline<true, true, false, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotQuadSpline<false, true, false, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
+								if ((blending) && (!color.isOpaque())) _plotQuadSpline<true, true, false, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotQuadSpline<false, true, false, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
 								}
 							}
 						else
@@ -2179,7 +2180,7 @@ namespace mtools
 								}
 							else
 								{
-								if ((blending) && (color.comp.A != 255)) _plotQuadSpline<true, true, false, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotQuadSpline<false, true, false, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
+								if ((blending) && (!color.isOpaque())) _plotQuadSpline<true, true, false, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotQuadSpline<false, true, false, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
 								}
 							}
 						if (tabX != static_tabX) { delete[] tabX; delete[] tabY; } // release memory if dynamically allocated. 
@@ -2261,7 +2262,7 @@ namespace mtools
 								}
 							else
 								{
-								if ((blending) && (color.comp.A != 255)) _plotCubicSpline<true, true, false, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotCubicSpline<false, true, false, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
+								if ((blending) && (!color.isOpaque())) _plotCubicSpline<true, true, false, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotCubicSpline<false, true, false, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
 								}
 							}
 						else
@@ -2273,7 +2274,7 @@ namespace mtools
 								}
 							else
 								{
-								if ((blending) && (color.comp.A != 255)) _plotCubicSpline<true, true, false, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotCubicSpline<false, true, false, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
+								if ((blending) && (!color.isOpaque())) _plotCubicSpline<true, true, false, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotCubicSpline<false, true, false, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
 								}
 							}
 						if (tabX != static_tabX) { delete[] tabX; delete[] tabY; } // release memory if dynamically allocated. 
@@ -2323,7 +2324,7 @@ namespace mtools
 				{
 				if (dest_box.isEmpty()) return;
 				if (penwidth <= 0) penwidth = 0;
-				if (color.comp.A == 255) blend = false;
+				if (color.isOpaque()) blend = false;
 				float tickness = (float)penwidth;
 				draw_horizontal_line(dest_box.min[1], dest_box.min[0] - penwidth, dest_box.max[0] + penwidth, color, true, blend, tickness);
 				draw_horizontal_line(dest_box.max[1], dest_box.min[0] - penwidth, dest_box.max[0] + penwidth, color, true, blend, tickness);
@@ -2429,7 +2430,7 @@ namespace mtools
 			inline void draw_triangle(iVec2 P1, iVec2 P2, iVec2 P3, RGBc color, bool blending, bool antialiased, int32 penwidth = 0)
 				{
 				if (isEmpty()) return;
-				if ((penwidth <= 0)&&(!antialiased)&&(blending)&& (color.comp.A != 255))
+				if ((penwidth <= 0)&&(!antialiased)&&(blending)&& (!color.isOpaque()))
 					{ // draw without overlap
 					_lineBresenham<true, true, false>(P1, P2, color, true, penwidth);
 					_lineBresenham_avoid<true, true>(P2, P3, P1, color, 0);
@@ -2485,11 +2486,11 @@ namespace mtools
 				if (intersectionRect(mbr, B).isEmpty()) return; // nothing to draw. 
 				if (mbr.isIncludedIn(B))
 					{
-					if ((blending) && (fillcolor.comp.A != 255)) _draw_triangle_interior<true, false>(P1, P2, P3, fillcolor); else _draw_triangle_interior<false, false>(P1, P2, P3, fillcolor);
+					if ((blending) && (!fillcolor.isOpaque())) _draw_triangle_interior<true, false>(P1, P2, P3, fillcolor); else _draw_triangle_interior<false, false>(P1, P2, P3, fillcolor);
 					}
 				else
 					{
-					if ((blending) && (fillcolor.comp.A != 255)) _draw_triangle_interior<true, true>(P1, P2, P3, fillcolor); else _draw_triangle_interior<false, true>(P1, P2, P3, fillcolor);
+					if ((blending) && (!fillcolor.isOpaque())) _draw_triangle_interior<true, true>(P1, P2, P3, fillcolor); else _draw_triangle_interior<false, true>(P1, P2, P3, fillcolor);
 					}
 				}
 
@@ -2528,7 +2529,7 @@ namespace mtools
 			inline void draw_polygon(size_t nbvertices, const iVec2 * tabPoints, RGBc color, bool blending, bool antialiased, int32 penwidth = 0)
 				{
 				if (isEmpty()) return;
-				if ((color.comp.A == 255)&&(!antialiased)) blending = false;
+				if ((color.isOpaque())&&(!antialiased)) blending = false;
 				switch (nbvertices)
 					{
 					case 0: { return; }
@@ -2549,7 +2550,7 @@ namespace mtools
 						}
 					default:
 						{
-						if ((penwidth <= 0) && (!antialiased) && (blending) && (color.comp.A != 255))
+						if ((penwidth <= 0) && (!antialiased) && (blending) && (!color.isOpaque()))
 							{ // draw without overlap
 							_lineBresenham<true, true,false>(tabPoints[0], tabPoints[1], color, true, penwidth);
 							for (size_t i = 1; i < nbvertices - 1; i++)
@@ -2595,7 +2596,7 @@ namespace mtools
 			inline void fill_convex_polygon(size_t nbvertices, const iVec2 * tabPoints, RGBc fillcolor, bool blending)
 				{
 				if (isEmpty() || nbvertices < 3) return;
-				if (fillcolor.comp.A == 255) blending = false;
+				if (fillcolor.isOpaque()) blending = false;
 				if (nbvertices == 3)
 					{
 					fill_triangle(tabPoints[0], tabPoints[1], tabPoints[2], fillcolor, blending);
@@ -3933,7 +3934,7 @@ namespace mtools
 					{
 					for (int64 i = 0; i < _lx; i++)
 						{
-						if (operator()(i, j).comp.A != 0)
+						if (!(operator()(i, j).isTransparent()))
 							{
 							if (i < minx) minx = i;
 							if (i > maxx) maxx = i;
@@ -5343,7 +5344,7 @@ namespace mtools
 					{
 					for (int64 i = 0; i < sx; i++)
 						{
-						pdest[i].blend(color, convertAlpha_0xFF_to_0x100(psrc[i].comp.A));
+						pdest[i].blend(color, psrc[i].opacityInt());
 						}
 					pdest += dest_stride;
 					psrc += src_stride;
@@ -5367,9 +5368,8 @@ namespace mtools
 			/** change the opacity to match with the pen width **/ 
 			MTOOLS_FORCEINLINE void  _correctPenOpacity(RGBc & color, int32 penwidth)
 				{
-				if ((penwidth <= 0) || (color.comp.A <= 1) || (color.comp.A == 255)) return;
+				if ((penwidth <= 0) || (color.comp.A <= 3) || (color.comp.A == 255)) return;
 				float a =  1.0f - pow(1.0f - ((float)color.comp.A / 255.0f), 1.0f / (2*penwidth + 1.0f));				
-
 				color.opacity(a);
 				}
 
@@ -5428,7 +5428,7 @@ namespace mtools
 						{
 						if (USE_OP)
 							{
-							if (BLEND) { blendPixel(x,y,color, (uint32)op); return;  } else { op *= color.comp.A; op >>= 8; color.comp.A = (uint8)op;  setPixel(x, y, color); return; }
+							if (BLEND) { blendPixel(x, y, color, (uint32)op); return; } else { color.multOpacityInt(op); setPixel(x, y, color); return; }
 							}
 						else
 							{
@@ -5440,11 +5440,11 @@ namespace mtools
 						MTOOLS_ASSERT((x >= 0) && (x < _lx) && (y >= 0) && (y < _ly));
 						if (USE_OP)
 							{
-							if (BLEND) { operator()(x, y).blend(color, (uint32)op); return; } else { op *= color.comp.A; op >>= 8; color.comp.A = (uint8)op;  operator()(x, y) = color; return; }
+							if (BLEND) { operator()(x, y).blend(color, (uint32)op); return; } else { color.multOpacityInt(op); operator()(x, y) = color; return; }
 							}
 						else
 							{
-							if (BLEND) { operator()(x, y).blend(color); return; } else { operator()(x, y) = color;return; }
+							if (BLEND) { operator()(x, y).blend(color); return; } else { operator()(x, y) = color; return; }
 							}
 						}
 					}
@@ -6671,8 +6671,9 @@ namespace mtools
 						err += inc;
 						if (err <= tmp) { x0 += dir; } // overflow !
 						y0++;
-						color.comp.A = (err >> 24); _updatePixel<blend, checkrange, false, usepen>(x0 + dir, y0,color, 0, penwidth);
-						color.comp.A = 0xFF ^ (color.comp.A); _updatePixel<blend, checkrange, false, usepen>(x0, y0, color, 0, penwidth);
+						uint32 mm = (err >> 24) + 1;
+						_updatePixel<blend, checkrange, true, usepen>(x0 + dir, y0, color, mm, penwidth);
+						_updatePixel<blend, checkrange, true, usepen>(x0, y0, color, 0x100 - mm, penwidth);
 						}
 					}
 				else
@@ -6684,8 +6685,9 @@ namespace mtools
 						err += inc;
 						if (err <= tmp) { y0++; } // overflow !
 						x0 += dir;
-						color.comp.A = (err >> 24); _updatePixel<blend, checkrange, false, usepen>(x0, y0 + 1,color, 0, penwidth);
-						color.comp.A = 0xFF ^ (color.comp.A); _updatePixel<blend, checkrange, false, usepen>(x0, y0, color, 0, penwidth);
+						uint32 mm = (err >> 24) + 1;
+						_updatePixel<blend, checkrange, true, usepen>(x0, y0 + 1, color, mm, penwidth);
+						_updatePixel<blend, checkrange, true, usepen>(x0, y0, color, 0x100 - mm, penwidth);
 						}
 					}
 				return; 
@@ -6770,19 +6772,19 @@ namespace mtools
 				int64 dy = abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
 				int64 err = dx - dy, e2, x2, y2;
 				float ed = dx + dy == 0 ? 1 : sqrt((float)dx*dx + (float)dy*dy);
-				int64 op = mtools::convertAlpha_0xFF_to_0x100(color.comp.A);
+				int64 op =color.opacityInt();
 				if (op == 256)
 					{
 					for (wd = (wd + 1) / 2; ; )
 						{
-						color.comp.A = (uint8)(255 - std::max<float>(0, 255 * (abs(err - dx + dy) / ed - wd + 1)));
+						color.comp.A = (ui(255 - std::max<float>(0, 255 * (abs(err - dx + dy) / ed - wd + 1))); // BEWARE : does not work anymore with premultiplied alpha
 						_updatePixel<blend, checkrange>(x0, y0, color);
 						e2 = err; x2 = x0;
 						if (2 * e2 >= -dx)
 							{
 							for (e2 += dy, y2 = y0; e2 < ed*wd && (y1 != y2 || dx > dy); e2 += dx)
 								{
-								color.comp.A = (uint8)(255 - std::max<float>(0, 255 * (abs(e2) / ed - wd + 1)));
+								color.comp.A = (uint8)(255 - std::max<float>(0, 255 * (abs(e2) / ed - wd + 1))); // BEWARE : does not work anymore with premultiplied alpha
 								_updatePixel<blend, checkrange>(x0, y2 += sy, color);
 								}
 							if (x0 == x1) break;
@@ -6792,7 +6794,7 @@ namespace mtools
 							{
 							for (e2 = dx - e2; e2 < ed*wd && (x1 != x2 || dx < dy); e2 += dy)
 								{
-								color.comp.A = (uint8)(255 - std::max<float>(0, 255 * (abs(e2) / ed - wd + 1)));
+								color.comp.A = (uint8)(255 - std::max<float>(0, 255 * (abs(e2) / ed - wd + 1))); // BEWARE : does not work anymore with premultiplied alpha
 								_updatePixel<blend, checkrange>(x2 += sx, y0, color);
 								}
 							if (y0 == y1) break;
@@ -6805,14 +6807,14 @@ namespace mtools
 					{
 					for (wd = (wd + 1) / 2; ; )
 						{
-						color.comp.A = (uint8)((((int32)(255 - std::max<float>(0, 255 * (abs(err - dx + dy) / ed - wd + 1)))) * op) >> 8);
+						color.comp.A = (uint8)((((int32)(255 - std::max<float>(0, 255 * (abs(err - dx + dy) / ed - wd + 1)))) * op) >> 8); // BEWARE : does not work anymore with premultiplied alpha
 						_updatePixel<blend, checkrange>(x0, y0, color);
 						e2 = err; x2 = x0;
 						if (2 * e2 >= -dx)
 							{
 							for (e2 += dy, y2 = y0; e2 < ed*wd && (y1 != y2 || dx > dy); e2 += dx)
 								{
-								color.comp.A = (uint8)((((int32)(255 - std::max<float>(0, 255 * (abs(e2) / ed - wd + 1))))*op) >> 8);
+								color.comp.A = (uint8)((((int32)(255 - std::max<float>(0, 255 * (abs(e2) / ed - wd + 1))))*op) >> 8); // BEWARE : does not work anymore with premultiplied alpha
 								_updatePixel<blend, checkrange>(x0, y2 += sy, color);
 								}
 							if (x0 == x1) break;
@@ -6822,7 +6824,7 @@ namespace mtools
 							{
 							for (e2 = dx - e2; e2 < ed*wd && (x1 != x2 || dx < dy); e2 += dy)
 								{
-								color.comp.A = (uint8)((((int32)(255 - std::max<float>(0, 255 * (abs(e2) / ed - wd + 1))))*op) >> 8);
+								color.comp.A = (uint8)((((int32)(255 - std::max<float>(0, 255 * (abs(e2) / ed - wd + 1))))*op) >> 8); // BEWARE : does not work anymore with premultiplied alpha
 								_updatePixel<blend, checkrange>(x2 += sx, y0, color);
 								}
 							if (y0 == y1) break;
@@ -7560,12 +7562,12 @@ namespace mtools
 				{
 				if (x < 0) { sx -= x;   x = 0; }
 				if (y < 0) { sy -= y;   y = 0; }
-				if ((boxcolor.comp.A == 0) || (x >= _lx) || (y >= _ly)) return;
+				if ((boxcolor.isTransparent()) || (x >= _lx) || (y >= _ly)) return;
 				sx -= std::max<int64>(0, (x + sx - _lx));
 				sy -= std::max<int64>(0, (y + sy - _ly));
 				if ((sx <= 0) || (sy <= 0)) return;
 				RGBc * p = _data + _stride*y + x;
-				if (blend && (boxcolor.comp.A < 255))
+				if ((blend) && (!boxcolor.isOpaque()))
 					{
 					for (int64 j = 0; j < sy; j++)
 						{
