@@ -288,8 +288,7 @@ namespace mtools
 		*
 		* @return  The opacity in the range [0x00, 0x100].
 		**/
-		MTOOLS_FORCEINLINE float opacityInt() const { return convertAlpha_0xFF_to_0x100(comp.A); }
-
+		MTOOLS_FORCEINLINE uint32 opacityInt() const { return convertAlpha_0xFF_to_0x100(comp.A); }
 
 
         /**
