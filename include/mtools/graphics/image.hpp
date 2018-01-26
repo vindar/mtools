@@ -5369,6 +5369,7 @@ namespace mtools
 				{
 				if ((penwidth <= 0) || (color.comp.A <= 1) || (color.comp.A == 255)) return;
 				float a =  1.0f - pow(1.0f - ((float)color.comp.A / 255.0f), 1.0f / (2*penwidth + 1.0f));				
+
 				color.opacity(a);
 				}
 
