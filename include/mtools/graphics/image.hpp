@@ -664,7 +664,7 @@ namespace mtools
 			 * @param	bkcolor Color to use for new pixels.
 			 * @param	padding padding for the resulting image.
 			 */
-			inline void expand(int64 left, int64 right, int64 up, int64 down, RGBc bkcolor = RGBc::c_TransparentWhite, int64 padding = 0)
+			inline void expand(int64 left, int64 right, int64 up, int64 down, RGBc bkcolor = RGBc::c_Transparent, int64 padding = 0)
 				{
 				if (left < 0) { left = 0; }
 				if (right < 0) { right = 0; }
@@ -688,7 +688,7 @@ namespace mtools
 			 * @param	bkcolor	Color to use for new pixels.
 			 * @param	padding	padding for the resulting image.
 			 **/
-			inline Image get_expand(int64 left, int64 right, int64 up, int64 down, RGBc bkcolor = RGBc::c_TransparentWhite, int64 padding = 0) const
+			inline Image get_expand(int64 left, int64 right, int64 up, int64 down, RGBc bkcolor = RGBc::c_Transparent, int64 padding = 0) const
 				{
 				if (left < 0) { left = 0; }
 				if (right < 0) { right = 0; }
@@ -3413,7 +3413,7 @@ namespace mtools
 			 *
 			 * @return	The pixel color.
 			 **/
-			MTOOLS_FORCEINLINE RGBc getPixel(const int64 x, const int64 y, const RGBc defaultcolor = RGBc::c_TransparentWhite) const
+			MTOOLS_FORCEINLINE RGBc getPixel(const int64 x, const int64 y, const RGBc defaultcolor = RGBc::c_Transparent) const
 				{
 				if ((x >= 0) && (x < _lx) && (y >= 0) && (y < _ly)) { return _data[x + _stride*y]; }
 				return defaultcolor;
@@ -3428,7 +3428,7 @@ namespace mtools
 			 *
 			 * @return	The pixel color.
 			 **/
-			MTOOLS_FORCEINLINE RGBc getPixel(const iVec2 & pos, const RGBc defaultcolor = RGBc::c_TransparentWhite) const
+			MTOOLS_FORCEINLINE RGBc getPixel(const iVec2 & pos, const RGBc defaultcolor = RGBc::c_Transparent) const
 				{
 				const int64 x = pos.X();
 				const int64 y = pos.Y();
@@ -3789,7 +3789,7 @@ namespace mtools
 			**/
 			MTOOLS_FORCEINLINE RGBc toRGBc() const
 				{
-				if (isEmpty()) return RGBc::c_TransparentWhite;
+				if (isEmpty()) return RGBc::c_Transparent;
 				return getPixel({ 0,0 });
 				}
 

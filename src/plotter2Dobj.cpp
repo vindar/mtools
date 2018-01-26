@@ -382,7 +382,7 @@ namespace mtools
         void Plotter2DObj::colorCB(Fl_Widget * W) { return; }
 
 
-        RGBc Plotter2DObj::nameWidgetColor() const { return RGBc::c_TransparentWhite; }
+        RGBc Plotter2DObj::nameWidgetColor() const { return RGBc::c_Transparent; }
 
 
         void Plotter2DObj::setNameWidgetColor()
@@ -395,7 +395,7 @@ namespace mtools
                 }
             if ((pnot)_ownercb == nullptr) return;  // return if not inserted
             RGBc coul = nameWidgetColor();
-            if (coul == RGBc::c_TransparentWhite) { return; }
+            if (coul == RGBc::c_Transparent) { return; }
             _nameBox->color(toFlColor(coul));
             if ((int)coul.comp.R + (int)coul.comp.G + (int)coul.comp.B < 300)
                 {

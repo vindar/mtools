@@ -483,7 +483,7 @@ void _qualityPixelDraw() const
 /* return the color of a point or trnasparent white if outside of the definition domain */
 inline RGBc getColor(iVec2 pos)
     {
-    if (!_g_domR.isInside(pos)) return RGBc::c_TransparentWhite;
+    if (!_g_domR.isInside(pos)) return RGBc::c_Transparent;
     void * data = nullptr;
     return mtools::GetColorSelector<LatticeObj>::call(*_g_obj, pos, data);
     }
@@ -977,7 +977,7 @@ void _redrawImage(iBox2 new_wr, int new_sx, int new_sy, int maxtime_ms)
     if ((!_g_redraw_im) && (_keepOldImage(new_im_x, new_im_y)) && (prevphase >= 1))
         { // we try to keep something from the previous image
         Image new_im(new_im_x, new_im_y);
-		new_im.clear(RGBc::c_TransparentWhite);
+		new_im.clear(RGBc::c_Transparent);
         cimg_library::CImg<uint8> new_qbuf((int32)new_wr.lx() + 1, (int32)new_wr.ly() + 1, 1, 1, 0);  // create buffer with zeros
         // there has been some change but we may be able to keep something
         bool samescale = ((new_sx == _exact_sx) && (new_sy == _exact_sy)); // true if we are on the same scale as before

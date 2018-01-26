@@ -136,13 +136,13 @@ namespace mtools
          **/
 		inline RGBc getColor(iVec2 pos)
             {
-            if (_im == nullptr) return RGBc::c_TransparentWhite;
+            if (_im == nullptr) return RGBc::c_Transparent;
 			const int64 lx = _im->width();
 			const int64 ly = _im->height();
 			int64 x = pos.X();
 			int64 y = pos.Y();
 			if (_typepos == TYPECENTER) { x += lx/2; y += ly/2; }
-			if ((x <0)||(y < 0)||(x >= lx)||(y >= ly)) return RGBc::c_TransparentWhite;
+			if ((x <0)||(y < 0)||(x >= lx)||(y >= ly)) return RGBc::c_Transparent;
 			y = ly - 1 - y;
 			const int64 lxy = lx*ly;
 			int64 off = x + lx*y;

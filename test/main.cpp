@@ -178,9 +178,26 @@ class TestImage : public Image
 
 	int main(int argc, char *argv[])
 	{
+
+
 		MTOOLS_SWAP_THREADS(argc, argv); // required on OSX, does nothing on Linux/Windows
 		mtools::parseCommandLine(argc, argv, true); // parse the command line, interactive mode
 
+		/*
+		RGBc64 coul(100, 110, 120, 130);
+		cout << coul  << "\n";
+
+		RGBc coulbk(200, 210, 220, 230);
+		cout << coulbk << "\n";
+
+		auto res = coulbk.get_blend(coul,1,256);
+		cout << res << "\n";
+
+		cout.getKey(); 
+
+		return 0; 
+		*/
+		
 		TreeFigure<int, NN> TF;
 
 		int n = 1000;
@@ -232,7 +249,7 @@ class TestImage : public Image
 
 		cout << "Drawing...\n";
 		mtools::Chronometer();
-		TF.drawTreeDebug(im, R, RGBc::c_TransparentWhite);
+		TF.drawTreeDebug(im, R, RGBc::c_Transparent);
 		cout << "done in " << durationToString(mtools::Chronometer(), true) << "\n";
 
 

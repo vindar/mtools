@@ -63,7 +63,7 @@ namespace mtools
      * Constructor. By default, an empty red site with a white transparent background.
      **/
 	EdgeSiteImage() : _up(NOEDGE),_down(NOEDGE),_left(NOEDGE),_right(NOEDGE),
-                      _site(false),_cbk(RGBc::c_TransparentWhite), _csite(RGBc::c_Red),
+                      _site(false),_cbk(RGBc::c_Transparent), _csite(RGBc::c_Red),
 					  _cup(RGBc::c_Black),_cdown(RGBc::c_Black),_cleft(RGBc::c_Black),_cright(RGBc::c_Black),_ctext(RGBc::c_Black),
 					  _ctextup(RGBc::c_Blue),_ctextdown(RGBc::c_Blue),_ctextleft(RGBc::c_Blue),_ctextright(RGBc::c_Blue)
 	{return;}

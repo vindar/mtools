@@ -36,7 +36,7 @@ namespace mtools
     *
     * Detect if a type (or function) contain a method compatible with getColor() used by the PlaneDrawer class.
     * 
-    * The method can be called with call(). (if no method found, return RGBc::c_TransparentWhite).
+    * The method can be called with call(). (if no method found, return RGBc::c_Transparent).
     *
     * - fVec2 pos or (int64 x,int64 y) : the coordinate of the point to draw
     *
@@ -178,7 +178,7 @@ namespace mtools
         static std::pair<mtools::RGBc, bool> call17(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<false> D) { return call18(obj, pos, box, nbiter, data, mtools::metaprog::dummy<version18>()); }
         static std::pair<mtools::RGBc, bool> call18(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<false> D) { return call19(obj, pos, box, nbiter, data, mtools::metaprog::dummy<version19>()); }
         static std::pair<mtools::RGBc, bool> call19(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<false> D) { return call20(obj, pos, box, nbiter, data, mtools::metaprog::dummy<version20>()); }
-        static std::pair<mtools::RGBc, bool> call20(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<false> D) { MTOOLS_DEBUG("GetColorPlaneSelector: no getColor() found."); return std::pair<mtools::RGBc, bool>(RGBc::c_TransparentWhite, false); }
+        static std::pair<mtools::RGBc, bool> call20(T & obj, const fVec2 & pos, const fBox2 & box, int32 nbiter, void * &data, mtools::metaprog::dummy<false> D) { MTOOLS_DEBUG("GetColorPlaneSelector: no getColor() found."); return std::pair<mtools::RGBc, bool>(RGBc::c_Transparent, false); }
 
         public:
 
@@ -289,7 +289,7 @@ namespace mtools
         *
         * Detect if a type (or function) contain a method compatible with getColor() used by the PixelDrawer class.
         * 
-        * The method can be called with call(). (if no method found, return RGBc::c_TransparentWhite).
+        * The method can be called with call(). (if no method found, return RGBc::c_Transparent).
         *
         * - iVec2 pos or (int64 x,int64 y) : the coordinate of the point to draw
         *
@@ -358,7 +358,7 @@ namespace mtools
             static mtools::RGBc call8(T & obj, const iVec2 & pos, void * &data, mtools::metaprog::dummy<true> D) { return obj(pos.X(), pos.Y()); }
             static mtools::RGBc call9(T & obj, const iVec2 & pos, void * &data, mtools::metaprog::dummy<true> D) {
                 const mtools::Image * im = GetImageSelector<T>::call(obj, pos, { 1,1 }, data);
-                return ((im == nullptr) ? RGBc::c_TransparentWhite : im->toRGBc());
+                return ((im == nullptr) ? RGBc::c_Transparent : im->toRGBc());
                 }
 
             static mtools::RGBc call1(T & obj, const iVec2 & pos, void * &data, mtools::metaprog::dummy<false> D) { return call2(obj, pos, data, mtools::metaprog::dummy<version2>()); }
@@ -369,7 +369,7 @@ namespace mtools
             static mtools::RGBc call6(T & obj, const iVec2 & pos, void * &data, mtools::metaprog::dummy<false> D) { return call7(obj, pos, data, mtools::metaprog::dummy<version7>()); }
             static mtools::RGBc call7(T & obj, const iVec2 & pos, void * &data, mtools::metaprog::dummy<false> D) { return call8(obj, pos, data, mtools::metaprog::dummy<version8>()); }
             static mtools::RGBc call8(T & obj, const iVec2 & pos, void * &data, mtools::metaprog::dummy<false> D) { return call9(obj, pos, data, mtools::metaprog::dummy<GetImageSelector<T>::has_getImage>()); }
-            static mtools::RGBc call9(T & obj, const iVec2 & pos, void * &data, mtools::metaprog::dummy<false> D) { MTOOLS_DEBUG("GetColorSelector: No getImage()/getColor() found."); return RGBc::c_TransparentWhite; }
+            static mtools::RGBc call9(T & obj, const iVec2 & pos, void * &data, mtools::metaprog::dummy<false> D) { MTOOLS_DEBUG("GetColorSelector: No getImage()/getColor() found."); return RGBc::c_Transparent; }
 
             public:
 

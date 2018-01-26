@@ -43,7 +43,7 @@ namespace mtools
      * RGBc colorFct(iVec2 pos)
      * {
      * if (G.Get(pos.X(), pos.Y())) { return RGBc::c_Blue; }
-     * return RGBc::c_TransparentWhite;
+     * return RGBc::c_Transparent;
      * }
      * 
      * int main()

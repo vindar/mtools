@@ -136,7 +136,7 @@ namespace mtools
 			**/
 			inline RGBc getColor(iVec2 pos)
 				{
-				if (_im == nullptr) return RGBc::c_TransparentWhite;
+				if (_im == nullptr) return RGBc::c_Transparent;
 				const int64 lx = _im->lx();
 				const int64 ly = _im->ly();
 				int64 x = pos.X();
