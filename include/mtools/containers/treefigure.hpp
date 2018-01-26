@@ -241,7 +241,6 @@ namespace mtools
 				const size_t currentsize = pcurrentStack->size();
 				if (currentsize == 0)
 					{
-					MTOOLS_ASSERT(nb == size());
 					return nb;
 					}
 				for (size_t i = 0; i < currentsize; i++)
@@ -295,7 +294,6 @@ namespace mtools
 				const size_t currentsize = pcurrentStack->size();
 				if (currentsize == 0)
 					{
-					MTOOLS_ASSERT(nb == size());
 					return nb;
 					}
 				for (size_t i = 0; i < currentsize; i++)
@@ -349,7 +347,6 @@ namespace mtools
 				const size_t currentsize = pcurrentStack->size();
 				if (currentsize == 0)
 					{
-					MTOOLS_ASSERT(nb == size());
 					return nb;
 					}
 				for (size_t i = 0; i < currentsize; i++)
