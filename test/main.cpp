@@ -22,16 +22,14 @@ class TestImage : public Image
 			**/
 			template<bool blend, bool outline, bool fill, bool usepen>  inline  void _draw_ellipse2(iBox2 B, fVec2 P, double rx, double ry, RGBc color, RGBc fillcolor, int32 penwidth)
 			{
-				/*
-				const int64 FALLBACK_MINRADIUS = 5;
-				if (r < FALLBACK_MINRADIUS)
-				{ // fallback for small value. 
-					_draw_circle<blend, true, outline, fill, usepen>(P.X(), P.Y(), r, color, fillcolor, penwidth);
-					return;
-				}
-				*/
+				B = intersectionRect(B, iBox2((int64)floor(P.X() - rx - 1),
+					(int64)ceil(P.X() + rx + 1),
+					(int64)floor(P.Y() - ry - 1),
+					(int64)ceil(P.Y() + ry + 1)));
+
 				const double rx2 = ((double)rx)*rx;
 				const double ry2 = ((double)ry)*ry;
+
 				int64 xmin = B.min[0];
 				int64 xmax = B.max[0];
 				for (int64 y = B.min[1]; y <= B.max[1]; y++)
@@ -43,14 +41,14 @@ class TestImage : public Image
 					double ly = dy2 - absdy + 0.25;
 					double Ly = dy2 + absdy + 0.25;
 					while (1)
-					{
+						{
 						double dx = (double)(xmin - P.X());
 						const double absdx = ((dx > 0) ? dx : -dx);
 						const double dx2 = dx*dx;
 						const double lx = dx2 - absdx + 0.25;
 						if ((xmin == B.min[0]) || (lx/rx2 + ly/ry2 > 1.0)) break;
 						xmin--;
-					}
+						}
 					while (1)
 					{
 						const double dx = (double)(xmin - P.X());
@@ -89,13 +87,18 @@ class TestImage : public Image
 
 
 
-
 			/**
-			* Draw an anti-aliased circle. Alternative method that only draw the portion inside the box B.
-			* Used for large circle (larger than the image size).
+			* Draw an anti-aliased circle/ellipse. 
+			* Alternative method that only draw the portion inside the box B.
+			* Used for large circle (much larger than the image size).
 			**/
-			template<bool blend, bool usepen> void _draw_ellipse2_AA(iBox2 B, fVec2 P, double rx, double ry, RGBc color, int32 penwidth)
-			{
+			template<bool blend, bool fill, bool usepen> void _draw_ellipse2_AA(iBox2 B, fVec2 P, double rx, double ry, RGBc color, int32 penwidth)
+				{
+				B = intersectionRect(B, iBox2((int64)floor(P.X() - rx - 1),
+					(int64)ceil(P.X() + rx + 1),
+					(int64)floor(P.Y() - ry - 1),
+					(int64)ceil(P.Y() + ry + 1)));
+
 				const double ex2 = rx * rx;
 				const double ey2 = ry * ry;
 				const double exy2 = ex2 * ey2;
@@ -105,76 +108,86 @@ class TestImage : public Image
 				const double ry2 = (ry - 0.5)*(ry - 0.5);
 				const double rxy2 = rx2*ry2;
 				const double Rxy2 = Rx2*Ry2;
+				const double Rx2minus025 = Rx2 - 0.25;
+				const double Rx2overRy2 = Rx2 / Ry2;
+				const double rx2minus025 = rx2 - 0.25;
+				const double rx2overry2 = rx2 / ry2;
+
 				int64 xmin = B.min[0];
 				int64 xmax = B.max[0];
+
 				for (int64 y = B.min[1]; y <= B.max[1]; y++)
-				{
+					{
 					if (xmin > xmax) { xmin = B.min[0]; xmax = B.max[0]; }
 					const double dy = (double)(y - P.Y());
 					const double absdy = ((dy > 0) ? dy : -dy);
 					const double dy2 = (dy*dy);
 					const double v = ex2 * dy2;
 					const double vv = ex2 * v;
-					double ly = dy2 - absdy + 0.25;
-					double Ly = dy2 + absdy + 0.25;
-					const double g1 = (Rxy2 - Rx2 * ly) / Ry2;
-					const double g2 = (rxy2 - rx2 * Ly) / ry2;
+					const double vminusexy2 = v - exy2;
+					const double ly = dy2 - absdy + 0.25;
+					const double Ly = dy2 + absdy + 0.25;				
+					const double g1 = Rx2minus025 - Rx2overRy2 * ly;
+					const double g2 = rx2minus025 - rx2overry2 * Ly;
+					double dx = (double)(xmin - P.X());
 					while (1)
 						{
-						double dx = (double)(xmin - P.X());
 						const double absdx = ((dx > 0) ? dx : -dx);
-						const double dx2 = dx*dx;
-						const double lx = dx2 - absdx + 0.25;
+						const double dx2 = dx * dx;
+						const double lx = dx2 - absdx;
 						if ((xmin == B.min[0]) || (lx > g1)) break;
 						xmin--;
+						dx--;
 						}
 					while (1)
 						{
-						const double dx = (double)(xmin - P.X());
 						const double absdx = ((dx > 0) ? dx : -dx);
-						const double dx2 = dx*dx;
-						const double lx = dx2 - absdx + 0.25;
-						const double Lx = dx2 + absdx + 0.25;
+						const double dx2 = dx * dx;
+						const double lx = dx2 - absdx;
+						const double Lx = dx2 + absdx;
 						if ((Lx < g2) || (xmax < xmin)) break;
-						if  (lx < g1)
+						if (lx < g1)
 							{
 							const double u = ey2 * dx2;
 							const double uu = ey2 * u;
-							double d = (u + v - exy2)/(2*sqrt(uu + vv));
-							if (d < 0) d = -d;
-							if (d < 1) { _updatePixel<blend, usepen, true, usepen>(xmin, y, color, 256 - (int32)(256 * d), penwidth); }
+							double d = (u + vminusexy2) * fast_invsqrt(uu + vv); // d = twice the distance of the point to the ideal ellipse
+							if (d < 0) d = (fill ? 0 : -d);
+							if (d < 2) { _updatePixel<blend, usepen, true, usepen>(xmin, y, color, 256 - (int32)(128 * d), penwidth); }
 							}
 						xmin++;
+						dx++;
 						}
+					dx = (double)(xmax - P.X());
 					while (1)
 						{
-						const double dx = (double)(xmax - P.X());
 						const double absdx = ((dx > 0) ? dx : -dx);
-						const double dx2 = dx*dx;
-						const double lx = dx2 - absdx + 0.25;
+						const double dx2 = dx * dx;
+						const double lx = dx2 - absdx;
 						if ((xmax == B.max[0]) || (lx > g1)) break;
 						xmax++;
+						dx++;
 						}
 					while (1)
 						{
-						const double dx = (double)(xmax - P.X());
 						const double absdx = ((dx > 0) ? dx : -dx);
-						const double dx2 = dx*dx;
-						const double lx = dx2 - absdx + 0.25;
-						const double Lx = dx2 + absdx + 0.25;
+						const double dx2 = dx * dx;
+						const double lx = dx2 - absdx;
+						const double Lx = dx2 + absdx;
 						if ((Lx < g2) || (xmax < xmin)) break;
-						if  (lx < g1)
+						if (lx < g1)
 							{
 							const double u = ey2 * dx2;
 							const double uu = ey2 * u;
-							double d = (u + v - exy2) / (2 * sqrt(uu + vv));
-							if (d < 0) d = -d;
-							if (d < 1) { _updatePixel<blend, usepen, true, usepen>(xmax, y, color, 256 - (int32)(256 * d), penwidth); }
+							double d = (u + vminusexy2) * fast_invsqrt(uu + vv); // d = twice the distance of the point to the ideal ellipse
+							if (d < 0) d = (fill ? 0 : -d);
+							if (d < 2) { _updatePixel<blend, usepen, true, usepen>(xmax, y, color, 256 - (int32)(128 * d), penwidth); }
 							}
 						xmax--;
+						dx--;
 						}
+					if (fill) { if (xmin < xmax) { _hline<blend, false>(xmin, xmax, y, color); } }
+					}
 				}
-			}
 
 
 
@@ -348,50 +361,46 @@ class TestImage : public Image
 	{
 
 		MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
-
-
-		int64 NS = 100000000;
-			{
-			double tot = 0.0;
-			Chronometer();
-			for (int64 n = 1; n < NS; n++)
-				{
-				tot += 1 / sqrt((double)n);
-				}
-			auto res = Chronometer();
-			mtools::cout << "tot = " << tot << " in " << durationToString(res,true) << "\n\n";
-			}
-
-			{
-				double tot = 0.0;
-				Chronometer();
-				for (int64 n = 0; n < NS; n++)
-				{
-					tot += fast_invsqrt((float)n);
-				}
-				auto res = Chronometer();
-				mtools::cout << "tot = " << tot << " in " << durationToString(res,true) << "\n\n";
-			}
-
-
-			cout.getKey();
-			return 0;
-
+		
 		{
-			for (int i = 0; i < 20; i++)
+			TestImage im(1000, 600);
+			im.clear(RGBc::c_White);
+
+			iBox2 B(100, 800, 100, 500);
+			fVec2 Pa(300, 350);
+			double rx = 100;
+			double ry = 200;
+
+
+			int64 N = 10000; 
+
 				{
-				double a = Unif(gen) * 100; 
-				cout << a << "\t - \t" << 1 / sqrt(a) << "\t - \t" << Q_rsqrt(a) << "\n";
+				Chronometer();
+				for (int64 i = 0; i < N; i++)
+					{
+					//im._draw_ellipse2_AA<true, false,false>(B, Pa, rx, ry, RGBc::c_Red, 0);
+					//im._draw_ellipse2<true, true, false, false>(B, Pa, rx, ry, RGBc::c_Red, RGBc::c_Red, 0);
+					im.fill_ellipse(Pa, (int64)rx, (int64)ry, RGBc::c_Red, true);
+					}
+				int64 res = Chronometer();
+				cout << "done in = " << durationToString(res, true) << "\n";
 				}
-			cout.getKey();
-			return 0;
+
+
+				auto P = makePlot2DImage(im, 6);   // Encapsulate the image inside a 'plottable' object.	
+				Plotter2D plotter;              // Create a plotter object
+				plotter.axesObject(false);      // Remove the axe system.
+				plotter[P];                     // Add the image to the list of objects to draw.  	
+				plotter.autorangeXY();          // Set the plotter range to fit the image.
+				plotter.plot();                 // start interactive display.
+
+
 		}
 
 
 		{
 			TestImage im(1000, 600);
 			im.clear(RGBc::c_White);
-
 
 			iBox2 B(100, 800, 100, 500);
 			fVec2 Pa(300, 250);
@@ -403,7 +412,7 @@ class TestImage : public Image
 
 			//im.draw_box(B, RGBc::c_Gray, true);
 			//im._draw_ellipse2<true, true, false, false>(B, Pa, rx, ry, RGBc::c_Red, RGBc::c_Blue, 0);
-			im._draw_ellipse2_AA<true, false>(B, Pa, rx, ry, RGBc::c_Red, 0);
+			im._draw_ellipse2_AA<true, true,false>(B, Pa, rx, ry, RGBc::c_Red, 0);
 			//im._draw_ellipse2<true, true, false, false>(B, Pb, rx, ry, RGBc::c_Red, RGBc::c_Blue, 0);
 
 			//im.draw_ellipse(Pc, rx, ry, RGBc::c_Red, true, false);
