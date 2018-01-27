@@ -15,12 +15,12 @@ class TestImage : public Image
 	TestImage(int64 lx, int64 ly) : Image(lx, ly) {}
 	
 
-
 			/**
 			* Draw an ellipse. Alternative method that only draw the portion inside the box B.
 			* Used for large ellipse (larger than the image size). 
+			* Advantage : can draw with non-integer center and radii !
 			**/
-			template<bool blend, bool outline, bool fill, bool usepen>  inline  void _draw_ellipse2(iBox2 B, iVec2 P, int64 rx, int ry, RGBc color, RGBc fillcolor, int32 penwidth)
+			template<bool blend, bool outline, bool fill, bool usepen>  inline  void _draw_ellipse2(iBox2 B, fVec2 P, double rx, double ry, RGBc color, RGBc fillcolor, int32 penwidth)
 			{
 				/*
 				const int64 FALLBACK_MINRADIUS = 5;
@@ -78,7 +78,7 @@ class TestImage : public Image
 						const double dx2 = dx*dx;
 						const double lx = dx2 - absdx + 0.25;
 						const double Lx = dx2 + absdx + 0.25;
-						if ((Lx/rx2 + Ly/ry2 <= 1.0) || (xmax <= xmin)) break;
+						if ((Lx/rx2 + Ly/ry2 <= 1.0) || (xmax < xmin)) break;
 						if (outline) { if ((lx/rx2 + Ly/ry2 < 1.0) || (Lx/rx2 + ly/ry2 < 1.0)) { _updatePixel<blend, usepen, false, usepen>(xmax, y, color, 255, penwidth); } }
 						xmax--;
 					}
@@ -88,6 +88,101 @@ class TestImage : public Image
 			}
 
 
+
+
+			/**
+			* Draw an anti-aliased circle. Alternative method that only draw the portion inside the box B.
+			* Used for large circle (larger than the image size).
+			**/
+			template<bool blend, bool usepen> void _draw_ellipse2_AA(iBox2 B, fVec2 P, double rx, double ry, RGBc color, int32 penwidth)
+			{
+				/*
+				const int64 FALLBACK_MINRADIUS = 5;
+				if (r < FALLBACK_MINRADIUS)
+				{ // fallback for small value. 
+					_draw_circle_AA<blend, true, usepen>(P.X(), P.Y(), r, color, penwidth);
+					return;
+				}
+				*/
+				const double ex2 = rx * rx;
+				const double ey2 = ry * ry;
+				const double Rx2 = (rx + 0.5)*(rx + 0.5);
+				const double rx2 = (rx - 0.5)*(rx - 0.5);
+				const double Ry2 = (ry + 0.5)*(ry + 0.5);
+				const double ry2 = (ry - 0.5)*(ry - 0.5);
+				int64 xmin = B.min[0];
+				int64 xmax = B.max[0];
+				for (int64 y = B.min[1]; y <= B.max[1]; y++)
+				{
+					if (y == 259)
+						{
+						cout << "a";
+						}
+					//304, 259
+					if (xmin > xmax) { xmin = B.min[0]; xmax = B.max[0]; }
+					const double dy = (double)(y - P.Y());
+					const double absdy = ((dy > 0) ? dy : -dy);
+					const double dy2 = (dy*dy);
+					double ly = dy2 - absdy + 0.25;
+					double Ly = dy2 + absdy + 0.25;
+					while (1)
+					{
+						double dx = (double)(xmin - P.X());
+						const double absdx = ((dx > 0) ? dx : -dx);
+						const double dx2 = dx*dx;
+						const double lx = dx2 - absdx + 0.25;
+						if ((xmin == B.min[0]) || (lx/Rx2 + ly/Ry2 > 1.0)) break;
+						xmin--;
+					}
+					while (1)
+					{
+						const double dx = (double)(xmin - P.X());
+						const double absdx = ((dx > 0) ? dx : -dx);
+						const double dx2 = dx*dx;
+						const double lx = dx2 - absdx + 0.25;
+						const double Lx = dx2 + absdx + 0.25;
+						if ((Lx/rx2 + Ly/ry2 <= 1.0) || (xmax < xmin)) break;
+						if (lx/Rx2 + ly/Ry2 < 1.0)
+						{
+							double ll = 1.0 / sqrt(dx2 / ex2 + dy2 / ey2);
+							double d = sqrt((1 - ll)*dx2 + (1 - ll)*dy2);
+							if (d < 0) d = -d;
+							if (d < 2) { _updatePixel<blend, usepen, true, usepen>(xmin, y, color, 256 - (int32)(256 * d), penwidth); }
+						}
+						xmin++;
+					}
+					while (1)
+					{
+						const double dx = (double)(xmax - P.X());
+						const double absdx = ((dx > 0) ? dx : -dx);
+						const double dx2 = dx*dx;
+						const double lx = dx2 - absdx + 0.25;
+						if ((xmax == B.max[0]) || (lx/Rx2 + ly/Ry2 > 1.0)) break;
+						xmax++;
+					}
+					while (1)
+					{
+						const double dx = (double)(xmax - P.X());
+						const double absdx = ((dx > 0) ? dx : -dx);
+						const double dx2 = dx*dx;
+						const double lx = dx2 - absdx + 0.25;
+						const double Lx = dx2 + absdx + 0.25;
+						if ((Lx/rx2 + Ly/ry2 <= 1.0) || (xmax < xmin)) break;
+						if (lx/Rx2 + ly/Ry2 < 1.0)
+						{
+							double ll = 1.0 / sqrt(dx2 / ex2 + dy2 / ey2);
+							double d = sqrt((1 - ll)*dx2 + (1 - ll)*dy2);
+							/*
+							double d = sqrt(dx2 / ex2 + dy2 / ey2) - 1;
+							d *= (dx2 / ex2)*rx + (dy2 / ey2)*ry;
+							d *= sqrt((dx2/ex2)*rx + (dy2/ey2)*ry);*/
+							if (d < 0) d = -d;
+							if (d < 2) { _updatePixel<blend, usepen, true, usepen>(xmax, y, color, 256 - (int32)(256 * d), penwidth); }
+						}
+						xmax--;
+					}
+				}
+			}
 
 
 
@@ -260,28 +355,29 @@ class TestImage : public Image
 		cout << "Hello from the console !";     // print on mtools::cout console (saved in cout.text)
 
 
+		{
+			TestImage im(800, 600);
+			im.clear(RGBc::c_White);
 
 
+			iBox2 B(100, 400, 100, 500);
+			fVec2 Pa(300, 250);
+			double rx = 80;
+			double ry = 100;
 
-		TestImage im(800, 600);
-		im.clear(RGBc::c_White);
+			im.draw_box(B, RGBc::c_Gray, true);
+			//im._draw_ellipse2<true, false, true, false>(B, Pa, rx, ry, RGBc::c_Red, RGBc::c_Blue, 0);
+			im._draw_ellipse2_AA<true, false>(B, Pa, rx, ry, RGBc::c_Red, 0);
 
+			//im.draw_dot({ 304, 259 }, RGBc::c_Blue, true, 0);
 
-		iBox2 B(100, 400, 100, 500);
-		iVec2 P(300, 250);
-		int rx = 100;
-		int ry = 150;
-
-		im.draw_box(B, RGBc::c_Gray, true);
-		im._draw_ellipse2(B, P, rx, ry, RGBc::c_Red, RGBc::c_Blue, 0);
-
-		auto P = makePlot2DImage(im, 6);   // Encapsulate the image inside a 'plottable' object.	
-		Plotter2D plotter;              // Create a plotter object
-		plotter.axesObject(false);      // Remove the axe system.
-		plotter[P];                     // Add the image to the list of objects to draw.  	
-		plotter.autorangeXY();          // Set the plotter range to fit the image.
-		plotter.plot();                 // start interactive display.
-
+			auto P = makePlot2DImage(im, 6);   // Encapsulate the image inside a 'plottable' object.	
+			Plotter2D plotter;              // Create a plotter object
+			plotter.axesObject(false);      // Remove the axe system.
+			plotter[P];                     // Add the image to the list of objects to draw.  	
+			plotter.autorangeXY();          // Set the plotter range to fit the image.
+			plotter.plot();                 // start interactive display.
+		}
 
 
 		return 0;
