@@ -96,91 +96,83 @@ class TestImage : public Image
 			**/
 			template<bool blend, bool usepen> void _draw_ellipse2_AA(iBox2 B, fVec2 P, double rx, double ry, RGBc color, int32 penwidth)
 			{
-				/*
-				const int64 FALLBACK_MINRADIUS = 5;
-				if (r < FALLBACK_MINRADIUS)
-				{ // fallback for small value. 
-					_draw_circle_AA<blend, true, usepen>(P.X(), P.Y(), r, color, penwidth);
-					return;
-				}
-				*/
 				const double ex2 = rx * rx;
 				const double ey2 = ry * ry;
+				const double exy2 = ex2 * ey2;
 				const double Rx2 = (rx + 0.5)*(rx + 0.5);
 				const double rx2 = (rx - 0.5)*(rx - 0.5);
 				const double Ry2 = (ry + 0.5)*(ry + 0.5);
 				const double ry2 = (ry - 0.5)*(ry - 0.5);
+				const double rxy2 = rx2*ry2;
+				const double Rxy2 = Rx2*Ry2;
 				int64 xmin = B.min[0];
 				int64 xmax = B.max[0];
 				for (int64 y = B.min[1]; y <= B.max[1]; y++)
 				{
-					if (y == 259)
-						{
-						cout << "a";
-						}
-					//304, 259
 					if (xmin > xmax) { xmin = B.min[0]; xmax = B.max[0]; }
 					const double dy = (double)(y - P.Y());
 					const double absdy = ((dy > 0) ? dy : -dy);
 					const double dy2 = (dy*dy);
+					const double v = ex2 * dy2;
+					const double vv = ex2 * v;
 					double ly = dy2 - absdy + 0.25;
 					double Ly = dy2 + absdy + 0.25;
+					const double g1 = (Rxy2 - Rx2 * ly) / Ry2;
+					const double g2 = (rxy2 - rx2 * Ly) / ry2;
 					while (1)
-					{
+						{
 						double dx = (double)(xmin - P.X());
 						const double absdx = ((dx > 0) ? dx : -dx);
 						const double dx2 = dx*dx;
 						const double lx = dx2 - absdx + 0.25;
-						if ((xmin == B.min[0]) || (lx/Rx2 + ly/Ry2 > 1.0)) break;
+						if ((xmin == B.min[0]) || (lx > g1)) break;
 						xmin--;
-					}
+						}
 					while (1)
-					{
+						{
 						const double dx = (double)(xmin - P.X());
 						const double absdx = ((dx > 0) ? dx : -dx);
 						const double dx2 = dx*dx;
 						const double lx = dx2 - absdx + 0.25;
 						const double Lx = dx2 + absdx + 0.25;
-						if ((Lx/rx2 + Ly/ry2 <= 1.0) || (xmax < xmin)) break;
-						if (lx/Rx2 + ly/Ry2 < 1.0)
-						{
-							double ll = 1.0 / sqrt(dx2 / ex2 + dy2 / ey2);
-							double d = sqrt((1 - ll)*dx2 + (1 - ll)*dy2);
+						if ((Lx < g2) || (xmax < xmin)) break;
+						if  (lx < g1)
+							{
+							const double u = ey2 * dx2;
+							const double uu = ey2 * u;
+							double d = (u + v - exy2)/(2*sqrt(uu + vv));
 							if (d < 0) d = -d;
-							if (d < 2) { _updatePixel<blend, usepen, true, usepen>(xmin, y, color, 256 - (int32)(256 * d), penwidth); }
-						}
+							if (d < 1) { _updatePixel<blend, usepen, true, usepen>(xmin, y, color, 256 - (int32)(256 * d), penwidth); }
+							}
 						xmin++;
-					}
+						}
 					while (1)
-					{
+						{
 						const double dx = (double)(xmax - P.X());
 						const double absdx = ((dx > 0) ? dx : -dx);
 						const double dx2 = dx*dx;
 						const double lx = dx2 - absdx + 0.25;
-						if ((xmax == B.max[0]) || (lx/Rx2 + ly/Ry2 > 1.0)) break;
+						if ((xmax == B.max[0]) || (lx > g1)) break;
 						xmax++;
-					}
+						}
 					while (1)
-					{
+						{
 						const double dx = (double)(xmax - P.X());
 						const double absdx = ((dx > 0) ? dx : -dx);
 						const double dx2 = dx*dx;
 						const double lx = dx2 - absdx + 0.25;
 						const double Lx = dx2 + absdx + 0.25;
-						if ((Lx/rx2 + Ly/ry2 <= 1.0) || (xmax < xmin)) break;
-						if (lx/Rx2 + ly/Ry2 < 1.0)
-						{
-							double ll = 1.0 / sqrt(dx2 / ex2 + dy2 / ey2);
-							double d = sqrt((1 - ll)*dx2 + (1 - ll)*dy2);
-							/*
-							double d = sqrt(dx2 / ex2 + dy2 / ey2) - 1;
-							d *= (dx2 / ex2)*rx + (dy2 / ey2)*ry;
-							d *= sqrt((dx2/ex2)*rx + (dy2/ey2)*ry);*/
+						if ((Lx < g2) || (xmax < xmin)) break;
+						if  (lx < g1)
+							{
+							const double u = ey2 * dx2;
+							const double uu = ey2 * u;
+							double d = (u + v - exy2) / (2 * sqrt(uu + vv));
 							if (d < 0) d = -d;
-							if (d < 2) { _updatePixel<blend, usepen, true, usepen>(xmax, y, color, 256 - (int32)(256 * d), penwidth); }
-						}
+							if (d < 1) { _updatePixel<blend, usepen, true, usepen>(xmax, y, color, 256 - (int32)(256 * d), penwidth); }
+							}
 						xmax--;
-					}
+						}
 				}
 			}
 
@@ -348,26 +340,74 @@ class TestImage : public Image
 #define NN 1
 
 
+
+	/* fast inverse squere root */
+
+
 	int main(int argc, char *argv[])
 	{
 
 		MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
-		cout << "Hello from the console !";     // print on mtools::cout console (saved in cout.text)
+
+
+		int64 NS = 100000000;
+			{
+			double tot = 0.0;
+			Chronometer();
+			for (int64 n = 1; n < NS; n++)
+				{
+				tot += 1 / sqrt((double)n);
+				}
+			auto res = Chronometer();
+			mtools::cout << "tot = " << tot << " in " << durationToString(res,true) << "\n\n";
+			}
+
+			{
+				double tot = 0.0;
+				Chronometer();
+				for (int64 n = 0; n < NS; n++)
+				{
+					tot += fast_invsqrt((float)n);
+				}
+				auto res = Chronometer();
+				mtools::cout << "tot = " << tot << " in " << durationToString(res,true) << "\n\n";
+			}
+
+
+			cout.getKey();
+			return 0;
+
+		{
+			for (int i = 0; i < 20; i++)
+				{
+				double a = Unif(gen) * 100; 
+				cout << a << "\t - \t" << 1 / sqrt(a) << "\t - \t" << Q_rsqrt(a) << "\n";
+				}
+			cout.getKey();
+			return 0;
+		}
 
 
 		{
-			TestImage im(800, 600);
+			TestImage im(1000, 600);
 			im.clear(RGBc::c_White);
 
 
-			iBox2 B(100, 400, 100, 500);
+			iBox2 B(100, 800, 100, 500);
 			fVec2 Pa(300, 250);
-			double rx = 80;
-			double ry = 100;
+			fVec2 Pb(400, 250);
+			fVec2 Pc(500, 250);
+			fVec2 Pd(600, 350);
+			double rx = 50;
+			double ry = 50;
 
-			im.draw_box(B, RGBc::c_Gray, true);
-			//im._draw_ellipse2<true, false, true, false>(B, Pa, rx, ry, RGBc::c_Red, RGBc::c_Blue, 0);
+			//im.draw_box(B, RGBc::c_Gray, true);
+			//im._draw_ellipse2<true, true, false, false>(B, Pa, rx, ry, RGBc::c_Red, RGBc::c_Blue, 0);
 			im._draw_ellipse2_AA<true, false>(B, Pa, rx, ry, RGBc::c_Red, 0);
+			//im._draw_ellipse2<true, true, false, false>(B, Pb, rx, ry, RGBc::c_Red, RGBc::c_Blue, 0);
+
+			//im.draw_ellipse(Pc, rx, ry, RGBc::c_Red, true, false);
+			im.draw_ellipse(Pd, rx, ry, RGBc::c_Red, true, true);
 
 			//im.draw_dot({ 304, 259 }, RGBc::c_Blue, true, 0);
 
