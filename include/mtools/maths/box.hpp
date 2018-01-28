@@ -581,6 +581,24 @@ namespace mtools
                 }
 
 
+			/**
+			* Returns an integer box that caontina this box, obtained by taking the floor() 
+			* for min[] and the ceil() for max().
+			* 
+			* This box is larger than that returned by integerEnclosingRect().
+			**/
+			inline iBox<N> integerEnclosingRect_larger() const
+				{
+				iBox<N> B;
+				for (size_t i = 0; i < N; i++)
+					{
+					B.min[i] = (int64)floor(min[i]);
+					B.max[i] = (int64)ceil(max[i]);
+					}
+				return B;
+				}
+
+
             /**
             * Returns the minimal centered enclosing rectangle with a given aspect ratio.
             *
