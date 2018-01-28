@@ -107,14 +107,160 @@ void testCE()
 
 
 
+/**
+ * Evaluate a quadratic bezier curve at position t.
+ **/
+fVec2 _quad_bezier_eval(fVec2 P0, fVec2 P1, fVec2 P2, double t)
+	{
+	return  fVec2(((P0.X() - 2 * P1.X() + P2.X())*t + 2 * (P1.X() - P0.X()))*t + P0.X(),
+	           	 ((P0.Y() - 2 * P1.Y() + P2.Y())*t + 2 * (P1.Y() - P0.Y()))*t + P0.Y());
+	}
+
+
+/**
+* Find the root inside [0,1] of the derivative of a quad. bezier equation
+* if it exists.
+**/
+double _quad_bezier_solve_deriv(double x0, double x1, double x2)
+{
+	double dem = x0 + x2 - 2 * x1;
+	if (dem == 0) { return -1; }
+	double res = (x0 - x1) / dem;
+	return ((res > 1) ? -1 : res);
+}
+
+
+fBox2 quadBezierBoundingBox(fVec2 P0, fVec2 P1, fVec2 P2)
+	{
+	fBox2 B(std::min<double>(P0.X(), P2.X()), std::max<double>(P0.X(), P2.X()), std::min<double>(P0.Y(), P2.Y()), std::max<double>(P0.Y(), P2.Y()));
+	
+	double tx = _quad_bezier_solve_deriv(P0.X(), P1.X(), P2.X());
+	if (tx > 0) { B.swallowPoint(_quad_bezier_eval(P0, P1, P2, tx)); }
+	double ty = _quad_bezier_solve_deriv(P0.Y(), P1.Y(), P2.Y());
+	if (ty > 0) { B.swallowPoint(_quad_bezier_eval(P0, P1, P2, ty)); }
+	return B;
+	}
+
+
+iBox2 quadBezierBoundingBox(iVec2 P0, iVec2 P1, iVec2 P2)
+	{
+	fBox2 fB = quadBezierBoundingBox((fVec2)P0, (fVec2)P1, (fVec2)P2);
+	iBox2 iB = fB.integerEnclosingRect_larger();
+	return iB; 
+	}
 
 
 
 
+/**
+* Evaluate a cubic bezier curve at position t.
+**/
+fVec2 _cubic_bezier_eval(fVec2 P0, fVec2 P1, fVec2 P2, fVec2 P3, double t)
+	{
+	return  fVec2( (((P3.X() + 3 * (P1.X() - P2.X()) - P0.X())*t + 3 * (P2.X() - 2 * P1.X() + P0.X()))*t + 3 * (P1.X() - P0.X()))*t + P0.X(),
+		           (((P3.Y() + 3 * (P1.Y() - P2.Y()) - P0.Y())*t + 3 * (P2.Y() - 2 * P1.Y() + P0.Y()))*t + 3 * (P1.Y() - P0.Y()))*t + P0.Y() );
+	}
+
+
+/**
+* Find the roots inside [0,1] of the derivative of a cubic bezier equation
+* if it exists.
+**/
+std::pair<double,double> _cubic_bezier_solve_deriv(double x0, double x1, double x2, double x3)
+	{
+	double a = 3 * (3 * x1 - 3 * x2 + x3 - x0);
+	double b = 6 * (x0 - 2*x1 + x2);
+	double c = 3 * (x1 - x0);
+	std::pair<double, double> root { -1,-1 };
+	int nb = mtools::gsl_poly_solve_quadratic(a, b, c, &root.first, &root.second);
+	if (root.first > 1) root.first = -1;
+	if (root.second > 1) root.second = -1;
+	return root;
+	}
+
+
+fBox2 cubicBezierBoundingBox(fVec2 P0, fVec2 P1, fVec2 P2, fVec2 P3)
+	{
+	fBox2 B(std::min<double>(P0.X(), P3.X()), std::max<double>(P0.X(), P3.X()), std::min<double>(P0.Y(), P3.Y()), std::max<double>(P0.Y(), P3.Y()));
+
+	auto rx = _cubic_bezier_solve_deriv(P0.X(), P1.X(), P2.X(),  P3.X());
+	if (rx.first > 0) { B.swallowPoint(_cubic_bezier_eval(P0, P1, P2, P3, rx.first)); }
+	if (rx.second > 0) { B.swallowPoint(_cubic_bezier_eval(P0, P1, P2, P3, rx.second)); }
+
+	auto ry = _cubic_bezier_solve_deriv(P0.Y(), P1.Y(), P2.Y(), P3.Y());
+	if (ry.first > 0) { B.swallowPoint(_cubic_bezier_eval(P0, P1, P2, P3, ry.first)); }
+	if (ry.second > 0) { B.swallowPoint(_cubic_bezier_eval(P0, P1, P2, P3, ry.second)); }
+
+	return B;
+	}
+
+
+iBox2 cubicBezierBoundingBox(iVec2 P0, iVec2 P1, iVec2 P2, iVec2 P3)
+	{
+	fBox2 fB = cubicBezierBoundingBox((fVec2)P0, (fVec2)P1, (fVec2)P2, (fVec2)P3);
+	iBox2 iB = fB.integerEnclosingRect_larger();
+	return iB;
+	}
 
 
 
 
+void testCF()
+{
+	size_t N = 50000;
+	int64 LX = 1000;
+	int64 LY = 1000;
+
+	TestImage im(LX, LY);
+	im.clear(RGBc::RGBc(240,240,200));
+	MT2004_64 gen(0);
+
+
+	while (1)
+	{
+		im.clear(RGBc::RGBc(240, 240, 200));
+
+		iVec2 P0 = { (int64)(Unif(gen)*LX), (int64)(Unif(gen)*LY) };
+		iVec2 P1 = { (int64)(Unif(gen)*LX), (int64)(Unif(gen)*LY) };
+		iVec2 P2 = { (int64)(Unif(gen)*LX), (int64)(Unif(gen)*LY) };
+		iVec2 P3 = { (int64)(Unif(gen)*LX), (int64)(Unif(gen)*LY) };
+
+		cout << "P0 : " << P0 << "\n";
+		cout << "P1 : " << P1 << "\n";
+		cout << "P2 : " << P2 << "\n";
+		cout << "P3 : " << P3 << "\n";
+
+
+		P0 = { 226, 803 };
+		P1 = { 600, 748};
+		P2 = { 665, 154};
+		P3 = { 604, 485};
+
+		auto bb = cubicBezierBoundingBox(P0, P1, P2, P3);
+
+		cout << "bb : " << bb << "\n";
+
+		im.draw_box(bb, RGBc::c_Gray, true);
+
+		im.draw_dot(P0, RGBc::c_Green, true, 2);
+		im.draw_dot(P1, RGBc::c_Green, true, 2);
+		im.draw_dot(P2, RGBc::c_Green, true, 2);
+		im.draw_dot(P3, RGBc::c_Green, true, 2);
+		/*
+		im.draw_line(P0, P1, RGBc::c_Green, false);
+		im.draw_line(P1, P2, RGBc::c_Green, false);
+		im.draw_line(P2, P3, RGBc::c_Green, false);
+		*/
+	//	im.draw_cubic_bezier(P0, P3, P1, P2, RGBc::c_Red, true, true,false);
+		im.draw_cubic_bezier(P0, P3, P1, P2, RGBc::c_Blue, true, true, true);
+
+		auto PA = makePlot2DImage(im, 1, "Image A");   // Encapsulate the image inside a 'plottable' object.	
+		Plotter2D plotter;              // Create a plotter object
+		plotter[PA];	                // Add the image to the list of objects to draw.  	
+		plotter.autorangeXY();          // Set the plotter range to fit the image.
+		plotter.plot();                 // start interactive display.
+	}
+}
 
 
 
@@ -126,9 +272,7 @@ void testCE()
 
 		MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
 		
-
-
-		testCE();
+		testCF();
 		cout.getKey(); 
 		return 0;
 
