@@ -199,11 +199,11 @@ namespace mtools
 		{
 		if ((int)(kx * 100) == (int)(ky * 100))
 			{
-			im.draw_filled_circle({ (int64)(kx * 50), (int64)(ky * 50) }, (int64)(kx * 25) , coul, coul, false);
+			im.draw_filled_circle({ (int64)(kx * 50), (int64)(ky * 50) }, (int64)(kx * 25) , coul, coul, false,true);
 			}
         else 
 			{ 
-			im.draw_filled_ellipse({ (int64)(kx * 50), (int64)(ky * 50) }, (int64)(kx * 25), (int64)(ky * 25), coul, coul, false);
+			im.draw_filled_ellipse({ (int64)(kx * 50), (int64)(ky * 50) }, (int64)(kx * 25), (int64)(ky * 25), coul, coul, false,true);
 			}
 		}
 
