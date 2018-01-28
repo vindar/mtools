@@ -2666,6 +2666,7 @@ namespace mtools
 				}	
 
 
+
 			/**
 			* Draw a circle.
 			*
@@ -2674,7 +2675,7 @@ namespace mtools
 			* @param	color			color to use.
 			* @param	blend			true to use blending.
 			* @param	antialiasing	true to use antialiasing.
-			* @param	penwidth		The pen width (0 = unit width)
+			* @param	penwidth		(Optional) The pen width (0 = unit width)
 			**/
 			inline void draw_circle(iVec2 P, int64 r, RGBc color, bool blend, bool antialiasing, int32 penwidth = 0)
 			{
@@ -2700,7 +2701,7 @@ namespace mtools
 						return;
 					}
 					// not included
-					if (B.area() * 64 > circleBox.area())
+					if (B.area() * 8 > circleBox.area())
 					{ // still faster to use draw everything using the first method and checking the range
 						if (antialiasing)
 						{
@@ -2713,13 +2714,15 @@ namespace mtools
 						return;
 					}
 					// use alternate method
+					B.enlarge(penwidth);
+					double rr = (double)r;
 					if (antialiasing)
 					{
-						if (blend) _draw_circle2_AA<true, true>(B, P, r, color, penwidth); else _draw_circle2_AA<false, true>(B, P, r, color, penwidth);
+						if (blend) _draw_ellipse2_AA<true, false, true>(B, P, rr, rr, color, color, penwidth); else _draw_ellipse2_AA<false, false, true>(B, P, rr, rr, color, color, penwidth);
 					}
 					else
 					{
-						if (blend) _draw_circle2<true, true, false, true>(B, P, r, color, RGBc::c_White, penwidth); else _draw_circle2<false, true, false, true>(B, P, r, color, RGBc::c_White, penwidth);
+						if (blend) _draw_ellipse2<true, true, false, true>(B, P, rr, rr, color, color, penwidth); else _draw_ellipse2<false, true, false, true>(B, P, rr, rr, color, color, penwidth);
 					}
 					return;
 				}
@@ -2738,7 +2741,7 @@ namespace mtools
 					return;
 				}
 				// not included
-				if (B.area() * 64 > circleBox.area())
+				if (B.area() * 8 > circleBox.area())
 				{ // still faster to use draw everything using the first method and checking the range
 					if (antialiasing)
 					{
@@ -2751,422 +2754,257 @@ namespace mtools
 					return;
 				}
 				// use alternate method
+				double rr = (double)r;
 				if (antialiasing)
 				{
-					if (blend) _draw_circle2_AA<true, false>(B, P, r, color, 0); else _draw_circle2_AA<false, false>(B, P, r, color, 0);
+					if (blend) _draw_ellipse2_AA<true, false, false>(B, P, rr, rr, color, color, 0); else _draw_ellipse2_AA<false, false, false>(B, P, rr, rr, color, color, 0);
 				}
 				else
 				{
-					if (blend) _draw_circle2<true, true, false, false>(B, P, r, color, RGBc::c_White, 0); else _draw_circle2<false, true, false, false>(B, P, r, color, RGBc::c_White, 0);
+					if (blend) _draw_ellipse2<true, true, false, false>(B, P, rr, rr, color, color, 0); else _draw_ellipse2<false, true, false, false>(B, P, rr, rr, color, color, 0);
 				}
 				return;
 			}
 
 
 			/**
-			* Fill the interior of a circle.
+			* Draw a filled circle.
 			*
-			* The circle border is not drawn, use draw_filled_circle to draw both border and interior simultaneously.
-			*
-			* @param	P			   position of the center.
-			* @param	r			   radius.
-			* @param	color_interior color of the interior.
-			* @param	blend		   true to use blending.
-			*/
-			inline void fill_circle(iVec2 P, int64 r, RGBc color_interior, bool blend)
-			{
-				if (isEmpty() || (r < 1)) return;
-				iBox2 circleBox(P.X() - r, P.X() + r, P.Y() - r, P.Y() + r);
-				iBox2 imBox = imageBox();
-				iBox2 B = intersectionRect(circleBox, imBox);
-				if (B.isEmpty()) return; // nothing to draw. 
-				if (circleBox.isIncludedIn(imBox))
-				{ // circle is completely inside the image
-					if (blend) _draw_circle<true, false, false, true, false>(P.X(), P.Y(), r, RGBc::c_White, color_interior, 0); else _draw_circle<false, false, false, true, false>(P.X(), P.Y(), r, RGBc::c_White, color_interior, 0);
-					return;
-				}
-				// partial drawing, use alternative drawing method
-				if (blend) _draw_circle2<true, false, true, false>(B, P, r, RGBc::c_White, color_interior, 0); else _draw_circle2<false, false, true, false>(B, P, r, RGBc::c_White, color_interior, 0);
-				return;
-			}
-
-
-			/**
-			* Draw a filled circle. The border and the interior color may be different.
-			*
-			* @param	P			  	position of the center.
-			* @param	r			  	radius.
-			* @param	color_border  	color for the border.
-			* @param	color_interior	color of the interior.
-			* @param	blend		  	true to use blending.
+			* @param	P		   	position of the center.
+			* @param	r		   	radius.
+			* @param	color	   	color of the border.
+			* @param	fillcolor  	color of the interior.
+			* @param	blend	   	true to use blending.
+			* @param	antialiased	true to use antialiasing.
 			**/
-			inline void draw_filled_circle(iVec2 P, int64 r, RGBc color_border, RGBc color_interior, bool blend)
+			void draw_filled_circle(iVec2 P, int64 r, RGBc color, RGBc fillcolor, bool blend, bool antialiased)
 			{
 				if (isEmpty() || (r < 1)) return;
 				iBox2 circleBox(P.X() - r, P.X() + r, P.Y() - r, P.Y() + r);
 				iBox2 imBox = imageBox();
 				iBox2 B = intersectionRect(circleBox, imBox);
 				if (B.isEmpty()) return; // nothing to draw. 
-				if (circleBox.isIncludedIn(imBox))
-				{ // circle is completely inside the image
-					if (blend) _draw_circle<true, false, true, true, false>(P.X(), P.Y(), r, color_border, color_interior, 0); else _draw_circle<false, false, true, true, false>(P.X(), P.Y(), r, color_border, color_interior, 0);
+				if (antialiased)
+				{
+					double rr = (double)r;
+					if (blend) _draw_ellipse2_AA<true, true, false>(B, P, rr, rr, color, fillcolor, 0); else _draw_ellipse2_AA<false, true, false>(B, P, rr, rr, color, fillcolor, 0);
 					return;
 				}
-				// partial drawing, use alternative drawing method
-				if (blend) _draw_circle2<true, true, true, false>(B, P, r, color_border, color_interior, 0); else _draw_circle2<false, false, true, false>(B, P, r, color_border, color_interior, 0);
+				if (circleBox.isIncludedIn(imBox))
+				{ // circle is completely inside the image
+					if (blend) _draw_circle<true, false, true, true, false>(P.X(), P.Y(), r, color, fillcolor, 0); else _draw_circle<false, false, true, true, false>(P.X(), P.Y(), r, color, fillcolor, 0);
+					return;
+				}
+				double rr = (double)r;
+				if (blend) _draw_ellipse2<true, true, true, false>(B, P, rr, rr, color, fillcolor, 0); else _draw_ellipse2<false, true, true, false>(B, P, rr, rr, color, fillcolor, 0);
 				return;
 			}
 
 
 			/**
-			 * Draw an ellipse.
-			 *
-			 * @param	P				position of the center.
-			 * @param	rx				the x-radius.
-			 * @param	ry				The y-radius.
-			 * @param	color			color to use.
-			 * @param	blend			true to use blending.
-			 * @param	antialiasing	true to use antialiasing.
-			 * @param	penwidth		The pen width (0 = unit width)
-			 **/
+			* Draw an ellipse.
+			*
+			* @param	P				position of the center.
+			* @param	rx				x radius
+			* @param	ry				y radius
+			* @param	color			color to use.
+			* @param	blend			true to use blending.
+			* @param	antialiasing	true to use antialiasing.
+			* @param	penwidth		(Optional) The pen width (0 = unit width)
+			**/
 			inline void draw_ellipse(iVec2 P, int64 rx, int64 ry, RGBc color, bool blend, bool antialiasing, int32 penwidth = 0)
-				{
+			{
 				if (isEmpty() || (rx < 1) || (ry < 1)) return;
-				iBox2 mbr(P.X() - rx, P.X() + rx, P.Y() - ry, P.Y() + ry);
-				iBox2 B(0, _lx - 1, 0, _ly - 1);
+				iBox2 circleBox(P.X() - rx, P.X() + rx, P.Y() - ry, P.Y() + ry);
+				iBox2 imBox = imageBox();
 				if (penwidth > 0)
-					{ // large pen
+				{ // large pen
 					_correctPenOpacity(color, penwidth);
-					mbr.enlarge(penwidth);
-					if (intersectionRect(mbr, B).isEmpty()) return;
-					if (!mbr.isIncludedIn(B))
-						{ // not included
+					circleBox.enlarge(penwidth);
+					iBox2 B = intersectionRect(circleBox, imBox);
+					if (B.isEmpty()) return; // nothing to draw.
+					if (circleBox.isIncludedIn(imBox))
+					{ // included
 						if (antialiasing)
-							{
-							if (blend) _draw_ellipse_in_rect_AA<true, true,true>(P.X() - rx, P.Y() - ry, P.X() + rx, P.Y() + ry, color, penwidth); else _draw_ellipse_in_rect_AA<false, true, true>(P.X() - rx, P.Y() - ry, P.X() + rx, P.Y() + ry, color, penwidth);
-							}
+						{
+							if (blend) _draw_ellipse_in_rect_AA<true, false, true>(P.X() - rx, P.Y() - ry, P.X() + rx, P.Y() + ry, color, penwidth); else _draw_ellipse_in_rect_AA<false, false, true>(P.X() - rx, P.Y() - ry, P.X() + rx, P.Y() + ry, color, penwidth);
+						}
 						else
-							{
-							if (blend) _draw_ellipse<true, true, true, false, 0, 0, true>(P.X(), P.Y(), rx, ry, color, RGBc::c_White, penwidth); else _draw_ellipse<false, true, true, false, 0, 0, true>(P.X(), P.Y(), rx, ry, color, RGBc::c_White, penwidth);
-							}
+						{
+							if (blend) _draw_ellipse<true, false, true, false, false, false, true>(P.X(), P.Y(), rx, ry, color, color, penwidth); else _draw_ellipse<false, false, true, false, false, false, true>(P.X(), P.Y(), rx, ry, color, color, penwidth);
+						}
 						return;
+					}
+					// not included
+					if (B.area() * 8 > circleBox.area())
+					{ // still faster to use draw everything using the first method and checking the range
+						if (antialiasing)
+						{
+							if (blend) _draw_ellipse_in_rect_AA<true, true, true>(P.X() - rx, P.Y() - ry, P.X() + rx, P.Y() + ry, color, penwidth); else _draw_ellipse_in_rect_AA<false, true, true>(P.X() - rx, P.Y() - ry, P.X() + rx, P.Y() + ry, color, penwidth);
 						}
-					// included, no need to check range
+						else
+						{
+							if (blend) _draw_ellipse<true, true, true, false, false, false, true>(P.X(), P.Y(), rx, ry, color, color, penwidth); else _draw_ellipse<false, true, true, false, false, false, true>(P.X(), P.Y(), rx, ry, color, color, penwidth);
+						}
+						return;
+					}
+					// use alternate method
+					B.enlarge(penwidth);
+					double rrx = (double)rx;
+					double rry = (double)ry;
 					if (antialiasing)
-						{
-						if (blend) _draw_ellipse_in_rect_AA<true, false, true>(P.X() - rx, P.Y() - ry, P.X() + rx, P.Y() + ry, color, penwidth); else _draw_ellipse_in_rect_AA<false, false, true>(P.X() - rx, P.Y() - ry, P.X() + rx, P.Y() + ry, color, penwidth);
-						}
-					else
-						{
-						if (blend) _draw_ellipse<true, false, true, false, 0, 0, true>(P.X(), P.Y(), rx, ry, color, RGBc::c_White, penwidth); else _draw_ellipse<false, false, true, false, 0, 0, true>(P.X(), P.Y(), rx, ry, color, RGBc::c_White, penwidth);
-						}
-					return;
-					}
-				if (intersectionRect(mbr, B).isEmpty()) return;
-				if (!mbr.isIncludedIn(B))
-					{ // not included
-					if (antialiasing)
-						{
-						if (blend) _draw_ellipse_in_rect_AA<true, true, false>(P.X() - rx, P.Y() - ry, P.X() + rx, P.Y() + ry, color, penwidth); else _draw_ellipse_in_rect_AA<false, true, false>(P.X() - rx, P.Y() - ry, P.X() + rx, P.Y() + ry, color, penwidth);
-						}
-					else
-						{
-						if (blend) _draw_ellipse<true, true, true, false, 0, 0, false>(P.X(), P.Y(), rx, ry, color, RGBc::c_White, penwidth); else _draw_ellipse<false, true, true, false, 0, 0, false>(P.X(), P.Y(), rx, ry, color, RGBc::c_White, penwidth);
-						}
-					return;
-					}
-				// included, no need to check range
-				if (antialiasing)
 					{
-					if (blend) _draw_ellipse_in_rect_AA<true, false, false>(P.X() - rx, P.Y() - ry, P.X() + rx, P.Y() + ry, color, penwidth); else _draw_ellipse_in_rect_AA<false, false, false>(P.X() - rx, P.Y() - ry, P.X() + rx, P.Y() + ry, color, penwidth);
+						if (blend) _draw_ellipse2_AA<true, false, true>(B, P, rrx, rry, color, color, penwidth); else _draw_ellipse2_AA<false, false, true>(B, P, rrx, rry, color, color, penwidth);
 					}
-				else
+					else
 					{
-					if (blend) _draw_ellipse<true, false, true, false, 0, 0, false>(P.X(), P.Y(), rx, ry, color, RGBc::c_White, penwidth); else _draw_ellipse<false, false, true, false, 0, 0, false>(P.X(), P.Y(), rx, ry, color, RGBc::c_White, penwidth);
+						if (blend) _draw_ellipse2<true, true, false, true>(B, P, rrx, rry, color, color, penwidth); else _draw_ellipse2<false, true, false, true>(B, P, rrx, rry, color, color, penwidth);
 					}
-				return;
+					return;
 				}
+				iBox2 B = intersectionRect(circleBox, imBox);
+				if (B.isEmpty()) return; // nothing to draw.
+				if (circleBox.isIncludedIn(imBox))
+				{ // included
+					if (antialiasing)
+					{
+						if (blend) _draw_ellipse_in_rect_AA<true, false, false>(P.X() - rx, P.Y() - ry, P.X() + rx, P.Y() + ry, color, 0); else _draw_ellipse_in_rect_AA<false, false, false>(P.X() - rx, P.Y() - ry, P.X() + rx, P.Y() + ry, color, 0);
+					}
+					else
+					{
+						if (blend) _draw_ellipse<true, false, true, false, false, false, false>(P.X(), P.Y(), rx, ry, color, color, 0); else _draw_ellipse<false, false, true, false, false, false, false>(P.X(), P.Y(), rx, ry, color, color, 0);
+					}
+					return;
+				}
+				// not included
+				if (B.area() * 8 > circleBox.area())
+				{ // still faster to use draw everything using the first method and checking the range
+					if (antialiasing)
+					{
+						if (blend) _draw_ellipse_in_rect_AA<true, true, false>(P.X() - rx, P.Y() - ry, P.X() + rx, P.Y() + ry, color, 0); else _draw_ellipse_in_rect_AA<false, true, false>(P.X() - rx, P.Y() - ry, P.X() + rx, P.Y() + ry, color, 0);
+					}
+					else
+					{
+						if (blend) _draw_ellipse<true, true, true, false, false, false, false>(P.X(), P.Y(), rx, ry, color, color, 0); else _draw_ellipse<false, true, true, false, false, false, false>(P.X(), P.Y(), rx, ry, color, color, 0);
+					}
+					return;
+				}
+				// use alternate method
+				double rrx = (double)rx;
+				double rry = (double)ry;
+				if (antialiasing)
+				{
+					if (blend) _draw_ellipse2_AA<true, false, false>(B, P, rrx, rry, color, color, 0); else _draw_ellipse2_AA<false, false, false>(B, P, rrx, rry, color, color, 0);
+				}
+				else
+				{
+					if (blend) _draw_ellipse2<true, true, false, false>(B, P, rrx, rry, color, color, 0); else _draw_ellipse2<false, true, false, false>(B, P, rrx, rry, color, color, 0);
+				}
+				return;
+			}
 
 
 			/**
-			* Fill the interior of an ellipse.
+			* Draw a filled ellipse.
 			*
-			* @param	P			   position of the center.
-			* @param	rx			   the x-radius.
-			* @param	ry			   The y-radius.
-			* @param	color_interior color of the interior.
-			* @param	blend		   true to use blending.
-			*/
-			inline void fill_ellipse(iVec2 P, int64 rx, int64 ry, RGBc color_interior, bool blend)
-				{
+			* @param	P		   	position of the center.
+			* @param	rx		   	x-radius.
+			* @param	ry		   	y-radius.
+			* @param	color	   	color of the border.
+			* @param	fillcolor  	color of the interior.
+			* @param	blend	   	true to use blending.
+			* @param	antialiased	true to use antialiasing.
+			**/
+			void draw_filled_ellipse(iVec2 P, int64 rx, int64 ry, RGBc color, RGBc fillcolor, bool blend, bool antialiased)
+			{
 				if (isEmpty() || (rx < 1) || (ry < 1)) return;
-				iBox2 mbr(P.X() - rx, P.X() + rx, P.Y() - ry, P.Y() + ry);
-				iBox2 B(0, _lx - 1, 0, _ly - 1);
-				if (intersectionRect(mbr, B).isEmpty()) return;
-				if (!mbr.isIncludedIn(B))
-					{ // not included
-					if (blend) _draw_ellipse<true, true, false, true, 0, 0, false>(P.X(), P.Y(), rx, ry, RGBc::c_White, color_interior, 0); else _draw_ellipse<false, true, false, true, 0, 0, false>(P.X(), P.Y(), rx, ry, RGBc::c_White, color_interior, 0);
+				iBox2 circleBox(P.X() - rx, P.X() + rx, P.Y() - ry, P.Y() + ry);
+				iBox2 imBox = imageBox();
+				iBox2 B = intersectionRect(circleBox, imBox);
+				if (B.isEmpty()) return; // nothing to draw. 
+				double rrx = (double)rx;
+				double rry = (double)ry;
+				if (antialiased)
+				{
+					if (blend) _draw_ellipse2_AA<true, true, false>(B, P, rrx, rry, color, fillcolor, 0); else _draw_ellipse2_AA<false, true, false>(B, P, rrx, rry, color, fillcolor, 0);
 					return;
-					}
-				// included, no need to check range
-				if (blend) _draw_ellipse<true, false, false, true, 0, 0, false>(P.X(), P.Y(), rx, ry, RGBc::c_White, color_interior, 0); else _draw_ellipse<false, false, false, true, 0, 0, false>(P.X(), P.Y(), rx, ry, RGBc::c_White, color_interior, 0);
-				return;
 				}
+				if (blend) _draw_ellipse2<true, true, true, false>(B, P, rrx, rry, color, fillcolor, 0); else _draw_ellipse2<false, true, true, false>(B, P, rrx, rry, color, fillcolor, 0);
+				return;
+			}
 
 
 			/**
-			* Draw an ellipse together with its interior (with different colors). 
+			* Draw ellipse fitting inside a rectangle.
 			*
-			* @param	P			   position of the center.
-			* @param	rx			   the x-radius.
-			* @param	ry			   The y-radius.
-			* @param	color_border   The color of the border.
-			* @param	color_interior color of the interior.
-			* @param	blend		   true to use blending.
-			*/
-			inline void draw_filled_ellipse(iVec2 P, int64 rx, int64 ry, RGBc color_border, RGBc color_interior, bool blend)
-				{
-				if ((isEmpty()) || (rx < 1) || (ry < 1)) return;
-				iBox2 mbr(P.X() - rx, P.X() + rx, P.Y() - ry, P.Y() + ry);
-				iBox2 B(0, _lx - 1, 0, _ly - 1);
-				if (intersectionRect(mbr, B).isEmpty()) return;
-				if (!mbr.isIncludedIn(B))
-					{ // not included
-					if (blend) _draw_ellipse<true, true, true, true, 0, 0, false>(P.X(), P.Y(), rx, ry, color_border, color_interior, 0); else _draw_ellipse<false, true, true, true, 0, 0, false>(P.X(), P.Y(), rx, ry, color_border, color_interior, 0);
-					return;
-					}
-				// included, no need to check range
-				if (blend) _draw_ellipse<true, false, true, true, 0, 0, false>(P.X(), P.Y(), rx, ry, color_border, color_interior, 0); else _draw_ellipse<false, false, true, true, 0, 0, false>(P.X(), P.Y(), rx, ry, color_border, color_interior, 0);
-				return;
-				}
-
-
-			/**
-			 * Draw an ellipse with a given bounding box.
-			 * 
-			 * When using pen with non zero witdh, the ellipse exits the rectangle since the pen is centered
-			 * on this rectangle. Substract penwidth to the margin of the rectanlge to fit the ellipse
-			 * inside exactly.
-			 *
-			 * @param	B				The box to fit the ellipse into.
-			 * @param	color			color to use.
-			 * @param	blend			true to use blending.
-			 * @param	antialiasing	true to use antialiasing.
-			 * @param	penwidth		The pen width (0 = unit width)
-			 **/
-			inline void draw_ellipse_in_rect(const iBox2 & B, RGBc color, bool blend, bool antialiasing, int32 penwidth = 0)
-				{
-				if ((isEmpty()) || (B.isEmpty())) return;
-				int64 lx = B.max[0] - B.min[0];
-				int64 rx = lx / 2;
-				int64 mx = B.min[0] + rx;
-				bool incx = (lx % 2 != 0);
-				int64 ly = B.max[1] - B.min[1];
-				int64 ry = ly / 2;
-				int64 my = B.min[1] + ry;
-				bool incy = (ly % 2 != 0);
-				iBox2 mbr = B;
-				iBox2 imB(0, _lx - 1, 0, _ly - 1);
+			* Remark: the pen width does not count: if penwidth > 0, the ellipse will overflow its bounding
+			* box by exactly penwidth pixel on each side.
+			*
+			* @param	boundingBox	The enclosing rectangle.
+			* @param	color	   	color.
+			* @param	blend	   	true to use blending.
+			* @param	antialiased	true to use antialiasing.
+			* @param	penwidth   	(Optional) The pen width (0 = unit width)
+			**/
+			void draw_ellipse_in_rect(iBox2 boundingBox, RGBc color, bool blend, bool antialiased, int penwidth = 0)
+			{
+				if (isEmpty() || (boundingBox.isEmpty())) return;
+				iBox2 imBox = imageBox();
+				fVec2 P{ 0.5*(boundingBox.min[0] + boundingBox.max[0]) , 0.5*(boundingBox.min[1] + boundingBox.max[1]) };
+				double rx = 0.5*(boundingBox.max[0] - boundingBox.min[0]);
+				double ry = 0.5*(boundingBox.max[1] - boundingBox.min[1]);
 				if (penwidth > 0)
-					{
-					const bool usepen = true;
+				{
 					_correctPenOpacity(color, penwidth);
-					mbr.enlarge(penwidth);
-					if (intersectionRect(mbr, imB).isEmpty()) return;
-					if (!mbr.isIncludedIn(imB))
-						{ // not included
-						if (antialiasing)
-							{
-							if (blend) _draw_ellipse_in_rect_AA<true, true, usepen>(B.min[0], B.min[1], B.max[0], B.max[1], color, penwidth); else _draw_ellipse_in_rect_AA<false, true, usepen>(B.min[0], B.min[1], B.max[0], B.max[1], color, penwidth);
-							return;
-							}
-						if (incx)
-							{
-							const int64 INCX = 1;
-							if (incy) { const int64 INCY = 1; if (blend) _draw_ellipse<true, true, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); else _draw_ellipse<false, true, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); }
-							else { const int64 INCY = 0; if (blend) _draw_ellipse<true, true, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); else _draw_ellipse<false, true, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); }
-							}
-						else
-							{
-							const int64 INCX = 0;
-							if (incy) {	const int64 INCY = 1; if (blend) _draw_ellipse<true, true, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); else _draw_ellipse<false, true, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); }
-							else { const int64 INCY = 0; if (blend) _draw_ellipse<true, true, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); else _draw_ellipse<false, true, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); }
-							}
-						return;
-						}
-					// included
-					if (antialiasing)
-						{
-						if (blend) _draw_ellipse_in_rect_AA<true, false, usepen>(B.min[0], B.min[1], B.max[0], B.max[1], color, penwidth); else _draw_ellipse_in_rect_AA<false, false, usepen>(B.min[0], B.min[1], B.max[0], B.max[1], color, penwidth);
-						return;
-						}
-					if (incx)
-						{
-						const int64 INCX = 1;
-						if (incy) { const int64 INCY = 1; if (blend) _draw_ellipse<true, false, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); else _draw_ellipse<false, false, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); }
-						else { const int64 INCY = 0; if (blend) _draw_ellipse<true, false, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); else _draw_ellipse<false, false, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); }
-						}
-					else
-						{
-						const int64 INCX = 0;
-						if (incy) { const int64 INCY = 1; if (blend) _draw_ellipse<true, false, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); else _draw_ellipse<false, false, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); }
-						else { const int64 INCY = 0; if (blend) _draw_ellipse<true, false, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); else _draw_ellipse<false, false, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); }
-						}
-					return;
-					}
-				// normal pen
-				const bool usepen = false;
-				if (intersectionRect(mbr, imB).isEmpty()) return;
-				if (!mbr.isIncludedIn(imB))
-					{ // not included
-					if (antialiasing)
-						{
-						if (blend) _draw_ellipse_in_rect_AA<true, true, usepen>(B.min[0], B.min[1], B.max[0], B.max[1], color, penwidth); else _draw_ellipse_in_rect_AA<false, true, usepen>(B.min[0], B.min[1], B.max[0], B.max[1], color, penwidth);
-						return;
-						}
-					if (incx)
-						{
-						const int64 INCX = 1;
-						if (incy) { const int64 INCY = 1; if (blend) _draw_ellipse<true, true, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); else _draw_ellipse<false, true, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); }
-						else { const int64 INCY = 0; if (blend) _draw_ellipse<true, true, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); else _draw_ellipse<false, true, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); }
-						}
-					else
-						{
-						const int64 INCX = 0;
-						if (incy) { const int64 INCY = 1; if (blend) _draw_ellipse<true, true, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); else _draw_ellipse<false, true, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); }
-						else { const int64 INCY = 0; if (blend) _draw_ellipse<true, true, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); else _draw_ellipse<false, true, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); }
-						}
-					return;
-					}
-				// included
-				if (antialiasing)
+					imBox.enlarge(penwidth);
+					iBox2 B = intersectionRect(boundingBox, imBox);
+					if (B.isEmpty()) return; // nothing to draw. 
+					if (antialiased)
 					{
-					if (blend) _draw_ellipse_in_rect_AA<true, false, usepen>(B.min[0], B.min[1], B.max[0], B.max[1], color, penwidth); else _draw_ellipse_in_rect_AA<false, false, usepen>(B.min[0], B.min[1], B.max[0], B.max[1], color, penwidth);
+						if (blend) _draw_ellipse2_AA<true, false, true>(B, P, rx, ry, color, color, penwidth); else _draw_ellipse2_AA<false, false, true>(B, P, rx, ry, color, color, penwidth);
+						return;
+					}
+					if (blend) _draw_ellipse2<true, true, false, true>(B, P, rx, ry, color, color, penwidth); else _draw_ellipse2<false, true, false, true>(B, P, rx, ry, color, color, penwidth);
 					return;
-					}
-				if (incx)
-					{
-					const int64 INCX = 1;
-					if (incy) { const int64 INCY = 1; if (blend) _draw_ellipse<true, false, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); else _draw_ellipse<false, false, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); }
-					else { const int64 INCY = 0; if (blend) _draw_ellipse<true, false, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); else _draw_ellipse<false, false, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); }
-					}
-				else
-					{
-					const int64 INCX = 0;
-					if (incy) { const int64 INCY = 1; if (blend) _draw_ellipse<true, false, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); else _draw_ellipse<false, false, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); }
-					else { const int64 INCY = 0; if (blend) _draw_ellipse<true, false, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); else _draw_ellipse<false, false, true, false, INCX, INCY, usepen>(mx, my, rx, ry, color, RGBc::c_White, penwidth); }
-					}
-				return;
 				}
+				iBox2 B = intersectionRect(boundingBox, imBox);
+				if (B.isEmpty()) return; // nothing to draw. 
+				if (antialiased)
+				{
+					if (blend) _draw_ellipse2_AA<true, false, false>(B, P, rx, ry, color, color, 0); else _draw_ellipse2_AA<false, false, false>(B, P, rx, ry, color, color, 0);
+					return;
+				}
+				if (blend) _draw_ellipse2<true, true, false, false>(B, P, rx, ry, color, color, 0); else _draw_ellipse2<false, true, false, false>(B, P, rx, ry, color, color, 0);
+				return;
+			}
 
 
 			/**
-			* Fill the interior of a ellipse with a given bounding box.
+			* Draw a filled ellipse fitting inside a rectangle.
 			*
-			* @param	B			   The box to fit the ellipse into.
-			* @param	color_interior color of the interior.
-			* @param	blend		   true to use blending.
-			*/
-			inline void fill_ellipse_in_rect(const iBox2 & B, RGBc color_interior, bool blend)
+			* @param	boundingBox	The enclosing rectangle.
+			* @param	color	   	border color.
+			* @param	fillcolor  	interior color.
+			* @param	blend	   	true to use blending.
+			* @param	antialiased	true to use antialiasing.
+			**/
+			void draw_filled_ellipse_in_rect(iBox2 boundingBox, RGBc color, RGBc fillcolor, bool blend, bool antialiased)
+			{
+				if (isEmpty() || (boundingBox.isEmpty())) return;
+				iBox2 imBox = imageBox();
+				iBox2 B = intersectionRect(boundingBox, imBox);
+				if (B.isEmpty()) return; // nothing to draw. 
+				fVec2 P{ 0.5*(boundingBox.min[0] + boundingBox.max[0]) , 0.5*(boundingBox.min[1] + boundingBox.max[1]) };
+				double rx = 0.5*(boundingBox.max[0] - boundingBox.min[0]);
+				double ry = 0.5*(boundingBox.max[1] - boundingBox.min[1]);
+				if (antialiased)
 				{
-				if ((isEmpty()) || (B.isEmpty())) return;
-				int64 lx = B.max[0] - B.min[0];
-				int64 rx = lx / 2;
-				int64 mx = B.min[0] + rx;
-				bool incx = (lx % 2 != 0);
-				int64 ly = B.max[1] - B.min[1];
-				int64 ry = ly / 2;
-				int64 my = B.min[1] + ry;
-				bool incy = (ly % 2 != 0);
-				iBox2 imB(0, _lx - 1, 0, _ly - 1);
-				if (intersectionRect(B, imB).isEmpty()) return;
-				if (!B.isIncludedIn(imB))
-					{ // not included
-					if (incx)
-						{
-						const int64 INCX = 1;
-						if (incy) { const int64 INCY = 1; if (blend) _draw_ellipse<true, true, false, true, INCX, INCY, false>(mx, my, rx, ry, RGBc::c_White, color_interior,0); else _draw_ellipse<false, true, false, true, INCX, INCY, false>(mx, my, rx, ry, RGBc::c_White, color_interior, 0); }
-						else { const int64 INCY = 0; if (blend) _draw_ellipse<true, true, false, true, INCX, INCY, false>(mx, my, rx, ry, RGBc::c_White, color_interior, 0); else _draw_ellipse<false, true, false, true, INCX, INCY, false>(mx, my, rx, ry, RGBc::c_White, color_interior, 0); }
-						}
-					else
-						{
-						const int64 INCX = 0;
-						if (incy) { const int64 INCY = 1; if (blend) _draw_ellipse<true, true, false, true, INCX, INCY, false>(mx, my, rx, ry, RGBc::c_White, color_interior, 0); else _draw_ellipse<false, true, false, true, INCX, INCY, false>(mx, my, rx, ry, RGBc::c_White, color_interior, 0); }
-						else { const int64 INCY = 0; if (blend) _draw_ellipse<true, true, false, true, INCX, INCY, false>(mx, my, rx, ry, RGBc::c_White, color_interior, 0); else _draw_ellipse<false, true, false, true, INCX, INCY, false>(mx, my, rx, ry, RGBc::c_White, color_interior, 0); }
-						}
-					}
-				else
-					{
-					if (incx)
-						{
-						const int64 INCX = 1;
-						if (incy) { const int64 INCY = 1; if (blend) _draw_ellipse<true, false, false, true, INCX, INCY, false>(mx, my, rx, ry, RGBc::c_White, color_interior, 0); else _draw_ellipse<false, false, false, true, INCX, INCY, false>(mx, my, rx, ry, RGBc::c_White, color_interior, 0); }
-						else { const int64 INCY = 0; if (blend) _draw_ellipse<true, false, false, true, INCX, INCY, false>(mx, my, rx, ry, RGBc::c_White, color_interior, 0); else _draw_ellipse<false, false, false, true, INCX, INCY, false>(mx, my, rx, ry, RGBc::c_White, color_interior, 0); }
-						}
-					else
-						{
-						const int64 INCX = 0;
-						if (incy) { const int64 INCY = 1; if (blend) _draw_ellipse<true, false, false, true, INCX, INCY, false>(mx, my, rx, ry, RGBc::c_White, color_interior, 0); else _draw_ellipse<false, false, false, true, INCX, INCY, false>(mx, my, rx, ry, RGBc::c_White, color_interior, 0); }
-						else { const int64 INCY = 0; if (blend) _draw_ellipse<true, false, false, true, INCX, INCY, false>(mx, my, rx, ry, RGBc::c_White, color_interior, 0); else _draw_ellipse<false, false, false, true, INCX, INCY, false>(mx, my, rx, ry, RGBc::c_White, color_interior, 0); }
-						}
-					}
-				return;
+					if (blend) _draw_ellipse2_AA<true, true, false>(B, P, rx, ry, color, fillcolor, 0); else _draw_ellipse2_AA<false, true, false>(B, P, rx, ry, color, fillcolor, 0);
+					return;
 				}
-
-
-			/**
-			* Draw the boundary and fill the interior of an ellipse inside a rectangle simultaneously.
-			*
-			* @param	B			   The box to fit the ellipse into.
-			* @param	color_border   Color of the border.
-			* @param	color_interior color of the interior.
-			* @param	blend		   true to use blending.
-			*/
-			inline void draw_filled_ellipse_in_rect(const iBox2 & B, RGBc color_border, RGBc color_interior, bool blend)
-				{
-				if ((isEmpty()) || (B.isEmpty())) return;
-				int64 lx = B.max[0] - B.min[0];
-				int64 rx = lx / 2;
-				int64 mx = B.min[0] + rx;
-				bool incx = (lx % 2 != 0);
-				int64 ly = B.max[1] - B.min[1];
-				int64 ry = ly / 2;
-				int64 my = B.min[1] + ry;
-				bool incy = (ly % 2 != 0);
-				iBox2 imB(0, _lx - 1, 0, _ly - 1);
-				if (intersectionRect(B, imB).isEmpty()) return;
-				if (!B.isIncludedIn(imB))
-					{ // not included
-					if (incx)
-						{
-						const int64 INCX = 1;
-						if (incy) { const int64 INCY = 1; if (blend) _draw_ellipse<true, true, true, true, INCX, INCY, false>(mx, my, rx, ry, color_border, color_interior, 0); else _draw_ellipse<false, true, true, true, INCX, INCY, false>(mx, my, rx, ry, color_border, color_interior, 0); }
-						else { const int64 INCY = 0; if (blend) _draw_ellipse<true, true, true, true, INCX, INCY, false>(mx, my, rx, ry, color_border, color_interior, 0); else _draw_ellipse<false, true, true, true, INCX, INCY, false>(mx, my, rx, ry, color_border, color_interior, 0); }
-						}
-					else
-						{
-						const int64 INCX = 0; 
-						if (incy) { const int64 INCY = 1; if (blend) _draw_ellipse<true, true, true, true, INCX, INCY, false>(mx, my, rx, ry, color_border, color_interior, 0); else _draw_ellipse<false, true, true, true, INCX, INCY, false>(mx, my, rx, ry, color_border, color_interior, 0); }
-						else { const int64 INCY = 0; if (blend) _draw_ellipse<true, true, true, true, INCX, INCY, false>(mx, my, rx, ry, color_border, color_interior, 0); else _draw_ellipse<false, true, true, true, INCX, INCY, false>(mx, my, rx, ry, color_border, color_interior, 0); }
-						}
-					}
-				else
-					{
-					if (incx)
-						{
-						const int64 INCX = 1;
-						if (incy) { const int64 INCY = 1; if (blend) _draw_ellipse<true, false, true, true, INCX, INCY, false>(mx, my, rx, ry, color_border, color_interior, 0); else _draw_ellipse<false, false, true, true, INCX, INCY, false>(mx, my, rx, ry, color_border, color_interior, 0); }
-						else { const int64 INCY = 0; if (blend) _draw_ellipse<true, false, true, true, INCX, INCY, false>(mx, my, rx, ry, color_border, color_interior, 0); else _draw_ellipse<false, false, true, true, INCX, INCY, false>(mx, my, rx, ry, color_border, color_interior, 0); }
-						}
-					else
-						{
-						const int64 INCX = 0;
-						if (incy) { const int64 INCY = 1; if (blend) _draw_ellipse<true, false, true, true, INCX, INCY, false>(mx, my, rx, ry, color_border, color_interior, 0); else _draw_ellipse<false, false, true, true, INCX, INCY, false>(mx, my, rx, ry, color_border, color_interior, 0); }
-						else { const int64 INCY = 0; if (blend) _draw_ellipse<true, false, true, true, INCX, INCY, false>(mx, my, rx, ry, color_border, color_interior, 0); else _draw_ellipse<false, false, true, true, INCX, INCY, false>(mx, my, rx, ry, color_border, color_interior, 0); }
-						}
-					}
+				if (blend) _draw_ellipse2<true, true, true, false>(B, P, rx, ry, color, fillcolor, 0); else _draw_ellipse2<false, true, true, false>(B, P, rx, ry, color, fillcolor, 0);
 				return;
-				}
+			}
 
 
 
@@ -4499,7 +4337,6 @@ namespace mtools
 				}
 
 
-
 			/**
 			* Fill the interior of a convex polygon. The edge are not drawn.
 			*
@@ -4540,50 +4377,29 @@ namespace mtools
 				const auto dim = dimension();
 				const int64 irx = R.absToPixel_lenghtX(r, dim);
 				const int64 iry = R.absToPixel_lenghtY(r, dim);
-				draw_ellipse(R.absToPixel(P, dim), irx, iry, color, blend, antialiasing, penwidth);
+				if (irx == iry) draw_circle(R.absToPixel(P, dim), irx, color, blend, antialiasing, penwidth); else draw_ellipse(R.absToPixel(P, dim), irx, iry, color, blend, antialiasing, penwidth);
 				}
 
 
 			/**
-			* Fill the interior of a circle.
-			*
-			* The circle border is not drawn, use draw_filled_circle to draw both border and interior simultaneously.
-			*
-			* Use absolute coordinate (canvas method).
-			*
-			* @param	R				the absolute range represented in the image.
-			* @param	P			   position of the center.
-			* @param	r			   radius.
-			* @param	color_interior color of the interior.
-			* @param	blend		   true to use blending.
-			*/
-			MTOOLS_FORCEINLINE void canvas_fill_circle(const mtools::fBox2 & R, fVec2 P, double r, RGBc color_interior, bool blend)
+			 * Draw a filled circle. The border and the interior color may be different.
+			 * 
+			 * Use absolute coordinate (canvas method).
+			 *
+			 * @param	R			  	the absolute range represented in the image.
+			 * @param	P			  	position of the center.
+			 * @param	r			  	radius.
+			 * @param	color_border  	color for the border.
+			 * @param	color_interior	color of the interior.
+			 * @param	blend		  	true to use blending.
+			 * @param	antialiased   	true to use antialiasing.
+			 **/
+			MTOOLS_FORCEINLINE void canvas_draw_filled_circle(const mtools::fBox2 & R, fVec2 P, double r, RGBc color_border, RGBc color_interior, bool blend, bool antialiased)
 				{
 				const auto dim = dimension();
 				const int64 irx = R.absToPixel_lenghtX(r, dim);
 				const int64 iry = R.absToPixel_lenghtY(r, dim);
-				fill_ellipse(R.absToPixel(P, dim), irx, iry, color_interior, blend);
-				}
-
-
-			/**
-			* Draw a filled circle. The border and the interior color may be different.
-			*
-			* Use absolute coordinate (canvas method).
-			*
-			* @param	R				the absolute range represented in the image.
-			* @param	P			  	position of the center.
-			* @param	r			  	radius.
-			* @param	color_border  	color for the border.
-			* @param	color_interior	color of the interior.
-			* @param	blend		  	true to use blending.
-			**/
-			MTOOLS_FORCEINLINE void canvas_draw_filled_circle(const mtools::fBox2 & R, fVec2 P, double r, RGBc color_border, RGBc color_interior, bool blend)
-				{
-				const auto dim = dimension();
-				const int64 irx = R.absToPixel_lenghtX(r, dim);
-				const int64 iry = R.absToPixel_lenghtY(r, dim);
-				draw_filled_ellipse(R.absToPixel(P, dim), irx, iry, color_border, color_interior, blend);
+				if (irx == iry) draw_filled_circle(R.absToPixel(P, dim), irx, color_border, color_interior, blend, antialiased); else draw_filled_ellipse(R.absToPixel(P, dim), irx, iry, color_border, color_interior, blend,antialiased);
 				}
 
 
@@ -4598,58 +4414,38 @@ namespace mtools
 			* @param	ry				The y-radius.
 			* @param	color			color to use.
 			* @param	blend			true to use blending.
-			* @param	antialiasing	true to use antialiasing.
+			* @param	antialiased   	true to use antialiasing.
 			* @param	penwidth		The pen width (0 = unit width)
 			**/
-			MTOOLS_FORCEINLINE void canvas_draw_ellipse(const mtools::fBox2 & R, fVec2 P, double rx, double ry, RGBc color, bool blend, bool antialiasing, int32 penwidth = 0)
+			MTOOLS_FORCEINLINE void canvas_draw_ellipse(const mtools::fBox2 & R, fVec2 P, double rx, double ry, RGBc color, bool blend, bool antialiased, int32 penwidth = 0)
 				{
 				const auto dim = dimension();
 				const int64 irx = R.absToPixel_lenghtX(rx, dim);
 				const int64 iry = R.absToPixel_lenghtY(ry, dim);
-				draw_ellipse(R.absToPixel(P, dim), irx, iry, color, blend, antialiasing, penwidth);
+				draw_ellipse(R.absToPixel(P, dim), irx, iry, color, blend, antialiased, penwidth);
 				}
 
 
 			/**
-			* Fill the interior of an ellipse.
-			*
-			* Use absolute coordinate (canvas method).
-			*
-			* @param	R				the absolute range represented in the image.
-			* @param	P			   position of the center.
-			* @param	rx			   the x-radius.
-			* @param	ry			   The y-radius.
-			* @param	color_interior color of the interior.
-			* @param	blend		   true to use blending.
-			*/
-			MTOOLS_FORCEINLINE void canvas_fill_ellipse(const mtools::fBox2 & R, fVec2 P, double rx, double ry, RGBc color_interior, bool blend)
+			 * Draw an ellipse together with its interior (with different colors).
+			 * 
+			 * Use absolute coordinate (canvas method).
+			 *
+			 * @param	R			  	the absolute range represented in the image.
+			 * @param	P			  	position of the center.
+			 * @param	rx			  	the x-radius.
+			 * @param	ry			  	The y-radius.
+			 * @param	color_border  	The color of the border.
+			 * @param	color_interior	color of the interior.
+			 * @param	blend		  	true to use blending.
+			 * @param	antialiased   	true to use antialiasing.
+			 **/
+			MTOOLS_FORCEINLINE void canvas_draw_filled_ellipse(const mtools::fBox2 & R, fVec2 P, double rx, double ry, RGBc color_border, RGBc color_interior, bool blend, bool antialiased)
 				{
 				const auto dim = dimension();
 				const int64 irx = R.absToPixel_lenghtX(rx, dim);
 				const int64 iry = R.absToPixel_lenghtY(ry, dim);
-				fill_ellipse(R.absToPixel(P, dim), irx, iry, color_interior, blend);
-				}
-
-
-			/**
-			* Draw an ellipse together with its interior (with different colors).
-			*
-			* Use absolute coordinate (canvas method).
-			*
-			* @param	R				the absolute range represented in the image.
-			* @param	P			   position of the center.
-			* @param	rx			   the x-radius.
-			* @param	ry			   The y-radius.
-			* @param	color_border   The color of the border.
-			* @param	color_interior color of the interior.
-			* @param	blend		   true to use blending.
-			*/
-			MTOOLS_FORCEINLINE void canvas_draw_filled_ellipse(const mtools::fBox2 & R, fVec2 P, double rx, double ry, RGBc color_border, RGBc color_interior, bool blend)
-				{
-				const auto dim = dimension();
-				const int64 irx = R.absToPixel_lenghtX(rx, dim);
-				const int64 iry = R.absToPixel_lenghtY(ry, dim);
-				draw_filled_ellipse(R.absToPixel(P, dim), irx, iry, color_border, color_interior, blend);
+				draw_filled_ellipse(R.absToPixel(P, dim), irx, iry, color_border, color_interior, blend,antialiased);
 				}
 
 
@@ -4676,36 +4472,20 @@ namespace mtools
 
 
 			/**
-			* Fill the interior of a ellipse with a given bounding box.
-			*
-			* Use absolute coordinate (canvas method).
-			*
-			* @param	R				the absolute range represented in the image.
-			* @param	B			   The box to fit the ellipse into.
-			* @param	color_interior color of the interior.
-			* @param	blend		   true to use blending.
-			*/
-			MTOOLS_FORCEINLINE void canvas_fill_ellipse_in_rect(const mtools::fBox2 & R, const fBox2 & B, RGBc color_interior, bool blend)
+			 * Draw the boundary and fill the interior of an ellipse inside a rectangle simultaneously.
+			 * 
+			 * Use absolute coordinate (canvas method).
+			 *
+			 * @param	R			  	the absolute range represented in the image.
+			 * @param	B			  	The box to fit the ellipse into.
+			 * @param	color_border  	Color of the border.
+			 * @param	color_interior	color of the interior.
+			 * @param	blend		  	true to use blending.
+			 * @param	antialiasing  	true to use antialiasing.
+			 **/
+			MTOOLS_FORCEINLINE void canvas_draw_filled_ellipse_in_rect(const mtools::fBox2 & R, const fBox2 & B, RGBc color_border, RGBc color_interior, bool blend, bool antialiasing)
 				{
-				fill_ellipse_in_rect(R.absToPixel(B, dimension()), color_interior, blend);
-				}
-
-
-
-			/**
-			* Draw the boundary and fill the interior of an ellipse inside a rectangle simultaneously.
-			*
-			* Use absolute coordinate (canvas method).
-			*
-			* @param	R				the absolute range represented in the image.
-			* @param	B			   The box to fit the ellipse into.
-			* @param	color_border   Color of the border.
-			* @param	color_interior color of the interior.
-			* @param	blend		   true to use blending.
-			*/
-			MTOOLS_FORCEINLINE void canvas_draw_filled_ellipse_in_rect(const mtools::fBox2 & R, const fBox2 & B, RGBc color_border, RGBc color_interior, bool blend)
-				{
-				draw_filled_ellipse_in_rect(R.absToPixel(B, dimension()), color_border, color_interior, blend);
+				draw_filled_ellipse_in_rect(R.absToPixel(B, dimension()), color_border, color_interior, blend, antialiasing);
 				}
 
 
@@ -4875,7 +4655,7 @@ namespace mtools
 			*******************************************************************************************************************************************************/
 
 
-		//private:
+		private:
 
 
 
@@ -7708,153 +7488,6 @@ namespace mtools
 				}
 
 
-			/**
-			* Draw circle. Alternative method that only draw the portion inside the box B.
-			* Used for large circle (larger than the image size). 
-			**/
-			template<bool blend, bool outline, bool fill, bool usepen>  inline  void _draw_circle2(iBox2 B, iVec2 P, int64 r, RGBc color, RGBc fillcolor, int32 penwidth)
-			{
-				const int64 FALLBACK_MINRADIUS = 5;
-				if (r < FALLBACK_MINRADIUS)
-				{ // fallback for small value. 
-					_draw_circle<blend, true, outline, fill, usepen>(P.X(), P.Y(), r, color, fillcolor, penwidth);
-					return;
-				}
-				const double r2 = ((double)r)*r;
-				int64 xmin = B.min[0];
-				int64 xmax = B.max[0];
-				for (int64 y = B.min[1]; y <= B.max[1]; y++)
-				{
-					if (xmin > xmax) { xmin = B.min[0]; xmax = B.max[0]; }
-					const double dy = (double)(y - P.Y());
-					const double absdy = ((dy > 0) ? dy : -dy);
-					const double dy2 = (dy*dy);
-					double ly = dy2 - absdy + 0.25;
-					double Ly = dy2 + absdy + 0.25;
-					while (1)
-					{
-						double dx = (double)(xmin - P.X());
-						const double absdx = ((dx > 0) ? dx : -dx);
-						const double dx2 = dx*dx;
-						const double lx = dx2 - absdx + 0.25;
-						if ((xmin == B.min[0]) || (lx + ly > r2)) break;
-						xmin--;
-					}
-					while (1)
-					{
-						const double dx = (double)(xmin - P.X());
-						const double absdx = ((dx > 0) ? dx : -dx);
-						const double dx2 = dx*dx;
-						const double lx = dx2 - absdx + 0.25;
-						const double Lx = dx2 + absdx + 0.25;
-						if ((Lx + Ly <= r2) || (xmax < xmin)) break;
-						if (outline) { if ((lx + Ly < r2) || (Lx + ly < r2)) { _updatePixel<blend, usepen, false, usepen>(xmin, y, color, 255, penwidth); } }
-						xmin++;
-					}
-					while (1)
-					{
-						const double dx = (double)(xmax - P.X());
-						const double absdx = ((dx > 0) ? dx : -dx);
-						const double dx2 = dx*dx;
-						const double lx = dx2 - absdx + 0.25;
-						if ((xmax == B.max[0]) || (lx + ly > r2)) break;
-						xmax++;
-					}
-					while (1)
-					{
-						const double dx = (double)(xmax - P.X());
-						const double absdx = ((dx > 0) ? dx : -dx);
-						const double dx2 = dx*dx;
-						const double lx = dx2 - absdx + 0.25;
-						const double Lx = dx2 + absdx + 0.25;
-						if ((Lx + Ly <= r2) || (xmax <= xmin)) break;
-						if (outline) { if ((lx + Ly < r2) || (Lx + ly < r2)) { _updatePixel<blend, usepen, false, usepen>(xmax, y, color, 255, penwidth); } }
-						xmax--;
-					}
-
-					if (fill) { if (xmin < xmax) { _hline<blend, false>(xmin, xmax, y, fillcolor); } }
-				}
-			}
-
-
-			/**
-			* Draw an anti-aliased circle. Alternative method that only draw the portion inside the box B.
-			* Used for large circle (larger than the image size).
-			**/
-			template<bool blend, bool usepen> void _draw_circle2_AA(iBox2 B, iVec2 P, int64 r, RGBc color, int32 penwidth)
-			{
-				const int64 FALLBACK_MINRADIUS = 5;
-				if (r < FALLBACK_MINRADIUS)
-				{ // fallback for small value. 
-					_draw_circle_AA<blend, true, usepen>(P.X(), P.Y(), r, color, penwidth);
-					return;
-				}
-				const double R2 = (r + 0.5)*(r + 0.5);
-				const double r2 = (r - 0.5)*(r - 0.5);
-				int64 xmin = B.min[0];
-				int64 xmax = B.max[0];
-				for (int64 y = B.min[1]; y <= B.max[1]; y++)
-				{
-					if (xmin > xmax) { xmin = B.min[0]; xmax = B.max[0]; }
-					const double dy = (double)(y - P.Y());
-					const double absdy = ((dy > 0) ? dy : -dy);
-					const double dy2 = (dy*dy);
-					double ly = dy2 - absdy + 0.25;
-					double Ly = dy2 + absdy + 0.25;
-					while (1)
-					{
-						double dx = (double)(xmin - P.X());
-						const double absdx = ((dx > 0) ? dx : -dx);
-						const double dx2 = dx*dx;
-						const double lx = dx2 - absdx + 0.25;
-						if ((xmin == B.min[0]) || (lx + ly > R2)) break;
-						xmin--;
-					}
-					while (1)
-					{
-						const double dx = (double)(xmin - P.X());
-						const double absdx = ((dx > 0) ? dx : -dx);
-						const double dx2 = dx*dx;
-						const double lx = dx2 - absdx + 0.25;
-						const double Lx = dx2 + absdx + 0.25;
-						if ((Lx + Ly <= r2) || (xmax < xmin)) break;
-						if (lx + ly < R2)
-						{
-							double d = sqrt(dx2 + dy2) - r;
-							if (d < 0) d = -d;
-							if (d < 1) { _updatePixel<blend, usepen, true, usepen>(xmin, y, color, 256 - (int32)(256 * d), penwidth); }
-						}
-						xmin++;
-					}
-					while (1)
-					{
-						const double dx = (double)(xmax - P.X());
-						const double absdx = ((dx > 0) ? dx : -dx);
-						const double dx2 = dx*dx;
-						const double lx = dx2 - absdx + 0.25;
-						if ((xmax == B.max[0]) || (lx + ly > R2)) break;
-						xmax++;
-					}
-					while (1)
-					{
-						const double dx = (double)(xmax - P.X());
-						const double absdx = ((dx > 0) ? dx : -dx);
-						const double dx2 = dx*dx;
-						const double lx = dx2 - absdx + 0.25;
-						const double Lx = dx2 + absdx + 0.25;
-						if ((Lx + Ly <= r2) || (xmax <= xmin)) break;
-						if (lx + ly < R2)
-						{
-							double d = sqrt(dx2 + dy2) - r;
-							if (d < 0) d = -d;
-							if (d < 1) { _updatePixel<blend, usepen, true, usepen>(xmax, y, color, 256 - (int32)(256 * d), penwidth); }
-						}
-						xmax--;
-					}
-				}
-			}
-
-
 
 
 			/**
@@ -8016,6 +7649,224 @@ namespace mtools
 						err += dy += a;
 						}
 				}
+
+
+			/**
+			* Draw a circle/ellipse. Alternative method. About for times slower than the regular method but :
+			*
+			*  - can draw with non-integer center and radii !
+			*  - can restrict drawing to a subbox B (useful when the ellipse is much larger than the image).
+			**/
+			template<bool blend, bool outline, bool fill, bool usepen>  inline  void _draw_ellipse2(iBox2 B, fVec2 P, double rx, double ry, RGBc color, RGBc fillcolor, int32 penwidth)
+			{
+				B = intersectionRect(B, iBox2((int64)floor(P.X() - rx - 1),
+					(int64)ceil(P.X() + rx + 1),
+					(int64)floor(P.Y() - ry - 1),
+					(int64)ceil(P.Y() + ry + 1)));
+
+				const double rx2 = rx * rx;
+				const double ry2 = ry * ry;
+				const double Rx2 = (rx + 0.5)*(rx + 0.5);
+				const double Ry2 = (ry + 0.5)*(ry + 0.5);
+				const double Rxy2 = Rx2 * Ry2;
+
+				int64 xmin = B.max[0];
+				int64 xmax = B.min[0];
+
+				for (int64 y = B.min[1]; y <= B.max[1]; y++)
+				{
+					const double dy = (double)(y - P.Y());
+					const double absdy = ((dy > 0) ? dy : -dy);
+					const double dy2 = (dy*dy);
+
+					if (xmin > xmax)
+					{
+						if (dy2 > Ry2) continue;  // line is empty. 
+						if (P.X() <= (double)B.min[0])
+						{
+							const double dx = (double)B.min[0] - P.X();
+							if ((dx*dx)*Ry2 + (dy2*Rx2) > Rxy2) continue; // line is empty
+						}
+						else if (P.X() >= (double)B.max[0])
+						{
+							const double dx = P.X() - (double)B.max[0];
+							if ((dx*dx)*Ry2 + (dy2*Rx2) > Rxy2) continue; // line is empty
+						}
+						xmin = B.min[0]; xmax = B.max[0];
+					}
+					const double ly = dy2 - absdy + 0.25;
+					const double Ly = dy2 + absdy + 0.25;
+					const double g1 = rx2 - ly * rx2 / ry2 - 0.25;
+					const double g2 = rx2 - Ly * rx2 / ry2 - 0.25;
+					double dx = (double)(xmin - P.X());
+
+					while (1)
+					{
+						const double absdx = ((dx > 0) ? dx : -dx);
+						const double dx2 = dx * dx;
+						const double lx = dx2 - absdx;
+						if ((xmin == B.min[0]) || (lx  > g1)) break;
+						xmin--;
+						dx--;
+					}
+					while (1)
+					{
+						const double absdx = ((dx > 0) ? dx : -dx);
+						const double dx2 = dx * dx;
+						const double lx = dx2 - absdx;
+						const double Lx = dx2 + absdx;
+						if ((Lx <= g2) || (xmax < xmin)) break;
+						if (outline) { if ((lx  < g2) || (Lx  <  g1)) { _updatePixel<blend, usepen, false, usepen>(xmin, y, color, 255, penwidth); } }
+						xmin++;
+						dx++;
+					}
+					dx = (double)(xmax - P.X());
+					while (1)
+					{
+						const double absdx = ((dx > 0) ? dx : -dx);
+						const double dx2 = dx * dx;
+						const double lx = dx2 - absdx;
+						if ((xmax == B.max[0]) || (lx  > g1)) break;
+						xmax++;
+						dx++;
+					}
+					while (1)
+					{
+						const double absdx = ((dx > 0) ? dx : -dx);
+						const double dx2 = dx * dx;
+						const double lx = dx2 - absdx;
+						const double Lx = dx2 + absdx;
+						if ((Lx <= g2) || (xmax < xmin)) break;
+						if (outline) { if ((lx  < g2) || (Lx  <  g1)) { _updatePixel<blend, usepen, false, usepen>(xmax, y, color, 255, penwidth); } }
+						xmax--;
+						dx--;
+					}
+					if (fill) { if (xmin < xmax) { _hline<blend, false>(xmin, xmax, y, fillcolor); } }
+				}
+			}
+
+
+
+			/**
+			* Draw an antialised circle/ellipse. Alternative method.About for times slower than the regular method but :
+			*
+			*  -can draw with non - integer center and radii !
+			*  -can restrict drawing to a subbox B(useful when the ellipse is much larger than the image).
+			**/
+			template<bool blend, bool fill, bool usepen> void _draw_ellipse2_AA(iBox2 B, fVec2 P, double rx, double ry, RGBc color, RGBc fillcolor, int32 penwidth)
+			{
+				B = intersectionRect(B, iBox2((int64)floor(P.X() - rx - 1),
+					(int64)ceil(P.X() + rx + 1),
+					(int64)floor(P.Y() - ry - 1),
+					(int64)ceil(P.Y() + ry + 1)));
+
+				const double ex2 = rx * rx;
+				const double ey2 = ry * ry;
+				const double exy2 = ex2 * ey2;
+				const double Rx2 = (rx + 0.5)*(rx + 0.5);
+				const double rx2 = (rx - 0.5)*(rx - 0.5);
+				const double Ry2 = (ry + 0.5)*(ry + 0.5);
+				const double ry2 = (ry - 0.5)*(ry - 0.5);
+				const double rxy2 = rx2 * ry2;
+				const double Rxy2 = Rx2 * Ry2;
+				const double Rx2minus025 = Rx2 - 0.25;
+				const double Rx2overRy2 = Rx2 / Ry2;
+				const double rx2minus025 = rx2 - 0.25;
+				const double rx2overry2 = rx2 / ry2;
+
+				int64 xmin = B.max[0];
+				int64 xmax = B.min[0];
+
+				for (int64 y = B.min[1]; y <= B.max[1]; y++)
+				{
+					const double dy = (double)(y - P.Y());
+					const double absdy = ((dy > 0) ? dy : -dy);
+					const double dy2 = (dy*dy);
+
+					if (xmin > xmax)
+					{
+						if (dy2 > Ry2) continue;  // line is empty. 
+						if (P.X() <= (double)B.min[0])
+						{
+							const double dx = (double)B.min[0] - P.X();
+							if ((dx*dx)*Ry2 + (dy2*Rx2) > Rxy2) continue; // line is empty
+						}
+						else if (P.X() >= (double)B.max[0])
+						{
+							const double dx = P.X() - (double)B.max[0];
+							if ((dx*dx)*Ry2 + (dy2*Rx2) > Rxy2) continue; // line is empty
+						}
+						xmin = B.min[0]; xmax = B.max[0];
+					}
+
+
+					const double v = ex2 * dy2;
+					const double vv = ex2 * v;
+					const double vminusexy2 = v - exy2;
+					const double ly = dy2 - absdy + 0.25;
+					const double Ly = dy2 + absdy + 0.25;
+					const double g1 = Rx2minus025 - Rx2overRy2 * ly;
+					const double g2 = rx2minus025 - rx2overry2 * Ly;
+					double dx = (double)(xmin - P.X());
+					while (1)
+					{
+						const double absdx = ((dx > 0) ? dx : -dx);
+						const double dx2 = dx * dx;
+						const double lx = dx2 - absdx;
+						if ((xmin == B.min[0]) || (lx > g1)) break;
+						xmin--;
+						dx--;
+					}
+					while (1)
+					{
+						const double absdx = ((dx > 0) ? dx : -dx);
+						const double dx2 = dx * dx;
+						const double lx = dx2 - absdx;
+						const double Lx = dx2 + absdx;
+						if ((Lx < g2) || (xmax < xmin)) break;
+						if (lx < g1)
+						{
+							const double u = ey2 * dx2;
+							const double uu = ey2 * u;
+							double d = (u + vminusexy2) * fast_invsqrt((float)(uu + vv)); // d = twice the distance of the point to the ideal ellipse
+							if (d < 0) d = (fill ? 0 : -d);
+							if (d < 2) { _updatePixel<blend, usepen, true, usepen>(xmin, y, color, 256 - (int32)(128 * d), penwidth); }
+						}
+						xmin++;
+						dx++;
+					}
+					dx = (double)(xmax - P.X());
+					while (1)
+					{
+						const double absdx = ((dx > 0) ? dx : -dx);
+						const double dx2 = dx * dx;
+						const double lx = dx2 - absdx;
+						if ((xmax == B.max[0]) || (lx > g1)) break;
+						xmax++;
+						dx++;
+					}
+					while (1)
+					{
+						const double absdx = ((dx > 0) ? dx : -dx);
+						const double dx2 = dx * dx;
+						const double lx = dx2 - absdx;
+						const double Lx = dx2 + absdx;
+						if ((Lx < g2) || (xmax < xmin)) break;
+						if (lx < g1)
+						{
+							const double u = ey2 * dx2;
+							const double uu = ey2 * u;
+							double d = (u + vminusexy2) * fast_invsqrt((float)(uu + vv)); // d = twice the distance of the point to the ideal ellipse
+							if (d < 0) d = (fill ? 0 : -d);
+							if (d < 2) { _updatePixel<blend, usepen, true, usepen>(xmax, y, color, 256 - (int32)(128 * d), penwidth); }
+						}
+						xmax--;
+						dx--;
+					}
+					if (fill) { if (xmin < xmax) { _hline<blend, false>(xmin, xmax, y, fillcolor); } }
+				}
+			}
+
 
 
 
