@@ -30,16 +30,34 @@ class TestImage : public Image
 
 				const double rx2 = rx*rx;
 				const double ry2 = ry*ry;
+				const double Rx2 = (rx + 0.5)*(rx + 0.5);
+				const double Ry2 = (ry + 0.5)*(ry + 0.5);
+				const double Rxy2 =  Rx2*Ry2;
 
-				int64 xmin = B.min[0];
-				int64 xmax = B.max[0];
+				int64 xmin = B.max[0];
+				int64 xmax = B.min[0];
 
 				for (int64 y = B.min[1]; y <= B.max[1]; y++)
 					{	
-					if (xmin > xmax) { xmin = B.min[0]; xmax = B.max[0]; }
 					const double dy = (double)(y - P.Y());
 					const double absdy = ((dy > 0) ? dy : -dy);
 					const double dy2 = (dy*dy);
+
+					if (xmin > xmax)
+						{ 
+						if (dy2 > Ry2) continue;  // line is empty. 
+						if (P.X() <= (double)B.min[0])
+							{ 
+							const double dx = (double)B.min[0] - P.X();
+							if ( (dx*dx)*Ry2 + (dy2*Rx2) > Rxy2) continue; // line is empty
+							}
+						else if (P.X() >= (double)B.max[0])
+							{
+							const double dx = P.X() - (double)B.max[0];
+							if ((dx*dx)*Ry2 + (dy2*Rx2) > Rxy2) continue; // line is empty
+							}							
+						xmin = B.min[0]; xmax = B.max[0]; 
+						}
 					const double ly = dy2 - absdy + 0.25;
 					const double Ly = dy2 + absdy + 0.25;
 					const double g1 = rx2 - ly * rx2/ry2 - 0.25;
@@ -122,15 +140,32 @@ class TestImage : public Image
 				const double rx2minus025 = rx2 - 0.25;
 				const double rx2overry2 = rx2 / ry2;
 
-				int64 xmin = B.min[0];
-				int64 xmax = B.max[0];
+				int64 xmin = B.max[0];
+				int64 xmax = B.min[0];
 
 				for (int64 y = B.min[1]; y <= B.max[1]; y++)
 					{
-					if (xmin > xmax) { xmin = B.min[0]; xmax = B.max[0]; }
 					const double dy = (double)(y - P.Y());
 					const double absdy = ((dy > 0) ? dy : -dy);
 					const double dy2 = (dy*dy);
+
+					if (xmin > xmax)
+						{
+						if (dy2 > Ry2) continue;  // line is empty. 
+						if (P.X() <= (double)B.min[0])
+							{
+							const double dx = (double)B.min[0] - P.X();
+							if ((dx*dx)*Ry2 + (dy2*Rx2) > Rxy2) continue; // line is empty
+							}
+						else if (P.X() >= (double)B.max[0])
+							{
+							const double dx = P.X() - (double)B.max[0];
+							if ((dx*dx)*Ry2 + (dy2*Rx2) > Rxy2) continue; // line is empty
+							}
+						xmin = B.min[0]; xmax = B.max[0];
+						}
+
+
 					const double v = ex2 * dy2;
 					const double vv = ex2 * v;
 					const double vminusexy2 = v - exy2;
@@ -249,6 +284,7 @@ class TestImage : public Image
 						return;
 					}
 					// use alternate method
+					B.enlarge(penwidth);
 					double rr = (double)r;
 					if (antialiasing)
 						{
@@ -349,6 +385,7 @@ class TestImage : public Image
 						return;
 						}
 					// use alternate method
+					B.enlarge(penwidth);
 					double rrx = (double)rx;
 					double rry = (double)ry;
 					if (antialiasing)
@@ -469,6 +506,9 @@ class TestImage : public Image
 
 			/**
 			 * Draw ellipse fitting inside a rectangle.
+			 * 
+			 * Remark: the pen width does not count: if penwidth > 0, the ellipse will overflow its bounding
+			 * box by exactly penwidth pixel on each side.
 			 *
 			 * @param	boundingBox	The enclosing rectangle.
 			 * @param	color	   	color.
@@ -480,11 +520,25 @@ class TestImage : public Image
 				{
 				if (isEmpty() || (boundingBox.isEmpty())) return;
 				iBox2 imBox = imageBox();
+				fVec2 P{ 0.5*(boundingBox.min[0] + boundingBox.max[0]) , 0.5*(boundingBox.min[1] + boundingBox.max[1]) };
+				double rx = 0.5*(boundingBox.max[0] - boundingBox.min[0]);
+				double ry = 0.5*(boundingBox.max[1] - boundingBox.min[1]);
+				if (penwidth > 0)
+					{
+					_correctPenOpacity(color, penwidth);
+					imBox.enlarge(penwidth);
+					iBox2 B = intersectionRect(boundingBox, imBox);
+					if (B.isEmpty()) return; // nothing to draw. 
+					if (antialiased)
+						{
+						if (blend) _draw_ellipse2_AA<true, false, true>(B, P, rx, ry, color, color, penwidth); else _draw_ellipse2_AA<false, false, true>(B, P, rx, ry, color, color, penwidth);
+						return;
+						}
+					if (blend) _draw_ellipse2<true, true, false, true>(B, P, rx, ry, color, color, penwidth); else _draw_ellipse2<false, true, false, true>(B, P, rx, ry, color, color, penwidth);
+					return;
+					}
 				iBox2 B = intersectionRect(boundingBox, imBox);
 				if (B.isEmpty()) return; // nothing to draw. 
-				fVec2 P{ 0.5*(boundingBox.min[0] + boundingBox.max[0]) , 0.5*(boundingBox.min[1] + boundingBox.max[1]) };
-				double rx = 0.5*(boundingBox.max[0] + boundingBox.min[0]);
-				double ry = 0.5*(boundingBox.max[1] + boundingBox.min[1]);
 				if (antialiased)
 					{
 					if (blend) _draw_ellipse2_AA<true, false, false>(B, P, rx, ry, color, color, 0); else _draw_ellipse2_AA<false, false, false>(B, P, rx, ry, color, color, 0);
@@ -511,8 +565,8 @@ class TestImage : public Image
 				iBox2 B = intersectionRect(boundingBox, imBox);
 				if (B.isEmpty()) return; // nothing to draw. 
 				fVec2 P { 0.5*(boundingBox.min[0] + boundingBox.max[0]) , 0.5*(boundingBox.min[1] + boundingBox.max[1]) };
-				double rx = 0.5*(boundingBox.max[0] + boundingBox.min[0]);
-				double ry = 0.5*(boundingBox.max[1] + boundingBox.min[1]);
+				double rx = 0.5*(boundingBox.max[0] - boundingBox.min[0]);
+				double ry = 0.5*(boundingBox.max[1] - boundingBox.min[1]);
 				if (antialiased)
 					{
 					if (blend) _draw_ellipse2_AA<true, true, false>(B, P, rx, ry, color, fillcolor, 0); else _draw_ellipse2_AA<false, true, false>(B, P, rx, ry, color, fillcolor, 0);
@@ -546,15 +600,19 @@ class TestImage : public Image
 
 void testCE()
 	{
-	TestImage im(1000, 1000);
-	im.clear(RGBc::c_White);
-	MT2004_64 gen(0); 
+	TestImage imA(1000, 1000);
+	TestImage imB(1000, 1000);
+	imA.clear(RGBc::c_White);
+	imB.clear(RGBc::c_White);
+	MT2004_64 gen(0);
 
-	size_t N = 10000;
+	size_t N = 50000;
 
+	
 	int64 mult_rx = 10000; 
 	int64 mult_ry = 10000;
-	int64 mult_pos = 1000; 
+	int64 mult_pos = 10000; 
+	
 
 	std::vector<iVec2> center(N, iVec2());
 	std::vector<int64> rx(N, 1);
@@ -565,24 +623,35 @@ void testCE()
 		center[i] = { -mult_pos + (int64)(2 * Unif(gen)*mult_pos), -mult_pos + (int64)(2 * Unif(gen)*mult_pos) };
 		rx[i] = 1 + (int64)(Unif(gen)*mult_rx);
 		ry[i] = 1 + (int64)(Unif(gen)*mult_ry);
+
 		}
 
 
 
-	cout << "Simulating... ";
+	cout << "Simulating A... ";
 	Chronometer(); 
-
 	for (size_t i = 0; i < N; i++)
 		{
-		im.good_draw_circle(center[i], rx[i], RGBc::getDistinctColor(i), true, true, 0);
+		imA.good_draw_ellipse(center[i], rx[i], ry[i], RGBc::getDistinctColor(i),true,true,3);
 		}
+	auto resA = Chronometer();
+	cout << "done in " << durationToString(resA, true) << "\n";
 
-	auto res = Chronometer();
-	cout << "done in " << durationToString(res) << "\n";
 
-	auto P = makePlot2DImage(im, 6);   // Encapsulate the image inside a 'plottable' object.	
+	cout << "Simulating B... ";
+	Chronometer();
+	for (size_t i = 0; i < N; i++)
+		{
+		imB.draw_ellipse(center[i], rx[i], ry[i], RGBc::getDistinctColor(i),true, true,3);
+		}
+	auto resB = Chronometer();
+	cout << "done in " << durationToString(resB, true) << "\n";
+
+
+	auto PA = makePlot2DImage(imA, 1, "Image A");   // Encapsulate the image inside a 'plottable' object.	
+	auto PB = makePlot2DImage(imB, 1, "Image B");   // Encapsulate the image inside a 'plottable' object.	
 	Plotter2D plotter;              // Create a plotter object
-	plotter[P];                     // Add the image to the list of objects to draw.  	
+	plotter[PA][PB];                // Add the image to the list of objects to draw.  	
 	plotter.autorangeXY();          // Set the plotter range to fit the image.
 	plotter.plot();                 // start interactive display.
 
