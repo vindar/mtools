@@ -22,4 +22,4 @@ TODO LIST
 
 - complete the Circle Packing classes. 
 
-- improve offspring drawing for ellipse and bezier/spline draw method for the image class. 
+- improve offscreen drawing for bezier/spline draw methods in the image class. 
