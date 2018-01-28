@@ -39,7 +39,7 @@ namespace mtools
 	 * @param [in,out]	x0	the smallest real root (if it exist).
 	 * @param [in,out]	x1	the largest real root (if it exist).
 	 *
-	 * @return	The number of real roots (either 0 or 2).
+	 * @return	The number of real roots (either 0, 1 or 2).
 	 **/
 	int gsl_poly_solve_quadratic(double a, double b, double c, double *x0, double *x1);
 
