@@ -456,19 +456,16 @@ namespace mtools
 		{
 		w0a = w0;
 		P0a = P0;
-
 		w2b = w2;
 		P2b = P2;
-
 		w1a = (1 - t)*w0 + t * w1;
-		P1a = (1 - t)*P0 + t * P1;
+		P1a = (1 - t)*w0*P0 + t *w1*P1;
 		w1b = (1 - t)*w1 + t * w2;
-		P1b = (1 - t)*P1 + t * P2;
+		P1b = (1 - t)*w1*P1 + t * w2*P2;
 		w2a = w0b = (1 - t)*w1a + t * w1b;
-
-		P2a = P0b = rational_bezier_eval(P0, w0, P1, w1, P2, w2, t);
-
-		//P2a = P0b = ((1 - t)*P1a + t * P1b)/w2a;
+		P2a = P0b = ((1 - t)*P1a + t * P1b )/ w2a;
+		P1a /= w1a;
+		P1b /= w1b;
 		}
 
 
