@@ -153,6 +153,66 @@ iBox2 quadBezierBoundingBox(iVec2 P0, iVec2 P1, iVec2 P2)
 
 
 /**
+* Evaluate a rational quadratic bezier curve at position t.
+**/
+fVec2 _rat_bezier_eval(fVec2 P0, fVec2 P1, fVec2 P2, double w, double t)
+	{
+	if (w - 1 == 0) return _quad_bezier_eval(P0, P1, P2, t);
+	double D = 1 + 2 * (((1 - w)*t + (w - 1))*t);
+	return fVec2( (((P0.X() - 2 * P1.X() * w + P2.X())*t + 2 * (w * P1.X() - P0.X()))*t + P0.X()) / D, 
+		          (((P0.Y() - 2 * P1.Y() * w + P2.Y())*t + 2 * (w * P1.Y() - P0.Y()))*t + P0.Y()) / D );
+	}
+
+
+/**
+* Find the roots inside [0,1] of the derivative of a rationnal quadratic bezier 
+* equation if they exists.
+**/
+std::pair<double, double> _rat_bezier_solve_deriv(double x0, double x1, double x2, double w)
+	{
+	double a = (x2 - x0)*(w - 1);
+	double b = ( (x0 -x1)*2*w + x2 - x0);
+	double c = (x1*w - x0*w);
+	std::pair<double, double> root{ -1,-1 };
+	int nb = mtools::gsl_poly_solve_quadratic(a, b, c, &root.first, &root.second);
+	if (root.first > 1) root.first = -1;
+	if (root.second > 1) root.second = -1;
+	return root;
+	}
+
+
+
+fBox2 ratBezierBoundingBox(fVec2 P0, fVec2 P1, fVec2 P2, double w)
+	{
+	fBox2 B(std::min<double>(P0.X(), P2.X()), std::max<double>(P0.X(), P2.X()), std::min<double>(P0.Y(), P2.Y()), std::max<double>(P0.Y(), P2.Y()));
+
+	auto rx = _rat_bezier_solve_deriv(P0.X(), P1.X(), P2.X(), w);
+	if (rx.first > 0) { B.swallowPoint(_rat_bezier_eval(P0, P1, P2, w, rx.first)); }
+	if (rx.second > 0) { B.swallowPoint(_rat_bezier_eval(P0, P1, P2, w, rx.second)); }
+
+	auto ry = _rat_bezier_solve_deriv(P0.Y(), P1.Y(), P2.Y(), w);
+	if (ry.first > 0) { B.swallowPoint(_rat_bezier_eval(P0, P1, P2, w, ry.first)); }
+	if (ry.second > 0) { B.swallowPoint(_rat_bezier_eval(P0, P1, P2, w, ry.second)); }
+
+	return B;
+	}
+
+
+iBox2 ratBezierBoundingBox(iVec2 P0, iVec2 P1, iVec2 P2, double w)
+	{
+	fBox2 fB = ratBezierBoundingBox((fVec2)P0, (fVec2)P1, (fVec2)P2, w);
+	iBox2 iB = fB.integerEnclosingRect_larger();
+	return iB;
+	}
+
+
+
+
+
+
+
+
+/**
 * Evaluate a cubic bezier curve at position t.
 **/
 fVec2 _cubic_bezier_eval(fVec2 P0, fVec2 P1, fVec2 P2, fVec2 P3, double t)
@@ -168,9 +228,9 @@ fVec2 _cubic_bezier_eval(fVec2 P0, fVec2 P1, fVec2 P2, fVec2 P3, double t)
 **/
 std::pair<double,double> _cubic_bezier_solve_deriv(double x0, double x1, double x2, double x3)
 	{
-	double a = 3 * (3 * x1 - 3 * x2 + x3 - x0);
-	double b = 6 * (x0 - 2*x1 + x2);
-	double c = 3 * (x1 - x0);
+	double a = (3 * x1 - 3 * x2 + x3 - x0);
+	double b = 2 * (x0 - 2*x1 + x2);
+	double c = (x1 - x0);
 	std::pair<double, double> root { -1,-1 };
 	int nb = mtools::gsl_poly_solve_quadratic(a, b, c, &root.first, &root.second);
 	if (root.first > 1) root.first = -1;
@@ -205,6 +265,11 @@ iBox2 cubicBezierBoundingBox(iVec2 P0, iVec2 P1, iVec2 P2, iVec2 P3)
 
 
 
+
+
+
+
+
 void testCF()
 {
 	size_t N = 50000;
@@ -225,10 +290,12 @@ void testCF()
 		iVec2 P2 = { (int64)(Unif(gen)*LX), (int64)(Unif(gen)*LY) };
 		iVec2 P3 = { (int64)(Unif(gen)*LX), (int64)(Unif(gen)*LY) };
 
+		double w = Unif(gen) * 0.1;
+
 		cout << "P0 : " << P0 << "\n";
 		cout << "P1 : " << P1 << "\n";
 		cout << "P2 : " << P2 << "\n";
-		cout << "P3 : " << P3 << "\n";
+		cout << "w : " << w << "\n";
 
 		/*
 		P0 = { 226, 803 };
@@ -237,7 +304,7 @@ void testCF()
 		P3 = { 604, 485};
 		*/
 		
-		auto bb = cubicBezierBoundingBox(P0, P1, P2, P3);
+		auto bb = ratBezierBoundingBox(P0, P1, P2, w);
 
 		cout << "bb : " << bb << "\n";
 
@@ -246,14 +313,13 @@ void testCF()
 		im.draw_dot(P0, RGBc::c_Green, true, 2);
 		im.draw_dot(P1, RGBc::c_Green, true, 2);
 		im.draw_dot(P2, RGBc::c_Green, true, 2);
-		im.draw_dot(P3, RGBc::c_Green, true, 2);
 		/*
 		im.draw_line(P0, P1, RGBc::c_Green, false);
 		im.draw_line(P1, P2, RGBc::c_Green, false);
 		im.draw_line(P2, P3, RGBc::c_Green, false);
 		*/
 	//	im.draw_cubic_bezier(P0, P3, P1, P2, RGBc::c_Red, true, true,false);
-		im.draw_cubic_bezier(P0, P3, P1, P2, RGBc::c_Blue, true, true, true);
+		im.draw_quad_bezier(P0, P2, P1, w, RGBc::c_Blue, true, true, true);
 
 		auto PA = makePlot2DImage(im, 1, "Image A");   // Encapsulate the image inside a 'plottable' object.	
 		Plotter2D plotter;              // Create a plotter object
