@@ -36,8 +36,6 @@ namespace mtools
 
     
 
-
-
 	/** for internal usage only. */
 	namespace bezier_internals
 	{
@@ -283,6 +281,47 @@ namespace mtools
 		}
 
 
+
+	/**
+	* Compute the minimal bounding box of the curve.
+	*
+	* @param 	   	P0 	start point of the curve.
+	* @param 	   	P1 	control point of the curve.
+	* @param 	   	P2 	end point of the curve.
+	*
+	* @return	the curve bounding box.
+	**/
+	inline fBox2 quadratic_bezier_boundingbox(fVec2 P0, fVec2 P1, fVec2 P2)
+		{
+		fBox2 B(std::min<double>(P0.X(), P2.X()), std::max<double>(P0.X(), P2.X()), std::min<double>(P0.Y(), P2.Y()), std::max<double>(P0.Y(), P2.Y()));
+		double rx;
+		quadratic_bezier_vertical_tangent(P0, P1, P2, rx);
+		if (rx > 0) { B.swallowPoint(quadratic_bezier_eval(P0, P1, P2, rx)); }
+		double ry;
+		quadratic_bezier_horizontal_tangent(P0, P1, P2, ry);
+		if (ry > 0) { B.swallowPoint(quadratic_bezier_eval(P0, P1, P2, ry)); }
+		return B;
+		}
+
+
+	/**
+	* Compute the minimal bounding box of the curve.
+	* integer version, conservative estimates.
+	*
+	* @param 	   	P0 	start point of the curve.
+	* @param 	   	P1 	control point of the curve.
+	* @param 	   	P2 	end point of the curve.
+	*
+	* @return	the curve bounding box.
+	**/
+	inline iBox2 quadratic_bezier_boundingbox(iVec2 P0, iVec2 P1, iVec2 P2)
+		{
+		fBox2 fB = quadratic_bezier_boundingbox((fVec2)P0, (fVec2)P1, (fVec2)P2);
+		iBox2 iB = fB.integerEnclosingRect_larger();
+		return iB;
+		}
+
+
 	/**
 	* Split a curve in two part, [0,t] and [t,1].
 	*
@@ -331,44 +370,6 @@ namespace mtools
 		}
 
 
-	/**
-	* Compute the minimal bounding box of the curve.
-	*
-	* @param 	   	P0 	start point of the curve.
-	* @param 	   	P1 	control point of the curve.
-	* @param 	   	P2 	end point of the curve.
-	*
-	* @return	the curve bounding box.
-	**/
-	inline fBox2 quadratic_bezier_boundingbox(fVec2 P0, fVec2 P1, fVec2 P2)
-		{
-		fBox2 B(std::min<double>(P0.X(), P2.X()), std::max<double>(P0.X(), P2.X()), std::min<double>(P0.Y(), P2.Y()), std::max<double>(P0.Y(), P2.Y()));
-		double rx;
-		quadratic_bezier_vertical_tangent(P0, P1, P2, rx);
-		if (rx > 0) { B.swallowPoint(quadratic_bezier_eval(P0, P1, P2, rx)); }
-		double ry;
-		quadratic_bezier_horizontal_tangent(P0, P1, P2, ry);
-		if (ry > 0) { B.swallowPoint(quadratic_bezier_eval(P0, P1, P2, ry)); }
-		return B;
-		}
-
-
-	/**
-	* Compute the minimal bounding box of the curve.
-	* integer version, conservative estimates.
-	*
-	* @param 	   	P0 	start point of the curve.
-	* @param 	   	P1 	control point of the curve.
-	* @param 	   	P2 	end point of the curve.
-	*
-	* @return	the curve bounding box.
-	**/
-	inline iBox2 quadratic_bezier_boundingbox(iVec2 P0, iVec2 P1, iVec2 P2)
-		{
-		fBox2 fB = quadratic_bezier_boundingbox((fVec2)P0, (fVec2)P1, (fVec2)P2);
-		iBox2 iB = fB.integerEnclosingRect_larger();
-		return iB;
-		}
 
 
 
@@ -423,6 +424,203 @@ namespace mtools
 		{
 		MTOOLS_ASSERT(w0*w2 > 0);
 		return sqrt((w1*w1) / (w0*w2));
+		}
+
+
+	/**
+	* Compute the time the curve has an horizontal tangent.
+	*
+	* @param 			P0 	start point of the cure.
+	* @param 			w0 	weight of P0.
+	* @param 			P1 	control point of the curve.
+	* @param 			w1 	weight of P1.
+	* @param 			P2 	start point of the curve.
+	* @param 			w2 	weight of P2.
+	* @param [out]		r1	store possible horizontal tangent time (<0 if not valid).
+	* @param [out]		r2	store possible horizontal tangent time (<0 if not valid).
+	**/
+	inline void rational_bezier_horizontal_tangent(fVec2 P0, double w0, fVec2 P1, double w1, fVec2 P2, double w2, double & r1, double & r2)
+		{
+		bezier_internals::_rational_bezier_solve_deriv(P0.Y(), P1.Y(), P2.Y(), w0, w1, w2, r1 , r2);
+		}
+
+
+	/**
+	* Compute the time the curve has a vertical tangent.
+	*
+	* @param 			P0 	start point of the cure.
+	* @param 			w0 	weight of P0.
+	* @param 			P1 	control point of the curve.
+	* @param 			w1 	weight of P1.
+	* @param 			P2 	start point of the curve.
+	* @param 			w2 	weight of P2.
+	* @param [out]		r1	store possible vertical tangent time (<0 if not valid).
+	* @param [out]		r2	store possible vertical tangent time (<0 if not valid).
+	**/
+	inline void rational_bezier_vertical_tangent(fVec2 P0, double w0, fVec2 P1, double w1, fVec2 P2, double w2, double & r1, double & r2)
+		{
+		bezier_internals::_rational_bezier_solve_deriv(P0.X(), P1.X(), P2.X(), w0, w1, w2, r1, r2);
+		}
+
+
+	/**
+	* Find the times when the curve intersect the horizontal line Y = y0.
+	*
+	* @param 			P0 	start point of the cure.
+	* @param 			w0 	weight of P0.
+	* @param 			P1 	control point of the curve.
+	* @param 			w1 	weight of P1.
+	* @param 			P2 	start point of the curve.
+	* @param 			w2 	weight of P2.
+	* @param 	   		y0	line equation is X = x0.
+	* @param [out]		r1	store possible intersection time (<0 if not valid).
+	* @param [out]		r2	store possible intersection time (<0 if not valid).
+	**/
+	inline void rational_bezier_intersect_hline(fVec2 P0, double w0, fVec2 P1, double w1, fVec2 P2, double w2, double y0, double & r1, double & r2)
+		{
+		bezier_internals::_rational_bezier_solve(P0.Y(), P1.Y(), P2.Y(), w0, w1, w2, y0, r1, r2);
+		}
+
+
+	/**
+	* Find the times when the curve intersect the vertical line X = x0.
+	*
+	* @param 			P0 	start point of the cure.
+	* @param 			w0 	weight of P0.
+	* @param 			P1 	control point of the curve.
+	* @param 			w1 	weight of P1.
+	* @param 			P2 	start point of the curve.
+	* @param 			w2 	weight of P2.
+	* @param 	   		y0	line equation is X = x0.
+	* @param [out]		r1	store possible intersection time (<0 if not valid).
+	* @param [out]		r2	store possible intersection time (<0 if not valid).
+	**/
+	inline void rational_bezier_intersect_vline(fVec2 P0, double w0, fVec2 P1, double w1, fVec2 P2, double w2, double x0, double & r1, double & r2)
+		{
+		bezier_internals::_rational_bezier_solve(P0.X(), P1.X(), P2.X(), w0, w1, w2, x0, r1, r2);
+		}
+
+
+
+	/**
+	* Compute the times when a curve intersect a rectangle.
+	*
+	* @param 	   	B			The rectangle to test.
+	* @param 		P0 			start point of the cure.
+	* @param 		w0 			weight of P0.
+	* @param 		P1 			control point of the curve.
+	* @param 		w1 			weight of P1.
+	* @param 		P2 			start point of the curve.
+	* @param 		w2 			weight of P2.
+	* @param [out]	restimes	an array of size at least 8 to store the intersection times. There are
+	* 							returned ordered increasingly.
+	*
+	* @return	The number of intersection times found.
+	**/
+	inline int rational_bezier_intersect_rect(fBox2 B, fVec2 P0, double w0, fVec2 P1, double w1, fVec2 P2, double w2, double(&restimes)[8])
+	{
+		int nb = 0;
+		double r1, r2;
+
+		rational_bezier_intersect_vline(P0, w0, P1, w1, P2, w2, B.min[0], r1, r2);
+		if (r1 > 0)
+		{
+			double y = rational_bezier_eval(P0, w0, P1, w1, P2, w2, r1).Y();
+			if ((y >= B.min[1]) && (y <= B.max[1])) { restimes[nb] = r1; nb++; }
+		}
+		if (r2 > 0)
+		{
+			double y = rational_bezier_eval(P0, w0, P1, w1, P2, w2, r2).Y();
+			if ((y >= B.min[1]) && (y <= B.max[1])) { restimes[nb] = r2; nb++; }
+		}
+
+		rational_bezier_intersect_vline(P0, w0, P1, w1, P2, w2, B.max[0], r1, r2);
+		if (r1 > 0)
+		{
+			double y = rational_bezier_eval(P0, w0, P1, w1, P2, w2, r1).Y();
+			if ((y >= B.min[1]) && (y <= B.max[1])) { restimes[nb] = r1; nb++; }
+		}
+		if (r2 > 0)
+		{
+			double y = rational_bezier_eval(P0, w0, P1, w1, P2, w2, r2).Y();
+			if ((y >= B.min[1]) && (y <= B.max[1])) { restimes[nb] = r2; nb++; }
+		}
+
+		rational_bezier_intersect_hline(P0, w0, P1, w1, P2, w2, B.min[1], r1, r2);
+		if (r1 > 0)
+		{
+			double x = rational_bezier_eval(P0, w0, P1, w1, P2, w2, r1).X();
+			if ((x >= B.min[0]) && (x <= B.max[0])) { restimes[nb] = r1; nb++; }
+		}
+		if (r2 > 0)
+		{
+			double x = rational_bezier_eval(P0, w0, P1, w1, P2, w2, r2).X();
+			if ((x >= B.min[0]) && (x <= B.max[0])) { restimes[nb] = r2; nb++; }
+		}
+
+		rational_bezier_intersect_hline(P0, w0, P1, w1, P2, w2, B.max[1], r1, r2);
+		if (r1 > 0)
+		{
+			double x = rational_bezier_eval(P0, w0, P1, w1, P2, w2, r1).X();
+			if ((x >= B.min[0]) && (x <= B.max[0])) { restimes[nb] = r1; nb++; }
+		}
+		if (r2 > 0)
+		{
+			double x = rational_bezier_eval(P0, w0, P1, w1, P2, w2, r2).X();
+			if ((x >= B.min[0]) && (x <= B.max[0])) { restimes[nb] = r2; nb++; }
+		}
+
+		if (nb >0) std::sort(restimes, restimes + nb);
+		return nb;
+	}
+
+
+
+	/**
+	* Compute the minimal bounding box of the curve.
+	*
+	* @param 		P0 			start point of the cure.
+	* @param 		w0 			weight of P0.
+	* @param 		P1 			control point of the curve.
+	* @param 		w1 			weight of P1.
+	* @param 		P2 			start point of the curve.
+	* @param 		w2 			weight of P2.
+	*
+	* @return	the curve bounding box.
+	**/
+	inline fBox2 rational_bezier_boundingbox(fVec2 P0, double w0, fVec2 P1, double w1, fVec2 P2, double w2)
+		{
+		fBox2 B(std::min<double>(P0.X(), P2.X()), std::max<double>(P0.X(), P2.X()), std::min<double>(P0.Y(), P2.Y()), std::max<double>(P0.Y(), P2.Y()));
+		double rx1, rx2;
+		rational_bezier_vertical_tangent(P0, w0, P1, w1, P2, w2, rx1, rx2);
+		if (rx1 > 0) { B.swallowPoint(rational_bezier_eval(P0, w0, P1, w1, P2, w2, rx1)); }
+		if (rx2 > 0) { B.swallowPoint(rational_bezier_eval(P0, w0, P1, w1, P2, w2, rx2)); }
+		double ry1,ry2;
+		rational_bezier_horizontal_tangent(P0, w0, P1, w1, P2, w2, ry1, ry2);
+		if (ry1 > 0) { B.swallowPoint(rational_bezier_eval(P0, w0, P1, w1, P2, w2, ry1)); }
+		if (ry2 > 0) { B.swallowPoint(rational_bezier_eval(P0, w0, P1, w1, P2, w2, ry2)); }
+		return B;
+		}
+
+
+	/**
+	* Compute the minimal bounding box of the curve.
+	* integer version, conservative estimates.
+	*
+	* @param 		P0 			start point of the cure.
+	* @param 		w0 			weight of P0.
+	* @param 		P1 			control point of the curve.
+	* @param 		w1 			weight of P1.
+	* @param 		P2 			start point of the curve.
+	* @param 		w2 			weight of P2.
+	*
+	* @return	the curve bounding box.
+	**/
+	inline iBox2 rational_bezier_boundingbox(iVec2 P0, double w0, iVec2 P1, double w1, iVec2 P2, double w2)
+		{
+		fBox2 fB = rational_bezier_boundingbox((fVec2)P0, w0, (fVec2)P1, w1, (fVec2)P2, w2);
+		iBox2 iB = fB.integerEnclosingRect_larger();
+		return iB;
 		}
 
 
@@ -508,6 +706,9 @@ namespace mtools
 
 
 
+
+
+
 	/**********************************************************************************
 	*  CUBIC BEZIER CURVE
 	*
@@ -519,6 +720,220 @@ namespace mtools
 	**********************************************************************************/
 
 
+
+
+	struct BezierQuadratic
+		{
+
+		fVec2 P0;		// start point of the curve
+		fVec2 P1;		// control point
+		fVec2 P2;		// end point of the curve
+
+
+		/** Constructor */
+		BezierQuadratic() = default;
+
+
+		/** Constructor */
+		BezierQuadratic(fVec2 p0, fVec2 p1, fVec2 p2) : P0(p0), P1(p1), P2(p2) {}
+
+
+		/** compute the position of the poont on the curve at time t. */
+		inline fVec2 eval(double t) const
+			{
+			return  fVec2(((P0.X() - 2 * P1.X() + P2.X())*t + 2 * (P1.X() - P0.X()))*t + P0.X(),
+				          ((P0.Y() - 2 * P1.Y() + P2.Y())*t + 2 * (P1.Y() - P0.Y()))*t + P0.Y());
+			}
+
+
+		/** compute the position of the poont on the curve at time t (same as eval()). */
+		fVec2 operator()(double t) const { return eval(t); }
+		
+
+		/**
+		* Return the point of intersection with the line of equation Y = y0 
+		* (return <0 if no intersecton).
+		**/
+		std::pair<double,double> intersect_hline(double y0) const
+			{
+			std::pair<double, double> res;
+			_solve(P0.Y(), P1.Y(), P2.Y(), y0, res.first, res.second);
+			return res;
+			}
+
+
+		/**
+		* Return the point of intersection with the line of equation Y = y0
+		* (return <0 if no intersecton).
+		**/
+		std::pair<double, double> intersect_vline(double x0) const
+			{
+			std::pair<double, double> res;
+			_solve(P0.X(), P1.X(), P2.X(), x0, res.first, res.second);
+			return res;
+			}
+
+
+		/**
+		* Return the point where the curve has an horizontal tangent.
+		* (return <0 if none).
+		**/
+		double tangent_h() const
+			{
+			double r;
+			_solve_deriv(P0.Y(), P1.Y(), P2.Y(), r);
+			return r;
+			}
+
+
+		/**
+		* Return the point where the curve has a vertical tangent.
+		* (return <0 if none).
+		**/
+		double tangent_v() const
+			{
+			double r;
+			_solve_deriv(P0.X(), P1.X(), P2.X(), r);
+			return r;
+			}
+
+
+		/**
+		* Compute all the intersection times between the cuve and the rectangle B. 
+		* the array res store the times of intersection (size at least 12)
+		* 
+		* return the number of intersection times found. 
+		**/
+		int intersect_rect(fBox2 B, double(&res)[12]) const
+			{
+			int nb = 0;
+			std::pair<double, double> r;
+			double & r1 = r.first;
+			double & r2 = r.second;
+			r = intersect_vline(B.min[0]);
+			if (r1 > 0)
+				{
+				double y = eval(r1).Y();
+				if ((y >= B.min[1]) && (y <= B.max[1])) { res[nb] = r1; nb++; }
+				}
+			if (r2 > 0)
+				{
+				double y = eval(r2).Y();
+				if ((y >= B.min[1]) && (y <= B.max[1])) { res[nb] = r2; nb++; }
+				}
+			r = intersect_vline(B.max[0]);
+			if (r1 > 0)
+				{
+				double y = eval(r1).Y();
+				if ((y >= B.min[1]) && (y <= B.max[1])) { res[nb] = r1; nb++; }
+				}
+			if (r2 > 0)
+				{
+				double y = eval(r2).Y();
+				if ((y >= B.min[1]) && (y <= B.max[1])) { res[nb] = r2; nb++; }
+				}
+			r = intersect_hline(B.min[1]);
+			if (r1 > 0)
+				{
+				double x = eval(r1).X();
+				if ((x >= B.min[0]) && (x <= B.max[0])) { res[nb] = r1; nb++; }
+				}
+			if (r2 > 0)
+				{
+				double x = eval(r2).X();
+				if ((x >= B.min[0]) && (x <= B.max[0])) { res[nb] = r2; nb++; }
+				}
+			r = intersect_hline(B.max[1]);
+			if (r1 > 0)
+				{
+				double x = eval(r1).X();
+				if ((x >= B.min[0]) && (x <= B.max[0])) { res[nb] = r1; nb++; }
+				}
+			if (r2 > 0)
+				{
+				double x = eval(r2).X();
+				if ((x >= B.min[0]) && (x <= B.max[0])) { res[nb] = r2; nb++; }
+				}
+			if (nb >0) std::sort(res, res + nb);
+			return nb;
+			}
+
+
+		/**
+		 * Compute the minimal bounding box of the curve 
+		 **/
+		fBox2 boundingBox() const
+			{
+			fBox2 B(std::min<double>(P0.X(), P2.X()), std::max<double>(P0.X(), P2.X()), std::min<double>(P0.Y(), P2.Y()), std::max<double>(P0.Y(), P2.Y()));
+			double rx = tangent_v();
+			if (rx > 0) { B.swallowPoint(eval(rx)); }
+			double ry = tangent_h();
+			if (ry > 0) { B.swallowPoint(eval(ry)); }
+			return B;
+			}
+
+
+		/**
+		* Return the 'integer valued' bounding box of the curve
+		* (conservative estimates).
+		**/
+		iBox2 integerBoundingBox() const
+			{
+			fBox2 fB = boundingBox();
+			return fB.integerEnclosingRect_larger();
+			}
+
+
+
+		/**
+		* Split the curve in two: 
+		* - first curve [0,T]  
+		* - second curve [T,1]
+		**/
+		std::pair<BezierQuadratic, BezierQuadratic> split(double T) const
+			{
+			std::pair<BezierQuadratic, BezierQuadratic> R;
+			BezierQuadratic & a = R.first;
+			BezierQuadratic & b = R.second;
+			a.P0 = P0;
+			b.P2 = P2;
+			a.P1 = (1 - T)*P0 + T * P1;
+			b.P1 = (1 - T)*P1 + T * P2;
+			a.P2 = b.P0 = (1 - T)*a.P1 + T * b.P1;
+			return R;
+			}
+
+
+
+		private:
+
+
+			/** solve when the derivative is zero. */
+			static void _solve_deriv(double x0, double x1, double x2, double & r)
+				{
+				r = -1;
+				double dem = x0 + x2 - 2 * x1;
+				if (dem != 0)
+					{
+					double res = (x0 - x1) / dem;
+					r = ((res > 1) ? -1 : res);
+					}
+				}
+
+
+			/** Solve the equation for a given value */
+			static void _solve(double x0, double x1, double x2, double z, double & r1, double & r2)
+				{
+				double a = x0 - 2 * x1 + x2;
+				double b = 2 * (x1 - x0);
+				double c = x0 - z;
+				r1 = -1; r2 = -1;
+				int nb = mtools::gsl_poly_solve_quadratic(a, b, c, &r1, &r2);
+				if (r1 >= 1) r1 = -1;
+				if (r2 >= 1) r2 = -1;
+				}
+
+	};
 
 
     }

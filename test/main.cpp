@@ -103,32 +103,28 @@ void testCE()
 
 
 
-void testQuad(const fBox2 & B, fVec2 P0, fVec2 P1, fVec2 P2, Image & im)
+void testQuad(const fBox2 & B, BezierQuadratic BQ, Image & im)
 {
 	RGBc color;
 	auto C = B;
 	C.enlarge(2);
-	double res[8];
-	int nb = quadratic_bezier_intersect_rect(C, P0, P1, P2, res);
+	double res[12];
+	int nb = BQ.intersect_rect(C, res);
 	for (int i = (nb - 1); i > 0; i--)
-	{
+		{
 		res[i] = (res[i] - res[i - 1]) / (1.0 - res[i - 1]);
-	}
+		}
 
 	for (int i = 0; i < nb; i++)
-	{
-		fVec2 P0a, P1a, P2a, P0b, P1b, P2b;
-		quadratic_bezier_split(P0, P1, P2, res[i], P0a, P1a, P2a, P0b, P1b, P2b);
-		P0 = P0b;  P1 = P1b; P2 = P2b;
+		{
+		auto sp = BQ.split(res[i]);
+		BQ = sp.second;
+		color = (C.isInside(sp.first(0.5))) ? RGBc::c_Red : RGBc::c_Blue;	// set the color		
+		im.draw_quad_bezier(sp.first.P0, sp.first.P2, sp.first.P1, 1.0, color, true, true, true);
+		}
 
-		auto bb = quadratic_bezier_boundingbox(P0a, P1a, P2a);												// comput the bb. 
-		color = (C.isInside(quadratic_bezier_eval(P0a, P1a, P2a, 0.5))) ? RGBc::c_Red : RGBc::c_Blue;	// set the color		
-		im.draw_quad_bezier(P0a, P2a, P1a, 1.0, color, true, true, true);
-	}
-
-	auto bb = quadratic_bezier_boundingbox(P0, P1, P2);								// comput the bb. 
-	color = (C.isInside(quadratic_bezier_eval(P0, P1, P2, 0.5))) ? RGBc::c_Red : RGBc::c_Blue;	// set the color		
-	im.draw_quad_bezier(P0, P2, P1, 1.0, color, true, true, true);
+	color = (C.isInside(BQ(0.5))) ? RGBc::c_Red : RGBc::c_Blue;	// set the color		
+	im.draw_quad_bezier(BQ.P0, BQ.P2, BQ.P1, 1.0, color, true, true, true);
 }
 
 
@@ -141,17 +137,6 @@ void testQuad(const fBox2 & B, fVec2 P0, fVec2 P1, fVec2 P2, Image & im)
 *  RATIONAL QUADRATIC BEZIER
 **********************************************************************************/
 
-
-/**
-* Evaluate a rational quadratic bezier curve at position t.
-**/
-fVec2 _rat_bezier_eval(fVec2 P0, fVec2 P1, fVec2 P2, double w, double t)
-	{
-	if (w - 1 == 0) return quadratic_bezier_eval(P0, P1, P2, t);
-	double D = 1 + 2 * (((1 - w)*t + (w - 1))*t);
-	return fVec2( (((P0.X() - 2 * P1.X() * w + P2.X())*t + 2 * (w * P1.X() - P0.X()))*t + P0.X()) / D, 
-		          (((P0.Y() - 2 * P1.Y() * w + P2.Y())*t + 2 * (w * P1.Y() - P0.Y()))*t + P0.Y()) / D );
-	}
 
 
 /**
@@ -192,12 +177,12 @@ fBox2 ratBezierBoundingBox(fVec2 P0, fVec2 P1, fVec2 P2, double w)
 	fBox2 B(std::min<double>(P0.X(), P2.X()), std::max<double>(P0.X(), P2.X()), std::min<double>(P0.Y(), P2.Y()), std::max<double>(P0.Y(), P2.Y()));
 	double rx1, rx2;
 	_rat_bezier_solve_deriv(P0.X(), P1.X(), P2.X(), w, rx1, rx2);
-	if (rx1 > 0) { B.swallowPoint(_rat_bezier_eval(P0, P1, P2, w, rx1)); }
-	if (rx2 > 0) { B.swallowPoint(_rat_bezier_eval(P0, P1, P2, w, rx2)); }
+	//if (rx1 > 0) { B.swallowPoint(_rat_bezier_eval(P0, P1, P2, w, rx1)); }
+	//if (rx2 > 0) { B.swallowPoint(_rat_bezier_eval(P0, P1, P2, w, rx2)); }
 	double ry1, ry2;
 	_rat_bezier_solve_deriv(P0.Y(), P1.Y(), P2.Y(), w, ry1, ry2);
-	if (ry1 > 0) { B.swallowPoint(_rat_bezier_eval(P0, P1, P2, w, ry1)); }
-	if (ry2 > 0) { B.swallowPoint(_rat_bezier_eval(P0, P1, P2, w, ry2)); }
+	//if (ry1 > 0) { B.swallowPoint(_rat_bezier_eval(P0, P1, P2, w, ry1)); }
+	//if (ry2 > 0) { B.swallowPoint(_rat_bezier_eval(P0, P1, P2, w, ry2)); }
 	return B;
 	}
 
@@ -318,7 +303,6 @@ void testCF()
 		iVec2 P3 = { (int64)(Unif(gen)*LX), (int64)(Unif(gen)*LY) };
 
 		double w = Unif(gen) * 1;
-
 		w = 2; 
 		cout << "P0 : " << P0 << "\n";
 		cout << "P1 : " << P1 << "\n";
@@ -335,16 +319,18 @@ void testCF()
 		im.draw_line(P2, P3, RGBc::c_Green, false);
 		*/
 
+		BezierQuadratic BQ(P0, P1, P2);
 
-		auto bb = ratBezierBoundingBox(P0, P1, P2, w);
+		auto bb = BQ.integerBoundingBox();
 		im.draw_box(bb, RGBc::c_Gray, true);
 
-		/*
 		iBox2 TB{ 300,600,400,600 };
 		im.draw_box(TB, RGBc::c_Yellow.getMultOpacity(0.5), true);
 		im.draw_rectangle(TB, RGBc::c_Yellow, true);
-		*/
-		
+		testQuad(TB, BQ, im);
+
+
+		/*
 		im.draw_quad_bezier(P0, P2, P1, w, RGBc::c_Red.getMultOpacity(0.2), true, true, true, 1);
 
 		iVec2 Pa0, Pa1, Pa2, Pb0, Pb1, Pb2;
@@ -354,11 +340,10 @@ void testCF()
 
 		im.draw_quad_bezier(Pa0, Pa2, Pa1, rational_bezier_normalise(wa0, wa1, wa2), RGBc::c_Green, true, true, true, 0);
 		im.draw_quad_bezier(Pb0, Pb2, Pb1, rational_bezier_normalise(wb0, wb1, wb2), RGBc::c_Black, true, true, true, 0);
-
-
-		/*
-		testQuad(TB, P0, P1, P2, im);
 		*/
+
+	
+		
 
 
 		auto PA = makePlot2DImage(im, 1, "Image A");   // Encapsulate the image inside a 'plottable' object.	
