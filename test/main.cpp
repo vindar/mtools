@@ -103,7 +103,7 @@ void testCE()
 
 
 
-void testQuad(const fBox2 & B, BezierQuadratic BQ, Image & im)
+void testQuad(const fBox2 & B, BezierRationalQuadratic BQ, Image & im)
 {
 	RGBc color;
 	auto C = B;
@@ -120,161 +120,42 @@ void testQuad(const fBox2 & B, BezierQuadratic BQ, Image & im)
 		auto sp = BQ.split(res[i]);
 		BQ = sp.second;
 		color = (C.isInside(sp.first(0.5))) ? RGBc::c_Red : RGBc::c_Blue;	// set the color		
-		im.draw_quad_bezier(sp.first.P0, sp.first.P2, sp.first.P1, 1.0, color, true, true, true);
+		sp.first.normalize();
+		im.draw_quad_bezier(sp.first.P0, sp.first.P2, sp.first.P1, sp.first.w1, color, true, true, true);
 		}
 
 	color = (C.isInside(BQ(0.5))) ? RGBc::c_Red : RGBc::c_Blue;	// set the color		
-	im.draw_quad_bezier(BQ.P0, BQ.P2, BQ.P1, 1.0, color, true, true, true);
+	BQ.normalize();
+	im.draw_quad_bezier(BQ.P0, BQ.P2, BQ.P1, BQ.w1, color, true, true, true);
 }
 
 
 
 
-
-
-
-/**********************************************************************************
-*  RATIONAL QUADRATIC BEZIER
-**********************************************************************************/
-
-
-
-/**
-* Find the roots inside [0,1] of the derivative of a rationnal quadratic bezier 
-* equation if they exists.
-**/
-void _rat_bezier_solve_deriv(double x0, double x1, double x2, double w, double & r1, double & r2)
+void draw(BezierQuadratic sp, Image & im, RGBc color, int penwidth)
 	{
-	double a = (x2 - x0)*(w - 1);
-	double b = ( (x0 -x1)*2*w + x2 - x0);
-	double c = (x1*w - x0*w);
-	r1 = -1;  r2 = -1;
-	int nb = mtools::gsl_poly_solve_quadratic(a, b, c, &r1, &r2);
-	if (r1 >= 1) r1 = -1;
-	if (r2 >= 1) r2 = -1;
+	im.draw_quad_bezier(sp.P0, sp.P2, sp.P1, 1, color, true, true, true, penwidth);
+	}
+
+void draw(BezierRationalQuadratic sp, Image & im, RGBc color, int penwidth)
+	{
+	im.draw_quad_bezier(sp.P0, sp.P2, sp.P1, sp.w1, color, true, true, true, penwidth);
+	}
+
+void draw(BezierCubic sp, Image & im, RGBc color, int penwidth)
+	{
+	im.draw_cubic_bezier(sp.P0, sp.P3, sp.P1, sp.P2, color, true, true, true, penwidth);
 	}
 
 
-/**
-* Find the root inside [0,1] of rational quad. bezier equation
-* f(t) = z for the curve with parameters (x0,x1, x2, w)
-**/
-void _rat_bezier_solve(double x0, double x1, double x2, double w, double z, double & r1, double & r2)
-{
-	double a = (-2 * x1*w + x0 + x2 - z * (-2 * w + 2));
-	double b = 2 * (x1*w - x0 - z * (w - 1));
-	double c = x0 - z;
-	r1 = -1; r2 = -1;
-	int nb = mtools::gsl_poly_solve_quadratic(a, b, c, &r1, &r2);
-	if (r1 >= 1) r1 = -1;
-	if (r2 >= 1) r2 = -1;
-}
-
-
-
-fBox2 ratBezierBoundingBox(fVec2 P0, fVec2 P1, fVec2 P2, double w)
+template<typename BezierClass> void testBezier(fBox2 B, BezierClass curve, Image & im)
 	{
-	fBox2 B(std::min<double>(P0.X(), P2.X()), std::max<double>(P0.X(), P2.X()), std::min<double>(P0.Y(), P2.Y()), std::max<double>(P0.Y(), P2.Y()));
-	double rx1, rx2;
-	_rat_bezier_solve_deriv(P0.X(), P1.X(), P2.X(), w, rx1, rx2);
-	//if (rx1 > 0) { B.swallowPoint(_rat_bezier_eval(P0, P1, P2, w, rx1)); }
-	//if (rx2 > 0) { B.swallowPoint(_rat_bezier_eval(P0, P1, P2, w, rx2)); }
-	double ry1, ry2;
-	_rat_bezier_solve_deriv(P0.Y(), P1.Y(), P2.Y(), w, ry1, ry2);
-	//if (ry1 > 0) { B.swallowPoint(_rat_bezier_eval(P0, P1, P2, w, ry1)); }
-	//if (ry2 > 0) { B.swallowPoint(_rat_bezier_eval(P0, P1, P2, w, ry2)); }
-	return B;
+	draw(curve, im, RGBc::c_Black, 1);
+	B.enlarge(2);
+	BezierClass subcurves[5];
+	int tot = splitBezierInsideBox(B, curve, subcurves);
+	for (int i = 0; i < tot; i++) { draw(subcurves[i], im, RGBc::c_Red, 2); }
 	}
-
-
-iBox2 ratBezierBoundingBox(iVec2 P0, iVec2 P1, iVec2 P2, double w)
-	{
-	fBox2 fB = ratBezierBoundingBox((fVec2)P0, (fVec2)P1, (fVec2)P2, w);
-	iBox2 iB = fB.integerEnclosingRect_larger();
-	return iB;
-	}
-
-
-
-
-
-
-/**********************************************************************************
-*  CUBIC BEZIER
-**********************************************************************************/
-
-
-/**
-* Evaluate a cubic bezier curve at position t.
-**/
-fVec2 _cubic_bezier_eval(fVec2 P0, fVec2 P1, fVec2 P2, fVec2 P3, double t)
-	{
-	return  fVec2( (((P3.X() + 3 * (P1.X() - P2.X()) - P0.X())*t + 3 * (P2.X() - 2 * P1.X() + P0.X()))*t + 3 * (P1.X() - P0.X()))*t + P0.X(),
-		           (((P3.Y() + 3 * (P1.Y() - P2.Y()) - P0.Y())*t + 3 * (P2.Y() - 2 * P1.Y() + P0.Y()))*t + 3 * (P1.Y() - P0.Y()))*t + P0.Y() );
-	}
-
-
-/**
-* Find the roots inside [0,1] of the derivative of a cubic bezier equation
-* if it exists.
-**/
-void _cubic_bezier_solve_deriv(double x0, double x1, double x2, double x3, double & r1, double & r2)
-	{
-	double a = (3 * x1 - 3 * x2 + x3 - x0);
-	double b = 2 * (x0 - 2*x1 + x2);
-	double c = (x1 - x0);
-	r1 = -1; r2 = -1;
-	int nb = mtools::gsl_poly_solve_quadratic(a, b, c, &r1, &r2);
-	if (r1 >= 1) r1 = -1;
-	if (r2 >= 1) r2 = -1;
-	}
-
-
-/**
-* Find the root inside [0,1] of rational quad. bezier equation
-* f(t) = z for the curve with parameters (x0,x1, x2, x3)
-**/
-void _cubic_bezier_solve(double x0, double x1, double x2, double x3, double z, double & r1, double & r2, double & r3)
-	{
-	double a = x3 + 3 * (x1 - x2) - x0;
-	double b = 3 * (x0 - 2 * x1 + x2);
-	double c = 3 * (x1 - x0); 
-	double d = x0 - z;
-	r1 = -1; r2 = -1; r3 = -1;
-	int nb = mtools::gsl_poly_solve_cubic(a, b, c, d, &r1, &r2, &r3);
-	if (r1 >= 1) r1 = -1;
-	if (r2 >= 1) r2 = -1;
-	if (r3 >= 1) r3 = -1;
-	}
-
-
-
-fBox2 cubicBezierBoundingBox(fVec2 P0, fVec2 P1, fVec2 P2, fVec2 P3)
-	{
-	fBox2 B(std::min<double>(P0.X(), P3.X()), std::max<double>(P0.X(), P3.X()), std::min<double>(P0.Y(), P3.Y()), std::max<double>(P0.Y(), P3.Y()));
-
-	double rx1, rx2;
-	_cubic_bezier_solve_deriv(P0.X(), P1.X(), P2.X(),  P3.X(), rx1, rx2);
-	if (rx1 > 0) { B.swallowPoint(_cubic_bezier_eval(P0, P1, P2, P3, rx1)); }
-	if (rx2 > 0) { B.swallowPoint(_cubic_bezier_eval(P0, P1, P2, P3, rx2)); }
-
-	double ry1, ry2;
-	_cubic_bezier_solve_deriv(P0.Y(), P1.Y(), P2.Y(), P3.Y(), ry1, ry2);
-	if (ry1 > 0) { B.swallowPoint(_cubic_bezier_eval(P0, P1, P2, P3, ry1)); }
-	if (ry2 > 0) { B.swallowPoint(_cubic_bezier_eval(P0, P1, P2, P3, ry2)); }
-
-	return B;
-	}
-
-
-iBox2 cubicBezierBoundingBox(iVec2 P0, iVec2 P1, iVec2 P2, iVec2 P3)
-	{
-	fBox2 fB = cubicBezierBoundingBox((fVec2)P0, (fVec2)P1, (fVec2)P2, (fVec2)P3);
-	iBox2 iB = fB.integerEnclosingRect_larger();
-	return iB;
-	}
-
-
 
 
 
@@ -301,49 +182,31 @@ void testCF()
 		iVec2 P1 = { (int64)(Unif(gen)*LX), (int64)(Unif(gen)*LY) };
 		iVec2 P2 = { (int64)(Unif(gen)*LX), (int64)(Unif(gen)*LY) };
 		iVec2 P3 = { (int64)(Unif(gen)*LX), (int64)(Unif(gen)*LY) };
+		double w = Unif(gen) * 10;
 
-		double w = Unif(gen) * 1;
-		w = 2; 
 		cout << "P0 : " << P0 << "\n";
 		cout << "P1 : " << P1 << "\n";
 		cout << "P2 : " << P2 << "\n";
+		cout << "P3 : " << P3 << "\n";
 		cout << "w : " << w << "\n";
 
+		BezierQuadratic curve(P0, P1,P2);
+		//BezierRationalQuadratic curve(P0, 1.0, P1, w, P2,1.0);
+		//BezierCubic curve(P0, P1, P2, P3);
 
+		auto bb = curve.integerBoundingBox();
+		im.draw_box(bb, RGBc::c_Gray, true);
 		im.draw_dot(P0, RGBc::c_Green, true, 2);
 		im.draw_dot(P1, RGBc::c_Green, true, 2);
 		im.draw_dot(P2, RGBc::c_Green, true, 2);
-		/*
-		im.draw_line(P0, P1, RGBc::c_Green, false);
-		im.draw_line(P1, P2, RGBc::c_Green, false);
-		im.draw_line(P2, P3, RGBc::c_Green, false);
-		*/
+		im.draw_dot(P3, RGBc::c_Green, true, 2);
 
-		BezierQuadratic BQ(P0, P1, P2);
-
-		auto bb = BQ.integerBoundingBox();
-		im.draw_box(bb, RGBc::c_Gray, true);
-
-		iBox2 TB{ 300,600,400,600 };
+		iBox2 TB{ 100,900,200,800 };
 		im.draw_box(TB, RGBc::c_Yellow.getMultOpacity(0.5), true);
 		im.draw_rectangle(TB, RGBc::c_Yellow, true);
-		testQuad(TB, BQ, im);
 
-
-		/*
-		im.draw_quad_bezier(P0, P2, P1, w, RGBc::c_Red.getMultOpacity(0.2), true, true, true, 1);
-
-		iVec2 Pa0, Pa1, Pa2, Pb0, Pb1, Pb2;
-		double wa0, wa1, wa2, wb0, wb1, wb2;
-
-		rational_bezier_split((iVec2)P0, 1.0, (iVec2)P1, w, (iVec2)P2, 1.0, 0.33, Pa0, wa0, Pa1, wa1, Pa2, wa2, Pb0, wb0, Pb1, wb1, Pb2, wb2);
-
-		im.draw_quad_bezier(Pa0, Pa2, Pa1, rational_bezier_normalise(wa0, wa1, wa2), RGBc::c_Green, true, true, true, 0);
-		im.draw_quad_bezier(Pb0, Pb2, Pb1, rational_bezier_normalise(wb0, wb1, wb2), RGBc::c_Black, true, true, true, 0);
-		*/
-
-	
-		
+		testBezier(TB, curve, im);
+			
 
 
 		auto PA = makePlot2DImage(im, 1, "Image A");   // Encapsulate the image inside a 'plottable' object.	
