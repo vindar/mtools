@@ -107,44 +107,282 @@ void testCE()
 
 
 
+
+namespace bezier_internals
+{
+
+	/** solve when the derivative is zero. */
+	inline void _quadratic_bezier_solve_deriv(double x0, double x1, double x2, double & r)
+	{
+		r = -1;
+		double dem = x0 + x2 - 2 * x1;
+		if (dem != 0)
+		{
+			double res = (x0 - x1) / dem;
+			r = ((res > 1) ? -1 : res);
+		}
+	}
+
+
+	/** Solve the equation for a given value */
+	inline void _quadratic_bezier_solve(double x0, double x1, double x2, double z, double & r1, double & r2)
+	{
+		double a = x0 - 2 * x1 + x2;
+		double b = 2 * (x1 - x0);
+		double c = x0 - z;
+		r1 = -1; r2 = -1;
+		int nb = mtools::gsl_poly_solve_quadratic(a, b, c, &r1, &r2);
+		if (r1 >= 1) r1 = -1;
+		if (r2 >= 1) r2 = -1;
+	}
+
+
+
+}
+
+
+
+/**********************************************************************************
+ *  QUADRATIC BEZIER CURVE
+ *  
+ * Defined by 3 point P0, P1, P2.   
+ * 
+ *  -> curve start at P0, end at P2 and with control point P1. 
+ *  -> parametrisation : f(t) = (1-t)^2 P0 + 2t(1-t)P1 + t^2 P2 for t in [0,1]
+ *
+ **********************************************************************************/
+
+
 /**
- * Evaluate a quadratic bezier curve at position t.
+ * Compute the position of the point on the curve at time t.
+ *
+ * @param	P0	start point of the curve.
+ * @param	P1	control point of the curve.
+ * @param	P2	end point of the curve.
+ * @param	t 	time.
+ *
+ * @return	The position on the curve at time t. 
  **/
-fVec2 _quad_bezier_eval(fVec2 P0, fVec2 P1, fVec2 P2, double t)
+inline fVec2 quadratic_bezier_eval(fVec2 P0, fVec2 P1, fVec2 P2, double t)
 	{
 	return  fVec2(((P0.X() - 2 * P1.X() + P2.X())*t + 2 * (P1.X() - P0.X()))*t + P0.X(),
-	           	 ((P0.Y() - 2 * P1.Y() + P2.Y())*t + 2 * (P1.Y() - P0.Y()))*t + P0.Y());
+	           	  ((P0.Y() - 2 * P1.Y() + P2.Y())*t + 2 * (P1.Y() - P0.Y()))*t + P0.Y());
 	}
 
 
 /**
-* Find the root inside [0,1] of the derivative of a quad. bezier equation
-* if it exists.
+ * Compute the time the curve has an horizontal tangent.
+ *
+ * @param 		  	P0 	start point of the curve.
+ * @param 		  	P1 	control point of the curve.
+ * @param 		  	P2 	end point of the curve.
+ * @param [out]	r  	time when the tangent is horizontal (<0 is there is none).
+ **/
+inline void quadratic_bezier_horizontal_tangent(fVec2 P0, fVec2 P1, fVec2 P2, double & r)
+	{
+	bezier_internals::_quadratic_bezier_solve_deriv(P0.Y(), P1.Y(), P2.Y(), r);
+	}
+
+
+/**
+* Compute the time the curve has a vertical tangent.
+*
+* @param 		  	P0 	start point of the curve.
+* @param 		  	P1 	control point of the curve.
+* @param 		  	P2 	end point of the curve.
+* @param [out]	r  	time when the tangent is vertical (<0 is there is none).
 **/
-double _quad_bezier_solve_deriv(double x0, double x1, double x2)
+inline void quadratic_bezier_vertical_tangent(fVec2 P0, fVec2 P1, fVec2 P2, double & r)
+	{
+	bezier_internals::_quadratic_bezier_solve_deriv(P0.X(), P1.X(), P2.X(), r);
+	}
+
+
+/**
+ * Find the time when the curve intersect the horizontal line Y = y0.
+ *
+ * @param 	   	P0	start point of the curve.
+ * @param 	   	P1	control point of the curve.
+ * @param 	   	P2	end point of the curve.
+ * @param 	   	y0	line equation is Y = y0.
+ * @param [out]	r1	store possible intersection time (<0 if not valid).
+ * @param [out]	r2	store possible intersection time (<0 if not valid).
+ **/
+inline void quadratic_bezier_intersect_hline(fVec2 P0, fVec2 P1, fVec2 P2,  double y0, double & r1, double & r2)
+	{
+	bezier_internals::_quadratic_bezier_solve(P0.Y(), P1.Y(), P2.Y(), y0, r1, r2);
+	}
+
+
+/**
+* Find the time when the curve intersect the vertical line X = x0.
+*
+* @param 	   	P0	start point of the curve.
+* @param 	   	P1	control point of the curve.
+* @param 	   	P2	end point of the curve.
+* @param 	   	y0	line equation is X = x0.
+* @param [out]	r1	store possible intersection time (<0 if not valid).
+* @param [out]	r2	store possible intersection time (<0 if not valid).
+**/
+inline void quadratic_bezier_intersect_vline(fVec2 P0, fVec2 P1, fVec2 P2, double x0, double & r1, double & r2)
+	{
+	bezier_internals::_quadratic_bezier_solve(P0.X(), P1.X(), P2.X(), x0, r1, r2);
+	}
+
+
+/**
+ * Compute the times when a curve intersect a rectangle.
+ *
+ * @param 	   	B			The rectangle to test.
+ * @param 	   	P0			start point of the curve.
+ * @param 	   	P1			control point of the curve.
+ * @param 	   	P2			end point of the curve.
+ * @param [out]	restimes	an array of size at least 8 to store the intersection times. There are
+ * 							returned ordered increasingly.
+ *
+ * @return	The number of intersection times found.
+ **/
+inline int quadratic_bezier_intersect_rect(fBox2 B, fVec2 P0, fVec2 P1, fVec2 P2, double (&restimes)[8])
 {
-	double dem = x0 + x2 - 2 * x1;
-	if (dem == 0) { return -1; }
-	double res = (x0 - x1) / dem;
-	return ((res > 1) ? -1 : res);
+	int nb = 0;
+	double r1, r2;
+
+	quadratic_bezier_intersect_vline(P0, P1, P2, B.min[0], r1, r2);
+	if (r1 > 0)
+		{
+		double y = quadratic_bezier_eval(P0, P1, P2, r1).Y();
+		if ((y >= B.min[1]) && (y <= B.max[1])) { restimes[nb] = r1; nb++; }
+		}
+	if (r2 > 0)
+		{
+		double y = quadratic_bezier_eval(P0, P1, P2, r2).Y();
+		if ((y >= B.min[1]) && (y <= B.max[1])) { restimes[nb] = r2; nb++; }
+		}
+
+	quadratic_bezier_intersect_vline(P0, P1, P2, B.max[0], r1, r2);
+	if (r1 > 0)
+		{
+		double y = quadratic_bezier_eval(P0, P1, P2, r1).Y();
+		if ((y >= B.min[1]) && (y <= B.max[1])) { restimes[nb] = r1; nb++; }
+		}
+	if (r2 > 0)
+		{
+		double y = quadratic_bezier_eval(P0, P1, P2, r2).Y();
+		if ((y >= B.min[1]) && (y <= B.max[1])) { restimes[nb] = r2; nb++; }
+		}
+
+	quadratic_bezier_intersect_hline(P0, P1, P2, B.min[1], r1, r2);
+	if (r1 > 0)
+		{
+		double x = quadratic_bezier_eval(P0, P1, P2, r1).X();
+		if ((x >= B.min[0]) && (x <= B.max[0])) { restimes[nb] = r1; nb++; }
+		}
+	if (r2 > 0)
+		{
+		double x = quadratic_bezier_eval(P0, P1, P2, r2).X();
+		if ((x >= B.min[0]) && (x <= B.max[0])) { restimes[nb] = r2; nb++; }
+		}
+
+	quadratic_bezier_intersect_hline(P0, P1, P2, B.max[1], r1, r2);
+	if (r1 > 0)
+		{
+		double x = quadratic_bezier_eval(P0, P1, P2, r1).X();
+		if ((x >= B.min[0]) && (x <= B.max[0])) { restimes[nb] = r1; nb++; }
+		}
+	if (r2 > 0)
+		{
+		double x = quadratic_bezier_eval(P0, P1, P2, r2).X();
+		if ((x >= B.min[0]) && (x <= B.max[0])) { restimes[nb] = r2; nb++; }
+		}
+
+	if (nb >0) std::sort(restimes, restimes + nb);
+	return nb;
 }
 
 
-fBox2 quadBezierBoundingBox(fVec2 P0, fVec2 P1, fVec2 P2)
+/**
+ * Split a curve in two part, [0,t] and [t,1].
+ *
+ * @param 	   	P0 	start point of the curve.
+ * @param 	   	P1 	control point of the curve.
+ * @param 	   	P2 	end point of the curve.
+ * @param 	   	t  	splitting time.
+ * @param [out]	P0a	start point for the curve on [0,t].
+ * @param [out]	P1a	control point for the curve on [0,t].
+ * @param [out]	P2a	end point for the curve on [0,t].
+ * @param [out]	P0b	start point for the curve on [t,1].
+ * @param [out]	P1b	control point for the curve on [t,1].
+ * @param [out]	P2b	end point for the curve on [T,1].
+ **/
+inline void quadratic_bezier_split(fVec2 P0, fVec2 P1, fVec2 P2, double t, fVec2 & P0a, fVec2 & P1a, fVec2 & P2a, fVec2 & P0b, fVec2 & P1b, fVec2 & P2b)
+	{
+	P0a = P0;
+	P2b = P2;
+	P2a = P0b = quadratic_bezier_eval(P0, P1, P2, t);
+	P1a = (1 - t)*P0 + t * P1;
+	P1b = (1 - t)*P1 + t * P2;
+	}
+
+
+/**
+ * Split a curve in two part, [0,t] and [t,1].
+ * (integer version). 
+ *
+ * @param 	   	P0 	start point of the curve.
+ * @param 	   	P1 	control point of the curve.
+ * @param 	   	P2 	end point of the curve.
+ * @param 	   	t  	splitting time.
+ * @param [out]	P0a	start point for the curve on [0,t].
+ * @param [out]	P1a	control point for the curve on [0,t].
+ * @param [out]	P2a	end point for the curve on [0,t].
+ * @param [out]	P0b	start point for the curve on [t,1].
+ * @param [out]	P1b	control point for the curve on [t,1].
+ * @param [out]	P2b	end point for the curve on [T,1].
+ **/
+inline void quadratic_bezier_split(iVec2 P0, iVec2 P1, iVec2 P2, double t, iVec2 & P0a, iVec2 & P1a, iVec2 & P2a, iVec2 & P0b, iVec2 & P1b, iVec2 & P2b)
+	{
+	fVec2 fP0a, fP1a, fP2a, fP0b, fP1b, fP2b;
+	quadratic_bezier_split((fVec2)P0, (fVec2)P1, (fVec2)P2, t, fP0a, fP1a, fP2a, fP0b, fP1b, fP2b);
+	P0a = (iVec2)fP0a; P1a = (iVec2)fP1a; P2a = (iVec2)fP2a;
+	P0b = (iVec2)fP0b; P1b = (iVec2)fP1b; P2b = (iVec2)fP2b;
+	}
+
+
+/**
+ * Compute the minimal bounding box of the curve.
+ *
+ * @param 	   	P0 	start point of the curve.
+ * @param 	   	P1 	control point of the curve.
+ * @param 	   	P2 	end point of the curve.
+ *
+ * @return	the curve bounding box. 
+ **/
+inline fBox2 quadratic_bezier_boundingbox(fVec2 P0, fVec2 P1, fVec2 P2)
 	{
 	fBox2 B(std::min<double>(P0.X(), P2.X()), std::max<double>(P0.X(), P2.X()), std::min<double>(P0.Y(), P2.Y()), std::max<double>(P0.Y(), P2.Y()));
-	
-	double tx = _quad_bezier_solve_deriv(P0.X(), P1.X(), P2.X());
-	if (tx > 0) { B.swallowPoint(_quad_bezier_eval(P0, P1, P2, tx)); }
-	double ty = _quad_bezier_solve_deriv(P0.Y(), P1.Y(), P2.Y());
-	if (ty > 0) { B.swallowPoint(_quad_bezier_eval(P0, P1, P2, ty)); }
+	double rx;
+	quadratic_bezier_vertical_tangent(P0, P1, P2, rx);
+	if (rx > 0) { B.swallowPoint(quadratic_bezier_eval(P0, P1, P2, rx)); }
+	double ry;
+	quadratic_bezier_horizontal_tangent(P0, P1, P2, ry);
+	if (ry > 0) { B.swallowPoint(quadratic_bezier_eval(P0, P1, P2, ry)); }
 	return B;
 	}
 
 
-iBox2 quadBezierBoundingBox(iVec2 P0, iVec2 P1, iVec2 P2)
+/**
+* Compute the minimal bounding box of the curve.
+* integer version, conservative estimates.
+*
+* @param 	   	P0 	start point of the curve.
+* @param 	   	P1 	control point of the curve.
+* @param 	   	P2 	end point of the curve.
+*
+* @return	the curve bounding box.
+**/
+inline iBox2 quadratic_bezier_boundingbox(iVec2 P0, iVec2 P1, iVec2 P2)
 	{
-	fBox2 fB = quadBezierBoundingBox((fVec2)P0, (fVec2)P1, (fVec2)P2);
+	fBox2 fB = quadratic_bezier_boundingbox((fVec2)P0, (fVec2)P1, (fVec2)P2);
 	iBox2 iB = fB.integerEnclosingRect_larger();
 	return iB; 
 	}
@@ -152,12 +390,54 @@ iBox2 quadBezierBoundingBox(iVec2 P0, iVec2 P1, iVec2 P2)
 
 
 
+
+
+void testQuad(const fBox2 & B, fVec2 P0, fVec2 P1, fVec2 P2, Image & im)
+{
+	RGBc color;
+	auto C = B;
+	C.enlarge(2);
+	double res[8];
+	int nb = quadratic_bezier_intersect_rect(C, P0, P1, P2, res);
+	for (int i = (nb - 1); i > 0; i--)
+		{
+		res[i] = (res[i] - res[i-1])/(1.0 - res[i-1]);
+		}
+
+	for (int i = 0; i < nb; i++)
+		{
+		fVec2 P0a, P1a, P2a, P0b, P1b, P2b;
+		quadratic_bezier_split(P0, P1, P2, res[i], P0a, P1a, P2a, P0b, P1b, P2b);
+		P0 = P0b;  P1 = P1b; P2 = P2b;
+
+		auto bb = quadratic_bezier_boundingbox(P0a, P1a, P2a);												// comput the bb. 
+		color = (C.isInside(quadratic_bezier_eval(P0a, P1a, P2a, 0.5))) ? RGBc::c_Red : RGBc::c_Blue;	// set the color		
+		im.draw_quad_bezier(P0a, P2a, P1a, 1.0, color, true, true, true);
+	}
+
+	auto bb = quadratic_bezier_boundingbox(P0, P1, P2);								// comput the bb. 
+	color = (C.isInside(quadratic_bezier_eval(P0, P1, P2, 0.5))) ? RGBc::c_Red : RGBc::c_Blue;	// set the color		
+	im.draw_quad_bezier(P0, P2, P1, 1.0, color, true, true, true);
+}
+
+
+
+
+
+
+
+
+/**********************************************************************************
+*  RATIONAL QUADRATIC BEZIER
+**********************************************************************************/
+
+
 /**
 * Evaluate a rational quadratic bezier curve at position t.
 **/
 fVec2 _rat_bezier_eval(fVec2 P0, fVec2 P1, fVec2 P2, double w, double t)
 	{
-	if (w - 1 == 0) return _quad_bezier_eval(P0, P1, P2, t);
+	if (w - 1 == 0) return quadratic_bezier_eval(P0, P1, P2, t);
 	double D = 1 + 2 * (((1 - w)*t + (w - 1))*t);
 	return fVec2( (((P0.X() - 2 * P1.X() * w + P2.X())*t + 2 * (w * P1.X() - P0.X()))*t + P0.X()) / D, 
 		          (((P0.Y() - 2 * P1.Y() * w + P2.Y())*t + 2 * (w * P1.Y() - P0.Y()))*t + P0.Y()) / D );
@@ -168,32 +448,46 @@ fVec2 _rat_bezier_eval(fVec2 P0, fVec2 P1, fVec2 P2, double w, double t)
 * Find the roots inside [0,1] of the derivative of a rationnal quadratic bezier 
 * equation if they exists.
 **/
-std::pair<double, double> _rat_bezier_solve_deriv(double x0, double x1, double x2, double w)
+void _rat_bezier_solve_deriv(double x0, double x1, double x2, double w, double & r1, double & r2)
 	{
 	double a = (x2 - x0)*(w - 1);
 	double b = ( (x0 -x1)*2*w + x2 - x0);
 	double c = (x1*w - x0*w);
-	std::pair<double, double> root{ -1,-1 };
-	int nb = mtools::gsl_poly_solve_quadratic(a, b, c, &root.first, &root.second);
-	if (root.first > 1) root.first = -1;
-	if (root.second > 1) root.second = -1;
-	return root;
+	r1 = -1;  r2 = -1;
+	int nb = mtools::gsl_poly_solve_quadratic(a, b, c, &r1, &r2);
+	if (r1 >= 1) r1 = -1;
+	if (r2 >= 1) r2 = -1;
 	}
+
+
+/**
+* Find the root inside [0,1] of rational quad. bezier equation
+* f(t) = z for the curve with parameters (x0,x1, x2, w)
+**/
+void _rat_bezier_solve(double x0, double x1, double x2, double w, double z, double & r1, double & r2)
+{
+	double a = (-2 * x1*w + x0 + x2 - z * (-2 * w + 2));
+	double b = 2 * (x1*w - x0 - z * (w - 1));
+	double c = x0 - z;
+	r1 = -1; r2 = -1;
+	int nb = mtools::gsl_poly_solve_quadratic(a, b, c, &r1, &r2);
+	if (r1 >= 1) r1 = -1;
+	if (r2 >= 1) r2 = -1;
+}
 
 
 
 fBox2 ratBezierBoundingBox(fVec2 P0, fVec2 P1, fVec2 P2, double w)
 	{
 	fBox2 B(std::min<double>(P0.X(), P2.X()), std::max<double>(P0.X(), P2.X()), std::min<double>(P0.Y(), P2.Y()), std::max<double>(P0.Y(), P2.Y()));
-
-	auto rx = _rat_bezier_solve_deriv(P0.X(), P1.X(), P2.X(), w);
-	if (rx.first > 0) { B.swallowPoint(_rat_bezier_eval(P0, P1, P2, w, rx.first)); }
-	if (rx.second > 0) { B.swallowPoint(_rat_bezier_eval(P0, P1, P2, w, rx.second)); }
-
-	auto ry = _rat_bezier_solve_deriv(P0.Y(), P1.Y(), P2.Y(), w);
-	if (ry.first > 0) { B.swallowPoint(_rat_bezier_eval(P0, P1, P2, w, ry.first)); }
-	if (ry.second > 0) { B.swallowPoint(_rat_bezier_eval(P0, P1, P2, w, ry.second)); }
-
+	double rx1, rx2;
+	_rat_bezier_solve_deriv(P0.X(), P1.X(), P2.X(), w, rx1, rx2);
+	if (rx1 > 0) { B.swallowPoint(_rat_bezier_eval(P0, P1, P2, w, rx1)); }
+	if (rx2 > 0) { B.swallowPoint(_rat_bezier_eval(P0, P1, P2, w, rx2)); }
+	double ry1, ry2;
+	_rat_bezier_solve_deriv(P0.Y(), P1.Y(), P2.Y(), w, ry1, ry2);
+	if (ry1 > 0) { B.swallowPoint(_rat_bezier_eval(P0, P1, P2, w, ry1)); }
+	if (ry2 > 0) { B.swallowPoint(_rat_bezier_eval(P0, P1, P2, w, ry2)); }
 	return B;
 	}
 
@@ -210,6 +504,9 @@ iBox2 ratBezierBoundingBox(iVec2 P0, iVec2 P1, iVec2 P2, double w)
 
 
 
+/**********************************************************************************
+*  CUBIC BEZIER
+**********************************************************************************/
 
 
 /**
@@ -226,30 +523,50 @@ fVec2 _cubic_bezier_eval(fVec2 P0, fVec2 P1, fVec2 P2, fVec2 P3, double t)
 * Find the roots inside [0,1] of the derivative of a cubic bezier equation
 * if it exists.
 **/
-std::pair<double,double> _cubic_bezier_solve_deriv(double x0, double x1, double x2, double x3)
+void _cubic_bezier_solve_deriv(double x0, double x1, double x2, double x3, double & r1, double & r2)
 	{
 	double a = (3 * x1 - 3 * x2 + x3 - x0);
 	double b = 2 * (x0 - 2*x1 + x2);
 	double c = (x1 - x0);
-	std::pair<double, double> root { -1,-1 };
-	int nb = mtools::gsl_poly_solve_quadratic(a, b, c, &root.first, &root.second);
-	if (root.first > 1) root.first = -1;
-	if (root.second > 1) root.second = -1;
-	return root;
+	r1 = -1; r2 = -1;
+	int nb = mtools::gsl_poly_solve_quadratic(a, b, c, &r1, &r2);
+	if (r1 >= 1) r1 = -1;
+	if (r2 >= 1) r2 = -1;
 	}
+
+
+/**
+* Find the root inside [0,1] of rational quad. bezier equation
+* f(t) = z for the curve with parameters (x0,x1, x2, x3)
+**/
+void _cubic_bezier_solve(double x0, double x1, double x2, double x3, double z, double & r1, double & r2, double & r3)
+	{
+	double a = x3 + 3 * (x1 - x2) - x0;
+	double b = 3 * (x0 - 2 * x1 + x2);
+	double c = 3 * (x1 - x0); 
+	double d = x0 - z;
+	r1 = -1; r2 = -1; r3 = -1;
+	int nb = mtools::gsl_poly_solve_cubic(a, b, c, d, &r1, &r2, &r3);
+	if (r1 >= 1) r1 = -1;
+	if (r2 >= 1) r2 = -1;
+	if (r3 >= 1) r3 = -1;
+	}
+
 
 
 fBox2 cubicBezierBoundingBox(fVec2 P0, fVec2 P1, fVec2 P2, fVec2 P3)
 	{
 	fBox2 B(std::min<double>(P0.X(), P3.X()), std::max<double>(P0.X(), P3.X()), std::min<double>(P0.Y(), P3.Y()), std::max<double>(P0.Y(), P3.Y()));
 
-	auto rx = _cubic_bezier_solve_deriv(P0.X(), P1.X(), P2.X(),  P3.X());
-	if (rx.first > 0) { B.swallowPoint(_cubic_bezier_eval(P0, P1, P2, P3, rx.first)); }
-	if (rx.second > 0) { B.swallowPoint(_cubic_bezier_eval(P0, P1, P2, P3, rx.second)); }
+	double rx1, rx2;
+	_cubic_bezier_solve_deriv(P0.X(), P1.X(), P2.X(),  P3.X(), rx1, rx2);
+	if (rx1 > 0) { B.swallowPoint(_cubic_bezier_eval(P0, P1, P2, P3, rx1)); }
+	if (rx2 > 0) { B.swallowPoint(_cubic_bezier_eval(P0, P1, P2, P3, rx2)); }
 
-	auto ry = _cubic_bezier_solve_deriv(P0.Y(), P1.Y(), P2.Y(), P3.Y());
-	if (ry.first > 0) { B.swallowPoint(_cubic_bezier_eval(P0, P1, P2, P3, ry.first)); }
-	if (ry.second > 0) { B.swallowPoint(_cubic_bezier_eval(P0, P1, P2, P3, ry.second)); }
+	double ry1, ry2;
+	_cubic_bezier_solve_deriv(P0.Y(), P1.Y(), P2.Y(), P3.Y(), ry1, ry2);
+	if (ry1 > 0) { B.swallowPoint(_cubic_bezier_eval(P0, P1, P2, P3, ry1)); }
+	if (ry2 > 0) { B.swallowPoint(_cubic_bezier_eval(P0, P1, P2, P3, ry2)); }
 
 	return B;
 	}
@@ -304,11 +621,6 @@ void testCF()
 		P3 = { 604, 485};
 		*/
 		
-		auto bb = ratBezierBoundingBox(P0, P1, P2, w);
-
-		cout << "bb : " << bb << "\n";
-
-		im.draw_box(bb, RGBc::c_Gray, true);
 
 		im.draw_dot(P0, RGBc::c_Green, true, 2);
 		im.draw_dot(P1, RGBc::c_Green, true, 2);
@@ -318,8 +630,18 @@ void testCF()
 		im.draw_line(P1, P2, RGBc::c_Green, false);
 		im.draw_line(P2, P3, RGBc::c_Green, false);
 		*/
-	//	im.draw_cubic_bezier(P0, P3, P1, P2, RGBc::c_Red, true, true,false);
-		im.draw_quad_bezier(P0, P2, P1, w, RGBc::c_Blue, true, true, true);
+
+
+		auto bb = ratBezierBoundingBox(P0, P1, P2, 1.0);
+		im.draw_box(bb, RGBc::c_Gray, true);
+
+		iBox2 TB{ 300,600,400,600 };
+		im.draw_box(TB, RGBc::c_Yellow.getMultOpacity(0.5), true);
+		im.draw_rectangle(TB, RGBc::c_Yellow, true);
+
+		testQuad(TB, P0, P1, P2, im);
+
+
 
 		auto PA = makePlot2DImage(im, 1, "Image A");   // Encapsulate the image inside a 'plottable' object.	
 		Plotter2D plotter;              // Create a plotter object
