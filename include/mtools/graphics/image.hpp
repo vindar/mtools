@@ -7129,10 +7129,10 @@ namespace mtools
 					}
 				x1 = (x1 - x0)*(x1 - x0) + (y1 - y0)*(y1 - y0) + 1;
 				x2 = (x2 - x3)*(x2 - x3) + (y2 - y3)*(y2 - y3) + 1;
-
 				do {
 					ab = xa*yb - xb*ya; ac = xa*yc - xc*ya; bc = xb*yc - xc*yb;
-					ip = 4 * ab*bc - ac*ac;
+					ip = 4 * ab*bc - ac * ac; 
+					if (ip < 0) ip = -ip;																// BUGFIX : make it positive
 					ex = ab*(ab + ac - 3 * bc) + ac*ac;
 					f = ((ex > 0) ? 1 : (int64)sqrt(1 + 1024 / x1));
 					ab *= f; ac *= f; bc *= f; ex *= f*f;
@@ -7157,7 +7157,8 @@ namespace mtools
 						py = fabs(ex + (fx - 1)*dx - (f - fy + 1)*dy);
 						y2 = (double)y0;
 						do {
-							if (ip >= -EP) if (dx + xx > xy || dy + yy < xy) goto exit;
+							if (ip < EP) goto exit;														// BUGFIX. change leg if abs value is too small (I do not know why I do that...)
+							if (dx + xx > xy || dy + yy < xy) goto exit;
 							y1 = 2 * ex + dx;
 							if (2 * ex + dy > 0) { fx--; ex += dx += xx; dy += xy += ac; yy += bc; xx += ab; }
 							else if (y1 > 0) goto exit;
