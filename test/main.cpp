@@ -230,12 +230,13 @@ void testCF()
 		cout << "P2 : " << P2 << "\n";
 		cout << "P3 : " << P3 << "\n";
 
-
+		/*
 		P0 = { 226, 803 };
 		P1 = { 600, 748};
 		P2 = { 665, 154};
 		P3 = { 604, 485};
-
+		*/
+		
 		auto bb = cubicBezierBoundingBox(P0, P1, P2, P3);
 
 		cout << "bb : " << bb << "\n";
