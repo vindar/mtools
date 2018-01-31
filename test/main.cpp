@@ -226,145 +226,65 @@ void testCF()
 	{
 
 		MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
-		
+		/*
 		testCF();
 		cout.getKey(); 
 		return 0;
-
-	
-
-
-		
-		return 0;
-
-
-
-/*
-		{
-			Image im("hello.png");
-			im.rescale(10, { im.lx() * 10,im.ly() * 10 });
-			auto P = makePlot2DImage(im,6);   // Encapsulate the image inside a 'plottable' object.	
-			Plotter2D plotter;              // Create a plotter object
-			plotter.axesObject(false);      // Remove the axe system.
-			plotter[P];                     // Add the image to the list of objects to draw.  	
-			plotter.autorangeXY();          // Set the plotter range to fit the image.
-			plotter.plot();                 // start interactive display.
-		}
-		return 0;
-		{
-			Image im(800, 600, RGBc(150, 150, 150,150));  // image of size 800x600 with a light gray background
-
-													  // draw on the image
-			im.fill_ellipse_in_rect({ 100,400,50,550 }, RGBc::c_Cyan, false);
-			im.draw_ellipse_in_rect({ 100,400,50,550 }, RGBc::c_Green, true, true, 4);
-			im.draw_text({ 400, 300 }, "Hello\n  World!", MTOOLS_TEXT_CENTER, RGBc::c_Red.getOpacity(0.7f), 200);
-			im.draw_cubic_spline({ { 10,10 },{ 100,100 },{ 200,30 },{ 300,100 },{ 600,10 } ,{ 700,300 },
-				{ 720, 500 },{ 600, 480 },{ 400,500 } }, RGBc::c_Yellow.getOpacity(0.5f), true, true, true, 3);
-
-
-			im.draw_line({ 0,0 }, { 800,337 }, RGBc(200, 100, 57, 200), true, true, true, 20);
-
-			im.save("hello2.png");
-			im.save("hello2.jpeg");
-			im.save("hello2.bmp");
-
-			// display the image
-			auto P = makePlot2DImage(im);   // Encapsulate the image inside a 'plottable' object.	
-			Plotter2D plotter;              // Create a plotter object
-			plotter.axesObject(false);      // Remove the axe system.
-			plotter[P];                     // Add the image to the list of objects to draw.  	
-			plotter.autorangeXY();          // Set the plotter range to fit the image.
-			plotter.plot();                 // start interactive display.
-		}
-		return 0;
 		*/
 
-		TreeFigure<int, NN> TF;
+		Image im(800, 800);
 
-		int n = 1000;
+		RGBc color = RGBc::c_Red.getMultOpacity(0.5);;
+		RGBc colorfill = RGBc::c_Red.getMultOpacity(0.5);;
 
 
-		cout << "inserting...\n";
-		mtools::Chronometer();
-		/*
-		{
-			cout << "DEserializing...\n";
-			IFileArchive ar("testTreeAR.txt");
-			ar & TF;
-			cout << "OK...\n";
+		iVec2 P1 = { 50,50 };
+		iVec2 P2 = { 350,100 };
+		iVec2 P3 = { 300,400 };
+		iVec2 P4 = { 100,500 };
+
+		int64 N = 1;
+
+		Chronometer();
+
+
+		for (int i = 0; i < N; i++)
+			{
+			im.fill_triangle(P1, P2, P3, colorfill, true);
+			im.draw_triangle(P1, P2, P3, color, true, false, 0);
+			im.draw_triangle(P1, P4, P3, color, true, false, 0);
 		}
-		*/
+		cout << "1) done in " << mtools::durationToString(Chronometer(),true) << "\n";
+
+		iVec2 T = { 350, 0 };
+		P1 += T;
+		P2 += T;
+		P3 += T;
+		P4 += T;
+
+		Chronometer();
+		for (int i = 0; i < N; i++)
+		{
+		im.fill_triangle(P1, P2, P3, colorfill, true);
+		im.fill_triangle(P1, P4, P3, colorfill, true);
+		im._lineBresenham_AA<true, true, false>(P1, P2, color, false, 0);
+		im._lineBresenham_AA<true, true, false>(P2, P3, color, false, 0);
+		im._lineBresenham<true, true, false>(P1, P3, color, false, 0);
+		im._lineBresenham_AA<true, true, false>(P1, P4, color, false, 0);
+		im._lineBresenham_AA<true, true, false>(P4, P3, color, false, 0);
+
+		}
+		cout << "1) done in " << mtools::durationToString(Chronometer(),true) << "\n";
+
+
+
+
+		auto PA = makePlot2DImage(im, 1, "Image A");   // Encapsulate the image inside a 'plottable' object.	
+		Plotter2D plotter;              // Create a plotter object
+		plotter[PA];	                // Add the image to the list of objects to draw.  	
+		plotter.autorangeXY();          // Set the plotter range to fit the image.
+		plotter.plot();                 // start interactive display.
+
 		
-		for (int i = 0; i < n; i++)
-		{
-			double xc = Unif(gen) * (Unif(gen) - 0.5) * 20;
-			double yc = Unif(gen) * (Unif(gen) - 0.5) * 12;
-			double lx = Unif(gen); lx *= lx;
-			double ly = Unif(gen); ly *= ly;
-			lx = 0.1; ly = 0.1;
-			TF.insert({ xc - lx, xc + lx, yc - ly, yc + ly }, 0);
-		}
-
-
-		for (int i = 0; i < n / 10; i++)
-		{
-			double yc = Unif(gen) * 5;
-			double lx = 10 * Unif(gen)* Unif(gen);
-			TF.insert({ 0, lx, yc, yc }, 0);
-		}
-
-		
-		
-		cout << TF << "\n";
-
-		//	TF.insert({ 1, 2, 1, 1.6 }, nullptr);
-
-		cout << "done in " << durationToString(mtools::Chronometer(), true) << "\n";
-
-
-		fBox2 R = TF.mainBoundingBox();
-		R = mtools::zoomOut(R);
-		Image im(10000, 10000);
-		im.clear(RGBc::c_White);
-
-
-		cout << "Drawing...\n";
-		mtools::Chronometer();
-		TF.drawTreeDebug(im, R, RGBc::c_Transparent);
-		cout << "done in " << durationToString(mtools::Chronometer(), true) << "\n";
-
-
-		cout << "Visiting...\n";
-		mtools::Chronometer();
-		cout << "visited = " << TF.iterate_intersect({ -5,5,0,5 }, [&](const TreeFigure<int, NN>::BoundedObject & bo) -> void { im.canvas_draw_box(R, bo.boundingbox, RGBc::c_Green.getOpacity(0.5f), true);  return; });
-		cout << "done in " << durationToString(mtools::Chronometer(), true) << "\n";
-
-		cout << "Visiting...\n";
-		mtools::Chronometer();
-		cout << "visited = " << TF.iterate_contained_in({ -5,5,0,5 }, [&](const TreeFigure<int, NN>::BoundedObject & bo) -> void { im.canvas_draw_box(R, bo.boundingbox, RGBc::c_Blue.getOpacity(0.5f), true);  return; });
-		cout << "done in " << durationToString(mtools::Chronometer(), true) << "\n";
-
-		cout << "Visiting...\n";
-		mtools::Chronometer();
-		cout << "visited = " << TF.iterate_contain({ 1,1.01,1.5,1.51 }, [&](const TreeFigure<int, NN>::BoundedObject & bo) -> void { im.canvas_draw_box(R, bo.boundingbox, RGBc::c_Yellow.getOpacity(0.2f), true);  return; });
-		cout << "done in " << durationToString(mtools::Chronometer(), true) << "\n";
-
-		/*
-		{
-		cout << "serializing...\n";
-		OFileArchive ar("testTreeAR.txt");
-		ar & TF;
-		cout << "OK...\n";
-		}
-		*/
-		auto P1 = makePlot2DImage(im);
-		Plotter2D plotter;
-		plotter[P1];
-		plotter.autorangeXY();
-		plotter.range().zoomOut();
-		plotter.plot();
-
-		mtools::cout << "Hello World\n";
-		mtools::cout.getKey();
 		return 0;
 	}

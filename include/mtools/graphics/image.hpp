@@ -5432,12 +5432,24 @@ namespace mtools
 
 
 
+
+		public:
+
+
+
+
+
+
+
+
+
 			/* stucture holding info on  a bresenham line */
 			struct _bdir
 				{
 				int64 dx, dy;			// step size in each direction
 				int64 stepx, stepy;		// directions (+/-1)
-				int64 rat;				// ratio max(dx,dy)/min(dx,dy) to sped up computations
+				int64 rat;				// ratio max(dx,dy)/min(dx,dy) to speed up computations
+				int64 amul;				// multiplication factor to compute aa values. 
 				bool x_major;			// true if the line is xmajor (ie dx > dy) and false if y major (dy >= dx).
 				};
 
@@ -5449,6 +5461,15 @@ namespace mtools
 				int64 frac; // fractional part
 				};
 
+
+			///template<bool SIDE, bool x_major> 
+			MTOOLS_FORCEINLINE int32 _line_aa(_bdir & linedir, _bpos & linepos)
+				{
+				int64 a = (linedir.x_major) ? linedir.dy : linedir.dx;
+				a = (((a - linepos.frac)*linedir.amul) >> 52);
+				//if (linedir.x_major) a = (256*(linedir.dy - linepos.frac))/ linedir.dx; else a = (256*(linedir.dx - linepos.frac))/ linedir.dy;				
+				return (int32)a + 1;
+				}
 			
 			/**
 			* Construct the structure containg the info for a bresenham line 
@@ -5475,7 +5496,8 @@ namespace mtools
 				linepos.x = P1.X();
 				linepos.y = P1.Y();
 				int64 flagdir = (P2.X() > P1.X()) ? 1 : 0; // used to copensante frac so that line [P1,P2] = [P2,P1]. 
-				linepos.frac = ((linedir.x_major) ? (dy - (dx >> 1)) : (dx - (dy >> 1))) - flagdir;
+				linepos.frac = ((linedir.x_major) ? (dy - (dx >> 1)) : (dx - (dy >> 1))) - flagdir;		
+				linedir.amul = ((int64)1 << 60) / (linedir.x_major ? linedir.dx : linedir.dy);
 				}
 
 
@@ -5812,6 +5834,84 @@ namespace mtools
 					}
 				}
 
+
+			/**
+			* Draw a segment [P1,P2] using Bresenham's algorithm with 'side' antialiasing
+			*
+			* The algorithm is symmetric: the line [P1,P2] is always equal
+			* to the line drawn in the other direction [P2,P1].
+			*
+			* Set draw_last to true to draw the endpoint P2 and to false to draw only
+			* the open segment [P1,P2[.
+			*
+			* Optimized for speed.
+			**/
+			template<bool blend, bool checkrange, bool usepen>  MTOOLS_FORCEINLINE void _lineBresenham_AA(const iVec2 P1, const iVec2 P2, RGBc color, bool draw_last, int32 penwidth)
+				{
+				if (P1 == P2)
+					{
+					if (draw_last)
+						{
+						if (penwidth <= 0) { _updatePixel<blend, checkrange, false, false>(P1.X(), P1.Y(), color, 0, penwidth); } else { _updatePixel<blend, checkrange, false, true>(P1.X(), P1.Y(), color, 0, penwidth); }
+						}
+					return;
+					}
+				int64 y = _lengthBresenham(P1, P2, draw_last);
+				_bdir line;
+				_bpos pos;
+				_init_line(P1, P2, line, pos);
+				if (checkrange)
+					{
+					iBox2 B; 
+					if (penwidth <= 0) { B = iBox2(0, _lx - 1, 0, _ly - 1); } else { B = iBox2(-penwidth-2, _lx + penwidth + 1, -penwidth - 2, _ly + penwidth  +1); }
+					int64 r = _move_inside_box(line, pos, B);
+					if (r < 0) return; // nothing to draw
+					y -= r;
+					y = std::min<int64>(y , _lenght_inside_box(line, pos, B));
+					}
+				if (penwidth <= 0)
+					{ // unit pen, do not need to check range anymore
+					if (line.x_major)
+						{
+						while (--y >= 0)
+							{
+							int32 aa = (int32)_line_aa(line, pos);
+							_updatePixel<blend, false, true, false>(pos.x, pos.y, color, aa, 0);
+							_move_line<true>(line, pos);
+							}
+						}
+					else
+						{
+						while (--y >= 0)
+							{
+							int32 aa = (int32)_line_aa(line, pos);
+							_updatePixel<blend, false, true, false>(pos.x, pos.y, color, aa, 0);
+							_move_line<false>(line, pos);
+							}
+						}
+					}
+				else
+					{ // larger pen, we always check the range
+					if (line.x_major)
+						{
+						while (--y >= 0)
+							{
+							int32 aa = (int32)_line_aa(line, pos);
+							_updatePixel<blend, true, true, true>(pos.x, pos.y, color, aa, penwidth);
+							_move_line<true>(line, pos);
+							}
+						}
+					else
+						{
+						while (--y >= 0)
+							{
+							int32 aa = (int32)_line_aa(line, pos);
+							_updatePixel<blend, true, true, true>(pos.x, pos.y, color, aa, penwidth);
+							_move_line<false>(line, pos);
+							}
+						}
+					}
+				}
 
 
 			/**
