@@ -222,62 +222,83 @@ void testCF()
 
 
 
-	int main(int argc, char *argv[])
-	{
+int main(int argc, char *argv[])
+{
 
-		MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
-		/*
-		testCF();
-		cout.getKey(); 
-		return 0;
-		*/
-
-		Image im(800, 800);
-
-		RGBc color = RGBc::c_Red.getMultOpacity(0.5);;
-		RGBc colorfill = RGBc::c_Red.getMultOpacity(0.5);;
+	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
 
 
-		iVec2 P1 = { 50,50 };
-		iVec2 P2 = { 350,100 };
-		iVec2 P3 = { 300,400 };
-		iVec2 P4 = { 100,500 };
+	Image im(800, 800);
 
-		int64 N = 1;
-
-		Chronometer();
+	RGBc color = RGBc::c_Red.getMultOpacity(0.5);;
+	RGBc colorfill = RGBc::c_Red.getMultOpacity(0.5);;
 
 
-		for (int i = 0; i < N; i++)
-			{
-			im.fill_triangle(P1, P2, P3, colorfill, true);
-			im.draw_triangle(P1, P2, P3, color, true, false, 0);
-			im.draw_triangle(P1, P4, P3, color, true, false, 0);
-		}
-		cout << "1) done in " << mtools::durationToString(Chronometer(),true) << "\n";
 
-		iVec2 T = { 350, 0 };
-		P1 += T;
-		P2 += T;
-		P3 += T;
-		P4 += T;
+	iVec2 P1 = { 50,50 };
+	iVec2 P2 = { 350,100 };
+	iVec2 P3 = { 300,400 };
+	iVec2 P4 = { 100,500 };
 
-		Chronometer();
-		for (int i = 0; i < N; i++)
+	int64 N = 1000000;
+
+	Chronometer();
+
+
+	for (int i = 0; i < N; i++)
 		{
-		im.fill_triangle(P1, P2, P3, colorfill, true);
-		im.fill_triangle(P1, P4, P3, colorfill, true);
-		im._lineBresenham_AA<true, true, false>(P1, P2, color, false, 0);
-		im._lineBresenham_AA<true, true, false>(P2, P3, color, false, 0);
-		im._lineBresenham<true, true, false>(P1, P3, color, false, 0);
-		im._lineBresenham_AA<true, true, false>(P1, P4, color, false, 0);
-		im._lineBresenham_AA<true, true, false>(P4, P3, color, false, 0);
-
+		//im.fill_triangle(P1, P2, P3, colorfill, true);
+		im.draw_triangle(P1, P2, P3, color, true, false, 0);
 		}
-		cout << "1) done in " << mtools::durationToString(Chronometer(),true) << "\n";
+	cout << "1) done in " << mtools::durationToString(Chronometer(),true) << "\n";
+
+	iVec2 T = { 350, 0 };
+	P1 += T;
+	P2 += T;
+	P3 += T;
+	P4 += T;
+
+	Chronometer();
+	for (int i = 0; i < N; i++)
+	{
+	//im.fill_triangle(P1, P2, P3, colorfill, true);
+	//im.fill_triangle(P1, P4, P3, colorfill, true);
+	im._lineBresenham_AA<true, true, false>(P1, P2, color, false, 0);
+	im._lineBresenham_AA<true, true, false>(P2, P3, color, false, 0);
+	im._lineBresenham_AA<true, true, false>(P3, P1, color, false, 0);
+
+	}
+	cout << "1) done in " << mtools::durationToString(Chronometer(),true) << "\n";
+	
+
+	/*
+	iVec2 P[10];
+
+	P[0] = { 350,100 };
+	P[1] = { 550,150 };
+	P[2] = { 600,350 };
+	P[3] = { 550,550 };
+	P[4] = { 350,600 };
+	P[5] = { 150,550 };
+	P[6] = { 100,350 };
+	P[7] = { 150,150 };
 
 
+	iVec2 PC = { 350,350 };
+	
+	
+	im._lineBresenham_AA<true, true, false>(P[0], P[1], color, false, 0);
+	im._lineBresenham_AA<true, true, false>(P[1], P[2], color, false, 0);
+	im._lineBresenham_AA<true, true, false>(P[2], P[3], color, false, 0);
+	im._lineBresenham_AA<true, true, false>(P[3], P[4], color, false, 0);
+	im._lineBresenham_AA<true, true, false>(P[4], P[5], color, false, 0);
+	im._lineBresenham_AA<true, true, false>(P[5], P[6], color, false, 0);
+	im._lineBresenham_AA<true, true, false>(P[6], P[7], color, false, 0);
+	im._lineBresenham_AA<true, true, false>(P[7], P[0], color, false, 0);
 
+	im.fill_convex_polygon(8, P, colorfill, true);
+	*/
+	 
 
 		auto PA = makePlot2DImage(im, 1, "Image A");   // Encapsulate the image inside a 'plottable' object.	
 		Plotter2D plotter;              // Create a plotter object
@@ -288,3 +309,10 @@ void testCF()
 		
 		return 0;
 	}
+
+
+
+
+
+
+

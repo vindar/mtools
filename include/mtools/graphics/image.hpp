@@ -5462,12 +5462,38 @@ namespace mtools
 				};
 
 
-			///template<bool SIDE, bool x_major> 
-			MTOOLS_FORCEINLINE int32 _line_aa(_bdir & linedir, _bpos & linepos)
-				{
-				int64 a = (linedir.x_major) ? linedir.dy : linedir.dx;
-				a = (((a - linepos.frac)*linedir.amul) >> 52);
-				//if (linedir.x_major) a = (256*(linedir.dy - linepos.frac))/ linedir.dx; else a = (256*(linedir.dx - linepos.frac))/ linedir.dy;				
+			/* compute the value for antialiasing the half side of a line during bresenham algorithm:
+			   side true = correspond to the outside being on the left of the line we follow the line in its increasing direction.
+			               correspond to drawing a filled polygone in clockwise order. */
+			template<bool side = true, bool x_major = true, int64 stepx = 1, int64 stepy = 1>  MTOOLS_FORCEINLINE int32 _line_aa(_bdir & linedir, _bpos & linepos)
+				{				
+				int64 a;				
+				if (linedir.x_major)
+					{
+					a = linedir.dy;
+					a = (((a - linepos.frac)*linedir.amul) >> 52);
+					if (side)
+						{
+						if (linedir.stepx != linedir.stepy) a = 255 - a;
+						}
+					else
+						{
+						if (linedir.stepx == linedir.stepy) a = 255 - a;
+						}
+					}
+				else
+					{
+					a = linedir.dx;
+					a = (((a - linepos.frac)*linedir.amul) >> 52);
+					if (side)
+						{
+						if (linedir.stepx == linedir.stepy) a = 255 - a;
+						}
+					else
+						{
+						if (linedir.stepx != linedir.stepy) a = 255 - a;
+						}
+					}
 				return (int32)a + 1;
 				}
 			
@@ -5521,6 +5547,29 @@ namespace mtools
 					pos.y += linedir.stepy; pos.frac += linedir.dx;
 					}
 				}
+
+
+			/**
+			* Move the position pos by 1 pixel along a bresenham line.
+			*
+			* [x_major, stepx and stepy can be deduced from linedir but are given as template parameters 
+			* for speed optimization]
+			*/
+			template<bool x_major,int64 stepx,int64 stepy> MTOOLS_FORCEINLINE void _move_line(const _bdir & linedir, _bpos & pos)
+				{
+				if (x_major)
+					{
+					if (pos.frac >= 0) { pos.y += stepy; pos.frac -= linedir.dx; }
+					pos.x += stepx; pos.frac += linedir.dy;
+					}
+				else
+					{
+					if (pos.frac >= 0) { pos.x += stepx; pos.frac -= linedir.dy; }
+					pos.y += stepy; pos.frac += linedir.dx;
+					}
+				}
+
+
 
 
 			/**
