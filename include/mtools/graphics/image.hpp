@@ -1923,7 +1923,7 @@ namespace mtools
 			inline void draw_line(iVec2 P1, iVec2 P2, RGBc color, bool draw_P2)
 				{
 				if (isEmpty()) return;
-				_lineBresenham<false, true, false>(P1, P2, color, draw_P2, 0);
+				_lineBresenham<false, true, false,false,false>(P1, P2, color, draw_P2, 0,0);
 				}
 
 
@@ -1966,7 +1966,7 @@ namespace mtools
 						if (blending) _lineBresenhamAA<true, true, false>(P1, P2, color, draw_P2, 0); else _lineBresenhamAA<false, true, false>(P1, P2, color, draw_P2, 0);
 						return;
 						}
-					if ((blending) && (!color.isOpaque())) _lineBresenham<true, true, false>(P1, P2, color, draw_P2, 0); else _lineBresenham<false, true, false>(P1, P2, color, draw_P2, 0);
+					if ((blending) && (!color.isOpaque())) _lineBresenham<true, true, false,false,false>(P1, P2, color, draw_P2, 0, 0); else _lineBresenham<false, true, false, false, false>(P1, P2, color, draw_P2, 0, 0);
 					return;
 					}
 				_correctPenOpacity(color, penwidth);
@@ -1977,7 +1977,7 @@ namespace mtools
 					if (blending) _lineBresenhamAA<true, true, true>(P1, P2, color, draw_P2, penwidth); else _lineBresenhamAA<false, true, true>(P1, P2, color, draw_P2, penwidth);
 					return;
 					}
-				if ((blending) && (!color.isOpaque())) _lineBresenham<true,true, true>(P1, P2, color, draw_P2, penwidth); else _lineBresenham<false,true, true>(P1, P2, color, draw_P2, penwidth);
+				if ((blending) && (!color.isOpaque())) _lineBresenham<true,true, true, false, false>(P1, P2, color, draw_P2, penwidth, 0); else _lineBresenham<false,true, true, false, false>(P1, P2, color, draw_P2, penwidth, 0);
 				return;
 				}
 
@@ -2458,9 +2458,9 @@ namespace mtools
 				if (isEmpty()) return;
 				if ((penwidth <= 0)&&(!antialiased)&&(blending)&& (!color.isOpaque()))
 					{ // draw without overlap
-					_lineBresenham<true, true, false>(P1, P2, color, true, penwidth);
-					_lineBresenham_avoid<true, true>(P2, P3, P1, color, 0);
-					_lineBresenham_avoid_both_sides<true, true>(P1, P3, P2, color);
+					_lineBresenham<true, true, false, false, false>(P1, P2, color, true, penwidth, 0);
+					_lineBresenham_avoid<true, true,false,false,false>(P2, P3, P1, color, 0, 0);
+					_lineBresenham_avoid_both_sides<true, true, false, false, false>(P1, P3, P2, color,0);
 					return;
 					}
 				// default drawing
@@ -2578,12 +2578,12 @@ namespace mtools
 						{
 						if ((penwidth <= 0) && (!antialiased) && (blending) && (!color.isOpaque()))
 							{ // draw without overlap
-							_lineBresenham<true, true,false>(tabPoints[0], tabPoints[1], color, true, penwidth);
+							_lineBresenham<true, true,false, false, false>(tabPoints[0], tabPoints[1], color, true, penwidth, 0);
 							for (size_t i = 1; i < nbvertices - 1; i++)
 								{
-								_lineBresenham_avoid<true, true>(tabPoints[i], tabPoints[i + 1], tabPoints[i - 1], color, 0);
+								_lineBresenham_avoid<true, true,false,false,false>(tabPoints[i], tabPoints[i + 1], tabPoints[i - 1], color, 0,0);
 								}
-							_lineBresenham_avoid_both_sides<true, true>(tabPoints[nbvertices - 1], tabPoints[0], tabPoints[nbvertices - 2], tabPoints[1], color);
+							_lineBresenham_avoid_both_sides<true, true, false, false, false>(tabPoints[nbvertices - 1], tabPoints[0], tabPoints[nbvertices - 2], tabPoints[1], color,0);
 							return;
 							}
 						for (size_t i = 0; i < nbvertices; i++)
@@ -2638,10 +2638,10 @@ namespace mtools
 					}
 				if (blending)
 					{
-					_lineBresenham_avoid<true, true>(tabPoints[0], G, tabPoints[nbvertices - 1], tabPoints[1], fillcolor, 0);
+					_lineBresenham_avoid<true, true, false, false, false>(tabPoints[0], G, tabPoints[nbvertices - 1], tabPoints[1], fillcolor, 0,0);
 					for (size_t i = 1; i < nbvertices; i++)
 						{
-						_lineBresenham_avoid_both_sides<true, true>(tabPoints[i], G, tabPoints[i - 1], tabPoints[(i + 1) % nbvertices], tabPoints[0], tabPoints[i - 1], fillcolor);
+						_lineBresenham_avoid_both_sides<true, true, false, false, false>(tabPoints[i], G, tabPoints[i - 1], tabPoints[(i + 1) % nbvertices], tabPoints[0], tabPoints[i - 1], fillcolor,0);
 						}
 					return;
 					}
@@ -5524,25 +5524,6 @@ namespace mtools
 				}
 
 
-			/**
-			* Move the position pos by 1 pixel along a bresenham line.
-			* fast template version
-			*/
-			template<bool x_major, int64 stepx, int64 stepy> MTOOLS_FORCEINLINE void _move_line(const _bdir & linedir, _bpos & pos)
-			{
-				if (x_major)
-				{
-					if (pos.frac >= 0) { pos.y += stepy; pos.frac -= linedir.dx; }
-					pos.x += stepx; pos.frac += linedir.dy;
-				}
-				else
-				{
-					if (pos.frac >= 0) { pos.x += stepx; pos.frac -= linedir.dy; }
-					pos.y += stepy; pos.frac += linedir.dx;
-				}
-			}
-
-
 			/** Same as above but a little slower because not templated */
 			template<bool x_major> MTOOLS_FORCEINLINE void _move_line(const _bdir & linedir, _bpos & pos)
 				{
@@ -5797,24 +5778,7 @@ namespace mtools
 
 
 
-			/** sub procedure, color a single pixel in a bresenham line */
-			template<bool blend, bool checkrange, bool useop, bool usepen, bool useaa, bool side, bool x_major, int64 stepx, int64 stepy>
-			MTOOLS_FORCEINLINE void _update_pixel_bresenham(_bdir & line, _bpos & pos, RGBc color, int32 op, int32 penwidth)
-			{
-				if (useaa)
-				{
-					int32 aa = _line_aa<side, x_major, stepx, stepy>(line, pos);
-					if (useop) { aa *= op; aa >>= 8; }
-					_updatePixel<blend, checkrange, true, usepen>(pos.x, pos.y, color, aa, penwidth);
-				}
-				else
-				{
-					_updatePixel<blend, checkrange, useop, usepen>(pos.x, pos.y, color, op, penwidth);
-				}
-			}
-
-
-			/** same as above but a bit slower because not templated */
+			/** draw a pixel on a bresenham line */
 			template<bool blend, bool checkrange, bool useop, bool usepen, bool useaa, bool side>
 			MTOOLS_FORCEINLINE void _update_pixel_bresenham(_bdir & line, _bpos & pos, RGBc color, int32 op, int32 penwidth)
 			{
@@ -5831,21 +5795,9 @@ namespace mtools
 			}
 
 
-			/** sub procedure, draw a bresenham line. */
-			template<bool useaa, bool blend, bool usepen, bool side, bool x_major, int64 stepx, int64 stepy>
-			MTOOLS_FORCEINLINE void _lineBresenham_sub(_bdir & line, _bpos & pos, int64 y, int32 penwidth, RGBc color)
-			{
-				while (--y >= 0)
-				{
-					//			_update_pixel_bresenham<blend, usepen, false, usepen, useaa, side, x_major, stepx, stepy>(line, pos, color, 0, penwidth);
-					_update_pixel_bresenham<blend, usepen, false, usepen, useaa, side>(line, pos, color, 0, penwidth);
-					_move_line<x_major, stepx, stepy>(line, pos);
-				}
-			}
-
 
 			/**
-			* Draw a segment [P1,P2] using Bresenham's algorithm, possibly with side antialiasing
+			* Draw a segment [P1,P2] using Bresenham's algorithm, (possibly with side antialiasing)
 			*
 			* The algorithm is symmetric: the line [P1,P2] is always equal
 			* to the line drawn in the other direction [P2,P1].
@@ -5854,23 +5806,23 @@ namespace mtools
 			*
 			* Optimized for speed.
 			**/
-			template<bool blend, bool checkrange, bool usepen, bool useaa = false>  MTOOLS_FORCEINLINE void _lineBresenham(const iVec2 P1, const iVec2 P2, RGBc color, bool draw_last, int32 penwidth, bool side = true)
-			{
-				if (P1 == P2)
+			template<bool blend, bool checkrange, bool usepen, bool useaa, bool side>  MTOOLS_FORCEINLINE void _lineBresenham(const iVec2 P1, const iVec2 P2, RGBc color, bool draw_last, int32 penwidth, int32 op)
 				{
-					if (draw_last)
+				if (P1 == P2)
 					{
-						if (penwidth <= 0) { _updatePixel<blend, checkrange, false, false>(P1.X(), P1.Y(), color, 0, penwidth); }
-						else { _updatePixel<blend, checkrange, false, true>(P1.X(), P1.Y(), color, 0, penwidth); }
-					}
+					if (draw_last)
+						{
+						if (penwidth <= 0) { _updatePixel<blend, checkrange, false, false>(P1.X(), P1.Y(), color, op, penwidth); }
+						else { _updatePixel<blend, checkrange, false, true>(P1.X(), P1.Y(), color, op, penwidth); }
+						}
 					return;
-				}
+					}
 				int64 y = _lengthBresenham(P1, P2, draw_last);
 				_bdir line;
 				_bpos pos;
 				_init_line(P1, P2, line, pos);
 				if (checkrange)
-				{
+					{
 					iBox2 B;
 					if (penwidth <= 0) { B = iBox2(0, _lx - 1, 0, _ly - 1); }
 					else { B = iBox2(-penwidth - 2, _lx + penwidth + 1, -penwidth - 2, _ly + penwidth + 1); }
@@ -5878,146 +5830,26 @@ namespace mtools
 					if (r < 0) return; // nothing to draw
 					y -= r;
 					y = std::min<int64>(y, _lenght_inside_box(line, pos, B));
-				}
-
-				//call template sub function with corresponding template param: side, x_major, stepx, stepy
-				if (side)
-				{
-					const bool SIDE = true;
-					if (line.x_major)
+					}
+			
+				if (line.x_major)
 					{
-						const bool XMAJOR = true;
-						if (line.stepx == 1)
+					while (--y >= 0)
 						{
-							const int64 STEPX = 1;
-							if (line.stepy == 1)
-							{
-								const int64 STEPY = 1;
-								_lineBresenham_sub<useaa, blend, usepen, SIDE, XMAJOR, STEPX, STEPY>(line, pos, y, penwidth, color);
-							}
-							else
-							{
-								const int64 STEPY = -1;
-								_lineBresenham_sub<useaa, blend, usepen, SIDE, XMAJOR, STEPX, STEPY>(line, pos, y, penwidth, color);
-							}
-						}
-						else
-						{
-							const int64 STEPX = -1;
-							if (line.stepy == 1)
-							{
-								const int64 STEPY = 1;
-								_lineBresenham_sub<useaa, blend, usepen, SIDE, XMAJOR, STEPX, STEPY>(line, pos, y, penwidth, color);
-							}
-							else
-							{
-								const int64 STEPY = -1;
-								_lineBresenham_sub<useaa, blend, usepen, SIDE, XMAJOR, STEPX, STEPY>(line, pos, y, penwidth, color);
-							}
+						_update_pixel_bresenham<blend, usepen, false, usepen, useaa, side>(line, pos, color, op, penwidth);
+						_move_line<true>(line, pos);
 						}
 					}
-					else
-					{
-						const bool XMAJOR = false;
-						if (line.stepx == 1)
-						{
-							const int64 STEPX = 1;
-							if (line.stepy == 1)
-							{
-								const int64 STEPY = 1;
-								_lineBresenham_sub<useaa, blend, usepen, SIDE, XMAJOR, STEPX, STEPY>(line, pos, y, penwidth, color);
-							}
-							else
-							{
-								const int64 STEPY = -1;
-								_lineBresenham_sub<useaa, blend, usepen, SIDE, XMAJOR, STEPX, STEPY>(line, pos, y, penwidth, color);
-							}
-						}
-						else
-						{
-							const int64 STEPX = -1;
-							if (line.stepy == 1)
-							{
-								const int64 STEPY = 1;
-								_lineBresenham_sub<useaa, blend, usepen, SIDE, XMAJOR, STEPX, STEPY>(line, pos, y, penwidth, color);
-							}
-							else
-							{
-								const int64 STEPY = -1;
-								_lineBresenham_sub<useaa, blend, usepen, SIDE, XMAJOR, STEPX, STEPY>(line, pos, y, penwidth, color);
-							}
-						}
-					}
-				}
 				else
-				{
-					const bool SIDE = false;
-					if (line.x_major)
 					{
-						const bool XMAJOR = true;
-						if (line.stepx == 1)
+					while (--y >= 0)
 						{
-							const int64 STEPX = 1;
-							if (line.stepy == 1)
-							{
-								const int64 STEPY = 1;
-								_lineBresenham_sub<useaa, blend, usepen, SIDE, XMAJOR, STEPX, STEPY>(line, pos, y, penwidth, color);
-							}
-							else
-							{
-								const int64 STEPY = -1;
-								_lineBresenham_sub<useaa, blend, usepen, SIDE, XMAJOR, STEPX, STEPY>(line, pos, y, penwidth, color);
-							}
-						}
-						else
-						{
-							const int64 STEPX = -1;
-							if (line.stepy == 1)
-							{
-								const int64 STEPY = 1;
-								_lineBresenham_sub<useaa, blend, usepen, SIDE, XMAJOR, STEPX, STEPY>(line, pos, y, penwidth, color);
-							}
-							else
-							{
-								const int64 STEPY = -1;
-								_lineBresenham_sub<useaa, blend, usepen, SIDE, XMAJOR, STEPX, STEPY>(line, pos, y, penwidth, color);
-							}
+						_update_pixel_bresenham<blend, usepen, false, usepen, useaa, side>(line, pos, color, op, penwidth);
+						_move_line<false>(line, pos);
 						}
 					}
-					else
-					{
-						const bool XMAJOR = false;
-						if (line.stepx == 1)
-						{
-							const int64 STEPX = 1;
-							if (line.stepy == 1)
-							{
-								const int64 STEPY = 1;
-								_lineBresenham_sub<useaa, blend, usepen, SIDE, XMAJOR, STEPX, STEPY>(line, pos, y, penwidth, color);
-							}
-							else
-							{
-								const int64 STEPY = -1;
-								_lineBresenham_sub<useaa, blend, usepen, SIDE, XMAJOR, STEPX, STEPY>(line, pos, y, penwidth, color);
-							}
-						}
-						else
-						{
-							const int64 STEPX = -1;
-							if (line.stepy == 1)
-							{
-								const int64 STEPY = 1;
-								_lineBresenham_sub<useaa, blend, usepen, SIDE, XMAJOR, STEPX, STEPY>(line, pos, y, penwidth, color);
-							}
-							else
-							{
-								const int64 STEPY = -1;
-								_lineBresenham_sub<useaa, blend, usepen, SIDE, XMAJOR, STEPX, STEPY>(line, pos, y, penwidth, color);
-							}
-						}
-					}
+				return;
 				}
-			}
 
 
 
@@ -6037,7 +5869,7 @@ namespace mtools
 				int64 lenb = _lengthBresenham(P, Q2, true);
 				int64 r = 0;
 				if (checkrange)
-				{
+					{
 					iBox2 B(0, _lx - 1, 0, _ly - 1);
 					r = _move_inside_box(linea, posa, B); // move the first line into the box. 
 					if (r < 0) return 1; // nothing to draw
@@ -6045,7 +5877,7 @@ namespace mtools
 					_move_line(lineb, posb, r); // move the second line
 					lenb -= r;
 					lena = std::min<int64>(lena, _lenght_inside_box(linea, posa, B)); // number of pixels still to draw. 
-				}
+					}
 				lena--;
 				lenb--;
 				int64 l = 0;
@@ -6150,11 +5982,7 @@ namespace mtools
 						{
 						while (l <= lena)
 							{
-							if ((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) _updatePixel<blend, false, false, false>(posa.x, posa.y,color, 0, 0);
-
-							template<bool blend, bool checkrange, bool useaa, bool side>
-							MTOOLS_FORCEINLINE void _update_pixel_bresenham(_bdir & line, _bpos & pos, RGBc color, int32 op, int32 penwidth)
-
+							if ((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) _update_pixel_bresenham<blend, false, useop, false, useaa, side>(linea, posa, color, op, 0);
 							_move_line<true>(linea, posa);
 							_move_line<true>(lineb, posb);						
 							l++; 
@@ -6164,7 +5992,7 @@ namespace mtools
 						{
 						while (l <= lena)
 							{
-							if ((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) _updatePixel<blend, false, false, false>(posa.x, posa.y, color, 0, 0);
+							if ((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) _update_pixel_bresenham<blend, false, useop, false, useaa, side>(linea, posa, color, op, 0);
 							_move_line<true>(linea, posa);
 							_move_line<false>(lineb, posb);
 							l++;
@@ -6177,7 +6005,7 @@ namespace mtools
 						{
 						while (l <= lena)
 							{
-							if ((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) _updatePixel<blend, false, false, false>(posa.x, posa.y, color, 0, 0);
+							if ((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) _update_pixel_bresenham<blend, false, useop, false, useaa, side>(linea, posa, color, op, 0);
 							_move_line<false>(linea, posa);
 							_move_line<true>(lineb, posb);
 							l++;
@@ -6187,7 +6015,7 @@ namespace mtools
 						{
 						while (l <= lena)
 							{
-							if ((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) _updatePixel<blend, false, false, false>(posa.x, posa.y, color, 0, 0);
+							if ((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) _update_pixel_bresenham<blend, false, useop, false, useaa, side>(linea, posa, color, op, 0);
 							_move_line<false>(linea, posa);
 							_move_line<false>(lineb, posb);
 							l++;
@@ -6195,12 +6023,6 @@ namespace mtools
 						}
 					}
 				}
-
-
-
-
-
-
 
 
 			/**
@@ -6262,7 +6084,7 @@ namespace mtools
 							{
 							while (l <= lena)
 								{
-								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _updatePixel<blend, false,false,false>(posa.x, posa.y,color,0,0);
+								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _update_pixel_bresenham<blend, false, useop, false, useaa, side>(linea, posa, color, op, 0);
 								_move_line<true>(linea, posa); 
 								_move_line<true>(lineb, posb); 
 								_move_line<true>(linec, posc);
@@ -6273,7 +6095,7 @@ namespace mtools
 							{
 							while (l <= lena)
 								{
-								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _updatePixel<blend, false, false, false>(posa.x, posa.y, color, 0, 0);
+								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _update_pixel_bresenham<blend, false, useop, false, useaa, side>(linea, posa, color, op, 0);
 								_move_line<true>(linea, posa);
 								_move_line<true>(lineb, posb);
 								_move_line<false>(linec, posc);
@@ -6287,7 +6109,7 @@ namespace mtools
 							{
 							while (l <= lena)
 								{
-								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _updatePixel<blend, false, false, false>(posa.x, posa.y, color, 0, 0);
+								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _update_pixel_bresenham<blend, false, useop, false, useaa, side>(linea, posa, color, op, 0);
 								_move_line<true>(linea, posa);
 								_move_line<false>(lineb, posb);
 								_move_line<true>(linec, posc);
@@ -6298,7 +6120,7 @@ namespace mtools
 							{
 							while (l <= lena)
 								{
-								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _updatePixel<blend, false, false, false>(posa.x, posa.y, color, 0, 0);
+								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _update_pixel_bresenham<blend, false, useop, false, useaa, side>(linea, posa, color, op, 0);
 								_move_line<true>(linea, posa);
 								_move_line<false>(lineb, posb);
 								_move_line<false>(linec, posc);
@@ -6315,7 +6137,7 @@ namespace mtools
 							{
 							while (l <= lena)
 								{
-								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _updatePixel<blend, false, false, false>(posa.x, posa.y, color, 0, 0);
+								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _update_pixel_bresenham<blend, false, useop, false, useaa, side>(linea, posa, color, op, 0);
 								_move_line<false>(linea, posa);
 								_move_line<true>(lineb, posb);
 								_move_line<true>(linec, posc);
@@ -6326,7 +6148,7 @@ namespace mtools
 							{
 							while (l <= lena)
 								{
-								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _updatePixel<blend, false, false, false>(posa.x, posa.y, color, 0, 0);
+								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _update_pixel_bresenham<blend, false, useop, false, useaa, side>(linea, posa, color, op, 0);
 								_move_line<false>(linea, posa);
 								_move_line<true>(lineb, posb);
 								_move_line<false>(linec, posc);
@@ -6340,7 +6162,7 @@ namespace mtools
 							{
 							while (l <= lena)
 								{
-								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _updatePixel<blend, false, false, false>(posa.x, posa.y, color, 0, 0);
+								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _update_pixel_bresenham<blend, false, useop, false, useaa, side>(linea, posa, color, op, 0);
 								_move_line<false>(linea, posa);
 								_move_line<false>(lineb, posb);
 								_move_line<true>(linec, posc);
@@ -6351,7 +6173,7 @@ namespace mtools
 							{
 							while (l <= lena)
 								{
-								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _updatePixel<blend, false, false, false>(posa.x, posa.y, color,0,0);
+								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _update_pixel_bresenham<blend, false, useop, false, useaa, side>(linea, posa, color, op, 0);
 								_move_line<false>(linea, posa);
 								_move_line<false>(lineb, posb);
 								_move_line<false>(linec, posc);
@@ -6389,7 +6211,7 @@ namespace mtools
 					}
 				MTOOLS_ASSERT(lP + lQ == PQ + 1);
 				_lineBresenham_avoid<blend, checkrange, useop, useaa, side>(P, Q, R, color, lQ, op);
-				_lineBresenham_avoid<blend, checkrange, useop, useaa, side>(Q, P, R, color, lP, op);
+				_lineBresenham_avoid<blend, checkrange, useop, useaa, !side>(Q, P, R, color, lP, op);
 				}
 
 
@@ -6414,7 +6236,7 @@ namespace mtools
 				if (ql > L) { ql = L; } else if (ql < 1) ql = 1;
 				int64 M = (pl + ((L+1) - ql)) >> 1; // much faster and usually good to just take M = L/2; 
 				_lineBresenham_avoid<blend, checkrange, useop, useaa, side>(P, Q, P2, color, L + 1 - M, op);
-				_lineBresenham_avoid<blend, checkrange, useop, useaa, side>(Q, P, Q2, color, M, op);
+				_lineBresenham_avoid<blend, checkrange, useop, useaa, !side>(Q, P, Q2, color, M, op);
 				}
 
 
@@ -6445,7 +6267,7 @@ namespace mtools
 				int64 ql = std::max<int64>(ql2, ql3);
 				int64 M = (pl + ((L + 1) - ql)) >> 1; // much faster and usually good to just take M = L/2; 
 				_lineBresenham_avoid<blend, checkrange, useop, useaa, side>(P, Q, P2, P3, color, L + 1 - M,op);
-				_lineBresenham_avoid<blend, checkrange, useop, useaa, side>(Q, P, Q2, Q3, color, M,op);	
+				_lineBresenham_avoid<blend, checkrange, useop, useaa, !side>(Q, P, Q2, Q3, color, M,op);	
 				}
 
 
@@ -6870,7 +6692,7 @@ namespace mtools
 				double dx, dy, err, cur = (double)(xx*sy - yy*sx);
 				if (cur == 0)
 					{
-					_lineBresenham<blend, checkrange, usepen>({ x0, y0 }, { x2, y2 }, color, false, penwidth);
+					_lineBresenham<blend, checkrange, usepen, false, false>({ x0, y0 }, { x2, y2 }, color, false, penwidth, 0);
 					return;
 					}
 				bool sw = false;
@@ -6904,7 +6726,7 @@ namespace mtools
 					if (2 * err > dy) { x0 += sx; dx -= xy; err += dy += yy; }
 					if (y1) { y0 += sy; dy -= xy; err += dx += xx; }
 					}
-				_lineBresenham<blend, checkrange, usepen>({ x0, y0 }, { x2, y2 }, color, sw, penwidth);
+				_lineBresenham<blend, checkrange, usepen, false, false>({ x0, y0 }, { x2, y2 }, color, sw, penwidth, 0);
 				}
 
 
@@ -7035,7 +6857,7 @@ namespace mtools
 				double xy = xx*sy + yy*sx, cur = xx*sy - yy*sx, err;
 				if ((cur == 0) || (w <= 0))
 					{
-					_lineBresenham<blend, checkrange, usepen>({ x0, y0 }, { x2, y2 }, color, false, penwidth);
+					_lineBresenham<blend, checkrange, usepen, false, false>({ x0, y0 }, { x2, y2 }, color, false, penwidth, 0);
 					return;
 					}
 				bool sw = false;
@@ -7091,7 +6913,7 @@ namespace mtools
 					if (2 * err < dx || y1) { y0 += sy; dy += xy; err += dx += xx; }
 					if (2 * err > dx || x1) { x0 += sx; dx += xy; err += dy += yy; }
 					}
-				_lineBresenham<blend, checkrange, usepen>({ x0, y0 }, { x2, y2 }, color, sw, penwidth);
+				_lineBresenham<blend, checkrange, usepen, false, false>({ x0, y0 }, { x2, y2 }, color, sw, penwidth, 0);
 				}
 
 
@@ -7313,9 +7135,9 @@ namespace mtools
 					yy = (double)y0; y0 = y3; y3 = (int64)yy; sy = -sy; yb = -yb; x1 = x2;
 					}
 				while (leg--);
-				if ((x0 == sax3) && (y0 == say3)) { _lineBresenham<blend, checkrange, usepen>({ x3, y3 }, { x0, y0 }, color, false, penwidth); }
-				else if ((x3 == sax3) && (y3 == say3)) { _lineBresenham<blend, checkrange, usepen>({ x0, y0 }, { x3, y3 }, color, false, penwidth); }
-				else _lineBresenham<blend, checkrange, usepen>({ x0, y0 }, { x3, y3 }, color, true, penwidth);
+				if ((x0 == sax3) && (y0 == say3)) { _lineBresenham<blend, checkrange, usepen, false, false>({ x3, y3 }, { x0, y0 }, color, false, penwidth, 0); }
+				else if ((x3 == sax3) && (y3 == say3)) { _lineBresenham<blend, checkrange, usepen, false, false>({ x0, y0 }, { x3, y3 }, color, false, penwidth, 0); }
+				else _lineBresenham<blend, checkrange, usepen, false, false>({ x0, y0 }, { x3, y3 }, color, true, penwidth, 0);
 				}
 
 
@@ -7802,7 +7624,7 @@ namespace mtools
 				double dx = (double)(4 * (a - 1.0)*b*b), dy = (double)(4 * (b1 + 1)*a*a);
 				double ed, i, err = b1*a*a - dx + dy;
 				bool f;
-				if (a == 0 || b == 0) return _lineBresenham<blend, checkrange, usepen>({ x0, y0 }, { x1, y1 }, color, true, penwidth);
+				if (a == 0 || b == 0) return _lineBresenham<blend, checkrange, usepen, false, false>({ x0, y0 }, { x1, y1 }, color, true, penwidth, 0);
 				if (x0 > x1) { x0 = x1; x1 += a; }
 				if (y0 > y1) y0 = y1;
 				y0 += (b + 1) / 2; y1 = y0 - b1;

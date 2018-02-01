@@ -389,14 +389,14 @@ int main(int argc, char *argv[])
 	iVec2 P3 = { 300,400 };
 	iVec2 P4 = { 100,500 };
 
-	int64 N = 1;
+	int64 N = 1;// 0000;
 
 	Chronometer();
 
 
 	for (int i = 0; i < N; i++)
 		{
-		//im.fill_triangle(P1, P2, P3, colorfill, true);
+		im.fill_triangle(P1, P2, P3, colorfill, true);
 		//im.draw_triangle(P1, P2, P3, color, true, false, 0);
 
 		LineBresenham(P1, P2, im, color);
@@ -414,14 +414,31 @@ int main(int argc, char *argv[])
 	Chronometer();
 	for (int i = 0; i < N; i++)
 	{
-	//im.fill_triangle(P1, P2, P3, colorfill, true);
+	//im.draw_triangle(P1, P2, P3, color, true, false, 0);
+	im.fill_triangle(P1, P2, P3, colorfill, true);
 	//im.fill_triangle(P1, P4, P3, colorfill, true);
-	im._lineBresenham<true, false, true, true>(P1, P2, color, false, 2,true);
-	im._lineBresenham<true, false, false, true>(P2, P3, color, false, 0, true);
-	im._lineBresenham<true, false, false, true>(P3, P1, color, false, 0,true);
+	im._lineBresenham<true, false, false, true, true>(P1, P2, color, false, 0, 0);
+	im._lineBresenham_avoid<true, false, false, true, true>(P2, P3, P1, color, 0,0);
+	im._lineBresenham_avoid_both_sides<true, false, false, true, true>(P3, P1, P2,color,0);
 	}
 	cout << "1) done in " << mtools::durationToString(Chronometer(),true) << "\n";
 	
+
+	/*
+	/* 
+	
+	- dot / pixel access
+	- line
+	- quadratic bezier
+	- rational quad bezier
+	- cubic bezier
+	
+
+	
+	
+	
+	
+	*/
 
 	/*
 	iVec2 P[10];
