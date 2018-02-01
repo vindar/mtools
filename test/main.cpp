@@ -222,6 +222,155 @@ void testCF()
 
 
 
+void LineBresenham(iVec2 P1, iVec2 P2, Image & im, RGBc color)
+{
+	int64 x1 = P1.X(); 
+	int64 y1 = P1.Y();
+	int64 x2 = P2.X();
+	int64 y2 = P2.Y();
+
+	int64 dy = y2 - y1;
+	int64 dx = x2 - x1;
+	int64 stepx, stepy;
+
+	if (dy < 0) { dy = -dy;  stepy = -1; } else { stepy = 1; }
+	if (dx < 0) { dx = -dx;  stepx = -1; } else { stepx = 1; }
+	dy <<= 1;        // dy is now 2*dy
+	dx <<= 1;        // dx is now 2*dx
+
+	im.operator()(x1, y1).blend(color);
+
+
+	if (stepx == 1) 
+		{
+		if (stepy == 1)
+			{
+			if (dx > dy)
+			{
+				int fraction = dy - (dx >> 1);  // same as 2*dy - dx
+				while (x1 != x2)
+				{
+					if (fraction >= 0)
+					{
+						y1++;
+						fraction -= dx;          // same as fraction -= 2*dx
+					}
+					x1++;
+					fraction += dy;              // same as fraction -= 2*dy
+					im.operator()(x1, y1).blend(color);
+				}
+			}
+			else {
+				int fraction = dx - (dy >> 1);
+				while (y1 != y2) {
+					if (fraction >= 0) {
+						x1++;
+						fraction -= dy;
+					}
+					y1++;
+					fraction += dx;
+					im.operator()(x1, y1).blend(color);
+				}
+			}
+			}
+		else
+			{
+			if (dx > dy)
+			{
+				int fraction = dy - (dx >> 1);  // same as 2*dy - dx
+				while (x1 != x2)
+				{
+					if (fraction >= 0)
+					{
+						y1--;
+						fraction -= dx;          // same as fraction -= 2*dx
+					}
+					x1++;
+					fraction += dy;              // same as fraction -= 2*dy
+					im.operator()(x1, y1).blend(color);
+				}
+			}
+			else {
+				int fraction = dx - (dy >> 1);
+				while (y1 != y2) {
+					if (fraction >= 0) {
+						x1++;
+						fraction -= dy;
+					}
+					y1--;
+					fraction += dx;
+					im.operator()(x1, y1).blend(color);
+				}
+			}
+			}
+		}
+	else
+		{
+		if (stepy == 1)
+			{
+			if (dx > dy)
+			{
+				int fraction = dy - (dx >> 1);  // same as 2*dy - dx
+				while (x1 != x2)
+				{
+					if (fraction >= 0)
+					{
+						y1++;
+						fraction -= dx;          // same as fraction -= 2*dx
+					}
+					x1--;
+					fraction += dy;              // same as fraction -= 2*dy
+					im.operator()(x1, y1).blend(color);
+				}
+			}
+			else {
+				int fraction = dx - (dy >> 1);
+				while (y1 != y2) {
+					if (fraction >= 0) {
+						x1--;
+						fraction -= dy;
+					}
+					y1++;
+					fraction += dx;
+					im.operator()(x1, y1).blend(color);
+				}
+			}
+			}
+		else
+			{
+			if (dx > dy)
+			{
+				int fraction = dy - (dx >> 1);  // same as 2*dy - dx
+				while (x1 != x2)
+				{
+					if (fraction >= 0)
+					{
+						y1--;
+						fraction -= dx;          // same as fraction -= 2*dx
+					}
+					x1--;
+					fraction += dy;              // same as fraction -= 2*dy
+					im.operator()(x1, y1).blend(color);
+				}
+			}
+			else {
+				int fraction = dx - (dy >> 1);
+				while (y1 != y2) {
+					if (fraction >= 0) {
+						x1--;
+						fraction -= dy;
+					}
+					y1--;
+					fraction += dx;
+					im.operator()(x1, y1).blend(color);
+				}
+			}
+			}
+		}
+
+}
+
+
 int main(int argc, char *argv[])
 {
 
@@ -248,8 +397,12 @@ int main(int argc, char *argv[])
 	for (int i = 0; i < N; i++)
 		{
 		//im.fill_triangle(P1, P2, P3, colorfill, true);
-		im.draw_triangle(P1, P2, P3, color, true, false, 0);
-		}
+		//im.draw_triangle(P1, P2, P3, color, true, false, 0);
+
+		LineBresenham(P1, P2, im, color);
+		LineBresenham(P2, P3, im, color);
+		LineBresenham(P3, P1, im, color);
+	}
 	cout << "1) done in " << mtools::durationToString(Chronometer(),true) << "\n";
 
 	iVec2 T = { 350, 0 };
