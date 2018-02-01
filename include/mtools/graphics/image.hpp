@@ -4655,7 +4655,7 @@ namespace mtools
 			*******************************************************************************************************************************************************/
 
 
-		private:
+//		private:
 
 
 
@@ -5430,19 +5430,6 @@ namespace mtools
 
 
 
-
-
-
-		public:
-
-
-
-
-
-
-
-
-
 			/* stucture holding info on  a bresenham line */
 			struct _bdir
 				{
@@ -5462,40 +5449,6 @@ namespace mtools
 				};
 
 
-			/* compute the value for antialiasing the half side of a line during bresenham algorithm:
-			   side true = correspond to the outside being on the left of the line we follow the line in its increasing direction.
-			               correspond to drawing a filled polygone in clockwise order. */
-			template<bool side = true, bool x_major = true, int64 stepx = 1, int64 stepy = 1>  MTOOLS_FORCEINLINE int32 _line_aa(_bdir & linedir, _bpos & linepos)
-				{				
-				int64 a;				
-				if (linedir.x_major)
-					{
-					a = linedir.dy;
-					a = (((a - linepos.frac)*linedir.amul) >> 52);
-					if (side)
-						{
-						if (linedir.stepx != linedir.stepy) a = 255 - a;
-						}
-					else
-						{
-						if (linedir.stepx == linedir.stepy) a = 255 - a;
-						}
-					}
-				else
-					{
-					a = linedir.dx;
-					a = (((a - linepos.frac)*linedir.amul) >> 52);
-					if (side)
-						{
-						if (linedir.stepx == linedir.stepy) a = 255 - a;
-						}
-					else
-						{
-						if (linedir.stepx != linedir.stepy) a = 255 - a;
-						}
-					}
-				return (int32)a + 1;
-				}
 			
 			/**
 			* Construct the structure containg the info for a bresenham line 
@@ -5529,11 +5482,68 @@ namespace mtools
 
 
 
+			/* compute the value for antialiasing the half side of a line during bresenham algorithm:
+			   side true = correspond to the outside being on the left of the line we follow the line in its increasing direction.
+			               correspond to drawing a filled polygone in clockwise order. */
+			template<bool side, bool x_major, int64 stepx, int64 stepy>  MTOOLS_FORCEINLINE int32 _line_aa(_bdir & linedir, _bpos & linepos)
+				{				
+				int64 a;				
+				if (x_major)
+					{
+					a = linedir.dy;
+					a = (((a - linepos.frac)*linedir.amul) >> 52);
+					if (side) { if (stepx != stepy) a = 255 - a; } else { if (stepx == stepy) a = 255 - a; }
+					}
+				else
+					{
+					a = linedir.dx;
+					a = (((a - linepos.frac)*linedir.amul) >> 52);
+					if (side) { if (stepx == stepy) a = 255 - a; } else { if (stepx != stepy) a = 255 - a; }
+					}
+				return (int32)a + 1;
+				}
+
+
+			/* same as above but a bit slower because not templated */
+			template<bool side>  MTOOLS_FORCEINLINE int32 _line_aa(_bdir & linedir, _bpos & linepos)
+				{
+				int64 a;
+				if (linedir.x_major)
+					{
+					a = linedir.dy;
+					a = (((a - linepos.frac)*linedir.amul) >> 52);
+					if (side) { if (linedir.stepx != linedir.stepy) a = 255 - a; } else { if (linedir.stepx == linedir.stepy) a = 255 - a; }
+					}
+				else
+					{
+					a = linedir.dx;
+					a = (((a - linepos.frac)*linedir.amul) >> 52);
+					if (side) { if (linedir.stepx == linedir.stepy) a = 255 - a; } else { if (linedir.stepx != linedir.stepy) a = 255 - a; }
+					}
+				return (int32)a + 1;
+				}
+
+
 			/**
 			* Move the position pos by 1 pixel along a bresenham line.
-			*
-			* [x_major can be deduced from linedir but is given as template paramter for speed optimization]
+			* fast template version
 			*/
+			template<bool x_major, int64 stepx, int64 stepy> MTOOLS_FORCEINLINE void _move_line(const _bdir & linedir, _bpos & pos)
+			{
+				if (x_major)
+				{
+					if (pos.frac >= 0) { pos.y += stepy; pos.frac -= linedir.dx; }
+					pos.x += stepx; pos.frac += linedir.dy;
+				}
+				else
+				{
+					if (pos.frac >= 0) { pos.x += stepx; pos.frac -= linedir.dy; }
+					pos.y += stepy; pos.frac += linedir.dx;
+				}
+			}
+
+
+			/** Same as above but a little slower because not templated */
 			template<bool x_major> MTOOLS_FORCEINLINE void _move_line(const _bdir & linedir, _bpos & pos)
 				{
 				if (x_major)
@@ -5547,29 +5557,6 @@ namespace mtools
 					pos.y += linedir.stepy; pos.frac += linedir.dx;
 					}
 				}
-
-
-			/**
-			* Move the position pos by 1 pixel along a bresenham line.
-			*
-			* [x_major, stepx and stepy can be deduced from linedir but are given as template parameters 
-			* for speed optimization]
-			*/
-			template<bool x_major,int64 stepx,int64 stepy> MTOOLS_FORCEINLINE void _move_line(const _bdir & linedir, _bpos & pos)
-				{
-				if (x_major)
-					{
-					if (pos.frac >= 0) { pos.y += stepy; pos.frac -= linedir.dx; }
-					pos.x += stepx; pos.frac += linedir.dy;
-					}
-				else
-					{
-					if (pos.frac >= 0) { pos.x += stepx; pos.frac -= linedir.dy; }
-					pos.y += stepy; pos.frac += linedir.dx;
-					}
-				}
-
-
 
 
 			/**
@@ -5809,158 +5796,316 @@ namespace mtools
 
 
 
+
+			/** sub procedure, color a single pixel in a bresenham line */
+			template<bool blend, bool checkrange, bool useop, bool usepen, bool useaa, bool side, bool x_major, int64 stepx, int64 stepy>
+			MTOOLS_FORCEINLINE void _update_pixel_bresenham(_bdir & line, _bpos & pos, RGBc color, int32 op, int32 penwidth)
+			{
+				if (useaa)
+				{
+					int32 aa = _line_aa<side, x_major, stepx, stepy>(line, pos);
+					if (useop) { aa *= op; aa >>= 8; }
+					_updatePixel<blend, checkrange, true, usepen>(pos.x, pos.y, color, aa, penwidth);
+				}
+				else
+				{
+					_updatePixel<blend, checkrange, useop, usepen>(pos.x, pos.y, color, op, penwidth);
+				}
+			}
+
+
+			/** same as above but a bit slower because not templated */
+			template<bool blend, bool checkrange, bool useop, bool usepen, bool useaa, bool side>
+			MTOOLS_FORCEINLINE void _update_pixel_bresenham(_bdir & line, _bpos & pos, RGBc color, int32 op, int32 penwidth)
+			{
+				if (useaa)
+				{
+					int32 aa = _line_aa<side>(line, pos);
+					if (useop) { aa *= op; aa >>= 8; }
+					_updatePixel<blend, checkrange, true, usepen>(pos.x, pos.y, color, aa, penwidth);
+				}
+				else
+				{
+					_updatePixel<blend, checkrange, useop, usepen>(pos.x, pos.y, color, op, penwidth);
+				}
+			}
+
+
+			/** sub procedure, draw a bresenham line. */
+			template<bool useaa, bool blend, bool usepen, bool side, bool x_major, int64 stepx, int64 stepy>
+			MTOOLS_FORCEINLINE void _lineBresenham_sub(_bdir & line, _bpos & pos, int64 y, int32 penwidth, RGBc color)
+			{
+				while (--y >= 0)
+				{
+					//			_update_pixel_bresenham<blend, usepen, false, usepen, useaa, side, x_major, stepx, stepy>(line, pos, color, 0, penwidth);
+					_update_pixel_bresenham<blend, usepen, false, usepen, useaa, side>(line, pos, color, 0, penwidth);
+					_move_line<x_major, stepx, stepy>(line, pos);
+				}
+			}
+
+
 			/**
-			* Draw a segment [P1,P2] using Bresenham's algorithm.
+			* Draw a segment [P1,P2] using Bresenham's algorithm, possibly with side antialiasing
 			*
 			* The algorithm is symmetric: the line [P1,P2] is always equal
 			* to the line drawn in the other direction [P2,P1].
 			*
-			* Set draw_last to true to draw the endpoint P2 and to false to draw only
-			* the open segment [P1,P2[.
+			* template parameter control (side) antialiasing, blending, checkrange and pen width.
 			*
 			* Optimized for speed.
 			**/
-			template<bool blend, bool checkrange, bool usepen>  MTOOLS_FORCEINLINE void _lineBresenham(const iVec2 P1, const iVec2 P2, RGBc color, bool draw_last, int32 penwidth)
-				{
+			template<bool blend, bool checkrange, bool usepen, bool useaa = false>  MTOOLS_FORCEINLINE void _lineBresenham(const iVec2 P1, const iVec2 P2, RGBc color, bool draw_last, int32 penwidth, bool side = true)
+			{
 				if (P1 == P2)
-					{
+				{
 					if (draw_last)
-						{
-						if (penwidth <= 0) { _updatePixel<blend, checkrange, false, false>(P1.X(), P1.Y(), color, 0, penwidth); } else { _updatePixel<blend, checkrange, false, true>(P1.X(), P1.Y(), color, 0, penwidth); }
-						}
-					return;
+					{
+						if (penwidth <= 0) { _updatePixel<blend, checkrange, false, false>(P1.X(), P1.Y(), color, 0, penwidth); }
+						else { _updatePixel<blend, checkrange, false, true>(P1.X(), P1.Y(), color, 0, penwidth); }
 					}
+					return;
+				}
 				int64 y = _lengthBresenham(P1, P2, draw_last);
 				_bdir line;
 				_bpos pos;
 				_init_line(P1, P2, line, pos);
 				if (checkrange)
-					{
-					iBox2 B; 
-					if (penwidth <= 0) { B = iBox2(0, _lx - 1, 0, _ly - 1); } else { B = iBox2(-penwidth-2, _lx + penwidth + 1, -penwidth - 2, _ly + penwidth  +1); }
+				{
+					iBox2 B;
+					if (penwidth <= 0) { B = iBox2(0, _lx - 1, 0, _ly - 1); }
+					else { B = iBox2(-penwidth - 2, _lx + penwidth + 1, -penwidth - 2, _ly + penwidth + 1); }
 					int64 r = _move_inside_box(line, pos, B);
 					if (r < 0) return; // nothing to draw
 					y -= r;
-					y = std::min<int64>(y , _lenght_inside_box(line, pos, B));
-					}
-				if (penwidth <= 0)
-					{ // unit pen, do not need to check range anymore
+					y = std::min<int64>(y, _lenght_inside_box(line, pos, B));
+				}
+
+				//call template sub function with corresponding template param: side, x_major, stepx, stepy
+				if (side)
+				{
+					const bool SIDE = true;
 					if (line.x_major)
+					{
+						const bool XMAJOR = true;
+						if (line.stepx == 1)
 						{
-						while (--y >= 0)
+							const int64 STEPX = 1;
+							if (line.stepy == 1)
 							{
-							_updatePixel<blend, false, false, false>(pos.x, pos.y, color, 0, 0);
-							_move_line<true>(line, pos);
+								const int64 STEPY = 1;
+								_lineBresenham_sub<useaa, blend, usepen, SIDE, XMAJOR, STEPX, STEPY>(line, pos, y, penwidth, color);
+							}
+							else
+							{
+								const int64 STEPY = -1;
+								_lineBresenham_sub<useaa, blend, usepen, SIDE, XMAJOR, STEPX, STEPY>(line, pos, y, penwidth, color);
 							}
 						}
-					else
+						else
 						{
-						while (--y >= 0)
+							const int64 STEPX = -1;
+							if (line.stepy == 1)
 							{
-							_updatePixel<blend, false, false, false>(pos.x, pos.y, color, 0, 0);
-							_move_line<false>(line, pos);
+								const int64 STEPY = 1;
+								_lineBresenham_sub<useaa, blend, usepen, SIDE, XMAJOR, STEPX, STEPY>(line, pos, y, penwidth, color);
+							}
+							else
+							{
+								const int64 STEPY = -1;
+								_lineBresenham_sub<useaa, blend, usepen, SIDE, XMAJOR, STEPX, STEPY>(line, pos, y, penwidth, color);
 							}
 						}
 					}
-				else
-					{ // larger pen, we always check the range
-					if (line.x_major)
+					else
+					{
+						const bool XMAJOR = false;
+						if (line.stepx == 1)
 						{
-						while (--y >= 0)
+							const int64 STEPX = 1;
+							if (line.stepy == 1)
 							{
-							_updatePixel<blend, true, false, true>(pos.x, pos.y, color, 0, penwidth);
-							_move_line<true>(line, pos);
+								const int64 STEPY = 1;
+								_lineBresenham_sub<useaa, blend, usepen, SIDE, XMAJOR, STEPX, STEPY>(line, pos, y, penwidth, color);
+							}
+							else
+							{
+								const int64 STEPY = -1;
+								_lineBresenham_sub<useaa, blend, usepen, SIDE, XMAJOR, STEPX, STEPY>(line, pos, y, penwidth, color);
 							}
 						}
-					else
+						else
 						{
-						while (--y >= 0)
+							const int64 STEPX = -1;
+							if (line.stepy == 1)
 							{
-							_updatePixel<blend, true, false, true>(pos.x, pos.y, color, 0, penwidth);
-							_move_line<false>(line, pos);
+								const int64 STEPY = 1;
+								_lineBresenham_sub<useaa, blend, usepen, SIDE, XMAJOR, STEPX, STEPY>(line, pos, y, penwidth, color);
+							}
+							else
+							{
+								const int64 STEPY = -1;
+								_lineBresenham_sub<useaa, blend, usepen, SIDE, XMAJOR, STEPX, STEPY>(line, pos, y, penwidth, color);
 							}
 						}
 					}
 				}
+				else
+				{
+					const bool SIDE = false;
+					if (line.x_major)
+					{
+						const bool XMAJOR = true;
+						if (line.stepx == 1)
+						{
+							const int64 STEPX = 1;
+							if (line.stepy == 1)
+							{
+								const int64 STEPY = 1;
+								_lineBresenham_sub<useaa, blend, usepen, SIDE, XMAJOR, STEPX, STEPY>(line, pos, y, penwidth, color);
+							}
+							else
+							{
+								const int64 STEPY = -1;
+								_lineBresenham_sub<useaa, blend, usepen, SIDE, XMAJOR, STEPX, STEPY>(line, pos, y, penwidth, color);
+							}
+						}
+						else
+						{
+							const int64 STEPX = -1;
+							if (line.stepy == 1)
+							{
+								const int64 STEPY = 1;
+								_lineBresenham_sub<useaa, blend, usepen, SIDE, XMAJOR, STEPX, STEPY>(line, pos, y, penwidth, color);
+							}
+							else
+							{
+								const int64 STEPY = -1;
+								_lineBresenham_sub<useaa, blend, usepen, SIDE, XMAJOR, STEPX, STEPY>(line, pos, y, penwidth, color);
+							}
+						}
+					}
+					else
+					{
+						const bool XMAJOR = false;
+						if (line.stepx == 1)
+						{
+							const int64 STEPX = 1;
+							if (line.stepy == 1)
+							{
+								const int64 STEPY = 1;
+								_lineBresenham_sub<useaa, blend, usepen, SIDE, XMAJOR, STEPX, STEPY>(line, pos, y, penwidth, color);
+							}
+							else
+							{
+								const int64 STEPY = -1;
+								_lineBresenham_sub<useaa, blend, usepen, SIDE, XMAJOR, STEPX, STEPY>(line, pos, y, penwidth, color);
+							}
+						}
+						else
+						{
+							const int64 STEPX = -1;
+							if (line.stepy == 1)
+							{
+								const int64 STEPY = 1;
+								_lineBresenham_sub<useaa, blend, usepen, SIDE, XMAJOR, STEPX, STEPY>(line, pos, y, penwidth, color);
+							}
+							else
+							{
+								const int64 STEPY = -1;
+								_lineBresenham_sub<useaa, blend, usepen, SIDE, XMAJOR, STEPX, STEPY>(line, pos, y, penwidth, color);
+							}
+						}
+					}
+				}
+			}
+
 
 
 			/**
-			* Draw a segment [P1,P2] using Bresenham's algorithm with 'side' antialiasing
-			*
-			* The algorithm is symmetric: the line [P1,P2] is always equal
-			* to the line drawn in the other direction [P2,P1].
-			*
-			* Set draw_last to true to draw the endpoint P2 and to false to draw only
-			* the open segment [P1,P2[.
-			*
-			* Optimized for speed.
+			* Return the max distance from P where [P,Q] and [P,Q2] intersect.
 			**/
-			template<bool blend, bool checkrange, bool usepen>  MTOOLS_FORCEINLINE void _lineBresenham_AA(const iVec2 P1, const iVec2 P2, RGBc color, bool draw_last, int32 penwidth)
-				{
-				if (P1 == P2)
-					{
-					if (draw_last)
-						{
-						if (penwidth <= 0) { _updatePixel<blend, checkrange, false, false>(P1.X(), P1.Y(), color, 0, penwidth); } else { _updatePixel<blend, checkrange, false, true>(P1.X(), P1.Y(), color, 0, penwidth); }
-						}
-					return;
-					}
-				int64 y = _lengthBresenham(P1, P2, draw_last);
-				_bdir line;
-				_bpos pos;
-				_init_line(P1, P2, line, pos);
+			template<bool checkrange> inline int64 _lineBresenham_find_max_intersection(iVec2 P, iVec2 Q, iVec2 Q2)
+			{
+				if ((P == Q) || (P == Q2)) return 1;
+				_bdir linea;
+				_bpos posa;
+				_init_line(P, Q, linea, posa);
+				_bdir lineb;
+				_bpos posb;
+				_init_line(P, Q2, lineb, posb);
+				int64 lena = _lengthBresenham(P, Q, true);
+				int64 lenb = _lengthBresenham(P, Q2, true);
+				int64 r = 0;
 				if (checkrange)
+				{
+					iBox2 B(0, _lx - 1, 0, _ly - 1);
+					r = _move_inside_box(linea, posa, B); // move the first line into the box. 
+					if (r < 0) return 1; // nothing to draw
+					lena -= r;
+					_move_line(lineb, posb, r); // move the second line
+					lenb -= r;
+					lena = std::min<int64>(lena, _lenght_inside_box(linea, posa, B)); // number of pixels still to draw. 
+				}
+				lena--;
+				lenb--;
+				int64 l = 0;
+				int64 maxp = 0;
+				if (linea.x_major)
+				{
+					if (lineb.x_major)
 					{
-					iBox2 B; 
-					if (penwidth <= 0) { B = iBox2(0, _lx - 1, 0, _ly - 1); } else { B = iBox2(-penwidth-2, _lx + penwidth + 1, -penwidth - 2, _ly + penwidth  +1); }
-					int64 r = _move_inside_box(line, pos, B);
-					if (r < 0) return; // nothing to draw
-					y -= r;
-					y = std::min<int64>(y , _lenght_inside_box(line, pos, B));
-					}
-				if (penwidth <= 0)
-					{ // unit pen, do not need to check range anymore
-					if (line.x_major)
+						int64 o = 0;
+						while ((o <= 1) && (l <= lena) && (l <= lenb))
 						{
-						while (--y >= 0)
-							{
-							int32 aa = (int32)_line_aa(line, pos);
-							_updatePixel<blend, false, true, false>(pos.x, pos.y, color, aa, 0);
-							_move_line<true>(line, pos);
-							}
-						}
-					else
-						{
-						while (--y >= 0)
-							{
-							int32 aa = (int32)_line_aa(line, pos);
-							_updatePixel<blend, false, true, false>(pos.x, pos.y, color, aa, 0);
-							_move_line<false>(line, pos);
-							}
+							o = abs(posa.x - posb.x) + abs(posa.y - posb.y);
+							if (o == 0) maxp = l;
+							_move_line<true>(linea, posa);
+							_move_line<true>(lineb, posb);
+							l++;
 						}
 					}
-				else
-					{ // larger pen, we always check the range
-					if (line.x_major)
-						{
-						while (--y >= 0)
-							{
-							int32 aa = (int32)_line_aa(line, pos);
-							_updatePixel<blend, true, true, true>(pos.x, pos.y, color, aa, penwidth);
-							_move_line<true>(line, pos);
-							}
-						}
 					else
+					{
+						int64 o = 0;
+						while ((o <= 1) && (l <= lena) && (l <= lenb))
 						{
-						while (--y >= 0)
-							{
-							int32 aa = (int32)_line_aa(line, pos);
-							_updatePixel<blend, true, true, true>(pos.x, pos.y, color, aa, penwidth);
-							_move_line<false>(line, pos);
-							}
+							o = abs(posa.x - posb.x) + abs(posa.y - posb.y);
+							if (o == 0) maxp = l;
+							_move_line<true>(linea, posa);
+							_move_line<false>(lineb, posb);
+							l++;
 						}
 					}
 				}
+				else
+				{
+					if (lineb.x_major)
+					{
+						int64 o = 0;
+						while ((o <= 1) && (l <= lena) && (l <= lenb))
+						{
+							o = abs(posa.x - posb.x) + abs(posa.y - posb.y);
+							if (o == 0) maxp = l;
+							_move_line<false>(linea, posa);
+							_move_line<true>(lineb, posb);
+							l++;
+						}
+					}
+					else
+					{
+						int64 o = 0;
+						while ((o <= 1) && (l <= lena) && (l <= lenb))
+						{
+							o = abs(posa.x - posb.x) + abs(posa.y - posb.y);
+							if (o == 0) maxp = l;
+							_move_line<false>(linea, posa);
+							_move_line<false>(lineb, posb);
+							l++;
+						}
+					}
+				}
+				return ((maxp == 0) ? 1 : (r + maxp));
+			}
 
 
 			/**
@@ -5975,7 +6120,7 @@ namespace mtools
 			 * 
 			 * Optimized for speed. 
 			 **/
-			template<bool blend, bool checkrange> inline void _lineBresenham_avoid(iVec2 P, iVec2 Q, iVec2 P2, RGBc color, int64 stop_before)
+			template<bool blend, bool checkrange, bool useop, bool useaa, bool side> inline void _lineBresenham_avoid(iVec2 P, iVec2 Q, iVec2 P2, RGBc color, int64 stop_before, int32 op)
 				{
 				if (P == Q) return;
 				_bdir linea;
@@ -6006,6 +6151,10 @@ namespace mtools
 						while (l <= lena)
 							{
 							if ((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) _updatePixel<blend, false, false, false>(posa.x, posa.y,color, 0, 0);
+
+							template<bool blend, bool checkrange, bool useaa, bool side>
+							MTOOLS_FORCEINLINE void _update_pixel_bresenham(_bdir & line, _bpos & pos, RGBc color, int32 op, int32 penwidth)
+
 							_move_line<true>(linea, posa);
 							_move_line<true>(lineb, posb);						
 							l++; 
@@ -6050,91 +6199,6 @@ namespace mtools
 
 
 
-			/**
-			* Return the max distance from P where [P,Q] and [P,Q2] intersect. 
-			**/
-			template<bool checkrange> inline int64 _lineBresenham_find_max_intersection(iVec2 P, iVec2 Q, iVec2 Q2)
-				{
-				if ((P == Q)||(P == Q2)) return 1;
-				_bdir linea;
-				_bpos posa;
-				_init_line(P, Q, linea, posa);
-				_bdir lineb;
-				_bpos posb;
-				_init_line(P, Q2, lineb, posb);
-				int64 lena = _lengthBresenham(P, Q, true);
-				int64 lenb = _lengthBresenham(P, Q2, true);
-				int64 r = 0;
-				if (checkrange)
-					{
-					iBox2 B(0, _lx - 1, 0, _ly - 1);
-					r = _move_inside_box(linea, posa, B); // move the first line into the box. 
-					if (r < 0) return 1; // nothing to draw
-					lena -= r;
-					_move_line(lineb, posb, r); // move the second line
-					lenb -= r;
-					lena = std::min<int64>(lena, _lenght_inside_box(linea, posa, B)); // number of pixels still to draw. 
-					}
-				lena--;
-				lenb--;
-				int64 l = 0;
-				int64 maxp = 0;
-				if (linea.x_major)
-					{
-					if (lineb.x_major)
-						{
-						int64 o = 0;
-						while ((o <= 1) && (l <= lena) && (l <= lenb))
-							{
-							o = abs(posa.x  - posb.x) + abs(posa.y - posb.y);
-							if (o == 0) maxp = l;
-							_move_line<true>(linea, posa);
-							_move_line<true>(lineb, posb);
-							l++;
-							}
-						}
-					else
-						{
-						int64 o = 0;
-						while ((o <= 1) && (l <= lena) && (l <= lenb))
-							{
-							o = abs(posa.x - posb.x) + abs(posa.y - posb.y);
-							if (o == 0) maxp = l;
-							_move_line<true>(linea, posa);
-							_move_line<false>(lineb, posb);
-							l++;
-							}
-						}
-					}
-				else
-					{
-					if (lineb.x_major)
-						{
-						int64 o = 0;
-						while ((o <= 1) && (l <= lena) && (l <= lenb))
-							{
-							o = abs(posa.x - posb.x) + abs(posa.y - posb.y);
-							if (o == 0) maxp = l;
-							_move_line<false>(linea, posa);
-							_move_line<true>(lineb, posb);
-							l++;
-							}
-						}
-					else
-						{
-						int64 o = 0;
-						while ((o <= 1) && (l <= lena) && (l <= lenb))
-							{
-							o = abs(posa.x - posb.x) + abs(posa.y - posb.y);
-							if (o == 0) maxp = l;
-							_move_line<false>(linea, posa);
-							_move_line<false>(lineb, posb);
-							l++;
-							}
-						}
-					}
-				return ((maxp == 0) ? 1 : (r + maxp));
-				}
 
 
 
@@ -6151,10 +6215,10 @@ namespace mtools
 			*
 			* Optimized for speed.
 			**/
-			template<bool blend, bool checkrange> inline void _lineBresenham_avoid(iVec2 P, iVec2 Q, iVec2 P2, iVec2 P3, RGBc color, int64 stop_before)
+			template<bool blend, bool checkrange, bool useop, bool useaa, bool side> inline void _lineBresenham_avoid(iVec2 P, iVec2 Q, iVec2 P2, iVec2 P3, RGBc color, int64 stop_before, int32 op)
 				{
-				if ((P2 == P3)||(P3 == P)) { _lineBresenham_avoid<blend, checkrange>(P, Q, P2, color, stop_before); return; }
-				if (P2 == P) { _lineBresenham_avoid<blend, checkrange>(P, Q, P3, color, stop_before); return; }
+				if ((P2 == P3)||(P3 == P)) { _lineBresenham_avoid<blend, checkrange, useop, useaa, side>(P, Q, P2, color, stop_before, op); return; }
+				if (P2 == P) { _lineBresenham_avoid<blend, checkrange, useop, useaa, side>(P, Q, P3, color, stop_before, op); return; }
 				if (P == Q) return;
 
 				_bdir linea;
@@ -6310,7 +6374,7 @@ namespace mtools
 			* 
 			* Optimized for speed.
 			**/
-			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void _lineBresenham_avoid_both_sides(iVec2 P, iVec2 Q, iVec2 R, RGBc color)
+			template<bool blend, bool checkrange, bool useop, bool useaa, bool side> MTOOLS_FORCEINLINE void _lineBresenham_avoid_both_sides(iVec2 P, iVec2 Q, iVec2 R, RGBc color, int32 op)
 				{
 				if ((P==Q)||(P == R)||(Q == R)) {  return; }
 				const int64 PQ = _lengthBresenham(P, Q);
@@ -6324,8 +6388,8 @@ namespace mtools
 					if (lP > lQ) { lP--; } else { lQ--; }
 					}
 				MTOOLS_ASSERT(lP + lQ == PQ + 1);
-				_lineBresenham_avoid<blend, checkrange>(P, Q, R, color, lQ);
-				_lineBresenham_avoid<blend, checkrange>(Q, P, R, color, lP);
+				_lineBresenham_avoid<blend, checkrange, useop, useaa, side>(P, Q, R, color, lQ, op);
+				_lineBresenham_avoid<blend, checkrange, useop, useaa, side>(Q, P, R, color, lP, op);
 				}
 
 
@@ -6341,7 +6405,7 @@ namespace mtools
 			 * 
 			 * Optimized for speed.
 			 **/
-			template<bool blend, bool checkrange> inline void _lineBresenham_avoid_both_sides(iVec2 P, iVec2 Q, iVec2 P2, iVec2 Q2, RGBc color)
+			template<bool blend, bool checkrange, bool useop, bool useaa, bool side> inline void _lineBresenham_avoid_both_sides(iVec2 P, iVec2 Q, iVec2 P2, iVec2 Q2, RGBc color, int32 op)
 				{
 				const int64 L = _lengthBresenham(P, Q);				
 				int64 pl = _lineBresenham_find_max_intersection<checkrange>(P, Q, P2);
@@ -6349,8 +6413,8 @@ namespace mtools
 				int64 ql = _lineBresenham_find_max_intersection<checkrange>(Q, P, Q2);
 				if (ql > L) { ql = L; } else if (ql < 1) ql = 1;
 				int64 M = (pl + ((L+1) - ql)) >> 1; // much faster and usually good to just take M = L/2; 
-				_lineBresenham_avoid<blend, checkrange>(P, Q, P2, color, L + 1 - M);
-				_lineBresenham_avoid<blend, checkrange>(Q, P, Q2, color, M);
+				_lineBresenham_avoid<blend, checkrange, useop, useaa, side>(P, Q, P2, color, L + 1 - M, op);
+				_lineBresenham_avoid<blend, checkrange, useop, useaa, side>(Q, P, Q2, color, M, op);
 				}
 
 
@@ -6366,7 +6430,7 @@ namespace mtools
 			*
 			* Optimized for speed.
 			**/
-			template<bool blend, bool checkrange> inline void _lineBresenham_avoid_both_sides(iVec2 P, iVec2 Q, iVec2 P2, iVec2 P3, iVec2 Q2, iVec2 Q3, RGBc color)
+			template<bool blend, bool checkrange, bool useop, bool useaa, bool side> inline void _lineBresenham_avoid_both_sides(iVec2 P, iVec2 Q, iVec2 P2, iVec2 P3, iVec2 Q2, iVec2 Q3, RGBc color, int32 op)
 				{
 				const int64 L = _lengthBresenham(P, Q);
 				int64 pl2 = _lineBresenham_find_max_intersection<checkrange>(P, Q, P2);
@@ -6380,9 +6444,8 @@ namespace mtools
 				if (ql3 > L) { ql3 = L; } else if (ql3 < 1) ql3 = 1;
 				int64 ql = std::max<int64>(ql2, ql3);
 				int64 M = (pl + ((L + 1) - ql)) >> 1; // much faster and usually good to just take M = L/2; 
-				_lineBresenham_avoid<blend, checkrange>(P, Q, P2, P3, color, L + 1 - M);
-				_lineBresenham_avoid<blend, checkrange>(Q, P, Q2, Q3, color, M);
-				
+				_lineBresenham_avoid<blend, checkrange, useop, useaa, side>(P, Q, P2, P3, color, L + 1 - M,op);
+				_lineBresenham_avoid<blend, checkrange, useop, useaa, side>(Q, P, Q2, Q3, color, M,op);	
 				}
 
 

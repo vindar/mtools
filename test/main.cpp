@@ -17,6 +17,7 @@ class TestImage : public Image
 
 
 
+
 	};
 
 
@@ -376,8 +377,7 @@ int main(int argc, char *argv[])
 
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
 
-
-	Image im(800, 800);
+	TestImage im(800, 800);
 
 	RGBc color = RGBc::c_Red.getMultOpacity(0.5);;
 	RGBc colorfill = RGBc::c_Red.getMultOpacity(0.5);;
@@ -389,7 +389,7 @@ int main(int argc, char *argv[])
 	iVec2 P3 = { 300,400 };
 	iVec2 P4 = { 100,500 };
 
-	int64 N = 1000000;
+	int64 N = 1;
 
 	Chronometer();
 
@@ -416,10 +416,9 @@ int main(int argc, char *argv[])
 	{
 	//im.fill_triangle(P1, P2, P3, colorfill, true);
 	//im.fill_triangle(P1, P4, P3, colorfill, true);
-	im._lineBresenham_AA<true, true, false>(P1, P2, color, false, 0);
-	im._lineBresenham_AA<true, true, false>(P2, P3, color, false, 0);
-	im._lineBresenham_AA<true, true, false>(P3, P1, color, false, 0);
-
+	im._lineBresenham<true, false, true, true>(P1, P2, color, false, 2,true);
+	im._lineBresenham<true, false, false, true>(P2, P3, color, false, 0, true);
+	im._lineBresenham<true, false, false, true>(P3, P1, color, false, 0,true);
 	}
 	cout << "1) done in " << mtools::durationToString(Chronometer(),true) << "\n";
 	
