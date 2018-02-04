@@ -21,6 +21,25 @@ class TestImage : public Image
 	
 
 
+
+	MTOOLS_FORCEINLINE  void reverse_line(_bdir & linedir, _bpos & linepos)
+		{
+		linedir.stepx *= -1;
+		linedir.stepy *= -1;
+		if (linedir.x_major)
+			{
+			linepos.frac = -linedir.dx - 1 - linepos.frac; 
+			}
+		else
+			{
+			linepos.frac = -linedir.dy - 1 - linepos.frac; 
+			}
+		}
+
+
+
+	/*
+
 	void makefromfloat(fVec2 Pf1, fVec2 Pf2, _bdir & linedir, _bpos & linepos)
 	{
 		fVec2 vd = 1024.0 * (Pf2 - Pf1);
@@ -54,7 +73,8 @@ class TestImage : public Image
 		(P1.X() - Pf1.X())*fdy/fdx
 		
 	}
-
+	*/
+	
 
 
 	};
@@ -422,90 +442,32 @@ int main(int argc, char *argv[])
 	RGBc colorfill = RGBc::c_Red.getMultOpacity(0.5);;
 
 
-
-	iVec2 P1 = { 50,50 };
-	iVec2 P2 = { 350,100 };
-	iVec2 P3 = { 300,400 };
-	iVec2 P4 = { 100,500 };
-
-	int64 N = 1;// 0000;
-
-	Chronometer();
+	iVec2 P1{ 50,50 };
+	iVec2 P2{ 150,100 };
 
 
-	for (int i = 0; i < N; i++)
-		{
-		im.fill_triangle(P1, P2, P3, colorfill, true);
-		//im.draw_triangle(P1, P2, P3, color, true, false, 0);
+	Image::_bdir dir,dir2;
+	Image::_bpos pos,pos2;
 
-		LineBresenham(P1, P2, im, color);
-		LineBresenham(P2, P3, im, color);
-		LineBresenham(P3, P1, im, color);
-	}
-	cout << "1) done in " << mtools::durationToString(Chronometer(),true) << "\n";
-
-	iVec2 T = { 350, 0 };
-	P1 += T;
-	P2 += T;
-	P3 += T;
-	P4 += T;
-
-	Chronometer();
-	for (int i = 0; i < N; i++)
-	{
-	//im.draw_triangle(P1, P2, P3, color, true, false, 0);
-	im.fill_triangle(P1, P2, P3, colorfill, true);
-	//im.fill_triangle(P1, P4, P3, colorfill, true);
-	im._lineBresenham<true, false, false, true, true>(P1, P2, color, false, 0, 0);
-	im._lineBresenham_avoid<true, false, false, true, true>(P2, P3, P1, color, 0,0);
-	im._lineBresenham_avoid_both_sides<true, false, false, true, true>(P3, P1, P2,color,0);
-	}
-	cout << "1) done in " << mtools::durationToString(Chronometer(),true) << "\n";
-	
+	int64 len = im._init_line(P1, P2, dir, pos);
 
 	/*
-	/* 
-	
-	- dot / pixel access
-	- line
-	- quadratic bezier
-	- rational quad bezier
-	- cubic bezier
-	
-
-	
-	
-	
-	
+	dir2 = dir;
+	pos2 = pos;
+	im._move_line(dir2, pos2, len);
+	im.reverse_line(dir2, pos2);
 	*/
+	im._init_line(P2, P1, dir2, pos2);
 
-	/*
-	iVec2 P[10];
-
-	P[0] = { 350,100 };
-	P[1] = { 550,150 };
-	P[2] = { 600,350 };
-	P[3] = { 550,550 };
-	P[4] = { 350,600 };
-	P[5] = { 150,550 };
-	P[6] = { 100,350 };
-	P[7] = { 150,150 };
-
-
-	iVec2 PC = { 350,350 };
+	int64 len2 = len; 
 	
-	
-	im._lineBresenham_AA<true, true, false>(P[0], P[1], color, false, 0);
-	im._lineBresenham_AA<true, true, false>(P[1], P[2], color, false, 0);
-	im._lineBresenham_AA<true, true, false>(P[2], P[3], color, false, 0);
-	im._lineBresenham_AA<true, true, false>(P[3], P[4], color, false, 0);
-	im._lineBresenham_AA<true, true, false>(P[4], P[5], color, false, 0);
-	im._lineBresenham_AA<true, true, false>(P[5], P[6], color, false, 0);
-	im._lineBresenham_AA<true, true, false>(P[6], P[7], color, false, 0);
-	im._lineBresenham_AA<true, true, false>(P[7], P[0], color, false, 0);
+	//len -= 2;
 
-	im.fill_convex_polygon(8, P, colorfill, true);
-	*/
+
+	im._lineBresenham<true, true, false, false, false>(dir, pos, len + 1, RGBc::c_Red.getMultOpacity(0.5), false, 0, 0);
+	im._lineBresenham<true, true, false, false, false>(dir2, pos2, len2 + 1, RGBc::c_Green.getMultOpacity(0.5), false, 0, 0);
+
+
 	 
 
 		auto PA = makePlot2DImage(im, 1, "Image A");   // Encapsulate the image inside a 'plottable' object.	
