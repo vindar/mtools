@@ -10,11 +10,50 @@ class TestImage : public Image
 
 	public:
 
+		void draw_line_new(const iVec2 & P1, const iVec2 & P2, RGBc color, int32 penwidth = 0, bool antialiasing = true, bool blending = true);
 
 
-	TestImage(int64 lx, int64 ly) : Image(lx, ly) {}
+	TestImage(int64 lx, int64 ly) : Image(lx, ly) 	
+	{
+
+//	draw_line()
+	}
 	
 
+
+	void makefromfloat(fVec2 Pf1, fVec2 Pf2, _bdir & linedir, _bpos & linepos)
+	{
+		fVec2 vd = 1024.0 * (Pf2 - Pf1);
+		iVec2 P1 = (iVec2)(Pf1 - vd);
+		iVec2 P2 = (iVec2)(Pf2 + vd);
+
+		_init_line(P1, P2, linedir, linepos);
+
+		if (linedir.x_major)
+			{
+
+			}
+
+		int64 dx = (int64)fdx; if (dx < 0) { dx = -dx;  linedir.stepx = -1; } else { linedir.stepx = 1; }
+		int64 dy = (int64)fdy; if (dy < 0) { dy = -dy;  linedir.stepy = -1; } else { linedir.stepy = 1; }
+		MTOOLS_ASSERT((dx >= 2) && (dy >= 2));
+		if (dx > dy)
+			{
+			linedir.x_major = true;
+			linedir.rat = (dy == 0) ? 0 : (dx / dy);
+			}
+		else
+			{
+			linedir.x_major = false;
+			linedir.rat = (dx == 0) ? 0 : (dy / dx);
+			}
+		linepos.x = (int64)round(Pf1.X());
+		linepos.y = (int64)round(Pf1.Y());
+
+
+		(P1.X() - Pf1.X())*fdy/fdx
+		
+	}
 
 
 
