@@ -5448,7 +5448,6 @@ namespace mtools
 				int64 frac; // fractional part
 				};
 
-
 			
 			/**
 			* Construct the structure containg the info for a bresenham line 
@@ -5482,22 +5481,109 @@ namespace mtools
 				}
 
 
-			/** reverse the direction of the line. */
-			MTOOLS_FORCEINLINE  void _reverse_line(_bdir & linedir, _bpos & linepos)
+			/**
+			* Construct the structure containg the info for a bresenham line
+			* and a position on the line.
+			* version for non_integer valued line.
+			* put in P1 the pixel start point and in P2 the pixel end point. 
+			* return the number of pixels in the half open segment [P1, P2[
+			*/
+			int64 _init_line(fVec2 Pf1, fVec2 Pf2, _bdir & linedir, _bpos & linepos, iVec2 & P1, iVec2 & P2)
 				{
-				linedir.stepx *= -1;
-				linedir.stepy *= -1;
-				if (linedir.x_major)
+				const double fdx = (Pf2.X() - Pf1.X());
+				const double fdy = (Pf2.Y() - Pf1.Y());
+				int64 len;
+				if (fdx > fdy)
 					{
-					linepos.frac = -linedir.dx - 1 - linepos.frac;
-					linepos.frac += 2 * linedir.dy;
+					P1.X() = (int64)round(Pf1.X());
+					P2.X() = (int64)round(Pf2.X());
+					double yy1 = (fdy / fdx)*(P1.X() - Pf1.X()) + Pf1.Y();
+					double yy2 = (fdy / fdx)*(P2.X() - Pf2.X()) + Pf2.Y();
+					P1.Y() = (int64)round(yy1);
+					P2.Y() = (int64)round(yy2);
+					double f1 = yy1 - P1.Y();
+					double f2 = yy2 - P2.Y();
+					if (P2.Y() < P1.Y()) { f1 = -f1; f2 = -f2; }
+					int64 if1 = (int64)(1024 * f1); if (if1 <= -512) { if1 = -511; }
+					else if (if1 >= 512) { if1 = 511; }
+					int64 if2 = (int64)(1024 * f2); if (if2 <= -512) { if2 = -511; }
+					else if (if2 >= 512) { if2 = 511; }
+
+					linedir.dx = (P2.X() - P1.X()) * 1024;
+					linedir.dy = (P2.Y() - P1.Y()) * 1024;
+					if (linedir.dx < 0) { linedir.dx = -linedir.dx;  linedir.stepx = -1; }
+					else { linedir.stepx = 1; }
+					if (linedir.dy < 0) { linedir.dy = -linedir.dy;  linedir.stepy = -1; }
+					else { linedir.stepy = 1; }
+					linedir.dy += -if1 + if2;
+
+					linedir.x_major = true;
+					linedir.rat = (linedir.dy == 0) ? 0 : (linedir.dx / linedir.dy);
+					linedir.amul = ((int64)1 << 60) / linedir.dx;
+
+					linepos.x = P1.X();
+					linepos.y = P1.Y();
+
+					len = linedir.dx >> 10;
+					linepos.frac = -(linedir.dx >> 1) + if1 * len;
+					linepos.frac += linedir.dy;
 					}
 				else
 					{
+					P1.Y() = (int64)round(Pf1.Y());
+					P2.Y() = (int64)round(Pf2.Y());
+					double xx1 = (fdx / fdy)*(P1.Y() - Pf1.Y()) + Pf1.X();
+					double xx2 = (fdx / fdy)*(P2.Y() - Pf2.Y()) + Pf2.X();
+					P1.X() = (int64)round(xx1);
+					P2.X() = (int64)round(xx2);
+					double f1 = xx1 - P1.X();
+					double f2 = xx2 - P2.X();
+					if (P2.X() < P1.X()) { f1 = -f1; f2 = -f2; }
+					int64 if1 = (int64)(1024 * f1); if (if1 <= -512) { if1 = -511; }
+					else if (if1 >= 511) { if1 = 511; }
+					int64 if2 = (int64)(1024 * f2); if (if2 <= -512) { if2 = -511; }
+					else if (if2 >= 511) { if2 = 511; }
+
+					linedir.dx = (P2.X() - P1.X()) * 1024;
+					linedir.dy = (P2.Y() - P1.Y()) * 1024;
+					if (linedir.dx < 0) { linedir.dx = -linedir.dx;  linedir.stepx = -1; }
+					else { linedir.stepx = 1; }
+					if (linedir.dy < 0) { linedir.dy = -linedir.dy;  linedir.stepy = -1; }
+					else { linedir.stepy = 1; }
+					linedir.dx += -if1 + if2;
+
+					linedir.x_major = false;
+					linedir.rat = (linedir.dx == 0) ? 0 : (linedir.dy / linedir.dx);
+					linedir.amul = ((int64)1 << 60) / linedir.dy;
+
+					linepos.x = P1.X();
+					linepos.y = P1.Y();
+
+					len = linedir.dy >> 10;
+					linepos.frac = -(linedir.dy >> 1) + if1 * len;
+					linepos.frac += linedir.dx;
+					}
+				linepos.frac -= (P2.X() > P1.X()) ? 1 : 0; // used to compensante frac so that line [P1,P2] = [P2,P1]. 
+				return len;  (linedir.x_major ? (linedir.dx >> 10) : (linedir.dy >> 10));
+				}
+
+
+			/** reverse the direction of the line. */
+			MTOOLS_FORCEINLINE  void _reverse_line(_bdir & linedir, _bpos & linepos)
+			{
+				linedir.stepx *= -1;
+				linedir.stepy *= -1;
+				if (linedir.x_major)
+				{
+					linepos.frac = -linedir.dx - 1 - linepos.frac;
+					linepos.frac += 2 * linedir.dy;
+				}
+				else
+				{
 					linepos.frac = -linedir.dy - 1 - linepos.frac;
 					linepos.frac += 2 * linedir.dx;
-					}
 				}
+			}
 
 
 			/* compute the value for antialiasing the half side of a line during bresenham algorithm:
@@ -6434,40 +6520,9 @@ namespace mtools
 				}
 
 
-			/**
-			 * Fill the interior delimited by the angle <Q1,P,Q2>
-			 * 
-			 * The filling occurs vertically (by scanlines) so the height P.Y()
-			 * should be either minimal or maximal among the 3 points
-			 * 
-			 * Filling is performed until height P1.Y() is reached. Parameter fill_last determined whether
-			 * this last line is also filled or not.
-			 * 
-			 * The method perform exact filling w.r.t. the Bresenham segment [P,Q1] and [P,Q2]. so no pixel
-			 * filled overlap these segment and no gap is left in between.
-			 * 
-			 * Optimized for speed.
-			 **/
-			template<bool blend, bool checkrange> inline void _fill_interior_angle(iVec2 P, iVec2 Q1, iVec2 Q2, RGBc color,bool fill_last)
+			/** sub procedure called by _fill_interior_angle that does the actual filling. */
+			template<bool blend, bool checkrange> void _fill_interior_angle_sub(int64 dir, int64 y, int64 ytarget, _bdir & linea, _bpos & posa, _bdir & lineb, _bpos & posb, RGBc color)
 				{
-				MTOOLS_ASSERT((P.Y() - Q1.Y())*(P.Y() - Q2.Y()) > 0);
-				int64 dir = (P.Y() > Q1.Y()) ? -1 : 1;				// y direction 
-				int64 y = P.Y();									// starting height
-				int64 ytarget = Q1.Y() + dir*(fill_last ? 1 : 0);	// height to reach	
-
-				if ((Q1.X() - P.X())*abs(Q2.Y() - P.Y())  > (Q2.X() - P.X())*abs(Q1.Y() - P.Y()))
-					{ // make sure Q1 is on the left and Q2 on the right. 
-					mtools::swap(Q1, Q2);
-					}
-
-				_bdir linea;
-				_bpos posa;
-				_init_line(P, Q1, linea, posa);
-
-				_bdir lineb;
-				_bpos posb;
-				_init_line(P, Q2, lineb, posb);
-
 				// fix the range. 
 				if (dir > 0)
 					{
@@ -6493,7 +6548,6 @@ namespace mtools
 						MTOOLS_ASSERT((posa.y == y) && (posb.y == y));
 						}
 					}
-
 				if (linea.x_major)
 					{
 					if (lineb.x_major)
@@ -6606,6 +6660,60 @@ namespace mtools
 						}
 					}
 				}
+
+
+			/**
+			 * Fill the interior delimited by the angle <Q1,P,Q2>
+			 * 
+			 * The filling occurs vertically (by scanlines) so the height P.Y()
+			 * should be either minimal or maximal among the 3 points
+			 * 
+			 * Filling is performed until height P1.Y() is reached. Parameter fill_last determined whether
+			 * this last line is also filled or not.
+			 * 
+			 * The method perform exact filling w.r.t. the Bresenham segment [P,Q1] and [P,Q2]. so no pixel
+			 * filled overlap these segment and no gap is left in between.
+			 * 
+			 * Optimized for speed.
+			 **/
+			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void _fill_interior_angle(iVec2 P, iVec2 Q1, iVec2 Q2, RGBc color,bool fill_last)
+				{
+				MTOOLS_ASSERT((P.Y() - Q1.Y())*(P.Y() - Q2.Y()) > 0);
+				int64 dir = (P.Y() > Q1.Y()) ? -1 : 1;				// y direction 
+				int64 y = P.Y();									// starting height
+				int64 ytarget = Q1.Y() + dir*(fill_last ? 1 : 0);	// height to reach	
+				if ((Q1.X() - P.X())*abs(Q2.Y() - P.Y())  > (Q2.X() - P.X())*abs(Q1.Y() - P.Y()))
+					{ // make sure Q1 is on the left and Q2 on the right. 
+					mtools::swap(Q1, Q2);
+					}
+				_bdir linea;
+				_bpos posa;
+				_init_line(P, Q1, linea, posa);
+				_bdir lineb;
+				_bpos posb;
+				_init_line(P, Q2, lineb, posb);
+				_fill_interior_angle_sub<blend, checkrange>(dir, y, ytarget, linea, posa, lineb, posb, color);
+				}
+
+
+			/** Same as above, but with non-integer valued points */  
+			/*
+			template<bool blend, bool checkrange> inline void _fill_interior_angle(iVec2 P, iVec2 Q1, iVec2 Q2, _bdir linePQ1, _bpos posPQ1, _bdir linePQ2, _bpos posPQ2, RGBc color, bool fill_last)
+				{
+				MTOOLS_ASSERT((P.Y() - Q1.Y())*(P.Y() - Q2.Y()) > 0);
+				int64 dir = (P.Y() > Q1.Y()) ? -1 : 1;
+				int64 y = P.Y();
+				int64 ytarget = Q1.Y() + dir * (fill_last ? 1 : 0);
+				if ((Q1.X() - P.X())*abs(Q2.Y() - P.Y())  > (Q2.X() - P.X())*abs(Q1.Y() - P.Y()))
+					{ 
+					mtools::swap(linePQ1, linePQ2);
+					mtools::swap(posPQ1, posPQ2);
+					}
+				_fill_interior_angle_sub(dir, y, ytarget, linePQ1, posPQ1, linePQ2, posPQ2);
+				}
+				*/
+
+
 
 
 			/**

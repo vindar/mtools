@@ -16,97 +16,10 @@ class TestImage : public Image
 	TestImage(int64 lx, int64 ly) : Image(lx, ly) 	
 	{
 
-//	draw_line()
 	}
 	
 
 
-
-
-	void _init_line(fVec2 Pf1, fVec2 Pf2, _bdir & linedir, _bpos & linepos)
-		{
-		int64 dx = (Pf2.X() - Pf1.X()) * 1024; 
-		int64 dy = (Pf2.Y() - Pf1.Y()) * 1024;
-
-		if (dx > dy)
-			{
-			int64 ix1 = (int64)round(Pf1.X());
-			int64 ix2 = (int64)round(Pf2.X());
-			int64 iy1 = (dy / dx)*(ix1 - Pf1.X()) + Pf1.Y();
-			int64 iy2 = (dy / dx)*(ix2 - Pf2.X()) + Pf2.Y();
-		}
-		else
-			{
-			int64 iy1 = (int64)round(Pf1.Y());
-			int64 iy2 = (int64)round(Pf2.Y());
-			int64 ix1 = (dx / dy)*(iy1 - Pf1.Y()) + Pf1.X();
-			int64 ix2 = (dx / dy)*(iy2 - Pf2.Y()) + Pf2.X();
-			}
-
-
-
-		if (dx < 0) { dx = -dx;  linedir.stepx = -1; } else { linedir.stepx = 1; } dx <<= 1;
-		if (dy < 0) { dy = -dy;  linedir.stepy = -1; } else { linedir.stepy = 1; } dy <<= 1;
-		linedir.dx = dx;
-		linedir.dy = dy;
-		if (dx > dy)
-		{
-			linedir.x_major = true;
-			linedir.rat = (dy == 0) ? 0 : (dx / dy);
-		}
-		else
-		{
-			linedir.x_major = false;
-			linedir.rat = (dx == 0) ? 0 : (dy / dx);
-		}
-		linepos.x = P1.X();
-		linepos.y = P1.Y();
-		int64 flagdir = (P2.X() > P1.X()) ? 1 : 0; // used to copensante frac so that line [P1,P2] = [P2,P1]. 
-		linepos.frac = ((linedir.x_major) ? (dy - (dx >> 1)) : (dx - (dy >> 1))) - flagdir;
-		linedir.amul = ((int64)1 << 60) / (linedir.x_major ? linedir.dx : linedir.dy);
-		return ((linedir.x_major ? dx : dy) >> 1);
-
-		}
-
-
-
-	/*
-
-	void makefromfloat(fVec2 Pf1, fVec2 Pf2, _bdir & linedir, _bpos & linepos)
-	{
-		fVec2 vd = 1024.0 * (Pf2 - Pf1);
-		iVec2 P1 = (iVec2)(Pf1 - vd);
-		iVec2 P2 = (iVec2)(Pf2 + vd);
-
-		_init_line(P1, P2, linedir, linepos);
-
-		if (linedir.x_major)
-			{
-
-			}
-
-		int64 dx = (int64)fdx; if (dx < 0) { dx = -dx;  linedir.stepx = -1; } else { linedir.stepx = 1; }
-		int64 dy = (int64)fdy; if (dy < 0) { dy = -dy;  linedir.stepy = -1; } else { linedir.stepy = 1; }
-		MTOOLS_ASSERT((dx >= 2) && (dy >= 2));
-		if (dx > dy)
-			{
-			linedir.x_major = true;
-			linedir.rat = (dy == 0) ? 0 : (dx / dy);
-			}
-		else
-			{
-			linedir.x_major = false;
-			linedir.rat = (dx == 0) ? 0 : (dy / dx);
-			}
-		linepos.x = (int64)round(Pf1.X());
-		linepos.y = (int64)round(Pf1.Y());
-
-
-		(P1.X() - Pf1.X())*fdy/fdx
-		
-	}
-	*/
-	
 
 
 	};
@@ -473,24 +386,31 @@ int main(int argc, char *argv[])
 	RGBc color = RGBc::c_Red.getMultOpacity(0.5);;
 	RGBc colorfill = RGBc::c_Red.getMultOpacity(0.5);;
 
+	double y = 1.5; 
+	fVec2 Pf1{ 0.3, 0 };
+	fVec2 Pf2{ 100, 30};
 
-	iVec2 P1 { 50,50 };
-	iVec2 P2 { 166,100 };
-	iVec2 P3 { 105, 75 };
+	fVec2 Pf3{ 0.3, 0  + y};
+	fVec2 Pf4{ 100, 30 + y};
 
-	Image::_bdir dira,dirb,dirc;
-	Image::_bpos posa,posb,posc;
 
-	int64 lena = im._init_line(P1, P2, dira, posa);
-	int64 lenb = im._init_line(P1, P3, dirb, posb);
-	int64 lenc = im._init_line(P2, P3, dirc, posc);
-	
-	
-	im._lineBresenham<true, true, false, false, false, false>(dirc, posc, lenc  + 1 , RGBc::c_Red.getMultOpacity(0.5), 0, 0);
-	im._lineBresenham_avoid<true, true, false, false, false>(dirb, posb, lenb, dirc, posc, lenc, RGBc::c_Green.getMultOpacity(0.5), 0);
-	im._lineBresenham_avoid_both_sides_triangle<true, true, false, false, false>(dira, posa, lena, dirb, posb, lenb, dirc, posc, lenc, RGBc::c_Blue.getMultOpacity(0.5), 0);
-	
-	
+	iVec2 P1, P2, P3, P4; 
+
+	Image::_bdir dira, dirb;
+	Image::_bpos posa, posb;
+
+	int64 lena = im._init_line(Pf1, Pf2, dira, posa, P1, P2);
+	int64 lenb = im._init_line(Pf3, Pf4, dirb, posb, P3, P4);
+
+	cout << "Pf1 = " << Pf1 << " \t P1 = " << P1 << "\n";
+	cout << "Pf2 = " << Pf2 << " \t P2 = " << P2 << "\n";
+	cout << "Pf3 = " << Pf3 << " \t P3 = " << P3 << "\n";
+	cout << "Pf4 = " << Pf4 << " \t P4 = " << P4 << "\n";
+
+	im._lineBresenham<true, true, false, false, true, true>(dira, posa, lena, color, 0, 0);
+	im._lineBresenham<true, true, false, false, true, false>(dirb, posb, lenb, color, 0, 0);
+
+
 	//	im.draw_triangle(P1, P2, P3, RGBc::c_Red.getMultOpacity(0.5), true, true);
 	 
 
