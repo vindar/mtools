@@ -1923,7 +1923,7 @@ namespace mtools
 			inline void draw_line(iVec2 P1, iVec2 P2, RGBc color, bool draw_P2)
 				{
 				if (isEmpty()) return;
-				_lineBresenham<false, true, false,false,false>(P1, P2, color, draw_P2, 0,0);
+				_lineBresenham<false, true, false, false,false,false>(P1, P2, color, draw_P2, 0,0);
 				}
 
 
@@ -1966,7 +1966,7 @@ namespace mtools
 						if (blending) _lineBresenhamAA<true, true, false>(P1, P2, color, draw_P2, 0); else _lineBresenhamAA<false, true, false>(P1, P2, color, draw_P2, 0);
 						return;
 						}
-					if ((blending) && (!color.isOpaque())) _lineBresenham<true, true, false,false,false>(P1, P2, color, draw_P2, 0, 0); else _lineBresenham<false, true, false, false, false>(P1, P2, color, draw_P2, 0, 0);
+					if ((blending) && (!color.isOpaque())) _lineBresenham<true, true, false, false,false,false>(P1, P2, color, draw_P2, 0, 0); else _lineBresenham<false, true, false, false, false, false>(P1, P2, color, draw_P2, 0, 0);
 					return;
 					}
 				_correctPenOpacity(color, penwidth);
@@ -1977,7 +1977,7 @@ namespace mtools
 					if (blending) _lineBresenhamAA<true, true, true>(P1, P2, color, draw_P2, penwidth); else _lineBresenhamAA<false, true, true>(P1, P2, color, draw_P2, penwidth);
 					return;
 					}
-				if ((blending) && (!color.isOpaque())) _lineBresenham<true,true, true, false, false>(P1, P2, color, draw_P2, penwidth, 0); else _lineBresenham<false,true, true, false, false>(P1, P2, color, draw_P2, penwidth, 0);
+				if ((blending) && (!color.isOpaque())) _lineBresenham<true,true, false, true, false, false>(P1, P2, color, draw_P2, penwidth, 0); else _lineBresenham<false,true, false, true, false, false>(P1, P2, color, draw_P2, penwidth, 0);
 				return;
 				}
 
@@ -2458,9 +2458,9 @@ namespace mtools
 				if (isEmpty()) return;
 				if ((penwidth <= 0)&&(!antialiased)&&(blending)&& (!color.isOpaque()))
 					{ // draw without overlap
-					_lineBresenham<true, true, false, false, false>(P1, P2, color, true, penwidth, 0);
-					_lineBresenham_avoid<true, true,false,false,false>(P2, P3, P1, color, 0, 0);
-					_lineBresenham_avoid_both_sides<true, true, false, false, false>(P1, P3, P2, color,0);
+					_lineBresenham<true, true, false, false, false, false>(P1, P2, color, true, penwidth, 0);
+					_lineBresenham_avoid<true, true, false, false, false>(P2, P3, P1, color, 0, 0);
+					_lineBresenham_avoid_both_sides_triangle<true, true, false, false, false>(P1, P3, P2, color,0);
 					return;
 					}
 				// default drawing
@@ -2578,7 +2578,7 @@ namespace mtools
 						{
 						if ((penwidth <= 0) && (!antialiased) && (blending) && (!color.isOpaque()))
 							{ // draw without overlap
-							_lineBresenham<true, true,false, false, false>(tabPoints[0], tabPoints[1], color, true, penwidth, 0);
+							_lineBresenham<true, true, false, false, false, false>(tabPoints[0], tabPoints[1], color, true, penwidth, 0);
 							for (size_t i = 1; i < nbvertices - 1; i++)
 								{
 								_lineBresenham_avoid<true, true,false,false,false>(tabPoints[i], tabPoints[i + 1], tabPoints[i - 1], color, 0,0);
@@ -5482,6 +5482,24 @@ namespace mtools
 				}
 
 
+			/** reverse the direction of the line. */
+			MTOOLS_FORCEINLINE  void _reverse_line(_bdir & linedir, _bpos & linepos)
+				{
+				linedir.stepx *= -1;
+				linedir.stepy *= -1;
+				if (linedir.x_major)
+					{
+					linepos.frac = -linedir.dx - 1 - linepos.frac;
+					linepos.frac += 2 * linedir.dy;
+					}
+				else
+					{
+					linepos.frac = -linedir.dy - 1 - linepos.frac;
+					linepos.frac += 2 * linedir.dx;
+					}
+				}
+
+
 			/* compute the value for antialiasing the half side of a line during bresenham algorithm:
 			   side true = correspond to the outside being on the left of the line we follow the line in its increasing direction.
 			               correspond to drawing a filled polygone in clockwise order. */
@@ -5796,12 +5814,12 @@ namespace mtools
 
 
 			/**
-			* Draw len pixels along a given bresenham line. 
+			* Draw len pixels along a given bresenham segment [pos, pos + len[
 			* template parameter control (side) antialiasing, blending, checkrange and pen width.
 			*
-			* Optimized for speed.
+			* exactly len pixel are painted
 			**/
-			template<bool blend, bool checkrange, bool usepen, bool useaa, bool side>  MTOOLS_FORCEINLINE void _lineBresenham(_bdir & line, _bpos & pos, int64 len, RGBc color, bool draw_last, int32 penwidth, int32 op)
+			template<bool blend, bool checkrange, bool useop, bool usepen, bool useaa, bool side>  MTOOLS_FORCEINLINE void _lineBresenham(_bdir line, _bpos pos, int64 len, RGBc color, int32 penwidth, int32 op)
 				{
 				if (checkrange)
 					{
@@ -5817,7 +5835,7 @@ namespace mtools
 					{
 					while (--len >= 0)
 						{
-						_update_pixel_bresenham<blend, usepen, false, usepen, useaa, side>(line, pos, color, op, penwidth);
+						_update_pixel_bresenham<blend, usepen, useop, usepen, useaa, side>(line, pos, color, op, penwidth);
 						_move_line<true>(line, pos);
 						}
 					}
@@ -5825,7 +5843,7 @@ namespace mtools
 					{
 					while (--len >= 0)
 						{
-						_update_pixel_bresenham<blend, usepen, false, usepen, useaa, side>(line, pos, color, op, penwidth);
+						_update_pixel_bresenham<blend, usepen, useop, usepen, useaa, side>(line, pos, color, op, penwidth);
 						_move_line<false>(line, pos);
 						}
 					}
@@ -5839,33 +5857,33 @@ namespace mtools
 			* to the line drawn in the other direction [P2,P1].
 			*
 			* template parameter control (side) antialiasing, blending, checkrange and pen width.
-			*
-			* Optimized for speed.
 			**/
-			template<bool blend, bool checkrange, bool usepen, bool useaa, bool side>  MTOOLS_FORCEINLINE void _lineBresenham(const iVec2 P1, const iVec2 P2, RGBc color, bool draw_last, int32 penwidth, int32 op)
+			template<bool blend, bool checkrange, bool useop, bool usepen, bool useaa, bool side>  MTOOLS_FORCEINLINE void _lineBresenham(const iVec2 P1, const iVec2 P2, RGBc color, bool draw_last, int32 penwidth, int32 op)
 				{
 				if (P1 == P2)
 					{
 					if (draw_last)
 						{
-						if (penwidth <= 0) { _updatePixel<blend, checkrange, false, false>(P1.X(), P1.Y(), color, op, penwidth); }
-						else { _updatePixel<blend, checkrange, false, true>(P1.X(), P1.Y(), color, op, penwidth); }
+						if (penwidth <= 0) { _updatePixel<blend, checkrange,useop, false>(P1.X(), P1.Y(), color, op, penwidth); }
+						else { _updatePixel<blend, checkrange, useop, true>(P1.X(), P1.Y(), color, op, penwidth); }
 						}
 					return;
 					}
 				_bdir line;
 				_bpos pos;
 				int64 len = _init_line(P1, P2, line, pos) + (draw_last ? 1 : 0);
-				_lineBresenham<blend, checkrange, usepen, useaa, side>(line, pos, len, color, draw_last, penwidth, op);
+				_lineBresenham<blend, checkrange,useop, usepen, useaa, side>(line, pos, len, color, penwidth, op);
 				return;
 				}
 
 
 			/**
-			* Return the max distance where the two line intersect.
+			* Return the max distance where the two line intersect. linea and lineb must share the same start pixel. 
+			* segment are considered open ended : [a, a + lena[
 			**/
-			template<bool checkrange> inline int64 _lineBresenham_find_max_intersection(_bdir & linea, _bpos & posa, int64 lena, _bdir & lineb, _bpos & posb, int64 lenb)
+			template<bool checkrange> int64 _lineBresenham_find_max_intersection(_bdir linea, _bpos posa, int64 lena, _bdir lineb, _bpos posb, int64 lenb)
 				{
+				MTOOLS_ASSERT((posa.x == posb.x) && (posa.y == posb.y));
 				int64 r = 0;
 				if (checkrange)
 					{
@@ -5942,7 +5960,7 @@ namespace mtools
 			/**
 			* Return the max distance from P where [P,Q] and [P,Q2] intersect.
 			**/
-			template<bool checkrange> inline int64 _lineBresenham_find_max_intersection(iVec2 P, iVec2 Q, iVec2 Q2)
+			template<bool checkrange> MTOOLS_FORCEINLINE int64 _lineBresenham_find_max_intersection(iVec2 P, iVec2 Q, iVec2 Q2)
 			{
 				if ((P == Q) || (P == Q2)) return 1;
 				_bdir linea;
@@ -5958,12 +5976,12 @@ namespace mtools
 
 
 			/**
-			* Draw the segment a while avoiding segment b (a and b should have the same starting point). 
-			*
-			* Optimized for speed.
+			* Draw the segment [a, + lena[ while avoiding segment [b, b + lenb[ 
+			* a and b must share the same start pixel
 			**/
-			template<bool blend, bool checkrange, bool useop, bool useaa, bool side> inline void _lineBresenham_avoid(_bdir & linea, _bpos & posa, int64 lena, _bdir & lineb, _bpos & posb, int64 lenb, RGBc color, int32 op)
+			template<bool blend, bool checkrange, bool useop, bool useaa, bool side> void _lineBresenham_avoid(_bdir linea, _bpos posa, int64 lena, _bdir lineb, _bpos posb, int64 lenb, RGBc color, int32 op)
 				{
+				MTOOLS_ASSERT((posa.x == posb.x) && (posa.y == posb.y));
 				if (checkrange)
 					{
 					iBox2 B(0, _lx - 1, 0, _ly - 1);
@@ -6035,10 +6053,8 @@ namespace mtools
 			 *     1 = draw [P,Q[   
 			 *    >1 = remove more pixels  
 			 *    <0 = extend the line adding stop_before additional pixels.
-			 * 
-			 * Optimized for speed. 
 			 **/
-			template<bool blend, bool checkrange, bool useop, bool useaa, bool side> inline void _lineBresenham_avoid(iVec2 P, iVec2 Q, iVec2 P2, RGBc color, int64 stop_before, int32 op)
+			template<bool blend, bool checkrange, bool useop, bool useaa, bool side> MTOOLS_FORCEINLINE void _lineBresenham_avoid(iVec2 P, iVec2 Q, iVec2 P2, RGBc color, int64 stop_before, int32 op)
 				{
 				if (P == Q) return;
 				_bdir linea;
@@ -6053,12 +6069,13 @@ namespace mtools
 
 
 			/**
-			* Draw the segment a while avoiding segments b and c (all should should have the same starting point).
-			*
-			* Optimized for speed.
+			* Draw the segment [a, a + lena[ while avoiding segments [b, b+ lenb[ and [c, c+ lenc[ 
+			* a,b,c must share the same starting pixel. 
 			**/
-			template<bool blend, bool checkrange, bool useop, bool useaa, bool side> inline void _lineBresenham_avoid(_bdir & linea, _bpos & posa, int64 lena, _bdir & lineb, _bpos & posb, int64 lenb, _bdir & linec, _bpos & posc, int64 lenc, RGBc color, int32 op)
+			template<bool blend, bool checkrange, bool useop, bool useaa, bool side> void _lineBresenham_avoid(_bdir linea, _bpos posa, int64 lena, _bdir lineb, _bpos posb, int64 lenb, _bdir linec, _bpos posc, int64 lenc, RGBc color, int32 op)
 				{
+				MTOOLS_ASSERT((posa.x == posb.x) && (posa.y == posb.y));
+				MTOOLS_ASSERT((posa.x == posc.x) && (posa.y == posc.y));
 				if (checkrange)
 					{
 					iBox2 B(0, _lx - 1, 0, _ly - 1);
@@ -6186,24 +6203,22 @@ namespace mtools
 
 			/**
 			* Draw the segment [P,Q] with the bresenham line algorithm while skipping the pixels
-			* which also belong to the segments [P,P2] and [P,P3].  (Always perfect.)
+			* which also belong to the segments [P,P2] and [P,P3].  (always perfect.)
 			*
 			* stop_before represented the number of pixel at the end of the line which are not drawn
 			* i.e 0 = draw [P,Q],
 			*     1 = draw [P,Q[
 			*    >1 = remove som more pixels
 			*    <0 = extend the line adding stop_before additional pixels.
-			*
-			* Optimized for speed.
 			**/
-			template<bool blend, bool checkrange, bool useop, bool useaa, bool side> inline void _lineBresenham_avoid(iVec2 P, iVec2 Q, iVec2 P2, iVec2 P3, RGBc color, int64 stop_before, int32 op)
+			template<bool blend, bool checkrange, bool useop, bool useaa, bool side> MTOOLS_FORCEINLINE void _lineBresenham_avoid(iVec2 P, iVec2 Q, iVec2 P2, iVec2 P3, RGBc color, int64 stop_before, int32 op)
 				{
 				if ((P2 == P3)||(P3 == P)) { _lineBresenham_avoid<blend, checkrange, useop, useaa, side>(P, Q, P2, color, stop_before, op); return; }
 				if (P2 == P) { _lineBresenham_avoid<blend, checkrange, useop, useaa, side>(P, Q, P3, color, stop_before, op); return; }
 				if (P == Q) return;
 				_bdir linea;
 				_bpos posa;
-				int64 lena = _init_line(P, Q, linea, posa) +1 - stop_before;
+				int64 lena = _init_line(P, Q, linea, posa) + 1 - stop_before;
 				_bdir lineb;
 				_bpos posb;
 				int64 lenb = _init_line(P, P2, lineb, posb) + 1;
@@ -6214,24 +6229,45 @@ namespace mtools
 				}
 
 
-
+			/**
+			* Draw the (open) segment ]a, a+ lena[ while avoiding segments [b, b + lenb[ and [c, c+ lenc[
+			* 
+			* a and b must share the same pixel
+			* a + lena and c must share the same pixel
+			* TRIANGLE CONDITION: b + lenb and c + lenc must share the same pixel (otherwise, use _lineBresenham_avoid_both_sides() method).
+			**/
+			template<bool blend, bool checkrange, bool useop, bool useaa, bool side> MTOOLS_FORCEINLINE void _lineBresenham_avoid_both_sides_triangle(_bdir linea, _bpos posa, int64 lena, _bdir lineb, _bpos posb, int64 lenb, _bdir linec, _bpos posc, int64 lenc, RGBc color, int32 op)
+				{
+				MTOOLS_ASSERT((posa.x == posb.x) && (posa.y == posb.y));
+				int64 G = lenb - lenc;
+				if (G > lena) { G = lena; } else { if (G < -lena) { G = -lena; } }
+				int64 lP = 1 + ((lena + G) >> 1);
+				int64 lQ = 1 + ((lena - G) >> 1);
+				if (lP + lQ > lena + 1)
+					{
+					if (lP > lQ) { lP--; } else { lQ--; }
+					}
+				MTOOLS_ASSERT(lP + lQ == lena + 1);
+				_bdir linea2 = linea;
+				_bpos posa2 = posa;
+				_move_line(linea2, posa2,lena);
+				_reverse_line(linea2, posa2);
+				MTOOLS_ASSERT((posa2.x == posc.x) && (posa2.y == posc.y));
+				_lineBresenham_avoid<blend, checkrange, useop, useaa,  side>(linea, posa, lena + 1 - lQ, lineb, posb, lenb, color, op);
+				_lineBresenham_avoid<blend, checkrange, useop, useaa, !side>(linea2, posa2, lena + 1 - lP, linec, posc, lenc, color, op);
+				}
 
 
 			/**
 			* Draw the segment [P,Q] with the bresenham line algorithm while skipping the pixels which also
 			* belong to the segments [P,R] and [Q,R];
-			*
-			* Drawing is performed using the blend() operation. ALways perfect.
-			* 
-			* Optimized for speed.
 			**/
-			template<bool blend, bool checkrange, bool useop, bool useaa, bool side> MTOOLS_FORCEINLINE void _lineBresenham_avoid_both_sides(iVec2 P, iVec2 Q, iVec2 R, RGBc color, int32 op)
+			template<bool blend, bool checkrange, bool useop, bool useaa, bool side> MTOOLS_FORCEINLINE void _lineBresenham_avoid_both_sides_triangle(iVec2 P, iVec2 Q, iVec2 R, RGBc color, int32 op)
 				{
 				if ((P==Q)||(P == R)||(Q == R)) {  return; }
 				const int64 PQ = _lengthBresenham(P, Q);
 				int64 G = _lengthBresenham(P, R) - _lengthBresenham(Q, R);
-				if (G > PQ) { G = PQ; }
-				else { if (G < -PQ) { G = -PQ; } }
+				if (G > PQ) { G = PQ; } else { if (G < -PQ) { G = -PQ; } }
 				int64 lP = 1 + ((PQ + G) >> 1);
 				int64 lQ = 1 + ((PQ - G) >> 1);
 				if (lP + lQ > PQ + 1)
@@ -6244,19 +6280,43 @@ namespace mtools
 				}
 
 
+			/**
+			* Draw the (open) segment ]a, a+ lena[ while avoiding segments [b, b + lenb[ and [c, c+ lenc[
+			*
+			* a and b must share the same pixel
+			* a + lena and c must share the same pixel
+			*
+			* if the triangle condition is satified: b + lenb' and c + lenc' share the same pixel for some lenb' >= lenb and lenc' >= lenc 
+			* then use _lineBresenham_avoid_both_sides_triangle() instead which is faster.
+			**/
+			template<bool blend, bool checkrange, bool useop, bool useaa, bool side> MTOOLS_FORCEINLINE void _lineBresenham_avoid_both_sides(_bdir linea, _bpos posa, int64 lena, _bdir lineb, _bpos posb, int64 lenb, _bdir linec, _bpos posc, int64 lenc, RGBc color, int32 op)			
+				{
+				MTOOLS_ASSERT((posa.x == posb.x) && (posa.y == posb.y));
+				int64 pl = _lineBresenham_find_max_intersection<checkrange>(linea, posa, lena, lineb, posb, lenb);
+				if (pl > lena) { pl = lena; }	else if (pl < 1) pl = 1;
+
+				_bdir linea2 = linea;
+				_bpos posa2 = posa;
+				_move_line(linea2, posa2, lena);
+				_reverse_line(linea2, posa2);
+				MTOOLS_ASSERT((posa2.x == posc.x) && (posa2.y == posc.y));
+				int64 ql = _lineBresenham_find_max_intersection<checkrange>(linea2, posa2, lena, linec, posc, lenc);
+				if (ql > lena) { ql = lena; } else if (ql < 1) ql = 1;
+
+				int64 M = (pl + ((lena + 1) - ql)) >> 1; // much faster and usually good to just take M = L/2; 
+				_lineBresenham_avoid<blend, checkrange, useop, useaa, side>(linea, posa, M, lineb, posb, lenb, color, op);
+				_lineBresenham_avoid<blend, checkrange, useop, useaa, !side>(linea2, posa2, lena + 1 - M, linec, posc, lenc, color, op);
+				}
+
 
 			/**
 			 * Draw the segment [P,Q] with the bresenham line algorithm while skipping the pixels which also
 			 * belong to the segments [P,P2] and [Q,Q2].
 			 * 
-			 * Drawing is performed using the blend() operation.
-			 * 
 			 * -> If the lines are really close, it is possible that the drawing is not perfect and
 			 *    some pixels over an existing line are drawn (but this only happens for 'degenerate' cases).
-			 * 
-			 * Optimized for speed.
 			 **/
-			template<bool blend, bool checkrange, bool useop, bool useaa, bool side> inline void _lineBresenham_avoid_both_sides(iVec2 P, iVec2 Q, iVec2 P2, iVec2 Q2, RGBc color, int32 op)
+			template<bool blend, bool checkrange, bool useop, bool useaa, bool side> MTOOLS_FORCEINLINE void _lineBresenham_avoid_both_sides(iVec2 P, iVec2 Q, iVec2 P2, iVec2 Q2, RGBc color, int32 op)
 				{
 				const int64 L = _lengthBresenham(P, Q);				
 				int64 pl = _lineBresenham_find_max_intersection<checkrange>(P, Q, P2);
@@ -6269,6 +6329,45 @@ namespace mtools
 				}
 
 
+			/**
+			* Draw the (open) segment ]a, a+ lena[ while avoiding segments [b, b + lenb[ and [c, c+ lenc[, [d, d+ lend[, [e, e+ lene[
+			*
+			* a, b and c must share the same pixel
+			* a + lena and d and e must share the same pixel
+			*
+			**/
+			template<bool blend, bool checkrange, bool useop, bool useaa, bool side> MTOOLS_FORCEINLINE void _lineBresenham_avoid_both_sides(_bdir linea, _bpos posa, int64 lena, 
+																																			 _bdir lineb, _bpos posb, int64 lenb, _bdir linec, _bpos posc, int64 lenc,				                                                                                                       				                                                                                                                             
+				                                                                                                                             _bdir lined, _bpos posd, int64 lend, _bdir linee, _bpos pose, int64 lene,				                                                                                                                             
+				                                                                                                                             RGBc color, int32 op)
+				{
+				MTOOLS_ASSERT((posa.x == posb.x) && (posa.y == posb.y));
+				MTOOLS_ASSERT((posa.x == posc.x) && (posa.y == posc.y));
+				int64 pl2 = _lineBresenham_find_max_intersection<checkrange>(linea, posa, lena, lineb, posb, lenb);
+				if (pl2 > lena) { pl2 = lena; } else if (pl2 < 1) pl2 = 1;
+				int64 pl3 = _lineBresenham_find_max_intersection<checkrange>(linea, posa, lena, linec, posc, lenc);
+				if (pl3 > lena) { pl3 = lena; } else if (pl3 < 1) pl3 = 1;
+				int64 pl = std::max<int64>(pl2, pl3);
+
+				_bdir linea2 = linea;
+				_bpos posa2 = posa;
+				_move_line(linea2, posa2, lena);
+				_reverse_line(linea2, posa2);
+				MTOOLS_ASSERT((posa2.x == posd.x) && (posa2.y == posd.y));
+				MTOOLS_ASSERT((posa2.x == pose.x) && (posa2.y == pose.y));
+				int64 ql2 = _lineBresenham_find_max_intersection<checkrange>(linea2, posa2, lena, lined, posd, lend);
+				if (ql2 > lena) { ql2 = lena; } else if (ql2 < 1) ql2 = 1;
+				int64 ql3 = _lineBresenham_find_max_intersection<checkrange>(linea2, posa2, lena, linee, pose, lene);
+				if (ql3 > lena) { ql3 = lena; } else if (ql3 < 1) ql3 = 1;
+				int64 ql = std::max<int64>(ql2, ql3);
+
+				int64 M = (pl + ((L + 1) - ql)) >> 1; // much faster and usually good to just take M = L/2; 
+
+				_lineBresenham_avoid<blend, checkrange, useop, useaa, side>(linea, posa, M, lineb, posb, lenb, linec, posc, lenc, color, op);
+				_lineBresenham_avoid<blend, checkrange, useop, useaa, !side>(linea2, posa2, lena + 1 - M, lined, posd, lend, linee, pose, lene, color, op);
+				}
+
+
 
 			/**
 			* Draw the segment [P,Q] with the bresenham line algorithm while skipping the pixels which also
@@ -6276,10 +6375,6 @@ namespace mtools
 			*
 			* -> If the lines are really close, it is possible that the drawing is not perfect and
 			*    some pixels over an existing line are drawn (but this only happens for 'degenerate' cases).
-			*
-			* Drawing is performed using the blend() operation.
-			*
-			* Optimized for speed.
 			**/
 			template<bool blend, bool checkrange, bool useop, bool useaa, bool side> inline void _lineBresenham_avoid_both_sides(iVec2 P, iVec2 Q, iVec2 P2, iVec2 P3, iVec2 Q2, iVec2 Q3, RGBc color, int32 op)
 				{
@@ -6721,7 +6816,7 @@ namespace mtools
 				double dx, dy, err, cur = (double)(xx*sy - yy*sx);
 				if (cur == 0)
 					{
-					_lineBresenham<blend, checkrange, usepen, false, false>({ x0, y0 }, { x2, y2 }, color, false, penwidth, 0);
+					_lineBresenham<blend, checkrange, false, usepen, false, false>({ x0, y0 }, { x2, y2 }, color, false, penwidth, 0);
 					return;
 					}
 				bool sw = false;
@@ -6755,7 +6850,7 @@ namespace mtools
 					if (2 * err > dy) { x0 += sx; dx -= xy; err += dy += yy; }
 					if (y1) { y0 += sy; dy -= xy; err += dx += xx; }
 					}
-				_lineBresenham<blend, checkrange, usepen, false, false>({ x0, y0 }, { x2, y2 }, color, sw, penwidth, 0);
+				_lineBresenham<blend, checkrange, false, usepen, false, false>({ x0, y0 }, { x2, y2 }, color, sw, penwidth, 0);
 				}
 
 
@@ -6886,7 +6981,7 @@ namespace mtools
 				double xy = xx*sy + yy*sx, cur = xx*sy - yy*sx, err;
 				if ((cur == 0) || (w <= 0))
 					{
-					_lineBresenham<blend, checkrange, usepen, false, false>({ x0, y0 }, { x2, y2 }, color, false, penwidth, 0);
+					_lineBresenham<blend, checkrange, false, usepen, false, false>({ x0, y0 }, { x2, y2 }, color, false, penwidth, 0);
 					return;
 					}
 				bool sw = false;
@@ -6942,7 +7037,7 @@ namespace mtools
 					if (2 * err < dx || y1) { y0 += sy; dy += xy; err += dx += xx; }
 					if (2 * err > dx || x1) { x0 += sx; dx += xy; err += dy += yy; }
 					}
-				_lineBresenham<blend, checkrange, usepen, false, false>({ x0, y0 }, { x2, y2 }, color, sw, penwidth, 0);
+				_lineBresenham<blend, checkrange, false, usepen, false, false>({ x0, y0 }, { x2, y2 }, color, sw, penwidth, 0);
 				}
 
 
@@ -7164,9 +7259,9 @@ namespace mtools
 					yy = (double)y0; y0 = y3; y3 = (int64)yy; sy = -sy; yb = -yb; x1 = x2;
 					}
 				while (leg--);
-				if ((x0 == sax3) && (y0 == say3)) { _lineBresenham<blend, checkrange, usepen, false, false>({ x3, y3 }, { x0, y0 }, color, false, penwidth, 0); }
-				else if ((x3 == sax3) && (y3 == say3)) { _lineBresenham<blend, checkrange, usepen, false, false>({ x0, y0 }, { x3, y3 }, color, false, penwidth, 0); }
-				else _lineBresenham<blend, checkrange, usepen, false, false>({ x0, y0 }, { x3, y3 }, color, true, penwidth, 0);
+				if ((x0 == sax3) && (y0 == say3)) { _lineBresenham<blend, checkrange, false, usepen, false, false>({ x3, y3 }, { x0, y0 }, color, false, penwidth, 0); }
+				else if ((x3 == sax3) && (y3 == say3)) { _lineBresenham<blend, checkrange, false, usepen, false, false>({ x0, y0 }, { x3, y3 }, color, false, penwidth, 0); }
+				else _lineBresenham<blend, checkrange, false, usepen, false, false>({ x0, y0 }, { x3, y3 }, color, true, penwidth, 0);
 				}
 
 
@@ -7653,7 +7748,7 @@ namespace mtools
 				double dx = (double)(4 * (a - 1.0)*b*b), dy = (double)(4 * (b1 + 1)*a*a);
 				double ed, i, err = b1*a*a - dx + dy;
 				bool f;
-				if (a == 0 || b == 0) return _lineBresenham<blend, checkrange, usepen, false, false>({ x0, y0 }, { x1, y1 }, color, true, penwidth, 0);
+				if (a == 0 || b == 0) return _lineBresenham<blend, checkrange, false, usepen, false, false>({ x0, y0 }, { x1, y1 }, color, true, penwidth, 0);
 				if (x0 > x1) { x0 = x1; x1 += a; }
 				if (y0 > y1) y0 = y1;
 				y0 += (b + 1) / 2; y1 = y0 - b1;

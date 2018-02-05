@@ -22,18 +22,50 @@ class TestImage : public Image
 
 
 
-	MTOOLS_FORCEINLINE  void reverse_line(_bdir & linedir, _bpos & linepos)
+
+	void _init_line(fVec2 Pf1, fVec2 Pf2, _bdir & linedir, _bpos & linepos)
 		{
-		linedir.stepx *= -1;
-		linedir.stepy *= -1;
-		if (linedir.x_major)
+		int64 dx = (Pf2.X() - Pf1.X()) * 1024; 
+		int64 dy = (Pf2.Y() - Pf1.Y()) * 1024;
+
+		if (dx > dy)
 			{
-			linepos.frac = -linedir.dx - 1 - linepos.frac; 
-			}
+			int64 ix1 = (int64)round(Pf1.X());
+			int64 ix2 = (int64)round(Pf2.X());
+			int64 iy1 = (dy / dx)*(ix1 - Pf1.X()) + Pf1.Y();
+			int64 iy2 = (dy / dx)*(ix2 - Pf2.X()) + Pf2.Y();
+		}
 		else
 			{
-			linepos.frac = -linedir.dy - 1 - linepos.frac; 
+			int64 iy1 = (int64)round(Pf1.Y());
+			int64 iy2 = (int64)round(Pf2.Y());
+			int64 ix1 = (dx / dy)*(iy1 - Pf1.Y()) + Pf1.X();
+			int64 ix2 = (dx / dy)*(iy2 - Pf2.Y()) + Pf2.X();
 			}
+
+
+
+		if (dx < 0) { dx = -dx;  linedir.stepx = -1; } else { linedir.stepx = 1; } dx <<= 1;
+		if (dy < 0) { dy = -dy;  linedir.stepy = -1; } else { linedir.stepy = 1; } dy <<= 1;
+		linedir.dx = dx;
+		linedir.dy = dy;
+		if (dx > dy)
+		{
+			linedir.x_major = true;
+			linedir.rat = (dy == 0) ? 0 : (dx / dy);
+		}
+		else
+		{
+			linedir.x_major = false;
+			linedir.rat = (dx == 0) ? 0 : (dy / dx);
+		}
+		linepos.x = P1.X();
+		linepos.y = P1.Y();
+		int64 flagdir = (P2.X() > P1.X()) ? 1 : 0; // used to copensante frac so that line [P1,P2] = [P2,P1]. 
+		linepos.frac = ((linedir.x_major) ? (dy - (dx >> 1)) : (dx - (dy >> 1))) - flagdir;
+		linedir.amul = ((int64)1 << 60) / (linedir.x_major ? linedir.dx : linedir.dy);
+		return ((linedir.x_major ? dx : dy) >> 1);
+
 		}
 
 
@@ -442,32 +474,24 @@ int main(int argc, char *argv[])
 	RGBc colorfill = RGBc::c_Red.getMultOpacity(0.5);;
 
 
-	iVec2 P1{ 50,50 };
-	iVec2 P2{ 150,100 };
+	iVec2 P1 { 50,50 };
+	iVec2 P2 { 166,100 };
+	iVec2 P3 { 105, 75 };
 
+	Image::_bdir dira,dirb,dirc;
+	Image::_bpos posa,posb,posc;
 
-	Image::_bdir dir,dir2;
-	Image::_bpos pos,pos2;
-
-	int64 len = im._init_line(P1, P2, dir, pos);
-
-	/*
-	dir2 = dir;
-	pos2 = pos;
-	im._move_line(dir2, pos2, len);
-	im.reverse_line(dir2, pos2);
-	*/
-	im._init_line(P2, P1, dir2, pos2);
-
-	int64 len2 = len; 
+	int64 lena = im._init_line(P1, P2, dira, posa);
+	int64 lenb = im._init_line(P1, P3, dirb, posb);
+	int64 lenc = im._init_line(P2, P3, dirc, posc);
 	
-	//len -= 2;
-
-
-	im._lineBresenham<true, true, false, false, false>(dir, pos, len + 1, RGBc::c_Red.getMultOpacity(0.5), false, 0, 0);
-	im._lineBresenham<true, true, false, false, false>(dir2, pos2, len2 + 1, RGBc::c_Green.getMultOpacity(0.5), false, 0, 0);
-
-
+	
+	im._lineBresenham<true, true, false, false, false, false>(dirc, posc, lenc  + 1 , RGBc::c_Red.getMultOpacity(0.5), 0, 0);
+	im._lineBresenham_avoid<true, true, false, false, false>(dirb, posb, lenb, dirc, posc, lenc, RGBc::c_Green.getMultOpacity(0.5), 0);
+	im._lineBresenham_avoid_both_sides_triangle<true, true, false, false, false>(dira, posa, lena, dirb, posb, lenb, dirc, posc, lenc, RGBc::c_Blue.getMultOpacity(0.5), 0);
+	
+	
+	//	im.draw_triangle(P1, P2, P3, RGBc::c_Red.getMultOpacity(0.5), true, true);
 	 
 
 		auto PA = makePlot2DImage(im, 1, "Image A");   // Encapsulate the image inside a 'plottable' object.	
