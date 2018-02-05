@@ -6505,14 +6505,14 @@ namespace mtools
 				int64 y1 = (int64)round(fP1.Y());
 				int64 y2 = (int64)round(fP2.Y());
 				int64 y3 = (int64)round(fP3.Y());
-				if (y1 == y2) return; //flat, nothing to draw. 
+				if (y1 == y3) return; //flat, nothing to draw. 
 				if (y1 == y2)
 					{
 					_bdir line31, line32;
 					_bpos pos31, pos32;
 					iVec2 P1, P2, P3;
-					_init_line(fP3, fP1, line31, dir31, P3, P1);
-					_init_line(fP3, fP2, line32, dir32, P3, P2);
+					_init_line(fP3, fP1, line31, pos31, P3, P1);
+					_init_line(fP3, fP2, line32, pos32, P3, P2);
 					_fill_interior_angle<blend, checkrange>(P3, P1, P2, line31, pos31, line32, pos32, fillcolor, false);
 					return;
 					}
@@ -6521,18 +6521,18 @@ namespace mtools
 					_bdir line12, line13;
 					_bpos pos12, pos13;
 					iVec2 P1, P2, P3;
-					_init_line(fP1, fP2, line12, dir12, P1, P2);
-					_init_line(fP1, fP3, line13, dir13, P1, P3);
+					_init_line(fP1, fP2, line12, pos12, P1, P2);
+					_init_line(fP1, fP3, line13, pos13, P1, P3);
 					_fill_interior_angle<blend, checkrange>(P1, P2, P3, line12, pos12, line13, pos13, fillcolor, false);
 					return;
 					}
 				_bdir line32, line31, line12, line13;
 				_bpos pos32, pos31, pos12, pos13;
 				iVec2 P1, P2, P3;
-				_init_line(fP3, fP2, line32, dir32, P3, P2);
-				_init_line(fP3, fP1, line31, dir31, P3, P1);
-				_init_line(fP1, fP2, line12, dir12, P1, P2);
-				_init_line(fP1, fP3, line13, dir13, P1, P3);
+				_init_line(fP3, fP2, line32, pos32, P3, P2);
+				_init_line(fP3, fP1, line31, pos31, P3, P1);
+				_init_line(fP1, fP2, line12, pos12, P1, P2);
+				_init_line(fP1, fP3, line13, pos13, P1, P3);
 				auto a1 = (P2.X() - P1.X())*(P3.Y() - P2.Y()); if (a1 < 0) a1 = -a1;
 				auto a2 = (P3.X() - P2.X())*(P2.Y() - P1.Y()); if (a2 < 0) a2 = -a2;
 				if (a1 > a2)
@@ -6737,7 +6737,7 @@ namespace mtools
 					mtools::swap(linePQ1, linePQ2);
 					mtools::swap(posPQ1, posPQ2);
 					}
-				_fill_interior_angle_sub(dir, y, ytarget, linePQ1, posPQ1, linePQ2, posPQ2);
+				_fill_interior_angle_sub<blend,checkrange>(dir, y, ytarget, linePQ1, posPQ1, linePQ2, posPQ2, color);
 				}				
 
 

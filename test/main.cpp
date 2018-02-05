@@ -385,49 +385,55 @@ int main(int argc, char *argv[])
 
 	RGBc color = RGBc::c_Red.getMultOpacity(0.5);;
 	RGBc color2 = RGBc::c_Green.getMultOpacity(0.5);;
-	RGBc colorfill = RGBc::c_Red.getMultOpacity(0.5);;
+	RGBc colorfill = RGBc::c_Blue.getMultOpacity(0.5);;
 
-	double y = 1.5; 
-	fVec2 Pf1{ 0, 0 - 0.4 };
-	fVec2 Pf2{ 100, 30 - 0.4};
+	fVec2 Pf1, Pf2, Pf3; 
+	iVec2 P1, P2, P3;
 
-	fVec2 Pf3{ 0, 0 + 1.49};
-	fVec2 Pf4{ 100, 30 + 0.51};
+	MT2004_64 gen(0);
+	double lx = 100.0; 
+	double ly = 100.0;
+
+	while (1)
+		{
+		Pf1 = { Unif(gen)*lx, Unif(gen)*ly };
+		Pf2 = { Unif(gen)*lx, Unif(gen)*ly };
+		Pf3 = { Unif(gen)*lx, Unif(gen)*ly };
+		//im._draw_triangle_interior<true, true>(Pf1, Pf2, Pf3, colorfill);
+
+		Image::_bdir dir12, dir23, dir31;
+		Image::_bpos pos12, pos23, pos31;
+		int64 len12 = im._init_line(Pf1, Pf2, dir12, pos12, P1, P2);
+		int64 len23 = im._init_line(Pf2, Pf3, dir23, pos23, P2, P3);
+		int64 len31 = im._init_line(Pf3, Pf1, dir31, pos31, P3, P1);
+
+		im._lineBresenham<true, true, false, false, false, false>(dir12, pos12, len12, color, 0, 0);
+		im._lineBresenham<true, true, false, false, false, false>(dir23, pos23, len23, color, 0, 0);
+		im._lineBresenham<true, true, false, false, false, false>(dir31, pos31, len31, color, 0, 0);
+
+		/*
+		im._lineBresenham_avoid<true, true, false, false, false>(dir23, pos23, len23, dir12, pos12, len12, color, 0);
+		im._lineBresenham_avoid_both_sides_triangle<true, true, false, false, false>(dir31, pos31, len31, dir32, pos32, len12, color, 0);
+		*/
+
+		cout << "Pf1 = " << Pf1 << " \t P1 = " << P1 << "\n";
+		cout << "Pf2 = " << Pf2 << " \t P2 = " << P2 << "\n";
+		cout << "Pf3 = " << Pf3 << " \t P3 = " << P3 << "\n";
 
 
-	iVec2 P1, P2, P3, P4; 
-
-	Image::_bdir dira, dirb;
-	Image::_bpos posa, posb;
-
-	int64 lena = im._init_line(Pf1, Pf2, dira, posa, P1, P2);
-	int64 lenb = im._init_line(Pf3, Pf4, dirb, posb, P3, P4);
-
-	cout << "Pf1 = " << Pf1 << " \t P1 = " << P1 << "\n";
-	cout << "Pf2 = " << Pf2 << " \t P2 = " << P2 << "\n";
-	cout << "Pf3 = " << Pf3 << " \t P3 = " << P3 << "\n";
-	cout << "Pf4 = " << Pf4 << " \t P4 = " << P4 << "\n";
-
-//	im._lineBresenham<true, true, false, false, true, true>(dira, posa, lena, color, 0, 0);
-	im._lineBresenham<true, true, false, false, true, false>(dirb, posb, lenb, color2, 0, 0);
-
-
-	//	im.draw_triangle(P1, P2, P3, RGBc::c_Red.getMultOpacity(0.5), true, true);
-	 
 
 		auto PA = makePlot2DImage(im, 1, "Image A");   // Encapsulate the image inside a 'plottable' object.	
 		Plotter2D plotter;              // Create a plotter object
 		plotter[PA];	                // Add the image to the list of objects to draw.  	
 		plotter.autorangeXY();          // Set the plotter range to fit the image.
 		plotter.plot();                 // start interactive display.
+		}
 
-		
+
+
+
+
+
 		return 0;
 	}
-
-
-
-
-
-
 
