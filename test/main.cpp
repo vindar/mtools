@@ -384,14 +384,15 @@ int main(int argc, char *argv[])
 	TestImage im(800, 800);
 
 	RGBc color = RGBc::c_Red.getMultOpacity(0.5);;
+	RGBc color2 = RGBc::c_Green.getMultOpacity(0.5);;
 	RGBc colorfill = RGBc::c_Red.getMultOpacity(0.5);;
 
 	double y = 1.5; 
-	fVec2 Pf1{ 0.3, 0 };
-	fVec2 Pf2{ 100, 30};
+	fVec2 Pf1{ 0, 0 - 0.4 };
+	fVec2 Pf2{ 100, 30 - 0.4};
 
-	fVec2 Pf3{ 0.3, 0  + y};
-	fVec2 Pf4{ 100, 30 + y};
+	fVec2 Pf3{ 0, 0 + 1.49};
+	fVec2 Pf4{ 100, 30 + 0.51};
 
 
 	iVec2 P1, P2, P3, P4; 
@@ -407,8 +408,8 @@ int main(int argc, char *argv[])
 	cout << "Pf3 = " << Pf3 << " \t P3 = " << P3 << "\n";
 	cout << "Pf4 = " << Pf4 << " \t P4 = " << P4 << "\n";
 
-	im._lineBresenham<true, true, false, false, true, true>(dira, posa, lena, color, 0, 0);
-	im._lineBresenham<true, true, false, false, true, false>(dirb, posb, lenb, color, 0, 0);
+//	im._lineBresenham<true, true, false, false, true, true>(dira, posa, lena, color, 0, 0);
+	im._lineBresenham<true, true, false, false, true, false>(dirb, posb, lenb, color2, 0, 0);
 
 
 	//	im.draw_triangle(P1, P2, P3, RGBc::c_Red.getMultOpacity(0.5), true, true);
