@@ -5462,7 +5462,7 @@ namespace mtools
 				int64 dy = P2.Y() - P1.Y(); if (dy < 0) { dy = -dy;  linedir.stepy = -1; } else { linedir.stepy = 1; } dy <<= 1;				
 				linedir.dx = dx;
 				linedir.dy = dy;
-				if (dx > dy) 
+				if (dx >= dy) 
 					{ 
 					linedir.x_major = true; 
 					linedir.rat = (dy == 0) ? 0 : (dx/dy);  
@@ -5491,33 +5491,125 @@ namespace mtools
 			*/
 			int64 _init_line(fVec2 Pf1, fVec2 Pf2, _bdir & linedir, _bpos & linepos, iVec2 & P1, iVec2 & P2)
 				{
+				bool sw = false;
+				if ((Pf1.X() > Pf2.X()) || ((Pf1.X() == Pf2.X()) && (Pf1.Y() > Pf2.Y())))
+					{
+					sw = true;
+					mtools::swap(Pf1, Pf2);
+					}
+
 				P1.X() = (int64)round(Pf1.X()); P1.Y() = (int64)round(Pf1.Y());
 				P2.X() = (int64)round(Pf2.X()); P2.Y() = (int64)round(Pf2.Y());
-				linepos.x = P1.X(); 
+				int64 len;
+
+				if (P1 == P2)
+				{
+				}
+
+				const double fdx = (Pf2.X() - Pf1.X());
+				const double fdy = (Pf2.Y() - Pf1.Y());
+
+				if (abs(fdx) > abs(fdy))
+					{ // x-major
+
+					linedir.dx = (P2.X() - P1.X())*1024; 
+					if (linedir.dx < 0) { linedir.dx = -linedir.dx;  linedir.stepx = -1; } else { linedir.stepx = 1; }
+
+
+
+					if (linedir.dy < 0) { linedir.dy = -linedir.dy;  linedir.stepy = -1; }
+					else { linedir.stepy = 1; }
+					if (linedir.dx < 0)
+
+
+					double f1 = (fdy / fdx)*(P1.X() - Pf1.X()) + Pf1.Y() - P1.Y();
+					double f2 = (fdy / fdx)*(P2.X() - Pf2.X()) + Pf2.Y() - P2.Y();
+					int64 if1 = (int64)(1024 * f1); if (if1 <= -512) { if1 = -511; } else if (if1 >= 512) { if1 = 511; }
+					int64 if2 = (int64)(1024 * f2); if (if2 <= -512) { if2 = -511; } else if (if2 >= 512) { if2 = 511; }
+					if ()
+
+
+					}
+				else
+					{ // y-major
+
+					}
+
+
+
+
+
+				if (P1.Y() == P1.Y())
+					{ // do something
+					if (P1.X() == P2.X())
+						{
+						// same point
+						}
+					else
+						{
+						// horizontal line
+						}
+					}
+				else
+					{
+					if (P1.Y() == P1.Y())
+						{
+						// vertical line
+						}
+					else
+						{
+						/// normal line
+						}
+					}
+
+
+
+				if ()
+				if (sw)
+					{
+					mtools::swap(P1, P2);
+					_reverse_line(linedir, linepos, len);
+					MTOOLS_ASSERT(linepos.x == P1.X());
+					MTOOLS_ASSERT(linepos.y == P1.Y());
+					}
+				return len;
+
+
+
+
+
+
+				linepos.x = P1.X();
 				linepos.y = P1.Y();
 				linedir.dx = (P2.X() - P1.X()) * 1024;
 				linedir.dy = (P2.Y() - P1.Y()) * 1024;
-				if (linedir.dx < 0) { linedir.dx = -linedir.dx;  linedir.stepx = -1; } else { linedir.stepx = 1; }
-				if (linedir.dy < 0) { linedir.dy = -linedir.dy;  linedir.stepy = -1; } else { linedir.stepy = 1; }
-				int64 len;
+
 				const double fdx = (Pf2.X() - Pf1.X());
 				const double fdy = (Pf2.Y() - Pf1.Y());
-				if (fdx > fdy)
+
+				if ((linedir.dx > linedir.dy) || ((linedir.dx == linedir.dy) && (fdx >= fdy)))
 					{
 					double f1 = (fdy / fdx)*(P1.X() - Pf1.X()) + (Pf1.Y() - P1.Y());
 					double f2 = (fdy / fdx)*(P2.X() - Pf2.X()) + (Pf2.Y() - P2.Y());
 					if (P2.Y() < P1.Y()) { f1 = -f1; f2 = -f2; }
 					int64 if1 = (int64)(1024 * f1); if (if1 <= -512) { if1 = -511; } else if (if1 >= 512) { if1 = 511; }
 					int64 if2 = (int64)(1024 * f2); if (if2 <= -512) { if2 = -511; } else if (if2 >= 512) { if2 = 511; }
-
 					linedir.dy += -if1 + if2;
-					linedir.x_major = true;
-					linedir.rat = (linedir.dy == 0) ? 0 : (linedir.dx / linedir.dy);
-					linedir.amul = ((int64)1 << 60) / linedir.dx;
 
-					len = linedir.dx >> 10;
-					linepos.frac = -(linedir.dx >> 1) + if1 * len;
-					linepos.frac += linedir.dy;
+					if (linedir.dy <= linedir.dx)
+						{
+						linedir.x_major = true;
+						linedir.rat = (linedir.dy == 0) ? 0 : (linedir.dx / linedir.dy);
+						linedir.amul = ((int64)1 << 60) / linedir.dx;
+						len = linedir.dx >> 10;
+						linepos.frac = -(linedir.dx >> 1) + if1 * len;
+						linepos.frac += linedir.dy;
+						}
+					else
+						{
+						MTOOLS_DEBUG("Incorrect real-valued line: fallback to integer line... (1)");
+						len = _init_line(P1, P2, linedir, linepos);
+						}
 					}
 				else
 					{
@@ -5528,16 +5620,27 @@ namespace mtools
 					int64 if2 = (int64)(1024 * f2); if (if2 <= -512) { if2 = -511; } else if (if2 >= 512) { if2 = 511; }
 
 					linedir.dx += -if1 + if2;
-					linedir.x_major = false;
-					linedir.rat = (linedir.dx == 0) ? 0 : (linedir.dy / linedir.dx);
-					linedir.amul = ((int64)1 << 60) / linedir.dy;
 
-					len = linedir.dy >> 10;
-					linepos.frac = -(linedir.dy >> 1) + if1 * len;
-					linepos.frac += linedir.dx;
+					if (linedir.dx <= linedir.dy)
+						{
+						linedir.x_major = false;
+						linedir.rat = (linedir.dx == 0) ? 0 : (linedir.dy / linedir.dx);
+						linedir.amul = ((int64)1 << 60) / linedir.dy;
+						len = linedir.dy >> 10;
+						linepos.frac = -(linedir.dy >> 1) + if1 * len;
+						linepos.frac += linedir.dx;
+						}
+					else
+						{
+						MTOOLS_DEBUG("Incorrect real-valued line: fallback to integer line... (2)");
+						len = _init_line(P1, P2, linedir, linepos);
+						}
 					}
-				linepos.frac -= (P2.X() > P1.X()) ? 1 : 0; // used to compensante frac so that line [P1,P2] = [P2,P1]. 
-				return len; 
+
+
+				if (linedir.dx < 0) { linedir.dx = -linedir.dx;  linedir.stepx = -1; } else { linedir.stepx = 1; }
+				if (linedir.dy < 0) { linedir.dy = -linedir.dy;  linedir.stepy = -1; } else { linedir.stepy = 1; }
+
 				}
 
 
@@ -5547,16 +5650,25 @@ namespace mtools
 				linedir.stepx *= -1;
 				linedir.stepy *= -1;
 				if (linedir.x_major)
-				{
+					{
 					linepos.frac = -linedir.dx - 1 - linepos.frac;
 					linepos.frac += 2 * linedir.dy;
-				}
+					}
 				else
-				{
+					{
 					linepos.frac = -linedir.dy - 1 - linepos.frac;
 					linepos.frac += 2 * linedir.dx;
-				}
+					}
 			}
+
+
+			/** make n step along the line then reserve it */
+			MTOOLS_FORCEINLINE  void _reverse_line(_bdir & linedir, _bpos & linepos, int64 n)
+				{
+				MTOOLS_ASSERT(n >= 0);
+				_move_line(linedir, linepos, n);
+				_reverse_line(linedir, linepos);
+				}
 
 
 			/* compute the value for antialiasing the half side of a line during bresenham algorithm:

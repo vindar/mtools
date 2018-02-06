@@ -390,16 +390,34 @@ int main(int argc, char *argv[])
 	fVec2 Pf1, Pf2, Pf3; 
 	iVec2 P1, P2, P3;
 
+
+
+	/*
+
+	fVec2 fA = { -0.49,0.49 };
+	fVec2 fB = { 1.49, 1.51 };
+
+	iVec2 iA, iB;
+
+	Image::_bdir bl;
+	Image::_bpos bp;
+
+	im._init_line(fA, fB, bl, bp, iA, iB);
+	*/
+
+
+
 	MT2004_64 gen(0);
 	double lx = 100.0; 
 	double ly = 100.0;
 
 	while (1)
 		{
+		im.clear(RGBc::c_White);
 		Pf1 = { Unif(gen)*lx, Unif(gen)*ly };
 		Pf2 = { Unif(gen)*lx, Unif(gen)*ly };
 		Pf3 = { Unif(gen)*lx, Unif(gen)*ly };
-		//im._draw_triangle_interior<true, true>(Pf1, Pf2, Pf3, colorfill);
+		im._draw_triangle_interior<true, true>(Pf1, Pf2, Pf3, colorfill);
 
 		Image::_bdir dir12, dir23, dir31;
 		Image::_bpos pos12, pos23, pos31;
@@ -421,12 +439,14 @@ int main(int argc, char *argv[])
 		cout << "Pf3 = " << Pf3 << " \t P3 = " << P3 << "\n";
 
 
-
+/*
 		auto PA = makePlot2DImage(im, 1, "Image A");   // Encapsulate the image inside a 'plottable' object.	
 		Plotter2D plotter;              // Create a plotter object
 		plotter[PA];	                // Add the image to the list of objects to draw.  	
 		plotter.autorangeXY();          // Set the plotter range to fit the image.
 		plotter.plot();                 // start interactive display.
+
+		*/
 		}
 
 
