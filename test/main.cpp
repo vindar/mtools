@@ -376,41 +376,198 @@ void LineBresenham(iVec2 P1, iVec2 P2, Image & im, RGBc color)
 }
 
 
+inline void assert(int nb, fVec2 Pf1, fVec2 Pf2, bool sta)
+	{
+	if (!sta)
+		{
+		cout << "Error " << nb << " at " << Pf1 << " , " << Pf2 << "\n";
+		cout.getKey();
+		}
+	}
+
+void test_lines(int L, double epsilon)
+{
+	Image im((int)L*epsilon + 2, (int)L*epsilon + 2);
+	im.clear(RGBc::c_White);
+
+	for (int x1 = 0; x1 < L; x1++)
+		{
+		for (int y1 = 0; y1 < L; y1++)
+			{
+			for (int x2 = 0; x2 < L; x2++)
+				{
+				for (int y2 = 0; y2 < L; y2++)
+					{
+
+					fVec2 Pf1 = { x1*epsilon + 1, y1*epsilon + 1 };
+					fVec2 Pf2 = { x2*epsilon + 1, y2*epsilon + 1 };
+
+					Image::_bdir dira,dirb;
+					Image::_bpos posa,posb;
+					iVec2 P1a, P1b, P2a, P2b;
+
+					int64 lena = im._init_line(Pf1, Pf2, dira, posa, P1a, P2a); 
+					int64 lenb = im._init_line(Pf2, Pf1, dirb, posb, P1b, P2b);
+
+					
+					assert(0, Pf1, Pf2, lena == lenb);
+					assert(1, Pf1, Pf2, P1a == P2b);
+					assert(2, Pf1, Pf2, P2a == P1b);
+					assert(3, Pf1, Pf2, posa.x = P1a.X());
+					assert(4, Pf1, Pf2, posa.y = P1a.Y());
+					assert(5, Pf1, Pf2, posb.x = P1b.X());
+					assert(6, Pf1, Pf2, posb.y = P1b.Y());
+					
+					for (int64 i = 0; i < lena; i++)
+						{
+						im(posa.x, posa.y) = RGBc::c_Black;
+						im._move_line(dira, posa,1);
+						}
+					
+					im(posa.x, posa.y) = RGBc::c_Black;
+					assert(7, Pf1, Pf2, posa.x = P2a.X());
+					assert(8, Pf1, Pf2, posa.y = P2a.Y());
+
+					for (int64 i = 0; i < lenb; i++)
+						{
+						assert(9, Pf1, Pf2, im(posb.x, posb.y) == RGBc::c_Black);
+						im(posb.x, posb.y) = RGBc::c_White;
+						im._move_line(dirb, posb, 1);
+						}
+					assert(10, Pf1, Pf2, im(posb.x, posb.y) == RGBc::c_Black);
+					im(posb.x, posb.y) = RGBc::c_White;
+
+					assert(11, Pf1, Pf2, posb.x = P2b.X());
+					assert(12, Pf1, Pf2, posb.y = P2b.Y());
+					
+					}
+				}
+			}
+		cout << ".";
+		}
+
+
+
+}
+
+
+
+
+
+
+inline void nextpoint(double l, Image & im, fVec2 & A, fVec2 & B, fVec2 & C, fVec2 D, RGBc color)
+	{
+	fVec2 M = 0.5*(A + B);
+	fVec2 U = C - M;
+
+	fVec2 Al = A + U;
+	fVec2 Bl = B + U;
+
+	fVec2 V = D - C; 
+
+	fVec2 H = { V.Y(), -V.X() };
+	H.normalize(); H *= l; 
+
+	fVec2 UU = (Al - C - H); UU.normalize();  UU *= l; 
+	iVec2 AA = C + UU;
+	fVec2 VV = (Bl - C + H); VV.normalize();  VV *= l; 
+	iVec2 BB = C + VV;
+
+	fVec2 A1 = A;
+	fVec2 A2 = AA;
+	fVec2 A3 = BB; 
+	fVec2 A4 = B;
+
+	iVec2 AP1, AP2, AP3, AP4;
+
+	Image::_bdir dir12, dir21;
+	Image::_bpos pos12, pos21;
+	int64 len12 = im._init_line(A1, A2, dir12, pos12, AP1, AP2);
+	pos21 = pos12;
+	dir21 = dir12;
+	im._reverse_line(dir21, pos21, len12);
+
+	Image::_bdir dir23, dir32;
+	Image::_bpos pos23, pos32;
+	int64 len23 = im._init_line(A2, A3, dir23, pos23, AP2, AP3);
+	pos32 = pos23;
+	dir32 = dir23;
+	im._reverse_line(dir32, pos32, len23);
+
+	Image::_bdir dir34, dir43;
+	Image::_bpos pos34, pos43;
+	int64 len34 = im._init_line(A3, A4, dir34, pos34, AP3, AP4);
+	pos43 = pos34;
+	dir43 = dir34;
+	im._reverse_line(dir43, pos43, len34);
+
+	Image::_bdir dir41, dir14;
+	Image::_bpos pos41, pos14;
+	int64 len41 = im._init_line(A4, A1, dir41, pos41, AP4, AP1);
+	pos14 = pos41;
+	dir14 = dir41;
+	im._reverse_line(dir14, pos14, len41);
+
+	Image::_bdir dir13;
+	Image::_bpos pos13;
+	int64 len13 = im._init_line(A1, A3, dir13, pos13, AP1, AP3);
+
+
+	static const bool caa = false;
+
+	im._lineBresenham_avoid<true, true, false, caa, false>(dir12, pos12, len12 + 1, dir14, pos14, len41 + 1, color, 0);
+	im._lineBresenham_avoid<true, true, false, caa, true>(dir43, pos43, len34 + 1, dir41, pos41, len41 + 1, color, 0);
+	im._lineBresenham_avoid_both_sides_triangle<true, true, false, false, true>(dir23, pos23, len23, dir21, pos21, len12 + 1, dir34, pos34, len34 + 1, color, 0);
+
+	im._lineBresenham_avoid_both_sides<true, true, false, false, true>
+		(dir13, pos13, len13,
+			dir12, pos12, len12,
+			dir14, pos14, len41,
+			dir32, pos32, len23,
+			dir34, pos34, len34, color, 0);
+
+	im._draw_triangle_interior<true, true>(A1, A2, A3, color);
+	im._draw_triangle_interior<true, true>(A1, A3, A4, color);
+
+	
+	A = AA; 
+	B = BB; 
+	C = D; 
+	return;
+	}
+
+void rot(fVec2 & V, double alpha)
+	{
+	double b = alpha * TWOPI / 360;
+	V = { V.X() * cos(b) + V.Y() * sin(b), -V.X() * sin(b) + V.Y() * cos(b) };
+	}
+
+
+
+
 int main(int argc, char *argv[])
 {
-
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
 
-	TestImage im(800, 800);
+	double lx = 800.0;
+	double ly = 800.0;
+
+
+	TestImage im((int)(lx+1), (int)(ly+1));
 
 	RGBc color = RGBc::c_Red.getMultOpacity(0.5);;
 	RGBc color2 = RGBc::c_Green.getMultOpacity(0.5);;
 	RGBc colorfill = RGBc::c_Blue.getMultOpacity(0.5);;
 
+
+	colorfill = color;
+
 	fVec2 Pf1, Pf2, Pf3; 
 	iVec2 P1, P2, P3;
 
-
+	MT2004_64 gen(0);
 
 	/*
-
-	fVec2 fA = { -0.49,0.49 };
-	fVec2 fB = { 1.49, 1.51 };
-
-	iVec2 iA, iB;
-
-	Image::_bdir bl;
-	Image::_bpos bp;
-
-	im._init_line(fA, fB, bl, bp, iA, iB);
-	*/
-
-
-
-	MT2004_64 gen(0);
-	double lx = 100.0; 
-	double ly = 100.0;
-
 	while (1)
 		{
 		im.clear(RGBc::c_White);
@@ -419,39 +576,210 @@ int main(int argc, char *argv[])
 		Pf3 = { Unif(gen)*lx, Unif(gen)*ly };
 		im._draw_triangle_interior<true, true>(Pf1, Pf2, Pf3, colorfill);
 
-		Image::_bdir dir12, dir23, dir31;
-		Image::_bpos pos12, pos23, pos31;
+		Image::_bdir dir12, dir21, dir13, dir31, dir23;
+		Image::_bpos pos12, pos21, pos13, pos31, pos23;
+
 		int64 len12 = im._init_line(Pf1, Pf2, dir12, pos12, P1, P2);
+		dir21 = dir12; pos21 = pos12; im._reverse_line(dir21, pos21, len12);
+
+		int64 len13 = im._init_line(Pf1, Pf3, dir13, pos13, P1, P3);
+		dir31 = dir13; pos31 = pos13; im._reverse_line(dir31, pos31, len13);
+
 		int64 len23 = im._init_line(Pf2, Pf3, dir23, pos23, P2, P3);
-		int64 len31 = im._init_line(Pf3, Pf1, dir31, pos31, P3, P1);
 
-		im._lineBresenham<true, true, false, false, false, false>(dir12, pos12, len12, color, 0, 0);
-		im._lineBresenham<true, true, false, false, false, false>(dir23, pos23, len23, color, 0, 0);
-		im._lineBresenham<true, true, false, false, false, false>(dir31, pos31, len31, color, 0, 0);
 
-		/*
-		im._lineBresenham_avoid<true, true, false, false, false>(dir23, pos23, len23, dir12, pos12, len12, color, 0);
-		im._lineBresenham_avoid_both_sides_triangle<true, true, false, false, false>(dir31, pos31, len31, dir32, pos32, len12, color, 0);
-		*/
+		fVec2 vA = (Pf3 - Pf1), vB = (Pf2 - Pf1);
+		double det = vA.X()*vB.Y() - vB.X()*vA.Y();
 
+		if (det > 0)
+			{
+			im._lineBresenham<true, true, false, false, true, false>(dir12, pos12, len12 + 1, color, 0, 0);
+			im._lineBresenham_avoid<true, true, false, true, true>(dir13, pos13, len13 + 1, dir12, pos12, len12 + 1, color, 0);
+			im._lineBresenham_avoid_both_sides_triangle<true, true, false, true, false>(dir23, pos23, len23, dir21, pos21, len12 + 1, dir31, pos31, len13 + 1, color, 0);
+			}
+		else
+			{
+			im._lineBresenham<true, true, false, false, true, true>(dir12, pos12, len12 + 1, color, 0, 0);
+			im._lineBresenham_avoid<true, true, false, true, false>(dir13, pos13, len13 + 1 , dir12, pos12, len12 + 1, color, 0);
+			im._lineBresenham_avoid_both_sides_triangle<true, true, false, true, true>(dir23, pos23, len23, dir21, pos21, len12 + 1, dir31, pos31, len13 + 1, color, 0);
+			}
+		
 		cout << "Pf1 = " << Pf1 << " \t P1 = " << P1 << "\n";
 		cout << "Pf2 = " << Pf2 << " \t P2 = " << P2 << "\n";
 		cout << "Pf3 = " << Pf3 << " \t P3 = " << P3 << "\n";
 
-
-/*
 		auto PA = makePlot2DImage(im, 1, "Image A");   // Encapsulate the image inside a 'plottable' object.	
 		Plotter2D plotter;              // Create a plotter object
 		plotter[PA];	                // Add the image to the list of objects to draw.  	
 		plotter.autorangeXY();          // Set the plotter range to fit the image.
-		plotter.plot();                 // start interactive display.
-
+		plotter.plot();                 // start interactive display.		
+		}
 		*/
+
+
+	im.clear(RGBc::c_White);
+
+
+	{
+
+		double l = 5; 
+		double r = 5; 
+
+		fVec2 O = { 400,400 };
+
+		fVec2 A = { O.X() - l, O.Y() };
+		fVec2 B = { O.X() + l, O.Y() };
+		fVec2 C = { O.X(), O.Y() + r };
+
+
+		fVec2 R = { 0, r };
+
+
+		fVec2 D;
+
+		for (int i = 0; i < 50; i++)
+		{
+			D = C + R;
+			nextpoint(l, im, A, B, C, D, color);
+			rot(R, 1);
 		}
 
 
+		auto PA = makePlot2DImage(im, 1, "Image A");   // Encapsulate the image inside a 'plottable' object.	
+		Plotter2D plotter;              // Create a plotter object
+		plotter[PA];	                // Add the image to the list of objects to draw.  	
+		plotter.autorangeXY();          // Set the plotter range to fit the image.
+		plotter.plot();                 // start interactive display.		
 
 
+	}
+
+
+	Chronometer();
+	int NSN = 100;
+	double l = 0.75;
+
+	for (int i = 0; i < NSN; i++)
+	{
+
+		fVec2 Pfa = { Unif(gen)*lx, Unif(gen)*ly };
+		fVec2 Pfb = { Unif(gen)*lx, Unif(gen)*ly };
+
+		iVec2 JA = { (int64)round(Pfa.X()), (int64)round(Pfa.Y()) };
+		iVec2 JB = { (int64)round(Pfb.X()), (int64)round(Pfb.Y()) };
+
+//		if (i & 1)
+	//		im.draw_line(JA, JB, color2, true, true, true, l);
+	//	else
+		{
+			fVec2 U = Pfa - Pfb;
+			fVec2 V = { U.Y(), -U.X() };
+			V.normalize();
+			V *= l;
+
+			fVec2 A1 = Pfa + V;
+			fVec2 A2 = Pfb + V;
+			fVec2 A3 = Pfb - V;
+			fVec2 A4 = Pfa - V;
+
+			im._draw_triangle_interior<true, true>(A1, A2, A3, colorfill);
+			im._draw_triangle_interior<true, true>(A1, A3, A4, colorfill);
+
+			iVec2 AP1, AP2, AP3, AP4;
+
+			Image::_bdir dir12, dir21;
+			Image::_bpos pos12, pos21;
+			int64 len12 = im._init_line(A1, A2, dir12, pos12, AP1, AP2);
+			pos21 = pos12;
+			dir21 = dir12;
+			im._reverse_line(dir21, pos21, len12);
+
+			Image::_bdir dir23, dir32;
+			Image::_bpos pos23, pos32;
+			int64 len23 = im._init_line(A2, A3, dir23, pos23, AP2, AP3);
+			pos32 = pos23;
+			dir32 = dir23;
+			im._reverse_line(dir32, pos32, len23);
+
+			Image::_bdir dir34, dir43;
+			Image::_bpos pos34, pos43;
+			int64 len34 = im._init_line(A3, A4, dir34, pos34, AP3, AP4);
+			pos43 = pos34;
+			dir43 = dir34;
+			im._reverse_line(dir43, pos43, len34);
+
+			Image::_bdir dir41, dir14;
+			Image::_bpos pos41, pos14;
+			int64 len41 = im._init_line(A4, A1, dir41, pos41, AP4, AP1);
+			pos14 = pos41;
+			dir14 = dir41;
+			im._reverse_line(dir14, pos14, len41);
+
+			Image::_bdir dir13;
+			Image::_bpos pos13;
+			int64 len13 = im._init_line(A1, A3, dir13, pos13, AP1, AP3);
+
+			
+			static const int caa = true;
+			im._lineBresenham<true, true, false, false, caa, false>(dir12, pos12, len12 + 1, color, 0, 0);
+			im._lineBresenham_avoid<true, true, false, caa, false>(dir23, pos23, len23 + 1, dir21, pos21, len12 + 1, color, 0);
+			im._lineBresenham_avoid<true, true, false, caa, false>(dir34, pos34, len34 + 1, dir32, pos32, len23 + 1, color, 0);
+			im._lineBresenham_avoid_both_sides_triangle<true, true, false, caa, false>(dir41, pos41, len41, dir43, pos43, len34 + 1, dir12, pos12, len12 + 1, color, 0);
+			
+
+			im._lineBresenham_avoid_both_sides<true, true, false, false, true>
+				(dir13, pos13, len13,
+					dir12, pos12, len12,
+					dir14, pos14, len41,
+					dir32, pos32, len23,
+					dir34, pos34, len34, color, 0);
+		}
+
+			 
+			 
+
+		/*
+
+		Image::_bdir dir12, dir21, dir13, dir31, dir23;
+		Image::_bpos pos12, pos21, pos13, pos31, pos23;
+
+		int64 len12 = im._init_line(Pf1, Pf2, dir12, pos12, P1, P2);
+		dir21 = dir12; pos21 = pos12; im._reverse_line(dir21, pos21, len12);
+
+		int64 len13 = im._init_line(Pf1, Pf3, dir13, pos13, P1, P3);
+		dir31 = dir13; pos31 = pos13; im._reverse_line(dir31, pos31, len13);
+
+		int64 len23 = im._init_line(Pf2, Pf3, dir23, pos23, P2, P3);
+
+		fVec2 vA = (Pf3 - Pf1), vB = (Pf2 - Pf1);
+		double det = vA.X()*vB.Y() - vB.X()*vA.Y();
+
+		if (det > 0)
+		{
+			im._lineBresenham<true, true, false, false, true, false>(dir12, pos12, len12 + 1, color, 0, 0);
+			im._lineBresenham_avoid<true, true, false, true, true>(dir13, pos13, len13 + 1, dir12, pos12, len12 + 1, color, 0);
+			im._lineBresenham_avoid_both_sides_triangle<true, true, false, true, false>(dir23, pos23, len23, dir21, pos21, len12 + 1, dir31, pos31, len13 + 1, color, 0);
+		}
+		else
+		{
+			im._lineBresenham<true, true, false, false, true, true>(dir12, pos12, len12 + 1, color, 0, 0);
+			im._lineBresenham_avoid<true, true, false, true, false>(dir13, pos13, len13 + 1, dir12, pos12, len12 + 1, color, 0);
+			im._lineBresenham_avoid_both_sides_triangle<true, true, false, true, true>(dir23, pos23, len23, dir21, pos21, len12 + 1, dir31, pos31, len13 + 1, color, 0);
+		}
+
+
+		*/
+
+	}
+
+	cout << mtools::durationToString(Chronometer(), true);
+
+
+	auto PA = makePlot2DImage(im, 1, "Image A");   // Encapsulate the image inside a 'plottable' object.	
+	Plotter2D plotter;              // Create a plotter object
+	plotter[PA];	                // Add the image to the list of objects to draw.  	
+	plotter.autorangeXY();          // Set the plotter range to fit the image.
+	plotter.plot();                 // start interactive display.		
 
 
 		return 0;

@@ -5470,7 +5470,7 @@ namespace mtools
 					linepos.x = P1.X();
 					linepos.y = P1.Y();
 					linepos.frac = -2;
-					return;
+					return 0;
 					}
 				MTOOLS_ASSERT(P1 != P2);
 				int64 dx = P2.X() - P1.X(); if (dx < 0) { dx = -dx;  linedir.stepx = -1; } else { linedir.stepx = 1; } dx <<= 1;
@@ -5539,12 +5539,13 @@ namespace mtools
 						double f2 = mul*(P2.X() - Pf2.X()) + Pf2.Y() - P2.Y(); // how much below
 						int64 if1 = (int64)((2 * PRECISION) * f1); if (if1 <= -PRECISION) { if1 = -PRECISION + 1; } else if (if1 >= PRECISION) { if1 = PRECISION - 1; }
 						int64 if2 = (int64)((2 * PRECISION) * f2); if (if2 <= -PRECISION) { if2 = -PRECISION + 1; } else if (if2 >= PRECISION) { if2 = PRECISION - 1; }
-						if (fdx < 0) { linedir.stepx = -1;  if1 = -if1; if2 = -if2; } else { linedir.stepx = +1; }
+						if (fdx < 0) { linedir.stepx = -1; } else { linedir.stepx = +1; }
 						if (fdy < 0) { linedir.stepy = -1;  if1 = -if1; if2 = -if2; } else { linedir.stepy = +1; }
 						linedir.dx = adx * (2 * PRECISION);
 						linedir.dy = ady * (2 * PRECISION);
 						linedir.dy += -if1 + if2;
-						MTOOLS_ASSERT(dy <= dx);
+						MTOOLS_ASSERT(linedir.dy >= 0);
+						MTOOLS_ASSERT(linedir.dy <= linedir.dx);
 						linedir.rat = (linedir.dy == 0) ? 0 : (linedir.dx / linedir.dy);
 						linedir.amul = ((int64)1 << 60) / linedir.dx;
 						linepos.frac = (if1 - PRECISION)*adx + linedir.dy;
@@ -5558,11 +5559,12 @@ namespace mtools
 						int64 if1 = (int64)((2 * PRECISION) * f1); if (if1 <= -PRECISION) { if1 = -PRECISION + 1;} else if (if1 >= PRECISION) { if1 = PRECISION - 1; }
 						int64 if2 = (int64)((2 * PRECISION) * f2); if (if2 <= -PRECISION) { if2 = -PRECISION + 1;} else if (if2 >= PRECISION) { if2 = PRECISION - 1; }
 						if (fdx < 0) { linedir.stepx = -1;  if1 = -if1; if2 = -if2; } else { linedir.stepx = +1; }
-						if (fdy < 0) { linedir.stepy = -1;  if1 = -if1; if2 = -if2; } else { linedir.stepy = +1; }
+						if (fdy < 0) { linedir.stepy = -1; } else { linedir.stepy = +1; }
 						linedir.dy = ady * (2 * PRECISION);
 						linedir.dx = adx * (2 * PRECISION);
 						linedir.dx += -if1 + if2;
-						MTOOLS_ASSERT(dx <= dy);
+						MTOOLS_ASSERT(linedir.dx >= 0);
+						MTOOLS_ASSERT(linedir.dx <= linedir.dy);
 						linedir.rat = (linedir.dx == 0) ? 0 : (linedir.dy / linedir.dx);
 						linedir.amul = ((int64)1 << 60) / linedir.dy;
 						linepos.frac = (if1 - PRECISION)*ady + linedir.dx;
@@ -6454,7 +6456,6 @@ namespace mtools
 				int64 pl3 = _lineBresenham_find_max_intersection<checkrange>(linea, posa, lena, linec, posc, lenc);
 				if (pl3 > lena) { pl3 = lena; } else if (pl3 < 1) pl3 = 1;
 				int64 pl = std::max<int64>(pl2, pl3);
-
 				_bdir linea2 = linea;
 				_bpos posa2 = posa;
 				_move_line(linea2, posa2, lena);
@@ -6466,9 +6467,7 @@ namespace mtools
 				int64 ql3 = _lineBresenham_find_max_intersection<checkrange>(linea2, posa2, lena, linee, pose, lene);
 				if (ql3 > lena) { ql3 = lena; } else if (ql3 < 1) ql3 = 1;
 				int64 ql = std::max<int64>(ql2, ql3);
-
-				int64 M = (pl + ((L + 1) - ql)) >> 1; // much faster and usually good to just take M = L/2; 
-
+				int64 M = (pl + ((lena + 1) - ql)) >> 1; // much faster and usually good to just take M = L/2; 
 				_lineBresenham_avoid<blend, checkrange, useop, useaa, side>(linea, posa, M, lineb, posb, lenb, linec, posc, lenc, color, op);
 				_lineBresenham_avoid<blend, checkrange, useop, useaa, !side>(linea2, posa2, lena + 1 - M, lined, posd, lend, linee, pose, lene, color, op);
 				}
@@ -6573,25 +6572,31 @@ namespace mtools
 					_fill_interior_angle<blend, checkrange>(P1, P2, P3, line12, pos12, line13, pos13, fillcolor, false);
 					return;
 					}
-				_bdir line32, line31, line12, line13;
-				_bpos pos32, pos31, pos12, pos13;
+				_bdir line32, line12, line31, line13, line23, line21;
+				_bpos pos32, pos12, pos31, pos13, pos23, pos21;
 				iVec2 P1, P2, P3;
-				_init_line(fP3, fP2, line32, pos32, P3, P2);
-				_init_line(fP3, fP1, line31, pos31, P3, P1);
-				_init_line(fP1, fP2, line12, pos12, P1, P2);
-				_init_line(fP1, fP3, line13, pos13, P1, P3);
-				auto a1 = (P2.X() - P1.X())*(P3.Y() - P2.Y()); if (a1 < 0) a1 = -a1;
-				auto a2 = (P3.X() - P2.X())*(P2.Y() - P1.Y()); if (a2 < 0) a2 = -a2;
-				if (a1 > a2)
+				int64 len12 = _init_line(fP1, fP2, line12, pos12, P1, P2);
+				int64 len32 = _init_line(fP3, fP2, line32, pos32, P3, P2);
+				int64 len13 = _init_line(fP1, fP3, line13, pos13, P1, P3);
+				line31 = line13; pos31 = pos13; _reverse_line(line31, pos31, len13);
+				line21 = line12; pos21 = pos12; _reverse_line(line21, pos21, len12);
+				line23 = line32; pos23 = pos32; _reverse_line(line23, pos23, len32);
+
+				bool fl3;
+				fVec2 vA = (fP3 - fP1), vB = (fP2 - fP1); 
+				double det = vA.X()*vB.Y() - vB.X()*vA.Y();
+				_move_line_y_dir(line23, pos23, 1);
+				_move_line_y_dir(line21, pos21, 1);
+				if (det < 0)
 					{
-					_fill_interior_angle<blend, checkrange>(P3, P2, P1, line32, pos32, line31, pos31, fillcolor, false);
-					_fill_interior_angle<blend, checkrange>(P1, P2, P3, line12, pos12, line13, pos13, fillcolor, true);
+					fl3 = (pos23.x < pos21.x) ? true : false;
 					}
 				else
 					{
-					_fill_interior_angle<blend, checkrange>(P1, P2, P3, line12, pos12, line13, pos13, fillcolor, false);
-					_fill_interior_angle<blend, checkrange>(P3, P2, P1, line32, pos32, line31, pos31, fillcolor, true);
+					fl3 = (pos23.x > pos21.x) ? true : false;
 					}
+				_fill_interior_angle<blend, checkrange>(P3, P2, P1, line32, pos32, line31, pos31, fillcolor, fl3);
+				_fill_interior_angle<blend, checkrange>(P1, P2, P3, line12, pos12, line13, pos13, fillcolor, !fl3);
 				return;
 				}
 
