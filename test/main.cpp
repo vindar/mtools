@@ -513,22 +513,24 @@ inline void nextpoint(double l, Image & im, fVec2 & A, fVec2 & B, fVec2 & C, fVe
 	int64 len13 = im._init_line(A1, A3, dir13, pos13, AP1, AP3);
 
 
-	static const bool caa = false;
+	static const bool caa = true;
 
-	im._lineBresenham_avoid<true, true, false, caa, false>(dir12, pos12, len12 + 1, dir14, pos14, len41 + 1, color, 0);
-	im._lineBresenham_avoid<true, true, false, caa, true>(dir43, pos43, len34 + 1, dir41, pos41, len41 + 1, color, 0);
-	im._lineBresenham_avoid_both_sides_triangle<true, true, false, false, true>(dir23, pos23, len23, dir21, pos21, len12 + 1, dir34, pos34, len34 + 1, color, 0);
+	im._lineBresenham_avoid<true, true, false, caa, false>(dir12, pos12, len12 +1, dir14, pos14, len41 + 1, color, 0);
+	im._lineBresenham_avoid<true, true, false, caa, true>(dir43, pos43, len34 +1, dir41, pos41, len41 + 1, color, 0);
+	//im._lineBresenham_avoid_both_sides_triangle<true, true, false, false, true>(dir23, pos23, len23, dir21, pos21, len12 + 1, dir34, pos34, len34 + 1, color, 0);
 
+	/*
 	im._lineBresenham_avoid_both_sides<true, true, false, false, true>
 		(dir13, pos13, len13,
 			dir12, pos12, len12,
 			dir14, pos14, len41,
 			dir32, pos32, len23,
 			dir34, pos34, len34, color, 0);
-
+			
+	
 	im._draw_triangle_interior<true, true>(A1, A2, A3, color);
 	im._draw_triangle_interior<true, true>(A1, A3, A4, color);
-
+	*/
 	
 	A = AA; 
 	B = BB; 
@@ -622,10 +624,10 @@ int main(int argc, char *argv[])
 
 	{
 
-		double l = 5; 
-		double r = 5; 
+		double l = 3; 
+		double r = 2; 
 
-		fVec2 O = { 400,400 };
+		fVec2 O = { 200,200 };
 
 		fVec2 A = { O.X() - l, O.Y() };
 		fVec2 B = { O.X() + l, O.Y() };
@@ -637,11 +639,11 @@ int main(int argc, char *argv[])
 
 		fVec2 D;
 
-		for (int i = 0; i < 50; i++)
+		for (int i = 0; i < 100; i++)
 		{
 			D = C + R;
 			nextpoint(l, im, A, B, C, D, color);
-			rot(R, 1);
+			rot(R, 2);
 		}
 
 

@@ -5473,8 +5473,8 @@ namespace mtools
 					return 0;
 					}
 				MTOOLS_ASSERT(P1 != P2);
-				int64 dx = P2.X() - P1.X(); if (dx < 0) { dx = -dx;  linedir.stepx = -1; } else { linedir.stepx = 1; } dx <<= 1;
-				int64 dy = P2.Y() - P1.Y(); if (dy < 0) { dy = -dy;  linedir.stepy = -1; } else { linedir.stepy = 1; } dy <<= 1;				
+				int64 dx = P2.X() - P1.X(); if (dx < 0) { dx = -dx;  linedir.stepx = -1; } else { linedir.stepx = 1; } dx <<= 10;
+				int64 dy = P2.Y() - P1.Y(); if (dy < 0) { dy = -dy;  linedir.stepy = -1; } else { linedir.stepy = 1; } dy <<= 10;				
 				linedir.dx = dx;
 				linedir.dy = dy;
 				if (dx >= dy) 
@@ -5506,7 +5506,7 @@ namespace mtools
 			*/
 			int64 _init_line(fVec2 Pf1, fVec2 Pf2, _bdir & linedir, _bpos & linepos, iVec2 & P1, iVec2 & P2)
 				{
-				const int64 PRECISION = 512;
+				const int64 PRECISION = 4; // 512 * 128;
 				bool sw = false;
 				if ((Pf1.X() > Pf2.X()) || ((Pf1.X() == Pf2.X()) && (Pf1.Y() > Pf2.Y())))
 					{
@@ -5516,6 +5516,11 @@ namespace mtools
 
 				P1.X() = (int64)round(Pf1.X()); P1.Y() = (int64)round(Pf1.Y());
 				P2.X() = (int64)round(Pf2.X()); P2.Y() = (int64)round(Pf2.Y());
+
+				if (sw) { mtools::swap(P1, P2); }
+				return _init_line(P1, P2, linedir, linepos);
+				 
+
 				linepos.x = P1.X();
 				linepos.y = P1.Y();
 				const int64 adx = abs(P2.X() - P1.X());
@@ -5618,14 +5623,17 @@ namespace mtools
 					{
 					a = linedir.dy;
 					a = (((a - linepos.frac)*linedir.amul) >> 52);
+					MTOOLS_INSURE((a < 255) && (a >= 0));
 					if (side) { if (stepx != stepy) a = 255 - a; } else { if (stepx == stepy) a = 255 - a; }
 					}
 				else
 					{
 					a = linedir.dx;
 					a = (((a - linepos.frac)*linedir.amul) >> 52);
+					MTOOLS_INSURE((a < 255) && (a >= 0));
 					if (side) { if (stepx == stepy) a = 255 - a; } else { if (stepx != stepy) a = 255 - a; }
 					}
+				return a;
 				return (int32)(a & 255) + 1;
 				}
 
@@ -5638,12 +5646,15 @@ namespace mtools
 					{
 					a = linedir.dy;
 					a = (((a - linepos.frac)*linedir.amul) >> 52);
+					MTOOLS_INSURE((a <= 255));
+					MTOOLS_INSURE(a >= 0);
 					if (side) { if (linedir.stepx != linedir.stepy) a = 255 - a; } else { if (linedir.stepx == linedir.stepy) a = 255 - a; }
 					}
 				else
 					{
 					a = linedir.dx;
 					a = (((a - linepos.frac)*linedir.amul) >> 52);
+					MTOOLS_INSURE((a <= 255) && (a >= 0));
 					if (side) { if (linedir.stepx == linedir.stepy) a = 255 - a; } else { if (linedir.stepx != linedir.stepy) a = 255 - a; }
 					}
 				return (int32)(a & 255) + 1;
