@@ -5457,6 +5457,21 @@ namespace mtools
 			*/
 			MTOOLS_FORCEINLINE int64 _init_line(const iVec2 P1, const iVec2 P2, _bdir & linedir, _bpos & linepos)
 				{
+				if (P1 == P2)
+					{ // default horizontal line
+					MTOOLS_DEBUG("P1 = P2 : default horizontal line.");
+					linedir.x_major = true;
+					linedir.dx = 2;
+					linedir.dy = 0;
+					linedir.stepx = 1;
+					linedir.stepy = 1; 
+					linedir.rat = 0;
+					linedir.amul = ((int64)1 << 60)/2;
+					linepos.x = P1.X();
+					linepos.y = P1.Y();
+					linepos.frac = -2;
+					return;
+					}
 				MTOOLS_ASSERT(P1 != P2);
 				int64 dx = P2.X() - P1.X(); if (dx < 0) { dx = -dx;  linedir.stepx = -1; } else { linedir.stepx = 1; } dx <<= 1;
 				int64 dy = P2.Y() - P1.Y(); if (dy < 0) { dy = -dy;  linedir.stepy = -1; } else { linedir.stepy = 1; } dy <<= 1;				
@@ -5491,6 +5506,7 @@ namespace mtools
 			*/
 			int64 _init_line(fVec2 Pf1, fVec2 Pf2, _bdir & linedir, _bpos & linepos, iVec2 & P1, iVec2 & P2)
 				{
+				const int64 PRECISION = 512;
 				bool sw = false;
 				if ((Pf1.X() > Pf2.X()) || ((Pf1.X() == Pf2.X()) && (Pf1.Y() > Pf2.Y())))
 					{
@@ -5500,71 +5516,58 @@ namespace mtools
 
 				P1.X() = (int64)round(Pf1.X()); P1.Y() = (int64)round(Pf1.Y());
 				P2.X() = (int64)round(Pf2.X()); P2.Y() = (int64)round(Pf2.Y());
-				int64 len;
-
-				if (P1 == P2)
-				{
-				}
-
+				linepos.x = P1.X();
+				linepos.y = P1.Y();
+				const int64 adx = abs(P2.X() - P1.X());
+				const int64 ady = abs(P2.Y() - P1.Y());
+				const int64 len = (adx > ady) ? adx : ady;
 				const double fdx = (Pf2.X() - Pf1.X());
 				const double fdy = (Pf2.Y() - Pf1.Y());
 
-				if (abs(fdx) > abs(fdy))
-					{ // x-major
-
-					linedir.dx = (P2.X() - P1.X())*1024; 
-					if (linedir.dx < 0) { linedir.dx = -linedir.dx;  linedir.stepx = -1; } else { linedir.stepx = 1; }
-
-
-
-					if (linedir.dy < 0) { linedir.dy = -linedir.dy;  linedir.stepy = -1; }
-					else { linedir.stepy = 1; }
-					if (linedir.dx < 0)
-
-
-					double f1 = (fdy / fdx)*(P1.X() - Pf1.X()) + Pf1.Y() - P1.Y();
-					double f2 = (fdy / fdx)*(P2.X() - Pf2.X()) + Pf2.Y() - P2.Y();
-					int64 if1 = (int64)(1024 * f1); if (if1 <= -512) { if1 = -511; } else if (if1 >= 512) { if1 = 511; }
-					int64 if2 = (int64)(1024 * f2); if (if2 <= -512) { if2 = -511; } else if (if2 >= 512) { if2 = 511; }
-					if ()
-
-
-					}
-				else
-					{ // y-major
-
-					}
-
-
-
-
-
-				if (P1.Y() == P1.Y())
-					{ // do something
-					if (P1.X() == P2.X())
-						{
-						// same point
-						}
-					else
-						{
-						// horizontal line
-						}
+				if (adx == ady)
+					{ // edge cases
+					if (sw) { mtools::swap(P1, P2); }
+					return _init_line(P1, P2, linedir, linepos);
 					}
 				else
 					{
-					if (P1.Y() == P1.Y())
-						{
-						// vertical line
+					if (adx > ady)
+						{ // x major
+						linedir.x_major = true;
+						const double mul = fdy / fdx;
+						double f1 = mul*(P1.X() - Pf1.X()) + Pf1.Y() - P1.Y(); // how much above
+						double f2 = mul*(P2.X() - Pf2.X()) + Pf2.Y() - P2.Y(); // how much below
+						int64 if1 = (int64)((2 * PRECISION) * f1); if (if1 <= -PRECISION) { if1 = -PRECISION + 1; } else if (if1 >= PRECISION) { if1 = PRECISION - 1; }
+						int64 if2 = (int64)((2 * PRECISION) * f2); if (if2 <= -PRECISION) { if2 = -PRECISION + 1; } else if (if2 >= PRECISION) { if2 = PRECISION - 1; }
+						if (fdx < 0) { linedir.stepx = -1;  if1 = -if1; if2 = -if2; } else { linedir.stepx = +1; }
+						if (fdy < 0) { linedir.stepy = -1;  if1 = -if1; if2 = -if2; } else { linedir.stepy = +1; }
+						linedir.dx = adx * (2 * PRECISION);
+						linedir.dy = ady * (2 * PRECISION);
+						linedir.dy += -if1 + if2;
+						MTOOLS_ASSERT(dy <= dx);
+						linedir.rat = (linedir.dy == 0) ? 0 : (linedir.dx / linedir.dy);
+						linedir.amul = ((int64)1 << 60) / linedir.dx;
+						linepos.frac = (if1 - PRECISION)*adx + linedir.dy;
 						}
 					else
-						{
-						/// normal line
+						{ // y major
+						linedir.x_major = false;
+						const double mul = fdx / fdy;
+						double f1 = mul*(P1.Y() - Pf1.Y()) + Pf1.X() - P1.X();
+						double f2 = mul*(P2.Y() - Pf2.Y()) + Pf2.X() - P2.X();
+						int64 if1 = (int64)((2 * PRECISION) * f1); if (if1 <= -PRECISION) { if1 = -PRECISION + 1;} else if (if1 >= PRECISION) { if1 = PRECISION - 1; }
+						int64 if2 = (int64)((2 * PRECISION) * f2); if (if2 <= -PRECISION) { if2 = -PRECISION + 1;} else if (if2 >= PRECISION) { if2 = PRECISION - 1; }
+						if (fdx < 0) { linedir.stepx = -1;  if1 = -if1; if2 = -if2; } else { linedir.stepx = +1; }
+						if (fdy < 0) { linedir.stepy = -1;  if1 = -if1; if2 = -if2; } else { linedir.stepy = +1; }
+						linedir.dy = ady * (2 * PRECISION);
+						linedir.dx = adx * (2 * PRECISION);
+						linedir.dx += -if1 + if2;
+						MTOOLS_ASSERT(dx <= dy);
+						linedir.rat = (linedir.dx == 0) ? 0 : (linedir.dy / linedir.dx);
+						linedir.amul = ((int64)1 << 60) / linedir.dy;
+						linepos.frac = (if1 - PRECISION)*ady + linedir.dx;
 						}
 					}
-
-
-
-				if ()
 				if (sw)
 					{
 					mtools::swap(P1, P2);
@@ -5573,74 +5576,6 @@ namespace mtools
 					MTOOLS_ASSERT(linepos.y == P1.Y());
 					}
 				return len;
-
-
-
-
-
-
-				linepos.x = P1.X();
-				linepos.y = P1.Y();
-				linedir.dx = (P2.X() - P1.X()) * 1024;
-				linedir.dy = (P2.Y() - P1.Y()) * 1024;
-
-				const double fdx = (Pf2.X() - Pf1.X());
-				const double fdy = (Pf2.Y() - Pf1.Y());
-
-				if ((linedir.dx > linedir.dy) || ((linedir.dx == linedir.dy) && (fdx >= fdy)))
-					{
-					double f1 = (fdy / fdx)*(P1.X() - Pf1.X()) + (Pf1.Y() - P1.Y());
-					double f2 = (fdy / fdx)*(P2.X() - Pf2.X()) + (Pf2.Y() - P2.Y());
-					if (P2.Y() < P1.Y()) { f1 = -f1; f2 = -f2; }
-					int64 if1 = (int64)(1024 * f1); if (if1 <= -512) { if1 = -511; } else if (if1 >= 512) { if1 = 511; }
-					int64 if2 = (int64)(1024 * f2); if (if2 <= -512) { if2 = -511; } else if (if2 >= 512) { if2 = 511; }
-					linedir.dy += -if1 + if2;
-
-					if (linedir.dy <= linedir.dx)
-						{
-						linedir.x_major = true;
-						linedir.rat = (linedir.dy == 0) ? 0 : (linedir.dx / linedir.dy);
-						linedir.amul = ((int64)1 << 60) / linedir.dx;
-						len = linedir.dx >> 10;
-						linepos.frac = -(linedir.dx >> 1) + if1 * len;
-						linepos.frac += linedir.dy;
-						}
-					else
-						{
-						MTOOLS_DEBUG("Incorrect real-valued line: fallback to integer line... (1)");
-						len = _init_line(P1, P2, linedir, linepos);
-						}
-					}
-				else
-					{
-					double f1 = (fdx / fdy)*(P1.Y() - Pf1.Y()) + (Pf1.X() - P1.X());
-					double f2 = (fdx / fdy)*(P2.Y() - Pf2.Y()) + (Pf2.X() - P2.X());
-					if (P2.X() < P1.X()) { f1 = -f1; f2 = -f2; }
-					int64 if1 = (int64)(1024 * f1); if (if1 <= -512) { if1 = -511; } else if (if1 >= 512) { if1 = 511; }
-					int64 if2 = (int64)(1024 * f2); if (if2 <= -512) { if2 = -511; } else if (if2 >= 512) { if2 = 511; }
-
-					linedir.dx += -if1 + if2;
-
-					if (linedir.dx <= linedir.dy)
-						{
-						linedir.x_major = false;
-						linedir.rat = (linedir.dx == 0) ? 0 : (linedir.dy / linedir.dx);
-						linedir.amul = ((int64)1 << 60) / linedir.dy;
-						len = linedir.dy >> 10;
-						linepos.frac = -(linedir.dy >> 1) + if1 * len;
-						linepos.frac += linedir.dx;
-						}
-					else
-						{
-						MTOOLS_DEBUG("Incorrect real-valued line: fallback to integer line... (2)");
-						len = _init_line(P1, P2, linedir, linepos);
-						}
-					}
-
-
-				if (linedir.dx < 0) { linedir.dx = -linedir.dx;  linedir.stepx = -1; } else { linedir.stepx = 1; }
-				if (linedir.dy < 0) { linedir.dy = -linedir.dy;  linedir.stepy = -1; } else { linedir.stepy = 1; }
-
 				}
 
 
