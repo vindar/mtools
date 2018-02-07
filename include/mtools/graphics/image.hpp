@@ -5457,6 +5457,7 @@ namespace mtools
 			*/
 			MTOOLS_FORCEINLINE int64 _init_line(const iVec2 P1, const iVec2 P2, _bdir & linedir, _bpos & linepos)
 				{
+				const int64 EXP = 10;
 				if (P1 == P2)
 					{ // default horizontal line
 					MTOOLS_DEBUG("P1 = P2 : default horizontal line.");
@@ -5473,8 +5474,8 @@ namespace mtools
 					return 0;
 					}
 				MTOOLS_ASSERT(P1 != P2);
-				int64 dx = P2.X() - P1.X(); if (dx < 0) { dx = -dx;  linedir.stepx = -1; } else { linedir.stepx = 1; } dx <<= 10;
-				int64 dy = P2.Y() - P1.Y(); if (dy < 0) { dy = -dy;  linedir.stepy = -1; } else { linedir.stepy = 1; } dy <<= 10;				
+				int64 dx = P2.X() - P1.X(); if (dx < 0) { dx = -dx;  linedir.stepx = -1; } else { linedir.stepx = 1; } dx <<= EXP;
+				int64 dy = P2.Y() - P1.Y(); if (dy < 0) { dy = -dy;  linedir.stepy = -1; } else { linedir.stepy = 1; } dy <<= EXP;
 				linedir.dx = dx;
 				linedir.dy = dy;
 				if (dx >= dy) 
@@ -5492,7 +5493,7 @@ namespace mtools
 				int64 flagdir = (P2.X() > P1.X()) ? 1 : 0; // used to copensante frac so that line [P1,P2] = [P2,P1]. 
 				linepos.frac = ((linedir.x_major) ? (dy - (dx >> 1)) : (dx - (dy >> 1))) - flagdir;		
 				linedir.amul = ((int64)1 << 60) / (linedir.x_major ? linedir.dx : linedir.dy);			
-				return ((linedir.x_major ? dx : dy) >> 1);
+				return ((linedir.x_major ? dx : dy) >> EXP);
 				}
 
 
@@ -5506,7 +5507,7 @@ namespace mtools
 			*/
 			int64 _init_line(fVec2 Pf1, fVec2 Pf2, _bdir & linedir, _bpos & linepos, iVec2 & P1, iVec2 & P2)
 				{
-				const int64 PRECISION = 4; // 512 * 128;
+				const int64 PRECISION = 1024*16; // 512 * 128;
 				bool sw = false;
 				if ((Pf1.X() > Pf2.X()) || ((Pf1.X() == Pf2.X()) && (Pf1.Y() > Pf2.Y())))
 					{
@@ -5517,9 +5518,10 @@ namespace mtools
 				P1.X() = (int64)round(Pf1.X()); P1.Y() = (int64)round(Pf1.Y());
 				P2.X() = (int64)round(Pf2.X()); P2.Y() = (int64)round(Pf2.Y());
 
+				/* basic algo, 
 				if (sw) { mtools::swap(P1, P2); }
 				return _init_line(P1, P2, linedir, linepos);
-				 
+				*/
 
 				linepos.x = P1.X();
 				linepos.y = P1.Y();
@@ -5623,18 +5625,17 @@ namespace mtools
 					{
 					a = linedir.dy;
 					a = (((a - linepos.frac)*linedir.amul) >> 52);
-					MTOOLS_INSURE((a < 255) && (a >= 0));
-					if (side) { if (stepx != stepy) a = 255 - a; } else { if (stepx == stepy) a = 255 - a; }
+					if (side) { if (stepx != stepy) a = 256 - a; } else { if (stepx == stepy) a = 256 - a; }
 					}
 				else
 					{
 					a = linedir.dx;
 					a = (((a - linepos.frac)*linedir.amul) >> 52);
-					MTOOLS_INSURE((a < 255) && (a >= 0));
-					if (side) { if (stepx == stepy) a = 255 - a; } else { if (stepx != stepy) a = 255 - a; }
+					if (side) { if (stepx == stepy) a = 256 - a; } else { if (stepx != stepy) a = 256 - a; }
 					}
-				return a;
-				return (int32)(a & 255) + 1;
+				a = (a >> 2) + (a >> 1) + 32; // compensate
+				MTOOLS_ASSERT((a >= 0) && (a <= 256));
+				return (int32)a;
 				}
 
 
@@ -5646,18 +5647,17 @@ namespace mtools
 					{
 					a = linedir.dy;
 					a = (((a - linepos.frac)*linedir.amul) >> 52);
-					MTOOLS_INSURE((a <= 255));
-					MTOOLS_INSURE(a >= 0);
-					if (side) { if (linedir.stepx != linedir.stepy) a = 255 - a; } else { if (linedir.stepx == linedir.stepy) a = 255 - a; }
+					if (side) { if (linedir.stepx != linedir.stepy) a = 256 - a; } else { if (linedir.stepx == linedir.stepy) a = 256 - a; }
 					}
 				else
 					{
 					a = linedir.dx;
 					a = (((a - linepos.frac)*linedir.amul) >> 52);
-					MTOOLS_INSURE((a <= 255) && (a >= 0));
-					if (side) { if (linedir.stepx == linedir.stepy) a = 255 - a; } else { if (linedir.stepx != linedir.stepy) a = 255 - a; }
+					if (side) { if (linedir.stepx == linedir.stepy) a = 256 - a; } else { if (linedir.stepx != linedir.stepy) a = 256 - a; }
 					}
-				return (int32)(a & 255) + 1;
+				a = (a >> 2) + (a >> 1) + 32; // compensate
+				MTOOLS_ASSERT((a >= 0) && (a <= 256));
+				return (int32)a;
 				}
 
 
@@ -5920,7 +5920,7 @@ namespace mtools
 			MTOOLS_FORCEINLINE void _update_pixel_bresenham(_bdir & line, _bpos & pos, RGBc color, int32 op, int32 penwidth)
 				{
 				if (useaa)
-					{
+				{
 					int32 aa = _line_aa<side>(line, pos);
 					if (useop) { aa *= op; aa >>= 8; }
 					_updatePixel<blend, checkrange, true, usepen>(pos.x, pos.y, color, aa, penwidth);
