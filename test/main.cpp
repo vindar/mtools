@@ -5,6 +5,68 @@ using namespace mtools;
 
 
 
+
+
+
+/*
+
+drawing parameters
+
+ antialiased    (bool)
+ blend			(bool)
+ tickness		(double)
+ tickscale		(double)
+ 
+ figures
+
+ outline 
+
+ - lines
+ - multi broken lines
+ - closed multi  broken lines
+ - open bezier curves
+ - circle ellipse
+
+ 
+ - triangle
+ - square
+ - convex polygon
+ - circle
+ - ellipse
+
+
+
+
+ */
+
+
+
+
+
+struct bseg
+{
+
+	iVec2 pos;
+
+	int64 dx;
+	int64 dy; 
+
+	int64 rat; 
+
+	int move()
+	{
+
+		rat += dy/2; 
+
+		if (rat > dx)
+
+
+
+	}
+
+
+};
+
 class TestImage : public Image
 	{
 
@@ -631,7 +693,7 @@ int main(int argc, char *argv[])
 	{
 
 		double l = 35; 
-		double r = 20; 
+		double r = 5; 
 
 		fVec2 O = { 200.5,200.5 };
 
@@ -645,7 +707,7 @@ int main(int argc, char *argv[])
 
 		fVec2 D;
 
-		for (int i = 0; i < 20000; i++)
+		for (int i = 0; i < 100; i++)
 		{
 			D = C + R;
 			nextpoint(l, im, A, B, C, D, color);
