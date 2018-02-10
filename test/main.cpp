@@ -317,7 +317,7 @@ class TestImage : public Image
 							const double absdx = ((dx > 0) ? dx : -dx);
 							const double dx2 = dx * dx;
 							const double lx = dx2 - absdx;
-							if ((Axmax == B.max[0]) || (lx > g1)) break;
+							if ((axmax == B.max[0]) || (lx > g1)) break;
 							axmax++;
 							dx++;
 						}
@@ -362,7 +362,7 @@ class TestImage : public Image
 							if (fmin <= B.max[0]) { _hline<blend, false>(Axmin, fmin - 1, y, color); }
 							else 
 								{ 
-								//if (axmax == axmin -1) 
+								if (axmax == axmin -1) 
 									_hline<blend, false>(Axmin, maxd - 1, y, color); 
 								}
 							if (fmax >= B.min[0]) { _hline<blend, false>(fmax + 1, Axmax, y, color); }
@@ -1136,11 +1136,17 @@ int main(int argc, char *argv[])
 
 	}
 
+
+
+	iBox2 BB(100, 200, 100, 200);
+
+	im.clear(RGBc::c_White);
+	im.draw_box(BB, RGBc::c_Gray, false);
+
 	cout << mtools::durationToString(Chronometer(), true);
 
-	im.clear(RGBc::c_Gray);
 
-	im._draw_ellipse_tick_AA<true, false, false>(im.imageBox(), {700.0 , 186.0 }, 100, 200, 182.5, 222.5, color, colorfill, 0);
+	im._draw_ellipse_tick_AA<true, false, false>(BB, {150.0 , 150.0 }, 60, 40, 100, 100, color, colorfill, 0);
 	
 	cout << "zzzz"; 
 	auto PA = makePlot2DImage(im, 1, "Image A");   // Encapsulate the image inside a 'plottable' object.	
