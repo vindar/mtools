@@ -41,31 +41,36 @@ drawing parameters
 
 
 
+/*
 
-
-struct bseg
-{
-
+template<bool xmajor, bool xup, bool yup> struct bseg
+	{
 	iVec2 pos;
-
 	int64 dx;
 	int64 dy; 
-
 	int64 rat; 
+	int64 hlf;
+
+	int32 aa;
 
 	int move()
-	{
-
-		rat += dy/2; 
-
-		if (rat > dx)
-
-
-
-	}
-
-
-};
+		{
+		if (hlf)
+			{ // in a half step
+			pos.X() += hlf & 1;
+			pos.Y() += hlf >> 1;
+			}
+		else
+			{ // normal step
+			rat += dy;
+			if (rat > dx)
+				{ // new step
+				if (rat > dx + dy/2) { pos.Y()++; hlf = 1; } else { pos.X()++; hlf = 2; }
+				}
+			}
+		}
+	};
+	*/
 
 class TestImage : public Image
 	{
@@ -82,6 +87,288 @@ class TestImage : public Image
 	
 
 
+
+
+			/**
+			* Draw an antialised circle/ellipse. Alternative method.About for times slower than the regular method but :
+			*
+			*  -can draw with non - integer center and radii !
+			*  -can restrict drawing to a subbox B(useful when the ellipse is much larger than the image).
+			**/
+			template<bool blend, bool fill, bool usepen> void _draw_ellipse_tick_AA(iBox2 B, fVec2 P, double arx, double ary, double Arx, double Ary, RGBc color, RGBc fillcolor, int32 penwidth)
+			{
+
+				fillcolor = RGBc::c_Blue.getMultOpacity(0.5);
+
+				B = intersectionRect(B, iBox2((int64)floor(P.X() - Arx - 1),
+					(int64)ceil(P.X() + Arx + 1),
+					(int64)floor(P.Y() - Ary - 1),
+					(int64)ceil(P.Y() + Ary + 1)));
+
+
+				// OUTER ELLIPSE
+				const double Aex2 = Arx * Arx;
+				const double Aey2 = Ary * Ary;
+				const double Aexy2 = Aex2 * Aey2;
+				const double ARx2 = (Arx + 0.5)*(Arx + 0.5);
+				const double Arx2 = (Arx - 0.5)*(Arx - 0.5);
+				const double ARy2 = (Ary + 0.5)*(Ary + 0.5);
+				const double Ary2 = (Ary - 0.5)*(Ary - 0.5);
+				const double Arxy2 = Arx2 * Ary2;
+				const double ARxy2 = ARx2 * ARy2;
+				const double ARx2minus025 = ARx2 - 0.25;
+				const double ARx2overRy2 = ARx2 / ARy2;
+				const double Arx2minus025 = Arx2 - 0.25;
+				const double Arx2overry2 = Arx2 / Ary2;
+
+
+				// INNER ELLIPSE
+				const double aex2 = arx * arx;
+				const double aey2 = ary * ary;
+				const double aexy2 = aex2 * aey2;
+				const double aRx2 = (arx + 0.5)*(arx + 0.5);
+				const double arx2 = (arx - 0.5)*(arx - 0.5);
+				const double aRy2 = (ary + 0.5)*(ary + 0.5);
+				const double ary2 = (ary - 0.5)*(ary - 0.5);
+				const double arxy2 = arx2 * ary2;
+				const double aRxy2 = aRx2 * aRy2;
+				const double aRx2minus025 = aRx2 - 0.25;
+				const double aRx2overRy2 = aRx2 / aRy2;
+				const double arx2minus025 = arx2 - 0.25;
+				const double arx2overry2 = arx2 / ary2;
+
+
+				int64 Axmin = B.max[0];
+				int64 Axmax = B.min[0];
+
+				int64 axmin = B.max[0];
+				int64 axmax = B.min[0];
+
+
+				for (int64 y = B.min[1]; y <= B.max[1]; y++)
+				{
+					const double dy = (double)(y - P.Y());
+					const double absdy = ((dy > 0) ? dy : -dy);
+					const double dy2 = (dy*dy);
+
+
+					// OUTER FAST DISCARD
+					if (Axmin > Axmax)
+					{
+						if (dy2 > ARy2) continue;  // line is empty. 
+						if (P.X() <= (double)B.min[0])
+						{
+							const double dx = (double)B.min[0] - P.X();
+							if ((dx*dx)*ARy2 + (dy2*ARx2) > ARxy2) continue; // line is empty
+						}
+						else if (P.X() >= (double)B.max[0])
+						{
+							const double dx = P.X() - (double)B.max[0];
+							if ((dx*dx)*ARy2 + (dy2*ARx2) > ARxy2) continue; // line is empty
+						}
+						Axmin = B.min[0];
+						Axmax = B.max[0];
+					}
+
+
+					{ // OUTER ELLIPSE
+						const double v = Aex2 * dy2;
+						const double vv = Aex2 * v;
+						const double vminusexy2 = v - Aexy2;
+						const double ly = dy2 - absdy + 0.25;
+						const double Ly = dy2 + absdy + 0.25;
+						const double g1 = ARx2minus025 - ARx2overRy2 * ly;
+						const double g2 = Arx2minus025 - Arx2overry2 * Ly;
+						double dx = (double)(Axmin - P.X());
+						while (1)
+						{
+							const double absdx = ((dx > 0) ? dx : -dx);
+							const double dx2 = dx * dx;
+							const double lx = dx2 - absdx;
+							if ((Axmin == B.min[0]) || (lx > g1)) break;
+							Axmin--;
+							dx--;
+						}
+						while (1)
+						{
+							const double absdx = ((dx > 0) ? dx : -dx);
+							const double dx2 = dx * dx;
+							const double lx = dx2 - absdx;
+							const double Lx = dx2 + absdx;
+							if ((Lx < g2) || (Axmax < Axmin)) break;
+							if (lx < g1)
+							{
+								const double u = Aey2 * dx2;
+								const double uu = Aey2 * u;
+								double d = (u + vminusexy2) * fast_invsqrt((float)(uu + vv)); // d = twice the distance of the point to the ideal ellipse
+								if (d < 0) d = 0;
+								if (d < 2) { _updatePixel<blend, usepen, true, usepen>(Axmin, y, color, 256 - (int32)(128 * d), penwidth); }
+							}
+							Axmin++;
+							dx++;
+						}
+
+						dx = (double)(Axmax - P.X());
+						while (1)
+						{
+							const double absdx = ((dx > 0) ? dx : -dx);
+							const double dx2 = dx * dx;
+							const double lx = dx2 - absdx;
+							if ((Axmax == B.max[0]) || (lx > g1)) break;
+							Axmax++;
+							dx++;
+						}
+						while (1)
+						{
+							const double absdx = ((dx > 0) ? dx : -dx);
+							const double dx2 = dx * dx;
+							const double lx = dx2 - absdx;
+							const double Lx = dx2 + absdx;
+							if ((Lx < g2) || (Axmax < Axmin)) break;
+							if (lx < g1)
+							{
+								const double u = Aey2 * dx2;
+								const double uu = Aey2 * u;
+								double d = (u + vminusexy2) * fast_invsqrt((float)(uu + vv)); // d = twice the distance of the point to the ideal ellipse
+								if (d < 0) d = 0;
+								if (d < 2) { _updatePixel<blend, usepen, true, usepen>(Axmax, y, color, 256 - (int32)(128 * d), penwidth); }
+							}
+							Axmax--;
+							dx--;
+						}
+					}
+
+
+
+
+
+					// INNER FAST DISCARD
+					int64 fmin = B.max[0] + 1;
+					int64 fmax = B.min[0] - 1;
+					int64 mind = B.max[0] + 1;
+					int64 maxd = B.min[0] - 1;
+
+					if (axmin > axmax)
+						{
+						if (dy2 > aRy2) goto end_loop;  // line is empty. 
+						if (P.X() <= (double)B.min[0])
+							{
+							const double dx = (double)B.min[0] - P.X();
+							if ((dx*dx)*aRy2 + (dy2*aRx2) > aRxy2) goto end_loop; // line is empty
+							}
+						else if (P.X() >= (double)B.max[0])
+							{
+							const double dx = P.X() - (double)B.max[0];
+							if ((dx*dx)*aRy2 + (dy2*aRx2) > aRxy2) goto end_loop; // line is empty
+							}
+						axmin = B.min[0];
+						axmax = B.max[0];
+						}
+
+					{ // INNER ELLIPSE
+						const double v = aex2 * dy2;
+						const double vv = aex2 * v;
+						const double vminusexy2 = v - aexy2;
+						const double ly = dy2 - absdy + 0.25;
+						const double Ly = dy2 + absdy + 0.25;
+						const double g1 = aRx2minus025 - aRx2overRy2 * ly;
+						const double g2 = arx2minus025 - arx2overry2 * Ly;
+						double dx = (double)(axmin - P.X());
+						while (1)
+							{
+							const double absdx = ((dx > 0) ? dx : -dx);
+							const double dx2 = dx * dx;
+							const double lx = dx2 - absdx;
+							if ((axmin == B.min[0]) || (lx > g1)) break;
+							axmin--;
+							dx--;
+							}
+						while (1)
+						{
+							const double absdx = ((dx > 0) ? dx : -dx);
+							const double dx2 = dx * dx;
+							const double lx = dx2 - absdx;
+							const double Lx = dx2 + absdx;
+							if ((Lx < g2) || (axmax < axmin)) break;
+							if (lx < g1)
+								{
+								const double u = aey2 * dx2;
+								const double uu = aey2 * u;
+								double d = -((u + vminusexy2) * fast_invsqrt((float)(uu + vv))); // d = twice the distance of the point to the ideal ellipse
+								if (d < 0) d = 0;
+								if (d <= 2)
+									{
+									fmin = (axmin < fmin) ? axmin : fmin;
+									mind = axmin;
+									//if (axmin > Axmin)
+										{
+										_updatePixel<blend, usepen, true, usepen>(axmin, y, color, 256 - (int32)(128 * d), penwidth);
+										if (fill) _updatePixel<blend, usepen, true, usepen>(axmin, y, fillcolor, (int32)(128 * d), penwidth);
+										}
+									}
+								}
+							axmin++;
+							dx++;
+						}
+
+						dx = (double)(axmax - P.X());
+						while (1)
+						{
+							const double absdx = ((dx > 0) ? dx : -dx);
+							const double dx2 = dx * dx;
+							const double lx = dx2 - absdx;
+							if ((Axmax == B.max[0]) || (lx > g1)) break;
+							axmax++;
+							dx++;
+						}
+						while (1)
+						{
+							const double absdx = ((dx > 0) ? dx : -dx);
+							const double dx2 = dx * dx;
+							const double lx = dx2 - absdx;
+							const double Lx = dx2 + absdx;
+							if ((Lx < g2) || (axmax < axmin)) break;
+							if (lx < g1)
+								{
+								const double u = aey2 * dx2;
+								const double uu = aey2 * u;
+								double d = -((u + vminusexy2) * fast_invsqrt((float)(uu + vv))); // d = twice the distance of the point to the ideal ellipse
+								if (d < 0) d = 0;
+								if (d <= 2)
+									{
+									fmax = (axmax > fmax) ? axmax : fmax;
+									maxd = axmax;
+									//if (axmax < Axmax) 
+										{
+										_updatePixel<blend, usepen, true, usepen>(axmax, y, color, 256 - (int32)(128 * d), penwidth);
+										if (fill) _updatePixel<blend, usepen, true, usepen>(axmax, y, fillcolor, (int32)(128 * d), penwidth);
+										}
+									}
+								}
+							axmax--;
+							dx--;
+						}
+					}
+				end_loop:
+
+
+
+					if (Axmin <= Axmax)
+						{
+						
+						if ((fmin > B.max[0]) && (fmax < B.min[0])) _hline<blend, false>(Axmin, Axmax, y, color);
+						else
+							{
+							if (fmin <= B.max[0]) { _hline<blend, false>(Axmin, fmin - 1, y, color); }
+							else { _hline<blend, false>(Axmin, maxd - 1, y, color); }
+							if (fmax >= B.min[0]) { _hline<blend, false>(fmax + 1, Axmax, y, color); }
+							else { _hline<blend, false>(mind + 1, Axmax, y, color); }
+							if (fill) { _hline<blend, false>(axmin, axmax, y, fillcolor); }
+							}
+							
+						}					
+				}
+			}
 
 
 	};
@@ -719,7 +1006,7 @@ int main(int argc, char *argv[])
 		Plotter2D plotter;              // Create a plotter object
 		plotter[PA];	                // Add the image to the list of objects to draw.  	
 		plotter.autorangeXY();          // Set the plotter range to fit the image.
-		plotter.plot();                 // start interactive display.		
+	//	plotter.plot();                 // start interactive display.		
 
 
 	}
@@ -844,7 +1131,11 @@ int main(int argc, char *argv[])
 
 	cout << mtools::durationToString(Chronometer(), true);
 
+	im.clear(RGBc::c_Gray);
 
+	im._draw_ellipse_tick_AA<true, false, false>(im.imageBox(), {750.0 , 50.0 }, 100, 200, 142.5, 222.5, color, colorfill, 0);
+	
+	cout << "zzzz"; 
 	auto PA = makePlot2DImage(im, 1, "Image A");   // Encapsulate the image inside a 'plottable' object.	
 	Plotter2D plotter;              // Create a plotter object
 	plotter[PA];	                // Add the image to the list of objects to draw.  	
