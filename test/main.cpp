@@ -360,9 +360,16 @@ class TestImage : public Image
 						else
 							{
 							if (fmin <= B.max[0]) { _hline<blend, false>(Axmin, fmin - 1, y, color); }
-							else { _hline<blend, false>(Axmin, maxd - 1, y, color); }
+							else 
+								{ 
+								//if (axmax == axmin -1) 
+									_hline<blend, false>(Axmin, maxd - 1, y, color); 
+								}
 							if (fmax >= B.min[0]) { _hline<blend, false>(fmax + 1, Axmax, y, color); }
-							else { _hline<blend, false>(mind + 1, Axmax, y, color); }
+							else
+								{ 
+								if (axmax == axmin - 1) _hline<blend, false>(mind + 1, Axmax, y, color);
+								}
 							if (fill) { _hline<blend, false>(axmin, axmax, y, fillcolor); }
 							}
 							
@@ -1133,7 +1140,7 @@ int main(int argc, char *argv[])
 
 	im.clear(RGBc::c_Gray);
 
-	im._draw_ellipse_tick_AA<true, false, false>(im.imageBox(), {750.0 , 50.0 }, 100, 200, 142.5, 222.5, color, colorfill, 0);
+	im._draw_ellipse_tick_AA<true, false, false>(im.imageBox(), {700.0 , 186.0 }, 100, 200, 182.5, 222.5, color, colorfill, 0);
 	
 	cout << "zzzz"; 
 	auto PA = makePlot2DImage(im, 1, "Image A");   // Encapsulate the image inside a 'plottable' object.	
