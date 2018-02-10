@@ -98,8 +98,6 @@ class TestImage : public Image
 			template<bool blend, bool fill, bool usepen> void _draw_ellipse_tick_AA(iBox2 B, fVec2 P, double arx, double ary, double Arx, double Ary, RGBc color, RGBc fillcolor, int32 penwidth)
 			{
 
-				fillcolor = RGBc::c_Blue.getMultOpacity(0.5);
-
 				B = intersectionRect(B, iBox2((int64)floor(P.X() - Arx - 1),
 					(int64)ceil(P.X() + Arx + 1),
 					(int64)floor(P.Y() - Ary - 1),
@@ -157,15 +155,15 @@ class TestImage : public Image
 					{
 						if (dy2 > ARy2) continue;  // line is empty. 
 						if (P.X() <= (double)B.min[0])
-						{
+							{
 							const double dx = (double)B.min[0] - P.X();
 							if ((dx*dx)*ARy2 + (dy2*ARx2) > ARxy2) continue; // line is empty
-						}
+							}
 						else if (P.X() >= (double)B.max[0])
-						{
+							{
 							const double dx = P.X() - (double)B.max[0];
 							if ((dx*dx)*ARy2 + (dy2*ARx2) > ARxy2) continue; // line is empty
-						}
+							}
 						Axmin = B.min[0];
 						Axmax = B.max[0];
 					}
@@ -181,66 +179,62 @@ class TestImage : public Image
 						const double g2 = Arx2minus025 - Arx2overry2 * Ly;
 						double dx = (double)(Axmin - P.X());
 						while (1)
-						{
+							{
 							const double absdx = ((dx > 0) ? dx : -dx);
 							const double dx2 = dx * dx;
 							const double lx = dx2 - absdx;
 							if ((Axmin == B.min[0]) || (lx > g1)) break;
 							Axmin--;
 							dx--;
-						}
+							}
 						while (1)
-						{
+							{
 							const double absdx = ((dx > 0) ? dx : -dx);
 							const double dx2 = dx * dx;
 							const double lx = dx2 - absdx;
 							const double Lx = dx2 + absdx;
 							if ((Lx < g2) || (Axmax < Axmin)) break;
 							if (lx < g1)
-							{
+								{
 								const double u = Aey2 * dx2;
 								const double uu = Aey2 * u;
 								double d = (u + vminusexy2) * fast_invsqrt((float)(uu + vv)); // d = twice the distance of the point to the ideal ellipse
 								if (d < 0) d = 0;
 								if (d < 2) { _updatePixel<blend, usepen, true, usepen>(Axmin, y, color, 256 - (int32)(128 * d), penwidth); }
-							}
+								}
 							Axmin++;
 							dx++;
-						}
+							}
 
 						dx = (double)(Axmax - P.X());
 						while (1)
-						{
+							{
 							const double absdx = ((dx > 0) ? dx : -dx);
 							const double dx2 = dx * dx;
 							const double lx = dx2 - absdx;
 							if ((Axmax == B.max[0]) || (lx > g1)) break;
 							Axmax++;
 							dx++;
-						}
+							}
 						while (1)
-						{
+							{
 							const double absdx = ((dx > 0) ? dx : -dx);
 							const double dx2 = dx * dx;
 							const double lx = dx2 - absdx;
 							const double Lx = dx2 + absdx;
 							if ((Lx < g2) || (Axmax < Axmin)) break;
 							if (lx < g1)
-							{
+								{
 								const double u = Aey2 * dx2;
 								const double uu = Aey2 * u;
 								double d = (u + vminusexy2) * fast_invsqrt((float)(uu + vv)); // d = twice the distance of the point to the ideal ellipse
 								if (d < 0) d = 0;
 								if (d < 2) { _updatePixel<blend, usepen, true, usepen>(Axmax, y, color, 256 - (int32)(128 * d), penwidth); }
-							}
+								}
 							Axmax--;
 							dx--;
-						}
+							}
 					}
-
-
-
-
 
 					// INNER FAST DISCARD
 					int64 fmin = B.max[0] + 1;
@@ -295,17 +289,12 @@ class TestImage : public Image
 								const double u = aey2 * dx2;
 								const double uu = aey2 * u;
 								double d = -((u + vminusexy2) * fast_invsqrt((float)(uu + vv))); // d = twice the distance of the point to the ideal ellipse
-								if (d < 0) d = 0;
-								if (d <= 2)
-									{
-									fmin = (axmin < fmin) ? axmin : fmin;
-									mind = axmin;
-									//if (axmin > Axmin)
-										{
-										_updatePixel<blend, usepen, true, usepen>(axmin, y, color, 256 - (int32)(128 * d), penwidth);
-										if (fill) _updatePixel<blend, usepen, true, usepen>(axmin, y, fillcolor, (int32)(128 * d), penwidth);
-										}
-									}
+								d = std::min<double>(2.0, std::max<double>(0.0, d));
+								fmin = std::min<int64>(axmin, fmin);
+								mind = axmin;
+								const int32 uc = (int32)(128 * d);
+								_updatePixel<blend, usepen, true, usepen>(axmin, y, color, 256 - uc, penwidth);
+								if (fill) _updatePixel<blend, usepen, true, usepen>(axmin, y, fillcolor, uc, penwidth);
 								}
 							axmin++;
 							dx++;
@@ -313,16 +302,16 @@ class TestImage : public Image
 
 						dx = (double)(axmax - P.X());
 						while (1)
-						{
+							{
 							const double absdx = ((dx > 0) ? dx : -dx);
 							const double dx2 = dx * dx;
 							const double lx = dx2 - absdx;
 							if ((axmax == B.max[0]) || (lx > g1)) break;
 							axmax++;
 							dx++;
-						}
+							}
 						while (1)
-						{
+							{
 							const double absdx = ((dx > 0) ? dx : -dx);
 							const double dx2 = dx * dx;
 							const double lx = dx2 - absdx;
@@ -333,37 +322,38 @@ class TestImage : public Image
 								const double u = aey2 * dx2;
 								const double uu = aey2 * u;
 								double d = -((u + vminusexy2) * fast_invsqrt((float)(uu + vv))); // d = twice the distance of the point to the ideal ellipse
-								if (d < 0) d = 0;
-								if (d <= 2)
-									{
-									fmax = (axmax > fmax) ? axmax : fmax;
-									maxd = axmax;
-									//if (axmax < Axmax) 
-										{
-										_updatePixel<blend, usepen, true, usepen>(axmax, y, color, 256 - (int32)(128 * d), penwidth);
-										if (fill) _updatePixel<blend, usepen, true, usepen>(axmax, y, fillcolor, (int32)(128 * d), penwidth);
-										}
-									}
+								d = std::min<double>(2.0, std::max<double>(0.0, d));
+								fmax = std::max<int64>(axmax, fmax);
+								maxd = axmax;
+								const int32 uc = (int32)(128 * d);
+								_updatePixel<blend, usepen, true, usepen>(axmax, y, color, 256 - uc, penwidth);
+								if (fill) _updatePixel<blend, usepen, true, usepen>(axmax, y, fillcolor, uc, penwidth);
 								}
 							axmax--;
 							dx--;
-						}
+							}
 					}
 				end_loop:
 
-
-
 					if (Axmin <= Axmax)
-						{
-						
-						if ((fmin > B.max[0]) && (fmax < B.min[0])) _hline<blend, false>(Axmin, Axmax, y, color);
+						{						
+						if ((fmin > B.max[0]) && (fmax < B.min[0]))
+							{
+							if (axmin <= axmax)
+								{
+								if (fill) { _hline<blend, false>(axmin, axmax, y, fillcolor); }
+								}
+							else
+								{
+								_hline<blend, false>(Axmin, Axmax, y, color);
+								}
+						}
 						else
 							{
 							if (fmin <= B.max[0]) { _hline<blend, false>(Axmin, fmin - 1, y, color); }
 							else 
 								{ 
-								if (axmax == axmin -1) 
-									_hline<blend, false>(Axmin, maxd - 1, y, color); 
+								if (axmax == axmin -1)  _hline<blend, false>(Axmin, maxd - 1, y, color); 
 								}
 							if (fmax >= B.min[0]) { _hline<blend, false>(fmax + 1, Axmax, y, color); }
 							else
@@ -371,8 +361,7 @@ class TestImage : public Image
 								if (axmax == axmin - 1) _hline<blend, false>(mind + 1, Axmax, y, color);
 								}
 							if (fill) { _hline<blend, false>(axmin, axmax, y, fillcolor); }
-							}
-							
+							}							
 						}					
 				}
 			}
@@ -1137,8 +1126,13 @@ int main(int argc, char *argv[])
 	}
 
 
+	int64 xs = 120;
+	int64 ys = 0;
 
-	iBox2 BB(100, 200, 100, 200);
+	iBox2 BB(100 + xs, 200 + xs, 100 + ys, 200 + ys);
+
+
+	colorfill = RGBc::c_Blue.getMultOpacity(0.5);
 
 	im.clear(RGBc::c_White);
 	im.draw_box(BB, RGBc::c_Gray, false);
@@ -1146,8 +1140,10 @@ int main(int argc, char *argv[])
 	cout << mtools::durationToString(Chronometer(), true);
 
 
-	im._draw_ellipse_tick_AA<true, false, false>(BB, {150.0 , 150.0 }, 60, 40, 100, 100, color, colorfill, 0);
-	
+	//im._draw_ellipse_tick_AA<true, true, false>(im.imageBox(), {150.0 , 150.0 }, 99, 99, 100, 100, color, colorfill, 0);
+
+	im._draw_ellipse2_AA<true, true, false>(im.imageBox(), { 155.0 , 150.0 }, 100, 100, color, colorfill, 0);
+
 	cout << "zzzz"; 
 	auto PA = makePlot2DImage(im, 1, "Image A");   // Encapsulate the image inside a 'plottable' object.	
 	Plotter2D plotter;              // Create a plotter object
