@@ -874,10 +874,25 @@ int main(int argc, char *argv[])
 
 	cout << mtools::durationToString(Chronometer(), true);
 
+	int qqL = 10000;
+	Chronometer();
+	for (int qq = 0; qq < qqL; qq++)
+		{
+			im._draw_ellipse_thick_AA<true, false, false>(im.imageBox(), { 250.0 , 190.0 }, 120, 170, 121, 171, color, colorfill, 0);
+		}
+	cout << "done in " << mtools::durationToString(Chronometer(), true) << "\n";
+	
+	for (int qq = 0; qq < qqL; qq++)
+	{
+		im._draw_ellipse2_AA<true, false, false>(im.imageBox(), { 455.0 , 450.0 }, 150, 200, color, colorfill, 0);
+	}
+	cout << "done in " << mtools::durationToString(Chronometer(), true) << "\n";
 
-	im._draw_ellipse_thick_AA<true, true, false>(im.imageBox(), {150.0 , 150.0 }, 10, 10, 20, 20, color, colorfill, 0);
-
-	im._draw_ellipse2_AA<true, true, false>(im.imageBox(), { 155.0 , 150.0 }, 10, 120, color, colorfill, 0);
+	for (int qq = 0; qq < qqL; qq++)
+	{
+		im.draw_ellipse({ 250,550 }, 150, 200, color,true, false, 0);
+	}
+	cout << "done in " << mtools::durationToString(Chronometer(), true) << "\n";
 
 	cout << "zzzz"; 
 	auto PA = makePlot2DImage(im, 1, "Image A");   // Encapsulate the image inside a 'plottable' object.	
