@@ -10,6 +10,32 @@ using namespace mtools;
 
 /*
 
+draw_circle(iVec2 center, int64 radius, RGBc color, bool fill = false, RGBc fillcolor = RGBc::c_White, bool aa = true, bool blend = true); 
+draw_circle(fVec2 center, double radius, bool blend, bool aa, bool fill, RGBc fillcolor);
+draw_thick_circle(fVec2 center, double radius, RGBc color, bool fill, RGBc fillcolor, double tickness, bool blend, bool aa, );
+
+draw_ellipse(iVec2 center, int64 rx, int64 ry, bool blend, bool aa, bool fill, RGBc fillcolor); 
+draw_ellipse(fVec2 center, double rx, double ry, bool blend, bool aa, bool fill, RGBc fillcolor); 
+draw_ellipse(iBox2 B, bool blend, bool aa, bool fill, RGBc fillcolor);
+draw_ellipse(fBox2 B, bool blend, bool aa, bool fill, RGBc fillcolor);
+
+draw_tick_ellipse(fVec2 center, double rx, double ry, double tickness_x, double tickness_y, bool blend, bool aa, bool fill, RGBc fillcolor);
+draw_tick_ellipse(fBox2 B, double tickness_x, double tickness_y, bool blend, bool aa, bool fill, RGBc fillcolor);
+
+draw_box(iBox2 B, bool blend, bool aa, bool fill, RGBc fillcolor); 
+draw_box(fBox2 B, bool fill, RGBc fillcolor, bool aa, bool blend);
+
+draw_tick_box()
+
+draw_line
+
+draw_thick_line
+
+
+
+
+
+
 drawing parameters
 
  antialiased    (bool)
@@ -33,8 +59,6 @@ drawing parameters
  - convex polygon
  - circle
  - ellipse
-
-
 
 
  */
@@ -91,8 +115,130 @@ class TestImage : public Image
 
 
 
+	/**
+	* Draw an antialiased ellipse.
+	* Support non-integer centers and radii.
+	**/
+	template<bool blend, bool fill, bool usepen> void _draw_ellipse4_AA(iBox2 B, fVec2 P, double rx, double ry, RGBc color, RGBc fillcolor, int32 penwidth)
+	{
+		MTOOLS_ASSERT(rx >= 0);
+		MTOOLS_ASSERT(ry >= 0);
+		B = intersectionRect(B, iBox2((int64)floor(P.X() - rx - 1),
+			(int64)ceil(P.X() + rx + 1),
+			(int64)floor(P.Y() - ry - 1),
+			(int64)ceil(P.Y() + ry + 1)));
+		MTOOLS_ASSERT(B.isIncludedIn(imageBox()));
+
+		const double ex2 = rx * rx;
+		const double ey2 = ry * ry;
+		const double exy2 = ex2 * ey2;
+		const double Rx2 = (rx + 0.5)*(rx + 0.5);
+		const double rx2 = (rx - 0.5)*(rx - 0.5);
+		const double Ry2 = (ry + 0.5)*(ry + 0.5);
+		const double ry2 = (ry - 0.5)*(ry - 0.5);
+		const double rxy2 = rx2 * ry2;
+		const double Rxy2 = Rx2 * Ry2;
+		const double Rx2minus025 = Rx2 - 0.25;
+		const double Rx2overRy2 = Rx2 / Ry2;
+		const double rx2minus025 = rx2 - 0.25;
+		const double rx2overry2 = rx2 / ry2;
+
+		int64 xmin = B.max[0];
+		int64 xmax = B.min[0];
+
+		for (int64 y = B.min[1]; y <= B.max[1]; y++)
+		{
+			const double dy = (double)(y - P.Y());
+			const double absdy = ((dy > 0) ? dy : -dy);
+			const double dy2 = (dy*dy);
+
+			if (xmin > xmax)
+			{
+				if (dy2 > Ry2) continue;  // line is empty. 
+				if (P.X() <= (double)B.min[0])
+				{
+					const double dx = (double)B.min[0] - P.X();
+					if ((dx*dx)*Ry2 + (dy2*Rx2) > Rxy2) continue; // line is empty
+				}
+				else if (P.X() >= (double)B.max[0])
+				{
+					const double dx = P.X() - (double)B.max[0];
+					if ((dx*dx)*Ry2 + (dy2*Rx2) > Rxy2) continue; // line is empty
+				}
+				xmin = B.min[0]; xmax = B.max[0];
+			}
 
 
+			const double v = ex2 * dy2;
+			const double vv = ex2 * v;
+			const double vminusexy2 = v - exy2;
+			const double ly = dy2 - absdy + 0.25;
+			const double Ly = dy2 + absdy + 0.25;
+			const double g1 = Rx2minus025 - Rx2overRy2 * ly;
+			const double g2 = rx2minus025 - rx2overry2 * Ly;
+			double dx = (double)(xmin - P.X());
+			while (1)
+			{
+				const double absdx = ((dx > 0) ? dx : -dx);
+				const double dx2 = dx * dx;
+				const double lx = dx2 - absdx;
+				if ((xmin == B.min[0]) || (lx > g1)) break;
+				xmin--;
+				dx--;
+			}
+			while (1)
+			{
+				const double absdx = ((dx > 0) ? dx : -dx);
+				const double dx2 = dx * dx;
+				const double lx = dx2 - absdx;
+				const double Lx = dx2 + absdx;
+				if ((Lx < g2) || (xmax < xmin)) break;
+				if (lx < g1)
+				{
+					const double u = ey2 * dx2;
+					const double uu = ey2 * u;
+					double d = (u + vminusexy2) * fast_invsqrt((float)(uu + vv)); // d = twice the distance of the point to the ideal ellipse
+					double dd = std::min<double>(2.0, std::abs(d));
+					int32 uc = (int32)(128 * dd);
+					_updatePixel<blend, usepen, true, usepen>(xmin, y, color, 256 - uc, penwidth);
+					if (fill) { if (d < 0) _updatePixel<blend, usepen, true, usepen>(xmin, y, fillcolor, uc, penwidth); }
+				}
+				xmin++;
+				dx++;
+			}
+			dx = (double)(xmax - P.X());
+			while (1)
+			{
+				const double absdx = ((dx > 0) ? dx : -dx);
+				const double dx2 = dx * dx;
+				const double lx = dx2 - absdx;
+				if ((xmax == B.max[0]) || (lx > g1)) break;
+				xmax++;
+				dx++;
+			}
+			while (1)
+			{
+				const double absdx = ((dx > 0) ? dx : -dx);
+				const double dx2 = dx * dx;
+				const double lx = dx2 - absdx;
+				const double Lx = dx2 + absdx;
+				if ((Lx < g2) || (xmax < xmin)) break;
+				if (lx < g1)
+				{
+					const double u = ey2 * dx2;
+					const double uu = ey2 * u;
+					double d = (u + vminusexy2) * fast_invsqrt((float)(uu + vv)); // d = twice the distance of the point to the ideal ellipse
+					double dd = std::min<double>(2.0, std::abs(d));
+					int32 uc = (int32)(128 * dd);
+					_updatePixel<blend, usepen, true, usepen>(xmax, y, color, 256 - uc, penwidth);
+					if (fill) { if (d < 0) _updatePixel<blend, usepen, true, usepen>(xmax, y, fillcolor, uc, penwidth); }
+				}
+				xmax--;
+				dx--;
+			}
+			if (fill) { if (xmin <= xmax) { _hline<blend, false>(xmin, xmax, y, fillcolor); } }
+		}
+	}
 
 
 
@@ -874,6 +1020,10 @@ int main(int argc, char *argv[])
 
 	cout << mtools::durationToString(Chronometer(), true);
 
+
+	im._draw_ellipse4_AA<true,true,false>(im.imageBox(), { 300,300 }, 1, 2, color, colorfill, 0);
+
+	/*
 	int qqL = 10000;
 	Chronometer();
 	for (int qq = 0; qq < qqL; qq++)
@@ -894,6 +1044,8 @@ int main(int argc, char *argv[])
 	}
 	cout << "done in " << mtools::durationToString(Chronometer(), true) << "\n";
 
+
+	*/
 	cout << "zzzz"; 
 	auto PA = makePlot2DImage(im, 1, "Image A");   // Encapsulate the image inside a 'plottable' object.	
 	Plotter2D plotter;              // Create a plotter object

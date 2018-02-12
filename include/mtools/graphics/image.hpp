@@ -8009,17 +8009,18 @@ namespace mtools
 
 
 			/**
-			* Draw a circle/ellipse. Alternative method. About for times slower than the regular method but :
-			*
-			*  - can draw with non-integer center and radii !
-			*  - can restrict drawing to a subbox B (useful when the ellipse is much larger than the image).
+			* Draw an antialiased ellipse.
+			* Support non-integer centers and radii.
 			**/
 			template<bool blend, bool outline, bool fill, bool usepen>  inline  void _draw_ellipse2(iBox2 B, fVec2 P, double rx, double ry, RGBc color, RGBc fillcolor, int32 penwidth)
 			{
+				MTOOLS_ASSERT(rx >= 0);
+				MTOOLS_ASSERT(ry >= 0);
 				B = intersectionRect(B, iBox2((int64)floor(P.X() - rx - 1),
 					(int64)ceil(P.X() + rx + 1),
 					(int64)floor(P.Y() - ry - 1),
 					(int64)ceil(P.Y() + ry + 1)));
+				MTOOLS_ASSERT(B.isIncludedIn(imageBox()));
 
 				const double rx2 = rx * rx;
 				const double ry2 = ry * ry;
@@ -8105,17 +8106,18 @@ namespace mtools
 
 
 			/**
-			* Draw an antialised circle/ellipse. Alternative method.About for times slower than the regular method but :
-			*
-			*  -can draw with non - integer center and radii !
-			*  -can restrict drawing to a subbox B(useful when the ellipse is much larger than the image).
+			* Draw an antialiased ellipse.
+			* Support non-integer centers and radii.
 			**/
 			template<bool blend, bool fill, bool usepen> void _draw_ellipse2_AA(iBox2 B, fVec2 P, double rx, double ry, RGBc color, RGBc fillcolor, int32 penwidth)
 				{
+				MTOOLS_ASSERT(rx >= 0);
+				MTOOLS_ASSERT(ry >= 0);
 				B = intersectionRect(B, iBox2((int64)floor(P.X() - rx - 1),
 					(int64)ceil(P.X() + rx + 1),
 					(int64)floor(P.Y() - ry - 1),
 					(int64)ceil(P.Y() + ry + 1)));
+				MTOOLS_ASSERT(B.isIncludedIn(imageBox()));
 
 				const double ex2 = rx * rx;
 				const double ey2 = ry * ry;
@@ -8230,23 +8232,24 @@ namespace mtools
 
 
 
-
 			/**
-			* Draw a a tick antialised circle/ellipse. Alternative method.About for times slower than the regular method but :
-			*
-			*  -can draw with non - integer center and radii !
-			*  -can restrict drawing to a subbox B(useful when the ellipse is much larger than the image).
-			*  - (arx,ary) interior radii  
-			*  - (Arx,Ary) exterior radii
-			**/
-			template<bool blend, bool fill, bool usepen> void _draw_ellipse_thick_AA(iBox2 B, fVec2 P, double arx, double ary, double Arx, double Ary, RGBc color, RGBc fillcolor, int32 penwidth)
+			 * Draw a thick ellipse. 
+			 * Support non-integer centers and radii.
+			 *
+			 * (arx,ary) raddi for the interior ring
+			 * (Arx,Ary) radii for the exterior ring
+			 */
+			template<bool blend, bool fill> void _draw_ellipse_thick_AA(iBox2 B, fVec2 P, double arx, double ary, double Arx, double Ary, RGBc color, RGBc fillcolor)
 			{
-
+				MTOOLS_ASSERT(arx <= Arx);
+				MTOOLS_ASSERT(ary <= Ary);
+				MTOOLS_ASSERT(arx >= 0);
+				MTOOLS_ASSERT(ary >= 0);
 				B = intersectionRect(B, iBox2((int64)floor(P.X() - Arx - 1),
 					(int64)ceil(P.X() + Arx + 1),
 					(int64)floor(P.Y() - Ary - 1),
 					(int64)ceil(P.Y() + Ary + 1)));
-
+				MTOOLS_ASSERT(B.isIncludedIn(imageBox()));
 
 				// OUTER ELLIPSE
 				const double Aex2 = Arx * Arx;
@@ -8263,7 +8266,6 @@ namespace mtools
 				const double Arx2minus025 = Arx2 - 0.25;
 				const double Arx2overry2 = Arx2 / Ary2;
 
-
 				// INNER ELLIPSE
 				const double aex2 = arx * arx;
 				const double aey2 = ary * ary;
@@ -8279,24 +8281,20 @@ namespace mtools
 				const double arx2minus025 = arx2 - 0.25;
 				const double arx2overry2 = arx2 / ary2;
 
-
 				int64 Axmin = B.max[0];
 				int64 Axmax = B.min[0];
 
 				int64 axmin = B.max[0];
 				int64 axmax = B.min[0];
 
-
 				for (int64 y = B.min[1]; y <= B.max[1]; y++)
 				{
 					const double dy = (double)(y - P.Y());
 					const double absdy = ((dy > 0) ? dy : -dy);
 					const double dy2 = (dy*dy);
-
-
-					// OUTER FAST DISCARD
+					
 					if (Axmin > Axmax)
-					{
+					{ // OUTER FAST DISCARD
 						if (dy2 > ARy2) continue;  // line is empty. 
 						if (P.X() <= (double)B.min[0])
 							{
@@ -8311,7 +8309,6 @@ namespace mtools
 						Axmin = B.min[0];
 						Axmax = B.max[0];
 					}
-
 
 					{ // OUTER ELLIPSE
 						const double v = Aex2 * dy2;
@@ -8344,7 +8341,7 @@ namespace mtools
 								const double uu = Aey2 * u;
 								double d = (u + vminusexy2) * fast_invsqrt((float)(uu + vv)); // d = twice the distance of the point to the ideal ellipse
 								if (d < 0) d = 0;
-								if (d < 2) { _updatePixel<blend, usepen, true, usepen>(Axmin, y, color, 256 - (int32)(128 * d), penwidth); }
+								if (d < 2) { _updatePixel<blend, false, true, false>(Axmin, y, color, 256 - (int32)(128 * d), 0); }
 								}
 							Axmin++;
 							dx++;
@@ -8373,21 +8370,20 @@ namespace mtools
 								const double uu = Aey2 * u;
 								double d = (u + vminusexy2) * fast_invsqrt((float)(uu + vv)); // d = twice the distance of the point to the ideal ellipse
 								if (d < 0) d = 0;
-								if (d < 2) { _updatePixel<blend, usepen, true, usepen>(Axmax, y, color, 256 - (int32)(128 * d), penwidth); }
+								if (d < 2) { _updatePixel<blend, false, true, false>(Axmax, y, color, 256 - (int32)(128 * d), 0); }
 								}
 							Axmax--;
 							dx--;
 							}
 					}
-
-					// INNER FAST DISCARD
+					
 					int64 fmin = B.max[0] + 1;
 					int64 fmax = B.min[0] - 1;
 					int64 mind = B.max[0] + 1;
 					int64 maxd = B.min[0] - 1;
 
 					if (axmin > axmax)
-						{
+						{ // INNER FAST DISCARD
 						if (dy2 > aRy2) goto end_loop;  // line is empty. 
 						if (P.X() <= (double)B.min[0])
 							{
@@ -8438,7 +8434,7 @@ namespace mtools
 								mind = axmin;
 								const int32 uc = (int32)(128 * d);
 								_updatePixel<blend, usepen, true, usepen>(axmin, y, color, 256 - uc, penwidth);
-								if (fill) _updatePixel<blend, usepen, true, usepen>(axmin, y, fillcolor, uc, penwidth);
+								if (fill) _updatePixel<blend, false, true, false>(axmin, y, fillcolor, uc, 0);
 								}
 							axmin++;
 							dx++;
@@ -8471,14 +8467,14 @@ namespace mtools
 								maxd = axmax;
 								const int32 uc = (int32)(128 * d);
 								_updatePixel<blend, usepen, true, usepen>(axmax, y, color, 256 - uc, penwidth);
-								if (fill) _updatePixel<blend, usepen, true, usepen>(axmax, y, fillcolor, uc, penwidth);
+								if (fill) _updatePixel<blend, false, true, false>(axmax, y, fillcolor, uc, 0);
 								}
 							axmax--;
 							dx--;
 							}
 					}
-				end_loop:
 
+				end_loop:
 					if (Axmin <= Axmax)
 						{						
 						if ((fmin > B.max[0]) && (fmax < B.min[0]))
