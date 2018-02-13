@@ -179,6 +179,11 @@ namespace mtools
 	inline void doNothing() {}
 
 
+	/**
+	* Test if a (double) number is an integer.
+	*/
+	MTOOLS_FORCEINLINE bool isIntegerValued(double v) { return (round(v) == v); }
+
 
 }
 

@@ -522,6 +522,17 @@ namespace mtools
 
 
 
+	/**
+	* Test if a (double valued) vector has integer coordinates.
+	*/
+	template<size_t N> MTOOLS_FORCEINLINE bool isIntegerValued(const Vec<double, N> & V)
+		{
+		for (size_t n = 0; n < N; n++)
+			{
+			if (round(V[n]) != V[n]) return false;
+			}
+		return true;
+		}
 
 
 	/**

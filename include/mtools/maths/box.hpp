@@ -849,9 +849,21 @@ namespace mtools
         }
 
 
-    }
 
-
+	/**
+	* Test if a (double valued) box has integer coordinates.
+	*/
+	template<size_t N> MTOOLS_FORCEINLINE bool isIntegerValued(const Box<double, N> & B)
+		{
+		for (size_t n = 0; n < N; n++)
+			{
+			if (round(B.min[n]) != B.min[n]) return false;
+			if (round(B.max[n]) != B.max[n]) return false;
+			}
+		return true;
+		}
+    
+}
 /* end of file */
 
 
