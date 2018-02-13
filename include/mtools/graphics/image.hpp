@@ -2734,49 +2734,49 @@ namespace mtools
 			* @param	blend	  (Optional) true to use blending.
 			*/
 			void draw_circle(iVec2 center, int64 radius, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
-			{
+				{
 				if (isEmpty() || (radius < 0)) return;
 				iBox2 circleBox(center.X() - radius, center.X() + radius, center.Y() - radius, center.Y() + radius);
 				iBox2 imBox = imageBox();
 				iBox2 B = intersectionRect(circleBox, imBox);
 				if (B.isEmpty()) return; // nothing to draw.
 				if (circleBox.isIncludedIn(imBox))
-				{ // included
+					{ // included
 					if (aa)
-					{
+						{
 						if (blend) _draw_circle_AA<true, false, true>(center.X(), center.Y(), radius, color, fillcolor); else _draw_circle_AA<false, false, true>(center.X(), center.Y(), radius, color, fillcolor);
-					}
+						}
 					else
-					{
+						{
 						if (blend) _draw_circle<true, false, true, true>(center.X(), center.Y(), radius, color, fillcolor); else _draw_circle<false, false, true, true>(center.X(), center.Y(), radius, color, fillcolor);
-					}
+						}
 					return;
-				}
+					}
 				// not included
 				if (B.area() * 8 > circleBox.area())
-				{ // still faster to use draw everything using the first method while checking the range
+					{ // still faster to use draw everything using the first method while checking the range
 					if (aa)
-					{
+						{
 						if (blend) _draw_circle_AA<true, true, true>(center.X(), center.Y(), radius, color, fillcolor); else _draw_circle_AA<false, true, true>(center.X(), center.Y(), radius, color, fillcolor);
-					}
+						}
 					else
-					{
+						{
 						if (blend) _draw_circle<true, true, true, true>(center.X(), center.Y(), radius, color, fillcolor); else _draw_circle<false, true, true, true>(center.X(), center.Y(), radius, color, fillcolor);
-					}
+						}
 					return;
-				}
+					}
 				// use alternate method
 				double rr = (double)radius;
 				if (aa)
-				{
+					{
 					if (blend) _draw_ellipse2_AA<true, true>(B, center, rr, rr, color, fillcolor); else _draw_ellipse2_AA<false, true>(B, center, rr, rr, color, fillcolor);
-				}
+					}
 				else
-				{
+					{
 					if (blend) _draw_ellipse2<true, true, true>(B, center, rr, rr, color, fillcolor); else _draw_ellipse2<false, true, true>(B, center, rr, rr, color, fillcolor);
-				}
+					}
 				return;
-			}
+				}
 
 
 
@@ -2788,26 +2788,27 @@ namespace mtools
 			* @param	color  color
 			* @param	aa	   (Optional) true to use antialiasing.
 			* @param	blend  (Optional) true to use blending.
+			* @param	grid_align (Optional) true to align to nearest integer value (faster drawing).
 			*/
-			void draw_circle(fVec2 center, double radius, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
-			{
-				if (isEmpty() || (radius <= 0)) return;
-				if (isIntegerValued(radius) && isIntegerValued(center))
+			void draw_circle(fVec2 center, double radius, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, bool grid_align = true)
 				{
-					draw_circle((iVec2)center, (int64)radius, color, aa, blend);
+				if (isEmpty() || (radius <= 0)) return;
+				if ((grid_align)||(isIntegerValued(radius) && isIntegerValued(center)))
+					{
+					draw_circle( iVec2{(int64)round(center.X()), (int64)round(center.Y())}, (int64)round(radius), color, aa, blend);
 					return;
-				}
+					}
 				iBox2 B = imageBox();
 				if (aa)
-				{
+					{
 					if (blend) _draw_ellipse2_AA<true, false>(B, center, radius, radius, color, color); else _draw_ellipse2_AA<false, false>(B, center, radius, radius, color, color);
-				}
+					}
 				else
-				{
+					{
 					if (blend) _draw_ellipse2<true, true, false>(B, center, radius, radius, color, color); else _draw_ellipse2<false, true, false>(B, center, radius, radius, color, color);
-				}
+					}
 				return;
-			}
+				}
 
 
 			/**
@@ -2819,26 +2820,27 @@ namespace mtools
 			* @param	fillcolor color to fill the inside of the circle.
 			* @param	aa		  (Optional) true to use antialiasing.
 			* @param	blend	  (Optional) true to use blending.
+			* @param	grid_align (Optional) true to align to nearest integer value (faster drawing).
 			*/
-			void draw_circle(fVec2 center, double radius, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
-			{
-				if (isEmpty() || (radius <= 0)) return;
-				if (isIntegerValued(radius) && isIntegerValued(center))
+			void draw_circle(fVec2 center, double radius, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, bool grid_align = true)
 				{
-					draw_circle((iVec2)center, (int64)radius, color, fillcolor, aa, blend);
+				if (isEmpty() || (radius <= 0)) return;
+				if ((grid_align) || (isIntegerValued(radius) && isIntegerValued(center)))
+					{
+					draw_circle(iVec2{ (int64)round(center.X()), (int64)round(center.Y()) }, (int64)round(radius), color, fillcolor, aa, blend);
 					return;
-				}
+					}
 				iBox2 B = imageBox();
 				if (aa)
-				{
+					{
 					if (blend) _draw_ellipse2_AA<true, true>(B, center, radius, radius, color, fillcolor); else _draw_ellipse2_AA<false, true>(B, center, radius, radius, color, fillcolor);
-				}
+					}
 				else
-				{
+					{
 					if (blend) _draw_ellipse2<true, true, true>(B, center, radius, radius, color, fillcolor); else _draw_ellipse2<false, true, true>(B, center, radius, radius, color, fillcolor);
-				}
+					}
 				return;
-			}
+				}
 
 
 			/**
@@ -2855,10 +2857,10 @@ namespace mtools
 			{
 				if (isEmpty() || (radius <= 0)) return;
 				if (thickness < 2)
-				{
+					{
 					draw_circle(center, radius, color, aa, blend);
 					return;
-				}
+					}
 				double radius2 = std::max<double>(radius - thickness, 0);
 				iBox2 B = imageBox();
 				if (blend) _draw_ellipse_thick_AA<true, false>(B, center, radius2, radius2, radius, radius, color, color); else _draw_ellipse_thick_AA<false, false>(B, center, radius2, radius2, radius, radius, color, color);
@@ -2878,18 +2880,19 @@ namespace mtools
 			* @param	blend	  (Optional) true to use blending.
 			*/
 			void draw_thick_circle(fVec2 center, double radius, double thickness, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
-			{
+				{
 				if (isEmpty() || (radius <= 0)) return;
 				if (thickness < 2)
-				{
+					{
 					draw_circle(center, radius, color, fillcolor, aa, blend);
 					return;
-				}
+					}
 				double radius2 = std::max<double>(radius - thickness, 0);
 				iBox2 B = imageBox();
 				if (blend) _draw_ellipse_thick_AA<true, true>(B, center, radius2, radius2, radius, radius, color, fillcolor); else _draw_ellipse_thick_AA<false, true>(B, center, radius2, radius2, radius, radius, color, fillcolor);
 				return;
-			}
+				}
+
 
 
 			/**

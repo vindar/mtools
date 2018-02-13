@@ -56,6 +56,64 @@ class TestImage : public Image
 	
 
 
+	/*
+	/* 
+
+
+
+
+
+				if (isEmpty() || (rx < 0) || (ry < 0)) return;
+				iBox2 cb(center.X() - rx, center.X() + rx, center.Y() - ry, center.Y() + ry);
+				iBox2 imBox = imageBox();
+				iBox2 B = intersectionRect(cb, imBox);
+				if (B.isEmpty()) return; // nothing to draw.
+				if (cb.isIncludedIn(imBox))
+					{ // included
+					if (aa)
+						{
+						if (blend) _draw_ellipse_in_rect_AA<true,false>(cb.min[0], cb.min[1], cb.max[0], cb.max[1], color);
+						else _draw_ellipse_in_rect_AA<false, false>(cb.min[0], cb.min[1], cb.max[0], cb.max[1], color);
+						}
+					else
+						{
+						if (blend) _draw_ellipse_in_rect<true, false, true, false>(cb.min[0], cb.min[1], cb.max[0], cb.max[1], color, color);
+						else _draw_ellipse_in_rect<false, false, true, false>(cb.min[0], cb.min[1], cb.max[0], cb.max[1], color, color);
+						}
+					return;
+					}
+				// not included
+				if (B.area() * 8 > cb.area())
+					{ // still faster to use draw everything using the first method while checking the range
+					if (aa)
+						{
+						if (blend) _draw_ellipse_in_rect_AA<true,true>(cb.min[0], cb.min[1], cb.max[0], cb.max[1], color);
+						else _draw_ellipse_in_rect_AA<false, true>(cb.min[0], cb.min[1], cb.max[0], cb.max[1], color);
+						}
+					else
+						{
+						if (blend) _draw_ellipse_in_rect<true, true, true, false>(cb.min[0], cb.min[1], cb.max[0], cb.max[1], color, color);
+						else _draw_ellipse_in_rect<false, true, true, false>(cb.min[0], cb.min[1], cb.max[0], cb.max[1], color, color);
+						}
+					return;
+					}
+				// use alternate method
+				double frx = (double)rx;
+				double fry = (double)ry;
+				fVec2 C
+				if (aa)
+					{
+					if (blend) _draw_ellipse2_AA<true, false>(B, C, frx, fry, color, color); else _draw_ellipse2_AA<false, false>(B, C, frx, fry, color, color);
+					}
+				else
+					{
+					if (blend) _draw_ellipse2<true, true, false>(B, C, frx, fry, color, color); else _draw_ellipse2<false, true, false>(B, C, frx, fry, color, color);
+					}
+				return;
+				}
+*/
+
+
 	/**
 	 * Draw an (integer-valued) ellipse.
 	 *
@@ -66,10 +124,11 @@ class TestImage : public Image
 	 * @param	aa	   (Optional) true to use antialiasing.
 	 * @param	blend  (Optional) true to use blending.
 	 */
-	void w_draw_ellipse(iVec2 center, int64 rx, int64 ry, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
-	{
-
-	}
+	void draw_ellipse(iVec2 center, int64 rx, int64 ry, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+		{
+		if (rx == ry) { draw_circle(center, rx, color, aa, blend); return; }
+		draw_ellipse(iBox2(center.X() - rx, center.X() + rx, center.Y() - ry, center.Y() + ry), color, aa, blend);
+		}
 
 
 	/**
@@ -83,10 +142,11 @@ class TestImage : public Image
 	 * @param	aa		  (Optional) true to use antialiasing.
 	 * @param	blend	  (Optional) true to use blending.
 	 */
-	void w_draw_ellipse(iVec2 center, int64 rx, int64 ry, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
-	{
-
-	}
+	void draw_ellipse(iVec2 center, int64 rx, int64 ry, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+		{
+		if (rx == ry) { draw_circle(center, rx, color, fillcolor, aa, blend); return; }
+		draw_ellipse(iBox2(center.X() - rx, center.X() + rx, center.Y() - ry, center.Y() + ry), color, fillcolor, aa, blend);
+		}
 
 
 	/**
@@ -98,11 +158,13 @@ class TestImage : public Image
 	 * @param	color  color.
 	 * @param	aa	   (Optional) true to use antialiasing.
 	 * @param	blend  (Optional) true to use blending.
+	 * @param	grid_align (Optional) true to align to nearest integer value (faster drawing).
 	 */
-	void w_draw_ellipse(fVec2 center, double rx, double ry, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
-	{
-
-	}
+	void draw_ellipse(fVec2 center, double rx, double ry, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, bool grid_align = true)
+		{
+		if (rx == ry) { draw_circle(center, rx, color, aa, blend, grid_align); return; }
+		draw_ellipse(fBox2(center.X() - rx, center.X() + rx, center.Y() - ry, center.Y() + ry), color, aa, blend, grid_align);
+		}
 
 
 	/**
@@ -115,11 +177,13 @@ class TestImage : public Image
 	 * @param	fillcolor color to fill the ellipse.
 	 * @param	aa		  (Optional) true to use antialiasing.
 	 * @param	blend	  (Optional) true to use blending.
+	 * @param	grid_align (Optional) true to align to nearest integer value (faster drawing).
 	 */
-	void w_draw_ellipse(fVec2 center, double rx, double ry, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
-	{
-
-	}
+	void draw_ellipse(fVec2 center, double rx, double ry, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, bool grid_align = true)
+		{
+		if (rx == ry) { draw_circle(center, rx, color, fillcolor, aa, blend, grid_align); return; }
+		draw_ellipse(fBox2(center.X() - rx, center.X() + rx, center.Y() - ry, center.Y() + ry), color, fillcolor, aa, blend, grid_align);
+		}
 
 
 	/**
@@ -130,7 +194,7 @@ class TestImage : public Image
 	 * @param	aa    (Optional) true to use antialiasing.
 	 * @param	blend (Optional) true to use blending.
 	 */
-	void w_draw_ellipse(iBox2 B, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+	void draw_ellipse(iBox2 B, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
 	{
 
 	}
@@ -145,7 +209,7 @@ class TestImage : public Image
 	 * @param	aa		  (Optional) true to use antialiasing.
 	 * @param	blend	  (Optional) true to use blending.
 	 */
-	void w_draw_ellipse(iBox2 B, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+	void draw_ellipse(iBox2 B, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
 	{
 
 	}
@@ -158,8 +222,9 @@ class TestImage : public Image
 	* @param	color color.
 	* @param	aa    (Optional) true to use antialiasing.
 	* @param	blend (Optional) true to use blending.
+	* @param	grid_align (Optional) true to align to nearest integer value (faster drawing).
 	*/
-	void w_draw_ellipse(fBox2 B, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+	void draw_ellipse(fBox2 B, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, bool grid_align = true)
 	{
 
 	}
@@ -173,8 +238,9 @@ class TestImage : public Image
 	* @param	fillcolor color to fill the ellipse.
 	* @param	aa		  (Optional) true to use antialiasing.
 	* @param	blend	  (Optional) true to use blending.
+	* @param	grid_align (Optional) true to align to nearest integer value (faster drawing).
 	*/
-	void w_draw_ellipse(fBox2 B, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+	void draw_ellipse(fBox2 B, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, bool grid_align = true)
 	{
 
 	}
@@ -184,38 +250,44 @@ class TestImage : public Image
 	 * Draw a thick (integer valued) ellipse
 	 *
 	 * @param	center	    center.
-	 * @param	rx		    (inner) radius along the x-axis.
-	 * @param	ry		    (inner) radius along the y-axis.
-	 * @param	thickness_x thickness along the x-axis (the outer radius on the x-axis is rx +
-	 * 						thickness_x).
-	 * @param	thickness_y thickness along the y-axis (the outer radius on the y-axis is ry +
-	 * 						thickness_y).
+	 * @param	rx		    (outer) radius along the x-axis.
+	 * @param	ry		    (outer) radius along the y-axis.
+	 * @param	thickness_x thickness along the x-axis inner x-radius = rx - thickness_x.
+	 * @param	thickness_y thickness along the y-axis inner y-radius = ry - thickness_y.
 	 * @param	color	    color.
 	 * @param	aa		    (Optional) true to use antialiasing.
 	 * @param	blend	    (Optional) true to use blending.
 	 */
-	void w_draw_thick_ellipse(fVec2 center, double rx, double ry, double thickness_x, double thickness_y, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
-	{
+	void draw_thick_ellipse(fVec2 center, double rx, double ry, double thickness_x, double thickness_y, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+		{
+		thickness_x = std::max<double>(thickness_x, 0);
+		thickness_y = std::max<double>(thickness_y, 0);
+		double Arx = rx, arx = std::max<double>(rx - thickness_x, 0);
+		double Ary = ry, ary = std::max<double>(ry - thickness_y, 0);
 
-	}
+		if ((thickness_x < 2)&&(thickness_x < 2))
+			{
+			draw_circle(center, radius, color, aa, blend);
+			return;
+			}
+
+		}
 
 
 	/**
 	 * Draw a thick filled (integer valued) ellipse
 	 *
 	 * @param	center	    center.
-	 * @param	rx		    (inner) radius along the x-axis.
-	 * @param	ry		    (inner) radius along the y-axis.
-	 * @param	thickness_x thickness along the x-axis (the outer radius on the x-axis is rx +
-	 * 						thickness_x).
-	 * @param	thickness_y thickness along the y-axis (the outer radius on the y-axis is ry +
-	 * 						thickness_y).
+	 * @param	rx		    (outer) radius along the x-axis.
+	 * @param	ry		    (outer) radius along the y-axis.
+	 * @param	thickness_x thickness along the x-axis inner x-radius = rx - thickness_x.
+	 * @param	thickness_y thickness along the y-axis inner y-radius = ry - thickness_y.
 	 * @param	color	    color.
 	 * @param	fillcolor   color to fill the ellipse.
 	 * @param	aa		    (Optional) true to use antialiasing.
 	 * @param	blend	    (Optional) true to use blending.
 	 */
-	void w_draw_thick_ellipse(fVec2 center, double rx, double ry, double thickness_x, double thickness_y, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+	void draw_thick_ellipse(fVec2 center, double rx, double ry, double thickness_x, double thickness_y, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
 	{
 
 	}
@@ -233,7 +305,7 @@ class TestImage : public Image
 	 * @param	aa		    (Optional) true to use antialiasing.
 	 * @param	blend	    (Optional) true to use blending.
 	 */
-	void w_draw_thick_ellipse(fBox2 B, double thickness_x, double thickness_y, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+	void draw_thick_ellipse(fBox2 B, double thickness_x, double thickness_y, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
 	{
 
 	}
@@ -252,7 +324,7 @@ class TestImage : public Image
 	 * @param	aa		    (Optional) true to use antialiasing.
 	 * @param	blend	    (Optional) true to use blending.
 	 */
-	void w_draw_thick_ellipse(fBox2 B, double thickness_x, double thickness_y, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+	void draw_thick_ellipse(fBox2 B, double thickness_x, double thickness_y, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
 	{
 
 	}
