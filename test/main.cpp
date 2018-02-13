@@ -1045,13 +1045,10 @@ int main(int argc, char *argv[])
 
 	//im._draw_ellipse4_AA<true,true,false>(im.imageBox(), { 300,300 }, 1, 2, color, colorfill, 0);
 
-
-
-	double R = 3;
+	double R = 100;
 	fVec2 P = {300,300};
 
-	im.draw_thick_circle(P, R, 1.9, color, colorfill, false, true);
-
+	im.draw_thick_circle(P, R, 3, color, colorfill, true, true);
 
 	im(300, 300) = RGBc::c_Black;
 
