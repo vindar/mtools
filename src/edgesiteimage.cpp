@@ -194,16 +194,17 @@ namespace mtools
 		{  
 		im.draw_rectangle(iBox2((int64)(kx * 45), (int64)(kx * 55), (int64)(ky * 45), (int64)(ky * 55),true), coul, false); 
 		im.fill_rectangle(iBox2((int64)(kx * 45), (int64)(kx * 55), (int64)(ky * 45), (int64)(ky * 55), true), coul, false);
-	}
+		}
+
     void EdgeSiteImage::_draw_centerSite(RGBc coul, Image & im, double kx, double ky) const
 		{
 		if ((int)(kx * 100) == (int)(ky * 100))
 			{
-			im.draw_filled_circle({ (int64)(kx * 50), (int64)(ky * 50) }, (int64)(kx * 25) , coul, coul, false,true);
+			im.draw_circle({ (int64)(kx * 50), (int64)(ky * 50) }, (int64)(kx * 25), coul, coul, true, true);
 			}
         else 
 			{ 
-			im.draw_filled_ellipse({ (int64)(kx * 50), (int64)(ky * 50) }, (int64)(kx * 25), (int64)(ky * 25), coul, coul, false,true);
+			im.draw_filled_ellipse({ (int64)(kx * 50), (int64)(ky * 50) }, (int64)(kx * 25), (int64)(ky * 25), coul, coul, true,true);
 			}
 		}
 
