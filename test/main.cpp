@@ -41,6 +41,10 @@ drawing parameters
 
 
 
+
+
+
+
 class TestImage : public Image
 	{
 
@@ -55,210 +59,7 @@ class TestImage : public Image
 	}
 	
 
-	/**
-	* Draw a circle.
-	*
-	* @param	R	   the absolute range represented in the image.
-	* @param	center center
-	* @param	radius radius
-	* @param	color  color
-	* @param	aa	   (Optional) true to use antialiasing.
-	* @param	blend  (Optional) true to use blending.
-	**/
-	MTOOLS_FORCEINLINE void canvas_draw_circle(const fBox2 & R, fVec2 center, double radius, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
-		{
-		const auto dim = dimension();
-		const int64 irx = R.absToPixel_lenghtX(r, dim);
-		const int64 iry = R.absToPixel_lenghtY(r, dim);
-		if (irx == iry) draw_circle(R.absToPixel(P, dim), irx, color, blend, antialiasing, penwidth); else draw_ellipse(R.absToPixel(P, dim), irx, iry, color, blend, antialiasing, penwidth);
-		}
 
-
-	/**
-	* Draw a filled circle.
-	*
-	* @param	R			the absolute range represented in the image.
-	* @param	center		center
-	* @param	radius		radius
-	* @param	color		color
-	* @param	fillcolor	color to fill the circle.				   
-	* @param	aa			(Optional) true to use antialiasing.
-	* @param	blend		(Optional) true to use blending.
-	**/
-	MTOOLS_FORCEINLINE void canvas_draw_filled_circle(const fBox2 & R, fVec2 center, double radius, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
-		{
-		}
-
-
-	/**
-	* Draw a thick circle. 
-	*
-	* @param	R					the absolute range represented in the image.
-	* @param	center				center
-	* @param	radius				radius
-	* @param	thickness			thickness.
-	* @param    relativethickness	true to scale tickness with range and false to use constant thcikness. 
-	* @param	color				color
-	* @param	aa					(Optional) true to use antialiasing.
-	* @param	blend				(Optional) true to use blending.
-	**/
-	MTOOLS_FORCEINLINE void canvas_draw_thick_circle(const fBox2 & R, fVec2 center, double radius, double thickness, bool relativethickness, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
-		{
-		}
-
-
-	/**
-	* Draw a thick filled circle.
-	*
-	* @param	R					the absolute range represented in the image.
-	* @param	center				center
-	* @param	radius				radius
-	* @param	thickness			thickness.
-	* @param    relativethickness	true to scale tickness with range and false to use constant thcikness.
-	* @param	color				color
-	* @param	fillcolor			color to fill the circle.
-	* @param	aa					(Optional) true to use antialiasing.
-	* @param	blend				(Optional) true to use blending.
-	**/
-	MTOOLS_FORCEINLINE void canvas_draw_thick_filled_circle(const fBox2 & R, fVec2 center, double radius, double thickness, bool relativethickness, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
-		{
-		}
-
-
-
-	/**
-	* Draw an ellipse.
-	*
-	* @param	R	   the absolute range represented in the image.
-	* @param	center center
-	* @param	rx	   radius along the x-axis.
-	* @param	ry	   radius along the y-axis.
-	* @param	color  color
-	* @param	aa	   (Optional) true to use antialiasing.
-	* @param	blend  (Optional) true to use blending.
-	**/
-	MTOOLS_FORCEINLINE void canvas_draw_ellipse(const fBox2 & R, fVec2 center, double rx, double ry, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
-		{
-		}
-
-
-	/**
-	* Draw a filled ellipse.
-	*
-	* @param	R			the absolute range represented in the image.
-	* @param	center		center
-	* @param	rx			radius along the x-axis.
-	* @param	ry			radius along the y-axis.
-	* @param	color		color
-	* @param	fillcolor	color to fill the ellipse.
-	* @param	aa			(Optional) true to use antialiasing.
-	* @param	blend		(Optional) true to use blending.
-	**/
-	MTOOLS_FORCEINLINE void canvas_draw_filled_ellipse(const fBox2 & R, fVec2 center, double rx, double ry, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
-		{
-		}
-
-
-	/**
-	* Draw a thick ellipse.
-	*
-	* @param	R					the absolute range represented in the image.
-	* @param	center				center
-	* @param	rx					radius along the x-axis.
-	* @param	ry					radius along the y-axis.
-	* @param	thickness			thickness.
-	* @param    relativethickness	true to scale tickness with range and false to use constant thcikness.
-	* @param	color				color
-	* @param	aa					(Optional) true to use antialiasing.
-	* @param	blend				(Optional) true to use blending.
-	**/
-	MTOOLS_FORCEINLINE void canvas_draw_thick_ellipse(const fBox2 & R, fVec2 center, double rx, double ry, double thickness, bool relativethickness, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
-	{
-	}
-
-
-
-	/**
-	* Draw a thick filled ellipse.
-	*
-	* @param	R					the absolute range represented in the image.
-	* @param	center				center
-	* @param	rx					radius along the x-axis.
-	* @param	ry					radius along the y-axis.
-	* @param	thickness			thickness.
-	* @param    relativethickness	true to scale tickness with range and false to use constant thcikness.
-	* @param	color				color
-	* @param	fillcolor			color to fill the ellipse.
-	* @param	aa					(Optional) true to use antialiasing.
-	* @param	blend				(Optional) true to use blending.
-	**/
-	MTOOLS_FORCEINLINE void canvas_draw_thick_filled_ellipse(const fBox2 & R, fVec2 center, double rx, double ry, double thickness, bool relativethickness, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
-	{
-	}
-
-
-	/**
-	* Draw an ellipse with a given boundung box.
-	*
-	* @param	R			the absolute range represented in the image.
-	* @param	ellipseBox	the ellipse bounding box.				   
-	* @param	color		color
-	* @param	aa			(Optional) true to use antialiasing.
-	* @param	blend		(Optional) true to use blending.
-	**/
-	MTOOLS_FORCEINLINE void canvas_draw_ellipse_in_box(const fBox2 & R, const fBox2 & ellipseBox, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
-	{
-	}
-
-
-
-	/**
-	* Draw a filled ellipse with a given boundung box.
-	*
-	* @param	R			the absolute range represented in the image.
-	* @param	ellipseBox	the ellipse bounding box.
-	* @param	color		color
-	* @param	fillcolor	color to fill the ellipse.
-	* @param	aa			(Optional) true to use antialiasing.
-	* @param	blend		(Optional) true to use blending.
-	**/
-	MTOOLS_FORCEINLINE void canvas_draw_filled_ellipse_in_box(const fBox2 & R, const fBox2 & ellipseBox, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
-	{
-	}
-
-
-	/**
-	* Draw a thick ellipse with a given bounding box.
-	*
-	* @param	R					the absolute range represented in the image.
-	* @param	ellipseBox			the ellipse bounding box.
-	* @param	thickness			thickness.
-	* @param    relativethickness	true to scale tickness with range and false to use constant thcikness.
-	* @param	color				color
-	* @param	aa					(Optional) true to use antialiasing.
-	* @param	blend				(Optional) true to use blending.
-	**/
-	MTOOLS_FORCEINLINE void canvas_draw_thick_ellipse_in_box(const fBox2 & R, const fBox2 & ellipseBox, double thickness, bool relativethickness, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
-	{
-	}
-
-
-
-	/**
-	* Draw a thick filled ellipse with a given bounding box.
-	*
-	* @param	R					the absolute range represented in the image.
-	* @param	ellipseBox			the ellipse bounding box.
-	* @param	thickness			thickness.
-	* @param    relativethickness	true to scale tickness with range and false to use constant thcikness.
-	* @param	color				color
-	* @param	fillcolor			color to fill the ellipse.
-	* @param	aa					(Optional) true to use antialiasing.
-	* @param	blend				(Optional) true to use blending.
-	**/
-	MTOOLS_FORCEINLINE void canvas_draw_thick_filled_ellipse_in_box(const fBox2 & R, const fBox2 & ellipseBox, double thickness, bool relativethickness, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
-	{
-	}
 
 
 	};
@@ -797,10 +598,10 @@ int main(int argc, char *argv[])
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
 
 	double lx = 800.0;
-	double ly = 800.0;
+	double ly = 600.0;
 
 
-	TestImage im((int)(lx+1), (int)(ly+1));
+	TestImage im((int)(lx), (int)(ly));
 
 	RGBc color = RGBc::c_Red.getMultOpacity(0.5);;
 	RGBc color2 = RGBc::c_Green.getMultOpacity(0.5);;
@@ -1026,6 +827,9 @@ int main(int argc, char *argv[])
 	iBox2 BB(100 + xs, 200 + xs, 100 + ys, 200 + ys);
 
 
+
+
+
 	colorfill = RGBc::c_Blue.getMultOpacity(0.5);
 
 	im.clear(RGBc::c_White);
@@ -1039,7 +843,12 @@ int main(int argc, char *argv[])
 	double R = 100;
 	fVec2 P = {300,300};
 
-	im.draw_thick_ellipse(P, R, R + 50, 3, 5, color, true, true);
+	//im.draw_thick_ellipse(P, R, R + 50, 3, 5, color, true, true);
+
+
+	fBox2 SR(0.0, 4.0, 0.0, 3.0);
+
+	im.canvas_draw_thick_filled_circle(SR, { 0.5,0.5 }, 3, 3, false, color, colorfill);
 
 	im(300, 300) = RGBc::c_Black;
 
