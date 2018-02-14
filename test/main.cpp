@@ -112,10 +112,10 @@ class PlotFigures
 class PlotTestFig : public internals_graphics::Plotter2DObj, protected internals_graphics::Drawable2DInterface
 {
 
-	const int N = 100000; 
+	const int N = 1000000;
 	const double LX = 100; 
 	const double LY = 100; 
-	const double R = 50;
+	const double R = 1;
 
 public:
 
@@ -162,7 +162,7 @@ protected:
 	virtual int drawOnto(Image & im, float opacity = 1.0)
 		{
 		RGBc color = RGBc::c_Red.getMultOpacity(0.5);
-		RGBc fillcolor = RGBc::c_Blue.getMultOpacity(0.5);
+		RGBc fillcolor = RGBc::c_Blue.getMultOpacity(0.1);
 
 		int count = 0; 
 		Chronometer();
@@ -173,9 +173,9 @@ protected:
 				[&](TreeFigure<double,2>::BoundedObject & bo) -> void
 					{
 
-					im.canvas_draw_ellipse_in_box(_range, bo.boundingbox, color);
-
-					if (count++ > 10000) throw "";
+					im.canvas_draw_thick_filled_ellipse_in_box(_range, bo.boundingbox, bo.boundingbox.lx()/10, bo.boundingbox.ly() / 10, true, color, fillcolor);
+					count++;
+					if (count > 10000) throw "";
 					return;
 					});
 			}

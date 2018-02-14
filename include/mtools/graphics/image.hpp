@@ -3933,10 +3933,21 @@ namespace mtools
 			 *
 			 * @param	bkColor	the color to use.
 			 **/
-			inline void clear(RGBc bkColor)
+			MTOOLS_FORCEINLINE void clear(RGBc bkColor)
 				{
 				//pixman_fill((uint32_t*)_data, _stride, 32, 0, 0, _lx, _ly, bkColor.color); // slow...
 				_fillRegion(_data, _stride, _lx, _ly, bkColor);
+				}
+
+
+			/**
+			* Blend a color over the whole image.
+			*
+			* @param	bkColorBlend	the color to blend over the whole image.
+			**/
+			MTOOLS_FORCEINLINE void clearBlend(RGBc bkColorBlend)
+				{
+				_blendRegion(_data, _stride, _lx, _ly, bkColorBlend);
 				}
 
 
@@ -8144,6 +8155,21 @@ namespace mtools
 				}
 
 
+			/* blend a region with a given color */
+			inline static void _blendRegion(RGBc * pdest, int64 dest_stride, int64 sx, int64 sy, RGBc color)
+				{
+				for (int64 j = 0; j < sy; j++)
+					{
+					const int64 offdest = j * dest_stride;
+					for (int64 i = 0; i < sx; i++)
+						{
+						pdest[offdest + i].blend(color);
+						}
+					}
+				}
+
+
+
 			/* draw a filled rectangle */
 			MTOOLS_FORCEINLINE void _draw_box(int64 x, int64 y, int64 sx, int64 sy, RGBc boxcolor, bool blend)
 				{
@@ -8179,6 +8205,80 @@ namespace mtools
 			*****************************************************************************/
 
 
+			/**
+			 * Check if the image intersect an ellipse. 
+			 * Return -1 if not intersection.
+			 *         0 if intersection
+			 *         1 if the image in included in the interior of the ellipse.
+			 **/
+			MTOOLS_FORCEINLINE int _ellipseIntersection(const iBox2 & iB, fVec2 center, double rx, double ry)
+				{
+				MTOOLS_ASSERT(rx > 0);
+				MTOOLS_ASSERT(ry > 0);
+				const fBox2 B( iB.min[0] - 1.5, iB.max[0] + 1.5,
+					           iB.min[1] - 1.5, iB.max[1] + 1.5  );
+				const double rx2 = rx * rx;
+				const double rx2_over_ry2 = rx2 / (ry*ry);
+
+				double u1;
+				{
+					double XX = B.min[0] - center.X(); XX *= XX;
+					double YY = B.min[1] - center.Y(); YY *= YY;
+					u1 = rx2 - XX - (YY * rx2_over_ry2);
+				}
+
+				double u2;
+				{
+					double XX = B.max[0] - center.X(); XX *= XX;
+					double YY = B.min[1] - center.Y(); YY *= YY;
+					u2 = rx2 - XX - (YY * rx2_over_ry2);
+				}
+
+				double u3;
+				{
+					double XX = B.min[0] - center.X(); XX *= XX;
+					double YY = B.max[1] - center.Y(); YY *= YY;
+					u3 = rx2 - XX - (YY * rx2_over_ry2);
+				}
+
+				double u4;
+					{
+					double XX = B.max[0] - center.X(); XX *= XX;
+					double YY = B.max[1] - center.Y(); YY *= YY;
+					u4 = rx2 - XX - (YY * rx2_over_ry2);
+					}
+
+				if ((u1 > 0) && (u2 > 0) && (u3 > 0) && (u4 > 0)) return 1; // box strictly inside the ellipse
+				if ((u1 < 0) && (u2 < 0) && (u3 < 0) && (u4 < 0))
+					{ // intersection may be empty. 
+					if (center.X() < B.min[0])
+						{
+						if ((center.Y() < B.min[1]) || (center.Y() > B.max[1])) return -1; // no intersection
+						if (center.X() + rx < B.min[0]) return -1; // no intersection
+						return 0;
+						}
+					if (center.X() > B.max[0])
+						{
+						if ((center.Y() < B.min[1]) || (center.Y() > B.max[1])) return -1; // no intersection
+						if (center.X() - rx > B.max[0]) return -1; // no intersection
+						return 0;
+						}
+					if (center.Y() < B.min[1])
+						{
+						if ((center.X() < B.min[0]) || (center.X() > B.max[0])) return -1; // no intersection
+						if (center.Y() + ry < B.min[1]) return -1; // no intersection
+						return 0;
+						}
+					if (center.Y() > B.max[1])
+						{
+						if ((center.X() < B.min[0]) || (center.X() > B.max[0])) return -1; // no intersection
+						if (center.Y() - ry > B.max[1]) return -1; // no intersection
+						return 0;
+						}
+					}
+				return 0;
+				}
+
 
 			/**
 			* Draw circle. both interior and outline.
@@ -8187,6 +8287,16 @@ namespace mtools
 			template<bool blend, bool checkrange, bool outline, bool fill>  inline  void _draw_circle(int64 xm, int64 ym, int64 r, RGBc color, RGBc fillcolor)
 				{
 				if (r < 0) return;
+				if (r > 2)
+					{ // circle is large enough to check first if there is something to draw.
+					int q = _ellipseIntersection(imageBox(), { (double)xm, (double)ym }, (double)r, (double)r);
+					if (q < 0) return; // nothing to draw
+					if (q > 0)
+						{
+						if (fill) { draw_box(imageBox(), fillcolor, true); }
+						return;
+						}
+					}
 				switch (r)
 				{
 				case 0:
@@ -8259,6 +8369,16 @@ namespace mtools
 			template<bool blend, bool checkrange, bool fill> void _draw_circle_AA(int64 xm, int64 ym, int64 r, RGBc color, RGBc colorfill)
 			{
 				if (r < 0) return;
+				if (r > 2)
+					{ // circle is large enough to check first if there is something to draw.
+					int q = _ellipseIntersection(imageBox(), { (double)xm, (double)ym }, (double)r, (double)r);
+					if (q < 0) return; // nothing to draw
+					if (q > 0)
+						{
+						if (fill) { draw_box(imageBox(), colorfill, true); }
+						return;
+						}
+					}
 				switch (r)
 				{
 				case 0:
@@ -8370,6 +8490,18 @@ namespace mtools
 			template<bool blend, bool checkrange, bool outline, bool fill> inline void _draw_ellipse_in_rect(int64 x0, int64 y0, int64 x1, int64 y1, RGBc color, RGBc fillcolor)
 				{
 				if ((x1 < x0) || (y1 < y0)) return;
+				if ((x1 - x0 > 2) || (y1 - y0 > 2))
+					{ // circle is large enough to check first if there is something to draw.
+					double rx = ((double)(x1 - x0)) / 2;
+					double ry = ((double)(y1 - y0)) / 2;
+					int q = _ellipseIntersection(imageBox(), fVec2(((double)(x1 + x0)) / 2, ((double)(y1 + y0)) / 2), rx, ry);
+					if (q < 0) return; // nothing to draw
+					if (q > 0)
+						{
+						if (fill) { draw_box(imageBox(), fillcolor, true); }
+						return;
+						}
+					}
 				if (x1 == x0)
 					{
 					if (fill)
@@ -8408,7 +8540,6 @@ namespace mtools
 						}
 					return;
 					}
-
 				bool INCX = ((x1 - x0) & 1);
 				bool INCY = ((y1 - y0) & 1);
 				int64 a = (x1 - x0) >> 1;
@@ -8536,6 +8667,14 @@ namespace mtools
 			template<bool blend, bool checkrange> void _draw_ellipse_in_rect_AA(int64 x0, int64 y0, int64 x1, int64 y1, RGBc color)
 				{
 				if ((x1 < x0) || (y1 < y0)) return;
+				if ((x1 - x0 > 2) || (y1 - y0 > 2))
+					{ // circle is large enough to check first if there is something to draw.
+					double rx = ((double)(x1 - x0)) / 2;
+					double ry = ((double)(y1 - y0)) / 2;
+					int q = _ellipseIntersection(imageBox(), fVec2(((double)(x1 + x0)) / 2, ((double)(y1 + y0)) / 2), rx, ry);
+					if (q < 0) return; // nothing to draw
+					if (q > 0) return; // again nothing to draw since there is no filling						
+					}
 				if (x1 == x0)
 					{
 					for (auto u = y0; u <= y1; u++)
@@ -8552,6 +8691,7 @@ namespace mtools
 						}
 					return;
 					}
+
 				int64 a = abs(x1 - x0), b = abs(y1 - y0), b1 = b & 1;
 				double dx = (double)(4 * (a - 1.0)*b*b), dy = (double)(4 * (b1 + 1)*a*a);
 				double ed, i, err = b1*a*a - dx + dy;
@@ -8625,11 +8765,22 @@ namespace mtools
 			template<bool blend, bool outline, bool fill>  inline  void _draw_ellipse2(iBox2 B, fVec2 P, double rx, double ry, RGBc color, RGBc fillcolor)
 			{
 				if ((rx <= 0) || (ry <= 0)) return; 
+
 				B = intersectionRect(B, iBox2((int64)floor(P.X() - rx - 1),
 					(int64)ceil(P.X() + rx + 1),
 					(int64)floor(P.Y() - ry - 1),
 					(int64)ceil(P.Y() + ry + 1)));
 				MTOOLS_ASSERT(B.isIncludedIn(imageBox()));
+
+				{ //check first if there is something to draw.
+					int q = _ellipseIntersection(B, P, rx, ry);
+					if (q < 0) return; // nothing to draw
+					if (q > 0)
+						{
+						if (fill) { draw_box(B,fillcolor,true); }
+						return;
+						}
+				}
 
 				const double rx2 = rx * rx;
 				const double ry2 = ry * ry;
@@ -8725,6 +8876,16 @@ namespace mtools
 					(int64)floor(P.Y() - ry - 1),
 					(int64)ceil(P.Y() + ry + 1)));
 				MTOOLS_ASSERT(B.isIncludedIn(imageBox()));
+
+				{ //check first if there is something to draw.
+					int q = _ellipseIntersection(B, P, rx, ry);
+					if (q < 0) return; // nothing to draw
+					if (q > 0)
+						{
+						if (fill) { draw_box(B, fillcolor, true); }
+						return;
+						}
+				}
 
 				const double ex2 = rx * rx;
 				const double ey2 = ry * ry;
@@ -8859,6 +9020,17 @@ namespace mtools
 					(int64)floor(P.Y() - Ary - 1),
 					(int64)ceil(P.Y() + Ary + 1)));
 				MTOOLS_ASSERT(B.isIncludedIn(imageBox()));
+
+				{ //check first if there is something to draw.
+					int q = _ellipseIntersection(B, P, Arx, Ary);
+					if (q < 0) return; // nothing to draw
+					q = _ellipseIntersection(B, P, arx, ary);
+					if (q > 0)
+						{	
+						if (fill) { draw_box(B, fillcolor, true); }
+						return;
+						}
+				}
 
 				if (B.isEmpty()) return;
 				// OUTER ELLIPSE
