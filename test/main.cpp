@@ -13,10 +13,22 @@ using namespace mtools;
 class PlotTestFig : public internals_graphics::Plotter2DObj, protected internals_graphics::Drawable2DInterface
 {
 
+	const int N = 100000; 
+	const double LX = 100; 
+	const double LY = 100; 
+	const double R = 10;
+
 public:
 
-	PlotTestFig() : internals_graphics::Plotter2DObj("plotTestfig")
+	PlotTestFig() : internals_graphics::Plotter2DObj("plotTestfig") , gen(0)
 	{
+		for (int k = 0; k < N; k++)
+			{
+			fVec2 center(Unif(gen)*LX, Unif(gen)*LY);
+			double rad = Unif(gen)*R;
+			cl.push_back({ center, rad });
+			}
+
 	}
 
 
@@ -53,10 +65,13 @@ protected:
 		RGBc color = RGBc::c_Red.getMultOpacity(0.5);
 		RGBc fillcolor = RGBc::c_Blue.getMultOpacity(0.5);
 
-		fVec2 center{ 20, 10};
-		double rad = 10; 
 
-		im.canvas_draw_circle(_range, center, rad,color);
+		cout << _range << "\n";
+		for (int i = 0; i < N; i++)
+			{
+			//im.canvas_draw_thick_filled_circle(_range, cl[i].first, cl[i].second, 1, true, color, fillcolor);
+			im.canvas_draw_circle(_range, cl[i].first, cl[i].second, color);
+			}
 
 		return 100; 
 		}
@@ -81,6 +96,13 @@ protected:
 
 
 private:
+
+
+
+	std::vector<std::pair<fVec2, double> >  cl;
+
+	MT2004_64 gen;
+
 
 
 	fBox2 _range;           // the range we should use to draw the axes

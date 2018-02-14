@@ -2681,7 +2681,8 @@ namespace mtools
 			void draw_circle(iVec2 center, int64 radius, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
 			{
 				if (isEmpty() || (radius < 0)) return;
-				iBox2 circleBox(center.X() - radius, center.X() + radius, center.Y() - radius, center.Y() + radius);
+				const int64 margin = (aa ? 1 : 0);
+				iBox2 circleBox(center.X() - radius - margin, center.X() + radius + margin, center.Y() - radius - margin, center.Y() + radius + margin);
 				iBox2 imBox = imageBox();
 				iBox2 B = intersectionRect(circleBox, imBox);
 				if (B.isEmpty()) return; // nothing to draw.
@@ -2737,7 +2738,8 @@ namespace mtools
 			void draw_filled_circle(iVec2 center, int64 radius, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
 				{
 				if (isEmpty() || (radius < 0)) return;
-				iBox2 circleBox(center.X() - radius, center.X() + radius, center.Y() - radius, center.Y() + radius);
+				const int64 margin = (aa ? 1 : 0);
+				iBox2 circleBox(center.X() - radius - margin, center.X() + radius + margin, center.Y() - radius - margin, center.Y() + radius + margin);
 				iBox2 imBox = imageBox();
 				iBox2 B = intersectionRect(circleBox, imBox);
 				if (B.isEmpty()) return; // nothing to draw.
@@ -2984,7 +2986,8 @@ namespace mtools
 				iBox2 imBox = imageBox();
 				iBox2 B = intersectionRect(imBox, ellipseBox);
 				if (B.isEmpty()) return; // nothing to draw.
-				if (ellipseBox.isIncludedIn(imBox))
+				const int64 margin = (aa ? 1 : 0);
+				if (ellipseBox.getEnlarge(margin).isIncludedIn(imBox))
 				{ // included
 					if (aa)
 					{
@@ -3057,7 +3060,8 @@ namespace mtools
 				if (B.isEmpty()) return; // nothing to draw.
 				if (!aa)
 				{
-					if (ellipseBox.isIncludedIn(imBox))
+					const int64 margin = (aa ? 1 : 0);
+					if (ellipseBox.getEnlarge(margin).isIncludedIn(imBox))
 					{ // included
 						if (blend) _draw_ellipse_in_rect<true, false, true, true>(ellipseBox.min[0], ellipseBox.min[1], ellipseBox.max[0], ellipseBox.max[1], color, fillcolor);
 						else _draw_ellipse_in_rect<false, false, true, true>(ellipseBox.min[0], ellipseBox.min[1], ellipseBox.max[0], ellipseBox.max[1], color, fillcolor);
@@ -3112,15 +3116,15 @@ namespace mtools
 				double ry = (ellipseBox.max[1] - ellipseBox.min[1]) / 2;
 				fVec2 center = { (ellipseBox.max[0] + ellipseBox.min[0]) / 2 , (ellipseBox.max[1] + ellipseBox.min[1]) / 2 };
 				if (aa)
-				{
+					{
 					if (blend) _draw_ellipse2_AA<true, false>(B, center, rx, ry, color, color);
 					else _draw_ellipse2_AA<false, false>(B, center, rx, ry, color, color);
-				}
+					}
 				else
-				{
+					{
 					if (blend) _draw_ellipse2<true, true, false>(B, center, rx, ry, color, color);
 					else _draw_ellipse2<false, true, false>(B, center, rx, ry, color, color);
-				}
+					}
 				return;
 			}
 
