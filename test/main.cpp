@@ -6,6 +6,105 @@ using namespace mtools;
 
 
 
+/** Interface class for figure objects. */
+class FigureInterface
+	{
+
+	/**
+	 * Draws the figure onto an image with a given range.
+	 *
+	 * @param [in,out]	im		    the image to draw onto.
+	 * @param [in,out]	R		    the range.
+	 * @param 		  	highQuality (Optional) True when high quality drawing is requested and false
+	 * 								otherwise.
+	 */
+	virtual void draw(Image & im, fBox2 & R, bool highQuality = true) = delete;
+
+
+	/**
+	 * Return the object's bounding box. 
+	 *
+	 * @return	A fBox2.
+	 */
+	virtual fBox2 boundingBox() const = delete;
+
+
+	/**
+	 * Print info about the object into an std::string.
+	 */
+	virtual std::string toString(bool debug = false) const = delete;
+
+	/**
+	 * Serialize the object.
+	 */
+	virtual void serialize(OBaseArchive & ar) const = delete;
+
+	/**
+	 * Deserialize this object.
+	 */
+	virtual void deserialize(IBaseArchive & ar) = delete;
+
+	};
+
+
+class FigureBox;
+
+class FigureCircle;
+
+class FigureEllipse;
+
+class FigureDot;
+
+class FigureLine;
+
+class FigurePolyLine;
+
+class FigureTriangle;
+
+class FigureConvexPolygon;
+
+class FigureQuadBezier;
+
+class FigureRatQuadBezier;
+
+class FigureCubicBezier;
+
+class FigureGroup;
+
+
+
+class FigureCanvas
+{
+	void insert(FigureInterface & figure, int layer); 
+
+	void clear();
+
+
+		int nbThread();
+
+		void reset(); 
+
+		void suspend();
+
+		void enable();
+
+		int drawonto(Image & im);
+
+		int quality();
+
+};
+
+
+
+
+class PlotFigures
+{
+
+
+
+};
+
+
 
 
 
@@ -13,10 +112,10 @@ using namespace mtools;
 class PlotTestFig : public internals_graphics::Plotter2DObj, protected internals_graphics::Drawable2DInterface
 {
 
-	const int N = 100000; 
+	const int N = 1000000; 
 	const double LX = 100; 
 	const double LY = 100; 
-	const double R = 0.1;
+	const double R = 10;
 
 public:
 
@@ -25,8 +124,8 @@ public:
 		for (int k = 0; k < N; k++)
 			{
 			fVec2 center(Unif(gen)*LX, Unif(gen)*LY);
-			double rad = Unif(gen)*R;
-			cl.push_back({ center, rad });
+			double rad = Unif(gen)*Unif(gen)*R;
+			TF.insert(fBox2(center.X() - rad, center.X() + rad, center.Y() - rad, center.Y() + rad), rad);
 			}
 
 	}
@@ -65,14 +164,34 @@ protected:
 		RGBc color = RGBc::c_Red.getMultOpacity(0.5);
 		RGBc fillcolor = RGBc::c_Blue.getMultOpacity(0.5);
 
+		int count = 0; 
+		Chronometer();
 
-		cout << _range << "\n";
-		for (int i = 0; i < N; i++)
+		try
+			{
+			TF.iterate_intersect(zoomOut(_range),
+				[&](TreeFigure<double,2>::BoundedObject & bo) -> void
+					{
+
+					im.canvas_draw_ellipse_in_box(_range, bo.boundingbox, color);
+
+					if (count++ > 100000) throw "";
+					return;
+					});
+			}
+		catch(...)
+			{
+			cout << "[interrupted]\n";
+			}
+		cout << "obj = " << count << " done in " << durationToString(Chronometer(), true) << "\n";
+
+/*		
+			for (int i = 0; i < N; i++)
 			{
 			//im.canvas_draw_thick_filled_circle(_range, cl[i].first, cl[i].second, 1, true, color, fillcolor);
 			im.canvas_draw_filled_circle(_range, cl[i].first, cl[i].second, fillcolor, fillcolor,true);
 			}
-
+			*/
 		return 100; 
 		}
 
@@ -96,6 +215,9 @@ protected:
 
 
 private:
+
+	TreeFigure<double,2> TF;
+
 
 
 
