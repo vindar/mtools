@@ -316,6 +316,26 @@ namespace mtools
 					}
 				}
 
+
+			/**
+			* Return a new box obtained from this box by enlarging in each direction by a given amount.
+			* an empty box may become not empty after this operation...
+			*
+			* @param	offset	The offset. positive to enlarge and negative to reduce the margin.
+			**/
+			Box getEnlarge(int64 offset) const
+				{
+				Box B(*this);
+				for (size_t i = 0; i < N; i++)
+					{
+					B.min[i] -= offset;
+					B.max[i] += offset;
+					}
+				return B;
+				}
+
+
+
             /**
             * Try to enlarge the rectangle using points from another rectangle if possible. By definition,
             * the resulting rectangle contain the initial one and is included in the union of the initial
@@ -901,24 +921,31 @@ namespace mtools
 	/**
 	* Map the position of a point when the source box mapped to the destination box by an affine transformation.
 	*
+	* template parameter selects whether the y-axis is reversed
+	*
 	* @param	src_pos Source position.
 	* @param	src_box Source box.
 	* @param	dst_box Destination box.
 	*
 	* @return	the corresponding position after the affine tranformation.
 	*/
-	MTOOLS_FORCEINLINE fVec2 boxTransform(const fVec2 & src_pos, const fBox2 & src_box, const fBox2 & dst_box)
+	template<bool reverse_y = true> MTOOLS_FORCEINLINE fVec2 boxTransform(const fVec2 & src_pos, const fBox2 & src_box, const fBox2 & dst_box)
 		{
 		MTOOLS_ASSERT((dst_box.max[0] - dst_box.min[0]) > 0);
 		MTOOLS_ASSERT((src_box.max[0] - src_box.min[0]) > 0);
 		MTOOLS_ASSERT((dst_box.max[1] - dst_box.min[1]) > 0);
 		MTOOLS_ASSERT((src_box.max[1] - src_box.min[1]) > 0);
-		return fVec2 ( dst_box.min[0] + ((dst_box.max[0] - dst_box.min[0]) / (src_box.max[0] - src_box.min[0]))*(src_pos.X() - src_box.min[0]),
-			           dst_box.min[1] + ((dst_box.max[1] - dst_box.min[1]) / (src_box.max[1] - src_box.min[1]))*(src_pos.Y() - src_box.min[1]) );
+		const double mx = (dst_box.max[0] - dst_box.min[0]) / (src_box.max[0] - src_box.min[0]);
+		const double my = (dst_box.max[1] - dst_box.min[1]) / (src_box.max[1] - src_box.min[1]);
+		return fVec2 ( dst_box.min[0] + mx*(src_pos.X() - src_box.min[0]),
+					   (reverse_y ? (dst_box.max[1] - my * (src_pos.Y() - src_box.min[1]))
+			                      : (dst_box.min[1] + my * (src_pos.Y() - src_box.min[1]))) );
 		}
 
 	/**
 	* Map a box to another one using the affine trandformation that maps src_box to dst_box.
+	*
+	* template parameter selects whether the y-axis is reversed 
 	*
 	* @param	box		box to transform
 	* @param	src_box Source box.
@@ -926,19 +953,21 @@ namespace mtools
 	*
 	* @return	the corresponding position after the affine tranformation.
 	*/
-	MTOOLS_FORCEINLINE fBox2 boxTransform(const fBox2 & box, const fBox2 & src_box, const fBox2 & dst_box)
-	{
+	template<bool reverse_y = true> MTOOLS_FORCEINLINE fBox2 boxTransform(const fBox2 & box, const fBox2 & src_box, const fBox2 & dst_box)
+		{
 		MTOOLS_ASSERT((dst_box.max[0] - dst_box.min[0]) > 0);
 		MTOOLS_ASSERT((src_box.max[0] - src_box.min[0]) > 0);
 		MTOOLS_ASSERT((dst_box.max[1] - dst_box.min[1]) > 0);
 		MTOOLS_ASSERT((src_box.max[1] - src_box.min[1]) > 0);
 		const double mx = (dst_box.max[0] - dst_box.min[0]) / (src_box.max[0] - src_box.min[0]);
 		const double my = (dst_box.max[1] - dst_box.min[1]) / (src_box.max[1] - src_box.min[1]);
-		return fBox2( dst_box.min[0] + mx * (box.min[0] - src_box.min[0]),
-				      dst_box.min[0] + mx * (box.max[0] - src_box.min[0]),
-				      dst_box.min[1] + my * (box.min[1] - src_box.min[1]),
-				      dst_box.min[1] + my * (box.max[1] - src_box.min[1]));
-	}
+		return fBox2(dst_box.min[0] + mx * (box.min[0] - src_box.min[0]),
+				     dst_box.min[0] + mx * (box.max[0] - src_box.min[0]),
+					 (reverse_y ? (dst_box.max[1] - my * (box.max[1] - src_box.min[1]))
+			                    : (dst_box.min[1] + my * (box.min[1] - src_box.min[1]))),
+			         (reverse_y ? (dst_box.max[1] - my * (box.min[1] - src_box.min[1]))
+			                    : (dst_box.min[1] + my * (box.max[1] - src_box.min[1]))) );
+		}
 
 
 }
