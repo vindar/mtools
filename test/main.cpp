@@ -16,7 +16,7 @@ class PlotTestFig : public internals_graphics::Plotter2DObj, protected internals
 	const int N = 100000; 
 	const double LX = 100; 
 	const double LY = 100; 
-	const double R = 10;
+	const double R = 0.1;
 
 public:
 
@@ -70,7 +70,7 @@ protected:
 		for (int i = 0; i < N; i++)
 			{
 			//im.canvas_draw_thick_filled_circle(_range, cl[i].first, cl[i].second, 1, true, color, fillcolor);
-			im.canvas_draw_circle(_range, cl[i].first, cl[i].second, color);
+			im.canvas_draw_filled_circle(_range, cl[i].first, cl[i].second, fillcolor, fillcolor,true);
 			}
 
 		return 100; 
