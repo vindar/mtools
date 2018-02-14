@@ -307,7 +307,7 @@ namespace mtools
 			 *
 			 * @param	offset	The offset. positive to enlarge and negative to reduce the margin.
 			 **/
-			inline void enlarge(int64 offset)
+			inline void enlarge(T offset)
 				{
 				for (size_t i = 0; i < N; i++)
 					{
@@ -323,7 +323,7 @@ namespace mtools
 			*
 			* @param	offset	The offset. positive to enlarge and negative to reduce the margin.
 			**/
-			Box getEnlarge(int64 offset) const
+			Box getEnlarge(T offset) const
 				{
 				Box B(*this);
 				for (size_t i = 0; i < N; i++)
