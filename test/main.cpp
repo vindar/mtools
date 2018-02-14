@@ -112,10 +112,10 @@ class PlotFigures
 class PlotTestFig : public internals_graphics::Plotter2DObj, protected internals_graphics::Drawable2DInterface
 {
 
-	const int N = 1000000; 
+	const int N = 100000; 
 	const double LX = 100; 
 	const double LY = 100; 
-	const double R = 10;
+	const double R = 50;
 
 public:
 
@@ -175,7 +175,7 @@ protected:
 
 					im.canvas_draw_ellipse_in_box(_range, bo.boundingbox, color);
 
-					if (count++ > 100000) throw "";
+					if (count++ > 10000) throw "";
 					return;
 					});
 			}
@@ -1137,6 +1137,8 @@ int main(int argc, char *argv[])
 	Plotter2D plotter;              // Create a plotter object
 	plotter[PTF];	                // Add the image to the list of objects to draw.  	
 	plotter.autorangeXY();          // Set the plotter range to fit the image.
+
+	plotter.range().setRange(zoomIn(fBox2(66.201, 66.217, 53.530, 53.545)));
 	plotter.plot();                 // start interactive display.		
 
 

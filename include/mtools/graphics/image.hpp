@@ -2699,7 +2699,7 @@ namespace mtools
 					return;
 				}
 				// not included
-				if (B.area() * 16 > circleBox.area())
+				if ((circleBox.ly() < 16 * B.ly()) && (B.area() * 8 > circleBox.area()))
 				{ // still faster to use draw everything using the first method while checking the range
 					if (aa)
 					{
@@ -2756,7 +2756,7 @@ namespace mtools
 					return;
 					}
 				// not included
-				if (B.area() * 8 > circleBox.area())
+				if ((circleBox.ly() < 8 * B.ly()) && (B.area() * 4 > circleBox.area()))
 					{ // still faster to use draw everything using the first method while checking the range
 					if (aa)
 						{
@@ -3002,7 +3002,7 @@ namespace mtools
 					return;
 				}
 				// not included
-				if (B.area() * 16 > ellipseBox.area())
+				if ((ellipseBox.ly() < 16 * B.ly()) && (ellipseBox.lx() < 16*B.lx()) && (B.area() * 8 > ellipseBox.area()))
 				{ // still faster to use draw everything using the first method while checking the range
 					if (aa)
 					{
@@ -3068,7 +3068,7 @@ namespace mtools
 						return;
 					}
 					// not included
-					if (B.area() * 4 > ellipseBox.area())
+					if ((ellipseBox.ly() < 8 * B.ly()) && (ellipseBox.lx() < 8 * B.lx()) && (B.area() * 4 > ellipseBox.area()))
 					{ // still faster to use draw everything using the first method while checking the range
 						if (blend) _draw_ellipse_in_rect<true, true, true, true>(ellipseBox.min[0], ellipseBox.min[1], ellipseBox.max[0], ellipseBox.max[1], color, fillcolor);
 						else _draw_ellipse_in_rect<false, true, true, true>(ellipseBox.min[0], ellipseBox.min[1], ellipseBox.max[0], ellipseBox.max[1], color, fillcolor);
@@ -8794,7 +8794,7 @@ namespace mtools
 						{
 							const double u = ey2 * dx2;
 							const double uu = ey2 * u;
-							double d = (u + vminusexy2) * fast_invsqrt((float)(uu + vv)); // d = twice the distance of the point to the ideal ellipse
+							double d = (u + vminusexy2) /sqrt(uu + vv); // d = twice the distance of the point to the ideal ellipse
 							double dd =  std::min<double>(2.0, std::abs(d));
 							int32 uc = (int32)(128 * dd);
 							_updatePixel<blend, false, true, false>(xmin, y, color, 256 - uc, 0);
@@ -8824,7 +8824,7 @@ namespace mtools
 						{
 							const double u = ey2 * dx2;
 							const double uu = ey2 * u;
-							double d = (u + vminusexy2) * fast_invsqrt((float)(uu + vv)); // d = twice the distance of the point to the ideal ellipse
+							double d = (u + vminusexy2) /sqrt(uu + vv); // d = twice the distance of the point to the ideal ellipse
 							double dd = std::min<double>(2.0, std::abs(d));
 							int32 uc = (int32)(128 * dd);
 							_updatePixel<blend, false, true, false>(xmax, y, color, 256 - uc, 0);
@@ -8949,7 +8949,7 @@ namespace mtools
 								{
 								const double u = Aey2 * dx2;
 								const double uu = Aey2 * u;
-								double d = (u + vminusexy2) * fast_invsqrt((float)(uu + vv)); // d = twice the distance of the point to the ideal ellipse
+								double d = (u + vminusexy2)/sqrt(uu + vv); // d = twice the distance of the point to the ideal ellipse
 								if (d < 0) d = 0;
 								if (d < 2) { _updatePixel<blend, false, true, false>(Axmin, y, color, 256 - (int32)(128 * d), 0); }
 								}
@@ -8978,7 +8978,7 @@ namespace mtools
 								{
 								const double u = Aey2 * dx2;
 								const double uu = Aey2 * u;
-								double d = (u + vminusexy2) * fast_invsqrt((float)(uu + vv)); // d = twice the distance of the point to the ideal ellipse
+								double d = (u + vminusexy2)/ sqrt(uu + vv); // d = twice the distance of the point to the ideal ellipse
 								if (d < 0) d = 0;
 								if (d < 2) { _updatePixel<blend, false, true, false>(Axmax, y, color, 256 - (int32)(128 * d), 0); }
 								}
@@ -9038,7 +9038,7 @@ namespace mtools
 								{
 								const double u = aey2 * dx2;
 								const double uu = aey2 * u;
-								double d = -((u + vminusexy2) * fast_invsqrt((float)(uu + vv))); // d = twice the distance of the point to the ideal ellipse
+								double d = -((u + vminusexy2) / sqrt(uu + vv)); // d = twice the distance of the point to the ideal ellipse
 								d = std::min<double>(2.0, std::max<double>(0.0, d));
 								fmin = std::min<int64>(axmin, fmin);
 								mind = axmin;
@@ -9071,7 +9071,7 @@ namespace mtools
 								{
 								const double u = aey2 * dx2;
 								const double uu = aey2 * u;
-								double d = -((u + vminusexy2) * fast_invsqrt((float)(uu + vv))); // d = twice the distance of the point to the ideal ellipse
+								double d = -((u + vminusexy2) /sqrt(uu + vv)); // d = twice the distance of the point to the ideal ellipse
 								d = std::min<double>(2.0, std::max<double>(0.0, d));
 								fmax = std::max<int64>(axmax, fmax);
 								maxd = axmax;
