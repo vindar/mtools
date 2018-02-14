@@ -866,35 +866,35 @@ namespace mtools
 
 
 	/**
-	* Map the x value of a point when the source box mapped to the destination box by an affine transformation.
+	* Map a distance on the x-axis to the distance after the affine transformation that maps src_box to dst_box.
 	*
-	* @param	src_x	initial value along the x axis.
+	* @param	dx	initial distance along the x axis.
 	* @param	src_box Source box.
 	* @param	dst_box Destination box.
 	*
-	* @return	new value on the x axis after applying the affine transformation.
+	* @return	new distance along the x axis after applying the affine transformation.
 	*/
-	MTOOLS_FORCEINLINE double boxTransform_x(double src_x, const fBox2 & src_box, const fBox2 & dst_box)
+	MTOOLS_FORCEINLINE double boxTransform_dx(double dx, const fBox2 & src_box, const fBox2 & dst_box)
 		{
 		MTOOLS_ASSERT((dst_box.max[0] - dst_box.min[0]) > 0);
 		MTOOLS_ASSERT((src_box.max[0] - src_box.min[0]) > 0);
-		return dst_box.min[0] + ((dst_box.max[0] - dst_box.min[0]) / (src_box.max[0] - src_box.min[0]))*(src_x - src_box.min[0]);
+		return ((dst_box.max[0] - dst_box.min[0]) / (src_box.max[0] - src_box.min[0]))*dx;
 		}
 
 	/**
-	* Map the y value of a point when the source box mapped to the destination box by an affine transformation.
+	* Map a distance on the y-axis to the distance after the affine transformation that maps src_box to dst_box.
 	*
-	* @param	src_y	initial value along the y axis.
+	* @param	dy	initial distance along the y axis.
 	* @param	src_box Source box.
 	* @param	dst_box Destination box.
 	*
-	* @return	new value on the y axis after applying the affine transformation.
+	* @return	new distance along the y axis after applying the affine transformation.
 	*/
-	MTOOLS_FORCEINLINE double boxTransform_y(double src_y, const fBox2 & src_box, const fBox2 & dst_box)
+	MTOOLS_FORCEINLINE double boxTransform_dy(double dy, const fBox2 & src_box, const fBox2 & dst_box)
 		{
 		MTOOLS_ASSERT((dst_box.max[1] - dst_box.min[1]) > 0);
 		MTOOLS_ASSERT((src_box.max[1] - src_box.min[1]) > 0);
-		return dst_box.min[1] + ((dst_box.max[1] - dst_box.min[1]) / (src_box.max[1] - src_box.min[1]))*(src_y - src_box.min[1]);
+		return ((dst_box.max[1] - dst_box.min[1]) / (src_box.max[1] - src_box.min[1]))*dy;
 		}
 
 
@@ -909,7 +909,12 @@ namespace mtools
 	*/
 	MTOOLS_FORCEINLINE fVec2 boxTransform(const fVec2 & src_pos, const fBox2 & src_box, const fBox2 & dst_box)
 		{
-		return fVec2(boxTransform_x(src_pos.X(), src_box, dst_box), boxTransform_y(src_pos.Y(), src_box, dst_box));
+		MTOOLS_ASSERT((dst_box.max[0] - dst_box.min[0]) > 0);
+		MTOOLS_ASSERT((src_box.max[0] - src_box.min[0]) > 0);
+		MTOOLS_ASSERT((dst_box.max[1] - dst_box.min[1]) > 0);
+		MTOOLS_ASSERT((src_box.max[1] - src_box.min[1]) > 0);
+		return fVec2 ( dst_box.min[0] + ((dst_box.max[0] - dst_box.min[0]) / (src_box.max[0] - src_box.min[0]))*(src_pos.X() - src_box.min[0]),
+			           dst_box.min[1] + ((dst_box.max[1] - dst_box.min[1]) / (src_box.max[1] - src_box.min[1]))*(src_pos.Y() - src_box.min[1]) );
 		}
 
 	/**

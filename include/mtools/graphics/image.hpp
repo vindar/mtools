@@ -2978,7 +2978,7 @@ namespace mtools
 			* @param	aa    (Optional) true to use antialiasing.
 			* @param	blend (Optional) true to use blending.
 			*/
-			void draw_ellipse_in_box(iBox2 ellipseBox, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+			void draw_ellipse_in_box(const iBox2 & ellipseBox, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
 			{
 				if ((isEmpty()) || (ellipseBox.isEmpty())) return;
 				iBox2 imBox = imageBox();
@@ -3040,7 +3040,7 @@ namespace mtools
 			* @param	aa		  (Optional) true to use antialiasing.
 			* @param	blend	  (Optional) true to use blending.
 			*/
-			void draw_filled_ellipse_in_box(iBox2 ellipseBox, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+			void draw_filled_ellipse_in_box(const iBox2 & ellipseBox, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
 			{
 				if ((isEmpty()) || (ellipseBox.isEmpty())) return;
 				const int64 llx = ellipseBox.max[0] - ellipseBox.min[0];
@@ -3098,7 +3098,7 @@ namespace mtools
 			* @param	blend (Optional) true to use blending.
 			* @param	grid_align (Optional) true to align to nearest integer value (faster drawing).
 			*/
-			void draw_ellipse_in_box(fBox2 ellipseBox, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, bool grid_align = true)
+			void draw_ellipse_in_box(const fBox2 & ellipseBox, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, bool grid_align = true)
 			{
 				if (isEmpty() || (ellipseBox.isEmpty())) return;
 				if ((grid_align) || (isIntegerValued(ellipseBox)))
@@ -3135,7 +3135,7 @@ namespace mtools
 			* @param	blend	  (Optional) true to use blending.
 			* @param	grid_align (Optional) true to align to nearest integer value (faster drawing).
 			*/
-			void draw_filled_ellipse_in_box(fBox2 ellipseBox, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, bool grid_align = true)
+			void draw_filled_ellipse_in_box(const fBox2 & ellipseBox, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, bool grid_align = true)
 			{
 				if (isEmpty() || (ellipseBox.isEmpty())) return;
 				if ((grid_align) || (isIntegerValued(ellipseBox)))
@@ -3238,7 +3238,7 @@ namespace mtools
 			* @param	blend	    (Optional) true to use blending.
 			* @param	grid_align  (Optional) true to align to nearest integer value (faster drawing).
 			*/
-			inline void draw_thick_ellipse_in_box(fBox2 B, double thickness_x, double thickness_y, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, bool grid_align = true)
+			inline void draw_thick_ellipse_in_box(const fBox2 & B, double thickness_x, double thickness_y, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, bool grid_align = true)
 			{
 				fVec2 center((B.max[0] + B.min[0]) / 2, (B.max[1] + B.min[1]) / 2);
 				double rx = (B.max[0] - B.min[0]) / 2;
@@ -3261,7 +3261,7 @@ namespace mtools
 			* @param	blend	    (Optional) true to use blending.
 			* @param	grid_align  (Optional) true to align to nearest integer value (faster drawing).
 			*/
-			inline void draw_thick_filled_ellipse_in_box(fBox2 B, double thickness_x, double thickness_y, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, bool grid_align = true)
+			inline void draw_thick_filled_ellipse_in_box(const fBox2 & B, double thickness_x, double thickness_y, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, bool grid_align = true)
 			{
 				fVec2 center((B.max[0] + B.min[0]) / 2, (B.max[1] + B.min[1]) / 2);
 				double rx = (B.max[0] - B.min[0]) / 2;
@@ -4637,8 +4637,8 @@ namespace mtools
 				const double EPS = 0.1;
 				if (isEmpty()) return;
 				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
-				double rx = boxTransform_x(radius, R, imBox);
-				double ry = boxTransform_y(radius, R, imBox);
+				double rx = boxTransform_dx(radius, R, imBox);
+				double ry = boxTransform_dy(radius, R, imBox);
 				if (std::abs<double>(rx - ry) < EPS) draw_circle(boxTransform(center, R, imBox), rx, color, aa, blend);
 				else draw_ellipse(boxTransform(center, R, imBox), rx, ry, color, aa, blend);
 			}
@@ -4660,8 +4660,8 @@ namespace mtools
 				const double EPS = 0.1;
 				if (isEmpty()) return;
 				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
-				double rx = boxTransform_x(radius, R, imBox);
-				double ry = boxTransform_y(radius, R, imBox);
+				const double rx = boxTransform_dx(radius, R, imBox);
+				const double ry = boxTransform_dy(radius, R, imBox);
 				if (std::abs<double>(rx - ry) < EPS) draw_filled_circle(boxTransform(center, R, imBox), rx, color, fillcolor, aa, blend);
 				else draw_filled_ellipse(boxTransform(center, R, imBox), rx, ry, color, fillcolor, aa, blend);
 			}
@@ -4684,16 +4684,16 @@ namespace mtools
 				const double EPS = 0.1;
 				if (isEmpty()) return;
 				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
-				double rx = boxTransform_x(radius, R, imBox);
-				double ry = boxTransform_y(radius, R, imBox);
+				const double rx = boxTransform_dx(radius, R, imBox);
+				const double ry = boxTransform_dy(radius, R, imBox);
 				if (std::abs<double>(rx - ry) < EPS)
 				{
-					if (relativethickness) draw_thick_circle(boxTransform(center, R, imBox), rx, boxTransform_x(thickness, R, imBox), color, aa, blend);
+					if (relativethickness) draw_thick_circle(boxTransform(center, R, imBox), rx, boxTransform_dx(thickness, R, imBox), color, aa, blend);
 					else draw_thick_circle(boxTransform(center, R, imBox), rx, thickness, color, aa, blend);
 				}
 				else
 				{
-					if (relativethickness) draw_thick_ellipse(boxTransform(center, R, imBox), rx, ry, boxTransform_x(thickness, R, imBox), boxTransform_y(thickness, R, imBox), color, aa, blend);
+					if (relativethickness) draw_thick_ellipse(boxTransform(center, R, imBox), rx, ry, boxTransform_dx(thickness, R, imBox), boxTransform_dy(thickness, R, imBox), color, aa, blend);
 					else draw_thick_ellipse(boxTransform(center, R, imBox), rx, ry, thickness, thickness, color, aa, blend);
 				}
 			}
@@ -4718,16 +4718,16 @@ namespace mtools
 				const double EPS = 0.1;
 				if (isEmpty()) return;
 				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
-				double rx = boxTransform_x(radius, R, imBox);
-				double ry = boxTransform_y(radius, R, imBox);
+				const double rx = boxTransform_dx(radius, R, imBox);
+				const double ry = boxTransform_dy(radius, R, imBox);
 				if (std::abs<double>(rx - ry) < EPS)
 				{
-					if (relativethickness) draw_thick_filled_circle(boxTransform(center, R, imBox), rx, boxTransform_x(thickness, R, imBox), color, fillcolor, aa, blend);
+					if (relativethickness) draw_thick_filled_circle(boxTransform(center, R, imBox), rx, boxTransform_dx(thickness, R, imBox), color, fillcolor, aa, blend);
 					else draw_thick_filled_circle(boxTransform(center, R, imBox), rx, thickness, color, fillcolor, aa, blend);
 				}
 				else
 				{
-					if (relativethickness) draw_thick_filled_ellipse(boxTransform(center, R, imBox), rx, ry, boxTransform_x(thickness, R, imBox), boxTransform_y(thickness, R, imBox), color, fillcolor, aa, blend);
+					if (relativethickness) draw_thick_filled_ellipse(boxTransform(center, R, imBox), rx, ry, boxTransform_dx(thickness, R, imBox), boxTransform_dy(thickness, R, imBox), color, fillcolor, aa, blend);
 					else draw_thick_filled_ellipse(boxTransform(center, R, imBox), rx, ry, thickness, thickness, color, fillcolor, aa, blend);
 				}
 			}
@@ -4749,7 +4749,7 @@ namespace mtools
 			{
 				if (isEmpty()) return;
 				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
-				draw_ellipse(boxTransform(center, R, imBox), boxTransform_x(rx, R, imBox), boxTransform_y(ry, R, imBox), color, aa, blend);
+				draw_ellipse(boxTransform(center, R, imBox), boxTransform_dx(rx, R, imBox), boxTransform_dy(ry, R, imBox), color, aa, blend);
 			}
 
 
@@ -4769,7 +4769,7 @@ namespace mtools
 			{
 				if (isEmpty()) return;
 				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
-				draw_filled_ellipse(boxTransform(center, R, imBox), boxTransform_x(rx, R, imBox), boxTransform_y(ry, R, imBox), color, fillcolor, aa, blend);
+				draw_filled_ellipse(boxTransform(center, R, imBox), boxTransform_dx(rx, R, imBox), boxTransform_dy(ry, R, imBox), color, fillcolor, aa, blend);
 			}
 
 
@@ -4791,9 +4791,9 @@ namespace mtools
 			{
 				if (isEmpty()) return;
 				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
-				const double frx = boxTransform_x(rx, R, imBox);
-				const double fry = boxTransform_y(ry, R, imBox);
-				if (relativethickness) draw_thick_ellipse(boxTransform(center, R, imBox), frx, fry, boxTransform_x(thickness_x, R, imBox), boxTransform_y(thickness_y, R, imBox), color, aa, blend);
+				const double frx = boxTransform_dx(rx, R, imBox);
+				const double fry = boxTransform_dy(ry, R, imBox);
+				if (relativethickness) draw_thick_ellipse(boxTransform(center, R, imBox), frx, fry, boxTransform_dx(thickness_x, R, imBox), boxTransform_dy(thickness_y, R, imBox), color, aa, blend);
 				else draw_thick_ellipse(boxTransform(center, R, imBox), frx, fry, thickness_x, thickness_y, color, aa, blend);
 			}
 
@@ -4817,9 +4817,9 @@ namespace mtools
 			{
 				if (isEmpty()) return;
 				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
-				const double frx = boxTransform_x(rx, R, imBox);
-				const double fry = boxTransform_y(ry, R, imBox);
-				if (relativethickness) draw_thick_filled_ellipse(boxTransform(center, R, imBox), frx, fry, boxTransform_x(thickness_x, R, imBox), boxTransform_y(thickness_y, R, imBox), color, fillcolor, aa, blend);
+				const double frx = boxTransform_dx(rx, R, imBox);
+				const double fry = boxTransform_dy(ry, R, imBox);
+				if (relativethickness) draw_thick_filled_ellipse(boxTransform(center, R, imBox), frx, fry, boxTransform_dx(thickness_x, R, imBox), boxTransform_dy(thickness_y, R, imBox), color, fillcolor, aa, blend);
 				else draw_thick_filled_ellipse(boxTransform(center, R, imBox), frx, fry, thickness_x, thickness_y, color, fillcolor, aa, blend);
 			}
 
@@ -4877,7 +4877,7 @@ namespace mtools
 				if (isEmpty()) return;
 				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
 				const fBox2 B = boxTransform(ellipseBox, R, imBox);
-				if (relativethickness) draw_thick_ellipse_in_box(B, boxTransform_x(thickness_x, R, imBox), boxTransform_y(thickness_y, R, imBox), color, aa, blend);
+				if (relativethickness) draw_thick_ellipse_in_box(B, boxTransform_dx(thickness_x, R, imBox), boxTransform_dy(thickness_y, R, imBox), color, aa, blend);
 				else draw_thick_ellipse_in_box(B, thickness_x, thickness_y, color, aa, blend);
 			}
 
@@ -4901,7 +4901,7 @@ namespace mtools
 				if (isEmpty()) return;
 				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
 				const fBox2 B = boxTransform(ellipseBox, R, imBox);
-				if (relativethickness) draw_thick_filled_ellipse_in_box(B, boxTransform_x(thickness_x, R, imBox), boxTransform_y(thickness_y, R, imBox), color, fillcolor, aa, blend);
+				if (relativethickness) draw_thick_filled_ellipse_in_box(B, boxTransform_dx(thickness_x, R, imBox), boxTransform_dy(thickness_y, R, imBox), color, fillcolor, aa, blend);
 				else draw_thick_filled_ellipse_in_box(B, thickness_x, thickness_y, color, fillcolor, aa, blend);
 			}
 

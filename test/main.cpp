@@ -10,6 +10,112 @@ using namespace mtools;
 
 
 
+class PlotTestFig : public internals_graphics::Plotter2DObj, protected internals_graphics::Drawable2DInterface
+{
+
+public:
+
+	PlotTestFig() : internals_graphics::Plotter2DObj("plotTestfig")
+	{
+	}
+
+
+	PlotTestFig(PlotTestFig && o) : internals_graphics::Plotter2DObj(std::move(o))
+	{
+	}
+
+
+	virtual ~PlotTestFig()
+	{
+	detach();
+	}
+
+
+
+protected:
+
+
+	/**
+	* Override of the setParam method from the Drawable2DObject interface
+	**/
+	virtual void setParam(mtools::fBox2 range, mtools::iVec2 imageSize)
+		{
+		_range = range;
+		_imageSize = imageSize;
+		}
+
+
+	/**
+	* Override of the drawOnto() method from the Drawable2DObject interface
+	**/
+	virtual int drawOnto(Image & im, float opacity = 1.0)
+		{
+		RGBc color = RGBc::c_Red.getMultOpacity(0.5);
+		RGBc fillcolor = RGBc::c_Blue.getMultOpacity(0.5);
+
+		fVec2 center{ 20, 10};
+		double rad = 10; 
+
+		im.canvas_draw_circle(_range, center, rad,color);
+
+		return 100; 
+		}
+
+
+	/**
+	* Override of the removed method from the Plotter2DObj base class
+	**/
+	virtual void removed(Fl_Group * optionWin)
+		{
+		return;
+		}
+
+
+	/**
+	* Override of the inserted method from the Plotter2DObj base class
+	**/
+	virtual internals_graphics::Drawable2DInterface * inserted(Fl_Group * & optionWin, int reqWidth)
+		{
+		return this;
+		}
+
+
+private:
+
+
+	fBox2 _range;           // the range we should use to draw the axes
+	iVec2 _imageSize;       // the requested size of the image. 
+};
+
+
+
+inline PlotTestFig makePlotTestFig()
+{
+	return PlotTestFig();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /*
 
 drawing parameters
@@ -879,9 +985,13 @@ int main(int argc, char *argv[])
 
 	*/
 	cout << "zzzz"; 
-	auto PA = makePlot2DImage(im, 1, "Image A");   // Encapsulate the image inside a 'plottable' object.	
+
+	//auto PA = makePlot2DImage(im, 1, "Image A");   // Encapsulate the image inside a 'plottable' object.	
+
+	auto PTF = makePlotTestFig(); 
+
 	Plotter2D plotter;              // Create a plotter object
-	plotter[PA];	                // Add the image to the list of objects to draw.  	
+	plotter[PTF];	                // Add the image to the list of objects to draw.  	
 	plotter.autorangeXY();          // Set the plotter range to fit the image.
 	plotter.plot();                 // start interactive display.		
 
