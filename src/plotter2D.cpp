@@ -890,20 +890,27 @@ namespace mtools
         void Plotter2DWindow::updateView(bool withreset)
             {
 
-        #define PLOTTER2D_NBRETRY_NOWAIT 100
-		#define PLOTTER2D_NBRETRY_WAIT   15
-		#define PLOTTER2D_WAITIME 1
+			//#define PLOTTER2D_NBRETRY_NOWAIT 100
+			#define PLOTTER2D_NBRETRY_WAIT   20
+			#define PLOTTER2D_WAITIME 1
+			#define PLOTTER2D_INITIAL_WAITIME 15
+
+			std::this_thread::sleep_for(std::chrono::milliseconds(PLOTTER2D_INITIAL_WAITIME));	// always wait a little to give worker thread time to work. 
 
             int maxretry = (withreset ? PLOTTER2D_NBRETRY_WAIT : 0);
             if (withreset) _PW->discardImage(); else { _mainImage->checkerboard(); }  // do it now while worker thread continu
             if (isSuspendedInserted()) {maxretry /= 5;} // try less if there is a suspended object; 
 			int retry = 0;
 			_mainImageQuality = quality(); // query the current quality
+
+			/*
 			while((maxretry>0)&&(_mainImageQuality == 0) && (retry < PLOTTER2D_NBRETRY_NOWAIT))
 				{ // quality is zero, we keep asking for a while
 				retry++;
 				_mainImageQuality = quality();
 				}
+			*/
+			
 			retry = 0;
 			while ((_mainImageQuality == 0) && (retry < maxretry))
 				{ // quality is zero, we wait a little between retry
@@ -935,10 +942,11 @@ namespace mtools
                 // no, still nothing, we draw whatever we can from the previously displayed image  
                 _PW->displayMovedImage(RGBc::c_Gray);
 
-			#undef PLOTTER2D_NBRETRY_NOWAIT
+			//#undef PLOTTER2D_NBRETRY_NOWAIT
 			#undef PLOTTER2D_NBRETRY_WAIT
 			#undef PLOTTER2D_WAITIME
-            }
+			#undef PLOTTER2D_INITIAL_WAITIME 20
+			}
 
 
         /* timer used to redraw the view when the quality changes. This timer is always on : created a construction and stoped at destruction time
