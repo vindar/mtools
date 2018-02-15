@@ -167,7 +167,7 @@ namespace mtools
              * !!! This method is fast. It must be called regularly inside work() to keep the thread
              * responsive !!!
              **/
-            inline void check() { if (((int)_msg) == MSG_NONE) { return; } _processInside(); }
+            MTOOLS_FORCEINLINE void check() { if (((int)_msg) == MSG_NONE) { return; } _processInside(); }
 
 
             /**
