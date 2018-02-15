@@ -226,50 +226,82 @@ namespace mtools
 		 * Iterate over all objects whose bounding box intersect 'box'. 
 		 * the function 'fun' must be callable in the form 'fun(boundedObject)'.
 		 */
-		template<typename FUNCTION> size_t iterate_intersect(BBox box, FUNCTION fun) const
+		template<typename FUNCTION, size_t NN = N> size_t iterate_intersect(BBox box, FUNCTION fun) const
 			{
-			MTOOLS_INSURE(!(box.isEmpty())); // box should not be empty.
-			std::vector<_TreeNode* > stack1; 
-			std::vector<_TreeNode* > stack2;
-			std::vector<_TreeNode* > * pcurrentStack = &stack1;
-			std::vector<_TreeNode* > * pnextStack = &stack2;
-			if (intersectionRect(_rootNode->_bbox, box).isEmpty()) return 0;
-			pcurrentStack->push_back(_rootNode);
+			if ((box.isEmpty())||(intersectionRect(_rootNode->_bbox, box).isEmpty())) return 0; // nothing to find. 
+			std::vector<std::tuple<_TreeNode*, _ListNode *, int64> > stack1;
+			std::vector<std::tuple<_TreeNode*, _ListNode *, int64> > stack2;
+			std::vector<std::tuple<_TreeNode*, _ListNode *, int64> > * pcurrentStack = &stack1;
+			std::vector<std::tuple<_TreeNode*, _ListNode *, int64> > * pnextStack = &stack2;
+			pcurrentStack->push_back({ _rootNode, _rootNode->_first_irreducible, -1});
 			size_t nb = 0;
-			while (1)
+			while(1)
 				{
 				const size_t currentsize = pcurrentStack->size();
-				if (currentsize == 0)
-					{
-					return nb;
-					}
+				if (currentsize == 0) { return nb; }	// done.
+				// iterate over all node for the first time
+				pnextStack->clear();
+				int64 u = 0;
 				for (size_t i = 0; i < currentsize; i++)
 					{
-					_TreeNode * node = pcurrentStack->operator[](i);					
-					_ListNode * LN = node->_first_irreducible;
-					while (LN != nullptr) 
-						{ 
-						if (!(intersectionRect(LN->_bobj.boundingbox, box).isEmpty())) { fun(LN->_bobj); nb++; }
-						LN = LN->_next; 
+					_TreeNode * node = std::get<0>(pcurrentStack->operator[](i));
+					// explore all reducible objects of the node.
+					_ListNode * LN = node->_first_reducible;
+					while (LN != nullptr)
+						{
+						if (!(intersectionRect(LN->_bobj.boundingbox, box).isEmpty()))
+							{ 
+							fun(LN->_bobj); nb++; 
+							}
+						LN = LN->_next;
 						}
-					LN = node->_first_reducible;
-					while (LN != nullptr) 
-						{ 
-						if (!(intersectionRect(LN->_bobj.boundingbox, box).isEmpty())) { fun(LN->_bobj); nb++; }
-						LN = LN->_next; 
-						}
+					// add all sub-nodes that will be explored at the next stage.
 					for (int j = 0; j < 15; j++)
 						{
-						if (node->_son[j] != nullptr) 
+						if (node->_son[j] != nullptr)
 							{
 							if (!(intersectionRect(node->_son[j]->_bbox, box).isEmpty()))
 								{
-								pnextStack->push_back(node->_son[j]);
+								u++;
+								pnextStack->push_back({ node->_son[j] , (node->_son[j])->_first_irreducible, u});
 								}
 							}
 						}
+					}					
+				if (u > 0) { std::get<2>(pnextStack->back()) = -1; }
+				// now we can explore all remaining irreducible objects
+				int64 fj = 0;	// first index
+				while (fj >= 0)
+					{ // iterate while there is node to explore
+					int64 lj = -1;  // last one
+					int64 pj = -1;	// previous one not finished. 
+					int64 j = fj;	// start node
+					fj = -1;
+					while (j >= 0)
+						{
+						_ListNode * LN = std::get<1>(pcurrentStack->operator[](j));
+						size_t cc = 0;						
+						while((LN != nullptr) && (cc < NN))
+							{ // do a bunch 
+							if (!(intersectionRect(LN->_bobj.boundingbox, box).isEmpty()))
+								{
+								fun(LN->_bobj); nb++; 
+								}
+							LN = LN->_next;
+							cc++;
+							}
+						if (LN != nullptr)
+							{ // not done with this node. 
+							std::get<1>(pcurrentStack->operator[](j)) = LN;						// save the new position
+							if (fj < 0) fj = j;													// if first node not finished, mark it.
+							if (pj >= 0) { std::get<2>(pcurrentStack->operator[](pj)) = j; }	// if their is a previous node not finished, link with it
+							pj = j;																// set as the new previous node.
+							lj = j;																// set as the new last node
+							}
+						j = std::get<2>(pcurrentStack->operator[](j));
+						}
+					if (lj >= 0) std::get<2>(pcurrentStack->operator[](lj)) = -1;
 					}
-				pcurrentStack->clear();
 				mtools::swap(pcurrentStack, pnextStack);
 				}
 			}
@@ -279,50 +311,82 @@ namespace mtools
 		* Iterate over all objects whose bounding box is contained in 'box'.
 		* the function 'fun' must be callable in the form 'fun(boundedObject)'.
 		*/
-		template<typename FUNCTION> size_t iterate_contained_in(const BBox & box, FUNCTION fun) const
+		template<typename FUNCTION, size_t NN = N> size_t iterate_contained_in(const BBox & box, FUNCTION fun) const
 			{
-			MTOOLS_INSURE(!(box.isEmpty())); // box should not be empty.
-			std::vector<_TreeNode* > stack1;
-			std::vector<_TreeNode* > stack2;
-			std::vector<_TreeNode* > * pcurrentStack = &stack1;
-			std::vector<_TreeNode* > * pnextStack = &stack2;
-			if (intersectionRect(_rootNode->_bbox, box).isEmpty()) return 0;
-			pcurrentStack->push_back(_rootNode);
+			if ((box.isEmpty())||(intersectionRect(_rootNode->_bbox, box).isEmpty())) return 0; // nothing to find. 
+			std::vector<std::tuple<_TreeNode*, _ListNode *, int64> > stack1;
+			std::vector<std::tuple<_TreeNode*, _ListNode *, int64> > stack2;
+			std::vector<std::tuple<_TreeNode*, _ListNode *, int64> > * pcurrentStack = &stack1;
+			std::vector<std::tuple<_TreeNode*, _ListNode *, int64> > * pnextStack = &stack2;
+			pcurrentStack->push_back({ _rootNode, _rootNode->_first_irreducible, -1});
 			size_t nb = 0;
-			while (1)
+			while(1)
 				{
 				const size_t currentsize = pcurrentStack->size();
-				if (currentsize == 0)
-					{
-					return nb;
-					}
+				if (currentsize == 0) { return nb; }	// done.
+				// iterate over all node for the first time
+				pnextStack->clear();
+				int64 u = 0;
 				for (size_t i = 0; i < currentsize; i++)
 					{
-					_TreeNode * node = pcurrentStack->operator[](i);					
-					_ListNode * LN = node->_first_irreducible;
-					while (LN != nullptr) 
-						{ 
-						if (box.contain(LN->_bobj.boundingbox)) { fun(LN->_bobj); nb++; }
-						LN = LN->_next; 
+					_TreeNode * node = std::get<0>(pcurrentStack->operator[](i));
+					// explore all reducible objects of the node.
+					_ListNode * LN = node->_first_reducible;
+					while (LN != nullptr)
+						{
+						if (box.contain(LN->_bobj.boundingbox)) 
+							{ 
+							fun(LN->_bobj); nb++; 
+							}
+						LN = LN->_next;
 						}
-					LN = node->_first_reducible;
-					while (LN != nullptr) 
-						{ 
-						if (box.contain(LN->_bobj.boundingbox)) { fun(LN->_bobj); nb++; }
-						LN = LN->_next; 
-						}
+					// add all sub-nodes that will be explored at the next stage.
 					for (int j = 0; j < 15; j++)
 						{
-						if (node->_son[j] != nullptr) 
+						if (node->_son[j] != nullptr)
 							{
 							if (!(intersectionRect(node->_son[j]->_bbox, box).isEmpty()))
 								{
-								pnextStack->push_back(node->_son[j]);
+								u++;
+								pnextStack->push_back({ node->_son[j] , (node->_son[j])->_first_irreducible, u});
 								}
 							}
 						}
+					}					
+				if (u > 0) { std::get<2>(pnextStack->back()) = -1; }
+				// now we can explore all remaining irreducible objects
+				int64 fj = 0;	// first index
+				while (fj >= 0)
+					{ // iterate while there is node to explore
+					int64 lj = -1;  // last one
+					int64 pj = -1;	// previous one not finished. 
+					int64 j = fj;	// start node
+					fj = -1;
+					while (j >= 0)
+						{
+						_ListNode * LN = std::get<1>(pcurrentStack->operator[](j));
+						size_t cc = 0;						
+						while((LN != nullptr) && (cc < NN))
+							{ // do a bunch 
+							if (box.contain(LN->_bobj.boundingbox)) 
+								{ 
+								fun(LN->_bobj); nb++; 
+								}
+							LN = LN->_next;
+							cc++;
+							}
+						if (LN != nullptr)
+							{ // not done with this node. 
+							std::get<1>(pcurrentStack->operator[](j)) = LN;						// save the new position
+							if (fj < 0) fj = j;													// if first node not finished, mark it.
+							if (pj >= 0) { std::get<2>(pcurrentStack->operator[](pj)) = j; }	// if their is a previous node not finished, link with it
+							pj = j;																// set as the new previous node.
+							lj = j;																// set as the new last node
+							}
+						j = std::get<2>(pcurrentStack->operator[](j));
+						}
+					if (lj >= 0) std::get<2>(pcurrentStack->operator[](lj)) = -1;
 					}
-				pcurrentStack->clear();
 				mtools::swap(pcurrentStack, pnextStack);
 				}
 			}
@@ -332,50 +396,82 @@ namespace mtools
 		* Iterate over all objects whose bounding box contain 'box'.
 		* the function 'fun' must be callable in the form 'fun(boundedObject)'.
 		*/
-		template<typename FUNCTION> size_t iterate_contain(const BBox & box, FUNCTION fun) const
+		template<typename FUNCTION, size_t NN = N> size_t iterate_contain(const BBox & box, FUNCTION fun) const
 			{
-			MTOOLS_INSURE(!(box.isEmpty())); // box should not be empty.
-			std::vector<_TreeNode* > stack1;
-			std::vector<_TreeNode* > stack2;
-			std::vector<_TreeNode* > * pcurrentStack = &stack1;
-			std::vector<_TreeNode* > * pnextStack = &stack2;
-			if (intersectionRect(_rootNode->_bbox, box).isEmpty()) return 0;
-			pcurrentStack->push_back(_rootNode);
+			if ((box.isEmpty())||(intersectionRect(_rootNode->_bbox, box).isEmpty())) return 0; // nothing to find. 
+			std::vector<std::tuple<_TreeNode*, _ListNode *, int64> > stack1;
+			std::vector<std::tuple<_TreeNode*, _ListNode *, int64> > stack2;
+			std::vector<std::tuple<_TreeNode*, _ListNode *, int64> > * pcurrentStack = &stack1;
+			std::vector<std::tuple<_TreeNode*, _ListNode *, int64> > * pnextStack = &stack2;
+			pcurrentStack->push_back({ _rootNode, _rootNode->_first_irreducible, -1});
 			size_t nb = 0;
-			while (1)
+			while(1)
 				{
 				const size_t currentsize = pcurrentStack->size();
-				if (currentsize == 0)
-					{
-					return nb;
-					}
+				if (currentsize == 0) { return nb; }	// done.
+				// iterate over all node for the first time
+				pnextStack->clear();
+				int64 u = 0;
 				for (size_t i = 0; i < currentsize; i++)
 					{
-					_TreeNode * node = pcurrentStack->operator[](i);					
-					_ListNode * LN = node->_first_irreducible;
-					while (LN != nullptr) 
-						{ 
-						if (LN->_bobj.boundingbox.contain(box)) { fun(LN->_bobj); nb++; }
-						LN = LN->_next; 
+					_TreeNode * node = std::get<0>(pcurrentStack->operator[](i));
+					// explore all reducible objects of the node.
+					_ListNode * LN = node->_first_reducible;
+					while (LN != nullptr)
+						{
+						if (LN->_bobj.boundingbox.contain(box))
+							{ 
+							fun(LN->_bobj); nb++; 
+							}
+						LN = LN->_next;
 						}
-					LN = node->_first_reducible;
-					while (LN != nullptr) 
-						{ 
-						if (LN->_bobj.boundingbox.contain(box)) { fun(LN->_bobj); nb++; }
-						LN = LN->_next; 
-						}
+					// add all sub-nodes that will be explored at the next stage.
 					for (int j = 0; j < 15; j++)
 						{
-						if (node->_son[j] != nullptr) 
+						if (node->_son[j] != nullptr)
 							{
 							if (node->_son[j]->_bbox.contain(box))
 								{
-								pnextStack->push_back(node->_son[j]);
+								u++;
+								pnextStack->push_back({ node->_son[j] , (node->_son[j])->_first_irreducible, u});
 								}
 							}
 						}
+					}					
+				if (u > 0) { std::get<2>(pnextStack->back()) = -1; }
+				// now we can explore all remaining irreducible objects
+				int64 fj = 0;	// first index
+				while (fj >= 0)
+					{ // iterate while there is node to explore
+					int64 lj = -1;  // last one
+					int64 pj = -1;	// previous one not finished. 
+					int64 j = fj;	// start node
+					fj = -1;
+					while (j >= 0)
+						{
+						_ListNode * LN = std::get<1>(pcurrentStack->operator[](j));
+						size_t cc = 0;						
+						while((LN != nullptr) && (cc < NN))
+							{ // do a bunch 
+							if (LN->_bobj.boundingbox.contain(box))
+								{
+								fun(LN->_bobj); nb++; 
+								}
+							LN = LN->_next;
+							cc++;
+							}
+						if (LN != nullptr)
+							{ // not done with this node. 
+							std::get<1>(pcurrentStack->operator[](j)) = LN;						// save the new position
+							if (fj < 0) fj = j;													// if first node not finished, mark it.
+							if (pj >= 0) { std::get<2>(pcurrentStack->operator[](pj)) = j; }	// if their is a previous node not finished, link with it
+							pj = j;																// set as the new previous node.
+							lj = j;																// set as the new last node
+							}
+						j = std::get<2>(pcurrentStack->operator[](j));
+						}
+					if (lj >= 0) std::get<2>(pcurrentStack->operator[](lj)) = -1;
 					}
-				pcurrentStack->clear();
 				mtools::swap(pcurrentStack, pnextStack);
 				}
 			}
@@ -512,7 +608,7 @@ namespace mtools
 
 			BBox		_bbox;				// the node bounding box
 			_ListNode *	_first_reducible;	// pointeur to the first reducible item
-			_ListNode *	_last_reducible;	// pointeur to the first reducible item
+			_ListNode *	_last_reducible;	// pointeur to the last reducible item
 			_ListNode * _first_irreducible;	// pointeur to the first irreducible item
 			size_t		_nb_reducible;		// number of reducible items
 			size_t		_nb_irreducible;	// number of irreducible items
