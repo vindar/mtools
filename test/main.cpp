@@ -108,6 +108,156 @@ class PlotFigures
 
 
 
+class Plot2DRaw : public internals_graphics::Plotter2DObj, protected internals_graphics::Drawable2DInterface
+{
+
+	typedef int(*p_drawOnto)(const fBox2 & R, Image & im, float opacity);
+
+public:
+
+
+	Plot2DRaw(p_drawOnto drawfun = nullptr, const std::string & name = "Plot2DRaw object") : internals_graphics::Plotter2DObj(name), _drawfun(drawfun), _range()
+		{
+		}
+
+
+	Plot2DRaw(Plot2DRaw && o) : internals_graphics::Plotter2DObj(std::move(o)) , _drawfun(o._drawfun)
+		{
+		}
+
+
+	virtual ~Plot2DRaw() 
+		{
+		detach(); 
+		}
+
+
+	virtual int draw(const fBox2 & R, Image & im, float opacity = 1.0)
+		{
+		MTOOLS_INSURE(_drawfun != nullptr);
+		_drawfun(R, im, opacity); 		// default draw method call the external draw function.
+		}
+
+
+protected:
+
+
+	/**
+	* Override of the setParam method from the Drawable2DObject interface
+	**/
+	virtual void setParam(mtools::fBox2 range, mtools::iVec2 imageSize)
+		{
+		_range = range;
+		}
+
+
+	/**
+	* Override of the drawOnto() method from the Drawable2DObject interface
+	**/
+	virtual int drawOnto(Image & im, float opacity = 1.0)
+		{
+		draw(_range, im, opacity);
+		}
+
+
+
+	/**
+	* Override of the removed method from the Plotter2DObj base class
+	**/
+	virtual void removed(Fl_Group * optionWin)
+		{
+		return;
+		}
+
+
+	/**
+	* Override of the inserted method from the Plotter2DObj base class
+	**/
+	virtual internals_graphics::Drawable2DInterface * inserted(Fl_Group * & optionWin, int reqWidth)
+		{
+		return this;
+		}
+
+
+private:
+
+	p_drawOnto _drawfun;
+	fBox2	   _range;
+
+};
+
+
+
+
+
+class PlotTestF : public Plot2DRaw
+{
+	const int N = 1000000;
+	const double LX = 100;
+	const double LY = 100;
+	const double R = 1;
+
+public:
+
+	PlotTestF() : Plot2DRaw() , gen(0)
+		{
+		for (int k = 0; k < N; k++)
+			{
+			fVec2 center(Unif(gen)*LX, Unif(gen)*LY);
+			double rad = Unif(gen)*Unif(gen)*R;
+			TF.insert(fBox2(center.X() - rad, center.X() + rad, center.Y() - rad, center.Y() + rad), rad);
+			}
+		}
+
+
+	virtual void draw(const fBox2 & R, Image & im, float opacity) 
+		{
+		RGBc color = RGBc::c_Red.getMultOpacity(0.5);
+		RGBc fillcolor = RGBc::c_Blue.getMultOpacity(0.1);
+
+		int count = 0;
+		Chronometer();
+
+		try
+			{
+			TF.iterate_intersect(zoomOut(R),
+				[&](TreeFigure<double, 2>::BoundedObject & bo) -> void
+				{
+
+				im.canvas_draw_thick_filled_ellipse_in_box(R, bo.boundingbox, bo.boundingbox.lx() / 10, bo.boundingbox.ly() / 10, true, color, fillcolor);
+				count++;
+				if (count > 10000) throw "";
+				return;
+				});
+			}
+		catch (...)
+			{
+			cout << "[interrupted]\n";
+			}
+		cout << "obj = " << count << " done in " << durationToString(Chronometer(), true) << "\n";
+
+		/*
+		for (int i = 0; i < N; i++)
+		{
+		//im.canvas_draw_thick_filled_circle(_range, cl[i].first, cl[i].second, 1, true, color, fillcolor);
+		im.canvas_draw_filled_circle(_range, cl[i].first, cl[i].second, fillcolor, fillcolor,true);
+		}
+		*/
+		return;
+		}
+
+
+
+private:
+
+	TreeFigure<double, 2> TF;
+	std::vector<std::pair<fVec2, double> >  cl;
+	MT2004_64 gen;
+
+};
+
+
+
 
 class PlotTestFig : public internals_graphics::Plotter2DObj, protected internals_graphics::Drawable2DInterface
 {
@@ -217,9 +367,6 @@ protected:
 private:
 
 	TreeFigure<double,2> TF;
-
-
-
 
 	std::vector<std::pair<fVec2, double> >  cl;
 
