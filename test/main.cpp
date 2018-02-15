@@ -105,15 +105,20 @@ class PlotFigures
 };
 
 
+#define HH 5
 
 
 
 class PlotTestF : public Plot2DBasic
 {
-	const int N = 1000000;
+	static const int N = 10000000;
+
 	const double LX = 100;
 	const double LY = 100;
 	const double R = 1;
+
+
+	std::vector<TreeFigure<int, HH>::BoundedObject *> v;
 
 public:
 
@@ -123,47 +128,48 @@ public:
 		for (int k = 0; k < N; k++)
 			{
 			fVec2 center(Unif(gen)*LX, Unif(gen)*LY);
-			double rad = Unif(gen)*Unif(gen)*R;
-			TF.insert(fBox2(center.X() - rad, center.X() + rad, center.Y() - rad, center.Y() + rad), rad);
+			double rad = Unif(gen)*Unif(gen)*Unif(gen)*Unif(gen)*R;
+			TF.insert(fBox2(center.X() - rad, center.X() + rad, center.Y() - rad, center.Y() + rad), k);
 			}
+		v.resize(N);
 		}
 
 
 
 
 	virtual void draw(const fBox2 & R, Image & im, float opacity) override
-		{
+	{
 		RGBc color = RGBc::c_Red.getMultOpacity(0.5);
 		RGBc fillcolor = RGBc::c_Blue.getMultOpacity(0.1);
 
-		int count = 0;
+
+
 		Chronometer();
+		size_t count = 0;
 
 		try
-			{
-			TF.iterate_intersect(zoomOut(R),
-				[&](TreeFigure<double, 2>::BoundedObject & bo) -> void
-				{
-
-				im.canvas_draw_thick_filled_ellipse_in_box(R, bo.boundingbox, bo.boundingbox.lx() / 10, bo.boundingbox.ly() / 10, true, color, fillcolor);
-				count++;
-				if (count > 10000) throw "";
-				return;
-				});
-			}
-		catch (...)
-			{
-			cout << "[interrupted]\n";
-			}
-		cout << "obj = " << count << " done in " << durationToString(Chronometer(), true) << "\n";
-
-		/*
-		for (int i = 0; i < N; i++)
 		{
-		//im.canvas_draw_thick_filled_circle(_range, cl[i].first, cl[i].second, 1, true, color, fillcolor);
-		im.canvas_draw_filled_circle(_range, cl[i].first, cl[i].second, fillcolor, fillcolor,true);
+			TF.iterate_intersect(
+				zoomOut(R),
+				[&](TreeFigure<int, HH>::BoundedObject & bo) -> void
+				{
+				v[count] = &bo;
+				count++;
+				if (count > 100000) throw "";
+				});
 		}
-		*/
+		catch (...) {}
+		cout << "listed in  " << durationToString(Chronometer(), true) << "\n";
+		cout << "nb = " << count << "\n";
+
+		Chronometer();
+		for (size_t i = 0; i < count; i++)
+			{
+			im.canvas_draw_ellipse_in_box(R, v[i]->boundingbox, color);		
+			}
+		cout << "drawn in  " << durationToString(Chronometer(), true) << "\n";
+
+	
 		return;
 		}
 
@@ -171,9 +177,9 @@ public:
 private:
 
 
-	TreeFigure<double, 2> TF;
+	TreeFigure<int, HH> TF;
 
-	std::vector<std::pair<fVec2, double> >  cl;
+	std::vector<std::pair<fVec2, int> >  cl;
 
 	MT2004_64 gen;
 
@@ -1081,7 +1087,7 @@ int main(int argc, char *argv[])
 	plotter[PTF];	                // Add the image to the list of objects to draw.  	
 	plotter.autorangeXY();          // Set the plotter range to fit the image.
 
-	plotter.range().setRange(zoomIn(fBox2(66.201, 66.217, 53.530, 53.545)));
+	//plotter.range().setRange(zoomIn(fBox2(66.201, 66.217, 53.530, 53.545)));
 	plotter.plot();                 // start interactive display.		
 
 
