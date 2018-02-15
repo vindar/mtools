@@ -4,6 +4,85 @@ using namespace mtools;
 
 
 
+// readpos = writepos means empty
+// writepos + 1 = readpos means full 
+
+template<typename T> class SingleProducerSingleConsumerQueue
+	{
+
+	public:
+
+	inline bool pop(T & obj)
+		{
+		if (_readpos == _writepos) return false; 
+		obj = _queue[_readpos];
+		_readpos = (_readpos + 1) % N;
+		return true;
+		}
+
+	bool push(const T & obj)
+		{
+		if (((_writepos + 1) % N) == _readpos) return false;
+		_queue[writepos] = obj;
+		writepos = ((_writepos + 1) % N);
+		}
+
+	private:
+
+
+	std::vector<T> _queue; 
+	
+	std::atomic<int64>		readpos;	// first position to read
+	std::atomic<int64>      writepos;	// number of item available in the queue
+
+	};
+
+
+
+class FigureDrawerWorker : public ThreadWorker	
+	{
+
+	public:
+
+		FigureDrawerWorker() : ThreadWorker()
+		{
+		}
+
+
+	protected: 
+
+		/**
+		* Work method. draws the figures
+		**/
+		virtual void work() override
+			{
+			while (1)
+				{
+//				while (queue.get())
+					{
+
+					nb_drawn++;
+					check();
+					}
+				}
+			}
+
+		/**
+		* Process incomming messages 
+		**/
+		virtual int message(int64 code)
+			{
+
+			}
+
+
+	private:
+
+		Image * im;							//< the image to draw on.
+		TT *	queue;						//< the queue containing the figures to draw
+		std::atomic<size_t> * queue_size;	//< size of the queue. 
+		std::atomic<size_t> nb_drawn;		//< number of figure drawn. 
+	};
 
 
 /** Interface class for figure objects. */
@@ -111,7 +190,7 @@ class PlotFigures
 
 class PlotTestF : public Plot2DBasic
 {
-	static const int N = 10000000;
+	static const int N = 1000000;
 
 	const double LX = 100;
 	const double LY = 100;
