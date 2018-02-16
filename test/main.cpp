@@ -4,36 +4,65 @@ using namespace mtools;
 
 
 
-// readpos = writepos means empty
-// writepos + 1 = readpos means full 
 
+/**
+ * Very simple thread-safe FIFO queue with circular buffer for
+ * a single producer thread and a single consumer thread.
+ **/
 template<typename T> class SingleProducerSingleConsumerQueue
 	{
 
 	public:
 
-	inline bool pop(T & obj)
+	/** Constructor. */
+	SingleProducerSingleConsumerQueue(size_t buffer_size) : N((int64)(buffer_size+1)), _queue(buffer_size + 1), _readpos(0), _writepos(0)
 		{
-		if (_readpos == _writepos) return false; 
-		obj = _queue[_readpos];
-		_readpos = (_readpos + 1) % N;
+		MTOOLS_INSURE(N > 1);
+		}
+
+
+	/**   
+	 * pop an element from the queue, return false if none available.  
+	 * Should only be called by the (unique) consumer thread. 
+	 **/
+	MTOOLS_FORCEINLINE inline bool pop(T & obj)
+		{
+		const int64 rp = _readpos;
+		if (rp == _writepos) return false; 
+		obj = _queue[rp];
+		_readpos = (rp + 1) % N;
 		return true;
 		}
 
-	bool push(const T & obj)
+
+	/**
+	* push an element in the queue, return false if the queue is full.
+	* Should only be called by the (unique) producer thread.
+	**/
+	MTOOLS_FORCEINLINE bool push(const T & obj)
 		{
-		if (((_writepos + 1) % N) == _readpos) return false;
-		_queue[writepos] = obj;
-		writepos = ((_writepos + 1) % N);
+		const int64 wp = _writepos;
+		const int64 nwp = (wp + 1) % N;
+		if (nwp == _readpos) return false;
+		_queue[wp] = obj;
+		writepos = nwp;
 		}
+
+
+	/** Return the number of elements in the queue */
+	MTOOLS_FORCEINLINE size_t size() const
+		{
+		const int64 l = _writepos - _readpos;
+		return (size_t)((l >= 0) ? l : (N + l));
+		}
+
 
 	private:
 
-
-	std::vector<T> _queue; 
-	
-	std::atomic<int64>		readpos;	// first position to read
-	std::atomic<int64>      writepos;	// number of item available in the queue
+		const int64				_N;			// buffer size
+		std::vector<T>			_queue;		// buffer
+		std::atomic<int64>		_readpos;	// position to read
+		std::atomic<int64>      _writepos;	// position to write
 
 	};
 
