@@ -5,66 +5,7 @@ using namespace mtools;
 
 
 
-/**
- * Very simple thread-safe FIFO queue with circular buffer for
- * a single producer thread and a single consumer thread.
- **/
-template<typename T> class SingleProducerSingleConsumerQueue
-	{
-
-	public:
-
-	/** Constructor. */
-	SingleProducerSingleConsumerQueue(size_t buffer_size) : N((int64)(buffer_size+1)), _queue(buffer_size + 1), _readpos(0), _writepos(0)
-		{
-		MTOOLS_INSURE(N > 1);
-		}
-
-
-	/**   
-	 * pop an element from the queue, return false if none available.  
-	 * Should only be called by the (unique) consumer thread. 
-	 **/
-	MTOOLS_FORCEINLINE inline bool pop(T & obj)
-		{
-		const int64 rp = _readpos;
-		if (rp == _writepos) return false; 
-		obj = _queue[rp];
-		_readpos = (rp + 1) % N;
-		return true;
-		}
-
-
-	/**
-	* push an element in the queue, return false if the queue is full.
-	* Should only be called by the (unique) producer thread.
-	**/
-	MTOOLS_FORCEINLINE bool push(const T & obj)
-		{
-		const int64 wp = _writepos;
-		const int64 nwp = (wp + 1) % N;
-		if (nwp == _readpos) return false;
-		_queue[wp] = obj;
-		writepos = nwp;
-		}
-
-
-	/** Return the number of elements in the queue */
-	MTOOLS_FORCEINLINE size_t size() const
-		{
-		const int64 l = _writepos - _readpos;
-		return (size_t)((l >= 0) ? l : (N + l));
-		}
-
-
-	private:
-
-		const int64				_N;			// buffer size
-		std::vector<T>			_queue;		// buffer
-		std::atomic<int64>		_readpos;	// position to read
-		std::atomic<int64>      _writepos;	// position to write
-
-	};
+#include "mtools/misc/internal/threadsafequeue.hpp"
 
 
 
@@ -73,7 +14,7 @@ class FigureDrawerWorker : public ThreadWorker
 
 	public:
 
-		FigureDrawerWorker() : ThreadWorker()
+		FigureDrawerWorker() : ThreadWorker(), _queue(QUEUE_SIZE)
 		{
 		}
 
@@ -87,12 +28,11 @@ class FigureDrawerWorker : public ThreadWorker
 			{
 			while (1)
 				{
-//				while (queue.get())
-					{
-
-					nb_drawn++;
-					check();
-					}
+				void * obj;
+				while (!_queue.pop(obj)) { check(); std::this_thread::yield(); }
+				//_drawobj(obj)
+				_nb_drawn++; 
+				check();
 				}
 			}
 
@@ -107,11 +47,14 @@ class FigureDrawerWorker : public ThreadWorker
 
 	private:
 
-		Image * im;							//< the image to draw on.
-		TT *	queue;						//< the queue containing the figures to draw
-		std::atomic<size_t> * queue_size;	//< size of the queue. 
-		std::atomic<size_t> nb_drawn;		//< number of figure drawn. 
+		static const size_t QUEUE_SIZE = 65535;
+
+
+		Image * _im;											// the image to draw onto
+		SingleProducerSingleConsumerQueue<void*> _queue;	// the queue containing the figures to draw
+		std::atomic<size_t> _nb_drawn;						//< number of figure drawn. 
 	};
+
 
 
 /** Interface class for figure objects. */
