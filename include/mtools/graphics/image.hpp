@@ -720,6 +720,7 @@ namespace mtools
 				{
 				if ((newlx <= 0) || (newly <= 0)) { empty(); return; }
 				if (padding <= 0) { padding = 0; }
+				if ((_lx == newlx) && (_ly == newly) && ((newlx + padding) == _stride)) return;
 				if (!shrinktofit)
 					{ // we try to keep the same buffer
 					int64 newstride = (newlx + padding);
