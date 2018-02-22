@@ -74,7 +74,8 @@ template<typename T> class SingleProducerSingleConsumerQueue
 		if (nwp == _readpos) return false;
 		_queue[wp] = obj;
 		std::atomic_thread_fence(std::memory_order::memory_order_acq_rel);
-		writepos = nwp;
+		_writepos = nwp;
+		return true;
 		}
 
 
@@ -83,6 +84,13 @@ template<typename T> class SingleProducerSingleConsumerQueue
 		{
 		const int64 l = _writepos - _readpos;
 		return (size_t)((l >= 0) ? l : (_N + l));
+		}
+
+
+	/** Clear the queue (this method is not threadsafe) */
+	MTOOLS_FORCEINLINE void clear()
+		{
+		_readpos.store(_writepos);
 		}
 
 
