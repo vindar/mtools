@@ -50,9 +50,20 @@ namespace mtools
     *
     * Two virtual methods must be overidden:
     *
-    * - work() : performs the thread's work()
+    * - work() : performs the thread's work(). Must call check() regularly to keep the threead responsive.
     * - message(int64 code) : process incomming messages and determine how the thread should behave.
     * 
+    * The thread has two status flags which are independent of each other. 
+    * 
+	* - enable/disabled. This flag can be toggled with the enabled() method. While disabled, the thread
+	*                    still processes incomming messages but does not performs any work even if its work
+	*                    status is set to active. When the thread is again enabled, if continues where it left
+	*                    when it was disabled. 
+	* 
+	* - work status: active/inactive. This flag can be toogled with the return value from the message() overriden  
+	*                                 virtual method. When, active, the thread performs the work() method. When inactive
+	*                                 it waits until being active again before continuing/starting the work method.  
+	*                                 Once work() is finished, this flag is set to inactive.
     */
     class ThreadWorker
         {

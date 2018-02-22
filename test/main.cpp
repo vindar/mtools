@@ -2,100 +2,137 @@
 #include "mtools/mtools.hpp"
 using namespace mtools;
 
-
-
-
 #include "mtools/misc/internal/threadsafequeue.hpp"
-
-
-
-class FigureDrawerWorker : public ThreadWorker	
-	{
-
-	public:
-
-		FigureDrawerWorker() : ThreadWorker(), _queue(QUEUE_SIZE)
-		{
-		}
-
-
-	protected: 
-
-		/**
-		* Work method. draws the figures
-		**/
-		virtual void work() override
-			{
-			while (1)
-				{
-				void * obj;
-				while (!_queue.pop(obj)) { check(); std::this_thread::yield(); }
-				//_drawobj(obj)
-				_nb_drawn++; 
-				check();
-				}
-			}
-
-		/**
-		* Process incomming messages 
-		**/
-		virtual int message(int64 code)
-			{
-
-			}
-
-
-	private:
-
-		static const size_t QUEUE_SIZE = 65535;
-
-
-		Image * _im;											// the image to draw onto
-		SingleProducerSingleConsumerQueue<void*> _queue;	// the queue containing the figures to draw
-		std::atomic<size_t> _nb_drawn;						//< number of figure drawn. 
-	};
 
 
 
 /** Interface class for figure objects. */
 class FigureInterface
-	{
+{
+
+public:
+
+
+	/** Virtual destructor */
+	virtual ~FigureInterface() {}
 
 	/**
-	 * Draws the figure onto an image with a given range.
-	 *
-	 * @param [in,out]	im		    the image to draw onto.
-	 * @param [in,out]	R		    the range.
-	 * @param 		  	highQuality (Optional) True when high quality drawing is requested and false
-	 * 								otherwise.
-	 */
-	virtual void draw(Image & im, fBox2 & R, bool highQuality = true) = delete;
-
-
-	/**
-	 * Return the object's bounding box. 
-	 *
-	 * @return	A fBox2.
-	 */
-	virtual fBox2 boundingBox() const = delete;
+	* Draws the figure onto an image with a given range.
+	*
+	* @param [in,out]	im		    the image to draw onto.
+	* @param [in,out]	R		    the range.
+	* @param 		  	highQuality (Optional) True when high quality drawing is requested and false
+	* 								otherwise.
+	*/
+	virtual void draw(Image & im, fBox2 & R, bool highQuality = true) = 0;
 
 
 	/**
-	 * Print info about the object into an std::string.
-	 */
-	virtual std::string toString(bool debug = false) const = delete;
+	* Return the object's bounding box.
+	*
+	* @return	A fBox2.
+	*/
+	virtual fBox2 boundingBox() const = 0;
+
 
 	/**
-	 * Serialize the object.
-	 */
-	virtual void serialize(OBaseArchive & ar) const = delete;
+	* Print info about the object into an std::string.
+	*/
+	virtual std::string toString(bool debug = false) const = 0;
 
 	/**
-	 * Deserialize this object.
-	 */
-	virtual void deserialize(IBaseArchive & ar) = delete;
+	* Serialize the object.
+	*/
+	virtual void serialize(OBaseArchive & ar) const = 0;
 
-	};
+	/**
+	* Deserialize this object.
+	*/
+	virtual void deserialize(IBaseArchive & ar) = 0;
+
+};
+
+
+
+
+class FigureCircle : public FigureInterface
+{
+
+public: 
+
+	/** circle parameters **/
+
+	fVec2	center;			// circle center
+	double	radius;			// circle radius
+	double	thickness;		// circle thickness
+	RGBc	color;			// circle color
+	RGBc	fillcolor;		// circle interior color
+
+
+	/** Constructor. */
+	FigureCircle(fVec2 centercircle, double rad, RGBc col) : center(centercircle), radius(rad), color(col)
+		{
+		//thickness = 0.1;
+		fillcolor = RGBc::c_Blue.getMultOpacity(0.5f);
+		}
+
+
+
+	/**
+	* Draws the figure onto an image with a given range.
+	*
+	* @param [in,out]	im		    the image to draw onto.
+	* @param [in,out]	R		    the range.
+	* @param 		  	highQuality (Optional) True when high quality drawing is requested and false
+	* 								otherwise.
+	*/
+	virtual void draw(Image & im, fBox2 & R, bool highQuality = true) override
+		{
+		im.canvas_draw_thick_filled_circle(R, center, radius, thickness, false, color, fillcolor, highQuality);
+		}
+
+
+	/**
+	* Return the object's bounding box.
+	*
+	* @return	A fBox2.
+	*/
+	virtual fBox2 boundingBox() const override
+		{
+		return fBox2(center.X() - radius, center.X() + radius, center.Y() - radius, center.Y() + radius);
+		}
+
+
+	/**
+	* Print info about the object into an std::string.
+	*/
+	virtual std::string toString(bool debug = false) const override
+		{
+		return "todo";
+		// TODO
+		}
+
+	/**
+	* Serialize the object.
+	*/
+	virtual void serialize(OBaseArchive & ar) const override
+		{
+		// TODO
+		}
+
+	/**
+	* Deserialize this object.
+	*/
+	virtual void deserialize(IBaseArchive & ar) override
+		{
+		// TODO
+		}
+
+
+
+};
+
+
 
 
 class FigureBox;
@@ -124,36 +161,458 @@ class FigureGroup;
 
 
 
-class FigureCanvas
+
+/**   
+ * Thread that draws figures inside an Image object.
+ *    
+ * Each thread has its own queue which it polls to query figures to draw. 
+ * Instances of this class are created and managed by the FigureDrawerDispatcher class.
+ */
+class FigureDrawerWorker : public ThreadWorker
 {
-	void insert(FigureInterface & figure, int layer); 
 
-	void clear();
+public:
+
+	/** Constructor. Initially disabled, nothing is drawn. */
+	FigureDrawerWorker() : ThreadWorker(), _queue(QUEUE_SIZE), _nb_drawn(0), _im(nullptr), _R(fBox2()), _hq(true)
+		{
+		}
 
 
-		int nbThread();
+	/** Stop the thread if active and set the parameters. */
+	void set(Image* im, fBox2 R, bool hq)
+		{
+		stop();
+		_queue.clear();
+		_nb_drawn = 0;
+		_im = im;
+		_R = R;
+		_hq = hq;
+		}
 
-		void reset(); 
+	/** Interrupt any work in progress. */
+	void stop()
+		{
+		signal(CODE_STOP_AND_WAIT);
+		sync();
+		}
 
-		void suspend();
+	/* (re)start work (return without waiting for sync(). */
+	void restart()
+		{
+		signal(CODE_RESTART);
+		}
 
-		void enable();
 
-		int drawonto(Image & im);
+	/** push a new figure in the queue */
+	MTOOLS_FORCEINLINE bool pushfigure(FigureInterface* fig)
+		{
+		return _queue.push(fig);
+		}
 
-		int quality();
+	/* current progress wrt the queue size, between 0 and 50 */
+	MTOOLS_FORCEINLINE int current_prog() const
+		{
+		if (_nb_drawn == 0) return 0; 
+		return (int)((50 * _nb_drawn) / (_nb_drawn + _queue.size()));
+		}
+
+protected:
+
+
+	/**
+	* Work method. draws the figures.
+	**/
+	virtual void work() override
+		{
+		bool hq = _hq;
+		fBox2 R = _R;
+		Image * im = _im;
+		MTOOLS_INSURE(im != nullptr);
+		_nb_drawn = 0;
+		while (1)
+			{ 
+			FigureInterface * obj;
+			while (!_queue.pop(obj)) { check(); std::this_thread::yield(); }
+			obj->draw(*im, R, hq);
+			_nb_drawn++;
+			check();
+			}
+		}
+
+
+	/**
+	* Process incomming messages
+	**/
+	virtual int message(int64 code)
+		{
+		switch (code)
+			{
+			case CODE_RESTART:
+				{ // start drawing operations
+				return THREAD_RESET;
+				}
+			case CODE_STOP_AND_WAIT:
+				{ // stop all drawing operation and wait until new messages arrive
+				return THREAD_RESET_AND_WAIT;
+				}
+			default:
+				{
+				MTOOLS_ERROR("should not be possible...");
+				}
+			}
+		return THREAD_RESET_AND_WAIT;
+		}
+
+
+private:
+
+	static const size_t QUEUE_SIZE = 1024*1024;
+	static const int64 CODE_STOP_AND_WAIT = 0;
+	static const int64 CODE_RESTART = 1;
+
+	SingleProducerSingleConsumerQueue<FigureInterface*> _queue;	// the queue containing the figures to draw
+	std::atomic<size_t> _nb_drawn;								// number of figure drawn since the work started 
+	std::atomic<Image*> _im;									// the image to draw onto
+	std::atomic<fBox2>  _R;										// range to use
+	std::atomic<bool>	_hq;									// true for high quality drawing
+
+};
+
+
+
+/**
+ * Class that manage a TreeFigure class and draws it onto an Image using
+ * one or more FigureDrawerWorker instances. 
+ */
+
+template<int N> class FigureDrawerDispatcher : protected ThreadWorker
+	{
+
+	public:
+
+		/** Constructor. Set the object in an empty state that does nothing. */
+		FigureDrawerDispatcher() : _figTree(nullptr), _workers(nullptr), _images(), _nb(0), _phase(0), _R(fBox2())
+			{
+			}
+
+		/** Constructor. Set the object in an empty state that does nothing. */
+		virtual ~FigureDrawerDispatcher()
+			{
+			delete[] _workers;
+			_workers = nullptr;
+			}
+
+
+		/**   
+		 * Set the main parameters.
+		 * Set the TreeFigure object to draw, number of threads and corresponding images. 
+		 **/
+		void set(TreeFigure<FigureInterface*, N> * figtree, const std::vector<Image*> & images)
+			{
+			MTOOLS_INSURE(figtree != nullptr);
+			MTOOLS_INSURE(images.size() > 0);
+			stop();							// interrupt any work in progress
+			_figTree = figtree;				// save the tree figure object
+			delete [] _workers;				// delete previous threads
+			_workers = new FigureDrawerWorker[images.size()]; // create the worker threads
+			_images = images;				// save the images. 
+			_phase = 0;						// nothing done...
+			_nb = 0;						// yet...
+			}
+
+
+		/** Same as above but set all threads to draw on the same image.*/
+		void set(TreeFigure<FigureInterface*, N> * figtree, const size_t nb_worker_threads, Image * image)
+			{
+			MTOOLS_INSURE(figtree != nullptr);
+			MTOOLS_INSURE(image != nullptr);
+			MTOOLS_INSURE(nb_worker_threads > 0);
+			std::vector<Image*> images(nb_worker_threads, image);
+			set(figtree, images);
+			}
+
+
+		/** restart the drawing */
+		void restart(fBox2 R, bool hq)
+			{
+			stop(); // stop everything
+			_nb = 0;
+			_phase = 0;
+			_R = R;
+			for (size_t i = 0; i < _images.size(); i++) { _workers[i].set(_images[i], R, hq); } // set parameters for worker threads
+			signal(CODE_RESTART); // start the dispatcher thread
+			for (size_t i = 0; i < _images.size(); i++) { _workers[i].restart(); } // start the worker threads. 
+			}
+
+
+		/** Stop all threads (dispatcher and workers).*/
+		void stop()
+			{
+			signal(CODE_STOP_AND_WAIT); //stop the dispatcher thread
+			for(size_t i = 0; i < _images.size(); i++) { _workers[i].stop(); } // stop the worker threads
+			sync(); 
+			}
+
+
+		/** Query if the thread are currently enabled. */ 
+		bool enableAllThreads() const
+			{
+			return enable();
+			}
+
+
+		/** Enable/disable all the threads */
+		void enableAllThreads(bool status)
+			{
+			if (enable() == status) return;
+			enable(status);
+			for (size_t i = 0; i < _images.size(); i++) { _workers[i].enable(status); }
+			}
+
+
+		/** return the total number of thread (1 + number of worker thread) */
+		int nbThreads() const
+			{
+			return (int)(1 + _images.size()); 
+			}
+		
+
+
+		/** Return the quality of the image currently drawn. 100 = finshed drawing. */
+		int quality() const
+			{
+			if (_phase == 0)
+				{
+				int64 u = _nb;
+				if (u == 0) return 0;
+				u *= u;
+				return (1 + mtools::highestBit((uint64)u));
+				}
+			else
+				{
+				const size_t Nth = _images.size();
+				int tot = 0;
+				for (size_t i = 0; i < Nth; i++) { tot += _workers[i].current_prog(); }
+				tot /= Nth;
+				return 50 + tot;
+				}
+			}
+
+
+	protected:
+
+
+		/**
+		* Work method. draws the figures.
+		**/
+		virtual void work() override
+			{
+			_phase = 0; // iterating
+			const int64 Nth = _images.size();	// number of worker threads.
+			int64 th = 0;						// index of the thread to use. 
+			// iterate over the figures to draw
+			fBox2 oR = zoomOut((fBox2)_R);
+			_figTree->iterate_intersect(oR,
+				[&](mtools::TreeFigure<FigureInterface *, N, double>::BoundedObject & bo ) -> void
+				{
+				do
+					{
+					check(); // check if we should interrupt 
+					th++; 
+					if (th >= Nth) th = 0;
+					} 
+				while (!_workers[th].pushfigure(bo.object));
+				_nb++;
+				});
+			_phase = 1; // finished iterating.
+			}
+
+
+		/**
+		* Process incomming messages
+		**/
+		virtual int message(int64 code)
+			{
+			switch (code)
+				{
+				case CODE_RESTART:
+					{ // start drawing operations
+					return THREAD_RESET;
+					}
+				case CODE_STOP_AND_WAIT:
+					{ // stop all drawing operation and wait until new messages arrive
+					return THREAD_RESET_AND_WAIT;
+					}
+				default:
+					{
+					MTOOLS_ERROR("should not be possible...");
+					}
+				}
+			return THREAD_RESET_AND_WAIT;
+			}
+
+
+	private:
+
+		static const int64 CODE_STOP_AND_WAIT = 0;
+		static const int64 CODE_RESTART = 1;
+
+		TreeFigure<FigureInterface*, N> *   _figTree;	// container for all figure objects.
+		FigureDrawerWorker *  _workers;					// vector containing the worker threads.
+		std::vector<Image *> _images;					// vector containing the images to draw onto
+		std::atomic<int64>	_nb;						// number of figure processed
+		std::atomic<int>	_phase;						// drawing phase
+		std::atomic<fBox2>	_R;							// range
+
+	};
+
+
+
+
+
+
+
+
+	/**
+	* Plot Object which encapsulate a TreeFigure object.
+	**/
+	template<int N > class Plot2DFigure : public internals_graphics::Plotter2DObj, protected internals_graphics::Drawable2DInterface
+		{
+
+	public:
+
+		/**
+		* Constructor.
+		**/
+		Plot2DFigure(TreeFigure<FigureInterface*, N> * figtree, int nbthread = 2, std::string name = "Figure") : internals_graphics::Plotter2DObj(name), _figDrawer(nullptr), _im(), _R(), _hq(true)
+			{
+			_figDrawer = new FigureDrawerDispatcher<N>;
+			_figDrawer->set(figtree, nbthread - 1, &_im);
+			}
+
+
+		/**
+		* Constructor. Reference verison
+		**/
+		Plot2DFigure(TreeFigure<FigureInterface*, N> & figtree, int nbthread = 2, std::string name = "Figure") : internals_graphics::Plotter2DObj(name), _figDrawer(nullptr), _im(), _R(), _hq(true)
+			{
+			_figDrawer = new FigureDrawerDispatcher<N>;
+			_figDrawer->set(&figtree, nbthread - 1, &_im);
+			}
+
+
+		/**
+		* Move constructor.
+		**/
+		Plot2DFigure(Plot2DFigure && o) : internals_graphics::Plotter2DObj(std::move(o)), _figDrawer(o._figDrawer), _im(std::move(o._im)), _R(o._R),_hq(O._hq)
+			{
+			o._figDrawer = nullptr;
+			}
+
+
+		/**
+		* Destructor. Remove the object if it is still inserted.
+		**/
+		virtual ~Plot2DFigure()
+			{
+			_figDrawer->stop();
+			_figDrawer->enableAllThreads(false);
+			detach();
+			delete _figDrawer;
+			}
+
+
+	protected:
+
+
+		virtual void setParam(mtools::fBox2 range, mtools::iVec2 imageSize) override
+			{
+			_figDrawer->stop();
+			_im.resizeRaw(imageSize);
+			_im.clear(RGBc::c_Transparent);
+			_R = range;
+			_figDrawer->restart(_R,_hq);
+			}
+
+
+		virtual void resetDrawing() override
+			{
+			_figDrawer->stop();
+			_im.clear(RGBc::c_Transparent);
+			_figDrawer->restart(_R,_hq);
+			}
+
+
+		virtual int drawOnto(Image & im, float opacity = 1.0) override
+			{
+			auto q = _figDrawer->quality();
+			im.blend(_im, { 0,0 }, opacity);
+			return q;
+			}
+
+
+		virtual int quality() const override 
+			{ 
+			return _figDrawer->quality();
+			}
+
+
+		virtual void enableThreads(bool status) override 
+			{ 
+			_figDrawer->enableAllThreads(status);
+			}
+
+
+		virtual bool enableThreads() const override 
+			{ 
+			return _figDrawer->enableAllThreads();
+			}
+
+
+		virtual int nbThreads() const override 
+			{ 
+			return _figDrawer->nbThreads();
+			}
+
+
+		/**
+		* Override of the removed method, nothing to do...
+		**/
+		virtual void removed(Fl_Group * optionWin) override
+			{
+			_figDrawer->enableAllThreads(false);
+			}
+
+
+		/**
+		* Override of the inserted method. There is no option window for a pixel object...
+		**/
+		virtual internals_graphics::Drawable2DInterface * inserted(Fl_Group * & optionWin, int reqWidth) override
+			{
+			optionWin = nullptr;
+			return this;
+			}
+
+private:
+
+
+	FigureDrawerDispatcher<N> * _figDrawer;  // figure drawer dispatcher object. 
+	Image						_im;		 // image to draw onto
+	fBox2						_R;			 // range to draw
+	bool						_hq;		 // use high quality.
 
 };
 
 
 
 
-class PlotFigures
-{
 
 
 
-};
+
+
+
 
 
 #define HH 5
@@ -162,7 +621,7 @@ class PlotFigures
 
 class PlotTestF : public Plot2DBasic
 {
-	static const int N = 1000000;
+	static const int N = 10;
 
 	const double LX = 100;
 	const double LY = 100;
@@ -190,8 +649,8 @@ public:
 
 	virtual void draw(const fBox2 & R, Image & im, float opacity) override
 	{
-		RGBc color = RGBc::c_Red.getMultOpacity(0.5);
-		RGBc fillcolor = RGBc::c_Blue.getMultOpacity(0.1);
+		RGBc color = RGBc::c_Red.getMultOpacity(0.5f);
+		RGBc fillcolor = RGBc::c_Blue.getMultOpacity(0.1f);
 
 
 
@@ -242,7 +701,32 @@ private:
 
 
 
+void testplotfigure()
+	{
+	MT2004_64 gen;
 
+	static const int NNN = 5; 
+
+	TreeFigure<FigureInterface*, NNN> figtree;
+
+	int nb = 10000000;
+
+	cout << "Creating... ";
+	for (int k = 0; k < nb; k++)
+		{
+		fVec2 pos = { 10000 * Unif(gen),10000 * Unif(gen) };
+		double rad = Unif(gen);
+		FigureCircle * C = new FigureCircle(pos, rad, RGBc::c_Red.getMultOpacity(0.5));
+		figtree.insert(C->boundingBox(), C);
+		}
+	cout << "ok !\n\n";
+	Plot2DFigure<NNN> PF(figtree,4);
+
+	Plotter2D plotter; 
+	plotter[PF];
+	plotter.autorangeXY();
+	plotter.plot();
+	}
 
 
 
@@ -842,6 +1326,9 @@ void rot(fVec2 & V, double alpha)
 int main(int argc, char *argv[])
 {
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
+
+	testplotfigure();
+	return 0;
 
 	double lx = 800.0;
 	double ly = 600.0;
