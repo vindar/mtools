@@ -101,6 +101,7 @@
 #include "graphics/plot2Dcimg.hpp"
 #include "graphics/plot2Dbasic.hpp"
 #include "graphics/figure.hpp"
+#include "graphics/plot2Dfigure.hpp"
 
 
 // containers
