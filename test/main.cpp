@@ -6,6 +6,32 @@ using namespace mtools;
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #define HH 5
 
 
@@ -16,20 +42,20 @@ void testplotfigure()
 
 	static const int NNN = 3; 
 
-	TreeFigure<FigureInterface*, NNN> figtree;
+	FigureCanvas canvas;
 
-	int nb = 10000000;
-
+	int nb = 100;
 	cout << "Creating... ";
 	for (int k = 0; k < nb; k++)
 		{
-		fVec2 pos = { 10000 * Unif(gen),10000 * Unif(gen) };
-		double rad = Unif(gen);
-		FigureCircle * C = new FigureCircle(pos, rad, RGBc::c_Red.getMultOpacity(0.5));
-		figtree.insert(C->boundingBox(), C);
+		fVec2 pos = { 100 * Unif(gen),100 * Unif(gen) };
+		double rad = 10*Unif(gen);
+		canvas(FigureCircle(pos, rad, rad/3, false, RGBc::c_Red.getMultOpacity(0.5)));
+
+		cout << FigureCircle(pos, rad, rad/3, false, RGBc::c_Red.getMultOpacity(0.5)) << "\n";
 		}
 	cout << "ok !\n\n";
-	Plot2DFigure<NNN> PF(figtree,3);
+	Plot2DFigure<10> PF(canvas.getTreeLayer(0),3);
 
 	Plotter2D plotter; 
 	plotter[PF];
