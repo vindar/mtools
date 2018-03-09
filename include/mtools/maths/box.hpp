@@ -34,6 +34,14 @@
 namespace mtools
     {
  
+
+	/* Definition of constants use for the splithalf() method*/
+	const int BOX_SPLIT_UP		= 0;
+	const int BOX_SPLIT_DOWN	= 1;
+	const int BOX_SPLIT_LEFT	= 2;
+	const int BOX_SPLIT_RIGHT	= 3;
+
+
     // forward declaration
     template<typename T, size_t N> class Box;
 
@@ -362,6 +370,72 @@ namespace mtools
                 if ((B.max[0] > max[0]) && (B.min[0] <= max[0])) { max[0] = B.max[0]; }
                 if ((B.min[0] < min[0]) && (B.max[0] >= min[0])) { min[0] = B.min[0]; }
                 }
+
+
+			/**
+			* Split the box in half along a given dimension, keeping eiter the lower or upper part.
+			*
+			* @param	dim			The dimension to split along.
+			* @param	keepup   	True to keep the upper part and flalse to keep the lower part. 
+			**/
+			inline void split(size_t dim, bool keepup)
+				{
+				MTOOLS_ASSERT(dim < N);
+				*this = get_split(dim, keepup);
+				}
+
+
+			/**
+			* Split the box in half along a given dimension, keeping eiter the lower or upper part.
+			*
+			* @param	dim			The dimension to split along.
+			* @param	keepup   	True to keep the upper part and flalse to keep the lower part.
+			* 						
+			* @return  corresponding half boxes.
+			**/
+			inline Box<T, N> get_split(size_t dim, bool keepup) const
+				{
+				MTOOLS_ASSERT(dim < N);
+				Box<T, N> B(*this);
+				if (keepup) B.min[dim] = (B.min[dim] + B.max[dim]) / 2; else B.max[dim] = (B.min[dim] + B.max[dim]) / 2;
+				return B;
+				}
+
+
+			/**
+			* Split the box in half.
+			* Only for dimension 2 
+			* 
+			* @param   part Part of the box to keep, one of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			**/
+			inline void split(int part)
+				{
+				static_assert(N == 2, "this version of split() in specific to dimension 2");
+				*this = get_split(part);
+				}
+
+
+			/**
+			* Split the box in half.
+			* Only for dimension 2
+			*
+			* @param   part Part of the box to keep, one of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			*
+			* @return  corresponding half boxes.
+			**/
+			inline Box<T, N> get_split(int part) const
+				{
+				static_assert(N == 2, "this version of get_split() in specific to dimension 2");
+				switch (part)
+					{
+					case BOX_SPLIT_UP:		{ return get_split(1, true); }
+					case BOX_SPLIT_DOWN:	{ return get_split(1, false); }
+					case BOX_SPLIT_LEFT:	{ return get_split(0, false); }
+					case BOX_SPLIT_RIGHT:	{ return get_split(0, true); }
+					default: { MTOOLS_ERROR("incorrect splitting part."); }
+					}
+				return *this;
+				}
 
 
             /**
