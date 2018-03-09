@@ -2,10 +2,6 @@
 #include "mtools/mtools.hpp"
 using namespace mtools;
 
-#include "mtools/misc/internal/threadsafequeue.hpp"
-
-
-
 
 
 
@@ -40,22 +36,28 @@ void testplotfigure()
 	{
 	MT2004_64 gen;
 
-	static const int NNN = 3; 
+	FigureCanvas<5> canvas(2);
 
-	FigureCanvas canvas;
-
-	int nb = 100;
+	int nb = 1000000;
 	cout << "Creating... ";
+	
 	for (int k = 0; k < nb; k++)
 		{
-		fVec2 pos = { 100 * Unif(gen),100 * Unif(gen) };
+		fVec2 pos = { 10000 * Unif(gen),10000 * Unif(gen) };
 		double rad = 10*Unif(gen);
-		canvas(FigureCircle(pos, rad, rad/3, false, RGBc::c_Red.getMultOpacity(0.5)));
-
-		cout << FigureCircle(pos, rad, rad/3, false, RGBc::c_Red.getMultOpacity(0.5)) << "\n";
+		canvas(FigureCircle(pos, rad, 1, false, RGBc::c_Red.getMultOpacity(1)), 0);
+		
+		pos = { 10000 * Unif(gen),10000 * Unif(gen) };
+		rad = 10 * Unif(gen);
+		canvas(FigureCircle(pos, rad, 1, false, RGBc::c_Blue.getMultOpacity(1)), 1);
 		}
+
 	cout << "ok !\n\n";
-	Plot2DFigure<10> PF(canvas.getTreeLayer(0),3);
+
+
+	auto PF = makePlot2DFigure(canvas, 5);
+
+	//PF.highQuality(false);
 
 	Plotter2D plotter; 
 	plotter[PF];

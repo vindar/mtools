@@ -35,6 +35,221 @@ namespace mtools
 
 
 
+	/* Forward declarations */
+	class FigureInterface;				// interface for a figure object
+	template<int N> class FigureCanvas;	// main figure canvas class
+
+	/* available figures classes*/
+	class FigureCircle;
+	class FigureCirclePart;
+	class FigureEllipse;
+	class FigureEllipsePart;
+	class FigureBox;
+	class FigureDot;
+	class FigureLine;
+	class FigurePolyLine;
+	class FigureTriangle;
+	class FigureConvexPolygon;
+	class FigureQuadBezier;
+	class FigureRatQuadBezier;
+	class FigureCubicBezier;
+	template<typename FIGURE1, typename FIGURE2>  class FigurePair;
+	template<typename FIGURE1, typename FIGURE2, typename FIGURE3>  class FigureTriplet;
+	template<typename FIGURE1, typename FIGURE2, typename FIGURE3, typename FIGURE4>  class FigureQuadruplet;
+	template<class... FIGURES> class FigureTuple;
+	class FigureGroup;
+
+
+
+	
+
+	/**
+	 * Factory function to create an empty Figure canvas with a given number of layers
+	 */
+	template<int N = 5> FigureCanvas<N> makeFigureCanvas(size_t nbLayers = 1)
+		{
+		return FigureCanvas<N>(nbLayers);
+		}
+
+
+
+	/**
+	 * Class that holds figure objects.
+	 * use makePlot2DFigure() to create a plot object that encapsulate the FigureCanvas object. 
+	 * 
+	 * NOT THREADSAFE : do not insert objects while accessing (ie drawing) the canvas. 
+	 *
+	 * @tparam	N	   template parameter for the TreeFigure container : max number of 'reducible' object per node.
+	 */
+	template<int N = 5> class FigureCanvas
+	{
+
+	public: 
+
+
+		/**
+		 * Constructor: create an empty canvas with a given number of layers. 
+		 **/
+		FigureCanvas(size_t nbLayers = 1) : _vecallocp(), _nbLayers(nbLayers), _figLayers(nullptr)
+			{
+			MTOOLS_INSURE(nbLayers > 0);
+			_figLayers = new TreeFigure<FigureInterface*,N> [nbLayers];
+			}
+
+
+		 /**
+		 * Destructor
+		 **/
+		~FigureCanvas()
+			{
+			clear();
+			delete [] _figLayers;
+			}
+
+
+		/**
+		* Move constructor
+		**/
+		FigureCanvas(FigureCanvas && o) : _vecallocp(std::move(o._vecallocp)), _nbLayers(o._nbLayers), _figLayers(o._figLayers)
+			{
+			o._figLayers = new TreeFigure<FigureInterface*, N>[o._nbLayers]; // create empty objects to replace to ones moved.
+			}
+
+
+		/**
+		* Move assignement operator 
+		**/
+		FigureCanvas & operator=(FigureCanvas && o) 
+			{
+			if (&o == this) return *this;
+			_vecallocp = std::move(o._vecallocp);
+			_nbLayers = o._nbLayers;
+			_figLayers = o._figLayers;
+			o._figLayers = new TreeFigure<FigureInterface*, N>(o._nbLayers); // create empty objects to replace to ones moved.
+			return *this;
+			}
+
+
+		/**
+		 * Insert a figure into the canvas, inside a given layer
+		 */
+		template<typename FIGURECLASS> MTOOLS_FORCEINLINE void operator()(const FIGURECLASS & figure, size_t layer = 0)
+			{
+			MTOOLS_INSURE(layer < _nbLayers);
+			FigureInterface * pf = _copyInPool(figure);			// save a copy of the object in the memory pool
+			_figLayers[layer].insert(pf->boundingBox(), pf);	// add to the corresponding layer. 
+			return;
+			}
+
+
+		/**   
+		 * Empty the canvas. 
+		 **/
+		void clear()
+			{
+			_deallocateAll();
+			for (size_t i = 0; i < _nbLayers; i++) _figLayers[i].reset();
+			}
+
+
+		/**
+		* Return the number of layers
+		**/
+		MTOOLS_FORCEINLINE size_t nbLayers() const { return _nbLayers; }
+
+
+		/**
+		 * Return the number of objects in the canvas. 
+		 */
+		MTOOLS_FORCEINLINE size_t size() const
+			{
+			size_t tot = 0;
+			for (size_t i = 0; i < _nbLayers; i++) tot += _figLayers[0].size();
+			return tot;  
+			}
+
+
+		/**
+		* Return the number of objects in a given layer.
+		*/
+		MTOOLS_FORCEINLINE size_t size(size_t layer) const
+			{
+			MTOOLS_ASSERT(layer < _nbLayers);
+			return _figLayers[layer].size();
+			}
+
+
+
+		/** Return a pointer to the TreeFigure object associated with a given layer. */
+		MTOOLS_FORCEINLINE TreeFigure<FigureInterface*, N> * getTreeLayer(size_t layer) const
+			{
+			MTOOLS_ASSERT(layer < _nbLayers);
+			return _figLayers + layer;
+			}
+
+
+	private: 
+
+		/* no copy */
+		FigureCanvas(const FigureCanvas &) = delete;
+		FigureCanvas & operator=(const FigureCanvas &) = delete;
+
+		
+		/* Make a copy of the figure object inside the memory pool */
+		template<typename FIGURECLASS> MTOOLS_FORCEINLINE FigureInterface * _copyInPool(const FIGURECLASS & figure)
+			{
+			void * p = _allocate(sizeof(FIGURECLASS));	// allocate memory in the memory pool for the figure object
+			new (p) FIGURECLASS(figure);				// placement new : copy constructor. 
+			return ((FigureInterface *)p);				// cast to base class. 
+			}
+
+
+		/******************** MEMORY POOL IMPLEMENTATION (TODO : REPLACE BY BETTER VERSION) **********************/
+
+		/* allocate size bytes in the memory pool. TODO: REPLACE A BY BETTER VERSION THAN MALLOC/FREE */
+		MTOOLS_FORCEINLINE void * _allocate(size_t size)
+			{
+			void * p = malloc(size);
+			_vecallocp.push_back(p); 
+			return  p;
+			}
+
+
+		/* delete all allocated memory TODO: REPLACE A BY BETTER VERSION THAN MALLOC/FREE */
+		void _deallocateAll()
+			{
+			for (void *  p : _vecallocp) { free(p); }
+			_vecallocp.clear();
+			}
+
+		std::vector<void *>				_vecallocp;	// vector containing pointers to all allocated figures (TEMP WHILE USING MALLOC/FREE). 
+
+		/*********************************************************************************************************/
+
+
+		size_t								_nbLayers;	// number of layers
+		TreeFigure<FigureInterface*, N> *	_figLayers;	// tree figure object for each layer. 
+
+
+	};
+
+
+
+
+
+
+
+
+
+
+	/************************************************************************************************************************************
+	*
+	* FIGURE CLASSES
+	*
+	*************************************************************************************************************************************/
+
+
+
 	/**  
 	 * Interface class for figure objects. 
 	 *
@@ -87,6 +302,13 @@ namespace mtools
 	};
 
 
+
+
+	/************************************************************************************************************************************
+	*
+	* CIRCLE
+	*
+	*************************************************************************************************************************************/
 
 	/**
 	 * Circle figure
@@ -236,161 +458,8 @@ namespace mtools
 			ar & color;
 			ar & fillcolor;
 			}
-
-
 	};
 
-
-
-
-	class FigureBox;
-
-	class FigureCircle;
-
-	class FigureEllipse;
-
-	class FigureDot;
-
-	class FigureLine;
-
-	class FigurePolyLine;
-
-	class FigureTriangle;
-
-	class FigureConvexPolygon;
-
-	class FigureQuadBezier;
-
-	class FigureRatQuadBezier;
-
-	class FigureCubicBezier;
-
-	template<typename FIGURE1, typename FIGURE2>  class FigurePair;
-
-	template<typename FIGURE1, typename FIGURE2, typename FIGURE3>  class FigureTriplet;
-
-	template<typename FIGURE1, typename FIGURE2, typename FIGURE3, typename FIGURE4>  class FigureQuadruplet;
-
-	template<class... FIGURES> class FigureTuple;
-
-	class FigureGroup;
-
-
-
-
-	/**
-	 * Class that holds figure objects
-	 * 
-	 * NOT THREADSAFE : do not insert objects while accessing (ie drawing) the canvas. 
-	 */
-	class FigureCanvas
-	{
-
-
-	public: 
-
-
-		/**
-		 * Constructor: create an empty canvas with a given number of layers. 
-		 **/
-		FigureCanvas(size_t nbLayers = 1) : _nbLayers(nbLayers)
-			{
-			MTOOLS_INSURE(nbLayers > 0);
-			_figLayers = new TreeFigure<FigureInterface*>(nbLayers);
-			}
-
-
-		 /**
-		 * Destructor
-		 **/
-		~FigureCanvas()
-			{
-			clear();
-			delete _figLayers;
-			}
-
-
-		/**
-		 * Insert a figure into the canvas at a given location
-		 */
-		template<typename FIGURECLASS> MTOOLS_FORCEINLINE void operator()(const FIGURECLASS & figure, size_t layer = 0)
-			{
-			MTOOLS_ASSERT(layer < _nbLayers);
-			FigureInterface * pf = _copyInPool(figure);			// save a copy of the object in the memory pool
-			_figLayers[layer].insert(pf->boundingBox(), pf);	// add to the corresponding layer. 
-			return;
-			}
-
-
-		/**
-		* Return the number of layers
-		**/
-		MTOOLS_FORCEINLINE size_t nbLayers() const { return _nbLayers; }
-
-
-		/**   
-		 * Empty the canvas. 
-		 **/
-		void clear()
-			{
-			// TODO
-			}
-
-
-		/**
-		 * Return the number of objects in the canvas. 
-		 */
-		MTOOLS_FORCEINLINE size_t size() const
-			{
-			// TODO
-			return 0;  
-			}
-
-
-		/** Return a pointer to the TreeFigure object associated with a given layer. */
-		MTOOLS_FORCEINLINE TreeFigure<FigureInterface*> * getTreeLayer(size_t layer) const
-			{
-			MTOOLS_ASSERT(layer < _nbLayers);
-			return _figLayers + layer;
-			}
-
-
-	private: 
-
-
-		/* no copy */
-		FigureCanvas(const FigureCanvas &) = delete;
-		FigureCanvas & operator=(const FigureCanvas &) = delete;
-
-
-
-		/******************** MEMORY POOL **********************/
-
-
-		/* Make a copy of the figure object inside the memory pool */
-		template<typename FIGURECLASS> MTOOLS_FORCEINLINE
-		//typename std::enable_if<std::is_base_of<FigureInterface, typename FIGURECLASS>, FigureInterface*>::type
-		FigureInterface *
-		_copyInPool(const FIGURECLASS & figure)
-			{
-			void * p = _allocate(sizeof(FIGURECLASS));	// allocate memory in the memory pool for the figure object
-			new (p) FIGURECLASS(figure);				// placement new : copy constructor. 
-			return ((FigureInterface *)p);				// cast to base class. 
-			}
-
-
-		/* allocate size bytes in the memory pool. */
-		MTOOLS_FORCEINLINE void * _allocate(size_t size)
-			{ 
-			return malloc(size); // TODO : use better memory pool. 
-			}
-
-
-		const size_t					_nbLayers;	// number of layers
-		TreeFigure<FigureInterface*> *	_figLayers;	// tree figure object for each layer. 
-
-
-	};
 
 
 

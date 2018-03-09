@@ -35,10 +35,387 @@
 
 #include <atomic>
 
+#include <FL/Fl.H>
+#include <FL/Fl_Box.H>
+#include <FL/Fl_Group.H>
+#include <FL/Fl_Check_Button.H>
 
 
 namespace mtools
 {
+
+
+	/* Forward declarations */
+	class FigureDrawerWorker;
+	template<int N> class FigureDrawerDispatcher;
+	template<int N> class Plot2DFigure;
+
+
+
+	/**
+	* Factory for creating Plots of FigureCanvas objects.
+	*
+	* @param			canvas  	FigureCanvas object containing the figures to draw..
+	* @param 		  	nbthread	number othread to use (number really used may be different). 
+	* @param 		  	name		name of the plot
+	* @tparam	N	   Same parameter as for the FigureCanvas class (max number of 'reducible' object per node in the TreeFigure container).
+	*
+	**/
+	template<int N> Plot2DFigure<N> makePlot2DFigure(FigureCanvas<N> & canvas, int nbthread = 2, std::string name = "Figure")
+		{
+		return Plot2DFigure<N>(canvas, nbthread, name);
+		}
+
+
+
+	/**
+	* Plot Object which encapsulate a FigureCanvas object.
+	* 
+	* use the factory method makePlot2DFigure() to create it. 
+	*
+	* @tparam	N	   Same parameter as for the FigureCanvas class (max number of 'reducible' object per node in the TreeFigure container).
+	* 				   
+	**/
+	template<int N> class Plot2DFigure : public internals_graphics::Plotter2DObj, protected internals_graphics::Drawable2DInterface
+	{
+
+
+	public:
+
+
+		/**
+		* Constructor.
+		* 
+		* @param			figcanvas  	FigureCanvas object containing the figures to draw..
+		* @param 		  	nbthread	number othread to use (number really used may be different).
+		* @param 		  	name		name of the plot
+		**/
+		Plot2DFigure(FigureCanvas<N> & figcanvas, int nbthread = 2, std::string name = "Figure")
+			: internals_graphics::Plotter2DObj(name), _figcanvas(&figcanvas), _figDrawers(nullptr), _ims(nullptr), _R(), _hq(true), _tmpIm(), _win(nullptr)
+			{
+			size_t nbworkerperlayer = (nbthread / figcanvas.nbLayers());
+			nbworkerperlayer = (nbworkerperlayer >= 2) ? (nbworkerperlayer - 1) : 1;
+			_figDrawers = new FigureDrawerDispatcher<N>[figcanvas.nbLayers()];	// create drawer dispatcher for each level
+			_ims = new std::pair<Image,bool>[figcanvas.nbLayers()];				// create images for each level
+			for (size_t i = 0; i < figcanvas.nbLayers(); i++)					// setup 
+				{
+				_ims[i].second = true;
+				_figDrawers[i].set(figcanvas.getTreeLayer(i), nbworkerperlayer,&(_ims[i].first));
+				}
+			}
+
+
+		/**
+		* Move constructor.
+		**/
+		Plot2DFigure(Plot2DFigure && o) : internals_graphics::Plotter2DObj(std::move(o)), _figcanvas(o._figcanvas), _figDrawers(o._figDrawers), _ims(o._ims), _R(o._R), _hq(o._hq), _tmpIm(std::move(o._tmpIm)), _win(nullptr)
+			{
+			o._figcanvas = nullptr;
+			o._figDrawer = nullptr;
+			o._ims = nullptr;
+			}
+
+
+		/**
+		* Move assignement operator.
+		**/
+		Plot2DFigure & operator=(Plot2DFigure && o)
+			{
+			if (&o == this) return *this;
+			internals_graphics::Plotter2DObj::operator=(std::move(o));
+			_figcanvas = o._figcanvas;
+			_figDrawers = o._figDrawers;
+			_ims = o._ims;
+			_R = o._R;
+			_hq = O._hq;
+			_tmpIm = std::move(o._tmpIm);
+			_win = nullptr;
+			o._figcanvas = nullptr;
+			o._figDrawer = nullptr;
+			o._ims = nullptr;
+			return *this;
+			}
+
+
+		/**
+		* Destructor. Remove the object if it is still inserted.
+		**/
+		virtual ~Plot2DFigure()
+			{
+			const size_t n = nbLayers();
+			for (size_t i = 0; i < n; i++)
+				{
+				_figDrawers[i].stopAll();
+				_figDrawers[i].enableAllThreads(false);
+				}
+			detach();
+			delete [] _figDrawers;
+			delete [] _ims;
+			}
+
+
+		/**
+		* Return the number layers in the underlying canvas object.
+		**/
+		size_t nbLayers() const
+			{
+			return (_figcanvas == nullptr) ? 0 : _figcanvas->nbLayers();
+			}
+
+
+		/**
+		* Query if we are drawing with high quality.
+		**/
+		bool highQuality() const { return _hq; }
+
+
+		/**
+		* Set if we are using high quality drawing or not. 
+		**/
+		void highQuality(bool hq)
+			{
+			if (hq == _hq) return;
+			if (!isFltkThread()) // we need to run the method in FLTK
+				{
+				IndirectMemberProc<Plot2DFigure<N>, bool> proxy(*this, &Plot2DFigure<N>::highQuality, hq); // registers the call
+				runInFltkThread(proxy);
+				return;
+				}
+			_hq = hq;
+			resetDrawing();
+			}
+
+
+		/**
+		* Query if a given layer is shown. 
+		**/
+		bool showLayer(size_t layerindex) const
+			{
+			MTOOLS_INSURE(layerindex < nbLayers());
+			return _ims[layerindex].second;
+			}
+
+
+		/**
+		* Set whether a given layer is shown.
+		**/
+		void showLayer(size_t layerindex, bool show)
+			{
+			MTOOLS_INSURE(layerindex < nbLayers());
+			if (show == _ims[layerindex].second) return;
+			if (!isFltkThread()) // we need to run the method in FLTK
+				{
+				IndirectMemberProc<Plot2DFigure<N>, size_t, bool> proxy(*this, &Plot2DFigure<N>::showLayer, layerindex, show); // registers the call
+				runInFltkThread(proxy);
+				return;
+				}
+			_ims[layerindex].second = show;
+			resetDrawing();
+			}
+
+
+	protected:
+
+
+		virtual void setParam(mtools::fBox2 range, mtools::iVec2 imageSize) override
+			{
+			const size_t n = nbLayers();
+			_R = range;
+			for (size_t i = 0; i < n; i++)
+				{
+				_figDrawers[i].stopAll();
+				_ims[i].first.resizeRaw(imageSize);
+				_ims[i].first.clear(RGBc::c_Transparent);
+				_figDrawers[i].restart(_R, _hq);
+				}
+			}
+
+
+		virtual void resetDrawing() override
+			{
+			const size_t n = nbLayers();
+			for (size_t i = 0; i < n; i++)
+				{
+				_figDrawers[i].stopAll();
+				_ims[i].first.clear(RGBc::c_Transparent);
+				_figDrawers[i].restart(_R, _hq);
+				}
+			Plotter2DObj::refresh();
+			}
+
+
+		virtual int drawOnto(Image & im, float opacity = 1.0f) override
+			{
+			const size_t n = nbLayers();
+			if (n == 0) return 100;
+			int totq = 0;
+			if ((opacity < 1.0f) && (n > 1))
+				{ // use temporary image 
+				_tmpIm.resizeRaw(im.dimension());
+				_tmpIm.clear(RGBc::c_Transparent);
+				for (size_t i = 0; i < n; i++)
+					{
+					totq += _figDrawers[i].quality();
+					if (_ims[i].second) _tmpIm.blend(_ims[i].first, { 0,0 });
+					}
+				im.blend(_tmpIm, { 0,0 }, opacity);
+				}
+			else
+				{ // direct blending without temp image. 
+				for (size_t i = 0; i < n; i++)
+					{
+					totq += _figDrawers[i].quality();
+					if (_ims[i].second) im.blend(_ims[i].first, { 0,0 });
+					}
+				}
+			return (totq / (int)n);
+			}
+
+
+		virtual int quality() const override
+			{
+			const size_t n = nbLayers();
+			if (n == 0) return 100;
+			int totq = 0;
+			for (size_t i = 0; i < n; i++)  totq += _figDrawers[i].quality();
+			return (totq / (int)n);
+			}
+
+
+		virtual void enableThreads(bool status) override
+			{
+			const size_t n = nbLayers();
+			for (size_t i = 0; i < n; i++) _figDrawers[i].enableAllThreads(status);
+			}
+
+
+		virtual bool enableThreads() const override
+			{
+			return ((nbLayers() == 0) ? true : _figDrawers[0].enableAllThreads());
+			}
+
+
+		virtual int nbThreads() const override
+			{
+			const size_t n = nbLayers();
+			int nbt = 0;
+			for (size_t i = 0; i < n; i++) nbt += _figDrawers[i].nbThreads();
+			return nbt;
+			}
+
+
+		/**
+		* Override of the removed method, nothing to do...
+		**/
+		virtual void removed(Fl_Group * optionWin) override
+			{
+			enableThreads(false);
+			_win = nullptr;
+			Fl::delete_widget(optionWin);
+			}
+
+
+		/**
+		* Override of the inserted method. There is no option window for a pixel object...
+		**/
+		virtual internals_graphics::Drawable2DInterface * inserted(Fl_Group * & optionWin, int reqWidth) override
+			{
+			int lgh = 15 + 20 * (int)nbLayers();
+
+			_win = new Fl_Group(0, 0, reqWidth, 65 + lgh); // create the option group
+			optionWin = _win;
+
+			_hqButton = new Fl_Check_Button(5, 10, 150, 15, "Use high quality drawing.");
+			_hqButton->labelfont(0);
+			_hqButton->labelsize(11);
+			_hqButton->color2(FL_RED);
+			_hqButton->callback(_toggleHQ_static, this);
+			_hqButton->when(FL_WHEN_CHANGED);
+
+			_infoBox = new Fl_Box(5, 34, reqWidth - 5, 15); // create the info txt;
+			_infoBox->labelfont(0);
+			_infoBox->labelsize(12);
+			_infoBox->labelcolor(FL_RED);
+
+			auto border = new Fl_Box(10, 55, reqWidth - 20, lgh); // create the option group;
+			border->box(FL_BORDER_BOX);
+
+			const size_t n = nbLayers();
+			_layerButtons.resize(n);
+			for (size_t i = 0; i < n; i++)
+				{
+				std::get<0>(_layerButtons[i]) = this;
+				std::get<1>(_layerButtons[i]) = i;
+				std::get<2>(_layerButtons[i]) = new Fl_Check_Button(15, 65 + 20*((int)i), 150, 15);
+				std::get<2>(_layerButtons[i])->labelfont(0);
+				std::get<2>(_layerButtons[i])->labelsize(11);
+				std::get<2>(_layerButtons[i])->color2(FL_RED);
+				std::get<2>(_layerButtons[i])->callback(_toggleLayer_static, &(_layerButtons[i]));
+				std::get<2>(_layerButtons[i])->when(FL_WHEN_CHANGED);
+				}
+
+			optionWin->end();	
+			_updateWidgets();
+			return this;
+			}
+
+
+		private:
+
+
+			void _updateWidgets()
+				{
+				_hqButton->value((bool)_hq ? 1 : 0);
+				_infoBox->copy_label((mtools::toString(nbLayers()) + " layers, " + mtools::toString(_figcanvas->size()) + " objects.").c_str());
+				
+				const size_t n = nbLayers();
+				for (size_t i = 0; i < n; i++)
+					{
+					std::get<2>(_layerButtons[i])->copy_label((std::string("Layer ") + mtools::toString(i)  + " \t[" + mtools::toString(_figcanvas->size(i)) + " objects]").c_str());
+					std::get<2>(_layerButtons[i])->value((bool)_ims[i].second ? 1 : 0);
+					}
+				}
+
+
+			static void _toggleHQ_static(Fl_Widget * W, void * data) { MTOOLS_ASSERT(data != nullptr); ((Plot2DFigure<N>*)data)->_toggleHQ(W); }
+			void _toggleHQ(Fl_Widget * W)
+				{
+				highQuality((bool)((Fl_Check_Button*)W)->value());
+				yieldFocus();
+				}
+
+
+			static void _toggleLayer_static(Fl_Widget * W, void * data) 
+				{ 
+				MTOOLS_ASSERT(data != nullptr);
+				std::tuple<Plot2DFigure<N>*, size_t, Fl_Check_Button*> U = *((std::tuple<Plot2DFigure<N> *, size_t, Fl_Check_Button*> *)data);
+				(std::get<0>(U))->_toggleLayer(std::get<2>(U), std::get<1>(U)); 
+				}
+
+			void _toggleLayer(Fl_Check_Button * W, size_t index)
+				{
+				showLayer(index,(bool)(W->value()));
+				yieldFocus();
+				}
+
+
+
+			FigureCanvas<N> *			_figcanvas;		// canvas holding all the figures
+			FigureDrawerDispatcher<N> * _figDrawers;	// figure drawer dispatcher objecs (1 per layer). 
+			std::pair<Image, bool> *	_ims;			// image to draw onto (one per layer) and their drawing status
+			fBox2						_R;				// range to draw
+			bool						_hq;			// use high quality.
+			Image						_tmpIm;			// temporary image in case of partial opacity. 
+
+			Fl_Group *					_win;			// option window
+			Fl_Box *					_infoBox;		// info box
+			Fl_Check_Button *			_hqButton;		// toggle high quality button
+			std::vector<std::tuple< Plot2DFigure<N>*, size_t, Fl_Check_Button*> > _layerButtons; // enable/disable a particular layer 
+
+		};
+
+
+
 
 
 
@@ -54,7 +431,7 @@ namespace mtools
 
 	public:
 
-		/** Constructor. Initially disabled, and not not active: nothing is drawn. */
+		/** Constructor. Initially disabled, and not active: nothing is drawn. */
 		FigureDrawerWorker() : ThreadWorker(), _queue(QUEUE_SIZE), _nb_drawn(0), _im(nullptr), _R(fBox2()), _hq(true)
 		{
 		}
@@ -108,6 +485,7 @@ namespace mtools
 			if (_nb_drawn == 0) return 0;
 			return (int)((45 * _nb_drawn) / (_nb_drawn + _queue.size()));
 		}
+
 
 	protected:
 
@@ -366,156 +744,19 @@ namespace mtools
 		static const int64 CODE_RESTART = 1;
 
 		TreeFigure<FigureInterface*, N> *   _figTree;	// container for all figure objects.
-		FigureDrawerWorker *  _workers;					// vector containing the worker threads.
-		std::vector<Image *> _images;					// vector containing the images to draw onto
-		std::atomic<int64>	_nb;						// number of figure processed
-		std::atomic<int>	_phase;						// drawing phase
-		std::atomic<fBox2>	_R;							// range
+		FigureDrawerWorker *				_workers;	// vector containing the worker threads.
+		std::vector<Image *>				_images;	// vector containing the images to draw onto
+		std::atomic<int64>					_nb;		// number of figure processed
+		std::atomic<int>					_phase;		// drawing phase
+		std::atomic<fBox2>					_R;			// range
 
 	};
 
 
 
+	}
 
 
-
-
-	/**
-	* Plot Object which encapsulate a TreeFigure object.
-	**/
-	template<int N > class Plot2DFigure : public internals_graphics::Plotter2DObj, protected internals_graphics::Drawable2DInterface
-	{
-
-	public:
-
-		/**
-		* Constructor.
-		**/
-		Plot2DFigure(TreeFigure<FigureInterface*, N> * figtree, int nbthread = 2, std::string name = "Figure") : internals_graphics::Plotter2DObj(name), _figDrawer(nullptr), _im(), _R(), _hq(true)
-		{
-			_figDrawer = new FigureDrawerDispatcher<N>;
-			_figDrawer->set(figtree, nbthread - 1, &_im);
-		}
-
-
-		/**
-		* Constructor. Reference verison
-		**/
-		Plot2DFigure(TreeFigure<FigureInterface*, N> & figtree, int nbthread = 2, std::string name = "Figure") : internals_graphics::Plotter2DObj(name), _figDrawer(nullptr), _im(), _R(), _hq(true)
-		{
-			_figDrawer = new FigureDrawerDispatcher<N>;
-			_figDrawer->set(&figtree, nbthread - 1, &_im);
-		}
-
-
-		/**
-		* Move constructor.
-		**/
-		Plot2DFigure(Plot2DFigure && o) : internals_graphics::Plotter2DObj(std::move(o)), _figDrawer(o._figDrawer), _im(std::move(o._im)), _R(o._R), _hq(O._hq)
-		{
-			o._figDrawer = nullptr;
-		}
-
-
-		/**
-		* Destructor. Remove the object if it is still inserted.
-		**/
-		virtual ~Plot2DFigure()
-		{
-			_figDrawer->stopAll();
-			_figDrawer->enableAllThreads(false);
-			detach();
-			delete _figDrawer;
-		}
-
-
-	protected:
-
-
-		virtual void setParam(mtools::fBox2 range, mtools::iVec2 imageSize) override
-		{
-			_figDrawer->stopAll();
-			_im.resizeRaw(imageSize);
-			_im.clear(RGBc::c_Transparent);
-			_R = range;
-			_figDrawer->restart(_R, _hq);
-		}
-
-
-		virtual void resetDrawing() override
-		{
-			_figDrawer->stopAll();
-			_im.clear(RGBc::c_Transparent);
-			_figDrawer->restart(_R, _hq);
-		}
-
-
-		virtual int drawOnto(Image & im, float opacity = 1.0) override
-		{
-			auto q = _figDrawer->quality();
-			im.blend(_im, { 0,0 }, opacity);
-			return q;
-		}
-
-
-		virtual int quality() const override
-		{
-			return _figDrawer->quality();
-		}
-
-
-		virtual void enableThreads(bool status) override
-		{
-			_figDrawer->enableAllThreads(status);
-		}
-
-
-		virtual bool enableThreads() const override
-		{
-			return _figDrawer->enableAllThreads();
-		}
-
-
-		virtual int nbThreads() const override
-		{
-			return _figDrawer->nbThreads();
-		}
-
-
-		/**
-		* Override of the removed method, nothing to do...
-		**/
-		virtual void removed(Fl_Group * optionWin) override
-		{
-			_figDrawer->enableAllThreads(false);
-		}
-
-
-		/**
-		* Override of the inserted method. There is no option window for a pixel object...
-		**/
-		virtual internals_graphics::Drawable2DInterface * inserted(Fl_Group * & optionWin, int reqWidth) override
-		{
-			optionWin = nullptr;
-			return this;
-		}
-
-	private:
-
-
-		FigureDrawerDispatcher<N> * _figDrawer;  // figure drawer dispatcher object. 
-		Image						_im;		 // image to draw onto
-		fBox2						_R;			 // range to draw
-		bool						_hq;		 // use high quality.
-
-	};
-
-
-
-
-
-
-}
 
 
 /* end of file */
