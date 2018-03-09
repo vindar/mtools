@@ -463,6 +463,179 @@ namespace mtools
 
 
 
+
+
+
+
+	/**
+	 * Circle Part figure
+	 * 
+	 * Parameters: 
+	 *  - center and radius  
+	 *  - outline color
+	 *  - thickness  
+	 *  - filling color   
+	 *  - antialiasing  
+	 *  - part to draw
+	 **/
+	class FigureCirclePart : public FigureInterface
+	{
+
+	public:
+
+		/** circle part parameters **/
+		fVec2	center;			// circle center
+		double	radius;			// circle radius
+		double	thickness;		// circle thickness 0 = no thickness. < 0 = absolute thicknes,  >0 = relative thickness 
+		RGBc	color;			// circle color
+		RGBc	fillcolor;		// circle interior color (transparent = no filling)
+		int		part;			// one of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+
+		/**   
+		 * Constructor. Simple circle part without filling or thickness    
+		 **/
+		FigureCirclePart(int circlepart, fVec2 centercircle, double rad, RGBc col) : part(circlepart), center(centercircle), radius(rad), thickness(0.0), color(col), fillcolor(RGBc::c_Transparent)
+			{
+			MTOOLS_ASSERT((circlepart >= 0) && (circlepart < 4));
+			MTOOLS_ASSERT(rad >= 0);
+			}
+
+		/**
+		* Constructor. Simple circle part with filling color but without thickness
+		**/
+		FigureCirclePart(int circlepart, fVec2 centercircle, double rad, RGBc col, RGBc fillcol) : part(circlepart), center(centercircle), radius(rad), thickness(0.0), color(col), fillcolor(fillcol)
+			{
+			MTOOLS_ASSERT((circlepart >= 0) && (circlepart < 4));
+			MTOOLS_ASSERT(rad >= 0);
+			}
+
+		/**
+		* Constructor. Thick circle without filling
+		**/
+		FigureCirclePart(int circlepart, fVec2 centercircle, double rad, double thick, bool relativethickness, RGBc col)
+		: part(circlepart), center(centercircle), radius(rad), thickness(relativethickness ? thick : -thick), color(col), fillcolor(RGBc::c_Transparent)
+			{
+			MTOOLS_ASSERT((circlepart >= 0) && (circlepart < 4));
+			MTOOLS_ASSERT(rad >= 0);
+			MTOOLS_ASSERT(thick > 0);
+			}
+
+
+		/**
+		* Constructor. Thick circle with filling
+		**/
+		FigureCirclePart(int circlepart, fVec2 centercircle, double rad, double thick, bool relativethickness, RGBc col, RGBc fillcol)
+			: part(circlepart), center(centercircle), radius(rad), thickness(relativethickness ? thick : -thick), color(col), fillcolor(fillcol)
+			{
+			MTOOLS_ASSERT((circlepart >= 0) && (circlepart < 4));
+			MTOOLS_ASSERT(rad >= 0);
+			MTOOLS_ASSERT(thick > 0);
+			}
+
+
+		/**
+		* Draws the figure onto an image with a given range.
+		*
+		* @param [in,out]	im		    the image to draw onto.
+		* @param [in,out]	R		    the range.
+		* @param 		  	highQuality (Optional) True when high quality drawing is requested and false
+		* 								otherwise.
+		*/
+		virtual void draw(Image & im, fBox2 & R, bool highQuality = true) override
+			{
+			if (thickness == 0.0)
+				{
+				if (fillcolor.comp.A == 0)
+					{
+					im.canvas_draw_part_circle(R, part, center, radius, color, highQuality);
+					}
+				else
+					{
+					im.canvas_draw_part_filled_circle(R, part, center, radius, color, fillcolor, highQuality);
+					}
+				}
+			else
+				{
+				const bool relative = (thickness > 0);
+				const double thick = (relative ? thickness : -thickness);
+				if (fillcolor.comp.A == 0)
+					{
+					im.canvas_draw_part_thick_circle(R, part, center, radius, thick, relative, color, highQuality);
+					}
+				else
+					{
+					im.canvas_draw_part_thick_filled_circle(R, part, center, radius, thick, relative, color, fillcolor, highQuality);
+					}
+				}
+			}
+
+
+		/**
+		* Return the object's bounding box.
+		*
+		* @return	A fBox2.
+		*/
+		virtual fBox2 boundingBox() const override
+			{
+			return fBox2(center.X() - radius, center.X() + radius, center.Y() - radius, center.Y() + radius).get_split(part);
+			}
+
+
+		/**
+		* Print info about the object into an std::string.
+		*/
+		virtual std::string toString(bool debug = false) const override
+			{
+			std::string str("Circle Part Figure [");
+			switch (part)
+				{
+				case BOX_SPLIT_UP: { str += "UP"; break; }
+				case BOX_SPLIT_DOWN: { str += "DOWN"; break; }
+				case BOX_SPLIT_LEFT: { str += "LEFT"; break; }
+				case BOX_SPLIT_RIGHT: { str += "RIGHT"; break; }
+				default: { str += "ERROR_PART"; }
+				}
+			str += " ";
+			str += mtools::toString(center) + " ";
+			str += mtools::toString(center) + " ";
+			str += mtools::toString(radius) + " ";
+			str += mtools::toString(color);
+			if (fillcolor.comp.A != 0) str += std::string(" filled: ") + mtools::toString(fillcolor);
+			if (thickness != 0.0)
+				{
+				if (thickness > 0) str += std::string(" rel. thick: ") + mtools::toString(thickness);
+				else str += std::string(" abs. thick: ") + mtools::toString(-thickness);
+				}
+			return str + "]";
+			}
+
+
+		/** Serialize the object. */
+		virtual void serialize(OBaseArchive & ar) const override
+			{
+			ar & part;
+			ar & center;
+			ar & radius;
+			ar & thickness;
+			ar & color;
+			ar & fillcolor;
+			}
+
+
+		/** Deserialize the object. */
+		virtual void deserialize(IBaseArchive & ar) override
+			{
+			ar & part;
+			ar & center;
+			ar & radius;
+			ar & thickness;
+			ar & color;
+			ar & fillcolor;
+			}
+	};
+
+
+
 }
 
 
