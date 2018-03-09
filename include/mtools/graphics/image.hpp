@@ -2670,6 +2670,7 @@ namespace mtools
 				}	
 
 
+
 			/**
 			* Draw an (integer-valued) circle
 			*
@@ -2816,6 +2817,32 @@ namespace mtools
 
 
 			/**
+			* Draw part of a (real-valued) circle
+			*
+			* @param	circlepart	combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	center center.
+			* @param	radius radius
+			* @param	color  color
+			* @param	aa	   (Optional) true to use antialiasing.
+			* @param	blend  (Optional) true to use blending.
+			*/
+			void draw_part_circle(int circlepart, fVec2 center, double radius, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+				{
+				if (isEmpty() || (radius <= 0)) return;
+				iBox2 B = intersectionRect(imageBox(), _ellipseBBox(center,radius,radius).get_split(circlepart));
+				if (aa)
+					{
+					if (blend) _draw_ellipse2_AA<true, false>(B, center, radius, radius, color, color); else _draw_ellipse2_AA<false, false>(B, center, radius, radius, color, color);
+					}
+					else
+					{
+					if (blend) _draw_ellipse2<true, true, false>(B, center, radius, radius, color, color); else _draw_ellipse2<false, true, false>(B, center, radius, radius, color, color);
+					}
+				return;
+				}
+
+
+			/**
 			* Draw an (real-valued) filled circle .
 			*
 			* @param	center    center.
@@ -2835,6 +2862,33 @@ namespace mtools
 					return;
 					}
 				iBox2 B = imageBox();
+				if (aa)
+					{
+					if (blend) _draw_ellipse2_AA<true, true>(B, center, radius, radius, color, fillcolor); else _draw_ellipse2_AA<false, true>(B, center, radius, radius, color, fillcolor);
+					}
+				else
+					{
+					if (blend) _draw_ellipse2<true, true, true>(B, center, radius, radius, color, fillcolor); else _draw_ellipse2<false, true, true>(B, center, radius, radius, color, fillcolor);
+					}
+				return;
+				}
+
+
+			/**
+			* Draw part of a (real-valued) filled circle .
+			*
+			* @param	circlepart	combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	center    center.
+			* @param	radius    radius.
+			* @param	color	  color.
+			* @param	fillcolor color to fill the inside of the circle.
+			* @param	aa		  (Optional) true to use antialiasing.
+			* @param	blend	  (Optional) true to use blending.
+			*/
+			void draw_part_filled_circle(int circlepart, fVec2 center, double radius, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+				{
+				if (isEmpty() || (radius <= 0)) return;
+				iBox2 B = intersectionRect(imageBox(), _ellipseBBox(center, radius, radius).get_split(circlepart));
 				if (aa)
 					{
 					if (blend) _draw_ellipse2_AA<true, true>(B, center, radius, radius, color, fillcolor); else _draw_ellipse2_AA<false, true>(B, center, radius, radius, color, fillcolor);
@@ -2874,6 +2928,32 @@ namespace mtools
 
 
 			/**
+			* Draw part of a thick (real-valued) circle
+			*
+			* @param	circlepart	combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	center    center.
+			* @param	radius    (outer) radius.
+			* @param	thickness thickness of the circle. The inner radius is radius - thickness.
+			* @param	color	  color.
+			* @param	aa		  (Optional) true to use antialiasing.
+			* @param	blend	  (Optional) true to use blending.
+			*/
+			void draw_part_thick_circle(int circlepart, fVec2 center, double radius, double thickness, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+				{
+				if (isEmpty() || (radius <= 0)) return;
+				if (thickness < 2)
+					{
+					draw_part_circle(circlepart, center, radius, color, aa, blend);
+					return;
+					}
+				double radius2 = std::max<double>(radius - thickness, 0);
+				iBox2 B = intersectionRect(imageBox(), _ellipseBBox(center, radius, radius).get_split(circlepart));
+				if (blend) _draw_ellipse_thick_AA<true, false>(B, center, radius2, radius2, radius, radius, color, color); else _draw_ellipse_thick_AA<false, false>(B, center, radius2, radius2, radius, radius, color, color);
+				return;
+				}
+
+
+			/**
 			* Draw a thick (real-valued) filled circle
 			*
 			* @param	center    center.
@@ -2899,6 +2979,32 @@ namespace mtools
 				}
 
 
+			/**
+			* Draw `part of a thick (real-valued) filled circle
+			*
+			* @param	circlepart	combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	center    center.
+			* @param	radius    (outer) radius.
+			* @param	thickness thickness of the circle. The inner radius is radius - thickness.
+			* @param	color	  color.
+			* @param	fillcolor color to fill the circle.
+			* @param	aa		  (Optional) true to use antialiasing.
+			* @param	blend	  (Optional) true to use blending.
+			*/
+			void draw_part_thick_filled_circle(int circlepart, fVec2 center, double radius, double thickness, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+				{
+				if (isEmpty() || (radius <= 0)) return;
+				if (thickness < 2)
+					{
+					draw_part_filled_circle(circlepart, center, radius, color, fillcolor, aa, blend);
+					return;
+					}
+				double radius2 = std::max<double>(radius - thickness, 0);
+				iBox2 B = intersectionRect(imageBox(), _ellipseBBox(center, radius, radius).get_split(circlepart));
+				if (blend) _draw_ellipse_thick_AA<true, true>(B, center, radius2, radius2, radius, radius, color, fillcolor); else _draw_ellipse_thick_AA<false, true>(B, center, radius2, radius2, radius, radius, color, fillcolor);
+				return;
+				}
+
 
 
 			/**
@@ -2912,10 +3018,10 @@ namespace mtools
 			* @param	blend  (Optional) true to use blending.
 			*/
 			inline void draw_ellipse(iVec2 center, int64 rx, int64 ry, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
-			{
+				{
 				if (rx == ry) { draw_circle(center, rx, color, aa, blend); return; }
 				draw_ellipse_in_box(iBox2(center.X() - rx, center.X() + rx, center.Y() - ry, center.Y() + ry), color, aa, blend);
-			}
+				}
 
 
 			/**
@@ -2930,10 +3036,10 @@ namespace mtools
 			* @param	blend	  (Optional) true to use blending.
 			*/
 			inline void draw_filled_ellipse(iVec2 center, int64 rx, int64 ry, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
-			{
+				{
 				if (rx == ry) { draw_filled_circle(center, rx, color, fillcolor, aa, blend); return; }
 				draw_filled_ellipse_in_box(iBox2(center.X() - rx, center.X() + rx, center.Y() - ry, center.Y() + ry), color, fillcolor, aa, blend);
-			}
+				}
 
 
 			/**
@@ -2948,10 +3054,28 @@ namespace mtools
 			* @param	grid_align (Optional) true to align to nearest integer value (faster drawing).
 			*/
 			inline void draw_ellipse(fVec2 center, double rx, double ry, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, bool grid_align = true)
-			{
+				{
 				if (rx == ry) { draw_circle(center, rx, color, aa, blend, grid_align); return; }
 				draw_ellipse_in_box(fBox2(center.X() - rx, center.X() + rx, center.Y() - ry, center.Y() + ry), color, aa, blend, grid_align);
-			}
+				}
+
+
+			/**
+			* Draw part of a (real-valued) ellipse.
+			*
+		    * @param	part   combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	center center.
+			* @param	rx	   radius along the x-axis.
+			* @param	ry	   raduis along the y-axis.
+			* @param	color  color.
+			* @param	aa	   (Optional) true to use antialiasing.
+			* @param	blend  (Optional) true to use blending.
+			*/
+			inline void draw_part_ellipse(int part, fVec2 center, double rx, double ry, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+				{
+				if (rx == ry) { draw_part_circle(part,center, rx, color, aa, blend); return; }
+				draw_part_ellipse_in_box(part,fBox2(center.X() - rx, center.X() + rx, center.Y() - ry, center.Y() + ry), color, aa, blend);
+				}
 
 
 			/**
@@ -2967,10 +3091,29 @@ namespace mtools
 			* @param	grid_align (Optional) true to align to nearest integer value (faster drawing).
 			*/
 			inline void draw_filled_ellipse(fVec2 center, double rx, double ry, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, bool grid_align = true)
-			{
+				{
 				if (rx == ry) { draw_filled_circle(center, rx, color, fillcolor, aa, blend, grid_align); return; }
 				draw_filled_ellipse_in_box(fBox2(center.X() - rx, center.X() + rx, center.Y() - ry, center.Y() + ry), color, fillcolor, aa, blend, grid_align);
-			}
+				}
+
+
+			/**
+			* Draw part of a filled (real-valued) ellipse.
+			*
+			* @param	part   combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	center    center.
+			* @param	rx		  radius along the x-axis.
+			* @param	ry		  raduis along the y-axis.
+			* @param	color	  color.
+			* @param	fillcolor color to fill the ellipse.
+			* @param	aa		  (Optional) true to use antialiasing.
+			* @param	blend	  (Optional) true to use blending.
+			*/
+			inline void draw_part_filled_ellipse(int part, fVec2 center, double rx, double ry, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+				{
+				if (rx == ry) { draw_part_filled_circle(part, center, rx, color, fillcolor, aa, blend); return; }
+				draw_part_filled_ellipse_in_box(part, fBox2(center.X() - rx, center.X() + rx, center.Y() - ry, center.Y() + ry), color, fillcolor, aa, blend);
+				}
 
 
 			/**
@@ -3104,7 +3247,7 @@ namespace mtools
 			* @param	grid_align (Optional) true to align to nearest integer value (faster drawing).
 			*/
 			void draw_ellipse_in_box(const fBox2 & ellipseBox, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, bool grid_align = true)
-			{
+				{
 				if (isEmpty() || (ellipseBox.isEmpty())) return;
 				if ((grid_align) || (isIntegerValued(ellipseBox)))
 					{
@@ -3127,7 +3270,37 @@ namespace mtools
 					else _draw_ellipse2<false, true, false>(B, center, rx, ry, color, color);
 					}
 				return;
-			}
+				}
+
+
+			/**
+			* Draw part of an ellipse inside a (real-valued) box.
+			*
+			* @param	part   combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	ellipseBox	  bounding box for the ellipse.
+			* @param	color color.
+			* @param	aa    (Optional) true to use antialiasing.
+			* @param	blend (Optional) true to use blending.
+			*/
+			void draw_part_ellipse_in_box(int part, const fBox2 & ellipseBox, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+				{
+				if (isEmpty() || (ellipseBox.isEmpty())) return;
+				double rx = (ellipseBox.max[0] - ellipseBox.min[0]) / 2;
+				double ry = (ellipseBox.max[1] - ellipseBox.min[1]) / 2;
+				fVec2 center = { (ellipseBox.max[0] + ellipseBox.min[0]) / 2 , (ellipseBox.max[1] + ellipseBox.min[1]) / 2 };
+				iBox2 B = intersectionRect(imageBox(), _ellipseBBox(center,rx,ry).get_split(part));
+				if (aa)
+					{
+					if (blend) _draw_ellipse2_AA<true, false>(B, center, rx, ry, color, color);
+					else _draw_ellipse2_AA<false, false>(B, center, rx, ry, color, color);
+					}
+				else
+					{
+					if (blend) _draw_ellipse2<true, true, false>(B, center, rx, ry, color, color);
+					else _draw_ellipse2<false, true, false>(B, center, rx, ry, color, color);
+					}
+				return;
+				}
 
 
 			/**
@@ -3141,7 +3314,7 @@ namespace mtools
 			* @param	grid_align (Optional) true to align to nearest integer value (faster drawing).
 			*/
 			void draw_filled_ellipse_in_box(const fBox2 & ellipseBox, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, bool grid_align = true)
-			{
+				{
 				if (isEmpty() || (ellipseBox.isEmpty())) return;
 				if ((grid_align) || (isIntegerValued(ellipseBox)))
 					{
@@ -3154,21 +3327,52 @@ namespace mtools
 				double ry = (ellipseBox.max[1] - ellipseBox.min[1]) / 2;
 				fVec2 center = { (ellipseBox.max[0] + ellipseBox.min[0]) / 2 , (ellipseBox.max[1] + ellipseBox.min[1]) / 2 };
 				if (aa)
-				{
+					{
 					if (blend) _draw_ellipse2_AA<true, true>(B, center, rx, ry, color, fillcolor);
 					else _draw_ellipse2_AA<false, true>(B, center, rx, ry, color, fillcolor);
-				}
+					}
 				else
-				{
+					{
 					if (blend) _draw_ellipse2<true, true, true>(B, center, rx, ry, color, fillcolor);
 					else _draw_ellipse2<false, true, true>(B, center, rx, ry, color, fillcolor);
-				}
+					}
 				return;
-			}
+				}
 
 
 			/**
-			* Draw a thick (integer valued) ellipse
+			* Draw a part of filled ellipse inside a (real-valued) box.
+			*
+			* @param	part   combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	ellipseBox		  bounding box for the ellipse.
+			* @param	color	  color.
+			* @param	fillcolor color to fill the ellipse.
+			* @param	aa		  (Optional) true to use antialiasing.
+			* @param	blend	  (Optional) true to use blending.
+			*/
+			void draw_part_filled_ellipse_in_box(int part, const fBox2 & ellipseBox, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+				{
+				if (isEmpty() || (ellipseBox.isEmpty())) return;
+				double rx = (ellipseBox.max[0] - ellipseBox.min[0]) / 2;
+				double ry = (ellipseBox.max[1] - ellipseBox.min[1]) / 2;
+				fVec2 center = { (ellipseBox.max[0] + ellipseBox.min[0]) / 2 , (ellipseBox.max[1] + ellipseBox.min[1]) / 2 };
+				iBox2 B = intersectionRect(imageBox(), _ellipseBBox(center, rx, ry).get_split(part));
+				if (aa)
+					{
+					if (blend) _draw_ellipse2_AA<true, true>(B, center, rx, ry, color, fillcolor);
+					else _draw_ellipse2_AA<false, true>(B, center, rx, ry, color, fillcolor);
+					}
+				else
+					{
+					if (blend) _draw_ellipse2<true, true, true>(B, center, rx, ry, color, fillcolor);
+					else _draw_ellipse2<false, true, true>(B, center, rx, ry, color, fillcolor);
+					}
+				return;
+				}
+
+
+			/**
+			* Draw a thick (real valued) ellipse
 			*
 			* @param	center	    center.
 			* @param	rx		    (outer) radius along the x-axis.
@@ -3199,7 +3403,39 @@ namespace mtools
 
 
 			/**
-			* Draw a thick filled (integer valued) ellipse
+			* Draw part of a thick (real valued) ellipse
+			*
+			* @param	part		combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	center	    center.
+			* @param	rx		    (outer) radius along the x-axis.
+			* @param	ry		    (outer) radius along the y-axis.
+			* @param	thickness_x thickness along the x-axis inner x-radius = rx - thickness_x.
+			* @param	thickness_y thickness along the y-axis inner y-radius = ry - thickness_y.
+			* @param	color	    color.
+			* @param	aa		    (Optional) true to use antialiasing.
+			* @param	blend	    (Optional) true to use blending.
+			*/
+			inline void draw_part_thick_ellipse(int part, fVec2 center, double rx, double ry, double thickness_x, double thickness_y, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+			{
+				if (isEmpty()) return;
+				thickness_x = std::max<double>(thickness_x, 0);
+				thickness_y = std::max<double>(thickness_y, 0);
+				if ((thickness_x < 2) && (thickness_y < 2))
+					{
+					draw_part_ellipse(part,center, rx, ry, color, aa, blend);
+					return;
+					}
+				const double arx = std::max<double>(rx - thickness_x, 0);
+				const double ary = std::max<double>(ry - thickness_y, 0);
+				iBox2 B = intersectionRect(imageBox(), _ellipseBBox(center, rx, ry).get_split(part));
+				if (blend) _draw_ellipse_thick_AA<true, false>(B, center, arx, ary, rx, ry, color, color);
+				else _draw_ellipse_thick_AA<false, false>(B, center, arx, ary, rx, ry, color, color);
+			}
+
+
+
+			/**
+			* Draw a thick filled (real valued) ellipse
 			*
 			* @param	center	    center.
 			* @param	rx		    (outer) radius along the x-axis.
@@ -3231,6 +3467,38 @@ namespace mtools
 
 
 			/**
+			* Draw part of a thick filled (real valued) ellipse
+			*
+			* @param	part		combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	center	    center.
+			* @param	rx		    (outer) radius along the x-axis.
+			* @param	ry		    (outer) radius along the y-axis.
+			* @param	thickness_x thickness along the x-axis inner x-radius = rx - thickness_x.
+			* @param	thickness_y thickness along the y-axis inner y-radius = ry - thickness_y.
+			* @param	color	    color.
+			* @param	fillcolor   color to fill the ellipse.
+			* @param	aa		    (Optional) true to use antialiasing.
+			* @param	blend	    (Optional) true to use blending.
+			*/
+			inline void draw_part_thick_filled_ellipse(int part, fVec2 center, double rx, double ry, double thickness_x, double thickness_y, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+				{
+				if (isEmpty()) return;
+				thickness_x = std::max<double>(thickness_x, 0);
+				thickness_y = std::max<double>(thickness_y, 0);
+				if ((thickness_x < 2) && (thickness_y < 2))
+					{
+					draw_part_filled_ellipse(part,center, rx, ry, color, fillcolor, aa, blend);
+					return;
+					}
+				const double arx = std::max<double>(rx - thickness_x, 0);
+				const double ary = std::max<double>(ry - thickness_y, 0);
+				iBox2 B = intersectionRect(imageBox(), _ellipseBBox(center, rx, ry).get_split(part));
+				if (blend) _draw_ellipse_thick_AA<true, true>(B, center, arx, ary, rx, ry, color, fillcolor);
+				else _draw_ellipse_thick_AA<false, true>(B, center, arx, ary, rx, ry, color, fillcolor);
+				}
+
+
+			/**
 			* Draw a thick ellipse inside a (real-valued) box.
 			*
 			* @param	B		    ellipse outer bounding box.
@@ -3244,12 +3512,34 @@ namespace mtools
 			* @param	grid_align  (Optional) true to align to nearest integer value (faster drawing).
 			*/
 			inline void draw_thick_ellipse_in_box(const fBox2 & B, double thickness_x, double thickness_y, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, bool grid_align = true)
-			{
+				{
 				fVec2 center((B.max[0] + B.min[0]) / 2, (B.max[1] + B.min[1]) / 2);
 				double rx = (B.max[0] - B.min[0]) / 2;
 				double ry = (B.max[1] - B.min[1]) / 2;
 				draw_thick_ellipse(center, rx, ry, thickness_x, thickness_y, color, aa, blend, grid_align);
-			}
+				}
+
+
+			/**
+			* Draw part of a thick ellipse inside a (real-valued) box.
+			*
+			* @param	part		combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	B		    ellipse outer bounding box.
+			* @param	thickness_x thickness along the x-axis (the ellipse inner radius is obtained by
+			* 						substracting this quantity from the bounding box radius).
+			* @param	thickness_y thickness along the y-axis (the ellipse inner radius is obtained by
+			* 						substracting this quantity from the bounding box radius).
+			* @param	color	    color.
+			* @param	aa		    (Optional) true to use antialiasing.
+			* @param	blend	    (Optional) true to use blending.
+			*/
+			inline void draw_part_thick_ellipse_in_box(int part, const fBox2 & B, double thickness_x, double thickness_y, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+				{
+				fVec2 center((B.max[0] + B.min[0]) / 2, (B.max[1] + B.min[1]) / 2);
+				double rx = (B.max[0] - B.min[0]) / 2;
+				double ry = (B.max[1] - B.min[1]) / 2;
+				draw_part_thick_ellipse(part, center, rx, ry, thickness_x, thickness_y, color, aa, blend);
+				}
 
 
 			/**
@@ -3267,12 +3557,35 @@ namespace mtools
 			* @param	grid_align  (Optional) true to align to nearest integer value (faster drawing).
 			*/
 			inline void draw_thick_filled_ellipse_in_box(const fBox2 & B, double thickness_x, double thickness_y, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, bool grid_align = true)
-			{
+				{
 				fVec2 center((B.max[0] + B.min[0]) / 2, (B.max[1] + B.min[1]) / 2);
 				double rx = (B.max[0] - B.min[0]) / 2;
 				double ry = (B.max[1] - B.min[1]) / 2;
 				draw_thick_filled_ellipse(center, rx, ry, thickness_x, thickness_y, color, fillcolor, aa, blend, grid_align);
-			}
+				}
+
+
+			/**
+			* Draw part of a thick filled ellipse inside a (real-valued) box.
+			*
+			* @param	part		combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	B		    ellipse outer bounding box.
+			* @param	thickness_x thickness along the x-axis (the ellipse inner radius is obtained by
+			* 						substracting this quantity from the bounding box radius).
+			* @param	thickness_y thickness along the y-axis (the ellipse inner radius is obtained by
+			* 						substracting this quantity from the bounding box radius).
+			* @param	color	    color.
+			* @param	fillcolor   color to fill the ellipse.
+			* @param	aa		    (Optional) true to use antialiasing.
+			* @param	blend	    (Optional) true to use blending.
+			*/
+			inline void draw_part_thick_filled_ellipse_in_box(int part, const fBox2 & B, double thickness_x, double thickness_y, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+				{
+				fVec2 center((B.max[0] + B.min[0]) / 2, (B.max[1] + B.min[1]) / 2);
+				double rx = (B.max[0] - B.min[0]) / 2;
+				double ry = (B.max[1] - B.min[1]) / 2;
+				draw_part_thick_filled_ellipse(part, center, rx, ry, thickness_x, thickness_y, color, fillcolor, aa, blend);
+				}
 
 
 
@@ -4661,6 +4974,30 @@ namespace mtools
 
 
 			/**
+			* Draw part of a circle.
+			*
+			* @param	R	   the absolute range represented in the image.
+			* @param	part   combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	center center
+			* @param	radius radius
+			* @param	color  color
+			* @param	aa	   (Optional) true to use antialiasing.
+			* @param	blend  (Optional) true to use blending.
+			**/
+			MTOOLS_FORCEINLINE void canvas_draw_part_circle(const fBox2 & R, int part, fVec2 center, double radius, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+				{
+				const double EPS = 0.1;
+				if (isEmpty()) return;
+				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
+				double rx = boxTransform_dx(radius, R, imBox);
+				double ry = boxTransform_dy(radius, R, imBox);
+				if (std::abs<double>(rx - ry) < EPS) draw_part_circle(part,boxTransform(center, R, imBox), rx, color, aa, blend);
+				else draw_part_ellipse(part,boxTransform(center, R, imBox), rx, ry, color, aa, blend);
+				}
+
+
+
+			/**
 			* Draw a filled circle.
 			*
 			* @param	R			the absolute range represented in the image.
@@ -4680,6 +5017,30 @@ namespace mtools
 				const double ry = boxTransform_dy(radius, R, imBox);
 				if (std::abs<double>(rx - ry) < EPS) draw_filled_circle(boxTransform(center, R, imBox), rx, color, fillcolor, aa, blend);
 				else draw_filled_ellipse(boxTransform(center, R, imBox), rx, ry, color, fillcolor, aa, blend);
+			}
+
+
+			/**
+			* Draw part of a filled circle.
+			*
+			* @param	R			the absolute range represented in the image.
+			* @param	part		combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	center		center
+			* @param	radius		radius
+			* @param	color		color
+			* @param	fillcolor	color to fill the circle.
+			* @param	aa			(Optional) true to use antialiasing.
+			* @param	blend		(Optional) true to use blending.
+			**/
+			MTOOLS_FORCEINLINE void canvas_draw_part_filled_circle(const fBox2 & R, int part, fVec2 center, double radius, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+			{
+				const double EPS = 0.1;
+				if (isEmpty()) return;
+				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
+				const double rx = boxTransform_dx(radius, R, imBox);
+				const double ry = boxTransform_dy(radius, R, imBox);
+				if (std::abs<double>(rx - ry) < EPS) draw_part_filled_circle(part,boxTransform(center, R, imBox), rx, color, fillcolor, aa, blend);
+				else draw_part_filled_ellipse(part,boxTransform(center, R, imBox), rx, ry, color, fillcolor, aa, blend);
 			}
 
 
@@ -4715,6 +5076,38 @@ namespace mtools
 			}
 
 
+			/**
+			* Draw part of a thick circle.
+			*
+			* @param	R					the absolute range represented in the image.
+			* @param	part				combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	center				center
+			* @param	radius				radius
+			* @param	thickness			thickness.
+			* @param    relativethickness	true to scale tickness with range and false to use constant thcikness.
+			* @param	color				color
+			* @param	aa					(Optional) true to use antialiasing.
+			* @param	blend				(Optional) true to use blending.
+			**/
+			MTOOLS_FORCEINLINE void canvas_draw_part_thick_circle(const fBox2 & R, int part, fVec2 center, double radius, double thickness, bool relativethickness, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+			{
+				const double EPS = 0.1;
+				if (isEmpty()) return;
+				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
+				const double rx = boxTransform_dx(radius, R, imBox);
+				const double ry = boxTransform_dy(radius, R, imBox);
+				if (std::abs<double>(rx - ry) < EPS)
+					{
+					if (relativethickness) draw_part_thick_circle(part,boxTransform(center, R, imBox), rx, boxTransform_dx(thickness, R, imBox), color, aa, blend);
+					else draw_part_thick_circle(part,boxTransform(center, R, imBox), rx, thickness, color, aa, blend);
+					}
+				else
+				{
+					if (relativethickness) draw_part_thick_ellipse(part,boxTransform(center, R, imBox), rx, ry, boxTransform_dx(thickness, R, imBox), boxTransform_dy(thickness, R, imBox), color, aa, blend);
+					else draw_part_thick_ellipse(part,boxTransform(center, R, imBox), rx, ry, thickness, thickness, color, aa, blend);
+				}
+			}
+
 
 			/**
 			* Draw a thick filled circle.
@@ -4749,6 +5142,39 @@ namespace mtools
 			}
 
 
+			/**
+			* Draw part of a thick filled circle.
+			*
+			* @param	R					the absolute range represented in the image.
+			* @param	part				combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	center				center
+			* @param	radius				radius
+			* @param	thickness			thickness.
+			* @param    relativethickness	true to scale tickness with range and false to use constant thcikness.
+			* @param	color				color
+			* @param	fillcolor			color to fill the circle.
+			* @param	aa					(Optional) true to use antialiasing.
+			* @param	blend				(Optional) true to use blending.
+			**/
+			MTOOLS_FORCEINLINE void canvas_draw_part_thick_filled_circle(const fBox2 & R, int part, fVec2 center, double radius, double thickness, bool relativethickness, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+			{
+				const double EPS = 0.1;
+				if (isEmpty()) return;
+				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
+				const double rx = boxTransform_dx(radius, R, imBox);
+				const double ry = boxTransform_dy(radius, R, imBox);
+				if (std::abs<double>(rx - ry) < EPS)
+					{
+					if (relativethickness) draw_part_thick_filled_circle(part, boxTransform(center, R, imBox), rx, boxTransform_dx(thickness, R, imBox), color, fillcolor, aa, blend);
+					else draw_part_thick_filled_circle(part, boxTransform(center, R, imBox), rx, thickness, color, fillcolor, aa, blend);
+					}
+				else
+					{
+					if (relativethickness) draw_part_thick_filled_ellipse(part, boxTransform(center, R, imBox), rx, ry, boxTransform_dx(thickness, R, imBox), boxTransform_dy(thickness, R, imBox), color, fillcolor, aa, blend);
+					else draw_part_thick_filled_ellipse(part, boxTransform(center, R, imBox), rx, ry, thickness, thickness, color, fillcolor, aa, blend);
+					}
+			}
+
 
 			/**
 			* Draw an ellipse.
@@ -4762,11 +5188,31 @@ namespace mtools
 			* @param	blend  (Optional) true to use blending.
 			**/
 			MTOOLS_FORCEINLINE void canvas_draw_ellipse(const fBox2 & R, fVec2 center, double rx, double ry, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
-			{
+				{
 				if (isEmpty()) return;
 				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
 				draw_ellipse(boxTransform(center, R, imBox), boxTransform_dx(rx, R, imBox), boxTransform_dy(ry, R, imBox), color, aa, blend);
-			}
+				}
+
+
+			/**
+			* Draw part of an ellipse.
+			*
+			* @param	R	   the absolute range represented in the image.
+			* @param	part   combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	center center
+			* @param	rx	   radius along the x-axis.
+			* @param	ry	   radius along the y-axis.
+			* @param	color  color
+			* @param	aa	   (Optional) true to use antialiasing.
+			* @param	blend  (Optional) true to use blending.
+			**/
+			MTOOLS_FORCEINLINE void canvas_draw_part_ellipse(const fBox2 & R, int part, fVec2 center, double rx, double ry, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+				{
+				if (isEmpty()) return;
+				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
+				draw_part_ellipse(part, boxTransform(center, R, imBox), boxTransform_dx(rx, R, imBox), boxTransform_dy(ry, R, imBox), color, aa, blend);
+				}
 
 
 			/**
@@ -4782,11 +5228,32 @@ namespace mtools
 			* @param	blend		(Optional) true to use blending.
 			**/
 			MTOOLS_FORCEINLINE void canvas_draw_filled_ellipse(const fBox2 & R, fVec2 center, double rx, double ry, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
-			{
+				{
 				if (isEmpty()) return;
 				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
 				draw_filled_ellipse(boxTransform(center, R, imBox), boxTransform_dx(rx, R, imBox), boxTransform_dy(ry, R, imBox), color, fillcolor, aa, blend);
-			}
+				}
+
+
+			/**
+			* Draw part of a filled ellipse.
+			*
+			* @param	R			the absolute range represented in the image.
+			* @param	part		combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	center		center
+			* @param	rx			radius along the x-axis.
+			* @param	ry			radius along the y-axis.
+			* @param	color		color
+			* @param	fillcolor	color to fill the ellipse.
+			* @param	aa			(Optional) true to use antialiasing.
+			* @param	blend		(Optional) true to use blending.
+			**/
+			MTOOLS_FORCEINLINE void canvas_draw_part_filled_ellipse(const fBox2 & R, int part, fVec2 center, double rx, double ry, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+				{
+				if (isEmpty()) return;
+				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
+				draw_part_filled_ellipse(part,boxTransform(center, R, imBox), boxTransform_dx(rx, R, imBox), boxTransform_dy(ry, R, imBox), color, fillcolor, aa, blend);
+				}
 
 
 			/**
@@ -4804,14 +5271,40 @@ namespace mtools
 			* @param	blend				(Optional) true to use blending.
 			**/
 			MTOOLS_FORCEINLINE void canvas_draw_thick_ellipse(const fBox2 & R, fVec2 center, double rx, double ry, double thickness_x, double thickness_y, bool relativethickness, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
-			{
+				{
 				if (isEmpty()) return;
 				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
 				const double frx = boxTransform_dx(rx, R, imBox);
 				const double fry = boxTransform_dy(ry, R, imBox);
 				if (relativethickness) draw_thick_ellipse(boxTransform(center, R, imBox), frx, fry, boxTransform_dx(thickness_x, R, imBox), boxTransform_dy(thickness_y, R, imBox), color, aa, blend);
 				else draw_thick_ellipse(boxTransform(center, R, imBox), frx, fry, thickness_x, thickness_y, color, aa, blend);
-			}
+				}
+
+
+			/**
+			* Draw part of a thick ellipse.
+			*
+			* @param	R					the absolute range represented in the image.
+			* @param	part				combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	center				center
+			* @param	rx					radius along the x-axis.
+			* @param	ry					radius along the y-axis.
+			* @param	thickness_x			thickness on the x-axis.
+			* @param	thickness_y			thickness on the y-axis.
+			* @param    relativethickness	true to scale tickness with range and false to use constant thcikness.
+			* @param	color				color
+			* @param	aa					(Optional) true to use antialiasing.
+			* @param	blend				(Optional) true to use blending.
+			**/
+			MTOOLS_FORCEINLINE void canvas_draw_part_thick_ellipse(const fBox2 & R, int part, fVec2 center, double rx, double ry, double thickness_x, double thickness_y, bool relativethickness, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+				{
+				if (isEmpty()) return;
+				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
+				const double frx = boxTransform_dx(rx, R, imBox);
+				const double fry = boxTransform_dy(ry, R, imBox);
+				if (relativethickness) draw_part_thick_ellipse(part, boxTransform(center, R, imBox), frx, fry, boxTransform_dx(thickness_x, R, imBox), boxTransform_dy(thickness_y, R, imBox), color, aa, blend);
+				else draw_part_thick_ellipse(part, boxTransform(center, R, imBox), frx, fry, thickness_x, thickness_y, color, aa, blend);
+				}
 
 
 			/**
@@ -4830,14 +5323,41 @@ namespace mtools
 			* @param	blend				(Optional) true to use blending.
 			**/
 			MTOOLS_FORCEINLINE void canvas_draw_thick_filled_ellipse(const fBox2 & R, fVec2 center, double rx, double ry, double thickness_x, double thickness_y, bool relativethickness, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
-			{
+				{
 				if (isEmpty()) return;
 				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
 				const double frx = boxTransform_dx(rx, R, imBox);
 				const double fry = boxTransform_dy(ry, R, imBox);
 				if (relativethickness) draw_thick_filled_ellipse(boxTransform(center, R, imBox), frx, fry, boxTransform_dx(thickness_x, R, imBox), boxTransform_dy(thickness_y, R, imBox), color, fillcolor, aa, blend);
 				else draw_thick_filled_ellipse(boxTransform(center, R, imBox), frx, fry, thickness_x, thickness_y, color, fillcolor, aa, blend);
-			}
+				}
+
+
+			/**
+			* Draw a part of thick filled ellipse.
+			*
+			* @param	R					the absolute range represented in the image.
+			* @param	part				combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	center				center
+			* @param	rx					radius along the x-axis.
+			* @param	ry					radius along the y-axis.
+			* @param	thickness_x			thickness on the x-axis.
+			* @param	thickness_y			thickness on the y-axis.
+			* @param    relativethickness	true to scale tickness with range and false to use constant thcikness.
+			* @param	color				color
+			* @param	fillcolor			color to fill the ellipse.
+			* @param	aa					(Optional) true to use antialiasing.
+			* @param	blend				(Optional) true to use blending.
+			**/
+			MTOOLS_FORCEINLINE void canvas_draw_part_thick_filled_ellipse(const fBox2 & R, int part, fVec2 center, double rx, double ry, double thickness_x, double thickness_y, bool relativethickness, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+				{
+				if (isEmpty()) return;
+				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
+				const double frx = boxTransform_dx(rx, R, imBox);
+				const double fry = boxTransform_dy(ry, R, imBox);
+				if (relativethickness) draw_part_thick_filled_ellipse(part, boxTransform(center, R, imBox), frx, fry, boxTransform_dx(thickness_x, R, imBox), boxTransform_dy(thickness_y, R, imBox), color, fillcolor, aa, blend);
+				else draw_part_thick_filled_ellipse(part, boxTransform(center, R, imBox), frx, fry, thickness_x, thickness_y, color, fillcolor, aa, blend);
+				}
 
 
 			/**
@@ -4850,12 +5370,29 @@ namespace mtools
 			* @param	blend		(Optional) true to use blending.
 			**/
 			MTOOLS_FORCEINLINE void canvas_draw_ellipse_in_box(const fBox2 & R, const fBox2 & ellipseBox, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
-			{
+				{
 				if (isEmpty()) return;
 				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
 				draw_ellipse_in_box(boxTransform(ellipseBox, R, imBox), color, aa, blend);
-			}
+				}
 
+
+			/**
+			* Draw part of an ellipse with a given bounding box.
+			*
+			* @param	R			the absolute range represented in the image.
+			* @param	part		combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	ellipseBox	the ellipse bounding box.
+			* @param	color		color
+			* @param	aa			(Optional) true to use antialiasing.
+			* @param	blend		(Optional) true to use blending.
+			**/
+			MTOOLS_FORCEINLINE void canvas_draw_part_ellipse_in_box(const fBox2 & R, int part, const fBox2 & ellipseBox, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+				{
+				if (isEmpty()) return;
+				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
+				draw_part_ellipse_in_box(part,boxTransform(ellipseBox, R, imBox), color, aa, blend);
+				}
 
 
 			/**
@@ -4869,11 +5406,30 @@ namespace mtools
 			* @param	blend		(Optional) true to use blending.
 			**/
 			MTOOLS_FORCEINLINE void canvas_draw_filled_ellipse_in_box(const fBox2 & R, const fBox2 & ellipseBox, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
-			{
+				{
 				if (isEmpty()) return;
 				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
 				draw_filled_ellipse_in_box(boxTransform(ellipseBox, R, imBox), color, fillcolor, aa, blend);
-			}
+				}
+
+
+			/**
+			* Draw part of a filled ellipse with a given bounding box.
+			*
+			* @param	R			the absolute range represented in the image.
+			* @param	part		combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	ellipseBox	the ellipse bounding box.
+			* @param	color		color
+			* @param	fillcolor	color to fill the ellipse.
+			* @param	aa			(Optional) true to use antialiasing.
+			* @param	blend		(Optional) true to use blending.
+			**/
+			MTOOLS_FORCEINLINE void canvas_draw_part_filled_ellipse_in_box(const fBox2 & R, int part, const fBox2 & ellipseBox, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+				{
+				if (isEmpty()) return;
+				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
+				draw_part_filled_ellipse_in_box(part, boxTransform(ellipseBox, R, imBox), color, fillcolor, aa, blend);
+				}
 
 
 			/**
@@ -4889,14 +5445,36 @@ namespace mtools
 			* @param	blend				(Optional) true to use blending.
 			**/
 			MTOOLS_FORCEINLINE void canvas_draw_thick_ellipse_in_box(const fBox2 & R, const fBox2 & ellipseBox, double thickness_x, double thickness_y, bool relativethickness, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
-			{
+				{
 				if (isEmpty()) return;
 				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
 				const fBox2 B = boxTransform(ellipseBox, R, imBox);
 				if (relativethickness) draw_thick_ellipse_in_box(B, boxTransform_dx(thickness_x, R, imBox), boxTransform_dy(thickness_y, R, imBox), color, aa, blend);
 				else draw_thick_ellipse_in_box(B, thickness_x, thickness_y, color, aa, blend);
-			}
+				}
 
+
+			/**
+			* Draw part of a thick ellipse with a given bounding box.
+			*
+			* @param	R					the absolute range represented in the image.
+			* @param	part				combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	ellipseBox			the ellipse bounding box.
+			* @param	thickness_x			thickness on the x-axis.
+			* @param	thickness_y			thickness on the y-axis.
+			* @param    relativethickness	true to scale tickness with range and false to use constant thcikness.
+			* @param	color				color
+			* @param	aa					(Optional) true to use antialiasing.
+			* @param	blend				(Optional) true to use blending.
+			**/
+			MTOOLS_FORCEINLINE void canvas_draw_part_thick_ellipse_in_box(const fBox2 & R, int part, const fBox2 & ellipseBox, double thickness_x, double thickness_y, bool relativethickness, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+				{
+				if (isEmpty()) return;
+				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
+				const fBox2 B = boxTransform(ellipseBox, R, imBox);
+				if (relativethickness) draw_part_thick_ellipse_in_box(part, B, boxTransform_dx(thickness_x, R, imBox), boxTransform_dy(thickness_y, R, imBox), color, aa, blend);
+				else draw_part_thick_ellipse_in_box(part, B, thickness_x, thickness_y, color, aa, blend);
+				}
 
 
 			/**
@@ -4921,6 +5499,29 @@ namespace mtools
 				else draw_thick_filled_ellipse_in_box(B, thickness_x, thickness_y, color, fillcolor, aa, blend);
 			}
 
+
+			/**
+			* Draw part of a thick filled ellipse with a given bounding box.
+			*
+			* @param	R					the absolute range represented in the image.
+			* @param	part				combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	ellipseBox			the ellipse bounding box.
+			* @param	thickness_x			thickness on the x-axis.
+			* @param	thickness_y			thickness on the y-axis.
+			* @param    relativethickness	true to scale tickness with range and false to use constant thcikness.
+			* @param	color				color
+			* @param	fillcolor			color to fill the ellipse.
+			* @param	aa					(Optional) true to use antialiasing.
+			* @param	blend				(Optional) true to use blending.
+			**/
+			MTOOLS_FORCEINLINE void canvas_draw_part_thick_filled_ellipse_in_box(const fBox2 & R, int part, const fBox2 & ellipseBox, double thickness_x, double thickness_y, bool relativethickness, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+			{
+				if (isEmpty()) return;
+				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
+				const fBox2 B = boxTransform(ellipseBox, R, imBox);
+				if (relativethickness) draw_part_thick_filled_ellipse_in_box(part, B, boxTransform_dx(thickness_x, R, imBox), boxTransform_dy(thickness_y, R, imBox), color, fillcolor, aa, blend);
+				else draw_part_thick_filled_ellipse_in_box(part, B, thickness_x, thickness_y, color, fillcolor, aa, blend);
+			}
 
 
 			/**
@@ -8204,6 +8805,13 @@ namespace mtools
 			/****************************************************************************
 			/* PRIVATE METHODS FOR DRAWING CIRCLES AND ELLIPSES. 
 			*****************************************************************************/
+
+
+			/** Compute the integer valued bounding box for an ellipse */
+			MTOOLS_FORCEINLINE iBox2 _ellipseBBox(fVec2 center, double rx, double ry)
+				{
+				return iBox2((int64)(floor(center.X() - rx)), (int64)(ceil(center.X() + rx)), (int64)(floor(center.Y() - ry)), (int64)(ceil(center.Y() + ry)));
+				}
 
 
 			/**

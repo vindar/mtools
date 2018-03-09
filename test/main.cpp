@@ -45,11 +45,11 @@ void testplotfigure()
 		{
 		fVec2 pos = { 10000 * Unif(gen),10000 * Unif(gen) };
 		double rad = 10*Unif(gen);
-		canvas(FigureCircle(pos, rad, 1, false, RGBc::c_Red.getMultOpacity(1)), 0);
+		canvas(FigureCirclePart(BOX_SPLIT_UP, pos, rad, 1, false, RGBc::c_Red.getMultOpacity(1)), 0);
 		
 		pos = { 10000 * Unif(gen),10000 * Unif(gen) };
 		rad = 10 * Unif(gen);
-		canvas(FigureCircle(pos, rad, 1, false, RGBc::c_Blue.getMultOpacity(1)), 1);
+		canvas(FigureCirclePart(BOX_SPLIT_DOWN, pos, rad, 1, false, RGBc::c_Blue.getMultOpacity(1)), 1);
 		}
 
 	cout << "ok !\n\n";
