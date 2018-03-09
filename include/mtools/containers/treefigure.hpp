@@ -55,11 +55,11 @@ namespace mtools
 	 * plot2DFigure class. 
 	 * 
 	 * @tparam	T	   template parameter representing the type of objects contained in the container.
-	 * @tparam	N	   Max number of 'reducible' object per node (typically between 2 and 100). 
+	 * @tparam	N	   Max number of 'reducible' object per node, typically between 2 and 100  (5 or 10 is good). 
 	 * @tparam	TFloat Type use for floating point computation (default double).
 	 * 				   
 	 */
-	template<class T, int N = 10, class TFloat = double> class TreeFigure
+	template<class T, int N, class TFloat = double> class TreeFigure
 	{
 
 
