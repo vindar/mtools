@@ -25,7 +25,7 @@ std::vector<int> cluster_typeleft;	// number of end that exist the cluster to th
 std::vector<int> cluster_typeright; // number of end that exist the cluster to the right 
 									// (if both cluster_typeleft and cluster_typeright are 0, the cluster is finite and complete).
 
-mtools::MT2004_64 gen;	// random generator
+mtools::MT2004_64 gen(1);	// random generator
 
 
 /* construct an arc vector */
@@ -185,53 +185,50 @@ void makeNoodle()
 
 
 
-void makeImage(Image & im, int64 width, int64 height)
-	{
-	cout << "-> Generating the drawing... ";
+void makeDrawing()
+{
+	cout << "-> Generating the Figure object... ";
 	mtools::Chronometer();
-	double l = (double)L;
-	double lext = l + L / 5;
 
-	im.resizeRaw({ width,height }, true);
-	im.clear(RGBc::c_White);
-
-	fBox2 R(-l/5, lext, -l*3/4, l*3/4);
-
-	im.canvas_draw_axes(R);
-
-	bool highquality = (width / L) >= 4;		// use antialiasing and tick lines if ratio is large enough. 
-	bool blend = (highquality) ? true : false;
-	bool aa = (highquality) ?  true : false;
-	int pw = (highquality) ? 1 : 0;
+	auto canvas = makeFigureCanvas();
 
 	for (int i = 0; i < L; i++)
 		{
 		int id = clusterId[i]; // cluster associated with this site
 		RGBc color = ((cluster_typeleft[id] != 0) || (cluster_typeright[id] != 0))
-					? RGBc::c_Black.getOpacity(0.1 + (0.9f * cluster_size[id])/ maxsize_incomplete) // incomplete clusters in black with opacity according to their size
-					: RGBc::jetPalette(cluster_size[id], 2, maxsize_complete); // complete clusters colored by jetPalette according to their size. 
+			? RGBc::c_Black.getOpacity(0.1 + (0.9f * cluster_size[id]) / maxsize_incomplete) // incomplete clusters in black with opacity according to their size
+			: RGBc::jetPalette(cluster_size[id], 2, maxsize_complete); // complete clusters colored by jetPalette according to their size. 
 		const int up = upArc[i];
 		if ((up == -1) || (up == L))
 			{
-			im.canvas_draw_line(R, { (double)i, 0.0 }, { (double)i,  lext }, color, true, blend,aa,pw);
+			canvas(FigureVerticalLine((double)i, 0, L/2, 0.5, true, color));
 			}
 		else if (up > i)
 			{
-			im.canvas_draw_cubic_bezier(R, { (double)i, 0.0 }, { (double)up, 0.0 }, { (double)i, (double)(up-i) }, { (double)up, (double)(up-i) }, color, true, blend, aa, pw);
+			double r = (up - i)*0.5;
+			if (r < 0) r = -r;
+			canvas(FigureCirclePart(BOX_SPLIT_UP, fVec2 { (i + up)*0.5, 0.0 }, r + 0.25, 0.5, true, color));
 			}
 		const int down = downArc[i];
 		if ((down == -1) || (down == L))
 			{
-			im.canvas_draw_line(R, { (double)i, 0.0 }, { (double)i,  -lext }, color, true, blend, aa, pw);
+			canvas(FigureVerticalLine((double)i, 0, - L/2, 0.5, true, color));
 			}
 		else if (down > i)
 			{
-			im.canvas_draw_cubic_bezier(R, { (double)i, 0.0 }, { (double)down, 0.0 }, { (double)i, (double)(i - down) }, { (double)down, (double)(i - down) }, color, true, blend, aa, pw);
+			double r = (down - i)*0.5; 
+			if (r < 0) r = -r;
+			canvas(FigureCirclePart(BOX_SPLIT_DOWN, fVec2{ (i + down)*0.5, 0.0 }, r + 0.25, 0.5, true, color));
 			}
 		}
-	cout << " done in " << Chronometer() << " ms\n";
-	}
 
+	cout << " done in " << Chronometer() << " ms\n";
+	Plotter2D plotter;
+	auto P = makePlot2DFigure(canvas);
+	plotter[P];
+	plotter.plot();
+
+}
 
 
 int main(int argc, char *argv[]) 
@@ -239,34 +236,10 @@ int main(int argc, char *argv[])
     MTOOLS_SWAP_THREADS(argc, argv);  // swap main/fltk threads on OSX
 	parseCommandLine(argc,argv,true); // parse the command line, interactive mode
 	
-	L = arg("L", 500).info("Number of site in the percolation");
-	int imsize = arg("Image size", 5000).info("Image size");
+	L = arg("L", 5000000).info("Number of site in the percolation");
 
 	makeNoodle();
-
-	Image im;
-	makeImage(im, imsize, imsize);
-
-	std::string filename = std::string("noodle-L") + toString(L) + ".png";
-	cout << "-> Saving image as : [" << filename << "]... ";
-	im.save(filename.c_str());
-	cout << "done.\n";
-
-	cout << "\n\n";
-	cout << "Number of sites : " << L << "\n\n";
-	cout << "Number of clusters : " << cluster_size.size() << "\n";
-	cout << "      - complete   : " << nb_complete << "\n";
-	cout << "      - incomplete : " << nb_incomplete << "\n\n";
-	cout << "Largest complete cluster   : " << maxsize_complete << " sites.\n\n";
-	cout << "Largest incomplete cluster : " << maxsize_incomplete << " sites.\n\n";
-
-	Plotter2D plotter; 
-	auto P1 = makePlot2DImage(im, 4, "infinite noodle");
-	plotter[P1];
-	plotter.axesObject()->enable(false);
-	plotter.autorangeXY(); 
-	plotter.plot();
-
+	makeDrawing();
     return 0;
 	}
 	
