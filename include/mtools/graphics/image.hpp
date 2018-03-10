@@ -85,6 +85,9 @@ namespace mtools
 	class Font;
 
 
+	// TODO : make it 
+#define DEFAULT_MIN_THICKNESS	0.1
+
 
 	/**
 	 * Class representing a true color image  
@@ -1850,7 +1853,7 @@ namespace mtools
 			 * @param	draw_P2 	true to draw the end point.
 			 * @param	blending	true to use blending
 			 **/
-			inline void draw_horizontal_line(int64 y, int64 x1, int64 x2, RGBc color, bool draw_P2, bool blending)
+			inline void draw_horizontal_line(int64 y, int64 x1, int64 x2, RGBc color, bool draw_P2 = true, bool blending = true)
 				{
 				if (isEmpty()) return;
 				if ((blending) && (!color.isOpaque())) _horizontalLine<true, true>(y, x1, x2, color, draw_P2); else _horizontalLine<false, true>(y, x1, x2, color, draw_P2);
@@ -1865,16 +1868,15 @@ namespace mtools
 			 * @param	y			The y coordinate of the line.
 			 * @param	x1			x value of the start point.
 			 * @param	x2			x value of the end point.
+			 * @param	thickness	The thickness.
 			 * @param	color   	The color to use.
 			 * @param	draw_P2 	true to draw the end point.
 			 * @param	blending	true to use blending.
-			 * @param	tickness	The tickness.
 			 **/
-			inline void draw_horizontal_line(int64 y, int64 x1, int64 x2, RGBc color, bool draw_P2, bool blending, float tickness)
+			inline void draw_horizontal_line(int64 y, int64 x1, int64 x2, double thickness, RGBc color, bool draw_P2 = true, bool blending = true, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
-				if (tickness == 0.0f) { draw_horizontal_line(y, x1, x2, color, draw_P2, blending); return; }
-				if (isEmpty() || (tickness <0)) return;
-				if (blending) _tickHorizontalLine<true, true>(y, x1, x2, color, draw_P2, 2*tickness + 1); else _tickHorizontalLine<false, true>(y, x1, x2, color, draw_P2, 2*tickness + 1);
+				if (isEmpty() || (thickness <= 0)) return;
+				if (blending) _tickHorizontalLine<true, true>(y, x1, x2, color, draw_P2, thickness, min_tick); else _tickHorizontalLine<false, true>(y, x1, x2, color, draw_P2, thickness,min_tick);
 				}
 
 
@@ -1888,31 +1890,28 @@ namespace mtools
 			 * @param	draw_P2 	true to draw the end point.
 			 * @param	blending	true to use blending.
 			 **/
-			inline void draw_vertical_line(int64 x, int64 y1, int64 y2, RGBc color, bool draw_P2, bool blending)
+			inline void draw_vertical_line(int64 x, int64 y1, int64 y2, RGBc color, bool draw_P2 = true, bool blending = true)
 				{
 				if (isEmpty()) return;
-				if ((blending) && (!color.isOpaque())) _verticalLine<true, true>(x,y1,y2, color, draw_P2); else _verticalLine<false, true>(x,y1,y2, color, draw_P2);
+				if (blending) _verticalLine<true, true>(x,y1,y2, color, draw_P2); else _verticalLine<false, true>(x,y1,y2, color, draw_P2);
 				}
 
 
 			/**
 			 * Draw a (tick) vertical line.
-			 * 
-			 * The tickness correspond to the penwidth of the other method (but here it may also be non-integer using antialiasing).
 			 *
 			 * @param	x			The x coordinate of the line.
 			 * @param	y1			y value of the start point.
 			 * @param	y2			y value of the end point.
+			 * @param	thickness	The thickness.
 			 * @param	color   	The color to use.
 			 * @param	draw_P2 	true to draw the end point.
 			 * @param	blending	true to use blending.
-			 * @param	tickness	The tickness.
 			 **/
-			inline void draw_vertical_line(int64 x, int64 y1, int64 y2, RGBc color, bool draw_P2, bool blending, float tickness)
+			inline void draw_vertical_line(int64 x, int64 y1, int64 y2, double thickness, RGBc color, bool draw_P2 = true, bool blending = true, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
-				if (tickness == 0.0f) { draw_vertical_line(x, y1, y2, color, draw_P2, blending); return; }
-				if (isEmpty() || (tickness <0)) return;
-				if (blending) _tickVerticalLine<true, true>(x, y1, y2, color, draw_P2, 2*tickness  + 1); else _tickVerticalLine<false, true>(x, y1, y2, color, draw_P2, 2*tickness + 1);
+				if (isEmpty() || (thickness <= 0)) return;
+				if (blending) _tickVerticalLine<true, true>(x, y1, y2, color, draw_P2, thickness, min_tick); else _tickVerticalLine<false, true>(x, y1, y2, color, draw_P2, thickness, min_tick);
 				}
 
 
@@ -2355,11 +2354,11 @@ namespace mtools
 				if (dest_box.isEmpty()) return;
 				if (penwidth <= 0) penwidth = 0;
 				if (color.isOpaque()) blend = false;
-				float tickness = (float)penwidth;
-				draw_horizontal_line(dest_box.min[1], dest_box.min[0] - penwidth, dest_box.max[0] + penwidth, color, true, blend, tickness);
-				draw_horizontal_line(dest_box.max[1], dest_box.min[0] - penwidth, dest_box.max[0] + penwidth, color, true, blend, tickness);
-				draw_vertical_line(dest_box.min[0], dest_box.min[1] + penwidth + 1, dest_box.max[1] - penwidth - 1, color, true, blend, tickness);
-				draw_vertical_line(dest_box.max[0], dest_box.min[1] + penwidth + 1, dest_box.max[1] - penwidth - 1, color, true, blend, tickness);
+				double tickness = 2*penwidth  + 1; // does not work if not using integer penwidth !
+				draw_horizontal_line(dest_box.min[1], dest_box.min[0] - penwidth, dest_box.max[0] + penwidth, tickness, color, true, blend);
+				draw_horizontal_line(dest_box.max[1], dest_box.min[0] - penwidth, dest_box.max[0] + penwidth, tickness, color, true, blend);
+				draw_vertical_line(dest_box.min[0], dest_box.min[1] + penwidth + 1, dest_box.max[1] - penwidth - 1, tickness, color, true, blend);
+				draw_vertical_line(dest_box.max[0], dest_box.min[1] + penwidth + 1, dest_box.max[1] - penwidth - 1, tickness, color, true, blend);
 				}
 
 
@@ -2912,11 +2911,12 @@ namespace mtools
 			* @param	blend	  (Optional) true to use blending.
 			* @param	grid_align (Optional) true to align to nearest integer value (faster drawing).
 			*/
-			void draw_thick_circle(fVec2 center, double radius, double thickness, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, bool grid_align = DEFAULT_GRID_ALIGN)
+			void draw_thick_circle(fVec2 center, double radius, double thickness, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, bool grid_align = DEFAULT_GRID_ALIGN, double min_tick = DEFAULT_MIN_THICKNESS)
 			{
 				if (isEmpty() || (radius <= 0)) return;
 				if (thickness < 2)
 					{
+					if (thickness < 1) { color.multOpacity((float)((thickness < min_tick) ? min_tick : thickness)); }
 					draw_circle(center, radius, color, aa, blend, grid_align);
 					return;
 					}
@@ -2938,11 +2938,12 @@ namespace mtools
 			* @param	aa		  (Optional) true to use antialiasing.
 			* @param	blend	  (Optional) true to use blending.
 			*/
-			void draw_part_thick_circle(int circlepart, fVec2 center, double radius, double thickness, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+			void draw_part_thick_circle(int circlepart, fVec2 center, double radius, double thickness, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
 				if (isEmpty() || (radius <= 0)) return;
 				if (thickness < 2)
 					{
+					if (thickness < 1) { color.multOpacity((float)((thickness < min_tick) ? min_tick : thickness)); }
 					draw_part_circle(circlepart, center, radius, color, aa, blend);
 					return;
 					}
@@ -2964,11 +2965,12 @@ namespace mtools
 			* @param	aa		  (Optional) true to use antialiasing.
 			* @param	blend	  (Optional) true to use blending.
 			*/
-			void draw_thick_filled_circle(fVec2 center, double radius, double thickness, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, bool grid_align = DEFAULT_GRID_ALIGN)
+			void draw_thick_filled_circle(fVec2 center, double radius, double thickness, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, bool grid_align = DEFAULT_GRID_ALIGN, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
 				if (isEmpty() || (radius <= 0)) return;
 				if (thickness < 2)
 					{
+					if (thickness < 1) { color.multOpacity((float)((thickness < min_tick) ? min_tick : thickness)); }
 					draw_filled_circle(center, radius, color, fillcolor, aa, blend, grid_align);
 					return;
 					}
@@ -2991,11 +2993,12 @@ namespace mtools
 			* @param	aa		  (Optional) true to use antialiasing.
 			* @param	blend	  (Optional) true to use blending.
 			*/
-			void draw_part_thick_filled_circle(int circlepart, fVec2 center, double radius, double thickness, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+			void draw_part_thick_filled_circle(int circlepart, fVec2 center, double radius, double thickness, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
 				if (isEmpty() || (radius <= 0)) return;
 				if (thickness < 2)
 					{
+					if (thickness < 1) { color.multOpacity((float)((thickness < min_tick) ? min_tick : thickness)); }
 					draw_part_filled_circle(circlepart, center, radius, color, fillcolor, aa, blend);
 					return;
 					}
@@ -3384,13 +3387,15 @@ namespace mtools
 			* @param	blend	    (Optional) true to use blending.
 			* @param	grid_align  (Optional) true to align to nearest integer value (faster drawing).
 			*/
-			inline void draw_thick_ellipse(fVec2 center, double rx, double ry, double thickness_x, double thickness_y, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, bool grid_align = true)
+			inline void draw_thick_ellipse(fVec2 center, double rx, double ry, double thickness_x, double thickness_y, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, bool grid_align = true, double min_tick = DEFAULT_MIN_THICKNESS)
 			{
 				if (isEmpty()) return;
 				thickness_x = std::max<double>(thickness_x, 0);
 				thickness_y = std::max<double>(thickness_y, 0);
 				if ((thickness_x < 2) && (thickness_y < 2))
 					{
+					double th = (thickness_x + thickness_y)/2;
+					if (th < 1) { color.multOpacity((float)((th < min_tick) ? min_tick : th)); }
 					draw_ellipse(center, rx, ry, color, aa, blend, grid_align);
 					return;
 					}
@@ -3415,13 +3420,15 @@ namespace mtools
 			* @param	aa		    (Optional) true to use antialiasing.
 			* @param	blend	    (Optional) true to use blending.
 			*/
-			inline void draw_part_thick_ellipse(int part, fVec2 center, double rx, double ry, double thickness_x, double thickness_y, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+			inline void draw_part_thick_ellipse(int part, fVec2 center, double rx, double ry, double thickness_x, double thickness_y, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 			{
 				if (isEmpty()) return;
 				thickness_x = std::max<double>(thickness_x, 0);
 				thickness_y = std::max<double>(thickness_y, 0);
 				if ((thickness_x < 2) && (thickness_y < 2))
 					{
+					double th = (thickness_x + thickness_y) / 2;
+					if (th < 1) { color.multOpacity((float)((th < min_tick) ? min_tick : th)); }
 					draw_part_ellipse(part,center, rx, ry, color, aa, blend);
 					return;
 					}
@@ -3448,13 +3455,15 @@ namespace mtools
 			* @param	blend	    (Optional) true to use blending.
 			* @param	grid_align  (Optional) true to align to nearest integer value (faster drawing).
 			*/
-			inline void draw_thick_filled_ellipse(fVec2 center, double rx, double ry, double thickness_x, double thickness_y, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, bool grid_align = true)
+			inline void draw_thick_filled_ellipse(fVec2 center, double rx, double ry, double thickness_x, double thickness_y, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, bool grid_align = true, double min_tick = DEFAULT_MIN_THICKNESS)
 			{
 				if (isEmpty()) return;
 				thickness_x = std::max<double>(thickness_x, 0);
 				thickness_y = std::max<double>(thickness_y, 0);
 				if ((thickness_x < 2) && (thickness_y < 2))
 					{
+					double th = (thickness_x + thickness_y) / 2;
+					if (th < 1) { color.multOpacity((float)((th < min_tick) ? min_tick : th)); }
 					draw_filled_ellipse(center, rx, ry, color, fillcolor, aa, blend, grid_align);
 					return;
 					}
@@ -3480,13 +3489,15 @@ namespace mtools
 			* @param	aa		    (Optional) true to use antialiasing.
 			* @param	blend	    (Optional) true to use blending.
 			*/
-			inline void draw_part_thick_filled_ellipse(int part, fVec2 center, double rx, double ry, double thickness_x, double thickness_y, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+			inline void draw_part_thick_filled_ellipse(int part, fVec2 center, double rx, double ry, double thickness_x, double thickness_y, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
 				if (isEmpty()) return;
 				thickness_x = std::max<double>(thickness_x, 0);
 				thickness_y = std::max<double>(thickness_y, 0);
 				if ((thickness_x < 2) && (thickness_y < 2))
 					{
+					double th = (thickness_x + thickness_y) / 2;
+					if (th < 1) { color.multOpacity((float)((th < min_tick) ? min_tick : th)); }
 					draw_part_filled_ellipse(part,center, rx, ry, color, fillcolor, aa, blend);
 					return;
 					}
@@ -3511,12 +3522,12 @@ namespace mtools
 			* @param	blend	    (Optional) true to use blending.
 			* @param	grid_align  (Optional) true to align to nearest integer value (faster drawing).
 			*/
-			inline void draw_thick_ellipse_in_box(const fBox2 & B, double thickness_x, double thickness_y, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, bool grid_align = true)
+			inline void draw_thick_ellipse_in_box(const fBox2 & B, double thickness_x, double thickness_y, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, bool grid_align = true, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
 				fVec2 center((B.max[0] + B.min[0]) / 2, (B.max[1] + B.min[1]) / 2);
 				double rx = (B.max[0] - B.min[0]) / 2;
 				double ry = (B.max[1] - B.min[1]) / 2;
-				draw_thick_ellipse(center, rx, ry, thickness_x, thickness_y, color, aa, blend, grid_align);
+				draw_thick_ellipse(center, rx, ry, thickness_x, thickness_y, color, aa, blend, grid_align, min_tick);
 				}
 
 
@@ -3533,12 +3544,12 @@ namespace mtools
 			* @param	aa		    (Optional) true to use antialiasing.
 			* @param	blend	    (Optional) true to use blending.
 			*/
-			inline void draw_part_thick_ellipse_in_box(int part, const fBox2 & B, double thickness_x, double thickness_y, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+			inline void draw_part_thick_ellipse_in_box(int part, const fBox2 & B, double thickness_x, double thickness_y, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
 				fVec2 center((B.max[0] + B.min[0]) / 2, (B.max[1] + B.min[1]) / 2);
 				double rx = (B.max[0] - B.min[0]) / 2;
 				double ry = (B.max[1] - B.min[1]) / 2;
-				draw_part_thick_ellipse(part, center, rx, ry, thickness_x, thickness_y, color, aa, blend);
+				draw_part_thick_ellipse(part, center, rx, ry, thickness_x, thickness_y, color, aa, blend, min_tick);
 				}
 
 
@@ -3556,12 +3567,12 @@ namespace mtools
 			* @param	blend	    (Optional) true to use blending.
 			* @param	grid_align  (Optional) true to align to nearest integer value (faster drawing).
 			*/
-			inline void draw_thick_filled_ellipse_in_box(const fBox2 & B, double thickness_x, double thickness_y, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, bool grid_align = true)
+			inline void draw_thick_filled_ellipse_in_box(const fBox2 & B, double thickness_x, double thickness_y, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, bool grid_align = true, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
 				fVec2 center((B.max[0] + B.min[0]) / 2, (B.max[1] + B.min[1]) / 2);
 				double rx = (B.max[0] - B.min[0]) / 2;
 				double ry = (B.max[1] - B.min[1]) / 2;
-				draw_thick_filled_ellipse(center, rx, ry, thickness_x, thickness_y, color, fillcolor, aa, blend, grid_align);
+				draw_thick_filled_ellipse(center, rx, ry, thickness_x, thickness_y, color, fillcolor, aa, blend, grid_align, min_tick);
 				}
 
 
@@ -3579,12 +3590,12 @@ namespace mtools
 			* @param	aa		    (Optional) true to use antialiasing.
 			* @param	blend	    (Optional) true to use blending.
 			*/
-			inline void draw_part_thick_filled_ellipse_in_box(int part, const fBox2 & B, double thickness_x, double thickness_y, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+			inline void draw_part_thick_filled_ellipse_in_box(int part, const fBox2 & B, double thickness_x, double thickness_y, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
 				fVec2 center((B.max[0] + B.min[0]) / 2, (B.max[1] + B.min[1]) / 2);
 				double rx = (B.max[0] - B.min[0]) / 2;
 				double ry = (B.max[1] - B.min[1]) / 2;
-				draw_part_thick_filled_ellipse(part, center, rx, ry, thickness_x, thickness_y, color, fillcolor, aa, blend);
+				draw_part_thick_filled_ellipse(part, center, rx, ry, thickness_x, thickness_y, color, fillcolor, aa, blend, min_tick);
 				}
 
 
@@ -4630,11 +4641,7 @@ namespace mtools
 
 
 			/**
-			* Draw a (tick) horizontal line.
-			*
-			* Use absolute coordinate (canvas method).
-			*
-			* The tickness correspond to the penwidth of the other method (but here it may also be non-integer using antialiasing).
+			* Draw an horizontal line  (canvas method).
 			*
 			* @param	R			the absolute range represented in the image.
 			* @param	y			The y coordinate of the line.
@@ -4643,22 +4650,39 @@ namespace mtools
 			* @param	color   	The color to use.
 			* @param	draw_P2 	true to draw the end point.
 			* @param	blending	true to use blending.
-			* @param	tickness	The tickness.
 			**/
-			MTOOLS_FORCEINLINE void canvas_draw_horizontal_line(const mtools::fBox2 & R, double y, double x1, double x2, RGBc color, bool draw_P2, bool blending, float tickness = 0.0f)
+			MTOOLS_FORCEINLINE void canvas_draw_horizontal_line(const mtools::fBox2 & R, double y, double x1, double x2, RGBc color, bool draw_P2 = true, bool blending = true)
 				{
 				const iVec2 P1 = R.absToPixel({ x1,y }, dimension());
 				const iVec2 P2 = R.absToPixel({ x2,y }, dimension());
-				draw_horizontal_line(P1.Y(), P1.X(), P2.X(), color, draw_P2, blending, tickness);
+				draw_horizontal_line(P1.Y(), P1.X(), P2.X(), color, draw_P2, blending);
 				}
 
 
 			/**
-			* Draw a (tick) vertical line.
+			* Draw a thick horizontal line  (canvas method).
 			*
-			* Use absolute coordinate (canvas method).
-			*
-			* The tickness correspond to the penwidth of the other method (but here it may also be non-integer using antialiasing).
+			* @param	R			the absolute range represented in the image.
+			* @param	y			The y coordinate of the line.
+			* @param	x1			x value of the start point.
+			* @param	x2			x value of the end point.
+			* @param	thickness	The thickness.
+			* @param    relativethickness	true to scale tickness with range and false to use constant thickness.
+			* @param	color   	The color to use.
+			* @param	draw_P2 	true to draw the end point.
+			* @param	blending	true to use blending.
+			**/
+			MTOOLS_FORCEINLINE void canvas_draw_thick_horizontal_line(const mtools::fBox2 & R, double y, double x1, double x2, double thickness, bool relativethickness, RGBc color, bool draw_P2 = true, bool blending = true, double min_tick = DEFAULT_MIN_THICKNESS)
+				{
+				const iVec2 P1 = R.absToPixel({ x1,y }, dimension());
+				const iVec2 P2 = R.absToPixel({ x2,y }, dimension());
+				const double th = (relativethickness ? boxTransform_dy(thickness, R, fBox2(-0.5, lx() - 0.5, -0.5, ly() - 0.5)) : thickness);
+				draw_horizontal_line(P1.Y(), P1.X(), P2.X(), th, color, draw_P2, blending, min_tick);
+				}
+
+
+			/**
+			* Draw a vertical line (canvas method)
 			*
 			* @param	R			the absolute range represented in the image.
 			* @param	x			The x coordinate of the line.
@@ -4667,14 +4691,36 @@ namespace mtools
 			* @param	color   	The color to use.
 			* @param	draw_P2 	true to draw the end point.
 			* @param	blending	true to use blending.
-			* @param	tickness	The tickness.
 			**/
-			MTOOLS_FORCEINLINE void canvas_draw_vertical_line(const mtools::fBox2 & R, double x, double y1, double y2, RGBc color, bool draw_P2, bool blending, float tickness = 0.0f)
+			MTOOLS_FORCEINLINE void canvas_draw_vertical_line(const mtools::fBox2 & R, double x, double y1, double y2, RGBc color, bool draw_P2 = true, bool blending = true)
 				{
 				const iVec2 P1 = R.absToPixel({ x,y1 }, dimension());
 				const iVec2 P2 = R.absToPixel({ x,y2 }, dimension());
-				draw_vertical_line(P1.X(), P1.Y(), P2.Y(), color, draw_P2, blending, tickness);
+				draw_vertical_line(P1.X(), P1.Y(), P2.Y(), color, draw_P2, blending);
 				}
+
+
+			/**
+			* Draw a (tick) vertical line (canvas method).
+			*
+			* @param	R			the absolute range represented in the image.
+			* @param	x			The x coordinate of the line.
+			* @param	y1			y value of the start point.
+			* @param	y2			y value of the end point.
+			* @param	thickness	The thickness.
+			* @param    relativethickness	true to scale tickness with range and false to use constant thickness.
+			* @param	color   	The color to use.
+			* @param	draw_P2 	true to draw the end point.
+			* @param	blending	true to use blending.
+			**/
+			MTOOLS_FORCEINLINE void canvas_draw_thick_vertical_line(const mtools::fBox2 & R, double x, double y1, double y2, double thickness, bool relativethickness, RGBc color, bool draw_P2 = true, bool blending = true, double min_tick = DEFAULT_MIN_THICKNESS)
+				{
+				const iVec2 P1 = R.absToPixel({ x,y1 }, dimension());
+				const iVec2 P2 = R.absToPixel({ x,y2 }, dimension());
+				const double th = (relativethickness ? boxTransform_dx(thickness, R, fBox2(-0.5, lx() - 0.5, -0.5, ly() - 0.5)) : thickness);
+				draw_vertical_line(P1.X(), P1.Y(), P2.Y(), th, color, draw_P2, blending, min_tick);
+				}
+
 
 
 			/**
@@ -5058,7 +5104,7 @@ namespace mtools
 			* @param	aa					(Optional) true to use antialiasing.
 			* @param	blend				(Optional) true to use blending.
 			**/
-			MTOOLS_FORCEINLINE void canvas_draw_thick_circle(const fBox2 & R, fVec2 center, double radius, double thickness, bool relativethickness, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+			MTOOLS_FORCEINLINE void canvas_draw_thick_circle(const fBox2 & R, fVec2 center, double radius, double thickness, bool relativethickness, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 			{
 				const double EPS = 0.1;
 				if (isEmpty()) return;
@@ -5067,13 +5113,13 @@ namespace mtools
 				const double ry = boxTransform_dy(radius, R, imBox);
 				if (std::abs<double>(rx - ry) < EPS)
 				{
-					if (relativethickness) draw_thick_circle(boxTransform(center, R, imBox), rx, boxTransform_dx(thickness, R, imBox), color, aa, blend);
-					else draw_thick_circle(boxTransform(center, R, imBox), rx, thickness, color, aa, blend);
+					if (relativethickness) draw_thick_circle(boxTransform(center, R, imBox), rx, boxTransform_dx(thickness, R, imBox), color, aa, blend, min_tick);
+					else draw_thick_circle(boxTransform(center, R, imBox), rx, thickness, color, aa, blend, min_tick);
 				}
 				else
 				{
-					if (relativethickness) draw_thick_ellipse(boxTransform(center, R, imBox), rx, ry, boxTransform_dx(thickness, R, imBox), boxTransform_dy(thickness, R, imBox), color, aa, blend);
-					else draw_thick_ellipse(boxTransform(center, R, imBox), rx, ry, thickness, thickness, color, aa, blend);
+					if (relativethickness) draw_thick_ellipse(boxTransform(center, R, imBox), rx, ry, boxTransform_dx(thickness, R, imBox), boxTransform_dy(thickness, R, imBox), color, aa, blend, min_tick);
+					else draw_thick_ellipse(boxTransform(center, R, imBox), rx, ry, thickness, thickness, color, aa, blend, min_tick);
 				}
 			}
 
@@ -5091,7 +5137,7 @@ namespace mtools
 			* @param	aa					(Optional) true to use antialiasing.
 			* @param	blend				(Optional) true to use blending.
 			**/
-			MTOOLS_FORCEINLINE void canvas_draw_part_thick_circle(const fBox2 & R, int part, fVec2 center, double radius, double thickness, bool relativethickness, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+			MTOOLS_FORCEINLINE void canvas_draw_part_thick_circle(const fBox2 & R, int part, fVec2 center, double radius, double thickness, bool relativethickness, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 			{
 				const double EPS = 0.1;
 				if (isEmpty()) return;
@@ -5101,13 +5147,13 @@ namespace mtools
 				const double ry = boxTransform_dy(radius, R, imBox);
 				if (std::abs<double>(rx - ry) < EPS)
 					{
-					if (relativethickness) draw_part_thick_circle(part,boxTransform(center, R, imBox), rx, boxTransform_dx(thickness, R, imBox), color, aa, blend);
-					else draw_part_thick_circle(part,boxTransform(center, R, imBox), rx, thickness, color, aa, blend);
+					if (relativethickness) draw_part_thick_circle(part,boxTransform(center, R, imBox), rx, boxTransform_dx(thickness, R, imBox), color, aa, blend, min_tick);
+					else draw_part_thick_circle(part,boxTransform(center, R, imBox), rx, thickness, color, aa, blend, min_tick);
 					}
 				else
 				{
-					if (relativethickness) draw_part_thick_ellipse(part,boxTransform(center, R, imBox), rx, ry, boxTransform_dx(thickness, R, imBox), boxTransform_dy(thickness, R, imBox), color, aa, blend);
-					else draw_part_thick_ellipse(part,boxTransform(center, R, imBox), rx, ry, thickness, thickness, color, aa, blend);
+					if (relativethickness) draw_part_thick_ellipse(part,boxTransform(center, R, imBox), rx, ry, boxTransform_dx(thickness, R, imBox), boxTransform_dy(thickness, R, imBox), color, aa, blend, min_tick);
+					else draw_part_thick_ellipse(part,boxTransform(center, R, imBox), rx, ry, thickness, thickness, color, aa, blend, min_tick);
 				}
 			}
 
@@ -5125,7 +5171,7 @@ namespace mtools
 			* @param	aa					(Optional) true to use antialiasing.
 			* @param	blend				(Optional) true to use blending.
 			**/
-			MTOOLS_FORCEINLINE void canvas_draw_thick_filled_circle(const fBox2 & R, fVec2 center, double radius, double thickness, bool relativethickness, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+			MTOOLS_FORCEINLINE void canvas_draw_thick_filled_circle(const fBox2 & R, fVec2 center, double radius, double thickness, bool relativethickness, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 			{
 				const double EPS = 0.1;
 				if (isEmpty()) return;
@@ -5134,13 +5180,13 @@ namespace mtools
 				const double ry = boxTransform_dy(radius, R, imBox);
 				if (std::abs<double>(rx - ry) < EPS)
 				{
-					if (relativethickness) draw_thick_filled_circle(boxTransform(center, R, imBox), rx, boxTransform_dx(thickness, R, imBox), color, fillcolor, aa, blend);
-					else draw_thick_filled_circle(boxTransform(center, R, imBox), rx, thickness, color, fillcolor, aa, blend);
+					if (relativethickness) draw_thick_filled_circle(boxTransform(center, R, imBox), rx, boxTransform_dx(thickness, R, imBox), color, fillcolor, aa, blend, min_tick);
+					else draw_thick_filled_circle(boxTransform(center, R, imBox), rx, thickness, color, fillcolor, aa, blend, min_tick);
 				}
 				else
 				{
-					if (relativethickness) draw_thick_filled_ellipse(boxTransform(center, R, imBox), rx, ry, boxTransform_dx(thickness, R, imBox), boxTransform_dy(thickness, R, imBox), color, fillcolor, aa, blend);
-					else draw_thick_filled_ellipse(boxTransform(center, R, imBox), rx, ry, thickness, thickness, color, fillcolor, aa, blend);
+					if (relativethickness) draw_thick_filled_ellipse(boxTransform(center, R, imBox), rx, ry, boxTransform_dx(thickness, R, imBox), boxTransform_dy(thickness, R, imBox), color, fillcolor, aa, blend, min_tick);
+					else draw_thick_filled_ellipse(boxTransform(center, R, imBox), rx, ry, thickness, thickness, color, fillcolor, aa, blend, min_tick);
 				}
 			}
 
@@ -5159,7 +5205,7 @@ namespace mtools
 			* @param	aa					(Optional) true to use antialiasing.
 			* @param	blend				(Optional) true to use blending.
 			**/
-			MTOOLS_FORCEINLINE void canvas_draw_part_thick_filled_circle(const fBox2 & R, int part, fVec2 center, double radius, double thickness, bool relativethickness, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+			MTOOLS_FORCEINLINE void canvas_draw_part_thick_filled_circle(const fBox2 & R, int part, fVec2 center, double radius, double thickness, bool relativethickness, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 			{
 				const double EPS = 0.1;
 				if (isEmpty()) return;
@@ -5169,13 +5215,13 @@ namespace mtools
 				const double ry = boxTransform_dy(radius, R, imBox);
 				if (std::abs<double>(rx - ry) < EPS)
 					{
-					if (relativethickness) draw_part_thick_filled_circle(part, boxTransform(center, R, imBox), rx, boxTransform_dx(thickness, R, imBox), color, fillcolor, aa, blend);
-					else draw_part_thick_filled_circle(part, boxTransform(center, R, imBox), rx, thickness, color, fillcolor, aa, blend);
+					if (relativethickness) draw_part_thick_filled_circle(part, boxTransform(center, R, imBox), rx, boxTransform_dx(thickness, R, imBox), color, fillcolor, aa, blend, min_tick);
+					else draw_part_thick_filled_circle(part, boxTransform(center, R, imBox), rx, thickness, color, fillcolor, aa, blend, min_tick);
 					}
 				else
 					{
-					if (relativethickness) draw_part_thick_filled_ellipse(part, boxTransform(center, R, imBox), rx, ry, boxTransform_dx(thickness, R, imBox), boxTransform_dy(thickness, R, imBox), color, fillcolor, aa, blend);
-					else draw_part_thick_filled_ellipse(part, boxTransform(center, R, imBox), rx, ry, thickness, thickness, color, fillcolor, aa, blend);
+					if (relativethickness) draw_part_thick_filled_ellipse(part, boxTransform(center, R, imBox), rx, ry, boxTransform_dx(thickness, R, imBox), boxTransform_dy(thickness, R, imBox), color, fillcolor, aa, blend, min_tick);
+					else draw_part_thick_filled_ellipse(part, boxTransform(center, R, imBox), rx, ry, thickness, thickness, color, fillcolor, aa, blend, min_tick);
 					}
 			}
 
@@ -5276,14 +5322,14 @@ namespace mtools
 			* @param	aa					(Optional) true to use antialiasing.
 			* @param	blend				(Optional) true to use blending.
 			**/
-			MTOOLS_FORCEINLINE void canvas_draw_thick_ellipse(const fBox2 & R, fVec2 center, double rx, double ry, double thickness_x, double thickness_y, bool relativethickness, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+			MTOOLS_FORCEINLINE void canvas_draw_thick_ellipse(const fBox2 & R, fVec2 center, double rx, double ry, double thickness_x, double thickness_y, bool relativethickness, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
 				if (isEmpty()) return;
 				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
 				const double frx = boxTransform_dx(rx, R, imBox);
 				const double fry = boxTransform_dy(ry, R, imBox);
-				if (relativethickness) draw_thick_ellipse(boxTransform(center, R, imBox), frx, fry, boxTransform_dx(thickness_x, R, imBox), boxTransform_dy(thickness_y, R, imBox), color, aa, blend);
-				else draw_thick_ellipse(boxTransform(center, R, imBox), frx, fry, thickness_x, thickness_y, color, aa, blend);
+				if (relativethickness) draw_thick_ellipse(boxTransform(center, R, imBox), frx, fry, boxTransform_dx(thickness_x, R, imBox), boxTransform_dy(thickness_y, R, imBox), color, aa, blend, min_tick);
+				else draw_thick_ellipse(boxTransform(center, R, imBox), frx, fry, thickness_x, thickness_y, color, aa, blend, min_tick);
 				}
 
 
@@ -5302,15 +5348,15 @@ namespace mtools
 			* @param	aa					(Optional) true to use antialiasing.
 			* @param	blend				(Optional) true to use blending.
 			**/
-			MTOOLS_FORCEINLINE void canvas_draw_part_thick_ellipse(const fBox2 & R, int part, fVec2 center, double rx, double ry, double thickness_x, double thickness_y, bool relativethickness, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+			MTOOLS_FORCEINLINE void canvas_draw_part_thick_ellipse(const fBox2 & R, int part, fVec2 center, double rx, double ry, double thickness_x, double thickness_y, bool relativethickness, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
 				if (isEmpty()) return;
 				_reverseVerticalCirclePart(part);
 				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
 				const double frx = boxTransform_dx(rx, R, imBox);
 				const double fry = boxTransform_dy(ry, R, imBox);
-				if (relativethickness) draw_part_thick_ellipse(part, boxTransform(center, R, imBox), frx, fry, boxTransform_dx(thickness_x, R, imBox), boxTransform_dy(thickness_y, R, imBox), color, aa, blend);
-				else draw_part_thick_ellipse(part, boxTransform(center, R, imBox), frx, fry, thickness_x, thickness_y, color, aa, blend);
+				if (relativethickness) draw_part_thick_ellipse(part, boxTransform(center, R, imBox), frx, fry, boxTransform_dx(thickness_x, R, imBox), boxTransform_dy(thickness_y, R, imBox), color, aa, blend, min_tick);
+				else draw_part_thick_ellipse(part, boxTransform(center, R, imBox), frx, fry, thickness_x, thickness_y, color, aa, blend, min_tick);
 				}
 
 
@@ -5329,14 +5375,14 @@ namespace mtools
 			* @param	aa					(Optional) true to use antialiasing.
 			* @param	blend				(Optional) true to use blending.
 			**/
-			MTOOLS_FORCEINLINE void canvas_draw_thick_filled_ellipse(const fBox2 & R, fVec2 center, double rx, double ry, double thickness_x, double thickness_y, bool relativethickness, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+			MTOOLS_FORCEINLINE void canvas_draw_thick_filled_ellipse(const fBox2 & R, fVec2 center, double rx, double ry, double thickness_x, double thickness_y, bool relativethickness, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
 				if (isEmpty()) return;
 				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
 				const double frx = boxTransform_dx(rx, R, imBox);
 				const double fry = boxTransform_dy(ry, R, imBox);
-				if (relativethickness) draw_thick_filled_ellipse(boxTransform(center, R, imBox), frx, fry, boxTransform_dx(thickness_x, R, imBox), boxTransform_dy(thickness_y, R, imBox), color, fillcolor, aa, blend);
-				else draw_thick_filled_ellipse(boxTransform(center, R, imBox), frx, fry, thickness_x, thickness_y, color, fillcolor, aa, blend);
+				if (relativethickness) draw_thick_filled_ellipse(boxTransform(center, R, imBox), frx, fry, boxTransform_dx(thickness_x, R, imBox), boxTransform_dy(thickness_y, R, imBox), color, fillcolor, aa, blend, min_tick);
+				else draw_thick_filled_ellipse(boxTransform(center, R, imBox), frx, fry, thickness_x, thickness_y, color, fillcolor, aa, blend, min_tick);
 				}
 
 
@@ -5356,15 +5402,15 @@ namespace mtools
 			* @param	aa					(Optional) true to use antialiasing.
 			* @param	blend				(Optional) true to use blending.
 			**/
-			MTOOLS_FORCEINLINE void canvas_draw_part_thick_filled_ellipse(const fBox2 & R, int part, fVec2 center, double rx, double ry, double thickness_x, double thickness_y, bool relativethickness, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+			MTOOLS_FORCEINLINE void canvas_draw_part_thick_filled_ellipse(const fBox2 & R, int part, fVec2 center, double rx, double ry, double thickness_x, double thickness_y, bool relativethickness, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
 				if (isEmpty()) return;
 				_reverseVerticalCirclePart(part);
 				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
 				const double frx = boxTransform_dx(rx, R, imBox);
 				const double fry = boxTransform_dy(ry, R, imBox);
-				if (relativethickness) draw_part_thick_filled_ellipse(part, boxTransform(center, R, imBox), frx, fry, boxTransform_dx(thickness_x, R, imBox), boxTransform_dy(thickness_y, R, imBox), color, fillcolor, aa, blend);
-				else draw_part_thick_filled_ellipse(part, boxTransform(center, R, imBox), frx, fry, thickness_x, thickness_y, color, fillcolor, aa, blend);
+				if (relativethickness) draw_part_thick_filled_ellipse(part, boxTransform(center, R, imBox), frx, fry, boxTransform_dx(thickness_x, R, imBox), boxTransform_dy(thickness_y, R, imBox), color, fillcolor, aa, blend, min_tick);
+				else draw_part_thick_filled_ellipse(part, boxTransform(center, R, imBox), frx, fry, thickness_x, thickness_y, color, fillcolor, aa, blend, min_tick);
 				}
 
 
@@ -5454,13 +5500,13 @@ namespace mtools
 			* @param	aa					(Optional) true to use antialiasing.
 			* @param	blend				(Optional) true to use blending.
 			**/
-			MTOOLS_FORCEINLINE void canvas_draw_thick_ellipse_in_box(const fBox2 & R, const fBox2 & ellipseBox, double thickness_x, double thickness_y, bool relativethickness, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+			MTOOLS_FORCEINLINE void canvas_draw_thick_ellipse_in_box(const fBox2 & R, const fBox2 & ellipseBox, double thickness_x, double thickness_y, bool relativethickness, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
 				if (isEmpty()) return;
 				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
 				const fBox2 B = boxTransform(ellipseBox, R, imBox);
-				if (relativethickness) draw_thick_ellipse_in_box(B, boxTransform_dx(thickness_x, R, imBox), boxTransform_dy(thickness_y, R, imBox), color, aa, blend);
-				else draw_thick_ellipse_in_box(B, thickness_x, thickness_y, color, aa, blend);
+				if (relativethickness) draw_thick_ellipse_in_box(B, boxTransform_dx(thickness_x, R, imBox), boxTransform_dy(thickness_y, R, imBox), color, aa, blend, min_tick);
+				else draw_thick_ellipse_in_box(B, thickness_x, thickness_y, color, aa, blend, min_tick);
 				}
 
 
@@ -5477,14 +5523,14 @@ namespace mtools
 			* @param	aa					(Optional) true to use antialiasing.
 			* @param	blend				(Optional) true to use blending.
 			**/
-			MTOOLS_FORCEINLINE void canvas_draw_part_thick_ellipse_in_box(const fBox2 & R, int part, const fBox2 & ellipseBox, double thickness_x, double thickness_y, bool relativethickness, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+			MTOOLS_FORCEINLINE void canvas_draw_part_thick_ellipse_in_box(const fBox2 & R, int part, const fBox2 & ellipseBox, double thickness_x, double thickness_y, bool relativethickness, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
 				if (isEmpty()) return;
 				_reverseVerticalCirclePart(part);
 				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
 				const fBox2 B = boxTransform(ellipseBox, R, imBox);
-				if (relativethickness) draw_part_thick_ellipse_in_box(part, B, boxTransform_dx(thickness_x, R, imBox), boxTransform_dy(thickness_y, R, imBox), color, aa, blend);
-				else draw_part_thick_ellipse_in_box(part, B, thickness_x, thickness_y, color, aa, blend);
+				if (relativethickness) draw_part_thick_ellipse_in_box(part, B, boxTransform_dx(thickness_x, R, imBox), boxTransform_dy(thickness_y, R, imBox), color, aa, blend, min_tick);
+				else draw_part_thick_ellipse_in_box(part, B, thickness_x, thickness_y, color, aa, blend, min_tick);
 				}
 
 
@@ -5501,13 +5547,13 @@ namespace mtools
 			* @param	aa					(Optional) true to use antialiasing.
 			* @param	blend				(Optional) true to use blending.
 			**/
-			MTOOLS_FORCEINLINE void canvas_draw_thick_filled_ellipse_in_box(const fBox2 & R, const fBox2 & ellipseBox, double thickness_x, double thickness_y, bool relativethickness, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+			MTOOLS_FORCEINLINE void canvas_draw_thick_filled_ellipse_in_box(const fBox2 & R, const fBox2 & ellipseBox, double thickness_x, double thickness_y, bool relativethickness, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 			{
 				if (isEmpty()) return;
 				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
 				const fBox2 B = boxTransform(ellipseBox, R, imBox);
-				if (relativethickness) draw_thick_filled_ellipse_in_box(B, boxTransform_dx(thickness_x, R, imBox), boxTransform_dy(thickness_y, R, imBox), color, fillcolor, aa, blend);
-				else draw_thick_filled_ellipse_in_box(B, thickness_x, thickness_y, color, fillcolor, aa, blend);
+				if (relativethickness) draw_thick_filled_ellipse_in_box(B, boxTransform_dx(thickness_x, R, imBox), boxTransform_dy(thickness_y, R, imBox), color, fillcolor, aa, blend, min_tick);
+				else draw_thick_filled_ellipse_in_box(B, thickness_x, thickness_y, color, fillcolor, aa, blend, min_tick);
 			}
 
 
@@ -5525,14 +5571,14 @@ namespace mtools
 			* @param	aa					(Optional) true to use antialiasing.
 			* @param	blend				(Optional) true to use blending.
 			**/
-			MTOOLS_FORCEINLINE void canvas_draw_part_thick_filled_ellipse_in_box(const fBox2 & R, int part, const fBox2 & ellipseBox, double thickness_x, double thickness_y, bool relativethickness, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+			MTOOLS_FORCEINLINE void canvas_draw_part_thick_filled_ellipse_in_box(const fBox2 & R, int part, const fBox2 & ellipseBox, double thickness_x, double thickness_y, bool relativethickness, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 			{
 				if (isEmpty()) return;
 				_reverseVerticalCirclePart(part);
 				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
 				const fBox2 B = boxTransform(ellipseBox, R, imBox);
-				if (relativethickness) draw_part_thick_filled_ellipse_in_box(part, B, boxTransform_dx(thickness_x, R, imBox), boxTransform_dy(thickness_y, R, imBox), color, fillcolor, aa, blend);
-				else draw_part_thick_filled_ellipse_in_box(part, B, thickness_x, thickness_y, color, fillcolor, aa, blend);
+				if (relativethickness) draw_part_thick_filled_ellipse_in_box(part, B, boxTransform_dx(thickness_x, R, imBox), boxTransform_dy(thickness_y, R, imBox), color, fillcolor, aa, blend, min_tick);
+				else draw_part_thick_filled_ellipse_in_box(part, B, thickness_x, thickness_y, color, fillcolor, aa, blend, min_tick);
 			}
 
 
@@ -5603,11 +5649,13 @@ namespace mtools
 			inline void canvas_draw_axes(const mtools::fBox2 & R, float scaling = 1.0f, mtools::RGBc color = RGBc::c_Black, float opacity = 1.0f)
 				{
 				color.multOpacity(opacity);
-				float tick = (scaling < 4.0f) ? 0.0f : ((scaling - 1) / 8);
+				scaling = scaling * ((float)(std::sqrt(_lx*_ly) / 1000.0));
+				double tick = (scaling < 4.0f) ? 0.0f : ((scaling - 1) / 8);
+				tick = 2 * tick + 1;
 				const double ex = R.max[0] - R.min[0];
 				const double ey = R.max[1] - R.min[1];
-				canvas_draw_horizontal_line(R, 0, R.min[0] - ex, R.max[0] + ex, color, true, true, tick);
-				canvas_draw_vertical_line(R, 0, R.min[1] - ey, R.max[1] + ey, color, true, true, tick);
+				canvas_draw_thick_horizontal_line(R, 0, R.min[0] - ex, R.max[0] + ex, tick, false, color, true, true);
+				canvas_draw_thick_vertical_line(R, 0, R.min[1] - ey, R.max[1] + ey, tick, false, color, true, true);
 				}
 
 
@@ -5624,7 +5672,8 @@ namespace mtools
 				{
 				color.multOpacity(opacity);
 				scaling = scaling*((float)(std::sqrt(_lx*_ly) / 1000.0));
-				float tick = (scaling < 4.0f) ? 0.0f : ((scaling - 1) / 8);
+				double tick = (scaling < 4.0f) ? 0.0f : ((scaling - 1) / 8);
+				tick = 2 * tick + 1;
 				int64 gradsize = 1 + (int64)(3 * scaling);
 				const int64 winx = _lx, winy = _ly;
 				int64 py = winy - 1 - (int64)ceil(((-R.min[1]) / (R.max[1] - R.min[1]))*winy - ((double)1.0 / 2.0));
@@ -5644,9 +5693,9 @@ namespace mtools
 						{
 						xx = xx + kk; xx2 = xx2 + pp;
 						zz = (int64)R.absToPixel(mtools::fVec2(0, xx), mtools::iVec2(winx, winy)).Y();
-						if ((zz >= -10) && (zz < winy + 10)) { if (xx != 0) { draw_horizontal_line(zz, px - 2 * gradsize, px + 2 * gradsize, color, true, true,tick); } }
+						if ((zz >= -10) && (zz < winy + 10)) { if (xx != 0) { draw_horizontal_line(zz, px - 2 * gradsize, px + 2 * gradsize, tick, color, true, true); } }
 						zz = (int64)R.absToPixel(mtools::fVec2(0, xx2), mtools::iVec2(winx, winy)).Y();
-						if ((zz > -2) && (zz < winy + 1)) { if (xx2 != 0) { draw_horizontal_line(zz, px - gradsize, px + gradsize, color, true, true,tick); } }
+						if ((zz > -2) && (zz < winy + 1)) { if (xx2 != 0) { draw_horizontal_line(zz, px - gradsize, px + gradsize, tick, color, true, true); } }
 						}
 					}
 				if ((py > -1) && (py < winy))
@@ -5663,9 +5712,9 @@ namespace mtools
 						{
 						xx = xx + kk; xx2 = xx2 + pp;
 						zz = (int64)R.absToPixel(mtools::fVec2(xx, 0), mtools::iVec2(winx, winy)).X();
-						if ((zz >= -30) && (zz < winx + 30)) { if (xx != 0) { draw_vertical_line(zz, py - 2 * gradsize, py + 2 * gradsize, color, true, true, tick);} }
+						if ((zz >= -30) && (zz < winx + 30)) { if (xx != 0) { draw_vertical_line(zz, py - 2 * gradsize, py + 2 * gradsize, tick, color, true, true);} }
 						zz = (int64)R.absToPixel(mtools::fVec2(xx2, 0), mtools::iVec2(winx, winy)).X();
-						if ((zz > -2) && (zz < winx + 1)) { if (xx2 != 0) { draw_vertical_line(zz, py - gradsize, py + gradsize, color, true, true, tick);} }
+						if ((zz > -2) && (zz < winx + 1)) { if (xx2 != 0) { draw_vertical_line(zz, py - gradsize, py + gradsize, tick, color, true, true);} }
 						}
 					}
 				}
@@ -6441,38 +6490,57 @@ namespace mtools
 				}
 
 
-			/* draw a tick vertical line with aliasing (draw both endpoint) */
-			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void _tickVerticalLine(int64 x, int64 y1, int64 y2, RGBc color, bool draw_P2, float tickness)
+			/* draw a tick vertical line with aliasing */
+			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void _tickVerticalLine(int64 x, int64 y1, int64 y2, RGBc color, bool draw_P2, double tickness, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
-				// tickness is assumed positive
-				float f = (tickness / 2) + 0.5f;
+				if (tickness <= 0) return;
+				if (tickness < min_tick) tickness = min_tick;
+				double f = (tickness/2) + 0.5f;
 				int64 d = (int64)f;
-				if (d == 0) { _verticalLine<blend, checkrange>(x, y1, y2, color.getOpacity(color.opacity()*tickness), draw_P2); return; }
+				if (d == 0) 
+					{ 
+					double op = color.opacity()*tickness;
+					_verticalLine<blend, checkrange>(x, y1, y2, color.getOpacity((float)op), draw_P2);
+					return; 
+					}
 				int64 xmin = x-d;
 				int64 xmax = x+d;
-				float r = f - d;
-				RGBc c = color.getOpacity(color.opacity()*r);
-				_verticalLine<blend, checkrange>(xmin, y1, y2, c, draw_P2);
+				double r = f - d;
+				RGBc c = color.getOpacity((float)(color.opacity()*r));
+				if (!c.isTransparent())
+					{
+					_verticalLine<blend, checkrange>(xmin, y1, y2, c, draw_P2);
+					_verticalLine<blend, checkrange>(xmax, y1, y2, c, draw_P2);
+					}
 				xmin++;
 				while (xmin < xmax) { _verticalLine<blend, checkrange>(xmin, y1, y2, color, draw_P2); xmin++; }
-				_verticalLine<blend, checkrange>(xmax, y1, y2, c, draw_P2);
 				}
 
 
-			/* draw a tick horizontal line with aliasing (draw both endpoint) */
-			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void _tickHorizontalLine(int64 y, int64 x1, int64 x2, RGBc color, bool draw_P2, float tickness)
+			/* draw a tick horizontal line with aliasing */
+			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void _tickHorizontalLine(int64 y, int64 x1, int64 x2, RGBc color, bool draw_P2, double tickness, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
-				float f = (tickness / 2) + 0.5f;
+				if (tickness <= 0) return;
+				if (tickness < min_tick) tickness = min_tick;
+				double f = (tickness / 2) + 0.5f;
 				int64 d = (int64)f;
-				if (d == 0) { _horizontalLine<blend, checkrange>(y, x1, x2, color.getOpacity(color.opacity()*tickness), draw_P2); return; }
+				if (d == 0) 
+					{ 
+					double op = color.opacity()*tickness; 
+					_horizontalLine<blend, checkrange>(y, x1, x2, color.getOpacity((float)op), draw_P2); 
+					return; 
+					}
 				int64 ymin = y - d;
 				int64 ymax = y + d;
-				float r = f - d;
-				RGBc c = color.getOpacity(color.opacity()*r);
-				_horizontalLine<blend, checkrange>(ymin, x1, x2, c, draw_P2);
+				double r = f - d;
+				RGBc c = color.getOpacity((float)(color.opacity()*r));
+				if (!c.isTransparent())
+					{
+					_horizontalLine<blend, checkrange>(ymin, x1, x2, c, draw_P2);
+					_horizontalLine<blend, checkrange>(ymax, x1, x2, c, draw_P2);
+					}
 				ymin++;
 				while (ymin < ymax) { _horizontalLine<blend, checkrange>(ymin, x1, x2, color, draw_P2); ymin++; }
-				_horizontalLine<blend, checkrange>(ymax, x1, x2, c, draw_P2);
 				}
 
 
