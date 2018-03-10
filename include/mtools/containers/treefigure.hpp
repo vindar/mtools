@@ -888,9 +888,9 @@ namespace mtools
 			TFloat bx = ax + ax;
 			TFloat cx = bx + ax;
 			TFloat mix = (inb.min[0] - outb.min[0]);
-			int nx_min = (mix < bx) ? ((mix < ax) ? 0 : 1) : ((mix < cx) ? 2 : 3);
+			int nx_min = (mix <= bx) ? ((mix <= ax) ? 0 : 1) : ((mix <= cx) ? 2 : 3);
 			TFloat max = (inb.max[0] - outb.min[0]);
-			int nx_max = (max <= bx) ? ((max <= ax) ? 0 : 1) : ((max <= cx) ? 2 : 3);
+			int nx_max = (max < bx) ? ((max < ax) ? 0 : 1) : ((max < cx) ? 2 : 3);
 			int ix = nx_min + (4 * nx_max);
 			int rx;
 			switch (ix)
@@ -911,9 +911,9 @@ namespace mtools
 			TFloat by = ay + ay;
 			TFloat cy = by + ay;
 			TFloat miy = (inb.min[1] - outb.min[1]);
-			int ny_min = (miy < by) ? ((miy < ay) ? 0 : 1) : ((miy < cy) ? 2 : 3);
+			int ny_min = (miy <= by) ? ((miy <= ay) ? 0 : 1) : ((miy <= cy) ? 2 : 3);
 			TFloat may = (inb.max[1] - outb.min[1]);
-			int ny_max = (may <= by) ? ((may <= ay) ? 0 : 1) : ((may <= cy) ? 2 : 3);
+			int ny_max = (may < by) ? ((may < ay) ? 0 : 1) : ((may < cy) ? 2 : 3);
 			int iy = ny_min + (4 * ny_max);
 			int ry;
 			switch (iy)
