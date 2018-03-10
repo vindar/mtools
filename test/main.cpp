@@ -59,7 +59,7 @@ void testplotfigure()
 
 	cout << "Creating... ";
 
-	int nb = 1;
+	int nb = 100000;
 	/*
 	for (int k = 0; k < nb; k++)
 		{

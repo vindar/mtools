@@ -9400,6 +9400,9 @@ namespace mtools
 					(int64)ceil(P.X() + rx + 1),
 					(int64)floor(P.Y() - ry - 1),
 					(int64)ceil(P.Y() + ry + 1)));
+				
+				if (B.isEmpty()) return;
+				
 				MTOOLS_ASSERT(B.isIncludedIn(imageBox()));
 
 				{ //check first if there is something to draw.
@@ -9505,6 +9508,9 @@ namespace mtools
 					(int64)ceil(P.X() + rx + 1),
 					(int64)floor(P.Y() - ry - 1),
 					(int64)ceil(P.Y() + ry + 1)));
+
+				if (B.isEmpty()) return;
+
 				MTOOLS_ASSERT(B.isIncludedIn(imageBox()));
 
 				{ //check first if there is something to draw.
@@ -9649,6 +9655,9 @@ namespace mtools
 					(int64)ceil(P.X() + Arx + 1),
 					(int64)floor(P.Y() - Ary - 1),
 					(int64)ceil(P.Y() + Ary + 1)));
+
+				if (B.isEmpty()) return;
+
 				MTOOLS_ASSERT(B.isIncludedIn(imageBox()));
 
 				{ //check first if there is something to draw.
