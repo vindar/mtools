@@ -34,13 +34,33 @@ using namespace mtools;
 
 void testplotfigure()
 	{
+
+	/*
+		{
+			Image im(1000, 1000);
+			im.clear(RGBc::c_White);
+
+			im.canvas_draw_part_circle(fBox2(0, 100, 0, 100), BOX_SPLIT_DOWN, { 80.0 ,50.0 }, 20.0, RGBc::c_Red);
+
+			auto P = makePlot2DImage(im);
+
+			Plotter2D plotter;
+			plotter[P];
+			plotter.autorangeXY();
+			plotter.plot();
+
+			return;
+		}
+		*/
+
 	MT2004_64 gen;
 
 	FigureCanvas<5> canvas(2);
 
-	int nb = 1000000;
 	cout << "Creating... ";
-	
+
+	int nb = 1;
+	/*
 	for (int k = 0; k < nb; k++)
 		{
 		fVec2 pos = { 10000 * Unif(gen),10000 * Unif(gen) };
@@ -51,7 +71,14 @@ void testplotfigure()
 		rad = 10 * Unif(gen);
 		canvas(FigureCirclePart(BOX_SPLIT_DOWN, pos, rad, 1, false, RGBc::c_Blue.getMultOpacity(1)), 1);
 		}
+	*/
 
+	canvas(FigureCirclePart(BOX_SPLIT_UP, { (double)nb , 0 }, 0, 0.5, true, RGBc::c_Red.getMultOpacity(1)), 0);
+	for (int k = 0; k < nb; k++)
+		{
+		canvas(FigureCirclePart(BOX_SPLIT_UP, { (double)nb , 0}, k + 1, 0.5, true, RGBc::c_Red.getMultOpacity(1)), 0);
+		}
+	
 	cout << "ok !\n\n";
 
 

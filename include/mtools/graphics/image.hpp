@@ -4988,6 +4988,7 @@ namespace mtools
 				{
 				const double EPS = 0.1;
 				if (isEmpty()) return;
+				_reverseVerticalCirclePart(part);
 				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
 				double rx = boxTransform_dx(radius, R, imBox);
 				double ry = boxTransform_dy(radius, R, imBox);
@@ -5036,6 +5037,7 @@ namespace mtools
 			{
 				const double EPS = 0.1;
 				if (isEmpty()) return;
+				_reverseVerticalCirclePart(part);
 				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
 				const double rx = boxTransform_dx(radius, R, imBox);
 				const double ry = boxTransform_dy(radius, R, imBox);
@@ -5093,6 +5095,7 @@ namespace mtools
 			{
 				const double EPS = 0.1;
 				if (isEmpty()) return;
+				_reverseVerticalCirclePart(part);
 				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
 				const double rx = boxTransform_dx(radius, R, imBox);
 				const double ry = boxTransform_dy(radius, R, imBox);
@@ -5160,6 +5163,7 @@ namespace mtools
 			{
 				const double EPS = 0.1;
 				if (isEmpty()) return;
+				_reverseVerticalCirclePart(part);
 				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
 				const double rx = boxTransform_dx(radius, R, imBox);
 				const double ry = boxTransform_dy(radius, R, imBox);
@@ -5210,6 +5214,7 @@ namespace mtools
 			MTOOLS_FORCEINLINE void canvas_draw_part_ellipse(const fBox2 & R, int part, fVec2 center, double rx, double ry, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
 				{
 				if (isEmpty()) return;
+				_reverseVerticalCirclePart(part);
 				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
 				draw_part_ellipse(part, boxTransform(center, R, imBox), boxTransform_dx(rx, R, imBox), boxTransform_dy(ry, R, imBox), color, aa, blend);
 				}
@@ -5251,6 +5256,7 @@ namespace mtools
 			MTOOLS_FORCEINLINE void canvas_draw_part_filled_ellipse(const fBox2 & R, int part, fVec2 center, double rx, double ry, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
 				{
 				if (isEmpty()) return;
+				_reverseVerticalCirclePart(part);
 				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
 				draw_part_filled_ellipse(part,boxTransform(center, R, imBox), boxTransform_dx(rx, R, imBox), boxTransform_dy(ry, R, imBox), color, fillcolor, aa, blend);
 				}
@@ -5299,6 +5305,7 @@ namespace mtools
 			MTOOLS_FORCEINLINE void canvas_draw_part_thick_ellipse(const fBox2 & R, int part, fVec2 center, double rx, double ry, double thickness_x, double thickness_y, bool relativethickness, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
 				{
 				if (isEmpty()) return;
+				_reverseVerticalCirclePart(part);
 				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
 				const double frx = boxTransform_dx(rx, R, imBox);
 				const double fry = boxTransform_dy(ry, R, imBox);
@@ -5352,6 +5359,7 @@ namespace mtools
 			MTOOLS_FORCEINLINE void canvas_draw_part_thick_filled_ellipse(const fBox2 & R, int part, fVec2 center, double rx, double ry, double thickness_x, double thickness_y, bool relativethickness, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
 				{
 				if (isEmpty()) return;
+				_reverseVerticalCirclePart(part);
 				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
 				const double frx = boxTransform_dx(rx, R, imBox);
 				const double fry = boxTransform_dy(ry, R, imBox);
@@ -5390,6 +5398,7 @@ namespace mtools
 			MTOOLS_FORCEINLINE void canvas_draw_part_ellipse_in_box(const fBox2 & R, int part, const fBox2 & ellipseBox, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
 				{
 				if (isEmpty()) return;
+				_reverseVerticalCirclePart(part);
 				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
 				draw_part_ellipse_in_box(part,boxTransform(ellipseBox, R, imBox), color, aa, blend);
 				}
@@ -5427,6 +5436,7 @@ namespace mtools
 			MTOOLS_FORCEINLINE void canvas_draw_part_filled_ellipse_in_box(const fBox2 & R, int part, const fBox2 & ellipseBox, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
 				{
 				if (isEmpty()) return;
+				_reverseVerticalCirclePart(part);
 				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
 				draw_part_filled_ellipse_in_box(part, boxTransform(ellipseBox, R, imBox), color, fillcolor, aa, blend);
 				}
@@ -5470,6 +5480,7 @@ namespace mtools
 			MTOOLS_FORCEINLINE void canvas_draw_part_thick_ellipse_in_box(const fBox2 & R, int part, const fBox2 & ellipseBox, double thickness_x, double thickness_y, bool relativethickness, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
 				{
 				if (isEmpty()) return;
+				_reverseVerticalCirclePart(part);
 				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
 				const fBox2 B = boxTransform(ellipseBox, R, imBox);
 				if (relativethickness) draw_part_thick_ellipse_in_box(part, B, boxTransform_dx(thickness_x, R, imBox), boxTransform_dy(thickness_y, R, imBox), color, aa, blend);
@@ -5517,6 +5528,7 @@ namespace mtools
 			MTOOLS_FORCEINLINE void canvas_draw_part_thick_filled_ellipse_in_box(const fBox2 & R, int part, const fBox2 & ellipseBox, double thickness_x, double thickness_y, bool relativethickness, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
 			{
 				if (isEmpty()) return;
+				_reverseVerticalCirclePart(part);
 				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
 				const fBox2 B = boxTransform(ellipseBox, R, imBox);
 				if (relativethickness) draw_part_thick_filled_ellipse_in_box(part, B, boxTransform_dx(thickness_x, R, imBox), boxTransform_dy(thickness_y, R, imBox), color, fillcolor, aa, blend);
@@ -8805,6 +8817,15 @@ namespace mtools
 			/****************************************************************************
 			/* PRIVATE METHODS FOR DRAWING CIRCLES AND ELLIPSES. 
 			*****************************************************************************/
+
+
+
+			/** Invert vertical the part chosen when drawing a circle (because y-axis inverted between image and canvas) */
+			MTOOLS_FORCEINLINE void _reverseVerticalCirclePart(int & part)
+				{
+				if (part == BOX_SPLIT_UP) { part = BOX_SPLIT_DOWN; }
+				else { if (part == BOX_SPLIT_DOWN) { part = BOX_SPLIT_UP; } }
+				}
 
 
 			/** Compute the integer valued bounding box for an ellipse */
