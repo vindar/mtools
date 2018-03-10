@@ -60,25 +60,26 @@ void testplotfigure()
 	cout << "Creating... ";
 
 	int nb = 100000;
-	/*
+	
 	for (int k = 0; k < nb; k++)
 		{
 		fVec2 pos = { 10000 * Unif(gen),10000 * Unif(gen) };
 		double rad = 10*Unif(gen);
-		canvas(FigureCirclePart(BOX_SPLIT_UP, pos, rad, 1, false, RGBc::c_Red.getMultOpacity(1)), 0);
+		canvas(FigureCirclePart(BOX_SPLIT_UP_LEFT, pos, rad, 1, false, RGBc::c_Red.getMultOpacity(1)), 0);
 		
 		pos = { 10000 * Unif(gen),10000 * Unif(gen) };
 		rad = 10 * Unif(gen);
-		canvas(FigureCirclePart(BOX_SPLIT_DOWN, pos, rad, 1, false, RGBc::c_Blue.getMultOpacity(1)), 1);
+		canvas(FigureCirclePart(BOX_SPLIT_DOWN_RIGHT, pos, rad, 1, false, RGBc::c_Blue.getMultOpacity(1)), 1);
 		}
-	*/
+	
 
+	/*
 	canvas(FigureCirclePart(BOX_SPLIT_UP, { (double)nb , 0 }, 0, 0.5, true, RGBc::c_Red.getMultOpacity(1)), 0);
 	for (int k = 0; k < nb; k++)
 		{
 		canvas(FigureCirclePart(BOX_SPLIT_UP, { (double)nb , 0}, k + 1, 0.5, true, RGBc::c_Red.getMultOpacity(1)), 0);
 		}
-	
+	*/
 	cout << "ok !\n\n";
 
 

@@ -8823,8 +8823,16 @@ namespace mtools
 			/** Invert vertical the part chosen when drawing a circle (because y-axis inverted between image and canvas) */
 			MTOOLS_FORCEINLINE void _reverseVerticalCirclePart(int & part)
 				{
-				if (part == BOX_SPLIT_UP) { part = BOX_SPLIT_DOWN; }
-				else { if (part == BOX_SPLIT_DOWN) { part = BOX_SPLIT_UP; } }
+				switch (part)
+					{
+					case BOX_SPLIT_UP:			{ part = BOX_SPLIT_DOWN; return; }
+					case BOX_SPLIT_UP_LEFT:		{ part = BOX_SPLIT_DOWN_LEFT; return; }
+					case BOX_SPLIT_UP_RIGHT:	{ part = BOX_SPLIT_DOWN_RIGHT; return; }
+					case BOX_SPLIT_DOWN:		{ part = BOX_SPLIT_UP; return; }
+					case BOX_SPLIT_DOWN_LEFT:	{ part = BOX_SPLIT_UP_LEFT; return; }
+					case BOX_SPLIT_DOWN_RIGHT:	{ part = BOX_SPLIT_UP_RIGHT; return; }
+					}
+				return;
 				}
 
 
