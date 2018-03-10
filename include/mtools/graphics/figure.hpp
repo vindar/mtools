@@ -589,11 +589,11 @@ namespace mtools
 			std::string str("Circle Part Figure [");
 			switch (part)
 				{
-				case BOX_SPLIT_UP: { str += "UP"; break; }
-				case BOX_SPLIT_DOWN: { str += "DOWN"; break; }
-				case BOX_SPLIT_LEFT: { str += "LEFT"; break; }
-				case BOX_SPLIT_RIGHT: { str += "RIGHT"; break; }
-				default: { str += "ERROR_PART"; }
+				case BOX_SPLIT_UP: { str += "HALF UP"; break; }
+				case BOX_SPLIT_DOWN: { str += "HALF DOWN"; break; }
+				case BOX_SPLIT_LEFT: { str += "HALF LEFT"; break; }
+				case BOX_SPLIT_RIGHT: { str += "HALF RIGHT"; break; }
+				default: { str += "ERROR PART"; }
 				}
 			str += " ";
 			str += mtools::toString(center) + " ";
