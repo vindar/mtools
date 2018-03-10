@@ -682,7 +682,6 @@ namespace mtools
 				int tot = 0;
 				for (size_t i = 0; i < Nth; i++) { tot += _workers[i].current_prog(); }
 				tot /= ((int)Nth);
-				cout << 55 + tot << "\n";
 				return 55 + tot;
 				}
 		}

@@ -68,8 +68,8 @@ void testplotfigure()
 		canvas(FigureEllipsePart(BOX_SPLIT_UP_RIGHT, pos, 10 * Unif(gen), 10 * Unif(gen), 10, 0, false, RGBc::c_Red.getMultOpacity(1), RGBc::c_Lime.getMultOpacity(0.5)));
 		
 		pos = { 10000 * Unif(gen),10000 * Unif(gen) };
-		rad = 10 * Unif(gen);
-		canvas(FigureCirclePart(BOX_SPLIT_DOWN_RIGHT, pos, rad, 1, false, RGBc::c_Blue.getMultOpacity(1)), 1);
+		rad = 100 * Unif(gen);
+		canvas(FigureVerticalLine(pos.Y(), pos.X() - rad, pos.X() + rad, 5 , true, RGBc::c_Blue.getMultOpacity(1)),1);
 		}
 	
 
