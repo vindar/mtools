@@ -481,10 +481,10 @@ namespace mtools
 
 		/* current progress w.r.t. the queue size, between 0 and 45 (queue empty) */
 		MTOOLS_FORCEINLINE int current_prog() const
-		{
-			if (_nb_drawn == 0) return 0;
-			return (int)((45 * _nb_drawn) / (_nb_drawn + _queue.size()));
-		}
+			{
+			const size_t qs = _queue.size();
+			return ((qs == 0) ?  45 : ((int)((45 * _nb_drawn) / (_nb_drawn + qs))));
+			}
 
 
 	protected:
@@ -682,6 +682,7 @@ namespace mtools
 				int tot = 0;
 				for (size_t i = 0; i < Nth; i++) { tot += _workers[i].current_prog(); }
 				tot /= ((int)Nth);
+				cout << 55 + tot << "\n";
 				return 55 + tot;
 				}
 		}
