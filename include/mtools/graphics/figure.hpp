@@ -40,10 +40,13 @@ namespace mtools
 	template<int N> class FigureCanvas;	// main figure canvas class
 
 	/* available figures classes*/
+
 	class FigureCircle;
 	class FigureCirclePart;
 	class FigureEllipse;
 	class FigureEllipsePart;
+
+
 	class FigureBox;
 	class FigureDot;
 	class FigureLine;
@@ -489,14 +492,15 @@ namespace mtools
 		double	thickness;		// circle thickness 0 = no thickness. < 0 = absolute thicknes,  >0 = relative thickness 
 		RGBc	color;			// circle color
 		RGBc	fillcolor;		// circle interior color (transparent = no filling)
-		int		part;			// one of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+		int		part;			// one of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT,, BOX_SPLIT_DOWN_LEFT, , BOX_SPLIT_DOWN_RIGHT
+
 
 		/**   
 		 * Constructor. Simple circle part without filling or thickness    
 		 **/
 		FigureCirclePart(int circlepart, fVec2 centercircle, double rad, RGBc col) : part(circlepart), center(centercircle), radius(rad), thickness(0.0), color(col), fillcolor(RGBc::c_Transparent)
 			{
-			MTOOLS_ASSERT((circlepart >= 0) && (circlepart < 4));
+			MTOOLS_ASSERT((circlepart >= 0) && (circlepart < 8));
 			MTOOLS_ASSERT(rad >= 0);
 			}
 
@@ -505,7 +509,7 @@ namespace mtools
 		**/
 		FigureCirclePart(int circlepart, fVec2 centercircle, double rad, RGBc col, RGBc fillcol) : part(circlepart), center(centercircle), radius(rad), thickness(0.0), color(col), fillcolor(fillcol)
 			{
-			MTOOLS_ASSERT((circlepart >= 0) && (circlepart < 4));
+			MTOOLS_ASSERT((circlepart >= 0) && (circlepart < 8));
 			MTOOLS_ASSERT(rad >= 0);
 			}
 
@@ -515,9 +519,9 @@ namespace mtools
 		FigureCirclePart(int circlepart, fVec2 centercircle, double rad, double thick, bool relativethickness, RGBc col)
 		: part(circlepart), center(centercircle), radius(rad), thickness(relativethickness ? thick : -thick), color(col), fillcolor(RGBc::c_Transparent)
 			{
-			MTOOLS_ASSERT((circlepart >= 0) && (circlepart < 4));
+			MTOOLS_ASSERT((circlepart >= 0) && (circlepart < 8));
 			MTOOLS_ASSERT(rad >= 0);
-			MTOOLS_ASSERT(thick > 0);
+			MTOOLS_ASSERT(thick >= 0);
 			}
 
 
@@ -527,9 +531,9 @@ namespace mtools
 		FigureCirclePart(int circlepart, fVec2 centercircle, double rad, double thick, bool relativethickness, RGBc col, RGBc fillcol)
 			: part(circlepart), center(centercircle), radius(rad), thickness(relativethickness ? thick : -thick), color(col), fillcolor(fillcol)
 			{
-			MTOOLS_ASSERT((circlepart >= 0) && (circlepart < 4));
+			MTOOLS_ASSERT((circlepart >= 0) && (circlepart < 8));
 			MTOOLS_ASSERT(rad >= 0);
-			MTOOLS_ASSERT(thick > 0);
+			MTOOLS_ASSERT(thick >= 0);
 			}
 
 
@@ -593,10 +597,13 @@ namespace mtools
 				case BOX_SPLIT_DOWN: { str += "HALF DOWN"; break; }
 				case BOX_SPLIT_LEFT: { str += "HALF LEFT"; break; }
 				case BOX_SPLIT_RIGHT: { str += "HALF RIGHT"; break; }
+				case BOX_SPLIT_UP_LEFT: { str += "QUARTER UP LEFT"; break; }
+				case BOX_SPLIT_UP_RIGHT: { str += "QUARTER UP RIGHT"; break; }
+				case BOX_SPLIT_DOWN_LEFT: { str += "QUARTER DOWN LEFT"; break; }
+				case BOX_SPLIT_DOWN_RIGHT: { str += "QUARTER DOWN RIGHT"; break; }
 				default: { str += "ERROR PART"; }
 				}
 			str += " ";
-			str += mtools::toString(center) + " ";
 			str += mtools::toString(center) + " ";
 			str += mtools::toString(radius) + " ";
 			str += mtools::toString(color);
@@ -633,6 +640,465 @@ namespace mtools
 			ar & fillcolor;
 			}
 	};
+
+
+
+
+	/**
+	 * Ellipse figure
+	 * 
+	 * Parameters: 
+	 *  - center and radii  
+	 *  - outline color
+	 *  - thickness  
+	 *  - filling color   
+	 *  - antialiasing
+	 **/
+	class FigureEllipse : public FigureInterface
+	{
+
+	public:
+
+		/** ellipse parameters **/
+		fVec2	center;			// circle center
+		double	rx;				// x-radius
+		double  ry;				// y-radius
+		double	thickness_x;	// 0 = no thickness. < 0 = absolute thicknes,  >0 = relative thickness 
+		double	thickness_y;	// 0 = no thickness  < 0 = absolute thicknes,  >0 = relative thickness 
+		RGBc	color;			// color
+		RGBc	fillcolor;		// interior color (transparent = no filling)
+
+
+		/**   
+		 * Constructor. Simple ellipse without filling or thickness    
+		 **/
+		FigureEllipse(fVec2 centerellipse, double rad_x, double rad_y, RGBc col) : center(centerellipse), rx(rad_x), ry(rad_y), thickness_x(0.0), thickness_y(0.0), color(col), fillcolor(RGBc::c_Transparent)
+			{
+			MTOOLS_ASSERT(rad_x >= 0);
+			MTOOLS_ASSERT(rad_y >= 0);
+			}
+
+		/**
+		* Constructor. Simple ellipse without filling or thickness, given by its bounding box
+		**/
+		FigureEllipse(const fBox2 & B, RGBc col) : center(B.center()), rx(B.l(0)/2), ry(B.l(1)/2), thickness_x(0.0), thickness_y(0.0), color(col), fillcolor(RGBc::c_Transparent)
+			{
+			MTOOLS_ASSERT(! B.isEmpty());
+			}
+
+
+		/**
+		* Constructor. Simple ellipse with filling color but without thickness
+		**/
+		FigureEllipse(fVec2 centerellipse, double rad_x, double rad_y, RGBc col, RGBc fillcol) : center(centerellipse), rx(rad_x), ry(rad_y), thickness_x(0.0), thickness_y(0.0), color(col), fillcolor(fillcol)
+			{
+			MTOOLS_ASSERT(rad_x >= 0);
+			MTOOLS_ASSERT(rad_y >= 0);
+			}
+
+
+		/**
+		* Constructor. Simple ellipse with filling but without thickness, given by its bounding box
+		**/
+		FigureEllipse(const fBox2 & B, RGBc col, RGBc fillcol) : center(B.center()), rx(B.l(0) / 2), ry(B.l(1) / 2), thickness_x(0.0), thickness_y(0.0), color(col), fillcolor(fillcol)
+		{
+			MTOOLS_ASSERT(!B.isEmpty());
+		}
+
+
+		/**
+		* Constructor. Thick ellipse without filling
+		**/
+		FigureEllipse(fVec2 centerellipse, double rad_x, double rad_y, double thick_x, double thick_y, bool relativethickness, RGBc col)
+		: center(centerellipse), rx(rad_x), ry(rad_y), thickness_x(relativethickness ? thick_x : -thick_x), thickness_y(relativethickness ? thick_y : -thick_y), color(col), fillcolor(RGBc::c_Transparent)
+			{
+			MTOOLS_ASSERT(rad_x >= 0);
+			MTOOLS_ASSERT(rad_y >= 0);
+			MTOOLS_ASSERT(thick_x >= 0);
+			MTOOLS_ASSERT(thick_y >= 0);
+			}
+
+
+		/**
+		* Constructor. Thick ellipse without filling, given by its bounding box
+		**/
+		FigureEllipse(const fBox2 & B, double thick_x, double thick_y, bool relativethickness, RGBc col) 
+			: center(B.center()), rx(B.l(0) / 2), ry(B.l(1) / 2), thickness_x(relativethickness ? thick_x : -thick_x), thickness_y(relativethickness ? thick_y : -thick_y), color(col), fillcolor(RGBc::c_Transparent)
+			{
+			MTOOLS_ASSERT(!B.isEmpty());
+			MTOOLS_ASSERT(thick_x >= 0);
+			MTOOLS_ASSERT(thick_y >= 0);
+			}
+
+
+		/**
+		* Constructor. Thick ellipse with filling
+		**/
+		FigureEllipse(fVec2 centerellipse, double rad_x, double rad_y, double thick_x, double thick_y, bool relativethickness, RGBc col, RGBc fillcol)
+			: center(centerellipse), rx(rad_x), ry(rad_y), thickness_x(relativethickness ? thick_x : -thick_x), thickness_y(relativethickness ? thick_y : -thick_y), color(col), fillcolor(fillcol)
+			{
+			MTOOLS_ASSERT(rad_x >= 0);
+			MTOOLS_ASSERT(rad_y >= 0);
+			MTOOLS_ASSERT(thick_x >= 0);
+			MTOOLS_ASSERT(thick_y >= 0);
+			}
+
+
+		/**
+		* Constructor. Thick ellipse with filling, given by its bounding box
+		**/
+		FigureEllipse(const fBox2 & B, double thick_x, double thick_y, bool relativethickness, RGBc col, RGBc fillcol)
+			: center(B.center()), rx(B.l(0) / 2), ry(B.l(1) / 2), thickness_x(relativethickness ? thick_x : -thick_x), thickness_y(relativethickness ? thick_y : -thick_y), color(col), fillcolor(fillcol)
+			{
+			MTOOLS_ASSERT(!B.isEmpty());
+			MTOOLS_ASSERT(thick_x >= 0);
+			MTOOLS_ASSERT(thick_y >= 0);
+			}
+
+
+		/**
+		* Draws the figure onto an image with a given range.
+		*
+		* @param [in,out]	im		    the image to draw onto.
+		* @param [in,out]	R		    the range.
+		* @param 		  	highQuality (Optional) True when high quality drawing is requested and false
+		* 								otherwise.
+		*/
+		virtual void draw(Image & im, fBox2 & R, bool highQuality = true) override
+			{
+			if ((thickness_x == 0.0)&&(thickness_y == 0.0))
+				{
+				if (fillcolor.comp.A == 0)
+					{
+					im.canvas_draw_ellipse(R, center, rx, ry, color, highQuality);
+					}
+				else
+					{
+					im.canvas_draw_filled_ellipse(R, center, rx, ry, color, fillcolor, highQuality);
+					}
+				}
+			else
+				{
+				const bool relative = (thickness_x >= 0);
+				const double tx = ((thickness_x < 0) ? (-thickness_x) : thickness_x);
+				const double ty = ((thickness_y < 0) ? (-thickness_y) : thickness_y);
+				if (fillcolor.comp.A == 0)
+					{
+					im.canvas_draw_thick_ellipse(R, center, rx, ry, tx, ty, relative, color, highQuality);
+					}
+				else
+					{
+					im.canvas_draw_thick_filled_ellipse(R, center, rx, ry, tx, ty, relative, color, fillcolor, highQuality);
+					}
+				}
+			}
+
+
+		/**
+		* Return the object's bounding box.
+		*
+		* @return	A fBox2.
+		*/
+		virtual fBox2 boundingBox() const override
+			{
+			return fBox2(center.X() - rx, center.X() + rx, center.Y() - ry, center.Y() + ry);
+			}
+
+
+		/**
+		* Print info about the object into an std::string.
+		*/
+		virtual std::string toString(bool debug = false) const override
+			{
+			std::string str("Ellipse Figure [");
+			str += mtools::toString(center) + " ";
+			str += mtools::toString(rx) + " ";
+			str += mtools::toString(ry) + " ";
+			str += mtools::toString(color);
+			if (fillcolor.comp.A != 0) str += std::string(" filled: ") + mtools::toString(fillcolor);
+			if ((thickness_x != 0.0)|| (thickness_y != 0.0))
+				{
+				if (thickness_x >= 0) str += std::string(" rel. thick: x ") + mtools::toString(thickness_x) + " y " + mtools::toString(thickness_y);
+				else str += std::string(" abs. thick: ") + mtools::toString(thickness_x) + " y " + mtools::toString(thickness_y);
+				}
+			return str + "]";
+			}
+
+
+		/** Serialize the object. */
+		virtual void serialize(OBaseArchive & ar) const override
+			{
+			ar & center;
+			ar & rx;
+			ar & ry;
+			ar & thickness_x;
+			ar & thickness_y;
+			ar & color;
+			ar & fillcolor;
+			}
+
+
+		/** Deserialize the object. */
+		virtual void deserialize(IBaseArchive & ar) override
+			{
+			ar & center;
+			ar & rx;
+			ar & ry;
+			ar & thickness_x;
+			ar & thickness_y;
+			ar & color;
+			ar & fillcolor;
+			}
+	};
+
+
+
+
+	/**
+	 * Ellipse Part figure
+	 * 
+	 * Parameters: 
+	 *  - center and radii  
+	 *  - outline color
+	 *  - thickness  
+	 *  - filling color   
+	 *  - antialiasing  
+	 *  - part to draw
+	 **/
+	class FigureEllipsePart : public FigureInterface
+	{
+
+	public:
+
+		/** ellipse parameters **/
+		fVec2	center;			// circle center
+		double	rx;				// x-radius
+		double  ry;				// y-radius
+		double	thickness_x;	// 0 = no thickness. < 0 = absolute thicknes,  >0 = relative thickness 
+		double	thickness_y;	// 0 = no thickness  < 0 = absolute thicknes,  >0 = relative thickness 
+		RGBc	color;			// color
+		RGBc	fillcolor;		// interior color (transparent = no filling)
+		int		part;			// one of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT,, BOX_SPLIT_DOWN_LEFT, , BOX_SPLIT_DOWN_RIGHT
+
+
+		/**   
+		 * Constructor. Simple ellipse without filling or thickness    
+		 **/
+		FigureEllipsePart(int ellipsepart, fVec2 centerellipse, double rad_x, double rad_y, RGBc col) : center(centerellipse), rx(rad_x), ry(rad_y), thickness_x(0.0), thickness_y(0.0), color(col), fillcolor(RGBc::c_Transparent), part(ellipsepart)
+			{
+			MTOOLS_ASSERT((ellipsepart >= 0) && (ellipsepart < 8));
+			MTOOLS_ASSERT(rad_x >= 0);
+			MTOOLS_ASSERT(rad_y >= 0);
+			}
+
+		/**
+		* Constructor. Simple ellipse without filling or thickness, given by its bounding box  (the bounding box if for the whole ellipse)
+		**/
+		FigureEllipsePart(int ellipsepart, const fBox2 & B, RGBc col) : center(B.center()), rx(B.l(0)/2), ry(B.l(1)/2), thickness_x(0.0), thickness_y(0.0), color(col), fillcolor(RGBc::c_Transparent), part(ellipsepart)
+			{
+			MTOOLS_ASSERT((ellipsepart >= 0) && (ellipsepart < 8));
+			MTOOLS_ASSERT(! B.isEmpty());
+			}
+
+
+		/**
+		* Constructor. Simple ellipse with filling color but without thickness
+		**/
+		FigureEllipsePart(int ellipsepart, fVec2 centerellipse, double rad_x, double rad_y, RGBc col, RGBc fillcol) : center(centerellipse), rx(rad_x), ry(rad_y), thickness_x(0.0), thickness_y(0.0), color(col), fillcolor(fillcol), part(ellipsepart)
+			{
+			MTOOLS_ASSERT((ellipsepart >= 0) && (ellipsepart < 8));
+			MTOOLS_ASSERT(rad_x >= 0);
+			MTOOLS_ASSERT(rad_y >= 0);
+			}
+
+
+		/**
+		* Constructor. Simple ellipse with filling but without thickness, given by its bounding box  (the bounding box if for the whole ellipse)
+		**/
+		FigureEllipsePart(int ellipsepart, const fBox2 & B, RGBc col, RGBc fillcol) : center(B.center()), rx(B.l(0) / 2), ry(B.l(1) / 2), thickness_x(0.0), thickness_y(0.0), color(col), fillcolor(fillcol), part(ellipsepart)
+			{
+			MTOOLS_ASSERT((ellipsepart >= 0) && (ellipsepart < 8));
+			MTOOLS_ASSERT(!B.isEmpty());
+			}
+
+
+		/**
+		* Constructor. Thick ellipse without filling
+		**/
+		FigureEllipsePart(int ellipsepart, fVec2 centerellipse, double rad_x, double rad_y, double thick_x, double thick_y, bool relativethickness, RGBc col)
+		: center(centerellipse), rx(rad_x), ry(rad_y), thickness_x(relativethickness ? thick_x : -thick_x), thickness_y(relativethickness ? thick_y : -thick_y), color(col), fillcolor(RGBc::c_Transparent), part(ellipsepart)
+			{
+			MTOOLS_ASSERT((ellipsepart >= 0) && (ellipsepart < 8));
+			MTOOLS_ASSERT(rad_x >= 0);
+			MTOOLS_ASSERT(rad_y >= 0);
+			MTOOLS_ASSERT(thick_x >= 0);
+			MTOOLS_ASSERT(thick_y >= 0);
+			}
+
+
+		/**
+		* Constructor. Thick ellipse without filling, given by its bounding box  (the bounding box if for the whole ellipse)
+		**/
+		FigureEllipsePart(int ellipsepart, const fBox2 & B, double thick_x, double thick_y, bool relativethickness, RGBc col)
+			: center(B.center()), rx(B.l(0) / 2), ry(B.l(1) / 2), thickness_x(relativethickness ? thick_x : -thick_x), thickness_y(relativethickness ? thick_y : -thick_y), color(col), fillcolor(RGBc::c_Transparent), part(ellipsepart)
+			{
+			MTOOLS_ASSERT((ellipsepart >= 0) && (ellipsepart < 8));
+			MTOOLS_ASSERT(!B.isEmpty());
+			MTOOLS_ASSERT(thick_x >= 0);
+			MTOOLS_ASSERT(thick_y >= 0);
+			}
+
+
+		/**
+		* Constructor. Thick ellipse with filling
+		**/
+		FigureEllipsePart(int ellipsepart, fVec2 centerellipse, double rad_x, double rad_y, double thick_x, double thick_y, bool relativethickness, RGBc col, RGBc fillcol)
+			: center(centerellipse), rx(rad_x), ry(rad_y), thickness_x(relativethickness ? thick_x : -thick_x), thickness_y(relativethickness ? thick_y : -thick_y), color(col), fillcolor(fillcol), part(ellipsepart)
+			{
+			MTOOLS_ASSERT((ellipsepart >= 0) && (ellipsepart < 8));
+			MTOOLS_ASSERT(rad_x >= 0);
+			MTOOLS_ASSERT(rad_y >= 0);
+			MTOOLS_ASSERT(thick_x >= 0);
+			MTOOLS_ASSERT(thick_y >= 0);
+			}
+
+
+		/**
+		* Constructor. Thick ellipse with filling, given by its bounding box (the bounding box if for the whole ellipse)
+		**/
+		FigureEllipsePart(int ellipsepart, const fBox2 & B, double thick_x, double thick_y, bool relativethickness, RGBc col, RGBc fillcol)
+			: center(B.center()), rx(B.l(0) / 2), ry(B.l(1) / 2), thickness_x(relativethickness ? thick_x : -thick_x), thickness_y(relativethickness ? thick_y : -thick_y), color(col), fillcolor(fillcol), part(ellipsepart)
+			{
+			MTOOLS_ASSERT((ellipsepart >= 0) && (ellipsepart < 8));
+			MTOOLS_ASSERT(!B.isEmpty());
+			MTOOLS_ASSERT(thick_x >= 0);
+			MTOOLS_ASSERT(thick_y >= 0);
+			}
+
+
+		/**
+		* Draws the figure onto an image with a given range.
+		*
+		* @param [in,out]	im		    the image to draw onto.
+		* @param [in,out]	R		    the range.
+		* @param 		  	highQuality (Optional) True when high quality drawing is requested and false
+		* 								otherwise.
+		*/
+		virtual void draw(Image & im, fBox2 & R, bool highQuality = true) override
+			{
+			if ((thickness_x == 0.0)&&(thickness_y == 0.0))
+				{
+				if (fillcolor.comp.A == 0)
+					{
+					im.canvas_draw_part_ellipse(R, part, center, rx, ry, color, highQuality);
+					}
+				else
+					{
+					im.canvas_draw_part_filled_ellipse(R, part, center, rx, ry, color, fillcolor, highQuality);
+					}
+				}
+			else
+				{
+				const bool relative = (thickness_x >= 0);
+				const double tx = ((thickness_x < 0) ? (-thickness_x) : thickness_x);
+				const double ty = ((thickness_y < 0) ? (-thickness_y) : thickness_y);
+				if (fillcolor.comp.A == 0)
+					{
+					im.canvas_draw_part_thick_ellipse(R, part, center, rx, ry, tx, ty, relative, color, highQuality);
+					}
+				else
+					{
+					im.canvas_draw_part_thick_filled_ellipse(R, part, center, rx, ry, tx, ty, relative, color, fillcolor, highQuality);
+					}
+				}
+			}
+
+
+		/**
+		* Return the object's bounding box.
+		*
+		* @return	A fBox2.
+		*/
+		virtual fBox2 boundingBox() const override
+			{
+			return fBox2(center.X() - rx, center.X() + rx, center.Y() - ry, center.Y() + ry).get_split(part);
+			}
+
+
+		/**
+		* Print info about the object into an std::string.
+		*/
+		virtual std::string toString(bool debug = false) const override
+			{
+			std::string str("Ellipse Part Figure [");
+			switch (part)
+			{
+			case BOX_SPLIT_UP: { str += "HALF UP"; break; }
+			case BOX_SPLIT_DOWN: { str += "HALF DOWN"; break; }
+			case BOX_SPLIT_LEFT: { str += "HALF LEFT"; break; }
+			case BOX_SPLIT_RIGHT: { str += "HALF RIGHT"; break; }
+			case BOX_SPLIT_UP_LEFT: { str += "QUARTER UP LEFT"; break; }
+			case BOX_SPLIT_UP_RIGHT: { str += "QUARTER UP RIGHT"; break; }
+			case BOX_SPLIT_DOWN_LEFT: { str += "QUARTER DOWN LEFT"; break; }
+			case BOX_SPLIT_DOWN_RIGHT: { str += "QUARTER DOWN RIGHT"; break; }
+			default: { str += "ERROR PART"; }
+			}
+			str += " " + mtools::toString(center) + " ";
+			str += mtools::toString(rx) + " ";
+			str += mtools::toString(ry) + " ";
+			str += mtools::toString(color);
+			if (fillcolor.comp.A != 0) str += std::string(" filled: ") + mtools::toString(fillcolor);
+			if ((thickness_x != 0.0)|| (thickness_y != 0.0))
+				{
+				if (thickness_x >= 0) str += std::string(" rel. thick: x ") + mtools::toString(thickness_x) + " y " + mtools::toString(thickness_y);
+				else str += std::string(" abs. thick: ") + mtools::toString(thickness_x) + " y " + mtools::toString(thickness_y);
+				}
+			return str + "]";
+			}
+
+
+		/** Serialize the object. */
+		virtual void serialize(OBaseArchive & ar) const override
+			{
+			ar & part;
+			ar & center;
+			ar & rx;
+			ar & ry;
+			ar & thickness_x;
+			ar & thickness_y;
+			ar & color;
+			ar & fillcolor;
+			}
+
+
+		/** Deserialize the object. */
+		virtual void deserialize(IBaseArchive & ar) override
+			{
+			ar & part;
+			ar & center;
+			ar & rx;
+			ar & ry;
+			ar & thickness_x;
+			ar & thickness_y;
+			ar & color;
+			ar & fillcolor;
+			}
+	};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
