@@ -41,6 +41,9 @@ namespace mtools
 
 	/* available figures classes*/
 
+	class FigureHorizontalLine;
+	class FigureVerticalLine;
+
 	class FigureCircle;
 	class FigureCirclePart;
 	class FigureEllipse;
@@ -307,11 +310,233 @@ namespace mtools
 
 
 
+
+
+
 	/************************************************************************************************************************************
 	*
-	* CIRCLE
+	* LINES
 	*
 	*************************************************************************************************************************************/
+
+
+
+	/**
+	* 
+	* Horizontal Line figure
+	*
+	**/
+	class FigureHorizontalLine : public FigureInterface
+	{
+
+	public:
+
+		/** parameters **/  
+		double x1, x2, y;		// line 
+		double thickness;		// thickness, 0 = no thickness. < 0 = absolute thickness,  >0 = relative thickness
+		RGBc	color;			// circle color
+
+
+		/**
+		* Constructor. Horizontal line, no thickness.
+		**/
+		FigureHorizontalLine(double Y, double X1, double X2, RGBc col) 
+		: x1(std::min(X1, X2)), x2(std::max(X1, X2)), y(Y), thickness(0.0), color(col)
+			{
+			}
+
+		/**
+		* Constructor. Horizontal line, with thickness.
+		**/
+		FigureHorizontalLine(double Y, double X1, double X2, double thick, bool relativethickness, RGBc col)
+		: x1(std::min(X1,X2)), x2(std::max(X1, X2)), y(Y), thickness(relativethickness ? thick : -thick), color(col)
+			{
+			MTOOLS_ASSERT(thick >= 0);
+			}
+
+
+		/** Draw method */
+		virtual void draw(Image & im, fBox2 & R, bool highQuality = true) override
+			{
+			if (thickness == 0.0)
+				{
+				im.canvas_draw_horizontal_line(R, y, x1, x2, color);
+				}
+			else
+				{
+				const bool relative = (thickness >= 0);
+				const double thick = (relative ? thickness : -thickness);
+				im.canvas_draw_thick_horizontal_line(R, y, x1, x2, thick, relative, color);
+				}
+			}
+
+
+		/** Return the object's bounding box. */
+		virtual fBox2 boundingBox() const override
+			{
+			if (thickness > 0)
+				{
+				return fBox2(x1 , x2 , y - thickness, y + thickness);
+				}
+			else
+				{ 
+				return fBox2(x1, x2, y, y);
+				}
+			}
+
+
+		/** Print info about the object into an std::string. */
+		virtual std::string toString(bool debug = false) const override
+			{
+			std::string str("Horizontal line [");
+			str += mtools::toString(x1) + " - ";
+			str += mtools::toString(x2) + ", ";
+			str += mtools::toString(y) + " ";
+			str += mtools::toString(color);
+			if (thickness != 0.0)
+				{
+				if (thickness > 0) str += std::string(" rel. thick: ") + mtools::toString(thickness);
+				else str += std::string(" abs. thick: ") + mtools::toString(-thickness);
+				}
+			return str + "]";
+			}
+
+
+		/** Serialize the object. */
+		virtual void serialize(OBaseArchive & ar) const override
+			{
+			ar & x1;
+			ar & x2;
+			ar & y;
+			ar & color;
+			ar & thickness;
+			}
+
+
+		/** Deserialize the object. */
+		virtual void deserialize(IBaseArchive & ar) override
+			{
+			ar & x1;
+			ar & x2;
+			ar & y;
+			ar & color;
+			ar & thickness;
+			}
+	};
+
+
+
+	/**
+	*
+	* Vertical Line figure
+	*
+	**/
+	class FigureVerticalLine : public FigureInterface
+	{
+
+	public:
+
+		/** parameters **/  
+		double y1, y2, x;		// line 
+		double thickness;		// thickness, 0 = no thickness. < 0 = absolute thickness,  >0 = relative thickness
+		RGBc	color;			// circle color
+
+
+		/**
+		* Constructor. Horizontal line, no thickness.
+		**/
+		FigureVerticalLine(double X, double Y1, double Y2, RGBc col) 
+		: y1(std::min(Y1, Y2)), y2(std::max(Y1, Y2)), x(X), thickness(0.0), color(col)
+			{
+			}
+
+		/**
+		* Constructor. Horizontal line, with thickness.
+		**/
+		FigureVerticalLine(double X, double Y1, double Y2, double thick, bool relativethickness, RGBc col)
+		: y1(std::min(Y1,Y2)), y2(std::max(Y1, Y2)), x(X), thickness(relativethickness ? thick : -thick), color(col)
+			{
+			MTOOLS_ASSERT(thick >= 0);
+			}
+
+
+		/** Draw method */
+		virtual void draw(Image & im, fBox2 & R, bool highQuality = true) override
+			{
+			if (thickness == 0.0)
+				{
+				im.canvas_draw_vertical_line(R, x, y1, y2, color);
+				}
+			else
+				{
+				const bool relative = (thickness >= 0);
+				const double thick = (relative ? thickness : -thickness);
+				im.canvas_draw_thick_vertical_line(R, x, y1, y2, thick, relative, color);
+				}
+			}
+
+
+		/** Return the object's bounding box. */
+		virtual fBox2 boundingBox() const override
+			{
+			if (thickness > 0)
+				{
+				return fBox2(x - thickness, x + thickness, y1, y2);
+				}
+			else
+				{ 
+				return fBox2(x, x, y1, y2);
+				}
+			}
+
+
+		/** Print info about the object into an std::string. */
+		virtual std::string toString(bool debug = false) const override
+			{
+			std::string str("Vertical line [");
+			str += mtools::toString(x) + ", ";
+			str += mtools::toString(y1) + " - ";
+			str += mtools::toString(y2) + " ";
+			str += mtools::toString(color);
+			if (thickness != 0.0)
+				{
+				if (thickness > 0) str += std::string(" rel. thick: ") + mtools::toString(thickness);
+				else str += std::string(" abs. thick: ") + mtools::toString(-thickness);
+				}
+			return str + "]";
+			}
+
+
+		/** Serialize the object. */
+		virtual void serialize(OBaseArchive & ar) const override
+			{
+			ar & y1;
+			ar & y2;
+			ar & x;
+			ar & color;
+			ar & thickness;
+			}
+
+
+		/** Deserialize the object. */
+		virtual void deserialize(IBaseArchive & ar) override
+			{
+			ar & y1;
+			ar & y2;
+			ar & x;
+			ar & color;
+			ar & thickness;
+			}
+	};
+
+
+
+	/************************************************************************************************************************************
+	*
+	* CIRCLE / ELLIPSE
+	*
+	*************************************************************************************************************************************/
+
 
 	/**
 	 * Circle figure
