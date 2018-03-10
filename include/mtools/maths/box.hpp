@@ -35,11 +35,19 @@ namespace mtools
     {
  
 
-	/* Definition of constants use for the splithalf() method*/
+	/* Definition of constants use for the split() method*/
+	
+	/* Split in half */
 	const int BOX_SPLIT_UP		= 0;
 	const int BOX_SPLIT_DOWN	= 1;
 	const int BOX_SPLIT_LEFT	= 2;
 	const int BOX_SPLIT_RIGHT	= 3;
+	
+	/* Split in quarter*/
+	const int BOX_SPLIT_UP_LEFT = 4;
+	const int BOX_SPLIT_UP_RIGHT = 5;
+	const int BOX_SPLIT_DOWN_LEFT = 6;
+	const int BOX_SPLIT_DOWN_RIGHT = 7;
 
 
     // forward declaration
@@ -403,7 +411,7 @@ namespace mtools
 
 
 			/**
-			* Split the box in half.
+			* Split the box in half or in quarter
 			* Only for dimension 2 
 			* 
 			* @param   part Part of the box to keep, one of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
@@ -416,10 +424,10 @@ namespace mtools
 
 
 			/**
-			* Split the box in half.
+			* Split the box in half or in quarter
 			* Only for dimension 2
 			*
-			* @param   part Part of the box to keep, one of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param   part Part of the box to keep, one of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT, BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT
 			*
 			* @return  corresponding half boxes.
 			**/
@@ -428,10 +436,14 @@ namespace mtools
 				static_assert(N == 2, "this version of get_split() in specific to dimension 2");
 				switch (part)
 					{
-					case BOX_SPLIT_UP:		{ return get_split(1, true); }
-					case BOX_SPLIT_DOWN:	{ return get_split(1, false); }
-					case BOX_SPLIT_LEFT:	{ return get_split(0, false); }
-					case BOX_SPLIT_RIGHT:	{ return get_split(0, true); }
+					case BOX_SPLIT_UP:		   { return get_split(1, true); }
+					case BOX_SPLIT_DOWN:	   { return get_split(1, false); }
+					case BOX_SPLIT_LEFT:	   { return get_split(0, false); }
+					case BOX_SPLIT_RIGHT:	   { return get_split(0, true); }
+					case BOX_SPLIT_UP_LEFT:    { return get_split(1, true).get_split(0, false); }
+					case BOX_SPLIT_UP_RIGHT:   { return get_split(1, true).get_split(0, true); }
+					case BOX_SPLIT_DOWN_LEFT:  { return get_split(1, false).get_split(0, false); }
+					case BOX_SPLIT_DOWN_RIGHT: { return get_split(1, false).get_split(0, true); }
 					default: { MTOOLS_ERROR("incorrect splitting part."); }
 					}
 				return *this;
