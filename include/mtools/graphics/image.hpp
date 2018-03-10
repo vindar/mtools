@@ -2819,7 +2819,7 @@ namespace mtools
 			/**
 			* Draw part of a (real-valued) circle
 			*
-			* @param	circlepart	combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	circlepart	combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT, BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT
 			* @param	center center.
 			* @param	radius radius
 			* @param	color  color
@@ -2877,7 +2877,7 @@ namespace mtools
 			/**
 			* Draw part of a (real-valued) filled circle .
 			*
-			* @param	circlepart	combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	circlepart	combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT, BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT
 			* @param	center    center.
 			* @param	radius    radius.
 			* @param	color	  color.
@@ -2930,7 +2930,7 @@ namespace mtools
 			/**
 			* Draw part of a thick (real-valued) circle
 			*
-			* @param	circlepart	combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	circlepart	combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT, BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT, BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT
 			* @param	center    center.
 			* @param	radius    (outer) radius.
 			* @param	thickness thickness of the circle. The inner radius is radius - thickness.
@@ -2982,7 +2982,7 @@ namespace mtools
 			/**
 			* Draw `part of a thick (real-valued) filled circle
 			*
-			* @param	circlepart	combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	circlepart	combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT, BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT, BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT
 			* @param	center    center.
 			* @param	radius    (outer) radius.
 			* @param	thickness thickness of the circle. The inner radius is radius - thickness.
@@ -3063,7 +3063,7 @@ namespace mtools
 			/**
 			* Draw part of a (real-valued) ellipse.
 			*
-		    * @param	part   combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+		    * @param	part   combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT, BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT, BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT
 			* @param	center center.
 			* @param	rx	   radius along the x-axis.
 			* @param	ry	   raduis along the y-axis.
@@ -3100,7 +3100,7 @@ namespace mtools
 			/**
 			* Draw part of a filled (real-valued) ellipse.
 			*
-			* @param	part   combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	part   combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT, BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT
 			* @param	center    center.
 			* @param	rx		  radius along the x-axis.
 			* @param	ry		  raduis along the y-axis.
@@ -3276,7 +3276,7 @@ namespace mtools
 			/**
 			* Draw part of an ellipse inside a (real-valued) box.
 			*
-			* @param	part   combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	part   combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT, BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT
 			* @param	ellipseBox	  bounding box for the ellipse.
 			* @param	color color.
 			* @param	aa    (Optional) true to use antialiasing.
@@ -3343,7 +3343,7 @@ namespace mtools
 			/**
 			* Draw a part of filled ellipse inside a (real-valued) box.
 			*
-			* @param	part   combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	part   combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT, BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT
 			* @param	ellipseBox		  bounding box for the ellipse.
 			* @param	color	  color.
 			* @param	fillcolor color to fill the ellipse.
@@ -3405,7 +3405,7 @@ namespace mtools
 			/**
 			* Draw part of a thick (real valued) ellipse
 			*
-			* @param	part		combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	part		combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT, BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT
 			* @param	center	    center.
 			* @param	rx		    (outer) radius along the x-axis.
 			* @param	ry		    (outer) radius along the y-axis.
@@ -3469,7 +3469,7 @@ namespace mtools
 			/**
 			* Draw part of a thick filled (real valued) ellipse
 			*
-			* @param	part		combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	part		combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT, BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT
 			* @param	center	    center.
 			* @param	rx		    (outer) radius along the x-axis.
 			* @param	ry		    (outer) radius along the y-axis.
@@ -3523,7 +3523,7 @@ namespace mtools
 			/**
 			* Draw part of a thick ellipse inside a (real-valued) box.
 			*
-			* @param	part		combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	part		combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT, BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT
 			* @param	B		    ellipse outer bounding box.
 			* @param	thickness_x thickness along the x-axis (the ellipse inner radius is obtained by
 			* 						substracting this quantity from the bounding box radius).
@@ -3568,7 +3568,7 @@ namespace mtools
 			/**
 			* Draw part of a thick filled ellipse inside a (real-valued) box.
 			*
-			* @param	part		combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	part		combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT, BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT
 			* @param	B		    ellipse outer bounding box.
 			* @param	thickness_x thickness along the x-axis (the ellipse inner radius is obtained by
 			* 						substracting this quantity from the bounding box radius).
@@ -4977,7 +4977,7 @@ namespace mtools
 			* Draw part of a circle.
 			*
 			* @param	R	   the absolute range represented in the image.
-			* @param	part   combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	part   combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT, BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT
 			* @param	center center
 			* @param	radius radius
 			* @param	color  color
@@ -5025,7 +5025,7 @@ namespace mtools
 			* Draw part of a filled circle.
 			*
 			* @param	R			the absolute range represented in the image.
-			* @param	part		combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	part		combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT, BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT
 			* @param	center		center
 			* @param	radius		radius
 			* @param	color		color
@@ -5082,7 +5082,7 @@ namespace mtools
 			* Draw part of a thick circle.
 			*
 			* @param	R					the absolute range represented in the image.
-			* @param	part				combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	part				combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT, BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT
 			* @param	center				center
 			* @param	radius				radius
 			* @param	thickness			thickness.
@@ -5149,7 +5149,7 @@ namespace mtools
 			* Draw part of a thick filled circle.
 			*
 			* @param	R					the absolute range represented in the image.
-			* @param	part				combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	part				combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT, BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT
 			* @param	center				center
 			* @param	radius				radius
 			* @param	thickness			thickness.
@@ -5203,7 +5203,7 @@ namespace mtools
 			* Draw part of an ellipse.
 			*
 			* @param	R	   the absolute range represented in the image.
-			* @param	part   combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	part   combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT, BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT
 			* @param	center center
 			* @param	rx	   radius along the x-axis.
 			* @param	ry	   radius along the y-axis.
@@ -5244,7 +5244,7 @@ namespace mtools
 			* Draw part of a filled ellipse.
 			*
 			* @param	R			the absolute range represented in the image.
-			* @param	part		combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	part		combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT, BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT
 			* @param	center		center
 			* @param	rx			radius along the x-axis.
 			* @param	ry			radius along the y-axis.
@@ -5291,7 +5291,7 @@ namespace mtools
 			* Draw part of a thick ellipse.
 			*
 			* @param	R					the absolute range represented in the image.
-			* @param	part				combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	part				combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT, BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT
 			* @param	center				center
 			* @param	rx					radius along the x-axis.
 			* @param	ry					radius along the y-axis.
@@ -5344,7 +5344,7 @@ namespace mtools
 			* Draw a part of thick filled ellipse.
 			*
 			* @param	R					the absolute range represented in the image.
-			* @param	part				combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	part				combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT, BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT
 			* @param	center				center
 			* @param	rx					radius along the x-axis.
 			* @param	ry					radius along the y-axis.
@@ -5389,7 +5389,7 @@ namespace mtools
 			* Draw part of an ellipse with a given bounding box.
 			*
 			* @param	R			the absolute range represented in the image.
-			* @param	part		combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	part		combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT, BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT
 			* @param	ellipseBox	the ellipse bounding box.
 			* @param	color		color
 			* @param	aa			(Optional) true to use antialiasing.
@@ -5426,7 +5426,7 @@ namespace mtools
 			* Draw part of a filled ellipse with a given bounding box.
 			*
 			* @param	R			the absolute range represented in the image.
-			* @param	part		combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	part		combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT, BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT
 			* @param	ellipseBox	the ellipse bounding box.
 			* @param	color		color
 			* @param	fillcolor	color to fill the ellipse.
@@ -5468,7 +5468,7 @@ namespace mtools
 			* Draw part of a thick ellipse with a given bounding box.
 			*
 			* @param	R					the absolute range represented in the image.
-			* @param	part				combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	part				combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT, BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT
 			* @param	ellipseBox			the ellipse bounding box.
 			* @param	thickness_x			thickness on the x-axis.
 			* @param	thickness_y			thickness on the y-axis.
@@ -5515,7 +5515,7 @@ namespace mtools
 			* Draw part of a thick filled ellipse with a given bounding box.
 			*
 			* @param	R					the absolute range represented in the image.
-			* @param	part				combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT
+			* @param	part				combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT, BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT
 			* @param	ellipseBox			the ellipse bounding box.
 			* @param	thickness_x			thickness on the x-axis.
 			* @param	thickness_y			thickness on the y-axis.
