@@ -665,24 +665,25 @@ namespace mtools
 
 
 
-		/** Return the quality of the image currently drawn. 100 = finshed drawing. */
+		/** Return the quality of the image currently drawn. 100 = finished drawing. */
 		int quality() const
 		{
+			if (_figTree->size() == 0) return 100;
 			if (_phase == 0)
-			{
+				{
 				int64 u = _nb;
 				if (u == 0) return 0;
 				u *= u;
 				return (1 + mtools::highestBit((uint64)u));
-			}
+				}
 			else
-			{
+				{
 				const size_t Nth = _images.size();
 				int tot = 0;
 				for (size_t i = 0; i < Nth; i++) { tot += _workers[i].current_prog(); }
 				tot /= ((int)Nth);
 				return 55 + tot;
-			}
+				}
 		}
 
 
