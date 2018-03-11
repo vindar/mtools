@@ -65,7 +65,10 @@ void testplotfigure()
 		{
 		fVec2 pos = { 10000 * Unif(gen),10000 * Unif(gen) };
 		double rad = 10*Unif(gen);
-		canvas(FigureEllipsePart(BOX_SPLIT_UP_RIGHT, pos, 10 * Unif(gen), 10 * Unif(gen), 10, 0, false, RGBc::c_Red.getMultOpacity(1), RGBc::c_Lime.getMultOpacity(0.5)));
+
+		canvas(FigureDot(pos, 3, RGBc::c_Red, RGBc::c_Green),0);
+
+//		canvas(FigureEllipsePart(BOX_SPLIT_UP_RIGHT, pos, 10 * Unif(gen), 10 * Unif(gen), 10, 0, false, RGBc::c_Red.getMultOpacity(1), RGBc::c_Lime.getMultOpacity(0.5)));
 		
 		pos = { 10000 * Unif(gen),10000 * Unif(gen) };
 		rad = 100 * Unif(gen);

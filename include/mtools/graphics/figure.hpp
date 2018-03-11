@@ -44,6 +44,8 @@ namespace mtools
 	class FigureHorizontalLine;
 	class FigureVerticalLine;
 
+	class FigureDot;
+
 	class FigureCircle;
 	class FigureCirclePart;
 	class FigureEllipse;
@@ -539,6 +541,109 @@ namespace mtools
 
 
 	/**
+	 * Dot figure : filled (possibly thick) circle with absolute size that
+	 * do not scale with the range. 
+	 * 
+	 * Parameters: 
+	 *  - center   
+	 *  - radius  
+	 *  - outline color
+	 *  - filling color   
+	 **/
+	class FigureDot : public FigureInterface
+	{
+
+	public:
+
+		/** circle parameters **/
+		fVec2	center;			// circle center
+		double	radius;			// circle radius
+		RGBc	outlinecolor;	// outline color
+		RGBc	fillcolor;		// interior color
+
+
+		/**
+		 * Constructor. unit size color dot.
+		 **/
+		FigureDot(fVec2 centerdot, RGBc color) : center(centerdot), radius(1.0), outlinecolor(color), fillcolor(color)
+			{
+			}
+
+
+		/**   
+		 * Constructor. Dot with given size and color.    
+		 **/
+		FigureDot(fVec2 centerdot, double rad, RGBc color) : center(centerdot), radius(rad), outlinecolor(color), fillcolor(color)
+			{
+			MTOOLS_ASSERT(rad > 0);
+			}
+
+
+		/**
+		* Constructor. Dot with given size and color and outline
+		**/
+		FigureDot(fVec2 centerdot, double rad, RGBc border_color, RGBc fill_color) : center(centerdot), radius(rad), outlinecolor(border_color), fillcolor(fill_color)
+			{
+			MTOOLS_ASSERT(rad > 0);
+			}
+
+
+		/**
+		* Draws the dot on the image
+		**/
+		virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+			{
+			double r = (radius < min_thickness) ? min_thickness : radius;
+			im.canvas_draw_dot(R, center, r, outlinecolor, fillcolor, highQuality, true);
+			}
+
+
+		/**
+		* Dot's bounding box : single point. 
+		*/
+		virtual fBox2 boundingBox() const override
+			{
+			return fBox2(center.X(), center.X(), center.Y(), center.Y());
+			}
+
+
+		/**
+		* Print info about the object into an std::string.
+		*/
+		virtual std::string toString(bool debug = false) const override
+			{
+			std::string str("Dot Figure [");
+			str += mtools::toString(center) + " ";
+			str += mtools::toString(radius) + "  outline ";
+			str += mtools::toString(outlinecolor) + " interior " + mtools::toString(fillcolor);
+			return str + "]";
+			}
+
+
+		/** Serialize the object. */
+		virtual void serialize(OBaseArchive & ar) const override
+			{
+			ar & center;
+			ar & radius;
+			ar & outlinecolor;
+			ar & fillcolor;
+			}
+
+
+		/** Deserialize the object. */
+		virtual void deserialize(IBaseArchive & ar) override
+			{
+			ar & center;
+			ar & radius;
+			ar & outlinecolor;
+			ar & fillcolor;
+			}
+
+	};
+
+
+
+	/**
 	 * Circle figure
 	 * 
 	 * Parameters: 
@@ -546,7 +651,6 @@ namespace mtools
 	 *  - outline color
 	 *  - thickness  
 	 *  - filling color   
-	 *  - antialiasing
 	 **/
 	class FigureCircle : public FigureInterface
 	{
@@ -703,7 +807,6 @@ namespace mtools
 	 *  - outline color
 	 *  - thickness  
 	 *  - filling color   
-	 *  - antialiasing  
 	 *  - part to draw
 	 **/
 	class FigureCirclePart : public FigureInterface
