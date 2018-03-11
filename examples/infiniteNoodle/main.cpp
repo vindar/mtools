@@ -226,6 +226,7 @@ void makeDrawing()
 	Plotter2D plotter;
 	auto P = makePlot2DFigure(canvas);
 	plotter[P];
+	plotter.autorangeXY();
 	plotter.plot();
 
 }
