@@ -275,11 +275,11 @@ namespace mtools
 		* Draws the figure onto an image with a given range.
 		*
 		* @param [in,out]	im		    the image to draw onto.
-		* @param [in,out]	R		    the range.
-		* @param 		  	highQuality (Optional) True when high quality drawing is requested and false
-		* 								otherwise.
+		* @param 			R		    the range.
+		* @param 		  	highQuality True when high quality drawing is requested and false otherwise
+		* @param 		  	min_thick   minimum thickness to use when drawing
 		*/
-		virtual void draw(Image & im, fBox2 & R, bool highQuality = true) = 0;
+		virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) = 0;
 
 
 		/**
@@ -356,7 +356,7 @@ namespace mtools
 
 
 		/** Draw method */
-		virtual void draw(Image & im, fBox2 & R, bool highQuality = true) override
+		virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 			{
 			if (thickness == 0.0)
 				{
@@ -366,7 +366,7 @@ namespace mtools
 				{
 				const bool relative = (thickness >= 0);
 				const double thick = (relative ? thickness : -thickness);
-				im.canvas_draw_thick_horizontal_line(R, y, x1, x2, thick, relative, color);
+				im.canvas_draw_thick_horizontal_line(R, y, x1, x2, thick, relative, color,true, true, min_thickness);
 				}
 			}
 
@@ -461,7 +461,7 @@ namespace mtools
 
 
 		/** Draw method */
-		virtual void draw(Image & im, fBox2 & R, bool highQuality = true) override
+		virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 			{
 			if (thickness == 0.0)
 				{
@@ -471,7 +471,7 @@ namespace mtools
 				{
 				const bool relative = (thickness >= 0);
 				const double thick = (relative ? thickness : -thickness);
-				im.canvas_draw_thick_vertical_line(R, x, y1, y2, thick, relative, color);
+				im.canvas_draw_thick_vertical_line(R, x, y1, y2, thick, relative, color, true, true, min_thickness);
 				}
 			}
 
@@ -607,7 +607,7 @@ namespace mtools
 		* @param 		  	highQuality (Optional) True when high quality drawing is requested and false
 		* 								otherwise.
 		*/
-		virtual void draw(Image & im, fBox2 & R, bool highQuality = true) override
+		virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 			{
 			if (thickness == 0.0)
 				{
@@ -626,11 +626,11 @@ namespace mtools
 				const double thick = (relative ? thickness : -thickness);
 				if (fillcolor.comp.A == 0)
 					{
-					im.canvas_draw_thick_circle(R, center, radius, thick, relative, color, highQuality);
+					im.canvas_draw_thick_circle(R, center, radius, thick, relative, color, highQuality, true, min_thickness);
 					}
 				else
 					{
-					im.canvas_draw_thick_filled_circle(R, center, radius, thick, relative, color, fillcolor, highQuality);
+					im.canvas_draw_thick_filled_circle(R, center, radius, thick, relative, color, fillcolor, highQuality, true, min_thickness);
 					}
 				}
 			}
@@ -770,7 +770,7 @@ namespace mtools
 		* @param 		  	highQuality (Optional) True when high quality drawing is requested and false
 		* 								otherwise.
 		*/
-		virtual void draw(Image & im, fBox2 & R, bool highQuality = true) override
+		virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 			{
 			if (thickness == 0.0)
 				{
@@ -789,11 +789,11 @@ namespace mtools
 				const double thick = (relative ? thickness : -thickness);
 				if (fillcolor.comp.A == 0)
 					{
-					im.canvas_draw_part_thick_circle(R, part, center, radius, thick, relative, color, highQuality);
+					im.canvas_draw_part_thick_circle(R, part, center, radius, thick, relative, color, highQuality, true, min_thickness);
 					}
 				else
 					{
-					im.canvas_draw_part_thick_filled_circle(R, part, center, radius, thick, relative, color, fillcolor, highQuality);
+					im.canvas_draw_part_thick_filled_circle(R, part, center, radius, thick, relative, color, fillcolor, highQuality, true, min_thickness);
 					}
 				}
 			}
@@ -989,7 +989,7 @@ namespace mtools
 		* @param 		  	highQuality (Optional) True when high quality drawing is requested and false
 		* 								otherwise.
 		*/
-		virtual void draw(Image & im, fBox2 & R, bool highQuality = true) override
+		virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 			{
 			if ((thickness_x == 0.0)&&(thickness_y == 0.0))
 				{
@@ -1009,11 +1009,11 @@ namespace mtools
 				const double ty = ((thickness_y < 0) ? (-thickness_y) : thickness_y);
 				if (fillcolor.comp.A == 0)
 					{
-					im.canvas_draw_thick_ellipse(R, center, rx, ry, tx, ty, relative, color, highQuality);
+					im.canvas_draw_thick_ellipse(R, center, rx, ry, tx, ty, relative, color, highQuality, true, min_thickness);
 					}
 				else
 					{
-					im.canvas_draw_thick_filled_ellipse(R, center, rx, ry, tx, ty, relative, color, fillcolor, highQuality);
+					im.canvas_draw_thick_filled_ellipse(R, center, rx, ry, tx, ty, relative, color, fillcolor, highQuality, true, min_thickness);
 					}
 				}
 			}
@@ -1209,7 +1209,7 @@ namespace mtools
 		* @param 		  	highQuality (Optional) True when high quality drawing is requested and false
 		* 								otherwise.
 		*/
-		virtual void draw(Image & im, fBox2 & R, bool highQuality = true) override
+		virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 			{
 			if ((thickness_x == 0.0)&&(thickness_y == 0.0))
 				{
@@ -1229,11 +1229,11 @@ namespace mtools
 				const double ty = ((thickness_y < 0) ? (-thickness_y) : thickness_y);
 				if (fillcolor.comp.A == 0)
 					{
-					im.canvas_draw_part_thick_ellipse(R, part, center, rx, ry, tx, ty, relative, color, highQuality);
+					im.canvas_draw_part_thick_ellipse(R, part, center, rx, ry, tx, ty, relative, color, highQuality,true,min_thickness);
 					}
 				else
 					{
-					im.canvas_draw_part_thick_filled_ellipse(R, part, center, rx, ry, tx, ty, relative, color, fillcolor, highQuality);
+					im.canvas_draw_part_thick_filled_ellipse(R, part, center, rx, ry, tx, ty, relative, color, fillcolor, highQuality, true, min_thickness);
 					}
 				}
 			}
@@ -1309,13 +1309,6 @@ namespace mtools
 			ar & fillcolor;
 			}
 	};
-
-
-
-
-
-
-
 
 
 

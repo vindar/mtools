@@ -85,6 +85,7 @@ void testplotfigure()
 
 	auto PF = makePlot2DFigure(canvas, 5);
 
+
 	//PF.highQuality(false);
 
 	Plotter2D plotter; 

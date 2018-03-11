@@ -85,10 +85,6 @@ namespace mtools
 	class Font;
 
 
-	// TODO : make it 
-#define DEFAULT_MIN_THICKNESS	0.1
-
-
 	/**
 	 * Class representing a true color image  
 	 * 
@@ -127,9 +123,10 @@ namespace mtools
 
 		public:
 
-			static const bool DEFAULT_AA			= true;			///< default mode is to use antialiasing.
-			static const bool DEFAULT_BLEND			= true;			///< default mode is to use blending.
-			static const bool DEFAULT_GRID_ALIGN    = true;			///< default mode is to align to grid for faster drawing.
+			static constexpr bool	DEFAULT_AA			  = true;			///< default mode is to use antialiasing.
+			static constexpr bool	DEFAULT_BLEND		  = true;			///< default mode is to use blending.
+			static constexpr bool	DEFAULT_GRID_ALIGN    = true;			///< default mode is to align to grid for faster drawing.
+			static constexpr double DEFAULT_MIN_THICKNESS = 0.5;			///< default minimum thickness set to 0.5 
 
 
 			/******************************************************************************************************************************************************
