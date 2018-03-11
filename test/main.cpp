@@ -55,7 +55,7 @@ void testplotfigure()
 
 	MT2004_64 gen;
 
-	FigureCanvas<5> canvas(2);
+	FigureCanvas<5> canvas(3);
 
 	cout << "Creating... ";
 

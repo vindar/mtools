@@ -240,6 +240,46 @@ namespace mtools
 			}
 
 
+		/**   
+		* Query the main bounding box of all layers currently displayed.
+		* Return an empty box if no object/layer are displayed. 
+		**/
+		fBox2 boundingBox() const
+			{
+			fBox2 R;
+			for (size_t i = 0; i < nbLayers(); i++)
+				{
+				if (_ims[i].second) { R.swallowBox(_figcanvas->getTreeLayer(i)->minBoundingBox()); }
+				}
+			return R;
+			}
+
+
+		/** Yes, thee is a favourite range X (override from base class) */
+		virtual bool hasFavouriteRangeX() override { return true; }
+
+
+		/** Yes, thee is a favourite range Y (override from base class) */
+		virtual bool hasFavouriteRangeY() override { return true; }
+
+
+		/** Favourite range X (override from base class) */
+		virtual fBox2 favouriteRangeX(fBox2 R) override
+			{
+			fBox2 B = boundingBox();
+			if (!B.isEmpty()) return zoomOut(B); else return B;
+			}
+
+
+		/** Favourite range Y (override from base class) */
+		virtual fBox2 favouriteRangeY(fBox2 R) override
+			{
+			fBox2 B = boundingBox();
+			if (!B.isEmpty()) return zoomOut(B); else return B;
+			}
+
+
+
 	protected:
 
 
