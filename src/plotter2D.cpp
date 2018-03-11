@@ -750,9 +750,8 @@ namespace mtools
             _w_objWin->end();
             _w_objWin->resizable(_w_scrollWin); // maybe we should resize wrt _w_objGroup ?
 
-
-            auto _w_borderrange3 = new Fl_Box(5, 360 + 55 + 10+h+20, 290, 65 );
-            _w_borderrange3->box(FL_UP_BOX);
+			auto _w_borderrange3 = new Fl_Box(5, H - 70, 290, 65);
+			_w_borderrange3->box(FL_UP_BOX);
             _w_borderrange3->labelfont(0);
             _w_borderrange3->labelsize(16);
             _w_borderrange3->align(Fl_Align(FL_ALIGN_TOP_LEFT));
