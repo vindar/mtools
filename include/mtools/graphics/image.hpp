@@ -1814,6 +1814,38 @@ namespace mtools
 			*******************************************************************************************************************************************************/
 
 
+
+			/**
+			* Draw a (circle) dot on the image.
+			*
+			* @param	center		Position of the dot.
+			* @param	radius   	abosolute radius of the dot (single pixel for radius = 1)
+			* @param	outcolor   	outline color.
+			* @param	fillcolor   inside color.
+			* @param	aa			true to use antialiasing.
+			* @param	blending	true to use blending.
+			**/
+			MTOOLS_FORCEINLINE void draw_dot(iVec2 center, double radius, RGBc outcolor, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+				{
+				if ((isEmpty()) || (radius <= 0)) return;
+				if (radius <= 1)
+					{
+					if (blend)
+						{
+						if (radius == 1) _updatePixel<true, true, false, false>(center.X(), center.Y(), outcolor, 0, 0);
+						else  _updatePixel<true, true, true, false>(center.X(), center.Y(), outcolor, (int32)(256*radius), 0);
+						}
+					else
+						{
+						if (radius == 1) _updatePixel<false, true, false, false>(center.X(), center.Y(), outcolor, 0, 0);
+						else  _updatePixel<false, true, true, false>(center.X(), center.Y(), outcolor, (int32)(256*radius), 0);
+						}
+					return;
+					}
+				draw_filled_circle(center, (int64)radius, outcolor, fillcolor, aa, blend);
+				}
+
+
 			/**
 			 * Draw a (square) dot on the image.
 			 * 
@@ -4621,19 +4653,22 @@ namespace mtools
 
 
 			/**
-			* Draw a (square) dot on the image.
+			* Draw a (circle) dot on the image. 
+			* the radius is in pixels and does not scle with the range. 
 			*
 			* Use absolute coordinate (canvas method).
 			*
 			* @param	R			the absolute range represented in the image.
-			* @param	P			Position of the center.
-			* @param	color   	The color.
-			* @param	blending	true to use blending.
-			* @param	penwidth	The pen width (radius of the square: 0 = single pixel).
+			* @param	center		Position of the dot.
+			* @param	radius   	abosolute radius of the dot.
+			* @param	outcolor   	outline color.
+			* @param	fillcolor   inside color.
+			* @param	aa			true to use antialiasing.
+			* @param	blend   	true to use blending.
 			**/
-			MTOOLS_FORCEINLINE void canvas_draw_dot(const mtools::fBox2 & R, fVec2 P, RGBc color, bool blending, int32 penwidth = 0)
+			MTOOLS_FORCEINLINE void canvas_draw_dot(const fBox2 & R, fVec2 center, double radius, RGBc outcolor, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
 				{
-				draw_dot(R.absToPixel(P, dimension()), color, blending, penwidth);
+				draw_dot(R.absToPixel(center, dimension()), radius, outcolor, fillcolor, aa, blend);
 				}
 
 

@@ -278,7 +278,7 @@ template<int N> void drawPoints(FigureCanvas<N> & canvas, float op = 1.0f)
         {
         pPoissonPoint pp = it->adr();
 		RGBc coul = ((pp->father() != nullptr) && (pp->father()->lastused() == pp)) ? RGBc::c_Red.getMultOpacity(op) :	coul = RGBc::c_Blue.getMultOpacity(op);
-		if ((pp->x < X)&&(pp->t > 0)) canvas(FigureCircle({ pp->x, pp->t }, 0.03, coul, coul),1);
+		if ((pp->x < X)&&(pp->t > 0)) canvas(FigureDot({ pp->x, pp->t }, 2, coul),1);
         }
 	cout << "ok!\n\n";
     }
