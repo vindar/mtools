@@ -97,7 +97,7 @@ namespace mtools
 		/**
 		* Default constructor, create an empty object.
 		**/
-		TreeFigure(bool callDtors = false) : _callDtors(callDtors), _rootNode(nullptr), _treeNodePool(), _listNodePool()
+		TreeFigure(bool callDtors = false) : _callDtors(callDtors), _rootNode(nullptr), _minbbox(), _treeNodePool(), _listNodePool()
 			{
 			_createRoot(); // create the root
 			}
@@ -115,7 +115,7 @@ namespace mtools
 		/**
 		* Move constructor.
 		**/
-		TreeFigure(const TreeFigure && TF) : _callDtors(TF._callDtors), _rootNode(TF._rootNode), _treeNodePool(std::forward<decltype(_treeNodePool)>(TF._sqrNodePool)), _listNodePool(std::forward<decltype(_listNodePool)>(TF._listNodePool))
+		TreeFigure(const TreeFigure && TF) : _callDtors(TF._callDtors), _rootNode(TF._rootNode), _minbbox(TF._minbbox), _treeNodePool(std::forward<decltype(_treeNodePool)>(TF._sqrNodePool)), _listNodePool(std::forward<decltype(_listNodePool)>(TF._listNodePool))
 			{
 			TF._rootNode = nullptr;
 			}
@@ -129,6 +129,7 @@ namespace mtools
 			_reset();
 			_callDtors = TF._callDtors;
 			_rootNode = TF._rootNode;
+			_minbbox = TF._minbbox;
 			_treeNodePool = std::forward<decltype(_treeNodePool)>(TF._treeNodePool);
 			_listNodePool = std::forward<decltype(_listNodePool)>(TF._listNodePool);
 			TF._rootNode = nullptr;
@@ -150,6 +151,7 @@ namespace mtools
 		void serialize(OBaseArchive & ar, const int version = 0) const
 			{
 			ar << std::string("TreeFigure< ") + typeid(T).name() + ", " + mtools::toString(N) + ", " + typeid(TFloat).name() + ">\n";
+			ar & _minbbox;
 			ar & size(); // number of items
 			size_t nb = iterate_all([&ar](const BoundedObject & bo) -> void  { ar & bo.boundingbox; ar & bo.object; }); 
 			ar << std::string("\nend of TreeFigure\n");
@@ -165,7 +167,9 @@ namespace mtools
 		**/
 		void deserialize(IBaseArchive & ar)
 			{
-			size_t nb; ar & nb; // number of items to add
+			size_t nb; 
+			ar & _minbbox;
+			ar & nb; // number of items to add
 			for (size_t i = 0; i < nb; i++)
 				{
 				BoundedObject bo; 
@@ -194,7 +198,8 @@ namespace mtools
 		**/
 		void insert(const BoundedObject & boundedObject)
 			{
-			MTOOLS_INSURE(!(boundedObject.boundingbox.isEmpty())); // bounding box should not be empty. 
+			MTOOLS_INSURE(!(boundedObject.boundingbox.isEmpty())); // bounding box should not be empty.
+			_minbbox.swallowBox(boundedObject.boundingbox);
 			// create new roots until we contain the object's bounding box
 			while (!(_rootNode->_bbox.contain(boundedObject.boundingbox))) { _reRootUp(); }
 			// start from the root and go down
@@ -517,8 +522,16 @@ namespace mtools
 
 		/**
 		* Return the main bounding box that contains all items currently inserted.
+		* Never empty.
 		**/
 		BBox mainBoundingBox() const  { return _rootNode->_bbox; }
+
+
+		/**
+		* Return the minimal bounding box that contains all items currently inserted.
+		* Can be empty if there is no item inserted. 
+		**/
+		BBox minBoundingBox() const { return _minbbox; }
 
 
 		/**
@@ -541,7 +554,8 @@ namespace mtools
 			std::string s = std::string("TreeFigure<") + typeid(T).name() + ", " + mtools::toString(N) + ", " + typeid(TFloat).name() + ">\n";
 			s += std::string(" - object inserted : ") + mtools::toString(size()) + "\n";
 			s += std::string(" - memory used : ") + mtools::toStringMemSize(footprint()) + "\n";
-			s += std::string(" - main bounding box : ") + mtools::toString(_rootNode->_bbox) + "\n";
+			s += std::string(" - main bounding box    : ") + mtools::toString(_rootNode->_bbox) + "\n";
+			s += std::string(" - minimal bounding box : ") + mtools::toString(_minbbox) + "\n";
 			return s + "---\n"; 
 			}
 
@@ -748,6 +762,7 @@ namespace mtools
 			MTOOLS_ASSERT(_rootNode == nullptr);
 			_rootNode = (_TreeNode *)_treeNodePool.malloc();
 			::new(_rootNode) _TreeNode({ (TFloat)-1, (TFloat)1, (TFloat)-1, (TFloat)1 });
+			_minbbox.clear();
 			}
 
 
@@ -942,6 +957,7 @@ namespace mtools
 		bool _callDtors;														// true if we should call the destructor when object are deleted. 
 
 		_TreeNode * _rootNode;													// root node the "tree"
+		BBox		_minbbox;													// minimal bounding box for all objects in the tree.
 
 		mtools::CstSizeMemoryPool<sizeof(_TreeNode), 10000> _treeNodePool;		// memory pool for the tree nodes elements
 		mtools::CstSizeMemoryPool<sizeof(_ListNode), 100000> _listNodePool;	    // memory pool for listNode elements
