@@ -59,19 +59,19 @@ void testplotfigure()
 
 	cout << "Creating... ";
 
-	int nb = 100000;
+	int nb = 1000000;
 	
 	for (int k = 0; k < nb; k++)
 		{
-		fVec2 pos = { 10000 * Unif(gen),10000 * Unif(gen) };
+		fVec2 pos = { 50000 * Unif(gen),50000 * Unif(gen) };
 		double rad = 10*Unif(gen);
 
 		canvas(FigureDot(pos, 3, RGBc::c_Red, RGBc::c_Green),0);
 
 //		canvas(FigureEllipsePart(BOX_SPLIT_UP_RIGHT, pos, 10 * Unif(gen), 10 * Unif(gen), 10, 0, false, RGBc::c_Red.getMultOpacity(1), RGBc::c_Lime.getMultOpacity(0.5)));
 		
-		pos = { 10000 * Unif(gen),10000 * Unif(gen) };
-		rad = 100 * Unif(gen);
+		pos = { 50000 * Unif(gen),50000 * Unif(gen) };
+		rad = 1* Unif(gen);
 		canvas(FigureVerticalLine(pos.Y(), pos.X() - rad, pos.X() + rad, 5 , true, RGBc::c_Blue.getMultOpacity(1)),1);
 		}
 	

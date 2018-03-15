@@ -41,9 +41,9 @@ namespace mtools
 
 	/* available figures classes*/
 
-	class FigureHorizontalLine;
-	class FigureVerticalLine;
 
+	// DONE 
+	// 
 	class FigureDot;
 
 	class FigureCircle;
@@ -51,16 +51,31 @@ namespace mtools
 	class FigureEllipse;
 	class FigureEllipsePart;
 
+	class FigureHorizontalLine;
+	class FigureVerticalLine;
+
+
+	// TODO
+	 
+	class FigureLine;
+	class FigureThickLine;
+	class FigurePolyLine;
+	class FigureThickPolyLine;
 
 	class FigureBox;
-	class FigureDot;
-	class FigureLine;
-	class FigurePolyLine;
 	class FigureTriangle;
 	class FigureConvexPolygon;
 	class FigureQuadBezier;
 	class FigureRatQuadBezier;
 	class FigureCubicBezier;
+
+	class FigureText;
+
+	class FigureImage;
+
+	class FigureFill;
+	class FigureClip;
+
 	template<typename FIGURE1, typename FIGURE2>  class FigurePair;
 	template<typename FIGURE1, typename FIGURE2, typename FIGURE3>  class FigureTriplet;
 	template<typename FIGURE1, typename FIGURE2, typename FIGURE3, typename FIGURE4>  class FigureQuadruplet;
@@ -226,7 +241,11 @@ namespace mtools
 		/* delete all allocated memory TODO: REPLACE A BY BETTER VERSION THAN MALLOC/FREE */
 		void _deallocateAll()
 			{
-			for (void *  p : _vecallocp) { free(p); }
+			for (void *  p : _vecallocp) 
+				{
+				((FigureInterface*)p)->~FigureInterface();	// call dtor
+				free(p);									// free memory
+				}
 			_vecallocp.clear();
 			}
 
