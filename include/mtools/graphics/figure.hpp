@@ -34,9 +34,9 @@ namespace mtools
 {
 
 
-
 	/* Forward declarations */
 	class FigureInterface;				// interface for a figure object
+
 	template<int N> class FigureCanvas;	// main figure canvas class
 
 	/* available figures classes*/
@@ -514,7 +514,7 @@ namespace mtools
 		/** Print info about the object into an std::string. */
 		virtual std::string toString(bool debug = false) const override
 			{
-			std::string str("Vertical line [");
+			std::string str("Horizontal line [");
 			str += mtools::toString(x) + ", ";
 			str += mtools::toString(y1) + " - ";
 			str += mtools::toString(y2) + " ";
@@ -547,6 +547,72 @@ namespace mtools
 			ar & x;
 			ar & color;
 			ar & thickness;
+			}
+	};
+
+
+
+	/**
+	*
+	* Line figure
+	*
+	**/
+	class FigureLine : public FigureInterface
+	{
+
+	public:
+
+		/** parameters **/  
+		fVec2 P1, P2;
+		RGBc  color;
+		int32 thick;
+
+
+		/**
+		* Constructor. Horizontal line, no thickness.
+		**/
+		FigureLine(fVec2 p1, fVec2 p2, RGBc col, int32 thickness = 0) : P1(p1), P2(p2), color(col), thick(thickness)
+		{
+		}
+
+
+		/** Draw method */
+		virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+			{
+			im.canvas_draw_line(R, P1, P2, color, true, true, highQuality, thick);
+			}
+
+
+		/** Return the object's bounding box. */
+		virtual fBox2 boundingBox() const override
+			{
+			return fBox2(std::min<double>(P1.X(), P2.X()), std::max<double>(P1.X(), P2.X()), std::min<double>(P1.Y(), P2.Y()), std::max<double>(P1.Y(), P2.Y()));
+			}
+
+
+		/** Print info about the object into an std::string. */
+		virtual std::string toString(bool debug = false) const override
+			{
+			std::string str("Line [");
+			str += mtools::toString(P1) + ", ";
+			str += mtools::toString(P2) + " - ";
+			str += mtools::toString(thick) + " ";
+			str += mtools::toString(color);
+			return str + "]";
+			}
+
+
+		/** Serialize the object. */
+		virtual void serialize(OBaseArchive & ar) const override
+			{
+			ar & P1 & P2 & color & thick;
+			}
+
+
+		/** Deserialize the object. */
+		virtual void deserialize(IBaseArchive & ar) override
+			{
+			ar & P1 & P2 & color & thick;
 			}
 	};
 

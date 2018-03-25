@@ -128,6 +128,10 @@ namespace mtools
 			static constexpr bool	DEFAULT_GRID_ALIGN    = true;			///< default mode is to align to grid for faster drawing.
 			static constexpr double DEFAULT_MIN_THICKNESS = 0.5;			///< default minimum thickness set to 0.5 
 
+			static constexpr int LINEEND_H = 0;		///< line with horizontal ending
+			static constexpr int LINEEND_V = 0;		///< line with vertical ending
+			static constexpr int LINEEND_O = 0;		///< line with orthogonal ending
+
 
 			/******************************************************************************************************************************************************
 			*******************************************************************************************************************************************************
@@ -1849,6 +1853,8 @@ namespace mtools
 			/**
 			 * Draw a (square) dot on the image.
 			 * 
+			 * DEPRECATED : SHOULD BE REMOVED AT SOME POINT 
+			 *
 			 * Use setPixel() and blendPixel or operator() for faster methods to set a single pixel. 
 			 * 
 			 * @param	P			Position of the center. 
@@ -1870,6 +1876,7 @@ namespace mtools
 					if (blending) _updatePixel<true, true, false, true>(P.X(), P.Y(), color, 0, 0); else _updatePixel<false, true, false, true>(P.X(), P.Y(), color, 0, penwidth);
 					}
 				}
+
 
 
 			/**
@@ -1944,51 +1951,22 @@ namespace mtools
 				}
 
 
-			/**
-			 * Draw a line.
-			 *
-			 * @param	P1	   	First point.
-			 * @param	P2	   	Second endpoint.
-			 * @param	color  	The color to use.
-			 * @param	draw_P2	true to draw the endpoint P2.
-			 **/
-			inline void draw_line(iVec2 P1, iVec2 P2, RGBc color, bool draw_P2)
-				{
-				if (isEmpty()) return;
-				_lineBresenham<false, true, false, false,false,false>(P1, P2, color, draw_P2, 0,0);
-				}
-
 
 			/**
-			* Draw a line. 
+			* Draw a (simple) line.
 			*
-			* @param	x1		   	x-coord of the first point.
-			* @param	y1		   	y-coord of the first point.
-			* @param	x2		   	x-coord of the second point.
-			* @param	y2		   	y-coord of the second point.
-			* @param	color	   	The color to use.
+			* PENWIDTH IS DEPRECATED. SHOULD BE REMOVED AT SOME POINT 
+			*
+			* @param	P1	   	First point.
+			* @param	P2	   	Second endpoint.
+			* @param	color  	The color to use.
 			* @param	draw_P2	true to draw the endpoint P2.
+			* @param    antialiased	true to use antialiasing.
+			* @param	blending	true to use blending.
+			* @param    penwidth pen radius (0 = unit pen)						
 			**/
-			MTOOLS_FORCEINLINE void draw_line(int64 x1, int64 y1, int64 x2, int64 y2, RGBc color, bool draw_P2)
+			inline void draw_line(iVec2 P1, iVec2 P2, RGBc color, bool draw_P2 = true, bool antialiased = true, bool blending = true, int penwidth = 0)
 				{
-				draw_line({ x1, y1 }, { x2, y2 }, color,draw_P2);
-				}
-
-
-			/**
-			 * Draw a line. 
-			 *
-			 * @param	P1		   	First point.
-			 * @param	P2		   	Second endpoint.
-			 * @param	color	   	The color to use.
-			 * @param	draw_P2	   	true to draw the endpoint P2.
-			 * @param	blending   	true to use blending instead of simply overwriting the color.
-			 * @param	antialiased	true to draw an antialised line.
-			 * @param	penwidth   	The pen width (0 = unit width)
-			 **/
-			inline void draw_line(iVec2 P1, iVec2 P2, RGBc color, bool draw_P2, bool blending, bool antialiased, int32 penwidth = 0)
-				{
-				if (isEmpty()) return;
 				if (penwidth <= 0)
 					{
 					if (antialiased)
@@ -1998,9 +1976,10 @@ namespace mtools
 						if (blending) _lineBresenhamAA<true, true, false>(P1, P2, color, draw_P2, 0); else _lineBresenhamAA<false, true, false>(P1, P2, color, draw_P2, 0);
 						return;
 						}
-					if ((blending) && (!color.isOpaque())) _lineBresenham<true, true, false, false,false,false>(P1, P2, color, draw_P2, 0, 0); else _lineBresenham<false, true, false, false, false, false>(P1, P2, color, draw_P2, 0, 0);
+					if ((blending) && (!color.isOpaque())) _lineBresenham<true, true, false, false, false, false>(P1, P2, color, draw_P2, 0, 0); else _lineBresenham<false, true, false, false, false, false>(P1, P2, color, draw_P2, 0, 0);
 					return;
 					}
+				// THIS PART MUST BE REMOVED AT SOME POINT
 				_correctPenOpacity(color, penwidth);
 				if (antialiased)
 					{
@@ -2009,28 +1988,28 @@ namespace mtools
 					if (blending) _lineBresenhamAA<true, true, true>(P1, P2, color, draw_P2, penwidth); else _lineBresenhamAA<false, true, true>(P1, P2, color, draw_P2, penwidth);
 					return;
 					}
-				if ((blending) && (!color.isOpaque())) _lineBresenham<true,true, false, true, false, false>(P1, P2, color, draw_P2, penwidth, 0); else _lineBresenham<false,true, false, true, false, false>(P1, P2, color, draw_P2, penwidth, 0);
+				if ((blending) && (!color.isOpaque())) _lineBresenham<true, true, false, true, false, false>(P1, P2, color, draw_P2, penwidth, 0); else _lineBresenham<false, true, false, true, false, false>(P1, P2, color, draw_P2, penwidth, 0);
 				return;
 				}
 
 
 			/**
-			 * Draw a line. portion outside the image is clipped.
-			 *
-			 * @param	x1		   	x-coord of the first point.
-			 * @param	y1		   	y-coord of the first point.
-			 * @param	x2		   	x-coord of the second point.
-			 * @param	y2		   	y-coord of the second point.
-			 * @param	color	   	The color to use.
-			 * @param	draw_P2	   	true to draw the endpoint P2.
-			 * @param	blending   	true to use blending instead of simply copying the color.
-			 * @param	antialiased	true to draw an antialised line.
-			 * @param	penwidth   	The pen width (0 = unit width)
-			 **/
-			MTOOLS_FORCEINLINE void draw_line(int64 x1, int64 y1, int64 x2, int64 y2, RGBc color, bool draw_P2, bool blending, bool antialiased, int32 penwidth = 0)
+			* Draw a thick line.
+			*
+			* @param	P1	   		First endpoint.
+			* @param	P2	   		Second endpoint.
+			* @param	thickness	thickness of the line (should be non negative)
+			* @param	color  		The color to use.
+			* @param	typeP1	   	one of LINEEND_H, LINEEND_V, LINEEND_O.
+			* @param	typeP2	    one of LINEEND_H, LINEEND_V, LINEEND_O.
+			* @param    antialiased	true to use antialiasing.
+			* @param	blending	true to use blending.
+			**/
+			inline void draw_thick_line(iVec2 P1, iVec2 P2, double thickness, RGBc color, int typeP1 = LINEEND_O, int typeP2 = LINEEND_O, bool antialiased = true, bool blending = true, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
-				draw_line({ x1, y1 }, { x2,y2 }, color, draw_P2, blending, antialiased, penwidth);
+
 				}
+
 
 
 			/**
@@ -4760,37 +4739,40 @@ namespace mtools
 			*
 			* Use absolute coordinate (canvas method).
 			*
-			* @param	R		the absolute range represented in the image.
-			* @param	P1	   	First point.
-			* @param	P2	   	Second endpoint.
-			* @param	color  	The color to use.
-			* @param	draw_P2	true to draw the endpoint P2.
+			* @param	R			the absolute range represented in the image.
+			* @param	P1		   	First point.
+			* @param	P2		   	Second endpoint.
+			* @param	color	   	The color to use.
+			* @param	draw_P2	   	true to draw the endpoint P2.
+			* @param	antialiased	true to draw an antialised line.
+			* @param	blending   	true to use blending instead of simply overwriting the color.
+			* @param	penwidth   	The pen width (0 = unit width)
 			**/
-			MTOOLS_FORCEINLINE void canvas_draw_line(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, RGBc color, bool draw_P2)
+			MTOOLS_FORCEINLINE void canvas_draw_line(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, RGBc color, bool draw_P2 = true, bool antialiased = true, bool blending = true, int32 penwidth = 0)
 				{
 				const auto dim = dimension();
-				draw_line(R.absToPixel(P1, dim), R.absToPixel(P2, dim), color, draw_P2);
+				draw_line(R.absToPixel(P1, dim), R.absToPixel(P2, dim), color, draw_P2, antialiased, blending, penwidth);
 				}
 
-
 			/**
-			* Draw a line.
+			* Draw a thick line.
 			*
 			* Use absolute coordinate (canvas method).
 			*
 			* @param	R			the absolute range represented in the image.
 			* @param	P1		   	First point.
 			* @param	P2		   	Second endpoint.
+			* @param	thickness	The thickness.
+			* @param    relativethickness	true to scale tickness with range and false to use constant thickness.
 			* @param	color	   	The color to use.
 			* @param	draw_P2	   	true to draw the endpoint P2.
-			* @param	blending   	true to use blending instead of simply overwriting the color.
 			* @param	antialiased	true to draw an antialised line.
+			* @param	blending   	true to use blending instead of simply overwriting the color.
 			* @param	penwidth   	The pen width (0 = unit width)
 			**/
-			MTOOLS_FORCEINLINE void canvas_draw_line(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, RGBc color, bool draw_P2, bool blending, bool antialiased, int32 penwidth = 0)
+			MTOOLS_FORCEINLINE void canvas_draw_thick_line(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, double thickness, bool relativethickness, RGBc color, int typeP1 = LINEEND_O, int typeP2 = LINEEND_O, bool antialiased = true, bool blending = true, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
-				const auto dim = dimension();
-				draw_line(R.absToPixel(P1, dim), R.absToPixel(P2, dim), color, draw_P2,blending, antialiased, penwidth);
+				// TODO DIRECTLY TO REMOVE APPROX
 				}
 
 

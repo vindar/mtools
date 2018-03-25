@@ -59,20 +59,21 @@ void testplotfigure()
 
 	cout << "Creating... ";
 
-	int nb = 1000000;
+	int nb = 1000;
 	
 	for (int k = 0; k < nb; k++)
 		{
 		fVec2 pos = { 50000 * Unif(gen),50000 * Unif(gen) };
+		fVec2 pos2 = { 50000 * Unif(gen),50000 * Unif(gen) };
 		double rad = 10*Unif(gen);
 
-		canvas(FigureDot(pos, 3, RGBc::c_Red, RGBc::c_Green),0);
+		canvas(FigureLine(pos, pos2, RGBc::c_Red,1),1);
 
 //		canvas(FigureEllipsePart(BOX_SPLIT_UP_RIGHT, pos, 10 * Unif(gen), 10 * Unif(gen), 10, 0, false, RGBc::c_Red.getMultOpacity(1), RGBc::c_Lime.getMultOpacity(0.5)));
 		
 		pos = { 50000 * Unif(gen),50000 * Unif(gen) };
 		rad = 1* Unif(gen);
-		canvas(FigureVerticalLine(pos.Y(), pos.X() - rad, pos.X() + rad, 5 , true, RGBc::c_Blue.getMultOpacity(1)),1);
+//		canvas(FigureVerticalLine(pos.Y(), pos.X() - rad, pos.X() + rad, 5 , true, RGBc::c_Blue.getMultOpacity(1)),1);
 		}
 	
 
@@ -683,11 +684,46 @@ inline void nextpoint(double l, Image & im, fVec2 & A, fVec2 & B, fVec2 & C, fVe
 	return;
 	}
 
+
 void rot(fVec2 & V, double alpha)
 	{
 	double b = alpha * TWOPI / 360;
 	V = { V.X() * cos(b) + V.Y() * sin(b), -V.X() * sin(b) + V.Y() * cos(b) };
 	}
+
+
+
+
+
+
+
+
+
+
+void canvas_draw_thick_line(Image & im, const mtools::fBox2 & R, fVec2 P1, fVec2 P2, double thickness, bool relativethickness, RGBc color, int typeP1 = Image::LINEEND_O, int typeP2 = Image::LINEEND_O, bool antialiased = true, bool blending = true, double min_tick = Image::DEFAULT_MIN_THICKNESS)
+{
+	fVec2 P1L, P1R, P2L, P2R;
+	fVec2 PO(P1.Y() - P2.Y(), P2.X() - P1.X());
+	PO.normalize(); PO *= thickness;
+	P1L = P1 + PO; P1R = P1 - PO;
+	P2L = P2 + PO; P2R = P2 - PO;
+
+
+	// convert to integer positions
+	iVec2 I1L = R.absToPixel(P1L, im.dimension());
+	iVec2 I1R = R.absToPixel(P1R, im.dimension());
+	iVec2 I2L = R.absToPixel(P2L, im.dimension());
+	iVec2 I2R = R.absToPixel(P2R, im.dimension());
+
+
+
+}
+
+
+
+
+
+
 
 
 
