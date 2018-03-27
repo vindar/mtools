@@ -792,6 +792,22 @@ namespace mtools
                 return iVec2((int64)x, scrSize.Y() - 1 - (int64)(y));
                 }
 
+			/**
+			* Converts an absolute position into its associated position inside a screen. (and invert the Y
+			* axis).
+			*
+			* Same as above but return an real valued position. 
+			**/
+			inline fVec2 absToPixelf(const fVec2 & absCoord, const iVec2 & scrSize) const
+			{
+				static_assert(N == 2, "dimension N must be exactly 2.");
+				const double lx = (double)(max[0] - min[0]);
+				const double ly = (double)(max[1] - min[1]);
+				MTOOLS_ASSERT((lx > 0.0) && (ly > 0.0));
+				double x = ((absCoord.X() - min[0]) / lx)*scrSize.X();
+				double y = ((absCoord.Y() - min[1]) / ly)*scrSize.Y();
+				return fVec2(x, scrSize.Y() - 1 - y);
+			}
 
 
 			/**
