@@ -536,13 +536,13 @@ namespace mtools
 
         void Plot2DBaseGraph::_drawPoint(int i, int j, Image & im, const RGBc & coul, const float opacity, const int tickness)
             {
-            if (tickness <= 1) { im.draw_dot(iVec2(i, j), coul.getMultOpacity(opacity), true, 0); } else { im.draw_dot(iVec2(i, j), coul.getMultOpacity(opacity), true, tickness - 1); }
+            if (tickness <= 1) { im.draw_square_dot(iVec2(i, j), coul.getMultOpacity(opacity), true, 0); } else { im.draw_square_dot(iVec2(i, j), coul.getMultOpacity(opacity), true, tickness - 1); }
 			}
 
 
         void Plot2DBaseGraph::_drawLine(int i, int j1, int j2, Image & im, const RGBc & coul, const float opacity, const int tickness)
             {
-            if (tickness <= 1) { im.draw_line(iVec2(i, j1), iVec2(i + 1, j2), coul.getMultOpacity(opacity), true, true,false,0); } else { im.draw_line(iVec2(i, j1), iVec2(i + 1, j2), coul.getMultOpacity(opacity), true, true, false, tickness - 1); }			
+            if (tickness <= 1) { im.draw_line(iVec2(i, j1), iVec2(i + 1, j2), coul.getMultOpacity(opacity), true, true,true,0); } else { im.draw_line(iVec2(i, j1), iVec2(i + 1, j2), coul.getMultOpacity(opacity), true, true, true, tickness - 1); }			
 			}
 
 
