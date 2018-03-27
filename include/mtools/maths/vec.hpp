@@ -477,7 +477,19 @@ namespace mtools
      *
      * @return  the cross product UxV.
      **/
-    template<typename T, size_t N> inline T crossProduct(const Vec<T, N> & U, const Vec<T, N> & V) { static_assert(N==3,"dimension must be 3 for cross product."); return Vec<T, N>(U[1]*V[2] - U[2]*V[1], U[2]*V[0] - U[0]*V[2], U[0]*V[1] - U[1]*V[0]); }
+    template<typename T> inline Vec<T, 3> crossProduct(const Vec<T, 3> & U, const Vec<T, 3> & V) { return Vec<T, 3>(U[1]*V[2] - U[2]*V[1], U[2]*V[0] - U[0]*V[2], U[0]*V[1] - U[1]*V[0]); }
+
+
+	/**
+	* Cross product UxV of two 2-dimensional vectors U and V.
+	*
+	* @tparam  N   must be equal to 2.
+	* @param   U   The first vector.
+	* @param   V   The second vector.
+	*
+	* @return  the cross product UxV which is also the determinant of the two row vector. 
+	**/
+	template<typename T> inline T crossProduct(const Vec<T, 2> & U, const Vec<T, 2> & V) { return (U.X() * V.Y() - U.Y() * V.X()); }
 
 
     /**
