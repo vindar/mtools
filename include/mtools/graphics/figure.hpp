@@ -58,12 +58,17 @@ namespace mtools
 	// TODO
 	 
 	class FigureLine;
-	class FigureThickLine;
 	class FigurePolyLine;
+	class FigurePolygon;
+	class FigureTriangle;
+
+	class FigureFilledPolygon;
+
+
+	class FigureThickLine;
 	class FigureThickPolyLine;
 
 	class FigureBox;
-	class FigureTriangle;
 	class FigureConvexPolygon;
 	class FigureQuadBezier;
 	class FigureRatQuadBezier;
@@ -569,7 +574,7 @@ namespace mtools
 
 
 		/**
-		* Constructor. Horizontal line, no thickness.
+		* Constructor.
 		**/
 		FigureLine(fVec2 p1, fVec2 p2, RGBc col, int32 thickness = 0) : P1(p1), P2(p2), color(col), thick(thickness)
 		{
@@ -579,7 +584,7 @@ namespace mtools
 		/** Draw method */
 		virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 			{
-			im.canvas_draw_line(R, P1, P2, color, true, true, highQuality, thick);
+			im.canvas_draw_line(R, P1, P2, color, true, highQuality, true,  thick);
 			}
 
 
@@ -618,9 +623,87 @@ namespace mtools
 
 
 
+
+	/**
+	*
+	* Thick Line figure
+	*
+	**/
+	class FigureThickLine : public FigureInterface
+	{
+
+	public:
+
+		/** parameters **/
+		fVec2 P1, P2;
+		RGBc  color;
+		double thick; // must be positive: thickness
+
+
+		/**
+		* Constructor.
+		**/
+		FigureThickLine(fVec2 p1, fVec2 p2, double thickness, RGBc col) : P1(p1), P2(p2), color(col), thick(thickness)
+			{
+			MTOOLS_ASSERT(thick >= 0);
+			MTOOLS_ASSERT(P1 != P2);
+			}
+
+
+		/** Draw method */
+		virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+			{
+			im.canvas_draw_thick_line(R, P1, P2, thick, color, highQuality, true, min_thickness);
+			}
+
+
+		/** Return the object's bounding box. */
+		virtual fBox2 boundingBox() const override
+			{
+			fBox2 R;
+			fVec2 H = (P2 - P1).get_rotate90();
+			H.normalize();
+			H *= (thick*0.5);
+			R.swallowPoint(P1 + H);
+			R.swallowPoint(P1 - H);
+			R.swallowPoint(P2 + H);
+			R.swallowPoint(P2 - H);
+			return R;
+			}
+
+
+		/** Print info about the object into an std::string. */
+		virtual std::string toString(bool debug = false) const override
+			{
+			std::string str("Thick Line [");
+			str += mtools::toString(P1) + ", ";
+			str += mtools::toString(P2) + " - ";
+			str += mtools::toString(thick) + " ";
+			str += mtools::toString(color);
+			return str + "]";
+			}
+
+
+		/** Serialize the object. */
+		virtual void serialize(OBaseArchive & ar) const override
+			{
+			ar & P1 & P2 & color & thick;
+			}
+
+
+		/** Deserialize the object. */
+		virtual void deserialize(IBaseArchive & ar) override
+			{
+			ar & P1 & P2 & color & thick;
+			}
+
+	};
+
+
+
 	/************************************************************************************************************************************
 	*
-	* CIRCLE / ELLIPSE
+	* DOT / CIRCLE / ELLIPSE
 	*
 	*************************************************************************************************************************************/
 
@@ -679,7 +762,7 @@ namespace mtools
 		virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 			{
 			double r = (radius < min_thickness) ? min_thickness : radius;
-			im.canvas_draw_dot(R, center, r, outlinecolor, fillcolor, highQuality, true);
+			im.canvas_draw_circle_dot(R, center, r, outlinecolor, fillcolor, highQuality, true);
 			}
 
 
