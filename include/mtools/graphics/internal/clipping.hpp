@@ -44,7 +44,7 @@ namespace internals_clipping
 	*
 	* @return	1 if C is on the left, -1 if C is on the right and 0 if C in on the line itself.
 	**/
-	MTOOLS_FORCEINLINE int left_of(const fVec2 & P1, const fVec2 & P2, const fVec2 & C)
+	inline int left_of(const fVec2 & P1, const fVec2 & P2, const fVec2 & C)
 	{
 		double x = crossProduct(P2 - P1, C - P2);
 		return ((x < 0) ? -1 : ((x > 0) ? 1 : 0));
@@ -181,7 +181,7 @@ template<typename POLYGON_T> void Sutherland_Hodgman_clipping(const POLYGON_T & 
 * @return	true if a line should be drawn and false if it should be discarded. If true, P1 and
 * 			P2 are now inside the closed rectangle B and delimit the line to draw.
 **/
-bool Colin_SutherLand_lineclip(fVec2 & P1, fVec2 & P2, const fBox2 & B)
+inline bool Colin_SutherLand_lineclip(fVec2 & P1, fVec2 & P2, const fBox2 & B)
 {
 	int c1 = internals_clipping::csLineClipCode<double>(P1, B);
 	int c2 = internals_clipping::csLineClipCode<double>(P2, B);
@@ -238,7 +238,7 @@ bool Colin_SutherLand_lineclip(fVec2 & P1, fVec2 & P2, const fBox2 & B)
 * @return	true if a line should be drawn and false if it should be discarded. If true, P1 and
 * 			P2 are now inside the closed rectangle B and delimit the line to draw.
 **/
-bool Colin_SutherLand_lineclip(iVec2 & P1, iVec2 & P2, const iBox2 & B)
+inline bool Colin_SutherLand_lineclip(iVec2 & P1, iVec2 & P2, const iBox2 & B)
 {
 	int c1 = internals_clipping::csLineClipCode<int64>(P1, B);
 	int c2 = internals_clipping::csLineClipCode<int64>(P2, B);
