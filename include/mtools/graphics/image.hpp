@@ -128,10 +128,6 @@ namespace mtools
 			static constexpr bool	DEFAULT_GRID_ALIGN    = true;			///< default mode is to align to grid for faster drawing.
 			static constexpr double DEFAULT_MIN_THICKNESS = 0.5;			///< default minimum thickness set to 0.5 
 
-			static constexpr int LINEEND_H = 0;		///< line with horizontal ending
-			static constexpr int LINEEND_V = 0;		///< line with vertical ending
-			static constexpr int LINEEND_O = 0;		///< line with orthogonal ending
-
 
 			/******************************************************************************************************************************************************
 			*******************************************************************************************************************************************************
@@ -1818,18 +1814,17 @@ namespace mtools
 			*******************************************************************************************************************************************************/
 
 
-
 			/**
-			* Draw a (circle) dot on the image.
-			*
-			* @param	center		Position of the dot.
-			* @param	radius   	abosolute radius of the dot (single pixel for radius = 1)
-			* @param	outcolor   	outline color.
-			* @param	fillcolor   inside color.
-			* @param	aa			true to use antialiasing.
-			* @param	blending	true to use blending.
-			**/
-			MTOOLS_FORCEINLINE void draw_dot(iVec2 center, double radius, RGBc outcolor, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+			 * Draw a circle dot on the image.
+			 *
+			 * @param	center   	Position of the dot.
+			 * @param	radius   	abosolute radius of the dot (single pixel for radius = 1)
+			 * @param	outcolor 	outline color.
+			 * @param	fillcolor	inside color.
+			 * @param	aa		 	(Optional) true to use antialiasing.
+			 * @param	blend	 	(Optional) true to use blending.
+			 **/
+			MTOOLS_FORCEINLINE void draw_circle_dot(iVec2 center, double radius, RGBc outcolor, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
 				{
 				if ((isEmpty()) || (radius <= 0)) return;
 				if (radius <= 1)
@@ -1851,18 +1846,18 @@ namespace mtools
 
 
 			/**
-			 * Draw a (square) dot on the image.
+			 * Draw a square dot on the image.
 			 * 
-			 * DEPRECATED : SHOULD BE REMOVED AT SOME POINT 
+			 * DEPRECATED : SHOULD BE REMOVED AT SOME POINT
+			 * 
+			 * Use setPixel() and blendPixel or operator() for faster methods to set a single pixel.
 			 *
-			 * Use setPixel() and blendPixel or operator() for faster methods to set a single pixel. 
-			 * 
-			 * @param	P			Position of the center. 
+			 * @param	P			Position of the center.
 			 * @param	color   	The color.
 			 * @param	blending	true to use blending.
-			 * @param	penwidth	The pen width (radius of the square: 0 = single pixel). 
+			 * @param	penwidth	(Optional) The pen width (radius of the square: 0 = single pixel).
 			 **/
-			void draw_dot(iVec2 P, RGBc color, bool blending, int32 penwidth = 0)
+			void draw_square_dot(iVec2 P, RGBc color, bool blending, int32 penwidth = 0)
 				{
 				if (isEmpty()) return;
 				if (color.isOpaque()) { blending = false; }
@@ -1878,16 +1873,15 @@ namespace mtools
 				}
 
 
-
 			/**
 			 * Draw an horizontal line.
 			 *
-			 * @param	y			The y coordinate of the line
-			 * @param	x1			x value of the start point
-			 * @param	x2			x value of the end point
+			 * @param	y			The y coordinate of the line.
+			 * @param	x1			x value of the start point.
+			 * @param	x2			x value of the end point.
 			 * @param	color   	The color to use.
-			 * @param	draw_P2 	true to draw the end point.
-			 * @param	blending	true to use blending
+			 * @param	draw_P2 	(Optional) true to draw the end point.
+			 * @param	blending	(Optional) true to use blending.
 			 **/
 			inline void draw_horizontal_line(int64 y, int64 x1, int64 x2, RGBc color, bool draw_P2 = true, bool blending = true)
 				{
@@ -1897,17 +1891,16 @@ namespace mtools
 
 
 			/**
-			 * Draw a (tick) horizontal line.
-			 * 
-			 * The tickness correspond to the penwidth of the other method (but here it may also be non-integer using antialiasing).
+			 * Draw a thick horizontal line.
 			 *
-			 * @param	y			The y coordinate of the line.
-			 * @param	x1			x value of the start point.
-			 * @param	x2			x value of the end point.
+			 * @param	y		 	The y coordinate of the line.
+			 * @param	x1		 	x value of the start point.
+			 * @param	x2		 	x value of the end point.
 			 * @param	thickness	The thickness.
-			 * @param	color   	The color to use.
-			 * @param	draw_P2 	true to draw the end point.
-			 * @param	blending	true to use blending.
+			 * @param	color	 	The color to use.
+			 * @param	draw_P2  	(Optional) true to draw the end point.
+			 * @param	blending 	(Optional) true to use blending.
+			 * @param	min_tick 	(Optional) minimal thickness.
 			 **/
 			inline void draw_horizontal_line(int64 y, int64 x1, int64 x2, double thickness, RGBc color, bool draw_P2 = true, bool blending = true, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
@@ -1923,8 +1916,8 @@ namespace mtools
 			 * @param	y1			y value of the start point.
 			 * @param	y2			y value of the end point.
 			 * @param	color   	The color to use.
-			 * @param	draw_P2 	true to draw the end point.
-			 * @param	blending	true to use blending.
+			 * @param	draw_P2 	(Optional) true to draw the end point.
+			 * @param	blending	(Optional) true to use blending.
 			 **/
 			inline void draw_vertical_line(int64 x, int64 y1, int64 y2, RGBc color, bool draw_P2 = true, bool blending = true)
 				{
@@ -1934,15 +1927,16 @@ namespace mtools
 
 
 			/**
-			 * Draw a (tick) vertical line.
+			 * Draw a thick vertical line.
 			 *
-			 * @param	x			The x coordinate of the line.
-			 * @param	y1			y value of the start point.
-			 * @param	y2			y value of the end point.
+			 * @param	x		 	The x coordinate of the line.
+			 * @param	y1		 	y value of the start point.
+			 * @param	y2		 	y value of the end point.
 			 * @param	thickness	The thickness.
-			 * @param	color   	The color to use.
-			 * @param	draw_P2 	true to draw the end point.
-			 * @param	blending	true to use blending.
+			 * @param	color	 	The color to use.
+			 * @param	draw_P2  	(Optional) true to draw the end point.
+			 * @param	blending 	(Optional) true to use blending.
+			 * @param	min_tick 	(Optional) minimal thickness.
 			 **/
 			inline void draw_vertical_line(int64 x, int64 y1, int64 y2, double thickness, RGBc color, bool draw_P2 = true, bool blending = true, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
@@ -1951,22 +1945,22 @@ namespace mtools
 				}
 
 
-
 			/**
-			* Draw a (simple) line.
-			*
-			* PENWIDTH IS DEPRECATED. SHOULD BE REMOVED AT SOME POINT 
-			*
-			* @param	P1	   	First point.
-			* @param	P2	   	Second endpoint.
-			* @param	color  	The color to use.
-			* @param	draw_P2	true to draw the endpoint P2.
-			* @param    antialiased	true to use antialiasing.
-			* @param	blending	true to use blending.
-			* @param    penwidth pen radius (0 = unit pen)						
-			**/
+			 * Draw a simple line.
+			 * 
+			 * PENWIDTH IS DEPRECATED. SHOULD BE REMOVED AT SOME POINT
+			 *
+			 * @param	P1		   	First point.
+			 * @param	P2		   	Second endpoint.
+			 * @param	color	   	The color to use.
+			 * @param	draw_P2	   	(Optional) true to draw the endpoint P2.
+			 * @param	antialiased	(Optional) true to use antialiasing.
+			 * @param	blending   	(Optional) true to use blending.
+			 * @param	penwidth   	(Optional) pen radius (0 = unit pen)
+			 **/
 			inline void draw_line(iVec2 P1, iVec2 P2, RGBc color, bool draw_P2 = true, bool antialiased = true, bool blending = true, int penwidth = 0)
 				{
+				if (isEmpty()) return;
 				if (penwidth <= 0)
 					{
 					if (antialiased)
@@ -1979,7 +1973,6 @@ namespace mtools
 					if ((blending) && (!color.isOpaque())) _lineBresenham<true, true, false, false, false, false>(P1, P2, color, draw_P2, 0, 0); else _lineBresenham<false, true, false, false, false, false>(P1, P2, color, draw_P2, 0, 0);
 					return;
 					}
-				// THIS PART MUST BE REMOVED AT SOME POINT
 				_correctPenOpacity(color, penwidth);
 				if (antialiased)
 					{
@@ -1994,25 +1987,6 @@ namespace mtools
 
 
 			/**
-			* Draw a thick line.
-			*
-			* @param	P1	   		First endpoint.
-			* @param	P2	   		Second endpoint.
-			* @param	thickness	thickness of the line (should be non negative)
-			* @param	color  		The color to use.
-			* @param	typeP1	   	one of LINEEND_H, LINEEND_V, LINEEND_O.
-			* @param	typeP2	    one of LINEEND_H, LINEEND_V, LINEEND_O.
-			* @param    antialiased	true to use antialiasing.
-			* @param	blending	true to use blending.
-			**/
-			inline void draw_thick_line(iVec2 P1, iVec2 P2, double thickness, RGBc color, int typeP1 = LINEEND_O, int typeP2 = LINEEND_O, bool antialiased = true, bool blending = true, double min_tick = DEFAULT_MIN_THICKNESS)
-				{
-
-				}
-
-
-
-			/**
 			 * Draw a quadratic (rational) Bezier curve.
 			 *
 			 * @param	P1				The first point.
@@ -2021,12 +1995,12 @@ namespace mtools
 			 * @param	wc				The control point weight. Must be positive (faster for wc = 1 =
 			 * 							classic quad Bezier curve).
 			 * @param	color			The color to use.
-			 * @param	draw_P2			true to draw the endpoint P2.
-			 * @param	blending		true to use blending.
-			 * @param	antialiasing	true to use antialiasing.
-			 * @param	penwidth		The pen width (0 = unit width)
+			 * @param	draw_P2			(Optional) true to draw the endpoint P2.
+			 * @param	antialiasing	(Optional) true to use antialiasing.
+			 * @param	blending		(Optional) true to use blending.
+			 * @param	penwidth		(Optional) The pen width (0 = unit width)
 			 **/
-			void draw_quad_bezier(iVec2 P1, iVec2 P2, iVec2 PC, float wc, RGBc color, bool draw_P2, bool blending, bool antialiasing, int32 penwidth = 0)
+			void draw_quad_bezier(iVec2 P1, iVec2 P2, iVec2 PC, float wc, RGBc color, bool draw_P2 = true, bool antialiasing = true, bool blending = true, int32 penwidth = 0)
 				{
 				if ((isEmpty()) || (wc <= 0)) return;
 				iBox2 mbr(P1);
@@ -2102,19 +2076,19 @@ namespace mtools
 
 
 			/**
-			* Draw a cubic Bezier curve.
-			*
-			* @param	P1				The first point.
-			* @param	P2				The second point.
-			* @param	PA				The first control point.
-			* @param	PB				The second control point.
-			* @param	color			The color to use
-			* @param	draw_P2			true to draw the endpoint P2.
-			* @param	blending		true to use blending.
-			* @param	antialiasing	true to use antialiasing.
-			* @param	penwidth		The pen width (0 = unit width)
-			**/
-			void draw_cubic_bezier(iVec2 P1, iVec2 P2, iVec2 PA, iVec2 PB,  RGBc color, bool draw_P2, bool blending, bool antialiasing, int32 penwidth = 0)
+			 * Draw a cubic Bezier curve.
+			 *
+			 * @param	P1				The first point.
+			 * @param	P2				The second point.
+			 * @param	PA				The first control point.
+			 * @param	PB				The second control point.
+			 * @param	color			The color to use.
+			 * @param	draw_P2			(Optional) true to draw the endpoint P2.
+			 * @param	antialiasing	(Optional) true to use antialiasing.
+			 * @param	blending		(Optional) true to use blending.
+			 * @param	penwidth		(Optional) The pen width (0 = unit width)
+			 **/
+			void draw_cubic_bezier(iVec2 P1, iVec2 P2, iVec2 PA, iVec2 PB,  RGBc color, bool draw_P2 = true, bool antialiasing = true, bool blending = true, int32 penwidth = 0)
 				{
 				if (isEmpty()) return;
 				iBox2 mbr(P1);
@@ -2152,20 +2126,20 @@ namespace mtools
 					}
 				if ((blending) && (!color.isOpaque())) _plotCubicBezier<true, true, false, true>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotCubicBezier<false, true, false, true>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
 				}
-			
+
 
 			/**
 			 * Draw a quadratic spline.
 			 *
-			 * @param	nbpoints	   	number of point to interpolated
-			 * @param	tabPoints	   	array of points to interpolate. 
+			 * @param	nbpoints	   	number of point to interpolated.
+			 * @param	tabPoints	   	array of points to interpolate.
 			 * @param	color		   	The color tu use.
-			 * @param	draw_last_point	true to draw the last point.
-			 * @param	blending	   	true to use blending.
-			 * @param	antialiased	   	true to use anti-aliasing.
-			 * @param	penwidth		The pen width (0 = unit width)
+			 * @param	draw_last_point	(Optional) true to draw the last point.
+			 * @param	antialiased	   	(Optional) true to use anti-aliasing.
+			 * @param	blending	   	(Optional) true to use blending.
+			 * @param	penwidth	   	(Optional) The pen width (0 = unit width)
 			 **/
-			inline void draw_quad_spline(size_t nbpoints, const iVec2 * tabPoints, RGBc color, bool draw_last_point, bool blending, bool antialiased, int32 penwidth = 0)
+			inline void draw_quad_spline(size_t nbpoints, const iVec2 * tabPoints, RGBc color, bool draw_last_point = true, bool antialiased = true, bool blending = true, int32 penwidth = 0)
 				{
 				if (isEmpty()) return;
 				switch(nbpoints)
@@ -2175,13 +2149,13 @@ namespace mtools
 						{
 						if (draw_last_point)
 							{
-							draw_dot(tabPoints[0], color, blending, penwidth);
+							draw_square_dot(tabPoints[0], color, blending, penwidth);
 							}
 						return;
 						}
 					case 2:
 						{
-						draw_line(tabPoints[0], tabPoints[1], color, draw_last_point,blending,antialiased, penwidth);
+						draw_line(tabPoints[0], tabPoints[1], color, draw_last_point, antialiased, blending, penwidth);
 						return;
 						}
 					default:
@@ -2228,33 +2202,33 @@ namespace mtools
 
 
 			/**
-			* Draw a quadratic spline.
-			*
-			* @param	tabPoints	   	std vector containing the points interpolated by the spline.
-			* @param	color		   	The color tu use.
-			* @param	draw_last_point	true to draw the last point.
-			* @param	blending	   	true to use blending.
-			* @param	antialiased	   	true to use anti-aliasing.
-			* @param	penwidth		The pen width (0 = unit width)
-			**/
-			MTOOLS_FORCEINLINE void draw_quad_spline(const std::vector<iVec2> & tabPoints, RGBc color, bool draw_last_point, bool blending, bool antialiased, int32 penwidth = 0)
+			 * Draw a quadratic spline.
+			 *
+			 * @param	tabPoints	   	std vector containing the points interpolated by the spline.
+			 * @param	color		   	The color tu use.
+			 * @param	draw_last_point	(Optional) true to draw the last point.
+			 * @param	antialiased	   	(Optional) true to use anti-aliasing.
+			 * @param	blending	   	(Optional) true to use blending.
+			 * @param	penwidth	   	(Optional) The pen width (0 = unit width)
+			 **/
+			MTOOLS_FORCEINLINE void draw_quad_spline(const std::vector<iVec2> & tabPoints, RGBc color, bool draw_last_point = true, bool antialiased = true, bool blending = true, int32 penwidth = 0)
 				{
-				draw_quad_spline(tabPoints.size(), tabPoints.data(), color, draw_last_point, blending, antialiased, penwidth);
+				draw_quad_spline(tabPoints.size(), tabPoints.data(), color, draw_last_point, antialiased, blending, penwidth);
 				}
 
 
 			/**
-			* Draw a cubic spline.
-			*
-			* @param	nbpoints	   	number of point to interpolated
-			* @param	tabPoints	   	array of points to interpolate.
-			* @param	color		   	The color tu use.
-			* @param	draw_last_point	true to draw the last point.
-			* @param	blending	   	true to use blending.
-			* @param	antialiased	   	true to use anti-aliasing.
-			* @param	penwidth		The pen width (0 = unit width)
-			**/
-			inline void draw_cubic_spline(size_t nbpoints, const iVec2 * tabPoints, RGBc color, bool draw_last_point, bool blending, bool antialiased, int32 penwidth = 0)
+			 * Draw a cubic spline.
+			 *
+			 * @param	nbpoints	   	number of point to interpolated.
+			 * @param	tabPoints	   	array of points to interpolate.
+			 * @param	color		   	The color tu use.
+			 * @param	draw_last_point	(Optional) true to draw the last point.
+			 * @param	antialiased	   	(Optional) true to use anti-aliasing.
+			 * @param	blending	   	(Optional) true to use blending.
+			 * @param	penwidth	   	(Optional) The pen width (0 = unit width)
+			 **/
+			inline void draw_cubic_spline(size_t nbpoints, const iVec2 * tabPoints, RGBc color, bool draw_last_point = true, bool antialiased = true, bool blending = true, int32 penwidth = 0)
 				{
 				if (isEmpty()) return;
 				switch (nbpoints)
@@ -2264,18 +2238,18 @@ namespace mtools
 						{
 						if (draw_last_point)
 							{
-							draw_dot(tabPoints[0], color, blending, penwidth);
+							draw_square_dot(tabPoints[0], color, blending, penwidth);
 							}
 						return;
 						}
 					case 2:
 						{
-						draw_line(tabPoints[0], tabPoints[1], color, draw_last_point, blending, antialiased, penwidth);
+						draw_line(tabPoints[0], tabPoints[1], color, draw_last_point, antialiased, blending, penwidth);
 						return;
 						}
 					case 3:
 						{
-						draw_quad_spline(nbpoints, tabPoints, color, draw_last_point, blending, antialiased, penwidth);
+						draw_quad_spline(nbpoints, tabPoints, color, draw_last_point, antialiased, blending, penwidth);
 						return;
 						}
 					default:
@@ -2322,18 +2296,18 @@ namespace mtools
 
 
 			/**
-			* Draw a cubic spline.
-			*
-			* @param	tabPoints	   	std vector containing the points interpolated by the spline.
-			* @param	color		   	The color tu use.
-			* @param	draw_last_point	true to draw the last point.
-			* @param	blending	   	true to use blending.
-			* @param	antialiased	   	true to use anti-aliasing.
-			* @param	penwidth		The pen width (0 = unit width)
-			**/
-			MTOOLS_FORCEINLINE void draw_cubic_spline(const std::vector<iVec2> & tabPoints, RGBc color, bool draw_last_point, bool blending, bool antialiased, int32 penwidth = 0)
+			 * Draw a cubic spline.
+			 *
+			 * @param	tabPoints	   	std vector containing the points interpolated by the spline.
+			 * @param	color		   	The color tu use.
+			 * @param	draw_last_point	(Optional) true to draw the last point.
+			 * @param	antialiased	   	(Optional) true to use anti-aliasing.
+			 * @param	blending	   	(Optional) true to use blending.
+			 * @param	penwidth	   	(Optional) The pen width (0 = unit width)
+			 **/
+			MTOOLS_FORCEINLINE void draw_cubic_spline(const std::vector<iVec2> & tabPoints, RGBc color, bool draw_last_point = true, bool antialiased = true, bool blending = true, int32 penwidth = 0)
 				{
-				draw_cubic_spline(tabPoints.size(), tabPoints.data(), color, draw_last_point, blending, antialiased, penwidth);
+				draw_cubic_spline(tabPoints.size(), tabPoints.data(), color, draw_last_point, antialiased, blending, penwidth);
 				}
 
 
@@ -2354,10 +2328,10 @@ namespace mtools
 			 *
 			 * @param	dest_box	position of the rectangle to draw.
 			 * @param	color   	the color to use.
-			 * @param	blend   	true to use blending and false to simply copy the color.
-			 * @param	penwidth	The pen width (0 = unit width)
+			 * @param	blend   	(Optional) true to use blending and false to simply copy the color.
+			 * @param	penwidth	(Optional) The pen width (0 = unit width)
 			 **/
-			inline void draw_rectangle(const iBox2 & dest_box, RGBc color, bool blend, int32 penwidth = 0)
+			inline void draw_rectangle(const iBox2 & dest_box, RGBc color, bool blend = true, int32 penwidth = 0)
 				{
 				if (dest_box.isEmpty()) return;
 				if (penwidth <= 0) penwidth = 0;
@@ -2379,44 +2353,46 @@ namespace mtools
 			 * @param	sx			rectangle width (if <= 0 nothing is drawn).
 			 * @param	sy			rectangle height (if <= 0 nothing is drawn).
 			 * @param	color   	the color to use.
-			 * @param	blend   	true to use blending and false to simply copy the color.
-			 * @param	penwidth	The pen width (0 = unit width)
+			 * @param	blend   	(Optional) true to use blending and false to simply copy the color.
+			 * @param	penwidth	(Optional) The pen width (0 = unit width)
 			 **/
-			MTOOLS_FORCEINLINE void draw_rectangle(int64 x, int64 y, int64 sx, int64 sy, RGBc color, bool blend, int32 penwidth)
+			MTOOLS_FORCEINLINE void draw_rectangle(int64 x, int64 y, int64 sx, int64 sy, RGBc color, bool blend = true, int32 penwidth = 0)
 				{
 				draw_rectangle(iBox2(x, x + sx - 1, y, y + sy - 1), color, blend, penwidth);
 				}
 
 
 			/**
-			* Fill the interior of a rectangle rectangle. Portion outside the image is clipped.
-			*
-			* The boundary of the rectangle is not drawn. To fill the whole rectangle with its boundary, use draw_box() instead.
-			*
-			* @param	dest_box	position of the rectangle to draw.
-			* @param	fillcolor	the color to use.
-			* @param	blend   	true to use blending and false to simply copy the color.
-			**/
-			MTOOLS_FORCEINLINE void fill_rectangle(const iBox2 & dest_box, RGBc fillcolor, bool blend)
+			 * Fill the interior of a rectangle rectangle. Portion outside the image is clipped.
+			 * 
+			 * The boundary of the rectangle is not drawn. To fill the whole rectangle with its boundary,
+			 * use draw_box() instead.
+			 *
+			 * @param	dest_box 	position of the rectangle to draw.
+			 * @param	fillcolor	the color to use.
+			 * @param	blend	 	(Optional) true to use blending and false to simply copy the color.
+			 **/
+			MTOOLS_FORCEINLINE void fill_rectangle(const iBox2 & dest_box, RGBc fillcolor, bool blend = true)
 				{
 				fill_rectangle(dest_box.min[0], dest_box.min[1], dest_box.max[0] - dest_box.min[0] + 1, dest_box.max[1] - dest_box.min[1] + 1, fillcolor, blend);
 				}
 
 
 			/**
-			* draw a filled rectangle of given size and color over this image. Portion outside the image
-			* is clipped.
-			*
-			* The boundary of the rectangle is not drawn. To fill the whole rectangle with its boundary, use draw_box() instead.
-			*
-			* @param	x			x-coordinate of the rectangle upper left corner.
-			* @param	y			y-coordinate of the rectangle upper left corner.
-			* @param	sx			rectangle width (if <= 0 nothing is drawn).
-			* @param	sy			rectangle height (if <= 0 nothing is drawn).
-			* @param	fillcolor	the color to use.
-			* @param	blend   	true to use blending and false to simply copy the color.
-			**/
-			inline void fill_rectangle(int64 x, int64 y, int64 sx, int64 sy, RGBc fillcolor, bool blend)
+			 * draw a filled rectangle of given size and color over this image. Portion outside the image is
+			 * clipped.
+			 * 
+			 * The boundary of the rectangle is not drawn. To fill the whole rectangle with its boundary,
+			 * use draw_box() instead.
+			 *
+			 * @param	x		 	x-coordinate of the rectangle upper left corner.
+			 * @param	y		 	y-coordinate of the rectangle upper left corner.
+			 * @param	sx		 	rectangle width (if <= 0 nothing is drawn).
+			 * @param	sy		 	rectangle height (if <= 0 nothing is drawn).
+			 * @param	fillcolor	the color to use.
+			 * @param	blend	 	(Optional) true to use blending and false to simply copy the color.
+			 **/
+			inline void fill_rectangle(int64 x, int64 y, int64 sx, int64 sy, RGBc fillcolor, bool blend = true)
 				{
 				if (isEmpty()) return;
 				_draw_box(x + 1, y + 1, sx - 2, sy - 2, fillcolor, blend);
@@ -2424,13 +2400,13 @@ namespace mtools
 
 
 			/**
-			* Fill a (closed) box with a given color. Portion outside the image is clipped.
-			*
-			* @param	dest_box 	position of the rectangle to draw.
-			* @param	fillcolor	the color to use.
-			* @param	blend	 	true to use blending and false to simply copy the color.
-			**/
-			MTOOLS_FORCEINLINE void draw_box(const iBox2 & dest_box, RGBc fillcolor, bool blend)
+			 * Fill a (closed) box with a given color. Portion outside the image is clipped.
+			 *
+			 * @param	dest_box 	position of the rectangle to draw.
+			 * @param	fillcolor	the color to use.
+			 * @param	blend	 	(Optional) true to use blending and false to simply copy the color.
+			 **/
+			MTOOLS_FORCEINLINE void draw_box(const iBox2 & dest_box, RGBc fillcolor, bool blend = true)
 				{
 				draw_box(dest_box.min[0], dest_box.min[1], dest_box.max[0] - dest_box.min[0] + 1, dest_box.max[1] - dest_box.min[1] + 1, fillcolor, blend);
 				}
@@ -2438,15 +2414,15 @@ namespace mtools
 
 			/**
 			 * Fill a (closed) box with a given color. Portion outside the image is clipped.
-			 * 
+			 *
 			 * @param	x		 	x-coordinate of the rectangle upper left corner.
 			 * @param	y		 	y-coordinate of the rectangle upper left corner.
 			 * @param	sx		 	rectangle width (if <= 0 nothing is drawn).
 			 * @param	sy		 	rectangle height (if <= 0 nothing is drawn).
 			 * @param	fillcolor	the color to use.
-			 * @param	blend	 	true to use blending and false to simply copy the color.
+			 * @param	blend	 	(Optional) true to use blending and false to simply copy the color.
 			 **/
-			inline void draw_box(int64 x, int64 y, int64 sx, int64 sy, RGBc fillcolor, bool blend)
+			inline void draw_box(int64 x, int64 y, int64 sx, int64 sy, RGBc fillcolor, bool blend = true)
 				{
 				if (isEmpty()) return;
 				_draw_box(x, y, sx, sy, fillcolor, blend);
@@ -2460,11 +2436,11 @@ namespace mtools
 			 * @param	P2		   	The second point.
 			 * @param	P3		   	The third point.
 			 * @param	color	   	The color.
-			 * @param	blending   	true to use blending and false to write over.
-			 * @param	antialiased	true to use antialiased lines.
-			 * @param	penwidth   	The pen width (0 = unit width)
+			 * @param	antialiased	(Optional) true to use antialiased lines.
+			 * @param	blending   	(Optional) true to use blending and false to write over.
+			 * @param	penwidth   	(Optional) The pen width (0 = unit width)
 			 **/
-			inline void draw_triangle(iVec2 P1, iVec2 P2, iVec2 P3, RGBc color, bool blending, bool antialiased, int32 penwidth = 0)
+			inline void draw_triangle(iVec2 P1, iVec2 P2, iVec2 P3, RGBc color, bool antialiased = true, bool blending = true, int32 penwidth = 0)
 				{
 				if (isEmpty()) return;
 				if ((penwidth <= 0)&&(!antialiased)&&(blending)&& (!color.isOpaque()))
@@ -2475,45 +2451,25 @@ namespace mtools
 					return;
 					}
 				// default drawing
-				draw_line(P1, P2, color, false, blending, antialiased, penwidth);
-				draw_line(P2, P3, color, false, blending, antialiased, penwidth);
-				draw_line(P3, P1, color, false, blending, antialiased, penwidth);
+				draw_line(P1, P2, color, false, antialiased, blending, penwidth);
+				draw_line(P2, P3, color, false, antialiased, blending, penwidth);
+				draw_line(P3, P1, color, false, antialiased, blending, penwidth);
 				return;
 				}
 
 
 			/**
-			 * Draw a triangle. Portion outside the image is clipped.
+			 * Fill the interior of a triangle. Portion outside the image is clipped.
+			 * 
+			 * Only the interior is filled, the boundary lines are not drawn/filled.
 			 *
-			 * @param	x1		   	x-coord of the first point.
-			 * @param	y1		   	y-coord of the first point.
-			 * @param	x2		   	x-coord of the second point.
-			 * @param	y2		   	y-coord of the second point.
-			 * @param	x3		   	x-coord of the third point.
-			 * @param	y3		   	y-coord of the third point.
-			 * @param	color	   	The color.
-			 * @param	blending   	true to use blending and false to write over.
-			 * @param	antialiased	true to use antialiased lines.
-			 * @param	penwidth   	The pen width (0 = unit width)
+			 * @param	P1		 	The first point.
+			 * @param	P2		 	The second point.
+			 * @param	P3		 	The third point.
+			 * @param	fillcolor	The fill color.
+			 * @param	blending 	(Optional) true to use blending and false to write over.
 			 **/
-			MTOOLS_FORCEINLINE void draw_triangle(int64 x1, int64 y1, int64 x2, int64 y2, int64 x3, int64 y3, RGBc color, bool blending, bool antialiased, int32 penwidth = 0)
-				{
-				draw_triangle({ x1,y1 }, { x2,y2 }, { x3,y3 }, color, blending, antialiased, penwidth);
-				}
-
-
-			/**
-			* Fill the interior of a triangle. Portion outside the image is clipped.
-			*
-			* Only the interior is filled, the boundary lines are not drawn/filled.
-			*
-			* @param	P1		   	The first point
-			* @param	P2		   	The second point.
-			* @param	P3		   	The third point.
-			* @param	fillcolor  	The fill color.
-			* @param	blending   	true to use blending and false to write over.
-			**/
-			inline void fill_triangle(iVec2 P1, iVec2 P2, iVec2 P3, RGBc fillcolor, bool blending)
+			inline void fill_triangle(iVec2 P1, iVec2 P2, iVec2 P3, RGBc fillcolor, bool blending = true)
 				{
 				if (isEmpty()) return;
 				iBox2 mbr(P1);
@@ -2532,38 +2488,17 @@ namespace mtools
 				}
 
 
-
-			/**
-			* Fill the interior of a triangle. Portion outside the image is clipped.
-			* 
-			* Only the interior is filled, the boundary lines are not drawn/filled.
-			*
-			* @param	x1		 	x-coord of the first point.
-			* @param	y1		 	y-coord of the first point.
-			* @param	x2		 	x-coord of the second point.
-			* @param	y2		 	y-coord of the second point.
-			* @param	x3		 	x-coord of the third point.
-			* @param	y3		 	y-coord of the third point.
-			* @param	fillcolor	The fill color.
-			* @param	blending 	true to use blending and false to write over.
-			**/
-			MTOOLS_FORCEINLINE void fill_triangle(int64 x1, int64 y1, int64 x2, int64 y2, int64 x3, int64 y3, RGBc fillcolor, bool blending)
-				{
-				fill_triangle({ x1,y1 }, { x2,y2 }, { x3,y3 }, fillcolor, blending);
-				}
-
-
 			/**
 			 * Draw a polygon.
 			 *
 			 * @param	nbvertices 	Number of vertices in the polygon.
 			 * @param	tabPoints  	the list of points in clockwise or counterclockwise order.
 			 * @param	color	   	The color tu use.
-			 * @param	blending   	true to use blending.
-			 * @param	antialiased	true to draw antialiased lines.
-			 * @param	penwidth   	The pen width (0 = unit width)
+			 * @param	antialiased	(Optional) true to draw antialiased lines.
+			 * @param	blending   	(Optional) true to use blending.
+			 * @param	penwidth   	(Optional) The pen width (0 = unit width)
 			 **/
-			inline void draw_polygon(size_t nbvertices, const iVec2 * tabPoints, RGBc color, bool blending, bool antialiased, int32 penwidth = 0)
+			inline void draw_polygon(size_t nbvertices, const iVec2 * tabPoints, RGBc color, bool antialiased = true, bool blending = true, int32 penwidth = 0)
 				{
 				if (isEmpty()) return;
 				if ((color.isOpaque())&&(!antialiased)) blending = false;
@@ -2572,17 +2507,17 @@ namespace mtools
 					case 0: { return; }
 					case 1:
 						{
-						draw_dot(*tabPoints, color, blending, penwidth);
+						draw_square_dot(*tabPoints, color, blending, penwidth);
 						return;
 						}
 					case 2:
 						{
-						draw_line(tabPoints[0], tabPoints[1], color, true, blending, antialiased, penwidth);
+						draw_line(tabPoints[0], tabPoints[1], color, true, antialiased, blending, penwidth);
 						return;
 						}
 					case 3:
 						{
-						draw_triangle(tabPoints[0], tabPoints[1], tabPoints[2], color, blending, antialiased, penwidth);
+						draw_triangle(tabPoints[0], tabPoints[1], tabPoints[2], color, antialiased, blending, penwidth);
 						return;
 						}
 					default:
@@ -2599,7 +2534,7 @@ namespace mtools
 							}
 						for (size_t i = 0; i < nbvertices; i++)
 							{
-							draw_line(tabPoints[i], tabPoints[(i + 1) % nbvertices], color, false, blending, antialiased, penwidth);
+							draw_line(tabPoints[i], tabPoints[(i + 1) % nbvertices], color, false, antialiased, blending, penwidth);
 							}
 						return;
 						}
@@ -2607,30 +2542,112 @@ namespace mtools
 				}
 
 
+
+			/**
+			* Draw a filled quadrilateral. Point must be ordered around the quad.
+			*
+			* @param	A1		   	The first point
+			* @param	A2		   	The second point
+			* @param	A3		   	The third point
+			* @param	A4		   	The fourth point
+			* @param	color	   	border color.
+			* @param	fillcolor  	interior color.
+			* @param	antialiased	(Optional) True to use antialiased.
+			* @param	blending   	(Optional) True to use blending.
+			**/
+			inline void draw_filled_quad(fVec2 A1, fVec2 A2, fVec2 A3, fVec2 A4, RGBc color, RGBc fillcolor, bool antialiased = true, bool blending = true)
+			{
+				if (isEmpty()) return;
+
+				iVec2 AP1, AP2, AP3, AP4;
+
+				Image::_bdir dir12, dir21;
+				Image::_bpos pos12, pos21;
+				int64 len12 = _init_line(A1, A2, dir12, pos12, AP1, AP2);
+				pos21 = pos12;
+				dir21 = dir12;
+				_reverse_line(dir21, pos21, len12);
+
+				Image::_bdir dir23, dir32;
+				Image::_bpos pos23, pos32;
+				int64 len23 = _init_line(A2, A3, dir23, pos23, AP2, AP3);
+				pos32 = pos23;
+				dir32 = dir23;
+				_reverse_line(dir32, pos32, len23);
+
+				Image::_bdir dir34, dir43;
+				Image::_bpos pos34, pos43;
+				int64 len34 = _init_line(A3, A4, dir34, pos34, AP3, AP4);
+				pos43 = pos34;
+				dir43 = dir34;
+				_reverse_line(dir43, pos43, len34);
+
+				Image::_bdir dir41, dir14;
+				Image::_bpos pos41, pos14;
+				int64 len41 = _init_line(A4, A1, dir41, pos41, AP4, AP1);
+				pos14 = pos41;
+				dir14 = dir41;
+				_reverse_line(dir14, pos14, len41);
+
+				Image::_bdir dir13, dir31;
+				Image::_bpos pos13, pos31;
+				int64 len13 = _init_line(A1, A3, dir13, pos13, AP1, AP3);
+				pos31 = pos13;
+				dir31 = dir13;
+				_reverse_line(dir31, pos31, len13);
+
+				if (antialiased)
+					{
+					const bool BLEND = true;
+					const bool AA = true;
+					_lineBresenham<BLEND, true, false, false, AA, false>(dir21, pos21, len12 + 1, color, 0, 0);
+					_lineBresenham_avoid<BLEND, true, false, AA, true>(dir23, pos23, len23 + 1, dir21, pos21, len12 + 1, color, 0);
+					_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, false, true>(dir13, pos13, len13, dir12, pos12, len12 + 1, dir32, pos32, len23 + 1, color, 0);
+					_lineBresenham_avoid<BLEND, true, false, AA, false>(dir14, pos14, len41 + 1, dir13, pos13, len13 + 1, color, 0);
+					_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, AA, true>(dir34, pos34, len34, dir31, pos31, len13 + 1, dir41, pos41, len41 + 1, color, 0);
+					_draw_triangle_interior<true, true>(A1, A2, A3, fillcolor);
+					_draw_triangle_interior<true, true>(A1, A3, A4, fillcolor);
+					}
+				else
+					{
+					const bool BLEND = true;
+					const bool AA = false;
+					_lineBresenham<BLEND, true, false, false, AA, false>(dir21, pos21, len12 + 1, color, 0, 0);
+					_lineBresenham_avoid<BLEND, true, false, AA, true>(dir23, pos23, len23 + 1, dir21, pos21, len12 + 1, color, 0);
+					_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, false, true>(dir13, pos13, len13, dir12, pos12, len12 + 1, dir32, pos32, len23 + 1, color, 0);
+					_lineBresenham_avoid<BLEND, true, false, AA, false>(dir14, pos14, len41 + 1, dir13, pos13, len13 + 1, color, 0);
+					_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, AA, true>(dir34, pos34, len34, dir31, pos31, len13 + 1, dir41, pos41, len41 + 1, color, 0);
+					_draw_triangle_interior<true, true>(A1, A2, A3, fillcolor);
+					_draw_triangle_interior<true, true>(A1, A3, A4, fillcolor);
+					}
+			}
+
+
+
 			/**
 			 * Draw a polygon.
 			 *
 			 * @param	tabPoints  	std vector of polygon vertice in clockwise or counterclockwise order.
 			 * @param	color	   	The color tu use.
-			 * @param	blending   	true to use blending.
-			 * @param	antialiased	true to draw antialiased lines.
-			 * @param	penwidth   	The pen width (0 = unit width)
+			 * @param	antialiased	(Optional) true to draw antialiased lines.
+			 * @param	blending   	(Optional) true to use blending.
+			 * @param	penwidth   	(Optional) The pen width (0 = unit width)
 			 **/
-			MTOOLS_FORCEINLINE void draw_polygon(const std::vector<iVec2> & tabPoints, RGBc color, bool blending, bool antialiased, int32 penwidth = 0)
+			MTOOLS_FORCEINLINE void draw_polygon(const std::vector<iVec2> & tabPoints, RGBc color, bool antialiased = true, bool blending = true, int32 penwidth = 0)
 				{
-				draw_polygon(tabPoints.size(), tabPoints.data(), color, blending, antialiased, penwidth);
+				draw_polygon(tabPoints.size(), tabPoints.data(), color, antialiased, blending, penwidth);
 				}
 
 
 			/**
-			* Fill the interior of a convex polygon. The boundary lines are not drawn.
-			*
-			* @param	nbvertices 	Number of vertices in the polygon.
-			* @param	tabPoints  	the list of points in clockwise or counterclockwise order.
-			* @param	fillcolor  	The color to use.
-			* @param	blending   	true to use blending.
-			**/
-			inline void fill_convex_polygon(size_t nbvertices, const iVec2 * tabPoints, RGBc fillcolor, bool blending)
+			 * Fill the interior of a convex polygon. The boundary lines are not drawn.
+			 *
+			 * @param	nbvertices	Number of vertices in the polygon.
+			 * @param	tabPoints 	the list of points in clockwise or counterclockwise order.
+			 * @param	fillcolor 	The color to use.
+			 * @param	blending  	(Optional) true to use blending.
+			 **/
+			inline void fill_convex_polygon(size_t nbvertices, const iVec2 * tabPoints, RGBc fillcolor, bool blending = true)
 				{
 				if (isEmpty() || nbvertices < 3) return;
 				if (fillcolor.isOpaque()) blending = false;
@@ -2664,14 +2681,13 @@ namespace mtools
 
 
 			/**
-			* Fill the interior of a convex polygon. The edge are not drawn.
-			*
-			* @param	tabPoints  	std vector of polygon vertice in clockwise or counterclockwise order.
-			* @param	color	   	The color tu use.
-			* @param	blending   	true to use blending.
-			* @param	antialiased	true to draw antialiased lines.
-			**/
-			MTOOLS_FORCEINLINE void fill_convex_polygon(const std::vector<iVec2> & tabPoints, RGBc fillcolor, bool blending)
+			 * Fill the interior of a convex polygon. The edge are not drawn.
+			 *
+			 * @param	tabPoints	std vector of polygon vertice in clockwise or counterclockwise order.
+			 * @param	fillcolor	The color tu use.
+			 * @param	blending 	(Optional) true to use blending.
+			 **/
+			MTOOLS_FORCEINLINE void fill_convex_polygon(const std::vector<iVec2> & tabPoints, RGBc fillcolor, bool blending = true)
 				{
 				fill_convex_polygon(tabPoints.size(), tabPoints.data(), fillcolor, blending);
 				}	
@@ -4520,7 +4536,7 @@ namespace mtools
 			*
 			* @return  the associated pixel the image (no clipping, may be outside of the image).
 			**/
-			MTOOLS_FORCEINLINE mtools::iVec2 canvas_getImageCoord(const mtools::fBox2 & R, const mtools::fVec2 & coord) const { return R.absToPixel(coord, dimension()); }
+			//MTOOLS_FORCEINLINE mtools::iVec2 canvas_getImageCoord(const mtools::fBox2 & R, const mtools::fVec2 & coord) const { return R.absToPixel(coord, dimension()); }
 
 
 			/**
@@ -4531,7 +4547,7 @@ namespace mtools
 			*
 			* @return  the associated absolute coordinate.
 			**/
-			MTOOLS_FORCEINLINE mtools::fVec2 canvas_getAbsCoord(const mtools::fBox2 & R, const mtools::iVec2 & pixpos) const { return R.pixelToAbs(pixpos, dimension()); }
+			//MTOOLS_FORCEINLINE mtools::fVec2 canvas_getAbsCoord(const mtools::fBox2 & R, const mtools::iVec2 & pixpos) const { return R.pixelToAbs(pixpos, dimension()); }
 
 
 			/**
@@ -4543,13 +4559,13 @@ namespace mtools
 			* @return  A possibly enlarged rectangle (with same centering) with same aspect ratio as the
 			*          image.
 			**/
-			MTOOLS_FORCEINLINE mtools::fBox2 canvas_respectImageAspectRatio(const mtools::fBox2 & R) const { return(R.fixedRatioEnclosingRect(aspectRatio())); }
+			//MTOOLS_FORCEINLINE mtools::fBox2 canvas_respectImageAspectRatio(const mtools::fBox2 & R) const { return(R.fixedRatioEnclosingRect(aspectRatio())); }
 
 
 			/**
 			* The canonical range rectangle corresponding to the image size
 			**/
-			MTOOLS_FORCEINLINE mtools::fBox2 canvas_getCanonicalRange() const { MTOOLS_ASSERT((_lx > 0) && (_ly > 0)); return mtools::fBox2(0, (double)_lx, 0, (double)_ly); }
+			//MTOOLS_FORCEINLINE mtools::fBox2 canvas_getCanonicalRange() const { MTOOLS_ASSERT((_lx > 0) && (_ly > 0)); return mtools::fBox2(0, (double)_lx, 0, (double)_ly); }
 
 
 
@@ -4632,37 +4648,36 @@ namespace mtools
 
 
 			/**
-			* Draw a (circle) dot on the image. 
-			* the radius is in pixels and does not scle with the range. 
-			*
-			* Use absolute coordinate (canvas method).
-			*
-			* @param	R			the absolute range represented in the image.
-			* @param	center		Position of the dot.
-			* @param	radius   	abosolute radius of the dot.
-			* @param	outcolor   	outline color.
-			* @param	fillcolor   inside color.
-			* @param	aa			true to use antialiasing.
-			* @param	blend   	true to use blending.
-			**/
-			MTOOLS_FORCEINLINE void canvas_draw_dot(const fBox2 & R, fVec2 center, double radius, RGBc outcolor, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+			 * Draw a (circle) dot on the image. the radius is in pixels and does not scale with the range.
+			 * 
+			 * Use absolute coordinate (canvas method).
+			 *
+			 * @param	R		 	the absolute range represented in the image.
+			 * @param	center   	Position of the dot.
+			 * @param	radius   	abosolute radius of the dot.
+			 * @param	outcolor 	outline color.
+			 * @param	fillcolor	inside color.
+			 * @param	aa		 	(Optional) true to use antialiasing.
+			 * @param	blend	 	(Optional) true to use blending.
+			 **/
+			MTOOLS_FORCEINLINE void canvas_draw_circle_dot(const fBox2 & R, fVec2 center, double radius, RGBc outcolor, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
 				{
-				draw_dot(R.absToPixel(center, dimension()), radius, outcolor, fillcolor, aa, blend);
+				draw_circle_dot(R.absToPixel(center, dimension()), radius, outcolor, fillcolor, aa, blend);
 				}
 
 
 			/**
-			* Draw an horizontal line  (canvas method).
-			*
-			* @param	R			the absolute range represented in the image.
-			* @param	y			The y coordinate of the line.
-			* @param	x1			x value of the start point.
-			* @param	x2			x value of the end point.
-			* @param	color   	The color to use.
-			* @param	draw_P2 	true to draw the end point.
-			* @param	blending	true to use blending.
-			**/
-			MTOOLS_FORCEINLINE void canvas_draw_horizontal_line(const mtools::fBox2 & R, double y, double x1, double x2, RGBc color, bool draw_P2 = true, bool blending = true)
+			 * Draw an horizontal line  (canvas method).
+			 *
+			 * @param	R			the absolute range represented in the image.
+			 * @param	y			The y coordinate of the line.
+			 * @param	x1			x value of the start point.
+			 * @param	x2			x value of the end point.
+			 * @param	color   	The color to use.
+			 * @param	draw_P2 	(Optional) true to draw the end point.
+			 * @param	blending	(Optional) true to use blending.
+			 **/
+			MTOOLS_FORCEINLINE void canvas_draw_horizontal_line(const mtools::fBox2 & R, double y, double x1, double x2, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND)
 				{
 				const iVec2 P1 = R.absToPixel({ x1,y }, dimension());
 				const iVec2 P2 = R.absToPixel({ x2,y }, dimension());
@@ -4671,19 +4686,21 @@ namespace mtools
 
 
 			/**
-			* Draw a thick horizontal line  (canvas method).
-			*
-			* @param	R			the absolute range represented in the image.
-			* @param	y			The y coordinate of the line.
-			* @param	x1			x value of the start point.
-			* @param	x2			x value of the end point.
-			* @param	thickness	The thickness.
-			* @param    relativethickness	true to scale tickness with range and false to use constant thickness.
-			* @param	color   	The color to use.
-			* @param	draw_P2 	true to draw the end point.
-			* @param	blending	true to use blending.
-			**/
-			MTOOLS_FORCEINLINE void canvas_draw_thick_horizontal_line(const mtools::fBox2 & R, double y, double x1, double x2, double thickness, bool relativethickness, RGBc color, bool draw_P2 = true, bool blending = true, double min_tick = DEFAULT_MIN_THICKNESS)
+			 * Draw a thick horizontal line  (canvas method).
+			 *
+			 * @param	R				 	the absolute range represented in the image.
+			 * @param	y				 	The y coordinate of the line.
+			 * @param	x1				 	x value of the start point.
+			 * @param	x2				 	x value of the end point.
+			 * @param	thickness		 	The thickness.
+			 * @param	relativethickness	true to scale tickness with range and false to use constant
+			 * 								thickness.
+			 * @param	color			 	The color to use.
+			 * @param	draw_P2			 	(Optional) true to draw the end point.
+			 * @param	blending		 	(Optional) true to use blending.
+			 * @param	min_tick		 	(Optional) The minimum tick.
+			 **/
+			MTOOLS_FORCEINLINE void canvas_draw_thick_horizontal_line(const mtools::fBox2 & R, double y, double x1, double x2, double thickness, bool relativethickness, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
 				const iVec2 P1 = R.absToPixel({ x1,y }, dimension());
 				const iVec2 P2 = R.absToPixel({ x2,y }, dimension());
@@ -4693,17 +4710,17 @@ namespace mtools
 
 
 			/**
-			* Draw a vertical line (canvas method)
-			*
-			* @param	R			the absolute range represented in the image.
-			* @param	x			The x coordinate of the line.
-			* @param	y1			y value of the start point.
-			* @param	y2			y value of the end point.
-			* @param	color   	The color to use.
-			* @param	draw_P2 	true to draw the end point.
-			* @param	blending	true to use blending.
-			**/
-			MTOOLS_FORCEINLINE void canvas_draw_vertical_line(const mtools::fBox2 & R, double x, double y1, double y2, RGBc color, bool draw_P2 = true, bool blending = true)
+			 * Draw a vertical line (canvas method)
+			 *
+			 * @param	R			the absolute range represented in the image.
+			 * @param	x			The x coordinate of the line.
+			 * @param	y1			y value of the start point.
+			 * @param	y2			y value of the end point.
+			 * @param	color   	The color to use.
+			 * @param	draw_P2 	(Optional) true to draw the end point.
+			 * @param	blending	(Optional) true to use blending.
+			 **/
+			MTOOLS_FORCEINLINE void canvas_draw_vertical_line(const mtools::fBox2 & R, double x, double y1, double y2, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND)
 				{
 				const iVec2 P1 = R.absToPixel({ x,y1 }, dimension());
 				const iVec2 P2 = R.absToPixel({ x,y2 }, dimension());
@@ -4712,19 +4729,21 @@ namespace mtools
 
 
 			/**
-			* Draw a (tick) vertical line (canvas method).
-			*
-			* @param	R			the absolute range represented in the image.
-			* @param	x			The x coordinate of the line.
-			* @param	y1			y value of the start point.
-			* @param	y2			y value of the end point.
-			* @param	thickness	The thickness.
-			* @param    relativethickness	true to scale tickness with range and false to use constant thickness.
-			* @param	color   	The color to use.
-			* @param	draw_P2 	true to draw the end point.
-			* @param	blending	true to use blending.
-			**/
-			MTOOLS_FORCEINLINE void canvas_draw_thick_vertical_line(const mtools::fBox2 & R, double x, double y1, double y2, double thickness, bool relativethickness, RGBc color, bool draw_P2 = true, bool blending = true, double min_tick = DEFAULT_MIN_THICKNESS)
+			 * Draw a thick vertical line (canvas method).
+			 *
+			 * @param	R				 	the absolute range represented in the image.
+			 * @param	x				 	The x coordinate of the line.
+			 * @param	y1				 	y value of the start point.
+			 * @param	y2				 	y value of the end point.
+			 * @param	thickness		 	The thickness.
+			 * @param	relativethickness	true to scale tickness with range and false to use constant
+			 * 								thickness.
+			 * @param	color			 	The color to use.
+			 * @param	draw_P2			 	(Optional) true to draw the end point.
+			 * @param	blending		 	(Optional) true to use blending.
+			 * @param	min_tick		 	(Optional) The minimum tick.
+			 **/
+			MTOOLS_FORCEINLINE void canvas_draw_thick_vertical_line(const mtools::fBox2 & R, double x, double y1, double y2, double thickness, bool relativethickness, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
 				const iVec2 P1 = R.absToPixel({ x,y1 }, dimension());
 				const iVec2 P2 = R.absToPixel({ x,y2 }, dimension());
@@ -4733,141 +4752,161 @@ namespace mtools
 				}
 
 
-
 			/**
-			* Draw a line.
-			*
-			* Use absolute coordinate (canvas method).
-			*
-			* @param	R			the absolute range represented in the image.
-			* @param	P1		   	First point.
-			* @param	P2		   	Second endpoint.
-			* @param	color	   	The color to use.
-			* @param	draw_P2	   	true to draw the endpoint P2.
-			* @param	antialiased	true to draw an antialised line.
-			* @param	blending   	true to use blending instead of simply overwriting the color.
-			* @param	penwidth   	The pen width (0 = unit width)
-			**/
-			MTOOLS_FORCEINLINE void canvas_draw_line(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, RGBc color, bool draw_P2 = true, bool antialiased = true, bool blending = true, int32 penwidth = 0)
+			 * Draw a line.
+			 * 
+			 * Use absolute coordinate (canvas method).
+			 *
+			 * @param	R		   	the absolute range represented in the image.
+			 * @param	P1		   	First point.
+			 * @param	P2		   	Second endpoint.
+			 * @param	color	   	The color to use.
+			 * @param	draw_P2	   	(Optional) true to draw the endpoint P2.
+			 * @param	antialiased	(Optional) true to draw an antialised line.
+			 * @param	blending   	(Optional) true to use blending instead of simply overwriting the color.
+			 * @param	penwidth   	(Optional) The pen width (0 = unit width)
+			 **/
+			MTOOLS_FORCEINLINE void canvas_draw_line(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, RGBc color, bool draw_P2 = true, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0)
 				{
 				const auto dim = dimension();
 				draw_line(R.absToPixel(P1, dim), R.absToPixel(P2, dim), color, draw_P2, antialiased, blending, penwidth);
 				}
 
+
 			/**
-			* Draw a thick line.
-			*
-			* Use absolute coordinate (canvas method).
-			*
-			* @param	R			the absolute range represented in the image.
-			* @param	P1		   	First point.
-			* @param	P2		   	Second endpoint.
-			* @param	thickness	The thickness.
-			* @param    relativethickness	true to scale tickness with range and false to use constant thickness.
-			* @param	color	   	The color to use.
-			* @param	draw_P2	   	true to draw the endpoint P2.
-			* @param	antialiased	true to draw an antialised line.
-			* @param	blending   	true to use blending instead of simply overwriting the color.
-			* @param	penwidth   	The pen width (0 = unit width)
-			**/
-			MTOOLS_FORCEINLINE void canvas_draw_thick_line(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, double thickness, bool relativethickness, RGBc color, int typeP1 = LINEEND_O, int typeP2 = LINEEND_O, bool antialiased = true, bool blending = true, double min_tick = DEFAULT_MIN_THICKNESS)
+			 * Draw a thick line.
+			 * 
+			 * Use absolute coordinate (canvas method).
+			 *
+			 * @param	R		   	the absolute range represented in the image.
+			 * @param	P1		   	First point.
+			 * @param	P2		   	Second endpoint.
+			 * @param	thickness  	thickness.
+			 * @param	color	   	The color to use.
+			 * @param	antialiased	(Optional) true to draw an antialised line.
+			 * @param	blending   	(Optional) true to use blending instead of simply overwriting the color.
+			 * @param	min_thick  	(Optional) The pen width (0 = unit width)
+			 **/
+			MTOOLS_FORCEINLINE void canvas_draw_thick_line(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, double thickness, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
-				// TODO DIRECTLY TO REMOVE APPROX
+				if ((isEmpty()) || (thickness <= 0) || (P1 == P2)) return;
+				fVec2 H = (P2 - P1).get_rotate90();
+				H.normalize();
+				H *= thickness;
+				const auto dim = dimension();
+				double r2 = (R.absToPixelf(H, dim) - R.absToPixelf({ 0.0 ,0.0 }, dim)).norm2();
+				if (r2 < 3)
+					{
+					if (r2 < 1)
+						{
+						color.multOpacity((float)((r2 < min_thick) ? min_thick : r2));
+						}
+					canvas_draw_line(R,P1, P2, color, true, antialiased, blending);
+					return;
+					}
+				H *= 0.5;
+				fVec2 A1 = (P1 + H);
+				fVec2 A4 = (P1 - H);
+				fVec2 A2 = (P2 + H);
+				fVec2 A3 = (P2 - H);
+				canvas_draw_filled_quad(R, A1, A2, A3, A4, color, color, antialiased, blending);
+				return;
 				}
 
 
+
 			/**
-			* Draw a quadratic (rational) Bezier curve.
-			*
-			* Use absolute coordinate (canvas method).
-			*
-			* @param	R				the absolute range represented in the image.
-			* @param	P1				The first point.
-			* @param	P2				The second point.
-			* @param	PC				The control point.
-			* @param	wc				The control point weight. Must be positive (faster for wc = 1 =
-			* 							classic quad Bezier curve).
-			* @param	color			The color to use.
-			* @param	draw_P2			true to draw the endpoint P2.
-			* @param	blending		true to use blending.
-			* @param	antialiasing	true to use antialiasing.
-			* @param	penwidth		The pen width (0 = unit width)
-			**/
-			MTOOLS_FORCEINLINE void canvas_draw_quad_bezier(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, fVec2 PC, float wc, RGBc color, bool draw_P2, bool blending, bool antialiasing, int32 penwidth = 0)
+			 * Draw a quadratic (rational) Bezier curve.
+			 * 
+			 * Use absolute coordinate (canvas method).
+			 *
+			 * @param	R				the absolute range represented in the image.
+			 * @param	P1				The first point.
+			 * @param	P2				The second point.
+			 * @param	PC				The control point.
+			 * @param	wc				The control point weight. Must be positive (faster for wc = 1 =
+			 * 							classic quad Bezier curve).
+			 * @param	color			The color to use.
+			 * @param	draw_P2			(Optional) true to draw the endpoint P2.
+			 * @param	antialiasing	(Optional) true to use antialiasing.
+			 * @param	blending		(Optional) true to use blending.
+			 * @param	penwidth		(Optional) The pen width (0 = unit width)
+			 **/
+			MTOOLS_FORCEINLINE void canvas_draw_quad_bezier(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, fVec2 PC, float wc, RGBc color, bool draw_P2 = true, bool antialiasing = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0)
 				{
 				const auto dim = dimension();
-				draw_quad_bezier(R.absToPixel(P1, dim), R.absToPixel(P2, dim), R.absToPixel(PC, dim), wc, color, draw_P2, blending, antialiasing, penwidth);
+				draw_quad_bezier(R.absToPixel(P1, dim), R.absToPixel(P2, dim), R.absToPixel(PC, dim), wc, color, draw_P2, antialiasing, blending, penwidth);
 				}
 
 
 			/**
-			* Draw a cubic Bezier curve.
-			*
-			* Use absolute coordinate (canvas method).
-			*
-			* @param	R				the absolute range represented in the image.
-			* @param	P1				The first point.
-			* @param	P2				The second point.
-			* @param	PA				The first control point.
-			* @param	PB				The second control point.
-			* @param	color			The color to use
-			* @param	draw_P2			true to draw the endpoint P2.
-			* @param	blending		true to use blending.
-			* @param	antialiasing	true to use antialiasing.
-			* @param	penwidth		The pen width (0 = unit width)
-			**/
-			MTOOLS_FORCEINLINE void canvas_draw_cubic_bezier(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, fVec2 PA, fVec2 PB, RGBc color, bool draw_P2, bool blending, bool antialiasing, int32 penwidth = 0)
+			 * Draw a cubic Bezier curve.
+			 * 
+			 * Use absolute coordinate (canvas method).
+			 *
+			 * @param	R				the absolute range represented in the image.
+			 * @param	P1				The first point.
+			 * @param	P2				The second point.
+			 * @param	PA				The first control point.
+			 * @param	PB				The second control point.
+			 * @param	color			The color to use.
+			 * @param	draw_P2			(Optional) true to draw the endpoint P2.
+			 * @param	antialiasing	(Optional) true to use antialiasing.
+			 * @param	blending		(Optional) true to use blending.
+			 * @param	penwidth		(Optional) The pen width (0 = unit width)
+			 **/
+			MTOOLS_FORCEINLINE void canvas_draw_cubic_bezier(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, fVec2 PA, fVec2 PB, RGBc color, bool draw_P2 = true, bool antialiasing = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0)
 				{
 				const auto dim = dimension();
-				draw_cubic_bezier(R.absToPixel(P1, dim), R.absToPixel(P2, dim), R.absToPixel(PA, dim), R.absToPixel(PB, dim), color, draw_P2, blending, antialiasing, penwidth);
+				draw_cubic_bezier(R.absToPixel(P1, dim), R.absToPixel(P2, dim), R.absToPixel(PA, dim), R.absToPixel(PB, dim), color, draw_P2, antialiasing, blending, penwidth);
 				}
 
 
 			/**
-			* Draw a quadratic spline.
-			*
-			* Use absolute coordinate (canvas method).
-			*
-			* @param	R				the absolute range represented in the image.
-			* @param	tabPoints	   	std vector containing the points interpolated by the spline.
-			* @param	color		   	The color tu use.
-			* @param	draw_last_point	true to draw the last point.
-			* @param	blending	   	true to use blending.
-			* @param	antialiased	   	true to use anti-aliasing.
-			* @param	penwidth		The pen width (0 = unit width)
-			**/
-			MTOOLS_FORCEINLINE void canvas_draw_quad_spline(const mtools::fBox2 & R, const std::vector<fVec2> & tabPoints, RGBc color, bool draw_last_point, bool blending, bool antialiased, int32 penwidth = 0)
+			 * Draw a quadratic spline.
+			 * 
+			 * Use absolute coordinate (canvas method).
+			 *
+			 * @param	R			   	the absolute range represented in the image.
+			 * @param	tabPoints	   	std vector containing the points interpolated by the spline.
+			 * @param	color		   	The color tu use.
+			 * @param	draw_last_point	(Optional) true to draw the last point.
+			 * @param	antialiased	   	(Optional) true to use anti-aliasing.
+			 * @param	blending	   	(Optional) true to use blending.
+			 * @param	penwidth	   	(Optional) The pen width (0 = unit width)
+			 **/
+			MTOOLS_FORCEINLINE void canvas_draw_quad_spline(const mtools::fBox2 & R, const std::vector<fVec2> & tabPoints, RGBc color, bool draw_last_point = true, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0)
 				{
 				const auto dim = dimension();
 				const size_t N = tabPoints.size();
 				std::vector<iVec2> tab;
 				tab.reserve(N);
 				for (size_t i=0; i < N; i++) { tab.push_back(R.absToPixel(tabPoints[i], dim)); }
-				draw_quad_spline(tab, color, draw_last_point, blending, antialiased, penwidth);
+				draw_quad_spline(tab, color, draw_last_point, antialiased, blending, penwidth);
 				}
 
 
 			/**
-			* Draw a cubic spline.
-			*
-			* Use absolute coordinate (canvas method).
-			*
-			* @param	R				the absolute range represented in the image.
-			* @param	tabPoints	   	std vector containing the points interpolated by the spline.
-			* @param	color		   	The color tu use.
-			* @param	draw_last_point	true to draw the last point.
-			* @param	blending	   	true to use blending.
-			* @param	antialiased	   	true to use anti-aliasing.
-			* @param	penwidth		The pen width (0 = unit width)
-			**/
-			MTOOLS_FORCEINLINE void canvas_draw_cubic_spline(const mtools::fBox2 & R, const std::vector<fVec2> & tabPoints, RGBc color, bool draw_last_point, bool blending, bool antialiased, int32 penwidth = 0)
+			 * Draw a cubic spline.
+			 * 
+			 * Use absolute coordinate (canvas method).
+			 *
+			 * @param	R			   	the absolute range represented in the image.
+			 * @param	tabPoints	   	std vector containing the points interpolated by the spline.
+			 * @param	color		   	The color tu use.
+			 * @param	draw_last_point	(Optional) true to draw the last point.
+			 * @param	antialiased	   	(Optional) true to use anti-aliasing.
+			 * @param	blending	   	(Optional) true to use blending.
+			 * @param	penwidth	   	(Optional) The pen width (0 = unit width)
+			 **/
+			MTOOLS_FORCEINLINE void canvas_draw_cubic_spline(const mtools::fBox2 & R, const std::vector<fVec2> & tabPoints, RGBc color, bool draw_last_point = true, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0)
 				{
 				const auto dim = dimension();
 				const size_t N = tabPoints.size();
 				std::vector<iVec2> tab;
 				tab.reserve(N);
 				for (size_t i = 0; i < N; i++) { tab.push_back(R.absToPixel(tabPoints[i], dim)); }
-				draw_cubic_spline(tab, color, draw_last_point, blending, antialiased, penwidth);
+				draw_cubic_spline(tab, color, draw_last_point, antialiased, blending, penwidth);
 				}
 
 
@@ -4880,10 +4919,10 @@ namespace mtools
 			 * @param	R			the absolute range represented in the image.
 			 * @param	dest_box	position of the rectangle to draw.
 			 * @param	color   	the color to use.
-			 * @param	blend   	true to use blending and false to simply copy the color.
-			 * @param	penwidth	The pen width (0 = unit width)
+			 * @param	blend   	(Optional) true to use blending and false to simply copy the color.
+			 * @param	penwidth	(Optional) The pen width (0 = unit width)
 			 **/
-			MTOOLS_FORCEINLINE void canvas_draw_rectangle(const mtools::fBox2 & R, const fBox2 & dest_box, RGBc color, bool blend, int32 penwidth = 0)
+			MTOOLS_FORCEINLINE void canvas_draw_rectangle(const mtools::fBox2 & R, const fBox2 & dest_box, RGBc color, bool blend = DEFAULT_BLEND, int32 penwidth = 0)
 				{
 				draw_rectangle(R.absToPixel(dest_box,dimension()), color, blend, penwidth);
 				}
@@ -4900,9 +4939,9 @@ namespace mtools
 			 * @param	R		 	the absolute range represented in the image.
 			 * @param	dest_box 	position of the rectangle to draw.
 			 * @param	fillcolor	the color to use.
-			 * @param	blend	 	true to use blending and false to simply copy the color.
+			 * @param	blend	 	(Optional) true to use blending and false to simply copy the color.
 			 **/
-			MTOOLS_FORCEINLINE void canvas_fill_rectangle(const mtools::fBox2 & R, const fBox2 & dest_box, RGBc fillcolor, bool blend)
+			MTOOLS_FORCEINLINE void canvas_fill_rectangle(const mtools::fBox2 & R, const fBox2 & dest_box, RGBc fillcolor, bool blend = DEFAULT_BLEND)
 				{
 				fill_rectangle(R.absToPixel(dest_box, dimension()), fillcolor, blend);
 				}
@@ -4916,9 +4955,9 @@ namespace mtools
 			 * @param	R		 	the absolute range represented in the image.
 			 * @param	dest_box 	position of the rectangle to draw.
 			 * @param	fillcolor	the color to use.
-			 * @param	blend	 	true to use blending and false to simply copy the color.
+			 * @param	blend	 	(Optional) true to use blending and false to simply copy the color.
 			 **/
-			MTOOLS_FORCEINLINE void canvas_draw_box(const mtools::fBox2 & R, const fBox2 & dest_box, RGBc fillcolor, bool blend)
+			MTOOLS_FORCEINLINE void canvas_draw_box(const mtools::fBox2 & R, const fBox2 & dest_box, RGBc fillcolor, bool blend = DEFAULT_BLEND)
 				{
 				draw_box(R.absToPixel(dest_box, dimension()), fillcolor, blend);
 				}
@@ -4934,14 +4973,14 @@ namespace mtools
 			 * @param	P2		   	The second point.
 			 * @param	P3		   	The third point.
 			 * @param	color	   	The color.
-			 * @param	blending   	true to use blending and false to write over.
-			 * @param	antialiased	true to use antialiased lines.
-			 * @param	penwidth   	The pen width (0 = unit width)
+			 * @param	antialiased	(Optional) true to use antialiased lines.
+			 * @param	blending   	(Optional) true to use blending and false to write over.
+			 * @param	penwidth   	(Optional) The pen width (0 = unit width)
 			 **/
-			MTOOLS_FORCEINLINE void canvas_draw_triangle(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, fVec2 P3, RGBc color, bool blending, bool antialiased, int32 penwidth = 0)
+			MTOOLS_FORCEINLINE void canvas_draw_triangle(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, fVec2 P3, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0)
 				{
 				const auto dim = dimension();
-				draw_triangle(R.absToPixel(P1, dim), R.absToPixel(P2, dim), R.absToPixel(P3, dim), color, blending, antialiased, penwidth);
+				draw_triangle(R.absToPixel(P1, dim), R.absToPixel(P2, dim), R.absToPixel(P3, dim), color, antialiased, blending, penwidth);
 				}
 
 
@@ -4957,9 +4996,9 @@ namespace mtools
 			 * @param	P2		 	The second point.
 			 * @param	P3		 	The third point.
 			 * @param	fillcolor	The fill color.
-			 * @param	blending 	true to use blending and false to write over.
+			 * @param	blending 	(Optional) true to use blending and false to write over.
 			 **/
-			MTOOLS_FORCEINLINE void canvas_fill_triangle(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, fVec2 P3, RGBc fillcolor, bool blending)
+			MTOOLS_FORCEINLINE void canvas_fill_triangle(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, fVec2 P3, RGBc fillcolor, bool blending = DEFAULT_BLEND)
 				{
 				const auto dim = dimension();
 				fill_triangle(R.absToPixel(P1, dim), R.absToPixel(P2, dim), R.absToPixel(P3, dim), fillcolor, blending);
@@ -4967,40 +5006,59 @@ namespace mtools
 
 
 			/**
-			* Draw a polygon.
-			*
-			* Use absolute coordinate (canvas method).
-			*
-			* @param	R				the absolute range represented in the image.
-			* @param	tabPoints  	std vector of polygon vertice in clockwise or counterclockwise order.
-			* @param	color	   	The color tu use.
-			* @param	blending   	true to use blending.
-			* @param	antialiased	true to draw antialiased lines.
-			* @param	penwidth   	The pen width (0 = unit width)
-			**/
-			MTOOLS_FORCEINLINE void canvas_draw_polygon(const mtools::fBox2 & R, const std::vector<fVec2> & tabPoints, RGBc color, bool blending, bool antialiased, int32 penwidth = 0)
+			 * Draw a filled quadrilateral. Point must be ordered around the quad.
+			 *
+			 * @param	R		   	the absolute range represented in the image.
+			 * @param	P1		   	The first point.
+			 * @param	P2		   	The second point.
+			 * @param	P3		   	The third point.
+			 * @param	P4		   	The fourth point.
+			 * @param	color	   	border color.
+			 * @param	fillcolor  	fill color.
+			 * @param	antialiased	(Optional) True to use antialiased.
+			 * @param	blending   	(Optional) True to use blending.
+			 **/
+			inline void canvas_draw_filled_quad(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, fVec2 P3, fVec2 P4, RGBc color, RGBc fillcolor, bool antialiased = true, bool blending = true)
+				{
+				const auto dim = dimension();
+				draw_filled_quad(R.absToPixel(P1, dim), R.absToPixel(P2, dim), R.absToPixel(P3, dim), R.absToPixel(P4, dim), color, fillcolor, antialiased, blending);
+				}
+
+
+			/**
+			 * Draw a polygon.
+			 * 
+			 * Use absolute coordinate (canvas method).
+			 *
+			 * @param	R		   	the absolute range represented in the image.
+			 * @param	tabPoints  	std vector of polygon vertice in clockwise or counterclockwise order.
+			 * @param	color	   	The color tu use.
+			 * @param	antialiased	(Optional) true to draw antialiased lines.
+			 * @param	blending   	(Optional) true to use blending.
+			 * @param	penwidth   	(Optional) The pen width (0 = unit width)
+			 **/
+			MTOOLS_FORCEINLINE void canvas_draw_polygon(const mtools::fBox2 & R, const std::vector<fVec2> & tabPoints, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0)
 				{
 				const auto dim = dimension();
 				const size_t N = tabPoints.size();
 				std::vector<iVec2> tab;
 				tab.reserve(N);
 				for (size_t i = 0; i < N; i++) { tab.push_back(R.absToPixel(tabPoints[i], dim)); }
-				draw_polygon(tab, color, blending, antialiased, penwidth);
+				draw_polygon(tab, color, antialiased, blending, penwidth);
 				}
 
 
 			/**
-			* Fill the interior of a convex polygon. The edge are not drawn.
-			*
-			* Use absolute coordinate (canvas method).
-			*
-			* @param	R				the absolute range represented in the image.
-			* @param	tabPoints  	std vector of polygon vertice in clockwise or counterclockwise order.
-			* @param	color	   	The color tu use.
-			* @param	blending   	true to use blending.
-			* @param	antialiased	true to draw antialiased lines.
-			**/
-			MTOOLS_FORCEINLINE void canvas_fill_convex_polygon(const mtools::fBox2 & R, const std::vector<fVec2> & tabPoints, RGBc fillcolor, bool blending)
+			 * Fill the interior of a convex polygon. The edge are not drawn.
+			 * 
+			 * Use absolute coordinate (canvas method).
+			 *
+			 * @param	R		 	the absolute range represented in the image.
+			 * @param	tabPoints	std vector of polygon vertice in clockwise or counterclockwise order.
+			 * @param	fillcolor	The color tu use.
+			 * @param	blending 	(Optional) true to use blending.
+			 **/
+			MTOOLS_FORCEINLINE void canvas_fill_convex_polygon(const mtools::fBox2 & R, const std::vector<fVec2> & tabPoints, RGBc fillcolor, bool blending = DEFAULT_BLEND)
 				{
 				const auto dim = dimension();
 				const size_t N = tabPoints.size();
@@ -5012,15 +5070,15 @@ namespace mtools
 
 
 			/**
-			* Draw a circle.
-			*
-			* @param	R	   the absolute range represented in the image.
-			* @param	center center
-			* @param	radius radius
-			* @param	color  color
-			* @param	aa	   (Optional) true to use antialiasing.
-			* @param	blend  (Optional) true to use blending.
-			**/
+			 * Draw a circle.
+			 *
+			 * @param	R	  	the absolute range represented in the image.
+			 * @param	center	center.
+			 * @param	radius	radius.
+			 * @param	color 	color.
+			 * @param	aa	  	(Optional) true to use antialiasing.
+			 * @param	blend 	(Optional) true to use blending.
+			 **/
 			MTOOLS_FORCEINLINE void canvas_draw_circle(const fBox2 & R, fVec2 center, double radius, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
 			{
 				const double EPS = 0.1;
@@ -5034,16 +5092,18 @@ namespace mtools
 
 
 			/**
-			* Draw part of a circle.
-			*
-			* @param	R	   the absolute range represented in the image.
-			* @param	part   combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT, BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT
-			* @param	center center
-			* @param	radius radius
-			* @param	color  color
-			* @param	aa	   (Optional) true to use antialiasing.
-			* @param	blend  (Optional) true to use blending.
-			**/
+			 * Draw part of a circle.
+			 *
+			 * @param	R	  	the absolute range represented in the image.
+			 * @param	part  	combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT,
+			 * 					BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT, BOX_SPLIT_DOWN_LEFT,
+			 * 					BOX_SPLIT_DOWN_RIGHT.
+			 * @param	center	center.
+			 * @param	radius	radius.
+			 * @param	color 	color.
+			 * @param	aa	  	(Optional) true to use antialiasing.
+			 * @param	blend 	(Optional) true to use blending.
+			 **/
 			MTOOLS_FORCEINLINE void canvas_draw_part_circle(const fBox2 & R, int part, fVec2 center, double radius, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
 				{
 				const double EPS = 0.1;
@@ -5057,18 +5117,17 @@ namespace mtools
 				}
 
 
-
 			/**
-			* Draw a filled circle.
-			*
-			* @param	R			the absolute range represented in the image.
-			* @param	center		center
-			* @param	radius		radius
-			* @param	color		color
-			* @param	fillcolor	color to fill the circle.
-			* @param	aa			(Optional) true to use antialiasing.
-			* @param	blend		(Optional) true to use blending.
-			**/
+			 * Draw a filled circle.
+			 *
+			 * @param	R		 	the absolute range represented in the image.
+			 * @param	center   	center.
+			 * @param	radius   	radius.
+			 * @param	color	 	color.
+			 * @param	fillcolor	color to fill the circle.
+			 * @param	aa		 	(Optional) true to use antialiasing.
+			 * @param	blend	 	(Optional) true to use blending.
+			 **/
 			MTOOLS_FORCEINLINE void canvas_draw_filled_circle(const fBox2 & R, fVec2 center, double radius, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
 			{
 				const double EPS = 0.1;
@@ -5082,17 +5141,19 @@ namespace mtools
 
 
 			/**
-			* Draw part of a filled circle.
-			*
-			* @param	R			the absolute range represented in the image.
-			* @param	part		combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT, BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT
-			* @param	center		center
-			* @param	radius		radius
-			* @param	color		color
-			* @param	fillcolor	color to fill the circle.
-			* @param	aa			(Optional) true to use antialiasing.
-			* @param	blend		(Optional) true to use blending.
-			**/
+			 * Draw part of a filled circle.
+			 *
+			 * @param	R		 	the absolute range represented in the image.
+			 * @param	part	 	combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT,
+			 * 						BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT,
+			 * 						BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT.
+			 * @param	center   	center.
+			 * @param	radius   	radius.
+			 * @param	color	 	color.
+			 * @param	fillcolor	color to fill the circle.
+			 * @param	aa		 	(Optional) true to use antialiasing.
+			 * @param	blend	 	(Optional) true to use blending.
+			 **/
 			MTOOLS_FORCEINLINE void canvas_draw_part_filled_circle(const fBox2 & R, int part, fVec2 center, double radius, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
 			{
 				const double EPS = 0.1;
@@ -5107,17 +5168,19 @@ namespace mtools
 
 
 			/**
-			* Draw a thick circle.
-			*
-			* @param	R					the absolute range represented in the image.
-			* @param	center				center
-			* @param	radius				radius
-			* @param	thickness			thickness.
-			* @param    relativethickness	true to scale tickness with range and false to use constant thcikness.
-			* @param	color				color
-			* @param	aa					(Optional) true to use antialiasing.
-			* @param	blend				(Optional) true to use blending.
-			**/
+			 * Draw a thick circle.
+			 *
+			 * @param	R				 	the absolute range represented in the image.
+			 * @param	center			 	center.
+			 * @param	radius			 	radius.
+			 * @param	thickness		 	thickness.
+			 * @param	relativethickness	true to scale tickness with range and false to use constant
+			 * 								thcikness.
+			 * @param	color			 	color.
+			 * @param	aa				 	(Optional) true to use antialiasing.
+			 * @param	blend			 	(Optional) true to use blending.
+			 * @param	min_tick		 	(Optional) The minimum tick.
+			 **/
 			MTOOLS_FORCEINLINE void canvas_draw_thick_circle(const fBox2 & R, fVec2 center, double radius, double thickness, bool relativethickness, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 			{
 				const double EPS = 0.1;
@@ -5139,18 +5202,22 @@ namespace mtools
 
 
 			/**
-			* Draw part of a thick circle.
-			*
-			* @param	R					the absolute range represented in the image.
-			* @param	part				combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT, BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT
-			* @param	center				center
-			* @param	radius				radius
-			* @param	thickness			thickness.
-			* @param    relativethickness	true to scale tickness with range and false to use constant thcikness.
-			* @param	color				color
-			* @param	aa					(Optional) true to use antialiasing.
-			* @param	blend				(Optional) true to use blending.
-			**/
+			 * Draw part of a thick circle.
+			 *
+			 * @param	R				 	the absolute range represented in the image.
+			 * @param	part			 	combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT,
+			 * 								BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT,
+			 * 								BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT.
+			 * @param	center			 	center.
+			 * @param	radius			 	radius.
+			 * @param	thickness		 	thickness.
+			 * @param	relativethickness	true to scale tickness with range and false to use constant
+			 * 								thcikness.
+			 * @param	color			 	color.
+			 * @param	aa				 	(Optional) true to use antialiasing.
+			 * @param	blend			 	(Optional) true to use blending.
+			 * @param	min_tick		 	(Optional) The minimum tick.
+			 **/
 			MTOOLS_FORCEINLINE void canvas_draw_part_thick_circle(const fBox2 & R, int part, fVec2 center, double radius, double thickness, bool relativethickness, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 			{
 				const double EPS = 0.1;
@@ -5173,18 +5240,20 @@ namespace mtools
 
 
 			/**
-			* Draw a thick filled circle.
-			*
-			* @param	R					the absolute range represented in the image.
-			* @param	center				center
-			* @param	radius				radius
-			* @param	thickness			thickness.
-			* @param    relativethickness	true to scale tickness with range and false to use constant thcikness.
-			* @param	color				color
-			* @param	fillcolor			color to fill the circle.
-			* @param	aa					(Optional) true to use antialiasing.
-			* @param	blend				(Optional) true to use blending.
-			**/
+			 * Draw a thick filled circle.
+			 *
+			 * @param	R				 	the absolute range represented in the image.
+			 * @param	center			 	center.
+			 * @param	radius			 	radius.
+			 * @param	thickness		 	thickness.
+			 * @param	relativethickness	true to scale tickness with range and false to use constant
+			 * 								thcikness.
+			 * @param	color			 	color.
+			 * @param	fillcolor		 	color to fill the circle.
+			 * @param	aa				 	(Optional) true to use antialiasing.
+			 * @param	blend			 	(Optional) true to use blending.
+			 * @param	min_tick		 	(Optional) The minimum tick.
+			 **/
 			MTOOLS_FORCEINLINE void canvas_draw_thick_filled_circle(const fBox2 & R, fVec2 center, double radius, double thickness, bool relativethickness, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 			{
 				const double EPS = 0.1;
@@ -5206,19 +5275,23 @@ namespace mtools
 
 
 			/**
-			* Draw part of a thick filled circle.
-			*
-			* @param	R					the absolute range represented in the image.
-			* @param	part				combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT, BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT
-			* @param	center				center
-			* @param	radius				radius
-			* @param	thickness			thickness.
-			* @param    relativethickness	true to scale tickness with range and false to use constant thcikness.
-			* @param	color				color
-			* @param	fillcolor			color to fill the circle.
-			* @param	aa					(Optional) true to use antialiasing.
-			* @param	blend				(Optional) true to use blending.
-			**/
+			 * Draw part of a thick filled circle.
+			 *
+			 * @param	R				 	the absolute range represented in the image.
+			 * @param	part			 	combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT,
+			 * 								BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT,
+			 * 								BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT.
+			 * @param	center			 	center.
+			 * @param	radius			 	radius.
+			 * @param	thickness		 	thickness.
+			 * @param	relativethickness	true to scale tickness with range and false to use constant
+			 * 								thcikness.
+			 * @param	color			 	color.
+			 * @param	fillcolor		 	color to fill the circle.
+			 * @param	aa				 	(Optional) true to use antialiasing.
+			 * @param	blend			 	(Optional) true to use blending.
+			 * @param	min_tick		 	(Optional) The minimum tick.
+			 **/
 			MTOOLS_FORCEINLINE void canvas_draw_part_thick_filled_circle(const fBox2 & R, int part, fVec2 center, double radius, double thickness, bool relativethickness, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 			{
 				const double EPS = 0.1;
@@ -5241,16 +5314,16 @@ namespace mtools
 
 
 			/**
-			* Draw an ellipse.
-			*
-			* @param	R	   the absolute range represented in the image.
-			* @param	center center
-			* @param	rx	   radius along the x-axis.
-			* @param	ry	   radius along the y-axis.
-			* @param	color  color
-			* @param	aa	   (Optional) true to use antialiasing.
-			* @param	blend  (Optional) true to use blending.
-			**/
+			 * Draw an ellipse.
+			 *
+			 * @param	R	  	the absolute range represented in the image.
+			 * @param	center	center.
+			 * @param	rx	  	radius along the x-axis.
+			 * @param	ry	  	radius along the y-axis.
+			 * @param	color 	color.
+			 * @param	aa	  	(Optional) true to use antialiasing.
+			 * @param	blend 	(Optional) true to use blending.
+			 **/
 			MTOOLS_FORCEINLINE void canvas_draw_ellipse(const fBox2 & R, fVec2 center, double rx, double ry, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
 				{
 				if (isEmpty()) return;
@@ -5260,17 +5333,19 @@ namespace mtools
 
 
 			/**
-			* Draw part of an ellipse.
-			*
-			* @param	R	   the absolute range represented in the image.
-			* @param	part   combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT, BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT
-			* @param	center center
-			* @param	rx	   radius along the x-axis.
-			* @param	ry	   radius along the y-axis.
-			* @param	color  color
-			* @param	aa	   (Optional) true to use antialiasing.
-			* @param	blend  (Optional) true to use blending.
-			**/
+			 * Draw part of an ellipse.
+			 *
+			 * @param	R	  	the absolute range represented in the image.
+			 * @param	part  	combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT,
+			 * 					BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT, BOX_SPLIT_DOWN_LEFT,
+			 * 					BOX_SPLIT_DOWN_RIGHT.
+			 * @param	center	center.
+			 * @param	rx	  	radius along the x-axis.
+			 * @param	ry	  	radius along the y-axis.
+			 * @param	color 	color.
+			 * @param	aa	  	(Optional) true to use antialiasing.
+			 * @param	blend 	(Optional) true to use blending.
+			 **/
 			MTOOLS_FORCEINLINE void canvas_draw_part_ellipse(const fBox2 & R, int part, fVec2 center, double rx, double ry, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
 				{
 				if (isEmpty()) return;
@@ -5281,17 +5356,17 @@ namespace mtools
 
 
 			/**
-			* Draw a filled ellipse.
-			*
-			* @param	R			the absolute range represented in the image.
-			* @param	center		center
-			* @param	rx			radius along the x-axis.
-			* @param	ry			radius along the y-axis.
-			* @param	color		color
-			* @param	fillcolor	color to fill the ellipse.
-			* @param	aa			(Optional) true to use antialiasing.
-			* @param	blend		(Optional) true to use blending.
-			**/
+			 * Draw a filled ellipse.
+			 *
+			 * @param	R		 	the absolute range represented in the image.
+			 * @param	center   	center.
+			 * @param	rx		 	radius along the x-axis.
+			 * @param	ry		 	radius along the y-axis.
+			 * @param	color	 	color.
+			 * @param	fillcolor	color to fill the ellipse.
+			 * @param	aa		 	(Optional) true to use antialiasing.
+			 * @param	blend	 	(Optional) true to use blending.
+			 **/
 			MTOOLS_FORCEINLINE void canvas_draw_filled_ellipse(const fBox2 & R, fVec2 center, double rx, double ry, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
 				{
 				if (isEmpty()) return;
@@ -5301,18 +5376,20 @@ namespace mtools
 
 
 			/**
-			* Draw part of a filled ellipse.
-			*
-			* @param	R			the absolute range represented in the image.
-			* @param	part		combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT, BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT
-			* @param	center		center
-			* @param	rx			radius along the x-axis.
-			* @param	ry			radius along the y-axis.
-			* @param	color		color
-			* @param	fillcolor	color to fill the ellipse.
-			* @param	aa			(Optional) true to use antialiasing.
-			* @param	blend		(Optional) true to use blending.
-			**/
+			 * Draw part of a filled ellipse.
+			 *
+			 * @param	R		 	the absolute range represented in the image.
+			 * @param	part	 	combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT,
+			 * 						BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT,
+			 * 						BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT.
+			 * @param	center   	center.
+			 * @param	rx		 	radius along the x-axis.
+			 * @param	ry		 	radius along the y-axis.
+			 * @param	color	 	color.
+			 * @param	fillcolor	color to fill the ellipse.
+			 * @param	aa		 	(Optional) true to use antialiasing.
+			 * @param	blend	 	(Optional) true to use blending.
+			 **/
 			MTOOLS_FORCEINLINE void canvas_draw_part_filled_ellipse(const fBox2 & R, int part, fVec2 center, double rx, double ry, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
 				{
 				if (isEmpty()) return;
@@ -5323,19 +5400,21 @@ namespace mtools
 
 
 			/**
-			* Draw a thick ellipse.
-			*
-			* @param	R					the absolute range represented in the image.
-			* @param	center				center
-			* @param	rx					radius along the x-axis.
-			* @param	ry					radius along the y-axis.
-			* @param	thickness_x			thickness on the x-axis.
-			* @param	thickness_y			thickness on the y-axis.
-			* @param    relativethickness	true to scale tickness with range and false to use constant thcikness.
-			* @param	color				color
-			* @param	aa					(Optional) true to use antialiasing.
-			* @param	blend				(Optional) true to use blending.
-			**/
+			 * Draw a thick ellipse.
+			 *
+			 * @param	R				 	the absolute range represented in the image.
+			 * @param	center			 	center.
+			 * @param	rx				 	radius along the x-axis.
+			 * @param	ry				 	radius along the y-axis.
+			 * @param	thickness_x		 	thickness on the x-axis.
+			 * @param	thickness_y		 	thickness on the y-axis.
+			 * @param	relativethickness	true to scale tickness with range and false to use constant
+			 * 								thcikness.
+			 * @param	color			 	color.
+			 * @param	aa				 	(Optional) true to use antialiasing.
+			 * @param	blend			 	(Optional) true to use blending.
+			 * @param	min_tick		 	(Optional) The minimum tick.
+			 **/
 			MTOOLS_FORCEINLINE void canvas_draw_thick_ellipse(const fBox2 & R, fVec2 center, double rx, double ry, double thickness_x, double thickness_y, bool relativethickness, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
 				if (isEmpty()) return;
@@ -5348,20 +5427,24 @@ namespace mtools
 
 
 			/**
-			* Draw part of a thick ellipse.
-			*
-			* @param	R					the absolute range represented in the image.
-			* @param	part				combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT, BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT
-			* @param	center				center
-			* @param	rx					radius along the x-axis.
-			* @param	ry					radius along the y-axis.
-			* @param	thickness_x			thickness on the x-axis.
-			* @param	thickness_y			thickness on the y-axis.
-			* @param    relativethickness	true to scale tickness with range and false to use constant thcikness.
-			* @param	color				color
-			* @param	aa					(Optional) true to use antialiasing.
-			* @param	blend				(Optional) true to use blending.
-			**/
+			 * Draw part of a thick ellipse.
+			 *
+			 * @param	R				 	the absolute range represented in the image.
+			 * @param	part			 	combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT,
+			 * 								BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT,
+			 * 								BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT.
+			 * @param	center			 	center.
+			 * @param	rx				 	radius along the x-axis.
+			 * @param	ry				 	radius along the y-axis.
+			 * @param	thickness_x		 	thickness on the x-axis.
+			 * @param	thickness_y		 	thickness on the y-axis.
+			 * @param	relativethickness	true to scale tickness with range and false to use constant
+			 * 								thcikness.
+			 * @param	color			 	color.
+			 * @param	aa				 	(Optional) true to use antialiasing.
+			 * @param	blend			 	(Optional) true to use blending.
+			 * @param	min_tick		 	(Optional) The minimum tick.
+			 **/
 			MTOOLS_FORCEINLINE void canvas_draw_part_thick_ellipse(const fBox2 & R, int part, fVec2 center, double rx, double ry, double thickness_x, double thickness_y, bool relativethickness, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
 				if (isEmpty()) return;
@@ -5375,20 +5458,22 @@ namespace mtools
 
 
 			/**
-			* Draw a thick filled ellipse.
-			*
-			* @param	R					the absolute range represented in the image.
-			* @param	center				center
-			* @param	rx					radius along the x-axis.
-			* @param	ry					radius along the y-axis.
-			* @param	thickness_x			thickness on the x-axis.
-			* @param	thickness_y			thickness on the y-axis.
-			* @param    relativethickness	true to scale tickness with range and false to use constant thcikness.
-			* @param	color				color
-			* @param	fillcolor			color to fill the ellipse.
-			* @param	aa					(Optional) true to use antialiasing.
-			* @param	blend				(Optional) true to use blending.
-			**/
+			 * Draw a thick filled ellipse.
+			 *
+			 * @param	R				 	the absolute range represented in the image.
+			 * @param	center			 	center.
+			 * @param	rx				 	radius along the x-axis.
+			 * @param	ry				 	radius along the y-axis.
+			 * @param	thickness_x		 	thickness on the x-axis.
+			 * @param	thickness_y		 	thickness on the y-axis.
+			 * @param	relativethickness	true to scale tickness with range and false to use constant
+			 * 								thickness.
+			 * @param	color			 	color.
+			 * @param	fillcolor		 	color to fill the ellipse.
+			 * @param	aa				 	(Optional) true to use antialiasing.
+			 * @param	blend			 	(Optional) true to use blending.
+			 * @param	min_tick		 	(Optional) The minimum tick.
+			 **/
 			MTOOLS_FORCEINLINE void canvas_draw_thick_filled_ellipse(const fBox2 & R, fVec2 center, double rx, double ry, double thickness_x, double thickness_y, bool relativethickness, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
 				if (isEmpty()) return;
@@ -5401,21 +5486,25 @@ namespace mtools
 
 
 			/**
-			* Draw a part of thick filled ellipse.
-			*
-			* @param	R					the absolute range represented in the image.
-			* @param	part				combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT, BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT
-			* @param	center				center
-			* @param	rx					radius along the x-axis.
-			* @param	ry					radius along the y-axis.
-			* @param	thickness_x			thickness on the x-axis.
-			* @param	thickness_y			thickness on the y-axis.
-			* @param    relativethickness	true to scale tickness with range and false to use constant thcikness.
-			* @param	color				color
-			* @param	fillcolor			color to fill the ellipse.
-			* @param	aa					(Optional) true to use antialiasing.
-			* @param	blend				(Optional) true to use blending.
-			**/
+			 * Draw a part of thick filled ellipse.
+			 *
+			 * @param	R				 	the absolute range represented in the image.
+			 * @param	part			 	combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT,
+			 * 								BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT,
+			 * 								BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT.
+			 * @param	center			 	center.
+			 * @param	rx				 	radius along the x-axis.
+			 * @param	ry				 	radius along the y-axis.
+			 * @param	thickness_x		 	thickness on the x-axis.
+			 * @param	thickness_y		 	thickness on the y-axis.
+			 * @param	relativethickness	true to scale tickness with range and false to use constant
+			 * 								thcikness.
+			 * @param	color			 	color.
+			 * @param	fillcolor		 	color to fill the ellipse.
+			 * @param	aa				 	(Optional) true to use antialiasing.
+			 * @param	blend			 	(Optional) true to use blending.
+			 * @param	min_tick		 	(Optional) The minimum tick.
+			 **/
 			MTOOLS_FORCEINLINE void canvas_draw_part_thick_filled_ellipse(const fBox2 & R, int part, fVec2 center, double rx, double ry, double thickness_x, double thickness_y, bool relativethickness, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
 				if (isEmpty()) return;
@@ -5429,14 +5518,14 @@ namespace mtools
 
 
 			/**
-			* Draw an ellipse with a given bounding box.
-			*
-			* @param	R			the absolute range represented in the image.
-			* @param	ellipseBox	the ellipse bounding box.
-			* @param	color		color
-			* @param	aa			(Optional) true to use antialiasing.
-			* @param	blend		(Optional) true to use blending.
-			**/
+			 * Draw an ellipse with a given bounding box.
+			 *
+			 * @param	R		  	the absolute range represented in the image.
+			 * @param	ellipseBox	the ellipse bounding box.
+			 * @param	color	  	color.
+			 * @param	aa		  	(Optional) true to use antialiasing.
+			 * @param	blend	  	(Optional) true to use blending.
+			 **/
 			MTOOLS_FORCEINLINE void canvas_draw_ellipse_in_box(const fBox2 & R, const fBox2 & ellipseBox, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
 				{
 				if (isEmpty()) return;
@@ -5446,15 +5535,17 @@ namespace mtools
 
 
 			/**
-			* Draw part of an ellipse with a given bounding box.
-			*
-			* @param	R			the absolute range represented in the image.
-			* @param	part		combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT, BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT
-			* @param	ellipseBox	the ellipse bounding box.
-			* @param	color		color
-			* @param	aa			(Optional) true to use antialiasing.
-			* @param	blend		(Optional) true to use blending.
-			**/
+			 * Draw part of an ellipse with a given bounding box.
+			 *
+			 * @param	R		  	the absolute range represented in the image.
+			 * @param	part	  	combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT,
+			 * 						BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT,
+			 * 						BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT.
+			 * @param	ellipseBox	the ellipse bounding box.
+			 * @param	color	  	color.
+			 * @param	aa		  	(Optional) true to use antialiasing.
+			 * @param	blend	  	(Optional) true to use blending.
+			 **/
 			MTOOLS_FORCEINLINE void canvas_draw_part_ellipse_in_box(const fBox2 & R, int part, const fBox2 & ellipseBox, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
 				{
 				if (isEmpty()) return;
@@ -5465,15 +5556,15 @@ namespace mtools
 
 
 			/**
-			* Draw a filled ellipse with a given bounding box.
-			*
-			* @param	R			the absolute range represented in the image.
-			* @param	ellipseBox	the ellipse bounding box.
-			* @param	color		color
-			* @param	fillcolor	color to fill the ellipse.
-			* @param	aa			(Optional) true to use antialiasing.
-			* @param	blend		(Optional) true to use blending.
-			**/
+			 * Draw a filled ellipse with a given bounding box.
+			 *
+			 * @param	R		  	the absolute range represented in the image.
+			 * @param	ellipseBox	the ellipse bounding box.
+			 * @param	color	  	color.
+			 * @param	fillcolor 	color to fill the ellipse.
+			 * @param	aa		  	(Optional) true to use antialiasing.
+			 * @param	blend	  	(Optional) true to use blending.
+			 **/
 			MTOOLS_FORCEINLINE void canvas_draw_filled_ellipse_in_box(const fBox2 & R, const fBox2 & ellipseBox, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
 				{
 				if (isEmpty()) return;
@@ -5483,16 +5574,18 @@ namespace mtools
 
 
 			/**
-			* Draw part of a filled ellipse with a given bounding box.
-			*
-			* @param	R			the absolute range represented in the image.
-			* @param	part		combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT, BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT
-			* @param	ellipseBox	the ellipse bounding box.
-			* @param	color		color
-			* @param	fillcolor	color to fill the ellipse.
-			* @param	aa			(Optional) true to use antialiasing.
-			* @param	blend		(Optional) true to use blending.
-			**/
+			 * Draw part of a filled ellipse with a given bounding box.
+			 *
+			 * @param	R		  	the absolute range represented in the image.
+			 * @param	part	  	combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT,
+			 * 						BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT,
+			 * 						BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT.
+			 * @param	ellipseBox	the ellipse bounding box.
+			 * @param	color	  	color.
+			 * @param	fillcolor 	color to fill the ellipse.
+			 * @param	aa		  	(Optional) true to use antialiasing.
+			 * @param	blend	  	(Optional) true to use blending.
+			 **/
 			MTOOLS_FORCEINLINE void canvas_draw_part_filled_ellipse_in_box(const fBox2 & R, int part, const fBox2 & ellipseBox, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
 				{
 				if (isEmpty()) return;
@@ -5503,17 +5596,19 @@ namespace mtools
 
 
 			/**
-			* Draw a thick ellipse with a given bounding box.
-			*
-			* @param	R					the absolute range represented in the image.
-			* @param	ellipseBox			the ellipse bounding box.
-			* @param	thickness_x			thickness on the x-axis.
-			* @param	thickness_y			thickness on the y-axis.
-			* @param    relativethickness	true to scale tickness with range and false to use constant thcikness.
-			* @param	color				color
-			* @param	aa					(Optional) true to use antialiasing.
-			* @param	blend				(Optional) true to use blending.
-			**/
+			 * Draw a thick ellipse with a given bounding box.
+			 *
+			 * @param	R				 	the absolute range represented in the image.
+			 * @param	ellipseBox		 	the ellipse bounding box.
+			 * @param	thickness_x		 	thickness on the x-axis.
+			 * @param	thickness_y		 	thickness on the y-axis.
+			 * @param	relativethickness	true to scale tickness with range and false to use constant
+			 * 								thcikness.
+			 * @param	color			 	color.
+			 * @param	aa				 	(Optional) true to use antialiasing.
+			 * @param	blend			 	(Optional) true to use blending.
+			 * @param	min_tick		 	(Optional) The minimum tick.
+			 **/
 			MTOOLS_FORCEINLINE void canvas_draw_thick_ellipse_in_box(const fBox2 & R, const fBox2 & ellipseBox, double thickness_x, double thickness_y, bool relativethickness, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
 				if (isEmpty()) return;
@@ -5525,18 +5620,22 @@ namespace mtools
 
 
 			/**
-			* Draw part of a thick ellipse with a given bounding box.
-			*
-			* @param	R					the absolute range represented in the image.
-			* @param	part				combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT, BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT
-			* @param	ellipseBox			the ellipse bounding box.
-			* @param	thickness_x			thickness on the x-axis.
-			* @param	thickness_y			thickness on the y-axis.
-			* @param    relativethickness	true to scale tickness with range and false to use constant thcikness.
-			* @param	color				color
-			* @param	aa					(Optional) true to use antialiasing.
-			* @param	blend				(Optional) true to use blending.
-			**/
+			 * Draw part of a thick ellipse with a given bounding box.
+			 *
+			 * @param	R				 	the absolute range represented in the image.
+			 * @param	part			 	combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT,
+			 * 								BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT,
+			 * 								BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT.
+			 * @param	ellipseBox		 	the ellipse bounding box.
+			 * @param	thickness_x		 	thickness on the x-axis.
+			 * @param	thickness_y		 	thickness on the y-axis.
+			 * @param	relativethickness	true to scale tickness with range and false to use constant
+			 * 								thcikness.
+			 * @param	color			 	color.
+			 * @param	aa				 	(Optional) true to use antialiasing.
+			 * @param	blend			 	(Optional) true to use blending.
+			 * @param	min_tick		 	(Optional) The minimum tick.
+			 **/
 			MTOOLS_FORCEINLINE void canvas_draw_part_thick_ellipse_in_box(const fBox2 & R, int part, const fBox2 & ellipseBox, double thickness_x, double thickness_y, bool relativethickness, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
 				if (isEmpty()) return;
@@ -5549,18 +5648,20 @@ namespace mtools
 
 
 			/**
-			* Draw a thick filled ellipse with a given bounding box.
-			*
-			* @param	R					the absolute range represented in the image.
-			* @param	ellipseBox			the ellipse bounding box.
-			* @param	thickness_x			thickness on the x-axis.
-			* @param	thickness_y			thickness on the y-axis.
-			* @param    relativethickness	true to scale tickness with range and false to use constant thcikness.
-			* @param	color				color
-			* @param	fillcolor			color to fill the ellipse.
-			* @param	aa					(Optional) true to use antialiasing.
-			* @param	blend				(Optional) true to use blending.
-			**/
+			 * Draw a thick filled ellipse with a given bounding box.
+			 *
+			 * @param	R				 	the absolute range represented in the image.
+			 * @param	ellipseBox		 	the ellipse bounding box.
+			 * @param	thickness_x		 	thickness on the x-axis.
+			 * @param	thickness_y		 	thickness on the y-axis.
+			 * @param	relativethickness	true to scale tickness with range and false to use constant
+			 * 								thcikness.
+			 * @param	color			 	color.
+			 * @param	fillcolor		 	color to fill the ellipse.
+			 * @param	aa				 	(Optional) true to use antialiasing.
+			 * @param	blend			 	(Optional) true to use blending.
+			 * @param	min_tick		 	(Optional) The minimum tick.
+			 **/
 			MTOOLS_FORCEINLINE void canvas_draw_thick_filled_ellipse_in_box(const fBox2 & R, const fBox2 & ellipseBox, double thickness_x, double thickness_y, bool relativethickness, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 			{
 				if (isEmpty()) return;
@@ -5572,28 +5673,32 @@ namespace mtools
 
 
 			/**
-			* Draw part of a thick filled ellipse with a given bounding box.
-			*
-			* @param	R					the absolute range represented in the image.
-			* @param	part				combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT, BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT
-			* @param	ellipseBox			the ellipse bounding box.
-			* @param	thickness_x			thickness on the x-axis.
-			* @param	thickness_y			thickness on the y-axis.
-			* @param    relativethickness	true to scale tickness with range and false to use constant thcikness.
-			* @param	color				color
-			* @param	fillcolor			color to fill the ellipse.
-			* @param	aa					(Optional) true to use antialiasing.
-			* @param	blend				(Optional) true to use blending.
-			**/
+			 * Draw part of a thick filled ellipse with a given bounding box.
+			 *
+			 * @param	R				 	the absolute range represented in the image.
+			 * @param	part			 	combination of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT,
+			 * 								BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT,
+			 * 								BOX_SPLIT_DOWN_LEFT, BOX_SPLIT_DOWN_RIGHT.
+			 * @param	ellipseBox		 	the ellipse bounding box.
+			 * @param	thickness_x		 	thickness on the x-axis.
+			 * @param	thickness_y		 	thickness on the y-axis.
+			 * @param	relativethickness	true to scale tickness with range and false to use constant
+			 * 								thcikness.
+			 * @param	color			 	color.
+			 * @param	fillcolor		 	color to fill the ellipse.
+			 * @param	aa				 	(Optional) true to use antialiasing.
+			 * @param	blend			 	(Optional) true to use blending.
+			 * @param	min_tick		 	(Optional) The minimum tick.
+			 **/
 			MTOOLS_FORCEINLINE void canvas_draw_part_thick_filled_ellipse_in_box(const fBox2 & R, int part, const fBox2 & ellipseBox, double thickness_x, double thickness_y, bool relativethickness, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
-			{
+				{
 				if (isEmpty()) return;
 				_reverseVerticalCirclePart(part);
 				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
 				const fBox2 B = boxTransform(ellipseBox, R, imBox);
 				if (relativethickness) draw_part_thick_filled_ellipse_in_box(part, B, boxTransform_dx(thickness_x, R, imBox), boxTransform_dy(thickness_y, R, imBox), color, fillcolor, aa, blend, min_tick);
 				else draw_part_thick_filled_ellipse_in_box(part, B, thickness_x, thickness_y, color, fillcolor, aa, blend, min_tick);
-			}
+				}
 
 
 			/**
