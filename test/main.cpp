@@ -166,11 +166,22 @@ void testplotfigure()
 	
 	for (int k = 0; k < nb; k++)
 		{
-		fVec2 pos = { 50000 * Unif(gen),50000 * Unif(gen) };
-		fVec2 pos2 = { 50000 * Unif(gen),50000 * Unif(gen) };
+		fVec2 pos = { 5000 * Unif(gen),5000 * Unif(gen) };
+		fVec2 pos2 = { 5000 * Unif(gen),5000 * Unif(gen) };
 		double rad = 10*Unif(gen);
+		
+		//canvas(FigureThickLine(pos, pos2, 0.1, RGBc::c_Red),1);
 
-		canvas(FigureThickLine(pos, pos2, 0.1, RGBc::c_Red),1);
+
+		fVec2 P1 = pos;
+		fVec2 P2 = pos + fVec2(Unif(gen), Unif(gen));
+		fVec2 P3 = pos + fVec2(Unif(gen), Unif(gen));
+		fVec2 P4 = P1 + 3.0*(P3 - P2);
+
+		canvas(FigureQuad(P1,P2,P3,P4, RGBc::c_Red.getMultOpacity(0.5f), RGBc::c_Red.getMultOpacity(0.5f)), 1);
+
+		//canvas(FigureTriangle(pos, pos + fVec2(Unif(gen),Unif(gen)) , pos + fVec2(Unif(gen), Unif(gen)), RGBc::c_Red.getMultOpacity(0.5f), RGBc::c_Red.getMultOpacity(0.5f)), 1);
+
 		//canvas(FigureLine(pos, pos2, RGBc::c_Red), 1);
 
 //		canvas(FigureEllipsePart(BOX_SPLIT_UP_RIGHT, pos, 10 * Unif(gen), 10 * Unif(gen), 10, 0, false, RGBc::c_Red.getMultOpacity(1), RGBc::c_Lime.getMultOpacity(0.5)));
