@@ -30,6 +30,10 @@
 #include "../random/gen_fastRNG.hpp"
 #include "../random/classiclaws.hpp"
 
+
+#include "../misc/timefct.hpp"
+
+
 #if (MTOOLS_USE_CAIRO)
 #include <cairo.h>
 #endif
@@ -2557,6 +2561,9 @@ namespace mtools
 			**/
 			inline void draw_filled_quad(fVec2 A1, fVec2 A2, fVec2 A3, fVec2 A4, RGBc color, RGBc fillcolor, bool antialiased = true, bool blending = true)
 			{
+
+				Chronometer();
+
 				if (isEmpty()) return;
 
 				iVec2 AP1, AP2, AP3, AP4;
@@ -2596,6 +2603,9 @@ namespace mtools
 				dir31 = dir13;
 				_reverse_line(dir31, pos31, len13);
 
+				auto t = Chronometer();
+				if (t > 1) cout << t << "\n";
+
 				if (antialiased)
 					{
 					const bool BLEND = true;
@@ -2620,6 +2630,7 @@ namespace mtools
 					_draw_triangle_interior<true, true>(A1, A2, A3, fillcolor);
 					_draw_triangle_interior<true, true>(A1, A3, A4, fillcolor);
 					}
+
 			}
 
 
@@ -4769,6 +4780,7 @@ namespace mtools
 			MTOOLS_FORCEINLINE void canvas_draw_line(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, RGBc color, bool draw_P2 = true, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0)
 				{
 				const auto dim = dimension();
+				if (!_csLineClip(P1, P2, (penwidth == 0) ? R : zoomOut(R))) return;
 				draw_line(R.absToPixel(P1, dim), R.absToPixel(P2, dim), color, draw_P2, antialiased, blending, penwidth);
 				}
 
@@ -4787,9 +4799,11 @@ namespace mtools
 			 * @param	blending   	(Optional) true to use blending instead of simply overwriting the color.
 			 * @param	min_thick  	(Optional) The pen width (0 = unit width)
 			 **/
-			MTOOLS_FORCEINLINE void canvas_draw_thick_line(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, double thickness, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
+			MTOOLS_FORCEINLINE void canvas_draw_thick_line(const fBox2 & R, fVec2 P1, fVec2 P2, double thickness, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
-				if ((isEmpty()) || (thickness <= 0) || (P1 == P2)) return;
+				if ((isEmpty()) || (thickness <= 0)) return;
+				if (!_csLineClip(P1, P2, R.getEnlarge(thickness * 2))) return;
+				if  (P1 == P2) return;
 				fVec2 H = (P2 - P1).get_rotate90();
 				H.normalize();
 				H *= thickness;
@@ -6504,7 +6518,78 @@ namespace mtools
 
 
 
-			/** Used by CSLineClip() to compute the region where the point lies **/
+			/** Used by CSLineClip() to compute the region where the point lies (real valued version) **/
+			MTOOLS_FORCEINLINE static int _csLineClipCode(const fVec2 & P, const fBox2 & B)
+				{
+				int c = 0;
+				const double xx = P.X();
+				const double yy = P.Y();
+				if (xx < B.min[0]) c |= 1;
+				if (xx > B.max[0]) c |= 2;
+				if (yy < B.min[1]) c |= 4;
+				if (yy > B.max[1]) c |= 8;
+				return c;
+				}
+
+
+			/**
+			* Cohen-Sutherland Line clipping algorithm (real valued point)
+			*
+			* @param [in,out]	P1	The first point.
+			* @param [in,out]	P2	The second point.
+			* @param	B		  	The rectangle to clip into.
+			*
+			* @return	true if a line should be drawn and false if it should be discarded. If true, P1 and
+			* 			P2 are now inside the closed rectangle B and delimit the line to draw.
+			**/
+			MTOOLS_FORCEINLINE static bool _csLineClip(fVec2 & P1, fVec2 & P2, const fBox2 & B)
+				{
+				int c1 = _csLineClipCode(P1, B);
+				int c2 = _csLineClipCode(P2, B);
+				while (1)
+					{
+					if ((c1 == 0) && (c2 == 0)) { return true; } // both point inside		
+					if ((c1 & c2) != 0) { return false; } //AND of both codes != 0.Line is outside. Reject line
+					int temp = (c1 == 0) ? c2 : c1; //Decide if point1 is inside, if not, calculate intersection		
+						{
+						double x = 0, y = 0;
+						const double m = (P2.Y() - P1.Y()) / (P2.X() - P1.X());
+						if (temp & 8)
+							{ //Line clips top edge
+							x = P1.X() + (B.max[1] - P1.Y()) / m;
+							y = B.max[1];
+							}
+						else if (temp & 4)
+							{ 	//Line clips bottom edge
+							x = P1.X() + (B.min[1] - P1.Y()) / m;
+							y = B.min[1];
+							}
+						else if (temp & 1)
+							{ 	//Line clips left edge
+							x = B.min[0];
+							y = P1.Y() + (B.min[0] - P1.X()) * m;
+							}
+						else if (temp & 2)
+							{ 	//Line clips right edge
+							x = B.max[0];
+							y = P1.Y() + (B.max[0] - P1.X()) * m;
+							}
+						if (temp == c1) //Check which point we had selected earlier as temp, and replace its co-ordinates
+							{
+							P1.X() = x; P1.Y() = y;
+							c1 = _csLineClipCode(P1, B);
+							}
+						else
+							{
+							P2.X() = x; P2.Y() = y;
+							c2 = _csLineClipCode(P2, B);
+							}
+						}
+					}
+				}
+
+
+			/** Used by CSLineClip() (integer-valued version) to compute the region where the point lies **/
 			MTOOLS_FORCEINLINE static int _csLineClipCode(const iVec2 & P, const iBox2 & B)
 				{
 				int c = 0;
@@ -6519,7 +6604,7 @@ namespace mtools
 
 
 			/**
-			 * Cohen-Sutherland Line clipping algorithm.
+			 * Cohen-Sutherland Line clipping algorithm (integer-valued points)
 			 *
 			 * @param [in,out]	P1	The first point.
 			 * @param [in,out]	P2	The second point.
@@ -6914,27 +6999,38 @@ namespace mtools
 			/**
 			* Move the position pos by len pixels along a bresenham line.
 			*/
-			inline void _move_line(const _bdir & linedir, _bpos & pos, int64 len)
+			inline void _move_line(const _bdir & linedir, _bpos & pos, int64 totlen)
 				{
-				if (linedir.x_major)
+				int64 len = safeMultB(std::max<int64>(linedir.dx, linedir.dy), totlen);
+				while(1)
 					{
-					if (linedir.dx == 0) return;
-					pos.x += linedir.stepx*len;
-					pos.frac += linedir.dy*len;
-					int64 u = pos.frac / linedir.dx;
-					pos.y += linedir.stepy*u;
-					pos.frac -= u*linedir.dx;
-					if (pos.frac >= linedir.dy) { pos.frac -= linedir.dx; pos.y += linedir.stepy; }
-					}
-				else
-					{
-					if (linedir.dy == 0) return;
-					pos.y += linedir.stepy*len;
-					pos.frac += linedir.dx*len;
-					int64 u = pos.frac / linedir.dy;
-					pos.x += linedir.stepx*u;
-					pos.frac -= u*linedir.dy;
-					if (pos.frac >= linedir.dx) { pos.frac -= linedir.dy; pos.x += linedir.stepx; }
+					if (linedir.x_major)
+						{
+						if (linedir.dx == 0) return;
+						pos.x += linedir.stepx*len;
+						pos.frac += linedir.dy*len;
+						int64 u = pos.frac / linedir.dx;
+						pos.y += linedir.stepy*u;
+						pos.frac -= u * linedir.dx;
+						if (pos.frac >= linedir.dy) { pos.frac -= linedir.dx; pos.y += linedir.stepy; }
+						}
+					else
+						{
+						if (linedir.dy == 0) return;
+						pos.y += linedir.stepy*len;
+						pos.frac += linedir.dx*len;
+						int64 u = pos.frac / linedir.dy;
+						pos.x += linedir.stepx*u;
+						pos.frac -= u * linedir.dy;
+						if (pos.frac >= linedir.dx) { pos.frac -= linedir.dy; pos.x += linedir.stepx; }
+						}
+					totlen -= len;
+					if (totlen <= 0)
+						{
+						MTOOLS_ASSERT(totlen == 0);
+						return;
+						}
+					if (totlen < len) { len = totlen; }
 					}
 				}
 
@@ -6973,32 +7069,44 @@ namespace mtools
 			* return the number of pixel traveled by the bresenham line.
 			* do nothing and return 0 if lenx <= 0.
 			*/
-			inline int64 _move_line_x_dir(const _bdir & linedir, _bpos & pos, const int64 lenx)
+			inline int64 _move_line_x_dir(const _bdir & linedir, _bpos & pos, int64 totlenx)
 				{
-				if (lenx <= 0) return 0;
+				if (totlenx <= 0) return 0;
 				MTOOLS_ASSERT(linedir.dx > 0); // not a vertical line
-				if (linedir.x_major)
+				int64 lenx = safeMultB(std::max<int64>(linedir.dx, linedir.dy), totlenx);
+				int64 res = 0;
+				while (1)
 					{
-					pos.x    += linedir.stepx*lenx;
-					pos.frac += linedir.dy*lenx;
-					int64 u   = pos.frac / linedir.dx;
-					pos.y    += linedir.stepy*u;
-					pos.frac -= u*linedir.dx;
-					if (pos.frac >= linedir.dy) { pos.frac -= linedir.dx; pos.y += linedir.stepy; }
-					return lenx;
-					}
-				else
-					{
-					int64 k = ((lenx - 1)*linedir.dy) / linedir.dx;
-					pos.frac += k*linedir.dx;
-					pos.y += k*linedir.stepy;
-					int64 u = pos.frac / linedir.dy;
-					pos.frac -= u*linedir.dy;
-					if (pos.frac >= linedir.dx) { u++; pos.frac -= linedir.dy; }
-					MTOOLS_ASSERT((u <= lenx) && (u >= lenx - 4));
-					pos.x += u*linedir.stepx;
-					while (u != lenx) { k += _move_line_x_dir<false>(linedir, pos); u++; }
-					return k;
+					if (linedir.x_major)
+						{
+						pos.x += linedir.stepx*lenx;
+						pos.frac += linedir.dy*lenx;
+						int64 u = pos.frac / linedir.dx;
+						pos.y += linedir.stepy*u;
+						pos.frac -= u * linedir.dx;
+						if (pos.frac >= linedir.dy) { pos.frac -= linedir.dx; pos.y += linedir.stepy; }
+						res += lenx;
+						}
+					else
+						{
+						int64 k = ((lenx - 1)*linedir.dy) / linedir.dx;
+						pos.frac += k * linedir.dx;
+						pos.y += k * linedir.stepy;
+						int64 u = pos.frac / linedir.dy;
+						pos.frac -= u * linedir.dy;
+						if (pos.frac >= linedir.dx) { u++; pos.frac -= linedir.dy; }
+						MTOOLS_ASSERT((u <= lenx) && (u >= lenx - 4));
+						pos.x += u * linedir.stepx;
+						while (u != lenx) { k += _move_line_x_dir<false>(linedir, pos); u++; }
+						res += k;
+						}
+					totlenx -= lenx;
+					if (totlenx <= 0)
+						{
+						MTOOLS_ASSERT(totlenx == 0);
+						return res;
+						}
+					if (totlenx < lenx) { lenx = totlenx; }
 					}
 				}
 
@@ -7038,32 +7146,44 @@ namespace mtools
 			* return the number of pixel traveled by the bresenham line.
 			* do nothing and return 0 if leny <= 0.
 			*/
-			inline int64 _move_line_y_dir(const _bdir & linedir, _bpos & pos, const int64 leny)
+			inline int64 _move_line_y_dir(const _bdir & linedir, _bpos & pos, int64 totleny)
 				{
-				if (leny <= 0) return 0; 
+				if (totleny <= 0) return 0; 
 				MTOOLS_ASSERT(linedir.dy > 0); // not an horizontal line
-				if (linedir.x_major) // compiler optimizes away the template conditionals
+				int64 leny = safeMultB(std::max<int64>(linedir.dx, linedir.dy), totleny);
+				int64 res = 0;
+				while (1)
 					{
-					int64 k = ((leny-1)*linedir.dx) / linedir.dy;
-					pos.frac += k*linedir.dy; 
-					pos.x += k*linedir.stepx; 
-					int64 u = pos.frac/linedir.dx;
-					pos.frac -= u*linedir.dx;
-					if (pos.frac >= linedir.dy) { u++; pos.frac -= linedir.dx; }					
-					MTOOLS_ASSERT((u <= leny)&&(u >= leny-4)); 
-					pos.y += u*linedir.stepy;
-					while(u != leny) { k += _move_line_y_dir<true>(linedir, pos); u++; }
-					return k;
-					}
-				else
-					{
-					pos.y += linedir.stepy*leny;
-					pos.frac += linedir.dx*leny;
-					int64 u = pos.frac / linedir.dy;
-					pos.x += linedir.stepx*u;
-					pos.frac -= u*linedir.dy;
-					if (pos.frac >= linedir.dx) { pos.frac -= linedir.dy; pos.x += linedir.stepx; }
-					return leny;
+					if (linedir.x_major) // compiler optimizes away the template conditionals
+						{
+						int64 k = ((leny - 1)*linedir.dx) / linedir.dy;
+						pos.frac += k * linedir.dy;
+						pos.x += k * linedir.stepx;
+						int64 u = pos.frac / linedir.dx;
+						pos.frac -= u * linedir.dx;
+						if (pos.frac >= linedir.dy) { u++; pos.frac -= linedir.dx; }
+						MTOOLS_ASSERT((u <= leny) && (u >= leny - 4));
+						pos.y += u * linedir.stepy;
+						while (u != leny) { k += _move_line_y_dir<true>(linedir, pos); u++; }
+						res += k;
+						}
+					else
+						{
+						pos.y += linedir.stepy*leny;
+						pos.frac += linedir.dx*leny;
+						int64 u = pos.frac / linedir.dy;
+						pos.x += linedir.stepx*u;
+						pos.frac -= u * linedir.dy;
+						if (pos.frac >= linedir.dx) { pos.frac -= linedir.dy; pos.x += linedir.stepx; }
+						res += leny;
+						}
+					totleny -= leny;
+					if (totleny <= 0)
+						{
+						MTOOLS_ASSERT(totleny == 0);
+						return res;
+						}
+					if (totleny < leny) { leny = totleny; }
 					}
 				}
 
@@ -7154,7 +7274,7 @@ namespace mtools
 			MTOOLS_FORCEINLINE void _update_pixel_bresenham(_bdir & line, _bpos & pos, RGBc color, int32 op, int32 penwidth)
 				{
 				if (useaa)
-				{
+					{
 					int32 aa = _line_aa<side>(line, pos);
 					if (useop) { aa *= op; aa >>= 8; }
 					_updatePixel<blend, checkrange, true, usepen>(pos.x, pos.y, color, aa, penwidth);

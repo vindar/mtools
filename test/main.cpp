@@ -6,6 +6,87 @@ using namespace mtools;
 
 
 
+/* tells if vec c lies on the left side of directed edge a->b
+* 1 if left, -1 if right, 0 if colinear
+*/
+MTOOLS_FORCEINLINE int left_of(const fVec2 & P1, const fVec2 & P2, const fVec2 & C)
+	{
+	double x = crossProduct(P2 - P1, C - P2);
+	return ((x < 0) ? -1 : ((x > 0) ? 1 : 0));
+	}
+
+
+/* line intersection */
+int line_sect(const fVec2 & x0, const fVec2 & x1, const fVec2 & y0, const fVec2 & y1, fVec2 &  res)
+	{
+	fVec2 dx = x1 - x0;
+	fVec2 dy = y1 - y0;
+	fVec2 d = x0 - y0;
+	double dyx = crossProduct(dy, dx);
+	if (dyx == 0) return 0;
+	dyx = crossProduct(d, dx) / dyx;
+	if (dyx <= 0 || dyx >= 1) return 0;
+	res = y0 + dyx * dy;
+	return 1;
+	}
+
+
+/* return the winding direction of the  polygon */
+template<typename POLYGON_T> int winding(const POLYGON_T & poly)
+	{
+	MTOOLS_ASSERT(poly.size() >= 3);
+	return left_of(poly[0], poly[1], poly[2]);
+	}
+
+
+template<typename POLYGON_T> void poly_edge_clip(const POLYGON_T & sub, const fVec2 x0, const fVec2 x1, const int left, POLYGON_T & res)
+	{
+	res.clear();
+	const size_t L = sub.size();
+	fVec2 v0 = sub[L-1];
+	int side0 = left_of(x0, x1, v0);
+	if (side0 != -left) res.push_back(v0); 	
+	for (size_t i = 0; i < L; i++)
+		{
+		fVec2 v1 = sub[i];
+		int side1 = left_of(x0, x1, v1);
+		if (side0 + side1 == 0 && side0)
+			{
+			fVec2 tmp;
+			if (line_sect(x0, x1, v0, v1, &tmp)) res.push_back[tmp];
+			}
+		if (i == L - 1) break;
+		if (side1 != -left) res.push_back[v1];
+		v0 = v1;
+		side0 = side1;
+		}
+	}
+
+template<typename POLYGON_T> POLYGON_T * poly_clip(const POLYGON_T &  sub, const POLYGON_T & clip, POLYGON_T & tmpA, POLYGON_T  & tmpB)
+	{
+	const size_t L = clip.size();
+	POLYGON_T * p1 = &tmpA;
+	POLYGON_T * p2 = &tmpB;
+	int dir = poly_winding(clip);
+	poly_edge_clip(sub, clip[L-1], clip[0], dir, *p2);
+	for (size_t i = 0; i < L-1; i++) 		
+		{
+		mtools::swap<POLYGON_T*>(p1, p2);
+		if (p1->size() == 0) { p2->clear(); break; }
+		poly_edge_clip(*p1, clip[i], clip[i + 1], dir, *p2);
+		}
+	return p2;
+	}
+
+
+
+void testCSCC()
+	{
+
+
+
+
+	}
 
 
 
@@ -16,6 +97,32 @@ using namespace mtools;
 
 
 
+
+
+
+
+
+
+
+
+
+
+class BLine
+	{
+
+
+
+	int64 dx, dy;			// step size in each direction
+	int64 stepx, stepy;		// directions (+/-1)
+	int64 rat;				// ratio max(dx,dy)/min(dx,dy) to speed up computations
+	int64 amul;				// multiplication factor to compute aa values. 
+	bool x_major;			// true if the line is xmajor (ie dx > dy) and false if y major (dy >= dx).
+
+	int64 x, y;				// current pos
+	int64 frac;				// fractional part
+
+
+	};
 
 
 
@@ -53,13 +160,13 @@ void testplotfigure()
 		}
 		*/
 
-	MT2004_64 gen;
+	MT2004_64 gen(0);
 
 	FigureCanvas<5> canvas(3);
 
 	cout << "Creating... ";
 
-	int nb = 10; // 00;
+	int nb = 1000000;
 	
 	for (int k = 0; k < nb; k++)
 		{
@@ -68,6 +175,7 @@ void testplotfigure()
 		double rad = 10*Unif(gen);
 
 		canvas(FigureThickLine(pos, pos2, 0.1, RGBc::c_Red),1);
+		//canvas(FigureLine(pos, pos2, RGBc::c_Red), 1);
 
 //		canvas(FigureEllipsePart(BOX_SPLIT_UP_RIGHT, pos, 10 * Unif(gen), 10 * Unif(gen), 10, 0, false, RGBc::c_Red.getMultOpacity(1), RGBc::c_Lime.getMultOpacity(0.5)));
 		
@@ -95,6 +203,8 @@ void testplotfigure()
 	Plotter2D plotter; 
 	plotter[PF];
 	plotter.autorangeXY();
+
+	plotter.range().setRange(fBox2(7989.46,7990.0,49607.0,49607.5));
 	plotter.plot();
 	}
 
