@@ -51,24 +51,6 @@ namespace internals_clipping
 	}
 
 
-	/**
-	 * Return the approximate winding Windings the given polygon
-	 * Only works if the polygon is convex !
-	 *
-	 * @return	+1 if clockise, -1 if counterclockise, 0 if flat.
-	 **/
-	inline int winding(const fVec2 * poly_tab, const size_t poly_len)
-		{
-		MTOOLS_ASSERT(poly_len >= 3);
-		for (size_t i = 0; i < poly_len; i++)
-			{
-			int d = left_of(poly_tab[i], poly_tab[(i + 1) % poly_len], poly_tab[(i + 2) % poly_len]);
-			if (d != 0) return d;
-			}
-		MTOOLS_DEBUG("polygon with 0 winding !!!");
-		return 0;
-		}
-
 
 	/**
 	* Sub routine used by the Sutherland-Hodgman polygon clipping akgorithm.
@@ -113,6 +95,42 @@ namespace internals_clipping
 }
 
 
+
+/**
+* Return the approximate winding direction of a polygon
+* 
+* Only works if the polygon is convex !
+*
+* @return	+1 if clockise, -1 if counterclockise, 0 if flat.
+**/
+inline int winding(const fVec2 * poly_tab, const size_t poly_len)
+{
+	MTOOLS_ASSERT(poly_len >= 3);
+	for (size_t i = 0; i < poly_len; i++)
+		{
+		int d = internals_clipping::left_of(poly_tab[i], poly_tab[(i + 1) % poly_len], poly_tab[(i + 2) % poly_len]);
+		if (d != 0) return d;
+		}
+	MTOOLS_DEBUG("polygon is flat without winding !!!");
+	return 0;
+}
+
+
+/**
+* Return the approximate winding direction of a polygon
+*
+* Only works if the polygon is convex !
+*
+* @return	+1 if clockise, -1 if counterclockise, 0 if flat.
+**/
+template<size_t N> inline int winding(const std::array<fVec2, N> & tab)
+	{
+	return winding(tab.data(), N);
+	}
+
+
+
+
 /**
  * Sutherland Hodgman clipping algorithm. Clip a given polygon against another (convex) polygon.
  *
@@ -142,7 +160,7 @@ inline void Sutherland_Hodgman_clipping(const fVec2  * sub_tab , const size_t su
 	const size_t L = clip_len;
 	fVec2 * p1 = (L & 1) ? tmp_tab : res_tab; size_t l1 = 0;
 	fVec2 * p2 = (L & 1) ? res_tab : tmp_tab; size_t l2 = 0;
-	int dir = internals_clipping::winding(clip_tab, clip_len);
+	int dir = winding(clip_tab, clip_len);
 	internals_clipping::Sutherland_Hodgman_clipping_sub(sub_tab, sub_len, clip_tab[L-1], clip_tab[0], dir, p2, l2);
 	for (size_t i = 0; i < L-1; i++) 		
 		{
