@@ -22,6 +22,8 @@
 
 #include "../misc/internal/mtools_export.hpp"
 
+#include "../misc/error.hpp"
+
 #include <cstdint>
 #include <limits>
 #include <complex>
@@ -164,6 +166,34 @@ namespace mtools
 		if (x & 0x2) { i += 1; }
 		return i;
 		}
+
+
+
+	/* Return a value U smaller or equal to B such that */
+
+
+	/**
+	 * Return a value smaller or equal to B such that the multiplication 
+	 * by A is safe (no overflow with int64). 
+	 * 
+	 * @param	A	first value to multiply
+	 * @param	B	second value to multiply (must be non-negative)
+	 *
+	 * @return	A value U <= B such that A*U fits in a int64 (no overflow). 
+	 * 			Return B if possible. 
+	 **/
+	MTOOLS_FORCEINLINE int64 safeMultB(int64 A, int64 B)
+		{
+		MTOOLS_ASSERT(B >= 0);
+		if ((A == 0)||(B==0)) return B;
+		const int64 max64 = 9223372036854775807;
+		const int64 nB = max64 / ((A > 0) ? A : (-A));
+		return ((B <= nB) ? B : nB);
+		}
+
+
+
+
 
 	/**
 	 * another swap, because std::swap is troublesome....
