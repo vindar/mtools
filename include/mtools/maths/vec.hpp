@@ -298,6 +298,22 @@ namespace mtools
          inline void normalize() { double a = norm(); if (a>0) { for (int n = 0; n<N; n++) _m_tab[n] = (T)(_m_tab[n]/a); } }
 
 
+		 /**
+		  * Rotate a the vector by +90 degree (anticlockise).
+		  * 
+		  * (only for two dimensional vectors)
+		  **/
+		 inline void rotate90() { static_assert(N == 2, "dimension must be 2 for rotation."); *this =  get_rotate90(); }
+
+
+		 /**
+		  * get the vector rotated by +90 degree (anticlockise).
+		  * 
+		  * (only for two dimensional vectors)
+		  **/
+		 inline Vec<T, N> get_rotate90() const { static_assert(N == 2, "dimension must be 2 for rotation."); return Vec<T, N>(-Y(), X()); }
+
+
          /**
           * @brief  Swap the elements at position i and j.
           *
@@ -461,7 +477,7 @@ namespace mtools
      *
      * @return  the cross product UxV.
      **/
-    template<typename T, size_t N> inline T crossProduct(const Vec<T, N> & U, const Vec<T, N> & V) { static_assert(N==3,"dimension must be 3 for croos product."); return Vec<T, N>(U[1]*V[2] - U[2]*V[1], U[2]*V[0] - U[0]*V[2], U[0]*V[1] - U[1]*V[0]); }
+    template<typename T, size_t N> inline T crossProduct(const Vec<T, N> & U, const Vec<T, N> & V) { static_assert(N==3,"dimension must be 3 for cross product."); return Vec<T, N>(U[1]*V[2] - U[2]*V[1], U[2]*V[0] - U[0]*V[2], U[0]*V[1] - U[1]*V[0]); }
 
 
     /**
