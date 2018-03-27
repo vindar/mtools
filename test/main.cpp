@@ -59,7 +59,7 @@ void testplotfigure()
 
 	cout << "Creating... ";
 
-	int nb = 1000;
+	int nb = 10; // 00;
 	
 	for (int k = 0; k < nb; k++)
 		{
@@ -67,7 +67,7 @@ void testplotfigure()
 		fVec2 pos2 = { 50000 * Unif(gen),50000 * Unif(gen) };
 		double rad = 10*Unif(gen);
 
-		canvas(FigureLine(pos, pos2, RGBc::c_Red,1),1);
+		canvas(FigureThickLine(pos, pos2, 0.1, RGBc::c_Red),1);
 
 //		canvas(FigureEllipsePart(BOX_SPLIT_UP_RIGHT, pos, 10 * Unif(gen), 10 * Unif(gen), 10, 0, false, RGBc::c_Red.getMultOpacity(1), RGBc::c_Lime.getMultOpacity(0.5)));
 		
@@ -341,10 +341,10 @@ void testCF()
 
 		auto bb = curve.integerBoundingBox();
 		im.draw_box(bb, RGBc::c_Gray, true);
-		im.draw_dot(P0, RGBc::c_Green, true, 2);
-		im.draw_dot(P1, RGBc::c_Green, true, 2);
-		im.draw_dot(P2, RGBc::c_Green, true, 2);
-		im.draw_dot(P3, RGBc::c_Green, true, 2);
+		im.draw_square_dot(P0, RGBc::c_Green, true, 2);
+		im.draw_square_dot(P1, RGBc::c_Green, true, 2);
+		im.draw_square_dot(P2, RGBc::c_Green, true, 2);
+		im.draw_square_dot(P3, RGBc::c_Green, true, 2);
 
 		iBox2 TB{ 100,900,200,800 };
 		im.draw_box(TB, RGBc::c_Yellow.getMultOpacity(0.5), true);
@@ -698,26 +698,6 @@ void rot(fVec2 & V, double alpha)
 
 
 
-
-
-void canvas_draw_thick_line(Image & im, const mtools::fBox2 & R, fVec2 P1, fVec2 P2, double thickness, bool relativethickness, RGBc color, int typeP1 = Image::LINEEND_O, int typeP2 = Image::LINEEND_O, bool antialiased = true, bool blending = true, double min_tick = Image::DEFAULT_MIN_THICKNESS)
-{
-	fVec2 P1L, P1R, P2L, P2R;
-	fVec2 PO(P1.Y() - P2.Y(), P2.X() - P1.X());
-	PO.normalize(); PO *= thickness;
-	P1L = P1 + PO; P1R = P1 - PO;
-	P2L = P2 + PO; P2R = P2 - PO;
-
-
-	// convert to integer positions
-	iVec2 I1L = R.absToPixel(P1L, im.dimension());
-	iVec2 I1R = R.absToPixel(P1R, im.dimension());
-	iVec2 I2L = R.absToPixel(P2L, im.dimension());
-	iVec2 I2R = R.absToPixel(P2R, im.dimension());
-
-
-
-}
 
 
 
