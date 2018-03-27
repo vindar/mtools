@@ -12,18 +12,20 @@ using namespace mtools;
 
 
 
+
+
 void testCSCC()
 {
 
-	fBox2 B(100, 300, 80, 380);
+	fBox2 B(100, 300, 100, 300);
 
-//	std::vector<fVec2> subject = { { 50,150 }, { 200,50 }, { 350,150 }, { 350,300 }, { 250,300 }, { 200,250 }, { 150,350 }, { 100,250 }, { 100,200 } };
-	std::vector<fVec2> subject = { { 0, 100 },{ 100, 100 },{ 99,200 }, };
+	std::vector<fVec2> subject = { { 50,150 }, { 200,50 }, { 350,150 }, { 350,300 }, { 250,300 }, { 200,250 }, { 150,350 }, { 100,250 }, { 100,200 } };
+	//std::vector<fVec2> subject = { { 0, 100 },{ 100, 100 },{ 99,200 }, };
 
-	std::vector<fVec2> res;
-	Sutherland_Hodgman_clipping(subject, B, res);
+	fVec2 res[1000];
+	size_t res_size = 0;
 
-	cout << res << "\n";
+	Sutherland_Hodgman_clipping(subject.data(), subject.size(), B, res, res_size);
 
 	FigureCanvas<5> canvas(3);
 
@@ -37,9 +39,10 @@ void testCSCC()
 		canvas(FigureLine(subject[i], subject[(i + 1) % subject.size()], RGBc::c_Green), 1);
 		}
 
-	for (size_t i = 0; i < res.size(); i++)
+	for (size_t i = 0; i < res_size; i++)
 		{
-		canvas(FigureLine((res)[i], (res)[(i + 1) % (res).size()], RGBc::c_Red), 2);
+		cout << res[i] << "\n";
+		canvas(FigureLine(res[i], res[(i + 1) % res_size], RGBc::c_Red), 2);
 		}
 
 	auto PF = makePlot2DFigure(canvas, 5);

@@ -52,54 +52,48 @@ namespace internals_clipping
 
 
 	/**
-	* Return the approximate winding Windings the given polygon
-	*
-	* Only works if the polygon is convex !
-	*
-	* @tparam	POLYGON_T	class such as std::vector<fVec2> that contain the vertices of the polygon.
-	* @param	poly	The polygon to test
-	*
-	* @return	+1 if clockise, -1 if counterclockise, 0 if flat.
-	**/
-	template<typename POLYGON_T> int winding(const POLYGON_T & poly)
-	{
-		size_t L = poly.size();
-		MTOOLS_ASSERT(poly.size() >= 3);
-		for (size_t i = 0; i < L; i++)
+	 * Return the approximate winding Windings the given polygon
+	 * Only works if the polygon is convex !
+	 *
+	 * @return	+1 if clockise, -1 if counterclockise, 0 if flat.
+	 **/
+	inline int winding(const fVec2 * poly_tab, const size_t poly_len)
 		{
-			int d = left_of(poly[i], poly[(i + 1) % L], poly[(i + 2) % L]);
+		MTOOLS_ASSERT(poly_len >= 3);
+		for (size_t i = 0; i < poly_len; i++)
+			{
+			int d = left_of(poly_tab[i], poly_tab[(i + 1) % poly_len], poly_tab[(i + 2) % poly_len]);
 			if (d != 0) return d;
-		}
+			}
 		MTOOLS_DEBUG("polygon with 0 winding !!!");
 		return 0;
-	}
+		}
 
 
 	/**
 	* Sub routine used by the Sutherland-Hodgman polygon clipping akgorithm.
 	* clip all the vertices of sub against (x0,x1)
 	**/
-	template<typename POLYGON_T> void Sutherland_Hodgman_clipping_sub(const POLYGON_T & sub, const fVec2 x0, const fVec2 x1, const int left, POLYGON_T & res)
+	inline void Sutherland_Hodgman_clipping_sub(const fVec2 * sub_tab, const size_t sub_len, const fVec2 x0, const fVec2 x1, const int left, fVec2 * res_tab, size_t & res_len)
 	{
-		res.clear();
-		const size_t L = sub.size();
-		fVec2 v0 = sub[L - 1];
+		res_len = 0;
+		fVec2 v0 = sub_tab[sub_len - 1];
 		int side0 = left_of(x0, x1, v0);
-		if (side0 != -left) res.push_back(v0);
-		for (size_t i = 0; i < L; i++)
-		{
-			fVec2 v1 = sub[i];
+		if (side0 != -left) { res_tab[res_len++] = v0; }
+		for (size_t i = 0; i < sub_len; i++)
+			{
+			fVec2 v1 = sub_tab[i];
 			int side1 = left_of(x0, x1, v1);
 			if (side0 + side1 == 0 && side0)
-			{
+				{
 				fVec2 tmp;
-				if (intersection(x0, x1, v0, v1, tmp)) res.push_back(tmp);
-			}
-			if (i == L - 1) break;
-			if (side1 != -left) res.push_back(v1);
+				if (intersection(x0, x1, v0, v1, tmp)) res_tab[res_len++] = tmp;
+				}
+			if (i == sub_len - 1) break;
+			if (side1 != -left) res_tab[res_len++] = v1;
 			v0 = v1;
 			side0 = side1;
-		}
+			}
 	}
 
 
@@ -119,52 +113,75 @@ namespace internals_clipping
 }
 
 
-
-
 /**
- * Sutherland hodgman clipping algorithm. Clip a given polygon against another (convex) polygon.
+ * Sutherland Hodgman clipping algorithm. Clip a given polygon against another (convex) polygon.
  *
- * @tparam	POLYGON_T	Type of the polygon t, compatible with std::vector<fVec2>
- * @param 		  	sub 	The polygon to clip.
- * @param 		  	clip	The clipping region delimited by a convex polygon.
- * @param [in,out]	res 	Polygon to store the result (may be empty).
+ * Polygons may be given in clockwise or anti-clockwise order (the resulting clipped polygon)
+ * has the same order.
+ *
+ * Warning : the resulting polygon may have two parrallel adjacent edges. 
+ *
+ * @param 		  	sub_tab 	list of verticve of polygon to clip.
+ * @param 		  	sub_len 	number of vertices.
+ * @param 		  	clip_tab	list of vertices of convex polygon that delimit the clipping
+ * 								region.
+ * @param 		  	clip_len	number of vertices.
+ * @param [in,out]	res_tab 	array to store the list of vertices of the clipped polygon.
+ * 					            (must be of size at least 2*sub_len + clip_len to be sure)
+ * @param [in,out]	res_len 	store the number of vertices.
  **/
-template<typename POLYGON_T> void Sutherland_Hodgman_clipping(const POLYGON_T &  sub, const POLYGON_T & clip, POLYGON_T & res)
+inline void Sutherland_Hodgman_clipping(const fVec2  * sub_tab , const size_t sub_len, 
+	                                    const fVec2  * clip_tab, const size_t clip_len, 
+	                                    fVec2  * res_tab , size_t & res_len)
 	{
-	res.clear();
-	const size_t L = clip.size();
-	POLYGON_T tmp;
-	POLYGON_T * p1 = (L & 1) ? &tmp : &res;
-	POLYGON_T * p2 = (L & 1) ? &res : &tmp;
-	int dir = internals_clipping::winding(clip);
-	internals_clipping::Sutherland_Hodgman_clipping_sub(sub, clip[L-1], clip[0], dir, *p2);
+	res_len = 0;
+	static const size_t STATIC_MAX_SIZE = 16;
+	fVec2   tmp1[STATIC_MAX_SIZE];
+	fVec2 * tmp2 =  ((2 * sub_len + clip_len > STATIC_MAX_SIZE) ?  (new fVec2[2*sub_len + clip_len]) : nullptr);
+	fVec2 * tmp_tab = ((tmp2 != nullptr) ? tmp2 : tmp1);	
+	const size_t L = clip_len;
+	fVec2 * p1 = (L & 1) ? tmp_tab : res_tab; size_t l1 = 0;
+	fVec2 * p2 = (L & 1) ? res_tab : tmp_tab; size_t l2 = 0;
+	int dir = internals_clipping::winding(clip_tab, clip_len);
+	internals_clipping::Sutherland_Hodgman_clipping_sub(sub_tab, sub_len, clip_tab[L-1], clip_tab[0], dir, p2, l2);
 	for (size_t i = 0; i < L-1; i++) 		
 		{
-		mtools::swap<POLYGON_T*>(p1, p2);
-		if (p1->size() == 0) { res.clear(); return; }
-		internals_clipping::Sutherland_Hodgman_clipping_sub(*p1, clip[i], clip[i + 1], dir, *p2);
+		mtools::swap<fVec2*>(p1, p2);
+		mtools::swap<size_t>(l1, l2);
+		if (l1 == 0) { res_len = 0; delete[] tmp2; return; }
+		internals_clipping::Sutherland_Hodgman_clipping_sub(p1, l1, clip_tab[i], clip_tab[i + 1], dir, p2, l2);
 		}
-	MTOOLS_ASSERT(p2 == &res);
+	res_len = l2;
+	MTOOLS_ASSERT(p2 == res_tab);
+	delete [] tmp2;
 	}
 
 
 /**
  * Sutherland hodgman clipping algorithm. Clip a given polygon against a rectangle box.
  *
- * @tparam	POLYGON_T	Type of the polygon t, compatible with std::vector<fVec2>
- * @param 		  	sub		   	The polygon to clip.
- * @param 		  	clippingBox	The box to clip into.
- * @param [in,out]	res		   	Polygon to store the result (may be empty).
+ * Polygon may be given in clockwise or anti-clockwise order (the resulting clipped polygon)
+ * has the same order.
+ *
+ * Warning : the resulting polygon may have two parrallel adjacent edges. 
+ *
+ * @param 		  	sub_tab	   	list of verticve of polygon to clip.
+ * @param 		  	sub_len	   	number of vertices.
+ * @param 		  	clippingBox	the box region to clip into.
+ * @param [in,out]	res_tab	   	array to store the list of vertices of the clipped polygon.
+ * 					            (must be of size at least 2*sub_len + 4 to be sure)
+ * @param [in,out]	res_len	   	store the number of vertices.
  **/
-template<typename POLYGON_T> void Sutherland_Hodgman_clipping(const POLYGON_T &  sub, const fBox2 & clippingBox , POLYGON_T & res)
+inline void Sutherland_Hodgman_clipping(const fVec2  * sub_tab, const size_t sub_len,
+	                                    const fBox2 & clippingBox,
+		   							    fVec2  * res_tab, size_t & res_len)
 	{
-	POLYGON_T clip;
-	clip.reserve(4); 
-	clip.push_back({ clippingBox.min[0], clippingBox.min[1] });
-	clip.push_back({ clippingBox.max[0], clippingBox.min[1] });
-	clip.push_back({ clippingBox.max[0], clippingBox.max[1] });
-	clip.push_back({ clippingBox.min[0], clippingBox.max[1] });
-	Sutherland_Hodgman_clipping(sub, clip, res);
+	fVec2 clip_tab[4] = {
+		{ clippingBox.min[0], clippingBox.min[1] },
+		{ clippingBox.max[0], clippingBox.min[1] },
+		{ clippingBox.max[0], clippingBox.max[1] },
+		{ clippingBox.min[0], clippingBox.max[1] } };
+	Sutherland_Hodgman_clipping(sub_tab,sub_len, clip_tab, 4, res_tab, res_len);
 	}
 
 
