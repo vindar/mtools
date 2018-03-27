@@ -6,83 +6,76 @@ using namespace mtools;
 
 
 
-/* tells if vec c lies on the left side of directed edge a->b
-* 1 if left, -1 if right, 0 if colinear
-*/
-MTOOLS_FORCEINLINE int left_of(const fVec2 & P1, const fVec2 & P2, const fVec2 & C)
-	{
-	double x = crossProduct(P2 - P1, C - P2);
-	return ((x < 0) ? -1 : ((x > 0) ? 1 : 0));
-	}
 
 
-/* line intersection */
-int line_sect(const fVec2 & x0, const fVec2 & x1, const fVec2 & y0, const fVec2 & y1, fVec2 &  res)
-	{
-	fVec2 dx = x1 - x0;
-	fVec2 dy = y1 - y0;
-	fVec2 d = x0 - y0;
-	double dyx = crossProduct(dy, dx);
-	if (dyx == 0) return 0;
-	dyx = crossProduct(d, dx) / dyx;
-	if (dyx <= 0 || dyx >= 1) return 0;
-	res = y0 + dyx * dy;
-	return 1;
-	}
 
-
-/* return the winding direction of the  polygon */
-template<typename POLYGON_T> int winding(const POLYGON_T & poly)
-	{
-	MTOOLS_ASSERT(poly.size() >= 3);
-	return left_of(poly[0], poly[1], poly[2]);
-	}
-
-
-template<typename POLYGON_T> void poly_edge_clip(const POLYGON_T & sub, const fVec2 x0, const fVec2 x1, const int left, POLYGON_T & res)
-	{
-	res.clear();
-	const size_t L = sub.size();
-	fVec2 v0 = sub[L-1];
-	int side0 = left_of(x0, x1, v0);
-	if (side0 != -left) res.push_back(v0); 	
-	for (size_t i = 0; i < L; i++)
-		{
-		fVec2 v1 = sub[i];
-		int side1 = left_of(x0, x1, v1);
-		if (side0 + side1 == 0 && side0)
-			{
-			fVec2 tmp;
-			if (line_sect(x0, x1, v0, v1, &tmp)) res.push_back[tmp];
-			}
-		if (i == L - 1) break;
-		if (side1 != -left) res.push_back[v1];
-		v0 = v1;
-		side0 = side1;
-		}
-	}
-
-template<typename POLYGON_T> POLYGON_T * poly_clip(const POLYGON_T &  sub, const POLYGON_T & clip, POLYGON_T & tmpA, POLYGON_T  & tmpB)
-	{
-	const size_t L = clip.size();
-	POLYGON_T * p1 = &tmpA;
-	POLYGON_T * p2 = &tmpB;
-	int dir = poly_winding(clip);
-	poly_edge_clip(sub, clip[L-1], clip[0], dir, *p2);
-	for (size_t i = 0; i < L-1; i++) 		
-		{
-		mtools::swap<POLYGON_T*>(p1, p2);
-		if (p1->size() == 0) { p2->clear(); break; }
-		poly_edge_clip(*p1, clip[i], clip[i + 1], dir, *p2);
-		}
-	return p2;
-	}
 
 
 
 void testCSCC()
-	{
+{
 
+	fBox2 B(100, 300, 80, 380);
+
+//	std::vector<fVec2> subject = { { 50,150 }, { 200,50 }, { 350,150 }, { 350,300 }, { 250,300 }, { 200,250 }, { 150,350 }, { 100,250 }, { 100,200 } };
+	std::vector<fVec2> subject = { { 0, 100 },{ 100, 100 },{ 99,200 }, };
+
+	std::vector<fVec2> res;
+	Sutherland_Hodgman_clipping(subject, B, res);
+
+	cout << res << "\n";
+
+	FigureCanvas<5> canvas(3);
+
+	canvas(FigureLine( {B.min[0], B.min[1]}, { B.max[0], B.min[1] }, RGBc::c_Black), 0);
+	canvas(FigureLine({ B.min[0], B.max[1] }, { B.max[0], B.max[1] }, RGBc::c_Black), 0);
+	canvas(FigureLine({ B.min[0], B.min[1] }, { B.min[0], B.max[1] }, RGBc::c_Black), 0);
+	canvas(FigureLine({ B.max[0], B.min[1] }, { B.max[0], B.max[1] }, RGBc::c_Black), 0);
+
+	for (size_t i = 0; i < subject.size(); i++)
+		{
+		canvas(FigureLine(subject[i], subject[(i + 1) % subject.size()], RGBc::c_Green), 1);
+		}
+
+	for (size_t i = 0; i < res.size(); i++)
+		{
+		canvas(FigureLine((res)[i], (res)[(i + 1) % (res).size()], RGBc::c_Red), 2);
+		}
+
+	auto PF = makePlot2DFigure(canvas, 5);
+	Plotter2D plotter;
+	plotter[PF];
+	plotter.autorangeXY();
+	plotter.range().setRange(fBox2(0,1000,0,1000));
+	plotter.plot();
+
+	/* long and arduous EPS printout */
+	/*
+	FILE * eps = fopen("test.eps", "w");
+	fprintf(eps, "%%!PS-Adobe-3.0\n%%%%BoundingBox: 40 40 360 360\n"
+		"/l {lineto} def /m{moveto} def /s{setrgbcolor} def"
+		"/c {closepath} def /gs {fill grestore stroke} def\n");
+	fprintf(eps, "0 setlinewidth %g %g m ", c[0].x, c[0].y);
+	for (i = 1; i < clen; i++)
+		fprintf(eps, "%g %g l ", c[i].x, c[i].y);
+	fprintf(eps, "c .5 0 0 s gsave 1 .7 .7 s gs\n");
+
+	fprintf(eps, "%g %g m ", s[0].x, s[0].y);
+	for (i = 1; i < slen; i++)
+		fprintf(eps, "%g %g l ", s[i].x, s[i].y);
+	fprintf(eps, "c 0 .2 .5 s gsave .4 .7 1 s gs\n");
+
+	fprintf(eps, "2 setlinewidth [10 8] 0 setdash %g %g m ",
+		res->v[0].x, res->v[0].y);
+	for (i = 1; i < res->len; i++)
+		fprintf(eps, "%g %g l ", res->v[i].x, res->v[i].y);
+	fprintf(eps, "c .5 0 .5 s gsave .7 .3 .8 s gs\n");
+
+	fprintf(eps, "%%%%EOF");
+	fclose(eps);
+	printf("test.eps written\n");
+	*/
+	return;
 
 
 
@@ -822,6 +815,7 @@ int main(int argc, char *argv[])
 {
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
 
+	testCSCC();
 	testplotfigure();
 	return 0;
 
