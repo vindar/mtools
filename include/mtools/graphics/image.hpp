@@ -2328,6 +2328,382 @@ namespace mtools
 
 
 			/**
+			* Draw a triangle. 
+			*
+			* @param	P1		   	The first point.
+			* @param	P2		   	The second point.
+			* @param	P3		   	The third point.
+			* @param	color	   	The color.
+			* @param	antialiased	(Optional) true to use antialiased lines.
+			* @param	blending   	(Optional) true to use blending and false to write over.
+			* @param	penwidth   	(Optional) The pen width (0 = unit width)
+			**/
+			inline void draw_triangle(iVec2 P1, iVec2 P2, iVec2 P3, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0)
+				{
+				if (isEmpty()) return;
+				if ((penwidth <= 0) && (!antialiased) && (blending) && (!color.isOpaque()))
+					{ // draw without overlap
+					_lineBresenham<true, true, false, false, false, false>(P1, P2, color, true, penwidth, 0);
+					_lineBresenham_avoid<true, true, false, false, false>(P2, P3, P1, color, 0, 0);
+					_lineBresenham_avoid_both_sides_triangle<true, true, false, false, false>(P1, P3, P2, color, 0);
+					return;
+					}
+				// default drawing
+				draw_line(P1, P2, color, false, antialiased, blending, penwidth);
+				draw_line(P2, P3, color, false, antialiased, blending, penwidth);
+				draw_line(P3, P1, color, false, antialiased, blending, penwidth);
+				return;
+				}
+
+
+			/**
+			* Draw a filled triangle.
+			*
+			* @param	A1		   	The first point
+			* @param	A2		   	The second point
+			* @param	A3		   	The third point
+			* @param	color	   	border color.
+			* @param	fillcolor  	interior color.
+			* @param	antialiased	(Optional) True to use antialiased.
+			* @param	blending   	(Optional) True to use blending.
+			**/
+			inline void draw_filled_triangle(fVec2 A1, fVec2 A2, fVec2 A3, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND)
+				{
+				if (isEmpty()) return;
+
+				int w = winding<4>({ A1, A2, A3}); // winding direction of the polygon
+				MTOOLS_ASSERT(w != 0);
+				if (w == -1) { mtools::swap(A1, A3); }
+
+				iVec2 AP1, AP2, AP3;
+
+				Image::_bdir dir12, dir21;
+				Image::_bpos pos12, pos21;
+				int64 len12 = _init_line(A1, A2, dir12, pos12, AP1, AP2);
+				pos21 = pos12;
+				dir21 = dir12;
+				_reverse_line(dir21, pos21, len12);
+
+				Image::_bdir dir23, dir32;
+				Image::_bpos pos23, pos32;
+				int64 len23 = _init_line(A2, A3, dir23, pos23, AP2, AP3);
+				pos32 = pos23;
+				dir32 = dir23;
+				_reverse_line(dir32, pos32, len23);
+
+				Image::_bdir dir13;
+				Image::_bpos pos13;
+				int64 len13 = _init_line(A1, A3, dir13, pos13, AP1, AP3);
+
+				if (blending)
+					{
+					const bool BLEND = true;
+					if (antialiased)
+						{
+						const bool AA = true;
+						_lineBresenham<BLEND, true, false, false, AA, true>(dir12, pos12, len12 + 1, color, 0, 0);
+						_lineBresenham_avoid<BLEND, true, false, AA, true>(dir23, pos23, len23 + 1, dir21, pos21, len12 + 1, color, 0);
+						_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, AA, false>(dir13, pos13, len13, dir12, pos12, len12 + 1, dir32, pos32, len23 + 1, color, 0);
+						_draw_triangle_interior<true, true>(A1, A2, A3, fillcolor);
+						}
+					else
+						{
+						const bool AA = false;				
+						_lineBresenham<BLEND, true, false, false, AA, true>(dir12, pos12, len12 + 1, color, 0, 0);
+						_lineBresenham_avoid<BLEND, true, false, AA, true>(dir23, pos23, len23 + 1, dir21, pos21, len12 + 1, color, 0);
+						_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, AA, false>(dir13, pos13, len13, dir12, pos12, len12 + 1, dir32, pos32, len23 + 1, color, 0);
+						_draw_triangle_interior<true, true>(A1, A2, A3, fillcolor);
+
+						}
+					}
+				else
+					{
+					const bool BLEND = false;
+					if (antialiased)
+						{
+						const bool AA = true;
+						_lineBresenham<BLEND, true, false, false, AA, true>(dir12, pos12, len12 + 1, color, 0, 0);
+						_lineBresenham_avoid<BLEND, true, false, AA, true>(dir23, pos23, len23 + 1, dir21, pos21, len12 + 1, color, 0);
+						_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, AA, false>(dir13, pos13, len13, dir12, pos12, len12 + 1, dir32, pos32, len23 + 1, color, 0);
+						_draw_triangle_interior<true, true>(A1, A2, A3, fillcolor);
+						}
+					else
+						{
+						const bool AA = false;
+						_lineBresenham<BLEND, true, false, false, AA, true>(dir12, pos12, len12 + 1, color, 0, 0);
+						_lineBresenham_avoid<BLEND, true, false, AA, true>(dir23, pos23, len23 + 1, dir21, pos21, len12 + 1, color, 0);
+						_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, AA, false>(dir13, pos13, len13, dir12, pos12, len12 + 1, dir32, pos32, len23 + 1, color, 0);
+						_draw_triangle_interior<true, true>(A1, A2, A3, fillcolor);
+						}
+					}
+				}
+
+
+			/**
+			* Draw a quadrilateral. Point must be ordered around the quad.
+			*
+			* @param	P1		   	The first point
+			* @param	P2		   	The second point
+			* @param	P3		   	The third point
+			* @param	P4		   	The fourth point
+			* @param	color	   	border color.
+			* @param	antialiased	(Optional) True to use antialiased.
+			* @param	blending   	(Optional) True to use blending.
+			* @param	penwidth   	(Optional) The pen width (0 = unit width)
+			**/
+			inline void draw_quad(fVec2 P1, fVec2 P2, fVec2 P3, fVec2 P4, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0)
+				{
+				if (isEmpty()) return;
+				if ((penwidth <= 0) && (!antialiased) && (blending) && (!color.isOpaque()))
+					{ // draw without overlap
+					_lineBresenham<true, true, false, false, false, false>(P1, P2, color, true, penwidth, 0);
+					_lineBresenham_avoid<true, true, false, false, false>(P2, P3, P1, color, 0, 0);
+					_lineBresenham_avoid<true, true, false, false, false>(P3, P4, P2, color, 0, 0);
+					_lineBresenham_avoid_both_sides<true, true, false, false, false>(P4, P1, P3, P2, color, 0);
+					return;
+					}
+				// default drawing
+				draw_line(P1, P2, color, false, antialiased, blending, penwidth);
+				draw_line(P2, P3, color, false, antialiased, blending, penwidth);
+				draw_line(P3, P4, color, false, antialiased, blending, penwidth);
+				draw_line(P4, P1, color, false, antialiased, blending, penwidth);
+				return;
+				}
+
+
+			/**
+			* Draw a filled quadrilateral. Point must be ordered around the quad.
+			*
+			* @param	A1		   	The first point
+			* @param	A2		   	The second point
+			* @param	A3		   	The third point
+			* @param	A4		   	The fourth point
+			* @param	color	   	border color.
+			* @param	fillcolor  	interior color.
+			* @param	antialiased	(Optional) True to use antialiased.
+			* @param	blending   	(Optional) True to use blending.
+			**/
+			inline void draw_filled_quad(fVec2 A1, fVec2 A2, fVec2 A3, fVec2 A4, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND)
+				{
+				if (isEmpty()) return;
+
+				int w = winding<4>({ A1, A2, A3, A4 }); // winding direction of the polygon
+				MTOOLS_ASSERT(w != 0);
+				if (w == -1) { mtools::swap(A1, A4); mtools::swap(A2, A3); }
+
+				iVec2 AP1, AP2, AP3, AP4;
+
+				Image::_bdir dir12, dir21;
+				Image::_bpos pos12, pos21;
+				int64 len12 = _init_line(A1, A2, dir12, pos12, AP1, AP2);
+				pos21 = pos12;
+				dir21 = dir12;
+				_reverse_line(dir21, pos21, len12);
+
+				Image::_bdir dir23, dir32;
+				Image::_bpos pos23, pos32;
+				int64 len23 = _init_line(A2, A3, dir23, pos23, AP2, AP3);
+				pos32 = pos23;
+				dir32 = dir23;
+				_reverse_line(dir32, pos32, len23);
+
+				Image::_bdir dir34, dir43;
+				Image::_bpos pos34, pos43;
+				int64 len34 = _init_line(A3, A4, dir34, pos34, AP3, AP4);
+				pos43 = pos34;
+				dir43 = dir34;
+				_reverse_line(dir43, pos43, len34);
+
+				Image::_bdir dir41, dir14;
+				Image::_bpos pos41, pos14;
+				int64 len41 = _init_line(A4, A1, dir41, pos41, AP4, AP1);
+				pos14 = pos41;
+				dir14 = dir41;
+				_reverse_line(dir14, pos14, len41);
+
+				Image::_bdir dir13, dir31;
+				Image::_bpos pos13, pos31;
+				int64 len13 = _init_line(A1, A3, dir13, pos13, AP1, AP3);
+				pos31 = pos13;
+				dir31 = dir13;
+				_reverse_line(dir31, pos31, len13);
+
+				if (blending)
+					{
+					const bool BLEND = true;
+					if (antialiased)
+						{
+						const bool AA = true;
+						_lineBresenham<BLEND, true, false, false, AA, false>(dir21, pos21, len12 + 1, color, 0, 0);
+						_lineBresenham_avoid<BLEND, true, false, AA, true>(dir23, pos23, len23 + 1, dir21, pos21, len12 + 1, color, 0);
+						_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, false, true>(dir13, pos13, len13, dir12, pos12, len12 + 1, dir32, pos32, len23 + 1, color, 0);
+						_lineBresenham_avoid<BLEND, true, false, AA, false>(dir14, pos14, len41 + 1, dir13, pos13, len13 + 1, color, 0);
+						_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, AA, true>(dir34, pos34, len34, dir31, pos31, len13 + 1, dir41, pos41, len41 + 1, color, 0);
+						_draw_triangle_interior<true, true>(A1, A2, A3, fillcolor);
+						_draw_triangle_interior<true, true>(A1, A3, A4, fillcolor);
+						}
+					else
+						{
+						const bool AA = false;
+						_lineBresenham<BLEND, true, false, false, AA, false>(dir21, pos21, len12 + 1, color, 0, 0);
+						_lineBresenham_avoid<BLEND, true, false, AA, true>(dir23, pos23, len23 + 1, dir21, pos21, len12 + 1, color, 0);
+						_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, false, true>(dir13, pos13, len13, dir12, pos12, len12 + 1, dir32, pos32, len23 + 1, color, 0);
+						_lineBresenham_avoid<BLEND, true, false, AA, false>(dir14, pos14, len41 + 1, dir13, pos13, len13 + 1, color, 0);
+						_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, AA, true>(dir34, pos34, len34, dir31, pos31, len13 + 1, dir41, pos41, len41 + 1, color, 0);
+						_draw_triangle_interior<true, true>(A1, A2, A3, fillcolor);
+						_draw_triangle_interior<true, true>(A1, A3, A4, fillcolor);
+						}
+					}
+				else
+					{
+					const bool BLEND = false;
+					if (antialiased)
+						{
+						const bool AA = true;
+						_lineBresenham<BLEND, true, false, false, AA, false>(dir21, pos21, len12 + 1, color, 0, 0);
+						_lineBresenham_avoid<BLEND, true, false, AA, true>(dir23, pos23, len23 + 1, dir21, pos21, len12 + 1, color, 0);
+						_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, false, true>(dir13, pos13, len13, dir12, pos12, len12 + 1, dir32, pos32, len23 + 1, color, 0);
+						_lineBresenham_avoid<BLEND, true, false, AA, false>(dir14, pos14, len41 + 1, dir13, pos13, len13 + 1, color, 0);
+						_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, AA, true>(dir34, pos34, len34, dir31, pos31, len13 + 1, dir41, pos41, len41 + 1, color, 0);
+						_draw_triangle_interior<true, true>(A1, A2, A3, fillcolor);
+						_draw_triangle_interior<true, true>(A1, A3, A4, fillcolor);
+						}
+					else
+						{
+						const bool AA = false;
+						_lineBresenham<BLEND, true, false, false, AA, false>(dir21, pos21, len12 + 1, color, 0, 0);
+						_lineBresenham_avoid<BLEND, true, false, AA, true>(dir23, pos23, len23 + 1, dir21, pos21, len12 + 1, color, 0);
+						_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, false, true>(dir13, pos13, len13, dir12, pos12, len12 + 1, dir32, pos32, len23 + 1, color, 0);
+						_lineBresenham_avoid<BLEND, true, false, AA, false>(dir14, pos14, len41 + 1, dir13, pos13, len13 + 1, color, 0);
+						_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, AA, true>(dir34, pos34, len34, dir31, pos31, len13 + 1, dir41, pos41, len41 + 1, color, 0);
+						_draw_triangle_interior<true, true>(A1, A2, A3, fillcolor);
+						_draw_triangle_interior<true, true>(A1, A3, A4, fillcolor);
+						}
+					}
+				}
+
+
+
+				/**
+				* Draw a polygon.  Point must be ordered around the polygon.
+				*
+				* @param	nbvertices 	Number of vertices in the polygon.
+				* @param	tabPoints  	the list of points in clockwise or counterclockwise order.
+				* @param	color	   	The color tu use.
+				* @param	antialiased	(Optional) true to draw antialiased lines.
+				* @param	blending   	(Optional) true to use blending.
+				* @param	penwidth   	(Optional) The pen width (0 = unit width)
+				**/
+				inline void draw_polygon(size_t nbvertices, const iVec2 * tabPoints, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0)
+				{
+					if (isEmpty()) return;
+					if ((color.isOpaque()) && (!antialiased)) blending = false;
+					switch (nbvertices)
+						{
+						case 0: { return; }
+						case 1:
+							{
+							draw_square_dot(*tabPoints, color, blending, penwidth);
+							return;
+							}
+						case 2:
+							{
+							draw_line(tabPoints[0], tabPoints[1], color, true, antialiased, blending, penwidth);
+							return;
+							}
+						case 3:
+							{
+							draw_triangle(tabPoints[0], tabPoints[1], tabPoints[2], color, antialiased, blending, penwidth);
+							return;
+							}
+						case 4: 
+							{
+							draw_quad(tabPoints[0], tabPoints[1], tabPoints[2], tabPoints[3], color, antialiased, blending, penwidth);
+							return;
+							}
+					default:
+						{
+						if ((penwidth <= 0) && (!antialiased) && (blending) && (!color.isOpaque()))
+							{ // draw without overlap
+							_lineBresenham<true, true, false, false, false, false>(tabPoints[0], tabPoints[1], color, true, penwidth, 0);
+							for (size_t i = 1; i < nbvertices - 1; i++)
+								{
+								_lineBresenham_avoid<true, true, false, false, false>(tabPoints[i], tabPoints[i + 1], tabPoints[i - 1], color, 0, 0);
+								}
+							_lineBresenham_avoid_both_sides<true, true, false, false, false>(tabPoints[nbvertices - 1], tabPoints[0], tabPoints[nbvertices - 2], tabPoints[1], color, 0);
+							return;
+							}
+						for (size_t i = 0; i < nbvertices; i++)
+							{
+							draw_line(tabPoints[i], tabPoints[(i + 1) % nbvertices], color, false, antialiased, blending, penwidth);
+							}
+						return;
+						}
+					}
+				}
+
+
+			/**
+			* Draw a polygon. Point must be ordered around the polygon.
+			*
+			* @param	vecPoints  	std vector of polygon vertice in clockwise or counterclockwise order.
+			* @param	color	   	The color tu use.
+			* @param	antialiased	(Optional) true to draw antialiased lines.
+			* @param	blending   	(Optional) true to use blending.
+			* @param	penwidth   	(Optional) The pen width (0 = unit width)
+			**/
+			MTOOLS_FORCEINLINE void draw_polygon(const std::vector<iVec2> & vecPoints, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0)
+				{
+				draw_polygon(vecPoints.size(), vecPoints.data(), color, antialiased, blending, penwidth);
+				}
+
+
+			/**
+			* Draw a filled (convex) polygon. Point must be ordered around the polygon.
+			*
+			* @param	nbvertices	Number of vertices in the polygon.
+			* @param	tabPoints 	the list of points in clockwise or counterclockwise order.
+			* @param	color	   	border color.
+			* @param	fillcolor  	interior color.
+			* @param	antialiased(Optional) True to use antialiased.
+			* @param	blending(Optional) True to use blending.
+			**/
+			inline void draw_filled_polygon(size_t nbvertices, const fVec2 * tabPoints, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND)
+				{
+				switch (nbvertices)
+					{
+					case 0: {return;}
+					case 1: {draw_circle_dot(tabPoints[0], 1, color, antialiased, blending);  return; }
+					case 2: {draw_line(tabPoints[0], tabPoints[1], color, true, antialiased, blending);  return; }
+					case 3: {draw_filled_triangle(tabPoints[0], tabPoints[1], tabPoints[2], color, fillcolor, antialiased, blending); return; }
+					case 4: {draw_filled_quad(tabPoints[0], tabPoints[1], tabPoints[2], tabPoints[3], color, fillcolor, antialiased, blending); return; }
+					}
+				// TODO. 
+
+				}
+
+
+			/**
+			* Draw a filled (convex) polygon. Point must be ordered around the polygon.
+			*
+			* @param	vecPoints  	std vector of polygon vertice in clockwise or counterclockwise order.
+			* @param	color	   	border color.
+			* @param	fillcolor  	interior color.
+			* @param	antialiased(Optional) True to use antialiased.
+			* @param	blending(Optional) True to use blending.
+			**/
+			inline void draw_filled_polygon(const std::vector<fVec2> & vecPoints, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND)
+				{
+				draw_filled_polygon(vecPoints.size(), vecPoints.data(), color, fillcolor, antialiased, blending);
+				}
+
+
+
+
+
+
+
+			/**
 			 * draw a rectangle of given size and color over this image. Portion outside the image is
 			 * clipped.
 			 *
@@ -2434,33 +2810,6 @@ namespace mtools
 				}
 
 
-			/**
-			 * Draw a triangle. Portion outside the image is clipped.
-			 *
-			 * @param	P1		   	The first point.
-			 * @param	P2		   	The second point.
-			 * @param	P3		   	The third point.
-			 * @param	color	   	The color.
-			 * @param	antialiased	(Optional) true to use antialiased lines.
-			 * @param	blending   	(Optional) true to use blending and false to write over.
-			 * @param	penwidth   	(Optional) The pen width (0 = unit width)
-			 **/
-			inline void draw_triangle(iVec2 P1, iVec2 P2, iVec2 P3, RGBc color, bool antialiased = true, bool blending = true, int32 penwidth = 0)
-				{
-				if (isEmpty()) return;
-				if ((penwidth <= 0)&&(!antialiased)&&(blending)&& (!color.isOpaque()))
-					{ // draw without overlap
-					_lineBresenham<true, true, false, false, false, false>(P1, P2, color, true, penwidth, 0);
-					_lineBresenham_avoid<true, true, false, false, false>(P2, P3, P1, color, 0, 0);
-					_lineBresenham_avoid_both_sides_triangle<true, true, false, false, false>(P1, P3, P2, color,0);
-					return;
-					}
-				// default drawing
-				draw_line(P1, P2, color, false, antialiased, blending, penwidth);
-				draw_line(P2, P3, color, false, antialiased, blending, penwidth);
-				draw_line(P3, P1, color, false, antialiased, blending, penwidth);
-				return;
-				}
 
 
 			/**
@@ -2493,162 +2842,8 @@ namespace mtools
 				}
 
 
-			/**
-			 * Draw a polygon.
-			 *
-			 * @param	nbvertices 	Number of vertices in the polygon.
-			 * @param	tabPoints  	the list of points in clockwise or counterclockwise order.
-			 * @param	color	   	The color tu use.
-			 * @param	antialiased	(Optional) true to draw antialiased lines.
-			 * @param	blending   	(Optional) true to use blending.
-			 * @param	penwidth   	(Optional) The pen width (0 = unit width)
-			 **/
-			inline void draw_polygon(size_t nbvertices, const iVec2 * tabPoints, RGBc color, bool antialiased = true, bool blending = true, int32 penwidth = 0)
-				{
-				if (isEmpty()) return;
-				if ((color.isOpaque())&&(!antialiased)) blending = false;
-				switch (nbvertices)
-					{
-					case 0: { return; }
-					case 1:
-						{
-						draw_square_dot(*tabPoints, color, blending, penwidth);
-						return;
-						}
-					case 2:
-						{
-						draw_line(tabPoints[0], tabPoints[1], color, true, antialiased, blending, penwidth);
-						return;
-						}
-					case 3:
-						{
-						draw_triangle(tabPoints[0], tabPoints[1], tabPoints[2], color, antialiased, blending, penwidth);
-						return;
-						}
-					default:
-						{
-						if ((penwidth <= 0) && (!antialiased) && (blending) && (!color.isOpaque()))
-							{ // draw without overlap
-							_lineBresenham<true, true, false, false, false, false>(tabPoints[0], tabPoints[1], color, true, penwidth, 0);
-							for (size_t i = 1; i < nbvertices - 1; i++)
-								{
-								_lineBresenham_avoid<true, true,false,false,false>(tabPoints[i], tabPoints[i + 1], tabPoints[i - 1], color, 0,0);
-								}
-							_lineBresenham_avoid_both_sides<true, true, false, false, false>(tabPoints[nbvertices - 1], tabPoints[0], tabPoints[nbvertices - 2], tabPoints[1], color,0);
-							return;
-							}
-						for (size_t i = 0; i < nbvertices; i++)
-							{
-							draw_line(tabPoints[i], tabPoints[(i + 1) % nbvertices], color, false, antialiased, blending, penwidth);
-							}
-						return;
-						}
-					}
-				}
 
 
-
-			/**
-			* Draw a filled quadrilateral. Point must be ordered around the quad.
-			*
-			* @param	A1		   	The first point
-			* @param	A2		   	The second point
-			* @param	A3		   	The third point
-			* @param	A4		   	The fourth point
-			* @param	color	   	border color.
-			* @param	fillcolor  	interior color.
-			* @param	antialiased	(Optional) True to use antialiased.
-			* @param	blending   	(Optional) True to use blending.
-			**/
-			inline void draw_filled_quad(fVec2 A1, fVec2 A2, fVec2 A3, fVec2 A4, RGBc color, RGBc fillcolor, bool antialiased = true, bool blending = true)
-			{
-
-				Chronometer();
-
-				if (isEmpty()) return;
-
-				iVec2 AP1, AP2, AP3, AP4;
-
-				Image::_bdir dir12, dir21;
-				Image::_bpos pos12, pos21;
-				int64 len12 = _init_line(A1, A2, dir12, pos12, AP1, AP2);
-				pos21 = pos12;
-				dir21 = dir12;
-				_reverse_line(dir21, pos21, len12);
-
-				Image::_bdir dir23, dir32;
-				Image::_bpos pos23, pos32;
-				int64 len23 = _init_line(A2, A3, dir23, pos23, AP2, AP3);
-				pos32 = pos23;
-				dir32 = dir23;
-				_reverse_line(dir32, pos32, len23);
-
-				Image::_bdir dir34, dir43;
-				Image::_bpos pos34, pos43;
-				int64 len34 = _init_line(A3, A4, dir34, pos34, AP3, AP4);
-				pos43 = pos34;
-				dir43 = dir34;
-				_reverse_line(dir43, pos43, len34);
-
-				Image::_bdir dir41, dir14;
-				Image::_bpos pos41, pos14;
-				int64 len41 = _init_line(A4, A1, dir41, pos41, AP4, AP1);
-				pos14 = pos41;
-				dir14 = dir41;
-				_reverse_line(dir14, pos14, len41);
-
-				Image::_bdir dir13, dir31;
-				Image::_bpos pos13, pos31;
-				int64 len13 = _init_line(A1, A3, dir13, pos13, AP1, AP3);
-				pos31 = pos13;
-				dir31 = dir13;
-				_reverse_line(dir31, pos31, len13);
-
-				auto t = Chronometer();
-				if (t > 1) cout << t << "\n";
-
-				if (antialiased)
-					{
-					const bool BLEND = true;
-					const bool AA = true;
-					_lineBresenham<BLEND, true, false, false, AA, false>(dir21, pos21, len12 + 1, color, 0, 0);
-					_lineBresenham_avoid<BLEND, true, false, AA, true>(dir23, pos23, len23 + 1, dir21, pos21, len12 + 1, color, 0);
-					_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, false, true>(dir13, pos13, len13, dir12, pos12, len12 + 1, dir32, pos32, len23 + 1, color, 0);
-					_lineBresenham_avoid<BLEND, true, false, AA, false>(dir14, pos14, len41 + 1, dir13, pos13, len13 + 1, color, 0);
-					_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, AA, true>(dir34, pos34, len34, dir31, pos31, len13 + 1, dir41, pos41, len41 + 1, color, 0);
-					_draw_triangle_interior<true, true>(A1, A2, A3, fillcolor);
-					_draw_triangle_interior<true, true>(A1, A3, A4, fillcolor);
-					}
-				else
-					{
-					const bool BLEND = true;
-					const bool AA = false;
-					_lineBresenham<BLEND, true, false, false, AA, false>(dir21, pos21, len12 + 1, color, 0, 0);
-					_lineBresenham_avoid<BLEND, true, false, AA, true>(dir23, pos23, len23 + 1, dir21, pos21, len12 + 1, color, 0);
-					_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, false, true>(dir13, pos13, len13, dir12, pos12, len12 + 1, dir32, pos32, len23 + 1, color, 0);
-					_lineBresenham_avoid<BLEND, true, false, AA, false>(dir14, pos14, len41 + 1, dir13, pos13, len13 + 1, color, 0);
-					_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, AA, true>(dir34, pos34, len34, dir31, pos31, len13 + 1, dir41, pos41, len41 + 1, color, 0);
-					_draw_triangle_interior<true, true>(A1, A2, A3, fillcolor);
-					_draw_triangle_interior<true, true>(A1, A3, A4, fillcolor);
-					}
-
-			}
-
-
-
-			/**
-			 * Draw a polygon.
-			 *
-			 * @param	tabPoints  	std vector of polygon vertice in clockwise or counterclockwise order.
-			 * @param	color	   	The color tu use.
-			 * @param	antialiased	(Optional) true to draw antialiased lines.
-			 * @param	blending   	(Optional) true to use blending.
-			 * @param	penwidth   	(Optional) The pen width (0 = unit width)
-			 **/
-			MTOOLS_FORCEINLINE void draw_polygon(const std::vector<iVec2> & tabPoints, RGBc color, bool antialiased = true, bool blending = true, int32 penwidth = 0)
-				{
-				draw_polygon(tabPoints.size(), tabPoints.data(), color, antialiased, blending, penwidth);
-				}
 
 
 			/**
@@ -4820,11 +5015,7 @@ namespace mtools
 					return;
 					}
 				H *= 0.5;
-				fVec2 A1 = (P1 + H);
-				fVec2 A4 = (P1 - H);
-				fVec2 A2 = (P2 + H);
-				fVec2 A3 = (P2 - H);
-				canvas_draw_filled_quad(R, A1, A2, A3, A4, color, color, antialiased, blending);
+				draw_filled_quad(R.absToPixel((P1 + H), dim), R.absToPixel((P2 + H), dim), R.absToPixel((P2 - H), dim), R.absToPixel((P1 - H), dim), color, color, antialiased, blending);
 				return;
 				}
 
@@ -4925,6 +5116,136 @@ namespace mtools
 				}
 
 
+
+			/**
+			* Draw a triangle. Portion outside the image is clipped.
+			*
+			* Use absolute coordinate (canvas method).
+			*
+			* @param	R		   	the absolute range represented in the image.
+			* @param	P1		   	The first point.
+			* @param	P2		   	The second point.
+			* @param	P3		   	The third point.
+			* @param	color	   	The color.
+			* @param	antialiased	(Optional) true to use antialiased lines.
+			* @param	blending   	(Optional) true to use blending and false to write over.
+			* @param	penwidth   	(Optional) The pen width (0 = unit width)
+			**/
+			MTOOLS_FORCEINLINE void canvas_draw_triangle(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, fVec2 P3, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0)
+				{
+				const auto dim = dimension();
+				// TODO : CHECK CLIPPING 
+				draw_triangle(R.absToPixel(P1, dim), R.absToPixel(P2, dim), R.absToPixel(P3, dim), color, antialiased, blending, penwidth);
+				}
+
+
+
+			/**
+			* Draw a filled triangle.
+			*
+			* @param	R		   	the absolute range represented in the image.
+			* @param	P1		   	The first point.
+			* @param	P2		   	The second point.
+			* @param	P3		   	The third point.
+			* @param	color	   	border color.
+			* @param	fillcolor  	fill color.
+			* @param	antialiased	(Optional) True to use antialiased.
+			* @param	blending   	(Optional) True to use blending.
+			**/
+			inline void canvas_draw_filled_triangle(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, fVec2 P3, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND)
+				{
+				const auto dim = dimension();
+				// TODO : CHECK CLIPPING 
+				draw_filled_triangle(R.absToPixel(P1, dim), R.absToPixel(P2, dim), R.absToPixel(P3, dim), color, fillcolor, antialiased, blending);
+				}
+
+
+			/**
+			 * Draw a quadrilateral. Point must be ordered around the quad.
+			 *
+			 * @param	R		   	the absolute range represented in the image.
+			 * @param	P1		   	The first point.
+			 * @param	P2		   	The second point.
+			 * @param	P3		   	The third point.
+			 * @param	P4		   	The fourth point.
+			 * @param	color	   	border color.
+			 * @param	antialiased	(Optional) True to use antialiased.
+			 * @param	blending   	(Optional) True to use blending.
+			 * @param	penwidth   	(Optional) The pen width (0 = unit width)
+			 **/
+			inline void canvas_draw_quad(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, fVec2 P3, fVec2 P4, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0)
+				{
+				const auto dim = dimension();
+				// TODO : CHECK CLIPPING 
+				draw_quad(R.absToPixel(P1, dim), R.absToPixel(P2, dim), R.absToPixel(P3, dim), R.absToPixel(P4, dim), color, antialiased, blending);
+				}
+
+
+			/**
+			* Draw a filled quadrilateral. Point must be ordered around the quad.
+			*
+			* @param	R		   	the absolute range represented in the image.
+			* @param	P1		   	The first point.
+			* @param	P2		   	The second point.
+			* @param	P3		   	The third point.
+			* @param	P4		   	The fourth point.
+			* @param	color	   	border color.
+			* @param	fillcolor  	fill color.
+			* @param	antialiased	(Optional) True to use antialiased.
+			* @param	blending   	(Optional) True to use blending.
+			**/
+			inline void canvas_draw_filled_quad(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, fVec2 P3, fVec2 P4, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND)
+				{
+				const auto dim = dimension();
+				// TODO : CHECK CLIPPING 
+				draw_filled_quad(R.absToPixel(P1, dim), R.absToPixel(P2, dim), R.absToPixel(P3, dim), R.absToPixel(P4, dim), color, fillcolor, antialiased, blending);
+				}
+
+
+			/**
+			* Draw a polygon.
+			*
+			* @param	R		   	the absolute range represented in the image.
+			* @param	tabPoints  	std vector of polygon vertice in clockwise or counterclockwise order.
+			* @param	color	   	The color tu use.
+			* @param	antialiased	(Optional) true to draw antialiased lines.
+			* @param	blending   	(Optional) true to use blending.
+			* @param	penwidth   	(Optional) The pen width (0 = unit width)
+			**/
+			MTOOLS_FORCEINLINE void canvas_draw_polygon(const mtools::fBox2 & R, const std::vector<fVec2> & tabPoints, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0)
+				{
+				const auto dim = dimension();
+				const size_t N = tabPoints.size();
+				std::vector<fVec2> tab;
+				tab.reserve(N);
+				for (size_t i = 0; i < N; i++) { tab.push_back(R.absToPixel(tabPoints[i], dim)); }
+				draw_polygon(tab, color, antialiased, blending, penwidth);
+				}
+
+
+			/**
+			* Draw a filled convex polygon.
+			*
+			* @param	R		   	the absolute range represented in the image.
+			* @param	tabPoints  	std vector of polygon vertice in clockwise or counterclockwise order.
+			* @param	color	   	The color tu use.
+			* @param	fillcolor  	fill color.
+			* @param	antialiased	(Optional) true to draw antialiased lines.
+			* @param	blending   	(Optional) true to use blending.
+			**/
+			MTOOLS_FORCEINLINE void canvas_draw_filled_polygon(const mtools::fBox2 & R, const std::vector<fVec2> & tabPoints, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND)
+				{
+				const auto dim = dimension();
+				const size_t N = tabPoints.size();
+				std::vector<iVec2> tab;
+				tab.reserve(N);
+				for (size_t i = 0; i < N; i++) { tab.push_back(R.absToPixel(tabPoints[i], dim)); }
+				draw_filled_polygon(tab, color, fillcolor, antialiased, blending);
+				}
+
+
+
+
 			/**
 			 * draw a rectangle of given size and color over this image. Portion outside the image is
 			 * clipped.
@@ -4978,25 +5299,6 @@ namespace mtools
 				}
 
 
-			/**
-			 * Draw a triangle. Portion outside the image is clipped.
-			 * 
-			 * Use absolute coordinate (canvas method).
-			 *
-			 * @param	R		   	the absolute range represented in the image.
-			 * @param	P1		   	The first point.
-			 * @param	P2		   	The second point.
-			 * @param	P3		   	The third point.
-			 * @param	color	   	The color.
-			 * @param	antialiased	(Optional) true to use antialiased lines.
-			 * @param	blending   	(Optional) true to use blending and false to write over.
-			 * @param	penwidth   	(Optional) The pen width (0 = unit width)
-			 **/
-			MTOOLS_FORCEINLINE void canvas_draw_triangle(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, fVec2 P3, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0)
-				{
-				const auto dim = dimension();
-				draw_triangle(R.absToPixel(P1, dim), R.absToPixel(P2, dim), R.absToPixel(P3, dim), color, antialiased, blending, penwidth);
-				}
 
 
 			/**
@@ -5020,47 +5322,6 @@ namespace mtools
 				}
 
 
-			/**
-			 * Draw a filled quadrilateral. Point must be ordered around the quad.
-			 *
-			 * @param	R		   	the absolute range represented in the image.
-			 * @param	P1		   	The first point.
-			 * @param	P2		   	The second point.
-			 * @param	P3		   	The third point.
-			 * @param	P4		   	The fourth point.
-			 * @param	color	   	border color.
-			 * @param	fillcolor  	fill color.
-			 * @param	antialiased	(Optional) True to use antialiased.
-			 * @param	blending   	(Optional) True to use blending.
-			 **/
-			inline void canvas_draw_filled_quad(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, fVec2 P3, fVec2 P4, RGBc color, RGBc fillcolor, bool antialiased = true, bool blending = true)
-				{
-				const auto dim = dimension();
-				draw_filled_quad(R.absToPixel(P1, dim), R.absToPixel(P2, dim), R.absToPixel(P3, dim), R.absToPixel(P4, dim), color, fillcolor, antialiased, blending);
-				}
-
-
-			/**
-			 * Draw a polygon.
-			 * 
-			 * Use absolute coordinate (canvas method).
-			 *
-			 * @param	R		   	the absolute range represented in the image.
-			 * @param	tabPoints  	std vector of polygon vertice in clockwise or counterclockwise order.
-			 * @param	color	   	The color tu use.
-			 * @param	antialiased	(Optional) true to draw antialiased lines.
-			 * @param	blending   	(Optional) true to use blending.
-			 * @param	penwidth   	(Optional) The pen width (0 = unit width)
-			 **/
-			MTOOLS_FORCEINLINE void canvas_draw_polygon(const mtools::fBox2 & R, const std::vector<fVec2> & tabPoints, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0)
-				{
-				const auto dim = dimension();
-				const size_t N = tabPoints.size();
-				std::vector<iVec2> tab;
-				tab.reserve(N);
-				for (size_t i = 0; i < N; i++) { tab.push_back(R.absToPixel(tabPoints[i], dim)); }
-				draw_polygon(tab, color, antialiased, blending, penwidth);
-				}
 
 
 			/**
