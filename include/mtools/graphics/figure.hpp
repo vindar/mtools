@@ -60,9 +60,14 @@ namespace mtools
 	class FigureLine;
 	class FigurePolyLine;
 	class FigurePolygon;
-	class FigureTriangle;
 
-	class FigureFilledPolygon;
+
+	class FigureTriangle;
+	class FigureQuad;
+
+
+
+
 
 
 	class FigureThickLine;
@@ -698,6 +703,172 @@ namespace mtools
 			}
 
 	};
+
+
+
+
+	/**
+	*
+	* Triangle figure
+	*
+	**/
+	class FigureTriangle : public FigureInterface
+	{
+
+	public:
+
+		/** parameters **/
+		fVec2 P1, P2, P3;
+		RGBc  color, fillcolor;
+
+		/**
+		 * Constructor.
+		 **/
+		FigureTriangle(fVec2 p1, fVec2 p2, fVec2 p3, RGBc col, RGBc fillcol = RGBc::c_Transparent) : P1(p1), P2(p2), P3(p3), color(col), fillcolor(fillcol)
+			{
+			}
+
+
+		/** Draw method */
+		virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+			{
+			if (fillcolor.isTransparent())
+				{
+				im.canvas_draw_triangle(R, P1, P2, P3, color, highQuality, true);
+				}
+			else
+				{
+				im.canvas_draw_filled_triangle(R, P1, P2, P3, color, fillcolor, highQuality, true);
+				}
+			}
+
+
+		/** Return the object's bounding box. */
+		virtual fBox2 boundingBox() const override
+			{
+			fBox2 R;
+			R.swallowPoint(P1);
+			R.swallowPoint(P2);
+			R.swallowPoint(P3);
+			return R;
+			}
+
+
+		/** Print info about the object into an std::string. */
+		virtual std::string toString(bool debug = false) const override
+			{
+			std::string str("Triangle [");
+			str += mtools::toString(P1) + ", ";
+			str += mtools::toString(P2) + ", ";
+			str += mtools::toString(P3) + " - ";
+			str += mtools::toString(color);
+			if (!fillcolor.isTransparent())
+				{
+				str += "filled : ";
+				str += mtools::toString(fillcolor);
+				}
+			return str + "]";
+			}
+
+
+		/** Serialize the object. */
+		virtual void serialize(OBaseArchive & ar) const override
+			{
+			ar & P1 & P2 & P3 & color & fillcolor;
+			}
+
+
+		/** Deserialize the object. */
+		virtual void deserialize(IBaseArchive & ar) override
+			{
+			ar & P1 & P2 & P3 & color & fillcolor;
+			}
+
+	};
+
+
+
+	/**
+	*
+	* Quad figure
+	*
+	**/
+	class FigureQuad : public FigureInterface
+	{
+
+	public:
+
+		/** parameters **/
+		fVec2 P1, P2, P3, P4;
+		RGBc  color, fillcolor;
+
+		/**
+		* Constructor.
+		**/
+		FigureQuad(fVec2 p1, fVec2 p2, fVec2 p3, fVec2 p4, RGBc col, RGBc fillcol = RGBc::c_Transparent) : P1(p1), P2(p2), P3(p3), P4(p4), color(col), fillcolor(fillcol)
+			{	
+			}
+
+
+		/** Draw method */
+		virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+			{
+			if (fillcolor.isTransparent())
+				{
+				im.canvas_draw_quad(R, P1, P2, P3, P4, color, highQuality, true);
+				}
+			else
+				{
+				im.canvas_draw_filled_quad(R, P1, P2, P3, P4, color, fillcolor, highQuality, true);
+				}
+			}
+
+
+		/** Return the object's bounding box. */
+		virtual fBox2 boundingBox() const override
+			{
+			fBox2 R;
+			R.swallowPoint(P1);
+			R.swallowPoint(P2);
+			R.swallowPoint(P3);
+			R.swallowPoint(P4);
+			return R;
+			}
+
+
+		/** Print info about the object into an std::string. */
+		virtual std::string toString(bool debug = false) const override
+			{
+			std::string str("Quad [");
+			str += mtools::toString(P1) + ", ";
+			str += mtools::toString(P2) + ", ";
+			str += mtools::toString(P3) + ", ";
+			str += mtools::toString(P4) + " - ";
+			str += mtools::toString(color);
+			if (!fillcolor.isTransparent())
+				{
+				str += "filled : ";
+				str += mtools::toString(fillcolor);
+				}
+			return str + "]";
+			}
+
+
+		/** Serialize the object. */
+		virtual void serialize(OBaseArchive & ar) const override
+			{
+			ar & P1 & P2 & P3 & P4 & color & fillcolor;
+			}
+
+
+		/** Deserialize the object. */
+		virtual void deserialize(IBaseArchive & ar) override
+			{
+			ar & P1 & P2 & P3 & P4 & color & fillcolor;
+			}
+
+	};
+
 
 
 
