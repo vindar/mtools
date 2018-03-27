@@ -30,6 +30,7 @@
 #include "../random/gen_fastRNG.hpp"
 #include "../random/classiclaws.hpp"
 
+#include "internal/clipping.hpp"
 
 #include "../misc/timefct.hpp"
 
@@ -1970,7 +1971,7 @@ namespace mtools
 					if (antialiased)
 						{
 						const int64 of = 10;
-						if (!_csLineClip(P1, P2, iBox2(-of, _lx - 1 + of, -of, _ly - 1 + of))) return; // choose box bigger to diminish clipping error. 
+						if (!Colin_SutherLand_lineclip(P1, P2, iBox2(-of, _lx - 1 + of, -of, _ly - 1 + of))) return; // choose box bigger to diminish clipping error. 
 						if (blending) _lineBresenhamAA<true, true, false>(P1, P2, color, draw_P2, 0); else _lineBresenhamAA<false, true, false>(P1, P2, color, draw_P2, 0);
 						return;
 						}
@@ -1981,7 +1982,7 @@ namespace mtools
 				if (antialiased)
 					{
 					const int64 of = 10 + 2 * penwidth;
-					if (!_csLineClip(P1, P2, iBox2(-of, _lx - 1 + of, -of, _ly - 1 + of))) return; // choose box bigger to diminish clipping error. 
+					if (!Colin_SutherLand_lineclip(P1, P2, iBox2(-of, _lx - 1 + of, -of, _ly - 1 + of))) return; // choose box bigger to diminish clipping error. 
 					if (blending) _lineBresenhamAA<true, true, true>(P1, P2, color, draw_P2, penwidth); else _lineBresenhamAA<false, true, true>(P1, P2, color, draw_P2, penwidth);
 					return;
 					}
@@ -4780,7 +4781,7 @@ namespace mtools
 			MTOOLS_FORCEINLINE void canvas_draw_line(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, RGBc color, bool draw_P2 = true, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0)
 				{
 				const auto dim = dimension();
-				if (!_csLineClip(P1, P2, (penwidth == 0) ? R : zoomOut(R))) return;
+				if (!Colin_SutherLand_lineclip(P1, P2, (penwidth == 0) ? R : zoomOut(R))) return;
 				draw_line(R.absToPixel(P1, dim), R.absToPixel(P2, dim), color, draw_P2, antialiased, blending, penwidth);
 				}
 
@@ -4802,7 +4803,7 @@ namespace mtools
 			MTOOLS_FORCEINLINE void canvas_draw_thick_line(const fBox2 & R, fVec2 P1, fVec2 P2, double thickness, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
 				if ((isEmpty()) || (thickness <= 0)) return;
-				if (!_csLineClip(P1, P2, R.getEnlarge(thickness * 2))) return;
+				if (!Colin_SutherLand_lineclip(P1, P2, R.getEnlarge(thickness * 2))) return;
 				if  (P1 == P2) return;
 				fVec2 H = (P2 - P1).get_rotate90();
 				H.normalize();
@@ -6513,149 +6514,6 @@ namespace mtools
 					if (blend) { (*p).blend(color); }
 					else { *p = color; }
 					p++; x1++;
-					}
-				}
-
-
-
-			/** Used by CSLineClip() to compute the region where the point lies (real valued version) **/
-			MTOOLS_FORCEINLINE static int _csLineClipCode(const fVec2 & P, const fBox2 & B)
-				{
-				int c = 0;
-				const double xx = P.X();
-				const double yy = P.Y();
-				if (xx < B.min[0]) c |= 1;
-				if (xx > B.max[0]) c |= 2;
-				if (yy < B.min[1]) c |= 4;
-				if (yy > B.max[1]) c |= 8;
-				return c;
-				}
-
-
-			/**
-			* Cohen-Sutherland Line clipping algorithm (real valued point)
-			*
-			* @param [in,out]	P1	The first point.
-			* @param [in,out]	P2	The second point.
-			* @param	B		  	The rectangle to clip into.
-			*
-			* @return	true if a line should be drawn and false if it should be discarded. If true, P1 and
-			* 			P2 are now inside the closed rectangle B and delimit the line to draw.
-			**/
-			MTOOLS_FORCEINLINE static bool _csLineClip(fVec2 & P1, fVec2 & P2, const fBox2 & B)
-				{
-				int c1 = _csLineClipCode(P1, B);
-				int c2 = _csLineClipCode(P2, B);
-				while (1)
-					{
-					if ((c1 == 0) && (c2 == 0)) { return true; } // both point inside		
-					if ((c1 & c2) != 0) { return false; } //AND of both codes != 0.Line is outside. Reject line
-					int temp = (c1 == 0) ? c2 : c1; //Decide if point1 is inside, if not, calculate intersection		
-						{
-						double x = 0, y = 0;
-						const double m = (P2.Y() - P1.Y()) / (P2.X() - P1.X());
-						if (temp & 8)
-							{ //Line clips top edge
-							x = P1.X() + (B.max[1] - P1.Y()) / m;
-							y = B.max[1];
-							}
-						else if (temp & 4)
-							{ 	//Line clips bottom edge
-							x = P1.X() + (B.min[1] - P1.Y()) / m;
-							y = B.min[1];
-							}
-						else if (temp & 1)
-							{ 	//Line clips left edge
-							x = B.min[0];
-							y = P1.Y() + (B.min[0] - P1.X()) * m;
-							}
-						else if (temp & 2)
-							{ 	//Line clips right edge
-							x = B.max[0];
-							y = P1.Y() + (B.max[0] - P1.X()) * m;
-							}
-						if (temp == c1) //Check which point we had selected earlier as temp, and replace its co-ordinates
-							{
-							P1.X() = x; P1.Y() = y;
-							c1 = _csLineClipCode(P1, B);
-							}
-						else
-							{
-							P2.X() = x; P2.Y() = y;
-							c2 = _csLineClipCode(P2, B);
-							}
-						}
-					}
-				}
-
-
-			/** Used by CSLineClip() (integer-valued version) to compute the region where the point lies **/
-			MTOOLS_FORCEINLINE static int _csLineClipCode(const iVec2 & P, const iBox2 & B)
-				{
-				int c = 0;
-				const int64 xx = P.X();
-				const int64 yy = P.Y();
-				if (xx < B.min[0]) c |= 1;
-				if (xx > B.max[0]) c |= 2;
-				if (yy < B.min[1]) c |= 4;
-				if (yy > B.max[1]) c |= 8;
-				return c;
-				}
-
-
-			/**
-			 * Cohen-Sutherland Line clipping algorithm (integer-valued points)
-			 *
-			 * @param [in,out]	P1	The first point.
-			 * @param [in,out]	P2	The second point.
-			 * @param	B		  	The rectangle to clip into.
-			 *
-			 * @return	true if a line should be drawn and false if it should be discarded. If true, P1 and
-			 * 			P2 are now inside the closed rectangle B and delimit the line to draw. 
-			 **/
-			MTOOLS_FORCEINLINE static bool _csLineClip(iVec2 & P1, iVec2 & P2, const iBox2 & B)
-				{
-				int c1 = _csLineClipCode(P1, B);
-				int c2 = _csLineClipCode(P2, B);
-				while (1)
-					{
-					if ((c1 == 0) && (c2 == 0)) { return true; } // both point inside		
-					if ((c1 & c2) != 0) { return false; } //AND of both codes != 0.Line is outside. Reject line
-					int temp = (c1 == 0) ? c2 : c1; //Decide if point1 is inside, if not, calculate intersection		
-					{
-					int64 x = 0, y = 0;
-					const double m = ((double)(P2.Y() - P1.Y())) / (P2.X() - P1.X());
-					if (temp & 8)
-						{ //Line clips top edge
-						x = P1.X() + (int64)round((B.max[1] - P1.Y()) / m);
-						y = B.max[1];
-						}
-					else if (temp & 4)
-						{ 	//Line clips bottom edge
-						x = P1.X() + (int64)round((B.min[1] - P1.Y()) / m);
-						y = B.min[1];
-						}
-					else if (temp & 1)
-						{ 	//Line clips left edge
-						x = B.min[0];
-						y = P1.Y() + (int64)round(m*(B.min[0] - P1.X()));
-						}
-					else if (temp & 2)
-						{ 	//Line clips right edge
-						x = B.max[0];
-						y = P1.Y() + (int64)round(m*(B.max[0] - P1.X()));
-						}
-					if (temp == c1) //Check which point we had selected earlier as temp, and replace its co-ordinates
-						{
-						P1.X() = x; P1.Y() = y;
-						c1 = _csLineClipCode(P1, B);
-						}
-					else
-						{
-						P2.X() = x; P2.Y() = y;
-						c2 = _csLineClipCode(P2, B);
-						}
-					}
 					}
 				}
 
