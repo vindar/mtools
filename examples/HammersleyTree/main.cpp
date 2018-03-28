@@ -281,7 +281,7 @@ void createTree()
 iVec2 toImage(double x, double t, Image & image) 
 	{ 
 	fBox2 R(0, X, 0, T); 
-	iVec2 pos = image.canvas_getImageCoord(R, { x,t }); pos.Y() = LY-1 - pos.Y(); 
+	iVec2 pos = R.absToPixel({ x,t }, image.dimension()); pos.Y() = LY-1 - pos.Y(); 
 	return pos; 
 	}
 
@@ -398,7 +398,7 @@ void drawTrees(Image & image, float op = 0.3)
                { 
                Q = toImage(mintab[i], 0, image);
                Q2 = toImage(maxtab[i], 0, image);
-			   image.draw_line({ Q.X() + 1, LY -2 - i }, { Q2.X() , LY - 2 -i }, coul,true); 
+			   image.draw_line(iVec2{ Q.X() + 1, LY -2 - i }, iVec2{ Q2.X() , LY - 2 -i }, coul,true); 
                colored = true;
                }
             }
