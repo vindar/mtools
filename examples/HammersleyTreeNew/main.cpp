@@ -278,7 +278,7 @@ template<int N> void drawPoints(FigureCanvas<N> & canvas, float op = 1.0f)
         {
         pPoissonPoint pp = it->adr();
 		RGBc coul = ((pp->father() != nullptr) && (pp->father()->lastused() == pp)) ? RGBc::c_Red.getMultOpacity(op) :	coul = RGBc::c_Blue.getMultOpacity(op);
-		if ((pp->x < X)&&(pp->t > 0)) canvas(FigureDot({ pp->x, pp->t }, 2, coul), 1);
+		if ((pp->x < X)&&(pp->t > 0)) canvas(Figure::CircleDot(fVec2{ pp->x, pp->t }, 2, coul), 1);
         }
 	cout << "ok!\n\n";
     }
@@ -296,20 +296,20 @@ template<int N> void drawLines(FigureCanvas<N> & canvas, float op = 1.0f)
         // horizontal lines
         if (pp->father() == nullptr)
 			{ // line going to the left border
-			if (pp->t > 0.0) canvas(FigureHorizontalLine(pp->t, 0.0, std::min<double>(X, pp->x), coul),0);
+			if (pp->t > 0.0) canvas(Figure::HorizontalLine(pp->t, 0.0, std::min<double>(X, pp->x), coul),0);
 			}
         else 
 			{ // normal horizontal line
-			canvas(FigureHorizontalLine(pp->t, pp->father()->x, std::min<double>(X, pp->x), coul), 0);
+			canvas(Figure::HorizontalLine(pp->t, pp->father()->x, std::min<double>(X, pp->x), coul), 0);
 			}
         // vertical lines
         if (pp->remaining() > 0) 
 			{ // line going to the top
-			if (pp->x < X) canvas(FigureVerticalLine(pp->x, std::max<double>(0, pp->t), T, coul), 0);
+			if (pp->x < X) canvas(Figure::VerticalLine(pp->x, std::max<double>(0, pp->t), T, coul), 0);
 			}
         else 
 			{ // normal vertical line
-			canvas(FigureVerticalLine(pp->x, std::max<double>(0,pp->t), pp->lastused()->t, coul), 0);
+			canvas(Figure::VerticalLine(pp->x, std::max<double>(0,pp->t), pp->lastused()->t, coul), 0);
 			}        
 		}
 	cout << "ok!\n\n";

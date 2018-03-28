@@ -467,7 +467,7 @@ MTOOLS_FORCEINLINE bool MultiBulletComparator::operator()(int64 indexa, int64 in
 
 
 
-Image drawbullet(double L, const std::vector<std::pair<MultiBulletProblem::Particle, double> > & init_vec, const std::vector< std::pair<int64, fVec2> > & res, int pw = 1)
+void drawbullet(double L, const std::vector<std::pair<MultiBulletProblem::Particle, double> > & init_vec, const std::vector< std::pair<int64, fVec2> > & res, int pw = 1)
 {
 
 	FigureCanvas<5> canvas(3);
@@ -483,7 +483,7 @@ Image drawbullet(double L, const std::vector<std::pair<MultiBulletProblem::Parti
 		if (res[i].first >= 0)
 			{
 			const RGBc color = (init_vec[i].first.second == 0.0) ? RGBc::c_Red : RGBc::c_Black;
-			canvas(FigureLine({ init_vec[i].first.first, init_vec[i].second }, res[i].second, color, 0),2);
+			canvas(Figure::Line({ init_vec[i].first.first, init_vec[i].second }, res[i].second, color, 0),2);
 			}
 		else
 			{
@@ -491,7 +491,7 @@ Image drawbullet(double L, const std::vector<std::pair<MultiBulletProblem::Parti
 			fVec2 Q = P;
 			Q.Y() += 2*L;
 			Q.X() += 2* L * init_vec[i].first.second;
-			canvas(FigureLine(P,Q, RGBc::c_Green), 1);
+			canvas(Figure::Line(P,Q, RGBc::c_Green), 1);
 			}
 		}
 
@@ -502,8 +502,6 @@ Image drawbullet(double L, const std::vector<std::pair<MultiBulletProblem::Parti
 	plotter[PF];
 	plotter.autorangeXY();
 	plotter.plot();
-
-
 
 }
 
@@ -648,7 +646,7 @@ void quantumBullet(int LL, double p)
 				fVec2 Q = P;
 				Q.Y() += dietime[i];
 				Q.X() += dietime[i] * init_vec[i].first.second;
-				canvas(FigureLine(P,Q, color, 0), 2);
+				canvas(Figure::Line(P,Q, color, 0), 2);
 
 				if (partner[i] > 0)
 					{
@@ -656,7 +654,7 @@ void quantumBullet(int LL, double p)
 					fVec2 R = P;
 					R.Y() += ct;
 					R.X() += ct * init_vec[i].first.second;
-					canvas(FigureLine(Q, R, RGBc::c_Yellow.getMultOpacity(0.5), 0), 2);
+					canvas(Figure::Line(Q, R, RGBc::c_Yellow.getMultOpacity(0.5), 0), 2);
 
 					}
 
@@ -667,7 +665,7 @@ void quantumBullet(int LL, double p)
 				fVec2 Q = P;
 				Q.X() += 2 * LL * init_vec[i].first.second;
 				Q.Y() += 2 * LL;
-				canvas(FigureLine(P, Q, RGBc::c_Green), 1);
+				canvas(Figure::Line(P, Q, RGBc::c_Green), 1);
 				}
 			}
 
@@ -692,7 +690,7 @@ int main(int argc, char *argv[])
 	double L = arg("L ",10000000.0); 
 	double p = arg("p", 0.11);
 
-	quantumBullet(L, p);
+	quantumBullet((int)L, p);
 	return 0;
 
 	std::vector< std::pair<MultiBulletProblem::Particle, double> > init_vec;

@@ -196,29 +196,29 @@ void makeDrawing()
 		{
 		int id = clusterId[i]; // cluster associated with this site
 		RGBc color = ((cluster_typeleft[id] != 0) || (cluster_typeright[id] != 0))
-			? RGBc::c_Black.getOpacity(0.1 + (0.9f * cluster_size[id]) / maxsize_incomplete) // incomplete clusters in black with opacity according to their size
+			? RGBc::c_Black.getOpacity((float)(0.1 + (0.9 * cluster_size[id]) / maxsize_incomplete)) // incomplete clusters in black with opacity according to their size
 			: RGBc::jetPalette(cluster_size[id], 2, maxsize_complete); // complete clusters colored by jetPalette according to their size. 
 		const int up = upArc[i];
 		if ((up == -1) || (up == L))
 			{
-			canvas(FigureVerticalLine((double)i, 0, L/2, 0.5, true, color));
+			canvas(Figure::ThickVerticalLine((double)i, 0, L/2, color, 0.5, true));
 			}
 		else if (up > i)
 			{
 			double r = (up - i)*0.5;
 			if (r < 0) r = -r;
-			canvas(FigureCirclePart(BOX_SPLIT_UP, fVec2 { (i + up)*0.5, 0.0 }, r + 0.25, 0.5, true, color));
+			canvas(Figure::CirclePart(BOX_SPLIT_UP, fVec2 { (i + up)*0.5, 0.0 }, r + 0.25, 0.5, true, color));
 			}
 		const int down = downArc[i];
 		if ((down == -1) || (down == L))
 			{
-			canvas(FigureVerticalLine((double)i, 0, - L/2, 0.5, true, color));
+			canvas(Figure::ThickVerticalLine((double)i, 0, - L/2, color, 0.5, true));
 			}
 		else if (down > i)
 			{
 			double r = (down - i)*0.5; 
 			if (r < 0) r = -r;
-			canvas(FigureCirclePart(BOX_SPLIT_DOWN, fVec2{ (i + down)*0.5, 0.0 }, r + 0.25, 0.5, true, color));
+			canvas(Figure::CirclePart(BOX_SPLIT_DOWN, fVec2{ (i + down)*0.5, 0.0 }, r + 0.25, 0.5, true, color));
 			}
 		}
 
