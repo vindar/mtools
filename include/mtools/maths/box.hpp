@@ -787,27 +787,28 @@ namespace mtools
                 const double lx = (double)(max[0] - min[0]);
                 const double ly = (double)(max[1] - min[1]);
                 MTOOLS_ASSERT((lx > 0.0) && (ly > 0.0));
-                double x = floor((((absCoord.X() - min[0]) / lx)*scrSize.X()) + 0.5); if (x < -2000000000) { x = -2000000000; } else if (x > +2000000000) { x = +2000000000; } // dirty, for overflow
-                double y = floor((((absCoord.Y() - min[1]) / ly)*scrSize.Y()) + 0.5); if (y < -2000000000) { y = -2000000000; } else if (y > +2000000000) { y = +2000000000; } // dirty, for overflow
+				const int64 L = 2000000000;
+                double x = std::floor((((absCoord.X() - min[0]) / lx)*scrSize.X()) + 0.5); if (x < -L) { x = -L; } else if (x > L) { x = L; } // dirty, for overflow
+                double y = std::floor((((absCoord.Y() - min[1]) / ly)*scrSize.Y()) + 0.5); if (y < -L) { y = -L; } else if (y > L) { y = L; } // dirty, for overflow
                 return iVec2((int64)x, scrSize.Y() - 1 - (int64)(y));
                 }
 
 			/**
-			* Converts an absolute position into its associated position inside a screen. (and invert the Y
-			* axis).
+			* Converts an absolute position into its associated position inside a screen.
+			* in normalized coordinate [_0.5 , lx - 0.5] x [-0.5, ly - 0.5]
 			*
 			* Same as above but return an real valued position. 
 			**/
 			inline fVec2 absToPixelf(const fVec2 & absCoord, const iVec2 & scrSize) const
-			{
+				{
 				static_assert(N == 2, "dimension N must be exactly 2.");
 				const double lx = (double)(max[0] - min[0]);
 				const double ly = (double)(max[1] - min[1]);
 				MTOOLS_ASSERT((lx > 0.0) && (ly > 0.0));
-				double x = ((absCoord.X() - min[0]) / lx)*scrSize.X();
-				double y = ((absCoord.Y() - min[1]) / ly)*scrSize.Y();
+				double x = ((absCoord.X() - min[0]) / lx)*scrSize.X() - 0.5;
+				double y = ((absCoord.Y() - min[1]) / ly)*scrSize.Y() - 0.5;
 				return fVec2(x, scrSize.Y() - 1 - y);
-			}
+				}
 
 
 			/**
@@ -818,15 +819,31 @@ namespace mtools
 			 *
 			 * @return	the corresponding box in pixel units. 
 			 */
-			inline fBox2 absToPixel(const fBox2 & absBox, const iVec2 & scrSize) const
+			inline iBox2 absToPixel(const fBox2 & absBox, const iVec2 & scrSize) const
 				{
 				static_assert(N == 2, "dimension N must be exactly 2.");
-				const iVec2 Pmin = absToPixel({absBox.min[0],absBox.max[1]}, scrSize);
-				const iVec2 Pmax = absToPixel({absBox.max[0],absBox.min[1]}, scrSize);
+				const iVec2 Pmin = absToPixel({absBox.min[0], absBox.max[1]}, scrSize);
+				const iVec2 Pmax = absToPixel({absBox.max[0], absBox.min[1]}, scrSize);
 				return iBox2(Pmin.X(), Pmax.X(), Pmin.Y(), Pmax.Y());				
 				}
 
 
+			/**
+			* Converts a box from absolute position into its associated position 
+			* in the normalized coord of the screen [_0.5 , lx - 0.5] x [-0.5, ly - 0.5]
+			*
+			* @param	absBox		the box in absolute position.
+			* @param   scrSize     Size of the screen in pixels (lx,ly).
+			*
+			* @return	the corresponding box in pixel units.
+			*/
+			inline fBox2 absToPixelf(const fBox2 & absBox, const iVec2 & scrSize) const
+				{
+				static_assert(N == 2, "dimension N must be exactly 2.");
+				const fVec2 Pmin = absToPixelf({ absBox.min[0], absBox.max[1] }, scrSize);
+				const fVec2 Pmax = absToPixelf({ absBox.max[0], absBox.min[1] }, scrSize);
+				return fBox2(Pmin.X(), Pmax.X(), Pmin.Y(), Pmax.Y());
+				}
 
 
             /**
@@ -979,8 +996,8 @@ namespace mtools
 		{
 		for (size_t n = 0; n < N; n++)
 			{
-			if (round(B.min[n]) != B.min[n]) return false;
-			if (round(B.max[n]) != B.max[n]) return false;
+			if (std::round(B.min[n]) != B.min[n]) return false;
+			if (std::round(B.max[n]) != B.max[n]) return false;
 			}
 		return true;
 		}
