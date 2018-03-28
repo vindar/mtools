@@ -110,15 +110,20 @@ void testplotfigure()
 
 	MT2004_64 gen(0);
 
-	FigureCanvas<5> canvas(20);
+	FigureCanvas<5> canvas(1);
 
 	cout << "Creating... ";
 
-	int nb = 1000000;
+	int nb = 1;
 	const double L = 50000;
 	
 	for (int k = 0; k < nb; k++)
 		{
+
+		std::vector<fVec2> subject = { { 50,150 },{ 200,50 },{ 350,150 },{ 350,300 },{ 250,300 },{ 200,250 },{ 150,350 },{ 100,250 },{ 100,200 } };
+	
+		canvas(Figure::Polygon(subject, RGBc::c_Red.getMultOpacity(0.5f), RGBc::c_Blue.getMultOpacity(0.5f)), 0);
+
 
 		/*
 			{ // CircleDot
@@ -130,13 +135,13 @@ void testplotfigure()
 				fVec2 pos = { L * Unif(gen),L * Unif(gen) };
 				canvas(Figure::SquareDot(pos, RGBc::c_Red, 5), 1);
 			}
-		*/
 		 
 			{ // Thick line
 			fVec2 P1 = { L * Unif(gen),L * Unif(gen) };
 			fVec2 P2 = { L * Unif(gen),L * Unif(gen) };
 			canvas(Figure::ThickLine(P1, P2, Unif(gen), RGBc::c_Red.getMultOpacity(0.5f)), 1);
 			}
+		*/
 
 
 		fVec2 pos2 = { 5000 * Unif(gen),5000 * Unif(gen) };
@@ -170,12 +175,12 @@ void testplotfigure()
 	*/
 	cout << "ok !\n\n";
 
-	auto PF = makePlot2DFigure(canvas, 5);
+	auto PF = makePlot2DFigure(canvas, 1);
 	//PF.highQuality(false);
 	Plotter2D plotter; 
 	plotter[PF];
 	plotter.autorangeXY();
-	plotter.range().setRange(fBox2(296.023991392, 296.023991668, 3772.45928744, 3772.45928772));
+	plotter.range().setRange(fBox2(199.999983071, 200.000016671, 249.999982864, 250.000016464));
 	plotter.plot();
 	}
 
