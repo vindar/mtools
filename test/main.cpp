@@ -114,12 +114,13 @@ void testplotfigure()
 
 	cout << "Creating... ";
 
-	int nb = 100000;
-	const double L = 5000;
+	int nb = 1000000;
+	const double L = 50000;
 	
 	for (int k = 0; k < nb; k++)
 		{
 
+		/*
 			{ // CircleDot
 				fVec2 pos = { L * Unif(gen),L * Unif(gen) };
 				canvas(Figure::CircleDot(pos, 10, RGBc::c_Red, RGBc::c_Blue), 0);
@@ -129,8 +130,13 @@ void testplotfigure()
 				fVec2 pos = { L * Unif(gen),L * Unif(gen) };
 				canvas(Figure::SquareDot(pos, RGBc::c_Red, 5), 1);
 			}
-
-
+		*/
+		 
+			{ // Thick line
+			fVec2 P1 = { L * Unif(gen),L * Unif(gen) };
+			fVec2 P2 = { L * Unif(gen),L * Unif(gen) };
+			canvas(Figure::ThickLine(P1, P2, Unif(gen), RGBc::c_Red.getMultOpacity(0.5f)), 1);
+			}
 
 
 		fVec2 pos2 = { 5000 * Unif(gen),5000 * Unif(gen) };
@@ -169,7 +175,7 @@ void testplotfigure()
 	Plotter2D plotter; 
 	plotter[PF];
 	plotter.autorangeXY();
-	plotter.range().setRange(fBox2(0,5000,0,5000));
+	plotter.range().setRange(fBox2(296.023991392, 296.023991668, 3772.45928744, 3772.45928772));
 	plotter.plot();
 	}
 
@@ -787,7 +793,7 @@ int main(int argc, char *argv[])
 {
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
 
-	testCSCC();
+	//testCSCC();
 	testplotfigure();
 	return 0;
 
