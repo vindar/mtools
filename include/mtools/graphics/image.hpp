@@ -1725,7 +1725,8 @@ namespace mtools
 						}
 					return;
 					}
-				draw_filled_circle(center, (int64)radius, outcolor, fillcolor, aa, blend);
+				if (radius < 16*(_lx + _ly)) draw_filled_circle(center, (int64)radius, outcolor, fillcolor, aa, blend);	// call integer version because radius cannot overflow
+				else draw_filled_circle((fVec2)center, radius, outcolor, fillcolor, aa, blend,false); // call floating point version for large radius
 				}
 
 
@@ -1750,7 +1751,7 @@ namespace mtools
 						}
 					return;
 					}
-				draw_filled_circle(center, radius, outcolor, fillcolor, aa, blend);
+				draw_filled_circle(center, radius, outcolor, fillcolor, aa, blend, (radius < 16 * (_lx + _ly)));
 				}
 
 
@@ -1943,22 +1944,26 @@ namespace mtools
 					{
 					if (antialiased)
 						{
-						const int64 of = 10;
+						const int64 of = 10000;
 						if (!Colin_SutherLand_lineclip(P1, P2, iBox2(-of, _lx - 1 + of, -of, _ly - 1 + of))) return; // choose box bigger to diminish clipping error. 
 						if (blending) _lineBresenhamAA<true, true, false>(P1, P2, color, draw_P2, 0); else _lineBresenhamAA<false, true, false>(P1, P2, color, draw_P2, 0);
 						return;
 						}
+					const int64 of = 10000 + _lx + _ly;
+					if (!Colin_SutherLand_lineclip(P1, P2, iBox2(-of, _lx - 1 + of, -of, _ly - 1 + of))) return; // choose box bigger to diminish clipping error. 
 					if ((blending) && (!color.isOpaque())) _lineBresenham<true, true, false, false, false, false>(P1, P2, color, draw_P2, 0, 0); else _lineBresenham<false, true, false, false, false, false>(P1, P2, color, draw_P2, 0, 0);
 					return;
 					}
 				_correctPenOpacity(color, penwidth);
 				if (antialiased)
 					{
-					const int64 of = 10 + 2 * penwidth;
+					const int64 of = 10000 + 2 * penwidth;
 					if (!Colin_SutherLand_lineclip(P1, P2, iBox2(-of, _lx - 1 + of, -of, _ly - 1 + of))) return; // choose box bigger to diminish clipping error. 
 					if (blending) _lineBresenhamAA<true, true, true>(P1, P2, color, draw_P2, penwidth); else _lineBresenhamAA<false, true, true>(P1, P2, color, draw_P2, penwidth);
 					return;
 					}
+				const int64 of = 10000 + _lx + _ly + 2 * penwidth;
+				if (!Colin_SutherLand_lineclip(P1, P2, iBox2(-of, _lx - 1 + of, -of, _ly - 1 + of))) return; // choose box bigger to diminish clipping error. 
 				if ((blending) && (!color.isOpaque())) _lineBresenham<true, true, false, true, false, false>(P1, P2, color, draw_P2, penwidth, 0); else _lineBresenham<false, true, false, true, false, false>(P1, P2, color, draw_P2, penwidth, 0);
 				return;
 				}
@@ -1970,11 +1975,10 @@ namespace mtools
 			**/
 			MTOOLS_FORCEINLINE void draw_line(fVec2 P1, fVec2 P2, RGBc color, bool draw_P2 = true, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int penwidth = 0)
 				{
-				// IMPROVE THIS REALLY USING THE REAL VALUED POSITIONS
 				if (isEmpty()) return;
-				const double L = 1000000.0;
+				const double L = 10000;
 				if (!Colin_SutherLand_lineclip(P1, P2, fBox2(-L, _lx + L, -L, _ly + L))) return;
-				draw_line(round(P1), round(P2), color, draw_P2, antialiased, blending, penwidth);
+				draw_line(round(P1), round(P2), color, draw_P2, antialiased, blending, penwidth); 	// IMPROVE THIS BY REALLY USING THE REAL VALUED POSITIONS
 				}
 	
 
@@ -1991,7 +1995,7 @@ namespace mtools
 			**/
 			MTOOLS_FORCEINLINE void draw_thick_line(fVec2 P1, fVec2 P2, double thickness, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
-				canvas_draw_thick_line(imagefBox(), fVec2(P1.X(), _ly - 1 - P1.Y()), fVec2(P2.X(), _ly - 1 - P2.Y()), thickness, color, antialiased, blending, min_thick); // because of thickness scaling, it is more convinient to use the canvas method.
+				canvas_draw_thick_line(imagefBox(), fVec2(P1.X(), _ly - 1 - P1.Y()), fVec2(P2.X(), _ly - 1 - P2.Y()), thickness, color, antialiased, blending, min_thick); // because of thickness scaling, it is more convinient to call the canvas method.
 				}
 
 
@@ -2348,15 +2352,23 @@ namespace mtools
 			* @param	blending   	(Optional) true to use blending and false to write over.
 			* @param	penwidth   	(Optional) The pen width (0 = unit width)
 			**/
-			inline void draw_triangle(iVec2 P1, iVec2 P2, iVec2 P3, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0)
+			inline void draw_triangle(fVec2 P1, fVec2 P2, fVec2 P3, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0)
 				{
 				if (isEmpty()) return;
 				if ((penwidth <= 0) && (!antialiased) && (blending) && (!color.isOpaque()))
-					{ // draw without overlap
-					_lineBresenham<true, true, false, false, false, false>(P1, P2, color, true, penwidth, 0);
-					_lineBresenham_avoid<true, true, false, false, false>(P2, P3, P1, color, 0, 0);
-					_lineBresenham_avoid_both_sides_triangle<true, true, false, false, false>(P1, P3, P2, color, 0);
-					return;
+					{ //try to draw without overlap
+					const double of = 10000.0 + _lx + _ly;
+					fBox2 B(-of, _lx + of, -of, _ly + of);
+					if ((B.isInside(P1)) && (B.isInside(P2)) && (B.isInside(P3)))
+						{
+						iVec2 A1 = round(P1);
+						iVec2 A2 = round(P2);
+						iVec2 A3 = round(P3);
+						_lineBresenham<true, true, false, false, false, false>(A1, A2, color, true, 0, 0);
+						_lineBresenham_avoid<true, true, false, false, false>(A2, A3, A1, color, 0, 0);
+						_lineBresenham_avoid_both_sides_triangle<true, true, false, false, false>(A1, A3, A2, color, 0);
+						return;
+						}
 					}
 				// default drawing
 				draw_line(P1, P2, color, false, antialiased, blending, penwidth);
@@ -2369,41 +2381,56 @@ namespace mtools
 			/**
 			* Draw a filled triangle.
 			*
-			* @param	A1		   	The first point
-			* @param	A2		   	The second point
-			* @param	A3		   	The third point
+			* @param	P1		   	The first point
+			* @param	P2		   	The second point
+			* @param	P3		   	The third point
 			* @param	color	   	border color.
 			* @param	fillcolor  	interior color.
 			* @param	antialiased	(Optional) True to use antialiased.
 			* @param	blending   	(Optional) True to use blending.
 			**/
-			inline void draw_filled_triangle(fVec2 A1, fVec2 A2, fVec2 A3, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND)
+			inline void draw_filled_triangle(fVec2 P1, fVec2 P2, fVec2 P3, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND)
 				{
 				if (isEmpty()) return;
+				const double of = 10000.0 + _lx + _ly;
+				fBox2 B(-of, _lx + of, -of, _ly + of);
+				if ((!B.isInside(P1)) || (!B.isInside(P2)) || (!B.isInside(P3)))
+					{ // triangle is not inside the box B: use clipping
+					fVec2 in_tab[3];  in_tab[0] = P1; in_tab[1] = P2; in_tab[2] = P3;
+					fVec2 out_tab[10]; size_t out_len;
+					Sutherland_Hodgman_clipping(in_tab, 3, B, out_tab, out_len);
+					if (out_len < 3) return;
+					if (out_len == 4) {	draw_filled_quad(out_tab[0], out_tab[1], out_tab[2], out_tab[3], color, fillcolor, antialiased, blending); return; }
+					if (out_len > 4)  { draw_filled_polygon(out_len, out_tab, color, fillcolor, antialiased, blending); return; }
+					P1 = out_tab[0];
+					P2 = out_tab[1];
+					P3 = out_tab[2];
+					}
 
-				int w = winding<4>({ A1, A2, A3}); // winding direction of the polygon
+				// ok, draw triangle inside a (not too big) box
+				int w = winding<3>({ P1, P2, P3}); // winding direction of the polygon
 				MTOOLS_ASSERT(w != 0);
-				if (w == -1) { mtools::swap(A1, A3); }
+				if (w == -1) { mtools::swap(P1, P3); }
 
 				iVec2 AP1, AP2, AP3;
 
 				Image::_bdir dir12, dir21;
 				Image::_bpos pos12, pos21;
-				int64 len12 = _init_line(A1, A2, dir12, pos12, AP1, AP2);
+				int64 len12 = _init_line(P1, P2, dir12, pos12, AP1, AP2);
 				pos21 = pos12;
 				dir21 = dir12;
 				_reverse_line(dir21, pos21, len12);
 
 				Image::_bdir dir23, dir32;
 				Image::_bpos pos23, pos32;
-				int64 len23 = _init_line(A2, A3, dir23, pos23, AP2, AP3);
+				int64 len23 = _init_line(P2, P3, dir23, pos23, AP2, AP3);
 				pos32 = pos23;
 				dir32 = dir23;
 				_reverse_line(dir32, pos32, len23);
 
 				Image::_bdir dir13;
 				Image::_bpos pos13;
-				int64 len13 = _init_line(A1, A3, dir13, pos13, AP1, AP3);
+				int64 len13 = _init_line(P1, P3, dir13, pos13, AP1, AP3);
 
 				if (blending)
 					{
@@ -2414,7 +2441,7 @@ namespace mtools
 						_lineBresenham<BLEND, true, false, false, AA, true>(dir12, pos12, len12 + 1, color, 0, 0);
 						_lineBresenham_avoid<BLEND, true, false, AA, true>(dir23, pos23, len23 + 1, dir21, pos21, len12 + 1, color, 0);
 						_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, AA, false>(dir13, pos13, len13, dir12, pos12, len12 + 1, dir32, pos32, len23 + 1, color, 0);
-						_draw_triangle_interior<true, true>(A1, A2, A3, fillcolor);
+						_draw_triangle_interior<true, true>(P1, P2, P3, fillcolor);
 						}
 					else
 						{
@@ -2422,7 +2449,7 @@ namespace mtools
 						_lineBresenham<BLEND, true, false, false, AA, true>(dir12, pos12, len12 + 1, color, 0, 0);
 						_lineBresenham_avoid<BLEND, true, false, AA, true>(dir23, pos23, len23 + 1, dir21, pos21, len12 + 1, color, 0);
 						_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, AA, false>(dir13, pos13, len13, dir12, pos12, len12 + 1, dir32, pos32, len23 + 1, color, 0);
-						_draw_triangle_interior<true, true>(A1, A2, A3, fillcolor);
+						_draw_triangle_interior<true, true>(P1, P2, P3, fillcolor);
 
 						}
 					}
@@ -2435,7 +2462,7 @@ namespace mtools
 						_lineBresenham<BLEND, true, false, false, AA, true>(dir12, pos12, len12 + 1, color, 0, 0);
 						_lineBresenham_avoid<BLEND, true, false, AA, true>(dir23, pos23, len23 + 1, dir21, pos21, len12 + 1, color, 0);
 						_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, AA, false>(dir13, pos13, len13, dir12, pos12, len12 + 1, dir32, pos32, len23 + 1, color, 0);
-						_draw_triangle_interior<true, true>(A1, A2, A3, fillcolor);
+						_draw_triangle_interior<true, true>(P1, P2, P3, fillcolor);
 						}
 					else
 						{
@@ -2443,7 +2470,7 @@ namespace mtools
 						_lineBresenham<BLEND, true, false, false, AA, true>(dir12, pos12, len12 + 1, color, 0, 0);
 						_lineBresenham_avoid<BLEND, true, false, AA, true>(dir23, pos23, len23 + 1, dir21, pos21, len12 + 1, color, 0);
 						_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, AA, false>(dir13, pos13, len13, dir12, pos12, len12 + 1, dir32, pos32, len23 + 1, color, 0);
-						_draw_triangle_interior<true, true>(A1, A2, A3, fillcolor);
+						_draw_triangle_interior<true, true>(P1, P2, P3, fillcolor);
 						}
 					}
 				}
@@ -2465,12 +2492,21 @@ namespace mtools
 				{
 				if (isEmpty()) return;
 				if ((penwidth <= 0) && (!antialiased) && (blending) && (!color.isOpaque()))
-					{ // draw without overlap
-					_lineBresenham<true, true, false, false, false, false>(P1, P2, color, true, penwidth, 0);
-					_lineBresenham_avoid<true, true, false, false, false>(P2, P3, P1, color, 0, 0);
-					_lineBresenham_avoid<true, true, false, false, false>(P3, P4, P2, color, 0, 0);
-					_lineBresenham_avoid_both_sides<true, true, false, false, false>(P4, P1, P3, P2, color, 0);
-					return;
+					{ // try drawing without overlap
+					const double of = 10000.0 + _lx + _ly;
+					fBox2 B(-of, _lx + of, -of, _ly + of);
+					if ((B.isInside(P1)) && (B.isInside(P2)) && (B.isInside(P3)) && (B.isInside(P4)))
+						{
+						iVec2 A1 = round(P1);
+						iVec2 A2 = round(P2);
+						iVec2 A3 = round(P3);
+						iVec2 A4 = round(P4);
+						_lineBresenham<true, true, false, false, false, false>(A1, A2, color, true, 0, 0);
+						_lineBresenham_avoid<true, true, false, false, false>(A2, A3, A1, color, 0, 0);
+						_lineBresenham_avoid<true, true, false, false, false>(A3, A4, A2, color, 0, 0);
+						_lineBresenham_avoid_both_sides<true, true, false, false, false>(A4, A1, A3, A2, color, 0);
+						return;
+						}
 					}
 				// default drawing
 				draw_line(P1, P2, color, false, antialiased, blending, penwidth);
@@ -2484,56 +2520,72 @@ namespace mtools
 			/**
 			* Draw a filled quadrilateral. Point must be ordered around the quad.
 			*
-			* @param	A1		   	The first point
-			* @param	A2		   	The second point
-			* @param	A3		   	The third point
-			* @param	A4		   	The fourth point
+			* @param	P1		   	The first point
+			* @param	P2		   	The second point
+			* @param	P3		   	The third point
+			* @param	P4		   	The fourth point
 			* @param	color	   	border color.
 			* @param	fillcolor  	interior color.
 			* @param	antialiased	(Optional) True to use antialiased.
 			* @param	blending   	(Optional) True to use blending.
 			**/
-			inline void draw_filled_quad(fVec2 A1, fVec2 A2, fVec2 A3, fVec2 A4, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND)
+			inline void draw_filled_quad(fVec2 P1, fVec2 P2, fVec2 P3, fVec2 P4, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND)
 				{
 				if (isEmpty()) return;
+				const double of = 10000.0 + _lx + _ly;
+				fBox2 B(-of, _lx + of, -of, _ly + of);
+				if ((!B.isInside(P1)) || (!B.isInside(P2)) || (!B.isInside(P3)) || (!B.isInside(P4)))
+					{ // quad is not inside the box B: use clipping
+					fVec2 in_tab[4];  in_tab[0] = P1; in_tab[1] = P2; in_tab[2] = P3; in_tab[3] = P4;
+					fVec2 out_tab[12]; size_t out_len;
+					Sutherland_Hodgman_clipping(in_tab, 4, B, out_tab, out_len);
+					if (out_len < 3) return;
+					if (out_len == 3) { draw_filled_triangle(out_tab[0], out_tab[1], out_tab[2], color, fillcolor, antialiased, blending); return; }
+					if (out_len > 4)  { draw_filled_polygon(out_len, out_tab, color, fillcolor, antialiased, blending); return; }
+					P1 = out_tab[0];
+					P2 = out_tab[1];
+					P3 = out_tab[2];
+					P4 = out_tab[3];
+					}
+				// ok, draw quad inside a (not too big) box
 
-				int w = winding<4>({ A1, A2, A3, A4 }); // winding direction of the polygon
+				int w = winding<4>({ P1, P2, P3, P4 }); // winding direction of the polygon
 				MTOOLS_ASSERT(w != 0);
-				if (w == -1) { mtools::swap(A1, A4); mtools::swap(A2, A3); }
+				if (w == -1) { mtools::swap(P1, P4); mtools::swap(P2, P3); }
 
 				iVec2 AP1, AP2, AP3, AP4;
 
 				Image::_bdir dir12, dir21;
 				Image::_bpos pos12, pos21;
-				int64 len12 = _init_line(A1, A2, dir12, pos12, AP1, AP2);
+				int64 len12 = _init_line(P1, P2, dir12, pos12, AP1, AP2);
 				pos21 = pos12;
 				dir21 = dir12;
 				_reverse_line(dir21, pos21, len12);
 
 				Image::_bdir dir23, dir32;
 				Image::_bpos pos23, pos32;
-				int64 len23 = _init_line(A2, A3, dir23, pos23, AP2, AP3);
+				int64 len23 = _init_line(P2, P3, dir23, pos23, AP2, AP3);
 				pos32 = pos23;
 				dir32 = dir23;
 				_reverse_line(dir32, pos32, len23);
 
 				Image::_bdir dir34, dir43;
 				Image::_bpos pos34, pos43;
-				int64 len34 = _init_line(A3, A4, dir34, pos34, AP3, AP4);
+				int64 len34 = _init_line(P3, P4, dir34, pos34, AP3, AP4);
 				pos43 = pos34;
 				dir43 = dir34;
 				_reverse_line(dir43, pos43, len34);
 
 				Image::_bdir dir41, dir14;
 				Image::_bpos pos41, pos14;
-				int64 len41 = _init_line(A4, A1, dir41, pos41, AP4, AP1);
+				int64 len41 = _init_line(P4, P1, dir41, pos41, AP4, AP1);
 				pos14 = pos41;
 				dir14 = dir41;
 				_reverse_line(dir14, pos14, len41);
 
 				Image::_bdir dir13, dir31;
 				Image::_bpos pos13, pos31;
-				int64 len13 = _init_line(A1, A3, dir13, pos13, AP1, AP3);
+				int64 len13 = _init_line(P1, P3, dir13, pos13, AP1, AP3);
 				pos31 = pos13;
 				dir31 = dir13;
 				_reverse_line(dir31, pos31, len13);
@@ -2549,8 +2601,8 @@ namespace mtools
 						_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, false, true>(dir13, pos13, len13, dir12, pos12, len12 + 1, dir32, pos32, len23 + 1, color, 0);
 						_lineBresenham_avoid<BLEND, true, false, AA, false>(dir14, pos14, len41 + 1, dir13, pos13, len13 + 1, color, 0);
 						_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, AA, true>(dir34, pos34, len34, dir31, pos31, len13 + 1, dir41, pos41, len41 + 1, color, 0);
-						_draw_triangle_interior<true, true>(A1, A2, A3, fillcolor);
-						_draw_triangle_interior<true, true>(A1, A3, A4, fillcolor);
+						_draw_triangle_interior<true, true>(P1, P2, P3, fillcolor);
+						_draw_triangle_interior<true, true>(P1, P3, P4, fillcolor);
 						}
 					else
 						{
@@ -2560,8 +2612,8 @@ namespace mtools
 						_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, false, true>(dir13, pos13, len13, dir12, pos12, len12 + 1, dir32, pos32, len23 + 1, color, 0);
 						_lineBresenham_avoid<BLEND, true, false, AA, false>(dir14, pos14, len41 + 1, dir13, pos13, len13 + 1, color, 0);
 						_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, AA, true>(dir34, pos34, len34, dir31, pos31, len13 + 1, dir41, pos41, len41 + 1, color, 0);
-						_draw_triangle_interior<true, true>(A1, A2, A3, fillcolor);
-						_draw_triangle_interior<true, true>(A1, A3, A4, fillcolor);
+						_draw_triangle_interior<true, true>(P1, P2, P3, fillcolor);
+						_draw_triangle_interior<true, true>(P1, P3, P4, fillcolor);
 						}
 					}
 				else
@@ -2575,8 +2627,8 @@ namespace mtools
 						_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, false, true>(dir13, pos13, len13, dir12, pos12, len12 + 1, dir32, pos32, len23 + 1, color, 0);
 						_lineBresenham_avoid<BLEND, true, false, AA, false>(dir14, pos14, len41 + 1, dir13, pos13, len13 + 1, color, 0);
 						_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, AA, true>(dir34, pos34, len34, dir31, pos31, len13 + 1, dir41, pos41, len41 + 1, color, 0);
-						_draw_triangle_interior<true, true>(A1, A2, A3, fillcolor);
-						_draw_triangle_interior<true, true>(A1, A3, A4, fillcolor);
+						_draw_triangle_interior<true, true>(P1, P2, P3, fillcolor);
+						_draw_triangle_interior<true, true>(P1, P3, P4, fillcolor);
 						}
 					else
 						{
@@ -2586,8 +2638,8 @@ namespace mtools
 						_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, false, true>(dir13, pos13, len13, dir12, pos12, len12 + 1, dir32, pos32, len23 + 1, color, 0);
 						_lineBresenham_avoid<BLEND, true, false, AA, false>(dir14, pos14, len41 + 1, dir13, pos13, len13 + 1, color, 0);
 						_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, AA, true>(dir34, pos34, len34, dir31, pos31, len13 + 1, dir41, pos41, len41 + 1, color, 0);
-						_draw_triangle_interior<true, true>(A1, A2, A3, fillcolor);
-						_draw_triangle_interior<true, true>(A1, A3, A4, fillcolor);
+						_draw_triangle_interior<true, true>(P1, P2, P3, fillcolor);
+						_draw_triangle_interior<true, true>(P1, P3, P4, fillcolor);
 						}
 					}
 				}
@@ -2604,45 +2656,20 @@ namespace mtools
 				* @param	blending   	(Optional) true to use blending.
 				* @param	penwidth   	(Optional) The pen width (0 = unit width)
 				**/
-				inline void draw_polygon(size_t nbvertices, const iVec2 * tabPoints, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0)
+				inline void draw_polygon(size_t nbvertices, const fVec2 * tabPoints, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0)
 				{
 					if (isEmpty()) return;
 					if ((color.isOpaque()) && (!antialiased)) blending = false;
 					switch (nbvertices)
 						{
 						case 0: { return; }
-						case 1:
-							{
-							draw_square_dot(*tabPoints, color, blending, penwidth);
-							return;
-							}
-						case 2:
-							{
-							draw_line(tabPoints[0], tabPoints[1], color, true, antialiased, blending, penwidth);
-							return;
-							}
-						case 3:
-							{
-							draw_triangle(tabPoints[0], tabPoints[1], tabPoints[2], color, antialiased, blending, penwidth);
-							return;
-							}
-						case 4: 
-							{
-							draw_quad(tabPoints[0], tabPoints[1], tabPoints[2], tabPoints[3], color, antialiased, blending, penwidth);
-							return;
-							}
-					default:
+						case 1: { draw_square_dot(*tabPoints, color, blending, penwidth); return; }
+						case 2: { draw_line(tabPoints[0], tabPoints[1], color, true, antialiased, blending, penwidth); return; }
+						case 3: { draw_triangle(tabPoints[0], tabPoints[1], tabPoints[2], color, antialiased, blending, penwidth); return; }
+						case 4: { draw_quad(tabPoints[0], tabPoints[1], tabPoints[2], tabPoints[3], color, antialiased, blending, penwidth); return; }
+						default:
 						{
-						if ((penwidth <= 0) && (!antialiased) && (blending) && (!color.isOpaque()))
-							{ // draw without overlap
-							_lineBresenham<true, true, false, false, false, false>(tabPoints[0], tabPoints[1], color, true, penwidth, 0);
-							for (size_t i = 1; i < nbvertices - 1; i++)
-								{
-								_lineBresenham_avoid<true, true, false, false, false>(tabPoints[i], tabPoints[i + 1], tabPoints[i - 1], color, 0, 0);
-								}
-							_lineBresenham_avoid_both_sides<true, true, false, false, false>(tabPoints[nbvertices - 1], tabPoints[0], tabPoints[nbvertices - 2], tabPoints[1], color, 0);
-							return;
-							}
+						// TODO, try to draw without overlap if possible (ie blending, not opaque, and penwidth == 0)
 						for (size_t i = 0; i < nbvertices; i++)
 							{
 							draw_line(tabPoints[i], tabPoints[(i + 1) % nbvertices], color, false, antialiased, blending, penwidth);
@@ -2662,7 +2689,7 @@ namespace mtools
 			* @param	blending   	(Optional) true to use blending.
 			* @param	penwidth   	(Optional) The pen width (0 = unit width)
 			**/
-			MTOOLS_FORCEINLINE void draw_polygon(const std::vector<iVec2> & vecPoints, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0)
+			MTOOLS_FORCEINLINE void draw_polygon(const std::vector<fVec2> & vecPoints, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0)
 				{
 				draw_polygon(vecPoints.size(), vecPoints.data(), color, antialiased, blending, penwidth);
 				}
@@ -2680,16 +2707,53 @@ namespace mtools
 			**/
 			inline void draw_filled_polygon(size_t nbvertices, const fVec2 * tabPoints, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND)
 				{
-				switch (nbvertices)
+				if (isEmpty()) return;
+				fVec2 * in_tab = (fVec2*)tabPoints;
+				size_t	in_len = nbvertices;
+				bool allocated = false;
+				// test if clipping is necessary
+				const double of = 10000.0 + _lx + _ly;
+				fBox2 B(-of, _lx + of, -of, _ly + of);
+				for (size_t i = 0; i < nbvertices; i++)
 					{
-					case 0: {return;}
-					case 1: {draw_circle_dot(tabPoints[0], 1, color, antialiased, blending);  return; }
-					case 2: {draw_line(tabPoints[0], tabPoints[1], color, true, antialiased, blending);  return; }
-					case 3: {draw_filled_triangle(tabPoints[0], tabPoints[1], tabPoints[2], color, fillcolor, antialiased, blending); return; }
-					case 4: {draw_filled_quad(tabPoints[0], tabPoints[1], tabPoints[2], tabPoints[3], color, fillcolor, antialiased, blending); return; }
+					if (!B.isInside(tabPoints[i]))
+						{ // yes, needs clipping
+						in_tab = new fVec2[2 * nbvertices + 4];
+						allocated = true;
+						Sutherland_Hodgman_clipping(tabPoints, nbvertices, B, in_tab, in_len);
+						break;
+						}
 					}
-				// TODO. 
+				cout << allocated << "\n";
+				// ok, polygon (in_tab, in_len) is now inside the box B
+				switch (in_len)
+					{
+					case 0: { break; }
+					case 1: {draw_circle_dot(in_tab[0], 1, color, antialiased, blending); break; }
+					case 2: {draw_line(in_tab[0], in_tab[1], color, true, antialiased, blending); break; }
+					case 3: {draw_filled_triangle(in_tab[0], in_tab[1], in_tab[2], color, fillcolor, antialiased, blending); break; }
+					case 4: {draw_filled_quad(in_tab[0], in_tab[1], in_tab[2], in_tab[3], color, fillcolor, antialiased, blending); break; }
+					default:
+						{ // generic drawing
 
+						fVec2 C = in_tab[0];
+						for (size_t i = 1; i < in_len; i++) { C += in_tab[i]; }
+						C *= 1.0 / in_len;
+
+						if (blending)
+							{
+							const bool BLEND = true;
+							for (size_t i = 0; i < in_len; i++) { _draw_triangle_interior<BLEND, true>(C, in_tab[i], in_tab[(i + 1) % in_len], fillcolor); }
+							}
+						else
+							{
+							const bool BLEND = false;
+							for (size_t i = 0; i < in_len; i++) { _draw_triangle_interior<BLEND, true>(C, in_tab[i], in_tab[(i + 1) % in_len], fillcolor); }
+							}
+						}
+					}
+				if (allocated) delete[] in_tab;
+				return;
 				}
 
 
@@ -5019,8 +5083,8 @@ namespace mtools
 			MTOOLS_FORCEINLINE void canvas_draw_thick_vertical_line(const mtools::fBox2 & R, double x, double y1, double y2, double thickness, bool relativethickness, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
 				const auto dim = dimension();
-				const fVec2 P1 = R.absToPixel({ x, y1 }, dim);
-				const fVec2 P2 = R.absToPixel({ x, y2 }, dim);
+				const fVec2 P1 = R.absToPixelf({ x, y1 }, dim);
+				const fVec2 P2 = R.absToPixelf({ x, y2 }, dim);
 				const double th = (relativethickness ? boxTransform_dx(thickness, R, imagefBox()) : thickness);
 				draw_thick_vertical_line(P1.X(), P1.Y(), P2.Y(), th, color, draw_P2, blending, min_tick);
 				}
@@ -5077,11 +5141,11 @@ namespace mtools
 						{
 						color.multOpacity((float)((r2 < min_thick) ? min_thick : r2));
 						}
-					canvas_draw_line(R,P1, P2, color, true, antialiased, blending);
+					canvas_draw_line(R, P1, P2, color, true, antialiased, blending);
 					return;
 					}
 				H *= 0.5;
-				draw_filled_quad(R.absToPixel((P1 + H), dim), R.absToPixel((P2 + H), dim), R.absToPixel((P2 - H), dim), R.absToPixel((P1 - H), dim), color, color, antialiased, blending);
+				draw_filled_quad(R.absToPixelf((P1 + H), dim), R.absToPixelf((P2 + H), dim), R.absToPixelf((P2 - H), dim), R.absToPixelf((P1 - H), dim), color, color, antialiased, blending);
 				return;
 				}
 
@@ -5212,8 +5276,7 @@ namespace mtools
 			MTOOLS_FORCEINLINE void canvas_draw_triangle(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, fVec2 P3, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0)
 				{
 				const auto dim = dimension();
-				// TODO : CHECK CLIPPING 
-				draw_triangle(R.absToPixel(P1, dim), R.absToPixel(P2, dim), R.absToPixel(P3, dim), color, antialiased, blending, penwidth);
+				draw_triangle(R.absToPixelf(P1, dim), R.absToPixelf(P2, dim), R.absToPixelf(P3, dim), color, antialiased, blending, penwidth);
 				}
 
 
@@ -5233,8 +5296,7 @@ namespace mtools
 			inline void canvas_draw_filled_triangle(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, fVec2 P3, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND)
 				{
 				const auto dim = dimension();
-				// TODO : CHECK CLIPPING 
-				draw_filled_triangle(R.absToPixel(P1, dim), R.absToPixel(P2, dim), R.absToPixel(P3, dim), color, fillcolor, antialiased, blending);
+				draw_filled_triangle(R.absToPixelf(P1, dim), R.absToPixelf(P2, dim), R.absToPixelf(P3, dim), color, fillcolor, antialiased, blending);
 				}
 
 
@@ -5255,7 +5317,7 @@ namespace mtools
 				{
 				const auto dim = dimension();
 				// TODO : CHECK CLIPPING 
-				draw_quad(R.absToPixel(P1, dim), R.absToPixel(P2, dim), R.absToPixel(P3, dim), R.absToPixel(P4, dim), color, antialiased, blending);
+				draw_quad(R.absToPixelf(P1, dim), R.absToPixelf(P2, dim), R.absToPixelf(P3, dim), R.absToPixelf(P4, dim), color, antialiased, blending);
 				}
 
 
@@ -5275,8 +5337,7 @@ namespace mtools
 			inline void canvas_draw_filled_quad(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, fVec2 P3, fVec2 P4, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND)
 				{
 				const auto dim = dimension();
-				// TODO : CHECK CLIPPING 
-				draw_filled_quad(R.absToPixel(P1, dim), R.absToPixel(P2, dim), R.absToPixel(P3, dim), R.absToPixel(P4, dim), color, fillcolor, antialiased, blending);
+				draw_filled_quad(R.absToPixelf(P1, dim), R.absToPixelf(P2, dim), R.absToPixelf(P3, dim), R.absToPixelf(P4, dim), color, fillcolor, antialiased, blending);
 				}
 
 
@@ -5296,8 +5357,8 @@ namespace mtools
 				const size_t N = tabPoints.size();
 				std::vector<fVec2> tab;
 				tab.reserve(N);
-				for (size_t i = 0; i < N; i++) { tab.push_back(R.absToPixel(tabPoints[i], dim)); }
-				//draw_polygon(tab, color, antialiased, blending, penwidth);
+				for (size_t i = 0; i < N; i++) { tab.push_back(R.absToPixelf(tabPoints[i], dim)); }
+				draw_polygon(tab, color, antialiased, blending, penwidth);
 				}
 
 
@@ -5315,10 +5376,10 @@ namespace mtools
 				{
 				const auto dim = dimension();
 				const size_t N = tabPoints.size();
-				std::vector<iVec2> tab;
+				std::vector<fVec2> tab;
 				tab.reserve(N);
-				for (size_t i = 0; i < N; i++) { tab.push_back(R.absToPixel(tabPoints[i], dim)); }
-				//draw_filled_polygon(tab, color, fillcolor, antialiased, blending);
+				for (size_t i = 0; i < N; i++) { tab.push_back(R.absToPixelf(tabPoints[i], dim)); }
+				draw_filled_polygon(tab, color, fillcolor, antialiased, blending);
 				}
 
 
