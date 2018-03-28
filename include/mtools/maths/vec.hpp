@@ -79,7 +79,7 @@ namespace mtools
          *
          * @param   v   the value to fill the vector with.
          **/
-        Vec(const T & v) { for (size_t i = 0; i < N; i++) _m_tab[i] = v; }
+        explicit Vec(const T & v) { for (size_t i = 0; i < N; i++) _m_tab[i] = v; }
 
 
         /**
@@ -555,7 +555,7 @@ namespace mtools
 	**/
 	MTOOLS_FORCEINLINE iVec2 round(const fVec2 & V)
 		{
-		return iVec2(std::round(V.X()), std::round(V.Y()));
+		return iVec2((int64)std::round(V.X()), (int64)std::round(V.Y()));
 		}
 
 
@@ -565,7 +565,7 @@ namespace mtools
 	**/
 	MTOOLS_FORCEINLINE iVec3 round(const fVec3 & V)
 		{
-		return iVec3(std::round(V.X()), std::round(V.Y()));
+		return iVec3((int64)std::round(V.X()), (int64)std::round(V.Y()), (int64)std::round(V.Z()));
 		}
 
 
@@ -575,7 +575,7 @@ namespace mtools
 	template<size_t N> MTOOLS_FORCEINLINE iVec<N> round(const fVec<N> & V)
 		{
 		iVec<N> res;
-		for (size_t i = 0; i < N; i++) { res[i] = std::round(V[i]); }
+		for (size_t i = 0; i < N; i++) { res[i] = (int64)std::round(V[i]); }
 		return res;
 		}
 
