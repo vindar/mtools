@@ -549,6 +549,36 @@ namespace mtools
 
 
 
+	/**
+	* Convert an fVec2 to iVec2 using std::round() instead of truncation to get the closest integer.
+	* Version for N = 2.
+	**/
+	MTOOLS_FORCEINLINE iVec2 round(const fVec2 & V)
+		{
+		return iVec2(std::round(V.X()), std::round(V.Y()));
+		}
+
+
+	/**
+	* Convert an fVec3 to iVec3 using std::round() instead of truncation to get the closest integer.
+	* Version for N = 3.
+	**/
+	MTOOLS_FORCEINLINE iVec3 round(const fVec3 & V)
+		{
+		return iVec3(std::round(V.X()), std::round(V.Y()));
+		}
+
+
+	/**
+	* Convert an fVec to iVec using std::round() instead of truncation to get the closest integer.
+	**/
+	template<size_t N> MTOOLS_FORCEINLINE iVec<N> round(const fVec<N> & V)
+		{
+		iVec<N> res;
+		for (size_t i = 0; i < N; i++) { res[i] = std::round(V[i]); }
+		return res;
+		}
+
 
 	/**
 	* Test if a (double valued) vector has integer coordinates.
@@ -557,7 +587,7 @@ namespace mtools
 		{
 		for (size_t n = 0; n < N; n++)
 			{
-			if (round(V[n]) != V[n]) return false;
+			if (std::round(V[n]) != V[n]) return false;
 			}
 		return true;
 		}

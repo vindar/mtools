@@ -1814,10 +1814,23 @@ namespace mtools
 			*******************************************************************************************************************************************************
 			*																				   																      *
 			*                                                            DRAWING DOTS, LINES AND CURVES                                                           *
-			*																																					  *
+			*																				   																      *
+			* Position for floating point coordinate fVec2 is in normalizsed range [-0.5 , lx - 0.5] x [-0.5, ly - 0.5] 								          *
+			*	-> this means that integer valued (x,y) correspond to the center of the pixel at pos (x,y) on the image										      *				
+			*	   in particular, methods taking floating point value position  can also be called with iVec2 parameter and are centered in the middle of pixels. *
+			*	   !!!! NO Y-INVERSION IS PERFORMED !!!																			   																      *
+			*																				   																      *
+			* All drawing primitive are clipped when drawing occurs outside the image (hopefully in a safe and fast way).									      *
+			*																				   																      *
 			*******************************************************************************************************************************************************
 			*******************************************************************************************************************************************************/
 
+
+			/*****************************************
+			 * 
+			 * DOTS
+			 * 
+			 *****************************************/
 
 			/**
 			 * Draw a circle dot on the image.
@@ -1836,13 +1849,11 @@ namespace mtools
 					{
 					if (blend)
 						{
-						if (radius == 1) _updatePixel<true, true, false, false>(center.X(), center.Y(), outcolor, 0, 0);
-						else  _updatePixel<true, true, true, false>(center.X(), center.Y(), outcolor, (int32)(256*radius), 0);
+						if (radius == 1) _updatePixel<true, true, false, false>(center.X(), center.Y(), outcolor, 0, 0); else  _updatePixel<true, true, true, false>(center.X(), center.Y(), outcolor, (int32)(256 * radius), 0);
 						}
 					else
 						{
-						if (radius == 1) _updatePixel<false, true, false, false>(center.X(), center.Y(), outcolor, 0, 0);
-						else  _updatePixel<false, true, true, false>(center.X(), center.Y(), outcolor, (int32)(256*radius), 0);
+						if (radius == 1) _updatePixel<false, true, false, false>(center.X(), center.Y(), outcolor, 0, 0); else  _updatePixel<false, true, true, false>(center.X(), center.Y(), outcolor, (int32)(256 * radius), 0);
 						}
 					return;
 					}
@@ -1851,18 +1862,41 @@ namespace mtools
 
 
 			/**
+			 * Draw a circle dot on the image. 
+			 * version with real valued coordinates. 
+			 **/
+			MTOOLS_FORCEINLINE void draw_circle_dot(fVec2 center, double radius, RGBc outcolor, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+				{
+				if ((isEmpty()) || (radius <= 0)) return;
+				if (radius <= 1)
+					{
+					if ((center.X() <= -0.5) || (center.X() >= _lx - 0.5) || (center.Y() <= -0.5) || (center.Y() >= _ly - 0.5)) return;
+					iVec2 c = round(center);
+					if (blend)
+						{
+						if (radius == 1) _updatePixel<true, false, false, false>(c.X(), c.Y(), outcolor, 0, 0); else  _updatePixel<true, false, true, false>(c.X(), c.Y(), outcolor, (int32)(256 * radius), 0);
+						}
+					else
+						{
+						if (radius == 1) _updatePixel<false, false, false, false>(c.X(), c.Y(), outcolor, 0, 0); else  _updatePixel<false, false, true, false>(c.X(), c.Y(), outcolor, (int32)(256 * radius), 0);
+						}
+					return;
+					}
+				draw_filled_circle(center, radius, outcolor, fillcolor, aa, blend);
+				}
+
+
+			/**
 			 * Draw a square dot on the image.
-			 * 
-			 * DEPRECATED : SHOULD BE REMOVED AT SOME POINT
 			 * 
 			 * Use setPixel() and blendPixel or operator() for faster methods to set a single pixel.
 			 *
 			 * @param	P			Position of the center.
 			 * @param	color   	The color.
-			 * @param	blending	true to use blending.
+			 * @param	blending	(Optional) true to use blending.
 			 * @param	penwidth	(Optional) The pen width (radius of the square: 0 = single pixel).
-			 **/
-			void draw_square_dot(iVec2 P, RGBc color, bool blending, int32 penwidth = 0)
+			**/
+			MTOOLS_FORCEINLINE void draw_square_dot(iVec2 P, RGBc color, bool blending = DEFAULT_BLEND, int32 penwidth = 0)
 				{
 				if (isEmpty()) return;
 				if (color.isOpaque()) { blending = false; }
@@ -1877,6 +1911,25 @@ namespace mtools
 					}
 				}
 
+			
+			/**
+			* Draw a square dot on the image.
+			* version with real valued coordinates.
+			**/
+			MTOOLS_FORCEINLINE void draw_square_dot(fVec2 P, RGBc color, bool blending = DEFAULT_BLEND, int32 penwidth = 0)
+				{
+				const double w = 2 * penwidth;
+				if ((P.X() <= -0.5 - w) || (P.X() >= _lx + w - 0.5) || (P.Y() <= -0.5 - w) || (P.Y() >= _ly + w - 0.5)) return;
+				draw_square_dot(round(P), color, blending, penwidth);
+				}
+
+
+			/*****************************************
+			*
+			* LINES
+			*
+			*****************************************/
+
 
 			/**
 			 * Draw an horizontal line.
@@ -1887,11 +1940,24 @@ namespace mtools
 			 * @param	color   	The color to use.
 			 * @param	draw_P2 	(Optional) true to draw the end point.
 			 * @param	blending	(Optional) true to use blending.
-			 **/
-			inline void draw_horizontal_line(int64 y, int64 x1, int64 x2, RGBc color, bool draw_P2 = true, bool blending = true)
+			**/
+			MTOOLS_FORCEINLINE void draw_horizontal_line(int64 y, int64 x1, int64 x2, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND)
 				{
 				if (isEmpty()) return;
 				if ((blending) && (!color.isOpaque())) _horizontalLine<true, true>(y, x1, x2, color, draw_P2); else _horizontalLine<false, true>(y, x1, x2, color, draw_P2);
+				}
+
+
+			/**
+			* Draw an horizontal line.
+			* version with real valued coordinates.
+			**/
+			MTOOLS_FORCEINLINE void draw_horizontal_line(double y, double x1, double x2, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND)
+				{
+				if ((y < -1.0) || (y > _ly + 1.0)) return;
+				if (x1 <= -1.0) { x1 = -1.0; } else if (x1 >= _lx + 1.0) { x1 = _lx + 1.0; }
+				if (x2 <= -1.0) { x2 = -1.0; } else if (x2 >= _lx + 1.0) { x2 = _lx + 1.0; }
+				draw_horizontal_line((int64)(std::round(y)), (int64)(std::round(x1)), (int64)(std::round(x2)), color, draw_P2, blending);
 				}
 
 
@@ -1907,10 +1973,20 @@ namespace mtools
 			 * @param	blending 	(Optional) true to use blending.
 			 * @param	min_tick 	(Optional) minimal thickness.
 			 **/
-			inline void draw_horizontal_line(int64 y, int64 x1, int64 x2, double thickness, RGBc color, bool draw_P2 = true, bool blending = true, double min_tick = DEFAULT_MIN_THICKNESS)
+			MTOOLS_FORCEINLINE void draw_horizontal_line(int64 y, int64 x1, int64 x2, double thickness, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
 				if (isEmpty() || (thickness <= 0)) return;
 				if (blending) _tickHorizontalLine<true, true>(y, x1, x2, color, draw_P2, thickness, min_tick); else _tickHorizontalLine<false, true>(y, x1, x2, color, draw_P2, thickness,min_tick);
+				}
+
+
+			/**
+			* Draw a thick horizontal line.
+			* version with real valued coordinates.
+			**/
+			MTOOLS_FORCEINLINE void draw_horizontal_line(double y, double x1, double x2, double thickness, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
+				{
+				draw_horizontal_line((int64)std::round(y), (int64)std::round(x1), (int64)std::round(x2), thickness, color, draw_P2, blending, min_tick);
 				}
 
 
@@ -1924,10 +2000,23 @@ namespace mtools
 			 * @param	draw_P2 	(Optional) true to draw the end point.
 			 * @param	blending	(Optional) true to use blending.
 			 **/
-			inline void draw_vertical_line(int64 x, int64 y1, int64 y2, RGBc color, bool draw_P2 = true, bool blending = true)
+			MTOOLS_FORCEINLINE void draw_vertical_line(int64 x, int64 y1, int64 y2, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND)
 				{
 				if (isEmpty()) return;
 				if (blending) _verticalLine<true, true>(x,y1,y2, color, draw_P2); else _verticalLine<false, true>(x,y1,y2, color, draw_P2);
+				}
+
+
+			/**
+			* Draw a vertical line.
+			* version with real valued coordinates.
+			**/
+			MTOOLS_FORCEINLINE void draw_vertical_line(double x, double y1, double y2, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND)
+				{
+				if ((y < -1.0) || (y > _ly + 1.0)) return;	
+				if (x1 <= -1.0) { x1 = -1.0; } else if (x1 >= _lx + 1.0) { x1 = _lx + 1.0; } 
+				if (x2 <= -1.0) { x2 = -1.0; } else if (x2 >= _lx + 1.0) { x2 = _lx + 1.0; }
+				draw_vertical_line((int64)std::round(x), (int64)std::round(y1), (int64)std::round(y2), color, draw_P2, blending);
 				}
 
 
@@ -1943,7 +2032,7 @@ namespace mtools
 			 * @param	blending 	(Optional) true to use blending.
 			 * @param	min_tick 	(Optional) minimal thickness.
 			 **/
-			inline void draw_vertical_line(int64 x, int64 y1, int64 y2, double thickness, RGBc color, bool draw_P2 = true, bool blending = true, double min_tick = DEFAULT_MIN_THICKNESS)
+			MTOOLS_FORCEINLINE void draw_vertical_line(int64 x, int64 y1, int64 y2, double thickness, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
 				if (isEmpty() || (thickness <= 0)) return;
 				if (blending) _tickVerticalLine<true, true>(x, y1, y2, color, draw_P2, thickness, min_tick); else _tickVerticalLine<false, true>(x, y1, y2, color, draw_P2, thickness, min_tick);
@@ -1951,10 +2040,18 @@ namespace mtools
 
 
 			/**
+			* Draw a thick vertical line.
+			* version with real valued coordinates.
+			**/
+			MTOOLS_FORCEINLINE void draw_vertical_line(double x, double y1, double y2, double thickness, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
+				{
+				draw_vertical_line((int64)std::round(x), (int64)std::round(y1), (int64)std::round(y2), thickness, color, draw_P2, blending, min_tick);
+				}
+
+
+			/**
 			 * Draw a simple line.
 			 * 
-			 * PENWIDTH IS DEPRECATED. SHOULD BE REMOVED AT SOME POINT
-			 *
 			 * @param	P1		   	First point.
 			 * @param	P2		   	Second endpoint.
 			 * @param	color	   	The color to use.
@@ -1963,7 +2060,7 @@ namespace mtools
 			 * @param	blending   	(Optional) true to use blending.
 			 * @param	penwidth   	(Optional) pen radius (0 = unit pen)
 			 **/
-			inline void draw_line(iVec2 P1, iVec2 P2, RGBc color, bool draw_P2 = true, bool antialiased = true, bool blending = true, int penwidth = 0)
+			inline void draw_line(iVec2 P1, iVec2 P2, RGBc color, bool draw_P2 = true, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int penwidth = 0)
 				{
 				if (isEmpty()) return;
 				if (penwidth <= 0)
@@ -1989,6 +2086,25 @@ namespace mtools
 				if ((blending) && (!color.isOpaque())) _lineBresenham<true, true, false, true, false, false>(P1, P2, color, draw_P2, penwidth, 0); else _lineBresenham<false, true, false, true, false, false>(P1, P2, color, draw_P2, penwidth, 0);
 				return;
 				}
+
+
+			/**
+			* Draw a simple line.
+			* Version with real-valued coordinates.
+			**/
+			inline void draw_line(fVec2 P1, fVec2 P2, RGBc color, bool draw_P2 = true, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int penwidth = 0)
+				{
+				draw_line(round(P1), round(P2), color, draw_P2, antialiased, blending, penwidth);
+				}
+	
+
+
+
+			/*****************************************
+			*
+			* CURVES
+			*
+			*****************************************/
 
 
 			/**
@@ -2316,15 +2432,12 @@ namespace mtools
 				}
 
 
+			/*****************************************
+			*
+			* POLYGON
+			*
+			*****************************************/
 
-
-			/******************************************************************************************************************************************************
-			*******************************************************************************************************************************************************
-			*																				   																      *
-			*                                                                  DRAWING SHAPES                                                                     *
-			*																																					  *
-			*******************************************************************************************************************************************************
-			*******************************************************************************************************************************************************/
 
 
 			/**
@@ -2899,6 +3012,12 @@ namespace mtools
 				fill_convex_polygon(tabPoints.size(), tabPoints.data(), fillcolor, blending);
 				}	
 
+
+			/*****************************************
+			*
+			* CIRCLE / ELLIPSE
+			*
+			*****************************************/
 
 
 			/**
@@ -4417,6 +4536,12 @@ namespace mtools
 
 
 			/**
+			* Return a fBox2 representing the normalized image box : fBox2(-0.5, lx() - 0.5, -0.5, ly() - 0.5)
+			**/
+			MTOOLS_FORCEINLINE iBox2 imagefBox() const { return fBox2(-0.5, _lx - 0.5, -0.5, _ly - 0.5); }
+
+
+			/**
 			* return the image aspect ratio lx/ly.
 			**/
 			MTOOLS_FORCEINLINE double aspectRatio() const
@@ -5219,7 +5344,7 @@ namespace mtools
 				std::vector<fVec2> tab;
 				tab.reserve(N);
 				for (size_t i = 0; i < N; i++) { tab.push_back(R.absToPixel(tabPoints[i], dim)); }
-				draw_polygon(tab, color, antialiased, blending, penwidth);
+				//draw_polygon(tab, color, antialiased, blending, penwidth);
 				}
 
 
@@ -5240,7 +5365,7 @@ namespace mtools
 				std::vector<iVec2> tab;
 				tab.reserve(N);
 				for (size_t i = 0; i < N; i++) { tab.push_back(R.absToPixel(tabPoints[i], dim)); }
-				draw_filled_polygon(tab, color, fillcolor, antialiased, blending);
+				//draw_filled_polygon(tab, color, fillcolor, antialiased, blending);
 				}
 
 
@@ -7553,7 +7678,7 @@ namespace mtools
 			* Return the max distance from P where [P,Q] and [P,Q2] intersect.
 			**/
 			template<bool checkrange> MTOOLS_FORCEINLINE int64 _lineBresenham_find_max_intersection(iVec2 P, iVec2 Q, iVec2 Q2)
-			{
+				{
 				if ((P == Q) || (P == Q2)) return 1;
 				_bdir linea;
 				_bpos posa;
@@ -7561,8 +7686,8 @@ namespace mtools
 				_bdir lineb;
 				_bpos posb;
 				int64 lenb = _init_line(P, Q2, lineb, posb) + 1;
-				_lineBresenham_find_max_intersection<checkrange>(linea, posa, lena, lineb, posb, lenb);
-			}
+				return _lineBresenham_find_max_intersection<checkrange>(linea, posa, lena, lineb, posb, lenb);
+				}
 
 
 
