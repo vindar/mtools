@@ -216,8 +216,8 @@ namespace mtools
                     }
                 // d >= 1152 We choose a point uniformly on the circle of radius d
                 double a = Unif(gen)*TWOPI;
-                pos.X() += (int64)round(d*sin(a));
-                pos.Y() += (int64)round(d*cos(a));
+                pos.X() += (int64)std::round(d*sin(a));
+                pos.Y() += (int64)std::round(d*cos(a));
                 }
             MTOOLS_ASSERT(d >= 0);
             return d;

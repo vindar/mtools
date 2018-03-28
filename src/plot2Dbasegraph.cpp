@@ -633,11 +633,11 @@ namespace mtools
 			coul.multOpacity(opacity);
             double eps = R.lx() / im.width();
             double x = R.min[0] + (eps / 2.0);
-			const int ly = (int)im.height();
-			for (int i = 0; i < im.width(); i++)
+			const int64 ly = (int64)im.height();
+			for (int64 i = 0; i < im.width(); i++)
                 {
                 double y = _function(x);
-                int j = ((y >= R.min[1]) && (y <= R.max[1])) ? (ly - 1 - (int)floor((y - R.min[1]) / R.ly()*ly + 0.5)) : ((y >= R.max[1]) ? -1 : ly);
+                int64 j = ((y >= R.min[1]) && (y <= R.max[1])) ? (ly - 1 - (int64)std::floor((y - R.min[1]) / R.ly()*ly + 0.5)) : ((y >= R.max[1]) ? -1 : ly);
                 if (!std::isnan(y))
                     {
 					if (over)
