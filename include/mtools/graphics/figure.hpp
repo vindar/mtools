@@ -35,63 +35,79 @@ namespace mtools
 
 
 	/* Forward declarations */
-	class FigureInterface;				// interface for a figure object
+	namespace Figure
+		{
+		namespace internals_figure
+			{
+			class FigureInterface;		// interface for a figure object
+			}
+		}
+
 
 	template<int N> class FigureCanvas;	// main figure canvas class
 
-	/* available figures classes*/
 
 
-	// DONE 
-	// 
-	class FigureDot;
+/*
+	// DOTS
 
-	class FigureCircle;
-	class FigureCirclePart;
-	class FigureEllipse;
-	class FigureEllipsePart;
+	class CircleDot;
+	class SquareDot;
 
-	class FigureHorizontalLine;
-	class FigureVerticalLine;
+	// LINES 
+
+	class HorizontalLine;
+	class VerticalLine;
+
+	class ThickHorizontalLine;
+	class ThickVerticalLine;
+
+	class Line;
+	class ThickLine;
+
+	// CURVES
+
+	class QuadBezier;
+	class CubicBezier;
+
+	class ThickQuadBezier;
+	class ThickCubicBezier;
+
+	// POLYGON
+
+	class Triangle;
+	class Quad;
+
+	// ELLIPSE / CIRCLES
+
+	class Circle;
+	class CirclePart;
+
+	class Ellipse;
+	class EllipsePart;
+
+	// TEXT
+	
+	// MISC
+
+*/
 
 
-	// TODO
-	 
-	class FigureLine;
-	class FigurePolyLine;
-	class FigurePolygon;
-
-
-	class FigureTriangle;
-	class FigureQuad;
-
-
-
-
-
-
-	class FigureThickLine;
-	class FigureThickPolyLine;
-
+	/*
+	class PolyLine;
+	class ThickPolyLine;
+	class Polygon;
 	class FigureBox;
-	class FigureConvexPolygon;
-	class FigureQuadBezier;
-	class FigureRatQuadBezier;
-	class FigureCubicBezier;
-
 	class FigureText;
-
 	class FigureImage;
-
 	class FigureFill;
 	class FigureClip;
-
 	template<typename FIGURE1, typename FIGURE2>  class FigurePair;
 	template<typename FIGURE1, typename FIGURE2, typename FIGURE3>  class FigureTriplet;
 	template<typename FIGURE1, typename FIGURE2, typename FIGURE3, typename FIGURE4>  class FigureQuadruplet;
 	template<class... FIGURES> class FigureTuple;
 	class FigureGroup;
-
+	*/
 
 
 	
@@ -108,6 +124,7 @@ namespace mtools
 
 	/**
 	 * Class that holds figure objects.
+	 * 
 	 * use makePlot2DFigure() to create a plot object that encapsulate the FigureCanvas object. 
 	 * 
 	 * NOT THREADSAFE : do not insert objects while accessing (ie drawing) the canvas. 
@@ -126,7 +143,7 @@ namespace mtools
 		FigureCanvas(size_t nbLayers = 1) : _vecallocp(), _nbLayers(nbLayers), _figLayers(nullptr)
 			{
 			MTOOLS_INSURE(nbLayers > 0);
-			_figLayers = new TreeFigure<FigureInterface*,N> [nbLayers];
+			_figLayers = new TreeFigure<Figure::internals_figure::FigureInterface*,N> [nbLayers];
 			}
 
 
@@ -145,7 +162,7 @@ namespace mtools
 		**/
 		FigureCanvas(FigureCanvas && o) : _vecallocp(std::move(o._vecallocp)), _nbLayers(o._nbLayers), _figLayers(o._figLayers)
 			{
-			o._figLayers = new TreeFigure<FigureInterface*, N>[o._nbLayers]; // create empty objects to replace to ones moved.
+			o._figLayers = new TreeFigure<Figure::internals_figure::FigureInterface*, N>[o._nbLayers]; // create empty objects to replace to ones moved.
 			}
 
 
@@ -158,7 +175,7 @@ namespace mtools
 			_vecallocp = std::move(o._vecallocp);
 			_nbLayers = o._nbLayers;
 			_figLayers = o._figLayers;
-			o._figLayers = new TreeFigure<FigureInterface*, N>(o._nbLayers); // create empty objects to replace to ones moved.
+			o._figLayers = new TreeFigure<Figure::internals_figure::FigureInterface*, N>(o._nbLayers); // create empty objects to replace to ones moved.
 			return *this;
 			}
 
@@ -169,7 +186,7 @@ namespace mtools
 		template<typename FIGURECLASS> MTOOLS_FORCEINLINE void operator()(const FIGURECLASS & figure, size_t layer = 0)
 			{
 			MTOOLS_INSURE(layer < _nbLayers);
-			FigureInterface * pf = _copyInPool(figure);			// save a copy of the object in the memory pool
+			Figure::internals_figure::FigureInterface * pf = _copyInPool(figure);			// save a copy of the object in the memory pool
 			_figLayers[layer].insert(pf->boundingBox(), pf);	// add to the corresponding layer. 
 			return;
 			}
@@ -214,7 +231,7 @@ namespace mtools
 
 
 		/** Return a pointer to the TreeFigure object associated with a given layer. */
-		MTOOLS_FORCEINLINE TreeFigure<FigureInterface*, N> * getTreeLayer(size_t layer) const
+		MTOOLS_FORCEINLINE TreeFigure<Figure::internals_figure::FigureInterface*, N> * getTreeLayer(size_t layer) const
 			{
 			MTOOLS_ASSERT(layer < _nbLayers);
 			return _figLayers + layer;
@@ -229,11 +246,11 @@ namespace mtools
 
 		
 		/* Make a copy of the figure object inside the memory pool */
-		template<typename FIGURECLASS> MTOOLS_FORCEINLINE FigureInterface * _copyInPool(const FIGURECLASS & figure)
+		template<typename FIGURECLASS> MTOOLS_FORCEINLINE Figure::internals_figure::FigureInterface * _copyInPool(const FIGURECLASS & figure)
 			{
-			void * p = _allocate(sizeof(FIGURECLASS));	// allocate memory in the memory pool for the figure object
-			new (p) FIGURECLASS(figure);				// placement new : copy constructor. 
-			return ((FigureInterface *)p);				// cast to base class. 
+			void * p = _allocate(sizeof(FIGURECLASS));					// allocate memory in the memory pool for the figure object
+			new (p) FIGURECLASS(figure);								// placement new : copy constructor. 
+			return ((Figure::internals_figure::FigureInterface *)p);	// cast to base class. 
 			}
 
 
@@ -253,8 +270,8 @@ namespace mtools
 			{
 			for (void *  p : _vecallocp) 
 				{
-				((FigureInterface*)p)->~FigureInterface();	// call dtor
-				free(p);									// free memory
+				((Figure::internals_figure::FigureInterface*)p)->~FigureInterface();	// call dtor
+				free(p);																// free memory
 				}
 			_vecallocp.clear();
 			}
@@ -264,14 +281,11 @@ namespace mtools
 		/*********************************************************************************************************/
 
 
-		size_t								_nbLayers;	// number of layers
-		TreeFigure<FigureInterface*, N> *	_figLayers;	// tree figure object for each layer. 
+		size_t															_nbLayers;	// number of layers
+		TreeFigure<Figure::internals_figure::FigureInterface*, N> *		_figLayers;	// tree figure object for each layer. 
 
 
 	};
-
-
-
 
 
 
@@ -282,1483 +296,1621 @@ namespace mtools
 	/************************************************************************************************************************************
 	*
 	* FIGURE CLASSES
-	*
-	*************************************************************************************************************************************/
-
-
-
-	/**  
-	 * Interface class for figure objects. 
-	 *
-	 * Any Figure object must derived from thispure virtual base class. 
-	 **/
-	class FigureInterface
-	{
-
-	public:
-
-
-		/** Virtual destructor */
-		virtual ~FigureInterface() {}
-
-
-		/**
-		* Draws the figure onto an image with a given range.
-		*
-		* @param [in,out]	im		    the image to draw onto.
-		* @param 			R		    the range.
-		* @param 		  	highQuality True when high quality drawing is requested and false otherwise
-		* @param 		  	min_thick   minimum thickness to use when drawing
-		*/
-		virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) = 0;
-
-
-		/**
-		* Return the object's bounding box.
-		*
-		* @return	A fBox2.
-		*/
-		virtual fBox2 boundingBox() const = 0;
-
-
-		/**
-		* Print info about the object into an std::string.
-		*/
-		virtual std::string toString(bool debug = false) const = 0;
-
-		/**
-		* Serialize the object.
-		*/
-		virtual void serialize(OBaseArchive & ar) const = 0;
-
-		/**
-		* Deserialize this object.
-		*/
-		virtual void deserialize(IBaseArchive & ar) = 0;
-
-	};
-
-
-
-
-
-
-
-	/************************************************************************************************************************************
-	*
-	* LINES
-	*
-	*************************************************************************************************************************************/
-
-
-
-	/**
 	* 
-	* Horizontal Line figure
+	* All the classes located inside the Figure namespace are derived from FigureInterface hence can be inserted in a canvas object. 
 	*
-	**/
-	class FigureHorizontalLine : public FigureInterface
+	*************************************************************************************************************************************/
+
+
+	namespace Figure
 	{
 
-	public:
+		namespace internals_figure
+		{
 
-		/** parameters **/  
-		double x1, x2, y;		// line 
-		double thickness;		// thickness, 0 = no thickness. < 0 = absolute thickness,  >0 = relative thickness
-		RGBc	color;			// circle color
+			/**
+			* Interface class for figure objects.
+			*
+			* Any Figure object must derived from thispure virtual base class.
+			**/
+			class FigureInterface
+			{
+
+			public:
+
+
+				/** Virtual destructor */
+				virtual ~FigureInterface() {}
+
+
+				/**
+				* Draws the figure onto an image with a given range.
+				*
+				* @param [in,out]	im		    the image to draw onto.
+				* @param 			R		    the range.
+				* @param 		  	highQuality True when high quality drawing is requested and false otherwise
+				* @param 		  	min_thick   minimum thickness to use when drawing
+				*/
+				virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) = 0;
+
+
+				/**
+				* Return the object's bounding box.
+				*
+				* @return	A fBox2.
+				*/
+				virtual fBox2 boundingBox() const = 0;
+
+
+				/**
+				* Print info about the object into an std::string.
+				*/
+				virtual std::string toString(bool debug = false) const = 0;
+
+				/**
+				* Serialize the object.
+				*/
+				virtual void serialize(OBaseArchive & ar) const = 0;
+
+				/**
+				* Deserialize this object.
+				*/
+				virtual void deserialize(IBaseArchive & ar) = 0;
+
+			};
+
+		}
+
+
+
+
+
+		/************************************************************************************************************************************
+		*
+		* DOTS
+		*
+		*************************************************************************************************************************************/
+
 
 
 		/**
-		* Constructor. Horizontal line, no thickness.
+		* 
+		* Circle Dot
+		* 
+		* The radius of a dot is absolute and does not scale with the range.
+		* 
 		**/
-		FigureHorizontalLine(double Y, double X1, double X2, RGBc col) 
-		: x1(std::min(X1, X2)), x2(std::max(X1, X2)), y(Y), thickness(0.0), color(col)
-			{
-			}
+		class CircleDot : public internals_figure::FigureInterface
+		{
+
+		public:
+
+			fVec2	center;			// center
+			double	radius;			// dot radius
+			RGBc	outlinecolor;	// outline color
+			RGBc	fillcolor;		// interior color
+
+
+			/**
+			 * Construct a circle dot. Unit pixel. 
+			 *
+			 * @param	centerdot position
+			 * @param	color	  color.
+			 */
+			CircleDot(fVec2 centerdot, RGBc color) : center(centerdot), radius(1.0), outlinecolor(color), fillcolor(color)
+				{
+				}
+
+
+			/**
+			 * Construct a circle dot with given (aboslute) radius.
+			 *
+			 * @param	centerdot position.
+			 * @param	rad		  radius of the dot.
+			 * @param	color	  color.
+			 */
+			CircleDot(fVec2 centerdot, double rad, RGBc color) : center(centerdot), radius(rad), outlinecolor(color), fillcolor(color)
+				{
+				MTOOLS_ASSERT(rad >= 0);
+				}
+
+
+			/** Constructor. Dot with given size and color and outline. **/
+			CircleDot(fVec2 centerdot, double rad, RGBc border_color, RGBc fill_color) : center(centerdot), radius(rad), outlinecolor(border_color), fillcolor(fill_color)
+				{
+				MTOOLS_ASSERT(rad >= 0);
+				}
+
+
+			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+				{
+				double r = (radius < min_thickness) ? min_thickness : radius;
+				im.canvas_draw_circle_dot(R, center, r, outlinecolor, fillcolor, highQuality, true);
+				}
+
+
+			virtual fBox2 boundingBox() const override
+				{
+				return fBox2(center.X(), center.X(), center.Y(), center.Y());
+				}
+
+
+			virtual std::string toString(bool debug = false) const override
+				{
+				std::string str("CircleDot [");
+				str += mtools::toString(center) + ", ";
+				str += mtools::toString(radius) + "  outline ";
+				str += mtools::toString(outlinecolor) + " interior " + mtools::toString(fillcolor);
+				return str + "]";
+				}
+
+
+			virtual void serialize(OBaseArchive & ar) const override
+				{
+				ar & center & radius & outlinecolor & fillcolor;
+				}
+
+
+			virtual void deserialize(IBaseArchive & ar) override
+				{
+				ar & center & radius & outlinecolor & fillcolor;
+				}
+
+		};
+
+
+
 
 		/**
-		* Constructor. Horizontal line, with thickness.
+		* 
+		* Square Dot
+		* 
+		* The radius of a dot is absolute and does not scale with the range.
+		* 
 		**/
-		FigureHorizontalLine(double Y, double X1, double X2, double thick, bool relativethickness, RGBc col)
-		: x1(std::min(X1,X2)), x2(std::max(X1, X2)), y(Y), thickness(relativethickness ? thick : -thick), color(col)
-			{
-			MTOOLS_ASSERT(thick >= 0);
-			}
+		class SquareDot : public internals_figure::FigureInterface
+		{
+
+		public:
+
+			fVec2	center;			// center
+			int32	pw;				// radius
+			RGBc	color;			// color
 
 
-		/** Draw method */
-		virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
-			{
-			if (thickness == 0.0)
+			/**
+			 * Construct a square dot : unit pixel size. 
+			 *
+			 * @param	centerdot position
+			 * @param	col		  color
+			 */
+			SquareDot(fVec2 centerdot, RGBc col) : center(centerdot), pw(0), color(col)
+				{
+				}
+
+
+			/**
+			 * Construct a square dot with given radius
+			 *
+			 * @param	centerdot position.
+			 * @param	col		  color.
+			 * @param	penwidth  radius (in pixels) of the dot. 
+			 */
+			SquareDot(fVec2 centerdot, RGBc col, int32 penwidth) : center(centerdot), pw(penwidth), color(col)
+				{
+				MTOOLS_ASSERT(penwidth >= 0);
+				}
+
+
+			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+				{
+				im.canvas_draw_square_dot(R, center, color, true, pw);
+				}
+
+
+			virtual fBox2 boundingBox() const override
+				{
+				return fBox2(center.X(), center.X(), center.Y(), center.Y());
+				}
+
+
+			virtual std::string toString(bool debug = false) const override
+				{
+				std::string str("SquareDot [");
+				str += mtools::toString(center) + ", ";
+				str += mtools::toString(pw) + ", ";
+				str += mtools::toString(color);
+				return str + "]";
+				}
+
+
+			virtual void serialize(OBaseArchive & ar) const override
+				{
+				ar & center & pw & color;
+				}
+
+
+			virtual void deserialize(IBaseArchive & ar) override
+				{
+				ar & center & pw & color;
+				}
+
+		};
+
+
+
+
+		/************************************************************************************************************************************
+		*
+		* LINES
+		*
+		*************************************************************************************************************************************/
+
+
+		/**
+		*
+		* Horizontal Line
+		*
+		**/
+		class HorizontalLine : public internals_figure::FigureInterface
+		{
+
+		public:
+
+			double x1, x2, y;
+			RGBc	color;
+
+
+			/**
+			 * Construct an horizontal line.
+			 *
+			 * @param	Y   Y coordinate of the line.
+			 * @param	X1  X coordinate of the first endpoint.
+			 * @param	X2  X coordinate of the second endpoint.
+			 * @param	col color to use.
+			 */
+			HorizontalLine(double Y, double X1, double X2, RGBc col) : x1(std::min(X1, X2)), x2(std::max(X1, X2)), y(Y), color(col)
+				{
+				}
+
+
+			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 				{
 				im.canvas_draw_horizontal_line(R, y, x1, x2, color);
 				}
-			else
-				{
-				const bool relative = (thickness >= 0);
-				const double thick = (relative ? thickness : -thickness);
-				im.canvas_draw_thick_horizontal_line(R, y, x1, x2, thick, relative, color,true, true, min_thickness);
-				}
-			}
 
 
-		/** Return the object's bounding box. */
-		virtual fBox2 boundingBox() const override
-			{
-			if (thickness > 0)
+			virtual fBox2 boundingBox() const override
 				{
-				return fBox2(x1 , x2 , y - thickness, y + thickness);
-				}
-			else
-				{ 
 				return fBox2(x1, x2, y, y);
 				}
-			}
 
 
-		/** Print info about the object into an std::string. */
-		virtual std::string toString(bool debug = false) const override
-			{
-			std::string str("Horizontal line [");
-			str += mtools::toString(x1) + " - ";
-			str += mtools::toString(x2) + ", ";
-			str += mtools::toString(y) + " ";
-			str += mtools::toString(color);
-			if (thickness != 0.0)
+			virtual std::string toString(bool debug = false) const override
 				{
-				if (thickness > 0) str += std::string(" rel. thick: ") + mtools::toString(thickness);
-				else str += std::string(" abs. thick: ") + mtools::toString(-thickness);
+				std::string str("HorizontalLine [");
+				str += mtools::toString(x1) + " - ";
+				str += mtools::toString(x2) + ", ";
+				str += mtools::toString(y) + " ";
+				str += mtools::toString(color);
+				return str + "]";
 				}
-			return str + "]";
-			}
 
 
-		/** Serialize the object. */
-		virtual void serialize(OBaseArchive & ar) const override
-			{
-			ar & x1;
-			ar & x2;
-			ar & y;
-			ar & color;
-			ar & thickness;
-			}
+			virtual void serialize(OBaseArchive & ar) const override
+				{
+				ar & x1 & x2 & y & color;
+				}
 
 
-		/** Deserialize the object. */
-		virtual void deserialize(IBaseArchive & ar) override
-			{
-			ar & x1;
-			ar & x2;
-			ar & y;
-			ar & color;
-			ar & thickness;
-			}
-	};
+			virtual void deserialize(IBaseArchive & ar) override
+				{
+				ar & x1 & x2 & y & color;
+				}
+		};
 
-
-
-	/**
-	*
-	* Vertical Line figure
-	*
-	**/
-	class FigureVerticalLine : public FigureInterface
-	{
-
-	public:
-
-		/** parameters **/  
-		double y1, y2, x;		// line 
-		double thickness;		// thickness, 0 = no thickness. < 0 = absolute thickness,  >0 = relative thickness
-		RGBc	color;			// circle color
 
 
 		/**
-		* Constructor. Horizontal line, no thickness.
+		*
+		* Vertical Line figure
+		*
 		**/
-		FigureVerticalLine(double X, double Y1, double Y2, RGBc col) 
-		: y1(std::min(Y1, Y2)), y2(std::max(Y1, Y2)), x(X), thickness(0.0), color(col)
-			{
-			}
+		class VerticalLine : public internals_figure::FigureInterface
+		{
 
-		/**
-		* Constructor. Horizontal line, with thickness.
-		**/
-		FigureVerticalLine(double X, double Y1, double Y2, double thick, bool relativethickness, RGBc col)
-		: y1(std::min(Y1,Y2)), y2(std::max(Y1, Y2)), x(X), thickness(relativethickness ? thick : -thick), color(col)
-			{
-			MTOOLS_ASSERT(thick >= 0);
-			}
+		public:
+
+			double y1, y2, x;
+			RGBc	color;
 
 
-		/** Draw method */
-		virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
-			{
-			if (thickness == 0.0)
+			/**
+			 * Construct a vertical line.
+			 *
+			 * @param	X   X coordinate of the line.
+			 * @param	Y1  Y coordinate of the first endpoint.
+			 * @param	Y2  Y coordinate of the second endpoint.
+			 * @param	col color to use.
+			 */
+			VerticalLine(double X, double Y1, double Y2, RGBc col) : y1(std::min(Y1, Y2)), y2(std::max(Y1, Y2)), x(X), color(col)
+				{
+				}
+
+
+			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 				{
 				im.canvas_draw_vertical_line(R, x, y1, y2, color);
 				}
-			else
+				
+
+			virtual fBox2 boundingBox() const override
+				{
+				return fBox2(x, x, y1, y2);
+				}
+
+
+			virtual std::string toString(bool debug = false) const override
+			{
+				std::string str("VerticalLine [");
+				str += mtools::toString(x) + ", ";
+				str += mtools::toString(y1) + " - ";
+				str += mtools::toString(y2) + " ";
+				str += mtools::toString(color);
+				return str + "]";
+			}
+
+
+			virtual void serialize(OBaseArchive & ar) const override
+				{
+				ar & y1 & y2 & x & color;
+				}
+
+
+			virtual void deserialize(IBaseArchive & ar) override
+				{
+				ar & y1 & y2 & x & color;
+				}
+
+		};
+
+
+
+		/**
+		*
+		* Thick Horizontal Line
+		*
+		**/
+		class ThickHorizontalLine : public internals_figure::FigureInterface
+		{
+
+		public:
+
+			double x1, x2, y;
+			double thickness; // positive for relative thickness and negative for absolute thickness
+			RGBc	color;
+
+
+			/**
+			 * Construct a thick horizontal line
+			 *
+			 * @param	Y				  Y coord of the line.
+			 * @param	X1				  first X coord endpoint.
+			 * @param	X2				  second X coord endpoint.
+			 * @param	col				  color to use.
+			 * @param	thick			  thickness (should be positve)
+			 * @param	relativethickness (Optional) True to scale thickness with range and false for fixed
+			 * 							  thickness.
+			 */
+			ThickHorizontalLine(double Y, double X1, double X2, RGBc col, double thick, bool relativethickness = true) : x1(std::min(X1, X2)), x2(std::max(X1, X2)), y(Y), thickness(relativethickness ? thick : -thick), color(col)
+				{
+				MTOOLS_ASSERT(thick >= 0);
+				}
+
+
+			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+				{
+				const bool relative = (thickness >= 0);
+				const double thick = (relative ? thickness : -thickness);
+				im.canvas_draw_thick_horizontal_line(R, y, x1, x2, thick, relative, color, true, true, min_thickness);
+				}
+
+
+			virtual fBox2 boundingBox() const override
+				{				
+				if (thickness > 0) { const double ht = thickness / 2;  return fBox2(x1, x2, y - ht, y + ht); } else { return fBox2(x1, x2, y, y); }
+				}
+
+
+			virtual std::string toString(bool debug = false) const override
+				{
+				std::string str("ThickHorizontalLine [");
+				str += mtools::toString(x1) + " - ";
+				str += mtools::toString(x2) + ", ";
+				str += mtools::toString(y) + " ";
+				str += mtools::toString(color);
+				if (thickness >= 0) str += std::string(" rel. thick: ") + mtools::toString(thickness); else str += std::string(" abs. thick: ") + mtools::toString(-thickness);
+				return str + "]";
+				}
+
+
+			virtual void serialize(OBaseArchive & ar) const override
+				{
+				ar & x1 & x2 & y & color & thickness;
+				}
+
+
+			virtual void deserialize(IBaseArchive & ar) override
+				{
+				ar & x1 & x2 & y & color & thickness;
+				}
+
+		};
+
+
+		/**
+		*
+		* Thick Vertical Line 
+		*
+		**/
+		class ThickVerticalLine : public internals_figure::FigureInterface
+		{
+
+		public:
+
+			
+			double y1, y2, x;
+			double thickness; // positive for relative thickness and negative for absolute thickness
+			RGBc color;
+
+
+			/**
+			 * Construct a thick vertical line
+			 *
+			 * @param	X				  x coord of the line.
+			 * @param	Y1				  first Y coord endpoint.
+			 * @param	Y2				  second Y coord endpoint.
+			 * @param	col				  color to use.
+			 * @param	thick			  thickness (should be positve)
+			 * @param	relativethickness (Optional) True to scale thickness with range and false for fixed
+			 * 							  thickness.
+			 */
+			ThickVerticalLine(double X, double Y1, double Y2, RGBc col, double thick, bool relativethickness = true) : y1(std::min(Y1, Y2)), y2(std::max(Y1, Y2)), x(X), thickness(relativethickness ? thick : -thick), color(col)
+				{
+				MTOOLS_ASSERT(thick >= 0);
+				}
+
+
+			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 				{
 				const bool relative = (thickness >= 0);
 				const double thick = (relative ? thickness : -thickness);
 				im.canvas_draw_thick_vertical_line(R, x, y1, y2, thick, relative, color, true, true, min_thickness);
 				}
-			}
 
 
-		/** Return the object's bounding box. */
-		virtual fBox2 boundingBox() const override
-			{
-			if (thickness > 0)
+			virtual fBox2 boundingBox() const override
 				{
-				return fBox2(x - thickness, x + thickness, y1, y2);
+				if (thickness > 0) { const double ht = thickness / 2;  return fBox2(x - ht, x + ht, y1, y2); } else { return fBox2(x, x, y1, y2); }
 				}
-			else
-				{ 
-				return fBox2(x, x, y1, y2);
-				}
-			}
 
 
-		/** Print info about the object into an std::string. */
-		virtual std::string toString(bool debug = false) const override
-			{
-			std::string str("Horizontal line [");
-			str += mtools::toString(x) + ", ";
-			str += mtools::toString(y1) + " - ";
-			str += mtools::toString(y2) + " ";
-			str += mtools::toString(color);
-			if (thickness != 0.0)
+			virtual std::string toString(bool debug = false) const override
 				{
-				if (thickness > 0) str += std::string(" rel. thick: ") + mtools::toString(thickness);
-				else str += std::string(" abs. thick: ") + mtools::toString(-thickness);
+				std::string str("ThickVerticalLine [");
+				str += mtools::toString(x) + ", ";
+				str += mtools::toString(y1) + " - ";
+				str += mtools::toString(y2) + " ";
+				str += mtools::toString(color);
+				if (thickness > 0) str += std::string(" rel. thick: ") + mtools::toString(thickness); else str += std::string(" abs. thick: ") + mtools::toString(-thickness);
+				return str + "]";
 				}
-			return str + "]";
-			}
 
 
-		/** Serialize the object. */
-		virtual void serialize(OBaseArchive & ar) const override
-			{
-			ar & y1;
-			ar & y2;
-			ar & x;
-			ar & color;
-			ar & thickness;
-			}
+			virtual void serialize(OBaseArchive & ar) const override
+				{
+				ar & y1 & y2 & x & color & thickness;
+				}
 
 
-		/** Deserialize the object. */
-		virtual void deserialize(IBaseArchive & ar) override
-			{
-			ar & y1;
-			ar & y2;
-			ar & x;
-			ar & color;
-			ar & thickness;
-			}
-	};
+			virtual void deserialize(IBaseArchive & ar) override
+				{
+				ar & y1 & y2 & x & color & thickness;
+				}
 
-
-
-	/**
-	*
-	* Line figure
-	*
-	**/
-	class FigureLine : public FigureInterface
-	{
-
-	public:
-
-		/** parameters **/  
-		fVec2 P1, P2;
-		RGBc  color;
-		int32 thick;
+		};
 
 
 		/**
-		* Constructor.
+		*
+		* Line
+		*
 		**/
-		FigureLine(fVec2 p1, fVec2 p2, RGBc col, int32 thickness = 0) : P1(p1), P2(p2), color(col), thick(thickness)
+		class Line : public internals_figure::FigureInterface
 		{
-		}
+
+		public:
+
+			fVec2 P1, P2;
+			RGBc  color;
+			int32 pw;
 
 
-		/** Draw method */
-		virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
-			{
-			im.canvas_draw_line(R, P1, P2, color, true, highQuality, true,  thick);
-			}
-
-
-		/** Return the object's bounding box. */
-		virtual fBox2 boundingBox() const override
-			{
-			return fBox2(std::min<double>(P1.X(), P2.X()), std::max<double>(P1.X(), P2.X()), std::min<double>(P1.Y(), P2.Y()), std::max<double>(P1.Y(), P2.Y()));
-			}
-
-
-		/** Print info about the object into an std::string. */
-		virtual std::string toString(bool debug = false) const override
-			{
-			std::string str("Line [");
-			str += mtools::toString(P1) + ", ";
-			str += mtools::toString(P2) + " - ";
-			str += mtools::toString(thick) + " ";
-			str += mtools::toString(color);
-			return str + "]";
-			}
-
-
-		/** Serialize the object. */
-		virtual void serialize(OBaseArchive & ar) const override
-			{
-			ar & P1 & P2 & color & thick;
-			}
-
-
-		/** Deserialize the object. */
-		virtual void deserialize(IBaseArchive & ar) override
-			{
-			ar & P1 & P2 & color & thick;
-			}
-	};
-
-
-
-
-	/**
-	*
-	* Thick Line figure
-	*
-	**/
-	class FigureThickLine : public FigureInterface
-	{
-
-	public:
-
-		/** parameters **/
-		fVec2 P1, P2;
-		RGBc  color;
-		double thick; // must be positive: thickness
-
-
-		/**
-		* Constructor.
-		**/
-		FigureThickLine(fVec2 p1, fVec2 p2, double thickness, RGBc col) : P1(p1), P2(p2), color(col), thick(thickness)
-			{
-			MTOOLS_ASSERT(thick >= 0);
-			MTOOLS_ASSERT(P1 != P2);
-			}
-
-
-		/** Draw method */
-		virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
-			{
-			im.canvas_draw_thick_line(R, P1, P2, thick, color, highQuality, true, min_thickness);
-			}
-
-
-		/** Return the object's bounding box. */
-		virtual fBox2 boundingBox() const override
-			{
-			fBox2 R;
-			fVec2 H = (P2 - P1).get_rotate90();
-			H.normalize();
-			H *= (thick*0.5);
-			R.swallowPoint(P1 + H);
-			R.swallowPoint(P1 - H);
-			R.swallowPoint(P2 + H);
-			R.swallowPoint(P2 - H);
-			return R;
-			}
-
-
-		/** Print info about the object into an std::string. */
-		virtual std::string toString(bool debug = false) const override
-			{
-			std::string str("Thick Line [");
-			str += mtools::toString(P1) + ", ";
-			str += mtools::toString(P2) + " - ";
-			str += mtools::toString(thick) + " ";
-			str += mtools::toString(color);
-			return str + "]";
-			}
-
-
-		/** Serialize the object. */
-		virtual void serialize(OBaseArchive & ar) const override
-			{
-			ar & P1 & P2 & color & thick;
-			}
-
-
-		/** Deserialize the object. */
-		virtual void deserialize(IBaseArchive & ar) override
-			{
-			ar & P1 & P2 & color & thick;
-			}
-
-	};
-
-
-
-
-	/**
-	*
-	* Triangle figure
-	*
-	**/
-	class FigureTriangle : public FigureInterface
-	{
-
-	public:
-
-		/** parameters **/
-		fVec2 P1, P2, P3;
-		RGBc  color, fillcolor;
-
-		/**
-		 * Constructor.
-		 **/
-		FigureTriangle(fVec2 p1, fVec2 p2, fVec2 p3, RGBc col, RGBc fillcol = RGBc::c_Transparent) : P1(p1), P2(p2), P3(p3), color(col), fillcolor(fillcol)
-			{
-			}
-
-
-		/** Draw method */
-		virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
-			{
-			if (fillcolor.isTransparent())
+			/**
+			 * Constructor
+			 *
+			 * @param	p1		 first endpoint
+			 * @param	p2		 second endpoint
+			 * @param	col		 color
+			 * @param	penwidth (Optional) penwidth (0 = unit pixel line). 
+			 */
+			Line(fVec2 p1, fVec2 p2, RGBc col, int32 penwidth = 0) : P1(p1), P2(p2), color(col), pw(penwidth)
 				{
-				im.canvas_draw_triangle(R, P1, P2, P3, color, highQuality, true);
 				}
-			else
+
+
+			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 				{
-				im.canvas_draw_filled_triangle(R, P1, P2, P3, color, fillcolor, highQuality, true);
+				im.canvas_draw_line(R, P1, P2, color, true, highQuality, true, pw);
 				}
-			}
 
 
-		/** Return the object's bounding box. */
-		virtual fBox2 boundingBox() const override
-			{
-			fBox2 R;
-			R.swallowPoint(P1);
-			R.swallowPoint(P2);
-			R.swallowPoint(P3);
-			return R;
-			}
-
-
-		/** Print info about the object into an std::string. */
-		virtual std::string toString(bool debug = false) const override
-			{
-			std::string str("Triangle [");
-			str += mtools::toString(P1) + ", ";
-			str += mtools::toString(P2) + ", ";
-			str += mtools::toString(P3) + " - ";
-			str += mtools::toString(color);
-			if (!fillcolor.isTransparent())
+			virtual fBox2 boundingBox() const override
 				{
-				str += "filled : ";
-				str += mtools::toString(fillcolor);
+				return fBox2(std::min<double>(P1.X(), P2.X()), std::max<double>(P1.X(), P2.X()), std::min<double>(P1.Y(), P2.Y()), std::max<double>(P1.Y(), P2.Y()));
 				}
-			return str + "]";
-			}
 
 
-		/** Serialize the object. */
-		virtual void serialize(OBaseArchive & ar) const override
-			{
-			ar & P1 & P2 & P3 & color & fillcolor;
-			}
-
-
-		/** Deserialize the object. */
-		virtual void deserialize(IBaseArchive & ar) override
-			{
-			ar & P1 & P2 & P3 & color & fillcolor;
-			}
-
-	};
-
-
-
-	/**
-	*
-	* Quad figure
-	*
-	**/
-	class FigureQuad : public FigureInterface
-	{
-
-	public:
-
-		/** parameters **/
-		fVec2 P1, P2, P3, P4;
-		RGBc  color, fillcolor;
-
-		/**
-		* Constructor.
-		**/
-		FigureQuad(fVec2 p1, fVec2 p2, fVec2 p3, fVec2 p4, RGBc col, RGBc fillcol = RGBc::c_Transparent) : P1(p1), P2(p2), P3(p3), P4(p4), color(col), fillcolor(fillcol)
-			{	
-			}
-
-
-		/** Draw method */
-		virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
-			{
-			if (fillcolor.isTransparent())
+			virtual std::string toString(bool debug = false) const override
 				{
-				im.canvas_draw_quad(R, P1, P2, P3, P4, color, highQuality, true);
+				std::string str("Line [");
+				str += mtools::toString(P1) + ", ";
+				str += mtools::toString(P2) + " (";
+				str += mtools::toString(pw) + ") ";
+				str += mtools::toString(color);
+				return str + "]";
 				}
-			else
+
+
+			virtual void serialize(OBaseArchive & ar) const override
 				{
-				im.canvas_draw_filled_quad(R, P1, P2, P3, P4, color, fillcolor, highQuality, true);
+				ar & P1 & P2 & color & pw;
 				}
-			}
 
 
-		/** Return the object's bounding box. */
-		virtual fBox2 boundingBox() const override
-			{
-			fBox2 R;
-			R.swallowPoint(P1);
-			R.swallowPoint(P2);
-			R.swallowPoint(P3);
-			R.swallowPoint(P4);
-			return R;
-			}
-
-
-		/** Print info about the object into an std::string. */
-		virtual std::string toString(bool debug = false) const override
-			{
-			std::string str("Quad [");
-			str += mtools::toString(P1) + ", ";
-			str += mtools::toString(P2) + ", ";
-			str += mtools::toString(P3) + ", ";
-			str += mtools::toString(P4) + " - ";
-			str += mtools::toString(color);
-			if (!fillcolor.isTransparent())
+			virtual void deserialize(IBaseArchive & ar) override
 				{
-				str += "filled : ";
-				str += mtools::toString(fillcolor);
+				ar & P1 & P2 & color & pw;
 				}
-			return str + "]";
-			}
+		};
 
-
-		/** Serialize the object. */
-		virtual void serialize(OBaseArchive & ar) const override
-			{
-			ar & P1 & P2 & P3 & P4 & color & fillcolor;
-			}
-
-
-		/** Deserialize the object. */
-		virtual void deserialize(IBaseArchive & ar) override
-			{
-			ar & P1 & P2 & P3 & P4 & color & fillcolor;
-			}
-
-	};
-
-
-
-
-	/************************************************************************************************************************************
-	*
-	* DOT / CIRCLE / ELLIPSE
-	*
-	*************************************************************************************************************************************/
-
-
-	/**
-	 * Dot figure : filled (possibly thick) circle with absolute size that
-	 * do not scale with the range. 
-	 * 
-	 * Parameters: 
-	 *  - center   
-	 *  - radius  
-	 *  - outline color
-	 *  - filling color   
-	 **/
-	class FigureDot : public FigureInterface
-	{
-
-	public:
-
-		/** circle parameters **/
-		fVec2	center;			// circle center
-		double	radius;			// circle radius
-		RGBc	outlinecolor;	// outline color
-		RGBc	fillcolor;		// interior color
 
 
 		/**
-		 * Constructor. unit size color dot.
-		 **/
-		FigureDot(fVec2 centerdot, RGBc color) : center(centerdot), radius(1.0), outlinecolor(color), fillcolor(color)
-			{
-			}
-
-
-		/**   
-		 * Constructor. Dot with given size and color.    
-		 **/
-		FigureDot(fVec2 centerdot, double rad, RGBc color) : center(centerdot), radius(rad), outlinecolor(color), fillcolor(color)
-			{
-			MTOOLS_ASSERT(rad > 0);
-			}
-
-
-		/**
-		* Constructor. Dot with given size and color and outline
-		**/
-		FigureDot(fVec2 centerdot, double rad, RGBc border_color, RGBc fill_color) : center(centerdot), radius(rad), outlinecolor(border_color), fillcolor(fill_color)
-			{
-			MTOOLS_ASSERT(rad > 0);
-			}
-
-
-		/**
-		* Draws the dot on the image
-		**/
-		virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
-			{
-			double r = (radius < min_thickness) ? min_thickness : radius;
-			im.canvas_draw_circle_dot(R, center, r, outlinecolor, fillcolor, highQuality, true);
-			}
-
-
-		/**
-		* Dot's bounding box : single point. 
-		*/
-		virtual fBox2 boundingBox() const override
-			{
-			return fBox2(center.X(), center.X(), center.Y(), center.Y());
-			}
-
-
-		/**
-		* Print info about the object into an std::string.
-		*/
-		virtual std::string toString(bool debug = false) const override
-			{
-			std::string str("Dot Figure [");
-			str += mtools::toString(center) + " ";
-			str += mtools::toString(radius) + "  outline ";
-			str += mtools::toString(outlinecolor) + " interior " + mtools::toString(fillcolor);
-			return str + "]";
-			}
-
-
-		/** Serialize the object. */
-		virtual void serialize(OBaseArchive & ar) const override
-			{
-			ar & center;
-			ar & radius;
-			ar & outlinecolor;
-			ar & fillcolor;
-			}
-
-
-		/** Deserialize the object. */
-		virtual void deserialize(IBaseArchive & ar) override
-			{
-			ar & center;
-			ar & radius;
-			ar & outlinecolor;
-			ar & fillcolor;
-			}
-
-	};
-
-
-
-	/**
-	 * Circle figure
-	 * 
-	 * Parameters: 
-	 *  - center and radius  
-	 *  - outline color
-	 *  - thickness  
-	 *  - filling color   
-	 **/
-	class FigureCircle : public FigureInterface
-	{
-
-	public:
-
-		/** circle parameters **/
-		fVec2	center;			// circle center
-		double	radius;			// circle radius
-		double	thickness;		// circle thickness 0 = no thickness. < 0 = absolute thicknes,  >0 = relative thickness 
-		RGBc	color;			// circle color
-		RGBc	fillcolor;		// circle interior color (transparent = no filling)
-
-
-		/**   
-		 * Constructor. Simple circle without filling or thickness    
-		 **/
-		FigureCircle(fVec2 centercircle, double rad, RGBc col) : center(centercircle), radius(rad), thickness(0.0), color(col), fillcolor(RGBc::c_Transparent)
-			{
-			MTOOLS_ASSERT(rad >= 0);
-			}
-
-		/**
-		* Constructor. Simple circle with filling color but without thickness
-		**/
-		FigureCircle(fVec2 centercircle, double rad, RGBc col, RGBc fillcol) : center(centercircle), radius(rad), thickness(0.0), color(col), fillcolor(fillcol)
-			{
-			MTOOLS_ASSERT(rad >= 0);
-			}
-
-		/**
-		* Constructor. Thick circle without filling
-		**/
-		FigureCircle(fVec2 centercircle, double rad, double thick, bool relativethickness, RGBc col) 
-		: center(centercircle), radius(rad), thickness(relativethickness ? thick : -thick), color(col), fillcolor(RGBc::c_Transparent)
-			{
-			MTOOLS_ASSERT(rad >= 0);
-			MTOOLS_ASSERT(thick > 0);
-			}
-
-
-		/**
-		* Constructor. Thick circle with filling
-		**/
-		FigureCircle(fVec2 centercircle, double rad, double thick, bool relativethickness, RGBc col, RGBc fillcol)
-			: center(centercircle), radius(rad), thickness(relativethickness ? thick : -thick), color(col), fillcolor(fillcol)
-			{
-			MTOOLS_ASSERT(rad >= 0);
-			MTOOLS_ASSERT(thick > 0);
-			}
-
-
-		/**
-		* Draws the figure onto an image with a given range.
 		*
-		* @param [in,out]	im		    the image to draw onto.
-		* @param [in,out]	R		    the range.
-		* @param 		  	highQuality (Optional) True when high quality drawing is requested and false
-		* 								otherwise.
-		*/
-		virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
-			{
-			if (thickness == 0.0)
-				{
-				if (fillcolor.comp.A == 0)
-					{
-					im.canvas_draw_circle(R, center, radius, color, highQuality);
-					}
-				else
-					{
-					im.canvas_draw_filled_circle(R, center, radius, color, fillcolor, highQuality);
-					}
-				}
-			else
-				{
-				const bool relative = (thickness > 0);
-				const double thick = (relative ? thickness : -thickness);
-				if (fillcolor.comp.A == 0)
-					{
-					im.canvas_draw_thick_circle(R, center, radius, thick, relative, color, highQuality, true, min_thickness);
-					}
-				else
-					{
-					im.canvas_draw_thick_filled_circle(R, center, radius, thick, relative, color, fillcolor, highQuality, true, min_thickness);
-					}
-				}
-			}
-
-
-		/**
-		* Return the object's bounding box.
+		* Thick Line
 		*
-		* @return	A fBox2.
-		*/
-		virtual fBox2 boundingBox() const override
-			{
-			return fBox2(center.X() - radius, center.X() + radius, center.Y() - radius, center.Y() + radius);
-			}
-
-
-		/**
-		* Print info about the object into an std::string.
-		*/
-		virtual std::string toString(bool debug = false) const override
-			{
-			std::string str("Circle Figure [");
-			str += mtools::toString(center) + " ";
-			str += mtools::toString(radius) + " ";
-			str += mtools::toString(color);
-			if (fillcolor.comp.A != 0) str += std::string(" filled: ") + mtools::toString(fillcolor);
-			if (thickness != 0.0)
-				{
-				if (thickness > 0) str += std::string(" rel. thick: ") + mtools::toString(thickness);
-				else str += std::string(" abs. thick: ") + mtools::toString(-thickness);
-				}
-			return str + "]";
-			}
-
-
-		/** Serialize the object. */
-		virtual void serialize(OBaseArchive & ar) const override
-			{
-			ar & center;
-			ar & radius;
-			ar & thickness;
-			ar & color;
-			ar & fillcolor;
-			}
-
-
-		/** Deserialize the object. */
-		virtual void deserialize(IBaseArchive & ar) override
-			{
-			ar & center;
-			ar & radius;
-			ar & thickness;
-			ar & color;
-			ar & fillcolor;
-			}
-	};
-
-
-
-
-
-
-
-
-	/**
-	 * Circle Part figure
-	 * 
-	 * Parameters: 
-	 *  - center and radius  
-	 *  - outline color
-	 *  - thickness  
-	 *  - filling color   
-	 *  - part to draw
-	 **/
-	class FigureCirclePart : public FigureInterface
-	{
-
-	public:
-
-		/** circle part parameters **/
-		fVec2	center;			// circle center
-		double	radius;			// circle radius
-		double	thickness;		// circle thickness 0 = no thickness. < 0 = absolute thicknes,  >0 = relative thickness 
-		RGBc	color;			// circle color
-		RGBc	fillcolor;		// circle interior color (transparent = no filling)
-		int		part;			// one of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT,, BOX_SPLIT_DOWN_LEFT, , BOX_SPLIT_DOWN_RIGHT
-
-
-		/**   
-		 * Constructor. Simple circle part without filling or thickness    
-		 **/
-		FigureCirclePart(int circlepart, fVec2 centercircle, double rad, RGBc col) : part(circlepart), center(centercircle), radius(rad), thickness(0.0), color(col), fillcolor(RGBc::c_Transparent)
-			{
-			MTOOLS_ASSERT((circlepart >= 0) && (circlepart < 8));
-			MTOOLS_ASSERT(rad >= 0);
-			}
-
-		/**
-		* Constructor. Simple circle part with filling color but without thickness
 		**/
-		FigureCirclePart(int circlepart, fVec2 centercircle, double rad, RGBc col, RGBc fillcol) : part(circlepart), center(centercircle), radius(rad), thickness(0.0), color(col), fillcolor(fillcol)
-			{
-			MTOOLS_ASSERT((circlepart >= 0) && (circlepart < 8));
-			MTOOLS_ASSERT(rad >= 0);
-			}
-
-		/**
-		* Constructor. Thick circle without filling
-		**/
-		FigureCirclePart(int circlepart, fVec2 centercircle, double rad, double thick, bool relativethickness, RGBc col)
-		: part(circlepart), center(centercircle), radius(rad), thickness(relativethickness ? thick : -thick), color(col), fillcolor(RGBc::c_Transparent)
-			{
-			MTOOLS_ASSERT((circlepart >= 0) && (circlepart < 8));
-			MTOOLS_ASSERT(rad >= 0);
-			MTOOLS_ASSERT(thick >= 0);
-			}
-
-
-		/**
-		* Constructor. Thick circle with filling
-		**/
-		FigureCirclePart(int circlepart, fVec2 centercircle, double rad, double thick, bool relativethickness, RGBc col, RGBc fillcol)
-			: part(circlepart), center(centercircle), radius(rad), thickness(relativethickness ? thick : -thick), color(col), fillcolor(fillcol)
-			{
-			MTOOLS_ASSERT((circlepart >= 0) && (circlepart < 8));
-			MTOOLS_ASSERT(rad >= 0);
-			MTOOLS_ASSERT(thick >= 0);
-			}
-
-
-		/**
-		* Draws the figure onto an image with a given range.
-		*
-		* @param [in,out]	im		    the image to draw onto.
-		* @param [in,out]	R		    the range.
-		* @param 		  	highQuality (Optional) True when high quality drawing is requested and false
-		* 								otherwise.
-		*/
-		virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
-			{
-			if (thickness == 0.0)
-				{
-				if (fillcolor.comp.A == 0)
-					{
-					im.canvas_draw_part_circle(R, part, center, radius, color, highQuality);
-					}
-				else
-					{
-					im.canvas_draw_part_filled_circle(R, part, center, radius, color, fillcolor, highQuality);
-					}
-				}
-			else
-				{
-				const bool relative = (thickness > 0);
-				const double thick = (relative ? thickness : -thickness);
-				if (fillcolor.comp.A == 0)
-					{
-					im.canvas_draw_part_thick_circle(R, part, center, radius, thick, relative, color, highQuality, true, min_thickness);
-					}
-				else
-					{
-					im.canvas_draw_part_thick_filled_circle(R, part, center, radius, thick, relative, color, fillcolor, highQuality, true, min_thickness);
-					}
-				}
-			}
-
-
-		/**
-		* Return the object's bounding box.
-		*
-		* @return	A fBox2.
-		*/
-		virtual fBox2 boundingBox() const override
-			{
-			return fBox2(center.X() - radius, center.X() + radius, center.Y() - radius, center.Y() + radius).get_split(part);
-			}
-
-
-		/**
-		* Print info about the object into an std::string.
-		*/
-		virtual std::string toString(bool debug = false) const override
-			{
-			std::string str("Circle Part Figure [");
-			switch (part)
-				{
-				case BOX_SPLIT_UP: { str += "HALF UP"; break; }
-				case BOX_SPLIT_DOWN: { str += "HALF DOWN"; break; }
-				case BOX_SPLIT_LEFT: { str += "HALF LEFT"; break; }
-				case BOX_SPLIT_RIGHT: { str += "HALF RIGHT"; break; }
-				case BOX_SPLIT_UP_LEFT: { str += "QUARTER UP LEFT"; break; }
-				case BOX_SPLIT_UP_RIGHT: { str += "QUARTER UP RIGHT"; break; }
-				case BOX_SPLIT_DOWN_LEFT: { str += "QUARTER DOWN LEFT"; break; }
-				case BOX_SPLIT_DOWN_RIGHT: { str += "QUARTER DOWN RIGHT"; break; }
-				default: { str += "ERROR PART"; }
-				}
-			str += " ";
-			str += mtools::toString(center) + " ";
-			str += mtools::toString(radius) + " ";
-			str += mtools::toString(color);
-			if (fillcolor.comp.A != 0) str += std::string(" filled: ") + mtools::toString(fillcolor);
-			if (thickness != 0.0)
-				{
-				if (thickness > 0) str += std::string(" rel. thick: ") + mtools::toString(thickness);
-				else str += std::string(" abs. thick: ") + mtools::toString(-thickness);
-				}
-			return str + "]";
-			}
-
-
-		/** Serialize the object. */
-		virtual void serialize(OBaseArchive & ar) const override
-			{
-			ar & part;
-			ar & center;
-			ar & radius;
-			ar & thickness;
-			ar & color;
-			ar & fillcolor;
-			}
-
-
-		/** Deserialize the object. */
-		virtual void deserialize(IBaseArchive & ar) override
-			{
-			ar & part;
-			ar & center;
-			ar & radius;
-			ar & thickness;
-			ar & color;
-			ar & fillcolor;
-			}
-	};
-
-
-
-
-	/**
-	 * Ellipse figure
-	 * 
-	 * Parameters: 
-	 *  - center and radii  
-	 *  - outline color
-	 *  - thickness  
-	 *  - filling color   
-	 *  - antialiasing
-	 **/
-	class FigureEllipse : public FigureInterface
-	{
-
-	public:
-
-		/** ellipse parameters **/
-		fVec2	center;			// circle center
-		double	rx;				// x-radius
-		double  ry;				// y-radius
-		double	thickness_x;	// 0 = no thickness. < 0 = absolute thicknes,  >0 = relative thickness 
-		double	thickness_y;	// 0 = no thickness  < 0 = absolute thicknes,  >0 = relative thickness 
-		RGBc	color;			// color
-		RGBc	fillcolor;		// interior color (transparent = no filling)
-
-
-		/**   
-		 * Constructor. Simple ellipse without filling or thickness    
-		 **/
-		FigureEllipse(fVec2 centerellipse, double rad_x, double rad_y, RGBc col) : center(centerellipse), rx(rad_x), ry(rad_y), thickness_x(0.0), thickness_y(0.0), color(col), fillcolor(RGBc::c_Transparent)
-			{
-			MTOOLS_ASSERT(rad_x >= 0);
-			MTOOLS_ASSERT(rad_y >= 0);
-			}
-
-		/**
-		* Constructor. Simple ellipse without filling or thickness, given by its bounding box
-		**/
-		FigureEllipse(const fBox2 & B, RGBc col) : center(B.center()), rx(B.l(0)/2), ry(B.l(1)/2), thickness_x(0.0), thickness_y(0.0), color(col), fillcolor(RGBc::c_Transparent)
-			{
-			MTOOLS_ASSERT(! B.isEmpty());
-			}
-
-
-		/**
-		* Constructor. Simple ellipse with filling color but without thickness
-		**/
-		FigureEllipse(fVec2 centerellipse, double rad_x, double rad_y, RGBc col, RGBc fillcol) : center(centerellipse), rx(rad_x), ry(rad_y), thickness_x(0.0), thickness_y(0.0), color(col), fillcolor(fillcol)
-			{
-			MTOOLS_ASSERT(rad_x >= 0);
-			MTOOLS_ASSERT(rad_y >= 0);
-			}
-
-
-		/**
-		* Constructor. Simple ellipse with filling but without thickness, given by its bounding box
-		**/
-		FigureEllipse(const fBox2 & B, RGBc col, RGBc fillcol) : center(B.center()), rx(B.l(0) / 2), ry(B.l(1) / 2), thickness_x(0.0), thickness_y(0.0), color(col), fillcolor(fillcol)
+		class ThickLine : public internals_figure::FigureInterface
 		{
-			MTOOLS_ASSERT(!B.isEmpty());
-		}
+
+		public:
+
+			fVec2 P1, P2;
+			RGBc  color;
+			double thick;
 
 
-		/**
-		* Constructor. Thick ellipse without filling
-		**/
-		FigureEllipse(fVec2 centerellipse, double rad_x, double rad_y, double thick_x, double thick_y, bool relativethickness, RGBc col)
-		: center(centerellipse), rx(rad_x), ry(rad_y), thickness_x(relativethickness ? thick_x : -thick_x), thickness_y(relativethickness ? thick_y : -thick_y), color(col), fillcolor(RGBc::c_Transparent)
-			{
-			MTOOLS_ASSERT(rad_x >= 0);
-			MTOOLS_ASSERT(rad_y >= 0);
-			MTOOLS_ASSERT(thick_x >= 0);
-			MTOOLS_ASSERT(thick_y >= 0);
-			}
-
-
-		/**
-		* Constructor. Thick ellipse without filling, given by its bounding box
-		**/
-		FigureEllipse(const fBox2 & B, double thick_x, double thick_y, bool relativethickness, RGBc col) 
-			: center(B.center()), rx(B.l(0) / 2), ry(B.l(1) / 2), thickness_x(relativethickness ? thick_x : -thick_x), thickness_y(relativethickness ? thick_y : -thick_y), color(col), fillcolor(RGBc::c_Transparent)
-			{
-			MTOOLS_ASSERT(!B.isEmpty());
-			MTOOLS_ASSERT(thick_x >= 0);
-			MTOOLS_ASSERT(thick_y >= 0);
-			}
-
-
-		/**
-		* Constructor. Thick ellipse with filling
-		**/
-		FigureEllipse(fVec2 centerellipse, double rad_x, double rad_y, double thick_x, double thick_y, bool relativethickness, RGBc col, RGBc fillcol)
-			: center(centerellipse), rx(rad_x), ry(rad_y), thickness_x(relativethickness ? thick_x : -thick_x), thickness_y(relativethickness ? thick_y : -thick_y), color(col), fillcolor(fillcol)
-			{
-			MTOOLS_ASSERT(rad_x >= 0);
-			MTOOLS_ASSERT(rad_y >= 0);
-			MTOOLS_ASSERT(thick_x >= 0);
-			MTOOLS_ASSERT(thick_y >= 0);
-			}
-
-
-		/**
-		* Constructor. Thick ellipse with filling, given by its bounding box
-		**/
-		FigureEllipse(const fBox2 & B, double thick_x, double thick_y, bool relativethickness, RGBc col, RGBc fillcol)
-			: center(B.center()), rx(B.l(0) / 2), ry(B.l(1) / 2), thickness_x(relativethickness ? thick_x : -thick_x), thickness_y(relativethickness ? thick_y : -thick_y), color(col), fillcolor(fillcol)
-			{
-			MTOOLS_ASSERT(!B.isEmpty());
-			MTOOLS_ASSERT(thick_x >= 0);
-			MTOOLS_ASSERT(thick_y >= 0);
-			}
-
-
-		/**
-		* Draws the figure onto an image with a given range.
-		*
-		* @param [in,out]	im		    the image to draw onto.
-		* @param [in,out]	R		    the range.
-		* @param 		  	highQuality (Optional) True when high quality drawing is requested and false
-		* 								otherwise.
-		*/
-		virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
-			{
-			if ((thickness_x == 0.0)&&(thickness_y == 0.0))
+			/**
+			 * Constructor.
+			 *
+			 * @param	p1		  first endpoint
+			 * @param	p2		  second endpoint
+			 * @param	thickness line thickness (relative).
+			 * @param	col		  color
+			 */
+			ThickLine(fVec2 p1, fVec2 p2, double thickness, RGBc col) : P1(p1), P2(p2), color(col), thick(thickness)
 				{
-				if (fillcolor.comp.A == 0)
+				MTOOLS_ASSERT(thick >= 0);
+				MTOOLS_ASSERT(P1 != P2);
+				}
+
+
+			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+				{
+				im.canvas_draw_thick_line(R, P1, P2, thick, color, highQuality, true, min_thickness);
+				}
+
+
+			virtual fBox2 boundingBox() const override
+				{
+				fBox2 R;
+				fVec2 H = (P2 - P1).get_rotate90();
+				H.normalize();
+				H *= (thick*0.5);
+				R.swallowPoint(P1 + H);
+				R.swallowPoint(P1 - H);
+				R.swallowPoint(P2 + H);
+				R.swallowPoint(P2 - H);
+				return R;
+				}
+
+
+			virtual std::string toString(bool debug = false) const override
+				{
+				std::string str("ThickLine [");
+				str += mtools::toString(P1) + ", ";
+				str += mtools::toString(P2) + " - ";
+				str += mtools::toString(thick) + " ";
+				str += mtools::toString(color);
+				return str + "]";
+				}
+
+
+			virtual void serialize(OBaseArchive & ar) const override
+				{
+				ar & P1 & P2 & color & thick;
+				}
+
+
+			virtual void deserialize(IBaseArchive & ar) override
+				{
+				ar & P1 & P2 & color & thick;
+				}
+
+		};
+
+
+
+		/************************************************************************************************************************************
+		*
+		* POLYGON
+		*
+		*************************************************************************************************************************************/
+
+
+		/**
+		*
+		* Triangle
+		*
+		**/
+		class Triangle : public internals_figure::FigureInterface
+		{
+
+		public:
+
+			fVec2 P1, P2, P3;
+			RGBc  color, fillcolor;
+
+
+			/**
+			 * construct a triangle
+			 *
+			 * @param	p1	    first point.
+			 * @param	p2	    second point.
+			 * @param	p3	    third point.
+			 * @param	col	    outline color.
+			 * @param	fillcol (Optional) fill color (default = transparent = no fill)
+			 */
+			Triangle(fVec2 p1, fVec2 p2, fVec2 p3, RGBc col, RGBc fillcol = RGBc::c_Transparent) : P1(p1), P2(p2), P3(p3), color(col), fillcolor(fillcol)
+				{
+				}
+
+
+			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+				{
+				if (fillcolor.isTransparent())
 					{
-					im.canvas_draw_ellipse(R, center, rx, ry, color, highQuality);
+					im.canvas_draw_triangle(R, P1, P2, P3, color, highQuality, true);
 					}
 				else
 					{
-					im.canvas_draw_filled_ellipse(R, center, rx, ry, color, fillcolor, highQuality);
+					im.canvas_draw_filled_triangle(R, P1, P2, P3, color, fillcolor, highQuality, true);
 					}
 				}
-			else
+
+
+			virtual fBox2 boundingBox() const override
 				{
-				const bool relative = (thickness_x >= 0);
-				const double tx = ((thickness_x < 0) ? (-thickness_x) : thickness_x);
-				const double ty = ((thickness_y < 0) ? (-thickness_y) : thickness_y);
-				if (fillcolor.comp.A == 0)
+				fBox2 R;
+				R.swallowPoint(P1);
+				R.swallowPoint(P2);
+				R.swallowPoint(P3);
+				return R;
+				}
+
+
+			virtual std::string toString(bool debug = false) const override
+				{
+				std::string str("Triangle [");
+				str += mtools::toString(P1) + ", ";
+				str += mtools::toString(P2) + ", ";
+				str += mtools::toString(P3) + " - ";
+				str += mtools::toString(color);
+				if (!fillcolor.isTransparent())
 					{
-					im.canvas_draw_thick_ellipse(R, center, rx, ry, tx, ty, relative, color, highQuality, true, min_thickness);
+					str += " filled : ";
+					str += mtools::toString(fillcolor);
+					}
+				return str + "]";
+				}
+
+
+			virtual void serialize(OBaseArchive & ar) const override
+				{
+				ar & P1 & P2 & P3 & color & fillcolor;
+				}
+
+
+			virtual void deserialize(IBaseArchive & ar) override
+				{
+				ar & P1 & P2 & P3 & color & fillcolor;
+				}
+
+		};
+
+
+
+		/**
+		*
+		* Quad
+		*
+		**/
+		class Quad : public internals_figure::FigureInterface
+		{
+
+		public:
+
+			
+			fVec2 P1, P2, P3, P4;
+			RGBc  color, fillcolor;
+
+
+			/**
+			 * Construct a quad.
+			 *
+			 * @param	p1	    first point.
+			 * @param	p2	    second point.
+			 * @param	p3	    third point.
+			 * @param	p4	    fourth point.
+			 * @param	col	    outline color
+			 * @param	fillcol (Optional) fill color (default = transparent = no fill)
+			 */
+			Quad(fVec2 p1, fVec2 p2, fVec2 p3, fVec2 p4, RGBc col, RGBc fillcol = RGBc::c_Transparent) : P1(p1), P2(p2), P3(p3), P4(p4), color(col), fillcolor(fillcol)
+				{
+				}
+
+
+			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+				{
+				if (fillcolor.isTransparent())
+					{
+					im.canvas_draw_quad(R, P1, P2, P3, P4, color, highQuality, true);
 					}
 				else
 					{
-					im.canvas_draw_thick_filled_ellipse(R, center, rx, ry, tx, ty, relative, color, fillcolor, highQuality, true, min_thickness);
+					im.canvas_draw_filled_quad(R, P1, P2, P3, P4, color, fillcolor, highQuality, true);
 					}
 				}
-			}
 
 
-		/**
-		* Return the object's bounding box.
-		*
-		* @return	A fBox2.
-		*/
-		virtual fBox2 boundingBox() const override
-			{
-			return fBox2(center.X() - rx, center.X() + rx, center.Y() - ry, center.Y() + ry);
-			}
-
-
-		/**
-		* Print info about the object into an std::string.
-		*/
-		virtual std::string toString(bool debug = false) const override
-			{
-			std::string str("Ellipse Figure [");
-			str += mtools::toString(center) + " ";
-			str += mtools::toString(rx) + " ";
-			str += mtools::toString(ry) + " ";
-			str += mtools::toString(color);
-			if (fillcolor.comp.A != 0) str += std::string(" filled: ") + mtools::toString(fillcolor);
-			if ((thickness_x != 0.0)|| (thickness_y != 0.0))
+			virtual fBox2 boundingBox() const override
 				{
-				if (thickness_x >= 0) str += std::string(" rel. thick: x ") + mtools::toString(thickness_x) + " y " + mtools::toString(thickness_y);
-				else str += std::string(" abs. thick: ") + mtools::toString(thickness_x) + " y " + mtools::toString(thickness_y);
+				fBox2 R;
+				R.swallowPoint(P1);
+				R.swallowPoint(P2);
+				R.swallowPoint(P3);
+				R.swallowPoint(P4);
+				return R;
 				}
-			return str + "]";
-			}
 
 
-		/** Serialize the object. */
-		virtual void serialize(OBaseArchive & ar) const override
-			{
-			ar & center;
-			ar & rx;
-			ar & ry;
-			ar & thickness_x;
-			ar & thickness_y;
-			ar & color;
-			ar & fillcolor;
-			}
-
-
-		/** Deserialize the object. */
-		virtual void deserialize(IBaseArchive & ar) override
-			{
-			ar & center;
-			ar & rx;
-			ar & ry;
-			ar & thickness_x;
-			ar & thickness_y;
-			ar & color;
-			ar & fillcolor;
-			}
-	};
-
-
-
-
-	/**
-	 * Ellipse Part figure
-	 * 
-	 * Parameters: 
-	 *  - center and radii  
-	 *  - outline color
-	 *  - thickness  
-	 *  - filling color   
-	 *  - antialiasing  
-	 *  - part to draw
-	 **/
-	class FigureEllipsePart : public FigureInterface
-	{
-
-	public:
-
-		/** ellipse parameters **/
-		fVec2	center;			// circle center
-		double	rx;				// x-radius
-		double  ry;				// y-radius
-		double	thickness_x;	// 0 = no thickness. < 0 = absolute thicknes,  >0 = relative thickness 
-		double	thickness_y;	// 0 = no thickness  < 0 = absolute thicknes,  >0 = relative thickness 
-		RGBc	color;			// color
-		RGBc	fillcolor;		// interior color (transparent = no filling)
-		int		part;			// one of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT,, BOX_SPLIT_DOWN_LEFT, , BOX_SPLIT_DOWN_RIGHT
-
-
-		/**   
-		 * Constructor. Simple ellipse without filling or thickness    
-		 **/
-		FigureEllipsePart(int ellipsepart, fVec2 centerellipse, double rad_x, double rad_y, RGBc col) : center(centerellipse), rx(rad_x), ry(rad_y), thickness_x(0.0), thickness_y(0.0), color(col), fillcolor(RGBc::c_Transparent), part(ellipsepart)
-			{
-			MTOOLS_ASSERT((ellipsepart >= 0) && (ellipsepart < 8));
-			MTOOLS_ASSERT(rad_x >= 0);
-			MTOOLS_ASSERT(rad_y >= 0);
-			}
-
-		/**
-		* Constructor. Simple ellipse without filling or thickness, given by its bounding box  (the bounding box if for the whole ellipse)
-		**/
-		FigureEllipsePart(int ellipsepart, const fBox2 & B, RGBc col) : center(B.center()), rx(B.l(0)/2), ry(B.l(1)/2), thickness_x(0.0), thickness_y(0.0), color(col), fillcolor(RGBc::c_Transparent), part(ellipsepart)
-			{
-			MTOOLS_ASSERT((ellipsepart >= 0) && (ellipsepart < 8));
-			MTOOLS_ASSERT(! B.isEmpty());
-			}
-
-
-		/**
-		* Constructor. Simple ellipse with filling color but without thickness
-		**/
-		FigureEllipsePart(int ellipsepart, fVec2 centerellipse, double rad_x, double rad_y, RGBc col, RGBc fillcol) : center(centerellipse), rx(rad_x), ry(rad_y), thickness_x(0.0), thickness_y(0.0), color(col), fillcolor(fillcol), part(ellipsepart)
-			{
-			MTOOLS_ASSERT((ellipsepart >= 0) && (ellipsepart < 8));
-			MTOOLS_ASSERT(rad_x >= 0);
-			MTOOLS_ASSERT(rad_y >= 0);
-			}
-
-
-		/**
-		* Constructor. Simple ellipse with filling but without thickness, given by its bounding box  (the bounding box if for the whole ellipse)
-		**/
-		FigureEllipsePart(int ellipsepart, const fBox2 & B, RGBc col, RGBc fillcol) : center(B.center()), rx(B.l(0) / 2), ry(B.l(1) / 2), thickness_x(0.0), thickness_y(0.0), color(col), fillcolor(fillcol), part(ellipsepart)
-			{
-			MTOOLS_ASSERT((ellipsepart >= 0) && (ellipsepart < 8));
-			MTOOLS_ASSERT(!B.isEmpty());
-			}
-
-
-		/**
-		* Constructor. Thick ellipse without filling
-		**/
-		FigureEllipsePart(int ellipsepart, fVec2 centerellipse, double rad_x, double rad_y, double thick_x, double thick_y, bool relativethickness, RGBc col)
-		: center(centerellipse), rx(rad_x), ry(rad_y), thickness_x(relativethickness ? thick_x : -thick_x), thickness_y(relativethickness ? thick_y : -thick_y), color(col), fillcolor(RGBc::c_Transparent), part(ellipsepart)
-			{
-			MTOOLS_ASSERT((ellipsepart >= 0) && (ellipsepart < 8));
-			MTOOLS_ASSERT(rad_x >= 0);
-			MTOOLS_ASSERT(rad_y >= 0);
-			MTOOLS_ASSERT(thick_x >= 0);
-			MTOOLS_ASSERT(thick_y >= 0);
-			}
-
-
-		/**
-		* Constructor. Thick ellipse without filling, given by its bounding box  (the bounding box if for the whole ellipse)
-		**/
-		FigureEllipsePart(int ellipsepart, const fBox2 & B, double thick_x, double thick_y, bool relativethickness, RGBc col)
-			: center(B.center()), rx(B.l(0) / 2), ry(B.l(1) / 2), thickness_x(relativethickness ? thick_x : -thick_x), thickness_y(relativethickness ? thick_y : -thick_y), color(col), fillcolor(RGBc::c_Transparent), part(ellipsepart)
-			{
-			MTOOLS_ASSERT((ellipsepart >= 0) && (ellipsepart < 8));
-			MTOOLS_ASSERT(!B.isEmpty());
-			MTOOLS_ASSERT(thick_x >= 0);
-			MTOOLS_ASSERT(thick_y >= 0);
-			}
-
-
-		/**
-		* Constructor. Thick ellipse with filling
-		**/
-		FigureEllipsePart(int ellipsepart, fVec2 centerellipse, double rad_x, double rad_y, double thick_x, double thick_y, bool relativethickness, RGBc col, RGBc fillcol)
-			: center(centerellipse), rx(rad_x), ry(rad_y), thickness_x(relativethickness ? thick_x : -thick_x), thickness_y(relativethickness ? thick_y : -thick_y), color(col), fillcolor(fillcol), part(ellipsepart)
-			{
-			MTOOLS_ASSERT((ellipsepart >= 0) && (ellipsepart < 8));
-			MTOOLS_ASSERT(rad_x >= 0);
-			MTOOLS_ASSERT(rad_y >= 0);
-			MTOOLS_ASSERT(thick_x >= 0);
-			MTOOLS_ASSERT(thick_y >= 0);
-			}
-
-
-		/**
-		* Constructor. Thick ellipse with filling, given by its bounding box (the bounding box if for the whole ellipse)
-		**/
-		FigureEllipsePart(int ellipsepart, const fBox2 & B, double thick_x, double thick_y, bool relativethickness, RGBc col, RGBc fillcol)
-			: center(B.center()), rx(B.l(0) / 2), ry(B.l(1) / 2), thickness_x(relativethickness ? thick_x : -thick_x), thickness_y(relativethickness ? thick_y : -thick_y), color(col), fillcolor(fillcol), part(ellipsepart)
-			{
-			MTOOLS_ASSERT((ellipsepart >= 0) && (ellipsepart < 8));
-			MTOOLS_ASSERT(!B.isEmpty());
-			MTOOLS_ASSERT(thick_x >= 0);
-			MTOOLS_ASSERT(thick_y >= 0);
-			}
-
-
-		/**
-		* Draws the figure onto an image with a given range.
-		*
-		* @param [in,out]	im		    the image to draw onto.
-		* @param [in,out]	R		    the range.
-		* @param 		  	highQuality (Optional) True when high quality drawing is requested and false
-		* 								otherwise.
-		*/
-		virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
-			{
-			if ((thickness_x == 0.0)&&(thickness_y == 0.0))
+			virtual std::string toString(bool debug = false) const override
 				{
-				if (fillcolor.comp.A == 0)
+				std::string str("Quad [");
+				str += mtools::toString(P1) + ", ";
+				str += mtools::toString(P2) + ", ";
+				str += mtools::toString(P3) + ", ";
+				str += mtools::toString(P4) + " - ";
+				str += mtools::toString(color);
+				if (!fillcolor.isTransparent())
 					{
-					im.canvas_draw_part_ellipse(R, part, center, rx, ry, color, highQuality);
+					str += "filled : ";
+					str += mtools::toString(fillcolor);
+					}
+				return str + "]";
+				}
+
+
+			virtual void serialize(OBaseArchive & ar) const override
+				{
+				ar & P1 & P2 & P3 & P4 & color & fillcolor;
+				}
+
+
+			virtual void deserialize(IBaseArchive & ar) override
+				{
+				ar & P1 & P2 & P3 & P4 & color & fillcolor;
+				}
+
+		};
+
+
+
+
+		/************************************************************************************************************************************
+		*
+		* CIRCLE / ELLIPSE
+		*
+		*************************************************************************************************************************************/
+
+
+		/**
+		*
+		* Circle figure
+		*
+		**/
+		class Circle : public internals_figure::FigureInterface
+		{
+
+		public:
+
+			fVec2	center;
+			double	radius;
+			double	thickness;		// circle thickness 0 = no thickness. < 0 = absolute thicknes,  >0 = relative thickness 
+			RGBc	color;
+			RGBc	fillcolor;		// (transparent = no filling)
+
+
+			/**
+			 * Construct a circle with unit thickness and without filling.
+			 *
+			 * @param	centercircle circle center.
+			 * @param	rad			 circle radius.
+			 * @param	col			 circle (outline) color
+			 */
+			Circle(fVec2 centercircle, double rad, RGBc col) : center(centercircle), radius(rad), thickness(0.0), color(col), fillcolor(RGBc::c_Transparent)
+				{
+				MTOOLS_ASSERT(rad >= 0);
+				}
+
+
+			/**
+			 * Construct a filled circle with unit thickness.
+			 *
+			 * @param	centercircle circle center.
+			 * @param	rad			 circle radius.
+			 * @param	col			 circle (outline) color
+			 * @param	fillcol		 circle fill color
+			 */
+			Circle(fVec2 centercircle, double rad, RGBc col, RGBc fillcol) : center(centercircle), radius(rad), thickness(0.0), color(col), fillcolor(fillcol)
+				{
+				MTOOLS_ASSERT(rad >= 0);
+				}
+
+
+			/**
+			 * Construct a thick circle (without filling).
+			 *
+			 * @param	centercircle		circle center.
+			 * @param	rad					circle radius.
+			 * @param	thick				thickness of the outline (going inside the circle).  
+			 * @param	relativethickness	true to use relative thickness.
+			 * @param	col					circle (outline) color
+			 */
+			Circle(fVec2 centercircle, double rad, double thick, bool relativethickness, RGBc col)
+				: center(centercircle), radius(rad), thickness(relativethickness ? thick : -thick), color(col), fillcolor(RGBc::c_Transparent)
+				{
+				MTOOLS_ASSERT(rad >= 0);
+				MTOOLS_ASSERT(thick > 0);
+				}
+
+
+			/**
+			 * Construct a thick filled circle
+			 *
+			 * @param	centercircle		circle center.
+			 * @param	rad					circle radius.
+			 * @param	thick				thickness of the outline (going inside the circle).
+			 * @param	relativethickness	true to use relative thickness.
+			 * @param	col					circle (outline) color
+			 * @param	fillcol				filling color
+			 */
+			Circle(fVec2 centercircle, double rad, double thick, bool relativethickness, RGBc col, RGBc fillcol)
+				: center(centercircle), radius(rad), thickness(relativethickness ? thick : -thick), color(col), fillcolor(fillcol)
+				{
+				MTOOLS_ASSERT(rad >= 0);
+				MTOOLS_ASSERT(thick > 0);
+				}
+
+
+			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+				{
+				if (thickness == 0.0)
+					{
+					if (fillcolor.isTransparent()) { im.canvas_draw_circle(R, center, radius, color, highQuality); }
+					else { im.canvas_draw_filled_circle(R, center, radius, color, fillcolor, highQuality); }
 					}
 				else
 					{
-					im.canvas_draw_part_filled_ellipse(R, part, center, rx, ry, color, fillcolor, highQuality);
+					const bool relative = (thickness > 0);
+					const double thick = (relative ? thickness : -thickness);
+					if (fillcolor.isTransparent()) { im.canvas_draw_thick_circle(R, center, radius, thick, relative, color, highQuality, true, min_thickness); }
+					else { im.canvas_draw_thick_filled_circle(R, center, radius, thick, relative, color, fillcolor, highQuality, true, min_thickness); }
 					}
 				}
-			else
+
+
+			virtual fBox2 boundingBox() const override { return fBox2(center.X() - radius, center.X() + radius, center.Y() - radius, center.Y() + radius); }
+
+
+			virtual std::string toString(bool debug = false) const override
 				{
-				const bool relative = (thickness_x >= 0);
-				const double tx = ((thickness_x < 0) ? (-thickness_x) : thickness_x);
-				const double ty = ((thickness_y < 0) ? (-thickness_y) : thickness_y);
-				if (fillcolor.comp.A == 0)
+				std::string str("Circle [");
+				str += mtools::toString(center) + " ";
+				str += mtools::toString(radius) + " ";
+				str += mtools::toString(color);
+				if (fillcolor.comp.A != 0) str += std::string(" filled: ") + mtools::toString(fillcolor);
+				if (thickness != 0.0)
 					{
-					im.canvas_draw_part_thick_ellipse(R, part, center, rx, ry, tx, ty, relative, color, highQuality,true,min_thickness);
+					if (thickness > 0) str += std::string(" rel. thick: ") + mtools::toString(thickness);
+					else str += std::string(" abs. thick: ") + mtools::toString(-thickness);
+					}
+				return str + "]";
+				}
+
+
+			virtual void serialize(OBaseArchive & ar) const override
+				{
+				ar & center & radius & thickness & color & fillcolor;
+				}
+
+
+			virtual void deserialize(IBaseArchive & ar) override
+				{
+				ar & center & radius & thickness & color & fillcolor;
+				}
+
+		};
+
+
+
+
+
+		/**
+		* 
+		* Circle Part
+		*
+		**/
+		class CirclePart : public internals_figure::FigureInterface
+		{
+
+		public:
+
+			fVec2	center;
+			double	radius;
+			double	thickness;		// circle thickness 0 = no thickness. < 0 = absolute thicknes,  >0 = relative thickness 
+			RGBc	color;
+			RGBc	fillcolor;		// circle interior color (transparent = no filling)
+			int		part;			// one of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT,, BOX_SPLIT_DOWN_LEFT, , BOX_SPLIT_DOWN_RIGHT
+
+
+			/**
+			 * Construct part of a circle (no filling, no thickness).
+			 *
+			 * @param	circlepart   part to draw, one of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT,
+			 * 						 BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT,,
+			 * 						 BOX_SPLIT_DOWN_LEFT, , BOX_SPLIT_DOWN_RIGHT.
+			 * @param	centercircle center.
+			 * @param	rad			 radius.
+			 * @param	col			 outline color.
+			 */
+			CirclePart(int circlepart, fVec2 centercircle, double rad, RGBc col) : part(circlepart), center(centercircle), radius(rad), thickness(0.0), color(col), fillcolor(RGBc::c_Transparent)
+				{
+				MTOOLS_ASSERT((circlepart >= 0) && (circlepart < 8));
+				MTOOLS_ASSERT(rad >= 0);
+				}
+
+
+			/**
+			 * Construct part of a circle with filling (no thickness).
+			 *
+			 * @param	circlepart   part to draw, one of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT,
+			 * 						 BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT,,
+			 * 						 BOX_SPLIT_DOWN_LEFT, , BOX_SPLIT_DOWN_RIGHT.
+			 * @param	centercircle center.
+			 * @param	rad			 radius.
+			 * @param	col			 outline color.
+			 * @param	fillcol		 fill color.
+			 */
+			CirclePart(int circlepart, fVec2 centercircle, double rad, RGBc col, RGBc fillcol) : part(circlepart), center(centercircle), radius(rad), thickness(0.0), color(col), fillcolor(fillcol)
+				{
+				MTOOLS_ASSERT((circlepart >= 0) && (circlepart < 8));
+				MTOOLS_ASSERT(rad >= 0);
+				}
+
+
+			/**
+			 * Construct part of a circle with thickness (no filling).
+			 *
+			 * @param	circlepart		  part to draw, one of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT,
+			 * 							  BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT,,
+			 * 							  BOX_SPLIT_DOWN_LEFT, , BOX_SPLIT_DOWN_RIGHT.
+			 * @param	centercircle	  center.
+			 * @param	rad				  radius.
+			 * @param	thick			  thickness of the outline (going inside the circle).
+			 * @param	relativethickness true to scale thickness with range.
+			 * @param	col				  outline color.
+			 */
+			CirclePart(int circlepart, fVec2 centercircle, double rad, double thick, bool relativethickness, RGBc col)
+				: part(circlepart), center(centercircle), radius(rad), thickness(relativethickness ? thick : -thick), color(col), fillcolor(RGBc::c_Transparent)
+				{
+				MTOOLS_ASSERT((circlepart >= 0) && (circlepart < 8));
+				MTOOLS_ASSERT(rad >= 0);
+				MTOOLS_ASSERT(thick >= 0);
+				}
+
+
+			/**
+			 * Construct part of a circle with thickness and filling
+			 *
+			 * @param	circlepart		  part to draw, one of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT,
+			 * 							  BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT,,
+			 * 							  BOX_SPLIT_DOWN_LEFT, , BOX_SPLIT_DOWN_RIGHT.
+			 * @param	centercircle	  center.
+			 * @param	rad				  radius.
+			 * @param	thick			  thickness of the outline (going inside the circle).
+			 * @param	relativethickness true to scale thickness with range.
+			 * @param	col				  outline color.
+			 * @param	fillcol			  fill color.
+			 */
+			CirclePart(int circlepart, fVec2 centercircle, double rad, double thick, bool relativethickness, RGBc col, RGBc fillcol)
+				: part(circlepart), center(centercircle), radius(rad), thickness(relativethickness ? thick : -thick), color(col), fillcolor(fillcol)
+				{
+				MTOOLS_ASSERT((circlepart >= 0) && (circlepart < 8));
+				MTOOLS_ASSERT(rad >= 0);
+				MTOOLS_ASSERT(thick >= 0);
+				}
+
+
+			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+				{
+				if (thickness == 0.0)
+					{
+					if (fillcolor.isTransparent()) { im.canvas_draw_part_circle(R, part, center, radius, color, highQuality); }
+					else { im.canvas_draw_part_filled_circle(R, part, center, radius, color, fillcolor, highQuality); }
 					}
 				else
 					{
-					im.canvas_draw_part_thick_filled_ellipse(R, part, center, rx, ry, tx, ty, relative, color, fillcolor, highQuality, true, min_thickness);
+					const bool relative = (thickness > 0);
+					const double thick = (relative ? thickness : -thickness);
+					if (fillcolor.isTransparent()) { im.canvas_draw_part_thick_circle(R, part, center, radius, thick, relative, color, highQuality, true, min_thickness); }
+					else { im.canvas_draw_part_thick_filled_circle(R, part, center, radius, thick, relative, color, fillcolor, highQuality, true, min_thickness); }
 					}
 				}
-			}
 
 
-		/**
-		* Return the object's bounding box.
-		*
-		* @return	A fBox2.
-		*/
-		virtual fBox2 boundingBox() const override
-			{
-			return fBox2(center.X() - rx, center.X() + rx, center.Y() - ry, center.Y() + ry).get_split(part);
-			}
-
-
-		/**
-		* Print info about the object into an std::string.
-		*/
-		virtual std::string toString(bool debug = false) const override
-			{
-			std::string str("Ellipse Part Figure [");
-			switch (part)
-			{
-			case BOX_SPLIT_UP: { str += "HALF UP"; break; }
-			case BOX_SPLIT_DOWN: { str += "HALF DOWN"; break; }
-			case BOX_SPLIT_LEFT: { str += "HALF LEFT"; break; }
-			case BOX_SPLIT_RIGHT: { str += "HALF RIGHT"; break; }
-			case BOX_SPLIT_UP_LEFT: { str += "QUARTER UP LEFT"; break; }
-			case BOX_SPLIT_UP_RIGHT: { str += "QUARTER UP RIGHT"; break; }
-			case BOX_SPLIT_DOWN_LEFT: { str += "QUARTER DOWN LEFT"; break; }
-			case BOX_SPLIT_DOWN_RIGHT: { str += "QUARTER DOWN RIGHT"; break; }
-			default: { str += "ERROR PART"; }
-			}
-			str += " " + mtools::toString(center) + " ";
-			str += mtools::toString(rx) + " ";
-			str += mtools::toString(ry) + " ";
-			str += mtools::toString(color);
-			if (fillcolor.comp.A != 0) str += std::string(" filled: ") + mtools::toString(fillcolor);
-			if ((thickness_x != 0.0)|| (thickness_y != 0.0))
+			virtual fBox2 boundingBox() const override
 				{
-				if (thickness_x >= 0) str += std::string(" rel. thick: x ") + mtools::toString(thickness_x) + " y " + mtools::toString(thickness_y);
-				else str += std::string(" abs. thick: ") + mtools::toString(thickness_x) + " y " + mtools::toString(thickness_y);
+				return fBox2(center.X() - radius, center.X() + radius, center.Y() - radius, center.Y() + radius).get_split(part);
 				}
-			return str + "]";
-			}
 
 
-		/** Serialize the object. */
-		virtual void serialize(OBaseArchive & ar) const override
-			{
-			ar & part;
-			ar & center;
-			ar & rx;
-			ar & ry;
-			ar & thickness_x;
-			ar & thickness_y;
-			ar & color;
-			ar & fillcolor;
-			}
+			virtual std::string toString(bool debug = false) const override
+				{
+				std::string str("CirclePart [");
+				switch (part)
+					{
+					case BOX_SPLIT_UP: { str += "HALF UP"; break; }
+					case BOX_SPLIT_DOWN: { str += "HALF DOWN"; break; }
+					case BOX_SPLIT_LEFT: { str += "HALF LEFT"; break; }
+					case BOX_SPLIT_RIGHT: { str += "HALF RIGHT"; break; }
+					case BOX_SPLIT_UP_LEFT: { str += "QUARTER UP LEFT"; break; }
+					case BOX_SPLIT_UP_RIGHT: { str += "QUARTER UP RIGHT"; break; }
+					case BOX_SPLIT_DOWN_LEFT: { str += "QUARTER DOWN LEFT"; break; }
+					case BOX_SPLIT_DOWN_RIGHT: { str += "QUARTER DOWN RIGHT"; break; }
+					default: { str += "ERROR PART"; }
+					}
+				str += " ";
+				str += mtools::toString(center) + " ";
+				str += mtools::toString(radius) + " ";
+				str += mtools::toString(color);
+				if (fillcolor.comp.A != 0) str += std::string(" filled: ") + mtools::toString(fillcolor);
+				if (thickness != 0.0)
+					{
+					if (thickness > 0) str += std::string(" rel. thick: ") + mtools::toString(thickness);
+					else str += std::string(" abs. thick: ") + mtools::toString(-thickness);
+					}
+				return str + "]";
+				}
 
 
-		/** Deserialize the object. */
-		virtual void deserialize(IBaseArchive & ar) override
-			{
-			ar & part;
-			ar & center;
-			ar & rx;
-			ar & ry;
-			ar & thickness_x;
-			ar & thickness_y;
-			ar & color;
-			ar & fillcolor;
-			}
-	};
+			virtual void serialize(OBaseArchive & ar) const override
+				{
+				ar & part & center & radius & thickness & color & fillcolor;
+				}
+
+
+			virtual void deserialize(IBaseArchive & ar) override
+				{
+				ar & part & center & radius & thickness & color & fillcolor;
+				}
+
+		};
+
+
+
+		/**
+		* 
+		* Ellipse
+		*
+		**/
+		class Ellipse : public internals_figure::FigureInterface
+		{
+
+		public:
+
+			fVec2	center;
+			double	rx;				// x-radius
+			double  ry;				// y-radius
+			double	thickness_x;	// 0 = no thickness. < 0 = absolute thicknes,  >0 = relative thickness 
+			double	thickness_y;	// 0 = no thickness  < 0 = absolute thicknes,  >0 = relative thickness 
+			RGBc	color;			// color
+			RGBc	fillcolor;		// interior color (transparent = no filling)
+
+
+
+			/**
+			 * Construct an ellipse (without filling nor thickness)
+			 *
+			 * @param	centerellipse center 
+			 * @param	rad_x		  x-radius
+			 * @param	rad_y		  y-radius
+			 * @param	col			  color
+			 */
+			Ellipse(fVec2 centerellipse, double rad_x, double rad_y, RGBc col) : center(centerellipse), rx(rad_x), ry(rad_y), thickness_x(0.0), thickness_y(0.0), color(col), fillcolor(RGBc::c_Transparent)
+				{
+				MTOOLS_ASSERT(rad_x >= 0);
+				MTOOLS_ASSERT(rad_y >= 0);
+				}
+
+
+			/**
+			 * Construct an ellipse (without filling nor thickness) from its bounding box.
+			 *
+			 * @param	B   bounding box
+			 * @param	col color.
+			 */
+			Ellipse(const fBox2 & B, RGBc col) : center(B.center()), rx(B.l(0) / 2), ry(B.l(1) / 2), thickness_x(0.0), thickness_y(0.0), color(col), fillcolor(RGBc::c_Transparent)
+				{
+				MTOOLS_ASSERT(!B.isEmpty());
+				}
+
+
+			/**
+			 * Construct a filled ellipse (without thickness)
+			 *
+			 * @param	centerellipse center.
+			 * @param	rad_x		  x-radius.
+			 * @param	rad_y		  y-radius.
+			 * @param	col			  color.
+			 * @param	fillcol		  fillcolor.
+			 */
+			Ellipse(fVec2 centerellipse, double rad_x, double rad_y, RGBc col, RGBc fillcol) : center(centerellipse), rx(rad_x), ry(rad_y), thickness_x(0.0), thickness_y(0.0), color(col), fillcolor(fillcol)
+				{
+				MTOOLS_ASSERT(rad_x >= 0);
+				MTOOLS_ASSERT(rad_y >= 0);
+				}
+
+
+			/**
+			 * Construct a filled ellipse (without thickness) from its bounding box.
+			 *
+			 * @param	B	    bounding box.
+			 * @param	col	    color.
+			 * @param	fillcol fill color
+			 */
+			Ellipse(const fBox2 & B, RGBc col, RGBc fillcol) : center(B.center()), rx(B.l(0) / 2), ry(B.l(1) / 2), thickness_x(0.0), thickness_y(0.0), color(col), fillcolor(fillcol)
+				{
+				MTOOLS_ASSERT(!B.isEmpty());
+				}
+
+
+			/**
+			 * Construct a thick ellipse (without filling)
+			 *
+			 * @param	centerellipse	  center.
+			 * @param	rad_x			  x-radius.
+			 * @param	rad_y			  y-radius.
+			 * @param	thick_x			  thickness on the x axis (going inside)
+			 * @param	thick_y			  thickness on the y axis (going inside)
+			 * @param	relativethickness true to use relative thickness.
+			 * @param	col				  color.
+			 */
+			Ellipse(fVec2 centerellipse, double rad_x, double rad_y, double thick_x, double thick_y, bool relativethickness, RGBc col)
+				: center(centerellipse), rx(rad_x), ry(rad_y), thickness_x(relativethickness ? thick_x : -thick_x), thickness_y(relativethickness ? thick_y : -thick_y), color(col), fillcolor(RGBc::c_Transparent)
+				{
+				MTOOLS_ASSERT(rad_x >= 0);
+				MTOOLS_ASSERT(rad_y >= 0);
+				MTOOLS_ASSERT(thick_x >= 0);
+				MTOOLS_ASSERT(thick_y >= 0);
+				}
+
+
+			/**
+			* Construct a thick ellipse (without filling) from its bounding box
+			*
+			 * @param	B				  bounding box
+			 * @param	thick_x			  thickness on the x axis (going inside)
+			 * @param	thick_y			  thickness on the y axis (going inside)
+			 * @param	relativethickness true to use relative thickness.
+			 * @param	col				  color.
+			 */
+			Ellipse(const fBox2 & B, double thick_x, double thick_y, bool relativethickness, RGBc col)
+				: center(B.center()), rx(B.l(0) / 2), ry(B.l(1) / 2), thickness_x(relativethickness ? thick_x : -thick_x), thickness_y(relativethickness ? thick_y : -thick_y), color(col), fillcolor(RGBc::c_Transparent)
+				{
+				MTOOLS_ASSERT(!B.isEmpty());
+				MTOOLS_ASSERT(thick_x >= 0);
+				MTOOLS_ASSERT(thick_y >= 0);
+				}
+
+
+			/**
+			 * Construct a thick filled ellipse
+			 *
+			 * @param	centerellipse	  center.
+			 * @param	rad_x			  x-radius.
+			 * @param	rad_y			  y-radius.
+			 * @param	thick_x			  thickness on the x axis (going inside)
+			 * @param	thick_y			  thickness on the y axis (going inside)
+			 * @param	relativethickness true to use relative thickness.
+			 * @param	col				  color.
+			 * @param	fillcol			  fill color
+			 */
+			Ellipse(fVec2 centerellipse, double rad_x, double rad_y, double thick_x, double thick_y, bool relativethickness, RGBc col, RGBc fillcol)
+				: center(centerellipse), rx(rad_x), ry(rad_y), thickness_x(relativethickness ? thick_x : -thick_x), thickness_y(relativethickness ? thick_y : -thick_y), color(col), fillcolor(fillcol)
+				{
+				MTOOLS_ASSERT(rad_x >= 0);
+				MTOOLS_ASSERT(rad_y >= 0);
+				MTOOLS_ASSERT(thick_x >= 0);
+				MTOOLS_ASSERT(thick_y >= 0);
+				}
+
+
+			/**
+			 * Construct a thick filled ellipse from its bounding box
+			 *
+			 * @param	B				  bounding box.
+			 * @param	thick_x			  thickness on the x axis (going inside)
+			 * @param	thick_y			  thickness on the y axis (going inside)
+			 * @param	relativethickness true to use relative thickness.
+			 * @param	col				  color.
+			 * @param	fillcol			  fill color
+			 */
+			Ellipse(const fBox2 & B, double thick_x, double thick_y, bool relativethickness, RGBc col, RGBc fillcol)
+				: center(B.center()), rx(B.l(0) / 2), ry(B.l(1) / 2), thickness_x(relativethickness ? thick_x : -thick_x), thickness_y(relativethickness ? thick_y : -thick_y), color(col), fillcolor(fillcol)
+				{
+				MTOOLS_ASSERT(!B.isEmpty());
+				MTOOLS_ASSERT(thick_x >= 0);
+				MTOOLS_ASSERT(thick_y >= 0);
+				}
+
+
+			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+				{
+				if ((thickness_x == 0.0) && (thickness_y == 0.0))
+					{
+					if (fillcolor.isTransparent()) { im.canvas_draw_ellipse(R, center, rx, ry, color, highQuality); }
+					else { im.canvas_draw_filled_ellipse(R, center, rx, ry, color, fillcolor, highQuality); }
+					}
+				else
+					{
+					const bool relative = (thickness_x >= 0);
+					const double tx = ((thickness_x < 0) ? (-thickness_x) : thickness_x);
+					const double ty = ((thickness_y < 0) ? (-thickness_y) : thickness_y);
+					if (fillcolor.isTransparent()) { im.canvas_draw_thick_ellipse(R, center, rx, ry, tx, ty, relative, color, highQuality, true, min_thickness); }
+					else { im.canvas_draw_thick_filled_ellipse(R, center, rx, ry, tx, ty, relative, color, fillcolor, highQuality, true, min_thickness); }
+					}
+				}
+
+
+			virtual fBox2 boundingBox() const override
+				{
+				return fBox2(center.X() - rx, center.X() + rx, center.Y() - ry, center.Y() + ry);
+				}
+
+
+			virtual std::string toString(bool debug = false) const override
+				{
+				std::string str("Ellipse [");
+				str += mtools::toString(center) + " ";
+				str += mtools::toString(rx) + " ";
+				str += mtools::toString(ry) + " ";
+				str += mtools::toString(color);
+				if (fillcolor.comp.A != 0) str += std::string(" filled: ") + mtools::toString(fillcolor);
+				if ((thickness_x != 0.0) || (thickness_y != 0.0))
+					{
+					if (thickness_x >= 0) str += std::string(" rel. thick: x ") + mtools::toString(thickness_x) + " y " + mtools::toString(thickness_y);
+					else str += std::string(" abs. thick: ") + mtools::toString(thickness_x) + " y " + mtools::toString(thickness_y);
+					}
+				return str + "]";
+				}
+
+
+			virtual void serialize(OBaseArchive & ar) const override
+				{
+				ar & center & rx & ry & thickness_x & thickness_y & color & fillcolor; 
+				}
+
+
+			virtual void deserialize(IBaseArchive & ar) override
+				{
+				ar & center & rx & ry & thickness_x & thickness_y & color & fillcolor;
+				}
+
+		};
+
+
+
+		/**
+		* 
+		* Ellipse Part figure
+		*
+		**/
+		class EllipsePart : public internals_figure::FigureInterface
+		{
+
+		public:
+
+			/** ellipse parameters **/
+			fVec2	center;			// circle center
+			double	rx;				// x-radius
+			double  ry;				// y-radius
+			double	thickness_x;	// 0 = no thickness. < 0 = absolute thicknes,  >0 = relative thickness 
+			double	thickness_y;	// 0 = no thickness  < 0 = absolute thicknes,  >0 = relative thickness 
+			RGBc	color;			// color
+			RGBc	fillcolor;		// interior color (transparent = no filling)
+			int		part;			// one of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT,, BOX_SPLIT_DOWN_LEFT, , BOX_SPLIT_DOWN_RIGHT
+
+
+			/**
+			 * Construct part of an ellipse (no filling, no thickness).
+			 *
+			 * @param	ellipsepart   part to draw. One of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT,
+			 * 						  BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT,,
+			 * 						  BOX_SPLIT_DOWN_LEFT, , BOX_SPLIT_DOWN_RIGHT.
+			 * @param	centerellipse center.
+			 * @param	rad_x		  x-radius.
+			 * @param	rad_y		  y-radius.
+			 * @param	col			  outline color.
+			 */
+			EllipsePart(int ellipsepart, fVec2 centerellipse, double rad_x, double rad_y, RGBc col) : center(centerellipse), rx(rad_x), ry(rad_y), thickness_x(0.0), thickness_y(0.0), color(col), fillcolor(RGBc::c_Transparent), part(ellipsepart)
+				{
+				MTOOLS_ASSERT((ellipsepart >= 0) && (ellipsepart < 8));
+				MTOOLS_ASSERT(rad_x >= 0);
+				MTOOLS_ASSERT(rad_y >= 0);
+				}
+
+
+			/**
+			 * Construct part of an ellipse (no filling, no thickness) from its bounding box
+			 *
+			 * @param	ellipsepart part to draw. One of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT,
+			 * 						BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT,,
+			 * 						BOX_SPLIT_DOWN_LEFT, , BOX_SPLIT_DOWN_RIGHT.
+			 * @param	B		    bounding box (for the whole ellipse).
+			 * @param	col		    outline color
+			 */
+			EllipsePart(int ellipsepart, const fBox2 & B, RGBc col) : center(B.center()), rx(B.l(0) / 2), ry(B.l(1) / 2), thickness_x(0.0), thickness_y(0.0), color(col), fillcolor(RGBc::c_Transparent), part(ellipsepart)
+				{
+				MTOOLS_ASSERT((ellipsepart >= 0) && (ellipsepart < 8));
+				MTOOLS_ASSERT(!B.isEmpty());
+				}
+
+
+			/**
+			 * Construct part of a filled ellipse (no thickness)
+			 *
+			 * @param	ellipsepart   part to draw. One of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT,
+			 * 						  BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT,,
+			 * 						  BOX_SPLIT_DOWN_LEFT, , BOX_SPLIT_DOWN_RIGHT.
+			 * @param	centerellipse center.
+			 * @param	rad_x		  x-radius.
+			 * @param	rad_y		  y-radius.
+			 * @param	col			  outline color.
+			 * @param	fillcol		  fill color.
+			 */
+			EllipsePart(int ellipsepart, fVec2 centerellipse, double rad_x, double rad_y, RGBc col, RGBc fillcol) : center(centerellipse), rx(rad_x), ry(rad_y), thickness_x(0.0), thickness_y(0.0), color(col), fillcolor(fillcol), part(ellipsepart)
+				{
+				MTOOLS_ASSERT((ellipsepart >= 0) && (ellipsepart < 8));
+				MTOOLS_ASSERT(rad_x >= 0);
+				MTOOLS_ASSERT(rad_y >= 0);
+				}
+
+
+			/**
+			 * Construct part of a filled ellipse (no thickness) from its bounding box
+			 *
+			 * @param	ellipsepart part to draw. One of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT,
+			 * 						BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT,,
+			 * 						BOX_SPLIT_DOWN_LEFT, , BOX_SPLIT_DOWN_RIGHT.
+			 * @param	B		    bounding box (for the whole ellipse).
+			 * @param	col		    outline color.
+			 * @param	fillcol	    fill color.
+			 */
+			EllipsePart(int ellipsepart, const fBox2 & B, RGBc col, RGBc fillcol) : center(B.center()), rx(B.l(0) / 2), ry(B.l(1) / 2), thickness_x(0.0), thickness_y(0.0), color(col), fillcolor(fillcol), part(ellipsepart)
+				{
+				MTOOLS_ASSERT((ellipsepart >= 0) && (ellipsepart < 8));
+				MTOOLS_ASSERT(!B.isEmpty());
+				}
+
+
+			/**
+			 * Construct part of a thick ellipse (no filling).
+			 *
+			 * @param	ellipsepart		  part to draw. One of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT,
+			 * 							  BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT,,
+			 * 							  BOX_SPLIT_DOWN_LEFT, , BOX_SPLIT_DOWN_RIGHT.
+			 * @param	centerellipse	  center.
+			 * @param	rad_x			  x-radius.
+			 * @param	rad_y			  y-radius.
+			 * @param	thick_x			  thickness on the x-axis (going inside)
+			 * @param	thick_y			  thickness on the y-axis (going inside)
+			 * @param	relativethickness true to use relative thickness.
+			 * @param	col				  outline color.
+			 */
+			EllipsePart(int ellipsepart, fVec2 centerellipse, double rad_x, double rad_y, double thick_x, double thick_y, bool relativethickness, RGBc col)
+				: center(centerellipse), rx(rad_x), ry(rad_y), thickness_x(relativethickness ? thick_x : -thick_x), thickness_y(relativethickness ? thick_y : -thick_y), color(col), fillcolor(RGBc::c_Transparent), part(ellipsepart)
+				{
+				MTOOLS_ASSERT((ellipsepart >= 0) && (ellipsepart < 8));
+				MTOOLS_ASSERT(rad_x >= 0);
+				MTOOLS_ASSERT(rad_y >= 0);
+				MTOOLS_ASSERT(thick_x >= 0);
+				MTOOLS_ASSERT(thick_y >= 0);
+				}
+
+
+			/**
+			 * Construct part of a thick ellipse (no filling) from its bounding box
+			 *
+			 * @param	ellipsepart		  part to draw. One of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT,
+			 * 							  BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT,,
+			 * 							  BOX_SPLIT_DOWN_LEFT, , BOX_SPLIT_DOWN_RIGHT.
+			 * @param	B				  bounding box (for the whole ellipse).
+			 * @param	thick_x			  thickness on the x-axis (going inside)
+			 * @param	thick_y			  thickness on the y-axis (going inside)
+			 * @param	relativethickness true to use relative thickness.
+			 * @param	col				  outline color.
+			 */
+			EllipsePart(int ellipsepart, const fBox2 & B, double thick_x, double thick_y, bool relativethickness, RGBc col)
+				: center(B.center()), rx(B.l(0) / 2), ry(B.l(1) / 2), thickness_x(relativethickness ? thick_x : -thick_x), thickness_y(relativethickness ? thick_y : -thick_y), color(col), fillcolor(RGBc::c_Transparent), part(ellipsepart)
+				{
+				MTOOLS_ASSERT((ellipsepart >= 0) && (ellipsepart < 8));
+				MTOOLS_ASSERT(!B.isEmpty());
+				MTOOLS_ASSERT(thick_x >= 0);
+				MTOOLS_ASSERT(thick_y >= 0);
+				}
+
+
+			/**
+			 * Construct part of a thick filled ellipse.
+			 *
+			 * @param	ellipsepart		  part to draw. One of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT,
+			 * 							  BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT,,
+			 * 							  BOX_SPLIT_DOWN_LEFT, , BOX_SPLIT_DOWN_RIGHT.
+			 * @param	centerellipse	  center.
+			 * @param	rad_x			  x-radius.
+			 * @param	rad_y			  y-radius.
+			 * @param	thick_x			  thickness on the x-axis (going inside)
+			 * @param	thick_y			  thickness on the y-axis (going inside)
+			 * @param	relativethickness true to use relative thickness.
+			 * @param	col				  outline color.
+			 * @param	fillcol			  fill color.
+			 */
+			EllipsePart(int ellipsepart, fVec2 centerellipse, double rad_x, double rad_y, double thick_x, double thick_y, bool relativethickness, RGBc col, RGBc fillcol)
+				: center(centerellipse), rx(rad_x), ry(rad_y), thickness_x(relativethickness ? thick_x : -thick_x), thickness_y(relativethickness ? thick_y : -thick_y), color(col), fillcolor(fillcol), part(ellipsepart)
+				{
+				MTOOLS_ASSERT((ellipsepart >= 0) && (ellipsepart < 8));
+				MTOOLS_ASSERT(rad_x >= 0);
+				MTOOLS_ASSERT(rad_y >= 0);
+				MTOOLS_ASSERT(thick_x >= 0);
+				MTOOLS_ASSERT(thick_y >= 0);
+				}
+
+
+			/**
+			 * Construct part of a thick filled ellipse from its bounding box
+			 *
+			 * @param	ellipsepart		  part to draw. One of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT,
+			 * 							  BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT,,
+			 * 							  BOX_SPLIT_DOWN_LEFT, , BOX_SPLIT_DOWN_RIGHT.
+			 * @param	B				  bounding box (for the whole ellipse).
+			 * @param	thick_x			  thickness on the x-axis (going inside)
+			 * @param	thick_y			  thickness on the y-axis (going inside)
+			 * @param	relativethickness true to use relative thickness.
+			 * @param	col				  outline color.
+			 * @param	fillcol			  fill color.
+			 */
+			EllipsePart(int ellipsepart, const fBox2 & B, double thick_x, double thick_y, bool relativethickness, RGBc col, RGBc fillcol)
+				: center(B.center()), rx(B.l(0) / 2), ry(B.l(1) / 2), thickness_x(relativethickness ? thick_x : -thick_x), thickness_y(relativethickness ? thick_y : -thick_y), color(col), fillcolor(fillcol), part(ellipsepart)
+				{
+				MTOOLS_ASSERT((ellipsepart >= 0) && (ellipsepart < 8));
+				MTOOLS_ASSERT(!B.isEmpty());
+				MTOOLS_ASSERT(thick_x >= 0);
+				MTOOLS_ASSERT(thick_y >= 0);
+				}
+
+
+			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+				{
+				if ((thickness_x == 0.0) && (thickness_y == 0.0))
+					{
+					if (fillcolor.isTransparent()) { im.canvas_draw_part_ellipse(R, part, center, rx, ry, color, highQuality); }
+					else { im.canvas_draw_part_filled_ellipse(R, part, center, rx, ry, color, fillcolor, highQuality); }
+					}
+				else
+					{
+					const bool relative = (thickness_x >= 0);
+					const double tx = ((thickness_x < 0) ? (-thickness_x) : thickness_x);
+					const double ty = ((thickness_y < 0) ? (-thickness_y) : thickness_y);
+					if (fillcolor.isTransparent()) { im.canvas_draw_part_thick_ellipse(R, part, center, rx, ry, tx, ty, relative, color, highQuality, true, min_thickness); }
+					else { im.canvas_draw_part_thick_filled_ellipse(R, part, center, rx, ry, tx, ty, relative, color, fillcolor, highQuality, true, min_thickness); }
+					}
+				}
+
+
+			virtual fBox2 boundingBox() const override
+				{
+				return fBox2(center.X() - rx, center.X() + rx, center.Y() - ry, center.Y() + ry).get_split(part);
+				}
+
+
+			virtual std::string toString(bool debug = false) const override
+				{
+				std::string str("EllipsePart [");
+				switch (part)
+					{
+					case BOX_SPLIT_UP: { str += "HALF UP"; break; }
+					case BOX_SPLIT_DOWN: { str += "HALF DOWN"; break; }
+					case BOX_SPLIT_LEFT: { str += "HALF LEFT"; break; }
+					case BOX_SPLIT_RIGHT: { str += "HALF RIGHT"; break; }
+					case BOX_SPLIT_UP_LEFT: { str += "QUARTER UP LEFT"; break; }
+					case BOX_SPLIT_UP_RIGHT: { str += "QUARTER UP RIGHT"; break; }
+					case BOX_SPLIT_DOWN_LEFT: { str += "QUARTER DOWN LEFT"; break; }
+					case BOX_SPLIT_DOWN_RIGHT: { str += "QUARTER DOWN RIGHT"; break; }
+					default: { str += "ERROR PART"; }
+					}
+				str += " " + mtools::toString(center) + " ";
+				str += mtools::toString(rx) + " ";
+				str += mtools::toString(ry) + " ";
+				str += mtools::toString(color);
+				if (fillcolor.comp.A != 0) str += std::string(" filled: ") + mtools::toString(fillcolor);
+				if ((thickness_x != 0.0) || (thickness_y != 0.0))
+					{
+					if (thickness_x >= 0) str += std::string(" rel. thick: x ") + mtools::toString(thickness_x) + " y " + mtools::toString(thickness_y);
+					else str += std::string(" abs. thick: ") + mtools::toString(thickness_x) + " y " + mtools::toString(thickness_y);
+					}
+				return str + "]";
+				}
+
+
+			virtual void serialize(OBaseArchive & ar) const override
+				{
+				ar & part & center & rx & ry & thickness_x & thickness_y & color & fillcolor;
+				}
+
+
+			virtual void deserialize(IBaseArchive & ar) override
+				{
+				ar & part & center & rx & ry & thickness_x & thickness_y & color & fillcolor;
+				}
+
+		};
 
 
 
 
-
-
-
-
+	}
 
 
 
