@@ -1675,155 +1675,23 @@ namespace mtools
 
 
 
-			/******************************************************************************************************************************************************
-			*******************************************************************************************************************************************************
-			*																				   																      *
-			*                                                            TEXT DRAWING METHODS                                                                     *
-			*																																					  *
-			*******************************************************************************************************************************************************
-			*******************************************************************************************************************************************************/
-
-
-
-			/**
-			 * Draw background of the rectangle that enclosed a given text. Color bkcolor is blend over the
-			 * image.
-			 *
-			 * @param	x	   	x coordinate of the text reference position.
-			 * @param	y	   	y coordinate of the text reference position.
-			 * @param	txt	   	the text.
-			 * @param	txt_pos	Positioning method (combination of MTOOLS_TEXT_XCENTER, MTOOLS_TEXT_LEFT,
-			 * 					MTOOLS_TEXT_RIGHT, MTOOLS_TEXT_TOP, MTOOLS_TEXT_BOTTOM, MTOOLS_TEXT_YCENTER).
-			 * @param	bkcolor	The color to blend over.
-			 * @param	font   	the font to use.
-			 **/
-			void draw_text_background(int64 x, int64 y, const std::string & txt, int txt_pos, RGBc bkcolor, const Font * font); 
-
-
-			/**
-			 * Draw background of the rectangle that enclosed a given text. Color bkcolor is blend over the
-			 * image. This version uses the default font (gFont).
-			 *
-			 * @param	x			x coordinate of the text reference position.
-			 * @param	y			y coordinate of the text reference position.
-			 * @param	txt			the text.
-			 * @param	txt_pos 	Positioning method (combination of MTOOLS_TEXT_XCENTER, MTOOLS_TEXT_LEFT,
-			 * 						MTOOLS_TEXT_RIGHT, MTOOLS_TEXT_TOP, MTOOLS_TEXT_BOTTOM, MTOOLS_TEXT_YCENTER).
-			 * @param	bkcolor 	The color to blend over.
-			 * @param	fontsize	the font size to use.
-			 **/
-			void draw_text_background(int64 x, int64 y, const std::string & txt, int txt_pos, RGBc bkcolor, int fontsize);
-
-
-			/**
-			 * Draw background of the rectangle that enclosed a given text. Color bkcolor is blend over the
-			 * image.
-			 *
-			 * @param	pos	   	the text reference position.
-			 * @param	txt	   	the text.
-			 * @param	txt_pos	Positioning method (combination of MTOOLS_TEXT_XCENTER, MTOOLS_TEXT_LEFT,
-			 * 					MTOOLS_TEXT_RIGHT, MTOOLS_TEXT_TOP, MTOOLS_TEXT_BOTTOM, MTOOLS_TEXT_YCENTER).
-			 * @param	bkcolor	The color to blend over.
-			 * @param	font   	the font to use.
-			 **/
-			inline void draw_text_background(const iVec2 & pos, const std::string & txt, int txt_pos, RGBc bkcolor, const Font * font)
-				{
-				draw_text_background(pos.X(), pos.Y(), txt, txt_pos, bkcolor, font);
-				}
-
-
-			/**
-			 * Draw background of the rectangle that enclosed a given text. Color bkcolor is blend over the
-			 * image. This version uses the default font (gFont).
-			 *
-			 * @param	pos			the text reference position.
-			 * @param	txt			the text.
-			 * @param	txt_pos 	Positioning method (combination of MTOOLS_TEXT_XCENTER, MTOOLS_TEXT_LEFT,
-			 * 						MTOOLS_TEXT_RIGHT, MTOOLS_TEXT_TOP, MTOOLS_TEXT_BOTTOM, MTOOLS_TEXT_YCENTER).
-			 * @param	bkcolor 	The color to blend over.
-			 * @param	fontsize	the font size to use.
-			 **/
-			inline void draw_text_background(const iVec2 & pos, const std::string & txt, int txt_pos, RGBc bkcolor, int fontsize)
-				{
-				draw_text_background( pos.X(), pos.Y() ,  txt, txt_pos, bkcolor, fontsize);
-				}
-
-
-			/**
-			 * Draws a text on the image, with a given color and using a given font.
-			 *
-			 * @param	x	   	x coordinate of the text reference position.
-			 * @param	y	   	y coordinate of the text reference position.
-			 * @param	txt	   	the text to draw.
-			 * @param	txt_pos	Positioning method (combination of MTOOLS_TEXT_XCENTER, MTOOLS_TEXT_LEFT,
-			 * 					MTOOLS_TEXT_RIGHT, MTOOLS_TEXT_TOP, MTOOLS_TEXT_BOTTOM, MTOOLS_TEXT_YCENTER).
-			 * @param	color  	The color to blend over.
-			 * @param	font   	the font to use.
-			 **/
-			void draw_text(int64 x, int64 y, const std::string & txt, int txt_pos, RGBc color, const Font * font);
-
-
-			/**
-			 * Draws a text on the image with a given color. Use the default font [gFont].
-			 *
-			 * @param	x			x coordinate of the text reference position.
-			 * @param	y			y coordinate of the text reference position.
-			 * @param	txt			the text to draw.
-			 * @param	txt_pos 	Positioning method (combination of MTOOLS_TEXT_XCENTER, MTOOLS_TEXT_LEFT,
-			 * 						MTOOLS_TEXT_RIGHT, MTOOLS_TEXT_TOP, MTOOLS_TEXT_BOTTOM, MTOOLS_TEXT_YCENTER).
-			 * @param	color   	The color to blend over.
-			 * @param	fontsize	the font size to use.
-			 **/
-			void draw_text(int64 x, int64 y, const std::string & txt, int txt_pos, RGBc color, int fontsize);
-
-
-			/**
-			* Draws a text on the image, with a given color and using a given font.
-			*
-			* @param	pos	   	the text reference position.
-			* @param	txt	   	the text to draw.
-			* @param	txt_pos	Positioning method (combination of MTOOLS_TEXT_XCENTER, MTOOLS_TEXT_LEFT,
-			* 					MTOOLS_TEXT_RIGHT, MTOOLS_TEXT_TOP, MTOOLS_TEXT_BOTTOM, MTOOLS_TEXT_YCENTER).
-			* @param	color  	The color to blend over.
-			* @param	font   	the font to use.
-			**/
-			inline void draw_text(const iVec2 & pos, const std::string & txt, int txt_pos, RGBc color, const Font * font)
-				{
-				draw_text(pos.X(), pos.Y(), txt, txt_pos, color, font);
-				}
-
-
-			/**
-			* Draws a text on the image with a given color. Use the default font [gFont].
-			*
-			* @param	pos			the text reference position.
-			* @param	txt			the text to draw
-			* @param	txt_pos 	Positioning method (combination of MTOOLS_TEXT_XCENTER, MTOOLS_TEXT_LEFT,
-			* 						MTOOLS_TEXT_RIGHT, MTOOLS_TEXT_TOP, MTOOLS_TEXT_BOTTOM, MTOOLS_TEXT_YCENTER).
-			* @param	color   	The color to blend over.
-			* @param	fontsize	the font size to use.
-			**/
-			inline void draw_text(const iVec2 & pos, const std::string & txt, int txt_pos, RGBc color, int fontsize)
-				{
-				draw_text(pos.X(), pos.Y(), txt, txt_pos, color, fontsize);
-				}
-
 
 
 			/******************************************************************************************************************************************************
-			*******************************************************************************************************************************************************
 			*																				   																      *
-			*                                                            DRAWING DOTS, LINES AND CURVES                                                           *
+			*                                                                DRAWING  PRIMITIVES                                                                  *
 			*																				   																      *
-			* Position for floating point coordinate fVec2 is in normalizsed range [-0.5 , lx - 0.5] x [-0.5, ly - 0.5] 								          *
-			*	-> this means that integer valued (x,y) correspond to the center of the pixel at pos (x,y) on the image										      *				
-			*	   in particular, methods taking floating point value position  can also be called with iVec2 parameter and are centered in the middle of pixels. *
-			*	   !!!! NO Y-INVERSION IS PERFORMED !!!																			   																      *
 			*																				   																      *
-			* All drawing primitive are clipped when drawing occurs outside the image (hopefully in a safe and fast way).									      *
+			* Position for floating point coordinate fVec2 is in normalized range [-0.5 , lx - 0.5] x [-0.5, ly - 0.5]   								          *
+			*	-> this means that integer-valued (x,y) correspond to the center of the pixel at pos (x,y) on the image										      *
+			*	   methods taking floating point value position can also be called with iVec2 parameter and are centered in the middle of pixels.                 *
+			*	   !!!! NO Y-INVERSION IS PERFORMED (0,0) !!!																	   							      *
 			*																				   																      *
-			*******************************************************************************************************************************************************
+			* All drawing primitives are clipped when drawing occurs outside the image (hopefully in a safe and fast way).									      *
+			*																				   																      *
+			*																				   																      *
 			*******************************************************************************************************************************************************/
+
 
 
 			/*****************************************
@@ -1836,7 +1704,7 @@ namespace mtools
 			 * Draw a circle dot on the image.
 			 *
 			 * @param	center   	Position of the dot.
-			 * @param	radius   	abosolute radius of the dot (single pixel for radius = 1)
+			 * @param	radius   	absolute radius of the dot (single pixel for radius = 1)
 			 * @param	outcolor 	outline color.
 			 * @param	fillcolor	inside color.
 			 * @param	aa		 	(Optional) true to use antialiasing.
@@ -1845,15 +1713,15 @@ namespace mtools
 			MTOOLS_FORCEINLINE void draw_circle_dot(iVec2 center, double radius, RGBc outcolor, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
 				{
 				if ((isEmpty()) || (radius <= 0)) return;
-				if (radius <= 1)
+				if (radius < 2)
 					{
 					if (blend)
 						{
-						if (radius == 1) _updatePixel<true, true, false, false>(center.X(), center.Y(), outcolor, 0, 0); else  _updatePixel<true, true, true, false>(center.X(), center.Y(), outcolor, (int32)(256 * radius), 0);
+						if (radius >= 1) _updatePixel<true, true, false, false>(center.X(), center.Y(), outcolor, 0, 0); else  _updatePixel<true, true, true, false>(center.X(), center.Y(), outcolor, (int32)(256 * radius), 0);
 						}
 					else
 						{
-						if (radius == 1) _updatePixel<false, true, false, false>(center.X(), center.Y(), outcolor, 0, 0); else  _updatePixel<false, true, true, false>(center.X(), center.Y(), outcolor, (int32)(256 * radius), 0);
+						if (radius >= 1) _updatePixel<false, true, false, false>(center.X(), center.Y(), outcolor, 0, 0); else  _updatePixel<false, true, true, false>(center.X(), center.Y(), outcolor, (int32)(256 * radius), 0);
 						}
 					return;
 					}
@@ -1874,11 +1742,11 @@ namespace mtools
 					iVec2 c = round(center);
 					if (blend)
 						{
-						if (radius == 1) _updatePixel<true, false, false, false>(c.X(), c.Y(), outcolor, 0, 0); else  _updatePixel<true, false, true, false>(c.X(), c.Y(), outcolor, (int32)(256 * radius), 0);
+						if (radius >= 1) _updatePixel<true, false, false, false>(c.X(), c.Y(), outcolor, 0, 0); else  _updatePixel<true, false, true, false>(c.X(), c.Y(), outcolor, (int32)(256 * radius), 0);
 						}
 					else
 						{
-						if (radius == 1) _updatePixel<false, false, false, false>(c.X(), c.Y(), outcolor, 0, 0); else  _updatePixel<false, false, true, false>(c.X(), c.Y(), outcolor, (int32)(256 * radius), 0);
+						if (radius >= 1) _updatePixel<false, false, false, false>(c.X(), c.Y(), outcolor, 0, 0); else  _updatePixel<false, false, true, false>(c.X(), c.Y(), outcolor, (int32)(256 * radius), 0);
 						}
 					return;
 					}
@@ -1898,7 +1766,7 @@ namespace mtools
 			**/
 			MTOOLS_FORCEINLINE void draw_square_dot(iVec2 P, RGBc color, bool blending = DEFAULT_BLEND, int32 penwidth = 0)
 				{
-				if (isEmpty()) return;
+				if (isEmpty() || (penwidth < 0)) return;
 				if (color.isOpaque()) { blending = false; }
 				if (penwidth <= 0)
 					{
@@ -1973,7 +1841,7 @@ namespace mtools
 			 * @param	blending 	(Optional) true to use blending.
 			 * @param	min_tick 	(Optional) minimal thickness.
 			 **/
-			MTOOLS_FORCEINLINE void draw_horizontal_line(int64 y, int64 x1, int64 x2, double thickness, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
+			MTOOLS_FORCEINLINE void draw_thick_horizontal_line(int64 y, int64 x1, int64 x2, double thickness, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
 				if (isEmpty() || (thickness <= 0)) return;
 				if (blending) _tickHorizontalLine<true, true>(y, x1, x2, color, draw_P2, thickness, min_tick); else _tickHorizontalLine<false, true>(y, x1, x2, color, draw_P2, thickness,min_tick);
@@ -1984,9 +1852,13 @@ namespace mtools
 			* Draw a thick horizontal line.
 			* version with real valued coordinates.
 			**/
-			MTOOLS_FORCEINLINE void draw_horizontal_line(double y, double x1, double x2, double thickness, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
+			MTOOLS_FORCEINLINE void draw_thick_horizontal_line(double y, double x1, double x2, double thickness, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
-				draw_horizontal_line((int64)std::round(y), (int64)std::round(x1), (int64)std::round(x2), thickness, color, draw_P2, blending, min_tick);
+				const double L = _ly + 100000.0;
+				if (y < -L) { thickness += (2 * (L + y));  y = -L; }	else if (y > L) { thickness -= (2 * (y - L));  y = L; }
+				if (x1 <= -1.0) { x1 = -1.0; } else if (x1 >= _lx + 1.0) { x1 = _lx + 1.0; }
+				if (x2 <= -1.0) { x2 = -1.0; } else if (x2 >= _lx + 1.0) { x2 = _lx + 1.0; }
+				draw_thick_horizontal_line((int64)std::round(y), (int64)std::round(x1), (int64)std::round(x2), thickness, color, draw_P2, blending, min_tick);
 				}
 
 
@@ -2013,9 +1885,9 @@ namespace mtools
 			**/
 			MTOOLS_FORCEINLINE void draw_vertical_line(double x, double y1, double y2, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND)
 				{
-				if ((y < -1.0) || (y > _ly + 1.0)) return;	
-				if (x1 <= -1.0) { x1 = -1.0; } else if (x1 >= _lx + 1.0) { x1 = _lx + 1.0; } 
-				if (x2 <= -1.0) { x2 = -1.0; } else if (x2 >= _lx + 1.0) { x2 = _lx + 1.0; }
+				if ((x < -1.0) || (x > _lx + 1.0)) return;	
+				if (y1 <= -1.0) { y1 = -1.0; } else if (y1 >= _ly + 1.0) { y1 = _ly + 1.0; } 
+				if (y2 <= -1.0) { y2 = -1.0; } else if (y2 >= _ly + 1.0) { y2 = _ly + 1.0; }
 				draw_vertical_line((int64)std::round(x), (int64)std::round(y1), (int64)std::round(y2), color, draw_P2, blending);
 				}
 
@@ -2032,7 +1904,7 @@ namespace mtools
 			 * @param	blending 	(Optional) true to use blending.
 			 * @param	min_tick 	(Optional) minimal thickness.
 			 **/
-			MTOOLS_FORCEINLINE void draw_vertical_line(int64 x, int64 y1, int64 y2, double thickness, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
+			MTOOLS_FORCEINLINE void draw_thick_vertical_line(int64 x, int64 y1, int64 y2, double thickness, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
 				if (isEmpty() || (thickness <= 0)) return;
 				if (blending) _tickVerticalLine<true, true>(x, y1, y2, color, draw_P2, thickness, min_tick); else _tickVerticalLine<false, true>(x, y1, y2, color, draw_P2, thickness, min_tick);
@@ -2043,9 +1915,13 @@ namespace mtools
 			* Draw a thick vertical line.
 			* version with real valued coordinates.
 			**/
-			MTOOLS_FORCEINLINE void draw_vertical_line(double x, double y1, double y2, double thickness, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
+			MTOOLS_FORCEINLINE void draw_thick_vertical_line(double x, double y1, double y2, double thickness, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
-				draw_vertical_line((int64)std::round(x), (int64)std::round(y1), (int64)std::round(y2), thickness, color, draw_P2, blending, min_tick);
+				const double L = _lx + 100000.0;
+				if (x < -L) { thickness += (2 * (L + x));  x = -L; } else if (x > L) { thickness -= (2 * (x - L));  x = L; }
+				if (y1 <= -1.0) { y1 = -1.0; } else if (y1 >= _ly + 1.0) { y1 = _ly + 1.0; }
+				if (y2 <= -1.0) { y2 = -1.0; } else if (y2 >= _ly + 1.0) { y2 = _ly + 1.0; }
+				draw_thick_vertical_line((int64)std::round(x), (int64)std::round(y1), (int64)std::round(y2), thickness, color, draw_P2, blending, min_tick);
 				}
 
 
@@ -2092,11 +1968,32 @@ namespace mtools
 			* Draw a simple line.
 			* Version with real-valued coordinates.
 			**/
-			inline void draw_line(fVec2 P1, fVec2 P2, RGBc color, bool draw_P2 = true, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int penwidth = 0)
+			MTOOLS_FORCEINLINE void draw_line(fVec2 P1, fVec2 P2, RGBc color, bool draw_P2 = true, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int penwidth = 0)
 				{
+				// IMPROVE THIS REALLY USING THE REAL VALUED POSITIONS
+				if (isEmpty()) return;
+				const double L = 1000000.0;
+				if (!Colin_SutherLand_lineclip(P1, P2, fBox2(-L, _lx + L, -L, _ly + L))) return;
 				draw_line(round(P1), round(P2), color, draw_P2, antialiased, blending, penwidth);
 				}
 	
+
+			/**
+			* Draw a thick line.
+			* 
+			* @param	P1		   	First point.
+			* @param	P2		   	Second endpoint.
+			* @param	thickness  	thickness.
+			* @param	color	   	The color to use.
+			* @param	antialiased	(Optional) true to draw an antialised line.
+			* @param	blending   	(Optional) true to use blending instead of simply overwriting the color.
+			* @param	min_thick  	(Optional) minimum thickness
+			**/
+			MTOOLS_FORCEINLINE void draw_thick_line(fVec2 P1, fVec2 P2, double thickness, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
+				{
+				canvas_draw_thick_line(imagefBox(), fVec2(P1.X(), _ly - 1 - P1.Y()), fVec2(P2.X(), _ly - 1 - P2.Y()), thickness, color, antialiased, blending, min_thick); // because of thickness scaling, it is more convinient to use the canvas method.
+				}
+
 
 
 
@@ -2831,10 +2728,10 @@ namespace mtools
 				if (penwidth <= 0) penwidth = 0;
 				if (color.isOpaque()) blend = false;
 				double tickness = 2*penwidth  + 1; // does not work if not using integer penwidth !
-				draw_horizontal_line(dest_box.min[1], dest_box.min[0] - penwidth, dest_box.max[0] + penwidth, tickness, color, true, blend);
-				draw_horizontal_line(dest_box.max[1], dest_box.min[0] - penwidth, dest_box.max[0] + penwidth, tickness, color, true, blend);
-				draw_vertical_line(dest_box.min[0], dest_box.min[1] + penwidth + 1, dest_box.max[1] - penwidth - 1, tickness, color, true, blend);
-				draw_vertical_line(dest_box.max[0], dest_box.min[1] + penwidth + 1, dest_box.max[1] - penwidth - 1, tickness, color, true, blend);
+				draw_thick_horizontal_line(dest_box.min[1], dest_box.min[0] - penwidth, dest_box.max[0] + penwidth, tickness, color, true, blend);
+				draw_thick_horizontal_line(dest_box.max[1], dest_box.min[0] - penwidth, dest_box.max[0] + penwidth, tickness, color, true, blend);
+				draw_thick_vertical_line(dest_box.min[0], dest_box.min[1] + penwidth + 1, dest_box.max[1] - penwidth - 1, tickness, color, true, blend);
+				draw_thick_vertical_line(dest_box.max[0], dest_box.min[1] + penwidth + 1, dest_box.max[1] - penwidth - 1, tickness, color, true, blend);
 				}
 
 
@@ -3149,7 +3046,7 @@ namespace mtools
 				if (isEmpty() || (radius <= 0)) return;
 				if ((grid_align)||(isIntegerValued(radius) && isIntegerValued(center)))
 					{
-					draw_circle( iVec2{(int64)round(center.X()), (int64)round(center.Y())}, (int64)round(radius), color, aa, blend);
+					draw_circle( iVec2{(int64)std::round(center.X()), (int64)std::round(center.Y())}, (int64)std::round(radius), color, aa, blend);
 					return;
 					}
 				iBox2 B = imageBox();
@@ -3207,7 +3104,7 @@ namespace mtools
 				if (isEmpty() || (radius <= 0)) return;
 				if ((grid_align) || (isIntegerValued(radius) && isIntegerValued(center)))
 					{
-					draw_filled_circle(iVec2{ (int64)round(center.X()), (int64)round(center.Y()) }, (int64)round(radius), color, fillcolor, aa, blend);
+					draw_filled_circle(iVec2{ (int64)std::round(center.X()), (int64)std::round(center.Y()) }, (int64)std::round(radius), color, fillcolor, aa, blend);
 					return;
 					}
 				iBox2 B = imageBox();
@@ -3604,7 +3501,7 @@ namespace mtools
 				if (isEmpty() || (ellipseBox.isEmpty())) return;
 				if ((grid_align) || (isIntegerValued(ellipseBox)))
 					{
-					draw_ellipse_in_box(iBox2((int64)round(ellipseBox.min[0]), (int64)round(ellipseBox.max[0]), (int64)round(ellipseBox.min[1]), (int64)round(ellipseBox.max[1])), color, aa, blend);
+					draw_ellipse_in_box(iBox2((int64)std::round(ellipseBox.min[0]), (int64)std::round(ellipseBox.max[0]), (int64)std::round(ellipseBox.min[1]), (int64)std::round(ellipseBox.max[1])), color, aa, blend);
 					return;
 					}
 				// use alternate method
@@ -3671,7 +3568,7 @@ namespace mtools
 				if (isEmpty() || (ellipseBox.isEmpty())) return;
 				if ((grid_align) || (isIntegerValued(ellipseBox)))
 					{
-					draw_filled_ellipse_in_box(iBox2((int64)round(ellipseBox.min[0]), (int64)round(ellipseBox.max[0]), (int64)round(ellipseBox.min[1]), (int64)round(ellipseBox.max[1])), color, fillcolor, aa, blend);
+					draw_filled_ellipse_in_box(iBox2((int64)std::round(ellipseBox.min[0]), (int64)std::round(ellipseBox.max[0]), (int64)std::round(ellipseBox.min[1]), (int64)std::round(ellipseBox.max[1])), color, fillcolor, aa, blend);
 					return;
 					}
 				// use alternate method
@@ -3947,6 +3844,137 @@ namespace mtools
 				double ry = (B.max[1] - B.min[1]) / 2;
 				draw_part_thick_filled_ellipse(part, center, rx, ry, thickness_x, thickness_y, color, fillcolor, aa, blend, min_tick);
 				}
+
+
+
+			/*****************************************
+			*
+			* TEXT
+			*
+			*****************************************/
+
+			/**
+			* Draw background of the rectangle that enclosed a given text. Color bkcolor is blend over the
+			* image.
+			*
+			* @param	x	   	x coordinate of the text reference position.
+			* @param	y	   	y coordinate of the text reference position.
+			* @param	txt	   	the text.
+			* @param	txt_pos	Positioning method (combination of MTOOLS_TEXT_XCENTER, MTOOLS_TEXT_LEFT,
+			* 					MTOOLS_TEXT_RIGHT, MTOOLS_TEXT_TOP, MTOOLS_TEXT_BOTTOM, MTOOLS_TEXT_YCENTER).
+			* @param	bkcolor	The color to blend over.
+			* @param	font   	the font to use.
+			**/
+			void draw_text_background(int64 x, int64 y, const std::string & txt, int txt_pos, RGBc bkcolor, const Font * font);
+
+
+			/**
+			* Draw background of the rectangle that enclosed a given text. Color bkcolor is blend over the
+			* image. This version uses the default font (gFont).
+			*
+			* @param	x			x coordinate of the text reference position.
+			* @param	y			y coordinate of the text reference position.
+			* @param	txt			the text.
+			* @param	txt_pos 	Positioning method (combination of MTOOLS_TEXT_XCENTER, MTOOLS_TEXT_LEFT,
+			* 						MTOOLS_TEXT_RIGHT, MTOOLS_TEXT_TOP, MTOOLS_TEXT_BOTTOM, MTOOLS_TEXT_YCENTER).
+			* @param	bkcolor 	The color to blend over.
+			* @param	fontsize	the font size to use.
+			**/
+			void draw_text_background(int64 x, int64 y, const std::string & txt, int txt_pos, RGBc bkcolor, int fontsize);
+
+
+			/**
+			* Draw background of the rectangle that enclosed a given text. Color bkcolor is blend over the
+			* image.
+			*
+			* @param	pos	   	the text reference position.
+			* @param	txt	   	the text.
+			* @param	txt_pos	Positioning method (combination of MTOOLS_TEXT_XCENTER, MTOOLS_TEXT_LEFT,
+			* 					MTOOLS_TEXT_RIGHT, MTOOLS_TEXT_TOP, MTOOLS_TEXT_BOTTOM, MTOOLS_TEXT_YCENTER).
+			* @param	bkcolor	The color to blend over.
+			* @param	font   	the font to use.
+			**/
+			inline void draw_text_background(const iVec2 & pos, const std::string & txt, int txt_pos, RGBc bkcolor, const Font * font)
+			{
+				draw_text_background(pos.X(), pos.Y(), txt, txt_pos, bkcolor, font);
+			}
+
+
+			/**
+			* Draw background of the rectangle that enclosed a given text. Color bkcolor is blend over the
+			* image. This version uses the default font (gFont).
+			*
+			* @param	pos			the text reference position.
+			* @param	txt			the text.
+			* @param	txt_pos 	Positioning method (combination of MTOOLS_TEXT_XCENTER, MTOOLS_TEXT_LEFT,
+			* 						MTOOLS_TEXT_RIGHT, MTOOLS_TEXT_TOP, MTOOLS_TEXT_BOTTOM, MTOOLS_TEXT_YCENTER).
+			* @param	bkcolor 	The color to blend over.
+			* @param	fontsize	the font size to use.
+			**/
+			inline void draw_text_background(const iVec2 & pos, const std::string & txt, int txt_pos, RGBc bkcolor, int fontsize)
+			{
+				draw_text_background(pos.X(), pos.Y(), txt, txt_pos, bkcolor, fontsize);
+			}
+
+
+			/**
+			* Draws a text on the image, with a given color and using a given font.
+			*
+			* @param	x	   	x coordinate of the text reference position.
+			* @param	y	   	y coordinate of the text reference position.
+			* @param	txt	   	the text to draw.
+			* @param	txt_pos	Positioning method (combination of MTOOLS_TEXT_XCENTER, MTOOLS_TEXT_LEFT,
+			* 					MTOOLS_TEXT_RIGHT, MTOOLS_TEXT_TOP, MTOOLS_TEXT_BOTTOM, MTOOLS_TEXT_YCENTER).
+			* @param	color  	The color to blend over.
+			* @param	font   	the font to use.
+			**/
+			void draw_text(int64 x, int64 y, const std::string & txt, int txt_pos, RGBc color, const Font * font);
+
+
+			/**
+			* Draws a text on the image with a given color. Use the default font [gFont].
+			*
+			* @param	x			x coordinate of the text reference position.
+			* @param	y			y coordinate of the text reference position.
+			* @param	txt			the text to draw.
+			* @param	txt_pos 	Positioning method (combination of MTOOLS_TEXT_XCENTER, MTOOLS_TEXT_LEFT,
+			* 						MTOOLS_TEXT_RIGHT, MTOOLS_TEXT_TOP, MTOOLS_TEXT_BOTTOM, MTOOLS_TEXT_YCENTER).
+			* @param	color   	The color to blend over.
+			* @param	fontsize	the font size to use.
+			**/
+			void draw_text(int64 x, int64 y, const std::string & txt, int txt_pos, RGBc color, int fontsize);
+
+
+			/**
+			* Draws a text on the image, with a given color and using a given font.
+			*
+			* @param	pos	   	the text reference position.
+			* @param	txt	   	the text to draw.
+			* @param	txt_pos	Positioning method (combination of MTOOLS_TEXT_XCENTER, MTOOLS_TEXT_LEFT,
+			* 					MTOOLS_TEXT_RIGHT, MTOOLS_TEXT_TOP, MTOOLS_TEXT_BOTTOM, MTOOLS_TEXT_YCENTER).
+			* @param	color  	The color to blend over.
+			* @param	font   	the font to use.
+			**/
+			inline void draw_text(const iVec2 & pos, const std::string & txt, int txt_pos, RGBc color, const Font * font)
+			{
+				draw_text(pos.X(), pos.Y(), txt, txt_pos, color, font);
+			}
+
+
+			/**
+			* Draws a text on the image with a given color. Use the default font [gFont].
+			*
+			* @param	pos			the text reference position.
+			* @param	txt			the text to draw
+			* @param	txt_pos 	Positioning method (combination of MTOOLS_TEXT_XCENTER, MTOOLS_TEXT_LEFT,
+			* 						MTOOLS_TEXT_RIGHT, MTOOLS_TEXT_TOP, MTOOLS_TEXT_BOTTOM, MTOOLS_TEXT_YCENTER).
+			* @param	color   	The color to blend over.
+			* @param	fontsize	the font size to use.
+			**/
+			inline void draw_text(const iVec2 & pos, const std::string & txt, int txt_pos, RGBc color, int fontsize)
+			{
+				draw_text(pos.X(), pos.Y(), txt, txt_pos, color, fontsize);
+			}
 
 
 
@@ -4853,136 +4881,23 @@ namespace mtools
 			/******************************************************************************************************************************************************
 			*******************************************************************************************************************************************************
 			*																				   																      *
+			*																				   																      *
 			*                                                              CANVAS RELATED METHODS                                                                 *
+			*																				   																      *
 			*																																					  *
 			*******************************************************************************************************************************************************
 			*******************************************************************************************************************************************************/
 
 
-			/**
-			* Return the position (i,j) of the pixel in the image associated with the absolute coordinate
-			* (x,y) w.r.t. to a mapping rectangle R.
+			/*****************************************
 			*
-			* @param   R       the rectangle defining the range represented by the image.
-			* @param   coord   the absolute coordinate to transform.
+			* (CANVAS) DOTS
 			*
-			* @return  the associated pixel the image (no clipping, may be outside of the image).
-			**/
-			//MTOOLS_FORCEINLINE mtools::iVec2 canvas_getImageCoord(const mtools::fBox2 & R, const mtools::fVec2 & coord) const { return R.absToPixel(coord, dimension()); }
+			*****************************************/
 
 
 			/**
-			* Return the absolute position of a pixel (i,j) of the image according to a mapping rectangle R.
-			*
-			* @param   R       the rectangle defining the range represented by the image.
-			* @param   pixpos  The position of the pixel in the image.
-			*
-			* @return  the associated absolute coordinate.
-			**/
-			//MTOOLS_FORCEINLINE mtools::fVec2 canvas_getAbsCoord(const mtools::fBox2 & R, const mtools::iVec2 & pixpos) const { return R.pixelToAbs(pixpos, dimension()); }
-
-
-			/**
-			* Return an enlarged rectangle of R with the same centering but such that the ratio of the
-			* returned  rectangle match the ratio of the image.
-			*
-			* @param   R   the original rectangle.
-			*
-			* @return  A possibly enlarged rectangle (with same centering) with same aspect ratio as the
-			*          image.
-			**/
-			//MTOOLS_FORCEINLINE mtools::fBox2 canvas_respectImageAspectRatio(const mtools::fBox2 & R) const { return(R.fixedRatioEnclosingRect(aspectRatio())); }
-
-
-			/**
-			* The canonical range rectangle corresponding to the image size
-			**/
-			//MTOOLS_FORCEINLINE mtools::fBox2 canvas_getCanonicalRange() const { MTOOLS_ASSERT((_lx > 0) && (_ly > 0)); return mtools::fBox2(0, (double)_lx, 0, (double)_ly); }
-
-
-
-			/**
-			 * Draw background of the rectangle that enclosed a given text. Color bkcolor is blend over the
-			 * image.
-			 * 
-			 * Use absolute coordinate (canvas method).
-			 *
-			 * @param	R	   	the absolute range represented in the image.
-			 * @param	pos	   	the text reference position.
-			 * @param	txt	   	the text.
-			 * @param	txt_pos	Positioning method (combination of MTOOLS_TEXT_XCENTER, MTOOLS_TEXT_LEFT,
-			 * 					MTOOLS_TEXT_RIGHT, MTOOLS_TEXT_TOP, MTOOLS_TEXT_BOTTOM, MTOOLS_TEXT_YCENTER).
-			 * @param	bkcolor	The color to blend over.
-			 * @param	font   	the font to use.
-			 **/
-			MTOOLS_FORCEINLINE void canvas_draw_text_background(const mtools::fBox2 & R, const fVec2 & pos, const std::string & txt, int txt_pos, RGBc bkcolor, const Font * font)
-				{
-				draw_text_background(R.absToPixel(pos,dimension()), txt, txt_pos, bkcolor, font);
-				}
-
-
-			/**
-			 * Draw background of the rectangle that enclosed a given text. Color bkcolor is blend over the
-			 * image. This version uses the default font (gFont).
-			 * 
-			 * Use absolute coordinate (canvas method).
-			 *
-			 * @param	R			the absolute range represented in the image.
-			 * @param	pos			the text reference position.
-			 * @param	txt			the text.
-			 * @param	txt_pos 	Positioning method (combination of MTOOLS_TEXT_XCENTER, MTOOLS_TEXT_LEFT,
-			 * 						MTOOLS_TEXT_RIGHT, MTOOLS_TEXT_TOP, MTOOLS_TEXT_BOTTOM, MTOOLS_TEXT_YCENTER).
-			 * @param	bkcolor 	The color to blend over.
-			 * @param	fontsize	the font size to use.
-			 **/
-			MTOOLS_FORCEINLINE void canvas_draw_text_background(const mtools::fBox2 & R, const fVec2 & pos, const std::string & txt, int txt_pos, RGBc bkcolor, int fontsize)
-				{
-				draw_text_background(R.absToPixel(pos, dimension()), txt, txt_pos, bkcolor, fontsize);
-				}
-
-
-			/**
-			* Draws a text on the image, with a given color and using a given font.
-			*
-			* Use absolute coordinate (canvas method).
-			*
-			* @param   R               the absolute range represented in the image.
-			* @param	pos	   	the text reference position.
-			* @param	txt	   	the text to draw.
-			* @param	txt_pos	Positioning method (combination of MTOOLS_TEXT_XCENTER, MTOOLS_TEXT_LEFT,
-			* 					MTOOLS_TEXT_RIGHT, MTOOLS_TEXT_TOP, MTOOLS_TEXT_BOTTOM, MTOOLS_TEXT_YCENTER).
-			* @param	color  	The color to blend over.
-			* @param	font   	the font to use.
-			**/
-			MTOOLS_FORCEINLINE void canvas_draw_text(const mtools::fBox2 & R, const fVec2 & pos, const std::string & txt, int txt_pos, RGBc color, const Font * font)
-				{
-				draw_text(R.absToPixel(pos, dimension()), txt, txt_pos, color, font);
-				}
-
-
-			/**
-			 * Draws a text on the image with a given color. Use the default font [gFont].
-			 * 
-			 * Use absolute coordinate (canvas method).
-			 *
-			 * @param	R			the absolute range represented in the image.
-			 * @param	pos			the text reference position.
-			 * @param	txt			the text to draw.
-			 * @param	txt_pos 	Positioning method (combination of MTOOLS_TEXT_XCENTER, MTOOLS_TEXT_LEFT,
-			 * 						MTOOLS_TEXT_RIGHT, MTOOLS_TEXT_TOP, MTOOLS_TEXT_BOTTOM, MTOOLS_TEXT_YCENTER).
-			 * @param	color   	The color to blend over.
-			 * @param	fontsize	the font size to use.
-			 **/
-			MTOOLS_FORCEINLINE void canvas_draw_text(const mtools::fBox2 & R, const fVec2 & pos, const std::string & txt, int txt_pos, RGBc color, int fontsize)
-				{
-				draw_text(R.absToPixel(pos, dimension()), txt, txt_pos, color, fontsize);
-				}
-
-
-			/**
-			 * Draw a (circle) dot on the image. the radius is in pixels and does not scale with the range.
-			 * 
-			 * Use absolute coordinate (canvas method).
+			 * Draw a circle dot on the image. the radius is in pixels and does not scale with the range.
 			 *
 			 * @param	R		 	the absolute range represented in the image.
 			 * @param	center   	Position of the dot.
@@ -4994,9 +4909,32 @@ namespace mtools
 			 **/
 			MTOOLS_FORCEINLINE void canvas_draw_circle_dot(const fBox2 & R, fVec2 center, double radius, RGBc outcolor, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
 				{
-				draw_circle_dot(R.absToPixel(center, dimension()), radius, outcolor, fillcolor, aa, blend);
+				draw_circle_dot(R.absToPixelf(center, dimension()), radius, outcolor, fillcolor, aa, blend);
 				}
 
+
+			/**
+			* Draw a square dot on the image. the radius does not scale with the range.
+			*
+			* @param	R		 	the absolute range represented in the image.
+			* @param	center   	Position of the dot.
+			* @param	radius   	absolute radius of the dot.
+			* @param	color 		color.
+			* @param	blend    (Optional) true to use blending
+			* @param	penwidth (Optional) width of the dot
+			**/
+			MTOOLS_FORCEINLINE void canvas_draw_square_dot(const fBox2 & R, fVec2 center, RGBc color,  bool blend = DEFAULT_BLEND, int32 penwidth = 0)
+				{
+				draw_square_dot(R.absToPixelf(center, dimension()), color, blend, penwidth);
+				}
+
+
+
+			/*****************************************
+			*
+			* (CANVAS) LINES
+			*
+			*****************************************/
 
 			/**
 			 * Draw an horizontal line  (canvas method).
@@ -5011,8 +4949,9 @@ namespace mtools
 			 **/
 			MTOOLS_FORCEINLINE void canvas_draw_horizontal_line(const mtools::fBox2 & R, double y, double x1, double x2, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND)
 				{
-				const iVec2 P1 = R.absToPixel({ x1,y }, dimension());
-				const iVec2 P2 = R.absToPixel({ x2,y }, dimension());
+				const auto dim = dimension();
+				const fVec2 P1 = R.absToPixelf({ x1, y }, dim);
+				const fVec2 P2 = R.absToPixelf({ x2, y }, dim);
 				draw_horizontal_line(P1.Y(), P1.X(), P2.X(), color, draw_P2, blending);
 				}
 
@@ -5034,10 +4973,11 @@ namespace mtools
 			 **/
 			MTOOLS_FORCEINLINE void canvas_draw_thick_horizontal_line(const mtools::fBox2 & R, double y, double x1, double x2, double thickness, bool relativethickness, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
-				const iVec2 P1 = R.absToPixel({ x1,y }, dimension());
-				const iVec2 P2 = R.absToPixel({ x2,y }, dimension());
-				const double th = (relativethickness ? boxTransform_dy(thickness, R, fBox2(-0.5, lx() - 0.5, -0.5, ly() - 0.5)) : thickness);
-				draw_horizontal_line(P1.Y(), P1.X(), P2.X(), th, color, draw_P2, blending, min_tick);
+				const auto dim = dimension();
+				const fVec2 P1 = R.absToPixelf({ x1,y }, dim);
+				const fVec2 P2 = R.absToPixelf({ x2,y }, dim);
+				const double th = (relativethickness ? boxTransform_dy(thickness, R, imagefBox()) : thickness);
+				draw_thick_horizontal_line(P1.Y(), P1.X(), P2.X(), th, color, draw_P2, blending, min_tick);
 				}
 
 
@@ -5054,8 +4994,9 @@ namespace mtools
 			 **/
 			MTOOLS_FORCEINLINE void canvas_draw_vertical_line(const mtools::fBox2 & R, double x, double y1, double y2, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND)
 				{
-				const iVec2 P1 = R.absToPixel({ x,y1 }, dimension());
-				const iVec2 P2 = R.absToPixel({ x,y2 }, dimension());
+				const auto dim = dimension();
+				const fVec2 P1 = R.absToPixelf({ x, y1 }, dim);
+				const fVec2 P2 = R.absToPixelf({ x, y2 }, dim);
 				draw_vertical_line(P1.X(), P1.Y(), P2.Y(), color, draw_P2, blending);
 				}
 
@@ -5077,10 +5018,11 @@ namespace mtools
 			 **/
 			MTOOLS_FORCEINLINE void canvas_draw_thick_vertical_line(const mtools::fBox2 & R, double x, double y1, double y2, double thickness, bool relativethickness, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
-				const iVec2 P1 = R.absToPixel({ x,y1 }, dimension());
-				const iVec2 P2 = R.absToPixel({ x,y2 }, dimension());
-				const double th = (relativethickness ? boxTransform_dx(thickness, R, fBox2(-0.5, lx() - 0.5, -0.5, ly() - 0.5)) : thickness);
-				draw_vertical_line(P1.X(), P1.Y(), P2.Y(), th, color, draw_P2, blending, min_tick);
+				const auto dim = dimension();
+				const fVec2 P1 = R.absToPixel({ x, y1 }, dim);
+				const fVec2 P2 = R.absToPixel({ x, y2 }, dim);
+				const double th = (relativethickness ? boxTransform_dx(thickness, R, imagefBox()) : thickness);
+				draw_thick_vertical_line(P1.X(), P1.Y(), P2.Y(), th, color, draw_P2, blending, min_tick);
 				}
 
 
@@ -5101,8 +5043,7 @@ namespace mtools
 			MTOOLS_FORCEINLINE void canvas_draw_line(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, RGBc color, bool draw_P2 = true, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0)
 				{
 				const auto dim = dimension();
-				if (!Colin_SutherLand_lineclip(P1, P2, (penwidth == 0) ? R : zoomOut(R))) return;
-				draw_line(R.absToPixel(P1, dim), R.absToPixel(P2, dim), color, draw_P2, antialiased, blending, penwidth);
+				draw_line(R.absToPixelf(P1, dim), R.absToPixelf(P2, dim), color, draw_P2, antialiased, blending, penwidth);
 				}
 
 
@@ -5144,6 +5085,12 @@ namespace mtools
 				return;
 				}
 
+
+			/*****************************************
+			*
+			* (CANVAS) CURVES
+			*
+			*****************************************/
 
 
 			/**
@@ -5240,6 +5187,12 @@ namespace mtools
 				draw_cubic_spline(tab, color, draw_last_point, antialiased, blending, penwidth);
 				}
 
+
+			/*****************************************
+			*
+			* (CANVAS) POLYGONS
+			*
+			*****************************************/
 
 
 			/**
@@ -5468,6 +5421,13 @@ namespace mtools
 				for (size_t i = 0; i < N; i++) { tab.push_back(R.absToPixel(tabPoints[i], dim)); }
 				fill_convex_polygon(tab, fillcolor, blending);
 				}
+
+
+			/*****************************************
+			*
+			* (CANVAS) CIRCLES / ELLIPSES
+			*
+			*****************************************/
 
 
 			/**
@@ -6102,6 +6062,97 @@ namespace mtools
 				}
 
 
+			/*****************************************
+			*
+			* (CANVAS) TEXT
+			*
+			*****************************************/
+
+
+			/**
+			* Draw background of the rectangle that enclosed a given text. Color bkcolor is blend over the
+			* image.
+			*
+			* Use absolute coordinate (canvas method).
+			*
+			* @param	R	   	the absolute range represented in the image.
+			* @param	pos	   	the text reference position.
+			* @param	txt	   	the text.
+			* @param	txt_pos	Positioning method (combination of MTOOLS_TEXT_XCENTER, MTOOLS_TEXT_LEFT,
+			* 					MTOOLS_TEXT_RIGHT, MTOOLS_TEXT_TOP, MTOOLS_TEXT_BOTTOM, MTOOLS_TEXT_YCENTER).
+			* @param	bkcolor	The color to blend over.
+			* @param	font   	the font to use.
+			**/
+			MTOOLS_FORCEINLINE void canvas_draw_text_background(const mtools::fBox2 & R, const fVec2 & pos, const std::string & txt, int txt_pos, RGBc bkcolor, const Font * font)
+			{
+				draw_text_background(R.absToPixel(pos, dimension()), txt, txt_pos, bkcolor, font);
+			}
+
+
+			/**
+			* Draw background of the rectangle that enclosed a given text. Color bkcolor is blend over the
+			* image. This version uses the default font (gFont).
+			*
+			* Use absolute coordinate (canvas method).
+			*
+			* @param	R			the absolute range represented in the image.
+			* @param	pos			the text reference position.
+			* @param	txt			the text.
+			* @param	txt_pos 	Positioning method (combination of MTOOLS_TEXT_XCENTER, MTOOLS_TEXT_LEFT,
+			* 						MTOOLS_TEXT_RIGHT, MTOOLS_TEXT_TOP, MTOOLS_TEXT_BOTTOM, MTOOLS_TEXT_YCENTER).
+			* @param	bkcolor 	The color to blend over.
+			* @param	fontsize	the font size to use.
+			**/
+			MTOOLS_FORCEINLINE void canvas_draw_text_background(const mtools::fBox2 & R, const fVec2 & pos, const std::string & txt, int txt_pos, RGBc bkcolor, int fontsize)
+			{
+				draw_text_background(R.absToPixel(pos, dimension()), txt, txt_pos, bkcolor, fontsize);
+			}
+
+
+			/**
+			* Draws a text on the image, with a given color and using a given font.
+			*
+			* Use absolute coordinate (canvas method).
+			*
+			* @param   R               the absolute range represented in the image.
+			* @param	pos	   	the text reference position.
+			* @param	txt	   	the text to draw.
+			* @param	txt_pos	Positioning method (combination of MTOOLS_TEXT_XCENTER, MTOOLS_TEXT_LEFT,
+			* 					MTOOLS_TEXT_RIGHT, MTOOLS_TEXT_TOP, MTOOLS_TEXT_BOTTOM, MTOOLS_TEXT_YCENTER).
+			* @param	color  	The color to blend over.
+			* @param	font   	the font to use.
+			**/
+			MTOOLS_FORCEINLINE void canvas_draw_text(const mtools::fBox2 & R, const fVec2 & pos, const std::string & txt, int txt_pos, RGBc color, const Font * font)
+			{
+				draw_text(R.absToPixel(pos, dimension()), txt, txt_pos, color, font);
+			}
+
+
+			/**
+			* Draws a text on the image with a given color. Use the default font [gFont].
+			*
+			* @param	R			the absolute range represented in the image.
+			* @param	pos			the text reference position.
+			* @param	txt			the text to draw.
+			* @param	txt_pos 	Positioning method (combination of MTOOLS_TEXT_XCENTER, MTOOLS_TEXT_LEFT,
+			* 						MTOOLS_TEXT_RIGHT, MTOOLS_TEXT_TOP, MTOOLS_TEXT_BOTTOM, MTOOLS_TEXT_YCENTER).
+			* @param	color   	The color to blend over.
+			* @param	fontsize	the font size to use.
+			**/
+			MTOOLS_FORCEINLINE void canvas_draw_text(const mtools::fBox2 & R, const fVec2 & pos, const std::string & txt, int txt_pos, RGBc color, int fontsize)
+			{
+				draw_text(R.absToPixel(pos, dimension()), txt, txt_pos, color, fontsize);
+			}
+
+
+
+			/*****************************************
+			*
+			* (CANVAS) GRID / CELLS / AXES
+			*
+			*****************************************/
+
+
 			/**
 			* Draw the integer grid (ie line of the form (x,j) and (i,y)) where (i,j) are integers.
 			*
@@ -6213,9 +6264,9 @@ namespace mtools
 						{
 						xx = xx + kk; xx2 = xx2 + pp;
 						zz = (int64)R.absToPixel(mtools::fVec2(0, xx), mtools::iVec2(winx, winy)).Y();
-						if ((zz >= -10) && (zz < winy + 10)) { if (xx != 0) { draw_horizontal_line(zz, px - 2 * gradsize, px + 2 * gradsize, tick, color, true, true); } }
+						if ((zz >= -10) && (zz < winy + 10)) { if (xx != 0) { draw_thick_horizontal_line(zz, px - 2 * gradsize, px + 2 * gradsize, tick, color, true, true); } }
 						zz = (int64)R.absToPixel(mtools::fVec2(0, xx2), mtools::iVec2(winx, winy)).Y();
-						if ((zz > -2) && (zz < winy + 1)) { if (xx2 != 0) { draw_horizontal_line(zz, px - gradsize, px + gradsize, tick, color, true, true); } }
+						if ((zz > -2) && (zz < winy + 1)) { if (xx2 != 0) { draw_thick_horizontal_line(zz, px - gradsize, px + gradsize, tick, color, true, true); } }
 						}
 					}
 				if ((py > -1) && (py < winy))
@@ -6232,9 +6283,9 @@ namespace mtools
 						{
 						xx = xx + kk; xx2 = xx2 + pp;
 						zz = (int64)R.absToPixel(mtools::fVec2(xx, 0), mtools::iVec2(winx, winy)).X();
-						if ((zz >= -30) && (zz < winx + 30)) { if (xx != 0) { draw_vertical_line(zz, py - 2 * gradsize, py + 2 * gradsize, tick, color, true, true);} }
+						if ((zz >= -30) && (zz < winx + 30)) { if (xx != 0) { draw_thick_vertical_line(zz, py - 2 * gradsize, py + 2 * gradsize, tick, color, true, true);} }
 						zz = (int64)R.absToPixel(mtools::fVec2(xx2, 0), mtools::iVec2(winx, winy)).X();
-						if ((zz > -2) && (zz < winx + 1)) { if (xx2 != 0) { draw_vertical_line(zz, py - gradsize, py + gradsize, tick, color, true, true);} }
+						if ((zz > -2) && (zz < winx + 1)) { if (xx2 != 0) { draw_thick_vertical_line(zz, py - gradsize, py + gradsize, tick, color, true, true);} }
 						}
 					}
 				}
@@ -6944,16 +6995,15 @@ namespace mtools
 				if (tickness <= 0) return;
 				if (tickness < min_tick) tickness = min_tick;
 				double f = (tickness/2) + 0.5f;
-				int64 d = (int64)f;
-				if (d == 0) 
+				if (f <= 1.0) 
 					{ 
 					double op = color.opacity()*tickness;
-					_verticalLine<blend, checkrange>(x, y1, y2, color.getOpacity((float)op), draw_P2);
+					_verticalLine<blend, checkrange>(x, y1, y2, color.getMultOpacity((float)op), draw_P2);
 					return; 
 					}
-				int64 xmin = x-d;
-				int64 xmax = x+d;
-				double r = f - d;
+				int64 xmin = (int64)((x - f < -2.0) ? -2.0 :  (x - (int64)f));
+				int64 xmax = (int64)((x + f > _lx + 2.0) ? _lx + 2.0 : (x + (int64)f));
+				double r = f - (int64)f;
 				RGBc c = color.getOpacity((float)(color.opacity()*r));
 				if (!c.isTransparent())
 					{
@@ -6971,16 +7021,15 @@ namespace mtools
 				if (tickness <= 0) return;
 				if (tickness < min_tick) tickness = min_tick;
 				double f = (tickness / 2) + 0.5f;
-				int64 d = (int64)f;
-				if (d == 0) 
+				if (f <= 1.0) 
 					{ 
 					double op = color.opacity()*tickness; 
-					_horizontalLine<blend, checkrange>(y, x1, x2, color.getOpacity((float)op), draw_P2); 
+					_horizontalLine<blend, checkrange>(y, x1, x2, color.getMultOpacity((float)op), draw_P2); 
 					return; 
 					}
-				int64 ymin = y - d;
-				int64 ymax = y + d;
-				double r = f - d;
+				int64 ymin = (int64)((y - f < -2.0) ? -2.0 : (y - (int64)f));
+				int64 ymax = (int64)((y + f > _ly + 2.0) ? _ly + 2.0 : (y + (int64)f));
+				double r = f - (int64)f;
 				RGBc c = color.getOpacity((float)(color.opacity()*r));
 				if (!c.isTransparent())
 					{
@@ -7078,8 +7127,8 @@ namespace mtools
 					mtools::swap(Pf1, Pf2);
 					}
 
-				P1.X() = (int64)round(Pf1.X()); P1.Y() = (int64)round(Pf1.Y());
-				P2.X() = (int64)round(Pf2.X()); P2.Y() = (int64)round(Pf2.Y());
+				P1.X() = (int64)std::round(Pf1.X()); P1.Y() = (int64)std::round(Pf1.Y());
+				P2.X() = (int64)std::round(Pf2.X()); P2.Y() = (int64)std::round(Pf2.Y());
 
 				/* basic algo, 
 				if (sw) { mtools::swap(P1, P2); }
@@ -8157,9 +8206,9 @@ namespace mtools
 				if (fP1.Y() > fP2.Y()) { mtools::swap(fP1, fP2); } // reorder by increasing Y value
 				if (fP1.Y() > fP3.Y()) { mtools::swap(fP1, fP3); } //
 				if (fP2.Y() > fP3.Y()) { mtools::swap(fP2, fP3); } //
-				int64 y1 = (int64)round(fP1.Y());
-				int64 y2 = (int64)round(fP2.Y());
-				int64 y3 = (int64)round(fP3.Y());
+				int64 y1 = (int64)std::round(fP1.Y());
+				int64 y2 = (int64)std::round(fP2.Y());
+				int64 y3 = (int64)std::round(fP3.Y());
 				if (y1 == y3) return; //flat, nothing to draw. 
 				if (y1 == y2)
 					{
