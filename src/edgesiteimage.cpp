@@ -249,26 +249,22 @@ namespace mtools
 			{
 			case 0: 
 				{// up
-				im.draw_triangle({ (int64)(kx*x0), (int64)(ky*y0) }, { (int64)(kx*x1), (int64)(ky*y1) }, { (int64)(kx*x2), (int64)(ky*y2) }, coul, false, false);
-				im.fill_triangle({ (int64)(kx*x0), (int64)(ky*y0) }, { (int64)(kx*x1), (int64)(ky*y1) }, { (int64)(kx*x2), (int64)(ky*y2) }, coul, false);
+				im.draw_filled_triangle({ (kx*x0), (ky*y0) }, { (kx*x1), (ky*y1) }, { (kx*x2), (ky*y2) }, coul,coul, false, false);
 				return;
 				}
 			case 1: 
 				{// down
-				im.draw_triangle({ (int64)(kx*x0), (int64)(ky*(100 - y0)) }, { (int64)(kx*x1), (int64)(ky*(100 - y1)) }, { (int64)(kx*x2), (int64)(ky*(100 - y2)) }, coul, false, false);
-				im.fill_triangle({ (int64)(kx*x0), (int64)(ky*(100 - y0)) }, { (int64)(kx*x1), (int64)(ky*(100 - y1)) }, { (int64)(kx*x2), (int64)(ky*(100 - y2)) }, coul, false);
+				im.draw_filled_triangle({ (kx*x0), (ky*(100 - y0)) }, { (kx*x1), (ky*(100 - y1)) }, { (kx*x2), (ky*(100 - y2)) }, coul, coul, false, false);
 				return;
 				}
 			case 2: 
 				{// left
-				im.draw_triangle({ (int64)(kx*y0), (int64)(ky*x0) }, { (int64)(kx*y1), (int64)(ky*x1) }, { (int64)(kx*y2), (int64)(ky*x2) }, coul, false, false);
-				im.fill_triangle({ (int64)(kx*y0), (int64)(ky*x0) }, { (int64)(kx*y1), (int64)(ky*x1) }, { (int64)(kx*y2), (int64)(ky*x2) }, coul, false);
+				im.draw_filled_triangle({ (kx*y0), (ky*x0) }, { (kx*y1), (ky*x1) }, { (kx*y2), (ky*x2) }, coul, coul, false, false);
 				return;
 				}
 			case 3: 
 				{// right
-				im.draw_triangle({ (int64)(kx*(100 - y0)), (int64)(ky*x0) }, { (int64)(kx*(100 - y1)), (int64)(ky*x1) }, { (int64)(kx*(100 - y2)), (int64)(ky*x2) }, coul, false, false);
-				im.fill_triangle({ (int64)(kx*(100 - y0)), (int64)(ky*x0) }, { (int64)(kx*(100 - y1)), (int64)(ky*x1) }, { (int64)(kx*(100 - y2)), (int64)(ky*x2) }, coul, false);
+				im.draw_filled_triangle({ (kx*(100 - y0)), (ky*x0) }, { (kx*(100 - y1)), (ky*x1) }, { (kx*(100 - y2)), (ky*x2) }, coul, coul, false, false);
 				return;
 				}
 			}
