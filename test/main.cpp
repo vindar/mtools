@@ -29,20 +29,20 @@ void testCSCC()
 
 	FigureCanvas<5> canvas(3);
 
-	canvas(FigureLine( {B.min[0], B.min[1]}, { B.max[0], B.min[1] }, RGBc::c_Black), 0);
-	canvas(FigureLine({ B.min[0], B.max[1] }, { B.max[0], B.max[1] }, RGBc::c_Black), 0);
-	canvas(FigureLine({ B.min[0], B.min[1] }, { B.min[0], B.max[1] }, RGBc::c_Black), 0);
-	canvas(FigureLine({ B.max[0], B.min[1] }, { B.max[0], B.max[1] }, RGBc::c_Black), 0);
+	canvas(Figure::Line( { B.min[0], B.min[1] }, { B.max[0], B.min[1] }, RGBc::c_Black), 0);
+	canvas(Figure::Line( { B.min[0], B.max[1] }, { B.max[0], B.max[1] }, RGBc::c_Black), 0);
+	canvas(Figure::Line( { B.min[0], B.min[1] }, { B.min[0], B.max[1] }, RGBc::c_Black), 0);
+	canvas(Figure::Line( { B.max[0], B.min[1] }, { B.max[0], B.max[1] }, RGBc::c_Black), 0);
 
 	for (size_t i = 0; i < subject.size(); i++)
 		{
-		canvas(FigureLine(subject[i], subject[(i + 1) % subject.size()], RGBc::c_Green), 1);
+		canvas(Figure::Line(subject[i], subject[(i + 1) % subject.size()], RGBc::c_Green), 1);
 		}
 
 	for (size_t i = 0; i < res_size; i++)
 		{
 		cout << res[i] << "\n";
-		canvas(FigureLine(res[i], res[(i + 1) % res_size], RGBc::c_Red), 2);
+		canvas(Figure::Line(res[i], res[(i + 1) % res_size], RGBc::c_Red), 2);
 		}
 
 	auto PF = makePlot2DFigure(canvas, 5);
@@ -52,42 +52,11 @@ void testCSCC()
 	plotter.range().setRange(fBox2(0,1000,0,1000));
 	plotter.plot();
 
-	/* long and arduous EPS printout */
-	/*
-	FILE * eps = fopen("test.eps", "w");
-	fprintf(eps, "%%!PS-Adobe-3.0\n%%%%BoundingBox: 40 40 360 360\n"
-		"/l {lineto} def /m{moveto} def /s{setrgbcolor} def"
-		"/c {closepath} def /gs {fill grestore stroke} def\n");
-	fprintf(eps, "0 setlinewidth %g %g m ", c[0].x, c[0].y);
-	for (i = 1; i < clen; i++)
-		fprintf(eps, "%g %g l ", c[i].x, c[i].y);
-	fprintf(eps, "c .5 0 0 s gsave 1 .7 .7 s gs\n");
-
-	fprintf(eps, "%g %g m ", s[0].x, s[0].y);
-	for (i = 1; i < slen; i++)
-		fprintf(eps, "%g %g l ", s[i].x, s[i].y);
-	fprintf(eps, "c 0 .2 .5 s gsave .4 .7 1 s gs\n");
-
-	fprintf(eps, "2 setlinewidth [10 8] 0 setdash %g %g m ",
-		res->v[0].x, res->v[0].y);
-	for (i = 1; i < res->len; i++)
-		fprintf(eps, "%g %g l ", res->v[i].x, res->v[i].y);
-	fprintf(eps, "c .5 0 .5 s gsave .7 .3 .8 s gs\n");
-
-	fprintf(eps, "%%%%EOF");
-	fclose(eps);
-	printf("test.eps written\n");
-	*/
 	return;
 
 
 
 	}
-
-
-
-
-
 
 
 
@@ -138,80 +107,69 @@ class BLine
 void testplotfigure()
 	{
 
-	/*
-		{
-			Image im(1000, 1000);
-			im.clear(RGBc::c_White);
-
-			im.canvas_draw_part_circle(fBox2(0, 100, 0, 100), BOX_SPLIT_DOWN, { 80.0 ,50.0 }, 20.0, RGBc::c_Red);
-
-			auto P = makePlot2DImage(im);
-
-			Plotter2D plotter;
-			plotter[P];
-			plotter.autorangeXY();
-			plotter.plot();
-
-			return;
-		}
-		*/
 
 	MT2004_64 gen(0);
 
-	FigureCanvas<5> canvas(3);
+	FigureCanvas<5> canvas(20);
 
 	cout << "Creating... ";
 
-	int nb = 1000000;
+	int nb = 100000;
+	const double L = 5000;
 	
 	for (int k = 0; k < nb; k++)
 		{
-		fVec2 pos = { 5000 * Unif(gen),5000 * Unif(gen) };
+
+			{ // CircleDot
+				fVec2 pos = { L * Unif(gen),L * Unif(gen) };
+				canvas(Figure::CircleDot(pos, 10, RGBc::c_Red, RGBc::c_Blue), 0);
+			}
+
+			{ // SquareDot
+				fVec2 pos = { L * Unif(gen),L * Unif(gen) };
+				canvas(Figure::SquareDot(pos, RGBc::c_Red, 5), 1);
+			}
+
+
+
+
 		fVec2 pos2 = { 5000 * Unif(gen),5000 * Unif(gen) };
-		double rad = 10*Unif(gen);
-		
-		//canvas(FigureThickLine(pos, pos2, 0.1, RGBc::c_Red),1);
-
-
+		double rad = 10 * Unif(gen);
+		fVec2 pos = { L * Unif(gen),L * Unif(gen) };
 		fVec2 P1 = pos;
 		fVec2 P2 = pos + fVec2(Unif(gen), Unif(gen));
 		fVec2 P3 = pos + fVec2(Unif(gen), Unif(gen));
 		fVec2 P4 = P1 + 3.0*(P3 - P2);
 
-		canvas(FigureQuad(P1,P2,P3,P4, RGBc::c_Red.getMultOpacity(0.5f), RGBc::c_Red.getMultOpacity(0.5f)), 1);
+		//canvas(Figure::Quad(P1,P2,P3,P4, RGBc::c_Red.getMultOpacity(0.5f), RGBc::c_Red.getMultOpacity(0.5f)), 1);
 
-		//canvas(FigureTriangle(pos, pos + fVec2(Unif(gen),Unif(gen)) , pos + fVec2(Unif(gen), Unif(gen)), RGBc::c_Red.getMultOpacity(0.5f), RGBc::c_Red.getMultOpacity(0.5f)), 1);
+		//canvas(Figure::Triangle(pos, pos + fVec2(Unif(gen),Unif(gen)) , pos + fVec2(Unif(gen), Unif(gen)), RGBc::c_Red.getMultOpacity(0.5f), RGBc::c_Red.getMultOpacity(0.5f)), 1);
 
-		//canvas(FigureLine(pos, pos2, RGBc::c_Red), 1);
+		//canvas(Figure::Line(pos, pos2, RGBc::c_Red), 1);
 
-//		canvas(FigureEllipsePart(BOX_SPLIT_UP_RIGHT, pos, 10 * Unif(gen), 10 * Unif(gen), 10, 0, false, RGBc::c_Red.getMultOpacity(1), RGBc::c_Lime.getMultOpacity(0.5)));
+//		canvas(Figure::EllipsePart(BOX_SPLIT_UP_RIGHT, pos, 10 * Unif(gen), 10 * Unif(gen), 10, 0, false, RGBc::c_Red.getMultOpacity(1), RGBc::c_Lime.getMultOpacity(0.5)));
 		
 		pos = { 50000 * Unif(gen),50000 * Unif(gen) };
 		rad = 1* Unif(gen);
-//		canvas(FigureVerticalLine(pos.Y(), pos.X() - rad, pos.X() + rad, 5 , true, RGBc::c_Blue.getMultOpacity(1)),1);
+//		canvas(Figure::VerticalLine(pos.Y(), pos.X() - rad, pos.X() + rad, 5 , true, RGBc::c_Blue.getMultOpacity(1)),1);
 		}
 	
 
 	/*
-	canvas(FigureCirclePart(BOX_SPLIT_UP, { (double)nb , 0 }, 0, 0.5, true, RGBc::c_Red.getMultOpacity(1)), 0);
+	canvas(Figure::CirclePart(BOX_SPLIT_UP, { (double)nb , 0 }, 0, 0.5, true, RGBc::c_Red.getMultOpacity(1)), 0);
 	for (int k = 0; k < nb; k++)
 		{
-		canvas(FigureCirclePart(BOX_SPLIT_UP, { (double)nb , 0}, k + 1, 0.5, true, RGBc::c_Red.getMultOpacity(1)), 0);
+		canvas(Figure::CirclePart(BOX_SPLIT_UP, { (double)nb , 0}, k + 1, 0.5, true, RGBc::c_Red.getMultOpacity(1)), 0);
 		}
 	*/
 	cout << "ok !\n\n";
 
-
 	auto PF = makePlot2DFigure(canvas, 5);
-
-
 	//PF.highQuality(false);
-
 	Plotter2D plotter; 
 	plotter[PF];
 	plotter.autorangeXY();
-
-	plotter.range().setRange(fBox2(7989.46,7990.0,49607.0,49607.5));
+	plotter.range().setRange(fBox2(0,5000,0,5000));
 	plotter.plot();
 	}
 
