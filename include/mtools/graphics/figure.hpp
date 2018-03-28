@@ -1137,6 +1137,81 @@ namespace mtools
 
 
 
+		/**
+		*
+		* Polygon
+		*
+		**/
+		class Polygon : public internals_figure::FigureInterface
+		{
+
+		public:
+
+			std::vector<fVec2> tab;
+			RGBc  color, fillcolor;
+
+
+			/**
+			 * Construct a polygon
+			 *
+			 * @param	tab_points	list of points, in clockwise or anti-clockwise order.
+			 * @param	col		  	outline color.
+			 * @param	fillcol   	(Optional) fill color (default = transparent = no fill)
+			 **/
+			Polygon(const std::vector<fVec2> & tab_points, RGBc col, RGBc fillcol = RGBc::c_Transparent) : tab(tab_points), color(col), fillcolor(fillcol)
+				{
+				MTOOLS_INSURE(tab_points.size() > 0);
+				}
+
+
+			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+				{
+				if (fillcolor.isTransparent())
+					{
+					im.canvas_draw_polygon(R, tab, color, highQuality, true);
+					}
+				else
+					{
+					im.canvas_draw_filled_polygon(R, tab, color, fillcolor, highQuality, true);
+					}
+				}
+
+
+			virtual fBox2 boundingBox() const override
+				{
+				fBox2 R;
+				for (size_t i = 0; i < tab.size(); i++) { R.swallowPoint(tab[i]); }
+				return R;
+				}
+
+
+			virtual std::string toString(bool debug = false) const override
+				{
+				std::string str("Polygon [");
+				str += mtools::toString(tab) + " - ";
+				str += mtools::toString(color);
+				if (!fillcolor.isTransparent())
+					{
+					str += "filled : ";
+					str += mtools::toString(fillcolor);
+					}
+				return str + "]";
+				}
+
+
+			virtual void serialize(OBaseArchive & ar) const override
+				{
+				ar & tab & color & fillcolor;
+				}
+
+
+			virtual void deserialize(IBaseArchive & ar) override
+				{
+				ar & tab & color & fillcolor;
+				}
+
+		};
+
 
 		/************************************************************************************************************************************
 		*
