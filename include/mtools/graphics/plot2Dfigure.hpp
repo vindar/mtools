@@ -567,7 +567,7 @@ namespace mtools
 
 
 		/** push a new figure in the queue */
-		MTOOLS_FORCEINLINE bool pushfigure(FigureInterface* fig)
+		MTOOLS_FORCEINLINE bool pushfigure(Figure::internals_figure::FigureInterface* fig)
 			{
 			return _queue.push(fig);
 			}
@@ -597,7 +597,7 @@ namespace mtools
 			_nb_drawn = 0;
 			while (1)
 				{
-				FigureInterface * obj;
+				Figure::internals_figure::FigureInterface * obj;
 				while (!_queue.pop(obj)) { check(); std::this_thread::yield(); }
 				obj->draw(*im, R, hq, min_thick);
 				_nb_drawn++;
@@ -636,12 +636,12 @@ namespace mtools
 		static constexpr int64 CODE_STOP_AND_WAIT = 0;
 		static constexpr int64 CODE_RESTART = 1;
 
-		SingleProducerSingleConsumerQueue<FigureInterface*> _queue;	// the queue containing the figures to draw
-		std::atomic<size_t> _nb_drawn;								// number of figure drawn since the work started 
-		std::atomic<Image*> _im;									// the image to draw onto
-		std::atomic<fBox2>  _R;										// range to use
-		std::atomic<bool>	_hq;									// true for high quality drawing
-		std::atomic<double> _min_thick;								// minimum thickness used when drawing
+		SingleProducerSingleConsumerQueue<Figure::internals_figure::FigureInterface*> _queue;	// the queue containing the figures to draw
+		std::atomic<size_t> _nb_drawn;															// number of figure drawn since the work started 
+		std::atomic<Image*> _im;																// the image to draw onto
+		std::atomic<fBox2>  _R;																	// range to use
+		std::atomic<bool>	_hq;																// true for high quality drawing
+		std::atomic<double> _min_thick;															// minimum thickness used when drawing
 	};
 
 
@@ -672,7 +672,7 @@ namespace mtools
 		* Set the main parameters.
 		* Set the TreeFigure object to draw, number of threads and corresponding images.
 		**/
-		void set(TreeFigure<FigureInterface*, N> * figtree, const std::vector<Image*> & images)
+		void set(TreeFigure<Figure::internals_figure::FigureInterface*, N> * figtree, const std::vector<Image*> & images)
 			{
 			MTOOLS_INSURE(figtree != nullptr);
 			MTOOLS_INSURE(images.size() > 0);
@@ -687,7 +687,7 @@ namespace mtools
 
 
 		/** Same as above but set all threads to draw on the same image.*/
-		void set(TreeFigure<FigureInterface*, N> * figtree, const size_t nb_worker_threads, Image * image)
+		void set(TreeFigure<Figure::internals_figure::FigureInterface*, N> * figtree, const size_t nb_worker_threads, Image * image)
 			{
 			MTOOLS_INSURE(figtree != nullptr);
 			MTOOLS_INSURE(image != nullptr);
@@ -796,7 +796,7 @@ namespace mtools
 												// iterate over the figures to draw
 			fBox2 oR = zoomOut((fBox2)_R);
 			_figTree->iterate_intersect(oR,
-				[&](mtools::TreeFigure<FigureInterface *, N, double>::BoundedObject & bo) -> void
+				[&](mtools::TreeFigure<Figure::internals_figure::FigureInterface *, N, double>::BoundedObject & bo) -> void
 				{
 				do
 					{
@@ -840,7 +840,7 @@ namespace mtools
 		static constexpr int64 CODE_STOP_AND_WAIT = 0;
 		static constexpr int64 CODE_RESTART = 1;
 
-		TreeFigure<FigureInterface*, N> *   _figTree;	// container for all figure objects.
+		TreeFigure<Figure::internals_figure::FigureInterface*, N> *   _figTree;	// container for all figure objects.
 		FigureDrawerWorker *				_workers;	// vector containing the worker threads.
 		std::vector<Image *>				_images;	// vector containing the images to draw onto
 		std::atomic<int64>					_nb;		// number of figure processed

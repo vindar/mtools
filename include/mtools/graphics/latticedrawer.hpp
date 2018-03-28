@@ -686,10 +686,10 @@ inline void _setInt16Buf(uint32 x,uint32 y,double R,double G,double B,double A)
 	{
     const size_t dx = (size_t)_int16_buffer_dim.X();
     const size_t dxy = (size_t)(dx * _int16_buffer_dim.Y());
-    _int16_buffer[x + y*dx] = (uint16)round(R);
-	_int16_buffer[x + y*dx + dxy] = (uint16)round(G);
-	_int16_buffer[x + y*dx + 2*dxy] = (uint16)round(B);
-    _int16_buffer[x + y*dx + 3*dxy] = (uint16)round(A);
+    _int16_buffer[x + y*dx] = (uint16)std::round(R);
+	_int16_buffer[x + y*dx + dxy] = (uint16)std::round(G);
+	_int16_buffer[x + y*dx + 2*dxy] = (uint16)std::round(B);
+    _int16_buffer[x + y*dx + 3*dxy] = (uint16)std::round(A);
     }
 
 /* add a color at position (i,j) */

@@ -287,23 +287,23 @@ inline bool Colin_SutherLand_lineclip(iVec2 & P1, iVec2 & P2, const iBox2 & B)
 			const double m = ((double)(P2.Y() - P1.Y())) / (P2.X() - P1.X());
 			if (temp & 8)
 			{ //Line clips top edge
-				x = P1.X() + (int64)round((B.max[1] - P1.Y()) / m);
+				x = P1.X() + (int64)std::round((B.max[1] - P1.Y()) / m);
 				y = B.max[1];
 			}
 			else if (temp & 4)
 			{ 	//Line clips bottom edge
-				x = P1.X() + (int64)round((B.min[1] - P1.Y()) / m);
+				x = P1.X() + (int64)std::round((B.min[1] - P1.Y()) / m);
 				y = B.min[1];
 			}
 			else if (temp & 1)
 			{ 	//Line clips left edge
 				x = B.min[0];
-				y = P1.Y() + (int64)round(m*(B.min[0] - P1.X()));
+				y = P1.Y() + (int64)std::round(m*(B.min[0] - P1.X()));
 			}
 			else if (temp & 2)
 			{ 	//Line clips right edge
 				x = B.max[0];
-				y = P1.Y() + (int64)round(m*(B.max[0] - P1.X()));
+				y = P1.Y() + (int64)std::round(m*(B.max[0] - P1.X()));
 			}
 			if (temp == c1)
 			{
