@@ -498,7 +498,7 @@ namespace internals_bseg
 		/**
 		* Increase len by 1
 		*/
-		MTOOLS_FORCEINLINE int64 & inclen() { _len++; }
+		MTOOLS_FORCEINLINE void inclen() { _len++; }
 
 
 		/**
