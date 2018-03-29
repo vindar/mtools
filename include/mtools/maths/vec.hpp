@@ -616,6 +616,23 @@ namespace mtools
 		P.Y() = (a1*c2 - a2*c1) / delta;
 		return true;
 		}
+
+	/**
+	* Test if C in on the left side of the oriented line [P1->P2]
+	*
+	* @param	P1	start point of the oriented line.
+	* @param	P2	endpoint of the oriented line.
+	* @param	C 	Point to test.
+	*
+	* @return	1 if C is on the left, -1 if C is on the right and 0 if C in on the line itself.
+	**/
+	MTOOLS_FORCEINLINE int left_of(const fVec2 & P1, const fVec2 & P2, const fVec2 & C)
+		{
+		double x = crossProduct(P2 - P1, C - P2);
+		return ((x < 0) ? -1 : ((x > 0) ? 1 : 0));
+		}
+
+
 }
 
 
