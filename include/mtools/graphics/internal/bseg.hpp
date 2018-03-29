@@ -446,6 +446,39 @@ namespace internals_bseg
 			}
 
 
+		/* Compute the aa value on a given side */
+		template<bool side, bool x_major>  MTOOLS_FORCEINLINE int32 AA2() const
+			{
+			MTOOLS_ASSERT(x_major == _x_major)
+			int64 a;
+			if (x_major)
+				{
+				a = _dy;
+				a = (((a - _frac)*_amul) >> 52);
+				if (side) { if (_stepx != _stepy) a = 256 - a; } else { if (_stepx == _stepy) a = 256 - a; }
+				}
+			else
+				{
+				a = _dx;
+				a = (((a - _frac)*_amul) >> 52);
+				if (side) { if (_stepx == _stepy) a = 256 - a; } else { if (_stepx != _stepy) a = 256 - a; }
+				}
+			a = (a >> 2) + (a >> 1) + 32; // compensate
+			MTOOLS_ASSERT((a >= 0) && (a <= 256));
+			return (int32)a;
+			}
+
+
+		/* Compute the aa value on a given side */
+		template<bool side>  MTOOLS_FORCEINLINE int32 AA1() const
+			{
+			return ((_x_major) ? AA2<side, true>() : AA2<side, false>());
+			}
+
+
+
+
+
 		/**
 		 * Query if the line is x_major
 		 */
