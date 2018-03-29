@@ -41,7 +41,6 @@ namespace internals_bseg
 	struct BSeg
 		{
 
-
 		/** Construct segment from P1 to P2 (integer-valued positions) */
 		BSeg(const iVec2 & P1, const iVec2 & P2) { init(P1, P2); }
 
@@ -65,12 +64,20 @@ namespace internals_bseg
 			}
 
 
+		/** Return the reversed segment **/
+		MTOOLS_FORCEINLINE BSeg get_reverse() const
+			{
+			BSeg tmp(*this);
+			tmp.reverse();
+			return tmp; 
+			}
+
 
 		/** move on the line by one pixel. tmeplate version (for speed) */
-		template<bool x_major> MTOOLS_FORCEINLINE void move()
+		template<bool X_MAJOR> MTOOLS_FORCEINLINE void move()
 			{
 			_len--;
-			if (x_major)
+			if (X_MAJOR)
 				{
 				if (_frac >= 0) { _y += _stepy; _frac -= _dx; } 
 				_x += _stepx; _frac += _dy;
@@ -133,11 +140,11 @@ namespace internals_bseg
 		*
 		* [x_major can be deduced from linedir but is given as template paramter for speed optimization]
 		*/
-		template<bool x_major> MTOOLS_FORCEINLINE int64 move_x_dir()
+		template<bool X_MAJOR> MTOOLS_FORCEINLINE int64 move_x_dir()
 			{
-			MTOOLS_ASSERT(_x_major == x_major);  // make sure template argument supplied is correct. 
+			MTOOLS_ASSERT(_x_major == X_MAJOR);  // make sure template argument supplied is correct. 
 			MTOOLS_ASSERT(_dx > 0);				 // not a vertical line
-			if (x_major) // compiler optimizes away the template conditionals
+			if (X_MAJOR) // compiler optimizes away the template conditionals
 				{
 				if (_frac >= 0) { _y += _stepy; _frac -= _dx; }
 				_x += _stepx; _frac += _dy;
@@ -215,11 +222,11 @@ namespace internals_bseg
 		*
 		* [x_major can be deduced from linedir but given as template paramter for speed optimization]
 		*/
-		template<bool x_major> MTOOLS_FORCEINLINE int64 move_y_dir()
+		template<bool X_MAJOR> MTOOLS_FORCEINLINE int64 move_y_dir()
 			{
-			MTOOLS_ASSERT(_x_major == x_major);  // make sure tempalte argument supplied is correct. 
+			MTOOLS_ASSERT(_x_major == X_MAJOR);  // make sure tempalte argument supplied is correct. 
 			MTOOLS_ASSERT(_dy > 0); // not an horizontal line
-			if (x_major) // compiler optimizes away the template conditionals
+			if (X_MAJOR) // compiler optimizes away the template conditionals
 				{
 				int64 r = (_frac < ((_dy << 1) - _dx)) ? _rat : ((_dy - _frac) / _dy); // use rat value if just after a step.
 				_x += (r*_stepx);
@@ -329,7 +336,7 @@ namespace internals_bseg
 		* is not in it, return 0.
 		**/
 		inline int64 lenght_inside_box(const iBox2 & B) const
-		{
+			{
 			if (!B.isInside({ _x, _y })) return 0;
 			const int64 hx = 1 + ((_stepx > 0) ? (B.max[0] - _x) : (_x - B.min[0])); // number of horizontal step before exit. 
 			const int64 hy = 1 + ((_stepy > 0) ? (B.max[1] - _y) : (_y - B.min[1])); // number of vertical step before exit. 
@@ -339,11 +346,11 @@ namespace internals_bseg
 			if (nx == -1) { return ny; }
 			if (ny == -1) { return nx; }
 			return std::min<int64>(nx, ny);
-		}
+			}
 
 
 		/** Initialize with integer-valued positions */
-		void init(const iVec2 & P1, const iVec2 & P2)
+		void init(iVec2 P1, iVec2 P2)
 			{
 			const int64 EXP = 10;
 			if (P1 == P2)
@@ -377,7 +384,7 @@ namespace internals_bseg
 
 
 		/** Construct segment from P1 to P2 (real-valued positions) */
-		void init(const fVec2 & Pf1, const fVec2 & Pf2)
+		void init(fVec2 Pf1, fVec2 Pf2)
 			{
 			const int64 PRECISION = 1024 * 16; // 512 * 128;
 			bool sw = false;
@@ -447,21 +454,21 @@ namespace internals_bseg
 
 
 		/* Compute the aa value on a given side */
-		template<bool side, bool x_major>  MTOOLS_FORCEINLINE int32 AA2() const
+		template<bool SIDE, bool X_MAJOR>  MTOOLS_FORCEINLINE int32 AA2() const
 			{
-			MTOOLS_ASSERT(x_major == _x_major)
+			MTOOLS_ASSERT(X_MAJOR == _x_major)
 			int64 a;
-			if (x_major)
+			if (X_MAJOR)
 				{
 				a = _dy;
 				a = (((a - _frac)*_amul) >> 52);
-				if (side) { if (_stepx != _stepy) a = 256 - a; } else { if (_stepx == _stepy) a = 256 - a; }
+				if (SIDE) { if (_stepx != _stepy) a = 256 - a; } else { if (_stepx == _stepy) a = 256 - a; }
 				}
 			else
 				{
 				a = _dx;
 				a = (((a - _frac)*_amul) >> 52);
-				if (side) { if (_stepx == _stepy) a = 256 - a; } else { if (_stepx != _stepy) a = 256 - a; }
+				if (SIDE) { if (_stepx == _stepy) a = 256 - a; } else { if (_stepx != _stepy) a = 256 - a; }
 				}
 			a = (a >> 2) + (a >> 1) + 32; // compensate
 			MTOOLS_ASSERT((a >= 0) && (a <= 256));
@@ -470,13 +477,10 @@ namespace internals_bseg
 
 
 		/* Compute the aa value on a given side */
-		template<bool side>  MTOOLS_FORCEINLINE int32 AA1() const
+		template<bool SIDE>  MTOOLS_FORCEINLINE int32 AA1() const
 			{
-			return ((_x_major) ? AA2<side, true>() : AA2<side, false>());
+			return ((_x_major) ? AA2<SIDE, true>() : AA2<SIDE, false>());
 			}
-
-
-
 
 
 		/**
@@ -514,7 +518,7 @@ namespace internals_bseg
 		*
 		* closed = true to compute the lenght of [P,Q] and false for [P,Q[.
 		**/
-		inline int64 lengthBSeg(const iVec2 & P, const iVec2 & Q, bool closed = false)
+		inline int64 length(const iVec2 & P, const iVec2 & Q, bool closed = false)
 			{
 			return std::max<int64>(abs(P.X() - Q.X()), abs(P.Y() - Q.Y())) + (closed ? 1 : 0);
 			}
@@ -524,14 +528,13 @@ namespace internals_bseg
 		* Compute the position of the next pixel after P on a Bresenham segment [P,Q].
 		* if P = Q (no line), return P.
 		**/
-		inline iVec2 nextPosBSeg(const iVec2 & P, const iVec2 & Q)
+		inline iVec2 nextPos(const iVec2 & P, const iVec2 & Q)
 			{
 			if (P == Q) return P;
 			BSeg seg(P, Q);
 			seg.move();
 			return seg.pos();
 			}
-
 
 
     }
