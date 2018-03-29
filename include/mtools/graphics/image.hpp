@@ -7641,6 +7641,12 @@ namespace mtools
 				}
 
 
+
+			/****************************************************************************************
+			 * BRESENHAM NEW METHODS 
+			 ***************************************************************************************/
+
+
 			/**
 			* Draw a bresenham segment (template version)
 			**/
@@ -7667,18 +7673,6 @@ namespace mtools
 
 			/**
 			 * Draw a Bresenham segment.
-			 * 
-			 * the segment is not modified
-			 *
-			 * @param	seg		   The segment to draw.
-			 * @param	draw_last  True to draw the last point.
-			 * @param	color	   Drawing color.
-			 * @param	penwidth   (Optional) use large pen if > 0.
-			 * @param	blend	   (Optional) true to use blending.
-			 * @param	side	   (Optional) AA side (0 = no aa)
-			 * @param	op		   (Optional) multiply color by op if  0 <= op < 256.
-			 * @param	checkrange (Optional) set it to false to disable range check (if you know the
-			 * 					   segment stay inside the image).
 			 */
 			void _draw_bseg(const internals_bseg::BSeg & seg, bool draw_last, RGBc color, int32 penwidth = 0, bool blend = true, int side = 0, int32 op = -1, bool checkrange = true)
 				{
@@ -7894,17 +7888,6 @@ namespace mtools
 
 			/**
 			 * Draw a Bresenham segment between two integer-valued points
-			 *
-			 * @param	P1		   Start point.
-			 * @param	P2		   End point.
-			 * @param	draw_last  True to draw the last point.
-			 * @param	color	   Drawing color.
-			 * @param	penwidth   (Optional) use large pen if > 0.
-			 * @param	blend	   (Optional) true to use blending.
-			 * @param	side	   (Optional) side AA (0 = no aa)
-			 * @param	op		   (Optional) multiply color by op if  0 <= op < 256.
-			 * @param	checkrange (Optional) set it to false to disable range check (if you know the
-			 * 					   segment stay inside the image).
 			 */
 			MTOOLS_FORCEINLINE void _draw_bseg(const iVec2 & P1, const iVec2 & P2, bool draw_last, RGBc color, int32 penwidth = 0, bool blend = true, int side = 0, int32 op = -1, bool checkrange = true)
 				{
@@ -7914,17 +7897,6 @@ namespace mtools
 
 			/**
 			 * Draw a Bresenham segment between two integer-valued points
-			 *
-			 * @param	P1		   Start point.
-			 * @param	P2		   End point.
-			 * @param	draw_last  True to draw the last point.
-			 * @param	color	   Drawing color.
-			 * @param	penwidth   (Optional) use large pen if > 0.
-			 * @param	blend	   (Optional) true to use blending.
-			 * @param	side	   (Optional) side AA (0 = no aa)
-			 * @param	op		   (Optional) multiply color by op if  0 <= op < 256.
-			 * @param	checkrange (Optional) set it to false to disable range check (if you know the
-			 * 					   segment stay inside the image).
 			 */
 			MTOOLS_FORCEINLINE void _draw_bseg(const fVec2 & P1, const fVec2 & P2, bool draw_last, RGBc color, int32 penwidth = 0, bool blend = true, int side = 0, int32 op = -1, bool checkrange = true)
 				{
@@ -7934,12 +7906,7 @@ namespace mtools
 
 			/**
 			 * Find the maximum distance where two segments intersect. 
-			 *
-			 * @param	segA	   First segment
-			 * @param	segB	   Second segment.
-			 * @param	checkrange true to move the segment inside the 
-			 *
-			 * @return	the max distance where they intersect. 
+			 * checkrange = true to move the segment inside the 
 			 */
 			int64 _bseg_find_max_intersection(internals_bseg::BSeg segA, internals_bseg::BSeg segB, bool checkrange = true)
 				{
@@ -8008,9 +7975,7 @@ namespace mtools
 
 
 			/**
-			* Draw the segment A while avoiding segment A. 
-			* must share the same start point
-			* template method
+			* Draw the segment A while avoiding segment A. Must share the same start point (template)
 			**/
 			template<bool BLEND, bool USEOP, int SIDE> void _bseg_avoid(internals_bseg::BSeg segA, internals_bseg::BSeg segB, bool draw_last, RGBc color, int32 op, bool checkrange = true)
 				{
@@ -8073,9 +8038,8 @@ namespace mtools
 
 
 			/**
-			* Draw a Bresenham segment while avoiding another one. 
-			* Must have the same starting point.
-			*/
+			* Draw the segment A while avoiding segment A. Must share the same start point
+			**/
 			void _bseg_avoid(const internals_bseg::BSeg & segA, const internals_bseg::BSeg & segB, bool draw_last, RGBc color, bool blend = true, int side = 0, int32 op = -1, bool checkrange = true)
 				{
 				if (op == 0) return;
@@ -8187,6 +8151,7 @@ namespace mtools
 				_bseg_avoid(internals_bseg::BSeg(P, Q), internals_bseg::BSeg(P, R), draw_last, color, blend, side, op, checkrange);
 				}
 
+
 			/**
 			* Draw a [P,Q] while avoiding [P,R]
 			*/
@@ -8198,7 +8163,7 @@ namespace mtools
 
 
 			/**
-			* draw segA while avoiding segB and segC. All 3 must have the same start point.
+			* draw segA while avoiding segB and segC. All 3 must have the same start point. (template)
 			**/
 			template<bool BLEND, bool USEOP, int SIDE> void _bseg_avoid(internals_bseg::BSeg segA, internals_bseg::BSeg segB, internals_bseg::BSeg segC, bool draw_last, RGBc color, int32 op, bool checkrange)
 				{
@@ -8312,9 +8277,8 @@ namespace mtools
 
 
 			/**
-			* Draw a Bresenham segment while avoiding two others
-			* Must have the same starting point.
-			*/
+			* draw segA while avoiding segB and segC. All 3 must have the same start point.
+			**/
 			void _bseg_avoid(const internals_bseg::BSeg & segA, const internals_bseg::BSeg & segB, const internals_bseg::BSeg & segC, bool draw_last, RGBc color, bool blend = true, int side = 0, int32 op = -1, bool checkrange = true)
 				{
 				if (op == 0) return;
@@ -8439,15 +8403,16 @@ namespace mtools
 
 
 			/**
-			* Draw the (open) segment ]a, a+ lena[ while avoiding segments [b, b + lenb[ and [c, c+ lenc[
-			* 
-			* a and b must share the same pixel
-			* a + lena and c must share the same pixel
-			* TRIANGLE CONDITION: b + lenb and c + lenc must share the same pixel (otherwise, use _lineBresenham_avoid_both_sides() method).
+			* draw segA while avoiding segB and segC where the 3 segment form a triangle 
+			* such that A and B have the same start pixel and the start pixel of C is the end pixel of A
 			**/
-			template<bool blend, bool checkrange, bool useop, bool useaa, bool side> MTOOLS_FORCEINLINE void _lineBresenham_avoid_both_sides_triangle(_bdir linea, _bpos posa, int64 lena, _bdir lineb, _bpos posb, int64 lenb, _bdir linec, _bpos posc, int64 lenc, RGBc color, int32 op)
+			MTOOLS_FORCEINLINE void _bseg_avoid_triangle(const internals_bseg::BSeg & segA, const internals_bseg::BSeg & segB, const internals_bseg::BSeg & segC, 
+				                                         bool draw_last, RGBc color, bool blend = true, int side = 0, int32 op = -1, bool checkrange = true)
 				{
-				MTOOLS_ASSERT((posa.x == posb.x) && (posa.y == posb.y));
+				MTOOLS_ASSERT(segA.pos() == segB.pos());
+				int64 lena = segA.len();
+				int64 lenb = segB.len();
+				int64 lenc = segC.len();
 				int64 G = lenb - lenc;
 				if (G > lena) { G = lena; } else { if (G < -lena) { G = -lena; } }
 				int64 lP = 1 + ((lena + G) >> 1);
@@ -8457,15 +8422,32 @@ namespace mtools
 					if (lP > lQ) { lP--; } else { lQ--; }
 					}
 				MTOOLS_ASSERT(lP + lQ == lena + 1);
-				_bdir linea2 = linea;
-				_bpos posa2 = posa;
-				_move_line(linea2, posa2,lena);
-				_reverse_line(linea2, posa2);
-				MTOOLS_ASSERT((posa2.x == posc.x) && (posa2.y == posc.y));
-				_lineBresenham_avoid<blend, checkrange, useop, useaa,  side>(linea, posa, lena + 1 - lQ, lineb, posb, lenb, color, op);
-				_lineBresenham_avoid<blend, checkrange, useop, useaa, !side>(linea2, posa2, lena + 1 - lP, linec, posc, lenc, color, op);
+				internals_bseg::BSeg segA1 = segA;
+				internals_bseg::BSeg segA2 = segA.get_reverse();
+				MTOOLS_ASSERT(segA2.pos() == segC.pos());
+				segA1.len() = lena + 1 - lQ;
+				segA2.len() = lena + 1 - lP;
+				_bseg_avoid(segA1, segB, false, color, blend, side, op, checkrange);
+				_bseg_avoid(segA2, segC, false, color, blend, side, op, checkrange);
 				}
 
+
+			/**
+			* draw [P,Q] while avoiding [P,R] and [Q,R]
+			**/
+			MTOOLS_FORCEINLINE void _bseg_avoid_triangle(const iVec2 & P, const iVec2 & Q, const iVec2 & R, bool draw_last, RGBc color, bool blend = true, int side = 0, int32 op = -1, bool checkrange = true)
+				{
+				_bseg_avoid_triangle(internals_bseg::BSeg(P,Q), internals_bseg::BSeg(P,R), internals_bseg::BSeg(Q,R), draw_last, color, blend, side, op, checkrange);
+				}
+
+
+			/**
+			* draw [P,Q] while avoiding [P,R] and [Q,R]
+			**/
+			MTOOLS_FORCEINLINE void _bseg_avoid_triangle(const fVec2 & P, const fVec2 & Q, const fVec2 & R, bool draw_last, RGBc color, bool blend = true, int side = 0, int32 op = -1, bool checkrange = true)
+				{
+				_bseg_avoid_triangle(internals_bseg::BSeg(P, Q), internals_bseg::BSeg(P, R), internals_bseg::BSeg(Q, R), draw_last, color, blend, side, op, checkrange);
+				}
 
 			/**
 			* Draw the segment [P,Q] with the bresenham line algorithm while skipping the pixels which also
