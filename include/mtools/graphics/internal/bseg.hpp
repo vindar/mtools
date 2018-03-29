@@ -299,7 +299,7 @@ namespace internals_bseg
 
 		/**
 		* Move the position until it is in the closed box B. Return the number of step performed by the
-		* walk or -1 if the line never enters the box. (in this case, pos may be anywhere.)
+		* walk or -1 if the line never enters the box. (in this case, pos may be anywhere but len is set to -1)
 		**/
 		inline int64 move_inside_box(const iBox2 & B)
 			{
@@ -332,8 +332,8 @@ namespace internals_bseg
 
 
 		/**
-		* Compute number of pixel of the line before it exits the box B. If the box is empty of if pos
-		* is not in it, return 0.
+		* Compute number of pixel of the line (that can be drawn) before it exits the box B. 
+		* If the box is empty of if pos is not in it, return 0. Otherwise, return at least 1.
 		**/
 		inline int64 lenght_inside_box(const iBox2 & B) const
 			{
@@ -343,8 +343,9 @@ namespace internals_bseg
 			int64 nx = -1, ny = -1;
 			if (_dx != 0) { BSeg tmp(*this); nx = tmp.move_x_dir(hx); }
 			if (_dy != 0) { BSeg tmp(*this); ny = tmp.move_y_dir(hy); }
-			if (nx == -1) { return ny; }
-			if (ny == -1) { return nx; }
+			if (nx == -1) { MTOOLS_ASSERT(ny > 0);  return ny; }
+			if (ny == -1) { MTOOLS_ASSERT(nx > 0);  return nx; }
+			MTOOLS_ASSERT((nx > 0)&&(ny > 0));
 			return std::min<int64>(nx, ny);
 			}
 
@@ -454,9 +455,9 @@ namespace internals_bseg
 
 
 		/* Compute the aa value on a given side */
-		template<int SIDE, bool X_MAJOR>  MTOOLS_FORCEINLINE int32 AA2() const
+		template<int SIDE, bool X_MAJOR>  MTOOLS_FORCEINLINE int32 AA() const
 			{
-			MTOOLS_ASSERT(X_MAJOR == _x_major)
+			MTOOLS_ASSERT(X_MAJOR == _x_major);
 			int64 a;
 			if (X_MAJOR)
 				{
@@ -473,13 +474,6 @@ namespace internals_bseg
 			a = (a >> 2) + (a >> 1) + 32; // compensate
 			MTOOLS_ASSERT((a >= 0) && (a <= 256));
 			return (int32)a;
-			}
-
-
-		/* Compute the aa value on a given side */
-		template<int SIDE>  MTOOLS_FORCEINLINE int32 AA1() const
-			{
-			return ((_x_major) ? AA2<SIDE, true>() : AA2<SIDE, false>());
 			}
 
 
@@ -502,6 +496,12 @@ namespace internals_bseg
 
 
 		/**
+		* Increase len by 1
+		*/
+		MTOOLS_FORCEINLINE int64 & inclen() { _len++; }
+
+
+		/**
 		* Query the current position on the line
 		*/
 		MTOOLS_FORCEINLINE iVec2 pos() const { return {_x,_y}; }
@@ -517,6 +517,24 @@ namespace internals_bseg
 		* y-coordinate of the current position
 		*/
 		MTOOLS_FORCEINLINE int64 Y() const { return _y; }
+
+
+		/**
+		* Operator== return true if both segment are currently at the same position.
+		*/
+		MTOOLS_FORCEINLINE bool operator==(const BSeg & seg) const
+			{
+			return ((_x == seg._x) && (_y == seg._y));
+			}
+
+
+		/**
+		* Operator!= return true if both segment are currently at different positions.
+		*/
+		MTOOLS_FORCEINLINE bool operator!=(const BSeg & seg) const
+			{
+			return ((_x != seg._x) || (_y != seg._y));
+			}
 
 
 		int64 _x, _y;			// current pos
