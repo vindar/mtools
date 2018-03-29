@@ -36,23 +36,6 @@ namespace internals_clipping
 
 
 	/**
-	* Test if point C in on the left side of the oriented line P1->P2
-	*
-	* @param	P1	start point of the oriented line.
-	* @param	P2	endpoint of the oriented line.
-	* @param	C 	Point to test.
-	*
-	* @return	1 if C is on the left, -1 if C is on the right and 0 if C in on the line itself.
-	**/
-	MTOOLS_FORCEINLINE int left_of(const fVec2 & P1, const fVec2 & P2, const fVec2 & C)
-		{
-		double x = crossProduct(P2 - P1, C - P2);
-		return ((x < 0) ? -1 : ((x > 0) ? 1 : 0));
-		}
-
-
-
-	/**
 	* Sub routine used by the Sutherland-Hodgman polygon clipping akgorithm.
 	* clip all the vertices of sub against (x0,x1)
 	**/
@@ -97,20 +80,21 @@ namespace internals_clipping
 
 
 /**
- * Return the winding direction of a convex polygon
+ * Return the winding direction of a convex polygon (C interface)
  *
  * @param	poly_tab	The polygon vertices
  * @param	poly_len	number of vertices
  *
- * @return	+1 if clockise, -1 if counterclockise, 0 if not convex or flat
+ * @return	+1 if clockise, -1 if counterclockise, 0 if polygon not convex or flat
 **/
 inline int winding(const fVec2 * poly_tab, const size_t poly_len)
 	{
 	if (poly_len < 3) return 0;
+	MTOOLS_ASSERT(poly_tab != nullptr);
 	size_t a = 0, b = 0;
 	for (size_t i = 0; i < poly_len; i++)
 		{
-		const int d = internals_clipping::left_of(poly_tab[i], poly_tab[(i + 1) % poly_len], poly_tab[(i + 2) % poly_len]);
+		const int d = left_of(poly_tab[i], poly_tab[(i + 1) % poly_len], poly_tab[(i + 2) % poly_len]);
 		switch (d)
 			{
 			case +1: { a++; break; }
@@ -124,11 +108,26 @@ inline int winding(const fVec2 * poly_tab, const size_t poly_len)
 
 
 /**
- * Return the winding direction of a convex polygon.
+* Return the winding direction of a convex polygon
+* (C++ interface, static version)
+*
+* @param	polygon	The polygon to compute the winding direction.
+*
+* @return	+1 if clockise, -1 if counterclockise, 0 if polygon not convex or flat.
+**/
+template<size_t N> inline int winding(const std::array<fVec2, N> & polygon)
+	{
+	return winding(polygon.data(), N);
+	}
+
+
+/**
+ * Return the winding direction of a convex polygon 
+ * (C++ interface, dynamic version)
  *
  * @param	polygon	The polygon to compute the winding direction.
  *
- * @return	+1 if clockise, -1 if counterclockise, 0 if not convex or flat.
+ * @return	+1 if clockise, -1 if counterclockise, 0 if polygon not convex or flat.
 **/
 inline int winding(const std::vector<fVec2> & polygon)	
 	{
@@ -136,9 +135,15 @@ inline int winding(const std::vector<fVec2> & polygon)
 	}
 
 
+
+
+
+
 /**
- * Sutherland Hodgman clipping algorithm. Clip a given polygon against another (convex) polygon.
- *
+ * Sutherland Hodgman clipping algorithm. 
+ * Clip a given polygon against another (convex) polygon.
+ * (C interface)
+ * 
  * Polygons can be given in clockwise or anti-clockwise order (the resulting clipped polygon)
  * has the same order.
  *
@@ -156,33 +161,34 @@ inline void Sutherland_Hodgman_clipping(const fVec2  * sub_tab , const size_t su
 	                                    const fVec2  * clip_tab, const size_t clip_len, 
 	                                    fVec2  * res_tab , size_t & res_len)
 	{
-	MTOOLS_ASSERT(clip.len > 0);
 	res_len = 0;
 	if (sub_len == 0) return;
 	static const size_t STATIC_MAX_SIZE = 16;
 	fVec2   tmp1[STATIC_MAX_SIZE];
 	fVec2 * tmp2 =  ((2 * sub_len + clip_len > STATIC_MAX_SIZE) ?  (new fVec2[2*sub_len + clip_len]) : nullptr);
 	fVec2 * tmp_tab = ((tmp2 != nullptr) ? tmp2 : tmp1);	
-	const size_t L = clip_len;
-	fVec2 * p1 = (L & 1) ? tmp_tab : res_tab; size_t l1 = 0;
-	fVec2 * p2 = (L & 1) ? res_tab : tmp_tab; size_t l2 = 0;
-	int dir = winding(clip_tab, clip_len);
-	internals_clipping::Sutherland_Hodgman_clipping_sub(sub_tab, sub_len, clip_tab[L-1], clip_tab[0], dir, p2, l2);
-	for (size_t i = 0; i < L-1; i++) 		
+	fVec2 * p1 = (clip_len & 1) ? tmp_tab : res_tab; size_t l1 = 0;
+	fVec2 * p2 = (clip_len & 1) ? res_tab : tmp_tab; size_t l2 = 0;
+	const int dir = winding(clip_tab, clip_len);
+	MTOOLS_ASSERT(dir != 0);
+	internals_clipping::Sutherland_Hodgman_clipping_sub(sub_tab, sub_len, clip_tab[clip_len -1], clip_tab[0], dir, p2, l2);
+	for (size_t i = 0; i < clip_len -1; i++)
 		{
 		mtools::swap<fVec2*>(p1, p2);
 		mtools::swap<size_t>(l1, l2);
-		if (l1 == 0) { res_len = 0; delete[] tmp2; return; }
+		if (l1 == 0) { l2 = 0; break; }
 		internals_clipping::Sutherland_Hodgman_clipping_sub(p1, l1, clip_tab[i], clip_tab[i + 1], dir, p2, l2);
 		}
 	res_len = l2;
-	MTOOLS_ASSERT(p2 == res_tab);
 	delete [] tmp2;
+	MTOOLS_ASSERT(res_len <= (2 * sub_len + clip_len));
 	}
 
 
 /**
- * Sutherland Hodgman clipping algorithm. Clip a given polygon against another (convex) polygon.
+ * Sutherland Hodgman clipping algorithm. 
+ * Clip a given polygon against another (convex) polygon.
+ * (C++ interface, dynamic version)
  * 
  * Polygons can be given in clockwise or anti-clockwise order (the resulting clipped polygon)
  * has the same order.
@@ -194,21 +200,23 @@ inline void Sutherland_Hodgman_clipping(const fVec2  * sub_tab , const size_t su
  *
  * @return	the clipped polygon.
 **/
-std::vector<fVec2> Sutherland_Hodgman_clipping(const std::vector<fVec2> & polygon,
-										const std::vector<fVec2> & clip_region)
+inline std::vector<fVec2> Sutherland_Hodgman_clipping(const std::vector<fVec2> & polygon, const std::vector<fVec2> & clip_region)
 	{
-	if (polygon.size() == 0) return;
-	std::vector<fVec2> res(2 * polygon.size() + clip_region.size());
+	const size_t L = 2 * polygon.size() + clip_region.size();
+	std::vector<fVec2> res(L);
 	size_t len = 0;
 	Sutherland_Hodgman_clipping(polygon.data(), polygon.size(), clip_region.data(), clip_region.size(), res.data(), len);
+	MTOOLS_ASSERT(len <= L);
 	res.resize(len);
 	return res;
 	}
 
 
 /**
- * Sutherland hodgman clipping algorithm. Clip a given polygon against a rectangle box.
- *
+ * Sutherland hodgman clipping algorithm. 
+ * Clip a given polygon against a rectangle box.
+ * (C interface)
+ * 
  * Polygon may be given in clockwise or anti-clockwise order (the resulting clipped polygon)
  * has the same order.
  *
@@ -221,9 +229,7 @@ std::vector<fVec2> Sutherland_Hodgman_clipping(const std::vector<fVec2> & polygo
  * 					            (must be of size at least 2*sub_len + 4 to be sure)
  * @param [in,out]	res_len	   	store the number of vertices.
  **/
-inline void Sutherland_Hodgman_clipping(const fVec2  * sub_tab, const size_t sub_len,
-	                                    const fBox2 & clippingBox,
-		   							    fVec2  * res_tab, size_t & res_len)
+inline void Sutherland_Hodgman_clipping(const fVec2  * sub_tab, const size_t sub_len, const fBox2 & clippingBox, fVec2  * res_tab, size_t & res_len)
 	{
 	fVec2 clip_tab[4] = {
 		{ clippingBox.min[0], clippingBox.min[1] },
@@ -235,8 +241,39 @@ inline void Sutherland_Hodgman_clipping(const fVec2  * sub_tab, const size_t sub
 
 
 /**
- * Sutherland hodgman clipping algorithm. Clip a given polygon against a rectangle box.
+ * Sutherland hodgman clipping algorithm. 
+ * Clip a given polygon against a rectangle box. 
+ * (C++ interface, static version)
+ * 
+ * Polygon may be given in clockwise or anti-clockwise order (the resulting clipped polygon)
+ * has the same order.
+ * 
+ * Warning : the resulting polygon may have two parrallel adjacent edges.
  *
+ * @param 	   	polygon	    polygon to clip.
+ * @param 	   	clippingBox clipping box.
+ * @param [out]	res		    array to store the clipped polygon.
+ *
+ * @return	number of vertices of the resulting polygon.
+ */
+template<size_t N, size_t M> inline size_t Sutherland_Hodgman_clipping(const std::array<fVec2, N> & polygon, const fBox2 & clippingBox, std::array<fVec2, M> & res)
+	{
+	fVec2 clip_tab[4] = { { clippingBox.min[0], clippingBox.min[1] },
+						  { clippingBox.max[0], clippingBox.min[1] },
+						  { clippingBox.max[0], clippingBox.max[1] },
+						  { clippingBox.min[0], clippingBox.max[1] } };
+	size_t len = 0;
+	Sutherland_Hodgman_clipping(polygon.data(), N, clip_tab, 4, res, len);
+	MTOOLS_ASSERT(len <= M);
+	return len;
+	}
+
+
+/**
+ * Sutherland hodgman clipping algorithm. 
+ * Clip a given polygon against a rectangle box.
+ * (C++ interface, dynamic version)
+ * 
  * Polygon may be given in clockwise or anti-clockwise order (the resulting clipped polygon)
  * has the same order.
  *
@@ -247,17 +284,18 @@ inline void Sutherland_Hodgman_clipping(const fVec2  * sub_tab, const size_t sub
  *
  * @return a vector containing the clipped polygon.
 **/
-std::vector<fVec2> Sutherland_Hodgman_clipping(const std::vector<fVec2> & polygon, const fBox2 & clippingBox)
+inline std::vector<fVec2> Sutherland_Hodgman_clipping(const std::vector<fVec2> & polygon, const fBox2 & clippingBox)
 	{
 	MTOOLS_ASSERT(!clippingBox.isEmpty());
-	if (polygon.size() == 0) return;
 	fVec2 clip_tab[4] = { { clippingBox.min[0], clippingBox.min[1] },
 	                      { clippingBox.max[0], clippingBox.min[1] },
 	                      { clippingBox.max[0], clippingBox.max[1] },
 	                      { clippingBox.min[0], clippingBox.max[1] } };
-	std::vector<fVec2> res(2*polygon.size() + 4);
+	const size_t L = 2 * polygon.size() + 4;
+	std::vector<fVec2> res(L);
 	size_t len = 0;
 	Sutherland_Hodgman_clipping(polygon.data(), polygon.size(), clip_tab, 4, res.data(), len);
+	MTOOLS_ASSERT(len <= L);
 	res.resize(len);
 	return res;
 	}
