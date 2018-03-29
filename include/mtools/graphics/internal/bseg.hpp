@@ -454,7 +454,7 @@ namespace internals_bseg
 
 
 		/* Compute the aa value on a given side */
-		template<bool SIDE, bool X_MAJOR>  MTOOLS_FORCEINLINE int32 AA2() const
+		template<int SIDE, bool X_MAJOR>  MTOOLS_FORCEINLINE int32 AA2() const
 			{
 			MTOOLS_ASSERT(X_MAJOR == _x_major)
 			int64 a;
@@ -462,13 +462,13 @@ namespace internals_bseg
 				{
 				a = _dy;
 				a = (((a - _frac)*_amul) >> 52);
-				if (SIDE) { if (_stepx != _stepy) a = 256 - a; } else { if (_stepx == _stepy) a = 256 - a; }
+				if (SIDE > 0) { if (_stepx != _stepy) a = 256 - a; } else { if (_stepx == _stepy) a = 256 - a; }
 				}
 			else
 				{
 				a = _dx;
 				a = (((a - _frac)*_amul) >> 52);
-				if (SIDE) { if (_stepx == _stepy) a = 256 - a; } else { if (_stepx != _stepy) a = 256 - a; }
+				if (SIDE > 0) { if (_stepx == _stepy) a = 256 - a; } else { if (_stepx != _stepy) a = 256 - a; }
 				}
 			a = (a >> 2) + (a >> 1) + 32; // compensate
 			MTOOLS_ASSERT((a >= 0) && (a <= 256));
@@ -477,7 +477,7 @@ namespace internals_bseg
 
 
 		/* Compute the aa value on a given side */
-		template<bool SIDE>  MTOOLS_FORCEINLINE int32 AA1() const
+		template<int SIDE>  MTOOLS_FORCEINLINE int32 AA1() const
 			{
 			return ((_x_major) ? AA2<SIDE, true>() : AA2<SIDE, false>());
 			}
@@ -492,13 +492,31 @@ namespace internals_bseg
 		/**
 		* Query the remaining distance to the endpoind
 		*/
-		MTOOLS_FORCEINLINE bool len() const { return _len; }
+		MTOOLS_FORCEINLINE const int64 & len() const { return _len; }
+
+
+		/**
+		* remaining distance to the endpoind
+		*/
+		MTOOLS_FORCEINLINE int64 & len() { return _len; }
 
 
 		/**
 		* Query the current position on the line
 		*/
 		MTOOLS_FORCEINLINE iVec2 pos() const { return {_x,_y}; }
+
+
+		/**
+		* x-coordinate of the current position
+		*/
+		MTOOLS_FORCEINLINE int64 X() const { return _x; }
+
+
+		/**
+		* y-coordinate of the current position
+		*/
+		MTOOLS_FORCEINLINE int64 Y() const { return _y; }
 
 
 		int64 _x, _y;			// current pos
