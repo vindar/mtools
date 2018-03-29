@@ -31,6 +31,7 @@
 #include "../random/classiclaws.hpp"
 
 #include "internal/clipping.hpp"
+#include "internal/bseg.hpp"
 
 #include "../misc/timefct.hpp"
 
