@@ -52,7 +52,7 @@ void testCSCC()
 	Plotter2D plotter;
 	plotter[PF];
 	plotter.autorangeXY();
-	plotter.range().setRange(fBox2(0,1000,0,1000));
+	plotter.range().setRange(fBox2(199.935142875, 200.050950875, 249.926736625, 250.042544625));
 	plotter.plot();
 
 	return;
@@ -137,13 +137,13 @@ void testplotfigure()
 		std::vector<fVec2> tri = { {-300,0}, {200, 127}, {-50, 50} };
 		std::vector<fVec2> qu = { {500,500} , {600, 520} , {700, 800}, {480,677} };
 
-		//canvas(Figure::Polygon(subject, RGBc::c_Red.getMultOpacity(0.5f), RGBc::c_Red.getMultOpacity(0.5f)), 0);
-		//canvas(Figure::Polygon(tri, RGBc::c_Red.getMultOpacity(0.5f), RGBc::c_Red.getMultOpacity(0.5f)), 0);
-		//canvas(Figure::Polygon(qu, RGBc::c_Red.getMultOpacity(0.5f), RGBc::c_Red.getMultOpacity(0.5f)), 0);
+		canvas(Figure::Polygon(subject, RGBc::c_Red.getMultOpacity(0.5f), RGBc::c_Red.getMultOpacity(0.5f)), 0);
+		canvas(Figure::Polygon(tri, RGBc::c_Green.getMultOpacity(0.5f), RGBc::c_Green.getMultOpacity(0.5f)), 0);
+		canvas(Figure::Polygon(qu, RGBc::c_Blue.getMultOpacity(0.5f), RGBc::c_Blue.getMultOpacity(0.5f)), 0);
 
 
 
-		canvas(Figure::Polygon(subject, RGBc::c_Red, RGBc::c_Red), 0);
+		//canvas(Figure::Polygon(subject, RGBc::c_Red, RGBc::c_Red), 0);
 
 
 		/*
@@ -201,7 +201,7 @@ void testplotfigure()
 	Plotter2D plotter; 
 	plotter[PF];
 	plotter.autorangeXY();
-	plotter.range().setRange(fBox2(120, 470, 50, 400));
+	plotter.range().setRange(fBox2(199.935142875, 200.050950875, 249.926736625, 250.042544625));
 	plotter.plot();
 	}
 
@@ -638,6 +638,9 @@ void LineBresenham(iVec2 P1, iVec2 P2, Image & im, RGBc color)
 int main(int argc, char *argv[])
 {
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
+
+
+
 
 	//testCSCC();
 	testplotfigure();

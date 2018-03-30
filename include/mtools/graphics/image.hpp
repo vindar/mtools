@@ -1753,7 +1753,7 @@ namespace mtools
 						}
 					return;
 					}
-				draw_filled_circle(center, radius, outcolor, fillcolor, aa, blend, (radius < 16 * (_lx + _ly)));
+				draw_filled_circle(center, radius, outcolor, fillcolor, aa, blend, false); // do not try to align grid because radius could be too large. 
 				}
 
 
@@ -1857,7 +1857,7 @@ namespace mtools
 			**/
 			MTOOLS_FORCEINLINE void draw_thick_horizontal_line(double y, double x1, double x2, double thickness, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
-				const double L = _ly + 100000.0;
+				const double L = _ly + 100.0;
 				if (y < -L) { thickness += (2 * (L + y));  y = -L; }	else if (y > L) { thickness -= (2 * (y - L));  y = L; }
 				if (x1 <= -1.0) { x1 = -1.0; } else if (x1 >= _lx + 1.0) { x1 = _lx + 1.0; }
 				if (x2 <= -1.0) { x2 = -1.0; } else if (x2 >= _lx + 1.0) { x2 = _lx + 1.0; }
@@ -1920,7 +1920,7 @@ namespace mtools
 			**/
 			MTOOLS_FORCEINLINE void draw_thick_vertical_line(double x, double y1, double y2, double thickness, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
-				const double L = _lx + 100000.0;
+				const double L = _lx + 100.0;
 				if (x < -L) { thickness += (2 * (L + x));  x = -L; } else if (x > L) { thickness -= (2 * (x - L));  x = L; }
 				if (y1 <= -1.0) { y1 = -1.0; } else if (y1 >= _ly + 1.0) { y1 = _ly + 1.0; }
 				if (y2 <= -1.0) { y2 = -1.0; } else if (y2 >= _ly + 1.0) { y2 = _ly + 1.0; }
@@ -1943,8 +1943,7 @@ namespace mtools
 				{
 				if (isEmpty()) return;
 				if (penwidth < 0) { MTOOLS_DEBUG("incorrect penwidth");  penwidth = 0; }
-				const int64 of = 1000 + _lx + _ly + (2 * penwidth);
-				if (!Colin_SutherLand_lineclip(P1, P2, iBox2(-of, _lx - 1 + of, -of, _ly - 1 + of))) return;
+				if (!Colin_SutherLand_lineclip(P1, P2, _clipiBox(penwidth))) return;
 				if (penwidth > 0) _correctPenOpacity(color, penwidth);
 				if (antialiased)
 					{
@@ -1965,8 +1964,7 @@ namespace mtools
 				{
 				if (isEmpty()) return;
 				if (penwidth < 0) { MTOOLS_DEBUG("incorrect penwidth");  penwidth = 0; }
-				const int64 of = 1000 + _lx + _ly + (2 * penwidth);
-				if (!Colin_SutherLand_lineclip(P1, P2, iBox2(-of, _lx - 1 + of, -of, _ly - 1 + of))) return;
+				if (!Colin_SutherLand_lineclip(P1, P2, _clipfBox(penwidth))) return;
 				if (penwidth > 0) _correctPenOpacity(color, penwidth);
 				if (antialiased)
 					{
@@ -1992,7 +1990,7 @@ namespace mtools
 			**/
 			MTOOLS_FORCEINLINE void draw_thick_line(fVec2 P1, fVec2 P2, double thickness, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
-				canvas_draw_thick_line(imagefBox(), fVec2(P1.X(), _ly - 1 - P1.Y()), fVec2(P2.X(), _ly - 1 - P2.Y()), thickness, color, antialiased, blending, min_thick); // because of thickness scaling, it is more convinient to call the canvas method.
+				canvas_draw_thick_line(imagefBox(), fVec2(P1.X(), _ly - 1 - P1.Y()), fVec2(P2.X(), _ly - 1 - P2.Y()), thickness, color, antialiased, blending, min_thick); // because of thickness scaling, it is more convenient to call the canvas method.
 				}
 
 
@@ -2353,20 +2351,9 @@ namespace mtools
 				{
 				if (isEmpty()) return;
 				if ((penwidth <= 0) && (!antialiased) && (blending) && (!color.isOpaque()))
-					{ //try to draw without overlap
-					const double of = 1000.0 + _lx + _ly;
-					fBox2 B(-of, _lx + of, -of, _ly + of);
-					if ((B.isInside(P1)) && (B.isInside(P2)) && (B.isInside(P3)))
-						{
-						// draw without overlap
-						internals_bseg::BSeg s12(P1, P2); internals_bseg::BSeg s21 = s12.get_reverse();
-						internals_bseg::BSeg s23(P2, P3); 
-						internals_bseg::BSeg s31(P3, P1); internals_bseg::BSeg s13 = s31.get_reverse();
-						_bseg_draw(s12, true, 0, color);
-						_bseg_avoid1(s13, true, s12, true, color);
-						_bseg_avoid11(s23, s21, true, s31, true, color);
-						return;
-						}
+					{ // draw without overlap
+					draw_filled_triangle(P1, P2, P3, color, RGBc::c_Transparent, false, true);
+					return;
 					}
 				// default drawing
 				draw_line(P1, P2, color, false, antialiased, blending, penwidth);
@@ -2390,16 +2377,16 @@ namespace mtools
 			inline void draw_filled_triangle(fVec2 P1, fVec2 P2, fVec2 P3, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND)
 				{
 				if (isEmpty()) return;
-				const double of = 1000.0 + _lx + _ly;
-				fBox2 B(-of, _lx + of, -of, _ly + of);
-				if ((!B.isInside(P1)) || (!B.isInside(P2)) || (!B.isInside(P3)))
+				const fBox2 B = _clipfBox();
+				const fBox2 C = zoomOut(B);
+				if ((!C.isInside(P1)) || (!C.isInside(P2)) || (!C.isInside(P3)))
 					{ // triangle is not inside the box B: use clipping
 					std::array<fVec2, 3> tri = { P1, P2, P3 };
 					std::array<fVec2, 10> out;
 					size_t out_len = Sutherland_Hodgman_clipping<3, 10>(tri, B, out);
 					if (out_len < 3) return;
 					if (out_len == 4) {	draw_filled_quad(out[0], out[1], out[2], out[3], color, fillcolor, antialiased, blending); return; }
-					if (out_len > 4)  { draw_filled_polygon(out_len, out.data(), color, fillcolor, antialiased, blending); return; }
+					if (out_len > 4)  { draw_filled_polygon(out.data(), out_len, color, fillcolor, antialiased, blending); return; }
 					P1 = out[0];
 					P2 = out[1];
 					P3 = out[2];
@@ -2413,8 +2400,8 @@ namespace mtools
 					}
 				_bseg_draw(internals_bseg::BSeg(P1, P2), true, 0, color, blending, w);
 				_bseg_avoid1(internals_bseg::BSeg(P2, P3), true, internals_bseg::BSeg(P2, P1), true, color, blending, w);
-				_bseg_avoid11(internals_bseg::BSeg(P3, P1), internals_bseg::BSeg(P3, P2), true, internals_bseg::BSeg(P1, P2), true, color, blending, w);
-				_bseg_fill_triangle(P1, P2, P3, fillcolor, blending);
+				_bseg_avoid11(internals_bseg::BSeg(P3, P1), internals_bseg::BSeg(P3, P2), true, internals_bseg::BSeg(P1, P2), true, color, blending, w);							
+				if (! fillcolor.isTransparent()) _bseg_fill_triangle(P1, P2, P3, fillcolor, blending);
 				}
 
 
@@ -2434,21 +2421,9 @@ namespace mtools
 				{
 				if (isEmpty()) return;
 				if ((penwidth <= 0) && (!antialiased) && (blending) && (!color.isOpaque()))
-					{ //try to draw without overlap
-					const double of = 1000.0 + _lx + _ly;
-					fBox2 B(-of, _lx + of, -of, _ly + of);
-					if ((B.isInside(P1)) && (B.isInside(P2)) && (B.isInside(P3)) && (B.isInside(P4)))
-						{
-						internals_bseg::BSeg s12(P1, P2); internals_bseg::BSeg s21 = s12.get_reverse();
-						internals_bseg::BSeg s23(P2, P3); internals_bseg::BSeg s32 = s23.get_reverse();
-						internals_bseg::BSeg s34(P3, P4); internals_bseg::BSeg s43 = s34.get_reverse();
-						internals_bseg::BSeg s41(P4, P1); internals_bseg::BSeg s14 = s41.get_reverse();
-						_bseg_draw(s12, true, 0, color);
-						_bseg_avoid1(s23, true, s21, true, color);
-						_bseg_avoid1(s34, true, s32, true, color);
-						_bseg_avoid11(s14, s12, true, s43, true, color);
-						return;
-						}
+					{ // draw without overlap
+					draw_filled_quad(P1, P2, P3, P4, color, RGBc::c_Transparent, false, true);
+					return;
 					}
 				// default drawing
 				draw_line(P1, P2, color, false, antialiased, blending, penwidth);
@@ -2474,21 +2449,21 @@ namespace mtools
 			inline void draw_filled_quad(fVec2 P1, fVec2 P2, fVec2 P3, fVec2 P4, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND)
 				{
 				if (isEmpty()) return;
-				const double of = 1000.0 + _lx + _ly;
-				fBox2 B(-of, _lx + of, -of, _ly + of);
-				if ((!B.isInside(P1)) || (!B.isInside(P2)) || (!B.isInside(P3)) || (!B.isInside(P4)))
+				const fBox2 B = _clipfBox();
+				const fBox2 C = zoomOut(B);
+				if ((!C.isInside(P1)) || (!C.isInside(P2)) || (!C.isInside(P3)) || (!C.isInside(P4)))
 					{ // triangle is not inside the box B: use clipping
 					std::array<fVec2, 4> tri = { P1, P2, P3, P4 };
 					std::array<fVec2, 12> out;
 					size_t out_len = Sutherland_Hodgman_clipping<4, 12>(tri, B, out);
 					if (out_len < 3) return;
 					if (out_len == 3) { draw_filled_triangle(out[0], out[1], out[2], color, fillcolor, antialiased, blending); return; }
-					if (out_len > 4)  { draw_filled_polygon(out_len, out.data(), color, fillcolor, antialiased, blending); return; }
+					if (out_len > 4)  { draw_filled_polygon(out.data(), out_len, color, fillcolor, antialiased, blending); return; }
 					P1 = out[0];
 					P2 = out[1];
 					P3 = out[2];
 					P4 = out[3];
-				}
+					}
 				// ok, draw quad inside the bounding box
 				int w = 0;
 				if (antialiased)
@@ -2501,8 +2476,11 @@ namespace mtools
 				_bseg_avoid1(internals_bseg::BSeg(P3, P4), true, internals_bseg::BSeg(P3, P2), true, color, blending, w);
 				_bseg_avoid11(internals_bseg::BSeg(P4, P1), internals_bseg::BSeg(P4, P3), true, internals_bseg::BSeg(P1, P2), true, color, blending, w);
 				_bseg_avoid22(internals_bseg::BSeg(P1, P3), internals_bseg::BSeg(P1, P2), true, internals_bseg::BSeg(P1, P4), true, internals_bseg::BSeg(P3, P2), true, internals_bseg::BSeg(P3, P4), true, fillcolor, blending, 0);
-				_bseg_fill_triangle(P1, P2, P3, fillcolor, blending);
-				_bseg_fill_triangle(P1, P3, P4, fillcolor, blending);
+				if (!fillcolor.isTransparent())
+					{
+					_bseg_fill_triangle(P1, P2, P3, fillcolor, blending);
+					_bseg_fill_triangle(P1, P3, P4, fillcolor, blending);
+					}
 				}
 
 
@@ -2510,17 +2488,16 @@ namespace mtools
 				/**
 				* Draw a polygon.  Point must be ordered around the polygon.
 				*
-				* @param	nbvertices 	Number of vertices in the polygon.
 				* @param	tabPoints  	the list of points in clockwise or counterclockwise order.
+				* @param	nbvertices 	Number of vertices in the polygon.
 				* @param	color	   	The color tu use.
 				* @param	antialiased	(Optional) true to draw antialiased lines.
 				* @param	blending   	(Optional) true to use blending.
 				* @param	penwidth   	(Optional) The pen width (0 = unit width)
 				**/
-				inline void draw_polygon(size_t nbvertices, const fVec2 * tabPoints, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0)
-				{
+				inline void draw_polygon(const fVec2 * tabPoints, size_t nbvertices, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0)
+					{
 					if (isEmpty()) return;
-					if ((color.isOpaque()) && (!antialiased)) blending = false;
 					switch (nbvertices)
 						{
 						case 0: { return; }
@@ -2529,16 +2506,18 @@ namespace mtools
 						case 3: { draw_triangle(tabPoints[0], tabPoints[1], tabPoints[2], color, antialiased, blending, penwidth); return; }
 						case 4: { draw_quad(tabPoints[0], tabPoints[1], tabPoints[2], tabPoints[3], color, antialiased, blending, penwidth); return; }
 						default:
-						{
-						// TODO, try to draw without overlap if possible (ie blending, not opaque, and penwidth == 0)
-						for (size_t i = 0; i < nbvertices; i++)
 							{
-							draw_line(tabPoints[i], tabPoints[(i + 1) % nbvertices], color, false, antialiased, blending, penwidth);
+							if ((penwidth <= 0) && (!antialiased) && (blending) && (!color.isOpaque()))
+								{ // draw without overlap
+								draw_filled_polygon(tabPoints, nbvertices, color, RGBc::c_Transparent, false);
+								return;
+								}
+							// default drawing
+							for (size_t i = 0; i < nbvertices; i++) draw_line(tabPoints[i], tabPoints[(i + 1) % nbvertices], color, false, antialiased, blending, penwidth);
+							return;
 							}
-						return;
 						}
 					}
-				}
 
 
 			/**
@@ -2552,32 +2531,32 @@ namespace mtools
 			**/
 			MTOOLS_FORCEINLINE void draw_polygon(const std::vector<fVec2> & vecPoints, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0)
 				{
-				draw_polygon(vecPoints.size(), vecPoints.data(), color, antialiased, blending, penwidth);
+				draw_polygon(vecPoints.data(), vecPoints.size(), color, antialiased, blending, penwidth);
 				}
 
 
 			/**
 			* Draw a filled (convex) polygon. Point must be ordered around the polygon.
 			*
-			* @param	nbvertices	Number of vertices in the polygon.
 			* @param	tabPoints 	the list of points in clockwise or counterclockwise order.
+			* @param	nbvertices	Number of vertices in the polygon.
 			* @param	color	   	border color.
 			* @param	fillcolor  	interior color.
 			* @param	antialiased(Optional) True to use antialiased.
 			* @param	blending(Optional) True to use blending.
 			**/
-			inline void draw_filled_polygon(size_t nbvertices, const fVec2 * tabPoints, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND)
+			inline void draw_filled_polygon(const fVec2 * tabPoints, size_t nbvertices, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND)
 				{
 				if (isEmpty()) return;
 				fVec2 * in_tab = (fVec2*)tabPoints;
 				size_t	in_len = nbvertices;
 				bool allocated = false;
 				// test if clipping is necessary
-				const double of = 1000.0 + _lx + _ly;
-				fBox2 B(-of, _lx + of, -of, _ly + of);
+				const fBox2 B = _clipfBox();
+				const fBox2 C = zoomOut(B);
 				for (size_t i = 0; i < nbvertices; i++)
 					{
-					if (!B.isInside(tabPoints[i]))
+					if (!C.isInside(tabPoints[i]))
 						{ // yes, needs clipping
 						in_tab = new fVec2[2 * nbvertices + 4];
 						allocated = true;
@@ -2595,26 +2574,22 @@ namespace mtools
 					case 4: {draw_filled_quad(in_tab[0], in_tab[1], in_tab[2], in_tab[3], color, fillcolor, antialiased, blending); break; }
 					default:
 						{ // generic drawing
-						const int w = winding(in_tab, in_len);	// winding direction of the polygon. 
-						int side = antialiased ? -w : 0;
-
-						std::cout << w << " side " << side << "\n";
-
+						const int w = ((antialiased) || (!fillcolor.isTransparent())) ? winding(in_tab, in_len) : 0;	// winding direction of the polygon. 
+						const int side = -w;
 						// draw the boundary. 
-						_bseg_draw(internals_bseg::BSeg(in_tab[0], in_tab[1]), true, 0, color, blending, side);						
+						_bseg_draw(internals_bseg::BSeg(in_tab[0], in_tab[1]), true, 0, color, blending, side);
 						for (size_t i = 1; i < in_len - 1; i++) _bseg_avoid1(internals_bseg::BSeg(in_tab[i], in_tab[i+1]), true, internals_bseg::BSeg(in_tab[i], in_tab[i-1]), true,  color, blending, side);						
 						_bseg_avoid11(internals_bseg::BSeg(in_tab[in_len -1], in_tab[0]), internals_bseg::BSeg(in_tab[in_len - 1], in_tab[in_len - 2]), true, internals_bseg::BSeg(in_tab[0], in_tab[1]), true, color, blending, side);
-
-
-						if (convex(in_tab, in_len))  std::cout << " convex\n ";
-						return; 
+						if (fillcolor.isTransparent()) break; 
+						// ok, we can draw the interior
 						if (convex(in_tab, in_len))
 							{ // convex polygon, use fan triangulation
-							for (size_t i = 2; i < in_len; i++)	_bseg_fill_triangle(in_tab[0], in_tab[i-1], in_tab[i], fillcolor, blending);
-							return;
-							}
 
-						// non-convex polygon
+							// TODO !!!!
+							for (size_t i = 2; i < in_len; i++)	_bseg_fill_triangle(in_tab[0], in_tab[i-1], in_tab[i], fillcolor, blending);
+							break;
+							}
+						// non-convex polygon, use ear clipping algorithm
 						std::list<fVec2> pol;
 						if (w > 0) // populate the list
 							{
@@ -2624,6 +2599,8 @@ namespace mtools
 							{
 							for (size_t i = 0; i < in_len; i++) { pol.push_front(in_tab[i]); }
 							}
+						// TODO !!!
+						std::cout << "ear clip\n";
 						}
 					}
 				if (allocated) delete[] in_tab;
@@ -2642,7 +2619,7 @@ namespace mtools
 			**/
 			inline void draw_filled_polygon(const std::vector<fVec2> & vecPoints, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND)
 				{
-				draw_filled_polygon(vecPoints.size(), vecPoints.data(), color, fillcolor, antialiased, blending);
+				draw_filled_polygon(vecPoints.data(), vecPoints.size(), color, fillcolor, antialiased, blending);
 				}
 
 
@@ -6784,6 +6761,22 @@ namespace mtools
 			*******************************************************************************************************************************************************/
 
 
+			/** Large box used to clip objects (so that conversion from double to integer are now safe). */  
+			fBox2 _clipfBox(int32 penwidth = 0) const
+				{
+				MTOOLS_ASSERT(penwidth >= 0);
+				const double margin = 100.0 + _lx + _ly +2 * penwidth - 0.5;
+				return fBox2(-margin - 0.5, margin + _lx - 0.5, -margin - 0.5, margin + _ly - 0.5);
+				}
+
+
+			/** Large box used to clip objects (so that conversion from double to integer are now safe). */
+			iBox2 _clipiBox(int32 penwidth = 0) const
+				{
+				MTOOLS_ASSERT(penwidth >= 0);
+				const double margin = 100 + _lx + _ly + 2 * penwidth - 0.5;
+				return fBox2(-margin, margin + _lx - 1, -margin, margin + _ly - 1);
+				}
 
 
 			/** change the opacity to match with the pen width **/ 
