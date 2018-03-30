@@ -54,12 +54,12 @@ public:
 		if (seg.x_major())
 			{
 			const bool X_MAJOR = true;
-			while (seg.len() > 0) { _bseg_update_pixel<X_MAJOR, BLEND, USEPEN, USEOP, USEPEN, SIDE>(seg, color, op, penwidth); seg.move<true>(); }
+			while (seg.len() > 0) { _bseg_update_pixel<X_MAJOR, BLEND, USEPEN, USEOP, USEPEN, SIDE>(seg, color, op, penwidth); seg.move<X_MAJOR>(); }
 			}
 		else
 			{
 			const bool X_MAJOR = false;
-			while (seg.len() > 0) { _bseg_update_pixel<X_MAJOR, BLEND, USEPEN, USEOP, USEPEN, SIDE>(seg, color, op, penwidth); seg.move<false>(); }
+			while (seg.len() > 0) { _bseg_update_pixel<X_MAJOR, BLEND, USEPEN, USEOP, USEPEN, SIDE>(seg, color, op, penwidth); seg.move<X_MAJOR>(); }
 			}
 		}
 
@@ -289,11 +289,9 @@ public:
 	}
 
 
-
-
 	/** used by _bseg_avoid1 */
 	template<bool BLEND, bool USEOP, int SIDE> void _bseg_avoid1_template(internals_bseg::BSeg segA, bool lastA, internals_bseg::BSeg segB, bool lastB, RGBc color, int32 op, bool checkrange = true)
-	{
+		{
 		MTOOLS_ASSERT(segA == segB); // same start position
 		if (lastA) segA.inclen();
 		if (lastB) segB.inclen();
@@ -309,46 +307,24 @@ public:
 		int64 lenb = segB.len() - 1;
 		int64 l = 0;
 		if (segA.x_major())
-		{
+			{
 			const bool X_MAJOR = true;
-			if (segB.x_major())
-			{
-				while (l <= lena)
-				{ 
-					if ((l > lenb) || (segA != segB)) _bseg_update_pixel<X_MAJOR, BLEND, false, USEOP, false, SIDE>(segA, color, op, 0);
-					segA.move<true>(); segB.move<true>(); l++;
-				}
-			}
-			else
-			{
-				while (l <= lena)
+			while (l <= lena)
 				{
-					if ((l > lenb) || (segA != segB)) _bseg_update_pixel<X_MAJOR, BLEND, false, USEOP, false, SIDE>(segA, color, op, 0);
-					segA.move<true>(); segB.move<false>(); l++;
+				if ((l > lenb) || (segA != segB)) _bseg_update_pixel<X_MAJOR, BLEND, false, USEOP, false, SIDE>(segA, color, op, 0);
+				segA.move<X_MAJOR>(); segB.move(); l++;
 				}
 			}
-		}
 		else
-		{
+			{
 			const bool X_MAJOR = false;
-			if (segB.x_major())
-			{
-				while (l <= lena)
+			while (l <= lena)
 				{
-					if ((l > lenb) || (segA != segB)) _bseg_update_pixel<X_MAJOR, BLEND, false, USEOP, false, SIDE>(segA, color, op, 0);
-					segA.move<false>(); segB.move<true>(); l++;
-				}
-			}
-			else
-			{
-				while (l <= lena)
-				{
-					if ((l > lenb) || (segA != segB)) _bseg_update_pixel<X_MAJOR, BLEND, false, USEOP, false, SIDE>(segA, color, op, 0);
-					segA.move<false>(); segB.move<false>(); l++;
+				if ((l > lenb) || (segA != segB)) _bseg_update_pixel<X_MAJOR, BLEND, false, USEOP, false, SIDE>(segA, color, op, 0);
+				segA.move<X_MAJOR>(); segB.move(); l++;
 				}
 			}
 		}
-	}
 
 
 	/**
@@ -475,7 +451,7 @@ public:
 
 	/** Used by _bseg_avoid2 */
 	template<bool BLEND, bool USEOP, int SIDE> void _bseg_avoid2_template(internals_bseg::BSeg segA, bool lastA, internals_bseg::BSeg segB, bool lastB, internals_bseg::BSeg segC, bool lastC, RGBc color, int32 op, bool checkrange)
-	{
+		{
 		MTOOLS_ASSERT(segA == segB);
 		MTOOLS_ASSERT(segA == segC);
 		if (lastA) segA.inclen();
@@ -495,90 +471,24 @@ public:
 		int64 lenc = segC.len() - 1;
 		int64 l = 0;
 		if (segA.x_major())
-		{
+			{
 			const bool X_MAJOR = true;
-			if (segB.x_major())
-			{
-				if (segC.x_major())
+			while (l <= lena)
 				{
-					while (l <= lena)
-					{
-						if (((l > lenb) || (segA != segB)) && ((l > lenc) || (segA != segC))) _bseg_update_pixel<X_MAJOR, BLEND, false, USEOP, false, SIDE>(segA, color, op, 0);
-						segA.move<true>(); segB.move<true>(); segC.move<true>(); l++;
-					}
-				}
-				else
-				{
-					while (l <= lena)
-					{
-						if (((l > lenb) || (segA != segB)) && ((l > lenc) || (segA != segC))) _bseg_update_pixel<X_MAJOR, BLEND, false, USEOP, false, SIDE>(segA, color, op, 0);
-						segA.move<true>(); segB.move<true>(); segC.move<false>(); l++;
-					}
+				if (((l > lenb) || (segA != segB)) && ((l > lenc) || (segA != segC))) _bseg_update_pixel<X_MAJOR, BLEND, false, USEOP, false, SIDE>(segA, color, op, 0);
+				segA.move<X_MAJOR>(); segB.move(); segC.move(); l++;
 				}
 			}
-			else
-			{
-				if (segC.x_major())
-				{
-					while (l <= lena)
-					{
-						if (((l > lenb) || (segA != segB)) && ((l > lenc) || (segA != segC))) _bseg_update_pixel<X_MAJOR, BLEND, false, USEOP, false, SIDE>(segA, color, op, 0);
-						segA.move<true>(); segB.move<false>(); segC.move<true>(); l++;
-					}
-				}
-				else
-				{
-					while (l <= lena)
-					{
-						if (((l > lenb) || (segA != segB)) && ((l > lenc) || (segA != segC))) _bseg_update_pixel<X_MAJOR, BLEND, false, USEOP, false, SIDE>(segA, color, op, 0);
-						segA.move<true>(); segB.move<false>(); segC.move<false>(); l++;
-					}
-				}
-			}
-		}
 		else
-		{
+			{
 			const bool X_MAJOR = false;
-			if (segB.x_major())
-			{
-				if (segC.x_major())
+			while (l <= lena)
 				{
-					while (l <= lena)
-					{
-						if (((l > lenb) || (segA != segB)) && ((l > lenc) || (segA != segC))) _bseg_update_pixel<X_MAJOR, BLEND, false, USEOP, false, SIDE>(segA, color, op, 0);
-						segA.move<false>(); segB.move<true>(); segC.move<true>(); l++;
-					}
-				}
-				else
-				{
-					while (l <= lena)
-					{
-						if (((l > lenb) || (segA != segB)) && ((l > lenc) || (segA != segC))) _bseg_update_pixel<X_MAJOR, BLEND, false, USEOP, false, SIDE>(segA, color, op, 0);
-						segA.move<false>(); segB.move<true>(); segC.move<false>(); l++;
-					}
-				}
-			}
-			else
-			{
-				if (segC.x_major())
-				{
-					while (l <= lena)
-					{
-						if (((l > lenb) || (segA != segB)) && ((l > lenc) || (segA != segC))) _bseg_update_pixel<X_MAJOR, BLEND, false, USEOP, false, SIDE>(segA, color, op, 0);
-						segA.move<false>(); segB.move<false>(); segC.move<true>(); l++;
-					}
-				}
-				else
-				{
-					while (l <= lena)
-					{
-						if (((l > lenb) || (segA != segB)) && ((l > lenc) || (segA != segC))) _bseg_update_pixel<X_MAJOR, BLEND, false, USEOP, false, SIDE>(segA, color, op, 0);
-						segA.move<false>(); segB.move<false>(); segC.move<false>(); l++;
-					}
+				if (((l > lenb) || (segA != segB)) && ((l > lenc) || (segA != segC))) _bseg_update_pixel<X_MAJOR, BLEND, false, USEOP, false, SIDE>(segA, color, op, 0);
+				segA.move<X_MAJOR>(); segB.move(); segC.move(); l++;
 				}
 			}
 		}
-	}
 
 
 	/**
@@ -705,9 +615,6 @@ public:
 	}
 
 
-
-
-
 	/** Used by _bseg_avoid11 */
 	template<bool BLEND, bool USEOP, int SIDE> void _bseg_avoid11_template(internals_bseg::BSeg segA, internals_bseg::BSeg segB, bool lastB, internals_bseg::BSeg segD, bool lastD, RGBc color, int32 op, bool checkrange)
 	{
@@ -715,7 +622,7 @@ public:
 
 		if (lastB) segB.inclen();
 
-		int64 dd   = (segA.len() - segD.len()) + (lastD ? 0 : 1); segD.len() = segA.len(); segD.reverse();	// D is now synchronized with A
+		int64 dd = (segA.len() - segD.len()) + (lastD ? 0 : 1); segD.len() = segA.len(); segD.reverse();	// D is now synchronized with A
 
 		if (checkrange)
 			{
@@ -731,89 +638,23 @@ public:
 		int64 lenb = segB.len() - 1;
 		int64 l = 0;
 		if (segA.x_major())
-		{
+			{
 			const bool X_MAJOR = true;
-			if (segB.x_major())
-			{
-				if (segD.x_major())
+			while (l <= lena)
 				{
-					while (l <= lena)
-					{
-						if (((l > lenb) || (segA != segB)) &&  ((l < dd) || (segA != segD))) _bseg_update_pixel<X_MAJOR, BLEND, false, USEOP, false, SIDE>(segA, color, op, 0);
-						segA.move<true>(); segB.move<true>(); segD.move<true>(); l++;
-					}
-				}
-				else
-				{
-					while (l <= lena)
-					{
-						if (((l > lenb) || (segA != segB)) && ((l < dd) || (segA != segD))) _bseg_update_pixel<X_MAJOR, BLEND, false, USEOP, false, SIDE>(segA, color, op, 0);
-						segA.move<true>(); segB.move<true>(); segD.move<false>(); l++;
-					}
+				if (((l > lenb) || (segA != segB)) && ((l < dd) || (segA != segD))) _bseg_update_pixel<X_MAJOR, BLEND, false, USEOP, false, SIDE>(segA, color, op, 0);
+				segA.move<X_MAJOR>(); segB.move(); segD.move(); l++;
 				}
 			}
-			else
-			{
-				if (segD.x_major())
-				{
-					while (l <= lena)
-					{
-						if (((l > lenb) || (segA != segB)) && ((l < dd) || (segA != segD))) _bseg_update_pixel<X_MAJOR, BLEND, false, USEOP, false, SIDE>(segA, color, op, 0);
-						segA.move<true>(); segB.move<false>(); segD.move<true>(); l++;
-					}
-				}
-				else
-				{
-					while (l <= lena)
-					{
-						if (((l > lenb) || (segA != segB)) && ((l < dd) || (segA != segD))) _bseg_update_pixel<X_MAJOR, BLEND, false, USEOP, false, SIDE>(segA, color, op, 0);
-						segA.move<true>(); segB.move<false>(); segD.move<false>(); l++;
-					}
-				}
-			}
-		}
 		else
-		{
+			{
 			const bool X_MAJOR = false;
-			if (segB.x_major())
-			{
-				if (segD.x_major())
+			while (l <= lena)
 				{
-					while (l <= lena)
-					{
-						if (((l > lenb) || (segA != segB)) && ((l < dd) || (segA != segD))) _bseg_update_pixel<X_MAJOR, BLEND, false, USEOP, false, SIDE>(segA, color, op, 0);
-						segA.move<false>(); segB.move<true>(); segD.move<true>(); l++;
-					}
-				}
-				else
-				{
-					while (l <= lena)
-					{
-						if (((l > lenb) || (segA != segB)) && ((l < dd) || (segA != segD))) _bseg_update_pixel<X_MAJOR, BLEND, false, USEOP, false, SIDE>(segA, color, op, 0);
-						segA.move<false>(); segB.move<true>(); segD.move<false>(); l++;
-					}
+				if (((l > lenb) || (segA != segB)) && ((l < dd) || (segA != segD))) _bseg_update_pixel<X_MAJOR, BLEND, false, USEOP, false, SIDE>(segA, color, op, 0);
+				segA.move<X_MAJOR>(); segB.move(); segD.move(); l++;
 				}
 			}
-			else
-			{
-				if (segD.x_major())
-				{
-					while (l <= lena)
-					{
-						if (((l > lenb) || (segA != segB)) && ((l < dd) || (segA != segD))) _bseg_update_pixel<X_MAJOR, BLEND, false, USEOP, false, SIDE>(segA, color, op, 0);
-						segA.move<false>(); segB.move<false>(); segD.move<true>(); l++;
-					}
-				}
-				else
-				{
-					while (l <= lena)
-					{
-						if (((l > lenb) || (segA != segB)) && ((l < dd) || (segA != segD))) _bseg_update_pixel<X_MAJOR, BLEND, false, USEOP, false, SIDE>(segA, color, op, 0);
-						segA.move<false>(); segB.move<false>(); segD.move<false>(); l++;
-					}
-				}
-			}
-		}
 	}
 
 
@@ -940,21 +781,19 @@ public:
 	}
 
 
-
-
 	/** Used by _bseg_avoid21 */
 	template<bool BLEND, bool USEOP, int SIDE> void _bseg_avoid21_template(internals_bseg::BSeg segA, internals_bseg::BSeg segB, bool lastB, internals_bseg::BSeg segC, bool lastC, internals_bseg::BSeg segD, bool lastD, RGBc color, int32 op, bool checkrange)
-	{
+		{
 		MTOOLS_ASSERT(segA == segB);
 		MTOOLS_ASSERT(segA == segC);
 
 		if (lastB) segB.inclen();
-		if (lastC) segB.inclen();
+		if (lastC) segC.inclen();
 
 		int64 dd = (segA.len() - segD.len()) + (lastD ? 0 : 1); segD.len() = segA.len(); segD.reverse();	// D is now synchronized with A
 
 		if (checkrange)
-		{
+			{
 			iBox2 B(0, _lx - 1, 0, _ly - 1);
 			int64 r = segA.move_inside_box(B);
 			if (segA.len() <= 0) return;
@@ -962,33 +801,31 @@ public:
 			segC.move(r);
 			segD.move(r); dd -= r;
 			segA.len() = std::min<int64>(segA.lenght_inside_box(B), segA.len());
-		}
+			}
 
 		int64 lena = segA.len() - 1;
 		int64 lenb = segB.len() - 1;
 		int64 lenc = segC.len() - 1;
 		int64 l = 0;
 		if (segA.x_major())
-		{
+			{
 			const bool X_MAJOR = true;
 			while (l <= lena)
-			{
+				{
 				if (((l > lenb) || (segA != segB)) && ((l > lenc) || (segA != segC)) && ((l < dd) || (segA != segD))) _bseg_update_pixel<X_MAJOR, BLEND, false, USEOP, false, SIDE>(segA, color, op, 0);
-				segA.move<X_MAJOR>(); segB.move(); segC.move();  segD.move(); l++;
+				segA.move<X_MAJOR>(); segB.move(); segC.move(); segD.move(); l++;
+				}
 			}
-		}
 		else
-		{
+			{
 			const bool X_MAJOR = false;
 			while (l <= lena)
-			{
+				{
 				if (((l > lenb) || (segA != segB)) && ((l > lenc) || (segA != segC)) && ((l < dd) || (segA != segD))) _bseg_update_pixel<X_MAJOR, BLEND, false, USEOP, false, SIDE>(segA, color, op, 0);
-				segA.move<X_MAJOR>(); segB.move(); segC.move();  segD.move(); l++;
+				segA.move<X_MAJOR>(); segB.move(); segC.move(); segD.move(); l++;
+				}
 			}
 		}
-	}
-
-
 
 
 	/**
@@ -1119,9 +956,51 @@ public:
 
 	/** Used by _bseg_avoid22 */
 	template<bool BLEND, bool USEOP, int SIDE> void _bseg_avoid22_template(internals_bseg::BSeg segA, internals_bseg::BSeg segB, bool lastB, internals_bseg::BSeg segC, bool lastC, internals_bseg::BSeg segD, bool lastD, internals_bseg::BSeg segE, bool lastE, RGBc color, int32 op, bool checkrange)
-	{
-		// TODO
-	}
+		{
+		MTOOLS_ASSERT(segA == segB);
+		MTOOLS_ASSERT(segA == segC);
+
+		if (lastB) segB.inclen();
+		if (lastC) segC.inclen();
+
+		int64 dd = (segA.len() - segD.len()) + (lastD ? 0 : 1); segD.len() = segA.len(); segD.reverse();	// D is now synchronized with A
+		int64 ee = (segA.len() - segE.len()) + (lastE ? 0 : 1); segE.len() = segA.len(); segE.reverse();	// E is now synchronized with A
+
+		if (checkrange)
+			{
+			iBox2 B(0, _lx - 1, 0, _ly - 1);
+			int64 r = segA.move_inside_box(B);
+			if (segA.len() <= 0) return;
+			segB.move(r);
+			segC.move(r);
+			segD.move(r); dd -= r;
+			segE.move(r); ee -= r;
+			segA.len() = std::min<int64>(segA.lenght_inside_box(B), segA.len());
+			}
+
+		int64 lena = segA.len() - 1;
+		int64 lenb = segB.len() - 1;
+		int64 lenc = segC.len() - 1;
+		int64 l = 0;
+		if (segA.x_major())
+			{
+			const bool X_MAJOR = true;
+			while (l <= lena)
+				{
+				if (((l > lenb) || (segA != segB)) && ((l > lenc) || (segA != segC)) && ((l < dd) || (segA != segD)) && ((l < ee) || (segA != segE))) _bseg_update_pixel<X_MAJOR, BLEND, false, USEOP, false, SIDE>(segA, color, op, 0);
+				segA.move<X_MAJOR>(); segB.move(); segC.move(); segD.move(); segE.move(); l++;
+			}
+			}
+		else
+			{
+			const bool X_MAJOR = false;
+			while (l <= lena)
+				{
+				if (((l > lenb) || (segA != segB)) && ((l > lenc) || (segA != segC)) && ((l < dd) || (segA != segD)) && ((l < ee) || (segA != segE))) _bseg_update_pixel<X_MAJOR, BLEND, false, USEOP, false, SIDE>(segA, color, op, 0);
+				segA.move<X_MAJOR>(); segB.move(); segC.move(); segD.move(); segE.move(); l++;
+				}
+			}
+		}
 
 
 	/**
@@ -1252,6 +1131,250 @@ public:
 	}
 
 
+	/** Used by _bseg_fill_triangle */
+	void _bseg_fill_interior_angle(iVec2 P, iVec2 Q1, iVec2 Q2, internals_bseg::BSeg & seg1, internals_bseg::BSeg & seg2, RGBc color, bool fill_last, bool blend, bool checkrange)
+	{
+		MTOOLS_ASSERT((P.Y() - Q1.Y())*(P.Y() - Q2.Y()) > 0);
+		int64 dir = (P.Y() > Q1.Y()) ? -1 : 1;
+		int64 y = P.Y();
+		int64 ytarget = Q1.Y() + dir * (fill_last ? 1 : 0);
+		if ((Q1.X() - P.X())*abs(Q2.Y() - P.Y())  > (Q2.X() - P.X())*abs(Q1.Y() - P.Y())) mtools::swap(seg1, seg2);
+		if (checkrange)
+		{
+			const bool CHECKRANGE = true;
+			if (blend)
+			{
+				const bool BLEND = true;
+				_bseg_fill_interior_angle_sub<BLEND, CHECKRANGE>(dir, y, ytarget, seg1, seg2, color);
+			}
+			else
+			{
+				const bool BLEND = false;
+				_bseg_fill_interior_angle_sub<BLEND, CHECKRANGE>(dir, y, ytarget, seg1, seg2, color);
+			}
+		}
+		else
+		{
+			const bool CHECKRANGE = false;
+			if (blend)
+			{
+				const bool BLEND = true;
+				_bseg_fill_interior_angle_sub<BLEND, CHECKRANGE>(dir, y, ytarget, seg1, seg2, color);
+			}
+			else
+			{
+				const bool BLEND = false;
+				_bseg_fill_interior_angle_sub<BLEND, CHECKRANGE>(dir, y, ytarget, seg1, seg2, color);
+			}
+		}
+	}
+
+
+	/** Used by _bseg_fill_triangle */
+	template<bool BLEND, bool CHECKRANGE> void _bseg_fill_interior_angle_sub(int64 dir, int64 y, int64 ytarget, internals_bseg::BSeg & sega, internals_bseg::BSeg & segb, RGBc color)
+	{
+		// fix the range. 
+		if (dir > 0)
+		{
+			if (ytarget >= _ly) { ytarget = _ly; }
+			if ((ytarget <= 0) || (y >= ytarget)) return;
+			if (y < 0)
+			{ // move y up to 0
+				sega.move_y_dir(-y);
+				segb.move_y_dir(-y);
+				y = 0;
+				MTOOLS_ASSERT((sega.Y() == y) && (segb.Y() == y));
+			}
+		}
+		else
+		{
+			if (ytarget < 0) { ytarget = -1; }
+			if ((ytarget >= _ly - 1) || (y <= ytarget)) return;
+			if (y > _ly - 1)
+			{ // move y down to ly-1
+				sega.move_y_dir(y - _ly + 1);
+				segb.move_y_dir(y - _ly + 1);
+				y = _ly - 1;
+				MTOOLS_ASSERT((sega.Y() == y) && (segb.Y() == y));
+			}
+		}
+		if (sega.x_major())
+		{
+			if (segb.x_major())
+			{
+				if (sega.step_x() < 0)
+				{
+					if (segb.step_x() > 0)
+					{
+						while (y != ytarget)
+						{
+							_hline<BLEND, CHECKRANGE>(sega.X() + 1, segb.X() - 1, y, color);
+							sega.move_y_dir<true>();
+							segb.move_y_dir<true>();
+							y += dir;
+						}
+					}
+					else
+					{
+						while (y != ytarget)
+						{
+							segb.move_y_dir<true>();
+							_hline<BLEND, CHECKRANGE>(sega.X() + 1, segb.X(), y, color);
+							sega.move_y_dir<true>();
+							y += dir;
+						}
+					}
+				}
+				else
+				{
+					if (segb.step_x() > 0)
+					{
+						while (y != ytarget)
+						{
+							sega.move_y_dir<true>();
+							_hline<BLEND, CHECKRANGE>(sega.X(), segb.X() - 1, y, color);
+							segb.move_y_dir<true>();
+							y += dir;
+						}
+					}
+					else
+					{
+						while (y != ytarget)
+						{
+							sega.move_y_dir<true>();
+							segb.move_y_dir<true>();
+							_hline<BLEND, CHECKRANGE>(sega.X(), segb.X(), y, color);
+							y += dir;
+						}
+					}
+				}
+			}
+			else
+			{
+				if (sega.step_x() < 0)
+				{
+					while (y != ytarget)
+					{
+						_hline<BLEND, CHECKRANGE>(sega.X() + 1, segb.X() - 1, y, color);
+						sega.move_y_dir<true>();
+						segb.move_y_dir<false>();
+						y += dir;
+					}
+				}
+				else
+				{
+					while (y != ytarget)
+					{
+						sega.move_y_dir<true>();
+						_hline<BLEND, CHECKRANGE>(sega.X(), segb.X() - 1, y, color);
+						segb.move_y_dir<false>();
+						y += dir;
+					}
+				}
+			}
+		}
+		else
+		{
+			if (segb.x_major())
+			{
+				if (segb.step_x() > 0)
+				{
+					while (y != ytarget)
+					{
+						_hline<BLEND, CHECKRANGE>(sega.X() + 1, segb.X() - 1, y, color);
+						segb.move_y_dir<true>();
+						sega.move_y_dir<false>();
+						y += dir;
+					}
+				}
+				else
+				{
+					while (y != ytarget)
+					{
+						segb.move_y_dir<true>();
+						_hline<BLEND, CHECKRANGE>(sega.X() + 1, segb.X(), y, color);
+						sega.move_y_dir<false>();
+						y += dir;
+					}
+				}
+			}
+			else
+			{
+				while (y != ytarget)
+				{
+					_hline<BLEND, CHECKRANGE>(sega.X() + 1, segb.X() - 1, y, color);
+					segb.move_y_dir<false>();
+					sega.move_y_dir<false>();
+					y += dir;
+				}
+			}
+		}
+	}
+
+
+	/**
+	 * Fill the interior of a triangle (fP1, fP2, fP3) delimited by bresenham segments. Only the
+	 * interior is filled (segment are not drawn over).
+	 *
+	 * @param	fP1		  	first point.
+	 * @param	fP2		  	second point.
+	 * @param	fP3		  	third point.
+	 * @param	fillcolor 	color to use.
+	 * @param	blend	  	(Optional) true to use blending.
+	 * @param	checkrange	(Optional) True to check the range (default). Set it to false only if it
+	 * 						is sure that the triangle is completely inside the image.
+	 **/
+	void _bseg_fill_triangle(fVec2 fP1, fVec2 fP2, fVec2 fP3, RGBc fillcolor, bool blend = true, bool checkrange = true)
+		{
+		if (fP1.Y() > fP2.Y()) { mtools::swap(fP1, fP2); } // reorder by increasing Y value
+		if (fP1.Y() > fP3.Y()) { mtools::swap(fP1, fP3); } //
+		if (fP2.Y() > fP3.Y()) { mtools::swap(fP2, fP3); } //
+		iVec2 P1 = round(fP1); int64 y1 = P1.Y();
+		iVec2 P2 = round(fP2); int64 y2 = P2.Y();
+		iVec2 P3 = round(fP3); int64 y3 = P3.Y();		
+		if (y1 == y3) return; //flat, nothing to draw. 
+		if (y1 == y2)
+			{
+			internals_bseg::BSeg seg31(fP3, fP1);
+			internals_bseg::BSeg seg32(fP3, fP2);
+			_bseg_fill_interior_angle(P3, P1, P2, seg31, seg32, fillcolor, false, blend, checkrange);
+			return;
+			}
+		if (y2 == y3)
+			{
+			internals_bseg::BSeg seg12(fP1, fP2);
+			internals_bseg::BSeg seg13(fP1, fP3);
+			_bseg_fill_interior_angle(P1, P2, P3, seg12, seg13, fillcolor, false, blend, checkrange);
+			return;
+			}
+		internals_bseg::BSeg seg12(fP1, fP2);
+		internals_bseg::BSeg seg13(fP1, fP3);
+		internals_bseg::BSeg seg23(fP2, fP3);
+		internals_bseg::BSeg seg21 = seg12.get_reverse();
+		internals_bseg::BSeg seg31 = seg13.get_reverse();
+		internals_bseg::BSeg seg32 = seg23.get_reverse();
+
+		bool fl3;
+		fVec2 vA = (fP3 - fP1), vB = (fP2 - fP1);
+		double det = vA.X()*vB.Y() - vB.X()*vA.Y();
+		seg23.move_y_dir(1);
+		seg21.move_y_dir(1);
+		if (det < 0) 
+			{ 
+			fl3 = (seg23.X() < seg21.X()) ? true : false; 
+			}
+		else 
+			{
+			fl3 = (seg23.X() > seg21.X()) ? true : false;
+			}
+
+		_bseg_fill_interior_angle(P3, P2, P1, seg32, seg31, fillcolor, fl3, blend, checkrange);
+		_bseg_fill_interior_angle(P1, P2, P3, seg12, seg13, fillcolor, !fl3, blend, checkrange);
+		return;
+		}
+
+
+
 
 
 };
@@ -1266,7 +1389,9 @@ int main(int argc, char *argv[])
 	RGBc GG = RGBc::c_Green.getMultOpacity(0.5);
 	RGBc BB = RGBc::c_Blue.getMultOpacity(0.5);
 
-	int64 L = 35;
+	RGBc FF = RGBc::c_Yellow.getMultOpacity(0.5f);
+
+	int64 L = 50;
 
 	TestImage im(L, L);
 	im.clear(RGBc(240,240,240));
@@ -1276,14 +1401,25 @@ int main(int argc, char *argv[])
 
 
 
-	im._bseg_avoid11(BSeg(fVec2(10,10), fVec2(40,10)), BSeg(fVec2(10, 10), fVec2(20, 10)), true, BSeg(fVec2(40, 10), fVec2(30, 10)), true, RR);
+	fVec2 P1(10,10);
+
+	fVec2 P2(37.49,25.51);
+
+	fVec2 P3(13,20.99);
+
+	im._bseg_draw(BSeg(P1, P2), true, RR);
+	im._bseg_avoid1(BSeg(P1, P3), true, BSeg(P1, P2), true, GG);
+	im._bseg_avoid11(BSeg(P2, P3), BSeg(P2, P1), true, BSeg(P3, P1), true, BB);
+
+	im._bseg_fill_triangle(P1, P2, P3, FF);
 
 
+	/*
 	im.blendPixel({ 40, 9 }, BB);
 	im.blendPixel({ 10, 9 }, BB);
 	im.blendPixel({ 20, 9 }, BB);
 	im.blendPixel({ 30, 9 }, BB);
-
+	*/
 	Plotter2D plotter;
 	auto P = makePlot2DImage(im);
 	plotter[P];

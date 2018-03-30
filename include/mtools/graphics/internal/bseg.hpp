@@ -484,6 +484,18 @@ namespace internals_bseg
 
 
 		/**
+		* Query step_x
+		*/
+		MTOOLS_FORCEINLINE int64 step_x() const { return _stepx; }
+
+
+		/**
+		* Query step_y
+		*/
+		MTOOLS_FORCEINLINE int64 step_y() const { return _stepy; }
+
+
+		/**
 		* Query the remaining distance to the endpoind
 		*/
 		MTOOLS_FORCEINLINE const int64 & len() const { return _len; }
