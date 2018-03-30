@@ -79,6 +79,55 @@ namespace internals_clipping
 }
 
 
+/**
+* Compute the signed aera of a polygon.
+*
+* @param	poly_tab	polygon vertices.
+* @param	poly_len	number of vertices.
+*
+* @return	the signed aera. Positive if vertices are ordered clockwide and negative if
+* 			vertices are ordered counterclockise.
+**/
+inline double aera(const fVec2 * poly_tab, const size_t poly_len)
+	{
+	if (poly_len < 3) return 0;
+	MTOOLS_ASSERT(poly_tab != nullptr);
+	double A = (poly_tab[0].X() - poly_tab[poly_len - 1].X())*(poly_tab[0].Y() + poly_tab[poly_len - 1].Y());
+	for (size_t i = 0; i < poly_len - 1; i++)
+		{	
+		A += (poly_tab[i + 1].X() - poly_tab[i].X())*(poly_tab[i + 1].Y() + poly_tab[i].Y());
+		}
+	return 0.5*A;
+	}
+
+
+/**
+ * Compute the signed aera of a polygon.
+ *
+ * @param	polygon	 the polygon vertices. 
+ *
+ * @return	the signed aera. Positive if vertices are ordered clockwide and negative if vertices
+ * 			are ordered counterclockise.
+ **/
+template<size_t N> inline double aera(const std::array<fVec2,N> & polygon)
+	{
+	return aera(polygon.data(), N);
+	}
+
+
+/**
+* Compute the signed aera of a polygon.
+*
+* @param	polygon	 the polygon vertices.
+*
+* @return	the signed aera. Positive if vertices are ordered clockwide and negative if vertices
+* 			are ordered counterclockise.
+**/
+inline double aera(const std::vector<fVec2> & polygon)
+	{
+	return aera(polygon.data(), polygon.size());
+	}
+
 
 /**
  * Return the winding direction of a convex polygon (C interface)
@@ -86,25 +135,11 @@ namespace internals_clipping
  * @param	poly_tab	The polygon vertices
  * @param	poly_len	number of vertices
  *
- * @return	+1 if clockise, -1 if counterclockise, 0 if polygon not convex or flat
-**/
+ * @return	+1 if clockwise order, -1 if counterclockise order and 0 if polygon is flat
+ **/
 inline int winding(const fVec2 * poly_tab, const size_t poly_len)
 	{
-	if (poly_len < 3) return 0;
-	MTOOLS_ASSERT(poly_tab != nullptr);
-	size_t a = 0, b = 0;
-	for (size_t i = 0; i < poly_len; i++)
-		{
-		const int d = left_of(poly_tab[i], poly_tab[(i + 1) % poly_len], poly_tab[(i + 2) % poly_len]);
-		switch (d)
-			{
-			case +1: { a++; break; }
-			case -1: { b++; break; }
-			}
-		}
-	if ((a > 0) && (b == 0)) return 1;
-	if ((b > 0) && (a == 0)) return -1;
-	return 0;
+	return ((aera(poly_tab, poly_len) > 0) ? 1 : ((aera(poly_tab, poly_len) < 0) ? -1 : 0));
 	}
 
 
@@ -114,7 +149,7 @@ inline int winding(const fVec2 * poly_tab, const size_t poly_len)
 *
 * @param	polygon	The polygon to compute the winding direction.
 *
-* @return	+1 if clockise, -1 if counterclockise, 0 if polygon not convex or flat.
+* @return	+1 if clockwise order, -1 if counterclockise order and 0 if polygon is flat
 **/
 template<size_t N> inline int winding(const std::array<fVec2, N> & polygon)
 	{
@@ -128,7 +163,7 @@ template<size_t N> inline int winding(const std::array<fVec2, N> & polygon)
  *
  * @param	polygon	The polygon to compute the winding direction.
  *
- * @return	+1 if clockise, -1 if counterclockise, 0 if polygon not convex or flat.
+ * @return	+1 if clockwise order, -1 if counterclockise order and 0 if polygon is flat
 **/
 inline int winding(const std::vector<fVec2> & polygon)	
 	{
@@ -136,7 +171,74 @@ inline int winding(const std::vector<fVec2> & polygon)
 	}
 
 
+/**
+ * Test if a polygon is convex.
+ *
+ * @param	poly_tab	The polygon tab.
+ * @param	poly_len	Length of the polygon.
+ *
+ * @return	True if the polygon is convex and false otherwise (flat polygon are convex).
+ **/
+inline bool convex(const fVec2 * poly_tab, const size_t poly_len)
+	{
+	if (poly_len <= 3) return true;
+	MTOOLS_ASSERT(poly_tab != nullptr);
+	int d = left_of(poly_tab[0], poly_tab[1], poly_tab[2]);
+	for (size_t i = 1; i < poly_len; i++)
+		{
+		const int e = left_of(poly_tab[i], poly_tab[(i + 1) % poly_len], poly_tab[(i + 2) % poly_len]);
+		if (e*d < 0) return false; else if (d == 0) d = e;
+		}
+	return true;
+	}
 
+
+/**
+ * Test if a polygon is convex.
+ *
+ * @param	polygon	polygon to test.
+ *
+ * @return	True if the polygon is convex and false otherwise (flat polygon are convex).
+ **/
+template<size_t N> inline bool convex(const std::array<fVec2, N> & polygon)
+	{
+	return convex(polygon.data(), N);
+	}
+
+
+/**
+ * Test if a polygon is convex.
+ *
+ * @param	polygon	polygon to test.
+ *
+ * @return	True if the polygon is convex and false otherwise (flat polygon are convex).
+ **/
+inline bool convex(const std::vector<fVec2> & polygon)
+	{
+	return convex(polygon.data(), polygon.size());
+	}
+
+
+/**
+ * test if Q is inside the triangle (P1,P2,P3)
+ *
+ * @param	P1	first point  of the triangle.
+ * @param	P2	second point of the triangle.
+ * @param	P3	third point  of the triangle.
+ * @param	Q 	point to test.
+ *
+ * @return	true if Q is inside the (closed) triangle and false otherwise. Always return false if
+ * 			the triangle is flat.
+ **/
+inline bool isInTriangle(const fVec2 & P1, const fVec2 & P2, const fVec2 & P3, const fVec2 & Q)
+	{
+	int a1 = left_of(P1, P2, Q);
+	int a2 = left_of(P2, P3, Q);
+	int a3 = left_of(P3, P1, Q);
+	if ((a1*a2 < 0) || (a1*a3 < 0) || (a2*a3 < 0)) return false;	// no inside
+	if (a1 + a2 + a3 == 0) return false; // flat
+	return true;
+	}
 
 
 
@@ -170,7 +272,7 @@ inline void Sutherland_Hodgman_clipping(const fVec2  * sub_tab , const size_t su
 	fVec2 * tmp_tab = ((tmp2 != nullptr) ? tmp2 : tmp1);	
 	fVec2 * p1 = (clip_len & 1) ? tmp_tab : res_tab; size_t l1 = 0;
 	fVec2 * p2 = (clip_len & 1) ? res_tab : tmp_tab; size_t l2 = 0;
-	const int dir = winding(clip_tab, clip_len);
+	const int dir = -winding(clip_tab, clip_len);
 	MTOOLS_ASSERT(dir != 0);
 	internals_clipping::Sutherland_Hodgman_clipping_sub(sub_tab, sub_len, clip_tab[clip_len -1], clip_tab[0], dir, p2, l2);
 	for (size_t i = 0; i < clip_len -1; i++)
