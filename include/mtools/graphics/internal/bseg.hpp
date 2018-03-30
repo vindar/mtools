@@ -205,7 +205,9 @@ namespace internals_bseg
 					if (_frac >= _dx) { u++; _frac -= _dy; }
 					MTOOLS_ASSERT((u <= lenx) && (u >= lenx - 4));
 					_x += u * _stepx;
+					int64 slen = _len; // backup because move_x_dir<> will modifiy _len
 					while (u != lenx) { k += move_x_dir<false>(); u++; }
+					_len = slen;
 					res += k;
 					}
 				totlenx -= lenx;
@@ -277,7 +279,9 @@ namespace internals_bseg
 					if (_frac >= _dy) { u++; _frac -= _dx; }
 					MTOOLS_ASSERT((u <= leny) && (u >= leny - 4));
 					_y += u * _stepy;
+					int64 slen = _len; // backup because move_x_dir<> will modifiy _len
 					while (u != leny) { k += move_y_dir<true>(); u++; }
+					_len = slen;
 					res += k;
 					}
 				else
