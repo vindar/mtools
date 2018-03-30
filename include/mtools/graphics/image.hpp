@@ -1941,32 +1941,18 @@ namespace mtools
 			inline void draw_line(iVec2 P1, iVec2 P2, RGBc color, bool draw_P2 = true, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int penwidth = 0)
 				{
 				if (isEmpty()) return;
-				if (penwidth <= 0)
-					{
-					if (antialiased)
-						{
-						const int64 of = 10000;
-						if (!Colin_SutherLand_lineclip(P1, P2, iBox2(-of, _lx - 1 + of, -of, _ly - 1 + of))) return; // choose box bigger to diminish clipping error. 
-						if (blending) _lineBresenhamAA<true, true, false>(P1, P2, color, draw_P2, 0); else _lineBresenhamAA<false, true, false>(P1, P2, color, draw_P2, 0);
-						return;
-						}
-					const int64 of = 10000 + _lx + _ly;
-					if (!Colin_SutherLand_lineclip(P1, P2, iBox2(-of, _lx - 1 + of, -of, _ly - 1 + of))) return; // choose box bigger to diminish clipping error. 
-					if ((blending) && (!color.isOpaque())) _lineBresenham<true, true, false, false, false, false>(P1, P2, color, draw_P2, 0, 0); else _lineBresenham<false, true, false, false, false, false>(P1, P2, color, draw_P2, 0, 0);
-					return;
-					}
-				_correctPenOpacity(color, penwidth);
+				if (penwidth < 0) { MTOOLS_DEBUG("incorrect penwidth");  penwidth = 0; }
+				const int64 of = 1000 + _lx + _ly + (2 * penwidth);
+				if (!Colin_SutherLand_lineclip(P1, P2, iBox2(-of, _lx - 1 + of, -of, _ly - 1 + of))) return;
+				if (penwidth > 0) _correctPenOpacity(color, penwidth);
 				if (antialiased)
 					{
-					const int64 of = 10000 + 2 * penwidth;
-					if (!Colin_SutherLand_lineclip(P1, P2, iBox2(-of, _lx - 1 + of, -of, _ly - 1 + of))) return; // choose box bigger to diminish clipping error. 
-					if (blending) _lineBresenhamAA<true, true, true>(P1, P2, color, draw_P2, penwidth); else _lineBresenhamAA<false, true, true>(P1, P2, color, draw_P2, penwidth);
-					return;
+					_line_wu(P1, P2, draw_P2, color,penwidth, blending);
 					}
-				const int64 of = 10000 + _lx + _ly + 2 * penwidth;
-				if (!Colin_SutherLand_lineclip(P1, P2, iBox2(-of, _lx - 1 + of, -of, _ly - 1 + of))) return; // choose box bigger to diminish clipping error. 
-				if ((blending) && (!color.isOpaque())) _lineBresenham<true, true, false, true, false, false>(P1, P2, color, draw_P2, penwidth, 0); else _lineBresenham<false, true, false, true, false, false>(P1, P2, color, draw_P2, penwidth, 0);
-				return;
+				else
+					{
+					_bseg_draw(internals_bseg::BSeg(P1, P2), draw_P2, color, penwidth, blending);
+					}
 				}
 
 
@@ -1977,10 +1963,19 @@ namespace mtools
 			MTOOLS_FORCEINLINE void draw_line(fVec2 P1, fVec2 P2, RGBc color, bool draw_P2 = true, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int penwidth = 0)
 				{
 				if (isEmpty()) return;
-				const double L = 10000;
-				if (!Colin_SutherLand_lineclip(P1, P2, fBox2(-L, _lx + L, -L, _ly + L))) return;
-				draw_line(round(P1), round(P2), color, draw_P2, antialiased, blending, penwidth); 	// IMPROVE THIS BY REALLY USING THE REAL VALUED POSITIONS
-				}
+				if (penwidth < 0) { MTOOLS_DEBUG("incorrect penwidth");  penwidth = 0; }
+				const int64 of = 1000 + _lx + _ly + (2 * penwidth);
+				if (!Colin_SutherLand_lineclip(P1, P2, iBox2(-of, _lx - 1 + of, -of, _ly - 1 + of))) return;
+				if (penwidth > 0) _correctPenOpacity(color, penwidth);
+				if (antialiased)
+					{
+					_line_wu(round(P1), round(P2), draw_P2, color, penwidth, blending);
+					}
+				else
+					{
+					_bseg_draw(internals_bseg::BSeg(P1, P2), draw_P2, color, penwidth, blending);
+					}
+			}
 	
 
 			/**
@@ -2358,16 +2353,17 @@ namespace mtools
 				if (isEmpty()) return;
 				if ((penwidth <= 0) && (!antialiased) && (blending) && (!color.isOpaque()))
 					{ //try to draw without overlap
-					const double of = 10000.0 + _lx + _ly;
+					const double of = 1000.0 + _lx + _ly;
 					fBox2 B(-of, _lx + of, -of, _ly + of);
 					if ((B.isInside(P1)) && (B.isInside(P2)) && (B.isInside(P3)))
 						{
-						iVec2 A1 = round(P1);
-						iVec2 A2 = round(P2);
-						iVec2 A3 = round(P3);
-						_lineBresenham<true, true, false, false, false, false>(A1, A2, color, true, 0, 0);
-						_lineBresenham_avoid<true, true, false, false, false>(A2, A3, A1, color, 0, 0);
-						_lineBresenham_avoid_both_sides_triangle<true, true, false, false, false>(A1, A3, A2, color, 0);
+						// draw without overlap
+						internals_bseg::BSeg s12(P1, P2); internals_bseg::BSeg s21 = s12.get_reverse();
+						internals_bseg::BSeg s23(P2, P3); 
+						internals_bseg::BSeg s31(P3, P1); internals_bseg::BSeg s13 = s31.get_reverse();
+						_bseg_draw(s12, true, color);
+						_bseg_avoid1(s13, true, s12, true, color);
+						_bseg_avoid11(s23, s21, true, s31, true, color);
 						return;
 						}
 					}
@@ -2393,87 +2389,31 @@ namespace mtools
 			inline void draw_filled_triangle(fVec2 P1, fVec2 P2, fVec2 P3, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND)
 				{
 				if (isEmpty()) return;
-				const double of = 10000.0 + _lx + _ly;
+				const double of = 1000.0 + _lx + _ly;
 				fBox2 B(-of, _lx + of, -of, _ly + of);
 				if ((!B.isInside(P1)) || (!B.isInside(P2)) || (!B.isInside(P3)))
 					{ // triangle is not inside the box B: use clipping
-					fVec2 in_tab[3];  in_tab[0] = P1; in_tab[1] = P2; in_tab[2] = P3;
-					fVec2 out_tab[10]; size_t out_len;
-					Sutherland_Hodgman_clipping(in_tab, 3, B, out_tab, out_len);
+					std::array<fVec2, 3> tri = { P1, P2, P3 };
+					std::array<fVec2, 10> out;
+					size_t out_len = Sutherland_Hodgman_clipping<3, 10>(tri, B, out);
 					if (out_len < 3) return;
-					if (out_len == 4) {	draw_filled_quad(out_tab[0], out_tab[1], out_tab[2], out_tab[3], color, fillcolor, antialiased, blending); return; }
-					if (out_len > 4)  { draw_filled_polygon(out_len, out_tab, color, fillcolor, antialiased, blending); return; }
-					P1 = out_tab[0];
-					P2 = out_tab[1];
-					P3 = out_tab[2];
+					if (out_len == 4) {	draw_filled_quad(out[0], out[1], out[2], out[3], color, fillcolor, antialiased, blending); return; }
+					if (out_len > 4)  { draw_filled_polygon(out_len, out.data(), color, fillcolor, antialiased, blending); return; }
+					P1 = out[0];
+					P2 = out[1];
+					P3 = out[2];
 					}
-
-				// ok, draw triangle inside a (not too big) box
-				int w = winding<3>({ P1, P2, P3}); // winding direction of the polygon
-				MTOOLS_ASSERT(w != 0);
-				if (w == -1) { mtools::swap(P1, P3); }
-
-				iVec2 AP1, AP2, AP3;
-
-				Image::_bdir dir12, dir21;
-				Image::_bpos pos12, pos21;
-				int64 len12 = _init_line(P1, P2, dir12, pos12, AP1, AP2);
-				pos21 = pos12;
-				dir21 = dir12;
-				_reverse_line(dir21, pos21, len12);
-
-				Image::_bdir dir23, dir32;
-				Image::_bpos pos23, pos32;
-				int64 len23 = _init_line(P2, P3, dir23, pos23, AP2, AP3);
-				pos32 = pos23;
-				dir32 = dir23;
-				_reverse_line(dir32, pos32, len23);
-
-				Image::_bdir dir13;
-				Image::_bpos pos13;
-				int64 len13 = _init_line(P1, P3, dir13, pos13, AP1, AP3);
-
-				if (blending)
+				// ok, draw triangle inside the bounding box
+				int w = 0; 
+				if (antialiased)
 					{
-					const bool BLEND = true;
-					if (antialiased)
-						{
-						const bool AA = true;
-						_lineBresenham<BLEND, true, false, false, AA, true>(dir12, pos12, len12 + 1, color, 0, 0);
-						_lineBresenham_avoid<BLEND, true, false, AA, true>(dir23, pos23, len23 + 1, dir21, pos21, len12 + 1, color, 0);
-						_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, AA, false>(dir13, pos13, len13, dir12, pos12, len12 + 1, dir32, pos32, len23 + 1, color, 0);
-						_draw_triangle_interior<true, true>(P1, P2, P3, fillcolor);
-						}
-					else
-						{
-						const bool AA = false;				
-						_lineBresenham<BLEND, true, false, false, AA, true>(dir12, pos12, len12 + 1, color, 0, 0);
-						_lineBresenham_avoid<BLEND, true, false, AA, true>(dir23, pos23, len23 + 1, dir21, pos21, len12 + 1, color, 0);
-						_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, AA, false>(dir13, pos13, len13, dir12, pos12, len12 + 1, dir32, pos32, len23 + 1, color, 0);
-						_draw_triangle_interior<true, true>(P1, P2, P3, fillcolor);
-
-						}
+					w = winding<3>({ P1, P2, P3 }); // winding direction of the polygon
+					MTOOLS_ASSERT(w != 0);
 					}
-				else
-					{
-					const bool BLEND = false;
-					if (antialiased)
-						{
-						const bool AA = true;
-						_lineBresenham<BLEND, true, false, false, AA, true>(dir12, pos12, len12 + 1, color, 0, 0);
-						_lineBresenham_avoid<BLEND, true, false, AA, true>(dir23, pos23, len23 + 1, dir21, pos21, len12 + 1, color, 0);
-						_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, AA, false>(dir13, pos13, len13, dir12, pos12, len12 + 1, dir32, pos32, len23 + 1, color, 0);
-						_draw_triangle_interior<true, true>(P1, P2, P3, fillcolor);
-						}
-					else
-						{
-						const bool AA = false;
-						_lineBresenham<BLEND, true, false, false, AA, true>(dir12, pos12, len12 + 1, color, 0, 0);
-						_lineBresenham_avoid<BLEND, true, false, AA, true>(dir23, pos23, len23 + 1, dir21, pos21, len12 + 1, color, 0);
-						_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, AA, false>(dir13, pos13, len13, dir12, pos12, len12 + 1, dir32, pos32, len23 + 1, color, 0);
-						_draw_triangle_interior<true, true>(P1, P2, P3, fillcolor);
-						}
-					}
+				_bseg_draw(internals_bseg::BSeg(P1, P2), true, color,0,blending,w);
+				_bseg_avoid1(internals_bseg::BSeg(P1, P3), true, internals_bseg::BSeg(P1, P2), true, color, 0, blending, -w);
+				_bseg_avoid11(internals_bseg::BSeg(P2, P3), internals_bseg::BSeg(P2, P1), true, internals_bseg::BSeg(P3, P1), true, color, 0, blending, w);
+				_bseg_fill_triangle(P1, P2, P3, fillcolor, blending);
 				}
 
 
@@ -2493,19 +2433,19 @@ namespace mtools
 				{
 				if (isEmpty()) return;
 				if ((penwidth <= 0) && (!antialiased) && (blending) && (!color.isOpaque()))
-					{ // try drawing without overlap
-					const double of = 10000.0 + _lx + _ly;
+					{ //try to draw without overlap
+					const double of = 1000.0 + _lx + _ly;
 					fBox2 B(-of, _lx + of, -of, _ly + of);
 					if ((B.isInside(P1)) && (B.isInside(P2)) && (B.isInside(P3)) && (B.isInside(P4)))
 						{
-						iVec2 A1 = round(P1);
-						iVec2 A2 = round(P2);
-						iVec2 A3 = round(P3);
-						iVec2 A4 = round(P4);
-						_lineBresenham<true, true, false, false, false, false>(A1, A2, color, true, 0, 0);
-						_lineBresenham_avoid<true, true, false, false, false>(A2, A3, A1, color, 0, 0);
-						_lineBresenham_avoid<true, true, false, false, false>(A3, A4, A2, color, 0, 0);
-						_lineBresenham_avoid_both_sides<true, true, false, false, false>(A4, A1, A3, A2, color, 0);
+						internals_bseg::BSeg s12(P1, P2); internals_bseg::BSeg s21 = s12.get_reverse();
+						internals_bseg::BSeg s23(P2, P3); internals_bseg::BSeg s32 = s23.get_reverse();
+						internals_bseg::BSeg s34(P3, P4); internals_bseg::BSeg s43 = s34.get_reverse();
+						internals_bseg::BSeg s41(P4, P1); internals_bseg::BSeg s14 = s41.get_reverse();
+						_bseg_draw(s12, true, color);
+						_bseg_avoid1(s23, true, s21, true, color);
+						_bseg_avoid1(s34, true, s32, true, color);
+						_bseg_avoid11(s14, s12, true, s43, true, color);
 						return;
 						}
 					}
@@ -2533,116 +2473,35 @@ namespace mtools
 			inline void draw_filled_quad(fVec2 P1, fVec2 P2, fVec2 P3, fVec2 P4, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND)
 				{
 				if (isEmpty()) return;
-				const double of = 10000.0 + _lx + _ly;
+				const double of = 1000.0 + _lx + _ly;
 				fBox2 B(-of, _lx + of, -of, _ly + of);
 				if ((!B.isInside(P1)) || (!B.isInside(P2)) || (!B.isInside(P3)) || (!B.isInside(P4)))
-					{ // quad is not inside the box B: use clipping
-					fVec2 in_tab[4];  in_tab[0] = P1; in_tab[1] = P2; in_tab[2] = P3; in_tab[3] = P4;
-					fVec2 out_tab[12]; size_t out_len;
-					Sutherland_Hodgman_clipping(in_tab, 4, B, out_tab, out_len);
+					{ // triangle is not inside the box B: use clipping
+					std::array<fVec2, 4> tri = { P1, P2, P3, P4 };
+					std::array<fVec2, 12> out;
+					size_t out_len = Sutherland_Hodgman_clipping<4, 12>(tri, B, out);
 					if (out_len < 3) return;
-					if (out_len == 3) { draw_filled_triangle(out_tab[0], out_tab[1], out_tab[2], color, fillcolor, antialiased, blending); return; }
-					if (out_len > 4)  { draw_filled_polygon(out_len, out_tab, color, fillcolor, antialiased, blending); return; }
-					P1 = out_tab[0];
-					P2 = out_tab[1];
-					P3 = out_tab[2];
-					P4 = out_tab[3];
-					}
-				// ok, draw quad inside a (not too big) box
-
-				int w = winding<4>({ P1, P2, P3, P4 }); // winding direction of the polygon
-				MTOOLS_ASSERT(w != 0);
-				if (w == -1) { mtools::swap(P1, P4); mtools::swap(P2, P3); }
-
-				iVec2 AP1, AP2, AP3, AP4;
-
-				Image::_bdir dir12, dir21;
-				Image::_bpos pos12, pos21;
-				int64 len12 = _init_line(P1, P2, dir12, pos12, AP1, AP2);
-				pos21 = pos12;
-				dir21 = dir12;
-				_reverse_line(dir21, pos21, len12);
-
-				Image::_bdir dir23, dir32;
-				Image::_bpos pos23, pos32;
-				int64 len23 = _init_line(P2, P3, dir23, pos23, AP2, AP3);
-				pos32 = pos23;
-				dir32 = dir23;
-				_reverse_line(dir32, pos32, len23);
-
-				Image::_bdir dir34, dir43;
-				Image::_bpos pos34, pos43;
-				int64 len34 = _init_line(P3, P4, dir34, pos34, AP3, AP4);
-				pos43 = pos34;
-				dir43 = dir34;
-				_reverse_line(dir43, pos43, len34);
-
-				Image::_bdir dir41, dir14;
-				Image::_bpos pos41, pos14;
-				int64 len41 = _init_line(P4, P1, dir41, pos41, AP4, AP1);
-				pos14 = pos41;
-				dir14 = dir41;
-				_reverse_line(dir14, pos14, len41);
-
-				Image::_bdir dir13, dir31;
-				Image::_bpos pos13, pos31;
-				int64 len13 = _init_line(P1, P3, dir13, pos13, AP1, AP3);
-				pos31 = pos13;
-				dir31 = dir13;
-				_reverse_line(dir31, pos31, len13);
-
-				if (blending)
+					if (out_len == 3) { draw_filled_triangle(out[0], out[1], out[2], color, fillcolor, antialiased, blending); return; }
+					if (out_len > 4)  { draw_filled_polygon(out_len, out.data(), color, fillcolor, antialiased, blending); return; }
+					P1 = out[0];
+					P2 = out[1];
+					P3 = out[2];
+					P4 = out[3];
+				}
+				// ok, draw quad inside the bounding box
+				int w = 0;
+				if (antialiased)
 					{
-					const bool BLEND = true;
-					if (antialiased)
-						{
-						const bool AA = true;
-						_lineBresenham<BLEND, true, false, false, AA, false>(dir21, pos21, len12 + 1, color, 0, 0);
-						_lineBresenham_avoid<BLEND, true, false, AA, true>(dir23, pos23, len23 + 1, dir21, pos21, len12 + 1, color, 0);
-						_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, false, true>(dir13, pos13, len13, dir12, pos12, len12 + 1, dir32, pos32, len23 + 1, color, 0);
-						_lineBresenham_avoid<BLEND, true, false, AA, false>(dir14, pos14, len41 + 1, dir13, pos13, len13 + 1, color, 0);
-						_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, AA, true>(dir34, pos34, len34, dir31, pos31, len13 + 1, dir41, pos41, len41 + 1, color, 0);
-						_draw_triangle_interior<true, true>(P1, P2, P3, fillcolor);
-						_draw_triangle_interior<true, true>(P1, P3, P4, fillcolor);
-						}
-					else
-						{
-						const bool AA = false;
-						_lineBresenham<BLEND, true, false, false, AA, false>(dir21, pos21, len12 + 1, color, 0, 0);
-						_lineBresenham_avoid<BLEND, true, false, AA, true>(dir23, pos23, len23 + 1, dir21, pos21, len12 + 1, color, 0);
-						_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, false, true>(dir13, pos13, len13, dir12, pos12, len12 + 1, dir32, pos32, len23 + 1, color, 0);
-						_lineBresenham_avoid<BLEND, true, false, AA, false>(dir14, pos14, len41 + 1, dir13, pos13, len13 + 1, color, 0);
-						_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, AA, true>(dir34, pos34, len34, dir31, pos31, len13 + 1, dir41, pos41, len41 + 1, color, 0);
-						_draw_triangle_interior<true, true>(P1, P2, P3, fillcolor);
-						_draw_triangle_interior<true, true>(P1, P3, P4, fillcolor);
-						}
+					w = winding<3>({ P1, P2, P3 }); // winding direction of the polygon
+					MTOOLS_ASSERT(w != 0);
 					}
-				else
-					{
-					const bool BLEND = false;
-					if (antialiased)
-						{
-						const bool AA = true;
-						_lineBresenham<BLEND, true, false, false, AA, false>(dir21, pos21, len12 + 1, color, 0, 0);
-						_lineBresenham_avoid<BLEND, true, false, AA, true>(dir23, pos23, len23 + 1, dir21, pos21, len12 + 1, color, 0);
-						_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, false, true>(dir13, pos13, len13, dir12, pos12, len12 + 1, dir32, pos32, len23 + 1, color, 0);
-						_lineBresenham_avoid<BLEND, true, false, AA, false>(dir14, pos14, len41 + 1, dir13, pos13, len13 + 1, color, 0);
-						_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, AA, true>(dir34, pos34, len34, dir31, pos31, len13 + 1, dir41, pos41, len41 + 1, color, 0);
-						_draw_triangle_interior<true, true>(P1, P2, P3, fillcolor);
-						_draw_triangle_interior<true, true>(P1, P3, P4, fillcolor);
-						}
-					else
-						{
-						const bool AA = false;
-						_lineBresenham<BLEND, true, false, false, AA, false>(dir21, pos21, len12 + 1, color, 0, 0);
-						_lineBresenham_avoid<BLEND, true, false, AA, true>(dir23, pos23, len23 + 1, dir21, pos21, len12 + 1, color, 0);
-						_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, false, true>(dir13, pos13, len13, dir12, pos12, len12 + 1, dir32, pos32, len23 + 1, color, 0);
-						_lineBresenham_avoid<BLEND, true, false, AA, false>(dir14, pos14, len41 + 1, dir13, pos13, len13 + 1, color, 0);
-						_lineBresenham_avoid_both_sides_triangle<BLEND, true, false, AA, true>(dir34, pos34, len34, dir31, pos31, len13 + 1, dir41, pos41, len41 + 1, color, 0);
-						_draw_triangle_interior<true, true>(P1, P2, P3, fillcolor);
-						_draw_triangle_interior<true, true>(P1, P3, P4, fillcolor);
-						}
-					}
+				_bseg_draw(internals_bseg::BSeg(P1, P2), true, color, 0, blending, w);
+				_bseg_avoid1(internals_bseg::BSeg(P2, P3), true, internals_bseg::BSeg(P2, P1), true, color, 0, blending, w);
+				_bseg_avoid1(internals_bseg::BSeg(P1, P4), true, internals_bseg::BSeg(P1, P2), true, color, 0, blending, -w);
+				_bseg_avoid11(internals_bseg::BSeg(P4, P3), internals_bseg::BSeg(P4, P1), true, internals_bseg::BSeg(P3, P2), true, color, 0, blending, -w);
+				_bseg_avoid22(internals_bseg::BSeg(P1, P3), internals_bseg::BSeg(P1, P2), true, internals_bseg::BSeg(P1, P4), true, internals_bseg::BSeg(P3, P2), true, internals_bseg::BSeg(P3, P4), true, fillcolor, 0, blending, 0);
+				_bseg_fill_triangle(P1, P2, P3, fillcolor, blending);
+				_bseg_fill_triangle(P1, P3, P4, fillcolor, blending);
 				}
 
 
@@ -2713,7 +2572,7 @@ namespace mtools
 				size_t	in_len = nbvertices;
 				bool allocated = false;
 				// test if clipping is necessary
-				const double of = 10000.0 + _lx + _ly;
+				const double of = 1000.0 + _lx + _ly;
 				fBox2 B(-of, _lx + of, -of, _ly + of);
 				for (size_t i = 0; i < nbvertices; i++)
 					{
@@ -2725,7 +2584,6 @@ namespace mtools
 						break;
 						}
 					}
-				cout << allocated << "\n";
 				// ok, polygon (in_tab, in_len) is now inside the box B
 				switch (in_len)
 					{
@@ -2736,22 +2594,24 @@ namespace mtools
 					case 4: {draw_filled_quad(in_tab[0], in_tab[1], in_tab[2], in_tab[3], color, fillcolor, antialiased, blending); break; }
 					default:
 						{ // generic drawing
-
 						fVec2 C = in_tab[0];
 						for (size_t i = 1; i < in_len; i++) { C += in_tab[i]; }
-						C *= 1.0 / in_len;
 
-						if (blending)
-							{
-							const bool BLEND = true;
-							for (size_t i = 0; i < in_len; i++) { _draw_triangle_interior<BLEND, true>(C, in_tab[i], in_tab[(i + 1) % in_len], fillcolor); }
+						C *= 1.0 / in_len; // barycenter
+
+						for (size_t i = 0; i < in_len; i++)
+						{
+							_bseg_fill_triangle(C, in_tab[i], in_tab[(i + 1) % in_len], RGBc::c_Blue.getMultOpacity(0.2f), blending);
 							}
-						else
+						for (size_t i = 0; i < in_len; i++)
 							{
-							const bool BLEND = false;
-							for (size_t i = 0; i < in_len; i++) { _draw_triangle_interior<BLEND, true>(C, in_tab[i], in_tab[(i + 1) % in_len], fillcolor); }
+							_bseg_draw(internals_bseg::BSeg(C, in_tab[i]),true,RGBc::c_Red);
 							}
-						}
+						for (size_t i = 0; i < in_len; i++)
+							{
+							_bseg_draw(internals_bseg::BSeg(in_tab[i], in_tab[(i +1) % in_len]), true, RGBc::c_Black);
+							}
+					}
 					}
 				if (allocated) delete[] in_tab;
 				return;
@@ -2900,6 +2760,7 @@ namespace mtools
 			 **/
 			inline void fill_triangle(iVec2 P1, iVec2 P2, iVec2 P3, RGBc fillcolor, bool blending = true)
 				{
+				/*
 				if (isEmpty()) return;
 				iBox2 mbr(P1);
 				mbr.swallowPoint(P2);
@@ -2914,6 +2775,7 @@ namespace mtools
 					{
 					if ((blending) && (!fillcolor.isOpaque())) _draw_triangle_interior<true, true>(P1, P2, P3, fillcolor); else _draw_triangle_interior<false, true>(P1, P2, P3, fillcolor);
 					}
+					*/
 				}
 
 
@@ -2931,6 +2793,7 @@ namespace mtools
 			 **/
 			inline void fill_convex_polygon(size_t nbvertices, const iVec2 * tabPoints, RGBc fillcolor, bool blending = true)
 				{
+				/*
 				if (isEmpty() || nbvertices < 3) return;
 				if (fillcolor.isOpaque()) blending = false;
 				if (nbvertices == 3)
@@ -2959,6 +2822,7 @@ namespace mtools
 					{
 					draw_line(G, tabPoints[i], fillcolor, false);
 					}
+				*/
 				}
 
 
@@ -6893,10 +6757,17 @@ namespace mtools
 
 
 
+
+
+
 			/******************************************************************************************************************************************************
-			*																				   																      *
-			*                                                                   LINE AND CURVE DRAWING                                                                      *
-			*																																					  *
+			*******************************************************************************************************************************************************																																					  *
+			***																				   																    ***
+			***																				   																    ***
+			***                                                                      DRAWING                                                                    ***
+			***																				   															        ***
+			***																				   															        ***
+			*******************************************************************************************************************************************************																																					  *
 			*******************************************************************************************************************************************************/
 
 
@@ -7017,6 +6888,13 @@ namespace mtools
 				}
 
 
+			/******************************************************************************************************************************************************
+			*																				   																      *
+			*                                                                 GENERIC LINE DRAWING                                                                *
+			*																																					  *
+			*******************************************************************************************************************************************************/
+
+
 			/* draw a vertical line */
 			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void _verticalLine(int64 x, int64 y1, int64 y2, RGBc color, bool draw_P2)
 				{
@@ -7103,1424 +6981,89 @@ namespace mtools
 				}
 
 
-
-			/* stucture holding info on  a bresenham line */
-			struct _bdir
-				{
-				int64 dx, dy;			// step size in each direction
-				int64 stepx, stepy;		// directions (+/-1)
-				int64 rat;				// ratio max(dx,dy)/min(dx,dy) to speed up computations
-				int64 amul;				// multiplication factor to compute aa values. 
-				bool x_major;			// true if the line is xmajor (ie dx > dy) and false if y major (dy >= dx).
-				};
-
-
-			/* stucture holding a position on a bresenham line */
-			struct _bpos
-				{
-				int64 x, y; // current pos
-				int64 frac; // fractional part
-				};
-
-			
 			/**
-			* Construct the structure containing the info for a bresenham line 
-			* and a position on the line.
-			* The line goes from P1 to P2 and the position is set to P1. 
-			* return the number of pixels in the half open segment [P1, P2[
-			*/
-			MTOOLS_FORCEINLINE int64 _init_line(const iVec2 P1, const iVec2 P2, _bdir & linedir, _bpos & linepos)
-				{
-				const int64 EXP = 10;
-				if (P1 == P2)
-					{ // default horizontal line
-					MTOOLS_DEBUG("P1 = P2 : default horizontal line.");
-					linedir.x_major = true;
-					linedir.dx = 2;
-					linedir.dy = 0;
-					linedir.stepx = 1;
-					linedir.stepy = 1; 
-					linedir.rat = 0;
-					linedir.amul = ((int64)1 << 60)/2;
-					linepos.x = P1.X();
-					linepos.y = P1.Y();
-					linepos.frac = -2;
-					return 0;
-					}
-				MTOOLS_ASSERT(P1 != P2);
-				int64 dx = P2.X() - P1.X(); if (dx < 0) { dx = -dx;  linedir.stepx = -1; } else { linedir.stepx = 1; } dx <<= EXP;
-				int64 dy = P2.Y() - P1.Y(); if (dy < 0) { dy = -dy;  linedir.stepy = -1; } else { linedir.stepy = 1; } dy <<= EXP;
-				linedir.dx = dx;
-				linedir.dy = dy;
-				if (dx >= dy) 
-					{ 
-					linedir.x_major = true; 
-					linedir.rat = (dy == 0) ? 0 : (dx/dy);  
-					}
-				else 
-					{ 
-					linedir.x_major = false; 
-					linedir.rat = (dx == 0) ? 0 : (dy/dx); 
-					}
-				linepos.x = P1.X();
-				linepos.y = P1.Y();
-				int64 flagdir = (P2.X() > P1.X()) ? 1 : 0; // used to copensante frac so that line [P1,P2] = [P2,P1]. 
-				linepos.frac = ((linedir.x_major) ? (dy - (dx >> 1)) : (dx - (dy >> 1))) - flagdir;		
-				linedir.amul = ((int64)1 << 60) / (linedir.x_major ? linedir.dx : linedir.dy);			
-				return ((linedir.x_major ? dx : dy) >> EXP);
-				}
-
-
-			/**
-			* Construct the structure containg the info for a bresenham line
-			* and a position on the line. Version for non_integer valued line.
-			* 
-			* put in P1,P2 the start and end pixels whch are obtained from fP1 and fP2 by rounding to the nearest integer.
-			* 
-			* Return the number of pixels in the half open segment [P1, P2[
-			*/
-			int64 _init_line(fVec2 Pf1, fVec2 Pf2, _bdir & linedir, _bpos & linepos, iVec2 & P1, iVec2 & P2)
-				{
-				const int64 PRECISION = 1024*16; // 512 * 128;
-				bool sw = false;
-				if ((Pf1.X() > Pf2.X()) || ((Pf1.X() == Pf2.X()) && (Pf1.Y() > Pf2.Y())))
-					{
-					sw = true;
-					mtools::swap(Pf1, Pf2);
-					}
-
-				P1.X() = (int64)std::round(Pf1.X()); P1.Y() = (int64)std::round(Pf1.Y());
-				P2.X() = (int64)std::round(Pf2.X()); P2.Y() = (int64)std::round(Pf2.Y());
-
-				/* basic algo, 
-				if (sw) { mtools::swap(P1, P2); }
-				return _init_line(P1, P2, linedir, linepos);
-				*/
-
-				linepos.x = P1.X();
-				linepos.y = P1.Y();
-				const int64 adx = abs(P2.X() - P1.X());
-				const int64 ady = abs(P2.Y() - P1.Y());
-				const int64 len = (adx > ady) ? adx : ady;
-				const double fdx = (Pf2.X() - Pf1.X());
-				const double fdy = (Pf2.Y() - Pf1.Y());
-
-				if (adx == ady)
-					{ // edge cases
-					if (sw) { mtools::swap(P1, P2); }
-					return _init_line(P1, P2, linedir, linepos);
-					}
-				else
-					{
-					if (adx > ady)
-						{ // x major
-						linedir.x_major = true;
-						const double mul = fdy / fdx;
-						double f1 = mul*(P1.X() - Pf1.X()) + Pf1.Y() - P1.Y(); // how much above
-						double f2 = mul*(P2.X() - Pf2.X()) + Pf2.Y() - P2.Y(); // how much below
-						int64 if1 = (int64)((2 * PRECISION) * f1); if (if1 <= -PRECISION) { if1 = -PRECISION + 1; } else if (if1 >= PRECISION) { if1 = PRECISION - 1; }
-						int64 if2 = (int64)((2 * PRECISION) * f2); if (if2 <= -PRECISION) { if2 = -PRECISION + 1; } else if (if2 >= PRECISION) { if2 = PRECISION - 1; }
-						if (fdx < 0) { linedir.stepx = -1; } else { linedir.stepx = +1; }
-						if (fdy < 0) { linedir.stepy = -1;  if1 = -if1; if2 = -if2; } else { linedir.stepy = +1; }
-						linedir.dx = adx * (2 * PRECISION);
-						linedir.dy = ady * (2 * PRECISION);
-						linedir.dy += -if1 + if2;
-						MTOOLS_ASSERT(linedir.dy >= 0);
-						MTOOLS_ASSERT(linedir.dy <= linedir.dx);
-						linedir.rat = (linedir.dy == 0) ? 0 : (linedir.dx / linedir.dy);
-						linedir.amul = ((int64)1 << 60) / linedir.dx;
-						linepos.frac = (if1 - PRECISION)*adx + linedir.dy;
-						}
-					else
-						{ // y major
-						linedir.x_major = false;
-						const double mul = fdx / fdy;
-						double f1 = mul*(P1.Y() - Pf1.Y()) + Pf1.X() - P1.X();
-						double f2 = mul*(P2.Y() - Pf2.Y()) + Pf2.X() - P2.X();
-						int64 if1 = (int64)((2 * PRECISION) * f1); if (if1 <= -PRECISION) { if1 = -PRECISION + 1;} else if (if1 >= PRECISION) { if1 = PRECISION - 1; }
-						int64 if2 = (int64)((2 * PRECISION) * f2); if (if2 <= -PRECISION) { if2 = -PRECISION + 1;} else if (if2 >= PRECISION) { if2 = PRECISION - 1; }
-						if (fdx < 0) { linedir.stepx = -1;  if1 = -if1; if2 = -if2; } else { linedir.stepx = +1; }
-						if (fdy < 0) { linedir.stepy = -1; } else { linedir.stepy = +1; }
-						linedir.dy = ady * (2 * PRECISION);
-						linedir.dx = adx * (2 * PRECISION);
-						linedir.dx += -if1 + if2;
-						MTOOLS_ASSERT(linedir.dx >= 0);
-						MTOOLS_ASSERT(linedir.dx <= linedir.dy);
-						linedir.rat = (linedir.dx == 0) ? 0 : (linedir.dy / linedir.dx);
-						linedir.amul = ((int64)1 << 60) / linedir.dy;
-						linepos.frac = (if1 - PRECISION)*ady + linedir.dx;
-						}
-					}
-				if (sw)
-					{
-					mtools::swap(P1, P2);
-					_reverse_line(linedir, linepos, len);
-					MTOOLS_ASSERT(linepos.x == P1.X());
-					MTOOLS_ASSERT(linepos.y == P1.Y());
-					}
-				return len;
-				}
-
-
-			/** reverse the direction of the line. */
-			MTOOLS_FORCEINLINE  void _reverse_line(_bdir & linedir, _bpos & linepos)
+			 * Dra a segment using Wu' antialiased line algorithm.
+			 *
+			 * @param	P1		  	first point
+			 * @param	P2		  	endpoint
+			 * @param	draw_last 	true to draw last point
+			 * @param	color	  	color
+			 * @param	penwidth  	(Optional) penwidth (if > 0)
+			 * @param	blend	  	(Optional) true to use blending
+			 * @param	checkrange	(Optional) true to check the range: disable this only if sure the line (with AA) does not exit the image.
+			 **/
+			MTOOLS_FORCEINLINE void _line_wu(iVec2 P1, iVec2 P2, bool draw_last, RGBc color, int32 penwidth = 0, bool blend = true, bool checkrange = true)
 			{
-				linedir.stepx *= -1;
-				linedir.stepy *= -1;
-				if (linedir.x_major)
+				const bool usepen = (penwidth > 0);
+				if (usepen)
+				{
+					const bool USEPEN = true;
+					if (blend)
 					{
-					linepos.frac = -linedir.dx - 1 - linepos.frac;
-					linepos.frac += 2 * linedir.dy;
+						const bool BLEND = true;
+						if (checkrange)
+							{
+							const bool CHECKRANGE = true;
+							_line_wu_sub<BLEND, CHECKRANGE, USEPEN>(P1, P2, color, draw_last, penwidth);
+							}
+						else
+							{
+							const bool CHECKRANGE = false;
+							_line_wu_sub<BLEND, CHECKRANGE, USEPEN>(P1, P2, color, draw_last, penwidth);
+							}
 					}
+					else
+					{
+						const bool BLEND = false;
+						if (checkrange)
+						{
+							const bool CHECKRANGE = true;
+							_line_wu_sub<BLEND, CHECKRANGE, USEPEN>(P1, P2, color, draw_last, penwidth);
+						}
+						else
+						{
+							const bool CHECKRANGE = false;
+							_line_wu_sub<BLEND, CHECKRANGE, USEPEN>(P1, P2, color, draw_last, penwidth);
+						}
+					}
+				}
 				else
+				{
+					const bool USEPEN = false;
+					if (blend)
 					{
-					linepos.frac = -linedir.dy - 1 - linepos.frac;
-					linepos.frac += 2 * linedir.dx;
+						const bool BLEND = true;
+						if (checkrange)
+						{
+							const bool CHECKRANGE = true;
+							_line_wu_sub<BLEND, CHECKRANGE, USEPEN>(P1, P2, color, draw_last, penwidth);
+						}
+						else
+						{
+							const bool CHECKRANGE = false;
+							_line_wu_sub<BLEND, CHECKRANGE, USEPEN>(P1, P2, color, draw_last, penwidth);
+						}
 					}
+					else
+					{
+						const bool BLEND = false;
+						if (checkrange)
+						{
+							const bool CHECKRANGE = true;
+							_line_wu_sub<BLEND, CHECKRANGE, USEPEN>(P1, P2, color, draw_last, penwidth);
+						}
+						else
+						{
+							const bool CHECKRANGE = false;
+							_line_wu_sub<BLEND, CHECKRANGE, USEPEN>(P1, P2, color, draw_last, penwidth);
+						}
+					}
+				}
 			}
 
 
-			/** make n step along the line then reserve it */
-			MTOOLS_FORCEINLINE  void _reverse_line(_bdir & linedir, _bpos & linepos, int64 n)
-				{
-				MTOOLS_ASSERT(n >= 0);
-				_move_line(linedir, linepos, n);
-				_reverse_line(linedir, linepos);
-				}
-
-
-			/* compute the value for antialiasing the half side of a line during bresenham algorithm:
-			   side true = correspond to the outside being on the left of the line we follow the line in its increasing direction.
-			               correspond to drawing a filled polygone in clockwise order. */
-			template<bool side, bool x_major, int64 stepx, int64 stepy>  MTOOLS_FORCEINLINE int32 _line_aa(_bdir & linedir, _bpos & linepos)
-				{				
-				int64 a;				
-				if (x_major)
-					{
-					a = linedir.dy;
-					a = (((a - linepos.frac)*linedir.amul) >> 52);
-					if (side) { if (stepx != stepy) a = 256 - a; } else { if (stepx == stepy) a = 256 - a; }
-					}
-				else
-					{
-					a = linedir.dx;
-					a = (((a - linepos.frac)*linedir.amul) >> 52);
-					if (side) { if (stepx == stepy) a = 256 - a; } else { if (stepx != stepy) a = 256 - a; }
-					}
-				a = (a >> 2) + (a >> 1) + 32; // compensate
-				MTOOLS_ASSERT((a >= 0) && (a <= 256));
-				return (int32)a;
-				}
-
-
-			/* same as above but a bit slower because not templated */
-			template<bool side>  MTOOLS_FORCEINLINE int32 _line_aa(_bdir & linedir, _bpos & linepos)
-				{
-				int64 a;
-				if (linedir.x_major)
-					{
-					a = linedir.dy;
-					a = (((a - linepos.frac)*linedir.amul) >> 52);
-					if (side) { if (linedir.stepx != linedir.stepy) a = 256 - a; } else { if (linedir.stepx == linedir.stepy) a = 256 - a; }
-					}
-				else
-					{
-					a = linedir.dx;
-					a = (((a - linepos.frac)*linedir.amul) >> 52);
-					if (side) { if (linedir.stepx == linedir.stepy) a = 256 - a; } else { if (linedir.stepx != linedir.stepy) a = 256 - a; }
-					}
-				a = (a >> 2) + (a >> 1) + 32; // compensate
-				MTOOLS_ASSERT((a >= 0) && (a <= 256));
-				return (int32)a;
-				}
-
-
-			/** move on the line by one pixel */
-			template<bool x_major> MTOOLS_FORCEINLINE void _move_line(const _bdir & linedir, _bpos & pos)
-				{
-				if (x_major)
-					{
-					if (pos.frac >= 0) { pos.y += linedir.stepy; pos.frac -= linedir.dx; }
-					pos.x += linedir.stepx; pos.frac += linedir.dy;
-					}
-				else
-					{
-					if (pos.frac >= 0) { pos.x += linedir.stepx; pos.frac -= linedir.dy; }
-					pos.y += linedir.stepy; pos.frac += linedir.dx;
-					}
-				}
-
-
-			/**
-			* Move the position pos by len pixels along a bresenham line.
-			*/
-			inline void _move_line(const _bdir & linedir, _bpos & pos, int64 totlen)
-				{
-				int64 len = safeMultB(std::max<int64>(linedir.dx, linedir.dy), totlen);
-				while(1)
-					{
-					if (linedir.x_major)
-						{
-						if (linedir.dx == 0) return;
-						pos.x += linedir.stepx*len;
-						pos.frac += linedir.dy*len;
-						int64 u = pos.frac / linedir.dx;
-						pos.y += linedir.stepy*u;
-						pos.frac -= u * linedir.dx;
-						if (pos.frac >= linedir.dy) { pos.frac -= linedir.dx; pos.y += linedir.stepy; }
-						}
-					else
-						{
-						if (linedir.dy == 0) return;
-						pos.y += linedir.stepy*len;
-						pos.frac += linedir.dx*len;
-						int64 u = pos.frac / linedir.dy;
-						pos.x += linedir.stepx*u;
-						pos.frac -= u * linedir.dy;
-						if (pos.frac >= linedir.dx) { pos.frac -= linedir.dy; pos.x += linedir.stepx; }
-						}
-					totlen -= len;
-					if (totlen <= 0)
-						{
-						MTOOLS_ASSERT(totlen == 0);
-						return;
-						}
-					if (totlen < len) { len = totlen; }
-					}
-				}
-
-
-			/**
-			 * Move the position pos by 1 pixel horizontally along the given bresenham line.
-			 * return the number of pixel traveled by the bresenham line.
-			 *
-			 * [x_major can be deduced from linedir but is given as template paramter for speed optimization]
-			 */
-			template<bool x_major> MTOOLS_FORCEINLINE int64 _move_line_x_dir(const _bdir & linedir, _bpos & pos)
-				{ 
-				MTOOLS_ASSERT(linedir.x_major == x_major);  // make sure template argument supplied is correct. 
-				MTOOLS_ASSERT(linedir.dx > 0); // not a vertical line
-				if (x_major) // compiler optimizes away the template conditionals
-					{
-					if (pos.frac >= 0) { pos.y +=  linedir.stepy; pos.frac -= linedir.dx; }
-					pos.x += linedir.stepx; pos.frac += linedir.dy;
-					return 1;
-					}
-				else
-					{
-					int64 r = (pos.frac < ((linedir.dx << 1) - linedir.dy)) ? linedir.rat : ((linedir.dx - pos.frac) / linedir.dx); // use rat value if just after a step.
-					pos.y += (r*linedir.stepy);
-					pos.frac += (r*linedir.dx);
-					if (pos.frac < linedir.dx) { pos.y += linedir.stepy; pos.frac += linedir.dx; r++;  }
-					MTOOLS_ASSERT((pos.frac >= linedir.dx)&&(pos.frac < 2*linedir.dx));
-					pos.frac -= linedir.dy;  pos.x += linedir.stepx;
-					return r;
-					}
-				}
-
-
-			/**
-			* Move the position pos by a given number of pixels horizontal along a bresenham line.
-			* return the number of pixel traveled by the bresenham line.
-			* do nothing and return 0 if lenx <= 0.
-			*/
-			inline int64 _move_line_x_dir(const _bdir & linedir, _bpos & pos, int64 totlenx)
-				{
-				if (totlenx <= 0) return 0;
-				MTOOLS_ASSERT(linedir.dx > 0); // not a vertical line
-				int64 lenx = safeMultB(std::max<int64>(linedir.dx, linedir.dy), totlenx);
-				int64 res = 0;
-				while (1)
-					{
-					if (linedir.x_major)
-						{
-						pos.x += linedir.stepx*lenx;
-						pos.frac += linedir.dy*lenx;
-						int64 u = pos.frac / linedir.dx;
-						pos.y += linedir.stepy*u;
-						pos.frac -= u * linedir.dx;
-						if (pos.frac >= linedir.dy) { pos.frac -= linedir.dx; pos.y += linedir.stepy; }
-						res += lenx;
-						}
-					else
-						{
-						int64 k = ((lenx - 1)*linedir.dy) / linedir.dx;
-						pos.frac += k * linedir.dx;
-						pos.y += k * linedir.stepy;
-						int64 u = pos.frac / linedir.dy;
-						pos.frac -= u * linedir.dy;
-						if (pos.frac >= linedir.dx) { u++; pos.frac -= linedir.dy; }
-						MTOOLS_ASSERT((u <= lenx) && (u >= lenx - 4));
-						pos.x += u * linedir.stepx;
-						while (u != lenx) { k += _move_line_x_dir<false>(linedir, pos); u++; }
-						res += k;
-						}
-					totlenx -= lenx;
-					if (totlenx <= 0)
-						{
-						MTOOLS_ASSERT(totlenx == 0);
-						return res;
-						}
-					if (totlenx < lenx) { lenx = totlenx; }
-					}
-				}
-
-
-
-			/**
-			* Move the position pos by one pixel vertically along the given bresenham line.
-			* return the number of pixel traveled by the bresenham line.
-			*
-			* [x_major can be deduced from linedir but given as template paramter for speed optimization]
-			*/
-			template<bool x_major> MTOOLS_FORCEINLINE int64 _move_line_y_dir(const _bdir & linedir, _bpos & pos)
-				{
-				MTOOLS_ASSERT(linedir.x_major == x_major);  // make sure tempalte argument supplied is correct. 
-				MTOOLS_ASSERT(linedir.dy > 0); // not an horizontal line
-				if (x_major) // compiler optimizes away the template conditionals
-					{
-					int64 r = (pos.frac < ((linedir.dy << 1) - linedir.dx)) ? linedir.rat : ((linedir.dy - pos.frac) / linedir.dy); // use rat value if just after a step.
-					pos.x += (r*linedir.stepx);
-					pos.frac += (r*linedir.dy);
-					if (pos.frac < linedir.dy) { pos.x += linedir.stepx; pos.frac += linedir.dy; r++; }
-					MTOOLS_ASSERT((pos.frac >= linedir.dy) && (pos.frac < 2 * linedir.dy));
-					pos.frac -= linedir.dx;  pos.y += linedir.stepy;
-					return r;
-					}
-				else
-					{
-					if (pos.frac >= 0) { pos.x += linedir.stepx; pos.frac -= linedir.dy; }
-					pos.y += linedir.stepy; pos.frac += linedir.dx;
-					return 1;
-					}
-				}
-
-
-			/**
-			* Move the position pos along a line by a given number of pixels vertically along a bresenham line.
-			* return the number of pixel traveled by the bresenham line.
-			* do nothing and return 0 if leny <= 0.
-			*/
-			inline int64 _move_line_y_dir(const _bdir & linedir, _bpos & pos, int64 totleny)
-				{
-				if (totleny <= 0) return 0; 
-				MTOOLS_ASSERT(linedir.dy > 0); // not an horizontal line
-				int64 leny = safeMultB(std::max<int64>(linedir.dx, linedir.dy), totleny);
-				int64 res = 0;
-				while (1)
-					{
-					if (linedir.x_major) // compiler optimizes away the template conditionals
-						{
-						int64 k = ((leny - 1)*linedir.dx) / linedir.dy;
-						pos.frac += k * linedir.dy;
-						pos.x += k * linedir.stepx;
-						int64 u = pos.frac / linedir.dx;
-						pos.frac -= u * linedir.dx;
-						if (pos.frac >= linedir.dy) { u++; pos.frac -= linedir.dx; }
-						MTOOLS_ASSERT((u <= leny) && (u >= leny - 4));
-						pos.y += u * linedir.stepy;
-						while (u != leny) { k += _move_line_y_dir<true>(linedir, pos); u++; }
-						res += k;
-						}
-					else
-						{
-						pos.y += linedir.stepy*leny;
-						pos.frac += linedir.dx*leny;
-						int64 u = pos.frac / linedir.dy;
-						pos.x += linedir.stepx*u;
-						pos.frac -= u * linedir.dy;
-						if (pos.frac >= linedir.dx) { pos.frac -= linedir.dy; pos.x += linedir.stepx; }
-						res += leny;
-						}
-					totleny -= leny;
-					if (totleny <= 0)
-						{
-						MTOOLS_ASSERT(totleny == 0);
-						return res;
-						}
-					if (totleny < leny) { leny = totleny; }
-					}
-				}
-
-
-			/**
-			 * Move the position until it is in the closed box B. Return the number of step performed by the
-			 * walk or -1 if the line never enters the box. (in this case, pos may be anywhere.)
-			 **/
-			inline int64 _move_inside_box(const _bdir & linedir, _bpos & pos, const iBox2 & B)
-				{
-				if (B.isEmpty()) return -1;
-				if (B.isInside({ pos.x,pos.y })) return 0;
-				int64 tot = 0;
-				if (pos.x < B.min[0])
-					{
-					if ((linedir.stepx < 0)||(linedir.dx ==0)) return -1;
-					tot += _move_line_x_dir(linedir, pos, B.min[0] - pos.x);
-					}
-				else if (pos.x > B.max[0])
-					{
-					if ((linedir.stepx > 0) ||(linedir.dx == 0)) return -1;
-					tot += _move_line_x_dir(linedir, pos, pos.x - B.max[0]);
-					}
-				if (pos.y < B.min[1])
-					{
-					if ((linedir.stepy < 0) || (linedir.dy == 0)) return -1;
-					tot += _move_line_y_dir(linedir, pos, B.min[1] - pos.y);
-					}
-				else if (pos.y > B.max[1])
-					{
-					if ((linedir.stepy > 0) || (linedir.dy == 0)) return -1;
-					tot += _move_line_y_dir(linedir, pos, pos.y - B.max[1]);
-					}
-				if (!B.isInside({ pos.x, pos.y })) return -1;
-				return tot;
-				}
-
-
-			/**
-			 * Compute number of pixel of the line before it exits the box B. If the box is empty of if pos
-			 * is not in it, return 0.
-			 **/
-			inline int64 _lenght_inside_box(const _bdir & linedir, const _bpos & pos, const iBox2 & B)
-				{
-				if (!B.isInside({ pos.x, pos.y })) return 0; 
-				const int64 hx = 1 + ((linedir.stepx > 0) ? (B.max[0] - pos.x) : (pos.x - B.min[0])); // number of horizontal step before exit. 
-				const int64 hy = 1 + ((linedir.stepy > 0) ? (B.max[1] - pos.y) : (pos.y - B.min[1])); // number of vertical step before exit. 
-				int64 nx = -1, ny = -1;				
-				if (linedir.dx != 0) { _bpos tmp = pos; nx = _move_line_x_dir(linedir, tmp, hx); }
-				if (linedir.dy != 0) { _bpos tmp = pos; ny = _move_line_y_dir(linedir, tmp, hy); }
-				if (nx == -1) { return ny; }
-				if (ny == -1) { return nx; }
-				return std::min<int64>(nx, ny);
-				}
-
-
-
-			/**
-			* Return the number of pixels that composed the Bressenham segment [P,Q|.
-			* 
-			* closed = true to compute the lenght of [P,Q] and false for [P,Q[.
-			**/
-			MTOOLS_FORCEINLINE int64 _lengthBresenham(iVec2 P, iVec2 Q, bool closed = false)
-				{
-				return std::max<int64>(abs(P.X() - Q.X()), abs(P.Y() - Q.Y())) + (closed ? 1 : 0);
-				}
-
-
-			/**
-			 * Compute the position of the next pixel after P on a Bresenham segment [P,Q].
-			 * if P = Q, return P. 
-			 **/
-			MTOOLS_FORCEINLINE iVec2 _nextPosInLine(iVec2 P, iVec2 Q)
-				{
-				if (P == Q) return P;
-				_bdir line;
-				_bpos pos;
-				_init_line(P, Q, line, pos);
-				if (line.x_major) _move_line<true>(line, pos); else _move_line<false>(line, pos);
-				return iVec2(pos.x, pos.y);
-				}
-
-
-
-
-			/** draw a pixel on a bresenham line */
-			template<bool blend, bool checkrange, bool useop, bool usepen, bool useaa, bool side>
-			MTOOLS_FORCEINLINE void _update_pixel_bresenham(_bdir & line, _bpos & pos, RGBc color, int32 op, int32 penwidth)
-				{
-				if (useaa)
-					{
-					int32 aa = _line_aa<side>(line, pos);
-					if (useop) { aa *= op; aa >>= 8; }
-					_updatePixel<blend, checkrange, true, usepen>(pos.x, pos.y, color, aa, penwidth);
-					}
-				else
-					{
-					_updatePixel<blend, checkrange, useop, usepen>(pos.x, pos.y, color, op, penwidth);
-					}
-				}
-
-
-			/**
-			* Draw len pixels along a given bresenham segment [pos, pos + len[
-			* template parameter control (side) antialiasing, blending, checkrange and pen width.
-			*
-			* exactly len pixel are painted
-			**/
-			template<bool blend, bool checkrange, bool useop, bool usepen, bool useaa, bool side>  MTOOLS_FORCEINLINE void _lineBresenham(_bdir line, _bpos pos, int64 len, RGBc color, int32 penwidth, int32 op)
-				{
-				if (checkrange)
-					{
-					iBox2 B;
-					if (penwidth <= 0) { B = iBox2(0, _lx - 1, 0, _ly - 1); }
-					else { B = iBox2(-penwidth - 2, _lx + penwidth + 1, -penwidth - 2, _ly + penwidth + 1); }
-					int64 r = _move_inside_box(line, pos, B);
-					if (r < 0) return; // nothing to draw
-					len -= r;
-					len = std::min<int64>(len, _lenght_inside_box(line, pos, B));
-					}
-				if (line.x_major)
-					{
-					while (--len >= 0)
-						{
-						_update_pixel_bresenham<blend, usepen, useop, usepen, useaa, side>(line, pos, color, op, penwidth);
-						_move_line<true>(line, pos);
-						}
-					}
-				else
-					{
-					while (--len >= 0)
-						{
-						_update_pixel_bresenham<blend, usepen, useop, usepen, useaa, side>(line, pos, color, op, penwidth);
-						_move_line<false>(line, pos);
-						}
-					}
-				}
-
-
-			/**
-			* Draw a segment [P1,P2] using Bresenham's algorithm, (possibly with side antialiasing)
-			*
-			* The algorithm is symmetric: the line [P1,P2] is always equal
-			* to the line drawn in the other direction [P2,P1].
-			*
-			* template parameter control (side) antialiasing, blending, checkrange and pen width.
-			**/
-			template<bool blend, bool checkrange, bool useop, bool usepen, bool useaa, bool side>  MTOOLS_FORCEINLINE void _lineBresenham(const iVec2 P1, const iVec2 P2, RGBc color, bool draw_last, int32 penwidth, int32 op)
-				{
-				if (P1 == P2)
-					{
-					if (draw_last)
-						{
-						if (penwidth <= 0) { _updatePixel<blend, checkrange,useop, false>(P1.X(), P1.Y(), color, op, penwidth); }
-						else { _updatePixel<blend, checkrange, useop, true>(P1.X(), P1.Y(), color, op, penwidth); }
-						}
-					return;
-					}
-				_bdir line;
-				_bpos pos;
-				int64 len = _init_line(P1, P2, line, pos) + (draw_last ? 1 : 0);
-				_lineBresenham<blend, checkrange,useop, usepen, useaa, side>(line, pos, len, color, penwidth, op);
-				return;
-				}
-
-
-			/**
-			* Return the max distance where the two line intersect. linea and lineb must share the same start pixel. 
-			* segment are considered open ended : [a, a + lena[
-			**/
-			template<bool checkrange> int64 _lineBresenham_find_max_intersection(_bdir linea, _bpos posa, int64 lena, _bdir lineb, _bpos posb, int64 lenb)
-				{
-				MTOOLS_ASSERT((posa.x == posb.x) && (posa.y == posb.y));
-				int64 r = 0;
-				if (checkrange)
-					{
-					iBox2 B(0, _lx - 1, 0, _ly - 1);
-					r = _move_inside_box(linea, posa, B); // move the first line into the box. 
-					if (r < 0) return 1; // nothing to draw
-					lena -= r;
-					_move_line(lineb, posb, r); // move the second line
-					lenb -= r;
-					lena = std::min<int64>(lena, _lenght_inside_box(linea, posa, B)); // number of pixels still to draw. 
-					}
-				lena--;
-				lenb--;
-				int64 l = 0;
-				int64 maxp = 0;
-				if (linea.x_major)
-					{
-					if (lineb.x_major)
-						{
-						int64 o = 0;
-						while ((o <= 1) && (l <= lena) && (l <= lenb))
-							{
-							o = abs(posa.x - posb.x) + abs(posa.y - posb.y);
-							if (o == 0) maxp = l;
-							_move_line<true>(linea, posa);
-							_move_line<true>(lineb, posb);
-							l++;
-							}
-						}
-					else
-						{
-						int64 o = 0;
-						while ((o <= 1) && (l <= lena) && (l <= lenb))
-							{
-							o = abs(posa.x - posb.x) + abs(posa.y - posb.y);
-							if (o == 0) maxp = l;
-							_move_line<true>(linea, posa);
-							_move_line<false>(lineb, posb);
-							l++;
-							}
-						}
-					}
-				else
-					{
-					if (lineb.x_major)
-						{
-						int64 o = 0;
-						while ((o <= 1) && (l <= lena) && (l <= lenb))
-							{
-							o = abs(posa.x - posb.x) + abs(posa.y - posb.y);
-							if (o == 0) maxp = l;
-							_move_line<false>(linea, posa);
-							_move_line<true>(lineb, posb);
-							l++;
-							}
-						}
-					else
-						{
-						int64 o = 0;
-						while ((o <= 1) && (l <= lena) && (l <= lenb))
-							{
-							o = abs(posa.x - posb.x) + abs(posa.y - posb.y);
-							if (o == 0) maxp = l;
-							_move_line<false>(linea, posa);
-							_move_line<false>(lineb, posb);
-							l++;
-							}
-						}
-					}
-				return ((maxp == 0) ? 1 : (r + maxp));
-				}
-
-
-			/**
-			* Return the max distance from P where [P,Q] and [P,Q2] intersect.
-			**/
-			template<bool checkrange> MTOOLS_FORCEINLINE int64 _lineBresenham_find_max_intersection(iVec2 P, iVec2 Q, iVec2 Q2)
-				{
-				if ((P == Q) || (P == Q2)) return 1;
-				_bdir linea;
-				_bpos posa;
-				int64 lena = _init_line(P, Q, linea, posa) + 1;
-				_bdir lineb;
-				_bpos posb;
-				int64 lenb = _init_line(P, Q2, lineb, posb) + 1;
-				return _lineBresenham_find_max_intersection<checkrange>(linea, posa, lena, lineb, posb, lenb);
-				}
-
-
-
-
-			/**
-			* Draw the segment [a, + lena[ while avoiding segment [b, b + lenb[ 
-			* a and b must share the same start pixel
-			**/
-			template<bool blend, bool checkrange, bool useop, bool useaa, bool side> void _lineBresenham_avoid(_bdir linea, _bpos posa, int64 lena, _bdir lineb, _bpos posb, int64 lenb, RGBc color, int32 op)
-				{
-				MTOOLS_ASSERT((posa.x == posb.x) && (posa.y == posb.y));
-				if (checkrange)
-					{
-					iBox2 B(0, _lx - 1, 0, _ly - 1);
-					int64 r = _move_inside_box(linea, posa, B); // move the first line into the box. 
-					if (r < 0) return; // nothing to draw
-					lena -= r;
-					_move_line(lineb, posb, r); // move the second line
-					lenb -= r;
-					lena = std::min<int64>(lena, _lenght_inside_box(linea, posa, B)); // number of pixels still to draw. 
-					}
-				lena--;
-				lenb--;
-				int64 l = 0;
-				if (linea.x_major)
-					{
-					if (lineb.x_major)
-						{
-						while (l <= lena)
-							{
-							if ((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) _update_pixel_bresenham<blend, false, useop, false, useaa, side>(linea, posa, color, op, 0);
-							_move_line<true>(linea, posa);
-							_move_line<true>(lineb, posb);						
-							l++; 
-							}
-						}
-					else
-						{
-						while (l <= lena)
-							{
-							if ((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) _update_pixel_bresenham<blend, false, useop, false, useaa, side>(linea, posa, color, op, 0);
-							_move_line<true>(linea, posa);
-							_move_line<false>(lineb, posb);
-							l++;
-							}
-						}
-					}
-				else
-					{
-					if (lineb.x_major)
-						{
-						while (l <= lena)
-							{
-							if ((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) _update_pixel_bresenham<blend, false, useop, false, useaa, side>(linea, posa, color, op, 0);
-							_move_line<false>(linea, posa);
-							_move_line<true>(lineb, posb);
-							l++;
-							}
-						}
-					else
-						{
-						while (l <= lena)
-							{
-							if ((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) _update_pixel_bresenham<blend, false, useop, false, useaa, side>(linea, posa, color, op, 0);
-							_move_line<false>(linea, posa);
-							_move_line<false>(lineb, posb);
-							l++;
-							}
-						}
-					}
-				}
-
-
-			/**
-			 * Draw the segment [P,Q] with the bresenham line algorithm while skipping the pixels
-			 * which also belong to the segment [P,P2]. (Always perfect.)
-			 * 
-			 * stop_before represented the number of pixel at the end of the line which are not drawn
-			 * i.e 0 = draw [P,Q], 
-			 *     1 = draw [P,Q[   
-			 *    >1 = remove more pixels  
-			 *    <0 = extend the line adding stop_before additional pixels.
-			 **/
-			template<bool blend, bool checkrange, bool useop, bool useaa, bool side> MTOOLS_FORCEINLINE void _lineBresenham_avoid(iVec2 P, iVec2 Q, iVec2 P2, RGBc color, int64 stop_before, int32 op)
-				{
-				if (P == Q) return;
-				_bdir linea;
-				_bpos posa;
-				int64 lena = _init_line(P, Q, linea, posa) + 1 - stop_before;
-				_bdir lineb;
-				_bpos posb;
-				int64 lenb = _init_line(P, P2, lineb, posb) + 1;
-				_lineBresenham_avoid<blend, checkrange, useop, useaa, side>(linea, posa, lena, lineb, posb, lenb, color, op);
-				}
-
-
-
-			/**
-			* Draw the segment [a, a + lena[ while avoiding segments [b, b+ lenb[ and [c, c+ lenc[ 
-			* a,b,c must share the same starting pixel. 
-			**/
-			template<bool blend, bool checkrange, bool useop, bool useaa, bool side> void _lineBresenham_avoid(_bdir linea, _bpos posa, int64 lena, _bdir lineb, _bpos posb, int64 lenb, _bdir linec, _bpos posc, int64 lenc, RGBc color, int32 op)
-				{
-				MTOOLS_ASSERT((posa.x == posb.x) && (posa.y == posb.y));
-				MTOOLS_ASSERT((posa.x == posc.x) && (posa.y == posc.y));
-				if (checkrange)
-					{
-					iBox2 B(0, _lx - 1, 0, _ly - 1);
-					int64 r = _move_inside_box(linea, posa, B); // move the first line into the box. 
-					if (r < 0) return; // nothing to draw
-					lena -= r;
-					_move_line(lineb, posb, r); // move the second line
-					lenb -= r;
-					_move_line(linec, posc, r); // move the third line
-					lenc -= r;
-					lena = std::min<int64>(lena, _lenght_inside_box(linea, posa, B)); // number of pixels still to draw. 
-					}
-				lena--;
-				lenb--;
-				lenc--;
-				int64 l = 0;
-				if (linea.x_major)
-					{
-					if (lineb.x_major)
-						{
-						if (linec.x_major)
-							{
-							while (l <= lena)
-								{
-								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _update_pixel_bresenham<blend, false, useop, false, useaa, side>(linea, posa, color, op, 0);
-								_move_line<true>(linea, posa); 
-								_move_line<true>(lineb, posb); 
-								_move_line<true>(linec, posc);
-								l++;
-								}
-							}
-						else
-							{
-							while (l <= lena)
-								{
-								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _update_pixel_bresenham<blend, false, useop, false, useaa, side>(linea, posa, color, op, 0);
-								_move_line<true>(linea, posa);
-								_move_line<true>(lineb, posb);
-								_move_line<false>(linec, posc);
-								l++;
-								}
-							}
-						}
-					else
-						{
-						if (linec.x_major)
-							{
-							while (l <= lena)
-								{
-								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _update_pixel_bresenham<blend, false, useop, false, useaa, side>(linea, posa, color, op, 0);
-								_move_line<true>(linea, posa);
-								_move_line<false>(lineb, posb);
-								_move_line<true>(linec, posc);
-								l++;
-								}
-							}
-						else
-							{
-							while (l <= lena)
-								{
-								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _update_pixel_bresenham<blend, false, useop, false, useaa, side>(linea, posa, color, op, 0);
-								_move_line<true>(linea, posa);
-								_move_line<false>(lineb, posb);
-								_move_line<false>(linec, posc);
-								l++;
-								}
-							}
-						}
-					}
-				else
-					{
-					if (lineb.x_major)
-						{
-						if (linec.x_major)
-							{
-							while (l <= lena)
-								{
-								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _update_pixel_bresenham<blend, false, useop, false, useaa, side>(linea, posa, color, op, 0);
-								_move_line<false>(linea, posa);
-								_move_line<true>(lineb, posb);
-								_move_line<true>(linec, posc);
-								l++;
-								}
-							}
-						else
-							{
-							while (l <= lena)
-								{
-								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _update_pixel_bresenham<blend, false, useop, false, useaa, side>(linea, posa, color, op, 0);
-								_move_line<false>(linea, posa);
-								_move_line<true>(lineb, posb);
-								_move_line<false>(linec, posc);
-								l++;
-								}
-							}
-						}
-					else
-						{
-						if (linec.x_major)
-							{
-							while (l <= lena)
-								{
-								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _update_pixel_bresenham<blend, false, useop, false, useaa, side>(linea, posa, color, op, 0);
-								_move_line<false>(linea, posa);
-								_move_line<false>(lineb, posb);
-								_move_line<true>(linec, posc);
-								l++;
-								}
-							}
-						else
-							{
-							while (l <= lena)
-								{
-								if (((l > lenb) || (posa.x != posb.x) || (posa.y != posb.y)) && ((l > lenc) || (posa.x != posc.x) || (posa.y != posc.y))) _update_pixel_bresenham<blend, false, useop, false, useaa, side>(linea, posa, color, op, 0);
-								_move_line<false>(linea, posa);
-								_move_line<false>(lineb, posb);
-								_move_line<false>(linec, posc);
-								l++;
-								}
-							}
-						}
-					}
-				}
-
-
-			/**
-			* Draw the segment [P,Q] with the bresenham line algorithm while skipping the pixels
-			* which also belong to the segments [P,P2] and [P,P3].  (always perfect.)
-			*
-			* stop_before represented the number of pixel at the end of the line which are not drawn
-			* i.e 0 = draw [P,Q],
-			*     1 = draw [P,Q[
-			*    >1 = remove som more pixels
-			*    <0 = extend the line adding stop_before additional pixels.
-			**/
-			template<bool blend, bool checkrange, bool useop, bool useaa, bool side> MTOOLS_FORCEINLINE void _lineBresenham_avoid(iVec2 P, iVec2 Q, iVec2 P2, iVec2 P3, RGBc color, int64 stop_before, int32 op)
-				{
-				if ((P2 == P3)||(P3 == P)) { _lineBresenham_avoid<blend, checkrange, useop, useaa, side>(P, Q, P2, color, stop_before, op); return; }
-				if (P2 == P) { _lineBresenham_avoid<blend, checkrange, useop, useaa, side>(P, Q, P3, color, stop_before, op); return; }
-				if (P == Q) return;
-				_bdir linea;
-				_bpos posa;
-				int64 lena = _init_line(P, Q, linea, posa) + 1 - stop_before;
-				_bdir lineb;
-				_bpos posb;
-				int64 lenb = _init_line(P, P2, lineb, posb) + 1;
-				_bdir linec;
-				_bpos posc;
-				int64 lenc = _init_line(P, P3, linec, posc) + 1;
-				_lineBresenham_avoid<blend, checkrange, useop, useaa, side>(linea, posa, lena, lineb, posb, lenb, linec, posc, lenc, color, op);
-				}
-
-
-			/**
-			* Draw the (open) segment ]a, a+ lena[ while avoiding segments [b, b + lenb[ and [c, c+ lenc[
-			* 
-			* a and b must share the same pixel
-			* a + lena and c must share the same pixel
-			* TRIANGLE CONDITION: b + lenb and c + lenc must share the same pixel (otherwise, use _lineBresenham_avoid_both_sides() method).
-			**/
-			template<bool blend, bool checkrange, bool useop, bool useaa, bool side> MTOOLS_FORCEINLINE void _lineBresenham_avoid_both_sides_triangle(_bdir linea, _bpos posa, int64 lena, _bdir lineb, _bpos posb, int64 lenb, _bdir linec, _bpos posc, int64 lenc, RGBc color, int32 op)
-				{
-				MTOOLS_ASSERT((posa.x == posb.x) && (posa.y == posb.y));
-				int64 G = lenb - lenc;
-				if (G > lena) { G = lena; } else { if (G < -lena) { G = -lena; } }
-				int64 lP = 1 + ((lena + G) >> 1);
-				int64 lQ = 1 + ((lena - G) >> 1);
-				if (lP + lQ > lena + 1)
-					{
-					if (lP > lQ) { lP--; } else { lQ--; }
-					}
-				MTOOLS_ASSERT(lP + lQ == lena + 1);
-				_bdir linea2 = linea;
-				_bpos posa2 = posa;
-				_move_line(linea2, posa2,lena);
-				_reverse_line(linea2, posa2);
-				MTOOLS_ASSERT((posa2.x == posc.x) && (posa2.y == posc.y));
-				_lineBresenham_avoid<blend, checkrange, useop, useaa,  side>(linea, posa, lena + 1 - lQ, lineb, posb, lenb, color, op);
-				_lineBresenham_avoid<blend, checkrange, useop, useaa, !side>(linea2, posa2, lena + 1 - lP, linec, posc, lenc, color, op);
-				}
-
-
-			/**
-			* Draw the segment [P,Q] with the bresenham line algorithm while skipping the pixels which also
-			* belong to the segments [P,R] and [Q,R];
-			**/
-			template<bool blend, bool checkrange, bool useop, bool useaa, bool side> MTOOLS_FORCEINLINE void _lineBresenham_avoid_both_sides_triangle(iVec2 P, iVec2 Q, iVec2 R, RGBc color, int32 op)
-				{
-				if ((P==Q)||(P == R)||(Q == R)) {  return; }
-				const int64 PQ = _lengthBresenham(P, Q);
-				int64 G = _lengthBresenham(P, R) - _lengthBresenham(Q, R);
-				if (G > PQ) { G = PQ; } else { if (G < -PQ) { G = -PQ; } }
-				int64 lP = 1 + ((PQ + G) >> 1);
-				int64 lQ = 1 + ((PQ - G) >> 1);
-				if (lP + lQ > PQ + 1)
-					{
-					if (lP > lQ) { lP--; } else { lQ--; }
-					}
-				MTOOLS_ASSERT(lP + lQ == PQ + 1);
-				_lineBresenham_avoid<blend, checkrange, useop, useaa, side>(P, Q, R, color, lQ, op);
-				_lineBresenham_avoid<blend, checkrange, useop, useaa, !side>(Q, P, R, color, lP, op);
-				}
-
-
-			/**
-			* Draw the (open) segment ]a, a+ lena[ while avoiding segments [b, b + lenb[ and [c, c+ lenc[
-			*
-			* a and b must share the same pixel
-			* a + lena and c must share the same pixel
-			*
-			* if the triangle condition is satified: b + lenb' and c + lenc' share the same pixel for some lenb' >= lenb and lenc' >= lenc 
-			* then use _lineBresenham_avoid_both_sides_triangle() instead which is faster.
-			**/
-			template<bool blend, bool checkrange, bool useop, bool useaa, bool side> MTOOLS_FORCEINLINE void _lineBresenham_avoid_both_sides(_bdir linea, _bpos posa, int64 lena, _bdir lineb, _bpos posb, int64 lenb, _bdir linec, _bpos posc, int64 lenc, RGBc color, int32 op)			
-				{
-				MTOOLS_ASSERT((posa.x == posb.x) && (posa.y == posb.y));
-				int64 pl = _lineBresenham_find_max_intersection<checkrange>(linea, posa, lena, lineb, posb, lenb);
-				if (pl > lena) { pl = lena; }	else if (pl < 1) pl = 1;
-
-				_bdir linea2 = linea;
-				_bpos posa2 = posa;
-				_move_line(linea2, posa2, lena);
-				_reverse_line(linea2, posa2);
-				MTOOLS_ASSERT((posa2.x == posc.x) && (posa2.y == posc.y));
-				int64 ql = _lineBresenham_find_max_intersection<checkrange>(linea2, posa2, lena, linec, posc, lenc);
-				if (ql > lena) { ql = lena; } else if (ql < 1) ql = 1;
-
-				int64 M = (pl + ((lena + 1) - ql)) >> 1; // much faster and usually good to just take M = L/2; 
-				_lineBresenham_avoid<blend, checkrange, useop, useaa, side>(linea, posa, M, lineb, posb, lenb, color, op);
-				_lineBresenham_avoid<blend, checkrange, useop, useaa, !side>(linea2, posa2, lena + 1 - M, linec, posc, lenc, color, op);
-				}
-
-
-			/**
-			 * Draw the segment [P,Q] with the bresenham line algorithm while skipping the pixels which also
-			 * belong to the segments [P,P2] and [Q,Q2].
-			 * 
-			 * -> If the lines are really close, it is possible that the drawing is not perfect and
-			 *    some pixels over an existing line are drawn (but this only happens for 'degenerate' cases).
-			 **/
-			template<bool blend, bool checkrange, bool useop, bool useaa, bool side> MTOOLS_FORCEINLINE void _lineBresenham_avoid_both_sides(iVec2 P, iVec2 Q, iVec2 P2, iVec2 Q2, RGBc color, int32 op)
-				{
-				const int64 L = _lengthBresenham(P, Q);				
-				int64 pl = _lineBresenham_find_max_intersection<checkrange>(P, Q, P2);
-				if (pl > L) { pl = L; } else if (pl < 1) pl = 1;
-				int64 ql = _lineBresenham_find_max_intersection<checkrange>(Q, P, Q2);
-				if (ql > L) { ql = L; } else if (ql < 1) ql = 1;
-				int64 M = (pl + ((L+1) - ql)) >> 1; // much faster and usually good to just take M = L/2; 
-				_lineBresenham_avoid<blend, checkrange, useop, useaa, side>(P, Q, P2, color, L + 1 - M, op);
-				_lineBresenham_avoid<blend, checkrange, useop, useaa, !side>(Q, P, Q2, color, M, op);
-				}
-
-
-			/**
-			* Draw the (open) segment ]a, a+ lena[ while avoiding segments [b, b + lenb[ and [c, c+ lenc[, [d, d+ lend[, [e, e+ lene[
-			*
-			* a, b and c must share the same pixel
-			* a + lena and d and e must share the same pixel
-			*
-			**/
-			template<bool blend, bool checkrange, bool useop, bool useaa, bool side> MTOOLS_FORCEINLINE void _lineBresenham_avoid_both_sides(_bdir linea, _bpos posa, int64 lena, 
-																																			 _bdir lineb, _bpos posb, int64 lenb, _bdir linec, _bpos posc, int64 lenc,				                                                                                                       				                                                                                                                             
-				                                                                                                                             _bdir lined, _bpos posd, int64 lend, _bdir linee, _bpos pose, int64 lene,				                                                                                                                             
-				                                                                                                                             RGBc color, int32 op)
-				{
-				MTOOLS_ASSERT((posa.x == posb.x) && (posa.y == posb.y));
-				MTOOLS_ASSERT((posa.x == posc.x) && (posa.y == posc.y));
-				int64 pl2 = _lineBresenham_find_max_intersection<checkrange>(linea, posa, lena, lineb, posb, lenb);
-				if (pl2 > lena) { pl2 = lena; } else if (pl2 < 1) pl2 = 1;
-				int64 pl3 = _lineBresenham_find_max_intersection<checkrange>(linea, posa, lena, linec, posc, lenc);
-				if (pl3 > lena) { pl3 = lena; } else if (pl3 < 1) pl3 = 1;
-				int64 pl = std::max<int64>(pl2, pl3);
-				_bdir linea2 = linea;
-				_bpos posa2 = posa;
-				_move_line(linea2, posa2, lena);
-				_reverse_line(linea2, posa2);
-				MTOOLS_ASSERT((posa2.x == posd.x) && (posa2.y == posd.y));
-				MTOOLS_ASSERT((posa2.x == pose.x) && (posa2.y == pose.y));
-				int64 ql2 = _lineBresenham_find_max_intersection<checkrange>(linea2, posa2, lena, lined, posd, lend);
-				if (ql2 > lena) { ql2 = lena; } else if (ql2 < 1) ql2 = 1;
-				int64 ql3 = _lineBresenham_find_max_intersection<checkrange>(linea2, posa2, lena, linee, pose, lene);
-				if (ql3 > lena) { ql3 = lena; } else if (ql3 < 1) ql3 = 1;
-				int64 ql = std::max<int64>(ql2, ql3);
-				int64 M = (pl + ((lena + 1) - ql)) >> 1; // much faster and usually good to just take M = L/2; 
-				_lineBresenham_avoid<blend, checkrange, useop, useaa, side>(linea, posa, M, lineb, posb, lenb, linec, posc, lenc, color, op);
-				_lineBresenham_avoid<blend, checkrange, useop, useaa, !side>(linea2, posa2, lena + 1 - M, lined, posd, lend, linee, pose, lene, color, op);
-				}
-
-
-
-			/**
-			* Draw the segment [P,Q] with the bresenham line algorithm while skipping the pixels which also
-			* belong to the segments [P,P2], [P,P3] and [Q,Q2], [Q,Q3].
-			*
-			* -> If the lines are really close, it is possible that the drawing is not perfect and
-			*    some pixels over an existing line are drawn (but this only happens for 'degenerate' cases).
-			**/
-			template<bool blend, bool checkrange, bool useop, bool useaa, bool side> inline void _lineBresenham_avoid_both_sides(iVec2 P, iVec2 Q, iVec2 P2, iVec2 P3, iVec2 Q2, iVec2 Q3, RGBc color, int32 op)
-				{
-				const int64 L = _lengthBresenham(P, Q);
-				int64 pl2 = _lineBresenham_find_max_intersection<checkrange>(P, Q, P2);
-				if (pl2 > L) { pl2 = L; } else if (pl2 < 1) pl2 = 1;
-				int64 pl3 = _lineBresenham_find_max_intersection<checkrange>(P, Q, P3);
-				if (pl3 > L) { pl3 = L; } else if (pl3 < 1) pl3 = 1;
-				int64 pl = std::max<int64>(pl2, pl3);
-				int64 ql2 = _lineBresenham_find_max_intersection<checkrange>(Q, P, Q2);
-				if (ql2 > L) { ql2 = L; } else if (ql2 < 1) ql2 = 1;
-				int64 ql3 = _lineBresenham_find_max_intersection<checkrange>(Q, P, Q3);
-				if (ql3 > L) { ql3 = L; } else if (ql3 < 1) ql3 = 1;
-				int64 ql = std::max<int64>(ql2, ql3);
-				int64 M = (pl + ((L + 1) - ql)) >> 1; // much faster and usually good to just take M = L/2; 
-				_lineBresenham_avoid<blend, checkrange, useop, useaa, side>(P, Q, P2, P3, color, L + 1 - M,op);
-				_lineBresenham_avoid<blend, checkrange, useop, useaa, !side>(Q, P, Q2, Q3, color, M,op);	
-				}
-
-
-
-			/**
-			 * Draw the interior of the triangle determined by the 3 Bresenham segments
-			 * [P1,P2], [P2,P3], [P3,P1]. 
-			 * 
-			 * The drawing is perfect (ie only the pixel strictly inside the triangle are drawn). 
-			 **/
-			template<bool blend, bool checkrange> inline void _draw_triangle_interior(iVec2 P1, iVec2 P2, iVec2 P3, RGBc fillcolor)
-				{
-				if (P1.Y() > P2.Y()) { mtools::swap(P1, P2); } // reorder by increasing Y value
-				if (P1.Y() > P3.Y()) { mtools::swap(P1, P3); } //
-				if (P2.Y() > P3.Y()) { mtools::swap(P2, P3); } //
-				if (P1.Y() == P3.Y()) return; //flat, nothing to draw. 
-				if (P1.Y() == P2.Y())
-					{
-					_fill_interior_angle<blend, checkrange>(P3, P1, P2, fillcolor, false);
-					return;
-					}
-				if (P2.Y() == P3.Y())
-					{
-					_fill_interior_angle<blend, checkrange>(P1, P2, P3, fillcolor, false);
-					return;
-					}
-				auto a1 = (P2.X() - P1.X())*(P3.Y() - P2.Y()); if (a1 < 0) a1 = -a1;
-				auto a2 = (P3.X() - P2.X())*(P2.Y() - P1.Y()); if (a2 < 0) a2 = -a2;
-				if (a1 > a2)
-					{
-					_fill_interior_angle<blend, checkrange>(P3, P2, P1, fillcolor, false);
-					_fill_interior_angle<blend, checkrange>(P1, P2, P3, fillcolor, true);
-					}
-				else
-					{
-					_fill_interior_angle<blend, checkrange>(P1, P2, P3, fillcolor, false);
-					_fill_interior_angle<blend, checkrange>(P3, P2, P1, fillcolor, true);
-					}
-				return;
-				}
-
-
-
-			/**
-			* Same as above but with non integer valued lines. 
-			**/
-			template<bool blend, bool checkrange> inline void _draw_triangle_interior(fVec2 fP1, fVec2 fP2, fVec2 fP3, RGBc fillcolor)
-				{
-				if (fP1.Y() > fP2.Y()) { mtools::swap(fP1, fP2); } // reorder by increasing Y value
-				if (fP1.Y() > fP3.Y()) { mtools::swap(fP1, fP3); } //
-				if (fP2.Y() > fP3.Y()) { mtools::swap(fP2, fP3); } //
-				int64 y1 = (int64)std::round(fP1.Y());
-				int64 y2 = (int64)std::round(fP2.Y());
-				int64 y3 = (int64)std::round(fP3.Y());
-				if (y1 == y3) return; //flat, nothing to draw. 
-				if (y1 == y2)
-					{
-					_bdir line31, line32;
-					_bpos pos31, pos32;
-					iVec2 P1, P2, P3;
-					_init_line(fP3, fP1, line31, pos31, P3, P1);
-					_init_line(fP3, fP2, line32, pos32, P3, P2);
-					_fill_interior_angle<blend, checkrange>(P3, P1, P2, line31, pos31, line32, pos32, fillcolor, false);
-					return;
-					}
-				if (y2 == y3)
-					{
-					_bdir line12, line13;
-					_bpos pos12, pos13;
-					iVec2 P1, P2, P3;
-					_init_line(fP1, fP2, line12, pos12, P1, P2);
-					_init_line(fP1, fP3, line13, pos13, P1, P3);
-					_fill_interior_angle<blend, checkrange>(P1, P2, P3, line12, pos12, line13, pos13, fillcolor, false);
-					return;
-					}
-				_bdir line32, line12, line31, line13, line23, line21;
-				_bpos pos32, pos12, pos31, pos13, pos23, pos21;
-				iVec2 P1, P2, P3;
-				int64 len12 = _init_line(fP1, fP2, line12, pos12, P1, P2);
-				int64 len32 = _init_line(fP3, fP2, line32, pos32, P3, P2);
-				int64 len13 = _init_line(fP1, fP3, line13, pos13, P1, P3);
-				line31 = line13; pos31 = pos13; _reverse_line(line31, pos31, len13);
-				line21 = line12; pos21 = pos12; _reverse_line(line21, pos21, len12);
-				line23 = line32; pos23 = pos32; _reverse_line(line23, pos23, len32);
-
-				bool fl3;
-				fVec2 vA = (fP3 - fP1), vB = (fP2 - fP1); 
-				double det = vA.X()*vB.Y() - vB.X()*vA.Y();
-				_move_line_y_dir(line23, pos23, 1);
-				_move_line_y_dir(line21, pos21, 1);
-				if (det < 0)
-					{
-					fl3 = (pos23.x < pos21.x) ? true : false;
-					}
-				else
-					{
-					fl3 = (pos23.x > pos21.x) ? true : false;
-					}
-				_fill_interior_angle<blend, checkrange>(P3, P2, P1, line32, pos32, line31, pos31, fillcolor, fl3);
-				_fill_interior_angle<blend, checkrange>(P1, P2, P3, line12, pos12, line13, pos13, fillcolor, !fl3);
-				return;
-				}
-
-
-			/** sub procedure called by _fill_interior_angle that does the actual filling. */
-			template<bool blend, bool checkrange> void _fill_interior_angle_sub(int64 dir, int64 y, int64 ytarget, _bdir & linea, _bpos & posa, _bdir & lineb, _bpos & posb, RGBc color)
-				{
-				// fix the range. 
-				if (dir > 0)
-					{
-					if (ytarget >= _ly) { ytarget = _ly; }
-					if ((ytarget <= 0)||(y >= ytarget)) return;
-					if (y < 0)
-						{ // move y up to 0
-						_move_line_y_dir(linea, posa, -y);
-						_move_line_y_dir(lineb, posb, -y);
-						y = 0;
-						MTOOLS_ASSERT((posa.y == y) && (posb.y == y));
-						}
-					}
-				else
-					{
-					if (ytarget < 0) { ytarget = -1; }
-					if ((ytarget >= _ly - 1) || (y <= ytarget)) return;
-					if (y > _ly - 1)
-						{ // move y down to ly-1
-						_move_line_y_dir(linea, posa, y - _ly + 1);
-						_move_line_y_dir(lineb, posb, y - _ly + 1);
-						y = _ly - 1;
-						MTOOLS_ASSERT((posa.y == y) && (posb.y == y));
-						}
-					}
-				if (linea.x_major)
-					{
-					if (lineb.x_major)
-						{
-						if (linea.stepx < 0)
-							{
-							if (lineb.stepx > 0)
-								{
-								while (y != ytarget)
-									{
-									_hline<blend, checkrange>(posa.x + 1, posb.x - 1, y, color);
-									_move_line_y_dir<true>(linea, posa);
-									_move_line_y_dir<true>(lineb, posb);
-									y += dir;
-									}
-								}
-							else
-								{
-								while (y != ytarget)
-									{
-									_move_line_y_dir<true>(lineb, posb);
-									_hline<blend, checkrange>(posa.x + 1, posb.x, y, color);
-									_move_line_y_dir<true>(linea, posa);
-									y += dir;
-									}
-								}
-							}
-						else
-							{
-							if (lineb.stepx > 0)
-								{
-								while (y != ytarget)
-									{
-									_move_line_y_dir<true>(linea, posa);
-									_hline<blend, checkrange>(posa.x, posb.x - 1, y, color);
-									_move_line_y_dir<true>(lineb, posb);
-									y += dir;
-									}
-								}
-							else
-								{
-								while (y != ytarget)
-									{
-									_move_line_y_dir<true>(linea, posa);
-									_move_line_y_dir<true>(lineb, posb);
-									_hline<blend, checkrange>(posa.x, posb.x, y, color);
-									y += dir;
-									}
-								}
-							}
-						}
-					else
-						{
-						if (linea.stepx < 0)
-							{
-							while (y != ytarget)
-								{
-								_hline<blend, checkrange>(posa.x + 1, posb.x - 1, y, color);
-								_move_line_y_dir<true>(linea, posa);
-								_move_line_y_dir<false>(lineb, posb);
-								y += dir;
-								}
-							}
-						else
-							{
-							while (y != ytarget)
-								{
-								_move_line_y_dir<true>(linea, posa);
-								_hline<blend, checkrange>(posa.x, posb.x - 1, y, color);
-								_move_line_y_dir<false>(lineb, posb);
-								y += dir;
-								}
-							}
-						}
-					}
-				else
-					{
-					if (lineb.x_major)
-						{
-						if (lineb.stepx > 0)
-							{
-							while (y != ytarget)
-								{
-								_hline<blend, checkrange>(posa.x + 1, posb.x - 1, y, color);
-								_move_line_y_dir<true>(lineb, posb);
-								_move_line_y_dir<false>(linea, posa);
-								y += dir;
-								}
-							}
-						else
-							{
-							while (y != ytarget)
-								{
-								_move_line_y_dir<true>(lineb, posb);
-								_hline<blend, checkrange>(posa.x + 1, posb.x, y, color);
-								_move_line_y_dir<false>(linea, posa);
-								y += dir;
-								}
-							}
-						}
-					else
-						{
-						while (y != ytarget)
-							{
-							_hline<blend, checkrange>(posa.x + 1, posb.x - 1, y, color);
-							_move_line_y_dir<false>(lineb, posb);
-							_move_line_y_dir<false>(linea, posa);
-							y += dir;
-							}
-						}
-					}
-				}
-
-
-			/**
-			 * Fill the interior delimited by the angle <Q1,P,Q2>
-			 * 
-			 * The filling occurs vertically (by scanlines) so the height P.Y()
-			 * should be either minimal or maximal among the 3 points
-			 * 
-			 * Filling is performed until height P1.Y() is reached. Parameter fill_last determined whether
-			 * this last line is also filled or not.
-			 * 
-			 * The method perform exact filling w.r.t. the Bresenham segment [P,Q1] and [P,Q2]. so no pixel
-			 * filled overlap these segment and no gap is left in between.
-			 * 
-			 * Optimized for speed.
-			 **/
-			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void _fill_interior_angle(iVec2 P, iVec2 Q1, iVec2 Q2, RGBc color,bool fill_last)
-				{
-				MTOOLS_ASSERT((P.Y() - Q1.Y())*(P.Y() - Q2.Y()) > 0);
-				int64 dir = (P.Y() > Q1.Y()) ? -1 : 1;				// y direction 
-				int64 y = P.Y();									// starting height
-				int64 ytarget = Q1.Y() + dir*(fill_last ? 1 : 0);	// height to reach	
-				if ((Q1.X() - P.X())*abs(Q2.Y() - P.Y())  > (Q2.X() - P.X())*abs(Q1.Y() - P.Y()))
-					{ // make sure Q1 is on the left and Q2 on the right. 
-					mtools::swap(Q1, Q2);
-					}
-				_bdir linea;
-				_bpos posa;
-				_init_line(P, Q1, linea, posa);
-				_bdir lineb;
-				_bpos posb;
-				_init_line(P, Q2, lineb, posb);
-				_fill_interior_angle_sub<blend, checkrange>(dir, y, ytarget, linea, posa, lineb, posb, color);
-				}
-
-
-			/** Same as above, but with non-integer valued points */  
-			template<bool blend, bool checkrange> inline void _fill_interior_angle(iVec2 P, iVec2 Q1, iVec2 Q2, _bdir linePQ1, _bpos posPQ1, _bdir linePQ2, _bpos posPQ2, RGBc color, bool fill_last)
-				{
-				MTOOLS_ASSERT((P.Y() - Q1.Y())*(P.Y() - Q2.Y()) > 0);
-				int64 dir = (P.Y() > Q1.Y()) ? -1 : 1;
-				int64 y = P.Y();
-				int64 ytarget = Q1.Y() + dir * (fill_last ? 1 : 0);
-				if ((Q1.X() - P.X())*abs(Q2.Y() - P.Y())  > (Q2.X() - P.X())*abs(Q1.Y() - P.Y()))
-					{ 
-					mtools::swap(linePQ1, linePQ2);
-					mtools::swap(posPQ1, posPQ2);
-					}
-				_fill_interior_angle_sub<blend,checkrange>(dir, y, ytarget, linePQ1, posPQ1, linePQ2, posPQ2, color);
-				}				
-
-
-
-
-			/**
-			 * Draw an antialiased segment [P1,P2| using Wu algorithm.
-			 * 
-			 * Set draw_last to true to draw point P2 and to false to draw only the open segment.
-			 **/
-			template<bool blend, bool checkrange, bool usepen>  MTOOLS_FORCEINLINE void _lineWuAA(iVec2 P1, iVec2 P2, RGBc color, bool draw_last, int32 penwidth)
+			/** used by _line_wu **/
+			template<bool blend, bool checkrange, bool usepen>  MTOOLS_FORCEINLINE void _line_wu_sub(iVec2 P1, iVec2 P2, RGBc color, bool draw_last, int32 penwidth)
 				{
 				int64 & x0 = P1.X(); int64 & y0 = P1.Y();
 				int64 & x1 = P2.X(); int64 & y1 = P2.Y();
@@ -8565,8 +7108,6 @@ namespace mtools
 					}
 				return; 
 				}
-
-
 
 
 			/**
@@ -8708,6 +7249,1433 @@ namespace mtools
 					}
 				}
 			*/
+
+
+
+			/******************************************************************************************************************************************************
+			*																				   																      *
+			*                                                        BRESENHAM SEGMENT AND TRIANGLE FILLING                                                       *
+			*																																					  *
+			*******************************************************************************************************************************************************/
+
+
+				/** update a pixel on a bresenham segment */
+				template<bool X_MAJOR, bool BLEND, bool CHECKRANGE, bool USEOP, bool USEPEN, int SIDE> MTOOLS_FORCEINLINE void _bseg_update_pixel(const internals_bseg::BSeg & seg, RGBc color, int32 op, int32 penwidth)
+				{
+					if (SIDE != 0)
+					{
+						int32 aa = seg.AA<SIDE, X_MAJOR>();
+						if (USEOP) { aa *= op; aa >>= 8; }
+						_updatePixel<BLEND, CHECKRANGE, true, USEPEN>(seg.X(), seg.Y(), color, aa, penwidth);
+					}
+					else
+					{
+						_updatePixel<BLEND, CHECKRANGE, USEOP, USEPEN>(seg.X(), seg.Y(), color, op, penwidth);
+					}
+				}
+
+
+				/** Used by _bseg_draw */
+				template<bool BLEND, bool USEOP, bool USEPEN, int SIDE> void _bseg_draw_template(internals_bseg::BSeg seg, bool draw_last, RGBc color, int32 penwidth, int32 op, bool checkrange = true)
+				{
+					if (draw_last) seg.inclen();
+					if (checkrange)
+					{
+						const int64 of = ((USEPEN) && (penwidth > 0)) ? (penwidth + 2) : 0;
+						iBox2 B(-of, _lx - 1 + of, -of, _ly - 1 + of);
+						seg.move_inside_box(B);												// move inside the box
+						seg.len() = std::min<int64>(seg.lenght_inside_box(B), seg.len());	// truncate to stay inside the box
+					}
+					if (seg.x_major())
+					{
+						const bool X_MAJOR = true;
+						while (seg.len() > 0) { _bseg_update_pixel<X_MAJOR, BLEND, USEPEN, USEOP, USEPEN, SIDE>(seg, color, op, penwidth); seg.move<X_MAJOR>(); }
+					}
+					else
+					{
+						const bool X_MAJOR = false;
+						while (seg.len() > 0) { _bseg_update_pixel<X_MAJOR, BLEND, USEPEN, USEOP, USEPEN, SIDE>(seg, color, op, penwidth); seg.move<X_MAJOR>(); }
+					}
+				}
+
+
+				/**
+				* Draw a Bresenham segment.
+				*
+				* @param	seg		  	segment to draw.
+				* @param	draw_last 	true to draw the endpoint.
+				* @param	color	  	color.
+				* @param	penwidth  	(Optional) if positive, use larger pen.
+				* @param	blend	  	(Optional) true for blending.
+				* @param	side	  	(Optional) 0 for no side AA and +/-1 for side AA.
+				* @param	op		  	(Optional) opacity to apply if 0 <= op <= 256.
+				* @param	checkrange	(Optional) True to check the range (default). Set it to false only if it
+				* 						is sure that the segment does not exit the image.
+				**/
+				void _bseg_draw(const internals_bseg::BSeg & seg, bool draw_last, RGBc color, int32 penwidth = 0, bool blend = true, int side = 0, int32 op = -1, bool checkrange = true)
+				{
+					if (op == 0) return;
+					const bool useop = ((op > 0) && (op < 256));
+					const bool usepen = (penwidth > 0);
+					if (side > 0)
+					{
+						const int SIDE = 1;
+						if (usepen)
+						{
+							const bool USEPEN = true;
+							if (useop)
+							{
+								const bool USEOP = true;
+								if (blend)
+								{
+									const bool BLEND = true;
+									_bseg_draw_template<BLEND, USEOP, USEPEN, SIDE>(seg, draw_last, color, penwidth, op, checkrange);
+								}
+								else
+								{
+									const bool BLEND = false;
+									_bseg_draw_template<BLEND, USEOP, USEPEN, SIDE>(seg, draw_last, color, penwidth, op, checkrange);
+								}
+							}
+							else
+							{
+								const bool USEOP = false;
+								if (blend)
+								{
+									const bool BLEND = true;
+									_bseg_draw_template<BLEND, USEOP, USEPEN, SIDE>(seg, draw_last, color, penwidth, op, checkrange);
+								}
+								else
+								{
+									const bool BLEND = false;
+									_bseg_draw_template<BLEND, USEOP, USEPEN, SIDE>(seg, draw_last, color, penwidth, op, checkrange);
+								}
+							}
+						}
+						else
+						{
+							const bool USEPEN = false;
+							if (useop)
+							{
+								const bool USEOP = true;
+								if (blend)
+								{
+									const bool BLEND = true;
+									_bseg_draw_template<BLEND, USEOP, USEPEN, SIDE>(seg, draw_last, color, penwidth, op, checkrange);
+								}
+								else
+								{
+									const bool BLEND = false;
+									_bseg_draw_template<BLEND, USEOP, USEPEN, SIDE>(seg, draw_last, color, penwidth, op, checkrange);
+								}
+							}
+							else
+							{
+								const bool USEOP = false;
+								if (blend)
+								{
+									const bool BLEND = true;
+									_bseg_draw_template<BLEND, USEOP, USEPEN, SIDE>(seg, draw_last, color, penwidth, op, checkrange);
+								}
+								else
+								{
+									const bool BLEND = false;
+									_bseg_draw_template<BLEND, USEOP, USEPEN, SIDE>(seg, draw_last, color, penwidth, op, checkrange);
+								}
+							}
+						}
+					}
+					else if (side < 0)
+					{
+						const int SIDE = -1;
+						if (usepen)
+						{
+							const bool USEPEN = true;
+							if (useop)
+							{
+								const bool USEOP = true;
+								if (blend)
+								{
+									const bool BLEND = true;
+									_bseg_draw_template<BLEND, USEOP, USEPEN, SIDE>(seg, draw_last, color, penwidth, op, checkrange);
+								}
+								else
+								{
+									const bool BLEND = false;
+									_bseg_draw_template<BLEND, USEOP, USEPEN, SIDE>(seg, draw_last, color, penwidth, op, checkrange);
+								}
+							}
+							else
+							{
+								const bool USEOP = false;
+								if (blend)
+								{
+									const bool BLEND = true;
+									_bseg_draw_template<BLEND, USEOP, USEPEN, SIDE>(seg, draw_last, color, penwidth, op, checkrange);
+								}
+								else
+								{
+									const bool BLEND = false;
+									_bseg_draw_template<BLEND, USEOP, USEPEN, SIDE>(seg, draw_last, color, penwidth, op, checkrange);
+								}
+							}
+						}
+						else
+						{
+							const bool USEPEN = false;
+							if (useop)
+							{
+								const bool USEOP = true;
+								if (blend)
+								{
+									const bool BLEND = true;
+									_bseg_draw_template<BLEND, USEOP, USEPEN, SIDE>(seg, draw_last, color, penwidth, op, checkrange);
+								}
+								else
+								{
+									const bool BLEND = false;
+									_bseg_draw_template<BLEND, USEOP, USEPEN, SIDE>(seg, draw_last, color, penwidth, op, checkrange);
+								}
+							}
+							else
+							{
+								const bool USEOP = false;
+								if (blend)
+								{
+									const bool BLEND = true;
+									_bseg_draw_template<BLEND, USEOP, USEPEN, SIDE>(seg, draw_last, color, penwidth, op, checkrange);
+								}
+								else
+								{
+									const bool BLEND = false;
+									_bseg_draw_template<BLEND, USEOP, USEPEN, SIDE>(seg, draw_last, color, penwidth, op, checkrange);
+								}
+							}
+						}
+					}
+					else
+					{
+						const int SIDE = 0;
+						if (usepen)
+						{
+							const bool USEPEN = true;
+							if (useop)
+							{
+								const bool USEOP = true;
+								if (blend)
+								{
+									const bool BLEND = true;
+									_bseg_draw_template<BLEND, USEOP, USEPEN, SIDE>(seg, draw_last, color, penwidth, op, checkrange);
+								}
+								else
+								{
+									const bool BLEND = false;
+									_bseg_draw_template<BLEND, USEOP, USEPEN, SIDE>(seg, draw_last, color, penwidth, op, checkrange);
+								}
+							}
+							else
+							{
+								const bool USEOP = false;
+								if (blend)
+								{
+									const bool BLEND = true;
+									_bseg_draw_template<BLEND, USEOP, USEPEN, SIDE>(seg, draw_last, color, penwidth, op, checkrange);
+								}
+								else
+								{
+									const bool BLEND = false;
+									_bseg_draw_template<BLEND, USEOP, USEPEN, SIDE>(seg, draw_last, color, penwidth, op, checkrange);
+								}
+							}
+						}
+						else
+						{
+							const bool USEPEN = false;
+							if (useop)
+							{
+								const bool USEOP = true;
+								if (blend)
+								{
+									const bool BLEND = true;
+									_bseg_draw_template<BLEND, USEOP, USEPEN, SIDE>(seg, draw_last, color, penwidth, op, checkrange);
+								}
+								else
+								{
+									const bool BLEND = false;
+									_bseg_draw_template<BLEND, USEOP, USEPEN, SIDE>(seg, draw_last, color, penwidth, op, checkrange);
+								}
+							}
+							else
+							{
+								const bool USEOP = false;
+								if (blend)
+								{
+									const bool BLEND = true;
+									_bseg_draw_template<BLEND, USEOP, USEPEN, SIDE>(seg, draw_last, color, penwidth, op, checkrange);
+								}
+								else
+								{
+									const bool BLEND = false;
+									_bseg_draw_template<BLEND, USEOP, USEPEN, SIDE>(seg, draw_last, color, penwidth, op, checkrange);
+								}
+							}
+						}
+					}
+				}
+
+
+				/** used by _bseg_avoid1 */
+				template<bool BLEND, bool USEOP, int SIDE> void _bseg_avoid1_template(internals_bseg::BSeg segA, bool lastA, internals_bseg::BSeg segB, bool lastB, RGBc color, int32 op, bool checkrange = true)
+				{
+					MTOOLS_ASSERT(segA == segB); // same start position
+					if (lastA) segA.inclen();
+					if (lastB) segB.inclen();
+					if (checkrange)
+					{
+						iBox2 B(0, _lx - 1, 0, _ly - 1);
+						int64 r = segA.move_inside_box(B);
+						if (segA.len() <= 0) return;
+						segB.move(r);																// move the second line by the same amount.
+						segA.len() = std::min<int64>(segA.lenght_inside_box(B), segA.len());		// truncate to stay inside the box
+					}
+					int64 lena = segA.len() - 1;
+					int64 lenb = segB.len() - 1;
+					int64 l = 0;
+					if (segA.x_major())
+					{
+						const bool X_MAJOR = true;
+						while (l <= lena)
+						{
+							if ((l > lenb) || (segA != segB)) _bseg_update_pixel<X_MAJOR, BLEND, false, USEOP, false, SIDE>(segA, color, op, 0);
+							segA.move<X_MAJOR>(); segB.move(); l++;
+						}
+					}
+					else
+					{
+						const bool X_MAJOR = false;
+						while (l <= lena)
+						{
+							if ((l > lenb) || (segA != segB)) _bseg_update_pixel<X_MAJOR, BLEND, false, USEOP, false, SIDE>(segA, color, op, 0);
+							segA.move<X_MAJOR>(); segB.move(); l++;
+						}
+					}
+				}
+
+
+				/**
+				* Draw the bresenham segment segA while avoiding segB
+				*
+				*            /
+				*          B/
+				*          /
+				*         +------A-------
+				*
+				* @param	segA	  	segment to draw.
+				* @param	lastA	  	true to consider the closed segment.
+				* @param	segB	  	segment to avoid : must share the same start pixel as segA.
+				* @param	lastB	  	true to consider the closed segment.
+				* @param	color	  	color to use.
+				* @param	blend	  	(Optional) true to use blending.
+				* @param	side	  	(Optional) 0 for no side AA and +/-1 for side AA.
+				* @param	op		  	(Optional) opacity to apply if 0 <= op <= 256.
+				* @param	checkrange	(Optional) True to check the range (default). Set it to false only if it
+				* 						is sure that the segment does not exit the image.
+				**/
+				void _bseg_avoid1(const internals_bseg::BSeg & segA, bool lastA, const internals_bseg::BSeg & segB, bool lastB, RGBc color, bool blend = true, int side = 0, int32 op = -1, bool checkrange = true)
+				{
+					if (op == 0) return;
+					const bool useop = ((op > 0) && (op < 256));
+					if (side > 0)
+					{
+						const int SIDE = 1;
+						if (useop)
+						{
+							const bool USEOP = true;
+							if (blend)
+							{
+								const bool BLEND = true;
+								_bseg_avoid1_template<BLEND, USEOP, SIDE>(segA, lastA, segB, lastB, color, op, checkrange);
+							}
+							else
+							{
+								const bool BLEND = false;
+								_bseg_avoid1_template<BLEND, USEOP, SIDE>(segA, lastA, segB, lastB, color, op, checkrange);
+							}
+						}
+						else
+						{
+							const bool USEOP = false;
+							if (blend)
+							{
+								const bool BLEND = true;
+								_bseg_avoid1_template<BLEND, USEOP, SIDE>(segA, lastA, segB, lastB, color, op, checkrange);
+							}
+							else
+							{
+								const bool BLEND = false;
+								_bseg_avoid1_template<BLEND, USEOP, SIDE>(segA, lastA, segB, lastB, color, op, checkrange);
+							}
+						}
+					}
+					else if (side < 0)
+					{
+						const int SIDE = -1;
+						if (useop)
+						{
+							const bool USEOP = true;
+							if (blend)
+							{
+								const bool BLEND = true;
+								_bseg_avoid1_template<BLEND, USEOP, SIDE>(segA, lastA, segB, lastB, color, op, checkrange);
+							}
+							else
+							{
+								const bool BLEND = false;
+								_bseg_avoid1_template<BLEND, USEOP, SIDE>(segA, lastA, segB, lastB, color, op, checkrange);
+							}
+						}
+						else
+						{
+							const bool USEOP = false;
+							if (blend)
+							{
+								const bool BLEND = true;
+								_bseg_avoid1_template<BLEND, USEOP, SIDE>(segA, lastA, segB, lastB, color, op, checkrange);
+							}
+							else
+							{
+								const bool BLEND = false;
+								_bseg_avoid1_template<BLEND, USEOP, SIDE>(segA, lastA, segB, lastB, color, op, checkrange);
+							}
+						}
+					}
+					else
+					{
+						const int SIDE = 0;
+						if (useop)
+						{
+							const bool USEOP = true;
+							if (blend)
+							{
+								const bool BLEND = true;
+								_bseg_avoid1_template<BLEND, USEOP, SIDE>(segA, lastA, segB, lastB, color, op, checkrange);
+							}
+							else
+							{
+								const bool BLEND = false;
+								_bseg_avoid1_template<BLEND, USEOP, SIDE>(segA, lastA, segB, lastB, color, op, checkrange);
+							}
+						}
+						else
+						{
+							const bool USEOP = false;
+							if (blend)
+							{
+								const bool BLEND = true;
+								_bseg_avoid1_template<BLEND, USEOP, SIDE>(segA, lastA, segB, lastB, color, op, checkrange);
+							}
+							else
+							{
+								const bool BLEND = false;
+								_bseg_avoid1_template<BLEND, USEOP, SIDE>(segA, lastA, segB, lastB, color, op, checkrange);
+							}
+						}
+					}
+				}
+
+
+				/** Used by _bseg_avoid2 */
+				template<bool BLEND, bool USEOP, int SIDE> void _bseg_avoid2_template(internals_bseg::BSeg segA, bool lastA, internals_bseg::BSeg segB, bool lastB, internals_bseg::BSeg segC, bool lastC, RGBc color, int32 op, bool checkrange)
+				{
+					MTOOLS_ASSERT(segA == segB);
+					MTOOLS_ASSERT(segA == segC);
+					if (lastA) segA.inclen();
+					if (lastB) segB.inclen();
+					if (lastC) segC.inclen();
+					if (checkrange)
+					{
+						iBox2 B(0, _lx - 1, 0, _ly - 1);
+						int64 r = segA.move_inside_box(B);
+						if (segA.len() <= 0) return;
+						segB.move(r);																// move the second line by the same amount.
+						segC.move(r);																// move the third line by the same amount.
+						segA.len() = std::min<int64>(segA.lenght_inside_box(B), segA.len());		// truncate to stay inside the box
+					}
+					int64 lena = segA.len() - 1;
+					int64 lenb = segB.len() - 1;
+					int64 lenc = segC.len() - 1;
+					int64 l = 0;
+					if (segA.x_major())
+					{
+						const bool X_MAJOR = true;
+						while (l <= lena)
+						{
+							if (((l > lenb) || (segA != segB)) && ((l > lenc) || (segA != segC))) _bseg_update_pixel<X_MAJOR, BLEND, false, USEOP, false, SIDE>(segA, color, op, 0);
+							segA.move<X_MAJOR>(); segB.move(); segC.move(); l++;
+						}
+					}
+					else
+					{
+						const bool X_MAJOR = false;
+						while (l <= lena)
+						{
+							if (((l > lenb) || (segA != segB)) && ((l > lenc) || (segA != segC))) _bseg_update_pixel<X_MAJOR, BLEND, false, USEOP, false, SIDE>(segA, color, op, 0);
+							segA.move<X_MAJOR>(); segB.move(); segC.move(); l++;
+						}
+					}
+				}
+
+
+				/**
+				* Draw the bresenham segment segA while avoiding segB and segC
+				*
+				*      \     /
+				*      C\   /B
+				*        \ /
+				*         +------A-------
+				*
+				* @param	segA	  	segment to draw.
+				* @param	lastA	  	true to consider the closed segment.
+				* @param	segB	  	first segment to avoid : must share the same start pixel as segA.
+				* @param	lastB	  	true to consider the closed segment.
+				* @param	segC	  	second segment to avoid : must share the same start pixel as segA.
+				* @param	lastC	  	true to consider the closed segment.
+				* @param	color	  	color to use.
+				* @param	blend	  	(Optional) true to use blending.
+				* @param	side	  	(Optional) 0 for no side AA and +/-1 for side AA.
+				* @param	op		  	(Optional) opacity to apply if 0 <= op <= 256.
+				* @param	checkrange	(Optional) True to check the range (default). Set it to false only if it
+				* 						is sure that the segment does not exit the image.
+				**/
+				void _bseg_avoid2(const internals_bseg::BSeg & segA, bool lastA, const internals_bseg::BSeg & segB, bool lastB, const internals_bseg::BSeg & segC, bool lastC, RGBc color, bool blend = true, int side = 0, int32 op = -1, bool checkrange = true)
+				{
+					if (op == 0) return;
+					const bool useop = ((op > 0) && (op < 256));
+					if (side > 0)
+					{
+						const int SIDE = 1;
+						if (useop)
+						{
+							const bool USEOP = true;
+							if (blend)
+							{
+								const bool BLEND = true;
+								_bseg_avoid2_template<BLEND, USEOP, SIDE>(segA, lastA, segB, lastB, segC, lastC, color, op, checkrange);
+							}
+							else
+							{
+								const bool BLEND = false;
+								_bseg_avoid2_template<BLEND, USEOP, SIDE>(segA, lastA, segB, lastB, segC, lastC, color, op, checkrange);
+							}
+						}
+						else
+						{
+							const bool USEOP = false;
+							if (blend)
+							{
+								const bool BLEND = true;
+								_bseg_avoid2_template<BLEND, USEOP, SIDE>(segA, lastA, segB, lastB, segC, lastC, color, op, checkrange);
+							}
+							else
+							{
+								const bool BLEND = false;
+								_bseg_avoid2_template<BLEND, USEOP, SIDE>(segA, lastA, segB, lastB, segC, lastC, color, op, checkrange);
+							}
+						}
+					}
+					else if (side < 0)
+					{
+						const int SIDE = -1;
+						if (useop)
+						{
+							const bool USEOP = true;
+							if (blend)
+							{
+								const bool BLEND = true;
+								_bseg_avoid2_template<BLEND, USEOP, SIDE>(segA, lastA, segB, lastB, segC, lastC, color, op, checkrange);
+							}
+							else
+							{
+								const bool BLEND = false;
+								_bseg_avoid2_template<BLEND, USEOP, SIDE>(segA, lastA, segB, lastB, segC, lastC, color, op, checkrange);
+							}
+						}
+						else
+						{
+							const bool USEOP = false;
+							if (blend)
+							{
+								const bool BLEND = true;
+								_bseg_avoid2_template<BLEND, USEOP, SIDE>(segA, lastA, segB, lastB, segC, lastC, color, op, checkrange);
+							}
+							else
+							{
+								const bool BLEND = false;
+								_bseg_avoid2_template<BLEND, USEOP, SIDE>(segA, lastA, segB, lastB, segC, lastC, color, op, checkrange);
+							}
+						}
+					}
+					else
+					{
+						const int SIDE = 0;
+						if (useop)
+						{
+							const bool USEOP = true;
+							if (blend)
+							{
+								const bool BLEND = true;
+								_bseg_avoid2_template<BLEND, USEOP, SIDE>(segA, lastA, segB, lastB, segC, lastC, color, op, checkrange);
+							}
+							else
+							{
+								const bool BLEND = false;
+								_bseg_avoid2_template<BLEND, USEOP, SIDE>(segA, lastA, segB, lastB, segC, lastC, color, op, checkrange);
+							}
+						}
+						else
+						{
+							const bool USEOP = false;
+							if (blend)
+							{
+								const bool BLEND = true;
+								_bseg_avoid2_template<BLEND, USEOP, SIDE>(segA, lastA, segB, lastB, segC, lastC, color, op, checkrange);
+							}
+							else
+							{
+								const bool BLEND = false;
+								_bseg_avoid2_template<BLEND, USEOP, SIDE>(segA, lastA, segB, lastB, segC, lastC, color, op, checkrange);
+							}
+						}
+					}
+				}
+
+
+				/** Used by _bseg_avoid11 */
+				template<bool BLEND, bool USEOP, int SIDE> void _bseg_avoid11_template(internals_bseg::BSeg segA, internals_bseg::BSeg segB, bool lastB, internals_bseg::BSeg segD, bool lastD, RGBc color, int32 op, bool checkrange)
+				{
+					MTOOLS_ASSERT(segA == segB);
+
+					if (lastB) segB.inclen();
+
+					int64 dd = (segA.len() - segD.len()) + (lastD ? 0 : 1); segD.len() = segA.len(); segD.reverse();	// D is now synchronized with A
+
+					if (checkrange)
+					{
+						iBox2 B(0, _lx - 1, 0, _ly - 1);
+						int64 r = segA.move_inside_box(B);
+						if (segA.len() <= 0) return;
+						segB.move(r);																// move the second line by the same amount.
+						segD.move(r); dd -= r;														// move the third line by the same amount.
+						segA.len() = std::min<int64>(segA.lenght_inside_box(B), segA.len());		// truncate to stay inside the box
+					}
+
+					int64 lena = segA.len() - 1;
+					int64 lenb = segB.len() - 1;
+					int64 l = 0;
+					if (segA.x_major())
+					{
+						const bool X_MAJOR = true;
+						while (l <= lena)
+						{
+							if (((l > lenb) || (segA != segB)) && ((l < dd) || (segA != segD))) _bseg_update_pixel<X_MAJOR, BLEND, false, USEOP, false, SIDE>(segA, color, op, 0);
+							segA.move<X_MAJOR>(); segB.move(); segD.move(); l++;
+						}
+					}
+					else
+					{
+						const bool X_MAJOR = false;
+						while (l <= lena)
+						{
+							if (((l > lenb) || (segA != segB)) && ((l < dd) || (segA != segD))) _bseg_update_pixel<X_MAJOR, BLEND, false, USEOP, false, SIDE>(segA, color, op, 0);
+							segA.move<X_MAJOR>(); segB.move(); segD.move(); l++;
+						}
+					}
+				}
+
+
+				/**
+				* Draw the bresenham segment segA while avoiding segB and segD (at opposite ends)
+				*
+				*            /        \
+				*          B/          \D
+				*          /            \
+				*         +------A-------+
+				*
+				* @param	segA	  	segment to draw.
+				* @param	segB	  	first segment to avoid : must share the same start pixel as segA.
+				* @param	lastB	  	true to consider the closed segment.
+				* @param	segD	  	second segment to avoid : its start pixel must be the end pixel of segA.
+				* @param	lastD	  	true to consider the closed segment.
+				* @param	color	  	color to use.
+				* @param	blend	  	(Optional) true to use blending.
+				* @param	side	  	(Optional) 0 for no side AA and +/-1 for side AA.
+				* @param	op		  	(Optional) opacity to apply if 0 <= op <= 256.
+				* @param	checkrange	(Optional) True to check the range (default). Set it to false only if it
+				* 						is sure that the segment does not exit the image.
+				**/
+				void _bseg_avoid11(const internals_bseg::BSeg & segA, const internals_bseg::BSeg & segB, bool lastB, const internals_bseg::BSeg & segD, bool lastD, RGBc color, bool blend = true, int side = 0, int32 op = -1, bool checkrange = true)
+				{
+					if (op == 0) return;
+					const bool useop = ((op > 0) && (op < 256));
+					if (side > 0)
+					{
+						const int SIDE = 1;
+						if (useop)
+						{
+							const bool USEOP = true;
+							if (blend)
+							{
+								const bool BLEND = true;
+								_bseg_avoid11_template<BLEND, USEOP, SIDE>(segA, segB, lastB, segD, lastD, color, op, checkrange);
+							}
+							else
+							{
+								const bool BLEND = false;
+								_bseg_avoid11_template<BLEND, USEOP, SIDE>(segA, segB, lastB, segD, lastD, color, op, checkrange);
+							}
+						}
+						else
+						{
+							const bool USEOP = false;
+							if (blend)
+							{
+								const bool BLEND = true;
+								_bseg_avoid11_template<BLEND, USEOP, SIDE>(segA, segB, lastB, segD, lastD, color, op, checkrange);
+							}
+							else
+							{
+								const bool BLEND = false;
+								_bseg_avoid11_template<BLEND, USEOP, SIDE>(segA, segB, lastB, segD, lastD, color, op, checkrange);
+							}
+						}
+					}
+					else if (side < 0)
+					{
+						const int SIDE = -1;
+						if (useop)
+						{
+							const bool USEOP = true;
+							if (blend)
+							{
+								const bool BLEND = true;
+								_bseg_avoid11_template<BLEND, USEOP, SIDE>(segA, segB, lastB, segD, lastD, color, op, checkrange);
+							}
+							else
+							{
+								const bool BLEND = false;
+								_bseg_avoid11_template<BLEND, USEOP, SIDE>(segA, segB, lastB, segD, lastD, color, op, checkrange);
+							}
+						}
+						else
+						{
+							const bool USEOP = false;
+							if (blend)
+							{
+								const bool BLEND = true;
+								_bseg_avoid11_template<BLEND, USEOP, SIDE>(segA, segB, lastB, segD, lastD, color, op, checkrange);
+							}
+							else
+							{
+								const bool BLEND = false;
+								_bseg_avoid11_template<BLEND, USEOP, SIDE>(segA, segB, lastB, segD, lastD, color, op, checkrange);
+							}
+						}
+					}
+					else
+					{
+						const int SIDE = 0;
+						if (useop)
+						{
+							const bool USEOP = true;
+							if (blend)
+							{
+								const bool BLEND = true;
+								_bseg_avoid11_template<BLEND, USEOP, SIDE>(segA, segB, lastB, segD, lastD, color, op, checkrange);
+							}
+							else
+							{
+								const bool BLEND = false;
+								_bseg_avoid11_template<BLEND, USEOP, SIDE>(segA, segB, lastB, segD, lastD, color, op, checkrange);
+							}
+						}
+						else
+						{
+							const bool USEOP = false;
+							if (blend)
+							{
+								const bool BLEND = true;
+								_bseg_avoid11_template<BLEND, USEOP, SIDE>(segA, segB, lastB, segD, lastD, color, op, checkrange);
+							}
+							else
+							{
+								const bool BLEND = false;
+								_bseg_avoid11_template<BLEND, USEOP, SIDE>(segA, segB, lastB, segD, lastD, color, op, checkrange);
+							}
+						}
+					}
+				}
+
+
+				/** Used by _bseg_avoid21 */
+				template<bool BLEND, bool USEOP, int SIDE> void _bseg_avoid21_template(internals_bseg::BSeg segA, internals_bseg::BSeg segB, bool lastB, internals_bseg::BSeg segC, bool lastC, internals_bseg::BSeg segD, bool lastD, RGBc color, int32 op, bool checkrange)
+				{
+					MTOOLS_ASSERT(segA == segB);
+					MTOOLS_ASSERT(segA == segC);
+
+					if (lastB) segB.inclen();
+					if (lastC) segC.inclen();
+
+					int64 dd = (segA.len() - segD.len()) + (lastD ? 0 : 1); segD.len() = segA.len(); segD.reverse();	// D is now synchronized with A
+
+					if (checkrange)
+					{
+						iBox2 B(0, _lx - 1, 0, _ly - 1);
+						int64 r = segA.move_inside_box(B);
+						if (segA.len() <= 0) return;
+						segB.move(r);
+						segC.move(r);
+						segD.move(r); dd -= r;
+						segA.len() = std::min<int64>(segA.lenght_inside_box(B), segA.len());
+					}
+
+					int64 lena = segA.len() - 1;
+					int64 lenb = segB.len() - 1;
+					int64 lenc = segC.len() - 1;
+					int64 l = 0;
+					if (segA.x_major())
+					{
+						const bool X_MAJOR = true;
+						while (l <= lena)
+						{
+							if (((l > lenb) || (segA != segB)) && ((l > lenc) || (segA != segC)) && ((l < dd) || (segA != segD))) _bseg_update_pixel<X_MAJOR, BLEND, false, USEOP, false, SIDE>(segA, color, op, 0);
+							segA.move<X_MAJOR>(); segB.move(); segC.move(); segD.move(); l++;
+						}
+					}
+					else
+					{
+						const bool X_MAJOR = false;
+						while (l <= lena)
+						{
+							if (((l > lenb) || (segA != segB)) && ((l > lenc) || (segA != segC)) && ((l < dd) || (segA != segD))) _bseg_update_pixel<X_MAJOR, BLEND, false, USEOP, false, SIDE>(segA, color, op, 0);
+							segA.move<X_MAJOR>(); segB.move(); segC.move(); segD.move(); l++;
+						}
+					}
+				}
+
+
+				/**
+				* Draw the bresenham segment segA while avoiding segB, segC and segD
+				*
+				*      \     /              /
+				*      C\   /B             /D
+				*        \ /              /
+				*         +------A-------+
+				*
+				* @param	segA	  	segment to draw.
+				* @param	segB	  	first segment to avoid : must share the same start pixel as segA.
+				* @param	lastB	  	true to consider the closed segment.
+				* @param	segC	  	second segment to avoid : must share the same start pixel as segA.
+				* @param	lastC	  	true to consider the closed segment.
+				* @param	segD	  	third segment to avoid : its start pixel must be the end pixel of segA.
+				* @param	lastD	  	true to consider the closed segment.
+				* @param	color	  	color to use.
+				* @param	blend	  	(Optional) true to use blending.
+				* @param	side	  	(Optional) 0 for no side AA and +/-1 for side AA.
+				* @param	op		  	(Optional) opacity to apply if 0 <= op <= 256.
+				* @param	checkrange	(Optional) True to check the range (default). Set it to false only if it
+				* 						is sure that the segment does not exit the image.
+				**/
+				void _bseg_avoid21(const internals_bseg::BSeg & segA, const internals_bseg::BSeg & segB, bool lastB, const internals_bseg::BSeg & segC, bool lastC, const internals_bseg::BSeg & segD, bool lastD,
+					RGBc color, bool blend = true, int side = 0, int32 op = -1, bool checkrange = true)
+				{
+					if (op == 0) return;
+					const bool useop = ((op > 0) && (op < 256));
+					if (side > 0)
+					{
+						const int SIDE = 1;
+						if (useop)
+						{
+							const bool USEOP = true;
+							if (blend)
+							{
+								const bool BLEND = true;
+								_bseg_avoid21_template<BLEND, USEOP, SIDE>(segA, segB, lastB, segC, lastC, segD, lastD, color, op, checkrange);
+							}
+							else
+							{
+								const bool BLEND = false;
+								_bseg_avoid21_template<BLEND, USEOP, SIDE>(segA, segB, lastB, segC, lastC, segD, lastD, color, op, checkrange);
+							}
+						}
+						else
+						{
+							const bool USEOP = false;
+							if (blend)
+							{
+								const bool BLEND = true;
+								_bseg_avoid21_template<BLEND, USEOP, SIDE>(segA, segB, lastB, segC, lastC, segD, lastD, color, op, checkrange);
+							}
+							else
+							{
+								const bool BLEND = false;
+								_bseg_avoid21_template<BLEND, USEOP, SIDE>(segA, segB, lastB, segC, lastC, segD, lastD, color, op, checkrange);
+							}
+						}
+					}
+					else if (side < 0)
+					{
+						const int SIDE = -1;
+						if (useop)
+						{
+							const bool USEOP = true;
+							if (blend)
+							{
+								const bool BLEND = true;
+								_bseg_avoid21_template<BLEND, USEOP, SIDE>(segA, segB, lastB, segC, lastC, segD, lastD, color, op, checkrange);
+							}
+							else
+							{
+								const bool BLEND = false;
+								_bseg_avoid21_template<BLEND, USEOP, SIDE>(segA, segB, lastB, segC, lastC, segD, lastD, color, op, checkrange);
+							}
+						}
+						else
+						{
+							const bool USEOP = false;
+							if (blend)
+							{
+								const bool BLEND = true;
+								_bseg_avoid21_template<BLEND, USEOP, SIDE>(segA, segB, lastB, segC, lastC, segD, lastD, color, op, checkrange);
+							}
+							else
+							{
+								const bool BLEND = false;
+								_bseg_avoid21_template<BLEND, USEOP, SIDE>(segA, segB, lastB, segC, lastC, segD, lastD, color, op, checkrange);
+							}
+						}
+					}
+					else
+					{
+						const int SIDE = 0;
+						if (useop)
+						{
+							const bool USEOP = true;
+							if (blend)
+							{
+								const bool BLEND = true;
+								_bseg_avoid21_template<BLEND, USEOP, SIDE>(segA, segB, lastB, segC, lastC, segD, lastD, color, op, checkrange);
+							}
+							else
+							{
+								const bool BLEND = false;
+								_bseg_avoid21_template<BLEND, USEOP, SIDE>(segA, segB, lastB, segC, lastC, segD, lastD, color, op, checkrange);
+							}
+						}
+						else
+						{
+							const bool USEOP = false;
+							if (blend)
+							{
+								const bool BLEND = true;
+								_bseg_avoid21_template<BLEND, USEOP, SIDE>(segA, segB, lastB, segC, lastC, segD, lastD, color, op, checkrange);
+							}
+							else
+							{
+								const bool BLEND = false;
+								_bseg_avoid21_template<BLEND, USEOP, SIDE>(segA, segB, lastB, segC, lastC, segD, lastD, color, op, checkrange);
+							}
+						}
+					}
+				}
+
+
+				/** Used by _bseg_avoid22 */
+				template<bool BLEND, bool USEOP, int SIDE> void _bseg_avoid22_template(internals_bseg::BSeg segA, internals_bseg::BSeg segB, bool lastB, internals_bseg::BSeg segC, bool lastC, internals_bseg::BSeg segD, bool lastD, internals_bseg::BSeg segE, bool lastE, RGBc color, int32 op, bool checkrange)
+				{
+					MTOOLS_ASSERT(segA == segB);
+					MTOOLS_ASSERT(segA == segC);
+
+					if (lastB) segB.inclen();
+					if (lastC) segC.inclen();
+
+					int64 dd = (segA.len() - segD.len()) + (lastD ? 0 : 1); segD.len() = segA.len(); segD.reverse();	// D is now synchronized with A
+					int64 ee = (segA.len() - segE.len()) + (lastE ? 0 : 1); segE.len() = segA.len(); segE.reverse();	// E is now synchronized with A
+
+					if (checkrange)
+					{
+						iBox2 B(0, _lx - 1, 0, _ly - 1);
+						int64 r = segA.move_inside_box(B);
+						if (segA.len() <= 0) return;
+						segB.move(r);
+						segC.move(r);
+						segD.move(r); dd -= r;
+						segE.move(r); ee -= r;
+						segA.len() = std::min<int64>(segA.lenght_inside_box(B), segA.len());
+					}
+
+					int64 lena = segA.len() - 1;
+					int64 lenb = segB.len() - 1;
+					int64 lenc = segC.len() - 1;
+					int64 l = 0;
+					if (segA.x_major())
+					{
+						const bool X_MAJOR = true;
+						while (l <= lena)
+						{
+							if (((l > lenb) || (segA != segB)) && ((l > lenc) || (segA != segC)) && ((l < dd) || (segA != segD)) && ((l < ee) || (segA != segE))) _bseg_update_pixel<X_MAJOR, BLEND, false, USEOP, false, SIDE>(segA, color, op, 0);
+							segA.move<X_MAJOR>(); segB.move(); segC.move(); segD.move(); segE.move(); l++;
+						}
+					}
+					else
+					{
+						const bool X_MAJOR = false;
+						while (l <= lena)
+						{
+							if (((l > lenb) || (segA != segB)) && ((l > lenc) || (segA != segC)) && ((l < dd) || (segA != segD)) && ((l < ee) || (segA != segE))) _bseg_update_pixel<X_MAJOR, BLEND, false, USEOP, false, SIDE>(segA, color, op, 0);
+							segA.move<X_MAJOR>(); segB.move(); segC.move(); segD.move(); segE.move(); l++;
+						}
+					}
+				}
+
+
+				/**
+				* Draw the bresenham segment segA while avoiding segB, segC and segD
+				*
+				*      \     /        \     /
+				*      C\   /B        E\   /D
+				*        \ /            \ /
+				*         +------A-------+
+				*
+				* @param	segA	  	segment to draw.
+				* @param	segB	  	first segment to avoid : must share the same start pixel as segA.
+				* @param	lastB	  	true to consider the closed segment.
+				* @param	segC	  	second segment to avoid : must share the same start pixel as segA.
+				* @param	lastC	  	true to consider the closed segment.
+				* @param	segD	  	third segment to avoid : its start pixel must be the end pixel of segA.
+				* @param	lastD	  	true to consider the closed segment.
+				* @param	segE	  	third segment to avoid : its start pixel must be the end pixel of segA.
+				* @param	lastE	  	true to consider the closed segment.
+				* @param	color	  	color to use.
+				* @param	blend	  	(Optional) true to use blending.
+				* @param	side	  	(Optional) 0 for no side AA and +/-1 for side AA.
+				* @param	op		  	(Optional) opacity to apply if 0 <= op <= 256.
+				* @param	checkrange	(Optional) True to check the range (default). Set it to false only if it
+				* 						is sure that the segment does not exit the image.
+				**/
+				void _bseg_avoid22(const internals_bseg::BSeg & segA, const internals_bseg::BSeg & segB, bool lastB, const internals_bseg::BSeg & segC, bool lastC, const internals_bseg::BSeg & segD, bool lastD, const internals_bseg::BSeg & segE, bool lastE,
+					RGBc color, bool blend = true, int side = 0, int32 op = -1, bool checkrange = true)
+				{
+					if (op == 0) return;
+					const bool useop = ((op > 0) && (op < 256));
+					if (side > 0)
+					{
+						const int SIDE = 1;
+						if (useop)
+						{
+							const bool USEOP = true;
+							if (blend)
+							{
+								const bool BLEND = true;
+								_bseg_avoid22_template<BLEND, USEOP, SIDE>(segA, segB, lastB, segC, lastC, segD, lastD, segE, lastE, color, op, checkrange);
+							}
+							else
+							{
+								const bool BLEND = false;
+								_bseg_avoid22_template<BLEND, USEOP, SIDE>(segA, segB, lastB, segC, lastC, segD, lastD, segE, lastE, color, op, checkrange);
+							}
+						}
+						else
+						{
+							const bool USEOP = false;
+							if (blend)
+							{
+								const bool BLEND = true;
+								_bseg_avoid22_template<BLEND, USEOP, SIDE>(segA, segB, lastB, segC, lastC, segD, lastD, segE, lastE, color, op, checkrange);
+							}
+							else
+							{
+								const bool BLEND = false;
+								_bseg_avoid22_template<BLEND, USEOP, SIDE>(segA, segB, lastB, segC, lastC, segD, lastD, segE, lastE, color, op, checkrange);
+							}
+						}
+					}
+					else if (side < 0)
+					{
+						const int SIDE = -1;
+						if (useop)
+						{
+							const bool USEOP = true;
+							if (blend)
+							{
+								const bool BLEND = true;
+								_bseg_avoid22_template<BLEND, USEOP, SIDE>(segA, segB, lastB, segC, lastC, segD, lastD, segE, lastE, color, op, checkrange);
+							}
+							else
+							{
+								const bool BLEND = false;
+								_bseg_avoid22_template<BLEND, USEOP, SIDE>(segA, segB, lastB, segC, lastC, segD, lastD, segE, lastE, color, op, checkrange);
+							}
+						}
+						else
+						{
+							const bool USEOP = false;
+							if (blend)
+							{
+								const bool BLEND = true;
+								_bseg_avoid22_template<BLEND, USEOP, SIDE>(segA, segB, lastB, segC, lastC, segD, lastD, segE, lastE, color, op, checkrange);
+							}
+							else
+							{
+								const bool BLEND = false;
+								_bseg_avoid22_template<BLEND, USEOP, SIDE>(segA, segB, lastB, segC, lastC, segD, lastD, segE, lastE, color, op, checkrange);
+							}
+						}
+					}
+					else
+					{
+						const int SIDE = 0;
+						if (useop)
+						{
+							const bool USEOP = true;
+							if (blend)
+							{
+								const bool BLEND = true;
+								_bseg_avoid22_template<BLEND, USEOP, SIDE>(segA, segB, lastB, segC, lastC, segD, lastD, segE, lastE, color, op, checkrange);
+							}
+							else
+							{
+								const bool BLEND = false;
+								_bseg_avoid22_template<BLEND, USEOP, SIDE>(segA, segB, lastB, segC, lastC, segD, lastD, segE, lastE, color, op, checkrange);
+							}
+						}
+						else
+						{
+							const bool USEOP = false;
+							if (blend)
+							{
+								const bool BLEND = true;
+								_bseg_avoid22_template<BLEND, USEOP, SIDE>(segA, segB, lastB, segC, lastC, segD, lastD, segE, lastE, color, op, checkrange);
+							}
+							else
+							{
+								const bool BLEND = false;
+								_bseg_avoid22_template<BLEND, USEOP, SIDE>(segA, segB, lastB, segC, lastC, segD, lastD, segE, lastE, color, op, checkrange);
+							}
+						}
+					}
+				}
+
+
+				/** Used by _bseg_fill_triangle */
+				void _bseg_fill_interior_angle(iVec2 P, iVec2 Q1, iVec2 Q2, internals_bseg::BSeg & seg1, internals_bseg::BSeg & seg2, RGBc color, bool fill_last, bool blend, bool checkrange)
+				{
+					MTOOLS_ASSERT((P.Y() - Q1.Y())*(P.Y() - Q2.Y()) > 0);
+					int64 dir = (P.Y() > Q1.Y()) ? -1 : 1;
+					int64 y = P.Y();
+					int64 ytarget = Q1.Y() + dir * (fill_last ? 1 : 0);
+					if ((Q1.X() - P.X())*abs(Q2.Y() - P.Y())  > (Q2.X() - P.X())*abs(Q1.Y() - P.Y())) mtools::swap(seg1, seg2);
+					if (checkrange)
+					{
+						const bool CHECKRANGE = true;
+						if (blend)
+						{
+							const bool BLEND = true;
+							_bseg_fill_interior_angle_sub<BLEND, CHECKRANGE>(dir, y, ytarget, seg1, seg2, color);
+						}
+						else
+						{
+							const bool BLEND = false;
+							_bseg_fill_interior_angle_sub<BLEND, CHECKRANGE>(dir, y, ytarget, seg1, seg2, color);
+						}
+					}
+					else
+					{
+						const bool CHECKRANGE = false;
+						if (blend)
+						{
+							const bool BLEND = true;
+							_bseg_fill_interior_angle_sub<BLEND, CHECKRANGE>(dir, y, ytarget, seg1, seg2, color);
+						}
+						else
+						{
+							const bool BLEND = false;
+							_bseg_fill_interior_angle_sub<BLEND, CHECKRANGE>(dir, y, ytarget, seg1, seg2, color);
+						}
+					}
+				}
+
+
+				/** Used by _bseg_fill_triangle */
+				template<bool BLEND, bool CHECKRANGE> void _bseg_fill_interior_angle_sub(int64 dir, int64 y, int64 ytarget, internals_bseg::BSeg & sega, internals_bseg::BSeg & segb, RGBc color)
+				{
+					// fix the range. 
+					if (dir > 0)
+					{
+						if (ytarget >= _ly) { ytarget = _ly; }
+						if ((ytarget <= 0) || (y >= ytarget)) return;
+						if (y < 0)
+						{ // move y up to 0
+							sega.move_y_dir(-y);
+							segb.move_y_dir(-y);
+							y = 0;
+							MTOOLS_ASSERT((sega.Y() == y) && (segb.Y() == y));
+						}
+					}
+					else
+					{
+						if (ytarget < 0) { ytarget = -1; }
+						if ((ytarget >= _ly - 1) || (y <= ytarget)) return;
+						if (y > _ly - 1)
+						{ // move y down to ly-1
+							sega.move_y_dir(y - _ly + 1);
+							segb.move_y_dir(y - _ly + 1);
+							y = _ly - 1;
+							MTOOLS_ASSERT((sega.Y() == y) && (segb.Y() == y));
+						}
+					}
+					if (sega.x_major())
+					{
+						if (segb.x_major())
+						{
+							if (sega.step_x() < 0)
+							{
+								if (segb.step_x() > 0)
+								{
+									while (y != ytarget)
+									{
+										_hline<BLEND, CHECKRANGE>(sega.X() + 1, segb.X() - 1, y, color);
+										sega.move_y_dir<true>();
+										segb.move_y_dir<true>();
+										y += dir;
+									}
+								}
+								else
+								{
+									while (y != ytarget)
+									{
+										segb.move_y_dir<true>();
+										_hline<BLEND, CHECKRANGE>(sega.X() + 1, segb.X(), y, color);
+										sega.move_y_dir<true>();
+										y += dir;
+									}
+								}
+							}
+							else
+							{
+								if (segb.step_x() > 0)
+								{
+									while (y != ytarget)
+									{
+										sega.move_y_dir<true>();
+										_hline<BLEND, CHECKRANGE>(sega.X(), segb.X() - 1, y, color);
+										segb.move_y_dir<true>();
+										y += dir;
+									}
+								}
+								else
+								{
+									while (y != ytarget)
+									{
+										sega.move_y_dir<true>();
+										segb.move_y_dir<true>();
+										_hline<BLEND, CHECKRANGE>(sega.X(), segb.X(), y, color);
+										y += dir;
+									}
+								}
+							}
+						}
+						else
+						{
+							if (sega.step_x() < 0)
+							{
+								while (y != ytarget)
+								{
+									_hline<BLEND, CHECKRANGE>(sega.X() + 1, segb.X() - 1, y, color);
+									sega.move_y_dir<true>();
+									segb.move_y_dir<false>();
+									y += dir;
+								}
+							}
+							else
+							{
+								while (y != ytarget)
+								{
+									sega.move_y_dir<true>();
+									_hline<BLEND, CHECKRANGE>(sega.X(), segb.X() - 1, y, color);
+									segb.move_y_dir<false>();
+									y += dir;
+								}
+							}
+						}
+					}
+					else
+					{
+						if (segb.x_major())
+						{
+							if (segb.step_x() > 0)
+							{
+								while (y != ytarget)
+								{
+									_hline<BLEND, CHECKRANGE>(sega.X() + 1, segb.X() - 1, y, color);
+									segb.move_y_dir<true>();
+									sega.move_y_dir<false>();
+									y += dir;
+								}
+							}
+							else
+							{
+								while (y != ytarget)
+								{
+									segb.move_y_dir<true>();
+									_hline<BLEND, CHECKRANGE>(sega.X() + 1, segb.X(), y, color);
+									sega.move_y_dir<false>();
+									y += dir;
+								}
+							}
+						}
+						else
+						{
+							while (y != ytarget)
+							{
+								_hline<BLEND, CHECKRANGE>(sega.X() + 1, segb.X() - 1, y, color);
+								segb.move_y_dir<false>();
+								sega.move_y_dir<false>();
+								y += dir;
+							}
+						}
+					}
+				}
+
+
+				/**
+				* Fill the interior of a triangle (fP1, fP2, fP3) delimited by bresenham segments. Only the
+				* interior is filled (segment are not drawn over).
+				*
+				* @param	fP1		  	first point.
+				* @param	fP2		  	second point.
+				* @param	fP3		  	third point.
+				* @param	fillcolor 	color to use.
+				* @param	blend	  	(Optional) true to use blending.
+				* @param	checkrange	(Optional) True to check the range (default). Set it to false only if it
+				* 						is sure that the triangle is completely inside the image.
+				**/
+				void _bseg_fill_triangle(fVec2 fP1, fVec2 fP2, fVec2 fP3, RGBc fillcolor, bool blend = true, bool checkrange = true)
+				{
+					if (fP1.Y() > fP2.Y()) { mtools::swap(fP1, fP2); } // reorder by increasing Y value
+					if (fP1.Y() > fP3.Y()) { mtools::swap(fP1, fP3); } //
+					if (fP2.Y() > fP3.Y()) { mtools::swap(fP2, fP3); } //
+					iVec2 P1 = round(fP1); int64 y1 = P1.Y();
+					iVec2 P2 = round(fP2); int64 y2 = P2.Y();
+					iVec2 P3 = round(fP3); int64 y3 = P3.Y();
+					if (y1 == y3) return; //flat, nothing to draw. 
+					if (y1 == y2)
+					{
+						internals_bseg::BSeg seg31(fP3, fP1);
+						internals_bseg::BSeg seg32(fP3, fP2);
+						_bseg_fill_interior_angle(P3, P1, P2, seg31, seg32, fillcolor, false, blend, checkrange);
+						return;
+					}
+					if (y2 == y3)
+					{
+						internals_bseg::BSeg seg12(fP1, fP2);
+						internals_bseg::BSeg seg13(fP1, fP3);
+						_bseg_fill_interior_angle(P1, P2, P3, seg12, seg13, fillcolor, false, blend, checkrange);
+						return;
+					}
+					internals_bseg::BSeg seg12(fP1, fP2); internals_bseg::BSeg seg21 = seg12.get_reverse();
+					internals_bseg::BSeg seg13(fP1, fP3); internals_bseg::BSeg seg31 = seg13.get_reverse();
+					internals_bseg::BSeg seg23(fP2, fP3); internals_bseg::BSeg seg32 = seg23.get_reverse();
+					
+					bool fl3;
+					fVec2 vA = (fP3 - fP1), vB = (fP2 - fP1);
+					double det = vA.X()*vB.Y() - vB.X()*vA.Y();
+					seg23.move_y_dir();
+					seg21.move_y_dir();
+					if (det < 0)
+					{
+						fl3 = (seg23.X() < seg21.X()) ? true : false;
+					}
+					else
+					{
+						fl3 = (seg23.X() > seg21.X()) ? true : false;
+					}
+
+					_bseg_fill_interior_angle(P3, P2, P1, seg32, seg31, fillcolor, fl3, blend, checkrange);
+					_bseg_fill_interior_angle(P1, P2, P3, seg12, seg13, fillcolor, !fl3, blend, checkrange);
+					return;
+				}
+
+
+				/**
+				* Fill the interior of a triangle (P1, P2, P3) delimited by bresenham segments. Only the
+				* interior is filled (segment are not drawn over).
+				*
+				* @param	P1		  	first point.
+				* @param	P2		  	second point.
+				* @param	P3		  	third point.
+				* @param	fillcolor 	color to use.
+				* @param	blend	  	(Optional) true to use blending.
+				* @param	checkrange	(Optional) True to check the range (default). Set it to false only if it
+				* 						is sure that the triangle is completely inside the image.
+				**/
+				void _bseg_fill_triangle(iVec2 P1, iVec2 P2, iVec2 P3, RGBc fillcolor, bool blend = true, bool checkrange = true)
+				{
+					if (P1.Y() > P2.Y()) { mtools::swap(P1, P2); } // reorder by increasing Y value
+					if (P1.Y() > P3.Y()) { mtools::swap(P1, P3); } //
+					if (P2.Y() > P3.Y()) { mtools::swap(P2, P3); } //
+					int64 y1 = P1.Y();
+					int64 y2 = P2.Y();
+					int64 y3 = P3.Y();
+					if (y1 == y3) return; //flat, nothing to draw. 
+					if (y1 == y2)
+					{
+						internals_bseg::BSeg seg31(P3, P1);
+						internals_bseg::BSeg seg32(P3, P2);
+						_bseg_fill_interior_angle(P3, P1, P2, seg31, seg32, fillcolor, false, blend, checkrange);
+						return;
+					}
+					if (y2 == y3)
+					{
+						internals_bseg::BSeg seg12(P1, P2);
+						internals_bseg::BSeg seg13(P1, P3);
+						_bseg_fill_interior_angle(P1, P2, P3, seg12, seg13, fillcolor, false, blend, checkrange);
+						return;
+					}
+					internals_bseg::BSeg seg12(P1, P2); internals_bseg::BSeg seg21 = seg12.get_reverse();
+					internals_bseg::BSeg seg13(P1, P3); internals_bseg::BSeg seg31 = seg13.get_reverse();
+					internals_bseg::BSeg seg23(P2, P3); internals_bseg::BSeg seg32 = seg23.get_reverse();
+					
+					bool fl3;
+					iVec2 vA = (P3 - P1), vB = (P2 - P1);
+					int64 det = vA.X()*vB.Y() - vB.X()*vA.Y();
+					seg23.move_y_dir();
+					seg21.move_y_dir();
+					if (det < 0)
+					{
+						fl3 = (seg23.X() < seg21.X()) ? true : false;
+					}
+					else
+					{
+						fl3 = (seg23.X() > seg21.X()) ? true : false;
+					}
+
+					_bseg_fill_interior_angle(P3, P2, P1, seg32, seg31, fillcolor, fl3, blend, checkrange);
+					_bseg_fill_interior_angle(P1, P2, P3, seg12, seg13, fillcolor, !fl3, blend, checkrange);
+					return;
+				}
+
+
+
+
+
+
+
+			/******************************************************************************************************************************************************
+			*																				   																      *
+			*                                                                 BRESENHAM BEZIER CURVES                                                             *
+			*																																					  *
+			*******************************************************************************************************************************************************/
+
 
 
 			/**
@@ -9412,7 +9380,7 @@ namespace mtools
 
 			/******************************************************************************************************************************************************
 			*																				   																      *
-			*                                                                  DRAWING SHAPES                                                                     *
+			*                                                                     RECTANGLE                                                                       *
 			*																																					  *
 			*******************************************************************************************************************************************************/
 
@@ -9476,9 +9444,20 @@ namespace mtools
 
 
 
-			/****************************************************************************
-			/* PRIVATE METHODS FOR DRAWING CIRCLES AND ELLIPSES. 
-			*****************************************************************************/
+			/******************************************************************************************************************************************************
+			*																				   																      *
+			*                                                               CIRCLES AND ELLIPSES                                                                  *
+			*																																					  *
+			*******************************************************************************************************************************************************/
+
+			template<bool blend, bool checkrange, bool useop, bool usepen, bool useaa, bool side>  MTOOLS_FORCEINLINE void _lineBresenham(const iVec2 P1, const iVec2 P2, RGBc color, bool draw_last, int32 penwidth, int32 op)
+				{
+				if (!useaa) _bseg_draw(internals_bseg::BSeg(P1, P2), draw_last, color, (usepen ? penwidth : 0), blend, 0, (useop ? op : -1), checkrange);
+				else
+					{	
+					_lineBresenhamAA<blend, checkrange, usepen>(P1, P2, color, draw_last, penwidth);
+					}
+				}
 
 
 

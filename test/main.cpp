@@ -180,7 +180,7 @@ void testplotfigure()
 	Plotter2D plotter; 
 	plotter[PF];
 	plotter.autorangeXY();
-	plotter.range().setRange(fBox2(199.999983071, 200.000016671, 249.999982864, 250.000016464));
+	plotter.range().setRange(fBox2(120, 470, 50, 400));
 	plotter.plot();
 	}
 
@@ -618,7 +618,7 @@ int main(int argc, char *argv[])
 {
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
 
-	testCSCC();
+	//testCSCC();
 	testplotfigure();
 	return 0;
 		return 0;
