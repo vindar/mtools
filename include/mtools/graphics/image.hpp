@@ -35,6 +35,7 @@
 
 #include "../misc/timefct.hpp"
 
+#include <iostream>
 
 #if (MTOOLS_USE_CAIRO)
 #include <cairo.h>
@@ -1951,7 +1952,7 @@ namespace mtools
 					}
 				else
 					{
-					_bseg_draw(internals_bseg::BSeg(P1, P2), draw_P2, color, penwidth, blending);
+					_bseg_draw(internals_bseg::BSeg(P1, P2), draw_P2, penwidth, color, blending);
 					}
 				}
 
@@ -1973,7 +1974,7 @@ namespace mtools
 					}
 				else
 					{
-					_bseg_draw(internals_bseg::BSeg(P1, P2), draw_P2, color, penwidth, blending);
+					_bseg_draw(internals_bseg::BSeg(P1, P2), draw_P2, penwidth,  color,  blending);
 					}
 			}
 	
@@ -2361,7 +2362,7 @@ namespace mtools
 						internals_bseg::BSeg s12(P1, P2); internals_bseg::BSeg s21 = s12.get_reverse();
 						internals_bseg::BSeg s23(P2, P3); 
 						internals_bseg::BSeg s31(P3, P1); internals_bseg::BSeg s13 = s31.get_reverse();
-						_bseg_draw(s12, true, color);
+						_bseg_draw(s12, true, 0, color);
 						_bseg_avoid1(s13, true, s12, true, color);
 						_bseg_avoid11(s23, s21, true, s31, true, color);
 						return;
@@ -2407,12 +2408,12 @@ namespace mtools
 				int w = 0; 
 				if (antialiased)
 					{
-					w = winding<3>({ P1, P2, P3 }); // winding direction of the polygon
+					w = -winding<3>({ P1, P2, P3 }); // winding direction of the polygon
 					MTOOLS_ASSERT(w != 0);
 					}
-				_bseg_draw(internals_bseg::BSeg(P1, P2), true, color,0,blending,w);
-				_bseg_avoid1(internals_bseg::BSeg(P1, P3), true, internals_bseg::BSeg(P1, P2), true, color, 0, blending, -w);
-				_bseg_avoid11(internals_bseg::BSeg(P2, P3), internals_bseg::BSeg(P2, P1), true, internals_bseg::BSeg(P3, P1), true, color, 0, blending, w);
+				_bseg_draw(internals_bseg::BSeg(P1, P2), true, 0, color, blending, w);
+				_bseg_avoid1(internals_bseg::BSeg(P2, P3), true, internals_bseg::BSeg(P2, P1), true, color, blending, w);
+				_bseg_avoid11(internals_bseg::BSeg(P3, P1), internals_bseg::BSeg(P3, P2), true, internals_bseg::BSeg(P1, P2), true, color, blending, w);
 				_bseg_fill_triangle(P1, P2, P3, fillcolor, blending);
 				}
 
@@ -2442,7 +2443,7 @@ namespace mtools
 						internals_bseg::BSeg s23(P2, P3); internals_bseg::BSeg s32 = s23.get_reverse();
 						internals_bseg::BSeg s34(P3, P4); internals_bseg::BSeg s43 = s34.get_reverse();
 						internals_bseg::BSeg s41(P4, P1); internals_bseg::BSeg s14 = s41.get_reverse();
-						_bseg_draw(s12, true, color);
+						_bseg_draw(s12, true, 0, color);
 						_bseg_avoid1(s23, true, s21, true, color);
 						_bseg_avoid1(s34, true, s32, true, color);
 						_bseg_avoid11(s14, s12, true, s43, true, color);
@@ -2492,14 +2493,14 @@ namespace mtools
 				int w = 0;
 				if (antialiased)
 					{
-					w = winding<3>({ P1, P2, P3 }); // winding direction of the polygon
+					w = -winding<4>({ P1, P2, P3, P4 }); // winding direction of the polygon
 					MTOOLS_ASSERT(w != 0);
 					}
-				_bseg_draw(internals_bseg::BSeg(P1, P2), true, color, 0, blending, w);
-				_bseg_avoid1(internals_bseg::BSeg(P2, P3), true, internals_bseg::BSeg(P2, P1), true, color, 0, blending, w);
-				_bseg_avoid1(internals_bseg::BSeg(P1, P4), true, internals_bseg::BSeg(P1, P2), true, color, 0, blending, -w);
-				_bseg_avoid11(internals_bseg::BSeg(P4, P3), internals_bseg::BSeg(P4, P1), true, internals_bseg::BSeg(P3, P2), true, color, 0, blending, -w);
-				_bseg_avoid22(internals_bseg::BSeg(P1, P3), internals_bseg::BSeg(P1, P2), true, internals_bseg::BSeg(P1, P4), true, internals_bseg::BSeg(P3, P2), true, internals_bseg::BSeg(P3, P4), true, fillcolor, 0, blending, 0);
+				_bseg_draw(internals_bseg::BSeg(P1, P2), true, 0, color, blending, w);
+				_bseg_avoid1(internals_bseg::BSeg(P2, P3), true, internals_bseg::BSeg(P2, P1), true, color, blending, w);
+				_bseg_avoid1(internals_bseg::BSeg(P3, P4), true, internals_bseg::BSeg(P3, P2), true, color, blending, w);
+				_bseg_avoid11(internals_bseg::BSeg(P4, P1), internals_bseg::BSeg(P4, P3), true, internals_bseg::BSeg(P1, P2), true, color, blending, w);
+				_bseg_avoid22(internals_bseg::BSeg(P1, P3), internals_bseg::BSeg(P1, P2), true, internals_bseg::BSeg(P1, P4), true, internals_bseg::BSeg(P3, P2), true, internals_bseg::BSeg(P3, P4), true, fillcolor, blending, 0);
 				_bseg_fill_triangle(P1, P2, P3, fillcolor, blending);
 				_bseg_fill_triangle(P1, P3, P4, fillcolor, blending);
 				}
@@ -2594,24 +2595,36 @@ namespace mtools
 					case 4: {draw_filled_quad(in_tab[0], in_tab[1], in_tab[2], in_tab[3], color, fillcolor, antialiased, blending); break; }
 					default:
 						{ // generic drawing
-						fVec2 C = in_tab[0];
-						for (size_t i = 1; i < in_len; i++) { C += in_tab[i]; }
+						const int w = winding(in_tab, in_len);	// winding direction of the polygon. 
+						int side = antialiased ? -w : 0;
 
-						C *= 1.0 / in_len; // barycenter
+						std::cout << w << " side " << side << "\n";
 
-						for (size_t i = 0; i < in_len; i++)
-						{
-							_bseg_fill_triangle(C, in_tab[i], in_tab[(i + 1) % in_len], RGBc::c_Blue.getMultOpacity(0.2f), blending);
+						// draw the boundary. 
+						_bseg_draw(internals_bseg::BSeg(in_tab[0], in_tab[1]), true, 0, color, blending, side);						
+						for (size_t i = 1; i < in_len - 1; i++) _bseg_avoid1(internals_bseg::BSeg(in_tab[i], in_tab[i+1]), true, internals_bseg::BSeg(in_tab[i], in_tab[i-1]), true,  color, blending, side);						
+						_bseg_avoid11(internals_bseg::BSeg(in_tab[in_len -1], in_tab[0]), internals_bseg::BSeg(in_tab[in_len - 1], in_tab[in_len - 2]), true, internals_bseg::BSeg(in_tab[0], in_tab[1]), true, color, blending, side);
+
+
+						if (convex(in_tab, in_len))  std::cout << " convex\n ";
+						return; 
+						if (convex(in_tab, in_len))
+							{ // convex polygon, use fan triangulation
+							for (size_t i = 2; i < in_len; i++)	_bseg_fill_triangle(in_tab[0], in_tab[i-1], in_tab[i], fillcolor, blending);
+							return;
 							}
-						for (size_t i = 0; i < in_len; i++)
+
+						// non-convex polygon
+						std::list<fVec2> pol;
+						if (w > 0) // populate the list
 							{
-							_bseg_draw(internals_bseg::BSeg(C, in_tab[i]),true,RGBc::c_Red);
+							for (size_t i = 0; i < in_len; i++) { pol.push_back(in_tab[i]); }
 							}
-						for (size_t i = 0; i < in_len; i++)
+						else
 							{
-							_bseg_draw(internals_bseg::BSeg(in_tab[i], in_tab[(i +1) % in_len]), true, RGBc::c_Black);
+							for (size_t i = 0; i < in_len; i++) { pol.push_front(in_tab[i]); }
 							}
-					}
+						}
 					}
 				if (allocated) delete[] in_tab;
 				return;
@@ -7304,15 +7317,15 @@ namespace mtools
 				*
 				* @param	seg		  	segment to draw.
 				* @param	draw_last 	true to draw the endpoint.
+				* @param	penwidth  	default 0, if positive, use larger pen.
 				* @param	color	  	color.
-				* @param	penwidth  	(Optional) if positive, use larger pen.
 				* @param	blend	  	(Optional) true for blending.
 				* @param	side	  	(Optional) 0 for no side AA and +/-1 for side AA.
 				* @param	op		  	(Optional) opacity to apply if 0 <= op <= 256.
 				* @param	checkrange	(Optional) True to check the range (default). Set it to false only if it
 				* 						is sure that the segment does not exit the image.
 				**/
-				void _bseg_draw(const internals_bseg::BSeg & seg, bool draw_last, RGBc color, int32 penwidth = 0, bool blend = true, int side = 0, int32 op = -1, bool checkrange = true)
+				void _bseg_draw(const internals_bseg::BSeg & seg, bool draw_last, int32 penwidth, RGBc color, bool blend = true, int side = 0, int32 op = -1, bool checkrange = true)
 				{
 					if (op == 0) return;
 					const bool useop = ((op > 0) && (op < 256));
@@ -9452,7 +9465,7 @@ namespace mtools
 
 			template<bool blend, bool checkrange, bool useop, bool usepen, bool useaa, bool side>  MTOOLS_FORCEINLINE void _lineBresenham(const iVec2 P1, const iVec2 P2, RGBc color, bool draw_last, int32 penwidth, int32 op)
 				{
-				if (!useaa) _bseg_draw(internals_bseg::BSeg(P1, P2), draw_last, color, (usepen ? penwidth : 0), blend, 0, (useop ? op : -1), checkrange);
+				if (!useaa) _bseg_draw(internals_bseg::BSeg(P1, P2), draw_last, (usepen ? penwidth : 0),  color,  blend, 0, (useop ? op : -1), checkrange);
 				else
 					{	
 					_lineBresenhamAA<blend, checkrange, usepen>(P1, P2, color, draw_last, penwidth);
