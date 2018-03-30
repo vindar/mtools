@@ -264,7 +264,7 @@ template<size_t N, size_t M> inline size_t Sutherland_Hodgman_clipping(const std
 						  { clippingBox.max[0], clippingBox.max[1] },
 						  { clippingBox.min[0], clippingBox.max[1] } };
 	size_t len = 0;
-	Sutherland_Hodgman_clipping(polygon.data(), N, clip_tab, 4, res, len);
+	Sutherland_Hodgman_clipping(polygon.data(), N, clip_tab, 4, res.data(), len);
 	MTOOLS_ASSERT(len <= M);
 	return len;
 	}
