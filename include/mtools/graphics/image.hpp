@@ -2584,23 +2584,49 @@ namespace mtools
 						// ok, we can draw the interior
 						if (convex(in_tab, in_len))
 							{ // convex polygon, use fan triangulation
-
-							// TODO !!!!
+							for (size_t i = 1; i < in_len - 2; i++)
+								{
+								_bseg_avoid22(internals_bseg::BSeg(in_tab[0], in_tab[i + 1]),
+									internals_bseg::BSeg(in_tab[0], in_tab[i]), true, internals_bseg::BSeg(in_tab[0], in_tab[in_len - 1]), true,
+									internals_bseg::BSeg(in_tab[i + 1], in_tab[i]), true, internals_bseg::BSeg(in_tab[i + 1], in_tab[i + 2]), true,
+									color, blending, 0);
+								}
 							for (size_t i = 2; i < in_len; i++)	_bseg_fill_triangle(in_tab[0], in_tab[i-1], in_tab[i], fillcolor, blending);
 							break;
 							}
-						// non-convex polygon, use ear clipping algorithm
+						// non-convex polygon, use (basic) ear clipping algorithm
 						std::list<fVec2> pol;
-						if (w > 0) // populate the list
+						pol.push_back(in_tab[0]);
+						// populate the list, in clockwise order, removing consecutive identical vertices. 
+						fVec2 *  prev = in_tab;
+						for (size_t i = 1; i < in_len; i++) 
 							{
-							for (size_t i = 0; i < in_len; i++) { pol.push_back(in_tab[i]); }
+							if (in_tab[i] != *prev)
+								{
+								if (w) pol.push_back(in_tab[i]); else pol.push_front(in_tab[i]);
+								prev = in_tab + i;
+								}
 							}
-						else
+						auto it = pol.begin();
+						size_t cons = 0;
+						while((pol.size() >= 3) && (cons <= pol.size()))
 							{
-							for (size_t i = 0; i < in_len; i++) { pol.push_front(in_tab[i]); }
+							cons++; // one more try
+							auto nextit = it; nextit++; if (nextit == pol.end()) nextit = pol.begin(); // next element (circular list)
+							auto previt = it; if (previt == pol.begin()) previt = pol.end(); previt--; // previous element (circular list)
+							int a = left_of(*previt, *it, *nextit);
+							if (a < 0)
+								{ // ok, 
+								auto ot = nextit; ot++; if (ot == pol.end()) ot = pol.begin();
+								while (ot != previt)
+									{
+							//		if () break;
+									ot++; if (ot == pol.end()) ot = pol.begin();
+									}
+								}
+							if (a == 0) pol.erase(it); // 3 vertices aligned, remove the middle one
 							}
-						// TODO !!!
-						std::cout << "ear clip\n";
+						MTOOLS_ASSERT(pol.size() < 3);
 						}
 					}
 				if (allocated) delete[] in_tab;
@@ -6765,7 +6791,7 @@ namespace mtools
 			fBox2 _clipfBox(int32 penwidth = 0) const
 				{
 				MTOOLS_ASSERT(penwidth >= 0);
-				const double margin = 100.0 + _lx + _ly +2 * penwidth - 0.5;
+				const double margin = 10; // 100.0 + _lx + _ly + 2 * penwidth - 0.5;
 				return fBox2(-margin - 0.5, margin + _lx - 0.5, -margin - 0.5, margin + _ly - 0.5);
 				}
 
@@ -6774,7 +6800,7 @@ namespace mtools
 			iBox2 _clipiBox(int32 penwidth = 0) const
 				{
 				MTOOLS_ASSERT(penwidth >= 0);
-				const double margin = 100 + _lx + _ly + 2 * penwidth - 0.5;
+				const double margin = 10; //  100 + _lx + _ly + 2 * penwidth - 0.5;
 				return fBox2(-margin, margin + _lx - 1, -margin, margin + _ly - 1);
 				}
 
