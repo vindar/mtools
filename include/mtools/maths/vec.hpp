@@ -611,9 +611,9 @@ namespace mtools
 		const double a2 = LB2.Y() - LB1.Y();
 		const double b2 = LB1.X() - LB2.X();
 		const double delta = a1*b2 - a2*b1; if (delta == 0) { return false; }
-		const double c1 = LA1.X()*a1 + LA1.Y()*b1; const double c2 = LB1.X()*a2 + LB1.Y()*b2;
-		P.X() = (b2*c1 - b1*c2) / delta;
-		P.Y() = (a1*c2 - a2*c1) / delta;
+		const double c1 = LA1.X()*a1 + LA1.Y()*b1; const double c2 = LB1.X()*a2 + LB1.Y()*b2;		
+		P.X() = ((b1 == 0) ? LA1.X() : ((b2 == 0) ? LB1.X() : (b2*c1 - b1 * c2) / delta));	// complicated but insures perfect clipping
+		P.Y() = ((a1 == 0) ? LA1.Y() : ((a2 == 0) ? LB1.Y() : (a1*c2 - a2 * c1) / delta));	// for horizontal and vertical lines
 		return true;
 		}
 

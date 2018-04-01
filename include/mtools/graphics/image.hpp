@@ -2609,24 +2609,40 @@ namespace mtools
 							}
 						auto it = pol.begin();
 						size_t cons = 0;
-						while((pol.size() >= 3) && (cons <= pol.size()))
+						while((pol.size() >= 3) && (cons <= 2*pol.size() + 1))
 							{
 							cons++; // one more try
 							auto nextit = it; nextit++; if (nextit == pol.end()) nextit = pol.begin(); // next element (circular list)
-							auto previt = it; if (previt == pol.begin()) previt = pol.end(); previt--; // previous element (circular list)
-							int a = left_of(*previt, *it, *nextit);
+							auto previt = it; if (previt == pol.begin()) previt = pol.end(); previt--; // previous element (circular list)							
+							const int a = left_of(*previt, *it, *nextit); 
 							if (a < 0)
-								{ // ok, 
+								{ // concave vertex, so it might be an ear
 								auto ot = nextit; ot++; if (ot == pol.end()) ot = pol.begin();
+								bool ear = true;
 								while (ot != previt)
-									{
-							//		if () break;
+									{ // iterate over remaining vertices to check if one of them is strictly inside
+									if (cons <= pol.size())
+										{
+										if (isInClosedTriangle(*previt, *it, *nextit, *ot)) { ear = false; break; }
+										}
+									else
+										{
+										if (isInOpenTriangle(*previt, *it, *nextit, *ot)) { ear = false; break; }
+										}
 									ot++; if (ot == pol.end()) ot = pol.begin();
 									}
+								if (ear)
+									{ // got an ear
+									_bseg_fill_triangle(*previt, *it, *nextit, fillcolor, blending);
+									pol.erase(it);
+									if (*previt == *nextit) pol.erase(previt); 
+									it = nextit; 
+									cons = 0;
+									}
 								}
-							if (a == 0) pol.erase(it); // 3 vertices aligned, remove the middle one
+							it++; if (it == pol.end()) it = pol.begin(); // next vertex
 							}
-						MTOOLS_ASSERT(pol.size() < 3);
+						MTOOLS_ASSERT(pol.size() < 3); // check that we exausted the polygon. 
 						}
 					}
 				if (allocated) delete[] in_tab;
@@ -6791,7 +6807,7 @@ namespace mtools
 			fBox2 _clipfBox(int32 penwidth = 0) const
 				{
 				MTOOLS_ASSERT(penwidth >= 0);
-				const double margin = 10; // 100.0 + _lx + _ly + 2 * penwidth - 0.5;
+				const double margin = -10; // 100.0 + _lx + _ly + 2 * penwidth - 0.5;
 				return fBox2(-margin - 0.5, margin + _lx - 0.5, -margin - 0.5, margin + _ly - 0.5);
 				}
 
@@ -6800,7 +6816,7 @@ namespace mtools
 			iBox2 _clipiBox(int32 penwidth = 0) const
 				{
 				MTOOLS_ASSERT(penwidth >= 0);
-				const double margin = 10; //  100 + _lx + _ly + 2 * penwidth - 0.5;
+				const double margin = -10; //  100 + _lx + _ly + 2 * penwidth - 0.5;
 				return fBox2(-margin, margin + _lx - 1, -margin, margin + _ly - 1);
 				}
 

@@ -220,26 +220,45 @@ inline bool convex(const std::vector<fVec2> & polygon)
 
 
 /**
- * test if Q is inside the triangle (P1,P2,P3)
+ * test if Q is inside the closed triangle (P1,P2,P3)
  *
  * @param	P1	first point  of the triangle.
  * @param	P2	second point of the triangle.
  * @param	P3	third point  of the triangle.
  * @param	Q 	point to test.
  *
- * @return	true if Q is inside the (closed) triangle and false otherwise. Always return false if
+ * @return	true if Q is inside the closed triangle and false otherwise. Always return false if
  * 			the triangle is flat.
  **/
-inline bool isInTriangle(const fVec2 & P1, const fVec2 & P2, const fVec2 & P3, const fVec2 & Q)
+inline bool isInClosedTriangle(const fVec2 & P1, const fVec2 & P2, const fVec2 & P3, const fVec2 & Q)
 	{
 	int a1 = left_of(P1, P2, Q);
 	int a2 = left_of(P2, P3, Q);
 	int a3 = left_of(P3, P1, Q);
 	if ((a1*a2 < 0) || (a1*a3 < 0) || (a2*a3 < 0)) return false;	// no inside
-	if (a1 + a2 + a3 == 0) return false; // flat
+	//if (a1 + a2 + a3 == 0) return false; // flat
 	return true;
 	}
 
+
+/**
+* test if Q is inside the open triangle (P1,P2,P3)
+*
+* @param	P1	first point  of the triangle.
+* @param	P2	second point of the triangle.
+* @param	P3	third point  of the triangle.
+* @param	Q 	point to test.
+*
+* @return	true if Q is inside the open triangle and false otherwise.
+**/
+inline bool isInOpenTriangle(const fVec2 & P1, const fVec2 & P2, const fVec2 & P3, const fVec2 & Q)
+	{
+	int a1 = left_of(P1, P2, Q);
+	int a2 = left_of(P2, P3, Q);
+	int a3 = left_of(P3, P1, Q);
+	if ((a1 == a2) && (a2 == a3) && (a1 != 0)) return true;
+	return false;
+	}
 
 
 /**
