@@ -2384,8 +2384,13 @@ namespace mtools
 					std::array<fVec2, 3> tri = { P1, P2, P3 };
 					std::array<fVec2, 10> out;
 					size_t out_len = Sutherland_Hodgman_clipping<3, 10>(tri, B, out);
-					if (out_len < 3) return;
-					if (out_len == 4) {	draw_filled_quad(out[0], out[1], out[2], out[3], color, fillcolor, antialiased, blending); return; }
+					switch (out_len)
+						{
+						case 0: { return; }
+						case 1: { draw_square_dot(out[0], color, blending); return; }
+						case 2: { draw_line(out[0], out[1], color, true, antialiased, blending); return; }
+						case 4: { draw_filled_quad(out[0], out[1], out[2], out[3], color, fillcolor, antialiased, blending); return; }
+						}
 					if (out_len > 4)  { draw_filled_polygon(out.data(), out_len, color, fillcolor, antialiased, blending); return; }
 					P1 = out[0];
 					P2 = out[1];
@@ -2456,8 +2461,13 @@ namespace mtools
 					std::array<fVec2, 4> tri = { P1, P2, P3, P4 };
 					std::array<fVec2, 12> out;
 					size_t out_len = Sutherland_Hodgman_clipping<4, 12>(tri, B, out);
-					if (out_len < 3) return;
-					if (out_len == 3) { draw_filled_triangle(out[0], out[1], out[2], color, fillcolor, antialiased, blending); return; }
+					switch (out_len)
+					{
+					case 0: { return; }
+					case 1: { draw_square_dot(out[0], color, blending); return; }
+					case 2: { draw_line(out[0], out[1], color, true, antialiased, blending); return; }
+					case 3: { draw_filled_triangle(out[0], out[1], out[2], color, fillcolor, antialiased, blending); return; }
+					}
 					if (out_len > 4)  { draw_filled_polygon(out.data(), out_len, color, fillcolor, antialiased, blending); return; }
 					P1 = out[0];
 					P2 = out[1];
@@ -2536,7 +2546,8 @@ namespace mtools
 
 
 			/**
-			* Draw a filled (convex) polygon. Point must be ordered around the polygon.
+			* Draw a filled (possibly not convex) polygon. Point are given ordered around the polygon 
+			* (clockise or counterclockwise).
 			*
 			* @param	tabPoints 	the list of points in clockwise or counterclockwise order.
 			* @param	nbvertices	Number of vertices in the polygon.
@@ -2620,7 +2631,7 @@ namespace mtools
 								auto ot = nextit; ot++; if (ot == pol.end()) ot = pol.begin();
 								bool ear = true;
 								while (ot != previt)
-									{ // iterate over remaining vertices to check if one of them is strictly inside
+									{ // iterate over remaining vertices to check if one of them is (possibly strictly) inside
 									if (cons <= pol.size())
 										{
 										if (isInClosedTriangle(*previt, *it, *nextit, *ot)) { ear = false; break; }
@@ -2634,16 +2645,14 @@ namespace mtools
 								if (ear)
 									{ // got an ear
 									_bseg_fill_triangle(*previt, *it, *nextit, fillcolor, blending);
-									if (pol.size() >= 3)
+									if (pol.size() > 3)
 										{
-										auto nextit2 = nextit; nextit2++;
-										auto previt2 = previt; previt2--;
+										auto nextit2 = nextit; nextit2++;  if (nextit2 == pol.end()) nextit2 = pol.begin();
+										auto previt2 = previt; if (previt2 == pol.begin()) previt2 = pol.end();  previt2--;
 										_bseg_avoid22(internals_bseg::BSeg(*previt, *nextit),
 											internals_bseg::BSeg(*previt, *it), true, internals_bseg::BSeg(*previt, *previt2), true,
-											internals_bseg::BSeg(*nextit, *it), true, internals_bseg::BSeg(*nextit, *nextit2), true, RGBc::c_Blue.getMultOpacity(0.5f),
-											blending, 0); 
-
-
+											internals_bseg::BSeg(*nextit, *it), true, internals_bseg::BSeg(*nextit, *nextit2), true, 
+											RGBc::c_Blue.getMultOpacity(0.5f), blending, 0); 
 										}
 									pol.erase(it);
 									if (*previt == *nextit) pol.erase(previt); 
@@ -2662,13 +2671,14 @@ namespace mtools
 
 
 			/**
-			* Draw a filled (convex) polygon. Point must be ordered around the polygon.
-			*
-			* @param	vecPoints  	std vector of polygon vertice in clockwise or counterclockwise order.
-			* @param	color	   	border color.
-			* @param	fillcolor  	interior color.
-			* @param	antialiased(Optional) True to use antialiased.
-			* @param	blending(Optional) True to use blending.
+			 * Draw a filled (possibly not convex) polygon. Point are given ordered around the polygon
+			 * (clockise or counterclockwise).
+			 *
+			 * @param	vecPoints  	std vector of polygon vertice in clockwise or counterclockwise order.
+			 * @param	color	   	border color.
+			 * @param	fillcolor  	interior color.
+			 * @param	antialiased	(Optional) True to use antialiased.
+			 * @param	blending   	(Optional) True to use blending.
 			**/
 			inline void draw_filled_polygon(const std::vector<fVec2> & vecPoints, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND)
 				{
