@@ -2652,7 +2652,7 @@ namespace mtools
 										_bseg_avoid22(internals_bseg::BSeg(*previt, *nextit),
 											internals_bseg::BSeg(*previt, *it), true, internals_bseg::BSeg(*previt, *previt2), true,
 											internals_bseg::BSeg(*nextit, *it), true, internals_bseg::BSeg(*nextit, *nextit2), true, 
-											RGBc::c_Blue.getMultOpacity(0.5f), blending, 0); 
+											fillcolor, blending, 0); 
 										}
 									pol.erase(it);
 									if (*previt == *nextit) pol.erase(previt); 
