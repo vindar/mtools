@@ -14,10 +14,13 @@ void testPalette()
 
 	im.clear(RGBc::c_White);
 
+	auto PA = ColorPalette().set(RGBc::c_Red, RGBc::c_Gray, 12);
+
+
 	for(int64 k = 0; k < 600; k++)
 		{
-		im.draw_horizontal_line(k + 100, 100, 200, Palette::Maroon_to_Violet.getLog(k,0,500, 1.2), true, true);
-		im.draw_horizontal_line(k + 100, 300, 400, Palette::soft_12(((double)k) / 500.0, true), true, true);
+		im.draw_horizontal_line(k + 100, 100, 200, PA.getLog(k,0,500, 1.2), true, true);
+		im.draw_horizontal_line(k + 100, 300, 400, PA(((double)k) / 500.0, true), true, true);
 	}
 
 		Plotter2D plot;
