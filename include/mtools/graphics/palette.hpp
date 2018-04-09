@@ -43,6 +43,39 @@ namespace mtools
 
 
 		/**
+		 * Set the palette with a single color. 
+		 * Return itself.
+		 **/
+		ColorPalette & set(RGBc col)
+			{ 
+			_size = 1;  
+			_color[0] = col; 
+			return *this;
+			}
+
+
+		/**
+		* Set the palette by interpolating between two color in the RGB color space.
+		* Return itself.
+		**/
+		ColorPalette & set(RGBc startcolor, RGBc endcolor, size_t palettesize)
+			{
+			MTOOLS_INSURE(palettesize > 1);
+			MTOOLS_INSURE(palettesize <= MAX_PALETTE_SIZE);
+			_size = palettesize;
+			const double e = 1.0 / (palettesize - 1);
+			double E = 0;
+			for (size_t i = 0; i < palettesize; i++)
+				{
+				const double S = 1.0 - E; 
+				_color[i] = RGBc((uint8)(S*startcolor.comp.R + E*endcolor.comp.R), (uint8)(S*startcolor.comp.G + E*endcolor.comp.G), (uint8)(S*startcolor.comp.B + E*endcolor.comp.B));
+				E += e;
+				}
+			return *this;
+			}
+
+
+		/**
 		* Return a given color in the palette and circle around  the palette.
 		*
 		* @param	n index of the color to get, modulo the palette size.
@@ -211,7 +244,7 @@ namespace mtools
 		extern const ColorPalette White_to_Violet;
 		extern const ColorPalette White_to_Blue;
 
-		// diverging palette (between 2 colors)
+		// diverging palette 
 		extern const ColorPalette Red_to_Violet;
 		extern const ColorPalette Red_to_Green;
 		extern const ColorPalette Red_to_Blue;
@@ -220,8 +253,9 @@ namespace mtools
 		extern const ColorPalette Violet_to_Green;
 		extern const ColorPalette Maroon_to_blue;
 
-		// multicolor palette
-		extern const ColorPalette matlabJet;		// similar to matlab jet color palette
+		extern const ColorPalette matlabJet;			// similar to matlab jet color palette
+
+		extern const ColorPalette Blue_to_Red_moreland;	// created by kenneth moreland : http://www.kennethmoreland.com/color-maps/
 
 		// qualitative (distinct colors)
 		extern const ColorPalette hard_12;			// hard color
