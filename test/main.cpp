@@ -8,8 +8,26 @@ using namespace mtools;
 
 
 
+void testPalette()
+{
+	Image im(800, 800);
 
+	im.clear(RGBc::c_White);
 
+	for(int64 k = 0; k < 600; k++)
+		{
+		im.draw_horizontal_line(k + 100, 100, 200, Palette::Maroon_to_Violet.getLog(k,0,500, 1.2), true, true);
+		im.draw_horizontal_line(k + 100, 300, 400, Palette::soft_12(((double)k) / 500.0, true), true, true);
+	}
+
+		Plotter2D plot;
+
+		auto P = makePlot2DImage(im); 
+		plot[P];
+		plot.autorangeXY();
+		plot.plot(); 
+
+}
 
 
 
@@ -639,7 +657,8 @@ int main(int argc, char *argv[])
 {
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
 
-
+	testPalette();
+	return 0;
 
 
 	//testCSCC();
