@@ -589,6 +589,9 @@ namespace mtools
 
 		/****************************************************************************
 		* PALETTE METHODS
+		* 
+		* DEPRECATED : Use the ColorPalette class instead. 
+		* 
 		*****************************************************************************/
 
 
@@ -680,7 +683,7 @@ namespace mtools
         static inline RGBc jetPaletteRaw(size_t i)
             {
             MTOOLS_ASSERT(i<72);
-            static const RGBc tab[] = { RGBc(0, 0, 127), RGBc(0, 0, 141), RGBc(0, 0, 155), RGBc(0, 0, 169), RGBc(0, 0, 183), RGBc(0, 0, 198), RGBc(0, 0, 212), RGBc(0, 0, 226), RGBc(0, 0, 240),
+            static const RGBc tab[] = { 
                 RGBc(0, 0, 127), RGBc(0, 0, 141), RGBc(0, 0, 155), RGBc(0, 0, 169), RGBc(0, 0, 183), RGBc(0, 0, 198), RGBc(0, 0, 212), RGBc(0, 0, 226), RGBc(0, 0, 240),
                 RGBc(0, 0, 255), RGBc(0, 14, 255), RGBc(0, 28, 255), RGBc(0, 42, 255), RGBc(0, 56, 255), RGBc(0, 70, 255), RGBc(0, 84, 255), RGBc(0, 98, 255), RGBc(0, 112, 255),
                 RGBc(0, 127, 255), RGBc(0, 141, 255), RGBc(0, 155, 255), RGBc(0, 169, 255), RGBc(0, 183, 255), RGBc(0, 198, 255), RGBc(0, 212, 255), RGBc(0, 226, 255), RGBc(0, 240, 255),
