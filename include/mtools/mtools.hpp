@@ -76,6 +76,8 @@
 
 
 // graphics
+#include "graphics/rgbc.hpp"
+#include "graphics/palette.hpp"
 #include "graphics/image.hpp"
 #include "graphics/font.hpp"
 #include "graphics/progressimg.hpp"
@@ -86,7 +88,6 @@
 #include "graphics/pixeldrawer.hpp"
 #include "graphics/sitedrawer.hpp"
 #include "graphics/latticedrawer.hpp" // deprecated.
-#include "graphics/rgbc.hpp"
 #include "graphics/plotter2D.hpp"
 #include "graphics/plot2Daxes.hpp"
 #include "graphics/plot2Dgrid.hpp"
