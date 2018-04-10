@@ -43,19 +43,19 @@ namespace internals_clipping
 	inline void Sutherland_Hodgman_clipping_sub(const fVec2 * sub_tab, const size_t sub_len, const fVec2 x0, const fVec2 x1, const int left, fVec2 * res_tab, size_t & res_len)
 		{
 		res_len = 0;
-		fVec2 v0 = sub_tab[sub_len - 1];
+		fVec2 v0 = sub_tab[0];
 		int side0 = left_of(x0, x1, v0);
 		if (side0 != -left) { res_tab[res_len++] = v0; }
-		for (size_t i = 0; i < sub_len; i++)
+		for (size_t i = 1; i <= sub_len; i++)
 			{
-			fVec2 v1 = sub_tab[i];
+			fVec2 v1 = sub_tab[i % sub_len];
 			int side1 = left_of(x0, x1, v1);
 			if (side0 + side1 == 0 && side0)
 				{
 				fVec2 tmp;
 				if (intersection(x0, x1, v0, v1, tmp)) res_tab[res_len++] = tmp;
 				}
-			if (i == sub_len - 1) break;
+			if (i == sub_len) break;
 			if (side1 != -left) res_tab[res_len++] = v1;
 			v0 = v1;
 			side0 = side1;
