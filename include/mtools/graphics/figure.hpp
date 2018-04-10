@@ -27,6 +27,7 @@
 #include "image.hpp"
 #include "font.hpp"
 #include "../containers/treefigure.hpp"
+#include "internal/polyline.hpp"
 
 #include <type_traits>
 
@@ -1022,6 +1023,82 @@ namespace mtools
 				{
 				ar & tab & color & pw;
 				}
+
+		};
+
+
+
+		/**
+		*
+		* Polyline
+		*
+		*/
+		class ThickPolyLine : public internals_figure::FigureInterface
+		{
+
+		public:
+
+			std::vector<fVec2>	tab;
+			RGBc				color;
+			double				thickness;
+			fBox2				bb;
+
+			ThickPolyLine(const std::vector<fVec2> & tab_points, double thick, RGBc col) : tab(tab_points), color(col), thickness(thick)
+				{
+				MTOOLS_INSURE(tab_points.size() > 0);
+				MTOOLS_INSURE(thick > 0);
+				_constructbb();
+				}
+
+
+			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+				{
+				im.canvas_draw_thick_polyline(R, tab, thickness, color, highQuality, true, min_thickness);
+				}
+
+
+			virtual fBox2 boundingBox() const override
+				{
+				return bb;
+				}
+
+
+			virtual std::string toString(bool debug = false) const override
+				{
+				std::string str("Thick PolyLine [");
+				str += mtools::toString(tab) + " - ";
+				str += mtools::toString(color) + "(";
+				str += mtools::toString(thickness) + ")";
+				return str + "]";
+				}
+
+
+			virtual void serialize(OBaseArchive & ar) const override
+				{
+				ar & tab & color & thickness;
+				}
+
+
+			virtual void deserialize(IBaseArchive & ar) override
+				{
+				ar & tab & color & thickness;
+				_constructbb();
+				}
+
+
+		private:
+
+
+			/* reconstruct the bounding box */
+			void _constructbb()
+				{
+				std::vector<fVec2> tabA, tabB;
+				internals_polyline::enlargePolyline(tab, thickness, tabA, tabB);
+				bb.clear();
+				const size_t l = tab.size();
+				for (size_t i = 0; i < l; i++) { bb.swallowPoint(tabA[i]); bb.swallowPoint(tabB[i]); }
+				}
+
 
 		};
 
