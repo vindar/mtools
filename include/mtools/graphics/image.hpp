@@ -2678,13 +2678,13 @@ namespace mtools
 					case 4: {draw_filled_quad(in_tab[0], in_tab[1], in_tab[2], in_tab[3], color, fillcolor, antialiased, blending); break; }
 					default:
 						{ // generic drawing
-						const int w = ((antialiased) || (!fillcolor.isTransparent())) ? winding(in_tab, in_len) : 0;	// winding direction of the polygon. 
-						const int side = -w;
+						const int w = winding(in_tab, in_len);	// winding direction of the polygon. 
+						const int side = ((antialiased) && (!fillcolor.isTransparent())) ? -w : 0;
 						// draw the boundary. 
 						_bseg_draw(internals_bseg::BSeg(in_tab[0], in_tab[1]), true, 0, color, blending, side);
 						for (size_t i = 1; i < in_len - 1; i++) _bseg_avoid1(internals_bseg::BSeg(in_tab[i], in_tab[i+1]), true, internals_bseg::BSeg(in_tab[i], in_tab[i-1]), true,  color, blending, side);						
 						_bseg_avoid11(internals_bseg::BSeg(in_tab[in_len -1], in_tab[0]), internals_bseg::BSeg(in_tab[in_len - 1], in_tab[in_len - 2]), true, internals_bseg::BSeg(in_tab[0], in_tab[1]), true, color, blending, side);
-						if (fillcolor.isTransparent()) break; 
+						if ((fillcolor.isTransparent()) || (w == 0)) break; // nothing to fill 
 						// ok, we can draw the interior
 						if (convex(in_tab, in_len))
 							{ // convex polygon, use fan triangulation
@@ -2707,32 +2707,32 @@ namespace mtools
 							{
 							if (in_tab[i] != *prev)
 								{
-								if (w) pol.push_back(in_tab[i]); else pol.push_front(in_tab[i]);
+								if (w >= 0) { pol.push_back(in_tab[i]); } else { pol.push_front(in_tab[i]); }
 								prev = in_tab + i;
 								}
 							}
 						auto it = pol.begin();
 						size_t cons = 0;
-						while((pol.size() >= 3) && (cons <= 2*pol.size() + 1))
+						while((pol.size() >= 3) && (cons <= pol.size() + 3))
 							{
 							cons++; // one more try
 							auto nextit = it; nextit++; if (nextit == pol.end()) nextit = pol.begin(); // next element (circular list)
 							auto previt = it; if (previt == pol.begin()) previt = pol.end(); previt--; // previous element (circular list)							
 							const int a = left_of(*previt, *it, *nextit); 
-							if (a < 0)
+							if (a == 0)
+								{ // tree point aligned, remove the middle one
+								pol.erase(it);
+								if (*previt == *nextit) pol.erase(nextit); // erase if both points concide
+								it = previt;
+								cons = 0;
+								}
+							else if (a < 0)
 								{ // concave vertex, so it might be an ear
 								auto ot = nextit; ot++; if (ot == pol.end()) ot = pol.begin();
 								bool ear = true;
 								while (ot != previt)
 									{ // iterate over remaining vertices to check if one of them is (possibly strictly) inside
-									if (cons <= pol.size())
-										{
-										if (isInClosedTriangle(*previt, *it, *nextit, *ot)) { ear = false; break; }
-										}
-									else
-										{
-										if (isInOpenTriangle(*previt, *it, *nextit, *ot)) { ear = false; break; }
-										}
+									if (isInClosedTriangle(*previt, *it, *nextit, *ot)) { ear = false; break; }
 									ot++; if (ot == pol.end()) ot = pol.begin();
 									}
 								if (ear)
@@ -2748,14 +2748,14 @@ namespace mtools
 											fillcolor, blending, 0); 
 										}
 									pol.erase(it);
-									if (*previt == *nextit) pol.erase(previt); 
-									it = nextit; 
+									if (*previt == *nextit) pol.erase(nextit); 
+									it = previt; 
 									cons = 0;
 									}
 								}
 							it++; if (it == pol.end()) it = pol.begin(); // next vertex
 							}
-						MTOOLS_ASSERT(pol.size() < 3); // check that we exausted the polygon. 
+						if (pol.size() >= 3) { MTOOLS_DEBUG(" ear filling algorithm failed !"); }
 						}
 					}
 				if (allocated) delete[] in_tab;
