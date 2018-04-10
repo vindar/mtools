@@ -58,12 +58,12 @@ namespace mtools
 
 	class HorizontalLine;
 	class VerticalLine;
-
 	class ThickHorizontalLine;
 	class ThickVerticalLine;
-
 	class Line;
 	class ThickLine;
+	class PolyLine;
+
 
 	// CURVES
 
@@ -94,7 +94,6 @@ namespace mtools
 
 
 	/*
-	class PolyLine;
 	class ThickPolyLine;
 	class Polygon;
 	class FigureBox;
@@ -956,6 +955,72 @@ namespace mtools
 			virtual void deserialize(IBaseArchive & ar) override
 				{
 				ar & P1 & P2 & color & thick;
+				}
+
+		};
+
+
+		/**
+		*
+		* Polyline
+		*
+		**/
+		class PolyLine : public internals_figure::FigureInterface
+		{
+
+		public:
+
+			std::vector<fVec2> tab;
+			RGBc  color;
+			int32 pw;
+
+
+			/**
+			* Construct a polyline
+			*
+			* @param	tab_points	list of points, linked by straight lines
+			* @param	col		  	color.
+			* @param	penwidth   	(Optional) pen width (0 = unit pen). 
+			**/
+			PolyLine(const std::vector<fVec2> & tab_points, RGBc col, int32 penwidth = 0) : tab(tab_points), color(col), pw(penwidth)
+				{
+				MTOOLS_INSURE(tab_points.size() > 0);
+				}
+
+
+			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+				{
+				im.canvas_draw_polyline(R, tab, color, true, highQuality, true, pw);
+				}
+
+
+			virtual fBox2 boundingBox() const override
+				{
+				fBox2 R;
+				for (size_t i = 0; i < tab.size(); i++) { R.swallowPoint(tab[i]); }
+				return R;
+				}
+
+
+			virtual std::string toString(bool debug = false) const override
+				{
+				std::string str("PolyLine [");
+				str += mtools::toString(tab) + " - ";
+				str += mtools::toString(color) + "(";
+				str += mtools::toString(pw) + ")";
+				return str + "]";
+				}
+
+
+			virtual void serialize(OBaseArchive & ar) const override
+				{
+				ar & tab & color & pw;
+				}
+
+
+			virtual void deserialize(IBaseArchive & ar) override
+				{
+				ar & tab & color & pw;
 				}
 
 		};

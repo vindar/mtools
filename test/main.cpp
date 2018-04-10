@@ -158,7 +158,7 @@ void testplotfigure()
 		std::vector<fVec2> tri = { {-300,0}, {200, 127}, {-50, 50} };
 		std::vector<fVec2> qu = { {500,500} , {600, 520} , {700, 800}, {480,677} };
 
-		canvas(Figure::Polygon(subject, RGBc::c_Red.getMultOpacity(0.5f), RGBc::c_Red.getMultOpacity(0.5f)), 0);
+		canvas(Figure::PolyLine(subject, RGBc::c_Red.getMultOpacity(0.5f), 0),0);
 		canvas(Figure::Polygon(tri, RGBc::c_Green.getMultOpacity(0.5f), RGBc::c_Green.getMultOpacity(0.5f)), 0);
 		canvas(Figure::Polygon(qu, RGBc::c_Blue.getMultOpacity(0.5f), RGBc::c_Blue.getMultOpacity(0.5f)), 0);
 
@@ -660,11 +660,9 @@ int main(int argc, char *argv[])
 {
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
 
-	testPalette();
-	return 0;
 
-
-	//testCSCC();
+	
+											//testCSCC();
 	testplotfigure();
 	return 0;
 		return 0;

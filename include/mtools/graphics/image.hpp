@@ -1994,6 +1994,61 @@ namespace mtools
 				}
 
 
+			/**
+			 * Draw a polyline
+			 *
+			 * @param	tabPoints  	set of points that are to be joined by lines.
+			 * @param	size	   	number of points
+			 * @param	color	   	color to use
+			 * @param	draw_last  	(Optional) true to draw the last point.
+			 * @param	antialiased	(Optional) true to draw an antialised line.
+			 * @param	blending   	(Optional) true to use blending instead of simply overwriting the color.
+			 * @param	penwidth   	(Optional) pen radius (0 = unit pen)
+			 **/
+			inline void draw_polyline(const fVec2 * tabPoints, size_t size, RGBc color, bool draw_last = true, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int penwidth = 0)
+				{
+				if (isEmpty() || (size == 0)) return;
+				MTOOLS_ASSERT(tabPoints != nullptr);
+				if (size == 1) { draw_square_dot(tabPoints[0], color, blending, penwidth); return; }
+				if ((penwidth <= 0) && (!antialiased) && (blending) && (!color.isOpaque()))
+					{ // try to draw without intersection: test if clipping is necessary
+					const fBox2 B = _clipfBoxLarge();
+					bool clip = false;
+					for (size_t i = 0; i < size; i++)
+						{
+						if (!B.isInside(tabPoints[i])) { clip = true; break; }
+						}
+					if (!clip)
+						{ // ok, not too outside
+						_bseg_draw(internals_bseg::BSeg(tabPoints[size - 2], tabPoints[size - 1]), draw_last, 0, color, blending, 0);
+						for (size_t i = size - 2; i > 0; i--)
+							{
+							_bseg_avoid1(internals_bseg::BSeg(tabPoints[i], tabPoints[i - 1]), true, internals_bseg::BSeg(tabPoints[i], tabPoints[i + 1]), true, color, blending, 0);
+							}
+						return; 
+						}
+					}
+				for (size_t i = 1; i < size - 1; i++) { draw_line(tabPoints[i - 1], tabPoints[i], color, false, antialiased, blending, penwidth); }
+				draw_line(tabPoints[size - 2], tabPoints[size - 1], color, draw_last, antialiased, blending, penwidth);
+				}
+
+
+			/**
+			 * Draw a polyline
+			 *
+			 * @param [in,out]	tabPoints  	set of points that are to be joined by lines.
+			 * @param 		  	color	   	color to use.
+			 * @param 		  	draw_last  	(Optional) true to draw the last point.
+			 * @param 		  	antialiased	(Optional) true to draw an antialised line.
+			 * @param 		  	blending   	(Optional) true to use blending instead of simply overwriting the
+			 * 								color.
+			 * @param 		  	penwidth   	(Optional) pen radius (0 = unit pen)
+			**/
+			MTOOLS_FORCEINLINE void draw_polyline(const std::vector<fVec2> & tabPoints, RGBc color, bool draw_last = true, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int penwidth = 0)
+				{
+				draw_polyline(tabPoints.data(), tabPoints.size(), color, draw_last, antialiased, blending, penwidth);
+				}
+
 
 
 			/*****************************************
@@ -2564,7 +2619,7 @@ namespace mtools
 				bool allocated = false;
 				// test if clipping is necessary
 				const fBox2 B = _clipfBox();
-				const fBox2 C = zoomOut(B);
+				const fBox2 C = _clipfBoxLarge();
 				for (size_t i = 0; i < nbvertices; i++)
 					{
 					if (!C.isInside(tabPoints[i]))
@@ -5031,8 +5086,6 @@ namespace mtools
 
 			/**
 			 * Draw a thick line.
-			 * 
-			 * Use absolute coordinate (canvas method).
 			 *
 			 * @param	R		   	the absolute range represented in the image.
 			 * @param	P1		   	First point.
@@ -5066,6 +5119,30 @@ namespace mtools
 				draw_filled_quad(R.absToPixelf((P1 + H), dim), R.absToPixelf((P2 + H), dim), R.absToPixelf((P2 - H), dim), R.absToPixelf((P1 - H), dim), color, color, antialiased, blending);
 				return;
 				}
+
+
+			/**
+			 * Draw a polyline
+			 *
+			 * @param	R		   	the absolute range represented in the image.
+			 * @param	tabPoints  	set of points that are to be joined by lines.
+			 * @param	color	   	color to use.
+			 * @param	draw_last  	(Optional) true to draw the last point.
+			 * @param	antialiased	(Optional) true to draw an antialised line.
+			 * @param	blending   	(Optional) true to use blending instead of simply overwriting the color.
+			 * @param	penwidth   	(Optional) pen radius (0 = unit pen)
+			**/
+			MTOOLS_FORCEINLINE void canvas_draw_polyline(const fBox2 & R, const std::vector<fVec2> & tabPoints, RGBc color, bool draw_last = true, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int penwidth = 0)
+				{
+				const auto dim = dimension();
+				const size_t N = tabPoints.size();
+				std::vector<fVec2> tab;
+				tab.reserve(N);
+				for (size_t i = 0; i < N; i++) { tab.push_back(R.absToPixelf(tabPoints[i], dim)); }
+				draw_polyline(tab, color, draw_last, antialiased, blending, penwidth);
+				}
+
+
 
 
 			/*****************************************
@@ -6824,11 +6901,19 @@ namespace mtools
 			*******************************************************************************************************************************************************/
 
 
-			/** Large box used to clip objects (so that conversion from double to integer are now safe). */  
+			/** box used to clip objects (so that conversion from double to integer are now safe). */  
 			fBox2 _clipfBox(int32 penwidth = 0) const
 				{
 				MTOOLS_ASSERT(penwidth >= 0);
-				const double margin = -10; // 100.0 + _lx + _ly + 2 * penwidth - 0.5;
+				const double margin = 100.0 + _lx + _ly + 2 * penwidth - 0.5;
+				return fBox2(-margin - 0.5, margin + _lx - 0.5, -margin - 0.5, margin + _ly - 0.5);
+				}
+
+			/** larger box used to clip objects (so that conversion from double to integer are now safe). */
+			fBox2 _clipfBoxLarge(int32 penwidth = 0) const
+				{
+				MTOOLS_ASSERT(penwidth >= 0);
+				const double margin = 10000.0 + 2*_lx + 2*_ly + 2 * penwidth - 0.5;
 				return fBox2(-margin - 0.5, margin + _lx - 0.5, -margin - 0.5, margin + _ly - 0.5);
 				}
 
@@ -6837,7 +6922,7 @@ namespace mtools
 			iBox2 _clipiBox(int32 penwidth = 0) const
 				{
 				MTOOLS_ASSERT(penwidth >= 0);
-				const double margin = -10; //  100 + _lx + _ly + 2 * penwidth - 0.5;
+				const double margin = 100 + _lx + _ly + 2 * penwidth - 0.5;
 				return fBox2(-margin, margin + _lx - 1, -margin, margin + _ly - 1);
 				}
 
