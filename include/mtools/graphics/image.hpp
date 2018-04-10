@@ -31,6 +31,7 @@
 #include "../random/classiclaws.hpp"
 
 #include "internal/clipping.hpp"
+#include "internal/polyline.hpp"
 #include "internal/bseg.hpp"
 
 #include "../misc/timefct.hpp"
@@ -2005,7 +2006,7 @@ namespace mtools
 			 * @param	blending   	(Optional) true to use blending instead of simply overwriting the color.
 			 * @param	penwidth   	(Optional) pen radius (0 = unit pen)
 			 **/
-			inline void draw_polyline(const fVec2 * tabPoints, size_t size, RGBc color, bool draw_last = true, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int penwidth = 0)
+			void draw_polyline(const fVec2 * tabPoints, size_t size, RGBc color, bool draw_last = true, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int penwidth = 0)
 				{
 				if (isEmpty() || (size == 0)) return;
 				MTOOLS_ASSERT(tabPoints != nullptr);
@@ -2047,6 +2048,43 @@ namespace mtools
 			MTOOLS_FORCEINLINE void draw_polyline(const std::vector<fVec2> & tabPoints, RGBc color, bool draw_last = true, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int penwidth = 0)
 				{
 				draw_polyline(tabPoints.data(), tabPoints.size(), color, draw_last, antialiased, blending, penwidth);
+				}
+
+
+			/**
+			 * Draw a thick polyline
+			 *
+			 * @param	tabPoints   set of points that are to be joined by lines.
+			 * @param	size	    number of points.
+			 * @param	thickness   The thickness.
+			 * @param	color	    color to use.
+			 * @param	antialiased (Optional) true to draw an antialised line.
+			 * @param	blending    (Optional) true to use blending instead of simply overwriting the color.
+			 * @param	min_thick   (Optional) The minimum thickness.
+			 */
+			MTOOLS_FORCEINLINE void draw_thick_polyline(const fVec2 * tabPoints, size_t size, double thickness, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
+				{
+				std::vector<fVec2> tab2(size);
+				for (size_t i = 0; i < size; i++) { tab2[i] = { tabPoints[i].X() , _ly - 1 - tabPoints[i].Y() }; }
+				canvas_draw_thick_polyline(imagefBox(), tab2, thickness, color, antialiased, blending, min_thick); // because of thickness scaling, it is more convenient to call the canvas method.
+				}
+
+
+			/**
+			* Draw a thick polyline
+			*
+			* @param	tabPoints   set of points that are to be joined by lines.
+			* @param	thickness   The thickness.
+			* @param	color	    color to use.
+			* @param	antialiased (Optional) true to draw an antialised line.
+			* @param	blending    (Optional) true to use blending instead of simply overwriting the color.
+			* @param	min_thick   (Optional) The minimum thickness.
+			*/
+			MTOOLS_FORCEINLINE void draw_thick_polyline(const std::vector<fVec2> & tabPoints, double thickness, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
+				{
+				auto tab2 = tabPoints;
+				for (size_t i = 0; i < tabPoints.size(); i++) { tab2[i].Y() = _ly - 1 - tab2[i].Y(); }
+				canvas_draw_thick_polyline(imagefBox(), tab2, thickness, color, antialiased, blending, min_thick); // because of thickness scaling, it is more convenient to call the canvas method.
 				}
 
 
@@ -5143,6 +5181,33 @@ namespace mtools
 				}
 
 
+			/**
+			* Draw a thick polyline
+			*
+			* @param	R		   	the absolute range represented in the image.
+			* @param	tabPoints   set of points that are to be joined by lines.
+			* @param	thickness   The thickness.
+			* @param	color	    color to use.
+			* @param	antialiased (Optional) true to draw an antialised line.
+			* @param	blending    (Optional) true to use blending instead of simply overwriting the color.
+			* @param	min_thick   (Optional) The minimum thickness.
+			*/
+			MTOOLS_FORCEINLINE void canvas_draw_thick_polyline(const fBox2 & R, const std::vector<fVec2> & tabPoints, double thickness, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
+				{
+				size_t l = tabPoints.size();
+				switch (l)
+					{
+					case 0: return;
+					case 1: { canvas_draw_circle(R, tabPoints[0], thickness, color, antialiased, blending);  }
+					case 2: { canvas_draw_thick_line(R, tabPoints[0], tabPoints[1], thickness, color, antialiased, blending, min_thick); return; }
+					}
+
+				// ********************* TODO ! *************************
+				}
+
+
+
+
 
 
 			/*****************************************
@@ -6905,7 +6970,8 @@ namespace mtools
 			fBox2 _clipfBox(int32 penwidth = 0) const
 				{
 				MTOOLS_ASSERT(penwidth >= 0);
-				const double margin = 100.0 + _lx + _ly + 2 * penwidth - 0.5;
+				//const double margin = 1000.0 + _lx + _ly + 2 * penwidth - 0.5;
+				const double margin = -20; 
 				return fBox2(-margin - 0.5, margin + _lx - 0.5, -margin - 0.5, margin + _ly - 0.5);
 				}
 
@@ -6913,18 +6979,31 @@ namespace mtools
 			fBox2 _clipfBoxLarge(int32 penwidth = 0) const
 				{
 				MTOOLS_ASSERT(penwidth >= 0);
-				const double margin = 10000.0 + 2*_lx + 2*_ly + 2 * penwidth - 0.5;
+				//const double margin = 100000.0 + 2*(_lx + _ly) + 2 * penwidth - 0.5;
+				const double margin = -10; 
+				//100000.0 + 2 * (_lx + _ly) + 2 * penwidth - 0.5;
 				return fBox2(-margin - 0.5, margin + _lx - 0.5, -margin - 0.5, margin + _ly - 0.5);
 				}
 
 
-			/** Large box used to clip objects (so that conversion from double to integer are now safe). */
+			/** box used to clip objects (so that conversion from double to integer are now safe). */
 			iBox2 _clipiBox(int32 penwidth = 0) const
 				{
 				MTOOLS_ASSERT(penwidth >= 0);
-				const double margin = 100 + _lx + _ly + 2 * penwidth - 0.5;
-				return fBox2(-margin, margin + _lx - 1, -margin, margin + _ly - 1);
+				//const double margin = 1000 + _lx + _ly + 2 * penwidth - 0.5;
+				const int64 margin = -20;
+				return iBox2(-margin, margin + _lx - 1, -margin, margin + _ly - 1);
 				}
+
+
+			/** larger box used to clip objects (so that conversion from double to integer are now safe). */
+			iBox2 _clipiBoxLarge(int32 penwidth = 0) const
+			{
+				MTOOLS_ASSERT(penwidth >= 0);
+				//const double margin = 100000 + 2*(_lx + _ly) + 2 * penwidth - 0.5;
+				const int64 margin = -10; 
+				return iBox2(-margin, margin + _lx - 1, -margin, margin + _ly - 1);
+			}
 
 
 			/** change the opacity to match with the pen width **/ 

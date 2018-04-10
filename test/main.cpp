@@ -21,7 +21,7 @@ void testPalette()
 		{
 		im.draw_horizontal_line(k + 100, 100, 200, PA.getLog(k,0,500, 1.2), true, true);
 		im.draw_horizontal_line(k + 100, 300, 400, PA(((double)k) / 500.0, true), true, true);
-	}
+		}
 
 		Plotter2D plot;
 
@@ -158,9 +158,10 @@ void testplotfigure()
 		std::vector<fVec2> tri = { {-300,0}, {200, 127}, {-50, 50} };
 		std::vector<fVec2> qu = { {500,500} , {600, 520} , {700, 800}, {480,677} };
 
-		canvas(Figure::PolyLine(subject, RGBc::c_Red.getMultOpacity(0.5f), 0),0);
-		canvas(Figure::Polygon(tri, RGBc::c_Green.getMultOpacity(0.5f), RGBc::c_Green.getMultOpacity(0.5f)), 0);
-		canvas(Figure::Polygon(qu, RGBc::c_Blue.getMultOpacity(0.5f), RGBc::c_Blue.getMultOpacity(0.5f)), 0);
+		canvas(Figure::ThickPolyLine(subject, 30.0, RGBc::c_Red.getMultOpacity(0.5f)),0);
+		canvas(Figure::PolyLine(subject, RGBc::c_Green.getMultOpacity(0.5f),1), 0);
+	//	canvas(Figure::Polygon(tri, RGBc::c_Green.getMultOpacity(0.5f), RGBc::c_Green.getMultOpacity(0.5f)), 0);
+	//	canvas(Figure::Polygon(qu, RGBc::c_Blue.getMultOpacity(0.5f), RGBc::c_Blue.getMultOpacity(0.5f)), 0);
 
 
 
