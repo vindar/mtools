@@ -2646,10 +2646,11 @@ namespace mtools
 			* @param	nbvertices	Number of vertices in the polygon.
 			* @param	color	   	border color.
 			* @param	fillcolor  	interior color.
-			* @param	antialiased(Optional) True to use antialiased.
-			* @param	blending(Optional) True to use blending.
+			* @param	antialiased	(Optional) True to use antialiased.
+			* @param	blending	(Optional) True to use blending.
+			* @param	snakefill (Optional) True to use 'snake' filling algorithm (use for polylines)
 			**/
-			inline void draw_filled_polygon(const fVec2 * tabPoints, size_t nbvertices, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND)
+			inline void draw_filled_polygon(const fVec2 * tabPoints, size_t nbvertices, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, bool snakefill = true)
 				{
 				if (isEmpty()) return;
 				fVec2 * in_tab = (fVec2*)tabPoints;
@@ -2686,6 +2687,24 @@ namespace mtools
 						_bseg_avoid11(internals_bseg::BSeg(in_tab[in_len -1], in_tab[0]), internals_bseg::BSeg(in_tab[in_len - 1], in_tab[in_len - 2]), true, internals_bseg::BSeg(in_tab[0], in_tab[1]), true, color, blending, side);
 						if ((fillcolor.isTransparent()) || (w == 0)) break; // nothing to fill 
 						// ok, we can draw the interior
+						if (snakefill)
+							{ // request that we use snake filling algo
+							size_t a = 0, b = in_len - 1;
+							int dir = 1; 
+							while (a + 1 < b)
+								{
+								if (dir) 
+									{
+									_bseg_fill_triangle(in_tab[a], in_tab[a + 1], in_tab[b], fillcolor, blending); a++;
+									}
+								else
+									{
+									_bseg_fill_triangle(in_tab[b], in_tab[b - 1], in_tab[a], fillcolor, blending); b--;								
+									}
+								dir = 1 - dir;
+								}
+							break;
+							}
 						if (convex(in_tab, in_len))
 							{ // convex polygon, use fan triangulation
 							for (size_t i = 1; i < in_len - 2; i++)
