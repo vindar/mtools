@@ -7511,44 +7511,81 @@ namespace mtools
 			*******************************************************************************************************************************************************/
 
 
+				/* clip box for bseg segment (to insure conversion from double to fixed point arithmetic is ok (large box) */
+				fBox2 _bsegClipBoxLarge() const
+					{
+					const double L = 2000000.0;
+					return fBox2(-L - _lx, L + 2*_lx, -L - _ly, L + 2*_ly);
+					}
+
+
+				/* clip box for bseg segment (to insure conversion from double to fixed point arithmetic is ok (small box) */
+				fBox2 _bsegClipBox() const
+					{
+					const double L = 1000000.0;
+					return fBox2(-L - _lx, L + 2 * _lx, -L - _ly, L + 2 * _ly);
+					}
+
+
 				/** update a pixel on a bresenham segment */
 				template<bool X_MAJOR, bool BLEND, bool CHECKRANGE, bool USEOP, bool USEPEN, int SIDE> MTOOLS_FORCEINLINE void _bseg_update_pixel(const internals_bseg::BSeg & seg, RGBc color, int32 op, int32 penwidth)
-				{
-					if (SIDE != 0)
 					{
+					if (SIDE != 0)
+						{
 						int32 aa = seg.AA<SIDE, X_MAJOR>();
 						if (USEOP) { aa *= op; aa >>= 8; }
 						_updatePixel<BLEND, CHECKRANGE, true, USEPEN>(seg.X(), seg.Y(), color, aa, penwidth);
-					}
+						}
 					else
-					{
+						{
 						_updatePixel<BLEND, CHECKRANGE, USEOP, USEPEN>(seg.X(), seg.Y(), color, op, penwidth);
+						}
 					}
-				}
 
 
 				/** Used by _bseg_draw */
 				template<bool BLEND, bool USEOP, bool USEPEN, int SIDE> void _bseg_draw_template(internals_bseg::BSeg seg, bool draw_last, RGBc color, int32 penwidth, int32 op, bool checkrange = true)
-				{
+					{
 					if (draw_last) seg.inclen();
 					if (checkrange)
-					{
+						{
 						const int64 of = ((USEPEN) && (penwidth > 0)) ? (penwidth + 2) : 0;
 						iBox2 B(-of, _lx - 1 + of, -of, _ly - 1 + of);
 						seg.move_inside_box(B);												// move inside the box
 						seg.len() = std::min<int64>(seg.lenght_inside_box(B), seg.len());	// truncate to stay inside the box
-					}
+						}
 					if (seg.x_major())
-					{
+						{
 						const bool X_MAJOR = true;
 						while (seg.len() > 0) { _bseg_update_pixel<X_MAJOR, BLEND, USEPEN, USEOP, USEPEN, SIDE>(seg, color, op, penwidth); seg.move<X_MAJOR>(); }
-					}
+						}
 					else
-					{
+						{
 						const bool X_MAJOR = false;
 						while (seg.len() > 0) { _bseg_update_pixel<X_MAJOR, BLEND, USEPEN, USEOP, USEPEN, SIDE>(seg, color, op, penwidth); seg.move<X_MAJOR>(); }
-					}
+						}
 				}
+
+
+				/**
+				 * Draw a Bresenham segment [P,Q|. 
+				 *
+				 * SAFE FOR ANY VALUE OF THE POINTS
+				 *
+				 * @param	P		  	start point of the segment.
+				 * @param	Q		  	end point of the segment.
+				 * @param	draw_last 	true to draw the endpoint.
+				 * @param	penwidth  	default 0, if positive, use larger pen.
+				 * @param	color	  	color.
+				 * @param	blend	  	(Optional) true for blending.
+				 * @param	side	  	(Optional) 0 for no side AA and +/-1 for side AA.
+				 * @param	op		  	(Optional) opacity to apply if 0 &lt;= op &lt;= 256.
+				**/
+				void _bseg_draw(fVec2 P, fVec2 Q, bool draw_last, int32 penwidth, RGBc color, bool blend = true, int side = 0, int32 op = -1)
+					{
+					if (!Colin_SutherLand_lineclip(P, Q, _bsegClipBox())) return;									// clip if needed and discard if nothing to draw
+					_bseg_draw(internals_bseg::BSeg(P, Q), draw_last, penwidth, color, blend, side, op, true);	// draw the segment
+					}
 
 
 				/**
@@ -7815,6 +7852,43 @@ namespace mtools
 
 
 				/**
+				 * Draw the bresenham segment [P,Q| while avoiding [P,PA|
+				 * 
+				 * SAFE FOR ANY VALUE OF THE POINTS
+				 * 
+				 *            PA 
+				 *            /
+				 *           /
+				 *          /
+				 *        P+-------------Q
+				 *
+				 * @param	P	   	start point of the segment to draw.
+				 * @param	Q	   	endpoint of the segment to draw.
+				 * @param	PA	   	endpoint of the segment to avoid.
+				 * @param	drawQ  	true to draw the closed segment.
+				 * @param	closedPA true to avoid the closed segment.
+				 * @param	color  	color to use.
+				 * @param	blend  	(Optional) true to use blending.
+				 * @param	side   	(Optional) 0 for no side AA and +/-1 for side AA.
+				 * @param	op	   	(Optional) opacity to apply if 0 &lt;= op &lt;= 256.
+				**/
+				void _bseg_avoid1(fVec2 P, fVec2 Q, fVec2 PA, bool drawQ, bool closedPA, RGBc color, bool blend = true, int side = 0, int32 op = -1)
+					{
+					fVec2 P2 = P; // save start point
+					if (!Colin_SutherLand_lineclip(P, Q, _bsegClipBox())) return; // clip and return if nothing to draw
+					Colin_SutherLand_lineclip(P2, PA, _bsegClipBox());
+					if (round(P) == round(P2))
+						{ // ok
+						_bseg_avoid1(internals_bseg::BSeg(P, Q), drawQ, internals_bseg::BSeg(P, PA), closedPA, color, blend, side, op, true);
+						}
+					else
+						{ // just draw the segment
+						_bseg_draw(internals_bseg::BSeg(P, Q), drawQ, 0, color, blend, side, op, true);	// draw the segment
+						}
+					}
+
+
+				/**
 				* Draw the bresenham segment segA while avoiding segB
 				*
 				*            /
@@ -7976,6 +8050,63 @@ namespace mtools
 						}
 					}
 				}
+
+
+
+				/**
+				* Draw the bresenham segment [P,Q| while avoiding [P,PA| and [P,PB|
+				*
+				* SAFE FOR ANY VALUE OF THE POINTS
+				*
+				*     PA      PB
+				*      \     /
+				*       \   /
+				*        \ /
+				*         +--------------
+				*         P             Q
+				* 
+				* @param	P	   	start point of the segment to draw.
+				* @param	Q	   	endpoint of the segment to draw.
+				* @param	PA	   	endpoint of the first segment to avoid.
+				* @param	PB	   	endpoint of the second egment to avoid.
+				* @param	drawQ  	true to draw the closed segment.
+				* @param	closedPA	true to avoid the closed first segment.
+				* @param	closedPB	true to avoid the closed second segment.
+				* @param	color  	color to use.
+				* @param	blend  	(Optional) true to use blending.
+				* @param	side   	(Optional) 0 for no side AA and +/-1 for side AA.
+				* @param	op	   	(Optional) opacity to apply if 0 &lt;= op &lt;= 256.
+				**/
+				void _bseg_avoid2(fVec2 P, fVec2 Q, fVec2 PA, fVec2 PB, bool drawQ, bool closedPA, bool closedPB, RGBc color, bool blend = true, int side = 0, int32 op = -1)
+					{
+					fVec2 PSA = P; // save start point
+					fVec2 PSB = P; // save start point
+					if (!Colin_SutherLand_lineclip(P, Q, _bsegClipBox())) return; // clip and return if nothing to draw
+					Colin_SutherLand_lineclip(PSA, PA, _bsegClipBox());
+					Colin_SutherLand_lineclip(PSB, PB, _bsegClipBox());
+					if (round(P) == round(PSA))
+						{
+						if (round(P) == round(PSB))
+							{ 
+							_bseg_avoid2(internals_bseg::BSeg(P, Q), drawQ, internals_bseg::BSeg(P, PA), closedPA, internals_bseg::BSeg(P, PB), closedPB, color, blend, side, op, true);
+							}
+						else
+							{
+							_bseg_avoid1(internals_bseg::BSeg(P, Q), drawQ, internals_bseg::BSeg(P, PA), closedPA, color, blend, side, op, true);
+							}
+						}
+					else
+						{
+						if (round(P) == round(PSB))
+							{
+							_bseg_avoid1(internals_bseg::BSeg(P, Q), drawQ, internals_bseg::BSeg(P, PB), closedPB, color, blend, side, op, true);
+							}
+						else
+							{
+							_bseg_draw(internals_bseg::BSeg(P, Q), drawQ, 0, color, blend, side, op, true);
+							}
+						}
+					}
 
 
 				/**
@@ -8144,6 +8275,61 @@ namespace mtools
 					}
 				}
 
+
+
+				/**
+				* Draw the bresenham segment [P,Q| while avoiding [P,PA| and [Q,QA|
+				*
+				* SAFE FOR ANY VALUE OF THE POINTS
+				*
+				*     PA                   QA
+				*      \                   /
+				*       \                 /
+				*        \               /
+				*         +--------------
+				*         P             Q
+				*
+				* @param	P	   	start point of the segment to draw.
+				* @param	Q	   	endpoint of the segment to draw.
+				* @param	PA	   	endpoint of the first segment to avoid.
+				* @param	QA	   	endpoint of the second segment to avoid.
+				* @param	closedPA	true to avoid the closed first segment.
+				* @param	closedPB	true to avoid the closed second segment.
+				* @param	color  	color to use.
+				* @param	blend  	(Optional) true to use blending.
+				* @param	side   	(Optional) 0 for no side AA and +/-1 for side AA.
+				* @param	op	   	(Optional) opacity to apply if 0 &lt;= op &lt;= 256.
+				**/
+				void _bseg_avoid11(fVec2 P, fVec2 Q, fVec2 PA, fVec2 QA, bool closedPA, bool closedQA, RGBc color, bool blend = true, int side = 0, int32 op = -1)
+					{
+					fVec2 PSA = P; // save start point
+					fVec2 QSA = Q; // save start point
+					if (!Colin_SutherLand_lineclip(P, Q, _bsegClipBox())) return; // clip and return if nothing to draw
+					Colin_SutherLand_lineclip(PSA, PA, _bsegClipBox());
+					Colin_SutherLand_lineclip(QSA, QA, _bsegClipBox());
+					if (round(P) == round(PSA))
+						{
+						if (round(Q) == round(QSA))
+							{
+							_bseg_avoid11(internals_bseg::BSeg(P, Q), internals_bseg::BSeg(P, PA), closedPA, internals_bseg::BSeg(Q, QA), closedQA, color, blend, side, op, true);
+							}
+						else
+							{
+							_bseg_avoid1(internals_bseg::BSeg(P, Q), false, internals_bseg::BSeg(P, PA), closedPA, color, blend, side, op, true);
+							}
+						}
+					else
+						{
+						if (round(Q) == round(QSA))
+							{
+							_bseg_avoid1(internals_bseg::BSeg(Q, P), false, internals_bseg::BSeg(Q, QA), closedQA, color, blend, -side, op, true);
+							}
+						else
+							{
+							_bseg_draw(internals_bseg::BSeg(P, Q), false, 0, color, blend, side, op, true);
+							}
+						}
+					}
 
 				/**
 				* Draw the bresenham segment segA while avoiding segB and segD (at opposite ends)
