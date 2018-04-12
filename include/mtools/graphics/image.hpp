@@ -2438,7 +2438,6 @@ namespace mtools
 
 
 
-
 			/**
 			* draw a rectangle (integer valued positions)
 			*
@@ -2462,6 +2461,7 @@ namespace mtools
 			**/
 			MTOOLS_FORCEINLINE void draw_rectangle(const fBox2 & dest_box, RGBc color, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
+				if (_drawTinyShape(dest_box, color, 1.0, blending, min_thick)) return;
 				draw_filled_rectangle(dest_box, color, RGBc::c_Transparent, blending, min_thick);
 				}
 
@@ -2507,9 +2507,11 @@ namespace mtools
 			 * @param	blending 	(Optional) true to use blending.
 			 * @param	min_thick	(Optional) The minimum thickness.
 			 **/
-			void draw_filled_rectangle(const fBox2 & dest_box, RGBc color, RGBc fillcolor, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
+			MTOOLS_FORCEINLINE void draw_filled_rectangle(const fBox2 & dest_box, RGBc color, RGBc fillcolor, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
-
+				if (_drawTinyShape(dest_box, fillcolor, 1.0, blending, min_thick)) return;
+				iBox2 box = round(intersectionRect(dest_box, _clipfBox()));
+				draw_filled_rectangle(box, color, fillcolor, blending);
 				}
 
 
@@ -2525,6 +2527,7 @@ namespace mtools
 			 **/
 			MTOOLS_FORCEINLINE void draw_thick_rectangle(const fBox2 & dest_box, RGBc color, double thickness_x = 1.0, double thickness_y = 1.0, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
+				if (_drawTinyShape(dest_box, color, 1.0, blending, min_thick)) return;
 				draw_thick_filled_rectangle(dest_box, color, RGBc::c_Transparent, thickness_x, thickness_y, blending, min_thick);
 				}
 
@@ -2542,18 +2545,28 @@ namespace mtools
 			 **/
 			void draw_thick_filled_rectangle(const fBox2 & dest_box, RGBc color, RGBc fillcolor, double thickness_x = 1.0, double thickness_y = 1.0, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
-				/*
-				if (dest_box.isEmpty()) return;
-				if (color.isOpaque()) blending = false;
-				if (_drawTinyShape(dest_box, color, 1.0, blending, min_thick)) return;
-				double tickness = 2*penwidth  + 1; // does not work if not using integer penwidth !
-				draw_thick_horizontal_line(dest_box.min[1], dest_box.min[0] - penwidth, dest_box.max[0] + penwidth, tickness, color, true, blending, min_thick);
-				draw_thick_horizontal_line(dest_box.max[1], dest_box.min[0] - penwidth, dest_box.max[0] + penwidth, tickness, color, true, blending, min_thick);
-				draw_thick_vertical_line(dest_box.min[0], dest_box.min[1] + penwidth + 1, dest_box.max[1] - penwidth - 1, tickness, color, true, blending, min_thick);
-				draw_thick_vertical_line(dest_box.max[0], dest_box.min[1] + penwidth + 1, dest_box.max[1] - penwidth - 1, tickness, color, true, blending, min_thick);
-				*/
+				if (_drawTinyShape(dest_box, fillcolor, 1.0, blending, min_thick)) return;
+				if (thickness_x < 1.0) { thickness_x = 1.0; }
+				if (thickness_y < 1.0) { thickness_y = 1.0; }
+				const fBox2 CB = _clipfBox();
+				const iBox2 ext_box = round(intersectionRect(dest_box, CB));
+				const iBox2 int_box = round(intersectionRect(fBox2(dest_box.min[0] + thickness_x, dest_box.max[0] - thickness_x, dest_box.min[1] + thickness_y, dest_box.max[1] - thickness_y), CB));
+				if ((!int_box.isEmpty())&&(!fillcolor.isTransparent()))
+					{ // draw the interior
+					draw_box(int_box, fillcolor, blending);
+					}
+				if (!color.isTransparent())
+					{
+					const iBox2 leftB = iBox2(ext_box.min[0], int_box.min[0] - 1, ext_box.min[1], ext_box.max[1]); // left side
+					if (!leftB.isEmpty()) draw_box(leftB, fillcolor, blending);
+					const iBox2 rightB = iBox2(int_box.max[0] + 1, ext_box.max[0], ext_box.min[1], ext_box.max[1]); // right side
+					if (!rightB.isEmpty()) draw_box(rightB, fillcolor, blending);
+					const iBox2 upB = iBox2(int_box.min[0], int_box.max[0], int_box.max[1] + 1, ext_box.max[1]); // up side
+					if (!upB.isEmpty()) draw_box(upB, fillcolor, blending);
+					const iBox2 downB = iBox2(int_box.min[0], int_box.max[0], ext_box.min[1], int_box.min[1] - 1); // down side
+					if (!downB.isEmpty()) draw_box(downB, fillcolor, blending);
+					}
 				}
-
 
 
 			/**
@@ -2580,7 +2593,9 @@ namespace mtools
 			 **/
 			MTOOLS_FORCEINLINE void draw_box(const fBox2 & dest_box, RGBc fillcolor, bool blend = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
-				if (isEmpty()) return;
+				if (_drawTinyShape(dest_box, fillcolor, 1.0, blend, min_thick)) return;
+				iBox2 box = round(intersectionRect(dest_box, _clipfBox()));
+				draw_box(box, fillcolor, blend);
 				}
 
 
@@ -5298,65 +5313,98 @@ namespace mtools
 
 
 			/**
-			 * draw a rectangle of given size and color over this image. Portion outside the image is
-			 * clipped.
-			 * 
-			 * Use absolute coordinate (canvas method).
-			 *
-			 * @param	R			the absolute range represented in the image.
-			 * @param	dest_box	position of the rectangle to draw.
-			 * @param	color   	the color to use.
-			 * @param	blend   	(Optional) true to use blending and false to simply copy the color.
-			 * @param	penwidth	(Optional) The pen width (0 = unit width)
-			 **/
-			MTOOLS_FORCEINLINE void canvas_draw_rectangle(const mtools::fBox2 & R, const fBox2 & dest_box, RGBc color, bool blend = DEFAULT_BLEND, int32 penwidth = 0)
+			* draw a rectangle.
+			*
+			* @param	R		    the absolute range represented in the image.
+			* @param	dest_box   	rectangle to draw. draw nothing if empty.
+			* @param	color	   	the color to use.
+			* @param	blending   	(Optional) true to use blending.
+			* @param	min_thick  	(Optional) The minimum thickness.
+			**/
+			MTOOLS_FORCEINLINE void canvas_draw_rectangle(const mtools::fBox2 & R, const fBox2 & dest_box, RGBc color, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
-				/*
-				draw_rectangle(R.absToPixel(dest_box,dimension()), color, blend, penwidth);
-				*/
+				if (isEmpty()) return;
+				draw_rectangle(boxTransform(dest_box, R, imagefBox()), color, blending, min_thick);
 				}
 
 
 			/**
-			 * Fill the interior of a rectangle rectangle. Portion outside the image is clipped.
-			 * 
-			 * The boundary of the rectangle is not drawn. To fill the whole rectangle with its boundary,
-			 * use draw_box() instead.
-			 * 
-			 * Use absolute coordinate (canvas method).
-			 *
-			 * @param	R		 	the absolute range represented in the image.
-			 * @param	dest_box 	position of the rectangle to draw.
-			 * @param	fillcolor	the color to use.
-			 * @param	blend	 	(Optional) true to use blending and false to simply copy the color.
-			 **/
-			MTOOLS_FORCEINLINE void canvas_fill_rectangle(const mtools::fBox2 & R, const fBox2 & dest_box, RGBc fillcolor, bool blend = DEFAULT_BLEND)
+			* draw a filled rectangle.
+			*
+			* @param	R		    the absolute range represented in the image.
+			* @param	dest_box 	rectangle to draw. draw nothing if empty.
+			* @param	color	 	the color to use.
+			* @param	fillcolor	color for the interior
+			* @param	blending 	(Optional) true to use blending.
+			* @param	min_thick	(Optional) The minimum thickness.
+			**/
+			MTOOLS_FORCEINLINE void canvas_draw_filled_rectangle(const mtools::fBox2 & R, const fBox2 & dest_box, RGBc color, RGBc fillcolor, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
-				/*
-				fill_rectangle(R.absToPixel(dest_box, dimension()), fillcolor, blend);
-				*/
+				if (isEmpty()) return;
+				draw_filled_rectangle(boxTransform(dest_box, R, imagefBox()), color, fillcolor, blending, min_thick);
 				}
 
 
 			/**
-			 * Fill a (closed) box with a given color. Portion outside the image is clipped.
-			 * 
-			 * Use absolute coordinate (canvas method).
+			 * draw a thick rectangle.
 			 *
-			 * @param	R		 	the absolute range represented in the image.
-			 * @param	dest_box 	position of the rectangle to draw.
-			 * @param	fillcolor	the color to use.
-			 * @param	blend	 	(Optional) true to use blending and false to simply copy the color.
+			 * @param	R				 	the absolute range represented in the image.
+			 * @param	dest_box		 	rectangle to draw. draw nothing if empty.
+			 * @param	color			 	the color to use.
+			 * @param	thickness_x		 	Horizontal thickness (going inside the rectangle)
+			 * @param	thickness_y		 	Vertical thickness (going inside the rectangle)
+			 * @param	relativethickness	True to use relative thickness and false for pixel thickness
+			 * @param	blending		 	(Optional) true to use blending.
+			 * @param	min_thick		 	(Optional) The minimum thickness.
 			 **/
-			MTOOLS_FORCEINLINE void canvas_draw_box(const mtools::fBox2 & R, const fBox2 & dest_box, RGBc fillcolor, bool blend = DEFAULT_BLEND)
+			MTOOLS_FORCEINLINE void canvas_draw_thick_rectangle(const mtools::fBox2 & R, const fBox2 & dest_box, RGBc color, double thickness_x, double thickness_y, bool relativethickness, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
-				draw_box(R.absToPixel(dest_box, dimension()), fillcolor, blend);
+				if (isEmpty()) return;
+				const fBox2 imB = imagefBox();
+				const double tx = (relativethickness) ? boxTransform_dx(thickness_x, R, imB) : thickness_x;
+				const double ty = (relativethickness) ? boxTransform_dy(thickness_y, R, imB) : thickness_y;
+				draw_thick_rectangle(boxTransform(dest_box, R, imB), color, tx, ty, blending, min_thick);
 				}
 
 
+			/**
+			* Draw a filled thick rectangle
+			*
+			* @param	R		    the absolute range represented in the image.
+			* @param	dest_box   	rectangle to draw. draw nothing if empty.
+			* @param	color	   	The color.
+			* @param	fillcolor  	the color to use.
+			* @param	thickness_x	(Optional) horizontal thickness (going inside the rectangle)
+			* @param	thickness_y	(Optional) vertical thickness (going inside the rectangle)
+			* @param	relativethickness	True to use relative thickness and false for pixel thickness
+			* @param	blending   	(Optional) True to use blending.
+			* @param	min_thick  	(Optional) The minimum thickness.
+			**/
+			MTOOLS_FORCEINLINE void canvas_draw_thick_filled_rectangle(const mtools::fBox2 & R, const fBox2 & dest_box, RGBc color, RGBc fillcolor, double thickness_x, double thickness_y, bool relativethickness, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
+				{
+				if (isEmpty()) return;
+				const fBox2 imB = imagefBox();
+				const double tx = (relativethickness) ? boxTransform_dx(thickness_x, R, imB) : thickness_x;
+				const double ty = (relativethickness) ? boxTransform_dy(thickness_y, R, imB) : thickness_y;
+				draw_thick_filled_rectangle(boxTransform(dest_box, R, imB), color, fillcolor, tx, ty, blending, min_thick);
+				}
 
 
-		
+			/**
+			* Fill a (closed) box with a given color.
+			*
+			* @param	R		    the absolute range represented in the image.
+			* @param	dest_box 	rectangle to draw. draw nothing if empty.
+			* @param	fillcolor	the color to use.
+			* @param	blend	 	(Optional) true to use blending.
+			* @param	min_thick	(Optional) The minimum thickness.
+			**/
+			MTOOLS_FORCEINLINE void canvas_draw_box(const mtools::fBox2 & R, const fBox2 & dest_box, RGBc fillcolor, bool blend = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
+				{
+				if (isEmpty()) return;
+				draw_box(boxTransform(dest_box, R, imagefBox()), fillcolor, blend, min_thick);
+				}
+
 
 
 	
