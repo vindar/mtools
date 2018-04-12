@@ -156,7 +156,7 @@ namespace mtools
             /**
             * Copy constructor from another template parameter.
             **/
-            template<typename U> Box(const Box<U,N> & B) : min(B.min), max(B.max) {}
+            template<typename U> explicit Box(const Box<U,N> & B) : min((Vec<T,N>)B.min), max((Vec<T, N>)B.max) {}
 
 
             /**
@@ -168,7 +168,7 @@ namespace mtools
             /**
             * Assignment operator from another type.
             **/
-            template<typename U> Box & operator=(const Box<U,N> & B) { min = B.min; max = B.max; return(*this); }
+            //template<typename U> Box & operator=(const Box<U,N> & B) { min = B.min; max = B.max; return(*this); }
 
 
             /**
