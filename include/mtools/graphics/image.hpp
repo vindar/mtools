@@ -1929,51 +1929,30 @@ namespace mtools
 				}
 
 
-			/**
-			 * Draw a simple line.
-			 * 
-			 * @param	P1		   	First point.
-			 * @param	P2		   	Second endpoint.
-			 * @param	color	   	The color to use.
-			 * @param	draw_P2	   	(Optional) true to draw the endpoint P2.
-			 * @param	antialiased	(Optional) true to use antialiasing.
-			 * @param	blending   	(Optional) true to use blending.
-			 * @param	penwidth   	(Optional) pen radius (0 = unit pen)
-			 **/
-			inline void draw_line(iVec2 P1, iVec2 P2, RGBc color, bool draw_P2 = true, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int penwidth = 0)
-				{
-				if (isEmpty()) return;
-				if (penwidth < 0) { MTOOLS_DEBUG("incorrect penwidth");  penwidth = 0; }
-				if (!Colin_SutherLand_lineclip(P1, P2, _clipiBox(penwidth))) return;
-				if (penwidth > 0) _correctPenOpacity(color, penwidth);
-				if (antialiased)
-					{
-					_line_wu(P1, P2, draw_P2, color,penwidth, blending);
-					}
-				else
-					{
-					_bseg_draw(internals_bseg::BSeg(P1, P2), draw_P2, penwidth, color, blending);
-					}
-				}
-
 
 			/**
 			* Draw a simple line.
-			* Version with real-valued coordinates.
+			*
+			* @param	P1		   	First point.
+			* @param	P2		   	Second endpoint.
+			* @param	color	   	The color to use.
+			* @param	draw_P2	   	(Optional) true to draw the endpoint P2.
+			* @param	antialiased	(Optional) true to use antialiasing.
+			* @param	blending   	(Optional) true to use blending.
+			* @param	penwidth   	(Optional) pen radius (0 = unit pen)
 			**/
 			MTOOLS_FORCEINLINE void draw_line(fVec2 P1, fVec2 P2, RGBc color, bool draw_P2 = true, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int penwidth = 0)
 				{
 				if (isEmpty()) return;
-				if (penwidth < 0) { MTOOLS_DEBUG("incorrect penwidth");  penwidth = 0; }
-				if (!Colin_SutherLand_lineclip(P1, P2, _clipfBox(penwidth))) return;
-				if (penwidth > 0) _correctPenOpacity(color, penwidth);
+				if (penwidth < 0) { MTOOLS_DEBUG("incorrect penwidth");  penwidth = 0; } else if (penwidth > 0) _correctPenOpacity(color, penwidth);				
 				if (antialiased)
 					{
+					if (!Colin_SutherLand_lineclip(P1, P2, _clipfBox(penwidth))) return;
 					_line_wu(round(P1), round(P2), draw_P2, color, penwidth, blending);
 					}
 				else
 					{
-					_bseg_draw(internals_bseg::BSeg(P1, P2), draw_P2, penwidth,  color,  blending);
+					_bseg_draw(P1, P2, draw_P2, penwidth,  color,  blending);
 					}
 			}
 	
@@ -2012,22 +1991,13 @@ namespace mtools
 				MTOOLS_ASSERT(tabPoints != nullptr);
 				if (size == 1) { draw_square_dot(tabPoints[0], color, blending, penwidth); return; }
 				if ((penwidth <= 0) && (!antialiased) && (blending) && (!color.isOpaque()))
-					{ // try to draw without intersection: test if clipping is necessary
-					const fBox2 B = _clipfBoxLarge();
-					bool clip = false;
-					for (size_t i = 0; i < size; i++)
+					{ // draw without intersection
+					_bseg_draw(tabPoints[size - 2], tabPoints[size - 1], draw_last, 0, color, blending, 0);
+					for (size_t i = size - 2; i > 0; i--)
 						{
-						if (!B.isInside(tabPoints[i])) { clip = true; break; }
+						_bseg_avoid1(tabPoints[i], tabPoints[i - 1], tabPoints[i + 1], true, true, color, blending, 0);
 						}
-					if (!clip)
-						{ // ok, not too outside
-						_bseg_draw(internals_bseg::BSeg(tabPoints[size - 2], tabPoints[size - 1]), draw_last, 0, color, blending, 0);
-						for (size_t i = size - 2; i > 0; i--)
-							{
-							_bseg_avoid1(internals_bseg::BSeg(tabPoints[i], tabPoints[i - 1]), true, internals_bseg::BSeg(tabPoints[i], tabPoints[i + 1]), true, color, blending, 0);
-							}
-						return; 
-						}
+					return;
 					}
 				for (size_t i = 1; i < size - 1; i++) { draw_line(tabPoints[i - 1], tabPoints[i], color, false, antialiased, blending, penwidth); }
 				draw_line(tabPoints[size - 2], tabPoints[size - 1], color, draw_last, antialiased, blending, penwidth);
@@ -2445,7 +2415,9 @@ namespace mtools
 				if (isEmpty()) return;
 				if ((penwidth <= 0) && (!antialiased) && (blending) && (!color.isOpaque()))
 					{ // draw without overlap
-					draw_filled_triangle(P1, P2, P3, color, RGBc::c_Transparent, false, true);
+					_bseg_draw(P1, P2, true, 0, color, blending);
+					_bseg_avoid1(P2, P3, P1, true, true, color, blending);
+					_bseg_avoid11(P3, P1, P2, P2, true, true, color, blending);
 					return;
 					}
 				// default drawing
@@ -2470,36 +2442,11 @@ namespace mtools
 			inline void draw_filled_triangle(fVec2 P1, fVec2 P2, fVec2 P3, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND)
 				{
 				if (isEmpty()) return;
-				const fBox2 B = _clipfBox();
-				const fBox2 C = zoomOut(B);
-				if ((!C.isInside(P1)) || (!C.isInside(P2)) || (!C.isInside(P3)))
-					{ // triangle is not inside the box B: use clipping
-					std::array<fVec2, 3> tri = { P1, P2, P3 };
-					std::array<fVec2, 10> out;
-					size_t out_len = Sutherland_Hodgman_clipping<3, 10>(tri, B, out);
-					switch (out_len)
-						{
-						case 0: { return; }
-						case 1: { draw_square_dot(out[0], color, blending); return; }
-						case 2: { draw_line(out[0], out[1], color, true, antialiased, blending); return; }
-						case 4: { draw_filled_quad(out[0], out[1], out[2], out[3], color, fillcolor, antialiased, blending); return; }
-						}
-					if (out_len > 4)  { draw_filled_polygon(out.data(), out_len, color, fillcolor, antialiased, blending); return; }
-					P1 = out[0];
-					P2 = out[1];
-					P3 = out[2];
-					}
-				// ok, draw triangle inside the bounding box
-				int w = 0; 
-				if (antialiased)
-					{
-					w = -winding<3>({ P1, P2, P3 }); // winding direction of the polygon
-					MTOOLS_ASSERT(w != 0);
-					}
-				_bseg_draw(internals_bseg::BSeg(P1, P2), true, 0, color, blending, w);
-				_bseg_avoid1(internals_bseg::BSeg(P2, P3), true, internals_bseg::BSeg(P2, P1), true, color, blending, w);
-				_bseg_avoid11(internals_bseg::BSeg(P3, P1), internals_bseg::BSeg(P3, P2), true, internals_bseg::BSeg(P1, P2), true, color, blending, w);							
-				if (! fillcolor.isTransparent()) _bseg_fill_triangle(P1, P2, P3, fillcolor, blending);
+				if (!fillcolor.isTransparent()) _bseg_fill_triangle(P1, P2, P3, fillcolor, blending);	// fill the triangle 
+				int w = -winding<3>({ P1, P2, P3 }); // winding direction of the polygon
+				_bseg_draw(P1, P2, true, 0, color, blending, w);
+				_bseg_avoid1(P2, P3, P1, true, true, color, blending, w);
+				_bseg_avoid11(P3, P1, P2, P2, true, true, color, blending, w);
 				}
 
 
@@ -2520,7 +2467,10 @@ namespace mtools
 				if (isEmpty()) return;
 				if ((penwidth <= 0) && (!antialiased) && (blending) && (!color.isOpaque()))
 					{ // draw without overlap
-					draw_filled_quad(P1, P2, P3, P4, color, RGBc::c_Transparent, false, true);
+					_bseg_draw(P1, P2, true, 0, color, blending);
+					_bseg_avoid1(P2, P3, P1, true, true, color, blending);
+					_bseg_avoid1(P3, P4, P1, true, true, color, blending);
+					_bseg_avoid11(P4, P1, P3, P2, true, true, color, blending);
 					return;
 					}
 				// default drawing
@@ -2547,38 +2497,14 @@ namespace mtools
 			inline void draw_filled_quad(fVec2 P1, fVec2 P2, fVec2 P3, fVec2 P4, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND)
 				{
 				if (isEmpty()) return;
-				const fBox2 B = _clipfBox();
-				const fBox2 C = zoomOut(B);
-				if ((!C.isInside(P1)) || (!C.isInside(P2)) || (!C.isInside(P3)) || (!C.isInside(P4)))
-					{ // triangle is not inside the box B: use clipping
-					std::array<fVec2, 4> tri = { P1, P2, P3, P4 };
-					std::array<fVec2, 12> out;
-					size_t out_len = Sutherland_Hodgman_clipping<4, 12>(tri, B, out);
-					switch (out_len)
-					{
-					case 0: { return; }
-					case 1: { draw_square_dot(out[0], color, blending); return; }
-					case 2: { draw_line(out[0], out[1], color, true, antialiased, blending); return; }
-					case 3: { draw_filled_triangle(out[0], out[1], out[2], color, fillcolor, antialiased, blending); return; }
-					}
-					if (out_len > 4)  { draw_filled_polygon(out.data(), out_len, color, fillcolor, antialiased, blending); return; }
-					P1 = out[0];
-					P2 = out[1];
-					P3 = out[2];
-					P4 = out[3];
-					}
 				// ok, draw quad inside the bounding box
 				int w = 0;
-				if (antialiased)
-					{
-					w = -winding<4>({ P1, P2, P3, P4 }); // winding direction of the polygon
-					MTOOLS_ASSERT(w != 0);
-					}
-				_bseg_draw(internals_bseg::BSeg(P1, P2), true, 0, color, blending, w);
-				_bseg_avoid1(internals_bseg::BSeg(P2, P3), true, internals_bseg::BSeg(P2, P1), true, color, blending, w);
-				_bseg_avoid1(internals_bseg::BSeg(P3, P4), true, internals_bseg::BSeg(P3, P2), true, color, blending, w);
-				_bseg_avoid11(internals_bseg::BSeg(P4, P1), internals_bseg::BSeg(P4, P3), true, internals_bseg::BSeg(P1, P2), true, color, blending, w);
-				_bseg_avoid22(internals_bseg::BSeg(P1, P3), internals_bseg::BSeg(P1, P2), true, internals_bseg::BSeg(P1, P4), true, internals_bseg::BSeg(P3, P2), true, internals_bseg::BSeg(P3, P4), true, fillcolor, blending, 0);
+				if (antialiased) { w = -winding<4>({ P1, P2, P3, P4 }); } // winding direction of the polygon					
+				_bseg_draw(P1, P2, true, 0, color, blending, w);
+				_bseg_avoid1(P2, P3, P1, true, true, color, blending, w);
+				_bseg_avoid1(P3, P4, P2, true, true, color, blending, w);
+				_bseg_avoid11(P4, P1, P3, P2, true, true, color, blending, w);
+				_bseg_avoid22(P1, P3, P2, P4, P2, P4, true,true,true,true, fillcolor, blending, 0);
 				if (!fillcolor.isTransparent())
 					{
 					_bseg_fill_triangle(P1, P2, P3, fillcolor, blending);
@@ -2612,7 +2538,9 @@ namespace mtools
 							{
 							if ((penwidth <= 0) && (!antialiased) && (blending) && (!color.isOpaque()))
 								{ // draw without overlap
-								draw_filled_polygon(tabPoints, nbvertices, color, RGBc::c_Transparent, false);
+								_bseg_draw(tabPoints[0], tabPoints[1], true, 0, color, blending);
+								for (size_t i = 1; i < nbvertices - 1; i++) _bseg_avoid1(tabPoints[i], tabPoints[i + 1], tabPoints[i - 1], true, true, color, blending);
+								_bseg_avoid11(tabPoints[nbvertices - 1], tabPoints[0], tabPoints[nbvertices - 2], tabPoints[1], true, true, color, blending);
 								return;
 								}
 							// default drawing
@@ -2656,6 +2584,7 @@ namespace mtools
 				fVec2 * in_tab = (fVec2*)tabPoints;
 				size_t	in_len = nbvertices;
 				bool allocated = false;
+				/*
 				// test if clipping is necessary
 				const fBox2 B = _clipfBox();
 				const fBox2 C = _clipfBoxLarge();
@@ -2670,6 +2599,7 @@ namespace mtools
 						}
 					}
 				// ok, polygon (in_tab, in_len) is now inside the box B
+				*/
 				switch (in_len)
 					{
 					case 0: { break; }
@@ -2682,24 +2612,28 @@ namespace mtools
 						const int w = winding(in_tab, in_len);	// winding direction of the polygon. 
 						const int side = ((antialiased) && (!fillcolor.isTransparent())) ? -w : 0;
 						// draw the boundary. 
-						_bseg_draw(internals_bseg::BSeg(in_tab[0], in_tab[1]), true, 0, color, blending, side);
-						for (size_t i = 1; i < in_len - 1; i++) _bseg_avoid1(internals_bseg::BSeg(in_tab[i], in_tab[i+1]), true, internals_bseg::BSeg(in_tab[i], in_tab[i-1]), true,  color, blending, side);						
-						_bseg_avoid11(internals_bseg::BSeg(in_tab[in_len -1], in_tab[0]), internals_bseg::BSeg(in_tab[in_len - 1], in_tab[in_len - 2]), true, internals_bseg::BSeg(in_tab[0], in_tab[1]), true, color, blending, side);
+						_bseg_draw(in_tab[0], in_tab[1], true, 0, color, blending, side);
+						for (size_t i = 1; i < in_len - 1; i++) _bseg_avoid1(in_tab[i], in_tab[i+1], in_tab[i-1], true, true,  color, blending, side);						
+						_bseg_avoid11(in_tab[in_len -1], in_tab[0], in_tab[in_len - 2], in_tab[1], true, true, color, blending, side);
 						if ((fillcolor.isTransparent()) || (w == 0)) break; // nothing to fill 
 						// ok, we can draw the interior
 						if (snakefill)
-							{ // request that we use snake filling algo
+							{ // use snake filling algo
 							size_t a = 0, b = in_len - 1;
 							int dir = 1; 
 							while (a + 1 < b)
 								{
 								if (dir) 
 									{
-									_bseg_fill_triangle(in_tab[a], in_tab[a + 1], in_tab[b], fillcolor, blending); a++;
+									_bseg_fill_triangle(in_tab[a], in_tab[a + 1], in_tab[b], fillcolor, blending); 
+									if (a+2 != b) _bseg_avoid22(in_tab[a + 1], in_tab[b], in_tab[a], in_tab[a + 2], in_tab[b - 1], in_tab[(b + 1) % in_len], true, true, true, true,fillcolor,blending,0);
+									a++;
 									}
 								else
 									{
-									_bseg_fill_triangle(in_tab[b], in_tab[b - 1], in_tab[a], fillcolor, blending); b--;								
+									_bseg_fill_triangle(in_tab[b], in_tab[b - 1], in_tab[a], fillcolor, blending);
+									if (b - 2 != a) _bseg_avoid22(in_tab[b-1], in_tab[a], in_tab[b], in_tab[b - 2], in_tab[a + 1], in_tab[(a == 0) ? (in_len-1) : (a-1)], true, true, true, true, fillcolor, blending, 0);
+									b--;
 									}
 								dir = 1 - dir;
 								}
@@ -2709,10 +2643,7 @@ namespace mtools
 							{ // convex polygon, use fan triangulation
 							for (size_t i = 1; i < in_len - 2; i++)
 								{
-								_bseg_avoid22(internals_bseg::BSeg(in_tab[0], in_tab[i + 1]),
-									internals_bseg::BSeg(in_tab[0], in_tab[i]), true, internals_bseg::BSeg(in_tab[0], in_tab[in_len - 1]), true,
-									internals_bseg::BSeg(in_tab[i + 1], in_tab[i]), true, internals_bseg::BSeg(in_tab[i + 1], in_tab[i + 2]), true,
-									color, blending, 0);
+								_bseg_avoid22(in_tab[0], in_tab[i + 1], in_tab[i], in_tab[in_len - 1], in_tab[i], in_tab[i + 2], true, true, true, true, fillcolor, blending, 0);
 								}
 							for (size_t i = 2; i < in_len; i++)	_bseg_fill_triangle(in_tab[0], in_tab[i-1], in_tab[i], fillcolor, blending);
 							break;
@@ -2761,10 +2692,7 @@ namespace mtools
 										{
 										auto nextit2 = nextit; nextit2++;  if (nextit2 == pol.end()) nextit2 = pol.begin();
 										auto previt2 = previt; if (previt2 == pol.begin()) previt2 = pol.end();  previt2--;
-										_bseg_avoid22(internals_bseg::BSeg(*previt, *nextit),
-											internals_bseg::BSeg(*previt, *it), true, internals_bseg::BSeg(*previt, *previt2), true,
-											internals_bseg::BSeg(*nextit, *it), true, internals_bseg::BSeg(*nextit, *nextit2), true, 
-											fillcolor, blending, 0); 
+										_bseg_avoid22(*previt, *nextit, *it, *previt2, *it, *nextit2, true,  true, true, true, fillcolor, blending, 0); 
 										}
 									pol.erase(it);
 									if (*previt == *nextit) pol.erase(nextit); 
@@ -2923,10 +2851,10 @@ namespace mtools
 			 * @param	fillcolor	The fill color.
 			 * @param	blending 	(Optional) true to use blending and false to write over.
 			 **/
-			inline void fill_triangle(iVec2 P1, iVec2 P2, iVec2 P3, RGBc fillcolor, bool blending = true)
+			 inline void fill_triangle(iVec2 P1, iVec2 P2, iVec2 P3, RGBc fillcolor, bool blending = true)
 				{
-				/*
-				if (isEmpty()) return;
+				 /*
+				 if (isEmpty()) return;
 				iBox2 mbr(P1);
 				mbr.swallowPoint(P2);
 				mbr.swallowPoint(P3);
@@ -2940,7 +2868,7 @@ namespace mtools
 					{
 					if ((blending) && (!fillcolor.isOpaque())) _draw_triangle_interior<true, true>(P1, P2, P3, fillcolor); else _draw_triangle_interior<false, true>(P1, P2, P3, fillcolor);
 					}
-					*/
+				*/
 				}
 
 
@@ -7583,8 +7511,9 @@ namespace mtools
 				**/
 				void _bseg_draw(fVec2 P, fVec2 Q, bool draw_last, int32 penwidth, RGBc color, bool blend = true, int side = 0, int32 op = -1)
 					{
-					if (!Colin_SutherLand_lineclip(P, Q, _bsegClipBox())) return;									// clip if needed and discard if nothing to draw
-					_bseg_draw(internals_bseg::BSeg(P, Q), draw_last, penwidth, color, blend, side, op, true);	// draw the segment
+					const fBox2 BB = _bsegClipBox();
+					if (!Colin_SutherLand_lineclip(P, Q, BB)) return;									// clip if needed and discard if nothing to draw
+					_bseg_draw_sub(internals_bseg::BSeg(P, Q), draw_last, penwidth, color, blend, side, op, true);	// draw the segment
 					}
 
 
@@ -7601,7 +7530,7 @@ namespace mtools
 				* @param	checkrange	(Optional) True to check the range (default). Set it to false only if it
 				* 						is sure that the segment does not exit the image.
 				**/
-				void _bseg_draw(const internals_bseg::BSeg & seg, bool draw_last, int32 penwidth, RGBc color, bool blend = true, int side = 0, int32 op = -1, bool checkrange = true)
+				void _bseg_draw_sub(const internals_bseg::BSeg & seg, bool draw_last, int32 penwidth, RGBc color, bool blend = true, int side = 0, int32 op = -1, bool checkrange = true)
 				{
 					if (op == 0) return;
 					const bool useop = ((op > 0) && (op < 256));
@@ -7875,15 +7804,16 @@ namespace mtools
 				void _bseg_avoid1(fVec2 P, fVec2 Q, fVec2 PA, bool drawQ, bool closedPA, RGBc color, bool blend = true, int side = 0, int32 op = -1)
 					{
 					fVec2 P2 = P; // save start point
-					if (!Colin_SutherLand_lineclip(P, Q, _bsegClipBox())) return; // clip and return if nothing to draw
-					Colin_SutherLand_lineclip(P2, PA, _bsegClipBox());
+					const fBox2 BB = _bsegClipBox();
+					if (!Colin_SutherLand_lineclip(P, Q,BB)) return; // clip and return if nothing to draw
+					Colin_SutherLand_lineclip(P2, PA, BB);
 					if (round(P) == round(P2))
 						{ // ok
-						_bseg_avoid1(internals_bseg::BSeg(P, Q), drawQ, internals_bseg::BSeg(P, PA), closedPA, color, blend, side, op, true);
+						_bseg_avoid1_sub(internals_bseg::BSeg(P, Q), drawQ, internals_bseg::BSeg(P, PA), closedPA, color, blend, side, op, true);
 						}
 					else
 						{ // just draw the segment
-						_bseg_draw(internals_bseg::BSeg(P, Q), drawQ, 0, color, blend, side, op, true);	// draw the segment
+						_bseg_draw_sub(internals_bseg::BSeg(P, Q), drawQ, 0, color, blend, side, op, true);	// draw the segment
 						}
 					}
 
@@ -7907,7 +7837,7 @@ namespace mtools
 				* @param	checkrange	(Optional) True to check the range (default). Set it to false only if it
 				* 						is sure that the segment does not exit the image.
 				**/
-				void _bseg_avoid1(const internals_bseg::BSeg & segA, bool lastA, const internals_bseg::BSeg & segB, bool lastB, RGBc color, bool blend = true, int side = 0, int32 op = -1, bool checkrange = true)
+				void _bseg_avoid1_sub(const internals_bseg::BSeg & segA, bool lastA, const internals_bseg::BSeg & segB, bool lastB, RGBc color, bool blend = true, int side = 0, int32 op = -1, bool checkrange = true)
 				{
 					if (op == 0) return;
 					const bool useop = ((op > 0) && (op < 256));
@@ -8081,29 +8011,30 @@ namespace mtools
 					{
 					fVec2 PSA = P; // save start point
 					fVec2 PSB = P; // save start point
-					if (!Colin_SutherLand_lineclip(P, Q, _bsegClipBox())) return; // clip and return if nothing to draw
-					Colin_SutherLand_lineclip(PSA, PA, _bsegClipBox());
-					Colin_SutherLand_lineclip(PSB, PB, _bsegClipBox());
+					const fBox2 BB = _bsegClipBox();
+					if (!Colin_SutherLand_lineclip(P, Q, BB)) return; // clip and return if nothing to draw
+					Colin_SutherLand_lineclip(PSA, PA, BB);
+					Colin_SutherLand_lineclip(PSB, PB, BB);
 					if (round(P) == round(PSA))
 						{
 						if (round(P) == round(PSB))
 							{ 
-							_bseg_avoid2(internals_bseg::BSeg(P, Q), drawQ, internals_bseg::BSeg(P, PA), closedPA, internals_bseg::BSeg(P, PB), closedPB, color, blend, side, op, true);
+							_bseg_avoid2_sub(internals_bseg::BSeg(P, Q), drawQ, internals_bseg::BSeg(P, PA), closedPA, internals_bseg::BSeg(P, PB), closedPB, color, blend, side, op, true);
 							}
 						else
 							{
-							_bseg_avoid1(internals_bseg::BSeg(P, Q), drawQ, internals_bseg::BSeg(P, PA), closedPA, color, blend, side, op, true);
+							_bseg_avoid1_sub(internals_bseg::BSeg(P, Q), drawQ, internals_bseg::BSeg(P, PA), closedPA, color, blend, side, op, true);
 							}
 						}
 					else
 						{
 						if (round(P) == round(PSB))
 							{
-							_bseg_avoid1(internals_bseg::BSeg(P, Q), drawQ, internals_bseg::BSeg(P, PB), closedPB, color, blend, side, op, true);
+							_bseg_avoid1_sub(internals_bseg::BSeg(P, Q), drawQ, internals_bseg::BSeg(P, PB), closedPB, color, blend, side, op, true);
 							}
 						else
 							{
-							_bseg_draw(internals_bseg::BSeg(P, Q), drawQ, 0, color, blend, side, op, true);
+							_bseg_draw_sub(internals_bseg::BSeg(P, Q), drawQ, 0, color, blend, side, op, true);
 							}
 						}
 					}
@@ -8130,7 +8061,7 @@ namespace mtools
 				* @param	checkrange	(Optional) True to check the range (default). Set it to false only if it
 				* 						is sure that the segment does not exit the image.
 				**/
-				void _bseg_avoid2(const internals_bseg::BSeg & segA, bool lastA, const internals_bseg::BSeg & segB, bool lastB, const internals_bseg::BSeg & segC, bool lastC, RGBc color, bool blend = true, int side = 0, int32 op = -1, bool checkrange = true)
+				void _bseg_avoid2_sub(const internals_bseg::BSeg & segA, bool lastA, const internals_bseg::BSeg & segB, bool lastB, const internals_bseg::BSeg & segC, bool lastC, RGBc color, bool blend = true, int side = 0, int32 op = -1, bool checkrange = true)
 				{
 					if (op == 0) return;
 					const bool useop = ((op > 0) && (op < 256));
@@ -8294,7 +8225,7 @@ namespace mtools
 				* @param	PA	   	endpoint of the first segment to avoid.
 				* @param	QA	   	endpoint of the second segment to avoid.
 				* @param	closedPA	true to avoid the closed first segment.
-				* @param	closedPB	true to avoid the closed second segment.
+				* @param	closedQA	true to avoid the closed second segment.
 				* @param	color  	color to use.
 				* @param	blend  	(Optional) true to use blending.
 				* @param	side   	(Optional) 0 for no side AA and +/-1 for side AA.
@@ -8304,29 +8235,30 @@ namespace mtools
 					{
 					fVec2 PSA = P; // save start point
 					fVec2 QSA = Q; // save start point
-					if (!Colin_SutherLand_lineclip(P, Q, _bsegClipBox())) return; // clip and return if nothing to draw
-					Colin_SutherLand_lineclip(PSA, PA, _bsegClipBox());
-					Colin_SutherLand_lineclip(QSA, QA, _bsegClipBox());
+					const fBox2 BB = _bsegClipBox();
+					if (!Colin_SutherLand_lineclip(P, Q, BB)) return; // clip and return if nothing to draw
+					Colin_SutherLand_lineclip(PSA, PA, BB);
+					Colin_SutherLand_lineclip(QSA, QA, BB);
 					if (round(P) == round(PSA))
 						{
 						if (round(Q) == round(QSA))
 							{
-							_bseg_avoid11(internals_bseg::BSeg(P, Q), internals_bseg::BSeg(P, PA), closedPA, internals_bseg::BSeg(Q, QA), closedQA, color, blend, side, op, true);
+							_bseg_avoid11_sub(internals_bseg::BSeg(P, Q), internals_bseg::BSeg(P, PA), closedPA, internals_bseg::BSeg(Q, QA), closedQA, color, blend, side, op, true);
 							}
 						else
 							{
-							_bseg_avoid1(internals_bseg::BSeg(P, Q), false, internals_bseg::BSeg(P, PA), closedPA, color, blend, side, op, true);
+							_bseg_avoid1_sub(internals_bseg::BSeg(P, Q), false, internals_bseg::BSeg(P, PA), closedPA, color, blend, side, op, true);
 							}
 						}
 					else
 						{
 						if (round(Q) == round(QSA))
 							{
-							_bseg_avoid1(internals_bseg::BSeg(Q, P), false, internals_bseg::BSeg(Q, QA), closedQA, color, blend, -side, op, true);
+							_bseg_avoid1_sub(internals_bseg::BSeg(Q, P), false, internals_bseg::BSeg(Q, QA), closedQA, color, blend, -side, op, true);
 							}
 						else
 							{
-							_bseg_draw(internals_bseg::BSeg(P, Q), false, 0, color, blend, side, op, true);
+							_bseg_draw_sub(internals_bseg::BSeg(P, Q), false, 0, color, blend, side, op, true);
 							}
 						}
 					}
@@ -8351,7 +8283,7 @@ namespace mtools
 				* @param	checkrange	(Optional) True to check the range (default). Set it to false only if it
 				* 						is sure that the segment does not exit the image.
 				**/
-				void _bseg_avoid11(const internals_bseg::BSeg & segA, const internals_bseg::BSeg & segB, bool lastB, const internals_bseg::BSeg & segD, bool lastD, RGBc color, bool blend = true, int side = 0, int32 op = -1, bool checkrange = true)
+				void _bseg_avoid11_sub(const internals_bseg::BSeg & segA, const internals_bseg::BSeg & segB, bool lastB, const internals_bseg::BSeg & segD, bool lastD, RGBc color, bool blend = true, int side = 0, int32 op = -1, bool checkrange = true)
 				{
 					if (op == 0) return;
 					const bool useop = ((op > 0) && (op < 256));
@@ -8502,6 +8434,94 @@ namespace mtools
 
 
 				/**
+				* Draw the bresenham segment [P,Q| while avoiding [P,PA| , [P, PB| and [Q,QA|
+				*
+				* SAFE FOR ANY VALUE OF THE POINTS
+				*
+				*     PA     PB            QA
+				*      \     /             /
+				*       \   /             /
+				*        \ /             /
+				*         +--------------
+				*         P             Q
+				*
+				* @param	P	   	start point of the segment to draw.
+				* @param	Q	   	endpoint of the segment to draw.
+				* @param	PA	   	endpoint of the first segment to avoid.
+				* @param	PB	   	endpoint of the second segment to avoid.
+				* @param	QA	   	endpoint of the third segment to avoid.
+				* @param	closedPA	true to avoid the closed first segment.
+				* @param	closedPB	true to avoid the closed second segment.
+				* @param	closedQA	true to avoid the closed third segment.
+				* @param	color  	color to use.
+				* @param	blend  	(Optional) true to use blending.
+				* @param	side   	(Optional) 0 for no side AA and +/-1 for side AA.
+				* @param	op	   	(Optional) opacity to apply if 0 &lt;= op &lt;= 256.
+				**/
+				void _bseg_avoid21(fVec2 P, fVec2 Q, fVec2 PA, fVec2 PB, fVec2 QA, bool closedPA, bool closedPB, bool closedQA, RGBc color, bool blend = true, int side = 0, int32 op = -1)
+					{
+					fVec2 PSA = P;
+					fVec2 PSB = P;
+					fVec2 QSA = Q;
+					const fBox2 BB = _bsegClipBox();
+					if (!Colin_SutherLand_lineclip(P, Q, BB)) return; // clip and return if nothing to draw
+					Colin_SutherLand_lineclip(PSA, PA, BB);
+					Colin_SutherLand_lineclip(PSB, PB, BB);
+					Colin_SutherLand_lineclip(QSA, QA, BB);
+					if (round(P) == round(PSA))
+						{
+						if (round(P) == round(PSB))
+							{
+							if (round(Q) == round(QSA))
+								{
+								_bseg_avoid21_sub(internals_bseg::BSeg(P, Q), internals_bseg::BSeg(P, PA), closedPA, internals_bseg::BSeg(P, PB), closedPB, internals_bseg::BSeg(Q, QA), closedQA, color, blend, side, op, true);
+								}
+							else
+								{
+								_bseg_avoid2_sub(internals_bseg::BSeg(P, Q), false, internals_bseg::BSeg(P, PA), closedPA, internals_bseg::BSeg(P, PB), closedPB, color, blend, side, op, true);
+								}
+							}
+						else
+							{
+							if (round(Q) == round(QSA))
+								{
+								_bseg_avoid11_sub(internals_bseg::BSeg(P, Q), internals_bseg::BSeg(P, PA), closedPA, internals_bseg::BSeg(Q, QA), closedQA, color, blend, side, op, true);
+								}
+							else
+								{
+								_bseg_avoid1_sub(internals_bseg::BSeg(P, Q), false, internals_bseg::BSeg(P, PA), closedPA, color, blend, side, op, true);
+								}
+							}
+						}
+					else
+						{
+						if (round(P) == round(PSB))
+							{
+							if (round(Q) == round(QSA))
+								{
+								_bseg_avoid11_sub(internals_bseg::BSeg(P, Q), internals_bseg::BSeg(P, PB), closedPB, internals_bseg::BSeg(Q, QA), closedQA, color, blend, side, op, true);
+								}
+							else
+								{
+								_bseg_avoid1_sub(internals_bseg::BSeg(P, Q), false, internals_bseg::BSeg(P, PB), closedPB, color, blend, side, op, true);
+								}
+							}
+						else
+							{
+							if (round(Q) == round(QSA))
+								{
+								_bseg_avoid1_sub(internals_bseg::BSeg(Q, P), false, internals_bseg::BSeg(Q, QA), closedQA, color, blend, -side, op, true);
+								}
+							else
+								{
+								_bseg_draw_sub(internals_bseg::BSeg(P, Q), false, 0, color, blend, side, op, true);
+								}
+							}
+						}
+					}
+
+
+				/**
 				* Draw the bresenham segment segA while avoiding segB, segC and segD
 				*
 				*      \     /              /
@@ -8523,7 +8543,7 @@ namespace mtools
 				* @param	checkrange	(Optional) True to check the range (default). Set it to false only if it
 				* 						is sure that the segment does not exit the image.
 				**/
-				void _bseg_avoid21(const internals_bseg::BSeg & segA, const internals_bseg::BSeg & segB, bool lastB, const internals_bseg::BSeg & segC, bool lastC, const internals_bseg::BSeg & segD, bool lastD,
+				void _bseg_avoid21_sub(const internals_bseg::BSeg & segA, const internals_bseg::BSeg & segB, bool lastB, const internals_bseg::BSeg & segC, bool lastC, const internals_bseg::BSeg & segD, bool lastD,
 					RGBc color, bool blend = true, int side = 0, int32 op = -1, bool checkrange = true)
 				{
 					if (op == 0) return;
@@ -8677,6 +8697,153 @@ namespace mtools
 
 
 				/**
+				* Draw the bresenham segment [P,Q| while avoiding [P,PA| , [P, PB|,  [Q,QA| and [Q,QB|
+				*
+				* SAFE FOR ANY VALUE OF THE POINTS
+				*
+				*     PA     PB         QA     QB
+				*      \     /           \     /
+				*       \   /             \   /
+				*        \ /               \ /
+				*         +------------------
+				*         P                 Q
+				*
+				* @param	P	   	start point of the segment to draw.
+				* @param	Q	   	endpoint of the segment to draw.
+				* @param	PA	   	endpoint of the first segment to avoid.
+				* @param	PB	   	endpoint of the second segment to avoid.
+				* @param	QA	   	endpoint of the third segment to avoid.
+				* @param	QB	   	endpoint of the fourth segment to avoid.
+				* @param	closedPA	true to avoid the closed first segment.
+				* @param	closedPB	true to avoid the closed second segment.
+				* @param	closedQA	true to avoid the closed third segment.
+				* @param	closedQB	true to avoid the closed third segment.
+				* @param	color  	color to use.
+				* @param	blend  	(Optional) true to use blending.
+				* @param	side   	(Optional) 0 for no side AA and +/-1 for side AA.
+				* @param	op	   	(Optional) opacity to apply if 0 &lt;= op &lt;= 256.
+				**/
+				void _bseg_avoid22(fVec2 P, fVec2 Q, fVec2 PA, fVec2 PB, fVec2 QA, fVec2 QB, bool closedPA, bool closedPB, bool closedQA, bool closedQB, RGBc color, bool blend = true, int side = 0, int32 op = -1)
+					{
+					fVec2 PSA = P;
+					fVec2 PSB = P;
+					fVec2 QSA = Q;
+					fVec2 QSB = Q;
+					const fBox2 BB = _bsegClipBox();
+					if (!Colin_SutherLand_lineclip(P, Q, BB)) return; // clip and return if nothing to draw
+					Colin_SutherLand_lineclip(PSA, PA, BB);
+					Colin_SutherLand_lineclip(PSB, PB, BB);
+					Colin_SutherLand_lineclip(QSA, QA, BB);
+					Colin_SutherLand_lineclip(QSB, QB, BB);
+					if (round(P) == round(PSA))
+						{
+						if (round(P) == round(PSB))
+							{ // PA et PB
+							if (round(Q) == round(QSA))
+								{
+								if (round(Q) == round(QSB))
+									{ // PA PB QA QB
+									_bseg_avoid22_sub(internals_bseg::BSeg(P, Q), internals_bseg::BSeg(P, PA), closedPA, internals_bseg::BSeg(P, PB), closedPB, internals_bseg::BSeg(Q, QA), closedQA, internals_bseg::BSeg(Q, QB), closedQB, color, blend, side, op, true);
+									}
+								else
+									{ // PA PB QA
+									_bseg_avoid21_sub(internals_bseg::BSeg(P, Q), internals_bseg::BSeg(P, PA), closedPA, internals_bseg::BSeg(P, PB), closedPB, internals_bseg::BSeg(Q, QA), closedQA, color, blend, side, op, true);
+									}
+								}
+							else
+								{
+								if (round(Q) == round(QSB))
+									{ // PA PB QB
+									_bseg_avoid21_sub(internals_bseg::BSeg(P, Q), internals_bseg::BSeg(P, PA), closedPA, internals_bseg::BSeg(P, PB), closedPB, internals_bseg::BSeg(Q, QB), closedQB, color, blend, side, op, true);
+									}
+								else
+									{ // PA PB 
+									_bseg_avoid2_sub(internals_bseg::BSeg(P, Q), false, internals_bseg::BSeg(P, PA), closedPA, internals_bseg::BSeg(P, PB), closedPB, color, blend, side, op, true);
+									}
+								}
+							}
+						else
+							{ // seulement PA
+							if (round(Q) == round(QSA))
+								{
+								if (round(Q) == round(QSB))
+									{ // PA QA QB
+									_bseg_avoid21_sub(internals_bseg::BSeg(Q, P), internals_bseg::BSeg(Q, QA), closedQA, internals_bseg::BSeg(Q, QB), closedQB, internals_bseg::BSeg(P, PA), closedPA, color, blend, -side, op, true);
+									}
+								else
+									{ // PA QA
+									_bseg_avoid11_sub(internals_bseg::BSeg(P, Q), internals_bseg::BSeg(P, PA), closedPA, internals_bseg::BSeg(Q, QA), closedQA, color, blend, side, op, true);
+									}
+								}
+							else
+								{
+								if (round(Q) == round(QSB))
+									{ // PA QB
+									_bseg_avoid11_sub(internals_bseg::BSeg(P, Q), internals_bseg::BSeg(P, PA), closedPA, internals_bseg::BSeg(Q, QB), closedQB, color, blend, side, op, true);
+									}
+								else
+									{ // PA
+									_bseg_avoid1_sub(internals_bseg::BSeg(P, Q), false, internals_bseg::BSeg(P, PA), closedPA, color, blend, side, op, true);
+									}
+								}
+							}
+						}
+					else
+						{
+						if (round(P) == round(PSB))
+							{ // seulement PB
+							if (round(Q) == round(QSA))
+								{
+								if (round(Q) == round(QSB))
+									{ // PB QA QB
+									_bseg_avoid21_sub(internals_bseg::BSeg(Q, P), internals_bseg::BSeg(Q, QA), closedQA, internals_bseg::BSeg(Q, QB), closedQB, internals_bseg::BSeg(P, PB), closedPB, color, blend, -side, op, true);
+									}
+								else
+									{ // PB QA
+									_bseg_avoid11_sub(internals_bseg::BSeg(P, Q), internals_bseg::BSeg(P, PB), closedPB, internals_bseg::BSeg(Q, QA), closedQA, color, blend, side, op, true);
+									}
+								}
+							else
+								{
+								if (round(Q) == round(QSB))
+									{ // PB QB 
+									_bseg_avoid11_sub(internals_bseg::BSeg(P, Q), internals_bseg::BSeg(P, PB), closedPB, internals_bseg::BSeg(Q, QB), closedQB, color, blend, side, op, true);
+									}
+								else
+									{ // PB
+									_bseg_avoid1_sub(internals_bseg::BSeg(P, Q), false, internals_bseg::BSeg(P, PB), closedPB, color, blend, side, op, true);
+									}
+								}
+							}
+						else
+							{ // aucun 
+							if (round(Q) == round(QSA))
+								{
+								if (round(Q) == round(QSB))
+									{ // QA QB
+									_bseg_avoid2_sub(internals_bseg::BSeg(Q, P), false, internals_bseg::BSeg(Q, QA), closedQA, internals_bseg::BSeg(Q, QB), closedQB, color, blend, -side, op, true);
+									}
+								else
+									{ // QA
+									_bseg_avoid1_sub(internals_bseg::BSeg(Q, P), false, internals_bseg::BSeg(Q, QA), closedQA, color, blend, -side, op, true);
+									}
+								}
+							else
+								{
+								if (round(Q) == round(QSB))
+									{ // QB
+									_bseg_avoid1_sub(internals_bseg::BSeg(Q, P), false, internals_bseg::BSeg(Q, QB), closedQB, color, blend, -side, op, true);
+									}
+								else
+									{ // rien
+									_bseg_draw_sub(internals_bseg::BSeg(P, Q), false, 0, color, blend, side, op, true);
+									}
+								}
+							}
+						}
+					}
+
+				/**
 				* Draw the bresenham segment segA while avoiding segB, segC and segD
 				*
 				*      \     /        \     /
@@ -8700,7 +8867,7 @@ namespace mtools
 				* @param	checkrange	(Optional) True to check the range (default). Set it to false only if it
 				* 						is sure that the segment does not exit the image.
 				**/
-				void _bseg_avoid22(const internals_bseg::BSeg & segA, const internals_bseg::BSeg & segB, bool lastB, const internals_bseg::BSeg & segC, bool lastC, const internals_bseg::BSeg & segD, bool lastD, const internals_bseg::BSeg & segE, bool lastE,
+				void _bseg_avoid22_sub(const internals_bseg::BSeg & segA, const internals_bseg::BSeg & segB, bool lastB, const internals_bseg::BSeg & segC, bool lastC, const internals_bseg::BSeg & segD, bool lastD, const internals_bseg::BSeg & segE, bool lastE,
 					RGBc color, bool blend = true, int side = 0, int32 op = -1, bool checkrange = true)
 				{
 					if (op == 0) return;
@@ -8804,41 +8971,122 @@ namespace mtools
 				}
 
 
+
+				/**
+				* Fill the interior of a triangle (P1, P2, P3) delimited by bresenham segments. Only the
+				* interior is filled (segment are not drawn over).
+				*
+				* WORK FOR ANY VALUE OF THE POINTS
+				*
+				*          P2
+				*          /\
+				*         /++\
+				*        /++++\
+				*       /++++++\ 
+				*      /++++++++\
+				*   P1 ---------- P3
+				* 
+				* @param	P1		  	first point.
+				* @param	P2		  	second point.
+				* @param	P3		  	third point.
+				* @param	fillcolor 	color to use.
+				* @param	blend	  	(Optional) true to use blending.
+				**/
+				MTOOLS_FORCEINLINE void _bseg_fill_triangle(fVec2 P1, fVec2 P2, fVec2 P3, RGBc fillcolor, bool blend = true)
+					{
+					fBox2 BB; 
+					BB.swallowPoint(P1);  BB.swallowPoint(P2); BB.swallowPoint(P3);
+					const fBox2 CB = _bsegClipBox();
+					if (intersectionRect(BB, CB).isEmpty()) return;
+					if (CB.contain(BB))
+						{ // good no clipping needed
+						_bseg_sub_fill_triangle(P1, P2, P3, fillcolor, blend); 
+						return;
+						}
+					// need clipping
+					fVec2	tab[3] = { P1,P2,P3 };
+					fVec2	in_tab[10];
+					size_t	in_len; 
+					Sutherland_Hodgman_clipping(tab,3,CB,in_tab,in_len); // clip the triangle																																		 
+					 // ok, we now have a convex polygon (in_tab, in_len) which can be drawn with trivial fan triangulation
+					if (in_len < 3) return; // nothing to fill
+					for (size_t i = 2; i < in_len; i++)	_bseg_sub_fill_triangle(in_tab[0], in_tab[i - 1], in_tab[i], fillcolor, blend); // fill the interior of the triangle
+					for (size_t i = 1; i < in_len - 2; i++)
+						{ // draw the inner lines
+						_bseg_avoid22_sub(internals_bseg::BSeg(in_tab[0], in_tab[i + 1]),
+							internals_bseg::BSeg(in_tab[0], in_tab[i]), true, internals_bseg::BSeg(in_tab[0], in_tab[in_len - 1]), true,
+			                internals_bseg::BSeg(in_tab[i + 1], in_tab[i]), true, internals_bseg::BSeg(in_tab[i + 1], in_tab[i + 2]), true, fillcolor, blend, 0);
+						}
+					return;
+					}
+
+
+				/** sub procedure, the point are already inside the clipping region */
+				void _bseg_sub_fill_triangle(fVec2 fP1, fVec2 fP2, fVec2 fP3, RGBc fillcolor, bool blend = true)
+				{
+					if (fP1.Y() > fP2.Y()) { mtools::swap(fP1, fP2); } // reorder by increasing Y value
+					if (fP1.Y() > fP3.Y()) { mtools::swap(fP1, fP3); } //
+					if (fP2.Y() > fP3.Y()) { mtools::swap(fP2, fP3); } //
+					iVec2 P1 = round(fP1); int64 y1 = P1.Y();
+					iVec2 P2 = round(fP2); int64 y2 = P2.Y();
+					iVec2 P3 = round(fP3); int64 y3 = P3.Y();
+					if (y1 == y3) return; //flat, nothing to draw. 
+					if (y1 == y2)
+					{
+						internals_bseg::BSeg seg31(fP3, fP1);
+						internals_bseg::BSeg seg32(fP3, fP2);
+						_bseg_fill_interior_angle(P3, P1, P2, seg31, seg32, fillcolor, false, blend);
+						return;
+					}
+					if (y2 == y3)
+					{
+						internals_bseg::BSeg seg12(fP1, fP2);
+						internals_bseg::BSeg seg13(fP1, fP3);
+						_bseg_fill_interior_angle(P1, P2, P3, seg12, seg13, fillcolor, false, blend);
+						return;
+					}
+					internals_bseg::BSeg seg12(fP1, fP2); internals_bseg::BSeg seg21 = seg12.get_reverse();
+					internals_bseg::BSeg seg13(fP1, fP3); internals_bseg::BSeg seg31 = seg13.get_reverse();
+					internals_bseg::BSeg seg23(fP2, fP3); internals_bseg::BSeg seg32 = seg23.get_reverse();
+					
+					bool fl3;
+					fVec2 vA = (fP3 - fP1), vB = (fP2 - fP1);
+					double det = vA.X()*vB.Y() - vB.X()*vA.Y();
+					seg23.move_y_dir();
+					seg21.move_y_dir();
+					if (det < 0)
+					{
+						fl3 = (seg23.X() < seg21.X()) ? true : false;
+					}
+					else
+					{
+						fl3 = (seg23.X() > seg21.X()) ? true : false;
+					}
+
+					_bseg_fill_interior_angle(P3, P2, P1, seg32, seg31, fillcolor, fl3, blend);
+					_bseg_fill_interior_angle(P1, P2, P3, seg12, seg13, fillcolor, !fl3, blend);
+					return;
+				}
+
+
 				/** Used by _bseg_fill_triangle */
-				void _bseg_fill_interior_angle(iVec2 P, iVec2 Q1, iVec2 Q2, internals_bseg::BSeg & seg1, internals_bseg::BSeg & seg2, RGBc color, bool fill_last, bool blend, bool checkrange)
+				void _bseg_fill_interior_angle(iVec2 P, iVec2 Q1, iVec2 Q2, internals_bseg::BSeg & seg1, internals_bseg::BSeg & seg2, RGBc color, bool fill_last, bool blend)
 				{
 					MTOOLS_ASSERT((P.Y() - Q1.Y())*(P.Y() - Q2.Y()) > 0);
 					int64 dir = (P.Y() > Q1.Y()) ? -1 : 1;
 					int64 y = P.Y();
 					int64 ytarget = Q1.Y() + dir * (fill_last ? 1 : 0);
 					if ((Q1.X() - P.X())*abs(Q2.Y() - P.Y())  > (Q2.X() - P.X())*abs(Q1.Y() - P.Y())) mtools::swap(seg1, seg2);
-					if (checkrange)
+					const bool CHECKRANGE = true;
+					if (blend)
 					{
-						const bool CHECKRANGE = true;
-						if (blend)
-						{
-							const bool BLEND = true;
-							_bseg_fill_interior_angle_sub<BLEND, CHECKRANGE>(dir, y, ytarget, seg1, seg2, color);
-						}
-						else
-						{
-							const bool BLEND = false;
-							_bseg_fill_interior_angle_sub<BLEND, CHECKRANGE>(dir, y, ytarget, seg1, seg2, color);
-						}
+						const bool BLEND = true;
+						_bseg_fill_interior_angle_sub<BLEND, CHECKRANGE>(dir, y, ytarget, seg1, seg2, color);
 					}
 					else
 					{
-						const bool CHECKRANGE = false;
-						if (blend)
-						{
-							const bool BLEND = true;
-							_bseg_fill_interior_angle_sub<BLEND, CHECKRANGE>(dir, y, ytarget, seg1, seg2, color);
-						}
-						else
-						{
-							const bool BLEND = false;
-							_bseg_fill_interior_angle_sub<BLEND, CHECKRANGE>(dir, y, ytarget, seg1, seg2, color);
-						}
+						const bool BLEND = false;
+						_bseg_fill_interior_angle_sub<BLEND, CHECKRANGE>(dir, y, ytarget, seg1, seg2, color);
 					}
 				}
 
@@ -8986,65 +9234,9 @@ namespace mtools
 
 
 				/**
-				* Fill the interior of a triangle (fP1, fP2, fP3) delimited by bresenham segments. Only the
-				* interior is filled (segment are not drawn over).
+				* 
+				* INTEGER-VALUED POINT VERSION IS DEPRECATED. 
 				*
-				* @param	fP1		  	first point.
-				* @param	fP2		  	second point.
-				* @param	fP3		  	third point.
-				* @param	fillcolor 	color to use.
-				* @param	blend	  	(Optional) true to use blending.
-				* @param	checkrange	(Optional) True to check the range (default). Set it to false only if it
-				* 						is sure that the triangle is completely inside the image.
-				**/
-				void _bseg_fill_triangle(fVec2 fP1, fVec2 fP2, fVec2 fP3, RGBc fillcolor, bool blend = true, bool checkrange = true)
-				{
-					if (fP1.Y() > fP2.Y()) { mtools::swap(fP1, fP2); } // reorder by increasing Y value
-					if (fP1.Y() > fP3.Y()) { mtools::swap(fP1, fP3); } //
-					if (fP2.Y() > fP3.Y()) { mtools::swap(fP2, fP3); } //
-					iVec2 P1 = round(fP1); int64 y1 = P1.Y();
-					iVec2 P2 = round(fP2); int64 y2 = P2.Y();
-					iVec2 P3 = round(fP3); int64 y3 = P3.Y();
-					if (y1 == y3) return; //flat, nothing to draw. 
-					if (y1 == y2)
-					{
-						internals_bseg::BSeg seg31(fP3, fP1);
-						internals_bseg::BSeg seg32(fP3, fP2);
-						_bseg_fill_interior_angle(P3, P1, P2, seg31, seg32, fillcolor, false, blend, checkrange);
-						return;
-					}
-					if (y2 == y3)
-					{
-						internals_bseg::BSeg seg12(fP1, fP2);
-						internals_bseg::BSeg seg13(fP1, fP3);
-						_bseg_fill_interior_angle(P1, P2, P3, seg12, seg13, fillcolor, false, blend, checkrange);
-						return;
-					}
-					internals_bseg::BSeg seg12(fP1, fP2); internals_bseg::BSeg seg21 = seg12.get_reverse();
-					internals_bseg::BSeg seg13(fP1, fP3); internals_bseg::BSeg seg31 = seg13.get_reverse();
-					internals_bseg::BSeg seg23(fP2, fP3); internals_bseg::BSeg seg32 = seg23.get_reverse();
-					
-					bool fl3;
-					fVec2 vA = (fP3 - fP1), vB = (fP2 - fP1);
-					double det = vA.X()*vB.Y() - vB.X()*vA.Y();
-					seg23.move_y_dir();
-					seg21.move_y_dir();
-					if (det < 0)
-					{
-						fl3 = (seg23.X() < seg21.X()) ? true : false;
-					}
-					else
-					{
-						fl3 = (seg23.X() > seg21.X()) ? true : false;
-					}
-
-					_bseg_fill_interior_angle(P3, P2, P1, seg32, seg31, fillcolor, fl3, blend, checkrange);
-					_bseg_fill_interior_angle(P1, P2, P3, seg12, seg13, fillcolor, !fl3, blend, checkrange);
-					return;
-				}
-
-
-				/**
 				* Fill the interior of a triangle (P1, P2, P3) delimited by bresenham segments. Only the
 				* interior is filled (segment are not drawn over).
 				*
@@ -9053,10 +9245,9 @@ namespace mtools
 				* @param	P3		  	third point.
 				* @param	fillcolor 	color to use.
 				* @param	blend	  	(Optional) true to use blending.
-				* @param	checkrange	(Optional) True to check the range (default). Set it to false only if it
-				* 						is sure that the triangle is completely inside the image.
 				**/
-				void _bseg_fill_triangle(iVec2 P1, iVec2 P2, iVec2 P3, RGBc fillcolor, bool blend = true, bool checkrange = true)
+				/*
+				void _bseg_fill_triangle(iVec2 P1, iVec2 P2, iVec2 P3, RGBc fillcolor, bool blend = true)
 				{
 					if (P1.Y() > P2.Y()) { mtools::swap(P1, P2); } // reorder by increasing Y value
 					if (P1.Y() > P3.Y()) { mtools::swap(P1, P3); } //
@@ -9069,14 +9260,14 @@ namespace mtools
 					{
 						internals_bseg::BSeg seg31(P3, P1);
 						internals_bseg::BSeg seg32(P3, P2);
-						_bseg_fill_interior_angle(P3, P1, P2, seg31, seg32, fillcolor, false, blend, checkrange);
+						_bseg_fill_interior_angle(P3, P1, P2, seg31, seg32, fillcolor, false, blend);
 						return;
 					}
 					if (y2 == y3)
 					{
 						internals_bseg::BSeg seg12(P1, P2);
 						internals_bseg::BSeg seg13(P1, P3);
-						_bseg_fill_interior_angle(P1, P2, P3, seg12, seg13, fillcolor, false, blend, checkrange);
+						_bseg_fill_interior_angle(P1, P2, P3, seg12, seg13, fillcolor, false, blend);
 						return;
 					}
 					internals_bseg::BSeg seg12(P1, P2); internals_bseg::BSeg seg21 = seg12.get_reverse();
@@ -9097,11 +9288,11 @@ namespace mtools
 						fl3 = (seg23.X() > seg21.X()) ? true : false;
 					}
 
-					_bseg_fill_interior_angle(P3, P2, P1, seg32, seg31, fillcolor, fl3, blend, checkrange);
-					_bseg_fill_interior_angle(P1, P2, P3, seg12, seg13, fillcolor, !fl3, blend, checkrange);
+					_bseg_fill_interior_angle(P3, P2, P1, seg32, seg31, fillcolor, fl3, blend);
+					_bseg_fill_interior_angle(P1, P2, P3, seg12, seg13, fillcolor, !fl3, blend);
 					return;
 				}
-
+				*/
 
 
 
@@ -9890,7 +10081,7 @@ namespace mtools
 
 			template<bool blend, bool checkrange, bool useop, bool usepen, bool useaa, bool side>  MTOOLS_FORCEINLINE void _lineBresenham(const iVec2 P1, const iVec2 P2, RGBc color, bool draw_last, int32 penwidth, int32 op)
 				{
-				if (!useaa) _bseg_draw(internals_bseg::BSeg(P1, P2), draw_last, (usepen ? penwidth : 0),  color,  blend, 0, (useop ? op : -1), checkrange);
+				if (!useaa) _bseg_draw(P1, P2, draw_last, (usepen ? penwidth : 0),  color,  blend, 0, (useop ? op : -1));
 				else
 					{	
 					_lineBresenhamAA<blend, checkrange, usepen>(P1, P2, color, draw_last, penwidth);
