@@ -576,7 +576,7 @@ namespace mtools
 
 			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 				{
-				im.canvas_draw_horizontal_line(R, y, x1, x2, color);
+				im.canvas_draw_horizontal_line(R, y, x1, x2, color, true, true, min_thickness);
 				}
 
 
@@ -640,7 +640,7 @@ namespace mtools
 
 			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 				{
-				im.canvas_draw_vertical_line(R, x, y1, y2, color);
+				im.canvas_draw_vertical_line(R, x, y1, y2, color, true, true, min_thickness);
 				}
 				
 
@@ -851,7 +851,7 @@ namespace mtools
 
 			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 				{
-				im.canvas_draw_line(R, P1, P2, color, true, highQuality, true, pw);
+				im.canvas_draw_line(R, P1, P2, color, true, highQuality, true, pw, min_thickness);
 				}
 
 
@@ -987,7 +987,7 @@ namespace mtools
 
 			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 				{
-				im.canvas_draw_polyline(R, tab, color, true, highQuality, true, pw);
+				im.canvas_draw_polyline(R, tab, color, true, highQuality, true, pw, min_thickness);
 				}
 
 
@@ -1135,11 +1135,11 @@ namespace mtools
 				{
 				if (fillcolor.isTransparent())
 					{
-					im.canvas_draw_triangle(R, P1, P2, P3, color, highQuality, true);
+					im.canvas_draw_triangle(R, P1, P2, P3, color, highQuality, true, 0, min_thickness);
 					}
 				else
 					{
-					im.canvas_draw_filled_triangle(R, P1, P2, P3, color, fillcolor, highQuality, true);
+					im.canvas_draw_filled_triangle(R, P1, P2, P3, color, fillcolor, highQuality, true, min_thickness);
 					}
 				}
 
@@ -1215,11 +1215,11 @@ namespace mtools
 				{
 				if (fillcolor.isTransparent())
 					{
-					im.canvas_draw_quad(R, P1, P2, P3, P4, color, highQuality, true);
+					im.canvas_draw_quad(R, P1, P2, P3, P4, color, highQuality, true, 0, min_thickness);
 					}
 				else
 					{
-					im.canvas_draw_filled_quad(R, P1, P2, P3, P4, color, fillcolor, highQuality, true);
+					im.canvas_draw_filled_quad(R, P1, P2, P3, P4, color, fillcolor, highQuality, true, min_thickness);
 					}
 				}
 
@@ -1293,11 +1293,11 @@ namespace mtools
 				{
 				if (fillcolor.isTransparent())
 					{
-					im.canvas_draw_polygon(R, tab, color, highQuality, true);
+					im.canvas_draw_polygon(R, tab, color, highQuality, true, 0, min_thickness);
 					}
 				else
 					{
-					im.canvas_draw_filled_polygon(R, tab, color, fillcolor, highQuality, true);
+					im.canvas_draw_filled_polygon(R, tab, color, fillcolor, highQuality, true, min_thickness);
 					}
 				}
 
