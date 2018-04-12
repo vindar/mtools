@@ -1135,7 +1135,7 @@ namespace mtools
 	* Return the bounding box of a set of points.
 	* Version for a array of points
 	*/
-	template<typename T, size_t N> Box<T, N> getBoundingBox(const Vec<T, N> & tab, size_t tab_len)
+	template<typename T, size_t N> Box<T, N> getBoundingBox(const Vec<T, N> * tab, size_t tab_len)
 		{
 		Box<T, N> B;
 		for(size_t l = 0; l < tab_len; l++) B.swallowPoint(tab[l]);
