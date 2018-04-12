@@ -142,7 +142,7 @@ void testplotfigure()
 
 	MT2004_64 gen(0);
 
-	FigureCanvas<5> canvas(1);
+	FigureCanvas<5> canvas(2);
 
 	cout << "Creating... ";
 
@@ -154,6 +154,7 @@ void testplotfigure()
 
 		std::vector<fVec2> subject = { { 50,150 },{ 200,50 },{ 350,150 },{ 350,300 },{ 250,300 },{ 200,250 },{ 150,350 },{ 100,250 },{ 100,200 } };
 
+		/*
 		std::vector<fVec2> enlarged;
 		mtools::internals_polyline::polylinetoPolygon(subject, 10, enlarged);
 
@@ -164,16 +165,18 @@ void testplotfigure()
 			}
 
 		cout << enlarged << "\n\n\n";
-
+		*/
+		
 		std::vector<fVec2> tri = { {-300,0}, {200, 127}, {-50, 50} };
 		std::vector<fVec2> qu = { {500,500} , {600, 520} , {700, 800}, {480,677} };
 
 		canvas(Figure::PolyLine(subject, RGBc::c_Green.getMultOpacity(0.5f),1), 0);
-		canvas(Figure::Polygon(enlarged, RGBc::c_Red.getMultOpacity(0.5f), RGBc::c_Blue.getMultOpacity(0.5f)), 0);
+		canvas(Figure::ThickPolyLine(subject, 10, RGBc::c_Red.getMultOpacity(0.5f)), 0);
 
-	//	canvas(Figure::Polygon(tri, RGBc::c_Green.getMultOpacity(0.5f), RGBc::c_Green.getMultOpacity(0.5f)), 0);
-	//	canvas(Figure::Polygon(qu, RGBc::c_Blue.getMultOpacity(0.5f), RGBc::c_Blue.getMultOpacity(0.5f)), 0);
+		canvas(Figure::Polygon(tri, RGBc::c_Green.getMultOpacity(0.5f), RGBc::c_Green.getMultOpacity(0.5f)), 0);
+		canvas(Figure::Polygon(qu, RGBc::c_Blue.getMultOpacity(0.5f), RGBc::c_Blue.getMultOpacity(0.5f)), 0);
 
+		canvas(Figure::Polygon(subject, RGBc::c_Black, RGBc::c_Yellow.getMultOpacity(0.5f)), 1);
 
 
 		//canvas(Figure::Polygon(subject, RGBc::c_Red, RGBc::c_Red), 0);

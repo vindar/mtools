@@ -59,6 +59,7 @@ namespace internals_polyline
 	*/
 	inline void polylinetoPolygon(const std::vector<fVec2> & tabPoints, double thickness, std::vector<fVec2> & tabout)
 		{
+		thickness /= 2; 
 		const size_t l = tabPoints.size();
 		MTOOLS_INSURE(l >= 3);
 		const size_t N = 2*l - 1;
@@ -83,6 +84,7 @@ namespace internals_polyline
 	 */	
 	inline void enlargePolyline(const std::vector<fVec2> & tabPoints, double thickness, std::vector<fVec2> & tabA, std::vector<fVec2> & tabB)
 		{
+		thickness /= 2;
 		const size_t l = tabPoints.size();
 		if (l < 3) { MTOOLS_DEBUG("enlargePolyline called with less than 3 points");  tabA = tabPoints; tabB = tabPoints;  return; }
 		tabA.resize(l); tabB.resize(l);
@@ -95,6 +97,7 @@ namespace internals_polyline
 			}
 		}
 
+
 	/**
 	* Enlarge a polygone by a given thickness.
 	*
@@ -105,6 +108,7 @@ namespace internals_polyline
 	*/
 	inline void enlargePolygon(const std::vector<fVec2> & tabPoints, double thickness, std::vector<fVec2> & tabA, std::vector<fVec2> & tabB)
 		{
+		thickness /= 2;
 		const size_t l = tabPoints.size();
 		if (l < 3) { MTOOLS_DEBUG("enlargePolygon called with less than 3 points");  tabA = tabPoints; tabB = tabPoints;  return; }
 		tabA.resize(l); tabB.resize(l);
