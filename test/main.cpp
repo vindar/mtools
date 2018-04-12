@@ -356,7 +356,7 @@ void testCE()
 	Chronometer(); 
 	for (size_t i = 0; i < N; i++)
 		{
-		imA.draw_ellipse(center[i], rx[i], ry[i], RGBc::getDistinctColor(i),true,true,3);
+		imA.draw_ellipse((fVec2)center[i], rx[i], ry[i], RGBc::getDistinctColor(i),true,true);
 		}
 	auto resA = Chronometer();
 	cout << "done in " << durationToString(resA, true) << "\n";
@@ -366,7 +366,7 @@ void testCE()
 	Chronometer();
 	for (size_t i = 0; i < N; i++)
 		{
-		imB.draw_ellipse(center[i], rx[i], ry[i], RGBc::getDistinctColor(i),true, true,3);
+		imB.draw_ellipse((fVec2)center[i], rx[i], ry[i], RGBc::getDistinctColor(i),true, true);
 		}
 	auto resB = Chronometer();
 	cout << "done in " << durationToString(resB, true) << "\n";
@@ -409,12 +409,12 @@ void testQuad(const fBox2 & B, BezierRationalQuadratic BQ, Image & im)
 		BQ = sp.second;
 		color = (C.isInside(sp.first(0.5))) ? RGBc::c_Red : RGBc::c_Blue;	// set the color		
 		sp.first.normalize();
-		im.draw_quad_bezier(sp.first.P0, sp.first.P2, sp.first.P1, sp.first.w1, color, true, true, true);
+		im.draw_quad_bezier((iVec2)sp.first.P0, (iVec2)sp.first.P2, (iVec2)sp.first.P1, sp.first.w1, color, true, true, true);
 		}
 
 	color = (C.isInside(BQ(0.5))) ? RGBc::c_Red : RGBc::c_Blue;	// set the color		
 	BQ.normalize();
-	im.draw_quad_bezier(BQ.P0, BQ.P2, BQ.P1, BQ.w1, color, true, true, true);
+	im.draw_quad_bezier((iVec2)BQ.P0, (iVec2)BQ.P2, (iVec2)BQ.P1, BQ.w1, color, true, true, true);
 }
 
 
@@ -422,17 +422,17 @@ void testQuad(const fBox2 & B, BezierRationalQuadratic BQ, Image & im)
 
 void draw(BezierQuadratic sp, Image & im, RGBc color, int penwidth)
 	{
-	im.draw_quad_bezier(sp.P0, sp.P2, sp.P1, 1, color, true, true, true, penwidth);
+	im.draw_quad_bezier((iVec2)sp.P0, (iVec2)sp.P2, (iVec2)sp.P1, 1, color, true, true, true, penwidth);
 	}
 
 void draw(BezierRationalQuadratic sp, Image & im, RGBc color, int penwidth)
 	{
-	im.draw_quad_bezier(sp.P0, sp.P2, sp.P1, sp.w1, color, true, true, true, penwidth);
+	im.draw_quad_bezier((iVec2)sp.P0, (iVec2)sp.P2, (iVec2)sp.P1, sp.w1, color, true, true, true, penwidth);
 	}
 
 void draw(BezierCubic sp, Image & im, RGBc color, int penwidth)
 	{
-	im.draw_cubic_bezier(sp.P0, sp.P3, sp.P1, sp.P2, color, true, true, true, penwidth);
+	im.draw_cubic_bezier((iVec2)sp.P0, (iVec2)sp.P3, (iVec2)sp.P1, (iVec2)sp.P2, color, true, true, true, penwidth);
 	}
 
 
@@ -478,7 +478,7 @@ void testCF()
 		cout << "P3 : " << P3 << "\n";
 		cout << "w : " << w << "\n";
 
-		BezierQuadratic curve(P0, P1,P2);
+		BezierQuadratic curve((fVec2)P0, (fVec2)P1, (fVec2)P2);
 		//BezierRationalQuadratic curve(P0, 1.0, P1, w, P2,1.0);
 		//BezierCubic curve(P0, P1, P2, P3);
 
@@ -491,7 +491,7 @@ void testCF()
 
 		iBox2 TB{ 100,900,200,800 };
 		im.draw_box(TB, RGBc::c_Yellow.getMultOpacity(0.5), true);
-		im.draw_rectangle(TB, RGBc::c_Yellow, true);
+//		im.draw_rectangle(TB, RGBc::c_Yellow, true);
 
 		testBezier(TB, curve, im);
 			

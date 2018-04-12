@@ -1812,10 +1812,10 @@ namespace mtools
 			 * @param	color   	The color to use.
 			 * @param	draw_P2 	(Optional) true to draw the end point.
 			 * @param	blending	(Optional) true to use blending.
-			 * @param	min_thick   (Optional) The minimum thickness.
 			 **/
-			MTOOLS_FORCEINLINE void draw_horizontal_line(int64 y, int64 x1, int64 x2, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
+			MTOOLS_FORCEINLINE void draw_horizontal_line(int64 y, int64 x1, int64 x2, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND)
 				{
+				if (isEmpty()) return;
 				if ((blending) && (!color.isOpaque())) _horizontalLine<true, true>(y, x1, x2, color, draw_P2); else _horizontalLine<false, true>(y, x1, x2, color, draw_P2);
 				}
 
@@ -1878,9 +1878,8 @@ namespace mtools
 			 * @param	color   	The color to use.
 			 * @param	draw_P2 	(Optional) true to draw the end point.
 			 * @param	blending	(Optional) true to use blending.
-			 * @param	min_thick   (Optional) The minimum thickness.
 			 **/
-			MTOOLS_FORCEINLINE void draw_vertical_line(int64 x, int64 y1, int64 y2, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
+			MTOOLS_FORCEINLINE void draw_vertical_line(int64 x, int64 y1, int64 y2, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND)
 				{
 				if (isEmpty()) return;
 				if (blending) _verticalLine<true, true>(x,y1,y2, color, draw_P2); else _verticalLine<false, true>(x,y1,y2, color, draw_P2);
@@ -1934,6 +1933,32 @@ namespace mtools
 				if (_drawTinyShape(getBoundingBox(fVec2{ x - f, y1 }, fVec2{ x + f, y2 }), color, 1.0, blending, min_tick)) return;
 				draw_thick_vertical_line((int64)std::round(x), (int64)std::round(y1), (int64)std::round(y2), thickness, color, draw_P2, blending, min_tick);
 				}
+
+
+			/**
+			* Draw a simple line. integer version
+			*
+			* @param	P1		   	First point.
+			* @param	P2		   	Second endpoint.
+			* @param	color	   	The color to use.
+			* @param	draw_P2	   	(Optional) true to draw the endpoint P2.
+			* @param	antialiased	(Optional) true to use antialiasing.
+			* @param	blending   	(Optional) true to use blending.
+			* @param	penwidth   	(Optional) pen radius (0 = unit pen)
+			**/
+			MTOOLS_FORCEINLINE void draw_line(iVec2 P1, iVec2 P2, RGBc color, bool draw_P2 = true, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int penwidth = 0)
+			{
+				if (penwidth < 0) { MTOOLS_DEBUG("incorrect penwidth");  penwidth = 0; } else if (penwidth > 0) _correctPenOpacity(color, penwidth);
+				if (antialiased)
+					{
+					if (!Colin_SutherLand_lineclip(P1, P2, _clipfBox(penwidth))) return;
+					_line_wu(P1, P2, draw_P2, color, penwidth, blending);
+					}
+				else
+					{
+					_bseg_draw((fVec2)P1, (fVec2)P2, draw_P2, penwidth, color, blending);
+					}
+			}
 
 
 			/**
@@ -2412,16 +2437,110 @@ namespace mtools
 				}
 
 
+
+
+			/**
+			* draw a rectangle (integer valued positions)
+			*
+			* @param	dest_box   	rectangle to draw. draw nothing if empty.
+			* @param	color	   	the color to use.
+			* @param	blending   	(Optional) true to use blending.
+			**/
+			MTOOLS_FORCEINLINE void draw_rectangle(const iBox2 & dest_box, RGBc color, bool blending = DEFAULT_BLEND)
+				{
+				draw_filled_rectangle(dest_box, color, RGBc::c_Transparent, blending);
+				}
+
+
+			/**
+			* draw a rectangle.
+			*
+			* @param	dest_box   	rectangle to draw. draw nothing if empty.
+			* @param	color	   	the color to use.
+			* @param	blending   	(Optional) true to use blending.
+			* @param	min_thick  	(Optional) The minimum thickness.
+			**/
+			MTOOLS_FORCEINLINE void draw_rectangle(const fBox2 & dest_box, RGBc color, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
+				{
+				draw_filled_rectangle(dest_box, color, RGBc::c_Transparent, blending, min_thick);
+				}
+
+
+			/**
+			* draw a filled rectangle (integer valued positions)
+			*
+			* @param	dest_box 	rectangle to draw. draw nothing if empty.
+			* @param	color	 	the color to use.
+			* @param	fillcolor	color for the interior.
+			* @param	blending 	(Optional) true to use blending.
+			* @param	min_thick	(Optional) The minimum thickness.
+			**/
+			void draw_filled_rectangle(const iBox2 & dest_box, RGBc color, RGBc fillcolor, bool blending = DEFAULT_BLEND)
+				{
+				if ((isEmpty()) || (dest_box.isEmpty())) return;
+				if (!color.isTransparent())
+					{
+					draw_horizontal_line(dest_box.min[1], dest_box.min[0], dest_box.max[0], color, true, blending);
+					if (dest_box.min[1] < dest_box.max[1])
+						{
+						draw_horizontal_line(dest_box.max[1], dest_box.min[0], dest_box.max[0], color, true, blending);
+						if (dest_box.min[1] + 1 < dest_box.max[1])
+							{
+							draw_vertical_line(dest_box.min[0], dest_box.min[1] + 1, dest_box.max[1] - 1, color, true, blending);
+							draw_vertical_line(dest_box.max[0], dest_box.min[1] + 1, dest_box.max[1] - 1, color, true, blending);
+							}
+						}
+					}
+				if (!fillcolor.isTransparent())
+					{
+					draw_box(iBox2(dest_box.min[0] + 1, dest_box.max[0] - 1, dest_box.min[1] + 1, dest_box.max[1] - 1), fillcolor, blending);
+					}
+				}
+
+
+			/**
+			 * draw a filled rectangle.
+			 *
+			 * @param	dest_box 	rectangle to draw. draw nothing if empty.
+			 * @param	color	 	the color to use.
+			 * @param	fillcolor	color for the interior
+			 * @param	blending 	(Optional) true to use blending.
+			 * @param	min_thick	(Optional) The minimum thickness.
+			 **/
+			void draw_filled_rectangle(const fBox2 & dest_box, RGBc color, RGBc fillcolor, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
+				{
+
+				}
+
+
 			/**
 			 * draw a thick rectangle.
 			 *
-			 * @param	dest_box 	position of the rectangle to draw.
-			 * @param	color	 	the color to use.
-			 * @param	thickness	(Optional) The thickness of the border, going inside.
-			 * @param	blending 	(Optional) true to use blending.
-			 * @param	min_thick	(Optional) The minimum thickness.
-			**/
-			inline void draw_rectangle(const fBox2 & dest_box, RGBc color, double thickness = 1.0, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
+			 * @param	dest_box   	rectangle to draw. draw nothing if empty.
+			 * @param	color	   	the color to use.
+			 * @param	thickness_x	(Optional) horizontal thickness (going inside the rectangle)
+			 * @param	thickness_y	(Optional) vertical thickness (going inside the rectangle)
+			 * @param	blending   	(Optional) true to use blending.
+			 * @param	min_thick  	(Optional) The minimum thickness.
+			 **/
+			MTOOLS_FORCEINLINE void draw_thick_rectangle(const fBox2 & dest_box, RGBc color, double thickness_x = 1.0, double thickness_y = 1.0, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
+				{
+				draw_thick_filled_rectangle(dest_box, color, RGBc::c_Transparent, thickness_x, thickness_y, blending, min_thick);
+				}
+
+
+			/**
+			 * Draw a filled thick rectangle
+			 *
+			 * @param	dest_box   	rectangle to draw. draw nothing if empty.
+			 * @param	color	   	The color.
+			 * @param	fillcolor  	the color to use.
+			 * @param	thickness_x	(Optional) horizontal thickness (going inside the rectangle)
+			 * @param	thickness_y	(Optional) vertical thickness (going inside the rectangle)
+			 * @param	blending   	(Optional) True to use blending.
+			 * @param	min_thick  	(Optional) The minimum thickness.
+			 **/
+			void draw_thick_filled_rectangle(const fBox2 & dest_box, RGBc color, RGBc fillcolor, double thickness_x = 1.0, double thickness_y = 1.0, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
 				/*
 				if (dest_box.isEmpty()) return;
@@ -2436,89 +2555,32 @@ namespace mtools
 				}
 
 
-			/**
-			 * draw a thick rectangle.
-			 *
-			 * @param	x		 	x-coordinate of the rectangle upper left corner.
-			 * @param	y		 	y-coordinate of the rectangle upper left corner.
-			 * @param	sx		 	rectangle width (if &lt;0 nothing is drawn).
-			 * @param	sy		 	rectangle height (if &lt;0 nothing is drawn).
-			 * @param	color	 	True to use blending.
-			 * @param	thickness	(Optional) The thickness of the border, going inside.
-			 * @param	blending 	(Optional) True to use blending.
-			 * @param	min_thick	(Optional) The minimum thickness.
-			**/
-			MTOOLS_FORCEINLINE void draw_rectangle(double x, double y, double sx, double sy, RGBc color, double thickness = 1.0, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
-				{
-				draw_rectangle(fBox2(x, x + sx, y, y + sy), color, thickness, blending, min_thick);
-				}
-
 
 			/**
-			 * Draw a filled thick rectangle
+			 * Fill a (closed) box with a given color. (integer valued version). 
 			 *
-			 * @param	dest_box 	position of the rectangle to draw.
-			 * @param	color	 	The color.
+			 * @param	dest_box   	rectangle to draw. draw nothing if empty.
 			 * @param	fillcolor	the color to use.
-			 * @param	thickness	(Optional) The thickness of the border, going inside.
-			 * @param	blending 	(Optional) True to use blending.
-			 * @param	min_thick	(Optional) The minimum thickness.
-			**/
-			void draw_filled_rectangle(const fBox2 & dest_box, RGBc color, RGBc fillcolor, double thickness = 1.0, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
-				{
-				/*
-				fill_rectangle(dest_box.min[0], dest_box.min[1], dest_box.max[0] - dest_box.min[0] + 1, dest_box.max[1] - dest_box.min[1] + 1, fillcolor, blend);
-				*/
-				}
-
-
-			/**
-			 * draw a filled thick rectangle
-			 *
-			 * @param	x		 	x-coordinate of the rectangle upper left corner.
-			 * @param	y		 	y-coordinate of the rectangle upper left corner.
-			 * @param	sx		 	rectangle width (if &lt;= 0 nothing is drawn).
-			 * @param	sy		 	rectangle height (if &lt;= 0 nothing is drawn).
-			 * @param	color	 	The color.
-			 * @param	fillcolor	the color to use.
-			 * @param	thickness	(Optional) The thickness of the border, going inside.
-			 * @param	blending 	(Optional) true to use blending.
-			 * @param	min_thick	(Optional) The minimum thickness.
-			**/
-			MTOOLS_FORCEINLINE void draw_filled_rectangle(double x, double y, double sx, double sy, RGBc color, RGBc fillcolor, double thickness = 1.0, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
-				{
-				draw_filled_rectangle(fBox2(x, x + sx, y, y + sy), color, fillcolor, thickness, blending, min_thick);
-				}
-
-
-
-			/**
-			 * Fill a (closed) box with a given color.
-			 *
-			 * @param	dest_box 	position of the rectangle to draw.
-			 * @param	fillcolor	the color to use.
-			 * @param	blend	 	(Optional) true to use blending and false to simply copy the color.
+			 * @param	blend	 	(Optional) true to use blending.
 			 **/
 			MTOOLS_FORCEINLINE void draw_box(const iBox2 & dest_box, RGBc fillcolor, bool blend = DEFAULT_BLEND)
 				{
-				draw_box(dest_box.min[0], dest_box.min[1], dest_box.max[0] - dest_box.min[0] + 1, dest_box.max[1] - dest_box.min[1] + 1, fillcolor, blend);
+				if (isEmpty()) return;
+				_draw_box(dest_box.min[0], dest_box.min[1], dest_box.max[0] - dest_box.min[0] + 1, dest_box.max[1] - dest_box.min[1] + 1, fillcolor, blend);
 				}
 
 
 			/**
-			 * Fill a (closed) box with a given color.
+			 * Fill a (closed) box with a given color. 
 			 *
-			 * @param	x		 	x-coordinate of the rectangle upper left corner.
-			 * @param	y		 	y-coordinate of the rectangle upper left corner.
-			 * @param	sx		 	rectangle width (if <= 0 nothing is drawn).
-			 * @param	sy		 	rectangle height (if <= 0 nothing is drawn).
+			 * @param	dest_box 	rectangle to draw. draw nothing if empty.
 			 * @param	fillcolor	the color to use.
-			 * @param	blend	 	(Optional) true to use blending and false to simply copy the color.
+			 * @param	blend	 	(Optional) true to use blending.
+			 * @param	min_thick	(Optional) The minimum thickness.
 			 **/
-			MTOOLS_FORCEINLINE void draw_box(int64 x, int64 y, int64 sx, int64 sy, RGBc fillcolor, bool blend = DEFAULT_BLEND)
+			MTOOLS_FORCEINLINE void draw_box(const fBox2 & dest_box, RGBc fillcolor, bool blend = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
 				if (isEmpty()) return;
-				_draw_box(x, y, sx, sy, fillcolor, blend);
 				}
 
 
@@ -2576,11 +2638,11 @@ namespace mtools
 				double rr = (double)radius;
 				if (aa)
 				{
-					if (blend) _draw_ellipse2_AA<true, false>(B, center, rr, rr, color, color); else _draw_ellipse2_AA<false, false>(B, center, rr, rr, color, color);
+					if (blend) _draw_ellipse2_AA<true, false>(B, (fVec2)center, rr, rr, color, color); else _draw_ellipse2_AA<false, false>(B, (fVec2)center, rr, rr, color, color);
 				}
 				else
 				{
-					if (blend) _draw_ellipse2<true, true, false>(B, center, rr, rr, color, color); else _draw_ellipse2<false, true, false>(B, center, rr, rr, color, color);
+					if (blend) _draw_ellipse2<true, true, false>(B, (fVec2)center, rr, rr, color, color); else _draw_ellipse2<false, true, false>(B, (fVec2)center, rr, rr, color, color);
 				}
 				return;
 			}
@@ -2633,11 +2695,11 @@ namespace mtools
 				double rr = (double)radius;
 				if (aa)
 					{
-					if (blend) _draw_ellipse2_AA<true, true>(B, center, rr, rr, color, fillcolor); else _draw_ellipse2_AA<false, true>(B, center, rr, rr, color, fillcolor);
+					if (blend) _draw_ellipse2_AA<true, true>(B, (fVec2)center, rr, rr, color, fillcolor); else _draw_ellipse2_AA<false, true>(B, (fVec2)center, rr, rr, color, fillcolor);
 					}
 				else
 					{
-					if (blend) _draw_ellipse2<true, true, true>(B, center, rr, rr, color, fillcolor); else _draw_ellipse2<false, true, true>(B, center, rr, rr, color, fillcolor);
+					if (blend) _draw_ellipse2<true, true, true>(B, (fVec2)center, rr, rr, color, fillcolor); else _draw_ellipse2<false, true, true>(B, (fVec2)center, rr, rr, color, fillcolor);
 					}
 				return;
 				}
@@ -3637,7 +3699,7 @@ namespace mtools
 				}
 				case 2:
 				{
-					draw_line(tabPoints[0], tabPoints[1], color, draw_last_point, antialiased, blending, penwidth);
+					draw_line((fVec2)tabPoints[0], (fVec2)tabPoints[1], color, draw_last_point, antialiased, blending, penwidth);
 					return;
 				}
 				default:
@@ -3726,7 +3788,7 @@ namespace mtools
 				}
 				case 2:
 				{
-					draw_line(tabPoints[0], tabPoints[1], color, draw_last_point, antialiased, blending, penwidth);
+					draw_line((fVec2)tabPoints[0], (fVec2)tabPoints[1], color, draw_last_point, antialiased, blending, penwidth);
 					return;
 				}
 				case 3:
@@ -9998,8 +10060,8 @@ namespace mtools
 			/* draw a filled rectangle */
 			MTOOLS_FORCEINLINE void _draw_box(int64 x, int64 y, int64 sx, int64 sy, RGBc boxcolor, bool blend)
 				{
-				if (x < 0) { sx -= x;   x = 0; }
-				if (y < 0) { sy -= y;   y = 0; }
+				if (x < 0) { sx += x;   x = 0; }
+				if (y < 0) { sy += y;   y = 0; }
 				if ((boxcolor.isTransparent()) || (x >= _lx) || (y >= _ly)) return;
 				sx -= std::max<int64>(0, (x + sx - _lx));
 				sy -= std::max<int64>(0, (y + sy - _ly));
@@ -10033,7 +10095,7 @@ namespace mtools
 
 			template<bool blend, bool checkrange, bool useop, bool usepen, bool useaa, bool side>  MTOOLS_FORCEINLINE void _lineBresenham(const iVec2 P1, const iVec2 P2, RGBc color, bool draw_last, int32 penwidth, int32 op)
 				{
-				if (!useaa) _bseg_draw(P1, P2, draw_last, (usepen ? penwidth : 0),  color,  blend, 0, (useop ? op : -1));
+				if (!useaa) _bseg_draw((fVec2)P1, (fVec2)P2, draw_last, (usepen ? penwidth : 0),  color,  blend, 0, (useop ? op : -1));
 				else
 					{	
 					_lineBresenhamAA<blend, checkrange, usepen>(P1, P2, color, draw_last, penwidth);
