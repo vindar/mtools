@@ -192,8 +192,7 @@ namespace mtools
     void EdgeSiteImage::_draw_insideEdge(RGBc coul, int direction, Image & im, double kx, double ky) const { _draw_rect(45, 29, 55, 45, coul, direction, im, kx, ky); }
     void EdgeSiteImage::_draw_centerNoSite(RGBc coul, Image & im, double kx, double ky) const  
 		{  
-		im.draw_rectangle(iBox2((int64)(kx * 45), (int64)(kx * 55), (int64)(ky * 45), (int64)(ky * 55),true), coul, false); 
-		im.fill_rectangle(iBox2((int64)(kx * 45), (int64)(kx * 55), (int64)(ky * 45), (int64)(ky * 55), true), coul, false);
+		im.draw_filled_rectangle(iBox2((int64)(kx * 45), (int64)(kx * 55), (int64)(ky * 45), (int64)(ky * 55),true), coul, false); 
 		}
 
     void EdgeSiteImage::_draw_centerSite(RGBc coul, Image & im, double kx, double ky) const
@@ -215,26 +214,22 @@ namespace mtools
 			{
 			case 0:
 				{	// up
-				im.draw_rectangle(iBox2((int64)(kx*x0), (int64)(kx*x1), (int64)(ky*y0), (int64)(ky*y1), true), coul, false);
-				im.fill_rectangle(iBox2((int64)(kx*x0), (int64)(kx*x1), (int64)(ky*y0), (int64)(ky*y1), true), coul, false);
+				im.draw_filled_rectangle(iBox2((int64)(kx*x0), (int64)(kx*x1), (int64)(ky*y0), (int64)(ky*y1), true), coul, false);
 				return;
 				}
 			case 1:
 				{	// down
-				im.draw_rectangle(iBox2((int64)(kx*x0), (int64)(kx*x1), (int64)(ky*(100 - y0)), (int64)(ky*(100 - y1)), true), coul, false);
-				im.fill_rectangle(iBox2((int64)(kx*x0), (int64)(kx*x1), (int64)(ky*(100 - y0)), (int64)(ky*(100 - y1)), true), coul, false);
+				im.draw_filled_rectangle(iBox2((int64)(kx*x0), (int64)(kx*x1), (int64)(ky*(100 - y0)), (int64)(ky*(100 - y1)), true), coul, false);
 				return;
 				}
 			case 2:
 				{   // left
-				im.draw_rectangle(iBox2((int64)(kx*y0), (int64)(kx*y1), (int64)(ky*x0), (int64)(ky*x1), true), coul, false);
-				im.fill_rectangle(iBox2((int64)(kx*y0), (int64)(kx*y1), (int64)(ky*x0), (int64)(ky*x1), true), coul, false);
+				im.draw_filled_rectangle(iBox2((int64)(kx*y0), (int64)(kx*y1), (int64)(ky*x0), (int64)(ky*x1), true), coul, false);
 				return;
 				}
 			case 3:
 				{  // right
-				im.draw_rectangle(iBox2((int64)(kx*(100 - y0)), (int64)(kx*(100 - y1)), (int64)(ky*x0), (int64)(ky*x1), true), coul, false);
-				im.fill_rectangle(iBox2((int64)(kx*(100 - y0)), (int64)(kx*(100 - y1)), (int64)(ky*x0), (int64)(ky*x1), true), coul, false);
+				im.draw_filled_rectangle(iBox2((int64)(kx*(100 - y0)), (int64)(kx*(100 - y1)), (int64)(ky*x0), (int64)(ky*x1), true), coul, false);
 				return;
 				}
 			}
