@@ -1336,6 +1336,66 @@ namespace mtools
 		};
 
 
+
+		/**
+		*
+		* Filled Box
+		*
+		**/
+		class FilledBox : public internals_figure::FigureInterface
+		{
+
+		public:
+
+			fBox2 box;
+			RGBc  fillcolor;
+
+
+			/**
+			* construct a filled box with a given color
+			*/
+			FilledBox(fBox2 & B, RGBc fillcol) : box(B), fillcolor(fillcol)
+				{
+				MTOOLS_ASSERT(!B.isEmpty());
+				}
+
+
+			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+				{
+				im.canvas_draw_box(R, box, fillcolor, true, min_thickness);
+				}
+
+
+			virtual fBox2 boundingBox() const override
+				{
+				return box;
+				}
+
+
+			virtual std::string toString(bool debug = false) const override
+				{
+				std::string str("FilledBox [");
+				str += mtools::toString(box) + " - ";
+				str += mtools::toString(fillcolor);
+				return str + "]";
+				}
+
+
+			virtual void serialize(OBaseArchive & ar) const override
+				{
+				ar & box & fillcolor;
+				}
+
+
+			virtual void deserialize(IBaseArchive & ar) override
+				{
+				ar & box & fillcolor;
+				}
+
+		};
+
+
+
 		/************************************************************************************************************************************
 		*
 		* CIRCLE / ELLIPSE

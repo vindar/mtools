@@ -176,6 +176,8 @@ void testplotfigure()
 		canvas(Figure::Polygon(tri, RGBc::c_Green.getMultOpacity(0.5f), RGBc::c_Green.getMultOpacity(0.5f)), 0);
 		canvas(Figure::Polygon(qu, RGBc::c_Blue.getMultOpacity(0.5f), RGBc::c_Blue.getMultOpacity(0.5f)), 0);
 
+
+		canvas(Figure::FilledBox(fBox2( -100,-50,0,30 ), RGBc::c_Maroon.getMultOpacity(0.5f)), 0);
 	//	canvas(Figure::Polygon(subject, RGBc::c_Black, RGBc::c_Yellow.getMultOpacity(0.5f)), 1);
 
 
@@ -675,10 +677,6 @@ int main(int argc, char *argv[])
 {
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
 
-
-	fBox2 B(1.6, 5.2, 4, 5.51);
-
-	cout << round(B) << "\n";
 
 	
 											//testCSCC();
