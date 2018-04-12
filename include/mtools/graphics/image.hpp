@@ -2413,60 +2413,58 @@ namespace mtools
 
 
 			/**
-			 * draw a rectangle of given size and color over this image. Portion outside the image is
-			 * clipped.
+			 * draw a thick rectangle.
 			 *
-			 * @param	dest_box	position of the rectangle to draw.
-			 * @param	color   	the color to use.
-			 * @param	blend   	(Optional) true to use blending and false to simply copy the color.
-			 * @param	penwidth	(Optional) The pen width (0 = unit width)
-			 **/
-			inline void draw_rectangle(const fBox2 & dest_box, RGBc color, bool blend = true, int32 penwidth = 0)
+			 * @param	dest_box 	position of the rectangle to draw.
+			 * @param	color	 	the color to use.
+			 * @param	thickness	(Optional) The thickness of the border, going inside.
+			 * @param	blending 	(Optional) true to use blending.
+			 * @param	min_thick	(Optional) The minimum thickness.
+			**/
+			inline void draw_rectangle(const fBox2 & dest_box, RGBc color, double thickness = 1.0, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
 				/*
 				if (dest_box.isEmpty()) return;
-				if (penwidth <= 0) penwidth = 0;
-				if (color.isOpaque()) blend = false;
+				if (color.isOpaque()) blending = false;
+				if (_drawTinyShape(dest_box, color, 1.0, blending, min_thick)) return;
 				double tickness = 2*penwidth  + 1; // does not work if not using integer penwidth !
-				draw_thick_horizontal_line(dest_box.min[1], dest_box.min[0] - penwidth, dest_box.max[0] + penwidth, tickness, color, true, blend);
-				draw_thick_horizontal_line(dest_box.max[1], dest_box.min[0] - penwidth, dest_box.max[0] + penwidth, tickness, color, true, blend);
-				draw_thick_vertical_line(dest_box.min[0], dest_box.min[1] + penwidth + 1, dest_box.max[1] - penwidth - 1, tickness, color, true, blend);
-				draw_thick_vertical_line(dest_box.max[0], dest_box.min[1] + penwidth + 1, dest_box.max[1] - penwidth - 1, tickness, color, true, blend);
+				draw_thick_horizontal_line(dest_box.min[1], dest_box.min[0] - penwidth, dest_box.max[0] + penwidth, tickness, color, true, blending, min_thick);
+				draw_thick_horizontal_line(dest_box.max[1], dest_box.min[0] - penwidth, dest_box.max[0] + penwidth, tickness, color, true, blending, min_thick);
+				draw_thick_vertical_line(dest_box.min[0], dest_box.min[1] + penwidth + 1, dest_box.max[1] - penwidth - 1, tickness, color, true, blending, min_thick);
+				draw_thick_vertical_line(dest_box.max[0], dest_box.min[1] + penwidth + 1, dest_box.max[1] - penwidth - 1, tickness, color, true, blending, min_thick);
 				*/
 				}
 
 
 			/**
-			 * draw a rectangle of given size and color over this image. Portion outside the image is
-			 * clipped.
+			 * draw a thick rectangle.
 			 *
-			 * @param	x			x-coordinate of the rectangle upper left corner.
-			 * @param	y			y-coordinate of the rectangle upper left corner.
-			 * @param	sx			rectangle width (if <= 0 nothing is drawn).
-			 * @param	sy			rectangle height (if <= 0 nothing is drawn).
-			 * @param	color   	the color to use.
-			 * @param	blend   	(Optional) true to use blending and false to simply copy the color.
-			 * @param	penwidth	(Optional) The pen width (0 = unit width)
-			 **/
-			MTOOLS_FORCEINLINE void draw_rectangle(double x, double y, double sx, double sy, RGBc color, bool blend = true, int32 penwidth = 0)
+			 * @param	x		 	x-coordinate of the rectangle upper left corner.
+			 * @param	y		 	y-coordinate of the rectangle upper left corner.
+			 * @param	sx		 	rectangle width (if &lt;0 nothing is drawn).
+			 * @param	sy		 	rectangle height (if &lt;0 nothing is drawn).
+			 * @param	color	 	True to use blending.
+			 * @param	thickness	(Optional) The thickness of the border, going inside.
+			 * @param	blending 	(Optional) True to use blending.
+			 * @param	min_thick	(Optional) The minimum thickness.
+			**/
+			MTOOLS_FORCEINLINE void draw_rectangle(double x, double y, double sx, double sy, RGBc color, double thickness = 1.0, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
-				/*
-				draw_rectangle(iBox2(x, x + sx - 1, y, y + sy - 1), color, blend, penwidth);
-				*/
+				draw_rectangle(fBox2(x, x + sx, y, y + sy), color, thickness, blending, min_thick);
 				}
 
 
 			/**
-			 * Fill the interior of a rectangle rectangle. Portion outside the image is clipped.
-			 * 
-			 * The boundary of the rectangle is not drawn. To fill the whole rectangle with its boundary,
-			 * use draw_box() instead.
+			 * Draw a filled thick rectangle
 			 *
 			 * @param	dest_box 	position of the rectangle to draw.
+			 * @param	color	 	The color.
 			 * @param	fillcolor	the color to use.
-			 * @param	blend	 	(Optional) true to use blending and false to simply copy the color.
-			 **/
-			MTOOLS_FORCEINLINE void draw_filled_rectangle(const fBox2 & dest_box, RGBc color, RGBc fillcolor, bool blend = true)
+			 * @param	thickness	(Optional) The thickness of the border, going inside.
+			 * @param	blending 	(Optional) True to use blending.
+			 * @param	min_thick	(Optional) The minimum thickness.
+			**/
+			void draw_filled_rectangle(const fBox2 & dest_box, RGBc color, RGBc fillcolor, double thickness = 1.0, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
 				/*
 				fill_rectangle(dest_box.min[0], dest_box.min[1], dest_box.max[0] - dest_box.min[0] + 1, dest_box.max[1] - dest_box.min[1] + 1, fillcolor, blend);
@@ -2475,26 +2473,23 @@ namespace mtools
 
 
 			/**
-			 * draw a filled rectangle of given size and color over this image. Portion outside the image is
-			 * clipped.
-			 * 
-			 * The boundary of the rectangle is not drawn. To fill the whole rectangle with its boundary,
-			 * use draw_box() instead.
+			 * draw a filled thick rectangle
 			 *
 			 * @param	x		 	x-coordinate of the rectangle upper left corner.
 			 * @param	y		 	y-coordinate of the rectangle upper left corner.
-			 * @param	sx		 	rectangle width (if <= 0 nothing is drawn).
-			 * @param	sy		 	rectangle height (if <= 0 nothing is drawn).
+			 * @param	sx		 	rectangle width (if &lt;= 0 nothing is drawn).
+			 * @param	sy		 	rectangle height (if &lt;= 0 nothing is drawn).
+			 * @param	color	 	The color.
 			 * @param	fillcolor	the color to use.
-			 * @param	blend	 	(Optional) true to use blending and false to simply copy the color.
-			 **/
-			inline void draw_filled_rectangle(double x, double y, double sx, double sy, RGBc fillcolor, bool blend = true)
+			 * @param	thickness	(Optional) The thickness of the border, going inside.
+			 * @param	blending 	(Optional) true to use blending.
+			 * @param	min_thick	(Optional) The minimum thickness.
+			**/
+			MTOOLS_FORCEINLINE void draw_filled_rectangle(double x, double y, double sx, double sy, RGBc color, RGBc fillcolor, double thickness = 1.0, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
-				/*
-				if (isEmpty()) return;
-				_draw_box(x + 1, y + 1, sx - 2, sy - 2, fillcolor, blend);
-				*/
+				draw_filled_rectangle(fBox2(x, x + sx, y, y + sy), color, fillcolor, thickness, blending, min_thick);
 				}
+
 
 
 			/**
@@ -2504,7 +2499,7 @@ namespace mtools
 			 * @param	fillcolor	the color to use.
 			 * @param	blend	 	(Optional) true to use blending and false to simply copy the color.
 			 **/
-			MTOOLS_FORCEINLINE void draw_box(const iBox2 & dest_box, RGBc fillcolor, bool blend = true)
+			MTOOLS_FORCEINLINE void draw_box(const iBox2 & dest_box, RGBc fillcolor, bool blend = DEFAULT_BLEND)
 				{
 				draw_box(dest_box.min[0], dest_box.min[1], dest_box.max[0] - dest_box.min[0] + 1, dest_box.max[1] - dest_box.min[1] + 1, fillcolor, blend);
 				}
@@ -2520,7 +2515,7 @@ namespace mtools
 			 * @param	fillcolor	the color to use.
 			 * @param	blend	 	(Optional) true to use blending and false to simply copy the color.
 			 **/
-			inline void draw_box(int64 x, int64 y, int64 sx, int64 sy, RGBc fillcolor, bool blend = true)
+			MTOOLS_FORCEINLINE void draw_box(int64 x, int64 y, int64 sx, int64 sy, RGBc fillcolor, bool blend = DEFAULT_BLEND)
 				{
 				if (isEmpty()) return;
 				_draw_box(x, y, sx, sy, fillcolor, blend);
