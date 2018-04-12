@@ -1089,6 +1089,71 @@ namespace mtools
 		}
 
 
+	/**
+	 * Return the bounding box of a set of points.
+	 * Version for 2 point.
+	 */
+	template<typename T, size_t N> Box<T, N> getBoundingBox(const Vec<T,N> & P1, const Vec<T, N> & P2)
+		{
+		Box<T, N> B;
+		B.swallowPoint(P1); 
+		B.swallowPoint(P2);
+		return B; 
+		}
+
+
+	/**
+	* Return the bounding box of a set of points.
+	* Version for 3 points.
+	*/
+	template<typename T, size_t N> Box<T, N> getBoundingBox(const Vec<T, N> & P1, const Vec<T, N> & P2, const Vec<T, N> & P3)
+		{
+		Box<T, N> B;
+		B.swallowPoint(P1);
+		B.swallowPoint(P2);
+		B.swallowPoint(P3);
+		return B;
+		}
+
+
+	/**
+	* Return the bounding box of a set of points.
+	* Version for 4 points.
+	*/
+	template<typename T, size_t N> Box<T, N> getBoundingBox(const Vec<T, N> & P1, const Vec<T, N> & P2, const Vec<T, N> & P3, const Vec<T, N> & P4)
+		{
+		Box<T, N> B;
+		B.swallowPoint(P1);
+		B.swallowPoint(P2);
+		B.swallowPoint(P3);
+		B.swallowPoint(P4);
+		return B;
+		}
+
+
+	/**
+	* Return the bounding box of a set of points.
+	* Version for a array of points
+	*/
+	template<typename T, size_t N> Box<T, N> getBoundingBox(const Vec<T, N> & tab, size_t tab_len)
+		{
+		Box<T, N> B;
+		for(size_t l = 0; l < tab_len; l++) B.swallowPoint(tab[l]);
+		return B;
+		}
+
+
+	/**
+	* Return the bounding box of a set of points.
+	* Version for vector
+	*/
+	template<typename T, size_t N> Box<T, N> getBoundingBox(const std::vector<Vec<T,N> > & vec)
+		{
+		Box<T, N> B;
+		for (size_t l = 0; l < tab_len; l++) B.swallowPoint(vec[l]);
+		return B;
+		}
+
 }
 
 /* end of file */
