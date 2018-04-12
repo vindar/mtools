@@ -5095,6 +5095,7 @@ namespace mtools
 					if (r2 < 1)
 						{
 						color.multOpacity((float)((r2 < min_thick) ? min_thick : r2));
+						if (color.isTransparent()) return;
 						}
 					canvas_draw_line(R, P1, P2, color, true, antialiased, blending);
 					return;
@@ -5152,7 +5153,11 @@ namespace mtools
 				double r2 = (R.absToPixelf({thickness, thickness}, dim) - R.absToPixelf({ 0.0 ,0.0 }, dim)).norm2();
 				if (r2 < 3)
 					{
-					if (r2 < 1) { color.multOpacity((float)((r2 < min_thick) ? min_thick : r2)); }
+					if (r2 < 1) 
+						{ 
+						color.multOpacity((float)((r2 < min_thick) ? min_thick : r2)); 
+						if (color.isTransparent()) return;
+						}
 					canvas_draw_polyline(R, tabPoints, color, true, antialiased, blending);
 					return;
 					}
@@ -7088,6 +7093,7 @@ namespace mtools
 			/* draw a vertical line */
 			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void _verticalLine(int64 x, int64 y1, int64 y2, RGBc color, bool draw_P2)
 				{
+				if (color.isTransparent()) return;
 				if (y2 < y1) { if (!draw_P2) { y2++; } mtools::swap(y1, y2); } else { if (!draw_P2) { y2--; } }
 				if (checkrange)
 					{
@@ -7105,6 +7111,7 @@ namespace mtools
 			/* draw an horizontal line */
 			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void _horizontalLine(int64 y, int64 x1, int64 x2, RGBc color, bool draw_P2)
 				{
+				if (color.isTransparent()) return;
 				if (x2 < x1) { if (!draw_P2) { x2++; }  mtools::swap(x1, x2); } else { if (!draw_P2) x2--; }
 				if (checkrange)
 					{
@@ -7184,6 +7191,7 @@ namespace mtools
 			 **/
 			MTOOLS_FORCEINLINE void _line_wu(iVec2 P1, iVec2 P2, bool draw_last, RGBc color, int32 penwidth = 0, bool blend = true, bool checkrange = true)
 			{
+				if (color.isTransparent()) return;
 				const bool usepen = (penwidth > 0);
 				if (usepen)
 				{
@@ -7308,6 +7316,7 @@ namespace mtools
 			**/
 			template<bool blend, bool checkrange, bool usepen>  inline void _lineBresenhamAA(iVec2 P1, iVec2 P2, RGBc color, bool draw_last, int32 penwidth)
 				{
+				if (color.isTransparent()) return;
 				int64 & x0 = P1.X(); int64 & y0 = P1.Y();
 				int64 & x1 = P2.X(); int64 & y1 = P2.Y();
 				int64 sx = ((x0 < x1) ? 1 : -1), sy = ((y0 < y1) ? 1 : -1), x2;
@@ -7521,6 +7530,7 @@ namespace mtools
 				**/
 				void _bseg_draw(fVec2 P, fVec2 Q, bool draw_last, int32 penwidth, RGBc color, bool blend = true, int side = 0, int32 op = -1)
 					{
+					if (color.isTransparent()) return;
 					const fBox2 BB = _bsegClipBox();
 					if (!Colin_SutherLand_lineclip(P, Q, BB)) return;									// clip if needed and discard if nothing to draw
 					_bseg_draw_sub(internals_bseg::BSeg(P, Q), draw_last, penwidth, color, blend, side, op, true);	// draw the segment
@@ -7813,6 +7823,7 @@ namespace mtools
 				**/
 				void _bseg_avoid1(fVec2 P, fVec2 Q, fVec2 PA, bool drawQ, bool closedPA, RGBc color, bool blend = true, int side = 0, int32 op = -1)
 					{
+					if (color.isTransparent()) return;
 					fVec2 P2 = P; // save start point
 					const fBox2 BB = _bsegClipBox();
 					if (!Colin_SutherLand_lineclip(P, Q,BB)) return; // clip and return if nothing to draw
@@ -8019,6 +8030,7 @@ namespace mtools
 				**/
 				void _bseg_avoid2(fVec2 P, fVec2 Q, fVec2 PA, fVec2 PB, bool drawQ, bool closedPA, bool closedPB, RGBc color, bool blend = true, int side = 0, int32 op = -1)
 					{
+					if (color.isTransparent()) return;
 					fVec2 PSA = P; // save start point
 					fVec2 PSB = P; // save start point
 					const fBox2 BB = _bsegClipBox();
@@ -8243,6 +8255,7 @@ namespace mtools
 				**/
 				void _bseg_avoid11(fVec2 P, fVec2 Q, fVec2 PA, fVec2 QA, bool closedPA, bool closedQA, RGBc color, bool blend = true, int side = 0, int32 op = -1)
 					{
+					if (color.isTransparent()) return;
 					fVec2 PSA = P; // save start point
 					fVec2 QSA = Q; // save start point
 					const fBox2 BB = _bsegClipBox();
@@ -8470,6 +8483,7 @@ namespace mtools
 				**/
 				void _bseg_avoid21(fVec2 P, fVec2 Q, fVec2 PA, fVec2 PB, fVec2 QA, bool closedPA, bool closedPB, bool closedQA, RGBc color, bool blend = true, int side = 0, int32 op = -1)
 					{
+					if (color.isTransparent()) return;
 					fVec2 PSA = P;
 					fVec2 PSB = P;
 					fVec2 QSA = Q;
@@ -8735,6 +8749,7 @@ namespace mtools
 				**/
 				void _bseg_avoid22(fVec2 P, fVec2 Q, fVec2 PA, fVec2 PB, fVec2 QA, fVec2 QB, bool closedPA, bool closedPB, bool closedQA, bool closedQB, RGBc color, bool blend = true, int side = 0, int32 op = -1)
 					{
+					if (color.isTransparent()) return;
 					fVec2 PSA = P;
 					fVec2 PSB = P;
 					fVec2 QSA = Q;
@@ -9004,6 +9019,7 @@ namespace mtools
 				**/
 				MTOOLS_FORCEINLINE void _bseg_fill_triangle(fVec2 P1, fVec2 P2, fVec2 P3, RGBc fillcolor, bool blend = true)
 					{
+					if (fillcolor.isTransparent()) return;
 					fBox2 BB; 
 					BB.swallowPoint(P1);  BB.swallowPoint(P2); BB.swallowPoint(P3);
 					const fBox2 CB = _bsegClipBox();
