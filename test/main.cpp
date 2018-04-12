@@ -676,6 +676,10 @@ int main(int argc, char *argv[])
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
 
 
+	fBox2 B(1.6, 5.2, 4, 5.51);
+
+	cout << round(B) << "\n";
+
 	
 											//testCSCC();
 	testplotfigure();

@@ -882,6 +882,16 @@ namespace mtools
         };
 
 
+
+	/**
+	* Convert an fBox to iBox using std::round() instead of truncation to get the closest integer.
+	**/
+	template<size_t N> MTOOLS_FORCEINLINE iBox<N> round(const fBox<N> & V)
+		{			
+		return iBox<N>(round(V.min), round(V.max), false);
+		}
+
+
     /**
     * Zoom inside the rectangle (reduce the radius by 1/10th).
     **/
