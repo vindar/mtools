@@ -1929,7 +1929,6 @@ namespace mtools
 				}
 
 
-
 			/**
 			* Draw a simple line.
 			*
@@ -2398,7 +2397,6 @@ namespace mtools
 			*****************************************/
 
 
-
 			/**
 			* Draw a triangle. 
 			*
@@ -2578,7 +2576,7 @@ namespace mtools
 			* @param	blending	(Optional) True to use blending.
 			* @param	snakefill (Optional) True to use 'snake' filling algorithm (use for polylines)
 			**/
-			inline void draw_filled_polygon(const fVec2 * tabPoints, size_t nbvertices, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, bool snakefill = true)
+			inline void draw_filled_polygon(const fVec2 * tabPoints, size_t nbvertices, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, bool snakefill = false)
 				{
 				if (isEmpty()) return;
 				fVec2 * in_tab = (fVec2*)tabPoints;
@@ -2719,8 +2717,9 @@ namespace mtools
 			 * @param	fillcolor  	interior color.
 			 * @param	antialiased	(Optional) True to use antialiased.
 			 * @param	blending   	(Optional) True to use blending.
-			**/
-			inline void draw_filled_polygon(const std::vector<fVec2> & vecPoints, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND)
+			 * @param	snakefill (Optional) True to use 'snake' filling algorithm (use for polylines)
+ 			 **/
+			inline void draw_filled_polygon(const std::vector<fVec2> & vecPoints, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, bool snakefill = false)
 				{
 				draw_filled_polygon(vecPoints.data(), vecPoints.size(), color, fillcolor, antialiased, blending);
 				}
@@ -5134,7 +5133,7 @@ namespace mtools
 			* @param	R		   	the absolute range represented in the image.
 			* @param	tabPoints   set of points that are to be joined by lines.
 			* @param	thickness   The thickness.
-			* @param	color	    color to use.
+			* @param	color	    outline color.
 			* @param	antialiased (Optional) true to draw an antialised line.
 			* @param	blending    (Optional) true to use blending instead of simply overwriting the color.
 			* @param	min_thick   (Optional) The minimum thickness.
@@ -5149,7 +5148,17 @@ namespace mtools
 					case 2: { canvas_draw_thick_line(R, tabPoints[0], tabPoints[1], thickness, color, antialiased, blending, min_thick); return; }
 					}
 
-				// ********************* TODO ! *************************
+				const auto dim = dimension();
+				double r2 = (R.absToPixelf({thickness, thickness}, dim) - R.absToPixelf({ 0.0 ,0.0 }, dim)).norm2();
+				if (r2 < 3)
+					{
+					if (r2 < 1) { color.multOpacity((float)((r2 < min_thick) ? min_thick : r2)); }
+					canvas_draw_polyline(R, tabPoints, color, true, antialiased, blending);
+					return;
+					}
+				std::vector<fVec2> res;
+				internals_polyline::polylinetoPolygon(tabPoints, thickness, res);
+				canvas_draw_filled_polygon(R, res, color, color, antialiased, blending, true);
 				}
 
 
@@ -5370,23 +5379,24 @@ namespace mtools
 
 
 			/**
-			* Draw a filled convex polygon.
-			*
-			* @param	R		   	the absolute range represented in the image.
-			* @param	tabPoints  	std vector of polygon vertice in clockwise or counterclockwise order.
-			* @param	color	   	The color tu use.
-			* @param	fillcolor  	fill color.
-			* @param	antialiased	(Optional) true to draw antialiased lines.
-			* @param	blending   	(Optional) true to use blending.
-			**/
-			MTOOLS_FORCEINLINE void canvas_draw_filled_polygon(const mtools::fBox2 & R, const std::vector<fVec2> & tabPoints, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND)
+			 * Draw a filled convex polygon.
+			 *
+			 * @param	R			  the absolute range represented in the image.
+			 * @param	tabPoints	  std vector of polygon vertice in clockwise or counterclockwise order.
+			 * @param	color		  The color tu use.
+			 * @param	fillcolor	  fill color.
+			 * @param	antialiased   (Optional) true to draw antialiased lines.
+			 * @param	blending	  (Optional) true to use blending.
+			 * @param	snakefill	  (Optional) True to use snake filling algorithm.
+			 */
+			MTOOLS_FORCEINLINE void canvas_draw_filled_polygon(const mtools::fBox2 & R, const std::vector<fVec2> & tabPoints, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, bool snakefill = false)
 				{
 				const auto dim = dimension();
 				const size_t N = tabPoints.size();
 				std::vector<fVec2> tab;
 				tab.reserve(N);
 				for (size_t i = 0; i < N; i++) { tab.push_back(R.absToPixelf(tabPoints[i], dim)); }
-				draw_filled_polygon(tab, color, fillcolor, antialiased, blending);
+				draw_filled_polygon(tab, color, fillcolor, antialiased, blending, snakefill);
 				}
 
 
