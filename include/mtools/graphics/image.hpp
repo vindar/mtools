@@ -1951,7 +1951,7 @@ namespace mtools
 				if (penwidth < 0) { MTOOLS_DEBUG("incorrect penwidth");  penwidth = 0; } else if (penwidth > 0) _correctPenOpacity(color, penwidth);
 				if (antialiased)
 					{
-					if (!Colin_SutherLand_lineclip(P1, P2, _clipfBox(penwidth))) return;
+					if (!Colin_SutherLand_lineclip(P1, P2, _clipiBox(penwidth))) return;
 					_line_wu(P1, P2, draw_P2, color, penwidth, blending);
 					}
 				else
@@ -4575,7 +4575,7 @@ namespace mtools
 			/**
 			* Return a fBox2 representing the normalized image box : fBox2(-0.5, lx() - 0.5, -0.5, ly() - 0.5)
 			**/
-			MTOOLS_FORCEINLINE iBox2 imagefBox() const { return fBox2(-0.5, _lx - 0.5, -0.5, _ly - 0.5); }
+			MTOOLS_FORCEINLINE fBox2 imagefBox() const { return fBox2(-0.5, _lx - 0.5, -0.5, _ly - 0.5); }
 
 
 			/**

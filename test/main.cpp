@@ -493,7 +493,7 @@ void testCF()
 		im.draw_box(TB, RGBc::c_Yellow.getMultOpacity(0.5), true);
 //		im.draw_rectangle(TB, RGBc::c_Yellow, true);
 
-		testBezier(TB, curve, im);
+		testBezier((fBox2)TB, curve, im);
 			
 
 
