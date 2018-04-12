@@ -582,7 +582,7 @@ namespace mtools
 
 			virtual fBox2 boundingBox() const override
 				{
-				return fBox2(x1, x2, y, y);
+				return getBoundingBox(fVec2{ x1, y }, fVec2{ x2, y });
 				}
 
 
@@ -646,7 +646,7 @@ namespace mtools
 
 			virtual fBox2 boundingBox() const override
 				{
-				return fBox2(x, x, y1, y2);
+				return getBoundingBox(fVec2{ x, y1 }, fVec2{ x, y2 });
 				}
 
 
@@ -928,11 +928,7 @@ namespace mtools
 				fVec2 H = (P2 - P1).get_rotate90();
 				H.normalize();
 				H *= (thick*0.5);
-				R.swallowPoint(P1 + H);
-				R.swallowPoint(P1 - H);
-				R.swallowPoint(P2 + H);
-				R.swallowPoint(P2 - H);
-				return R;
+				return getBoundingBox(P1 + H, P1 - H, P2 + H, P2 - H)
 				}
 
 
@@ -997,9 +993,7 @@ namespace mtools
 
 			virtual fBox2 boundingBox() const override
 				{
-				fBox2 R;
-				for (size_t i = 0; i < tab.size(); i++) { R.swallowPoint(tab[i]); }
-				return R;
+				return getBoundingBox(tab);
 				}
 
 
@@ -1092,11 +1086,9 @@ namespace mtools
 			/* reconstruct the bounding box */
 			void _constructbb()
 				{
-				std::vector<fVec2> tabA, tabB;
-				internals_polyline::enlargePolyline(tab, thickness, tabA, tabB);
-				bb.clear();
-				const size_t l = tab.size();
-				for (size_t i = 0; i < l; i++) { bb.swallowPoint(tabA[i]); bb.swallowPoint(tabB[i]); }
+				std::vector<fVec2> tab2;
+				internals_polyline::polylinetoPolygon(tab, thickness, tab2);
+				bb = getBoundingBox(tab2);
 				}
 
 
@@ -1154,11 +1146,7 @@ namespace mtools
 
 			virtual fBox2 boundingBox() const override
 				{
-				fBox2 R;
-				R.swallowPoint(P1);
-				R.swallowPoint(P2);
-				R.swallowPoint(P3);
-				return R;
+				return getBoundingBox(P1,P2,P3);
 				}
 
 
@@ -1238,12 +1226,7 @@ namespace mtools
 
 			virtual fBox2 boundingBox() const override
 				{
-				fBox2 R;
-				R.swallowPoint(P1);
-				R.swallowPoint(P2);
-				R.swallowPoint(P3);
-				R.swallowPoint(P4);
-				return R;
+				return getBoundingBox(P1,P2,P3,P4);
 				}
 
 
@@ -1321,9 +1304,7 @@ namespace mtools
 
 			virtual fBox2 boundingBox() const override
 				{
-				fBox2 R;
-				for (size_t i = 0; i < tab.size(); i++) { R.swallowPoint(tab[i]); }
-				return R;
+				return getBoundingBox(tab);
 				}
 
 
