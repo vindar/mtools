@@ -928,7 +928,7 @@ namespace mtools
 				fVec2 H = (P2 - P1).get_rotate90();
 				H.normalize();
 				H *= (thick*0.5);
-				return getBoundingBox(P1 + H, P1 - H, P2 + H, P2 - H)
+				return getBoundingBox(P1 + H, P1 - H, P2 + H, P2 - H);
 				}
 
 

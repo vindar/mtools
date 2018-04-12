@@ -1150,7 +1150,8 @@ namespace mtools
 	template<typename T, size_t N> Box<T, N> getBoundingBox(const std::vector<Vec<T,N> > & vec)
 		{
 		Box<T, N> B;
-		for (size_t l = 0; l < tab_len; l++) B.swallowPoint(vec[l]);
+		const size_t len = vec.size(); 
+		for (size_t l = 0; l < len; l++) B.swallowPoint(vec[l]);
 		return B;
 		}
 
