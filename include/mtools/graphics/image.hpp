@@ -2069,337 +2069,6 @@ namespace mtools
 
 
 
-			/*****************************************
-			*
-			* CURVES
-			*
-			*****************************************/
-
-
-			/**
-			 * Draw a quadratic (rational) Bezier curve.
-			 *
-			 * @param	P1				The first point.
-			 * @param	P2				The second point.
-			 * @param	PC				The control point.
-			 * @param	wc				The control point weight. Must be positive (faster for wc = 1 =
-			 * 							classic quad Bezier curve).
-			 * @param	color			The color to use.
-			 * @param	draw_P2			(Optional) true to draw the endpoint P2.
-			 * @param	antialiasing	(Optional) true to use antialiasing.
-			 * @param	blending		(Optional) true to use blending.
-			 * @param	penwidth		(Optional) The pen width (0 = unit width)
-			 **/
-			void draw_quad_bezier(iVec2 P1, iVec2 P2, iVec2 PC, float wc, RGBc color, bool draw_P2 = true, bool antialiasing = true, bool blending = true, int32 penwidth = 0)
-				{
-				if ((isEmpty()) || (wc <= 0)) return;
-				iBox2 mbr(P1);
-				mbr.swallowPoint(P2);
-				mbr.swallowPoint(PC);
-				iBox2 B = imageBox();
-				if (penwidth <= 0)
-					{
-					if (intersectionRect(mbr,B).isEmpty()) return;  // nothing to draw
-					if (antialiasing) // if using antialiasing, we always check the range (and its cost is negligible compared to the antialiasing computations).
-						{
-						if (wc == 1)
-							{
-							if (blending)  _plotQuadBezier<true, true, true, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotQuadBezier<false, true, true, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
-							}
-						else
-							{
-							if (blending)  _plotQuadRationalBezier<true, true, true, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth); else _plotQuadRationalBezier<false, true, true, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth);
-							}
-						return;
-						}
-					// check if we stay inside the image to remove bound check if possible
-					if (!mbr.isIncludedIn(B))
-						{ // must check bounds
-						if (wc == 1)
-							{
-							if ((blending) && (!color.isOpaque()))  _plotQuadBezier<true, true, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotQuadBezier<false, true, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
-							}
-						else
-							{
-							if ((blending) && (!color.isOpaque()))  _plotQuadRationalBezier<true, true, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth); else _plotQuadRationalBezier<false, true, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth);
-							}
-						return;
-						}
-					// no need to check bounds
-					if (wc == 1)
-						{
-						if ((blending) && (!color.isOpaque()))  _plotQuadBezier<true, false, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotQuadBezier<false, false, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
-						}
-					else
-						{
-						if ((blending) && (!color.isOpaque()))  _plotQuadRationalBezier<true, false, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth); else _plotQuadRationalBezier<false, false, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth);
-						}
-					return;
-					}
-				// penwidth >= 1
-				_correctPenOpacity(color, penwidth);
-				mbr.enlarge(penwidth);
-				if (intersectionRect(mbr, B).isEmpty()) return;  // nothing to draw
-				// always check range since cost is negligible compared to using a large pen. 
-				if (antialiasing)
-					{
-					if (wc == 1)
-						{
-						if (blending)  _plotQuadBezier<true, true, true, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotQuadBezier<false, true, true, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
-						}
-					else
-						{
-						if (blending)  _plotQuadRationalBezier<true, true, true, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth); else _plotQuadRationalBezier<false, true, true, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth);
-						}
-					return;
-					}
-				if (wc == 1)
-					{
-					if ((blending) && (!color.isOpaque()))  _plotQuadBezier<true, true, false, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotQuadBezier<false, true, false, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
-					}
-				else
-					{
-					if ((blending) && (!color.isOpaque()))  _plotQuadRationalBezier<true, true, false, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth); else _plotQuadRationalBezier<false, true, false, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth);
-					}
-				return;
-				}
-
-
-			/**
-			 * Draw a cubic Bezier curve.
-			 *
-			 * @param	P1				The first point.
-			 * @param	P2				The second point.
-			 * @param	PA				The first control point.
-			 * @param	PB				The second control point.
-			 * @param	color			The color to use.
-			 * @param	draw_P2			(Optional) true to draw the endpoint P2.
-			 * @param	antialiasing	(Optional) true to use antialiasing.
-			 * @param	blending		(Optional) true to use blending.
-			 * @param	penwidth		(Optional) The pen width (0 = unit width)
-			 **/
-			void draw_cubic_bezier(iVec2 P1, iVec2 P2, iVec2 PA, iVec2 PB,  RGBc color, bool draw_P2 = true, bool antialiasing = true, bool blending = true, int32 penwidth = 0)
-				{
-				if (isEmpty()) return;
-				iBox2 mbr(P1);
-				mbr.swallowPoint(P2);
-				mbr.swallowPoint(PA);
-				mbr.swallowPoint(PB);
-				iBox2 B = imageBox();
-				if (penwidth <= 0)
-					{
-					if (intersectionRect(mbr, B).isEmpty()) return;  // nothing to draw
-					if (antialiasing) // if using antialiasing, we always check the range (and its cost is negligible compared to the antialiasing computations).
-						{
-						if (blending) _plotCubicBezier<true, true, true,false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotCubicBezier<false, true, true, false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
-						return;
-						}
-					// check if we stay inside the image to remove bound check is possible
-					if (!mbr.isIncludedIn(B))
-						{ // must check bounds
-						if ((blending) && (!color.isOpaque())) _plotCubicBezier<true, true, false, false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotCubicBezier<false, true, false, false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
-						return;
-						}
-					// no need to check bounds
-					if ((blending) && (!color.isOpaque()))  _plotCubicBezier<true, false, false, false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotCubicBezier<false, false, false, false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
-					return;
-					}
-				// use large pen
-				_correctPenOpacity(color, penwidth);
-				mbr.enlarge(penwidth);
-				if (intersectionRect(mbr, B).isEmpty()) return;  // nothing to draw
-				//always check bounds
-				if (antialiasing) 
-					{
-					if (blending) _plotCubicBezier<true, true, true, true>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotCubicBezier<false, true, true, true>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
-					return;
-					}
-				if ((blending) && (!color.isOpaque())) _plotCubicBezier<true, true, false, true>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotCubicBezier<false, true, false, true>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
-				}
-
-
-			/**
-			 * Draw a quadratic spline.
-			 *
-			 * @param	nbpoints	   	number of point to interpolated.
-			 * @param	tabPoints	   	array of points to interpolate.
-			 * @param	color		   	The color tu use.
-			 * @param	draw_last_point	(Optional) true to draw the last point.
-			 * @param	antialiased	   	(Optional) true to use anti-aliasing.
-			 * @param	blending	   	(Optional) true to use blending.
-			 * @param	penwidth	   	(Optional) The pen width (0 = unit width)
-			 **/
-			inline void draw_quad_spline(size_t nbpoints, const iVec2 * tabPoints, RGBc color, bool draw_last_point = true, bool antialiased = true, bool blending = true, int32 penwidth = 0)
-				{
-				if (isEmpty()) return;
-				switch(nbpoints)
-					{
-					case 0: {return;}
-					case 1:
-						{
-						if (draw_last_point)
-							{
-							draw_square_dot(tabPoints[0], color, blending, penwidth);
-							}
-						return;
-						}
-					case 2:
-						{
-						draw_line(tabPoints[0], tabPoints[1], color, draw_last_point, antialiased, blending, penwidth);
-						return;
-						}
-					default:
-						{
-						// we make a copy of the array because the drawing method destroy it.
-						const size_t STATIC_SIZE = 32;
-						int64 static_tabX[STATIC_SIZE]; int64 * tabX = static_tabX;
-						int64 static_tabY[STATIC_SIZE]; int64 * tabY = static_tabY;
-						if (nbpoints > STATIC_SIZE)
-							{ // use dynamic array instead. 
-							tabX = new int64[nbpoints];
-							tabY = new int64[nbpoints];
-							}
-						for (size_t k = 0; k < nbpoints; k++) { tabX[k] = tabPoints[k].X();  tabY[k] = tabPoints[k].Y(); }
-						// always check the range
-						if (penwidth <= 0)
-							{
-							if (antialiased)
-								{
-								if (blending) _plotQuadSpline<true, true, true, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotQuadSpline<false, true, true, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
-								}
-							else
-								{
-								if ((blending) && (!color.isOpaque())) _plotQuadSpline<true, true, false, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotQuadSpline<false, true, false, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
-								}
-							}
-						else
-							{
-							_correctPenOpacity(color, penwidth);
-							if (antialiased)
-								{
-								if (blending) _plotQuadSpline<true, true, true, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotQuadSpline<false, true, true, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
-								}
-							else
-								{
-								if ((blending) && (!color.isOpaque())) _plotQuadSpline<true, true, false, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotQuadSpline<false, true, false, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
-								}
-							}
-						if (tabX != static_tabX) { delete[] tabX; delete[] tabY; } // release memory if dynamically allocated. 
-						return;
-						}
-					}
-				}
-
-
-			/**
-			 * Draw a quadratic spline.
-			 *
-			 * @param	tabPoints	   	std vector containing the points interpolated by the spline.
-			 * @param	color		   	The color tu use.
-			 * @param	draw_last_point	(Optional) true to draw the last point.
-			 * @param	antialiased	   	(Optional) true to use anti-aliasing.
-			 * @param	blending	   	(Optional) true to use blending.
-			 * @param	penwidth	   	(Optional) The pen width (0 = unit width)
-			 **/
-			MTOOLS_FORCEINLINE void draw_quad_spline(const std::vector<iVec2> & tabPoints, RGBc color, bool draw_last_point = true, bool antialiased = true, bool blending = true, int32 penwidth = 0)
-				{
-				draw_quad_spline(tabPoints.size(), tabPoints.data(), color, draw_last_point, antialiased, blending, penwidth);
-				}
-
-
-			/**
-			 * Draw a cubic spline.
-			 *
-			 * @param	nbpoints	   	number of point to interpolated.
-			 * @param	tabPoints	   	array of points to interpolate.
-			 * @param	color		   	The color tu use.
-			 * @param	draw_last_point	(Optional) true to draw the last point.
-			 * @param	antialiased	   	(Optional) true to use anti-aliasing.
-			 * @param	blending	   	(Optional) true to use blending.
-			 * @param	penwidth	   	(Optional) The pen width (0 = unit width)
-			 **/
-			inline void draw_cubic_spline(size_t nbpoints, const iVec2 * tabPoints, RGBc color, bool draw_last_point = true, bool antialiased = true, bool blending = true, int32 penwidth = 0)
-				{
-				if (isEmpty()) return;
-				switch (nbpoints)
-					{
-					case 0: {return;}
-					case 1:
-						{
-						if (draw_last_point)
-							{
-							draw_square_dot(tabPoints[0], color, blending, penwidth);
-							}
-						return;
-						}
-					case 2:
-						{
-						draw_line(tabPoints[0], tabPoints[1], color, draw_last_point, antialiased, blending, penwidth);
-						return;
-						}
-					case 3:
-						{
-						draw_quad_spline(nbpoints, tabPoints, color, draw_last_point, antialiased, blending, penwidth);
-						return;
-						}
-					default:
-						{
-						// we make a copy of the array because the drawing method destroy it.
-						const size_t STATIC_SIZE = 32;
-						int64 static_tabX[STATIC_SIZE]; int64 * tabX = static_tabX;
-						int64 static_tabY[STATIC_SIZE]; int64 * tabY = static_tabY;
-						if (nbpoints > STATIC_SIZE)
-							{ // use dynamic array instead. 
-							tabX = new int64[nbpoints];
-							tabY = new int64[nbpoints];
-							}
-						for (size_t k = 0; k < nbpoints; k++) { tabX[k] = tabPoints[k].X();  tabY[k] = tabPoints[k].Y(); }
-						// always check the range....
-						if (penwidth <= 0)
-							{
-							if (antialiased)
-								{
-								if (blending)  _plotCubicSpline<true, true, true, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotCubicSpline<false, true, true, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
-								}
-							else
-								{
-								if ((blending) && (!color.isOpaque())) _plotCubicSpline<true, true, false, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotCubicSpline<false, true, false, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
-								}
-							}
-						else
-							{
-							_correctPenOpacity(color, penwidth);
-							if (antialiased)
-								{
-								if (blending) _plotCubicSpline<true, true, true, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotCubicSpline<false, true, true, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
-								}
-							else
-								{
-								if ((blending) && (!color.isOpaque())) _plotCubicSpline<true, true, false, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotCubicSpline<false, true, false, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
-								}
-							}
-						if (tabX != static_tabX) { delete[] tabX; delete[] tabY; } // release memory if dynamically allocated. 
-						return;
-						}
-					}
-				}
-
-
-			/**
-			 * Draw a cubic spline.
-			 *
-			 * @param	tabPoints	   	std vector containing the points interpolated by the spline.
-			 * @param	color		   	The color tu use.
-			 * @param	draw_last_point	(Optional) true to draw the last point.
-			 * @param	antialiased	   	(Optional) true to use anti-aliasing.
-			 * @param	blending	   	(Optional) true to use blending.
-			 * @param	penwidth	   	(Optional) The pen width (0 = unit width)
-			 **/
-			MTOOLS_FORCEINLINE void draw_cubic_spline(const std::vector<iVec2> & tabPoints, RGBc color, bool draw_last_point = true, bool antialiased = true, bool blending = true, int32 penwidth = 0)
-				{
-				draw_cubic_spline(tabPoints.size(), tabPoints.data(), color, draw_last_point, antialiased, blending, penwidth);
-				}
-
 
 			/*****************************************
 			*
@@ -2743,11 +2412,6 @@ namespace mtools
 				}
 
 
-
-
-
-
-
 			/**
 			 * draw a rectangle of given size and color over this image. Portion outside the image is
 			 * clipped.
@@ -2757,8 +2421,9 @@ namespace mtools
 			 * @param	blend   	(Optional) true to use blending and false to simply copy the color.
 			 * @param	penwidth	(Optional) The pen width (0 = unit width)
 			 **/
-			inline void draw_rectangle(const iBox2 & dest_box, RGBc color, bool blend = true, int32 penwidth = 0)
+			inline void draw_rectangle(const fBox2 & dest_box, RGBc color, bool blend = true, int32 penwidth = 0)
 				{
+				/*
 				if (dest_box.isEmpty()) return;
 				if (penwidth <= 0) penwidth = 0;
 				if (color.isOpaque()) blend = false;
@@ -2767,6 +2432,7 @@ namespace mtools
 				draw_thick_horizontal_line(dest_box.max[1], dest_box.min[0] - penwidth, dest_box.max[0] + penwidth, tickness, color, true, blend);
 				draw_thick_vertical_line(dest_box.min[0], dest_box.min[1] + penwidth + 1, dest_box.max[1] - penwidth - 1, tickness, color, true, blend);
 				draw_thick_vertical_line(dest_box.max[0], dest_box.min[1] + penwidth + 1, dest_box.max[1] - penwidth - 1, tickness, color, true, blend);
+				*/
 				}
 
 
@@ -2782,9 +2448,11 @@ namespace mtools
 			 * @param	blend   	(Optional) true to use blending and false to simply copy the color.
 			 * @param	penwidth	(Optional) The pen width (0 = unit width)
 			 **/
-			MTOOLS_FORCEINLINE void draw_rectangle(int64 x, int64 y, int64 sx, int64 sy, RGBc color, bool blend = true, int32 penwidth = 0)
+			MTOOLS_FORCEINLINE void draw_rectangle(double x, double y, double sx, double sy, RGBc color, bool blend = true, int32 penwidth = 0)
 				{
+				/*
 				draw_rectangle(iBox2(x, x + sx - 1, y, y + sy - 1), color, blend, penwidth);
+				*/
 				}
 
 
@@ -2798,9 +2466,11 @@ namespace mtools
 			 * @param	fillcolor	the color to use.
 			 * @param	blend	 	(Optional) true to use blending and false to simply copy the color.
 			 **/
-			MTOOLS_FORCEINLINE void fill_rectangle(const iBox2 & dest_box, RGBc fillcolor, bool blend = true)
+			MTOOLS_FORCEINLINE void draw_filled_rectangle(const fBox2 & dest_box, RGBc color, RGBc fillcolor, bool blend = true)
 				{
+				/*
 				fill_rectangle(dest_box.min[0], dest_box.min[1], dest_box.max[0] - dest_box.min[0] + 1, dest_box.max[1] - dest_box.min[1] + 1, fillcolor, blend);
+				*/
 				}
 
 
@@ -2818,15 +2488,17 @@ namespace mtools
 			 * @param	fillcolor	the color to use.
 			 * @param	blend	 	(Optional) true to use blending and false to simply copy the color.
 			 **/
-			inline void fill_rectangle(int64 x, int64 y, int64 sx, int64 sy, RGBc fillcolor, bool blend = true)
+			inline void draw_filled_rectangle(double x, double y, double sx, double sy, RGBc fillcolor, bool blend = true)
 				{
+				/*
 				if (isEmpty()) return;
 				_draw_box(x + 1, y + 1, sx - 2, sy - 2, fillcolor, blend);
+				*/
 				}
 
 
 			/**
-			 * Fill a (closed) box with a given color. Portion outside the image is clipped.
+			 * Fill a (closed) box with a given color.
 			 *
 			 * @param	dest_box 	position of the rectangle to draw.
 			 * @param	fillcolor	the color to use.
@@ -2839,7 +2511,7 @@ namespace mtools
 
 
 			/**
-			 * Fill a (closed) box with a given color. Portion outside the image is clipped.
+			 * Fill a (closed) box with a given color.
 			 *
 			 * @param	x		 	x-coordinate of the rectangle upper left corner.
 			 * @param	y		 	y-coordinate of the rectangle upper left corner.
@@ -3790,6 +3462,340 @@ namespace mtools
 				double ry = (B.max[1] - B.min[1]) / 2;
 				draw_part_thick_filled_ellipse(part, center, rx, ry, thickness_x, thickness_y, color, fillcolor, aa, blend, min_tick);
 				}
+
+
+
+
+			/*****************************************
+			*
+			* CURVES
+			*
+			*****************************************/
+
+
+			/**
+			* Draw a quadratic (rational) Bezier curve.
+			*
+			* @param	P1				The first point.
+			* @param	P2				The second point.
+			* @param	PC				The control point.
+			* @param	wc				The control point weight. Must be positive (faster for wc = 1 =
+			* 							classic quad Bezier curve).
+			* @param	color			The color to use.
+			* @param	draw_P2			(Optional) true to draw the endpoint P2.
+			* @param	antialiasing	(Optional) true to use antialiasing.
+			* @param	blending		(Optional) true to use blending.
+			* @param	penwidth		(Optional) The pen width (0 = unit width)
+			**/
+			void draw_quad_bezier(iVec2 P1, iVec2 P2, iVec2 PC, float wc, RGBc color, bool draw_P2 = true, bool antialiasing = true, bool blending = true, int32 penwidth = 0)
+			{
+				if ((isEmpty()) || (wc <= 0)) return;
+				iBox2 mbr(P1);
+				mbr.swallowPoint(P2);
+				mbr.swallowPoint(PC);
+				iBox2 B = imageBox();
+				if (penwidth <= 0)
+				{
+					if (intersectionRect(mbr, B).isEmpty()) return;  // nothing to draw
+					if (antialiasing) // if using antialiasing, we always check the range (and its cost is negligible compared to the antialiasing computations).
+					{
+						if (wc == 1)
+						{
+							if (blending)  _plotQuadBezier<true, true, true, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotQuadBezier<false, true, true, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
+						}
+						else
+						{
+							if (blending)  _plotQuadRationalBezier<true, true, true, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth); else _plotQuadRationalBezier<false, true, true, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth);
+						}
+						return;
+					}
+					// check if we stay inside the image to remove bound check if possible
+					if (!mbr.isIncludedIn(B))
+					{ // must check bounds
+						if (wc == 1)
+						{
+							if ((blending) && (!color.isOpaque()))  _plotQuadBezier<true, true, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotQuadBezier<false, true, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
+						}
+						else
+						{
+							if ((blending) && (!color.isOpaque()))  _plotQuadRationalBezier<true, true, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth); else _plotQuadRationalBezier<false, true, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth);
+						}
+						return;
+					}
+					// no need to check bounds
+					if (wc == 1)
+					{
+						if ((blending) && (!color.isOpaque()))  _plotQuadBezier<true, false, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotQuadBezier<false, false, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
+					}
+					else
+					{
+						if ((blending) && (!color.isOpaque()))  _plotQuadRationalBezier<true, false, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth); else _plotQuadRationalBezier<false, false, false, false>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth);
+					}
+					return;
+				}
+				// penwidth >= 1
+				_correctPenOpacity(color, penwidth);
+				mbr.enlarge(penwidth);
+				if (intersectionRect(mbr, B).isEmpty()) return;  // nothing to draw
+																 // always check range since cost is negligible compared to using a large pen. 
+				if (antialiasing)
+				{
+					if (wc == 1)
+					{
+						if (blending)  _plotQuadBezier<true, true, true, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotQuadBezier<false, true, true, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
+					}
+					else
+					{
+						if (blending)  _plotQuadRationalBezier<true, true, true, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth); else _plotQuadRationalBezier<false, true, true, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth);
+					}
+					return;
+				}
+				if (wc == 1)
+				{
+					if ((blending) && (!color.isOpaque()))  _plotQuadBezier<true, true, false, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotQuadBezier<false, true, false, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
+				}
+				else
+				{
+					if ((blending) && (!color.isOpaque()))  _plotQuadRationalBezier<true, true, false, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth); else _plotQuadRationalBezier<false, true, false, true>(P1.X(), P1.Y(), PC.X(), PC.Y(), P2.X(), P2.Y(), wc, color, draw_P2, penwidth);
+				}
+				return;
+			}
+
+
+			/**
+			* Draw a cubic Bezier curve.
+			*
+			* @param	P1				The first point.
+			* @param	P2				The second point.
+			* @param	PA				The first control point.
+			* @param	PB				The second control point.
+			* @param	color			The color to use.
+			* @param	draw_P2			(Optional) true to draw the endpoint P2.
+			* @param	antialiasing	(Optional) true to use antialiasing.
+			* @param	blending		(Optional) true to use blending.
+			* @param	penwidth		(Optional) The pen width (0 = unit width)
+			**/
+			void draw_cubic_bezier(iVec2 P1, iVec2 P2, iVec2 PA, iVec2 PB, RGBc color, bool draw_P2 = true, bool antialiasing = true, bool blending = true, int32 penwidth = 0)
+			{
+				if (isEmpty()) return;
+				iBox2 mbr(P1);
+				mbr.swallowPoint(P2);
+				mbr.swallowPoint(PA);
+				mbr.swallowPoint(PB);
+				iBox2 B = imageBox();
+				if (penwidth <= 0)
+				{
+					if (intersectionRect(mbr, B).isEmpty()) return;  // nothing to draw
+					if (antialiasing) // if using antialiasing, we always check the range (and its cost is negligible compared to the antialiasing computations).
+					{
+						if (blending) _plotCubicBezier<true, true, true, false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotCubicBezier<false, true, true, false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
+						return;
+					}
+					// check if we stay inside the image to remove bound check is possible
+					if (!mbr.isIncludedIn(B))
+					{ // must check bounds
+						if ((blending) && (!color.isOpaque())) _plotCubicBezier<true, true, false, false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotCubicBezier<false, true, false, false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
+						return;
+					}
+					// no need to check bounds
+					if ((blending) && (!color.isOpaque()))  _plotCubicBezier<true, false, false, false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotCubicBezier<false, false, false, false>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
+					return;
+				}
+				// use large pen
+				_correctPenOpacity(color, penwidth);
+				mbr.enlarge(penwidth);
+				if (intersectionRect(mbr, B).isEmpty()) return;  // nothing to draw
+																 //always check bounds
+				if (antialiasing)
+				{
+					if (blending) _plotCubicBezier<true, true, true, true>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotCubicBezier<false, true, true, true>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
+					return;
+				}
+				if ((blending) && (!color.isOpaque())) _plotCubicBezier<true, true, false, true>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth); else _plotCubicBezier<false, true, false, true>(P1.X(), P1.Y(), PA.X(), PA.Y(), PB.X(), PB.Y(), P2.X(), P2.Y(), color, draw_P2, penwidth);
+			}
+
+
+			/**
+			* Draw a quadratic spline.
+			*
+			* @param	nbpoints	   	number of point to interpolated.
+			* @param	tabPoints	   	array of points to interpolate.
+			* @param	color		   	The color tu use.
+			* @param	draw_last_point	(Optional) true to draw the last point.
+			* @param	antialiased	   	(Optional) true to use anti-aliasing.
+			* @param	blending	   	(Optional) true to use blending.
+			* @param	penwidth	   	(Optional) The pen width (0 = unit width)
+			**/
+			inline void draw_quad_spline(size_t nbpoints, const iVec2 * tabPoints, RGBc color, bool draw_last_point = true, bool antialiased = true, bool blending = true, int32 penwidth = 0)
+			{
+				if (isEmpty()) return;
+				switch (nbpoints)
+				{
+				case 0: {return; }
+				case 1:
+				{
+					if (draw_last_point)
+					{
+						draw_square_dot(tabPoints[0], color, blending, penwidth);
+					}
+					return;
+				}
+				case 2:
+				{
+					draw_line(tabPoints[0], tabPoints[1], color, draw_last_point, antialiased, blending, penwidth);
+					return;
+				}
+				default:
+				{
+					// we make a copy of the array because the drawing method destroy it.
+					const size_t STATIC_SIZE = 32;
+					int64 static_tabX[STATIC_SIZE]; int64 * tabX = static_tabX;
+					int64 static_tabY[STATIC_SIZE]; int64 * tabY = static_tabY;
+					if (nbpoints > STATIC_SIZE)
+					{ // use dynamic array instead. 
+						tabX = new int64[nbpoints];
+						tabY = new int64[nbpoints];
+					}
+					for (size_t k = 0; k < nbpoints; k++) { tabX[k] = tabPoints[k].X();  tabY[k] = tabPoints[k].Y(); }
+					// always check the range
+					if (penwidth <= 0)
+					{
+						if (antialiased)
+						{
+							if (blending) _plotQuadSpline<true, true, true, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotQuadSpline<false, true, true, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
+						}
+						else
+						{
+							if ((blending) && (!color.isOpaque())) _plotQuadSpline<true, true, false, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotQuadSpline<false, true, false, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
+						}
+					}
+					else
+					{
+						_correctPenOpacity(color, penwidth);
+						if (antialiased)
+						{
+							if (blending) _plotQuadSpline<true, true, true, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotQuadSpline<false, true, true, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
+						}
+						else
+						{
+							if ((blending) && (!color.isOpaque())) _plotQuadSpline<true, true, false, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotQuadSpline<false, true, false, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
+						}
+					}
+					if (tabX != static_tabX) { delete[] tabX; delete[] tabY; } // release memory if dynamically allocated. 
+					return;
+				}
+				}
+			}
+
+
+			/**
+			* Draw a quadratic spline.
+			*
+			* @param	tabPoints	   	std vector containing the points interpolated by the spline.
+			* @param	color		   	The color tu use.
+			* @param	draw_last_point	(Optional) true to draw the last point.
+			* @param	antialiased	   	(Optional) true to use anti-aliasing.
+			* @param	blending	   	(Optional) true to use blending.
+			* @param	penwidth	   	(Optional) The pen width (0 = unit width)
+			**/
+			MTOOLS_FORCEINLINE void draw_quad_spline(const std::vector<iVec2> & tabPoints, RGBc color, bool draw_last_point = true, bool antialiased = true, bool blending = true, int32 penwidth = 0)
+			{
+				draw_quad_spline(tabPoints.size(), tabPoints.data(), color, draw_last_point, antialiased, blending, penwidth);
+			}
+
+
+			/**
+			* Draw a cubic spline.
+			*
+			* @param	nbpoints	   	number of point to interpolated.
+			* @param	tabPoints	   	array of points to interpolate.
+			* @param	color		   	The color tu use.
+			* @param	draw_last_point	(Optional) true to draw the last point.
+			* @param	antialiased	   	(Optional) true to use anti-aliasing.
+			* @param	blending	   	(Optional) true to use blending.
+			* @param	penwidth	   	(Optional) The pen width (0 = unit width)
+			**/
+			inline void draw_cubic_spline(size_t nbpoints, const iVec2 * tabPoints, RGBc color, bool draw_last_point = true, bool antialiased = true, bool blending = true, int32 penwidth = 0)
+			{
+				if (isEmpty()) return;
+				switch (nbpoints)
+				{
+				case 0: {return; }
+				case 1:
+				{
+					if (draw_last_point)
+					{
+						draw_square_dot(tabPoints[0], color, blending, penwidth);
+					}
+					return;
+				}
+				case 2:
+				{
+					draw_line(tabPoints[0], tabPoints[1], color, draw_last_point, antialiased, blending, penwidth);
+					return;
+				}
+				case 3:
+				{
+					draw_quad_spline(nbpoints, tabPoints, color, draw_last_point, antialiased, blending, penwidth);
+					return;
+				}
+				default:
+				{
+					// we make a copy of the array because the drawing method destroy it.
+					const size_t STATIC_SIZE = 32;
+					int64 static_tabX[STATIC_SIZE]; int64 * tabX = static_tabX;
+					int64 static_tabY[STATIC_SIZE]; int64 * tabY = static_tabY;
+					if (nbpoints > STATIC_SIZE)
+					{ // use dynamic array instead. 
+						tabX = new int64[nbpoints];
+						tabY = new int64[nbpoints];
+					}
+					for (size_t k = 0; k < nbpoints; k++) { tabX[k] = tabPoints[k].X();  tabY[k] = tabPoints[k].Y(); }
+					// always check the range....
+					if (penwidth <= 0)
+					{
+						if (antialiased)
+						{
+							if (blending)  _plotCubicSpline<true, true, true, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotCubicSpline<false, true, true, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
+						}
+						else
+						{
+							if ((blending) && (!color.isOpaque())) _plotCubicSpline<true, true, false, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotCubicSpline<false, true, false, false>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
+						}
+					}
+					else
+					{
+						_correctPenOpacity(color, penwidth);
+						if (antialiased)
+						{
+							if (blending) _plotCubicSpline<true, true, true, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotCubicSpline<false, true, true, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
+						}
+						else
+						{
+							if ((blending) && (!color.isOpaque())) _plotCubicSpline<true, true, false, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth); else _plotCubicSpline<false, true, false, true>(nbpoints - 1, tabX, tabY, color, draw_last_point, penwidth);
+						}
+					}
+					if (tabX != static_tabX) { delete[] tabX; delete[] tabY; } // release memory if dynamically allocated. 
+					return;
+				}
+				}
+			}
+
+
+			/**
+			* Draw a cubic spline.
+			*
+			* @param	tabPoints	   	std vector containing the points interpolated by the spline.
+			* @param	color		   	The color tu use.
+			* @param	draw_last_point	(Optional) true to draw the last point.
+			* @param	antialiased	   	(Optional) true to use anti-aliasing.
+			* @param	blending	   	(Optional) true to use blending.
+			* @param	penwidth	   	(Optional) The pen width (0 = unit width)
+			**/
+			MTOOLS_FORCEINLINE void draw_cubic_spline(const std::vector<iVec2> & tabPoints, RGBc color, bool draw_last_point = true, bool antialiased = true, bool blending = true, int32 penwidth = 0)
+			{
+				draw_cubic_spline(tabPoints.size(), tabPoints.data(), color, draw_last_point, antialiased, blending, penwidth);
+			}
 
 
 
@@ -5097,111 +5103,6 @@ namespace mtools
 
 
 
-
-
-
-			/*****************************************
-			*
-			* (CANVAS) CURVES
-			*
-			*****************************************/
-
-
-			/**
-			 * Draw a quadratic (rational) Bezier curve.
-			 * 
-			 * Use absolute coordinate (canvas method).
-			 *
-			 * @param	R				the absolute range represented in the image.
-			 * @param	P1				The first point.
-			 * @param	P2				The second point.
-			 * @param	PC				The control point.
-			 * @param	wc				The control point weight. Must be positive (faster for wc = 1 =
-			 * 							classic quad Bezier curve).
-			 * @param	color			The color to use.
-			 * @param	draw_P2			(Optional) true to draw the endpoint P2.
-			 * @param	antialiasing	(Optional) true to use antialiasing.
-			 * @param	blending		(Optional) true to use blending.
-			 * @param	penwidth		(Optional) The pen width (0 = unit width)
-			 **/
-			MTOOLS_FORCEINLINE void canvas_draw_quad_bezier(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, fVec2 PC, float wc, RGBc color, bool draw_P2 = true, bool antialiasing = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0)
-				{
-				const auto dim = dimension();
-				draw_quad_bezier(R.absToPixel(P1, dim), R.absToPixel(P2, dim), R.absToPixel(PC, dim), wc, color, draw_P2, antialiasing, blending, penwidth);
-				}
-
-
-			/**
-			 * Draw a cubic Bezier curve.
-			 * 
-			 * Use absolute coordinate (canvas method).
-			 *
-			 * @param	R				the absolute range represented in the image.
-			 * @param	P1				The first point.
-			 * @param	P2				The second point.
-			 * @param	PA				The first control point.
-			 * @param	PB				The second control point.
-			 * @param	color			The color to use.
-			 * @param	draw_P2			(Optional) true to draw the endpoint P2.
-			 * @param	antialiasing	(Optional) true to use antialiasing.
-			 * @param	blending		(Optional) true to use blending.
-			 * @param	penwidth		(Optional) The pen width (0 = unit width)
-			 **/
-			MTOOLS_FORCEINLINE void canvas_draw_cubic_bezier(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, fVec2 PA, fVec2 PB, RGBc color, bool draw_P2 = true, bool antialiasing = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0)
-				{
-				const auto dim = dimension();
-				draw_cubic_bezier(R.absToPixel(P1, dim), R.absToPixel(P2, dim), R.absToPixel(PA, dim), R.absToPixel(PB, dim), color, draw_P2, antialiasing, blending, penwidth);
-				}
-
-
-			/**
-			 * Draw a quadratic spline.
-			 * 
-			 * Use absolute coordinate (canvas method).
-			 *
-			 * @param	R			   	the absolute range represented in the image.
-			 * @param	tabPoints	   	std vector containing the points interpolated by the spline.
-			 * @param	color		   	The color tu use.
-			 * @param	draw_last_point	(Optional) true to draw the last point.
-			 * @param	antialiased	   	(Optional) true to use anti-aliasing.
-			 * @param	blending	   	(Optional) true to use blending.
-			 * @param	penwidth	   	(Optional) The pen width (0 = unit width)
-			 **/
-			MTOOLS_FORCEINLINE void canvas_draw_quad_spline(const mtools::fBox2 & R, const std::vector<fVec2> & tabPoints, RGBc color, bool draw_last_point = true, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0)
-				{
-				const auto dim = dimension();
-				const size_t N = tabPoints.size();
-				std::vector<iVec2> tab;
-				tab.reserve(N);
-				for (size_t i=0; i < N; i++) { tab.push_back(R.absToPixel(tabPoints[i], dim)); }
-				draw_quad_spline(tab, color, draw_last_point, antialiased, blending, penwidth);
-				}
-
-
-			/**
-			 * Draw a cubic spline.
-			 * 
-			 * Use absolute coordinate (canvas method).
-			 *
-			 * @param	R			   	the absolute range represented in the image.
-			 * @param	tabPoints	   	std vector containing the points interpolated by the spline.
-			 * @param	color		   	The color tu use.
-			 * @param	draw_last_point	(Optional) true to draw the last point.
-			 * @param	antialiased	   	(Optional) true to use anti-aliasing.
-			 * @param	blending	   	(Optional) true to use blending.
-			 * @param	penwidth	   	(Optional) The pen width (0 = unit width)
-			 **/
-			MTOOLS_FORCEINLINE void canvas_draw_cubic_spline(const mtools::fBox2 & R, const std::vector<fVec2> & tabPoints, RGBc color, bool draw_last_point = true, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0)
-				{
-				const auto dim = dimension();
-				const size_t N = tabPoints.size();
-				std::vector<iVec2> tab;
-				tab.reserve(N);
-				for (size_t i = 0; i < N; i++) { tab.push_back(R.absToPixel(tabPoints[i], dim)); }
-				draw_cubic_spline(tab, color, draw_last_point, antialiased, blending, penwidth);
-				}
-
-
 			/*****************************************
 			*
 			* (CANVAS) POLYGONS
@@ -5353,7 +5254,9 @@ namespace mtools
 			 **/
 			MTOOLS_FORCEINLINE void canvas_draw_rectangle(const mtools::fBox2 & R, const fBox2 & dest_box, RGBc color, bool blend = DEFAULT_BLEND, int32 penwidth = 0)
 				{
+				/*
 				draw_rectangle(R.absToPixel(dest_box,dimension()), color, blend, penwidth);
+				*/
 				}
 
 
@@ -5372,7 +5275,9 @@ namespace mtools
 			 **/
 			MTOOLS_FORCEINLINE void canvas_fill_rectangle(const mtools::fBox2 & R, const fBox2 & dest_box, RGBc fillcolor, bool blend = DEFAULT_BLEND)
 				{
+				/*
 				fill_rectangle(R.absToPixel(dest_box, dimension()), fillcolor, blend);
+				*/
 				}
 
 
@@ -6037,6 +5942,110 @@ namespace mtools
 				if (relativethickness) draw_part_thick_filled_ellipse_in_box(part, B, boxTransform_dx(thickness_x, R, imBox), boxTransform_dy(thickness_y, R, imBox), color, fillcolor, aa, blend, min_tick);
 				else draw_part_thick_filled_ellipse_in_box(part, B, thickness_x, thickness_y, color, fillcolor, aa, blend, min_tick);
 				}
+
+
+
+			/*****************************************
+			*
+			* (CANVAS) CURVES
+			*
+			*****************************************/
+
+
+			/**
+			* Draw a quadratic (rational) Bezier curve.
+			*
+			* Use absolute coordinate (canvas method).
+			*
+			* @param	R				the absolute range represented in the image.
+			* @param	P1				The first point.
+			* @param	P2				The second point.
+			* @param	PC				The control point.
+			* @param	wc				The control point weight. Must be positive (faster for wc = 1 =
+			* 							classic quad Bezier curve).
+			* @param	color			The color to use.
+			* @param	draw_P2			(Optional) true to draw the endpoint P2.
+			* @param	antialiasing	(Optional) true to use antialiasing.
+			* @param	blending		(Optional) true to use blending.
+			* @param	penwidth		(Optional) The pen width (0 = unit width)
+			**/
+			MTOOLS_FORCEINLINE void canvas_draw_quad_bezier(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, fVec2 PC, float wc, RGBc color, bool draw_P2 = true, bool antialiasing = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0)
+			{
+				const auto dim = dimension();
+				draw_quad_bezier(R.absToPixel(P1, dim), R.absToPixel(P2, dim), R.absToPixel(PC, dim), wc, color, draw_P2, antialiasing, blending, penwidth);
+			}
+
+
+			/**
+			* Draw a cubic Bezier curve.
+			*
+			* Use absolute coordinate (canvas method).
+			*
+			* @param	R				the absolute range represented in the image.
+			* @param	P1				The first point.
+			* @param	P2				The second point.
+			* @param	PA				The first control point.
+			* @param	PB				The second control point.
+			* @param	color			The color to use.
+			* @param	draw_P2			(Optional) true to draw the endpoint P2.
+			* @param	antialiasing	(Optional) true to use antialiasing.
+			* @param	blending		(Optional) true to use blending.
+			* @param	penwidth		(Optional) The pen width (0 = unit width)
+			**/
+			MTOOLS_FORCEINLINE void canvas_draw_cubic_bezier(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, fVec2 PA, fVec2 PB, RGBc color, bool draw_P2 = true, bool antialiasing = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0)
+			{
+				const auto dim = dimension();
+				draw_cubic_bezier(R.absToPixel(P1, dim), R.absToPixel(P2, dim), R.absToPixel(PA, dim), R.absToPixel(PB, dim), color, draw_P2, antialiasing, blending, penwidth);
+			}
+
+
+			/**
+			* Draw a quadratic spline.
+			*
+			* Use absolute coordinate (canvas method).
+			*
+			* @param	R			   	the absolute range represented in the image.
+			* @param	tabPoints	   	std vector containing the points interpolated by the spline.
+			* @param	color		   	The color tu use.
+			* @param	draw_last_point	(Optional) true to draw the last point.
+			* @param	antialiased	   	(Optional) true to use anti-aliasing.
+			* @param	blending	   	(Optional) true to use blending.
+			* @param	penwidth	   	(Optional) The pen width (0 = unit width)
+			**/
+			MTOOLS_FORCEINLINE void canvas_draw_quad_spline(const mtools::fBox2 & R, const std::vector<fVec2> & tabPoints, RGBc color, bool draw_last_point = true, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0)
+			{
+				const auto dim = dimension();
+				const size_t N = tabPoints.size();
+				std::vector<iVec2> tab;
+				tab.reserve(N);
+				for (size_t i = 0; i < N; i++) { tab.push_back(R.absToPixel(tabPoints[i], dim)); }
+				draw_quad_spline(tab, color, draw_last_point, antialiased, blending, penwidth);
+			}
+
+
+			/**
+			* Draw a cubic spline.
+			*
+			* Use absolute coordinate (canvas method).
+			*
+			* @param	R			   	the absolute range represented in the image.
+			* @param	tabPoints	   	std vector containing the points interpolated by the spline.
+			* @param	color		   	The color tu use.
+			* @param	draw_last_point	(Optional) true to draw the last point.
+			* @param	antialiased	   	(Optional) true to use anti-aliasing.
+			* @param	blending	   	(Optional) true to use blending.
+			* @param	penwidth	   	(Optional) The pen width (0 = unit width)
+			**/
+			MTOOLS_FORCEINLINE void canvas_draw_cubic_spline(const mtools::fBox2 & R, const std::vector<fVec2> & tabPoints, RGBc color, bool draw_last_point = true, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0)
+			{
+				const auto dim = dimension();
+				const size_t N = tabPoints.size();
+				std::vector<iVec2> tab;
+				tab.reserve(N);
+				for (size_t i = 0; i < N; i++) { tab.push_back(R.absToPixel(tabPoints[i], dim)); }
+				draw_cubic_spline(tab, color, draw_last_point, antialiased, blending, penwidth);
+			}
+
 
 
 			/*****************************************
@@ -6826,19 +6835,18 @@ namespace mtools
 			fBox2 _clipfBox(int32 penwidth = 0) const
 				{
 				MTOOLS_ASSERT(penwidth >= 0);
-				//const double margin = 1000.0 + _lx + _ly + 2 * penwidth - 0.5;
-				const double margin = -20; 
-				return fBox2(-margin - 0.5, margin + _lx - 0.5, -margin - 0.5, margin + _ly - 0.5);
+				const double margin = 1000.0 + _lx + _ly + 2*penwidth;
+				//const double margin = -20; for testing
+				return fBox2(-margin, margin + _lx, -margin, margin + _ly);
 				}
 
 			/** larger box used to clip objects (so that conversion from double to integer are now safe). */
 			fBox2 _clipfBoxLarge(int32 penwidth = 0) const
 				{
 				MTOOLS_ASSERT(penwidth >= 0);
-				//const double margin = 100000.0 + 2*(_lx + _ly) + 2 * penwidth - 0.5;
-				const double margin = -10; 
-				//100000.0 + 2 * (_lx + _ly) + 2 * penwidth - 0.5;
-				return fBox2(-margin - 0.5, margin + _lx - 0.5, -margin - 0.5, margin + _ly - 0.5);
+				const double margin = 100000.0 + 2*(_lx + _ly) + 2*penwidth;
+				//const double margin = -10; // for testing
+				return fBox2(-margin, margin + _lx, -margin, margin + _ly);
 				}
 
 
@@ -6846,9 +6854,9 @@ namespace mtools
 			iBox2 _clipiBox(int32 penwidth = 0) const
 				{
 				MTOOLS_ASSERT(penwidth >= 0);
-				//const double margin = 1000 + _lx + _ly + 2 * penwidth - 0.5;
-				const int64 margin = -20;
-				return iBox2(-margin, margin + _lx - 1, -margin, margin + _ly - 1);
+				const int64 margin = 1000 + _lx + _ly + 2 * penwidth;
+				//const int64 margin = -20; // for testing
+				return iBox2(-margin, margin + _lx, -margin, margin + _ly);
 				}
 
 
@@ -6856,9 +6864,9 @@ namespace mtools
 			iBox2 _clipiBoxLarge(int32 penwidth = 0) const
 				{
 				MTOOLS_ASSERT(penwidth >= 0);
-				//const double margin = 100000 + 2*(_lx + _ly) + 2 * penwidth - 0.5;
-				const int64 margin = -10; 
-				return iBox2(-margin, margin + _lx - 1, -margin, margin + _ly - 1);
+				const int64 margin = 100000 + 2 * (_lx + _ly) + 2 * penwidth;
+				//const int64 margin = -10; // for testing
+				return iBox2(-margin, margin + _lx, -margin, margin + _ly);
 				}
 
 
@@ -6993,6 +7001,7 @@ namespace mtools
 				if ((penwidth == 0)&&(bb.lx() < 1.5) && (bb.ly() < 1.5))
 					{
 					fVec2 C = bb.center();
+					if ((C.X() < -1) || (C.X() > _lx + 1) || (C.Y() < -1) || (C.Y() > _ly + 1)) return true;
 					double f = (ratio * bb.lx() * bb.ly());
 					if (f < min_tick) f = min_tick;
 					if (f < 1.0) color.multOpacity((float)f);
