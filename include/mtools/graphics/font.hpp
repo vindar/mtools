@@ -259,7 +259,7 @@ namespace mtools
 				if ((!_fontsize) || (txt.size() == 0)) return;
 				iVec2 dim = textDimension(txt);
 				pos = _upperleft(pos, dim, txt_pos);
-				im.draw_box(pos.X(), pos.Y(), dim.X(), dim.Y(), bkcolor,true);
+				im.draw_box(iBox2(pos.X(), pos.X() + dim.X() - 1, pos.Y(), pos.Y() + dim.Y() - 1), bkcolor,true);
 				}
 
 
