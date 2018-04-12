@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
 	plotter.solidBackGroundColor(RGBc::c_Black);
 	iBox2 B;
 	grid.getPosRange(B);
-	plotter.range().setRange(zoomOut(B));
+	plotter.range().setRange((fBox2)zoomOut(B));
 	plotter.plot();
 	
 	return 0;

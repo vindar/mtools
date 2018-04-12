@@ -42,7 +42,7 @@ class longOERRW
 
 
         /* return the range of the walk (useful for plotting the graph) */
-        fBox2 rangeRect() const { return R; }
+        fBox2 rangeRect() const { return (fBox2)R; }
 
 
         /* return the actual coordinates of the walk */
