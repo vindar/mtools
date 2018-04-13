@@ -1123,8 +1123,9 @@ namespace mtools
 				{
 				if (thickness >= 0)
 					{ // relative thickness
+					const double tt = thickness / 2;
 					std::vector<fVec2> tab2;
-					internals_polyline::polylinetoPolygon(tab, thickness, tab2);
+					internals_polyline::polylinetoPolygon(tab, tt,tt, tab2);
 					bb = getBoundingBox(tab2);
 					}
 				else

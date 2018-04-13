@@ -5346,7 +5346,8 @@ namespace mtools
 					return;
 					}
 				std::vector<fVec2> res;
-				internals_polyline::polylinetoPolygon(tabPoints, thickness, res);
+				const double tt = thickness / 2;
+				internals_polyline::polylinetoPolygon(tabPoints, tt, tt, res);
 				canvas_draw_filled_polygon(R, res, color, color, antialiased, blending, true, min_thick);
 				}
 
