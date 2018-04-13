@@ -1125,7 +1125,7 @@ namespace mtools
 
 		/**
 		*
-		* BoxRegion
+		* BoxRegion : filled a boxed region with a single color.
 		*
 		**/
 		class BoxRegion : public internals_figure::FigureInterface
@@ -1375,7 +1375,7 @@ namespace mtools
 					}
 				else
 					{
-					im.canvas_draw_filled_polygon(R, tab, color, fillcolor, highQuality, true, min_thickness);
+					im.canvas_draw_filled_polygon(R, tab, color, fillcolor, highQuality, true, false, min_thickness);
 					}
 				}
 
@@ -1467,24 +1467,274 @@ namespace mtools
 				std::string str("Rectangle [");
 				str += mtools::toString(box) + " - ";
 				str += mtools::toString(color);
-				if (!fillcolor.isTransparent())
-					{
-					str += " filled : ";
-					str += mtools::toString(fillcolor);
-					}
+				if (!fillcolor.isTransparent()) { str += " filled "; str += mtools::toString(fillcolor); }
 				return str + "]";
 				}
 
 
 			virtual void serialize(OBaseArchive & ar) const override
 				{
-				ar & color & fillcolor;
+				ar & box & color & fillcolor;
 				}
 
 
 			virtual void deserialize(IBaseArchive & ar) override
 				{
-				ar & color & fillcolor;
+				ar & box & color & fillcolor;
+				}
+
+		};
+
+
+		/**
+		*
+		* Thick Triangle
+		*
+		**/
+		class ThickTriangle : public internals_figure::FigureInterface
+		{
+
+		public:
+
+			fVec2 P1, P2, P3;
+			double thickness;	// negative for absolute thickness
+			RGBc  color, fillcolor;
+
+
+			/**
+			 * Constructor
+			 *
+			 * @param	p1				   first point
+			 * @param	p2				   second point
+			 * @param	p3				   third point
+			 * @param	thick			   thickness (going inward)
+			 * @param	relative_thickness True to use relative thickness.
+			 * @param	col				   outline color.
+			 * @param	fillcol			   (Optional) interior color.
+			 */
+			ThickTriangle(fVec2 p1, fVec2 p2, fVec2 p3, double thick,  bool relative_thickness, RGBc col, RGBc fillcol = RGBc::c_Transparent) : P1(p1), P2(p2), P3(p3), thickness(thick), color(col), fillcolor(fillcol)
+				{
+				MTOOLS_ASSERT(thick >= 0);
+				if (!relative_thickness) { thickness = -thickness; }
+				}
+
+
+			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+				{
+				const bool rel = (thickness >= 0);
+				const double tt = (rel ? thickness : -thickness);
+				if (fillcolor.isTransparent())
+					{
+					im.canvas_draw_thick_triangle(R, P1, P2, P3, tt, rel, color, highQuality, true, min_thickness);
+					}
+				else
+					{
+					im.canvas_draw_thick_filled_triangle(R, P1, P2, P3, tt, rel, color, fillcolor, highQuality, true, min_thickness);
+					}
+				}
+
+
+			virtual fBox2 boundingBox() const override
+				{
+				return getBoundingBox(P1, P2, P3);
+				}
+
+
+			virtual std::string toString(bool debug = false) const override
+				{
+				const bool rel = (thickness >= 0);
+				const double tt = (rel ? thickness : -thickness);
+				std::string str("ThickTriangle [");
+				str += mtools::toString(P1) + ", ";
+				str += mtools::toString(P2) + ", ";
+				str += mtools::toString(P3) + " - ";
+				str += ((rel ? std::string(" rel. thick. (") : std::string("abs. thick. ("))) + mtools::toString(tt) + ") ";
+				str += mtools::toString(color);
+				if (!fillcolor.isTransparent()) { str += " filled "; str += mtools::toString(fillcolor); }
+				return str + "]";
+				}
+
+
+			virtual void serialize(OBaseArchive & ar) const override
+				{
+				ar &  P1 & P2 & P3 & thickness & color & fillcolor;
+				}
+
+
+			virtual void deserialize(IBaseArchive & ar) override
+				{
+				ar &  P1 & P2 & P3 & thickness & color & fillcolor;
+				}
+
+		};
+
+
+		/**
+		*
+		* Thick Quad
+		*
+		**/
+		class ThickQuad : public internals_figure::FigureInterface
+		{
+
+		public:
+
+			fVec2 P1, P2, P3, P4;
+			double thickness;	// negative for absolute thickness
+			RGBc  color, fillcolor;
+
+
+			/**
+			* Constructor
+			*
+			* @param	p1				   first point
+			* @param	p2				   second point
+			* @param	p3				   third point
+			* @param	p4				   fourth point
+			* @param	thick			   thickness (going inward)
+			* @param	relative_thickness True to use relative thickness.
+			* @param	col				   outline color.
+			* @param	fillcol			   (Optional) interior color.
+			*/
+			ThickQuad(fVec2 p1, fVec2 p2, fVec2 p3, fVec2 p4, double thick, bool relative_thickness, RGBc col, RGBc fillcol = RGBc::c_Transparent) : P1(p1), P2(p2), P3(p3), P4(p4), thickness(thick), color(col), fillcolor(fillcol)
+				{
+				MTOOLS_ASSERT(thick >= 0);
+				if (!relative_thickness) { thickness = -thickness; }
+				}
+
+
+			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+				{
+				const bool rel = (thickness >= 0);
+				const double tt = (rel ? thickness : -thickness);
+				if (fillcolor.isTransparent())
+					{
+					im.canvas_draw_thick_quad(R, P1, P2, P3, P4, tt, rel, color, highQuality, true, min_thickness);
+					}
+				else
+					{
+					im.canvas_draw_thick_filled_quad(R, P1, P2, P3, P4, tt, rel, color, fillcolor, highQuality, true, min_thickness);
+					}
+				}
+
+
+			virtual fBox2 boundingBox() const override
+				{
+				return getBoundingBox(P1, P2, P3, P4);
+				}
+
+
+			virtual std::string toString(bool debug = false) const override
+				{
+				const bool rel = (thickness >= 0);
+				const double tt = (rel ? thickness : -thickness);
+				std::string str("ThickQuad [");
+				str += mtools::toString(P1) + ", ";
+				str += mtools::toString(P2) + ", ";
+				str += mtools::toString(P3) + ", ";
+				str += mtools::toString(P4) + " - ";
+				str += ((rel ? std::string(" rel. thick. (") : std::string("abs. thick. ("))) + mtools::toString(tt) + ") ";
+				str += mtools::toString(color);
+				if (!fillcolor.isTransparent()) { str += " filled "; str += mtools::toString(fillcolor); }
+				return str + "]";
+				}
+
+
+			virtual void serialize(OBaseArchive & ar) const override
+				{
+				ar &  P1 & P2 & P3 & P4 & thickness & color & fillcolor;
+				}
+
+
+			virtual void deserialize(IBaseArchive & ar) override
+				{
+				ar &  P1 & P2 & P3 & P4 & thickness & color & fillcolor;
+				}
+
+		};
+
+
+		/**
+		*
+		* Thick Polygon
+		*
+		**/
+		class ThickPolygon : public internals_figure::FigureInterface
+		{
+
+		public:
+
+			std::vector<fVec2> tab;
+			double thickness;	// negative for absolute thickness
+			RGBc  color, fillcolor;
+
+
+			/**
+			* Construct a thick polygon
+			*
+			**/
+
+
+			/**
+			 * Constructor
+			 *
+			 * @param	tab_points		   list of points, in clockwise or anti-clockwise order.
+			 * @param	thick			   Thickness (going inward).
+			 * @param	relative_thickness True to use relative thickness.
+			 * @param	col				   outline color.
+			 * @param	fillcol			   (Optional) fill color (default = transparent = no fill)
+			 */
+			ThickPolygon(const std::vector<fVec2> & tab_points, double thick, bool relative_thickness, RGBc col, RGBc fillcol = RGBc::c_Transparent) : tab(tab_points), thickness(thick), color(col), fillcolor(fillcol)
+				{
+				MTOOLS_INSURE(tab_points.size() > 0);
+				MTOOLS_ASSERT(thickness >= 0); 
+				if (!relative_thickness) { thickness = -thickness; }
+				}
+
+
+			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+				{
+				const bool rel = (thickness >= 0);
+				const double tt = (rel ? thickness : -thickness);
+				if (fillcolor.isTransparent())
+					{
+					im.canvas_draw_thick_polygon(R, tab,  tt, rel, color, highQuality, true, min_thickness);
+					}
+				else
+					{
+					im.canvas_draw_thick_filled_polygon(R, tab, tt, rel, color, fillcolor, highQuality, true, min_thickness);
+					}
+				}
+
+
+			virtual fBox2 boundingBox() const override
+				{
+				return getBoundingBox(tab);
+				}
+
+
+			virtual std::string toString(bool debug = false) const override
+				{
+				const bool rel = (thickness >= 0);
+				const double tt = (rel ? thickness : -thickness);
+				std::string str("ThickPolygon [");
+				str += mtools::toString(tab) + " - ";
+				str += ((rel ? std::string(" rel. thick. (") : std::string("abs. thick. ("))) + mtools::toString(tt) + ") ";
+				str += mtools::toString(color);
+				if (!fillcolor.isTransparent()) { str += " filled "; str += mtools::toString(fillcolor); }
+				return str + "]";
+				}
+
+
+			virtual void serialize(OBaseArchive & ar) const override
+				{
+				ar & tab & thickness & color & fillcolor;
+				}
+
+
+			virtual void deserialize(IBaseArchive & ar) override
+				{
+				ar & tab & thickness & color & fillcolor;
 				}
 
 		};
@@ -1503,17 +1753,21 @@ namespace mtools
 		public:
 
 			fBox2 box;
-			RGBc  color, fillcolor;
 			double thickness_x;	// negative for absolute thickness
 			double thickness_y;	//
+			RGBc  color, fillcolor;
+
 
 			/**
-			* Construct a thick rectangle.
-			*
-			* @param	B	   	(closed) box representing the rectangle
-			* @param	col	   	outline color.
-			* @param	fillcol	(Optional) fill color (default = transparent = no fill)
-			**/
+			 * Constructor
+			 *
+			 * @param	B				   (closed) box representing the rectangle
+			 * @param	thick_x			   horizontal thickness (going inward)
+			 * @param	thick_y			   vertical thickness (going inward)
+			 * @param	relative_thickness True to use relative thickness.
+			 * @param	col				   outline color
+			 * @param	fillcol			   (Optional) interior color
+			 */
 			ThickRectangle(const fBox2 & B, double thick_x, double thick_y, bool relative_thickness, RGBc col, RGBc fillcol = RGBc::c_Transparent) : box(B), thickness_x(thick_x) , thickness_y(thick_y), color(col), fillcolor(fillcol)
 				{
 				MTOOLS_ASSERT(!B.isEmpty());
@@ -1550,31 +1804,29 @@ namespace mtools
 
 
 			virtual std::string toString(bool debug = false) const override
-			{
-				std::string str("ThickRectangle [");
-				str += mtools::toString(box) + " , ";
-				str += mtools::toString(tx);
-				str += mtools::toString(ty);
-				str += mtools::toString(color);
-				if (!fillcolor.isTransparent())
 				{
-					str += " filled : ";
-					str += mtools::toString(fillcolor);
-				}
+				const bool rel = (thickness_x >= 0);
+				const double tx = (rel ? thickness_x : -thickness_x);
+				const double ty = (rel ? thickness_y : -thickness_y);
+				std::string str("ThickRectangle [");
+				str += mtools::toString(box);
+				str += ((rel ? std::string("rel. thick. (") : std::string("abs. thick. ("))) + mtools::toString(tx) + "," + mtools::toString(ty) + ") ";
+				str += mtools::toString(color);
+				if (!fillcolor.isTransparent()) {str += " filled "; str += mtools::toString(fillcolor); }
 				return str + "]";
-			}
+				}
 
 
 			virtual void serialize(OBaseArchive & ar) const override
-			{
-				ar & color & fillcolor;
-			}
+				{
+				ar &  box & thickness_x & thickness_y & color & fillcolor;
+				}
 
 
 			virtual void deserialize(IBaseArchive & ar) override
-			{
-				ar & color & fillcolor;
-			}
+				{
+				ar &  box & thickness_x & thickness_y & color & fillcolor;
+				}
 
 		};
 
