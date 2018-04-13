@@ -177,7 +177,7 @@ void testplotfigure()
 		canvas(Figure::Polygon(qu, RGBc::c_Blue.getMultOpacity(0.5f), RGBc::c_Blue.getMultOpacity(0.5f)), 0);
 
 
-		canvas(Figure::FilledBox(fBox2( -100,-50,0,30 ), RGBc::c_Maroon.getMultOpacity(0.5f)), 0);
+		canvas(Figure::ThickRectangle(fBox2( -100,-50,0,30 ), 2, 2, false, RGBc::c_Maroon.getMultOpacity(0.5f), RGBc::c_Yellow), 0);
 	//	canvas(Figure::Polygon(subject, RGBc::c_Black, RGBc::c_Yellow.getMultOpacity(0.5f)), 1);
 
 
@@ -239,7 +239,7 @@ void testplotfigure()
 	Plotter2D plotter; 
 	plotter[PF];
 	plotter.autorangeXY();
-	plotter.range().setRange(fBox2(199.935142875, 200.050950875, 249.926736625, 250.042544625));
+	//plotter.range().setRange(fBox2(199.935142875, 200.050950875, 249.926736625, 250.042544625));
 	plotter.plot();
 	}
 

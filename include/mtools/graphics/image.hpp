@@ -2018,23 +2018,23 @@ namespace mtools
 			 * @param	penwidth   	(Optional) pen radius (0 = unit pen)
 			 * @param	min_thick   (Optional) The minimum thickness.
 			 **/
-			void draw_polyline(const fVec2 * tabPoints, size_t size, RGBc color, bool draw_last = true, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int penwidth = 0, double min_tick = DEFAULT_MIN_THICKNESS)
+			void draw_polyline(const fVec2 * tabPoints, size_t nbvertices, RGBc color, bool draw_last = true, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int penwidth = 0, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
 				MTOOLS_ASSERT(tabPoints != nullptr);
-				if (size == 0) return;
-				if (_drawTinyShape(getBoundingBox(tabPoints,size), color, 1.0, blending, min_tick, penwidth)) return;
-				if (size == 1) { draw_square_dot(tabPoints[0], color, blending, penwidth); return; }
+				if (nbvertices == 0) return;
+				if (_drawTinyShape(getBoundingBox(tabPoints, nbvertices), color, 1.0, blending, min_tick, penwidth)) return;
+				if (nbvertices == 1) { draw_square_dot(tabPoints[0], color, blending, penwidth); return; }
 				if ((penwidth <= 0) && (!antialiased) && (blending) && (!color.isOpaque()))
 					{ // draw without intersection
-					_bseg_draw(tabPoints[size - 2], tabPoints[size - 1], draw_last, 0, color, blending, 0);
-					for (size_t i = size - 2; i > 0; i--)
+					_bseg_draw(tabPoints[nbvertices - 2], tabPoints[nbvertices - 1], draw_last, 0, color, blending, 0);
+					for (size_t i = nbvertices - 2; i > 0; i--)
 						{
 						_bseg_avoid1(tabPoints[i], tabPoints[i - 1], tabPoints[i + 1], true, true, color, blending, 0);
 						}
 					return;
 					}
-				for (size_t i = 1; i < size - 1; i++) { draw_line(tabPoints[i - 1], tabPoints[i], color, false, antialiased, blending, penwidth); }
-				draw_line(tabPoints[size - 2], tabPoints[size - 1], color, draw_last, antialiased, blending, penwidth);
+				for (size_t i = 1; i < nbvertices - 1; i++) { draw_line(tabPoints[i - 1], tabPoints[i], color, false, antialiased, blending, penwidth); }
+				draw_line(tabPoints[nbvertices - 2], tabPoints[nbvertices - 1], color, draw_last, antialiased, blending, penwidth);
 				}
 
 
@@ -2067,10 +2067,10 @@ namespace mtools
 			 * @param	blending    (Optional) true to use blending instead of simply overwriting the color.
 			 * @param	min_thick   (Optional) The minimum thickness.
 			 */
-			MTOOLS_FORCEINLINE void draw_thick_polyline(const fVec2 * tabPoints, size_t size, double thickness, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
+			MTOOLS_FORCEINLINE void draw_thick_polyline(const fVec2 * tabPoints, size_t nbvertices, double thickness, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
-				std::vector<fVec2> tab2(size);
-				for (size_t i = 0; i < size; i++) { tab2[i] = { tabPoints[i].X() , _ly - 1 - tabPoints[i].Y() }; }
+				std::vector<fVec2> tab2(nbvertices);
+				for (size_t i = 0; i < nbvertices; i++) { tab2[i] = { tabPoints[i].X() , _ly - 1 - tabPoints[i].Y() }; }
 				canvas_draw_thick_polyline(imagefBox(), tab2, thickness, color, antialiased, blending, min_thick); // because of thickness scaling, it is more convenient to call the canvas method.
 				}
 
@@ -2156,6 +2156,46 @@ namespace mtools
 
 
 			/**
+			 * Draw a thick triangle
+			 *
+			 * @param	P1		    The first point.
+			 * @param	P2		    The second point.
+			 * @param	P3		    The third point.
+			 * @param	thickness   The thickness
+			 * @param	color	    border color.
+			 * @param	antialiased (Optional) True to use antialiased.
+			 * @param	blending    (Optional) True to use blending.
+			 * @param	min_thick   (Optional) The minimum thickness.
+			 */
+			MTOOLS_FORCEINLINE void draw_thick_triangle(fVec2 P1, fVec2 P2, fVec2 P3, double thickness, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
+				{
+				fVec2 tab[3] = { P1,P2,P3 };
+				draw_thick_filled_polygon(tab, 3, thickness, color, RGBc::c_Transparent, antialiased, blending, min_thick);
+				}
+
+
+			/**
+			 * Draw a thick filled triangle
+			 *
+			 * @param	P1		    The first point.
+			 * @param	P2		    The second point.
+			 * @param	P3		    The third point.
+			 * @param	thickness   The thickness.
+			 * @param	color	    border color.
+			 * @param	fillcolor   interior color.
+			 * @param	antialiased (Optional) True to use antialiased.
+			 * @param	blending    (Optional) True to use blending.
+			 * @param	min_thick   (Optional) The minimum thickness.
+			 */
+			MTOOLS_FORCEINLINE void draw_thick_filled_triangle(fVec2 P1, fVec2 P2, fVec2 P3, double thickness, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
+				{
+				fVec2 tab[3] = { P1,P2,P3 };
+				draw_thick_filled_polygon(tab, 3, thickness, color, fillcolor, antialiased, blending, min_thick);
+				}
+
+
+
+			/**
 			* Draw a quadrilateral. Point must be ordered around the quad.
 			*
 			* @param	P1		   	The first point
@@ -2219,43 +2259,83 @@ namespace mtools
 				}
 
 
+			/**
+			* Draw a thick quad
+			*
+			* @param	P1		    The first point.
+			* @param	P2		    The second point.
+			* @param	P3		    The third point.
+			* @param	P4		    The fourth point.
+			* @param	thickness   The thickness
+			* @param	color	    border color.
+			* @param	antialiased (Optional) True to use antialiased.
+			* @param	blending    (Optional) True to use blending.
+			* @param	min_thick   (Optional) The minimum thickness.
+			*/
+			MTOOLS_FORCEINLINE void draw_thick_quad(fVec2 P1, fVec2 P2, fVec2 P3, fVec2 P4, double thickness, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
+				{
+				fVec2 tab[4] = { P1,P2,P3,P4 };
+				draw_thick_filled_polygon(tab, 4, thickness, color, RGBc::c_Transparent, antialiased, blending, min_thick);
+				}
 
-				/**
-				* Draw a polygon.  Point must be ordered around the polygon.
-				*
-				* @param	tabPoints  	the list of points in clockwise or counterclockwise order.
-				* @param	nbvertices 	Number of vertices in the polygon.
-				* @param	color	   	The color tu use.
-				* @param	antialiased	(Optional) true to draw antialiased lines.
-				* @param	blending   	(Optional) true to use blending.
-				* @param	penwidth   	(Optional) The pen width (0 = unit width)
-				* @param	min_thick   (Optional) The minimum thickness.
-				**/
-				inline void draw_polygon(const fVec2 * tabPoints, size_t nbvertices, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0, double min_thick = DEFAULT_MIN_THICKNESS)
-					{
-					if (_drawTinyShape(getBoundingBox(tabPoints,nbvertices), color, 1.0, blending, min_thick, penwidth)) return;
-					switch (nbvertices)
-						{
-						case 0: { return; }
-						case 1: { draw_square_dot(*tabPoints, color, blending, penwidth); return; }
-						case 2: { draw_line(tabPoints[0], tabPoints[1], color, true, antialiased, blending, penwidth); return; }
-						case 3: { draw_triangle(tabPoints[0], tabPoints[1], tabPoints[2], color, antialiased, blending, penwidth); return; }
-						case 4: { draw_quad(tabPoints[0], tabPoints[1], tabPoints[2], tabPoints[3], color, antialiased, blending, penwidth); return; }
-						default:
-							{
-							if ((penwidth <= 0) && (!antialiased) && (blending) && (!color.isOpaque()))
-								{ // draw without overlap
-								_bseg_draw(tabPoints[0], tabPoints[1], true, 0, color, blending);
-								for (size_t i = 1; i < nbvertices - 1; i++) _bseg_avoid1(tabPoints[i], tabPoints[i + 1], tabPoints[i - 1], true, true, color, blending);
-								_bseg_avoid11(tabPoints[nbvertices - 1], tabPoints[0], tabPoints[nbvertices - 2], tabPoints[1], true, true, color, blending);
-								return;
-								}
-							// default drawing
-							for (size_t i = 0; i < nbvertices; i++) draw_line(tabPoints[i], tabPoints[(i + 1) % nbvertices], color, false, antialiased, blending, penwidth);
-							return;
-							}
-						}
+
+			/**
+			* Draw a thick filled quad
+			*
+			* @param	P1		    The first point.
+			* @param	P2		    The second point.
+			* @param	P3		    The third point.
+			* @param	P4		    The fourth point.
+			* @param	thickness   The thickness.
+			* @param	color	    border color.
+			* @param	fillcolor   interior color.
+			* @param	antialiased (Optional) True to use antialiased.
+			* @param	blending    (Optional) True to use blending.
+			* @param	min_thick   (Optional) The minimum thickness.
+			*/
+			MTOOLS_FORCEINLINE void draw_thick_filled_quad(fVec2 P1, fVec2 P2, fVec2 P3, fVec2 P4, double thickness, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
+				{
+				fVec2 tab[4] = { P1,P2,P3,P4 };
+				draw_thick_filled_polygon(tab, 4, thickness, color, fillcolor, antialiased, blending, min_thick);
+				}
+
+
+			/**
+			* Draw a polygon.  Point must be ordered around the polygon.
+			*
+			* @param	tabPoints  	the list of points in clockwise or counterclockwise order.
+			* @param	nbvertices 	Number of vertices in the polygon.
+			* @param	color	   	The color tu use.
+			* @param	antialiased	(Optional) true to draw antialiased lines.
+			* @param	blending   	(Optional) true to use blending.
+			* @param	penwidth   	(Optional) The pen width (0 = unit width)
+			* @param	min_thick   (Optional) The minimum thickness.
+			**/
+			inline void draw_polygon(const fVec2 * tabPoints, size_t nbvertices, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0, double min_thick = DEFAULT_MIN_THICKNESS)
+			{
+				if (_drawTinyShape(getBoundingBox(tabPoints, nbvertices), color, 1.0, blending, min_thick, penwidth)) return;
+				switch (nbvertices)
+				{
+				case 0: { return; }
+				case 1: { draw_square_dot(*tabPoints, color, blending, penwidth); return; }
+				case 2: { draw_line(tabPoints[0], tabPoints[1], color, true, antialiased, blending, penwidth); return; }
+				case 3: { draw_triangle(tabPoints[0], tabPoints[1], tabPoints[2], color, antialiased, blending, penwidth); return; }
+				case 4: { draw_quad(tabPoints[0], tabPoints[1], tabPoints[2], tabPoints[3], color, antialiased, blending, penwidth); return; }
+				default:
+				{
+					if ((penwidth <= 0) && (!antialiased) && (blending) && (!color.isOpaque()))
+					{ // draw without overlap
+						_bseg_draw(tabPoints[0], tabPoints[1], true, 0, color, blending);
+						for (size_t i = 1; i < nbvertices - 1; i++) _bseg_avoid1(tabPoints[i], tabPoints[i + 1], tabPoints[i - 1], true, true, color, blending);
+						_bseg_avoid11(tabPoints[nbvertices - 1], tabPoints[0], tabPoints[nbvertices - 2], tabPoints[1], true, true, color, blending);
+						return;
 					}
+					// default drawing
+					for (size_t i = 0; i < nbvertices; i++) draw_line(tabPoints[i], tabPoints[(i + 1) % nbvertices], color, false, antialiased, blending, penwidth);
+					return;
+				}
+				}
+			}
 
 
 			/**
@@ -2431,11 +2511,85 @@ namespace mtools
 			 * @param	snakefill (Optional) True to use 'snake' filling algorithm (use for polylines)
 			 * @param	min_thick   (Optional) The minimum thickness.
 			 **/
-			inline void draw_filled_polygon(const std::vector<fVec2> & vecPoints, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, bool snakefill = false, double min_thick = DEFAULT_MIN_THICKNESS)
+			MTOOLS_FORCEINLINE void draw_filled_polygon(const std::vector<fVec2> & vecPoints, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, bool snakefill = false, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
 				draw_filled_polygon(vecPoints.data(), vecPoints.size(), color, fillcolor, antialiased, blending);
 				}
 
+
+
+			/**
+			* Draw a thick (possibly not convex) polygon. Point are given ordered around the polygon
+			* (clockise or counterclockwise).
+			*
+			* @param	tabPoints    list of vertices
+			* @param	nbvertices  Tnumber of vertices
+			* @param	thickness   The thickness (going inward)
+			* @param	color	    The border color.
+			* @param	antialiased (Optional) True if antialiased.
+			* @param	blending    (Optional) True to blending.
+			* @param	min_thick   (Optional) The minimum thick.
+			*/
+			MTOOLS_FORCEINLINE void draw_thick_polygon(const fVec2 * tabPoints, size_t nbvertices, double thickness, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
+				{
+				draw_thick_filled_polygon(tabPoints, nbvertices, thickness, color, RGBc::c_Transparent, antialiased, blending, min_thick);
+				}
+
+
+			/**
+			* Draw a thick (possibly not convex) polygon. Point are given ordered around the polygon
+			* (clockise or counterclockwise).
+			*
+			* @param	vecPoints   The vector points.
+			* @param	thickness   The thickness (going inward)
+			* @param	color	    The border color.
+			* @param	antialiased (Optional) True if antialiased.
+			* @param	blending    (Optional) True to blending.
+			* @param	min_thick   (Optional) The minimum thick.
+			*/
+			MTOOLS_FORCEINLINE void draw_thick_polygon(const std::vector<fVec2> & vecPoints, double thickness, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
+				{
+				draw_thick_filled_polygon(vecPoints.data(), vecPoints.size(), thickness, color, RGBc::c_Transparent, antialiased, blending, min_thick);
+				}
+
+
+			/**
+			* Draw a thick filled (possibly not convex) polygon. Point are given ordered around the polygon
+			* (clockise or counterclockwise).
+			*
+			 * @param	tabPoints    list of vertices
+			 * @param	nbvertices  Tnumber of vertices
+			 * @param	thickness   The thickness (going inward)
+			 * @param	color	    The border color.
+			 * @param	fillcolor   The interior color
+			 * @param	antialiased (Optional) True if antialiased.
+			 * @param	blending    (Optional) True to blending.
+			 * @param	min_thick   (Optional) The minimum thick.
+			 */
+			void draw_thick_filled_polygon(const fVec2 * tabPoints, size_t nbvertices, double thickness, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
+				{
+				std::vector<fVec2> tab2(nbvertices);
+				for (size_t i = 0; i < nbvertices; i++) { tab2[i] = { tabPoints[i].X() , _ly - 1 - tabPoints[i].Y() }; }
+				canvas_draw_thick_filled_polygon(imagefBox(), tab2, thickness, true, color, fillcolor, antialiased, blending, min_thick); // because of thickness scaling, it is more convenient to call the canvas method.
+				}
+
+
+			/**
+			 * Draw a thick filled (possibly not convex) polygon. Point are given ordered around the polygon
+			 * (clockise or counterclockwise).
+			 *
+			 * @param	vecPoints   The vector points.
+			 * @param	thickness   The thickness (going inward)
+			 * @param	color	    The border color.
+			 * @param	fillcolor   The interior color
+			 * @param	antialiased (Optional) True if antialiased.
+			 * @param	blending    (Optional) True to blending.
+			 * @param	min_thick   (Optional) The minimum thick.
+			 */
+			MTOOLS_FORCEINLINE void draw_thick_filled_polygon(const std::vector<fVec2> & vecPoints, double thickness, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
+				{
+				draw_thick_filled_polygon(vecPoints.data(), vecPoints.size(), thickness, color, fillcolor, antialiased, blending, min_thick);
+				}
 
 
 			/**
@@ -2557,14 +2711,21 @@ namespace mtools
 					}
 				if (!color.isTransparent())
 					{
-					const iBox2 leftB = iBox2(ext_box.min[0], int_box.min[0] - 1, ext_box.min[1], ext_box.max[1]); // left side
-					if (!leftB.isEmpty()) draw_box(leftB, fillcolor, blending);
-					const iBox2 rightB = iBox2(int_box.max[0] + 1, ext_box.max[0], ext_box.min[1], ext_box.max[1]); // right side
-					if (!rightB.isEmpty()) draw_box(rightB, fillcolor, blending);
-					const iBox2 upB = iBox2(int_box.min[0], int_box.max[0], int_box.max[1] + 1, ext_box.max[1]); // up side
-					if (!upB.isEmpty()) draw_box(upB, fillcolor, blending);
-					const iBox2 downB = iBox2(int_box.min[0], int_box.max[0], ext_box.min[1], int_box.min[1] - 1); // down side
-					if (!downB.isEmpty()) draw_box(downB, fillcolor, blending);
+					if (int_box.isEmpty()) 
+						{ 
+						draw_box(ext_box, color, blending); 
+						}
+					else
+						{
+						const iBox2 leftB = iBox2(ext_box.min[0], int_box.min[0] - 1, ext_box.min[1], ext_box.max[1]); // left side
+						if (!leftB.isEmpty()) draw_box(leftB, color, blending);
+						const iBox2 rightB = iBox2(int_box.max[0] + 1, ext_box.max[0], ext_box.min[1], ext_box.max[1]); // right side
+						if (!rightB.isEmpty()) draw_box(rightB, color, blending);
+						const iBox2 upB = iBox2(int_box.min[0], int_box.max[0], int_box.max[1] + 1, ext_box.max[1]); // up side
+						if (!upB.isEmpty()) draw_box(upB, color, blending);
+						const iBox2 downB = iBox2(int_box.min[0], int_box.max[0], ext_box.min[1], int_box.min[1] - 1); // down side
+						if (!downB.isEmpty()) draw_box(downB, color, blending);
+						}
 					}
 				}
 
@@ -5183,9 +5344,7 @@ namespace mtools
 
 
 			/**
-			* Draw a triangle. Portion outside the image is clipped.
-			*
-			* Use absolute coordinate (canvas method).
+			* Draw a triangle.
 			*
 			* @param	R		   	the absolute range represented in the image.
 			* @param	P1		   	The first point.
@@ -5204,7 +5363,6 @@ namespace mtools
 				}
 
 
-
 			/**
 			* Draw a filled triangle.
 			*
@@ -5218,10 +5376,53 @@ namespace mtools
 			* @param	blending   	(Optional) True to use blending.
 			* @param	min_thick   (Optional) The minimum thickness.
 			**/
-			inline void canvas_draw_filled_triangle(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, fVec2 P3, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
+			MTOOLS_FORCEINLINE void canvas_draw_filled_triangle(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, fVec2 P3, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
 				const auto dim = dimension();
 				draw_filled_triangle(R.absToPixelf(P1, dim), R.absToPixelf(P2, dim), R.absToPixelf(P3, dim), color, fillcolor, antialiased, blending, min_thick);
+				}
+
+
+			/**
+			* draw thick triangle
+			*
+			* @param	R				  the absolute range represented in the image.
+			* @param	P1				  The first point.
+			* @param	P2				  The second point.
+			* @param	P3				  The third point.
+			* @param	thickness		  thickness (going inward)
+			* @param	relativethickness True to use relative thickness.
+			* @param	color			  border color.
+			* @param	antialiased		  (Optional) True to use antialiased.
+			* @param	blending		  (Optional) True to use blending.
+			* @param	min_thick		  (Optional) The minimum thickness.
+			*/
+			MTOOLS_FORCEINLINE void canvas_draw_thick_triangle(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, fVec2 P3, double thickness, bool relativethickness, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
+				{
+				std::vector<fVec2> tab = { P1,P2,P3 };
+				canvas_draw_thick_filled_polygon(R, tab, thickness, relativethickness, color, RGBc::c_Transparent, antialiased, blending, min_thick);
+				}
+
+
+			/**
+			 * draw thick filled triangle
+			 *
+			 * @param	R				  the absolute range represented in the image.
+			 * @param	P1				  The first point.
+			 * @param	P2				  The second point.
+			 * @param	P3				  The third point.
+			 * @param	thickness		  thickness (going inward)
+			 * @param	relativethickness True to use relative thickness.
+			 * @param	color			  border color.
+			 * @param	fillcolor		  fill color.
+			 * @param	antialiased		  (Optional) True to use antialiased.
+			 * @param	blending		  (Optional) True to use blending.
+			 * @param	min_thick		  (Optional) The minimum thickness.
+			 */
+			MTOOLS_FORCEINLINE void canvas_draw_thick_filled_triangle(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, fVec2 P3, double thickness, bool relativethickness, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
+				{
+				std::vector<fVec2> tab = { P1,P2,P3 };
+				canvas_draw_thick_filled_polygon(R, tab, thickness, relativethickness, color, fillcolor, antialiased, blending, min_thick);
 				}
 
 
@@ -5239,7 +5440,7 @@ namespace mtools
 			 * @param	penwidth   	(Optional) The pen width (0 = unit width)
 			 * @param	min_thick   (Optional) The minimum thickness.
 			 **/
-			inline void canvas_draw_quad(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, fVec2 P3, fVec2 P4, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0, double min_thick = DEFAULT_MIN_THICKNESS)
+			MTOOLS_FORCEINLINE void canvas_draw_quad(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, fVec2 P3, fVec2 P4, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
 				const auto dim = dimension();
 				draw_quad(R.absToPixelf(P1, dim), R.absToPixelf(P2, dim), R.absToPixelf(P3, dim), R.absToPixelf(P4, dim), color, antialiased, blending, penwidth, min_thick);
@@ -5260,10 +5461,55 @@ namespace mtools
 			* @param	blending   	(Optional) True to use blending.
 			* @param	min_thick   (Optional) The minimum thickness.
 			**/
-			inline void canvas_draw_filled_quad(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, fVec2 P3, fVec2 P4, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
+			MTOOLS_FORCEINLINE void canvas_draw_filled_quad(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, fVec2 P3, fVec2 P4, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
 				const auto dim = dimension();
 				draw_filled_quad(R.absToPixelf(P1, dim), R.absToPixelf(P2, dim), R.absToPixelf(P3, dim), R.absToPixelf(P4, dim), color, fillcolor, antialiased, blending, min_thick);
+				}
+
+
+			/**
+			* Draw a thick quadrilateral. Point must be ordered around the quad.
+			*
+			* @param	R				  the absolute range represented in the image.
+			* @param	P1				  The first point.
+			* @param	P2				  The second point.
+			* @param	P3				  The third point.
+			* @param	P4				  The fourth point.
+			* @param	thickness		  thickness (going inward)
+			* @param	relativethickness True to use relative thickness.
+			* @param	color			  border color.
+			* @param	antialiased		  (Optional) True to use antialiased.
+			* @param	blending		  (Optional) True to use blending.
+			* @param	min_thick		  (Optional) The minimum thickness.
+			*/
+			MTOOLS_FORCEINLINE void canvas_draw_thick_quad(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, fVec2 P3, fVec2 P4, double thickness, bool relativethickness, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
+				{
+				std::vector<fVec2> tab = { P1,P2,P3,P4 };
+				canvas_draw_thick_filled_polygon(R, tab, thickness, relativethickness, color, RGBc::c_Transparent, antialiased, blending, min_thick);
+				}
+
+
+			/**
+			 * Draw a thick filled quadrilateral. Point must be ordered around the quad.
+			 *
+			 * @param	R				  the absolute range represented in the image.
+			 * @param	P1				  The first point.
+			 * @param	P2				  The second point.
+			 * @param	P3				  The third point.
+			 * @param	P4				  The fourth point.
+			 * @param	thickness		  thickness (going inward)
+			 * @param	relativethickness True to use relative thickness.
+			 * @param	color			  border color.
+			 * @param	fillcolor		  fill color.
+			 * @param	antialiased		  (Optional) True to use antialiased.
+			 * @param	blending		  (Optional) True to use blending.
+			 * @param	min_thick		  (Optional) The minimum thickness.
+			 */
+			MTOOLS_FORCEINLINE void canvas_draw_thick_filled_quad(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, fVec2 P3, fVec2 P4, double thickness, bool relativethickness, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
+				{
+				std::vector<fVec2> tab = { P1,P2,P3,P4 };
+				canvas_draw_thick_filled_polygon(R, tab, thickness, relativethickness, color, fillcolor, antialiased, blending, min_thick);
 				}
 
 
@@ -5290,7 +5536,7 @@ namespace mtools
 
 
 			/**
-			 * Draw a filled convex polygon.
+			 * Draw a filled polygon.
 			 *
 			 * @param	R		    the absolute range represented in the image.
 			 * @param	tabPoints   std vector of polygon vertice in clockwise or counterclockwise order.
@@ -5309,6 +5555,43 @@ namespace mtools
 				tab.reserve(N);
 				for (size_t i = 0; i < N; i++) { tab.push_back(R.absToPixelf(tabPoints[i], dim)); }
 				draw_filled_polygon(tab, color, fillcolor, antialiased, blending, snakefill, min_thick);
+				}
+
+
+			/**
+			 * Draw a thick polygon.
+			 *
+			 * @param	R				  the absolute range represented in the image.
+			 * @param	tabPoints		  std vector of polygon vertice in clockwise or counterclockwise order.
+			 * @param	thickness		  thickness (going inward)
+			 * @param	relativethickness True to use relative thickness.
+			 * @param	color			  The color tu use.
+			 * @param	antialiased		  (Optional) true to draw antialiased lines.
+			 * @param	blending		  (Optional) true to use blending.
+			 * @param	min_thick		  (Optional) The minimum thickness.
+			 */
+			MTOOLS_FORCEINLINE void canvas_draw_thick_polygon(const mtools::fBox2 & R, const std::vector<fVec2> & tabPoints, double thickness, bool relativethickness, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
+				{
+				canvas_draw_thick_filled_polygon(R, tabPoints, thickness, relativethickness, color, RGBc::c_Transparent, antialiased, blending, min_thick);
+				}
+
+
+			/**
+			 * Draw a thick filled polygon.
+			 *
+			 * @param	R				  the absolute range represented in the image.
+			 * @param	tabPoints		  vector of polygon vertices in clockwise or counterclockwise order.
+			 * @param	thickness		  thickness (going inward)
+			 * @param	relativethickness True to use relative thickness.
+			 * @param	color			  The color tu use.
+			 * @param	fillcolor		  fill color.
+			 * @param	antialiased		  (Optional) true to draw antialiased lines.
+			 * @param	blending		  (Optional) true to use blending.
+			 * @param	min_thick		  (Optional) The minimum thickness.
+			 */
+			void canvas_draw_thick_filled_polygon(const mtools::fBox2 & R, const std::vector<fVec2> & tabPoints, double thickness, bool relativethickness, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
+				{
+				// TODO
 				}
 
 
@@ -5368,7 +5651,7 @@ namespace mtools
 
 
 			/**
-			* Draw a filled thick rectangle
+			* Draw a thick filled rectangle
 			*
 			* @param	R		    the absolute range represented in the image.
 			* @param	dest_box   	rectangle to draw. draw nothing if empty.
