@@ -5605,10 +5605,47 @@ namespace mtools
 			 * @param	blending		  (Optional) true to use blending.
 			 * @param	min_thick		  (Optional) The minimum thickness.
 			 */
-			void canvas_draw_thick_filled_polygon(const mtools::fBox2 & R, const std::vector<fVec2> & tabPoints, double thickness, bool relativethickness, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
+			void canvas_draw_thick_filled_polygon(fBox2 R, const std::vector<fVec2> & tab, double thickness, bool relativethickness, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
+				std::vector<fVec2> tab2;
+				const auto dim = dimension();
+				if (!relativethickness)
+					{
+					const size_t N = tab.size();
+					tab2.reserve(N);
+					for (size_t i = 0; i < N; i++) { tab2.push_back(R.absToPixelf(tab[i], dim));  tab2[i].Y() = _ly - 1 - tab2[i].Y(); }
+					R = imagefBox();
+					}
+				const std::vector<fVec2> & tabPoints = (relativethickness ? tab : tab2);
+				relativethickness = true;
+				size_t l = tabPoints.size();
+				switch (l)
+					{
+					case 0: return;
+					case 1: { canvas_draw_circle(R, tab[0], thickness, color, antialiased, blending);  return; }
+					case 2: { canvas_draw_thick_line(R, tab[0], tab[1], thickness, true, color, antialiased, blending, min_thick); }
+					}
+				double r2 = (R.absToPixelf({ thickness / 0.70710678118, thickness / 0.70710678118 }, dim) - R.absToPixelf({ 0.0 ,0.0 }, dim)).norm2();
+				if (r2 < 2)
+					{
+					if (r2 < 1)
+						{
+						color.multOpacity((float)((r2 < min_thick) ? min_thick : r2));
+						}
+					if (fillcolor.isTransparent()) canvas_draw_polygon(R, tabPoints, color,  antialiased, blending, 0, min_thick);
+					else canvas_draw_filled_polygon(R, tabPoints, color, fillcolor, antialiased, blending, false, min_thick);
+					return;
+					}
 
+				// TODO !
+				// 
+				/*
+				std::vector<fVec2> res;
+				internals_polyline::polylinetoPolygon(tabPoints, thickness, res);
+				canvas_draw_filled_polygon(R, res, color, color, antialiased, blending, true, min_thick);
+				*/
 				}
+
 
 
 			/**
