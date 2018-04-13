@@ -173,10 +173,11 @@ void testplotfigure()
 		canvas(Figure::ThickLine({ 0,100 }, { 200,140 }, 2, true, RGBc::c_Red.getMultOpacity(0.5f)), 0);
 
 
-		canvas(Figure::PolyLine(subject, RGBc::c_Green.getMultOpacity(0.5f),1), 0);
-		canvas(Figure::ThickPolyLine(subject, 10, true, RGBc::c_Red.getMultOpacity(0.5f)), 0);
+		//canvas(Figure::PolyLine(subject, RGBc::c_Green.getMultOpacity(0.5f),1), 1);
+		
+		canvas(Figure::ThickPolygon(subject, 20, true, RGBc::c_Red.getMultOpacity(0.5f), RGBc::c_Yellow.getMultOpacity(0.5f)), 0);
 
-		canvas(Figure::ThickPolygon(tri, 2 , true, RGBc::c_Green.getMultOpacity(0.5f), RGBc::c_Green.getMultOpacity(0.5f)), 0);
+		canvas(Figure::ThickPolygon(tri, 2 , true, RGBc::c_Green.getMultOpacity(0.5f)), 0);
 		canvas(Figure::ThickPolygon(qu, 3, true, RGBc::c_Blue.getMultOpacity(0.5f)), 0);
 
 
