@@ -970,6 +970,7 @@ namespace mtools
 
 		};
 
+
 		/**
 		*
 		* Thick Line
@@ -982,7 +983,7 @@ namespace mtools
 
 			fVec2 P1, P2;
 			RGBc  color;
-			double thick;
+			double thick; // positive for relative thickness and negative for absolute thickness
 
 
 			/**
@@ -993,35 +994,44 @@ namespace mtools
 			 * @param	thickness line thickness (relative).
 			 * @param	col		  color
 			 */
-			ThickLine(fVec2 p1, fVec2 p2, double thickness, RGBc col) : P1(p1), P2(p2), color(col), thick(thickness)
+			ThickLine(fVec2 p1, fVec2 p2, double thickness, bool relativethickness, RGBc col) : P1(p1), P2(p2), color(col), thick(thickness)
 				{
 				MTOOLS_ASSERT(thick >= 0);
 				MTOOLS_ASSERT(P1 != P2);
+				if (!relativethickness) { thick = -thick; }
 				}
 
 
 			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 				{
-				im.canvas_draw_thick_line(R, P1, P2, thick, color, highQuality, true, min_thickness);
+				const bool rel = (thick >= 0);
+				const double tt = (rel ? thick : -thick);
+				im.canvas_draw_thick_line(R, P1, P2, tt, rel, color, highQuality, true, min_thickness);
 				}
 
 
 			virtual fBox2 boundingBox() const override
 				{
-				fBox2 R;
-				fVec2 H = (P2 - P1).get_rotate90();
-				H.normalize();
-				H *= (thick*0.5);
-				return getBoundingBox(P1 + H, P1 - H, P2 + H, P2 - H);
+				if (thick >= 0)
+					{
+					fBox2 R;
+					fVec2 H = (P2 - P1).get_rotate90();
+					H.normalize();
+					H *= (thick*0.5);
+					return getBoundingBox(P1 + H, P1 - H, P2 + H, P2 - H);
+					}
+				return getBoundingBox(P1, P2);
 				}
 
 
 			virtual std::string toString(bool debug = false) const override
 				{
+				const bool rel = (thick >= 0);
+				const double tt = (rel ? thick : -thick);
 				std::string str("ThickLine [");
 				str += mtools::toString(P1) + ", ";
 				str += mtools::toString(P2) + " - ";
-				str += mtools::toString(thick) + " ";
+				str += ((rel ? std::string("rel. thick. (") : std::string("abs. thick. ("))) + mtools::toString(tt) + ") ";
 				str += mtools::toString(color);
 				return str + "]";
 				}
@@ -1054,20 +1064,23 @@ namespace mtools
 
 			std::vector<fVec2>	tab;
 			RGBc				color;
-			double				thickness;
+			double				thickness; // >= 0 for relative thickness and < 0 for absolute thickness
 			fBox2				bb;
 
-			ThickPolyLine(const std::vector<fVec2> & tab_points, double thick, RGBc col) : tab(tab_points), color(col), thickness(thick)
+			ThickPolyLine(const std::vector<fVec2> & tab_points, double thick, double relativethickness, RGBc col) : tab(tab_points), color(col), thickness(thick)
 				{
 				MTOOLS_INSURE(tab_points.size() > 0);
-				MTOOLS_INSURE(thick > 0);
+				MTOOLS_INSURE(thick >= 0);
+				if (!relativethickness) { thickness = -thickness; }
 				_constructbb();
 				}
 
 
 			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 				{
-				im.canvas_draw_thick_polyline(R, tab, thickness, color, highQuality, true, min_thickness);
+				const bool rel = (thickness >= 0);
+				const double tt = (rel ? thickness : -thickness);
+				im.canvas_draw_thick_polyline(R, tab, tt, rel, color, highQuality, true, min_thickness);
 				}
 
 
@@ -1079,10 +1092,12 @@ namespace mtools
 
 			virtual std::string toString(bool debug = false) const override
 				{
-				std::string str("Thick PolyLine [");
+				const bool rel = (thickness >= 0);
+				const double tt = (rel ? thickness : -thickness);
+				std::string str("ThickPolyLine [");
 				str += mtools::toString(tab) + " - ";
-				str += mtools::toString(color) + "(";
-				str += mtools::toString(thickness) + ")";
+				str += ((rel ? std::string("rel. thick. (") : std::string("abs. thick. ("))) + mtools::toString(tt) + ") ";
+				str += mtools::toString(color);
 				return str + "]";
 				}
 
@@ -1106,9 +1121,16 @@ namespace mtools
 			/* reconstruct the bounding box */
 			void _constructbb()
 				{
-				std::vector<fVec2> tab2;
-				internals_polyline::polylinetoPolygon(tab, thickness, tab2);
-				bb = getBoundingBox(tab2);
+				if (thickness >= 0)
+					{ // relative thickness
+					std::vector<fVec2> tab2;
+					internals_polyline::polylinetoPolygon(tab, thickness, tab2);
+					bb = getBoundingBox(tab2);
+					}
+				else
+					{ // absolute thickness
+					bb = getBoundingBox(tab);
+					}
 				}
 
 

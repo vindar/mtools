@@ -2002,7 +2002,7 @@ namespace mtools
 			**/
 			MTOOLS_FORCEINLINE void draw_thick_line(fVec2 P1, fVec2 P2, double thickness, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
-				canvas_draw_thick_line(imagefBox(), fVec2(P1.X(), _ly - 1 - P1.Y()), fVec2(P2.X(), _ly - 1 - P2.Y()), thickness, color, antialiased, blending, min_thick); // because of thickness scaling, it is more convenient to call the canvas method.
+				canvas_draw_thick_line(imagefBox(), fVec2(P1.X(), _ly - 1 - P1.Y()), fVec2(P2.X(), _ly - 1 - P2.Y()), thickness, true, color, antialiased, blending, min_thick); // because of thickness scaling, it is more convenient to call the canvas method.
 				}
 
 
@@ -2071,7 +2071,7 @@ namespace mtools
 				{
 				std::vector<fVec2> tab2(nbvertices);
 				for (size_t i = 0; i < nbvertices; i++) { tab2[i] = { tabPoints[i].X() , _ly - 1 - tabPoints[i].Y() }; }
-				canvas_draw_thick_polyline(imagefBox(), tab2, thickness, color, antialiased, blending, min_thick); // because of thickness scaling, it is more convenient to call the canvas method.
+				canvas_draw_thick_polyline(imagefBox(), tab2, thickness, true, color, antialiased, blending, min_thick); // because of thickness scaling, it is more convenient to call the canvas method.
 				}
 
 
@@ -2089,7 +2089,7 @@ namespace mtools
 				{
 				auto tab2 = tabPoints;
 				for (size_t i = 0; i < tabPoints.size(); i++) { tab2[i].Y() = _ly - 1 - tab2[i].Y(); }
-				canvas_draw_thick_polyline(imagefBox(), tab2, thickness, color, antialiased, blending, min_thick); // because of thickness scaling, it is more convenient to call the canvas method.
+				canvas_draw_thick_polyline(imagefBox(), tab2, thickness, true, color, antialiased, blending, min_thick); // because of thickness scaling, it is more convenient to call the canvas method.
 				}
 
 
@@ -5150,8 +5150,7 @@ namespace mtools
 			 * @param	x1				 	x value of the start point.
 			 * @param	x2				 	x value of the end point.
 			 * @param	thickness		 	The thickness.
-			 * @param	relativethickness	true to scale tickness with range and false to use constant
-			 * 								thickness.
+			 * @param	relativethickness	true to use relative thickness.
 			 * @param	color			 	The color to use.
 			 * @param	draw_P2			 	(Optional) true to draw the end point.
 			 * @param	blending		 	(Optional) true to use blending.
@@ -5196,8 +5195,7 @@ namespace mtools
 			 * @param	y1				 	y value of the start point.
 			 * @param	y2				 	y value of the end point.
 			 * @param	thickness		 	The thickness.
-			 * @param	relativethickness	true to scale tickness with range and false to use constant
-			 * 								thickness.
+			 * @param	relativethickness	true to use relative thickness.
 			 * @param	color			 	The color to use.
 			 * @param	draw_P2			 	(Optional) true to draw the end point.
 			 * @param	blending		 	(Optional) true to use blending.
@@ -5224,7 +5222,7 @@ namespace mtools
 			 * @param	color	   	The color to use.
 			 * @param	draw_P2	   	(Optional) true to draw the endpoint P2.
 			 * @param	antialiased	(Optional) true to draw an antialised line.
-			 * @param	blending   	(Optional) true to use blending instead of simply overwriting the color.
+			 * @param	blending   	(Optional) true to use blending.
 			 * @param	penwidth   	(Optional) The pen width (0 = unit width)
 			 * @param	min_thick   (Optional) The minimum thickness.
 			 **/
@@ -5242,22 +5240,30 @@ namespace mtools
 			 * @param	P1		   	First point.
 			 * @param	P2		   	Second endpoint.
 			 * @param	thickness  	thickness.
+			 * @param	relativethickness	true to use relative thickness.
 			 * @param	color	   	The color to use.
 			 * @param	antialiased	(Optional) true to draw an antialised line.
-			 * @param	blending   	(Optional) true to use blending instead of simply overwriting the color.
+			 * @param	blending   	(Optional) true to use blending.
 			 * @param	min_thick  	(Optional) The pen width (0 = unit width)
 			 **/
-			MTOOLS_FORCEINLINE void canvas_draw_thick_line(const fBox2 & R, fVec2 P1, fVec2 P2, double thickness, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
+			MTOOLS_FORCEINLINE void canvas_draw_thick_line(fBox2 R, fVec2 P1, fVec2 P2, double thickness, bool relativethickness, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
 				if ((isEmpty()) || (thickness <= 0)) return;
+				const auto dim = dimension();
+				if (!relativethickness)
+					{
+					P1 = R.absToPixelf(P1, dim); P1.Y() = _ly - 1 - P1.Y();
+					P2 = R.absToPixelf(P2, dim); P2.Y() = _ly - 1 - P2.Y();
+					R = imagefBox();
+					relativethickness = true;
+					}
 				if (!Colin_SutherLand_lineclip(P1, P2, R.getEnlarge(thickness * 2))) return;
 				if  (P1 == P2) return;
 				fVec2 H = (P2 - P1).get_rotate90();
 				H.normalize();
-				H *= thickness;
-				const auto dim = dimension();
+				H *= thickness;					
 				double r2 = (R.absToPixelf(H, dim) - R.absToPixelf({ 0.0 ,0.0 }, dim)).norm2();
-				if (r2 < 3)
+				if (r2 < 2)
 					{
 					if (r2 < 1)
 						{
@@ -5281,7 +5287,7 @@ namespace mtools
 			 * @param	color	   	color to use.
 			 * @param	draw_last  	(Optional) true to draw the last point.
 			 * @param	antialiased	(Optional) true to draw an antialised line.
-			 * @param	blending   	(Optional) true to use blending instead of simply overwriting the color.
+			 * @param	blending   	(Optional) true to use blending instead.
 			 * @param	penwidth   	(Optional) pen radius (0 = unit pen)
 			 * @param	min_thick   (Optional) The minimum thickness.
 			 **/
@@ -5297,29 +5303,39 @@ namespace mtools
 
 
 			/**
-			* Draw a thick polyline
-			*
-			* @param	R		   	the absolute range represented in the image.
-			* @param	tabPoints   set of points that are to be joined by lines.
-			* @param	thickness   The thickness.
-			* @param	color	    outline color.
-			* @param	antialiased (Optional) true to draw an antialised line.
-			* @param	blending    (Optional) true to use blending instead of simply overwriting the color.
-			* @param	min_thick   (Optional) The minimum thickness.
-			*/
-			MTOOLS_FORCEINLINE void canvas_draw_thick_polyline(const fBox2 & R, const std::vector<fVec2> & tabPoints, double thickness, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
+			 * Draw a thick polyline
+			 *
+			 * @param	R				  the absolute range represented in the image.
+			 * @param	tabPoints		  set of points that are to be joined by lines.
+			 * @param	thickness		  The thickness.
+			 * @param	relativethickness true to use relative thickness.
+			 * @param	color			  outline color.
+			 * @param	antialiased		  (Optional) true to draw an antialised line.
+			 * @param	blending		  (Optional) true to use blending 
+			 * @param	min_thick		  (Optional) The minimum thickness.
+			 */
+			MTOOLS_FORCEINLINE void canvas_draw_thick_polyline(fBox2 R, const std::vector<fVec2> & tab, double thickness, double relativethickness, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
+				std::vector<fVec2> tab2;
+				const auto dim = dimension();
+				if (!relativethickness)
+					{
+					const size_t N = tab.size();
+					tab2.reserve(N);
+					for (size_t i = 0; i < N; i++) { tab2.push_back(R.absToPixelf(tab[i], dim));  tab2[i].Y() = _ly - 1 - tab2[i].Y(); }
+					R = imagefBox(); 
+					}
+				const std::vector<fVec2> & tabPoints = (relativethickness ? tab : tab2);
+				relativethickness = true;
 				size_t l = tabPoints.size();
 				switch (l)
 					{
 					case 0: return;
-					case 1: { canvas_draw_circle(R, tabPoints[0], thickness, color, antialiased, blending);  }
-					case 2: { canvas_draw_thick_line(R, tabPoints[0], tabPoints[1], thickness, color, antialiased, blending, min_thick); return; }
+					case 1: { canvas_draw_circle(R, tab[0], thickness, color, antialiased, blending);  return; }
+					case 2: { canvas_draw_thick_line(R, tab[0], tab[1], thickness, true, color, antialiased, blending, min_thick); }
 					}
-
-				const auto dim = dimension();
-				double r2 = (R.absToPixelf({thickness, thickness}, dim) - R.absToPixelf({ 0.0 ,0.0 }, dim)).norm2();
-				if (r2 < 3)
+				double r2 = (R.absToPixelf({thickness/ 0.70710678118, thickness/ 0.70710678118}, dim) - R.absToPixelf({ 0.0 ,0.0 }, dim)).norm2();
+				if (r2 < 2)
 					{
 					if (r2 < 1) 
 						{ 
@@ -5591,7 +5607,7 @@ namespace mtools
 			 */
 			void canvas_draw_thick_filled_polygon(const mtools::fBox2 & R, const std::vector<fVec2> & tabPoints, double thickness, bool relativethickness, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
-				// TODO
+
 				}
 
 
