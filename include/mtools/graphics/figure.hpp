@@ -55,15 +55,46 @@ namespace mtools
 	class CircleDot;
 	class SquareDot;
 
+
 	// LINES 
 
 	class HorizontalLine;
 	class VerticalLine;
+	class Line;
+	class PolyLine;
+
 	class ThickHorizontalLine;
 	class ThickVerticalLine;
-	class Line;
 	class ThickLine;
-	class PolyLine;
+	class ThickPolyLine;
+
+
+	// POLYGON
+
+	class BoxRegion
+
+	class Triangle
+	class Quad
+	class Polygon
+	class Rectangle
+
+	class ThickTriangle
+	class ThickQuad
+	class ThickPolygon
+	class ThickRectangle
+
+
+	// ELLIPSE / CIRCLES
+
+	class Circle;
+	class CirclePart;
+	class Ellipse;
+	class EllipsePart;
+
+	class ThickCircle;
+	class ThickCirclePart;
+	class ThickEllipse;
+	class ThickEllipsePart;
 
 
 	// CURVES
@@ -74,18 +105,6 @@ namespace mtools
 	class ThickQuadBezier;
 	class ThickCubicBezier;
 
-	// POLYGON
-
-	class Triangle;
-	class Quad;
-
-	// ELLIPSE / CIRCLES
-
-	class Circle;
-	class CirclePart;
-
-	class Ellipse;
-	class EllipsePart;
 
 	// TEXT
 	
@@ -678,151 +697,6 @@ namespace mtools
 
 		/**
 		*
-		* Thick Horizontal Line
-		*
-		**/
-		class ThickHorizontalLine : public internals_figure::FigureInterface
-		{
-
-		public:
-
-			double x1, x2, y;
-			double thickness; // positive for relative thickness and negative for absolute thickness
-			RGBc	color;
-
-
-			/**
-			 * Construct a thick horizontal line
-			 *
-			 * @param	Y				  Y coord of the line.
-			 * @param	X1				  first X coord endpoint.
-			 * @param	X2				  second X coord endpoint.
-			 * @param	col				  color to use.
-			 * @param	thick			  thickness (should be positve)
-			 * @param	relativethickness (Optional) True to scale thickness with range and false for fixed
-			 * 							  thickness.
-			 */
-			ThickHorizontalLine(double Y, double X1, double X2, RGBc col, double thick, bool relativethickness = true) : x1(std::min(X1, X2)), x2(std::max(X1, X2)), y(Y), thickness(relativethickness ? thick : -thick), color(col)
-				{
-				MTOOLS_ASSERT(thick >= 0);
-				}
-
-
-			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
-				{
-				const bool relative = (thickness >= 0);
-				const double thick = (relative ? thickness : -thickness);
-				im.canvas_draw_thick_horizontal_line(R, y, x1, x2, thick, relative, color, true, true, min_thickness);
-				}
-
-
-			virtual fBox2 boundingBox() const override
-				{				
-				if (thickness > 0) { const double ht = thickness / 2;  return fBox2(x1, x2, y - ht, y + ht); } else { return fBox2(x1, x2, y, y); }
-				}
-
-
-			virtual std::string toString(bool debug = false) const override
-				{
-				std::string str("ThickHorizontalLine [");
-				str += mtools::toString(x1) + " - ";
-				str += mtools::toString(x2) + ", ";
-				str += mtools::toString(y) + " ";
-				str += mtools::toString(color);
-				if (thickness >= 0) str += std::string(" rel. thick: ") + mtools::toString(thickness); else str += std::string(" abs. thick: ") + mtools::toString(-thickness);
-				return str + "]";
-				}
-
-
-			virtual void serialize(OBaseArchive & ar) const override
-				{
-				ar & x1 & x2 & y & color & thickness;
-				}
-
-
-			virtual void deserialize(IBaseArchive & ar) override
-				{
-				ar & x1 & x2 & y & color & thickness;
-				}
-
-		};
-
-
-		/**
-		*
-		* Thick Vertical Line 
-		*
-		**/
-		class ThickVerticalLine : public internals_figure::FigureInterface
-		{
-
-		public:
-
-			
-			double y1, y2, x;
-			double thickness; // positive for relative thickness and negative for absolute thickness
-			RGBc color;
-
-
-			/**
-			 * Construct a thick vertical line
-			 *
-			 * @param	X				  x coord of the line.
-			 * @param	Y1				  first Y coord endpoint.
-			 * @param	Y2				  second Y coord endpoint.
-			 * @param	col				  color to use.
-			 * @param	thick			  thickness (should be positve)
-			 * @param	relativethickness (Optional) True to scale thickness with range and false for fixed
-			 * 							  thickness.
-			 */
-			ThickVerticalLine(double X, double Y1, double Y2, RGBc col, double thick, bool relativethickness = true) : y1(std::min(Y1, Y2)), y2(std::max(Y1, Y2)), x(X), thickness(relativethickness ? thick : -thick), color(col)
-				{
-				MTOOLS_ASSERT(thick >= 0);
-				}
-
-
-			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
-				{
-				const bool relative = (thickness >= 0);
-				const double thick = (relative ? thickness : -thickness);
-				im.canvas_draw_thick_vertical_line(R, x, y1, y2, thick, relative, color, true, true, min_thickness);
-				}
-
-
-			virtual fBox2 boundingBox() const override
-				{
-				if (thickness > 0) { const double ht = thickness / 2;  return fBox2(x - ht, x + ht, y1, y2); } else { return fBox2(x, x, y1, y2); }
-				}
-
-
-			virtual std::string toString(bool debug = false) const override
-				{
-				std::string str("ThickVerticalLine [");
-				str += mtools::toString(x) + ", ";
-				str += mtools::toString(y1) + " - ";
-				str += mtools::toString(y2) + " ";
-				str += mtools::toString(color);
-				if (thickness > 0) str += std::string(" rel. thick: ") + mtools::toString(thickness); else str += std::string(" abs. thick: ") + mtools::toString(-thickness);
-				return str + "]";
-				}
-
-
-			virtual void serialize(OBaseArchive & ar) const override
-				{
-				ar & y1 & y2 & x & color & thickness;
-				}
-
-
-			virtual void deserialize(IBaseArchive & ar) override
-				{
-				ar & y1 & y2 & x & color & thickness;
-				}
-
-		};
-
-
-		/**
-		*
 		* Line
 		*
 		**/
@@ -885,6 +759,216 @@ namespace mtools
 		};
 
 
+
+		/**
+		*
+		* Polyline
+		*
+		**/
+		class PolyLine : public internals_figure::FigureInterface
+		{
+
+		public:
+
+			std::vector<fVec2> tab;
+			RGBc  color;
+			int32 pw;
+
+
+			/**
+			* Construct a polyline
+			*
+			* @param	tab_points	list of points, linked by straight lines
+			* @param	col		  	color.
+			* @param	penwidth   	(Optional) pen width (0 = unit pen).
+			**/
+			PolyLine(const std::vector<fVec2> & tab_points, RGBc col, int32 penwidth = 0) : tab(tab_points), color(col), pw(penwidth)
+			{
+				MTOOLS_INSURE(tab_points.size() > 0);
+			}
+
+
+			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+			{
+				im.canvas_draw_polyline(R, tab, color, true, highQuality, true, pw, min_thickness);
+			}
+
+
+			virtual fBox2 boundingBox() const override
+			{
+				return getBoundingBox(tab);
+			}
+
+
+			virtual std::string toString(bool debug = false) const override
+			{
+				std::string str("PolyLine [");
+				str += mtools::toString(tab) + " - ";
+				str += mtools::toString(color) + "(";
+				str += mtools::toString(pw) + ")";
+				return str + "]";
+			}
+
+
+			virtual void serialize(OBaseArchive & ar) const override
+			{
+				ar & tab & color & pw;
+			}
+
+
+			virtual void deserialize(IBaseArchive & ar) override
+			{
+				ar & tab & color & pw;
+			}
+
+		};
+
+
+		/**
+		*
+		* Thick Horizontal Line
+		*
+		**/
+		class ThickHorizontalLine : public internals_figure::FigureInterface
+		{
+
+		public:
+
+			double x1, x2, y;
+			double thickness; // positive for relative thickness and negative for absolute thickness
+			RGBc	color;
+
+
+			/**
+			* Construct a thick horizontal line
+			*
+			* @param	Y				  Y coord of the line.
+			* @param	X1				  first X coord endpoint.
+			* @param	X2				  second X coord endpoint.
+			* @param	col				  color to use.
+			* @param	thick			  thickness (should be positve)
+			* @param	relativethickness (Optional) True to scale thickness with range and false for fixed
+			* 							  thickness.
+			*/
+			ThickHorizontalLine(double Y, double X1, double X2, RGBc col, double thick, bool relativethickness = true) : x1(std::min(X1, X2)), x2(std::max(X1, X2)), y(Y), thickness(relativethickness ? thick : -thick), color(col)
+			{
+				MTOOLS_ASSERT(thick >= 0);
+			}
+
+
+			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+			{
+				const bool relative = (thickness >= 0);
+				const double thick = (relative ? thickness : -thickness);
+				im.canvas_draw_thick_horizontal_line(R, y, x1, x2, thick, relative, color, true, true, min_thickness);
+			}
+
+
+			virtual fBox2 boundingBox() const override
+			{
+				if (thickness > 0) { const double ht = thickness / 2;  return fBox2(x1, x2, y - ht, y + ht); }
+				else { return fBox2(x1, x2, y, y); }
+			}
+
+
+			virtual std::string toString(bool debug = false) const override
+			{
+				std::string str("ThickHorizontalLine [");
+				str += mtools::toString(x1) + " - ";
+				str += mtools::toString(x2) + ", ";
+				str += mtools::toString(y) + " ";
+				str += mtools::toString(color);
+				if (thickness >= 0) str += std::string(" rel. thick: ") + mtools::toString(thickness); else str += std::string(" abs. thick: ") + mtools::toString(-thickness);
+				return str + "]";
+			}
+
+
+			virtual void serialize(OBaseArchive & ar) const override
+			{
+				ar & x1 & x2 & y & color & thickness;
+			}
+
+
+			virtual void deserialize(IBaseArchive & ar) override
+			{
+				ar & x1 & x2 & y & color & thickness;
+			}
+
+		};
+
+
+		/**
+		*
+		* Thick Vertical Line
+		*
+		**/
+		class ThickVerticalLine : public internals_figure::FigureInterface
+		{
+
+		public:
+
+
+			double y1, y2, x;
+			double thickness; // positive for relative thickness and negative for absolute thickness
+			RGBc color;
+
+
+			/**
+			* Construct a thick vertical line
+			*
+			* @param	X				  x coord of the line.
+			* @param	Y1				  first Y coord endpoint.
+			* @param	Y2				  second Y coord endpoint.
+			* @param	col				  color to use.
+			* @param	thick			  thickness (should be positve)
+			* @param	relativethickness (Optional) True to scale thickness with range and false for fixed
+			* 							  thickness.
+			*/
+			ThickVerticalLine(double X, double Y1, double Y2, RGBc col, double thick, bool relativethickness = true) : y1(std::min(Y1, Y2)), y2(std::max(Y1, Y2)), x(X), thickness(relativethickness ? thick : -thick), color(col)
+			{
+				MTOOLS_ASSERT(thick >= 0);
+			}
+
+
+			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+			{
+				const bool relative = (thickness >= 0);
+				const double thick = (relative ? thickness : -thickness);
+				im.canvas_draw_thick_vertical_line(R, x, y1, y2, thick, relative, color, true, true, min_thickness);
+			}
+
+
+			virtual fBox2 boundingBox() const override
+			{
+				if (thickness > 0) { const double ht = thickness / 2;  return fBox2(x - ht, x + ht, y1, y2); }
+				else { return fBox2(x, x, y1, y2); }
+			}
+
+
+			virtual std::string toString(bool debug = false) const override
+			{
+				std::string str("ThickVerticalLine [");
+				str += mtools::toString(x) + ", ";
+				str += mtools::toString(y1) + " - ";
+				str += mtools::toString(y2) + " ";
+				str += mtools::toString(color);
+				if (thickness > 0) str += std::string(" rel. thick: ") + mtools::toString(thickness); else str += std::string(" abs. thick: ") + mtools::toString(-thickness);
+				return str + "]";
+			}
+
+
+			virtual void serialize(OBaseArchive & ar) const override
+			{
+				ar & y1 & y2 & x & color & thickness;
+			}
+
+
+			virtual void deserialize(IBaseArchive & ar) override
+			{
+				ar & y1 & y2 & x & color & thickness;
+			}
+
+		};
 
 		/**
 		*
@@ -957,74 +1041,10 @@ namespace mtools
 		};
 
 
-		/**
-		*
-		* Polyline
-		*
-		**/
-		class PolyLine : public internals_figure::FigureInterface
-		{
-
-		public:
-
-			std::vector<fVec2> tab;
-			RGBc  color;
-			int32 pw;
-
-
-			/**
-			* Construct a polyline
-			*
-			* @param	tab_points	list of points, linked by straight lines
-			* @param	col		  	color.
-			* @param	penwidth   	(Optional) pen width (0 = unit pen). 
-			**/
-			PolyLine(const std::vector<fVec2> & tab_points, RGBc col, int32 penwidth = 0) : tab(tab_points), color(col), pw(penwidth)
-				{
-				MTOOLS_INSURE(tab_points.size() > 0);
-				}
-
-
-			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
-				{
-				im.canvas_draw_polyline(R, tab, color, true, highQuality, true, pw, min_thickness);
-				}
-
-
-			virtual fBox2 boundingBox() const override
-				{
-				return getBoundingBox(tab);
-				}
-
-
-			virtual std::string toString(bool debug = false) const override
-				{
-				std::string str("PolyLine [");
-				str += mtools::toString(tab) + " - ";
-				str += mtools::toString(color) + "(";
-				str += mtools::toString(pw) + ")";
-				return str + "]";
-				}
-
-
-			virtual void serialize(OBaseArchive & ar) const override
-				{
-				ar & tab & color & pw;
-				}
-
-
-			virtual void deserialize(IBaseArchive & ar) override
-				{
-				ar & tab & color & pw;
-				}
-
-		};
-
-
 
 		/**
 		*
-		* Polyline
+		* ThickPolyline
 		*
 		*/
 		class ThickPolyLine : public internals_figure::FigureInterface
@@ -1101,6 +1121,64 @@ namespace mtools
 		* POLYGON
 		*
 		*************************************************************************************************************************************/
+
+
+		/**
+		*
+		* BoxRegion
+		*
+		**/
+		class BoxRegion : public internals_figure::FigureInterface
+		{
+
+		public:
+
+			fBox2 box;
+			RGBc  fillcolor;
+
+
+			/**
+			* construct a filled box with a given color
+			*/
+			BoxRegion(fBox2 & B, RGBc fillcol) : box(B), fillcolor(fillcol)
+			{
+				MTOOLS_ASSERT(!B.isEmpty());
+			}
+
+
+			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+			{
+				im.canvas_draw_box(R, box, fillcolor, true, min_thickness);
+			}
+
+
+			virtual fBox2 boundingBox() const override
+			{
+				return box;
+			}
+
+
+			virtual std::string toString(bool debug = false) const override
+			{
+				std::string str("BoxedRegion [");
+				str += mtools::toString(box) + " - ";
+				str += mtools::toString(fillcolor);
+				return str + "]";
+			}
+
+
+			virtual void serialize(OBaseArchive & ar) const override
+			{
+				ar & box & fillcolor;
+			}
+
+
+			virtual void deserialize(IBaseArchive & ar) override
+			{
+				ar & box & fillcolor;
+			}
+
+		};
 
 
 		/**
@@ -1339,22 +1417,27 @@ namespace mtools
 
 		/**
 		*
-		* Filled Box
+		* Rectangle
 		*
 		**/
-		class FilledBox : public internals_figure::FigureInterface
+		class Rectangle : public internals_figure::FigureInterface
 		{
 
 		public:
 
+
 			fBox2 box;
-			RGBc  fillcolor;
+			RGBc  color, fillcolor;
 
 
 			/**
-			* construct a filled box with a given color
-			*/
-			FilledBox(fBox2 & B, RGBc fillcol) : box(B), fillcolor(fillcol)
+			 * Construct a rectangle.
+			 *
+			 * @param	B	   	(closed) box representing the rectangle
+			 * @param	col	   	outline color.
+			 * @param	fillcol	(Optional) fill color (default = transparent = no fill)
+ 			 **/
+			Rectangle(const fBox2 & B, RGBc col, RGBc fillcol = RGBc::c_Transparent) : box(B), color(col), fillcolor(fillcol)
 				{
 				MTOOLS_ASSERT(!B.isEmpty());
 				}
@@ -1362,7 +1445,14 @@ namespace mtools
 
 			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 				{
-				im.canvas_draw_box(R, box, fillcolor, true, min_thickness);
+				if (fillcolor.isTransparent())
+					{
+					im.canvas_draw_rectangle(R, box, color, true, min_thickness);
+					}
+				else
+					{
+					im.canvas_draw_filled_rectangle(R, box, color, fillcolor, true, min_thickness);
+					}
 				}
 
 
@@ -1374,26 +1464,119 @@ namespace mtools
 
 			virtual std::string toString(bool debug = false) const override
 				{
-				std::string str("FilledBox [");
+				std::string str("Rectangle [");
 				str += mtools::toString(box) + " - ";
-				str += mtools::toString(fillcolor);
+				str += mtools::toString(color);
+				if (!fillcolor.isTransparent())
+					{
+					str += " filled : ";
+					str += mtools::toString(fillcolor);
+					}
 				return str + "]";
 				}
 
 
 			virtual void serialize(OBaseArchive & ar) const override
 				{
-				ar & box & fillcolor;
+				ar & color & fillcolor;
 				}
 
 
 			virtual void deserialize(IBaseArchive & ar) override
 				{
-				ar & box & fillcolor;
+				ar & color & fillcolor;
 				}
 
 		};
 
+
+
+
+		/**
+		*
+		* Thick Rectangle
+		*
+		**/
+		class ThickRectangle : public internals_figure::FigureInterface
+		{
+
+		public:
+
+			fBox2 box;
+			RGBc  color, fillcolor;
+			double thickness_x;	// negative for absolute thickness
+			double thickness_y;	//
+
+			/**
+			* Construct a thick rectangle.
+			*
+			* @param	B	   	(closed) box representing the rectangle
+			* @param	col	   	outline color.
+			* @param	fillcol	(Optional) fill color (default = transparent = no fill)
+			**/
+			ThickRectangle(const fBox2 & B, double thick_x, double thick_y, bool relative_thickness, RGBc col, RGBc fillcol = RGBc::c_Transparent) : box(B), thickness_x(thick_x) , thickness_y(thick_y), color(col), fillcolor(fillcol)
+				{
+				MTOOLS_ASSERT(!B.isEmpty());
+				MTOOLS_ASSERT(thick_x >= 0);
+				MTOOLS_ASSERT(thick_y >= 0);
+				if (!relative_thickness)
+					{
+					thickness_x = -thickness_x;
+					thickness_y = -thickness_y;
+					}
+				}
+
+
+			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+				{
+				const bool rel = (thickness_x >= 0);
+				const double tx = (rel ? thickness_x : -thickness_x); 
+				const double ty = (rel ? thickness_y : -thickness_y);
+				if (fillcolor.isTransparent())
+					{
+					im.canvas_draw_thick_rectangle(R, box, color, tx,ty, rel, true, min_thickness);
+					}
+				else
+					{
+					im.canvas_draw_thick_filled_rectangle(R, box, color, fillcolor, tx, ty, rel, true, min_thickness);
+					}
+				}
+
+
+			virtual fBox2 boundingBox() const override
+				{
+				return box;
+				}
+
+
+			virtual std::string toString(bool debug = false) const override
+			{
+				std::string str("ThickRectangle [");
+				str += mtools::toString(box) + " , ";
+				str += mtools::toString(tx);
+				str += mtools::toString(ty);
+				str += mtools::toString(color);
+				if (!fillcolor.isTransparent())
+				{
+					str += " filled : ";
+					str += mtools::toString(fillcolor);
+				}
+				return str + "]";
+			}
+
+
+			virtual void serialize(OBaseArchive & ar) const override
+			{
+				ar & color & fillcolor;
+			}
+
+
+			virtual void deserialize(IBaseArchive & ar) override
+			{
+				ar & color & fillcolor;
+			}
+
+		};
 
 
 		/************************************************************************************************************************************
