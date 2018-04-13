@@ -167,8 +167,8 @@ void testplotfigure()
 		cout << enlarged << "\n\n\n";
 		*/
 		
-		std::vector<fVec2> tri = { {-300,0}, {200, 127}, {-50, 50} };
-		std::vector<fVec2> qu = { {500,500} , {600, 520} , {700, 800}, {480,677} };
+		std::vector<fVec2> tri = { { -50, 50 } , {200, 127},  {-300,0} };
+		std::vector<fVec2> qu = { { 480,677 } , {700, 800},{ 600, 520 } ,{ 500,500 }  };
 
 		canvas(Figure::ThickLine({ 0,100 }, { 200,140 }, 2, true, RGBc::c_Red.getMultOpacity(0.5f)), 0);
 

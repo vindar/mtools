@@ -5821,7 +5821,7 @@ namespace mtools
 			{
 				const double EPS = 0.4;
 				if (isEmpty()) return;
-				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
+				const fBox2 imBox = imagefBox();
 				double rx = boxTransform_dx(radius, R, imBox);
 				double ry = boxTransform_dy(radius, R, imBox);
 				if (std::abs<double>(rx - ry) < EPS) draw_circle(boxTransform(center, R, imBox), rx, color, aa, blend);
@@ -5847,7 +5847,7 @@ namespace mtools
 				const double EPS = 0.4;
 				if (isEmpty()) return;
 				_reverseVerticalCirclePart(part);
-				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
+				const fBox2 imBox = imagefBox();
 				double rx = boxTransform_dx(radius, R, imBox);
 				double ry = boxTransform_dy(radius, R, imBox);
 				if (std::abs<double>(rx - ry) < EPS) draw_part_circle(part,boxTransform(center, R, imBox), rx, color, aa, blend);
@@ -5870,7 +5870,7 @@ namespace mtools
 			{
 				const double EPS = 0.4;
 				if (isEmpty()) return;
-				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
+				const fBox2 imBox = imagefBox();
 				const double rx = boxTransform_dx(radius, R, imBox);
 				const double ry = boxTransform_dy(radius, R, imBox);
 				if (std::abs<double>(rx - ry) < EPS) draw_filled_circle(boxTransform(center, R, imBox), rx, color, fillcolor, aa, blend);
@@ -5897,7 +5897,7 @@ namespace mtools
 				const double EPS = 0.4;
 				if (isEmpty()) return;
 				_reverseVerticalCirclePart(part);
-				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
+				const fBox2 imBox = imagefBox();
 				const double rx = boxTransform_dx(radius, R, imBox);
 				const double ry = boxTransform_dy(radius, R, imBox);
 				if (std::abs<double>(rx - ry) < EPS) draw_part_filled_circle(part,boxTransform(center, R, imBox), rx, color, fillcolor, aa, blend);
@@ -5923,7 +5923,7 @@ namespace mtools
 			{
 				const double EPS = 0.4;
 				if (isEmpty()) return;
-				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
+				const fBox2 imBox = imagefBox();
 				const double rx = boxTransform_dx(radius, R, imBox);
 				const double ry = boxTransform_dy(radius, R, imBox);
 				if (std::abs<double>(rx - ry) < EPS)
@@ -5961,7 +5961,7 @@ namespace mtools
 				const double EPS = 0.4;
 				if (isEmpty()) return;
 				_reverseVerticalCirclePart(part);
-				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
+				const fBox2 imBox = imagefBox();
 				const double rx = boxTransform_dx(radius, R, imBox);
 				const double ry = boxTransform_dy(radius, R, imBox);
 				if (std::abs<double>(rx - ry) < EPS)
@@ -5996,7 +5996,7 @@ namespace mtools
 			{
 				const double EPS = 0.4;
 				if (isEmpty()) return;
-				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
+				const fBox2 imBox = imagefBox();
 				const double rx = boxTransform_dx(radius, R, imBox);
 				const double ry = boxTransform_dy(radius, R, imBox);
 				if (std::abs<double>(rx - ry) < EPS)
@@ -6035,7 +6035,7 @@ namespace mtools
 				const double EPS = 0.4;
 				if (isEmpty()) return;
 				_reverseVerticalCirclePart(part);
-				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
+				const fBox2 imBox = imagefBox();
 				const double rx = boxTransform_dx(radius, R, imBox);
 				const double ry = boxTransform_dy(radius, R, imBox);
 				if (std::abs<double>(rx - ry) < EPS)
@@ -6065,7 +6065,7 @@ namespace mtools
 			MTOOLS_FORCEINLINE void canvas_draw_ellipse(const fBox2 & R, fVec2 center, double rx, double ry, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
 				{
 				if (isEmpty()) return;
-				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
+				const fBox2 imBox = imagefBox();
 				draw_ellipse(boxTransform(center, R, imBox), boxTransform_dx(rx, R, imBox), boxTransform_dy(ry, R, imBox), color, aa, blend);
 				}
 
@@ -6088,7 +6088,7 @@ namespace mtools
 				{
 				if (isEmpty()) return;
 				_reverseVerticalCirclePart(part);
-				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
+				const fBox2 imBox = imagefBox();
 				draw_part_ellipse(part, boxTransform(center, R, imBox), boxTransform_dx(rx, R, imBox), boxTransform_dy(ry, R, imBox), color, aa, blend);
 				}
 
@@ -6108,7 +6108,7 @@ namespace mtools
 			MTOOLS_FORCEINLINE void canvas_draw_filled_ellipse(const fBox2 & R, fVec2 center, double rx, double ry, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
 				{
 				if (isEmpty()) return;
-				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
+				const fBox2 imBox = imagefBox();
 				draw_filled_ellipse(boxTransform(center, R, imBox), boxTransform_dx(rx, R, imBox), boxTransform_dy(ry, R, imBox), color, fillcolor, aa, blend);
 				}
 
@@ -6132,7 +6132,7 @@ namespace mtools
 				{
 				if (isEmpty()) return;
 				_reverseVerticalCirclePart(part);
-				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
+				const fBox2 imBox = imagefBox();
 				draw_part_filled_ellipse(part,boxTransform(center, R, imBox), boxTransform_dx(rx, R, imBox), boxTransform_dy(ry, R, imBox), color, fillcolor, aa, blend);
 				}
 
@@ -6156,7 +6156,7 @@ namespace mtools
 			MTOOLS_FORCEINLINE void canvas_draw_thick_ellipse(const fBox2 & R, fVec2 center, double rx, double ry, double thickness_x, double thickness_y, bool relativethickness, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
 				if (isEmpty()) return;
-				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
+				const fBox2 imBox = imagefBox();
 				const double frx = boxTransform_dx(rx, R, imBox);
 				const double fry = boxTransform_dy(ry, R, imBox);
 				if (relativethickness) draw_thick_ellipse(boxTransform(center, R, imBox), frx, fry, boxTransform_dx(thickness_x, R, imBox), boxTransform_dy(thickness_y, R, imBox), color, aa, blend, min_tick);
@@ -6187,7 +6187,7 @@ namespace mtools
 				{
 				if (isEmpty()) return;
 				_reverseVerticalCirclePart(part);
-				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
+				const fBox2 imBox = imagefBox();
 				const double frx = boxTransform_dx(rx, R, imBox);
 				const double fry = boxTransform_dy(ry, R, imBox);
 				if (relativethickness) draw_part_thick_ellipse(part, boxTransform(center, R, imBox), frx, fry, boxTransform_dx(thickness_x, R, imBox), boxTransform_dy(thickness_y, R, imBox), color, aa, blend, min_tick);
@@ -6215,7 +6215,7 @@ namespace mtools
 			MTOOLS_FORCEINLINE void canvas_draw_thick_filled_ellipse(const fBox2 & R, fVec2 center, double rx, double ry, double thickness_x, double thickness_y, bool relativethickness, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
 				if (isEmpty()) return;
-				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
+				const fBox2 imBox = imagefBox();
 				const double frx = boxTransform_dx(rx, R, imBox);
 				const double fry = boxTransform_dy(ry, R, imBox);
 				if (relativethickness) draw_thick_filled_ellipse(boxTransform(center, R, imBox), frx, fry, boxTransform_dx(thickness_x, R, imBox), boxTransform_dy(thickness_y, R, imBox), color, fillcolor, aa, blend, min_tick);
@@ -6247,7 +6247,7 @@ namespace mtools
 				{
 				if (isEmpty()) return;
 				_reverseVerticalCirclePart(part);
-				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
+				const fBox2 imBox = imagefBox();
 				const double frx = boxTransform_dx(rx, R, imBox);
 				const double fry = boxTransform_dy(ry, R, imBox);
 				if (relativethickness) draw_part_thick_filled_ellipse(part, boxTransform(center, R, imBox), frx, fry, boxTransform_dx(thickness_x, R, imBox), boxTransform_dy(thickness_y, R, imBox), color, fillcolor, aa, blend, min_tick);
@@ -6267,7 +6267,7 @@ namespace mtools
 			MTOOLS_FORCEINLINE void canvas_draw_ellipse_in_box(const fBox2 & R, const fBox2 & ellipseBox, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
 				{
 				if (isEmpty()) return;
-				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
+				const fBox2 imBox = imagefBox();
 				draw_ellipse_in_box(boxTransform(ellipseBox, R, imBox), color, aa, blend);
 				}
 
@@ -6288,7 +6288,7 @@ namespace mtools
 				{
 				if (isEmpty()) return;
 				_reverseVerticalCirclePart(part);
-				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
+				const fBox2 imBox = imagefBox();
 				draw_part_ellipse_in_box(part,boxTransform(ellipseBox, R, imBox), color, aa, blend);
 				}
 
@@ -6306,7 +6306,7 @@ namespace mtools
 			MTOOLS_FORCEINLINE void canvas_draw_filled_ellipse_in_box(const fBox2 & R, const fBox2 & ellipseBox, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
 				{
 				if (isEmpty()) return;
-				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
+				const fBox2 imBox = imagefBox();
 				draw_filled_ellipse_in_box(boxTransform(ellipseBox, R, imBox), color, fillcolor, aa, blend);
 				}
 
@@ -6328,7 +6328,7 @@ namespace mtools
 				{
 				if (isEmpty()) return;
 				_reverseVerticalCirclePart(part);
-				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
+				const fBox2 imBox = imagefBox();
 				draw_part_filled_ellipse_in_box(part, boxTransform(ellipseBox, R, imBox), color, fillcolor, aa, blend);
 				}
 
@@ -6350,7 +6350,7 @@ namespace mtools
 			MTOOLS_FORCEINLINE void canvas_draw_thick_ellipse_in_box(const fBox2 & R, const fBox2 & ellipseBox, double thickness_x, double thickness_y, bool relativethickness, RGBc color, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
 				if (isEmpty()) return;
-				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
+				const fBox2 imBox = imagefBox();
 				const fBox2 B = boxTransform(ellipseBox, R, imBox);
 				if (relativethickness) draw_thick_ellipse_in_box(B, boxTransform_dx(thickness_x, R, imBox), boxTransform_dy(thickness_y, R, imBox), color, aa, blend, min_tick);
 				else draw_thick_ellipse_in_box(B, thickness_x, thickness_y, color, aa, blend, min_tick);
@@ -6378,7 +6378,7 @@ namespace mtools
 				{
 				if (isEmpty()) return;
 				_reverseVerticalCirclePart(part);
-				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
+				const fBox2 imBox = imagefBox();
 				const fBox2 B = boxTransform(ellipseBox, R, imBox);
 				if (relativethickness) draw_part_thick_ellipse_in_box(part, B, boxTransform_dx(thickness_x, R, imBox), boxTransform_dy(thickness_y, R, imBox), color, aa, blend, min_tick);
 				else draw_part_thick_ellipse_in_box(part, B, thickness_x, thickness_y, color, aa, blend, min_tick);
@@ -6403,7 +6403,7 @@ namespace mtools
 			MTOOLS_FORCEINLINE void canvas_draw_thick_filled_ellipse_in_box(const fBox2 & R, const fBox2 & ellipseBox, double thickness_x, double thickness_y, bool relativethickness, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 			{
 				if (isEmpty()) return;
-				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
+				const fBox2 imBox = imagefBox();
 				const fBox2 B = boxTransform(ellipseBox, R, imBox);
 				if (relativethickness) draw_thick_filled_ellipse_in_box(B, boxTransform_dx(thickness_x, R, imBox), boxTransform_dy(thickness_y, R, imBox), color, fillcolor, aa, blend, min_tick);
 				else draw_thick_filled_ellipse_in_box(B, thickness_x, thickness_y, color, fillcolor, aa, blend, min_tick);
@@ -6432,7 +6432,7 @@ namespace mtools
 				{
 				if (isEmpty()) return;
 				_reverseVerticalCirclePart(part);
-				const fBox2 imBox(-0.5, lx() - 0.5, -0.5, ly() - 0.5);
+				const fBox2 imBox = imagefBox();
 				const fBox2 B = boxTransform(ellipseBox, R, imBox);
 				if (relativethickness) draw_part_thick_filled_ellipse_in_box(part, B, boxTransform_dx(thickness_x, R, imBox), boxTransform_dy(thickness_y, R, imBox), color, fillcolor, aa, blend, min_tick);
 				else draw_part_thick_filled_ellipse_in_box(part, B, thickness_x, thickness_y, color, fillcolor, aa, blend, min_tick);

@@ -391,6 +391,13 @@ namespace internals_bseg
 		/** Construct segment from P1 to P2 (real-valued positions) */
 		void init(fVec2 Pf1, fVec2 Pf2)
 			{
+
+			// ************************************************************
+			// Fall back to integer computations
+			//init(round(Pf1), round(Pf2));
+			//return;
+			// ************************************************************
+
 			const int64 PRECISION = 1024 * 16; // 512 * 128;
 			bool sw = false;
 			if ((Pf1.X() > Pf2.X()) || ((Pf1.X() == Pf2.X()) && (Pf1.Y() > Pf2.Y()))) { sw = true; mtools::swap(Pf1, Pf2); }
