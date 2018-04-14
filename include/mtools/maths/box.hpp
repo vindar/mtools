@@ -1046,6 +1046,25 @@ namespace mtools
 		return ((dst_box.max[1] - dst_box.min[1]) / (src_box.max[1] - src_box.min[1]))*dy;
 		}
 
+	/**
+	* Map a vector (not a position!) after the affine transformation that maps src_box to dst_box.
+	*
+	* @param	vec	the vector to transform
+	* @param	src_box Source box.
+	* @param	dst_box Destination box.
+	*
+	* @return	new distance along the y axis after applying the affine transformation.
+	*/
+	MTOOLS_FORCEINLINE fVec2 boxTransform_dx_dy(const fVec2 & vec, const fBox2 & src_box, const fBox2 & dst_box)
+		{
+		MTOOLS_ASSERT((dst_box.max[1] - dst_box.min[1]) > 0);
+		MTOOLS_ASSERT((dst_box.max[0] - dst_box.min[0]) > 0);
+		MTOOLS_ASSERT((src_box.max[1] - src_box.min[1]) > 0);
+		MTOOLS_ASSERT((src_box.max[0] - src_box.min[0]) > 0);
+		return fVec2( ((dst_box.max[0] - dst_box.min[0]) / (src_box.max[0] - src_box.min[0]))*vec.X(),
+		              ((dst_box.max[1] - dst_box.min[1]) / (src_box.max[1] - src_box.min[1]))*vec.Y());
+		}
+
 
 	/**
 	* Map the position of a point when the source box mapped to the destination box by an affine transformation.
