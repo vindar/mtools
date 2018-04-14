@@ -2406,7 +2406,7 @@ namespace mtools
 					{
 					case 0: { break; }
 					case 1: {draw_circle_dot(in_tab[0], 1, color, antialiased, blending); break; }
-					case 2: {draw_line(in_tab[0], in_tab[1], color, true, antialiased, blending, min_thick); break; }
+					case 2: {draw_line(in_tab[0], in_tab[1], color, true, antialiased, blending, 0, min_thick); break; }
 					case 3: {draw_filled_triangle(in_tab[0], in_tab[1], in_tab[2], color, fillcolor, antialiased, blending, min_thick); break; }
 					case 4: {draw_filled_quad(in_tab[0], in_tab[1], in_tab[2], in_tab[3], color, fillcolor, antialiased, blending, min_thick); break; }
 					default:
@@ -5179,7 +5179,7 @@ namespace mtools
 				const fBox2 imBox = imagefBox();
 				const fVec2 P1 = boxTransform({ x1, y }, R, imBox);
 				const fVec2 P2 = boxTransform({ x2, y }, R, imBox);
-				const double th = (relativethickness ? boxTransform_dy(thickness, R, imBox()) : thickness);
+				const double th = (relativethickness ? boxTransform_dy(thickness, R, imBox) : thickness);
 				draw_thick_horizontal_line(P1.Y(), P1.X(), P2.X(), th, color, draw_P2, blending, min_tick);
 				}
 
