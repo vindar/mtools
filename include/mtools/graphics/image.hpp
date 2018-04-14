@@ -1815,7 +1815,7 @@ namespace mtools
 			 **/
 			MTOOLS_FORCEINLINE void draw_horizontal_line(int64 y, int64 x1, int64 x2, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND)
 				{
-				if (isEmpty()) return;
+				if (isEmpty() || (color.isTransparent() && blending)) return;
 				if ((blending) && (!color.isOpaque())) _horizontalLine<true, true>(y, x1, x2, color, draw_P2); else _horizontalLine<false, true>(y, x1, x2, color, draw_P2);
 				}
 
@@ -1826,6 +1826,7 @@ namespace mtools
 			**/
 			MTOOLS_FORCEINLINE void draw_horizontal_line(double y, double x1, double x2, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
+				if (isEmpty() || (color.isTransparent() && blending)) return;
 				if ((y < -1.0) || (y > _ly + 1.0)) return;
 				if (x1 <= -1.0) { x1 = -1.0; } else if (x1 >= _lx + 1.0) { x1 = _lx + 1.0; }
 				if (x2 <= -1.0) { x2 = -1.0; } else if (x2 >= _lx + 1.0) { x2 = _lx + 1.0; }
@@ -1848,7 +1849,7 @@ namespace mtools
 			 **/
 			MTOOLS_FORCEINLINE void draw_thick_horizontal_line(int64 y, int64 x1, int64 x2, double thickness, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
-				if (isEmpty() || (thickness <= 0)) return;
+				if (isEmpty() || (thickness <= 0) || (color.isTransparent() && blending)) return;
 				if (blending) _tickHorizontalLine<true, true>(y, x1, x2, color, draw_P2, thickness, min_tick); else _tickHorizontalLine<false, true>(y, x1, x2, color, draw_P2, thickness,min_tick);
 				}
 
@@ -1859,6 +1860,7 @@ namespace mtools
 			**/
 			MTOOLS_FORCEINLINE void draw_thick_horizontal_line(double y, double x1, double x2, double thickness, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
+				if (isEmpty() || (thickness <= 0) || (color.isTransparent() && blending)) return;
 				const double L = _ly + 100.0;
 				if (y < -L) { thickness += (2 * (L + y));  y = -L; }	else if (y > L) { thickness -= (2 * (y - L));  y = L; }
 				if (x1 <= -1.0) { x1 = -1.0; } else if (x1 >= _lx + 1.0) { x1 = _lx + 1.0; }
@@ -1881,7 +1883,7 @@ namespace mtools
 			 **/
 			MTOOLS_FORCEINLINE void draw_vertical_line(int64 x, int64 y1, int64 y2, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND)
 				{
-				if (isEmpty()) return;
+				if (isEmpty() || (color.isTransparent() && blending)) return;
 				if (blending) _verticalLine<true, true>(x,y1,y2, color, draw_P2); else _verticalLine<false, true>(x,y1,y2, color, draw_P2);
 				}
 
@@ -1892,7 +1894,8 @@ namespace mtools
 			**/
 			MTOOLS_FORCEINLINE void draw_vertical_line(double x, double y1, double y2, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
-				if ((x < -1.0) || (x > _lx + 1.0)) return;	
+				if (isEmpty() || (color.isTransparent() && blending)) return;
+				if ((x < -1.0) || (x > _lx + 1.0)) return;
 				if (y1 <= -1.0) { y1 = -1.0; } else if (y1 >= _ly + 1.0) { y1 = _ly + 1.0; } 
 				if (y2 <= -1.0) { y2 = -1.0; } else if (y2 >= _ly + 1.0) { y2 = _ly + 1.0; }
 				if (_drawTinyShape(getBoundingBox(fVec2{ x - 0.3, y1 }, fVec2{ x + 0.3 ,y2 }), color, 1.0, blending, min_tick)) return;
@@ -1914,7 +1917,7 @@ namespace mtools
 			 **/
 			MTOOLS_FORCEINLINE void draw_thick_vertical_line(int64 x, int64 y1, int64 y2, double thickness, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
-				if (isEmpty() || (thickness <= 0)) return;
+				if (isEmpty() || (thickness <= 0) || (color.isTransparent() && blending)) return;
 				if (blending) _tickVerticalLine<true, true>(x, y1, y2, color, draw_P2, thickness, min_tick); else _tickVerticalLine<false, true>(x, y1, y2, color, draw_P2, thickness, min_tick);
 				}
 
@@ -1925,6 +1928,7 @@ namespace mtools
 			**/
 			MTOOLS_FORCEINLINE void draw_thick_vertical_line(double x, double y1, double y2, double thickness, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
+				if (isEmpty() || (thickness <= 0) || (color.isTransparent() && blending)) return;
 				const double L = _lx + 100.0;
 				if (x < -L) { thickness += (2 * (L + x));  x = -L; } else if (x > L) { thickness -= (2 * (x - L));  x = L; }
 				if (y1 <= -1.0) { y1 = -1.0; } else if (y1 >= _ly + 1.0) { y1 = _ly + 1.0; }
@@ -1948,6 +1952,7 @@ namespace mtools
 			**/
 			MTOOLS_FORCEINLINE void draw_line(iVec2 P1, iVec2 P2, RGBc color, bool draw_P2 = true, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int penwidth = 0)
 			{
+				if (isEmpty() || (color.isTransparent() && blending)) return;
 				if (penwidth < 0) { MTOOLS_DEBUG("incorrect penwidth");  penwidth = 0; } else if (penwidth > 0) _correctPenOpacity(color, penwidth);
 				if (antialiased)
 					{
@@ -1975,7 +1980,8 @@ namespace mtools
 			**/
 			MTOOLS_FORCEINLINE void draw_line(fVec2 P1, fVec2 P2, RGBc color, bool draw_P2 = true, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int penwidth = 0, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
-				// DO NOT USE min_tick HERE BECAUSE THIS METHOD IS CALLED FROM OTHER METHOD....
+				if (isEmpty() || (color.isTransparent() && blending)) return;
+				// WE DO NOT TAKE INTO ACCOUNT THE min_tick PARAM HERE BECAUSE THIS METHOD IS CALLED FROM OTHER METHOD....
 				if (penwidth < 0) { MTOOLS_DEBUG("incorrect penwidth");  penwidth = 0; } else if (penwidth > 0) _correctPenOpacity(color, penwidth);				
 				if (antialiased)
 					{
@@ -2020,6 +2026,7 @@ namespace mtools
 			 **/
 			void draw_polyline(const fVec2 * tabPoints, size_t nbvertices, RGBc color, bool draw_last = true, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int penwidth = 0, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
+				if (isEmpty() || (color.isTransparent() && blending)) return;
 				MTOOLS_ASSERT(tabPoints != nullptr);
 				if (nbvertices == 0) return;
 				if (_drawTinyShape(getBoundingBox(tabPoints, nbvertices), color, 1.0, blending, min_tick, penwidth)) return;
@@ -2116,7 +2123,7 @@ namespace mtools
 			**/
 			inline void draw_triangle(fVec2 P1, fVec2 P2, fVec2 P3, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
-				if (_drawTinyShape(getBoundingBox(P1, P2, P3), color, 1.0, blending, min_thick, penwidth)) return;
+				if ((color.isTransparent() && blending) || (_drawTinyShape(getBoundingBox(P1, P2, P3), color, 1.0, blending, min_thick, penwidth))) return;
 				if ((penwidth <= 0) && (!antialiased) && (blending) && (!color.isOpaque()))
 					{ // draw without overlap
 					_bseg_draw(P1, P2, true, 0, color, blending);
@@ -2147,11 +2154,14 @@ namespace mtools
 			inline void draw_filled_triangle(fVec2 P1, fVec2 P2, fVec2 P3, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
 				if (_drawTinyShape(getBoundingBox(P1, P2, P3), fillcolor, 1.0, blending, min_thick)) return;
-				if (!fillcolor.isTransparent()) _bseg_fill_triangle(P1, P2, P3, fillcolor, blending);	// fill the triangle 
-				int w = -winding<3>({ P1, P2, P3 }); // winding direction of the polygon
-				_bseg_draw(P1, P2, true, 0, color, blending, w);
-				_bseg_avoid1(P2, P3, P1, true, true, color, blending, w);
-				_bseg_avoid11(P3, P1, P2, P2, true, true, color, blending, w);
+				if (!(fillcolor.isTransparent() && blending)) _bseg_fill_triangle(P1, P2, P3, fillcolor, blending);	// fill the triangle 
+				if (!(color.isTransparent() && blending))
+					{
+					int w = -winding<3>({ P1, P2, P3 }); // winding direction of the polygon
+					_bseg_draw(P1, P2, true, 0, color, blending, w);
+					_bseg_avoid1(P2, P3, P1, true, true, color, blending, w);
+					_bseg_avoid11(P3, P1, P2, P2, true, true, color, blending, w);
+					}
 				}
 
 
@@ -5094,8 +5104,8 @@ namespace mtools
 			 **/
 			MTOOLS_FORCEINLINE void canvas_draw_circle_dot(const fBox2 & R, fVec2 center, double radius, RGBc outcolor, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
 				{
-				if (isEmpty()) return;
-				draw_circle_dot(R.absToPixelf(center, dimension()), radius, outcolor, fillcolor, aa, blend);
+				const fBox2 imBox = imagefBox();				
+				draw_circle_dot(boxTransform(center, R, imBox), radius, outcolor, fillcolor, aa, blend);
 				}
 
 
@@ -5111,8 +5121,8 @@ namespace mtools
 			**/
 			MTOOLS_FORCEINLINE void canvas_draw_square_dot(const fBox2 & R, fVec2 center, RGBc color,  bool blend = DEFAULT_BLEND, int32 penwidth = 0)
 				{
-				if (isEmpty()) return;
-				draw_square_dot(R.absToPixelf(center, dimension()), color, blend, penwidth);
+				const fBox2 imBox = imagefBox();
+				draw_square_dot(boxTransform(center, R, imBox), color, blend, penwidth);
 				}
 
 
@@ -5137,10 +5147,9 @@ namespace mtools
 			 **/
 			MTOOLS_FORCEINLINE void canvas_draw_horizontal_line(const mtools::fBox2 & R, double y, double x1, double x2, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
-				if (isEmpty()) return;
-				const auto dim = dimension();
-				const fVec2 P1 = R.absToPixelf({ x1, y }, dim);
-				const fVec2 P2 = R.absToPixelf({ x2, y }, dim);
+				const fBox2 imBox = imagefBox();
+				const fVec2 P1 = boxTransform({ x1, y }, R, imBox);
+				const fVec2 P2 = boxTransform({ x2, y }, R, imBox);
 				draw_horizontal_line(P1.Y(), P1.X(), P2.X(), color, draw_P2, blending,min_tick);
 				}
 
@@ -5161,11 +5170,10 @@ namespace mtools
 			 **/
 			MTOOLS_FORCEINLINE void canvas_draw_thick_horizontal_line(const mtools::fBox2 & R, double y, double x1, double x2, double thickness, bool relativethickness, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
-				if (isEmpty()) return;
-				const auto dim = dimension();
-				const fVec2 P1 = R.absToPixelf({ x1,y }, dim);
-				const fVec2 P2 = R.absToPixelf({ x2,y }, dim);
-				const double th = (relativethickness ? boxTransform_dy(thickness, R, imagefBox()) : thickness);
+				const fBox2 imBox = imagefBox();
+				const fVec2 P1 = boxTransform({ x1, y }, R, imBox);
+				const fVec2 P2 = boxTransform({ x2, y }, R, imBox);
+				const double th = (relativethickness ? boxTransform_dy(thickness, R, imBox()) : thickness);
 				draw_thick_horizontal_line(P1.Y(), P1.X(), P2.X(), th, color, draw_P2, blending, min_tick);
 				}
 
@@ -5184,10 +5192,9 @@ namespace mtools
 			 **/
 			MTOOLS_FORCEINLINE void canvas_draw_vertical_line(const mtools::fBox2 & R, double x, double y1, double y2, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
-				if (isEmpty()) return;
-				const auto dim = dimension();
-				const fVec2 P1 = R.absToPixelf({ x, y1 }, dim);
-				const fVec2 P2 = R.absToPixelf({ x, y2 }, dim);
+				const fBox2 imBox = imagefBox();
+				const fVec2 P1 = boxTransform({ x, y1 }, R, imBox);
+				const fVec2 P2 = boxTransform({ x, y2 }, R, imBox);
 				draw_vertical_line(P1.X(), P1.Y(), P2.Y(), color, draw_P2, blending, min_tick);
 				}
 
@@ -5208,11 +5215,10 @@ namespace mtools
 			 **/
 			MTOOLS_FORCEINLINE void canvas_draw_thick_vertical_line(const mtools::fBox2 & R, double x, double y1, double y2, double thickness, bool relativethickness, RGBc color, bool draw_P2 = true, bool blending = DEFAULT_BLEND, double min_tick = DEFAULT_MIN_THICKNESS)
 				{
-				if (isEmpty()) return;
-				const auto dim = dimension();
-				const fVec2 P1 = R.absToPixelf({ x, y1 }, dim);
-				const fVec2 P2 = R.absToPixelf({ x, y2 }, dim);
-				const double th = (relativethickness ? boxTransform_dx(thickness, R, imagefBox()) : thickness);
+				const fBox2 imBox = imagefBox();
+				const fVec2 P1 = boxTransform({ x, y1 }, R, imBox);
+				const fVec2 P2 = boxTransform({ x, y2 }, R, imBox);
+				const double th = (relativethickness ? boxTransform_dx(thickness, R, imBox) : thickness);
 				draw_thick_vertical_line(P1.X(), P1.Y(), P2.Y(), th, color, draw_P2, blending, min_tick);
 				}
 
@@ -5234,9 +5240,8 @@ namespace mtools
 			 **/
 			MTOOLS_FORCEINLINE void canvas_draw_line(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, RGBc color, bool draw_P2 = true, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
-				if (isEmpty()) return;
-				const auto dim = dimension();
-				draw_line(R.absToPixelf(P1, dim), R.absToPixelf(P2, dim), color, draw_P2, antialiased, blending, penwidth, min_thick);
+				const fBox2 imBox = imagefBox();
+				draw_line(boxTransform(P1, R, imBox), boxTransform(P2, R, imBox), color, draw_P2, antialiased, blending, penwidth, min_thick);
 				}
 
 
@@ -5251,25 +5256,29 @@ namespace mtools
 			 * @param	color	   	The color to use.
 			 * @param	antialiased	(Optional) true to draw an antialised line.
 			 * @param	blending   	(Optional) true to use blending.
-			 * @param	min_thick  	(Optional) The pen width (0 = unit width)
+			 * @param	min_thick  	(Optional) the minimum thickness
 			 **/
-			MTOOLS_FORCEINLINE void canvas_draw_thick_line(fBox2 R, fVec2 P1, fVec2 P2, double thickness, bool relativethickness, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
+			void canvas_draw_thick_line(fBox2 R, fVec2 P1, fVec2 P2, double thickness, bool relativethickness, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
-				if ((isEmpty()) || (thickness <= 0)) return;
-				const auto dim = dimension();
+				if ((isEmpty()) || (thickness <= 0) || (color.isTransparent() && blending)) return;
+				const fBox2 imBox = imagefBox();
 				if (!relativethickness)
 					{
-					P1 = R.absToPixelf(P1, dim); P1.Y() = _ly - 1 - P1.Y();
-					P2 = R.absToPixelf(P2, dim); P2.Y() = _ly - 1 - P2.Y();
-					R = imagefBox();
+					P1 = boxTransform<false>(P1, R, imBox);
+					P2 = boxTransform<false>(P2, R, imBox);
+					R = imBox;
 					relativethickness = true;
 					}
 				if (!Colin_SutherLand_lineclip(P1, P2, R.getEnlarge(thickness * 2))) return;
-				if  (P1 == P2) return;
+				if (P1 == P2)
+					{
+					canvas_draw_filled_circle(R, P1, thickness, color, color, antialiased, blending, min_thick);
+					return;
+					}
 				fVec2 H = (P2 - P1).get_rotate90();
 				H.normalize();
 				H *= thickness;					
-				double r2 = (R.absToPixelf(H, dim) - R.absToPixelf({ 0.0 ,0.0 }, dim)).norm2();
+				double r2 = boxTransform_dx_dy(H, R, imBox).norm2();
 				if (r2 < 2)
 					{
 					if (r2 < 1)
@@ -5281,7 +5290,7 @@ namespace mtools
 					return;
 					}
 				H *= 0.5;
-				draw_filled_quad(R.absToPixelf((P1 + H), dim), R.absToPixelf((P2 + H), dim), R.absToPixelf((P2 - H), dim), R.absToPixelf((P1 - H), dim), color, color, antialiased, blending, min_thick);
+				draw_filled_quad(boxTransform(P1 + H, R, imBox), boxTransform(P2 + H, R, imBox), boxTransform(P2 - H, R, imBox), boxTransform(P1 - H, R, imBox), color, color, antialiased, blending, min_thick);
 				return;
 				}
 
@@ -5298,14 +5307,13 @@ namespace mtools
 			 * @param	penwidth   	(Optional) pen radius (0 = unit pen)
 			 * @param	min_thick   (Optional) The minimum thickness.
 			 **/
-			MTOOLS_FORCEINLINE void canvas_draw_polyline(const fBox2 & R, const std::vector<fVec2> & tabPoints, RGBc color, bool draw_last = true, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int penwidth = 0, double min_thick = DEFAULT_MIN_THICKNESS)
+			void canvas_draw_polyline(const fBox2 & R, const std::vector<fVec2> & tabPoints, RGBc color, bool draw_last = true, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int penwidth = 0, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
-				if (isEmpty()) return;
-				const auto dim = dimension();
+				const fBox2 imBox = imagefBox();
 				const size_t l = tabPoints.size();
 				std::vector<fVec2> tab;
 				tab.reserve(l);
-				for (size_t i = 0; i < l; i++) { tab.push_back(R.absToPixelf(tabPoints[i], dim)); }
+				for (size_t i = 0; i < l; i++) { tab.push_back(boxTransform(tabPoints[i], R, imBox)); }
 				draw_polyline(tab, color, draw_last, antialiased, blending, penwidth, min_thick);
 				}
 
@@ -5322,27 +5330,27 @@ namespace mtools
 			 * @param	blending		  (Optional) true to use blending 
 			 * @param	min_thick		  (Optional) The minimum thickness.
 			 */
-			MTOOLS_FORCEINLINE void canvas_draw_thick_polyline(fBox2 R, const std::vector<fVec2> & tab, double thickness, double relativethickness, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
+			void canvas_draw_thick_polyline(fBox2 R, const std::vector<fVec2> & tab, double thickness, double relativethickness, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
-				if (isEmpty()) return;
+				if ((isEmpty()) || (thickness <= 0) || (color.isTransparent() && blending)) return;
+				const fBox2 imBox = imagefBox();
 				const size_t l = tab.size();
 				std::vector<fVec2> tab2;
-				const auto dim = dimension();
 				if (!relativethickness)
 					{
 					tab2.reserve(l);
-					for (size_t i = 0; i < l; i++) { tab2.push_back(R.absToPixelf(tab[i], dim));  tab2[i].Y() = _ly - 1 - tab2[i].Y(); }
-					R = imagefBox(); 
+					for (size_t i = 0; i < l; i++) { tab2.push_back(boxTransform<false>(tab[i], R, imBox)); }
+					R = imBox; 
 					}
 				const std::vector<fVec2> & tabPoints = (relativethickness ? tab : tab2);
 				relativethickness = true;
 				switch (l)
 					{
 					case 0: return;
-					case 1: { canvas_draw_circle(R, tab[0], thickness, color, antialiased, blending);  return; }
-					case 2: { canvas_draw_thick_line(R, tab[0], tab[1], thickness, true, color, antialiased, blending, min_thick); }
+					case 1: { canvas_draw_filled_circle(R, tab[0], thickness, color, color, antialiased, blending, min_thick);  return; }
+					case 2: { canvas_draw_thick_line(R, tab[0], tab[1], thickness, true, color, antialiased, blending, min_thick); return; }
 					}
-				double r2 = (R.absToPixelf({thickness/ 0.70710678118, thickness/ 0.70710678118}, dim) - R.absToPixelf({ 0.0 ,0.0 }, dim)).norm2();
+				double r2 = boxTransform_dx_dy({ thickness / 0.70710678118, thickness / 0.70710678118 }, R, imBox).norm2();
 				if (r2 < 2)
 					{
 					if (r2 < 1) 
@@ -5354,7 +5362,7 @@ namespace mtools
 					return;
 					}
 				std::vector<fVec2> res;
-				const double tt = thickness / 2;
+				const double tt = 0.5*thickness;
 				internals_polyline::polylinetoPolygon(tabPoints, tt, tt, res);
 				canvas_draw_filled_polygon(R, res, color, color, antialiased, blending, true, min_thick);
 				}
@@ -5383,9 +5391,8 @@ namespace mtools
 			**/
 			MTOOLS_FORCEINLINE void canvas_draw_triangle(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, fVec2 P3, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
-				if (isEmpty()) return;
-				const auto dim = dimension();
-				draw_triangle(R.absToPixelf(P1, dim), R.absToPixelf(P2, dim), R.absToPixelf(P3, dim), color, antialiased, blending, penwidth, min_thick);
+				const fBox2 imBox = imagefBox();
+				draw_triangle(boxTransform(P1, R, imBox), boxTransform(P2, R, imBox), boxTransform(P3, R, imBox), color, antialiased, blending, penwidth, min_thick);
 				}
 
 
@@ -5404,9 +5411,8 @@ namespace mtools
 			**/
 			MTOOLS_FORCEINLINE void canvas_draw_filled_triangle(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, fVec2 P3, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
-				if (isEmpty()) return;
-				const auto dim = dimension();
-				draw_filled_triangle(R.absToPixelf(P1, dim), R.absToPixelf(P2, dim), R.absToPixelf(P3, dim), color, fillcolor, antialiased, blending, min_thick);
+				const fBox2 imBox = imagefBox();
+				draw_filled_triangle(boxTransform(P1, R, imBox), boxTransform(P2, R, imBox), boxTransform(P3, R, imBox), color, fillcolor, antialiased, blending, min_thick);
 				}
 
 
@@ -5469,9 +5475,8 @@ namespace mtools
 			 **/
 			MTOOLS_FORCEINLINE void canvas_draw_quad(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, fVec2 P3, fVec2 P4, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
-				if (isEmpty()) return;
-				const auto dim = dimension();
-				draw_quad(R.absToPixelf(P1, dim), R.absToPixelf(P2, dim), R.absToPixelf(P3, dim), R.absToPixelf(P4, dim), color, antialiased, blending, penwidth, min_thick);
+				const fBox2 imBox = imagefBox();
+				draw_quad(boxTransform(P1, R, imBox), boxTransform(P2, R, imBox), boxTransform(P3, R, imBox), boxTransform(P4, R, imBox), color, antialiased, blending, penwidth, min_thick);
 				}
 
 
@@ -5491,9 +5496,8 @@ namespace mtools
 			**/
 			MTOOLS_FORCEINLINE void canvas_draw_filled_quad(const mtools::fBox2 & R, fVec2 P1, fVec2 P2, fVec2 P3, fVec2 P4, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
-				if (isEmpty()) return;
-				const auto dim = dimension();
-				draw_filled_quad(R.absToPixelf(P1, dim), R.absToPixelf(P2, dim), R.absToPixelf(P3, dim), R.absToPixelf(P4, dim), color, fillcolor, antialiased, blending, min_thick);
+				const fBox2 imBox = imagefBox();
+				draw_filled_quad(boxTransform(P1, R, imBox), boxTransform(P2, R, imBox), boxTransform(P3, R, imBox), boxTransform(P4, R, imBox), color, fillcolor, antialiased, blending, min_thick);
 				}
 
 
@@ -5553,14 +5557,13 @@ namespace mtools
 			* @param	penwidth   	(Optional) The pen width (0 = unit width)
 			* @param	min_thick   (Optional) The minimum thickness.
 			**/
-			MTOOLS_FORCEINLINE void canvas_draw_polygon(const mtools::fBox2 & R, const std::vector<fVec2> & tabPoints, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0, double min_thick = DEFAULT_MIN_THICKNESS)
+			void canvas_draw_polygon(const mtools::fBox2 & R, const std::vector<fVec2> & tabPoints, RGBc color, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, int32 penwidth = 0, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
-				if (isEmpty()) return;
-				const auto dim = dimension();
-				const size_t N = tabPoints.size();
+				const fBox2 imBox = imagefBox();
+				const size_t l = tabPoints.size();
 				std::vector<fVec2> tab;
-				tab.reserve(N);
-				for (size_t i = 0; i < N; i++) { tab.push_back(R.absToPixelf(tabPoints[i], dim)); }
+				tab.reserve(l);
+				for (size_t i = 0; i < l; i++) { tab.push_back(boxTransform(tabPoints[i], R, imBox)); }
 				draw_polygon(tab, color, antialiased, blending, penwidth, min_thick);
 				}
 
@@ -5577,14 +5580,13 @@ namespace mtools
 			 * @param	snakefill   (Optional) True to use snake filling algorithm.
 			 * @param	min_thick   (Optional) The minimum thickness.
 			 */
-			MTOOLS_FORCEINLINE void canvas_draw_filled_polygon(const mtools::fBox2 & R, const std::vector<fVec2> & tabPoints, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, bool snakefill = false, double min_thick = DEFAULT_MIN_THICKNESS)
+			void canvas_draw_filled_polygon(const mtools::fBox2 & R, const std::vector<fVec2> & tabPoints, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, bool snakefill = false, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
-				if (isEmpty()) return;
-				const auto dim = dimension();
-				const size_t N = tabPoints.size();
+				const fBox2 imBox = imagefBox();
+				const size_t l = tabPoints.size();
 				std::vector<fVec2> tab;
-				tab.reserve(N);
-				for (size_t i = 0; i < N; i++) { tab.push_back(R.absToPixelf(tabPoints[i], dim)); }
+				tab.reserve(l);
+				for (size_t i = 0; i < l; i++) { tab.push_back(boxTransform(tabPoints[i], R, imBox)); }
 				draw_filled_polygon(tab, color, fillcolor, antialiased, blending, snakefill, min_thick);
 				}
 
@@ -5622,50 +5624,49 @@ namespace mtools
 			 */
 			void canvas_draw_thick_filled_polygon(fBox2 R, const std::vector<fVec2> & tab, double thickness, bool relativethickness, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
-				if (isEmpty()) return;
+				if (isEmpty() || (thickness <= 0)) return;
+				const fBox2 imBox = imagefBox();
+				const size_t l = tab.size();
 				std::vector<fVec2> tab2;
-				const auto dim = dimension();
 				if (!relativethickness)
 					{
-					const size_t N = tab.size();
-					tab2.reserve(N);
-					for (size_t i = 0; i < N; i++) { tab2.push_back(R.absToPixelf(tab[i], dim));  tab2[i].Y() = _ly - 1 - tab2[i].Y(); }
+					tab2.reserve(l);
+					for (size_t i = 0; i < l; i++) { tab2.push_back(boxTransform<false>(tab[i], R, imBox)); }
 					R = imagefBox();
 					}
 				const std::vector<fVec2> & tabPoints = (relativethickness ? tab : tab2);
 				relativethickness = true;
-				size_t l = tabPoints.size();
 				switch (l)
 					{
 					case 0: return;
-					case 1: { canvas_draw_circle(R, tab[0], thickness, color, antialiased, blending);  return; }
-					case 2: { canvas_draw_thick_line(R, tab[0], tab[1], thickness, true, color, antialiased, blending, min_thick); }
-					}
-				double r2 = (R.absToPixelf({ thickness / 0.70710678118, thickness / 0.70710678118 }, dim) - R.absToPixelf({ 0.0 ,0.0 }, dim)).norm2();
+					case 1: { canvas_draw_filled_circle(R, tab[0], thickness, color, color, antialiased, blending, min_thick);  return; }
+					case 2: { canvas_draw_thick_line(R, tab[0], tab[1], thickness, true, color, antialiased, blending, min_thick); return; }
+					}				
+				double r2 = boxTransform_dx_dy({ thickness / 0.70710678118, thickness / 0.70710678118 }, R, imBox).norm2();
 				if (r2 < 2)
 					{
-					if (r2 < 1)
-						{
-						color.multOpacity((float)((r2 < min_thick) ? min_thick : r2));
-						}
+					if (r2 < 1) color.multOpacity((float)((r2 < min_thick) ? min_thick : r2));
 					if (fillcolor.isTransparent()) canvas_draw_polygon(R, tabPoints, color,  antialiased, blending, 0, min_thick);
 					else canvas_draw_filled_polygon(R, tabPoints, color, fillcolor, antialiased, blending, false, min_thick);
 					return;
 					}
-				int w = winding(tab);
-				std::vector<fVec2> exttab, inttab; // expand
+				int w = winding(tab); // winding direction
+				// we expand the polygon
+				std::vector<fVec2> exttab, inttab; 
 				if (w > 0) internals_polyline::enlargePolygon(tabPoints, thickness, 0, exttab, inttab); else internals_polyline::enlargePolygon(tabPoints, thickness, 0, inttab, exttab);
+				// we transform it to image coord
 				for (size_t i = 0; i < l; i++) 
-					{ 
-					inttab[i] = R.absToPixelf(inttab[i], dim); //inttab[i].Y() = _ly - 1 - inttab[i].Y();
-					exttab[i] = R.absToPixelf(exttab[i], dim); //exttab[i].Y() = _ly - 1 - exttab[i].Y();
+					{
+					inttab[i] = boxTransform(inttab[i], R, imBox); 
+					exttab[i] = boxTransform(exttab[i], R, imBox);
 					}
+				// ok, now we can draw it
 				if (_drawTinyShape(getBoundingBox(exttab), color, 1.0, blending, min_thick)) return; // quick draw if very small
-				if (!fillcolor.isTransparent())
+				if (!((fillcolor.isTransparent()) && blending))
 					{ // draw the interior
 					draw_filled_polygon(inttab,(antialiased ? color : RGBc::c_Transparent), fillcolor, antialiased, blending, false, min_thick);
 					}
-				if (!color.isTransparent())
+				if (!((color.isTransparent()) && blending))
 					{ // draw the outline
 					const int side = ((antialiased) ? w : 0);
 					// draw the boundary. 
@@ -5678,7 +5679,7 @@ namespace mtools
 						}
 					_bseg_avoid11(exttab[l - 1], exttab[0], exttab[l - 2], exttab[1], true, true, color, blending, side);
 					_bseg_avoid11(inttab[l - 1], inttab[0], inttab[l - 2], inttab[1], true, true, color, blending, -side);
-					// draw the boundary interior
+					// draw the boundary's interior
 					size_t a = 0, b = 0;
 					int dir = 1;
 					for (size_t i = 0; i < 2*l; i++)
@@ -5701,7 +5702,6 @@ namespace mtools
 				}
 
 
-
 			/**
 			* draw a rectangle.
 			*
@@ -5713,7 +5713,6 @@ namespace mtools
 			**/
 			MTOOLS_FORCEINLINE void canvas_draw_rectangle(const mtools::fBox2 & R, const fBox2 & dest_box, RGBc color, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
-				if (isEmpty()) return;
 				draw_rectangle(boxTransform(dest_box, R, imagefBox()), color, blending, min_thick);
 				}
 
@@ -5730,7 +5729,6 @@ namespace mtools
 			**/
 			MTOOLS_FORCEINLINE void canvas_draw_filled_rectangle(const mtools::fBox2 & R, const fBox2 & dest_box, RGBc color, RGBc fillcolor, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
-				if (isEmpty()) return;
 				draw_filled_rectangle(boxTransform(dest_box, R, imagefBox()), color, fillcolor, blending, min_thick);
 				}
 
@@ -5749,11 +5747,10 @@ namespace mtools
 			 **/
 			MTOOLS_FORCEINLINE void canvas_draw_thick_rectangle(const mtools::fBox2 & R, const fBox2 & dest_box, RGBc color, double thickness_x, double thickness_y, bool relativethickness, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
-				if (isEmpty()) return;
-				const fBox2 imB = imagefBox();
-				const double tx = (relativethickness) ? boxTransform_dx(thickness_x, R, imB) : thickness_x;
-				const double ty = (relativethickness) ? boxTransform_dy(thickness_y, R, imB) : thickness_y;
-				draw_thick_rectangle(boxTransform(dest_box, R, imB), color, tx, ty, blending, min_thick);
+				const fBox2 imBox = imagefBox();
+				const double tx = (relativethickness) ? boxTransform_dx(thickness_x, R, imBox) : thickness_x;
+				const double ty = (relativethickness) ? boxTransform_dy(thickness_y, R, imBox) : thickness_y;
+				draw_thick_rectangle(boxTransform(dest_box, R, imBox), color, tx, ty, blending, min_thick);
 				}
 
 
@@ -5772,11 +5769,10 @@ namespace mtools
 			**/
 			MTOOLS_FORCEINLINE void canvas_draw_thick_filled_rectangle(const mtools::fBox2 & R, const fBox2 & dest_box, RGBc color, RGBc fillcolor, double thickness_x, double thickness_y, bool relativethickness, bool blending = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
-				if (isEmpty()) return;
-				const fBox2 imB = imagefBox();
-				const double tx = (relativethickness) ? boxTransform_dx(thickness_x, R, imB) : thickness_x;
-				const double ty = (relativethickness) ? boxTransform_dy(thickness_y, R, imB) : thickness_y;
-				draw_thick_filled_rectangle(boxTransform(dest_box, R, imB), color, fillcolor, tx, ty, blending, min_thick);
+				const fBox2 imBox = imagefBox();
+				const double tx = (relativethickness) ? boxTransform_dx(thickness_x, R, imBox) : thickness_x;
+				const double ty = (relativethickness) ? boxTransform_dy(thickness_y, R, imBox) : thickness_y;
+				draw_thick_filled_rectangle(boxTransform(dest_box, R, imBox), color, fillcolor, tx, ty, blending, min_thick);
 				}
 
 
@@ -5791,7 +5787,6 @@ namespace mtools
 			**/
 			MTOOLS_FORCEINLINE void canvas_draw_box(const mtools::fBox2 & R, const fBox2 & dest_box, RGBc fillcolor, bool blend = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
 				{
-				if (isEmpty()) return;
 				draw_box(boxTransform(dest_box, R, imagefBox()), fillcolor, blend, min_thick);
 				}
 
@@ -5865,8 +5860,9 @@ namespace mtools
 			 * @param	fillcolor	color to fill the circle.
 			 * @param	aa		 	(Optional) true to use antialiasing.
 			 * @param	blend	 	(Optional) true to use blending.
+			 * @param	min_thick  	(Optional) The minimum thickness
 			 **/
-			MTOOLS_FORCEINLINE void canvas_draw_filled_circle(const fBox2 & R, fVec2 center, double radius, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND)
+			MTOOLS_FORCEINLINE void canvas_draw_filled_circle(const fBox2 & R, fVec2 center, double radius, RGBc color, RGBc fillcolor, bool aa = DEFAULT_AA, bool blend = DEFAULT_BLEND, double min_thick = DEFAULT_MIN_THICKNESS)
 			{
 				const double EPS = 0.4;
 				if (isEmpty()) return;
@@ -7519,7 +7515,6 @@ namespace mtools
 			/* draw a vertical line */
 			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void _verticalLine(int64 x, int64 y1, int64 y2, RGBc color, bool draw_P2)
 				{
-				if (color.isTransparent()) return;
 				if (y2 < y1) { if (!draw_P2) { y2++; } mtools::swap(y1, y2); } else { if (!draw_P2) { y2--; } }
 				if (checkrange)
 					{
@@ -7537,7 +7532,6 @@ namespace mtools
 			/* draw an horizontal line */
 			template<bool blend, bool checkrange> MTOOLS_FORCEINLINE void _horizontalLine(int64 y, int64 x1, int64 x2, RGBc color, bool draw_P2)
 				{
-				if (color.isTransparent()) return;
 				if (x2 < x1) { if (!draw_P2) { x2++; }  mtools::swap(x1, x2); } else { if (!draw_P2) x2--; }
 				if (checkrange)
 					{
