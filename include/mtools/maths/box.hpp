@@ -29,7 +29,9 @@
 #include <string>
 #include <ostream>
 
-
+// these undefs are needed when using cotire pre-compiled headers
+#undef min
+#undef max
 
 namespace mtools
     {
