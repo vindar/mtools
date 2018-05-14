@@ -1860,7 +1860,6 @@ namespace mtools
 		*
 		*************************************************************************************************************************************/
 
-
 		/**
 		*
 		* Circle figure
@@ -1873,36 +1872,89 @@ namespace mtools
 
 			fVec2	center;
 			double	radius;
-			double	thickness;		// circle thickness 0 = no thickness. < 0 = absolute thicknes,  >0 = relative thickness 
 			RGBc	color;
 			RGBc	fillcolor;		// (transparent = no filling)
 
 
 			/**
-			 * Construct a circle with unit thickness and without filling.
+			 * Construct a circle without filling.
 			 *
 			 * @param	centercircle circle center.
 			 * @param	rad			 circle radius.
 			 * @param	col			 circle (outline) color
 			 */
-			Circle(fVec2 centercircle, double rad, RGBc col) : center(centercircle), radius(rad), thickness(0.0), color(col), fillcolor(RGBc::c_Transparent)
+			Circle(fVec2 centercircle, double rad, RGBc col) : center(centercircle), radius(rad), color(col), fillcolor(RGBc::c_Transparent)
 				{
 				MTOOLS_ASSERT(rad >= 0);
 				}
 
 
 			/**
-			 * Construct a filled circle with unit thickness.
+			 * Construct a filled circle.
 			 *
 			 * @param	centercircle circle center.
 			 * @param	rad			 circle radius.
 			 * @param	col			 circle (outline) color
 			 * @param	fillcol		 circle fill color
 			 */
-			Circle(fVec2 centercircle, double rad, RGBc col, RGBc fillcol) : center(centercircle), radius(rad), thickness(0.0), color(col), fillcolor(fillcol)
+			Circle(fVec2 centercircle, double rad, RGBc col, RGBc fillcol) : center(centercircle), radius(rad), color(col), fillcolor(fillcol)
 				{
 				MTOOLS_ASSERT(rad >= 0);
 				}
+
+
+			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+				{
+				if (fillcolor.isTransparent()) { im.canvas_draw_circle(R, center, radius, color, highQuality); }
+				else { im.canvas_draw_filled_circle(R, center, radius, color, fillcolor, highQuality); }
+				}
+
+
+			virtual fBox2 boundingBox() const override { return fBox2(center.X() - radius, center.X() + radius, center.Y() - radius, center.Y() + radius); }
+
+
+			virtual std::string toString(bool debug = false) const override
+				{
+				std::string str("Circle [");
+				str += mtools::toString(center) + " ";
+				str += mtools::toString(radius) + " ";
+				str += mtools::toString(color);
+				if (fillcolor.comp.A != 0) str += std::string(" filled: ") + mtools::toString(fillcolor);
+				return str + "]";
+				}
+
+
+			virtual void serialize(OBaseArchive & ar) const override
+				{
+				ar & center & radius & color & fillcolor;
+				}
+
+
+			virtual void deserialize(IBaseArchive & ar) override
+				{
+				ar & center & radius & color & fillcolor;
+				}
+
+		};
+
+
+
+		/**
+		*
+		* Thick Circle figure
+		*
+		**/
+		class ThickCircle  : public internals_figure::FigureInterface
+		{
+
+		public:
+
+			fVec2	center;
+			double	radius;
+			double	thickness;		// circle thickness 0 = no thickness. < 0 = absolute thicknes,  >0 = relative thickness 
+			RGBc	color;
+			RGBc	fillcolor;		// (transparent = no filling)
+
 
 
 			/**
@@ -1914,7 +1966,7 @@ namespace mtools
 			 * @param	relativethickness	true to use relative thickness.
 			 * @param	col					circle (outline) color
 			 */
-			Circle(fVec2 centercircle, double rad, double thick, bool relativethickness, RGBc col)
+			ThickCircle(fVec2 centercircle, double rad, double thick, bool relativethickness, RGBc col)
 				: center(centercircle), radius(rad), thickness(relativethickness ? thick : -thick), color(col), fillcolor(RGBc::c_Transparent)
 				{
 				MTOOLS_ASSERT(rad >= 0);
@@ -1932,7 +1984,7 @@ namespace mtools
 			 * @param	col					circle (outline) color
 			 * @param	fillcol				filling color
 			 */
-			Circle(fVec2 centercircle, double rad, double thick, bool relativethickness, RGBc col, RGBc fillcol)
+			ThickCircle(fVec2 centercircle, double rad, double thick, bool relativethickness, RGBc col, RGBc fillcol)
 				: center(centercircle), radius(rad), thickness(relativethickness ? thick : -thick), color(col), fillcolor(fillcol)
 				{
 				MTOOLS_ASSERT(rad >= 0);
@@ -1962,7 +2014,7 @@ namespace mtools
 
 			virtual std::string toString(bool debug = false) const override
 				{
-				std::string str("Circle [");
+				std::string str("ThickCircle [");
 				str += mtools::toString(center) + " ";
 				str += mtools::toString(radius) + " ";
 				str += mtools::toString(color);
@@ -1991,8 +2043,6 @@ namespace mtools
 
 
 
-
-
 		/**
 		* 
 		* Circle Part
@@ -2005,14 +2055,13 @@ namespace mtools
 
 			fVec2	center;
 			double	radius;
-			double	thickness;		// circle thickness 0 = no thickness. < 0 = absolute thicknes,  >0 = relative thickness 
 			RGBc	color;
 			RGBc	fillcolor;		// circle interior color (transparent = no filling)
 			int		part;			// one of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT,, BOX_SPLIT_DOWN_LEFT, , BOX_SPLIT_DOWN_RIGHT
 
 
 			/**
-			 * Construct part of a circle (no filling, no thickness).
+			 * Construct part of a circle (no filling).
 			 *
 			 * @param	circlepart   part to draw, one of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT,
 			 * 						 BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT,,
@@ -2021,7 +2070,7 @@ namespace mtools
 			 * @param	rad			 radius.
 			 * @param	col			 outline color.
 			 */
-			CirclePart(int circlepart, fVec2 centercircle, double rad, RGBc col) : part(circlepart), center(centercircle), radius(rad), thickness(0.0), color(col), fillcolor(RGBc::c_Transparent)
+			CirclePart(int circlepart, fVec2 centercircle, double rad, RGBc col) : part(circlepart), center(centercircle), radius(rad), color(col), fillcolor(RGBc::c_Transparent)
 				{
 				MTOOLS_ASSERT((circlepart >= 0) && (circlepart < 8));
 				MTOOLS_ASSERT(rad >= 0);
@@ -2039,11 +2088,82 @@ namespace mtools
 			 * @param	col			 outline color.
 			 * @param	fillcol		 fill color.
 			 */
-			CirclePart(int circlepart, fVec2 centercircle, double rad, RGBc col, RGBc fillcol) : part(circlepart), center(centercircle), radius(rad), thickness(0.0), color(col), fillcolor(fillcol)
+			CirclePart(int circlepart, fVec2 centercircle, double rad, RGBc col, RGBc fillcol) : part(circlepart), center(centercircle), radius(rad), color(col), fillcolor(fillcol)
 				{
 				MTOOLS_ASSERT((circlepart >= 0) && (circlepart < 8));
 				MTOOLS_ASSERT(rad >= 0);
 				}
+
+
+			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+				{
+				if (fillcolor.isTransparent()) { im.canvas_draw_part_circle(R, part, center, radius, color, highQuality); }
+				else { im.canvas_draw_part_filled_circle(R, part, center, radius, color, fillcolor, highQuality); }
+				}
+
+
+			virtual fBox2 boundingBox() const override
+				{
+				return fBox2(center.X() - radius, center.X() + radius, center.Y() - radius, center.Y() + radius).get_split(part);
+				}
+
+
+			virtual std::string toString(bool debug = false) const override
+				{
+				std::string str("CirclePart [");
+				switch (part)
+					{
+					case BOX_SPLIT_UP: { str += "HALF UP"; break; }
+					case BOX_SPLIT_DOWN: { str += "HALF DOWN"; break; }
+					case BOX_SPLIT_LEFT: { str += "HALF LEFT"; break; }
+					case BOX_SPLIT_RIGHT: { str += "HALF RIGHT"; break; }
+					case BOX_SPLIT_UP_LEFT: { str += "QUARTER UP LEFT"; break; }
+					case BOX_SPLIT_UP_RIGHT: { str += "QUARTER UP RIGHT"; break; }
+					case BOX_SPLIT_DOWN_LEFT: { str += "QUARTER DOWN LEFT"; break; }
+					case BOX_SPLIT_DOWN_RIGHT: { str += "QUARTER DOWN RIGHT"; break; }
+					default: { str += "ERROR PART"; }
+					}
+				str += " ";
+				str += mtools::toString(center) + " ";
+				str += mtools::toString(radius) + " ";
+				str += mtools::toString(color);
+				if (fillcolor.comp.A != 0) str += std::string(" filled: ") + mtools::toString(fillcolor);
+				return str + "]";
+				}
+
+
+			virtual void serialize(OBaseArchive & ar) const override
+				{
+				ar & part & center & radius & color & fillcolor;
+				}
+
+
+			virtual void deserialize(IBaseArchive & ar) override
+				{
+				ar & part & center & radius & color & fillcolor;
+				}
+
+		};
+
+
+		
+		/**
+		* 
+		* Thick Circle Part
+		*
+		**/
+		class ThickCirclePart : public internals_figure::FigureInterface
+		{
+
+		public:
+
+			fVec2	center;
+			double	radius;
+			double	thickness;		// circle thickness 0 = no thickness. < 0 = absolute thicknes,  >0 = relative thickness 
+			RGBc	color;
+			RGBc	fillcolor;		// circle interior color (transparent = no filling)
+			int		part;			// one of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT,, BOX_SPLIT_DOWN_LEFT, , BOX_SPLIT_DOWN_RIGHT
+
 
 
 			/**
@@ -2058,7 +2178,7 @@ namespace mtools
 			 * @param	relativethickness true to scale thickness with range.
 			 * @param	col				  outline color.
 			 */
-			CirclePart(int circlepart, fVec2 centercircle, double rad, double thick, bool relativethickness, RGBc col)
+			ThickCirclePart(int circlepart, fVec2 centercircle, double rad, double thick, bool relativethickness, RGBc col)
 				: part(circlepart), center(centercircle), radius(rad), thickness(relativethickness ? thick : -thick), color(col), fillcolor(RGBc::c_Transparent)
 				{
 				MTOOLS_ASSERT((circlepart >= 0) && (circlepart < 8));
@@ -2080,7 +2200,7 @@ namespace mtools
 			 * @param	col				  outline color.
 			 * @param	fillcol			  fill color.
 			 */
-			CirclePart(int circlepart, fVec2 centercircle, double rad, double thick, bool relativethickness, RGBc col, RGBc fillcol)
+			ThickCirclePart(int circlepart, fVec2 centercircle, double rad, double thick, bool relativethickness, RGBc col, RGBc fillcol)
 				: part(circlepart), center(centercircle), radius(rad), thickness(relativethickness ? thick : -thick), color(col), fillcolor(fillcol)
 				{
 				MTOOLS_ASSERT((circlepart >= 0) && (circlepart < 8));
@@ -2114,7 +2234,7 @@ namespace mtools
 
 			virtual std::string toString(bool debug = false) const override
 				{
-				std::string str("CirclePart [");
+				std::string str("ThickCirclePart [");
 				switch (part)
 					{
 					case BOX_SPLIT_UP: { str += "HALF UP"; break; }
@@ -2156,6 +2276,8 @@ namespace mtools
 
 
 
+
+
 		/**
 		* 
 		* Ellipse
@@ -2169,22 +2291,20 @@ namespace mtools
 			fVec2	center;
 			double	rx;				// x-radius
 			double  ry;				// y-radius
-			double	thickness_x;	// 0 = no thickness. < 0 = absolute thicknes,  >0 = relative thickness 
-			double	thickness_y;	// 0 = no thickness  < 0 = absolute thicknes,  >0 = relative thickness 
 			RGBc	color;			// color
 			RGBc	fillcolor;		// interior color (transparent = no filling)
 
 
 
 			/**
-			 * Construct an ellipse (without filling nor thickness)
+			 * Construct an ellipse (without filling)
 			 *
 			 * @param	centerellipse center 
 			 * @param	rad_x		  x-radius
 			 * @param	rad_y		  y-radius
 			 * @param	col			  color
 			 */
-			Ellipse(fVec2 centerellipse, double rad_x, double rad_y, RGBc col) : center(centerellipse), rx(rad_x), ry(rad_y), thickness_x(0.0), thickness_y(0.0), color(col), fillcolor(RGBc::c_Transparent)
+			Ellipse(fVec2 centerellipse, double rad_x, double rad_y, RGBc col) : center(centerellipse), rx(rad_x), ry(rad_y), color(col), fillcolor(RGBc::c_Transparent)
 				{
 				MTOOLS_ASSERT(rad_x >= 0);
 				MTOOLS_ASSERT(rad_y >= 0);
@@ -2192,19 +2312,19 @@ namespace mtools
 
 
 			/**
-			 * Construct an ellipse (without filling nor thickness) from its bounding box.
+			 * Construct an ellipse (without filling) from its bounding box.
 			 *
 			 * @param	B   bounding box
 			 * @param	col color.
 			 */
-			Ellipse(const fBox2 & B, RGBc col) : center(B.center()), rx(B.l(0) / 2), ry(B.l(1) / 2), thickness_x(0.0), thickness_y(0.0), color(col), fillcolor(RGBc::c_Transparent)
+			Ellipse(const fBox2 & B, RGBc col) : center(B.center()), rx(B.l(0) / 2), ry(B.l(1) / 2), color(col), fillcolor(RGBc::c_Transparent)
 				{
 				MTOOLS_ASSERT(!B.isEmpty());
 				}
 
 
 			/**
-			 * Construct a filled ellipse (without thickness)
+			 * Construct a filled ellipse
 			 *
 			 * @param	centerellipse center.
 			 * @param	rad_x		  x-radius.
@@ -2220,7 +2340,7 @@ namespace mtools
 
 
 			/**
-			 * Construct a filled ellipse (without thickness) from its bounding box.
+			 * Construct a filled ellipse from its bounding box.
 			 *
 			 * @param	B	    bounding box.
 			 * @param	col	    color.
@@ -2230,6 +2350,66 @@ namespace mtools
 				{
 				MTOOLS_ASSERT(!B.isEmpty());
 				}
+
+			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+				{
+				if (fillcolor.isTransparent()) { im.canvas_draw_ellipse(R, center, rx, ry, color, highQuality); }
+				else { im.canvas_draw_filled_ellipse(R, center, rx, ry, color, fillcolor, highQuality); }
+				}
+
+
+			virtual fBox2 boundingBox() const override
+				{
+				return fBox2(center.X() - rx, center.X() + rx, center.Y() - ry, center.Y() + ry);
+				}
+
+
+			virtual std::string toString(bool debug = false) const override
+				{
+				std::string str("Ellipse [");
+				str += mtools::toString(center) + " ";
+				str += mtools::toString(rx) + " ";
+				str += mtools::toString(ry) + " ";
+				str += mtools::toString(color);
+				if (fillcolor.comp.A != 0) str += std::string(" filled: ") + mtools::toString(fillcolor);
+				return str + "]";
+				}
+
+
+			virtual void serialize(OBaseArchive & ar) const override
+				{
+				ar & center & rx & ry & thickness_x & thickness_y & color & fillcolor; 
+				}
+
+
+			virtual void deserialize(IBaseArchive & ar) override
+				{
+				ar & center & rx & ry & thickness_x & thickness_y & color & fillcolor;
+				}
+
+		};
+
+
+
+		/**
+		* 
+		* ThickEllipse
+		*
+		**/
+		class ThickEllipse : public internals_figure::FigureInterface
+		{
+
+		public:
+
+			fVec2	center;
+			double	rx;				// x-radius
+			double  ry;				// y-radius
+			double	thickness_x;	// 0 = no thickness. < 0 = absolute thicknes,  >0 = relative thickness 
+			double	thickness_y;	// 0 = no thickness  < 0 = absolute thicknes,  >0 = relative thickness 
+			RGBc	color;			// color
+			RGBc	fillcolor;		// interior color (transparent = no filling)
+
+
 
 
 			/**
@@ -2243,7 +2423,7 @@ namespace mtools
 			 * @param	relativethickness true to use relative thickness.
 			 * @param	col				  color.
 			 */
-			Ellipse(fVec2 centerellipse, double rad_x, double rad_y, double thick_x, double thick_y, bool relativethickness, RGBc col)
+			ThickEllipse(fVec2 centerellipse, double rad_x, double rad_y, double thick_x, double thick_y, bool relativethickness, RGBc col)
 				: center(centerellipse), rx(rad_x), ry(rad_y), thickness_x(relativethickness ? thick_x : -thick_x), thickness_y(relativethickness ? thick_y : -thick_y), color(col), fillcolor(RGBc::c_Transparent)
 				{
 				MTOOLS_ASSERT(rad_x >= 0);
@@ -2262,7 +2442,7 @@ namespace mtools
 			 * @param	relativethickness true to use relative thickness.
 			 * @param	col				  color.
 			 */
-			Ellipse(const fBox2 & B, double thick_x, double thick_y, bool relativethickness, RGBc col)
+			ThickEllipse(const fBox2 & B, double thick_x, double thick_y, bool relativethickness, RGBc col)
 				: center(B.center()), rx(B.l(0) / 2), ry(B.l(1) / 2), thickness_x(relativethickness ? thick_x : -thick_x), thickness_y(relativethickness ? thick_y : -thick_y), color(col), fillcolor(RGBc::c_Transparent)
 				{
 				MTOOLS_ASSERT(!B.isEmpty());
@@ -2283,7 +2463,7 @@ namespace mtools
 			 * @param	col				  color.
 			 * @param	fillcol			  fill color
 			 */
-			Ellipse(fVec2 centerellipse, double rad_x, double rad_y, double thick_x, double thick_y, bool relativethickness, RGBc col, RGBc fillcol)
+			ThickEllipse(fVec2 centerellipse, double rad_x, double rad_y, double thick_x, double thick_y, bool relativethickness, RGBc col, RGBc fillcol)
 				: center(centerellipse), rx(rad_x), ry(rad_y), thickness_x(relativethickness ? thick_x : -thick_x), thickness_y(relativethickness ? thick_y : -thick_y), color(col), fillcolor(fillcol)
 				{
 				MTOOLS_ASSERT(rad_x >= 0);
@@ -2303,7 +2483,7 @@ namespace mtools
 			 * @param	col				  color.
 			 * @param	fillcol			  fill color
 			 */
-			Ellipse(const fBox2 & B, double thick_x, double thick_y, bool relativethickness, RGBc col, RGBc fillcol)
+			ThickEllipse(const fBox2 & B, double thick_x, double thick_y, bool relativethickness, RGBc col, RGBc fillcol)
 				: center(B.center()), rx(B.l(0) / 2), ry(B.l(1) / 2), thickness_x(relativethickness ? thick_x : -thick_x), thickness_y(relativethickness ? thick_y : -thick_y), color(col), fillcolor(fillcol)
 				{
 				MTOOLS_ASSERT(!B.isEmpty());
@@ -2338,7 +2518,7 @@ namespace mtools
 
 			virtual std::string toString(bool debug = false) const override
 				{
-				std::string str("Ellipse [");
+				std::string str("ThickEllipse [");
 				str += mtools::toString(center) + " ";
 				str += mtools::toString(rx) + " ";
 				str += mtools::toString(ry) + " ";
@@ -2382,15 +2562,13 @@ namespace mtools
 			fVec2	center;			// circle center
 			double	rx;				// x-radius
 			double  ry;				// y-radius
-			double	thickness_x;	// 0 = no thickness. < 0 = absolute thicknes,  >0 = relative thickness 
-			double	thickness_y;	// 0 = no thickness  < 0 = absolute thicknes,  >0 = relative thickness 
 			RGBc	color;			// color
 			RGBc	fillcolor;		// interior color (transparent = no filling)
 			int		part;			// one of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT,, BOX_SPLIT_DOWN_LEFT, , BOX_SPLIT_DOWN_RIGHT
 
 
 			/**
-			 * Construct part of an ellipse (no filling, no thickness).
+			 * Construct part of an ellipse (no filling).
 			 *
 			 * @param	ellipsepart   part to draw. One of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT,
 			 * 						  BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT,,
@@ -2400,7 +2578,7 @@ namespace mtools
 			 * @param	rad_y		  y-radius.
 			 * @param	col			  outline color.
 			 */
-			EllipsePart(int ellipsepart, fVec2 centerellipse, double rad_x, double rad_y, RGBc col) : center(centerellipse), rx(rad_x), ry(rad_y), thickness_x(0.0), thickness_y(0.0), color(col), fillcolor(RGBc::c_Transparent), part(ellipsepart)
+			EllipsePart(int ellipsepart, fVec2 centerellipse, double rad_x, double rad_y, RGBc col) : center(centerellipse), rx(rad_x), ry(rad_y), color(col), fillcolor(RGBc::c_Transparent), part(ellipsepart)
 				{
 				MTOOLS_ASSERT((ellipsepart >= 0) && (ellipsepart < 8));
 				MTOOLS_ASSERT(rad_x >= 0);
@@ -2409,7 +2587,7 @@ namespace mtools
 
 
 			/**
-			 * Construct part of an ellipse (no filling, no thickness) from its bounding box
+			 * Construct part of an ellipse (no filling) from its bounding box
 			 *
 			 * @param	ellipsepart part to draw. One of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT,
 			 * 						BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT,,
@@ -2417,7 +2595,7 @@ namespace mtools
 			 * @param	B		    bounding box (for the whole ellipse).
 			 * @param	col		    outline color
 			 */
-			EllipsePart(int ellipsepart, const fBox2 & B, RGBc col) : center(B.center()), rx(B.l(0) / 2), ry(B.l(1) / 2), thickness_x(0.0), thickness_y(0.0), color(col), fillcolor(RGBc::c_Transparent), part(ellipsepart)
+			EllipsePart(int ellipsepart, const fBox2 & B, RGBc col) : center(B.center()), rx(B.l(0) / 2), ry(B.l(1) / 2), color(col), fillcolor(RGBc::c_Transparent), part(ellipsepart)
 				{
 				MTOOLS_ASSERT((ellipsepart >= 0) && (ellipsepart < 8));
 				MTOOLS_ASSERT(!B.isEmpty());
@@ -2425,7 +2603,7 @@ namespace mtools
 
 
 			/**
-			 * Construct part of a filled ellipse (no thickness)
+			 * Construct part of a filled ellipse
 			 *
 			 * @param	ellipsepart   part to draw. One of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT,
 			 * 						  BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT,,
@@ -2436,7 +2614,7 @@ namespace mtools
 			 * @param	col			  outline color.
 			 * @param	fillcol		  fill color.
 			 */
-			EllipsePart(int ellipsepart, fVec2 centerellipse, double rad_x, double rad_y, RGBc col, RGBc fillcol) : center(centerellipse), rx(rad_x), ry(rad_y), thickness_x(0.0), thickness_y(0.0), color(col), fillcolor(fillcol), part(ellipsepart)
+			EllipsePart(int ellipsepart, fVec2 centerellipse, double rad_x, double rad_y, RGBc col, RGBc fillcol) : center(centerellipse), rx(rad_x), ry(rad_y), color(col), fillcolor(fillcol), part(ellipsepart)
 				{
 				MTOOLS_ASSERT((ellipsepart >= 0) && (ellipsepart < 8));
 				MTOOLS_ASSERT(rad_x >= 0);
@@ -2445,7 +2623,7 @@ namespace mtools
 
 
 			/**
-			 * Construct part of a filled ellipse (no thickness) from its bounding box
+			 * Construct part of a filled ellipse from its bounding box
 			 *
 			 * @param	ellipsepart part to draw. One of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT,
 			 * 						BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT,,
@@ -2454,11 +2632,84 @@ namespace mtools
 			 * @param	col		    outline color.
 			 * @param	fillcol	    fill color.
 			 */
-			EllipsePart(int ellipsepart, const fBox2 & B, RGBc col, RGBc fillcol) : center(B.center()), rx(B.l(0) / 2), ry(B.l(1) / 2), thickness_x(0.0), thickness_y(0.0), color(col), fillcolor(fillcol), part(ellipsepart)
+			EllipsePart(int ellipsepart, const fBox2 & B, RGBc col, RGBc fillcol) : center(B.center()), rx(B.l(0) / 2), ry(B.l(1) / 2), color(col), fillcolor(fillcol), part(ellipsepart)
 				{
 				MTOOLS_ASSERT((ellipsepart >= 0) && (ellipsepart < 8));
 				MTOOLS_ASSERT(!B.isEmpty());
 				}
+
+
+			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+				{
+				if (fillcolor.isTransparent()) { im.canvas_draw_part_ellipse(R, part, center, rx, ry, color, highQuality); }
+				else { im.canvas_draw_part_filled_ellipse(R, part, center, rx, ry, color, fillcolor, highQuality); }
+				}
+
+
+			virtual fBox2 boundingBox() const override
+				{
+				return fBox2(center.X() - rx, center.X() + rx, center.Y() - ry, center.Y() + ry).get_split(part);
+				}
+
+
+			virtual std::string toString(bool debug = false) const override
+				{
+				std::string str("EllipsePart [");
+				switch (part)
+					{
+					case BOX_SPLIT_UP: { str += "HALF UP"; break; }
+					case BOX_SPLIT_DOWN: { str += "HALF DOWN"; break; }
+					case BOX_SPLIT_LEFT: { str += "HALF LEFT"; break; }
+					case BOX_SPLIT_RIGHT: { str += "HALF RIGHT"; break; }
+					case BOX_SPLIT_UP_LEFT: { str += "QUARTER UP LEFT"; break; }
+					case BOX_SPLIT_UP_RIGHT: { str += "QUARTER UP RIGHT"; break; }
+					case BOX_SPLIT_DOWN_LEFT: { str += "QUARTER DOWN LEFT"; break; }
+					case BOX_SPLIT_DOWN_RIGHT: { str += "QUARTER DOWN RIGHT"; break; }
+					default: { str += "ERROR PART"; }
+					}
+				str += " " + mtools::toString(center) + " ";
+				str += mtools::toString(rx) + " ";
+				str += mtools::toString(ry) + " ";
+				str += mtools::toString(color);
+				if (fillcolor.comp.A != 0) str += std::string(" filled: ") + mtools::toString(fillcolor);
+				return str + "]";
+				}
+
+
+			virtual void serialize(OBaseArchive & ar) const override
+				{
+				ar & part & center & rx & ry  & color & fillcolor;
+				}
+
+
+			virtual void deserialize(IBaseArchive & ar) override
+				{
+				ar & part & center & rx & ry  & color & fillcolor;
+				}
+
+		};
+
+
+
+		/**
+		* 
+		* Thick Ellipse Part figure
+		*
+		**/
+		class ThickEllipsePart : public internals_figure::FigureInterface
+		{
+
+		public:
+
+			/** ellipse parameters **/
+			fVec2	center;			// circle center
+			double	rx;				// x-radius
+			double  ry;				// y-radius
+			double	thickness_x;	// 0 = no thickness. < 0 = absolute thicknes,  >0 = relative thickness 
+			double	thickness_y;	// 0 = no thickness  < 0 = absolute thicknes,  >0 = relative thickness 
+			RGBc	color;			// color
+			RGBc	fillcolor;		// interior color (transparent = no filling)
+			int		part;			// one of BOX_SPLIT_UP, BOX_SPLIT_DOWN, BOX_SPLIT_LEFT, BOX_SPLIT_RIGHT, BOX_SPLIT_UP_LEFT, BOX_SPLIT_UP_RIGHT,, BOX_SPLIT_DOWN_LEFT, , BOX_SPLIT_DOWN_RIGHT
 
 
 			/**
@@ -2475,7 +2726,7 @@ namespace mtools
 			 * @param	relativethickness true to use relative thickness.
 			 * @param	col				  outline color.
 			 */
-			EllipsePart(int ellipsepart, fVec2 centerellipse, double rad_x, double rad_y, double thick_x, double thick_y, bool relativethickness, RGBc col)
+			ThickEllipsePart(int ellipsepart, fVec2 centerellipse, double rad_x, double rad_y, double thick_x, double thick_y, bool relativethickness, RGBc col)
 				: center(centerellipse), rx(rad_x), ry(rad_y), thickness_x(relativethickness ? thick_x : -thick_x), thickness_y(relativethickness ? thick_y : -thick_y), color(col), fillcolor(RGBc::c_Transparent), part(ellipsepart)
 				{
 				MTOOLS_ASSERT((ellipsepart >= 0) && (ellipsepart < 8));
@@ -2498,7 +2749,7 @@ namespace mtools
 			 * @param	relativethickness true to use relative thickness.
 			 * @param	col				  outline color.
 			 */
-			EllipsePart(int ellipsepart, const fBox2 & B, double thick_x, double thick_y, bool relativethickness, RGBc col)
+			ThickEllipsePart(int ellipsepart, const fBox2 & B, double thick_x, double thick_y, bool relativethickness, RGBc col)
 				: center(B.center()), rx(B.l(0) / 2), ry(B.l(1) / 2), thickness_x(relativethickness ? thick_x : -thick_x), thickness_y(relativethickness ? thick_y : -thick_y), color(col), fillcolor(RGBc::c_Transparent), part(ellipsepart)
 				{
 				MTOOLS_ASSERT((ellipsepart >= 0) && (ellipsepart < 8));
@@ -2523,7 +2774,7 @@ namespace mtools
 			 * @param	col				  outline color.
 			 * @param	fillcol			  fill color.
 			 */
-			EllipsePart(int ellipsepart, fVec2 centerellipse, double rad_x, double rad_y, double thick_x, double thick_y, bool relativethickness, RGBc col, RGBc fillcol)
+			ThickEllipsePart(int ellipsepart, fVec2 centerellipse, double rad_x, double rad_y, double thick_x, double thick_y, bool relativethickness, RGBc col, RGBc fillcol)
 				: center(centerellipse), rx(rad_x), ry(rad_y), thickness_x(relativethickness ? thick_x : -thick_x), thickness_y(relativethickness ? thick_y : -thick_y), color(col), fillcolor(fillcol), part(ellipsepart)
 				{
 				MTOOLS_ASSERT((ellipsepart >= 0) && (ellipsepart < 8));
@@ -2547,7 +2798,7 @@ namespace mtools
 			 * @param	col				  outline color.
 			 * @param	fillcol			  fill color.
 			 */
-			EllipsePart(int ellipsepart, const fBox2 & B, double thick_x, double thick_y, bool relativethickness, RGBc col, RGBc fillcol)
+			ThickEllipsePart(int ellipsepart, const fBox2 & B, double thick_x, double thick_y, bool relativethickness, RGBc col, RGBc fillcol)
 				: center(B.center()), rx(B.l(0) / 2), ry(B.l(1) / 2), thickness_x(relativethickness ? thick_x : -thick_x), thickness_y(relativethickness ? thick_y : -thick_y), color(col), fillcolor(fillcol), part(ellipsepart)
 				{
 				MTOOLS_ASSERT((ellipsepart >= 0) && (ellipsepart < 8));
@@ -2583,7 +2834,7 @@ namespace mtools
 
 			virtual std::string toString(bool debug = false) const override
 				{
-				std::string str("EllipsePart [");
+				std::string str("ThickEllipsePart [");
 				switch (part)
 					{
 					case BOX_SPLIT_UP: { str += "HALF UP"; break; }
@@ -2622,6 +2873,8 @@ namespace mtools
 				}
 
 		};
+
+
 
 
 

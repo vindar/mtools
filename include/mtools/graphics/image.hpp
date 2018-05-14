@@ -1778,7 +1778,7 @@ namespace mtools
 					}
 				else
 					{
-					_correctPenOpacity(color, penwidth);
+					//_correctPenOpacity(color, penwidth); // no  correction needed here
 					if (blending) _updatePixel<true, true, false, true>(P.X(), P.Y(), color, 0, 0); else _updatePixel<false, true, false, true>(P.X(), P.Y(), color, 0, penwidth);
 					}
 				}
@@ -2517,14 +2517,14 @@ namespace mtools
 
 			/**
 			 * Draw a filled (possibly not convex) polygon. Point are given ordered around the polygon
-			 * (clockise or counterclockwise).
+			 * (clockwise or counterclockwise).
 			 *
 			 * @param	vecPoints  	std vector of polygon vertice in clockwise or counterclockwise order.
 			 * @param	color	   	border color.
 			 * @param	fillcolor  	interior color.
 			 * @param	antialiased	(Optional) True to use antialiased.
 			 * @param	blending   	(Optional) True to use blending.
-			 * @param	snakefill (Optional) True to use 'snake' filling algorithm (use for polylines)
+			 * @param	snakefill	(Optional) True to use 'snake' filling algorithm (used for polylines)
 			 * @param	min_thick   (Optional) The minimum thickness.
 			 **/
 			MTOOLS_FORCEINLINE void draw_filled_polygon(const std::vector<fVec2> & vecPoints, RGBc color, RGBc fillcolor, bool antialiased = DEFAULT_AA, bool blending = DEFAULT_BLEND, bool snakefill = false, double min_thick = DEFAULT_MIN_THICKNESS)
@@ -2536,7 +2536,7 @@ namespace mtools
 
 			/**
 			* Draw a thick (possibly not convex) polygon. Point are given ordered around the polygon
-			* (clockise or counterclockwise).
+			* (clockwise or counterclockwise).
 			*
 			* @param	tabPoints    list of vertices
 			* @param	nbvertices  Tnumber of vertices
@@ -2554,7 +2554,7 @@ namespace mtools
 
 			/**
 			* Draw a thick (possibly not convex) polygon. Point are given ordered around the polygon
-			* (clockise or counterclockwise).
+			* (clockwise or counterclockwise).
 			*
 			* @param	vecPoints   The vector points.
 			* @param	thickness   The thickness (going inward)
@@ -2571,7 +2571,7 @@ namespace mtools
 
 			/**
 			* Draw a thick filled (possibly not convex) polygon. Point are given ordered around the polygon
-			* (clockise or counterclockwise).
+			* (clockwise or counterclockwise).
 			*
 			 * @param	tabPoints    list of vertices
 			 * @param	nbvertices  Tnumber of vertices
@@ -2592,7 +2592,7 @@ namespace mtools
 
 			/**
 			 * Draw a thick filled (possibly not convex) polygon. Point are given ordered around the polygon
-			 * (clockise or counterclockwise).
+			 * (clockwise or counterclockwise).
 			 *
 			 * @param	vecPoints   The vector points.
 			 * @param	thickness   The thickness (going inward)
@@ -2802,17 +2802,17 @@ namespace mtools
 				iBox2 B = intersectionRect(circleBox, imBox);
 				if (B.isEmpty()) return; // nothing to draw.
 				if (circleBox.isIncludedIn(imBox))
-				{ // included
+					{ // included
 					if (aa)
-					{
+						{
 						if (blend) _draw_circle_AA<true, false, false>(center.X(), center.Y(), radius, color, color); else _draw_circle_AA<false, false, false>(center.X(), center.Y(), radius, color, color);
-					}
+						}
 					else
-					{
+						{
 						if (blend) _draw_circle<true, false, true, false>(center.X(), center.Y(), radius, color, color); else _draw_circle<false, false, true, false>(center.X(), center.Y(), radius, color, color);
-					}
+						}
 					return;
-				}
+					}
 				// not included
 				if ((circleBox.ly() < 16 * B.ly()) && (B.area() * 8 > circleBox.area()))
 				{ // still faster to use draw everything using the first method while checking the range
