@@ -87,13 +87,15 @@ namespace mtools
 	// ELLIPSE / CIRCLES
 
 	class Circle;
-	class CirclePart;
-	class Ellipse;
-	class EllipsePart;
-
 	class ThickCircle;
+
+	class CirclePart;
 	class ThickCirclePart;
+
+	class Ellipse;
 	class ThickEllipse;
+
+	class EllipsePart;
 	class ThickEllipsePart;
 
 
@@ -114,9 +116,6 @@ namespace mtools
 
 
 	/*
-	class ThickPolyLine;
-	class Polygon;
-	class FigureBox;
 	class FigureText;
 	class FigureImage;
 	class FigureFill;
@@ -2332,7 +2331,7 @@ namespace mtools
 			 * @param	col			  color.
 			 * @param	fillcol		  fillcolor.
 			 */
-			Ellipse(fVec2 centerellipse, double rad_x, double rad_y, RGBc col, RGBc fillcol) : center(centerellipse), rx(rad_x), ry(rad_y), thickness_x(0.0), thickness_y(0.0), color(col), fillcolor(fillcol)
+			Ellipse(fVec2 centerellipse, double rad_x, double rad_y, RGBc col, RGBc fillcol) : center(centerellipse), rx(rad_x), ry(rad_y), color(col), fillcolor(fillcol)
 				{
 				MTOOLS_ASSERT(rad_x >= 0);
 				MTOOLS_ASSERT(rad_y >= 0);
@@ -2346,7 +2345,7 @@ namespace mtools
 			 * @param	col	    color.
 			 * @param	fillcol fill color
 			 */
-			Ellipse(const fBox2 & B, RGBc col, RGBc fillcol) : center(B.center()), rx(B.l(0) / 2), ry(B.l(1) / 2), thickness_x(0.0), thickness_y(0.0), color(col), fillcolor(fillcol)
+			Ellipse(const fBox2 & B, RGBc col, RGBc fillcol) : center(B.center()), rx(B.l(0) / 2), ry(B.l(1) / 2), color(col), fillcolor(fillcol)
 				{
 				MTOOLS_ASSERT(!B.isEmpty());
 				}
@@ -2378,13 +2377,13 @@ namespace mtools
 
 			virtual void serialize(OBaseArchive & ar) const override
 				{
-				ar & center & rx & ry & thickness_x & thickness_y & color & fillcolor; 
+				ar & center & rx & ry & color & fillcolor; 
 				}
 
 
 			virtual void deserialize(IBaseArchive & ar) override
 				{
-				ar & center & rx & ry & thickness_x & thickness_y & color & fillcolor;
+				ar & center & rx & ry & color & fillcolor;
 				}
 
 		};
