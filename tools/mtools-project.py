@@ -132,11 +132,11 @@ import sys
 import datetime
 import subprocess
 
-# input for both versions
-if sys.version_info[0] >= 3:
-    myinput = input
-else:
-    myinput = raw_input
+
+# Python 2 and 3:
+from builtins import input
+
+myinput = input
 	
 	
 # display an error msg
@@ -199,7 +199,7 @@ print("\n*** Project " + project_name + " created ! ***")
 print("    the project files are located in the '\\build' directory\n")
 
 if sys.platform.startswith('win32'):
-	raw_input("Press Enter to continue...")
+	myinput("Press Enter to continue...")
 
 # end of script mtools-project.py
 ############################################################################
