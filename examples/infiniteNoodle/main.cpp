@@ -207,7 +207,7 @@ void makeDrawing()
 			{
 			double r = (up - i)*0.5;
 			if (r < 0) r = -r;
-			canvas(Figure::CirclePart(BOX_SPLIT_UP, fVec2 { (i + up)*0.5, 0.0 }, r + 0.25, 0.5, true, color));
+			canvas(Figure::ThickCirclePart(BOX_SPLIT_UP, fVec2 { (i + up)*0.5, 0.0 }, r + 0.25, 0.5, true, color));
 			}
 		const int down = downArc[i];
 		if ((down == -1) || (down == L))
@@ -218,7 +218,7 @@ void makeDrawing()
 			{
 			double r = (down - i)*0.5; 
 			if (r < 0) r = -r;
-			canvas(Figure::CirclePart(BOX_SPLIT_DOWN, fVec2{ (i + down)*0.5, 0.0 }, r + 0.25, 0.5, true, color));
+			canvas(Figure::ThickCirclePart(BOX_SPLIT_DOWN, fVec2{ (i + down)*0.5, 0.0 }, r + 0.25, 0.5, true, color));
 			}
 		}
 
