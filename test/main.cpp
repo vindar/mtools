@@ -8,130 +8,11 @@ using namespace mtools;
 
 
 
-void testPalette()
-{
-	Image im(800, 800);
-
-	im.clear(RGBc::c_White);
-
-	auto PA = ColorPalette().set(RGBc::c_Red, RGBc::c_Gray, 12);
-
-
-	for(int64 k = 0; k < 600; k++)
-		{
-		im.draw_horizontal_line(k + 100, 100, 200, PA.getLog(k,0,500, 1.2), true, true);
-		im.draw_horizontal_line(k + 100, 300, 400, PA(((double)k) / 500.0, true), true, true);
-		}
-
-		Plotter2D plot;
-
-		auto P = makePlot2DImage(im); 
-		plot[P];
-		plot.autorangeXY();
-		plot.plot(); 
-
-}
-
-
-
-
-void testCSCC()
-{
-
-	fBox2 B(100, 300, 100, 300);
-
-	std::vector<fVec2> subject = { { 50,150 }, { 200,50 }, { 350,150 }, { 350,300 }, { 250,300 }, { 200,250 }, { 150,350 }, { 100,250 }, { 100,200 } };
-	//std::vector<fVec2> subject = { { 0, 100 },{ 100, 100 },{ 99,200 }, };
-
-
-	cout << winding(subject); 
-
-	fVec2 res[1000];
-	size_t res_size = 0;
-
-	Sutherland_Hodgman_clipping(subject.data(), subject.size(), B, res, res_size);
-
-	FigureCanvas<5> canvas(3);
-
-	canvas(Figure::Line( { B.min[0], B.min[1] }, { B.max[0], B.min[1] }, RGBc::c_Black), 0);
-	canvas(Figure::Line( { B.min[0], B.max[1] }, { B.max[0], B.max[1] }, RGBc::c_Black), 0);
-	canvas(Figure::Line( { B.min[0], B.min[1] }, { B.min[0], B.max[1] }, RGBc::c_Black), 0);
-	canvas(Figure::Line( { B.max[0], B.min[1] }, { B.max[0], B.max[1] }, RGBc::c_Black), 0);
-
-	for (size_t i = 0; i < subject.size(); i++)
-		{
-		canvas(Figure::Line(subject[i], subject[(i + 1) % subject.size()], RGBc::c_Green), 1);
-		}
-
-	for (size_t i = 0; i < res_size; i++)
-		{
-		cout << res[i] << "\n";
-		canvas(Figure::Line(res[i], res[(i + 1) % res_size], RGBc::c_Red), 2);
-		}
-
-	auto PF = makePlot2DFigure(canvas, 5);
-	Plotter2D plotter;
-	plotter[PF];
-	plotter.autorangeXY();
-	plotter.range().setRange(fBox2(199.935142875, 200.050950875, 249.926736625, 250.042544625));
-	plotter.plot();
-
-	return;
-
-
-
-	}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-class BLine
-	{
-
-
-
-	int64 dx, dy;			// step size in each direction
-	int64 stepx, stepy;		// directions (+/-1)
-	int64 rat;				// ratio max(dx,dy)/min(dx,dy) to speed up computations
-	int64 amul;				// multiplication factor to compute aa values. 
-	bool x_major;			// true if the line is xmajor (ie dx > dy) and false if y major (dy >= dx).
-
-	int64 x, y;				// current pos
-	int64 frac;				// fractional part
-
-
-	};
-
-
-
-
-
-
-
-
-
-
-
-
-#define HH 5
 
 
 
 void testplotfigure()
 	{
-
-
 
 	std::vector<fVec2> tr = { {0,0} , {0, 100}, {49,50} , {100, 0} };
 
@@ -257,142 +138,10 @@ void testplotfigure()
 
 
 
-
-
-/*
-
-drawing parameters
-
- antialiased    (bool)
- blend			(bool)
- tickness		(double)
- tickscale		(double)
- 
- figures
-
- outline 
-
- - lines
- - multi broken lines
- - closed multi  broken lines
- - open bezier curves
- - circle ellipse
-
- 
- - triangle
- - square
- - convex polygon
- - circle
- - ellipse
-
-
- */
-
-
-
-
-
-
-
-class TestImage : public Image
-	{
-
-	public:
-
-	//	void draw_line_new(const iVec2 & P1, const iVec2 & P2, RGBc color, int32 penwidth = 0, bool antialiasing = true, bool blending = true);
-
-
-	TestImage(int64 lx, int64 ly) : Image(lx, ly) 	
-	{
-
-	}
-	
-
-
-
-
-	};
-
-
-
-
-	MT2004_64 gen;
-
-#define NN 1
-
-
-
-	/* fast inverse squere root */
-
-
-
-
-
-void testCE()
-	{
-	TestImage imA(1000, 1000);
-	TestImage imB(1000, 1000);
-	imA.clear(RGBc::c_White);
-	imB.clear(RGBc::c_White);
-	MT2004_64 gen(0);
-
-	size_t N = 50000;
-
-	
-	int64 mult_rx = 10000; 
-	int64 mult_ry = 10000;
-	int64 mult_pos = 10000; 
-	
-
-	std::vector<iVec2> center(N, iVec2());
-	std::vector<int64> rx(N, 1);
-	std::vector<int64> ry(N, 1);
-
-	for (size_t i = 0; i < N; i++)
-		{
-		center[i] = { -mult_pos + (int64)(2 * Unif(gen)*mult_pos), -mult_pos + (int64)(2 * Unif(gen)*mult_pos) };
-		rx[i] = 1 + (int64)(Unif(gen)*mult_rx);
-		ry[i] = 1 + (int64)(Unif(gen)*mult_ry);
-
-		}
-
-
-
-	cout << "Simulating A... ";
-	Chronometer(); 
-	for (size_t i = 0; i < N; i++)
-		{
-		imA.draw_ellipse((fVec2)center[i], rx[i], ry[i], RGBc::getDistinctColor(i),true,true);
-		}
-	auto resA = Chronometer();
-	cout << "done in " << durationToString(resA, true) << "\n";
-
-
-	cout << "Simulating B... ";
-	Chronometer();
-	for (size_t i = 0; i < N; i++)
-		{
-		imB.draw_ellipse((fVec2)center[i], rx[i], ry[i], RGBc::getDistinctColor(i),true, true);
-		}
-	auto resB = Chronometer();
-	cout << "done in " << durationToString(resB, true) << "\n";
-
-
-	auto PA = makePlot2DImage(imA, 1, "Image A");   // Encapsulate the image inside a 'plottable' object.	
-	auto PB = makePlot2DImage(imB, 1, "Image B");   // Encapsulate the image inside a 'plottable' object.	
-	Plotter2D plotter;              // Create a plotter object
-	plotter[PA][PB];                // Add the image to the list of objects to draw.  	
-	plotter.autorangeXY();          // Set the plotter range to fit the image.
-	plotter.plot();                 // start interactive display.
-
-	}
-
-
-
-
-#include "mtools\maths\bezier.hpp"
-
-
+/**************************************************************
+ * Testing bezier class. To use in image class later for drawing
+ * bezier curve with clipping 
+**************************************************************/
 
 
 
@@ -422,9 +171,6 @@ void testQuad(const fBox2 & B, BezierRationalQuadratic BQ, Image & im)
 	BQ.normalize();
 	im.draw_quad_bezier((iVec2)BQ.P0, (iVec2)BQ.P2, (iVec2)BQ.P1, BQ.w1, color, true, true, true);
 }
-
-
-
 
 void draw(BezierQuadratic sp, Image & im, RGBc color, int penwidth)
 	{
@@ -463,10 +209,9 @@ void testCF()
 	int64 LX = 1000;
 	int64 LY = 1000;
 
-	TestImage im(LX, LY);
+	Image im(LX, LY);
 	im.clear(RGBc::RGBc(240,240,200));
 	MT2004_64 gen(0);
-
 
 	while (1)
 	{
@@ -500,8 +245,6 @@ void testCF()
 //		im.draw_rectangle(TB, RGBc::c_Yellow, true);
 
 		testBezier((fBox2)TB, curve, im);
-			
-
 
 		auto PA = makePlot2DImage(im, 1, "Image A");   // Encapsulate the image inside a 'plottable' object.	
 		Plotter2D plotter;              // Create a plotter object
@@ -509,159 +252,6 @@ void testCF()
 		plotter.autorangeXY();          // Set the plotter range to fit the image.
 		plotter.plot();                 // start interactive display.
 	}
-}
-
-
-
-
-
-
-void LineBresenham(iVec2 P1, iVec2 P2, Image & im, RGBc color)
-{
-	int64 x1 = P1.X(); 
-	int64 y1 = P1.Y();
-	int64 x2 = P2.X();
-	int64 y2 = P2.Y();
-
-	int64 dy = y2 - y1;
-	int64 dx = x2 - x1;
-	int64 stepx, stepy;
-
-	if (dy < 0) { dy = -dy;  stepy = -1; } else { stepy = 1; }
-	if (dx < 0) { dx = -dx;  stepx = -1; } else { stepx = 1; }
-	dy <<= 1;        // dy is now 2*dy
-	dx <<= 1;        // dx is now 2*dx
-
-	im.operator()(x1, y1).blend(color);
-
-
-	if (stepx == 1) 
-		{
-		if (stepy == 1)
-			{
-			if (dx > dy)
-			{
-				int fraction = dy - (dx >> 1);  // same as 2*dy - dx
-				while (x1 != x2)
-				{
-					if (fraction >= 0)
-					{
-						y1++;
-						fraction -= dx;          // same as fraction -= 2*dx
-					}
-					x1++;
-					fraction += dy;              // same as fraction -= 2*dy
-					im.operator()(x1, y1).blend(color);
-				}
-			}
-			else {
-				int fraction = dx - (dy >> 1);
-				while (y1 != y2) {
-					if (fraction >= 0) {
-						x1++;
-						fraction -= dy;
-					}
-					y1++;
-					fraction += dx;
-					im.operator()(x1, y1).blend(color);
-				}
-			}
-			}
-		else
-			{
-			if (dx > dy)
-			{
-				int fraction = dy - (dx >> 1);  // same as 2*dy - dx
-				while (x1 != x2)
-				{
-					if (fraction >= 0)
-					{
-						y1--;
-						fraction -= dx;          // same as fraction -= 2*dx
-					}
-					x1++;
-					fraction += dy;              // same as fraction -= 2*dy
-					im.operator()(x1, y1).blend(color);
-				}
-			}
-			else {
-				int fraction = dx - (dy >> 1);
-				while (y1 != y2) {
-					if (fraction >= 0) {
-						x1++;
-						fraction -= dy;
-					}
-					y1--;
-					fraction += dx;
-					im.operator()(x1, y1).blend(color);
-				}
-			}
-			}
-		}
-	else
-		{
-		if (stepy == 1)
-			{
-			if (dx > dy)
-			{
-				int fraction = dy - (dx >> 1);  // same as 2*dy - dx
-				while (x1 != x2)
-				{
-					if (fraction >= 0)
-					{
-						y1++;
-						fraction -= dx;          // same as fraction -= 2*dx
-					}
-					x1--;
-					fraction += dy;              // same as fraction -= 2*dy
-					im.operator()(x1, y1).blend(color);
-				}
-			}
-			else {
-				int fraction = dx - (dy >> 1);
-				while (y1 != y2) {
-					if (fraction >= 0) {
-						x1--;
-						fraction -= dy;
-					}
-					y1++;
-					fraction += dx;
-					im.operator()(x1, y1).blend(color);
-				}
-			}
-			}
-		else
-			{
-			if (dx > dy)
-			{
-				int fraction = dy - (dx >> 1);  // same as 2*dy - dx
-				while (x1 != x2)
-				{
-					if (fraction >= 0)
-					{
-						y1--;
-						fraction -= dx;          // same as fraction -= 2*dx
-					}
-					x1--;
-					fraction += dy;              // same as fraction -= 2*dy
-					im.operator()(x1, y1).blend(color);
-				}
-			}
-			else {
-				int fraction = dx - (dy >> 1);
-				while (y1 != y2) {
-					if (fraction >= 0) {
-						x1--;
-						fraction -= dy;
-					}
-					y1--;
-					fraction += dx;
-					im.operator()(x1, y1).blend(color);
-				}
-			}
-			}
-		}
-
 }
 
 
@@ -678,14 +268,9 @@ void LineBresenham(iVec2 P1, iVec2 P2, Image & im, RGBc color)
 
 
 int main(int argc, char *argv[])
-{
+	{
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
-
-
-	
-											//testCSCC();
 	testplotfigure();
 	return 0;
-		return 0;
 	}
 

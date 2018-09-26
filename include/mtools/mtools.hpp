@@ -47,6 +47,7 @@
 #include "maths/combinatorialmap_random_triangulation.hpp"
 #include "maths/graph.hpp"
 #include "maths/circlePacking.hpp"
+#include "maths/bezier.hpp"
 
 
 //misc
