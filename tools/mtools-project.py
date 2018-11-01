@@ -98,7 +98,9 @@ endif()
 
 find_package(mtools REQUIRED)
 
-add_executable("${PROJECT_NAME}" main.cpp)
+file(GLOB project_SRC "*.cpp" "*.hpp" "*.h")
+
+add_executable("${PROJECT_NAME}" ${project_SRC})
 
 target_link_libraries("${PROJECT_NAME}" mtools)
 
@@ -122,6 +124,74 @@ set(PREDEFINED_TARGETS_FOLDER "CustomTargets")
 
 #end of file
 """
+
+
+################### clean_build.py ####################
+
+cleanbuildFile = r"""#!/usr/bin/env python
+#
+# project: [PROJECT_NAME_PLH]
+# date: [PROJECT_DATE_PLH]
+# script that cleans the /build sub-directory
+#
+
+import shutil
+import os
+#import time 
+
+abspath = os.path.abspath(__file__)
+dname = os.path.dirname(abspath)
+os.chdir(dname)
+
+if (os.path.isdir("build")):
+    shutil.rmtree('build')
+#    time.sleep(1)
+
+os.makedirs('build')
+
+with open('build/build_directory','w') as out:
+    out.write('This directory (will) contain the CMake generated project files.')
+
+"""
+
+
+################### run_cmake.py ####################
+
+runcmakeFile = r"""#!/usr/bin/env python
+#
+# project: [PROJECT_NAME_PLH]
+# date: [PROJECT_DATE_PLH]
+# Invoque cmake to build the project.
+# usage: ./run_cmake [CMAKE_OPTIONS...]
+#
+
+import sys
+import os
+import subprocess
+
+carg = sys.argv
+del carg[0]
+carg.insert(0,'cmake');
+carg.append('..');
+
+# on windows, we build x64 binaries
+if sys.platform.startswith('win32'):
+	carg.insert(1,'-A');
+	carg.insert(2,'x64');
+
+# invoque cmake with the correct arguments
+if (not os.path.exists('build')):
+	os.makedirs('build')
+	
+
+abspath = os.path.abspath(__file__)
+dname = os.path.dirname(abspath)
+os.chdir(dname + "/build")
+subprocess.call(carg)
+
+"""
+
+	
 
 ############################################################################
 # the python script
@@ -169,7 +239,7 @@ if (len(sys.argv) > 1):
 else:
 	project_name = myinput("Name of the project to create ? ") 
 
-# create the project directories
+# create the project directory
 project_dir  = os.getcwd() + "/" + project_name
 project_build = project_dir + "/build"
 
@@ -177,26 +247,22 @@ if os.path.exists(project_dir):
 	error("directory [" + project_dir + "] already exist")
 try:	
 	os.makedirs(project_dir)
-	os.makedirs(project_build)
 except:
 	error("cannot create project directory [" + project_dir + "]")	
 	
 # copy the files		
 repl(mainFile,"main.cpp")
 repl(cmakeFile,"CMakeLists.txt")
+repl(runcmakeFile,"run_cmake.py")
+repl(cleanbuildFile,"clean_build.py")
 
-# run the cmake command to build project files
-os.chdir(project_build)
-if sys.platform.startswith('win32'):
-	import subprocess
-	subprocess.call(['cmake', '-A', 'x64', '..']) # x64 build on windows
-else:
-	subprocess.call(['cmake', '..'])
-	
-	
-#done !
+os.chdir(project_dir)
+os.system("python clean_build.py")
+
+# uncomment below to run cmake right way.  
+#os.system("python run_cmake.py")
+
 print("\n*** Project " + project_name + " created ! ***")
-print("    the project files are located in the '\\build' directory\n")
 
 if sys.platform.startswith('win32'):
 	myinput("Press Enter to continue...")
