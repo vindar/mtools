@@ -44,6 +44,51 @@ namespace mtools
 namespace mtools
 {
 
+
+
+	/**
+	* Very basic tokenizer.
+	*
+	* @param	str				  	The string to tokenize
+	* @param	kept_delimiters   	delimiter that are kept (make a token by themselves)
+	* @param	dropped_delimiters	delimiter that are silently dropped
+	* @param	linebreak		  	true to cut at end of line (ie adds "\r\n" to dropped delimiter list)
+	*
+	* @return	the vector of tokens. 
+	**/
+	inline std::vector<std::string> tokenize(const std::string & str, std::string kept_delimiters, std::string dropped_delimiters, bool linebreak = true)
+		{
+		std::string delim = kept_delimiters + dropped_delimiters;
+		if (linebreak) delim += "\n\r";
+		size_t nb_k = kept_delimiters.length(); 
+		std::vector<std::string> vec; 
+		size_t i = 0, j = 0; 
+		while (j < str.length())
+			{
+			size_t a = delim.find(str[j]);
+			if (a != std::string::npos)
+				{
+				if (j > i)
+					{
+					vec.push_back(str.substr(i, j - i));
+					}
+				if (a < nb_k)
+					{
+					vec.push_back(str.substr(j, 1));
+					}
+				i = j  + 1; 
+				}
+			j++;
+			}
+		if (j > i)
+			{
+			vec.push_back(str.substr(i, j - i));
+			}
+		return vec;
+		}
+
+
+
     /**
      * Reverse a string/wstring.
      *
