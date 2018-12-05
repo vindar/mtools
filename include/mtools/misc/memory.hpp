@@ -105,7 +105,7 @@ namespace mtools
 		/** Move assignement operator. Discard current content without calling dtors. */
 		CstSizeMemoryPool & operator=(CstSizeMemoryPool && csmp) 			
 			{
-			if (&csmp == this) return;
+			if (&csmp == this) return (*this);
 			freeAll(true);	// release memory without calling dtors
 			_m_allocatedobj = csmp._m_allocatedobj;
 			_m_totmem = csmp._m_totmem;
@@ -119,6 +119,7 @@ namespace mtools
 			csmp._m_currentpool = nullptr;
 			csmp._m_firstpool = nullptr;
 			csmp._m_index = POOLSIZE;
+			return (*this);
 			}
 
 

@@ -112,7 +112,7 @@ namespace mtools
 		Plot2DFigure(Plot2DFigure && o) : internals_graphics::Plotter2DObj(std::move(o)), _figcanvas(o._figcanvas), _figDrawers(o._figDrawers), _ims(o._ims), _R(o._R), _hq(o._hq), _min_thick(o._min_thick), _tmpIm(std::move(o._tmpIm)), _win(nullptr)
 			{
 			o._figcanvas = nullptr;
-			o._figDrawer = nullptr;
+			o._figDrawers = nullptr;
 			o._ims = nullptr;
 			}
 
@@ -128,7 +128,7 @@ namespace mtools
 			_figDrawers = o._figDrawers;
 			_ims = o._ims;
 			_R = o._R;
-			_hq = O._hq;
+			_hq = o._hq;
 			_min_thick = o._min_thick;
 			_tmpIm = std::move(o._tmpIm);
 			_win = nullptr;
@@ -795,6 +795,7 @@ namespace mtools
 			int64 th = 0;						// index of the thread to use. 
 												// iterate over the figures to draw
 			fBox2 oR = zoomOut((fBox2)_R);
+
 			_figTree->iterate_intersect(oR,
 				[&](mtools::TreeFigure<Figure::internals_figure::FigureInterface *, N, double>::BoundedObject & bo) -> void
 				{
