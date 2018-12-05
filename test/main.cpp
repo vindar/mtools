@@ -89,11 +89,11 @@ void testplotfigure()
 
 
 		//fVec2 pos2 = { 5000 * Unif(gen),5000 * Unif(gen) };
-		double rad = 10 * Unif(gen);
-		fVec2 pos = { L * Unif(gen),L * Unif(gen) };
-		fVec2 P1 = pos;
-		fVec2 P2 = pos + fVec2(Unif(gen), Unif(gen));
-		fVec2 P3 = pos + fVec2(Unif(gen), Unif(gen));
+		//double rad = 10 * Unif(gen);
+		//fVec2 pos = { L * Unif(gen),L * Unif(gen) };
+		//fVec2 P1 = pos;
+		//fVec2 P2 = pos + fVec2(Unif(gen), Unif(gen));
+		//fVec2 P3 = pos + fVec2(Unif(gen), Unif(gen));
 		//fVec2 P4 = P1 + 3.0*(P3 - P2);
 
 		//canvas(Figure::Quad(P1,P2,P3,P4, RGBc::c_Red.getMultOpacity(0.5f), RGBc::c_Red.getMultOpacity(0.5f)), 1);
@@ -103,9 +103,8 @@ void testplotfigure()
 		//canvas(Figure::Line(pos, pos2, RGBc::c_Red), 1);
 
 //		canvas(Figure::EllipsePart(BOX_SPLIT_UP_RIGHT, pos, 10 * Unif(gen), 10 * Unif(gen), 10, 0, false, RGBc::c_Red.getMultOpacity(1), RGBc::c_Lime.getMultOpacity(0.5)));
-		
-		pos = { 50000 * Unif(gen),50000 * Unif(gen) };
-		rad = 1* Unif(gen);
+		//pos = { 50000 * Unif(gen),50000 * Unif(gen) };
+		//rad = 1* Unif(gen);
 //		canvas(Figure::VerticalLine(pos.Y(), pos.X() - rad, pos.X() + rad, 5 , true, RGBc::c_Blue.getMultOpacity(1)),1);
 		}
 	
