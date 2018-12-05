@@ -326,7 +326,8 @@ namespace mtools
 				double b = 2 * (x1 - x0);
 				double c = x0 - z;
 				r1 = -1; r2 = -1;
-				int nb = mtools::gsl_poly_solve_quadratic(a, b, c, &r1, &r2);
+				//int nb = 
+					mtools::gsl_poly_solve_quadratic(a, b, c, &r1, &r2);
 				if (r1 >= 1) r1 = -1;
 				if (r2 >= 1) r2 = -1;
 				}
@@ -502,7 +503,8 @@ namespace mtools
 				double b = 4 * w0*w1*x0 - 4 * w0*w1*x1 - 2 * w0*w2*x0 + 2 * w0*w2*x2;
 				double c = -2 * w0*w1*x0 + 2 * w0*w1*x1;
 				r1 = -1; r2 = -1;
-				int nb = mtools::gsl_poly_solve_quadratic(a, b, c, &r1, &r2);
+				//int nb =
+					mtools::gsl_poly_solve_quadratic(a, b, c, &r1, &r2);
 				if (r1 >= 1) r1 = -1;
 				if (r2 >= 1) r2 = -1;
 			}
@@ -515,7 +517,8 @@ namespace mtools
 				double b = -2 * x0*w0 + 2 * x1*w1 - z * (-2 * w0 + 2 * w1);
 				double c = x0 * w0 - z * w0;
 				r1 = -1; r2 = -1;
-				int nb = mtools::gsl_poly_solve_quadratic(a, b, c, &r1, &r2);
+				//int nb = 
+					mtools::gsl_poly_solve_quadratic(a, b, c, &r1, &r2);
 				if (r1 >= 1) r1 = -1;
 				if (r2 >= 1) r2 = -1;
 			}
@@ -665,7 +668,8 @@ namespace mtools
 				double b = 2 * (x0 - 2 * x1 + x2);
 				double c = (x1 - x0);
 				r1 = -1; r2 = -1;
-				int nb = mtools::gsl_poly_solve_quadratic(a, b, c, &r1, &r2);
+				//int nb = 
+					mtools::gsl_poly_solve_quadratic(a, b, c, &r1, &r2);
 				if (r1 >= 1) r1 = -1;
 				if (r2 >= 1) r2 = -1;
 				}
@@ -679,7 +683,8 @@ namespace mtools
 				double c = 3 * (x1 - x0);
 				double d = x0 - z;
 				r1 = -1; r2 = -1; r3 = -1;
-				int nb = mtools::gsl_poly_solve_cubic(a, b, c, d, &r1, &r2, &r3);
+				//int nb = 
+					mtools::gsl_poly_solve_cubic(a, b, c, d, &r1, &r2, &r3);
 				if (r1 >= 1) r1 = -1;
 				if (r2 >= 1) r2 = -1;
 				if (r3 >= 1) r3 = -1;
