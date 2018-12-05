@@ -348,8 +348,8 @@ endif()
 ###############################################################################
 # test project.
 ###############################################################################
-file(GLOB_RECURSE _test_mtools_cpp_files ./test/*.cpp)
-file(GLOB_RECURSE _test_mtools_hpp_files ./test/*.hpp ./test/*.h)
+file(GLOB _test_mtools_cpp_files ./test/*.cpp)
+file(GLOB _test_mtools_hpp_files ./test/*.hpp ./test/*.h)
 
 add_executable(test_mtools ${_test_mtools_cpp_files} ${_test_mtools_hpp_files})
 
