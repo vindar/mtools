@@ -89,7 +89,7 @@ void testplotfigure()
 
 
 		//fVec2 pos2 = { 5000 * Unif(gen),5000 * Unif(gen) };
-		//double rad = 10 * Unif(gen);
+		double rad = 10 * Unif(gen);
 		fVec2 pos = { L * Unif(gen),L * Unif(gen) };
 		fVec2 P1 = pos;
 		fVec2 P2 = pos + fVec2(Unif(gen), Unif(gen));
@@ -205,17 +205,17 @@ template<typename BezierClass> void testBezier(fBox2 B, BezierClass curve, Image
 
 void testCF()
 {
-	size_t N = 50000;
+	//size_t N = 50000;
 	int64 LX = 1000;
 	int64 LY = 1000;
 
 	Image im(LX, LY);
-	im.clear(RGBc::RGBc(240,240,200));
+	im.clear(RGBc(240,240,200));
 	MT2004_64 gen(0);
 
 	while (1)
 	{
-		im.clear(RGBc::RGBc(240, 240, 200));
+		im.clear(RGBc(240, 240, 200));
 
 		iVec2 P0 = { (int64)(Unif(gen)*LX), (int64)(Unif(gen)*LY) };
 		iVec2 P1 = { (int64)(Unif(gen)*LX), (int64)(Unif(gen)*LY) };
