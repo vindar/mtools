@@ -20,7 +20,7 @@
 
 #pragma once
 
-
+#include "../../mtools_config.hpp"
 #include "../image.hpp"
 #include "../progressimg.hpp"
 

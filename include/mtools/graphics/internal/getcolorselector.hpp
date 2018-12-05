@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "../../mtools_config.hpp"
 #include "../image.hpp"
 #include "../rgbc.hpp"
 #include "../../maths/vec.hpp"

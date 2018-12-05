@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "../../mtools_config.hpp"
 #include "../rgbc.hpp"
 
 #include <FL/Fl.H>

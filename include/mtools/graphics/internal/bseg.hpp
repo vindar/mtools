@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "../mtools_config.hpp"
+#include "../../mtools_config.hpp"
 #include "../../misc/error.hpp"
 #include "../../misc/misc.hpp"
 #include "../../maths/box.hpp"
