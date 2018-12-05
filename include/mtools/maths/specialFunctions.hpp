@@ -28,6 +28,7 @@ namespace mtools
     {
 
 
+
 	/**
 	 * Fast inverse square root.
 	 * Taken from wikipedia : https://en.wikipedia.org/wiki/Fast_inverse_square_root
@@ -38,6 +39,10 @@ namespace mtools
 	 **/
 	inline float fast_invsqrt(float x)
 		{
+		#ifdef __GNUC__
+		#pragma GCC diagnostic push
+		#pragma GCC diagnostic ignored "-Wstrict-aliasing"
+		#endif
 		long i;
 		float x2, y;
 		const float threehalfs = 1.5F;
@@ -49,6 +54,9 @@ namespace mtools
 		y = y * (threehalfs - (x2 * y * y));		// 1st iteration
    //	y  = y * ( threehalfs - ( x2 * y * y ) );   // 2nd iteration, this can be removed
 		return y;
+		#ifdef __GNUC__
+		#pragma GCC diagnostic pop
+		#endif
 		}
 
 
