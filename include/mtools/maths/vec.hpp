@@ -295,7 +295,7 @@ namespace mtools
          /**
          * Normalise the vector so that its norm is 1, does nothing if the vector is 0.
          **/
-         inline void normalize() { double a = norm(); if (a>0) { for (int n = 0; n<N; n++) _m_tab[n] = (T)(_m_tab[n]/a); } }
+         inline void normalize() { double a = norm(); if (a>0) { for (size_t n = 0; n<N; n++) _m_tab[n] = (T)(_m_tab[n]/a); } }
 
 
 		 /**

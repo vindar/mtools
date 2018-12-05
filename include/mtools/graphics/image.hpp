@@ -11260,7 +11260,7 @@ namespace mtools
 				const double rx2 = (rx - 0.5)*(rx - 0.5);
 				const double Ry2 = (ry + 0.5)*(ry + 0.5);
 				const double ry2 = (ry - 0.5)*(ry - 0.5);
-				const double rxy2 = rx2 * ry2;
+				//const double rxy2 = rx2 * ry2;
 				const double Rxy2 = Rx2 * Ry2;
 				const double Rx2minus025 = Rx2 - 0.25;
 				const double Rx2overRy2 = Rx2 / Ry2;
@@ -11410,7 +11410,7 @@ namespace mtools
 				const double Arx2 = (Arx - 0.5)*(Arx - 0.5);
 				const double ARy2 = (Ary + 0.5)*(Ary + 0.5);
 				const double Ary2 = (Ary - 0.5)*(Ary - 0.5);
-				const double Arxy2 = Arx2 * Ary2;
+				//const double Arxy2 = Arx2 * Ary2;
 				const double ARxy2 = ARx2 * ARy2;
 				const double ARx2minus025 = ARx2 - 0.25;
 				const double ARx2overRy2 = ARx2 / ARy2;
@@ -11425,7 +11425,7 @@ namespace mtools
 				const double arx2 = (arx - 0.5)*(arx - 0.5);
 				const double aRy2 = (ary + 0.5)*(ary + 0.5);
 				const double ary2 = (ary - 0.5)*(ary - 0.5);
-				const double arxy2 = arx2 * ary2;
+				//const double arxy2 = arx2 * ary2;
 				const double aRxy2 = aRx2 * aRy2;
 				const double aRx2minus025 = aRx2 - 0.25;
 				const double aRx2overRy2 = aRx2 / aRy2;
