@@ -164,12 +164,12 @@ void testQuad(const fBox2 & B, BezierRationalQuadratic BQ, Image & im)
 		BQ = sp.second;
 		color = (C.isInside(sp.first(0.5))) ? RGBc::c_Red : RGBc::c_Blue;	// set the color		
 		sp.first.normalize();
-		im.draw_quad_bezier((iVec2)sp.first.P0, (iVec2)sp.first.P2, (iVec2)sp.first.P1, sp.first.w1, color, true, true, true);
+		im.draw_quad_bezier((iVec2)sp.first.P0, (iVec2)sp.first.P2, (iVec2)sp.first.P1, (float)sp.first.w1, color, true, true, true);
 		}
 
 	color = (C.isInside(BQ(0.5))) ? RGBc::c_Red : RGBc::c_Blue;	// set the color		
 	BQ.normalize();
-	im.draw_quad_bezier((iVec2)BQ.P0, (iVec2)BQ.P2, (iVec2)BQ.P1, BQ.w1, color, true, true, true);
+	im.draw_quad_bezier((iVec2)BQ.P0, (iVec2)BQ.P2, (iVec2)BQ.P1, (float)BQ.w1, color, true, true, true);
 }
 
 void draw(BezierQuadratic sp, Image & im, RGBc color, int penwidth)
@@ -179,7 +179,7 @@ void draw(BezierQuadratic sp, Image & im, RGBc color, int penwidth)
 
 void draw(BezierRationalQuadratic sp, Image & im, RGBc color, int penwidth)
 	{
-	im.draw_quad_bezier((iVec2)sp.P0, (iVec2)sp.P2, (iVec2)sp.P1, sp.w1, color, true, true, true, penwidth);
+	im.draw_quad_bezier((iVec2)sp.P0, (iVec2)sp.P2, (iVec2)sp.P1, (float)sp.w1, color, true, true, true, penwidth);
 	}
 
 void draw(BezierCubic sp, Image & im, RGBc color, int penwidth)

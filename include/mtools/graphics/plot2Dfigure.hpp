@@ -120,7 +120,8 @@ namespace mtools
 		/**
 		* Move assignement operator.
 		**/
-		Plot2DFigure & operator=(Plot2DFigure && o)
+		Plot2DFigure & operator=(Plot2DFigure && o) = delete;
+		/*
 			{
 			if (&o == this) return *this;
 			internals_graphics::Plotter2DObj::operator=(std::move(o));
@@ -137,7 +138,7 @@ namespace mtools
 			o._ims = nullptr;
 			return *this;
 			}
-
+			*/
 
 		/**
 		* Destructor. Remove the object if it is still inserted.
@@ -797,7 +798,7 @@ namespace mtools
 			fBox2 oR = zoomOut((fBox2)_R);
 
 			_figTree->iterate_intersect(oR,
-				[&](mtools::TreeFigure<Figure::internals_figure::FigureInterface *, N, double>::BoundedObject & bo) -> void
+				[&](typename mtools::TreeFigure<typename Figure::internals_figure::FigureInterface *, N, double>::BoundedObject & bo) -> void
 				{
 				do
 					{

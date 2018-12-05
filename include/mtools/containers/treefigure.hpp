@@ -751,7 +751,7 @@ namespace mtools
 		void _reset()
 			{
 			_treeNodePool.freeAll();
-			if (_callDtors) _listNodePool.destroyAndFreeAll<_ListNode>(); else _listNodePool.freeAll();
+			if (_callDtors) _listNodePool.template destroyAndFreeAll<_ListNode>(); else _listNodePool.freeAll();
 			_rootNode = nullptr;
 			}
 

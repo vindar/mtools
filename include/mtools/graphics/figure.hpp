@@ -200,14 +200,9 @@ namespace mtools
 
 		/**
 		 * Insert a figure into the canvas, inside a given layer
+		 * (IMPLEMENTATION AT BOTTOM OF FILE)
 		 */
-		template<typename FIGURECLASS> MTOOLS_FORCEINLINE void operator()(const FIGURECLASS & figure, size_t layer = 0)
-			{
-			MTOOLS_INSURE(layer < _nbLayers);
-			Figure::internals_figure::FigureInterface * pf = _copyInPool(figure);			// save a copy of the object in the memory pool
-			_figLayers[layer].insert(pf->boundingBox(), pf);	// add to the corresponding layer. 
-			return;
-			}
+		template<typename FIGURECLASS> MTOOLS_FORCEINLINE void operator()(const FIGURECLASS & figure, size_t layer = 0);
 
 
 		/**   
@@ -283,16 +278,11 @@ namespace mtools
 			}
 
 
-		/* delete all allocated memory TODO: REPLACE A BY BETTER VERSION THAN MALLOC/FREE */
-		void _deallocateAll()
-			{
-			for (void *  p : _vecallocp) 
-				{
-				((Figure::internals_figure::FigureInterface*)p)->~FigureInterface();	// call dtor
-				free(p);																// free memory
-				}
-			_vecallocp.clear();
-			}
+		/* delete all allocated memory TODO: REPLACE A BY BETTER VERSION THAN MALLOC/FREE 
+		 * (IMPLEMENTATION AT BOTTOM OF FILE)
+		 */
+		void _deallocateAll();
+
 
 		std::vector<void *>				_vecallocp;	// vector containing pointers to all allocated figures (TEMP WHILE USING MALLOC/FREE). 
 
@@ -304,6 +294,7 @@ namespace mtools
 
 
 	};
+
 
 
 
@@ -378,6 +369,16 @@ namespace mtools
 			};
 
 		}
+
+
+
+
+
+	
+
+
+
+
 
 
 
@@ -2069,7 +2070,7 @@ namespace mtools
 			 * @param	rad			 radius.
 			 * @param	col			 outline color.
 			 */
-			CirclePart(int circlepart, fVec2 centercircle, double rad, RGBc col) : part(circlepart), center(centercircle), radius(rad), color(col), fillcolor(RGBc::c_Transparent)
+			CirclePart(int circlepart, fVec2 centercircle, double rad, RGBc col) : center(centercircle), radius(rad), color(col), fillcolor(RGBc::c_Transparent), part(circlepart)
 				{
 				MTOOLS_ASSERT((circlepart >= 0) && (circlepart < 8));
 				MTOOLS_ASSERT(rad >= 0);
@@ -2087,7 +2088,7 @@ namespace mtools
 			 * @param	col			 outline color.
 			 * @param	fillcol		 fill color.
 			 */
-			CirclePart(int circlepart, fVec2 centercircle, double rad, RGBc col, RGBc fillcol) : part(circlepart), center(centercircle), radius(rad), color(col), fillcolor(fillcol)
+			CirclePart(int circlepart, fVec2 centercircle, double rad, RGBc col, RGBc fillcol) : center(centercircle), radius(rad), color(col), fillcolor(fillcol), part(circlepart)
 				{
 				MTOOLS_ASSERT((circlepart >= 0) && (circlepart < 8));
 				MTOOLS_ASSERT(rad >= 0);
@@ -2178,7 +2179,7 @@ namespace mtools
 			 * @param	col				  outline color.
 			 */
 			ThickCirclePart(int circlepart, fVec2 centercircle, double rad, double thick, bool relativethickness, RGBc col)
-				: part(circlepart), center(centercircle), radius(rad), thickness(relativethickness ? thick : -thick), color(col), fillcolor(RGBc::c_Transparent)
+				:  center(centercircle), radius(rad), thickness(relativethickness ? thick : -thick), color(col), fillcolor(RGBc::c_Transparent), part(circlepart)
 				{
 				MTOOLS_ASSERT((circlepart >= 0) && (circlepart < 8));
 				MTOOLS_ASSERT(rad >= 0);
@@ -2200,7 +2201,7 @@ namespace mtools
 			 * @param	fillcol			  fill color.
 			 */
 			ThickCirclePart(int circlepart, fVec2 centercircle, double rad, double thick, bool relativethickness, RGBc col, RGBc fillcol)
-				: part(circlepart), center(centercircle), radius(rad), thickness(relativethickness ? thick : -thick), color(col), fillcolor(fillcol)
+				: center(centercircle), radius(rad), thickness(relativethickness ? thick : -thick), color(col), fillcolor(fillcol), part(circlepart)
 				{
 				MTOOLS_ASSERT((circlepart >= 0) && (circlepart < 8));
 				MTOOLS_ASSERT(rad >= 0);
@@ -2881,6 +2882,44 @@ namespace mtools
 	}
 
 
+
+
+
+
+
+
+
+
+
+	/*****************POSTPONED FROM FigureCanvas ***************/
+
+
+
+	/**
+	* Insert a figure into the canvas, inside a given layer
+	*/
+	template<int N> 
+	template <typename FIGURECLASS> MTOOLS_FORCEINLINE void FigureCanvas<N>::operator()(const FIGURECLASS & figure, size_t layer)
+		{
+		MTOOLS_INSURE(layer < _nbLayers);
+		Figure::internals_figure::FigureInterface * pf = _copyInPool(figure);			// save a copy of the object in the memory pool
+		_figLayers[layer].insert(pf->boundingBox(), pf);	// add to the corresponding layer. 
+		return;
+		}
+
+
+
+	/* delete all allocated memory TODO: REPLACE A BY BETTER VERSION THAN MALLOC/FREE */
+	template<int N>
+	void FigureCanvas<N>::_deallocateAll()
+		{
+		for (void *  p : _vecallocp) 
+			{
+			((Figure::internals_figure::FigureInterface*)p)->~FigureInterface();	// call dtor
+			free(p);																// free memory
+			}
+		_vecallocp.clear();
+		}
 
 }
 
