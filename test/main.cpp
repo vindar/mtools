@@ -88,13 +88,13 @@ void testplotfigure()
 		*/
 
 
-		fVec2 pos2 = { 5000 * Unif(gen),5000 * Unif(gen) };
-		double rad = 10 * Unif(gen);
+		//fVec2 pos2 = { 5000 * Unif(gen),5000 * Unif(gen) };
+		//double rad = 10 * Unif(gen);
 		fVec2 pos = { L * Unif(gen),L * Unif(gen) };
 		fVec2 P1 = pos;
 		fVec2 P2 = pos + fVec2(Unif(gen), Unif(gen));
 		fVec2 P3 = pos + fVec2(Unif(gen), Unif(gen));
-		fVec2 P4 = P1 + 3.0*(P3 - P2);
+		//fVec2 P4 = P1 + 3.0*(P3 - P2);
 
 		//canvas(Figure::Quad(P1,P2,P3,P4, RGBc::c_Red.getMultOpacity(0.5f), RGBc::c_Red.getMultOpacity(0.5f)), 1);
 
