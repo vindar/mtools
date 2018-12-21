@@ -66,11 +66,11 @@ namespace mtools
 
     size_t randomID()
         {
-		static std::mutex mut;
-		static std::atomic<int> counter = 1; 
+	static std::mutex mut;
+	static std::atomic<int> counter((int)345); 
 		
-		std::lock_guard<std::mutex> lockmut(mut); // lock the mutex
-		counter.fetch_add(7);
+	std::lock_guard<std::mutex> lockmut(mut); // lock the mutex
+	counter.fetch_add(7);
 		
         size_t h[5];		
 		
