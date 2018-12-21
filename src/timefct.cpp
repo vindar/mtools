@@ -57,6 +57,8 @@
 //#include <FL/fl_draw.H>
 
 #include <thread>
+#include <mutex>
+#include <atomic>
 
 namespace mtools
 {
@@ -64,15 +66,26 @@ namespace mtools
 
     size_t randomID()
         {
-        static size_t h[5];
-        std::random_device rd;
+		static std::mutex mut;
+		static std::atomic<int> counter = 1; 
+		
+		std::lock_guard<std::mutex> lockmut(mut); // lock the mutex
+		counter.fetch_add(7);
+		
+        size_t h[5];		
+		
+        std::random_device rd;		
         std::hash<std::random_device::result_type> hash_rd;
         h[0] = hash_rd(rd());      // try to get a real random number 
+		
         std::hash<std::time_t> hash_time;
         h[1] = hash_time(time(nullptr));  // number of seconds since 1970
+		
         std::hash<std::thread::id> hash_thread;
         h[2] = hash_thread(std::this_thread::get_id());  // the thread id
-        h[3]++; // increase counter
+		
+        h[3] = (int)counter; // use counter
+		
     #if defined(__linux__) || defined(__APPLE__)
         auto pid = getpid();  // process id on linux
     #elif _WIN32
@@ -80,6 +93,7 @@ namespace mtools
     #endif
         std::hash<decltype(pid)> hash_pid;
         h[4] = hash_pid(pid);  // process id
+		
         std::string str = toString(h[0]) + "_" + toString(h[1]) + "_" + toString(h[2]) + "_" + toString(h[3]) + "_" + toString(h[4]);
         std::hash<std::string> hash_str;
         return hash_str(str);
