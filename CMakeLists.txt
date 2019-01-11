@@ -40,7 +40,7 @@ if( WIN32 )
 	endif()
         
     # only Debug and Release configurations
-    SET(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "" FORCE)
+    SET(CMAKE_CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo" CACHE STRING "" FORCE)
 
 endif()
 	 
@@ -315,6 +315,16 @@ elseif ()
 endif()
 
 
+# add MTOOLS_DEBUG_FLAG in Debug and RelWithDebInfo configuration mode. 
+if(WIN32)
+	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /DMTOOLS_DEBUG_FLAG")
+	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /DMTOOLS_DEBUG_FLAG")
+else()
+	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DMTOOLS_DEBUG_FLAG")
+	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -DMTOOLS_DEBUG_FLAG")
+endif()
+
+
 ###############################################################################
 # installation of the library
 ###############################################################################
@@ -481,30 +491,38 @@ endif()
 
 
 message(STATUS "")
-
-
+message(STATUS "")
 if (LOCAL_INSTALL)
-    message(STATUS "")
     message(STATUS "  LOCAL_INSTALL = 1  -> mtools will be used locally (no installation)")
-    message(STATUS "")
 else()
-    message(STATUS "")
     message(STATUS "  LOCAL_INSTALL = 0  -> mtools will be installed in")
 	message(STATUS "  CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}")
-    message(STATUS "")    
 endif()
 
-	message(STATUS "")
-	message(STATUS "****************************************************************")
-	message(STATUS "*                     CONFIGURATION DONE.                      *")
-	message(STATUS "*                                                              *")
+message(STATUS "")    
+message(STATUS "")
+
+if (NOT WIN32)
+	message(STATUS "Chosen configuration ${CMAKE_BUILD_TYPE} : [${CMAKE_CXX_FLAGS}]")
+else()
+	message(STATUS "MSVC Configurations: ")
+	message(STATUS "    - Debug : [${CMAKE_CXX_FLAGS_DEBUG}]")
+	message(STATUS "    - RelWithDebInfo : [${CMAKE_CXX_FLAGS_RELWITHDEBINFO}]")
+	message(STATUS "    - Release : [${CMAKE_CXX_FLAGS_RELEASE}]")
+endif()
+
+message(STATUS "")
+message(STATUS "")
+message(STATUS "****************************************************************")
+message(STATUS "*                     CONFIGURATION DONE.                      *")
+message(STATUS "*                                                              *")
 if (NOT WIN32)
 	message(STATUS "* - Run 'make' inside the '/build' sub-directory to build the  *")
 	message(STATUS "*   library                                                    *")
 	message(STATUS "*                                                              *")
 	if (LOCAL_INSTALL)
 	message(STATUS "* - No installation (use the local build tree)                 *")
-	message(STATUS "*   Add the '/tools' subdir to PATH to use 'mtools-config.py'  *")	
+	message(STATUS "*   Add the '/tools' subdir to PATH to use 'mtools-project.py' *")	
 	message(STATUS "*                                                              *")
 	else()
 	message(STATUS "* - Then install it with '[sudo] make install'                 *")
