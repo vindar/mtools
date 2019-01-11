@@ -78,7 +78,7 @@ if( WIN32 )
 	endif()
 	
     # only Debug and Release configurations
-    SET(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "" FORCE)
+    SET(CMAKE_CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo" CACHE STRING "" FORCE)
 	
 endif()
 
@@ -95,6 +95,16 @@ if (NOT WIN32)
 		set(CMAKE_BUILD_TYPE Release)				  # release build is default
 	endif ()
 endif()
+
+# add MTOOLS_DEBUG_FLAG in Debug and RelWithDebInfo configuration mode. 
+if(WIN32)
+	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /DMTOOLS_DEBUG_FLAG")
+	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /DMTOOLS_DEBUG_FLAG")
+else()
+	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DMTOOLS_DEBUG_FLAG")
+	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -DMTOOLS_DEBUG_FLAG")
+endif()
+
 
 find_package(mtools REQUIRED)
 
@@ -120,6 +130,23 @@ set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT "
 # move CMake specific project inside filter "CMakePredefinedTargets".
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(PREDEFINED_TARGETS_FOLDER "CustomTargets")
+
+
+message(STATUS "")
+message(STATUS "")
+if(WIN32)
+	message(STATUS "Project ${PROJECT_NAME} created for MSVC with configurations")
+	message(STATUS "")
+	message(STATUS "    - Debug : [${CMAKE_CXX_FLAGS_DEBUG}]")
+	message(STATUS "    - RelWithDebInfo : [${CMAKE_CXX_FLAGS_RELWITHDEBINFO}]")
+	message(STATUS "    - Release : [${CMAKE_CXX_FLAGS_RELEASE}]")
+else()
+	message(STATUS "Project ${PROJECT_NAME} created for make with configuration")
+	message(STATUS "")
+	message(STATUS "    - ${CMAKE_BUILD_TYPE} : [${CMAKE_CXX_FLAGS}]")
+endif()
+message(STATUS "")
+message(STATUS "")
 
 
 #end of file
