@@ -29,8 +29,19 @@
 
 namespace mtools
     {
+
+
+	void setErrorCallback(mtools_error_cb cb) { internals_error::_error_cb = cb; }
+
+
+	void removeErrorCallBack() { internals_error::_error_cb = nullptr; }
+
+
     namespace internals_error
         {
+
+		mtools_error_cb _error_cb = nullptr; // the error callback function
+
 
         std::string truncateFilename(std::string s)
             {

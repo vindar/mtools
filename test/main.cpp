@@ -258,17 +258,28 @@ void testCF()
 
 
 
-
-
-
-
-
+void error_cb(const std::string & title, const std::string & msg)
+	{
+	cout << title << "\n" << msg;
+	}
 
 
 
 int main(int argc, char *argv[])
 	{
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
+
+
+	mtools::setErrorCallback(error_cb); 
+
+
+	MTOOLS_ASSERT(1==2 , 20 << "blop"); 
+
+
+
+	cout << "azerty";
+	cout.getKey(); 
+
 	testplotfigure();
 	return 0;
 	}
