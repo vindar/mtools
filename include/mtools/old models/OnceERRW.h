@@ -47,12 +47,8 @@ int main (int argc, char *argv[])
 
 #include <cstdio>
 #include <windows.h>
+#include <string>
 
-
-using namespace mylib::mathgraph;
-using namespace mylib::containers;
-using namespace mylib::graphics;
-using namespace mylib::random;
 
 namespace mylib
 {
@@ -182,13 +178,14 @@ public:
 	***************************************************************/
 	std::string info() const
 		{
-		std::string s = "Edge Reinforced Random Walk ERRW\n";
-		s += "  -> reinforcement parameter delta   = " + tostring(delta) + "\n";
-		s += "  -> number of steps done            = " + tostring(step) + "\n";
-		s += "  -> number of visited sites         = " + tostring(N) + "\n";
-		s += "  -> number of return to origin      = " + tostring(nbreturn) + "\n";
-		s += "  -> current position of the walk  X = " + tostring(x) + "   Y = " + tostring(y) + "\n\n";
-		return s;
+		OSS os; 
+		os << "Edge Reinforced Random Walk ERRW\n";
+		os << "  -> reinforcement parameter delta   = " << delta << "\n";
+		os << "  -> number of steps done            = " << step << "\n";
+		os << "  -> number of visited sites         = " << N << "\n";
+		os << "  -> number of return to origin      = " << nbreturn << "\n";
+		os << "  -> current position of the walk  X = " << x << "   Y = " << y << "\n\n";
+		return os.str();
 		}
 
 

@@ -273,6 +273,7 @@ int main(int argc, char *argv[])
 	mtools::ostringstream os; 
 
 
+
 	fVec2 d(1, 2);
 
 	os << "Hello wrold : " << 123 << " - " << d << "\n" << std::tuple<double, int, char>(12.3, 4, 'c') << "\n";

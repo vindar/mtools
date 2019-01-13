@@ -525,7 +525,7 @@ namespace mtools
 																											 **/
 		SingleObjectAllocator() throw() : _memPool(new MemPoolType()), _count(new size_t(1))
 		{
-			MTOOLS_DEBUG(std::string("SingleObjectAllocator ctor with T=[") + typeid(T).name() + "] size " + mtools::toString(sizeof(T)) + " AllocSize = " + mtools::toString(AllocSize) + " poolSize = " + mtools::toString(PoolSize));
+			MTOOLS_DEBUG("SingleObjectAllocator ctor with T=[" << typeid(T).name() << "] size " << sizeof(T) << " AllocSize = " << AllocSize << " poolSize = " << PoolSize);
 		}
 
 
@@ -535,7 +535,7 @@ namespace mtools
 		SingleObjectAllocator(const SingleObjectAllocator & alloc) throw() : _memPool((MemPoolType*)alloc._memPool), _count(alloc._count)
 		{
 			(*_count)++;
-			MTOOLS_DEBUG(std::string("SingleObjectAllocator copy ctor with T=[") + typeid(T).name() + "] size " + mtools::toString(sizeof(T)) + " AllocSize = " + mtools::toString(AllocSize) + " poolSize = " + mtools::toString(PoolSize));
+			MTOOLS_DEBUG("SingleObjectAllocator copy ctor with T=[" << typeid(T).name() << "] size " << sizeof(T) << " AllocSize = " << AllocSize << " poolSize = " << PoolSize);
 		}
 
 
@@ -546,7 +546,7 @@ namespace mtools
 		{
 			static_assert(sizeof(U) < AllocSize, "Copy constructor to a type U which is larger than AllocSize. Try increasing the AllocSize template parameter");
 			(*_count)++;
-			MTOOLS_DEBUG(std::string("SingleObjectAllocator copy ctor from T=[") + typeid(T).name() + "] size " + mtools::toString(sizeof(T)) + " to " + typeid(U).name() + "] size " + mtools::toString(sizeof(U)) + " AllocSize = " + mtools::toString(AllocSize) + " poolSize = " + mtools::toString(PoolSize));
+			MTOOLS_DEBUG("SingleObjectAllocator copy ctor from T=[" << typeid(T).name() << "] size " << sizeof(T) << " to " << typeid(U).name() << "] size " << sizeof(U) << " AllocSize = "  << AllocSize << " poolSize = " << PoolSize);
 		}
 
 
@@ -557,7 +557,7 @@ namespace mtools
 		{
 			alloc._count = nullptr;
 			alloc._memPool = nullptr;
-			MTOOLS_DEBUG(std::string("SingleObjectAllocator move ctor with T=[") + typeid(T).name() + "] size " + mtools::toString(sizeof(T)) + " AllocSize = " + mtools::toString(AllocSize) + " poolSize = " + mtools::toString(PoolSize));
+			MTOOLS_DEBUG("SingleObjectAllocator move ctor with T=[" << typeid(T).name() << "] size " << sizeof(T) << " AllocSize = " << AllocSize << " poolSize = "  << PoolSize);
 		}
 
 
@@ -566,14 +566,14 @@ namespace mtools
 		**/
 		~SingleObjectAllocator()
 		{
-			MTOOLS_DEBUG(std::string("SingleObjectAllocator destructor with T=[") + typeid(T).name() + "] size " + mtools::toString(sizeof(T)) + " AllocSize = " + mtools::toString(AllocSize) + " poolSize = " + mtools::toString(PoolSize));
+			MTOOLS_DEBUG("SingleObjectAllocator destructor with T=[" << typeid(T).name() << "] size " << sizeof(T) << " AllocSize = " << AllocSize << " poolSize = " << PoolSize);
 			if (_count == nullptr) return; // empty object, do nothing
 			(*_count)--;
 			if ((*_count) == 0)
 			{
 				delete _memPool;
 				delete _count;
-				MTOOLS_DEBUG(std::string("Last instance of SingleObjectAllocator, deleting also the memory pool"));
+				MTOOLS_DEBUG("Last instance of SingleObjectAllocator, deleting also the memory pool");
 			}
 		}
 
@@ -600,7 +600,7 @@ namespace mtools
 		**/
 		pointer allocate(size_type n = 1, const void* hint = 0)
 		{
-			if (n != 1) { MTOOLS_ERROR(std::string("SingleObjectAllocator<") + typeid(T).name() + ", " + mtools::toString(AllocSize) + ", " + mtools::toString(PoolSize) + ">::allocate. Trying to allocate " + mtools::toString(n) + " objects simultaneously (must be 1)."); }
+			if (n != 1) { MTOOLS_ERROR("SingleObjectAllocator<" << typeid(T).name() << ", " << AllocSize << ", " << PoolSize << ">::allocate. Trying to allocate " << n << " objects simultaneously (must be 1)."); }
 			return (pointer)(_memPool->malloc());
 		}
 
@@ -613,7 +613,7 @@ namespace mtools
 		**/
 		void deallocate(void* p, size_type n = 1)
 		{
-			if (n != 1) { MTOOLS_ERROR(std::string("SingleObjectAllocator<") + typeid(T).name() + ", " + mtools::toString(AllocSize) + ", " + mtools::toString(PoolSize) + ">::deallocate. Trying to deallocate " + mtools::toString(n) + " objects simultaneously (should be 1)"); }
+			if (n != 1) { MTOOLS_ERROR("SingleObjectAllocator<" << typeid(T).name() << ", " << AllocSize << ", " << PoolSize << ">::deallocate. Trying to deallocate " << n << " objects simultaneously (should be 1)"); }
 			if (_count == nullptr) return; // empty object, do nothing
 			_memPool->free(p);
 		}
@@ -718,13 +718,14 @@ namespace mtools
 		* @return  A std::string that with info about the current object state.
 		**/
 		std::string toString() const
-		{
-			std::string s = std::string("SingleObjectAllocator<") + typeid(T).name() + ", " + mtools::toString(AllocSize) + ", " + mtools::toString(PoolSize) + ">\n";
-			s += std::string(" - object count : ") + mtools::toString(_count) + "\n";
-			s += std::string(" - memory pool adress : ") + mtools::toString(_memPool) + "\n --- Memory pool info ---\n";
-			s += _memPool->toString() + "---\n";
-			return s;
-		}
+			{
+			OSS os; 
+			os << "SingleObjectAllocator<" << typeid(T).name() << ", " << AllocSize << ", " << PoolSize << ">\n";
+			os << " - object count : " << _count << "\n";
+			os << " - memory pool adress : " << _memPool << "\n --- Memory pool info ---\n";
+			os << _memPool->toString() << "---\n";
+			return os.str();
+			}
 
 
 

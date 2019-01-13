@@ -127,7 +127,7 @@ namespace mtools
                         { // no value yet. 
                         if (!interactive)
                             {
-                            if (!opt.hasdefaultvalue) { MTOOLS_ERROR(std::string("Error : command line argument [") + _name + "] has neither value nor default value..."); }
+                            if (!opt.hasdefaultvalue) { MTOOLS_ERROR("Error : command line argument [" << _name << "] has neither value nor default value..."); }
                             opt.value = opt.defaultvalue;
                             }
                         else
@@ -209,7 +209,7 @@ namespace mtools
                 /** return a proxy to a given option, create the option if it does not exist yet **/
                 static ProxyArg _get(std::string  str, std::string defaultvalue, bool hasdefaultvalue)
                     {
-                    if (!internals_commandarg::parsed) { MTOOLS_ERROR(std::string("The command line was not yet parsed using parseCommandine().")); }
+                    if (!internals_commandarg::parsed) { MTOOLS_ERROR("The command line was not yet parsed using parseCommandine()."); }
                     removeMinus(str);  // remove leading '-' if any
                     std::string name, val;
                     if (parseArg(str, name, val)) // get theo ption name (and possible default value)
@@ -332,7 +332,7 @@ namespace mtools
                 { // option
                 std::string name, value;
                 bool hasvalue = internals_commandarg::parseArg(str, name, value);
-                if (internals_commandarg::mapOpt.find(internals_commandarg::optName(name)) != internals_commandarg::mapOpt.end()) { MTOOLS_ERROR(std::string("parseCommandLine() error, option [") + name + "] already defined."); }
+                if (internals_commandarg::mapOpt.find(internals_commandarg::optName(name)) != internals_commandarg::mapOpt.end()) { MTOOLS_ERROR("parseCommandLine() error, option [" << name << "] already defined."); }
                 internals_commandarg::mapOpt.insert(std::pair< std::string, internals_commandarg::OptObj>(name, internals_commandarg::OptObj(hasvalue, false, value, std::string(""))));
                 }
             else

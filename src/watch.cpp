@@ -134,7 +134,7 @@ namespace mtools
                     {
                     // make sure that the variable is being watched
                     auto it = mapspied.find(name);
-                    if (it == mapspied.end()) { MTOOLS_ERROR(std::string("FltkWatchWin::remove(), variable with name [") + name + "] does not exist"); }
+                    if (it == mapspied.end()) { MTOOLS_ERROR("FltkWatchWin::remove(), variable with name [" << name << "] does not exist"); }
                     WatchObj * obj = it->second;
                     removeTimers(obj);                   // remove all timers
                     detachWindow(obj,reposition);        // remove the fltk button window from the watch window and reposition if required
@@ -151,7 +151,7 @@ namespace mtools
                     {
                     // make sure that the variable is being watched
                     auto it = mapspied.find(name);
-                    if (it == mapspied.end()) { MTOOLS_ERROR(std::string("FltkWatchWin::refreshRate(), variable with name [") + name + "] does not exist"); }
+                    if (it == mapspied.end()) { MTOOLS_ERROR("FltkWatchWin::refreshRate(), variable with name [" << name << "] does not exist"); }
                     WatchObj * obj = it->second;
                     obj->refreshRate(newrate);
                     removeTimers(obj);
@@ -168,7 +168,7 @@ namespace mtools
                 void add(const std::string & name, WatchObj * obj)
                     {
                     // make sure that no variable with the same identifer exist
-                    if (mapspied.find(name) != mapspied.end()) { MTOOLS_ERROR(std::string("FltkWatchWin::add(), variable with name [") + name + "] is already in watch window"); }
+                    if (mapspied.find(name) != mapspied.end()) { MTOOLS_ERROR("FltkWatchWin::add(), variable with name [" << name << "] is already in watch window"); }
                     attachWindow(obj); // create the fltk windows
                     mapspied[name] = obj;   // insert in the map
                     createTimer(obj); // set an update timer

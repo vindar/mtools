@@ -66,7 +66,7 @@ namespace mtools
 			mtools::cout << "Selecting platform : [" << mtools::troncateAfterNullChar(platformList[i].getInfo<CL_PLATFORM_NAME>()) << "]\n";
 			return platformList[i];
 			}
-		catch (const cl::Error & e) { MTOOLS_ERROR(std::string("OpenCL error :[") + e.what() + "]\n"); }
+		catch (const cl::Error & e) { MTOOLS_ERROR("OpenCL error :[" << e.what() << "]\n"); }
 		throw ""; // used to remove warning
 		}
 
@@ -98,7 +98,7 @@ namespace mtools
 			if (output) { mtools::cout << "Selecting device : [" << mtools::troncateAfterNullChar(deviceList[i].getInfo<CL_DEVICE_NAME>()) << "]\n"; }
 			return deviceList[i];
 			}
-		catch (const cl::Error & e) { MTOOLS_ERROR(std::string("OpenCL error :[") + e.what() + "]\n"); }
+		catch (const cl::Error & e) { MTOOLS_ERROR("OpenCL error :[" << e.what() << "]\n"); }
 		throw ""; // used to remove warning
 		}
 
@@ -114,7 +114,7 @@ namespace mtools
 				}
 			return context;
 			}
-		catch (const cl::Error & e) { MTOOLS_ERROR(std::string("OpenCL error :[") + e.what() + "]\n"); }
+		catch (const cl::Error & e) { MTOOLS_ERROR("OpenCL error :[" << e.what() << "]\n"); }
 		throw ""; // used to remove warning
 		}
 
@@ -130,7 +130,7 @@ namespace mtools
 				}
 			return queue;
 			}
-		catch (const cl::Error & e) { MTOOLS_ERROR(std::string("OpenCL error :[") + e.what() + "]\n"); }
+		catch (const cl::Error & e) { MTOOLS_ERROR("OpenCL error :[" << e.what() << "]\n"); }
 		throw ""; // used to remove warning
 		}
 
@@ -145,7 +145,7 @@ namespace mtools
 			context = openCL_createContext(device, output);
 			queue = openCL_createQueue(device, context, output);
 			}
-		catch (const cl::Error & e) { MTOOLS_ERROR(std::string("OpenCL error :[") + e.what() + "]\n"); }
+		catch (const cl::Error & e) { MTOOLS_ERROR("OpenCL error :[" << e.what() << "]\n"); }
 		throw ""; // used to remove warning
 		}
 
@@ -161,7 +161,7 @@ namespace mtools
 				mtools::cout << "    with options : [" << compileroptions << "]\n";
 				}
 			std::string text = mtools::loadStringFromFile(filename);
-			if (text.length() == 0) { MTOOLS_ERROR(std::string("error loading file [") + filename + "]"); }
+			if (text.length() == 0) { MTOOLS_ERROR("error loading file [" << filename << "]"); }
 			cl::Program prog(context, text);
 			std::vector<cl::Device> listdevice; listdevice.push_back(device);
 			try {
@@ -177,7 +177,7 @@ namespace mtools
 					mtools::cout << textlog << "\n\n";
 					mtools::cout.getKey();
 					}
-				MTOOLS_ERROR(std::string("OpenCL error [") + e.what() + "]\nwhile building file [" + filename + "]\nwith options [" + compileroptions + "]\n");
+				MTOOLS_ERROR("OpenCL error [" << e.what() << "]\nwhile building file [" << filename << "]\nwith options [" << compileroptions << "]\n");
 				}
 			std::string textlog = mtools::troncateAfterNullChar(prog.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device));
 			mtools::saveStringToFile(filename + ".log", textlog);
@@ -188,7 +188,7 @@ namespace mtools
 				}
 			return prog;
 			}
-		catch (const cl::Error & e) { MTOOLS_ERROR(std::string("OpenCL error :[") + e.what() + "]\n"); }
+		catch (const cl::Error & e) { MTOOLS_ERROR("OpenCL error :[" << e.what() << "]\n"); }
 		throw ""; // used to remove warning
 		}
 
@@ -215,7 +215,7 @@ namespace mtools
 				mtools::cout << "*** build error ***\nlog file:\n";
 				mtools::cout << log << "\n\n";
 				mtools::cout.getKey();
-				MTOOLS_ERROR(std::string("OpenCL error [") + e.what() + "]\nwhile building program from std::string\nwith options [" + compileroptions + "]\n");
+				MTOOLS_ERROR("OpenCL error [" << e.what() << "]\nwhile building program from std::string\nwith options [" << compileroptions << "]\n");
 				}
 			log = mtools::troncateAfterNullChar(prog.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device));
 			if (output)
@@ -225,7 +225,7 @@ namespace mtools
 				}
 			return prog;
 			}
-		catch (const cl::Error & e) { MTOOLS_ERROR(std::string("OpenCL error :[") + e.what() + "]\n"); }
+		catch (const cl::Error & e) { MTOOLS_ERROR("OpenCL error :[" << e.what() << "]\n"); }
 		throw ""; // used to remove warning
 		}
 
@@ -242,7 +242,7 @@ namespace mtools
 			if (output) { mtools::cout << "Extraction successful.\n"; }
 			return kernel;
 			}
-		catch (const cl::Error & e) { MTOOLS_ERROR(std::string("OpenCL error :[") + e.what() + "]\n"); }
+		catch (const cl::Error & e) { MTOOLS_ERROR("OpenCL error :[" << e.what() << "]\n"); }
 		throw ""; // used to remove warning
 		}
 

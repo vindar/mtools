@@ -259,7 +259,7 @@ namespace mtools
 
 			for (size_t i = newsize; i < l; i++)
 				{
-				if (_perm[i] < newsize) { MTOOLS_ERROR(std::string("Subset is not stable: perm[") + mtools::toString(i) + "]=" + mtools::toString(_perm[i]) + " < newsize = " + mtools::toString(newsize)); }
+				if (_perm[i] < newsize) { MTOOLS_ERROR("Subset is not stable: perm[" << i << "]="  << _perm[i] << " < newsize = " << newsize); }
 				}
 			_perm.resize(newsize); _invperm.resize(newsize);
 			}

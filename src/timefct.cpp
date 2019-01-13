@@ -94,9 +94,10 @@ namespace mtools
         std::hash<decltype(pid)> hash_pid;
         h[4] = hash_pid(pid);  // process id
 		
-        std::string str = toString(h[0]) + "_" + toString(h[1]) + "_" + toString(h[2]) + "_" + toString(h[3]) + "_" + toString(h[4]);
+		OSS os; 
+		os << h[0] << "_" << h[1] << "_" << h[2] <<  "_" << h[3] <<  "_" << h[4];
         std::hash<std::string> hash_str;
-        return hash_str(str);
+        return hash_str(os.str());
         }
 
 
@@ -114,7 +115,7 @@ namespace mtools
 
     std::string durationToString(uint64 milliseconds, bool printMilliseconds)
         {
-        std::string res;
+		OSS os;
         uint64 days = milliseconds / (1000 * 60 * 60 * 24);
         milliseconds = milliseconds % (1000 * 60 * 60 * 24);
         uint64 hours = milliseconds / (1000 * 60 * 60);
@@ -123,12 +124,12 @@ namespace mtools
         milliseconds = milliseconds % (1000 * 60);
         uint64 sec = milliseconds / 1000;
         milliseconds = milliseconds % 1000;
-        if (days)  { res += mtools::toString(days) + ((days == 1) ? " day " : " days "); }
-        if (hours) { res += mtools::toString(hours) + ((hours == 1) ? " hour " : " hours "); }
-        if (min)   { res += mtools::toString(min) + " min. "; }
-        if (sec)   { res += mtools::toString(sec) + " sec. "; }
-        if ((printMilliseconds) && (milliseconds)) { res += mtools::toString(milliseconds) + " ms. "; }
-        return res;
+        if (days)  { os << days << ((days == 1) ? " day " : " days "); }
+        if (hours) { os << hours << ((hours == 1) ? " hour " : " hours "); }
+        if (min)   { os << min << " min. "; }
+        if (sec)   { os << sec << " sec. "; }
+        if ((printMilliseconds) && (milliseconds)) { os << milliseconds << " ms. "; }
+        return os.str();
         }
 
 

@@ -28,23 +28,23 @@ namespace mtools
 	Font::Font(const std::string & filename, int fontsize) : _fontsize(fontsize), _tab()
 		{
 		std::string bff = mtools::loadStringFromFile(filename);
-		if (bff.size() == 0) { MTOOLS_ERROR(std::string("readBFF() : Cannot read file [") + filename + "]"); }
-		if (bff.size() <= 276) { MTOOLS_ERROR(std::string("readBFF() : File [") + filename + "] too small."); }
-		if (((uint8)bff[0] != 0xBF) || ((uint8)bff[1] != 0xF2)) { MTOOLS_ERROR(std::string("readBFF() : incorrect BFF tag for file [") + filename + "]"); }
+		if (bff.size() == 0) { MTOOLS_ERROR("readBFF() : Cannot read file [" << filename << "]"); }
+		if (bff.size() <= 276) { MTOOLS_ERROR("readBFF() : File [" << filename << "] too small."); }
+		if (((uint8)bff[0] != 0xBF) || ((uint8)bff[1] != 0xF2)) { MTOOLS_ERROR("readBFF() : incorrect BFF tag for file [" << filename << "]"); }
 		const uint32 im_lx = *((uint32*)(bff.data() + 2));
 		const uint32 im_ly = *((uint32*)(bff.data() + 6));
 		const uint32 cell_lx = *((uint32*)(bff.data() + 10));
-		if (cell_lx == 0) { MTOOLS_ERROR(std::string("readBFF() : incorrect cell_lx =0 for file [") + filename + "]"); }
+		if (cell_lx == 0) { MTOOLS_ERROR("readBFF() : incorrect cell_lx =0 for file [" << filename << "]"); }
 		const uint32 cell_ly = *((uint32*)(bff.data() + 14));
-		if (cell_ly == 0) { MTOOLS_ERROR(std::string("readBFF() : incorrect cell_ly =0 for file [") + filename + "]"); }
+		if (cell_ly == 0) { MTOOLS_ERROR("readBFF() : incorrect cell_ly =0 for file [" << filename << "]"); }
 		const uint32 nbx = im_lx / cell_lx;
 		const uint32 nby = im_ly / cell_ly;
 		const uint8 bpp = (uint8)bff[18];
-		if (bpp != 32) { MTOOLS_ERROR(std::string("readBFF() : Error, image format must be 32bit. (file [") + filename + "])"); }
-		if (bff.size() < 276 + 4 * im_lx*im_ly) { MTOOLS_ERROR(std::string("readBFF() : Error, file [") + filename + " to small to contain the whole image."); }
+		if (bpp != 32) { MTOOLS_ERROR("readBFF() : Error, image format must be 32bit. (file [" << filename << "])"); }
+		if (bff.size() < 276 + 4 * im_lx*im_ly) { MTOOLS_ERROR("readBFF() : Error, file [" << filename << " to small to contain the whole image."); }
 		const uint8 char_offset = (uint8)bff[19];
-		if ((uint32)(256 - char_offset) > nbx*nby) { MTOOLS_ERROR(std::string("readBFF() : Error, the image cannot contain all the glyphs (file [") + filename + "])"); }
-		if (_fontsize <= 0) _fontsize = cell_ly; else if (_fontsize > cell_ly) { MTOOLS_ERROR(std::string("readBFF() : Error, the fontsize is larger than cell_ly (file [") + filename + "])"); }
+		if ((uint32)(256 - char_offset) > nbx*nby) { MTOOLS_ERROR("readBFF() : Error, the image cannot contain all the glyphs (file [" << filename << "])"); }
+		if (_fontsize <= 0) _fontsize = cell_ly; else if (_fontsize > cell_ly) { MTOOLS_ERROR("readBFF() : Error, the fontsize is larger than cell_ly (file [" << filename << "])"); }
 		// file is ok. we load the image. 
 		Image im(im_lx, im_ly);
 		for (uint32 j = 0; j < im_ly; j++)

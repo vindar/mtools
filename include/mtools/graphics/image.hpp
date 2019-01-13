@@ -11756,7 +11756,7 @@ namespace mtools
 				{
 				size_t memsize = 16 + (size_t)((databuffer == nullptr) ? (4*ly*stride) : 0); // 16 byte + the image buffer size if needed.
 				_deletepointer = (uint32*)malloc(memsize);
-				if (_deletepointer == nullptr) { MTOOLS_ERROR(std::string("malloc error: cannot allocate ") + mtools::toStringMemSize(memsize)); }
+				if (_deletepointer == nullptr) { MTOOLS_ERROR("malloc error: cannot allocate " << mtools::toStringMemSize(memsize)); }
 				_deletepointer[0] = 1; // set reference count to 1
 				((uint32**)_deletepointer)[1] = (databuffer == nullptr) ? _deletepointer : (uint32*)databuffer; // use to track the beginning of the buffer. 
 				_data = (databuffer == nullptr) ? ((RGBc*)(_deletepointer + 4)) : databuffer; // if allocated, buffer start 16 bytes (4 uint32) after the deletepointr.

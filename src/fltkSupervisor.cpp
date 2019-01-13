@@ -144,7 +144,7 @@ namespace mtools
                     size_t s = _exitCbList.size();
                     _exitCbList.remove(std::pair<cbFltkExit, void*>(cb, data));
                     int n = (int)(s - _exitCbList.size());
-                    if (n == 0) MTOOLS_DEBUG("No matching call back found."); else MTOOLS_DEBUG(mtools::toString(n) + " matching callbacks removed.");
+                    if (n == 0) MTOOLS_DEBUG("No matching call back found."); else MTOOLS_DEBUG(n << " matching callbacks removed.");
                     return n;
                     }
 
@@ -167,7 +167,7 @@ namespace mtools
                         }
                     std::lock_guard<std::recursive_mutex> lock(_muthread);
                     _startThread(); // try to start the thread if not up
-                    if (status() != THREAD_ON) { MTOOLS_DEBUG(std::string("Cannot run the method: thread has status ") + mtools::toString(status())); return false; }
+                    if (status() != THREAD_ON) { MTOOLS_DEBUG("Cannot run the method: thread has status " << status()); return false; }
                     std::unique_lock<std::mutex> lck(_cvmut);
                     Msg ms(proxycall, Msg::RUN_MSG);
                     _msgQueue.pushTop(&ms);
@@ -208,7 +208,7 @@ namespace mtools
                         }
                     std::lock_guard<std::recursive_mutex> lock(_muthread);
                     _startThread(); // try to start the thread if not up
-                    if (status() != THREAD_ON) { MTOOLS_DEBUG(std::string("Cannot construct the object: thread has status ") + mtools::toString(status())); return false; }
+                    if (status() != THREAD_ON) { MTOOLS_DEBUG("Cannot construct the object: thread has status " << status()); return false; }
                     std::unique_lock<std::mutex> lck(_cvmut);
                     Msg ms(proxy, Msg::NEW_MSG); // create the message
                     _msgQueue.pushTop(&ms);
@@ -250,7 +250,7 @@ namespace mtools
                     std::lock_guard<std::recursive_mutex> lock(_muthread);
                     if (status() != THREAD_ON)
                         {
-                        MTOOLS_DEBUG(std::string("Calling FltkSupervisor::deleteInFltk() while thread has status ") + mtools::toString(status()));
+                        MTOOLS_DEBUG("Calling FltkSupervisor::deleteInFltk() while thread has status " << status());
                         if (deleteAlways)
                             {
                             MTOOLS_DEBUG("destroying object anyway");
@@ -290,7 +290,7 @@ namespace mtools
                     {
                     if (isFltkThread()) { MTOOLS_DEBUG("Calling FltkSupervisor::stopThread() from the fltk thread itself : do nothing !"); return; }
                     std::lock_guard<std::recursive_mutex> lock(_muthread);
-                    if (status() != THREAD_ON) { MTOOLS_DEBUG(std::string("Calling FltkSupervisor::stopThread() while thread has status ") + mtools::toString(status())); return; }
+                    if (status() != THREAD_ON) { MTOOLS_DEBUG("Calling FltkSupervisor::stopThread() while thread has status " << status()); return; }
                     MTOOLS_DEBUG("Stopping the FLTK thread...");
                     Fl::awake();
                     _status = THREAD_STOPPING;
@@ -378,7 +378,7 @@ namespace mtools
                     try
                         {
                         _fltkid = std::this_thread::get_id();
-                        MTOOLS_DEBUG(" **** START: FLTK Loop " + toString(_fltkid) + " ****.");
+                        MTOOLS_DEBUG(" **** START: FLTK Loop " << _fltkid << " ****.");
                         Fl::lock();
                         Fl::args(0, nullptr);
                         Fl::awake();
@@ -395,18 +395,18 @@ namespace mtools
                                     }
                                 }
                             }
-                        MTOOLS_DEBUG(std::string(" **** fltk exit callback (") + mtools::toString(_exitCbList.size()) + ") ****.");
+                        MTOOLS_DEBUG(" **** fltk exit callback (" << _exitCbList.size() << ") ****.");
                         int icb = 0;
                         for (auto it = _exitCbList.begin(); it != _exitCbList.end(); ++it)
                             {
                             ++icb;
-                            MTOOLS_DEBUG(std::string("Calling callback ") + mtools::toString(icb) + "..." );
+                            MTOOLS_DEBUG("Calling callback " << icb << "...");
                             (it->first)(it->second);
                             MTOOLS_DEBUG("... done !");
                             }
                         _exitCbList.clear();
                         Fl::unlock();
-                        MTOOLS_DEBUG(" **** STOP: FLTK Loop " + mtools::toString(_fltkid) + " ****.");
+                        MTOOLS_DEBUG(" **** STOP: FLTK Loop " << _fltkid << " ****.");
                         _status = THREAD_STOPPED;
                         return;
                         }
@@ -437,10 +437,10 @@ namespace mtools
 
             #ifdef MTOOLS_SWAP_THREADS_FLAG
                     if (status() == THREAD_NOT_STARTED) { MTOOLS_DEBUG("Calling FltkSupervisor::startThread() before barrier()  when MTOOLS_SWAP_THREADS_FLAG is set. Do nothing."); return; }
-                    MTOOLS_DEBUG(std::string("Calling FltkSupervisor::startThread() while thread has status ") + mtools::toString(status())); return;
+                    MTOOLS_DEBUG("Calling FltkSupervisor::startThread() while thread has status " << status()); return;
                     return;
             #else
-                    if (status() != THREAD_NOT_STARTED) { MTOOLS_DEBUG(std::string("Calling FltkSupervisor::startThread() while thread has status ") + mtools::toString(status())); return; }
+                    if (status() != THREAD_NOT_STARTED) { MTOOLS_DEBUG("Calling FltkSupervisor::startThread() while thread has status " << status()); return; }
                     MTOOLS_DEBUG(" Starting the FLTK Thread...");
                     _th = new std::thread(&FltkSupervisor::_threadProc, this);
                     waitThreadReady();

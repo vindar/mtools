@@ -580,23 +580,23 @@ namespace mtools
 			mtools::Mobius<FPTYPE> M(hypcx); // Mobius transformation that centers the circle C(x) around 0 (M is an involution)
 
 			FPTYPE rx = distStoR(srad[ix]);					// radius of C(x) when it is centered on 0
-			if ((strictMaths) && ((rx == (FPTYPE)0.0))) { MTOOLS_ERROR(std::string("Precision error A. null radius (site ") + mtools::toString(ix) + ")"); }
-			if ((strictMaths) && ((std::isnan(rx))))    { MTOOLS_ERROR(std::string("Precision error A. NaN (site ") + mtools::toString(ix) + ")"); }
+			if ((strictMaths) && ((rx == (FPTYPE)0.0))) { MTOOLS_ERROR("Precision error A. null radius (site " << ix << ")"); }
+			if ((strictMaths) && ((std::isnan(rx))))    { MTOOLS_ERROR("Precision error A. NaN (site " << ix << ")"); }
 			FPTYPE ry = tangentCircleStoR(rx, srad[iy]);	// radius of C(y) when C(x) centered on 0
-			if ((strictMaths) && ((ry == (FPTYPE)0.0))) { MTOOLS_ERROR(std::string("Precision error B. null radius (site ") + mtools::toString(iy) + ")"); }
-			if ((strictMaths) && ((std::isnan(ry))))    { MTOOLS_ERROR(std::string("Precision error B. NaN (site ") + mtools::toString(iy) + ")"); }
+			if ((strictMaths) && ((ry == (FPTYPE)0.0))) { MTOOLS_ERROR("Precision error B. null radius (site " << iy << ")"); }
+			if ((strictMaths) && ((std::isnan(ry))))    { MTOOLS_ERROR("Precision error B. NaN (site " << iy << ")"); }
 			FPTYPE rz = tangentCircleStoR(rx, srad[iz]);	// radius of C(z) when C(x) centered on 0
-			if ((strictMaths) && ((rz == (FPTYPE)0.0))) { MTOOLS_ERROR(std::string("Precision error C. null radius (site ") + mtools::toString(iz) + ")"); }
-			if ((strictMaths) && ((std::isnan(rz))))    { MTOOLS_ERROR(std::string("Precision error C. NaN (site ") + mtools::toString(iz) + ")"); }
+			if ((strictMaths) && ((rz == (FPTYPE)0.0))) { MTOOLS_ERROR("Precision error C. null radius (site " << iz << ")"); }
+			if ((strictMaths) && ((std::isnan(rz))))    { MTOOLS_ERROR("Precision error C. NaN (site " << iz << ")"); }
 
 			const FPTYPE & alpha = internals_circlepacking::angleEuclidian(rx, ry, rz); // angle <y,x,z>
-			if ((strictMaths) && (isnan(alpha))) { MTOOLS_ERROR(std::string("Precision error D. null alpha (site ") + mtools::toString(iz) + ")"); }
+			if ((strictMaths) && (isnan(alpha))) { MTOOLS_ERROR("Precision error D. null alpha (site " << iz << ")"); }
 
 			const Circle<FPTYPE> Cy = M*circle[iy];	// position of C(y) after the tranformation M (ie when C(x) is centered at 0)
 
 			auto w = (Cy.center)*complex<FPTYPE>(cos(alpha), sin(alpha)); // apply a rotation of angle alpha to the center of C(y)
 			const FPTYPE norm = std::abs(w); // resize the lenght of the vector to be rx + rz.
-			if (norm > (FPTYPE)0.0) { w /= norm; w *= (rx + rz); } else { if (strictMaths) { MTOOLS_ERROR(std::string("Precision error E (site ") + mtools::toString(iz) + ")"); } }
+			if (norm > (FPTYPE)0.0) { w /= norm; w *= (rx + rz); } else { if (strictMaths) { MTOOLS_ERROR("Precision error E (site " << iz << ")"); } }
 
 			const Circle<FPTYPE> Cz(w, rz); // position of C(z) when C(x) is centered.
 			circle[iz] = (M*Cz);			// move back to the correct position by applying the inverse tranformation.
@@ -633,14 +633,14 @@ namespace mtools
 							const FPTYPE & ry = circle[iy].radius;
 							const FPTYPE rz = 1 / (1 / rx + 1 / ry - 1 + 2 * sqrt(1 / (rx*ry) - 1 / ry - 1 / rx)); // soddy circles theorem :-)
 							const FPTYPE & alpha = internals_circlepacking::angleEuclidian(rx, ry, rz);
-							if ((strictMaths) && (isnan(alpha))) { MTOOLS_ERROR(std::string("Precision error D. null alpha (site ") + mtools::toString(iz) + ")"); }
+							if ((strictMaths) && (isnan(alpha))) { MTOOLS_ERROR("Precision error D. null alpha (site " << iz << ")"); }
 							auto w = circle[iy].center - circle[ix].center;
 							w = w*complex<FPTYPE>(cos(alpha), sin(alpha));
 							const FPTYPE norm = std::abs(w);
 							if (norm != (FPTYPE)0.0) { w /= norm; w *= (rx + rz); }
-							else { if (strictMaths) { MTOOLS_ERROR(std::string("Precision error E (site ") + mtools::toString(iz) + ")"); } }
+							else { if (strictMaths) { MTOOLS_ERROR("Precision error E (site " << iz << ")"); } }
 							circle[iz].center = circle[ix].center + w;
-							if ((circle[iz].center == circle[iy].center) || (circle[iz].center == circle[ix].center)) { if (strictMaths) { MTOOLS_ERROR(std::string("Precision error F (site ") + mtools::toString(iz) + ")"); } }
+							if ((circle[iz].center == circle[iy].center) || (circle[iz].center == circle[ix].center)) { if (strictMaths) { MTOOLS_ERROR("Precision error F (site " << iz << ")"); } }
 							circle[iz].radius = rz;
 							laidvec[iz] = 1;
 							break;
@@ -685,17 +685,17 @@ namespace mtools
 
 		internals_circlepacking::layoutExplorer(graph, v0, v1, (boundary[v1] <= 0), [&](int ix, int iy, int iz)->bool
 			{
-			const FPTYPE & rx = rad[ix]; if ((strictMaths) && ((rx == (FPTYPE)0.0) || (isnan(rx)))) { MTOOLS_ERROR(std::string("Precision error A. null radius (site ") + mtools::toString(ix) + ")"); }
-			const FPTYPE & ry = rad[iy]; if ((strictMaths) && ((ry == (FPTYPE)0.0) || (isnan(ry)))) { MTOOLS_ERROR(std::string("Precision error B. null radius (site ") + mtools::toString(iy) + ")"); }
-			const FPTYPE & rz = rad[iz]; if ((strictMaths) && ((rz == (FPTYPE)0.0) || (isnan(rz)))) { MTOOLS_ERROR(std::string("Precision error C. null radius (site ") + mtools::toString(iz) + ")"); }
+			const FPTYPE & rx = rad[ix]; if ((strictMaths) && ((rx == (FPTYPE)0.0) || (isnan(rx)))) { MTOOLS_ERROR("Precision error A. null radius (site "<< ix << ")"); }
+			const FPTYPE & ry = rad[iy]; if ((strictMaths) && ((ry == (FPTYPE)0.0) || (isnan(ry)))) { MTOOLS_ERROR("Precision error B. null radius (site " << iy << ")"); }
+			const FPTYPE & rz = rad[iz]; if ((strictMaths) && ((rz == (FPTYPE)0.0) || (isnan(rz)))) { MTOOLS_ERROR("Precision error C. null radius (site " << iz <<")"); }
 			const FPTYPE & alpha = internals_circlepacking::angleEuclidian(rx, ry, rz);
-			if ((strictMaths) && (isnan(alpha))) { MTOOLS_ERROR(std::string("Precision error D. null alpha (site ") + mtools::toString(iz) + ")"); }
+			if ((strictMaths) && (isnan(alpha))) { MTOOLS_ERROR("Precision error D. null alpha (site " << iz << ")"); }
 			auto w = circle[iy].center - circle[ix].center;
 			w = w*complex<FPTYPE>(cos(alpha), sin(alpha));
 			const FPTYPE norm = std::abs(w);
-			if (norm != (FPTYPE)0.0) { w /= norm; w *= (rx + rz); } else { if (strictMaths) { MTOOLS_ERROR(std::string("Precision error E (site ") + mtools::toString(iz) + ")"); } }
+			if (norm != (FPTYPE)0.0) { w /= norm; w *= (rx + rz); } else { if (strictMaths) { MTOOLS_ERROR("Precision error E (site " << iz << ")"); } }
 			circle[iz].center = circle[ix].center + w;
-			if ((circle[iz].center == circle[iy].center) || (circle[iz].center == circle[ix].center)) { if (strictMaths) { MTOOLS_ERROR(std::string("Precision error F (site ") + mtools::toString(iz) + ")"); } }
+			if ((circle[iz].center == circle[iy].center) || (circle[iz].center == circle[ix].center)) { if (strictMaths) { MTOOLS_ERROR("Precision error F (site " << iz << ")"); } }
 			circle[iz].radius = rad[iz];
 			return (boundary[iz] <= 0);
 			});
