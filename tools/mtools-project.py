@@ -88,29 +88,25 @@ set(CMAKE_C_COMPILER "${MTOOLS_C_COMPILER}" CACHE STRING "" FORCE)
 
 project([PROJECT_NAME_PLH])
 
-if (NOT WIN32)
-	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -Wall") 	# build everything with warning enables 
-	target_compile_options(mtools PUBLIC "-std=c++17")	# recent C++ features
-	if (NOT CMAKE_BUILD_TYPE)
-		set(CMAKE_BUILD_TYPE Release)                   # release is the default build
-	endif ()
-elseif ()
+# release is the default build type
+if (NOT CMAKE_BUILD_TYPE)
+	set(CMAKE_BUILD_TYPE Release)
+endif ()
+
+# compile options
+if(WIN32)
 	set(CMAKE_CXX_STANDARD 17)
 	set(CMAKE_CXX_STANDARD_REQUIRED ON)
-	set(CMAKE_CXX_EXTENSIONS OFF)	 
-endif()
-
-
-# add MTOOLS_DEBUG_FLAG in Debug and RelWithDebInfo configuration mode. 
-if(WIN32)
+	set(CMAKE_CXX_EXTENSIONS OFF)
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /DMTOOLS_DEBUG_FLAG")	
 	# hack for RelWithDebINfo configuration otherwise compile never ends on MSVC
 	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/Zi /Gm- /Ox /Ob0 /DMTOOLS_DEBUG_FLAG")	
 else()
-	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DMTOOLS_DEBUG_FLAG")
-	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -DMTOOLS_DEBUG_FLAG")
+	target_compile_options(mtools PUBLIC "-std=c++17")
+	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DMTOOLS_DEBUG_FLAG -Wall")
+	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -DMTOOLS_DEBUG_FLAG -Wall")
+	set(CMAKE_CXX_FLAGS_RELEASE  "${CMAKE_CXX_FLAGS_RELEASE} -Wall")
 endif()
-
 
 
 find_package(mtools REQUIRED)
@@ -138,25 +134,24 @@ set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT "
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(PREDEFINED_TARGETS_FOLDER "CustomTargets")
 
-
 message(STATUS "")
 message(STATUS "")
-if(WIN32)
-	message(STATUS "Project ${PROJECT_NAME} created for MSVC with configurations")
-	message(STATUS "")
+if (NOT WIN32)
+	message(STATUS "Project ${PROJECT_NAME} created for make with configuration ${CMAKE_BUILD_TYPE}")
 	message(STATUS "    - Debug : [${CMAKE_CXX_FLAGS_DEBUG}]")
 	message(STATUS "    - RelWithDebInfo : [${CMAKE_CXX_FLAGS_RELWITHDEBINFO}]")
 	message(STATUS "    - Release : [${CMAKE_CXX_FLAGS_RELEASE}]")
 else()
-	message(STATUS "Project ${PROJECT_NAME} created for make with configuration")
-	message(STATUS "")
-	message(STATUS "    - ${CMAKE_BUILD_TYPE} : [${CMAKE_CXX_FLAGS}]")
+	message(STATUS "Project ${PROJECT_NAME} created for MSVC with configurations")
+	message(STATUS "    - Debug : [${CMAKE_CXX_FLAGS_DEBUG}]")
+	message(STATUS "    - RelWithDebInfo : [${CMAKE_CXX_FLAGS_RELWITHDEBINFO}]")
+	message(STATUS "    - Release : [${CMAKE_CXX_FLAGS_RELEASE}]")
 endif()
 message(STATUS "")
 message(STATUS "")
 
-
 #end of file
+
 """
 
 
