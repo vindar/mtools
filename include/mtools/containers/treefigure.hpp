@@ -909,7 +909,7 @@ namespace mtools
 			TFloat max = (inb.max[0] - outb.min[0]);
 			int nx_max = (max < bx) ? ((max < ax) ? 0 : 1) : ((max < cx) ? 2 : 3);
 			int ix = nx_min + (4 * nx_max);
-			int rx;
+			int rx = 0;
 			switch (ix)
 				{
 				case 0: { rx = 0; break; }
@@ -932,7 +932,7 @@ namespace mtools
 			TFloat may = (inb.max[1] - outb.min[1]);
 			int ny_max = (may < by) ? ((may < ay) ? 0 : 1) : ((may < cy) ? 2 : 3);
 			int iy = ny_min + (4 * ny_max);
-			int ry;
+			int ry = 0;
 			switch (iy)
 				{
 				case 0: { ry = 0; break; }
