@@ -23,22 +23,9 @@
 #include "../misc/internal/mtools_export.hpp"
 #include "misc.hpp"
 #include "error.hpp"
+#include "ostringstream.hpp"
 
 #include <cstring>
-
-namespace mtools
-{
-    /**
-     * Enum for diferent character encodings.
-     **/
-    enum StringEncoding { enc_utf8, enc_iso8859, enc_unknown };
-}
-
-#include "internal/internals_stringfct.hpp"
-
-
-
-
 
 
 namespace mtools
@@ -785,7 +772,7 @@ namespace mtools
 
 
 
-        /**
+     /**
      * Print a given number of bytes in nice form (ex: 10523 yields "10KB")
      *
      * @param   nb  The number of bytes.
@@ -803,45 +790,30 @@ namespace mtools
         if (nb < 1024*1024) { unit = "TB"; } else { nb /= 1024;
         if (nb < 1024*1024) { unit = "PB"; } else { nb /= 1024; }}}}}}
         res = ((nb % 1024) * 100) / 1024;
-        return toString(nb / 1024) + ((res == 0) ? std::string("") : (std::string(".") + toString(res))) + unit;
+		OSS os; 
+		os << (nb / 1024); 
+		if (res != 0) { os << "." << res; }
+		os << unit;
+		return os.str();
         }
 
 
     /**
-     * Convert an object into an std::string.
+     * Convert an object into an std::string : uses an mtools::ostringstream for conversion.
      *
-     * - Type `bool` is printed as 'true" or "false"
-     * - Integer types are printed in decimal format.
-     * - Floating point types are printed in default pseudo-scientific format.
-     * - `std::wstring` objects are converted using the specified encoding.
-     * - Types `char` and `wchar_t` are printed as characters (but `signed/unsigned char/wchar_t` are
-     * printed as integers).
-     * - Types `char *` and `wchar_t *` are printed as null terminated C (wide)strings (beware of
-     * buffer overflow).
-     * - Other pointer types `T *` have their adress printed in hexadecimal format.
-     * - Type `std::pair<U,V>` print both elements of the pair.
-     * - Fixed size C-arrays `T[N]`, ProxyArray<T> and STL containers are printed by iterating over
-     * the elements and using `toString()` to print their content.
-     * - If `T` does not match in of the cases above, then the following conversion order is used:
-     *     - (1) Check if `T` implements the method `std::string T.toString() [const]`.
-     *     - (2) Check if `T` implements the method `std::string T.to_string() [const]`.
-     *     - (3) Check if `T` is convertible into an `std::string`.
-     *     - (4) Check if `T` may be pushed to `std::ostream` via `operator<<`.
-     *     - (5) Fall back to printing generic informations about the object (its type, size and
-     *     adress).
-     *
-     * @tparam  T   Generic type parameter.
-     * @param   val         The object to print into an `std::string`.
-     * @param   output_enc  The desired encoding format for the output string. Relevant only if `T`
-     *                      contain wide characters (i.e. `wstring`, `wchar_t *` or `wchar_t`).
-     *                      Characters which cannot be translated are replaced by ' '. (default =
-     *                      unknown_enc = ISO8859-1).
-     *
-     * @return  The string representing the object.
-     *
-     * @sa  ToWString
+	 * @tparam  T           Generic type parameter.
+	 * @param   val         The object to convert into a std::string.
+	 * @param   input_enc   The input encoding format. Relevant only if T is wchar, wchar* or std::wstring.
+	 *
+	 * @return  The wstring representing the object.
+	 * 
      **/
-    template<typename T> inline std::string toString(const T & val, StringEncoding output_enc) { return internals_stringfct::StringConverter<T>::print(val, output_enc); }
+    template<typename T> inline std::string toString(const T & val, StringEncoding output_enc = enc_unknown, bool format_nice = true) 
+		{ 
+		OSS os(format_nice, output_enc);
+		os << val;
+		return os.str();
+		}
 
 
     /**
@@ -917,7 +889,7 @@ namespace mtools
      *
      * @return  A std::string representing the value
      **/
-    std::string doubleToStringHighPrecision(double val, int precision = 15, bool scientific = true);
+    //std::string doubleToStringHighPrecision(double val, int precision = 15, bool scientific = true);   -> DECLARATION IN ostringstream.hpp
 
 
     /**
@@ -930,7 +902,7 @@ namespace mtools
      *
      * @sa  doubleToStringNice
      **/
-    std::wstring doubleToWStringNice(double val);
+    //std::wstring doubleToWStringNice(double val);    -> DECLARATION IN ostringstream.hpp
 
 
     /**

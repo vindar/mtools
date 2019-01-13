@@ -53,6 +53,7 @@
 //misc
 #include "misc/error.hpp"
 #include "misc/stringfct.hpp"
+#include "misc/ostringstream.hpp"
 #include "misc/tuple.hpp"
 #include "misc/indirectcall.hpp"
 #include "misc/memory.hpp"

@@ -270,11 +270,14 @@ int main(int argc, char *argv[])
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
 
 
-	mtools::setErrorCallback(error_cb); 
+	mtools::ostringstream os; 
 
 
-	MTOOLS_ASSERT(1==2 , 20 << "blop"); 
+	fVec2 d(1, 2);
 
+	os << "Hello wrold : " << 123 << " - " << d << "\n" << std::tuple<double, int, char>(12.3, 4, 'c') << "\n";
+
+	cout << os; 
 
 
 	cout << "azerty";
