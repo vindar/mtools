@@ -267,7 +267,7 @@ namespace mtools
                         else if (c<0x110000) {s.append(1,240+c/262144); s.append(1,128+c/4096%64); s.append(1,128+c/64%64); s.append(1,128+c%64);}
                         else {s.append(1,' ');}
                         }
-                    return s;
+                    return;
                     #endif
                     }
                 std::string s(ws.length(), ' ');
@@ -432,13 +432,13 @@ namespace mtools
             public:
 			static inline void push(const T & val, mtools::ostringstream & os)
 				{
-				const chat * p = (const char *)val; 
+				const char * p = (const char *)val; 
 				if (p == nullptr)  { os << "(char[" << N << "])nullptr"; }
 				else
 					{
 					std::string s((const char *)val, N); 
-					size_t l = s.find(0, 0); 
-					if (l != string::npos) { s.resize(l); }
+					size_t l = s.find((char)0, (size_t)0); 
+					if (l != std::string::npos) { s.resize(l); }
 					os << s; 
 					}
 				}
@@ -450,13 +450,13 @@ namespace mtools
             public:
             static inline void push(const T & val, mtools::ostringstream & os) 
 				{ 
-				const chat * p = (const char *)val; 
+				const char * p = (const char *)val; 
 				if (p == nullptr)  { os << "(const char[" << N << "])nullptr"; }
 				else
 					{
 					std::string s((const char *)val, N); 
-					size_t l = s.find(0, 0); 
-					if (l != string::npos) { s.resize(l); }
+					size_t l = s.find((char)0, (size_t)0); 
+					if (l != std::string::npos) { s.resize(l); }
 					os << s; 
 					}
 				}
@@ -575,7 +575,7 @@ namespace mtools
 				{
                 size_t n = 0; for (auto it = val.begin(); it != val.end(); ++it) { ++n; }
                 os << "std::forward_list<" << typeid(U).name() << "> Size = " << n << "\n";
-                size_t i = 0; for (auto it = val.begin(); it != val.end(); ++it) { s << i << "\t -> " << (*it) << "\n"; ++i; }
+                size_t i = 0; for (auto it = val.begin(); it != val.end(); ++it) { os << i << "\t -> " << (*it) << "\n"; ++i; }
 				}
 			};
 
@@ -586,8 +586,8 @@ namespace mtools
             public:
             static inline void push(const T & val, mtools::ostringstream & os)
 				{
-                os << "std::list<" < typeid(U).name() << "> Size = " << val.size() << "\n";
-                size_t i = 0; for (auto it = val.begin(); it != val.end(); ++it) { s << i  << "\t -> " << (*it) << "\n"; ++i; }
+                os << "std::list<" << typeid(U).name() << "> Size = " << val.size() << "\n";
+                size_t i = 0; for (auto it = val.begin(); it != val.end(); ++it) { os << i  << "\t -> " << (*it) << "\n"; ++i; }
 				}
 			};
 
