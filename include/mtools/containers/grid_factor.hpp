@@ -880,9 +880,9 @@ namespace mtools
         **/
         std::string toString(bool debug = false) const
             {
-			OSS os
+			OSS os;
             os << "Grid_factor<" << D << " , " << typeid(T).name() << " , " << NB_SPECIAL << " , " << R << ">\n";
-			os << " - Memory : " << mtools::toStringMemSize(memoryUsed()) << " / " << mools::toStringMemSize(memoryAllocated()) << "\n";
+			os << " - Memory : " << mtools::toStringMemSize(memoryUsed()) << " / " << mtools::toStringMemSize(memoryAllocated()) << "\n";
 			os << " - Min position accessed = " << _rangemin.toString(false) << "\n";
 			os << " - Max position accessed = " << _rangemax.toString(false) << "\n";
 			os << " - Min value created = " << _minVal << "\n";

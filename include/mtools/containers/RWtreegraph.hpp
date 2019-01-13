@@ -295,13 +295,13 @@ public:
         os << "*****************************************************\n";
 		os << "TreeGraph object statistics\n\n";
 		os << "- Memory allocated         : " << toStringMemSize((sizeof(TreeNode)*tab_size) + (sizeof(size_t)*(tab_size + 5))) << "\n";;
-		os << "- Number of cleanup done   : " NbCleanUp() << "\n";
-		os << "- Number of step performed : " NbSteps() << "\n";
-		os << "- Depth of the memory root : " MemoryRootDepth() << "\n";
-		os << "- Depth of the actual pos  : " Depth() << "\n";
-		os << "- total Nb of site created : " NbCreated() << "\n";
-		os << "- total Nb of site visited : " NbVisited() << "\n";
-		os << "- Number of nodes in use   : " MemoryUsedSites() << " / " << MemoryMaxSites() << " (" << ((int)(((double)MemoryUsedSites())/((double)MemoryMaxSites())*100.0)) << "% occupied)\n";
+		os << "- Number of cleanup done   : " << NbCleanUp() << "\n";
+		os << "- Number of step performed : " << NbSteps() << "\n";
+		os << "- Depth of the memory root : " << MemoryRootDepth() << "\n";
+		os << "- Depth of the actual pos  : " << Depth() << "\n";
+		os << "- total Nb of site created : " << NbCreated() << "\n";
+		os << "- total Nb of site visited : " << NbVisited() << "\n";
+		os << "- Number of nodes in use   : " << MemoryUsedSites() << " / " << MemoryMaxSites() << " (" << ((int)(((double)MemoryUsedSites())/((double)MemoryMaxSites())*100.0)) << "% occupied)\n";
 		os << "*****************************************************\n";
         return os.str();                    
     }

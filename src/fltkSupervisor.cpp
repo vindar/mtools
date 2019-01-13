@@ -476,7 +476,7 @@ namespace mtools
                 /* set the thread as active */
                 void _init()
                     {
-                    std::unique_lock<std::mutex>(_cvmut);
+                    std::unique_lock<std::mutex> lock(_cvmut);
                     if (status() == THREAD_NOT_STARTED) { _status = THREAD_ON; }
                     _cv.notify_all();
                     }
@@ -500,7 +500,7 @@ namespace mtools
                             case Msg::RUN_MSG: { ((IndirectCall*)q)->call(); break; }
                             default: { MTOOLS_DEBUG("fltkSupervisor::_processMsg, unknown message !"); return; }
                             }
-                        std::unique_lock<std::mutex>(_cvmut);
+                        std::unique_lock<std::mutex> lock(_cvmut);
                         m->status = 1;
                         _cv.notify_all();
                         }

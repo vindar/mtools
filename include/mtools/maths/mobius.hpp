@@ -129,7 +129,7 @@ namespace mtools
 			{
 			OSS os;
 			os << "Mobius[" << a << "," << b << "," << c << "," << d << "]";
-			return os.Str();
+			return os.str();
 			}
 
 
