@@ -92,7 +92,7 @@ namespace mtools
 
 
 /* Error macro : use stringstream so we can use << to concatenate messages */
-#define MTOOLS_ERROR(_ex) mtools::internals_error::_error(__FILE__,__LINE__,(std::ostringstream() << _ex).str())
+#define MTOOLS_ERROR(_ex) mtools::internals_error::_error(__FILE__,__LINE__,(static_cast<std::ostringstream &>(std::ostringstream() << _ex)).str())
 
 /* Insure macro */
 #define MTOOLS_INSURE_1(_ex)       ((void)( (!!(_ex)) || (mtools::internals_error::_insures1(__FILE__ , __LINE__,(#_ex))) ))
