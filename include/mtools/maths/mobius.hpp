@@ -127,8 +127,9 @@ namespace mtools
 		**/
 		std::string toString() const
 			{
-			std::string s("Mobius[");
-			return(s + mtools::toString(a) + "," + mtools::toString(b) + "," + mtools::toString(c) + "," + mtools::toString(d) + "]");
+			OSS os;
+			os << "Mobius[" << a << "," << b << "," << c << "," << d << "]";
+			return os.Str();
 			}
 
 

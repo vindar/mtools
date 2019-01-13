@@ -333,11 +333,12 @@ namespace mtools
          **/
         std::string toString(bool includeTypeInfo = true) const
             {
-            std::string s;
-            if (includeTypeInfo) { s += std::string("Vec<") + typeid(T).name() + "," + mtools::toString(N) + ">"; }
-            s += std::string("[") + mtools::toString(_m_tab[0]);
-            for (size_t i = 1; i < N; i++) { s += std::string(",") + mtools::toString(_m_tab[i]); }
-            return(s+"]");
+			OSS os; 
+            if (includeTypeInfo) { os << "Vec<" <<  typeid(T).name() <<  "," << N << ">"; }
+            os << "[" << _m_tab[0];
+            for (size_t i = 1; i < N; i++) { os << "," << _m_tab[i]; }
+			os << "]";
+            return os.str();
             }
 
 

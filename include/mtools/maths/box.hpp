@@ -570,13 +570,14 @@ namespace mtools
             **/
             std::string toString() const 
                 { 
-                std::string s = isEmpty() ? std::string("(empty)") : std::string();
+				OSS os; 
+                os <<  (isEmpty() ? "(empty)" : "");
                 for (size_t i = 0; i < N; i++)
                     {
-                    if (i != 0) { s += "x"; }
-                    s += std::string("[") + mtools::toString(min[i]) + "," + mtools::toString(max[i]) + "]";
+                    if (i != 0) { os <<  "x"; }
+                    os << "[" << min[i] <<  ","  << max[i] << "]";
                     }
-                return s;
+                return os.str();
                 }
 
 

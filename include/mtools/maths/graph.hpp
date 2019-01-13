@@ -393,58 +393,57 @@ namespace mtools
 
 		std::string toString() const
 			{
-			std::string s;
-			if (isEmpty)  { s += std::string("EMPTY GRAPH\n"); return s; }
-			if (!isValid) { s += std::string("!!! INVALID GRAPH !!!!\n"); return s; }
+			OSS os; 
+			if (isEmpty)  { os << "EMPTY GRAPH\n"; return os.str(); }
+			if (!isValid) { os << "!!! INVALID GRAPH !!!!\n"; return os.str(); }
 			if (!undirected)
 				{ // oriented graphs
-				s += std::string("ORIENTED GRAPH\n");
-				if (hasLoops) { s += std::string("    -> WITH LOOPS\n"); } else { s += std::string("    -> no loop.\n"); }
-				if (hasDoubleEdges) { s += std::string("    -> WITH DOUBLE EDGES\n"); } else { s += std::string("    -> no double edge.\n"); }
-				s += std::string(" - Vertices         : ") + mtools::toString(nbVertices) + "\n";
-				s += std::string(" - Oriented edges   : ") + mtools::toString(nbOrientedEdges) + "\n";
-				s += std::string(" - out degree range : [") + mtools::toString(minVertexOutDegree) + "," + mtools::toString(maxVertexOutDegree) + "]\n";
-				s += std::string(" - in  degree range : [") + mtools::toString(minVertexInDegree) + "," + mtools::toString(maxVertexInDegree) + "]\n";
-				s += std::string(" - Isolated vertice out   : ") + mtools::toString(hasIsolatedVertexOut) + "\n";
-				s += std::string(" - Isolated vertices in   : ") + mtools::toString(hasIsolatedVertexIn) + "\n";
-				s += std::string(" - Isolated vertices both : ") + mtools::toString(hasIsolatedVertex) + "\n";
-				return s;
+				os << "ORIENTED GRAPH\n";
+				if (hasLoops) { os << "    -> WITH LOOPS\n"; } else { os << "    -> no loop.\n"; }
+				if (hasDoubleEdges) { os << "    -> WITH DOUBLE EDGES\n"; } else { os << "    -> no double edge.\n"; }
+				os << " - Vertices         : " << nbVertices << "\n";
+				os << " - Oriented edges   : " << nbOrientedEdges << "\n";
+				os << " - out degree range : [" << minVertexOutDegree << "," << maxVertexOutDegree << "]\n";
+				os << " - in  degree range : [" << minVertexInDegree << ","  << maxVertexInDegree << "]\n";
+				os << " - Isolated vertice out   : " << hasIsolatedVertexOut << "\n";
+				os << " - Isolated vertices in   : " << hasIsolatedVertexIn << "\n";
+				os << " - Isolated vertices both : " << hasIsolatedVertex << "\n";
+				return os.str();
 				}
 			// undirected graph
 			if ((hasIsolatedVertex) || (hasLoops) || (hasDoubleEdges)) 
 				{ // not simple 
-				s += std::string("UNDIRECTED GRAPH\n");
-				if (hasLoops) { s += std::string("    -> WITH LOOPS\n"); }	else { s += std::string("    -> no loop.\n"); }
-				if (hasDoubleEdges) { s += std::string("    -> WITH DOUBLE EDGES\n"); } else { s += std::string("    -> no double edge.\n"); }
-				if (hasIsolatedVertex) { s += std::string("    -> WITH ISOLATED VERTEX\n"); } else { s += std::string("    -> no isolated vertex.\n"); }
-				s += std::string("Edges        : ") + mtools::toString(nbOrientedEdges / 2) + "\n";
-				s += std::string("Vertices     : ") + mtools::toString(nbVertices) + "\n";
-				s += std::string("  |-> degree : [") + mtools::toString(minVertexInDegree) + "," + mtools::toString(maxVertexInDegree) + "]\n";
-				if (connected) { s += std::string("CONNECTED. Estimated diameter [") + mtools::toString(diameter_min) + "," + mtools::toString(diameter_max) + "]\n"; }
-				else { s += std::string("NOT CONNECTED !\n"); }
-				return s;
+				os  << "UNDIRECTED GRAPH\n";
+				if (hasLoops) { os << "    -> WITH LOOPS\n"; }	else { os << "    -> no loop.\n"; }
+				if (hasDoubleEdges) { os << "    -> WITH DOUBLE EDGES\n"; } else { os << "    -> no double edge.\n"; }
+				if (hasIsolatedVertex) { os << "    -> WITH ISOLATED VERTEX\n"; } else { os << "    -> no isolated vertex.\n"; }
+				os << "Edges        : " << nbOrientedEdges/2 << "\n";
+				os << "Vertices     : " << nbVertices << "\n";
+				os << "  |-> degree : [" << minVertexInDegree << "," << maxVertexInDegree << "]\n";
+				if (connected) { os  << "CONNECTED. Estimated diameter [" << diameter_min << "," << diameter_max << "]\n"; } else { os  << "NOT CONNECTED !\n"; }
+				return os.str();
 				}
 			// simple graph
-			s += std::string("SIMPLE UNDIRECTED GRAPH (no loop/no double edge/no isolated vertex)\n");
-			s += std::string("   Edges        : ") + mtools::toString(nbOrientedEdges/2) + "\n";
-			s += std::string("   Faces        : ") + mtools::toString(nbFaces); if (nbFaces == 1) { s += std::string(" (TREE)"); }  s += "\n";
-			s += std::string("     |-> degree : [") + mtools::toString(minFaceDegree) + "," + mtools::toString(maxFaceDegree) + "]\n";
-			s += std::string("   Vertices     : ") + mtools::toString(nbVertices) + "\n";
-			s += std::string("     |-> degree : [") + mtools::toString(minVertexInDegree) + "," + mtools::toString(maxVertexInDegree) + "]\n";
-			if (!connected)	{ s += std::string("NOT CONNECTED !\n"); return s; }
-			s += std::string("CONNECTED. Diameter range [") + mtools::toString(diameter_min) + "," + mtools::toString(diameter_max) + "]\n";
-			s += std::string("Genus : ") + mtools::toString(genus);  if (genus == 0) s += std::string(" -> PLANAR GRAPH\n");
+			os << "SIMPLE UNDIRECTED GRAPH (no loop/no double edge/no isolated vertex)\n";
+			os << "   Edges        : " << nbOrientedEdges/2 << "\n";
+			os << "   Faces        : " << nbFaces; if (nbFaces == 1) { os  << " (TREE)"; }  os << "\n";
+			os << "     |-> degree : [" << minFaceDegree << "," << maxFaceDegree << "]\n";
+			os << "   Vertices     : "  << nbVertices << "\n";
+			os << "     |-> degree : [" << minVertexInDegree << "," << maxVertexInDegree << "]\n";
+			if (!connected)	{ os << "NOT CONNECTED !\n"; return os.str(); }
+			os << "CONNECTED. Diameter range [" << diameter_min <<  "," << diameter_max << "]\n";
+			os << "Genus : " << genus;  if (genus == 0) os << " -> PLANAR GRAPH\n";
 			if (vertexRegular_average > 0)
 				{
-				if (vertexRegular_average == vertexRegular_exceptional) { s += std::string("REGULAR GRAPH: every site has degree ") + mtools::toString(vertexRegular_average) + "\n"; }
-				else { s += std::string("ALMOST REGULAR GRAPH: every site has degree ") + mtools::toString(vertexRegular_average) + " except one with degree " + mtools::toString(vertexRegular_exceptional) + "\n"; }
+				if (vertexRegular_average == vertexRegular_exceptional) { os << "REGULAR GRAPH: every site has degree " << vertexRegular_average << "\n"; }
+				else { os << "ALMOST REGULAR GRAPH: every site has degree " << vertexRegular_average << " except one with degree " << vertexRegular_exceptional << "\n"; }
 				}
 			if (faceRegular_average > 0)
 				{
-				if (faceRegular_average == faceRegular_exceptional) { s += std::string("ANGULATION: every face has degree ") + mtools::toString(faceRegular_average) + "\n"; }
-				else { s += std::string("ANGULATION WITH BOUNDARY: every face has degree ") + mtools::toString(faceRegular_average) + " except one with degree " + mtools::toString(faceRegular_exceptional) + "\n"; }
+				if (faceRegular_average == faceRegular_exceptional) { os << "ANGULATION: every face has degree " << faceRegular_average << "\n"; }
+				else { os << "ANGULATION WITH BOUNDARY: every face has degree " << faceRegular_average << " except one with degree " << faceRegular_exceptional << "\n"; }
 				}
-			return s;
+			return os.str();
 			}
 
 		};

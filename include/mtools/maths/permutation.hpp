@@ -331,13 +331,14 @@ namespace mtools
 			{
 			const size_t l = _perm.size();
 			if (l == 0) return "Permutation[empty]";
-			std::string s("Permutation[0,"); s += mtools::toString(l - 1) + "]";
+			OSS os;
+			os << "Permutation[0," << (l - 1) << "]";
 			if (details)
 				{
-				s += "\n";
-				for (int i = 0;i < (int)l;i++) { s += mtools::toString(i) + "\t -> \t" + mtools::toString(_perm[i]) + "\n"; }
+				os << "\n";
+				for (int i = 0;i < (int)l;i++) { os << i << "\t -> \t" << _perm[i] << "\n"; }
 				}
-			return s;
+			return os.str();
 			}
 
 

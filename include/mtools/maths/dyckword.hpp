@@ -152,9 +152,11 @@ namespace mtools
 			**/
 			std::string toString() const
 				{
-				std::string s("[");
-				for (int i = 0; i < (int)_vec.size(); i++) { s += ((this->operator[](i))*_weight + '0'); }
-				return s + "]";
+				OSS os; 
+				os << "[";
+				for (int i = 0; i < (int)_vec.size(); i++) { os <<  ((this->operator[](i))*_weight + '0'); }
+				os << "]";
+				return os.str();
 				}
 
 

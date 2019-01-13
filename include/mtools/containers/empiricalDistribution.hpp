@@ -747,19 +747,20 @@ class IntegerEmpiricalDistribution
 		 **/
 		std::string toString() const
 			{
-			std::string s("IntegerEmpiricalDistribution [L="); s += mtools::toString(spacing()) + "]";
-			if (isEmpty()) return s +" EMPTY !\n"; 
-			s += std::string("\n - memory usage : ") + toStringMemSize(memoryFootprint()) + "\n";
-			s += std::string(" - number of entries = ") + mtools::toString(nbInsertion()) + "]\n";
-			s += std::string(" - range of values = [") + mtools::toString(minVal()) + " , " + mtools::toString(maxVal())  +  ")\n";
-			s += std::string(" - E[X]   = ") + mtools::toString(expectation(ROUND_MIDDLE)) + "   (min " + mtools::toString(expectation(ROUND_MIDDLE)) + "  , max " + mtools::toString(expectation(ROUND_ABOVE)) + ")\n";
-			s += std::string(" - Var[X] = ") + mtools::toString(variance()) + "\n";
-			s += std::string(" - P(X = -infty) = ") + mtools::toString(probaMinusInfinity()) + "  \t(" + mtools::toString(nbMinusInfinity()) + " values)\n";
-			s += std::string(" - P(X = +infty) = ") + mtools::toString(probaPlusInfinity()) + "   \t(" + mtools::toString(nbPlusInfinity()) + " values)\n";
-			s += std::string(" - P(X = 0) = ") + mtools::toString(probaZero()) + "   \t(" + mtools::toString(nbZero()) + " values)\n";
-			s += std::string(" - P(X < 0) = ") + mtools::toString(probaNegative()) + "   \t(" + mtools::toString(nbNegative()) + " values)\n";
-			s += std::string(" - P(X > 0) = ") + mtools::toString(probaPositive()) + "   \t(" + mtools::toString(nbPositive()) + " values)\n";
-			return s;
+			OSS os; 
+			os << "IntegerEmpiricalDistribution [L=" << spacing() << "]";
+			if (isEmpty()) { os << " EMPTY !\n"; return os.str(); }
+			os << "\n - memory usage : " << toStringMemSize(memoryFootprint()) << "\n";
+			os << " - number of entries = " << nbInsertion() << "]\n";
+			os << " - range of values = [" << minVal() << " , " << maxVal() <<  ")\n";
+			os << " - E[X]   = " << expectation(ROUND_MIDDLE) << "   (min " << expectation(ROUND_MIDDLE) << "  , max " << expectation(ROUND_ABOVE) << ")\n";
+			os << " - Var[X] = " << variance() << "\n";
+			os << " - P(X = -infty) = " << probaMinusInfinity() << "  \t(" << nbMinusInfinity()  << " values)\n";
+			os << " - P(X = +infty) = " << probaPlusInfinity() << "   \t(" << nbPlusInfinity() << " values)\n";
+			os << " - P(X = 0) = " << probaZero() << "   \t(" << nbZero() <<  " values)\n";
+			os << " - P(X < 0) = " << probaNegative() << "   \t(" << nbNegative() << " values)\n";
+			os << " - P(X > 0) = " << probaPositive() << "   \t(" << nbPositive() + " values)\n";
+			return os.str();
 			}
 
 

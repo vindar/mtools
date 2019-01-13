@@ -423,13 +423,13 @@ namespace mtools
         **/
         std::string toString(bool debug = false) const
             {
-            std::string s;
-            s += std::string("Grid_basic<") + mtools::toString(D) + " , " + typeid(T).name() + " , " + mtools::toString(R) + ">\n";
-            s += std::string(" - Memory : ") + mtools::toStringMemSize(memoryUsed()) + " / " + mtools::toStringMemSize(memoryAllocated()) + "\n";
-            s += std::string(" - Range min = ") + _rangemin.toString(false) + "\n";
-            s += std::string(" - Range max = ") + _rangemax.toString(false) + "\n";
-            if (debug) { s += "\n" + _printTree(_getRoot(), ""); }
-            return s;
+			OSS os; 
+            os << "Grid_basic<" << D << " , " << typeid(T).name() << " , " << R << ">\n";
+			os << " - Memory : " << mtools::toStringMemSize(memoryUsed()) << " / " << mtools::toStringMemSize(memoryAllocated()) << "\n";
+			os << " - Range min = " << _rangemin.toString(false) << "\n";
+			os << " - Range max = " << _rangemax.toString(false) << "\n";
+            if (debug) { os << "\n" << _printTree(_getRoot(), ""); }
+            return os.str();
             }
 
 

@@ -938,25 +938,22 @@ namespace mtools
 			std::string toString(bool detailed = false) const
 				{
 				CHECKCONSISTENCY;
-				std::string s("CombinatorialMap: (");
-				s += mtools::toString(nbDarts()) + " darts)\n";
-				s += std::string("   edges    : ") + mtools::toString(nbEdges()) + "\n";
-				s += std::string("   vertices : ") + mtools::toString(nbVertices()) + "\n";
-				s += std::string("   faces    : ") + mtools::toString(nbFaces());
-				if (isTree()) s += std::string(" (TREE)");
-				s += "\n";
-				s += std::string("   genus    : ") + mtools::toString(genus());
-				if (genus() == 0) s += std::string(" (PLANAR EMBEDDING)");
-				s += "\n";
-				s += std::string("   root pos : ") + mtools::toString(root()) + "\n";
+				OSS os; 
+				os << "CombinatorialMap: (" << nbDarts() << " darts)\n" << "   edges    : " << nbEdges() << "\n" << "   vertices : " << nbVertices() << "\n" << "   faces    : " << nbFaces();
+				if (isTree()) { os << " (TREE)"; }
+				os << "\n";
+				os << "   genus    : " << genus();
+				if (genus() == 0) os << " (PLANAR EMBEDDING)";
+				os << "\n";
+				os << "   root pos : " << root() << "\n";
 				if (detailed)
 					{
-					s += std::string("alpha     = [ "); for (int i = 0; i < (int)_alpha.size(); i++) { s += mtools::toString(_alpha[i]) + " "; } s += "]\n";
-					s += std::string("sigma     = [ "); for (int i = 0; i < (int)_sigma.size(); i++) { s += mtools::toString(_sigma[i]) + " "; } s += "]\n";
-					s += std::string("vertices  = [ "); for (int i = 0; i < (int)_vertices.size(); i++) { s += mtools::toString(_vertices[i]) + " "; } s += "]\n";
-					s += std::string("faces     = [ "); for (int i = 0; i < (int)_vertices.size(); i++) { s += mtools::toString(_faces[i]) + " "; } s += "]\n";
+					os << "alpha     = [ "; for (int i = 0; i < (int)_alpha.size(); i++) { os << _alpha[i] << " "; } os << "]\n";
+					os << "sigma     = [ "; for (int i = 0; i < (int)_sigma.size(); i++) { os << _sigma[i] << " "; } os << "]\n";
+					os << "vertices  = [ "; for (int i = 0; i < (int)_vertices.size(); i++) { os << _vertices[i] << " "; } os << "]\n";
+					os << "faces     = [ "; for (int i = 0; i < (int)_vertices.size(); i++) { os << _faces[i] << " "; } os << "]\n";
 					}
-				return s;
+				return os.str();
 				}
 
 

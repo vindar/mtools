@@ -456,11 +456,9 @@ namespace mtools
 
 			virtual std::string toString(bool debug = false) const override
 				{
-				std::string str("CircleDot [");
-				str += mtools::toString(center) + ", ";
-				str += mtools::toString(radius) + "  outline ";
-				str += mtools::toString(outlinecolor) + " interior " + mtools::toString(fillcolor);
-				return str + "]";
+				OSS os; 
+				os << "CircleDot [" << center << ", " << radius << "  outline " << outlinecolor << " interior " << fillcolor << "]";
+				return os.str();
 				}
 
 
@@ -535,11 +533,9 @@ namespace mtools
 
 			virtual std::string toString(bool debug = false) const override
 				{
-				std::string str("SquareDot [");
-				str += mtools::toString(center) + ", ";
-				str += mtools::toString(pw) + ", ";
-				str += mtools::toString(color);
-				return str + "]";
+				OSS os; 
+				os <<"SquareDot [" << center << ", " << pw << ", " << color << "]";
+				return os.str();
 				}
 
 
@@ -607,12 +603,9 @@ namespace mtools
 
 			virtual std::string toString(bool debug = false) const override
 				{
-				std::string str("HorizontalLine [");
-				str += mtools::toString(x1) + " - ";
-				str += mtools::toString(x2) + ", ";
-				str += mtools::toString(y) + " ";
-				str += mtools::toString(color);
-				return str + "]";
+				OSS os; 
+				os << "HorizontalLine [" << x1 << " - " << x2 << ", " << y << " " << color << "]";
+				return os.str();
 				}
 
 
@@ -670,14 +663,11 @@ namespace mtools
 
 
 			virtual std::string toString(bool debug = false) const override
-			{
-				std::string str("VerticalLine [");
-				str += mtools::toString(x) + ", ";
-				str += mtools::toString(y1) + " - ";
-				str += mtools::toString(y2) + " ";
-				str += mtools::toString(color);
-				return str + "]";
-			}
+				{
+				OSS os;
+				os << "VerticalLine [" << x << ", " << y1 << " - " << y2 << " " << color << "]";
+				return os.str();
+				}
 
 
 			virtual void serialize(OBaseArchive & ar) const override
@@ -737,12 +727,9 @@ namespace mtools
 
 			virtual std::string toString(bool debug = false) const override
 				{
-				std::string str("Line [");
-				str += mtools::toString(P1) + ", ";
-				str += mtools::toString(P2) + " (";
-				str += mtools::toString(pw) + ") ";
-				str += mtools::toString(color);
-				return str + "]";
+				OSS os; 
+				os <<"Line [" << P1 << ", " << P2 << " (" << pw << ") " << color << "]";
+				return os.str();
 				}
 
 
@@ -802,11 +789,9 @@ namespace mtools
 
 			virtual std::string toString(bool debug = false) const override
 			{
-				std::string str("PolyLine [");
-				str += mtools::toString(tab) + " - ";
-				str += mtools::toString(color) + "(";
-				str += mtools::toString(pw) + ")";
-				return str + "]";
+				OSS os; 
+				os << "PolyLine [" << tab << " - " << color << "(" << pw << ")" << "]";
+				return os.str();
 			}
 
 
@@ -873,13 +858,11 @@ namespace mtools
 
 			virtual std::string toString(bool debug = false) const override
 			{
-				std::string str("ThickHorizontalLine [");
-				str += mtools::toString(x1) + " - ";
-				str += mtools::toString(x2) + ", ";
-				str += mtools::toString(y) + " ";
-				str += mtools::toString(color);
-				if (thickness >= 0) str += std::string(" rel. thick: ") + mtools::toString(thickness); else str += std::string(" abs. thick: ") + mtools::toString(-thickness);
-				return str + "]";
+				OSS os; 
+				os << "ThickHorizontalLine [" << x1 << " - " << x2 << ", " << y << " " << color;
+				if (thickness >= 0) { os << " rel. thick: " << thickness; }  else { os << " abs. thick: " << (-thickness); }
+				os << "]";
+				return os.str();
 			}
 
 
@@ -947,13 +930,11 @@ namespace mtools
 
 			virtual std::string toString(bool debug = false) const override
 			{
-				std::string str("ThickVerticalLine [");
-				str += mtools::toString(x) + ", ";
-				str += mtools::toString(y1) + " - ";
-				str += mtools::toString(y2) + " ";
-				str += mtools::toString(color);
-				if (thickness > 0) str += std::string(" rel. thick: ") + mtools::toString(thickness); else str += std::string(" abs. thick: ") + mtools::toString(-thickness);
-				return str + "]";
+				OSS os; 
+				os << "ThickVerticalLine [" << x << ", " << y1 << " - " << y2 << " " << color;
+				if (thickness > 0) { os << " rel. thick: " << thickness; } else { os << " abs. thick: " << (-thickness); }
+				os << "]";
+				return os.str();
 			}
 
 
@@ -1026,14 +1007,9 @@ namespace mtools
 
 			virtual std::string toString(bool debug = false) const override
 				{
-				const bool rel = (thick >= 0);
-				const double tt = (rel ? thick : -thick);
-				std::string str("ThickLine [");
-				str += mtools::toString(P1) + ", ";
-				str += mtools::toString(P2) + " - ";
-				str += ((rel ? std::string("rel. thick. (") : std::string("abs. thick. ("))) + mtools::toString(tt) + ") ";
-				str += mtools::toString(color);
-				return str + "]";
+				OSS os; 
+				os << "ThickLine [" << P1 << ", " << P2 << " - " << ((thick >= 0) ? "rel. thick. (" : "abs. thick. (") << std::abs(thick) << ") " << color << "]";
+				return os.str();
 				}
 
 
@@ -1092,13 +1068,9 @@ namespace mtools
 
 			virtual std::string toString(bool debug = false) const override
 				{
-				const bool rel = (thickness >= 0);
-				const double tt = (rel ? thickness : -thickness);
-				std::string str("ThickPolyLine [");
-				str += mtools::toString(tab) + " - ";
-				str += ((rel ? std::string("rel. thick. (") : std::string("abs. thick. ("))) + mtools::toString(tt) + ") ";
-				str += mtools::toString(color);
-				return str + "]";
+				OSS os; 
+				os << "ThickPolyLine [" << tab << " - " << ((thickness >= 0) ? "rel. thick. (" : "abs. thick. (") << std::abs(thickness) << ") " << color << "]";
+				return os.str();
 				}
 
 
@@ -1182,12 +1154,11 @@ namespace mtools
 
 
 			virtual std::string toString(bool debug = false) const override
-			{
-				std::string str("BoxedRegion [");
-				str += mtools::toString(box) + " - ";
-				str += mtools::toString(fillcolor);
-				return str + "]";
-			}
+				{
+				OSS os; 
+				os << "BoxedRegion [" << box << " - " << fillcolor << "]";
+				return os.str();
+				}
 
 
 			virtual void serialize(OBaseArchive & ar) const override
@@ -1253,17 +1224,11 @@ namespace mtools
 
 			virtual std::string toString(bool debug = false) const override
 				{
-				std::string str("Triangle [");
-				str += mtools::toString(P1) + ", ";
-				str += mtools::toString(P2) + ", ";
-				str += mtools::toString(P3) + " - ";
-				str += mtools::toString(color);
-				if (!fillcolor.isTransparent())
-					{
-					str += " filled : ";
-					str += mtools::toString(fillcolor);
-					}
-				return str + "]";
+				OSS os; 
+				os << "Triangle [" << P1 << ", " << P2 << ", " << P3 << " - " << color;
+				if (!fillcolor.isTransparent()) { os << "filled : " << fillcolor; }
+				os << "]";
+				return os.str();
 				}
 
 
@@ -1333,18 +1298,11 @@ namespace mtools
 
 			virtual std::string toString(bool debug = false) const override
 				{
-				std::string str("Quad [");
-				str += mtools::toString(P1) + ", ";
-				str += mtools::toString(P2) + ", ";
-				str += mtools::toString(P3) + ", ";
-				str += mtools::toString(P4) + " - ";
-				str += mtools::toString(color);
-				if (!fillcolor.isTransparent())
-					{
-					str += "filled : ";
-					str += mtools::toString(fillcolor);
-					}
-				return str + "]";
+				OSS os; 
+				os << "Quad [" <<  P1 << ", " << P2 << ", " << P3 << ", " << P4 << " - " << color;
+				if (!fillcolor.isTransparent()) { os << "filled : " << fillcolor; }
+				os << "]";
+				return os.str();
 				}
 
 
@@ -1411,15 +1369,11 @@ namespace mtools
 
 			virtual std::string toString(bool debug = false) const override
 				{
-				std::string str("Polygon [");
-				str += mtools::toString(tab) + " - ";
-				str += mtools::toString(color);
-				if (!fillcolor.isTransparent())
-					{
-					str += "filled : ";
-					str += mtools::toString(fillcolor);
-					}
-				return str + "]";
+				OSS os; 
+				os << "Polygon [" << tab << " - " << color;
+				if (!fillcolor.isTransparent()) { os << "filled : " << fillcolor; }
+				os << "]";
+				return os.str();
 				}
 
 
@@ -1487,11 +1441,11 @@ namespace mtools
 
 			virtual std::string toString(bool debug = false) const override
 				{
-				std::string str("Rectangle [");
-				str += mtools::toString(box) + " - ";
-				str += mtools::toString(color);
-				if (!fillcolor.isTransparent()) { str += " filled "; str += mtools::toString(fillcolor); }
-				return str + "]";
+				OSS os; 
+				os << "Rectangle [" << box << " - " << color; 
+				if (!fillcolor.isTransparent()) { os << " filled " << fillcolor; }
+				os << "]";
+				return os.str();
 				}
 
 
@@ -1565,16 +1519,11 @@ namespace mtools
 
 			virtual std::string toString(bool debug = false) const override
 				{
-				const bool rel = (thickness >= 0);
-				const double tt = (rel ? thickness : -thickness);
-				std::string str("ThickTriangle [");
-				str += mtools::toString(P1) + ", ";
-				str += mtools::toString(P2) + ", ";
-				str += mtools::toString(P3) + " - ";
-				str += ((rel ? std::string(" rel. thick. (") : std::string("abs. thick. ("))) + mtools::toString(tt) + ") ";
-				str += mtools::toString(color);
-				if (!fillcolor.isTransparent()) { str += " filled "; str += mtools::toString(fillcolor); }
-				return str + "]";
+				OSS os; 
+				os << "ThickTriangle [" << P1 << ", " << P2 << ", " << P3 << " - " << ((thickness >= 0) ? " rel. thick. (" : "abs. thick. (") << std::abs(thickness) << ") " << color;
+				if (!fillcolor.isTransparent()) { os << " filled " << fillcolor; }
+				os << "]";
+				return os.str();
 				}
 
 
@@ -1649,17 +1598,11 @@ namespace mtools
 
 			virtual std::string toString(bool debug = false) const override
 				{
-				const bool rel = (thickness >= 0);
-				const double tt = (rel ? thickness : -thickness);
-				std::string str("ThickQuad [");
-				str += mtools::toString(P1) + ", ";
-				str += mtools::toString(P2) + ", ";
-				str += mtools::toString(P3) + ", ";
-				str += mtools::toString(P4) + " - ";
-				str += ((rel ? std::string(" rel. thick. (") : std::string("abs. thick. ("))) + mtools::toString(tt) + ") ";
-				str += mtools::toString(color);
-				if (!fillcolor.isTransparent()) { str += " filled "; str += mtools::toString(fillcolor); }
-				return str + "]";
+				OSS os; 
+				os << "ThickQuad [" << P1 << ", " << P2 << ", " << P3 << ", " << P4 << " - " << ((thickness >= 0) ? " rel. thick. (" : "abs. thick. (") << std::abs(thickness) << ") " << color;
+				if (!fillcolor.isTransparent()) { os << " filled " << fillcolor; }
+				os << "]";
+				return os.str();
 				}
 
 
@@ -1738,14 +1681,11 @@ namespace mtools
 
 			virtual std::string toString(bool debug = false) const override
 				{
-				const bool rel = (thickness >= 0);
-				const double tt = (rel ? thickness : -thickness);
-				std::string str("ThickPolygon [");
-				str += mtools::toString(tab) + " - ";
-				str += ((rel ? std::string(" rel. thick. (") : std::string("abs. thick. ("))) + mtools::toString(tt) + ") ";
-				str += mtools::toString(color);
-				if (!fillcolor.isTransparent()) { str += " filled "; str += mtools::toString(fillcolor); }
-				return str + "]";
+				OSS os; 
+				os << "ThickPolygon [" << tab << " - " << ((thickness >= 0) ? " rel. thick. (" : "abs. thick. (") << std::abs(thickness) << ") " << color;
+				if (!fillcolor.isTransparent()) { os << " filled " << fillcolor; }
+				os << "]";
+				return os.str();
 				}
 
 
@@ -1828,15 +1768,11 @@ namespace mtools
 
 			virtual std::string toString(bool debug = false) const override
 				{
-				const bool rel = (thickness_x >= 0);
-				const double tx = (rel ? thickness_x : -thickness_x);
-				const double ty = (rel ? thickness_y : -thickness_y);
-				std::string str("ThickRectangle [");
-				str += mtools::toString(box);
-				str += ((rel ? std::string("rel. thick. (") : std::string("abs. thick. ("))) + mtools::toString(tx) + "," + mtools::toString(ty) + ") ";
-				str += mtools::toString(color);
-				if (!fillcolor.isTransparent()) {str += " filled "; str += mtools::toString(fillcolor); }
-				return str + "]";
+				OSS os; 
+				os << "ThickRectangle [" << box <<  ((thickness_x >= 0) ? "rel. thick. (" : "abs. thick. (")  << std::abs(thickness_x) << "," << std::abs(thickness_y) << ") " << color;
+				if (!fillcolor.isTransparent()) {os << " filled " << fillcolor; }
+				os << "]";
+				return os.str();
 				}
 
 
@@ -1915,12 +1851,11 @@ namespace mtools
 
 			virtual std::string toString(bool debug = false) const override
 				{
-				std::string str("Circle [");
-				str += mtools::toString(center) + " ";
-				str += mtools::toString(radius) + " ";
-				str += mtools::toString(color);
-				if (fillcolor.comp.A != 0) str += std::string(" filled: ") + mtools::toString(fillcolor);
-				return str + "]";
+				OSS os; 
+				os << "Circle [" << center << " " << radius << " " << color;
+				if (fillcolor.comp.A != 0) { os << " filled: " << fillcolor; }
+				os << "]";
+				return os.str();
 				}
 
 
@@ -2014,17 +1949,15 @@ namespace mtools
 
 			virtual std::string toString(bool debug = false) const override
 				{
-				std::string str("ThickCircle [");
-				str += mtools::toString(center) + " ";
-				str += mtools::toString(radius) + " ";
-				str += mtools::toString(color);
-				if (fillcolor.comp.A != 0) str += std::string(" filled: ") + mtools::toString(fillcolor);
+				OSS os; 
+				os << "ThickCircle [" << center << " " << radius << " " << color;
+				if (fillcolor.comp.A != 0) { os << " filled: " << fillcolor; }
 				if (thickness != 0.0)
 					{
-					if (thickness > 0) str += std::string(" rel. thick: ") + mtools::toString(thickness);
-					else str += std::string(" abs. thick: ") + mtools::toString(-thickness);
+					if (thickness > 0) { os << " rel. thick: " << thickness; } else { os << " abs. thick: " << (-thickness); }
 					}
-				return str + "]";
+				os << "]";
+				return os.str();
 				}
 
 
@@ -2110,25 +2043,24 @@ namespace mtools
 
 			virtual std::string toString(bool debug = false) const override
 				{
-				std::string str("CirclePart [");
+				OSS os; 
+				os << "CirclePart [";
 				switch (part)
 					{
-					case BOX_SPLIT_UP: { str += "HALF UP"; break; }
-					case BOX_SPLIT_DOWN: { str += "HALF DOWN"; break; }
-					case BOX_SPLIT_LEFT: { str += "HALF LEFT"; break; }
-					case BOX_SPLIT_RIGHT: { str += "HALF RIGHT"; break; }
-					case BOX_SPLIT_UP_LEFT: { str += "QUARTER UP LEFT"; break; }
-					case BOX_SPLIT_UP_RIGHT: { str += "QUARTER UP RIGHT"; break; }
-					case BOX_SPLIT_DOWN_LEFT: { str += "QUARTER DOWN LEFT"; break; }
-					case BOX_SPLIT_DOWN_RIGHT: { str += "QUARTER DOWN RIGHT"; break; }
-					default: { str += "ERROR PART"; }
+					case BOX_SPLIT_UP: { os << "HALF UP"; break; }
+					case BOX_SPLIT_DOWN: { os << "HALF DOWN"; break; }
+					case BOX_SPLIT_LEFT: { os << "HALF LEFT"; break; }
+					case BOX_SPLIT_RIGHT: { os << "HALF RIGHT"; break; }
+					case BOX_SPLIT_UP_LEFT: { os << "QUARTER UP LEFT"; break; }
+					case BOX_SPLIT_UP_RIGHT: { os << "QUARTER UP RIGHT"; break; }
+					case BOX_SPLIT_DOWN_LEFT: { os << "QUARTER DOWN LEFT"; break; }
+					case BOX_SPLIT_DOWN_RIGHT: { os << "QUARTER DOWN RIGHT"; break; }
+					default: { os << "ERROR PART"; }
 					}
-				str += " ";
-				str += mtools::toString(center) + " ";
-				str += mtools::toString(radius) + " ";
-				str += mtools::toString(color);
-				if (fillcolor.comp.A != 0) str += std::string(" filled: ") + mtools::toString(fillcolor);
-				return str + "]";
+				os << " " << center << " " << radius << " " << color;
+				if (fillcolor.comp.A != 0) { os << " filled: " << fillcolor; }
+				os << "]";
+				return os.str();
 				}
 
 
@@ -2234,30 +2166,28 @@ namespace mtools
 
 			virtual std::string toString(bool debug = false) const override
 				{
-				std::string str("ThickCirclePart [");
+				OSS os;
+				os << "ThickCirclePart ["; 
 				switch (part)
 					{
-					case BOX_SPLIT_UP: { str += "HALF UP"; break; }
-					case BOX_SPLIT_DOWN: { str += "HALF DOWN"; break; }
-					case BOX_SPLIT_LEFT: { str += "HALF LEFT"; break; }
-					case BOX_SPLIT_RIGHT: { str += "HALF RIGHT"; break; }
-					case BOX_SPLIT_UP_LEFT: { str += "QUARTER UP LEFT"; break; }
-					case BOX_SPLIT_UP_RIGHT: { str += "QUARTER UP RIGHT"; break; }
-					case BOX_SPLIT_DOWN_LEFT: { str += "QUARTER DOWN LEFT"; break; }
-					case BOX_SPLIT_DOWN_RIGHT: { str += "QUARTER DOWN RIGHT"; break; }
-					default: { str += "ERROR PART"; }
+					case BOX_SPLIT_UP: { os << "HALF UP"; break; }
+					case BOX_SPLIT_DOWN: { os << "HALF DOWN"; break; }
+					case BOX_SPLIT_LEFT: { os << "HALF LEFT"; break; }
+					case BOX_SPLIT_RIGHT: { os << "HALF RIGHT"; break; }
+					case BOX_SPLIT_UP_LEFT: { os << "QUARTER UP LEFT"; break; }
+					case BOX_SPLIT_UP_RIGHT: { os << "QUARTER UP RIGHT"; break; }
+					case BOX_SPLIT_DOWN_LEFT: { os << "QUARTER DOWN LEFT"; break; }
+					case BOX_SPLIT_DOWN_RIGHT: { os << "QUARTER DOWN RIGHT"; break; }
+					default: { os << "ERROR PART"; }
 					}
-				str += " ";
-				str += mtools::toString(center) + " ";
-				str += mtools::toString(radius) + " ";
-				str += mtools::toString(color);
-				if (fillcolor.comp.A != 0) str += std::string(" filled: ") + mtools::toString(fillcolor);
+				os << " " << center << " " << radius << " " << color;
+				if (fillcolor.comp.A != 0) { os << " filled: " << fillcolor; }
 				if (thickness != 0.0)
 					{
-					if (thickness > 0) str += std::string(" rel. thick: ") + mtools::toString(thickness);
-					else str += std::string(" abs. thick: ") + mtools::toString(-thickness);
+					if (thickness > 0) { os << " rel. thick: " << thickness; } else { os << " abs. thick: " << (-thickness); }
 					}
-				return str + "]";
+				os << "]";
+				return os.str();
 				}
 
 
@@ -2366,13 +2296,11 @@ namespace mtools
 
 			virtual std::string toString(bool debug = false) const override
 				{
-				std::string str("Ellipse [");
-				str += mtools::toString(center) + " ";
-				str += mtools::toString(rx) + " ";
-				str += mtools::toString(ry) + " ";
-				str += mtools::toString(color);
-				if (fillcolor.comp.A != 0) str += std::string(" filled: ") + mtools::toString(fillcolor);
-				return str + "]";
+				OSS os; 
+				os << "Ellipse [" << center << " " << rx << " " << ry << " " << color; 
+				if (fillcolor.comp.A != 0) { os << " filled: " << fillcolor; }
+				os << "]";
+				return os.str();
 				}
 
 
@@ -2518,18 +2446,15 @@ namespace mtools
 
 			virtual std::string toString(bool debug = false) const override
 				{
-				std::string str("ThickEllipse [");
-				str += mtools::toString(center) + " ";
-				str += mtools::toString(rx) + " ";
-				str += mtools::toString(ry) + " ";
-				str += mtools::toString(color);
-				if (fillcolor.comp.A != 0) str += std::string(" filled: ") + mtools::toString(fillcolor);
+				OSS os; 
+				os << "ThickEllipse [" << center << " " << rx << " " << ry << " " << color;
+				if (fillcolor.comp.A != 0) { os << " filled: " << fillcolor; }
 				if ((thickness_x != 0.0) || (thickness_y != 0.0))
 					{
-					if (thickness_x >= 0) str += std::string(" rel. thick: x ") + mtools::toString(thickness_x) + " y " + mtools::toString(thickness_y);
-					else str += std::string(" abs. thick: ") + mtools::toString(thickness_x) + " y " + mtools::toString(thickness_y);
+					if (thickness_x >= 0) { os << " rel. thick: x " << thickness_x << " y " << thickness_y; } else { os << " abs. thick: " << (-thickness_x) << " y "  << (-thickness_y); }
 					}
-				return str + "]";
+				os << "]";
+				return os.str();
 				}
 
 
@@ -2654,25 +2579,24 @@ namespace mtools
 
 			virtual std::string toString(bool debug = false) const override
 				{
-				std::string str("EllipsePart [");
+				OSS os;
+				os << "EllipsePart [";
 				switch (part)
 					{
-					case BOX_SPLIT_UP: { str += "HALF UP"; break; }
-					case BOX_SPLIT_DOWN: { str += "HALF DOWN"; break; }
-					case BOX_SPLIT_LEFT: { str += "HALF LEFT"; break; }
-					case BOX_SPLIT_RIGHT: { str += "HALF RIGHT"; break; }
-					case BOX_SPLIT_UP_LEFT: { str += "QUARTER UP LEFT"; break; }
-					case BOX_SPLIT_UP_RIGHT: { str += "QUARTER UP RIGHT"; break; }
-					case BOX_SPLIT_DOWN_LEFT: { str += "QUARTER DOWN LEFT"; break; }
-					case BOX_SPLIT_DOWN_RIGHT: { str += "QUARTER DOWN RIGHT"; break; }
-					default: { str += "ERROR PART"; }
+					case BOX_SPLIT_UP: { os << "HALF UP"; break; }
+					case BOX_SPLIT_DOWN: { os << "HALF DOWN"; break; }
+					case BOX_SPLIT_LEFT: { os << "HALF LEFT"; break; }
+					case BOX_SPLIT_RIGHT: { os << "HALF RIGHT"; break; }
+					case BOX_SPLIT_UP_LEFT: { os << "QUARTER UP LEFT"; break; }
+					case BOX_SPLIT_UP_RIGHT: { os << "QUARTER UP RIGHT"; break; }
+					case BOX_SPLIT_DOWN_LEFT: { os << "QUARTER DOWN LEFT"; break; }
+					case BOX_SPLIT_DOWN_RIGHT: { os << "QUARTER DOWN RIGHT"; break; }
+					default: { os << "ERROR PART"; }
 					}
-				str += " " + mtools::toString(center) + " ";
-				str += mtools::toString(rx) + " ";
-				str += mtools::toString(ry) + " ";
-				str += mtools::toString(color);
-				if (fillcolor.comp.A != 0) str += std::string(" filled: ") + mtools::toString(fillcolor);
-				return str + "]";
+				os << " " << center << " " << rx << " " << ry << " " << color;
+				if (fillcolor.comp.A != 0) { os << " filled: " << fillcolor; }
+				os << "]";
+				return os.str();
 				}
 
 
@@ -2834,30 +2758,28 @@ namespace mtools
 
 			virtual std::string toString(bool debug = false) const override
 				{
-				std::string str("ThickEllipsePart [");
+				OSS os; 
+				os << "ThickEllipsePart [";
 				switch (part)
 					{
-					case BOX_SPLIT_UP: { str += "HALF UP"; break; }
-					case BOX_SPLIT_DOWN: { str += "HALF DOWN"; break; }
-					case BOX_SPLIT_LEFT: { str += "HALF LEFT"; break; }
-					case BOX_SPLIT_RIGHT: { str += "HALF RIGHT"; break; }
-					case BOX_SPLIT_UP_LEFT: { str += "QUARTER UP LEFT"; break; }
-					case BOX_SPLIT_UP_RIGHT: { str += "QUARTER UP RIGHT"; break; }
-					case BOX_SPLIT_DOWN_LEFT: { str += "QUARTER DOWN LEFT"; break; }
-					case BOX_SPLIT_DOWN_RIGHT: { str += "QUARTER DOWN RIGHT"; break; }
-					default: { str += "ERROR PART"; }
+					case BOX_SPLIT_UP: { os << "HALF UP"; break; }
+					case BOX_SPLIT_DOWN: { os << "HALF DOWN"; break; }
+					case BOX_SPLIT_LEFT: { os << "HALF LEFT"; break; }
+					case BOX_SPLIT_RIGHT: { os << "HALF RIGHT"; break; }
+					case BOX_SPLIT_UP_LEFT: { os << "QUARTER UP LEFT"; break; }
+					case BOX_SPLIT_UP_RIGHT: { os << "QUARTER UP RIGHT"; break; }
+					case BOX_SPLIT_DOWN_LEFT: { os << "QUARTER DOWN LEFT"; break; }
+					case BOX_SPLIT_DOWN_RIGHT: { os << "QUARTER DOWN RIGHT"; break; }
+					default: { os << "ERROR PART"; }
 					}
-				str += " " + mtools::toString(center) + " ";
-				str += mtools::toString(rx) + " ";
-				str += mtools::toString(ry) + " ";
-				str += mtools::toString(color);
-				if (fillcolor.comp.A != 0) str += std::string(" filled: ") + mtools::toString(fillcolor);
+				os << " " << center << " " << rx << " " << ry << " " << color;
+				if (fillcolor.comp.A != 0) { os << " filled: " << fillcolor; }
 				if ((thickness_x != 0.0) || (thickness_y != 0.0))
 					{
-					if (thickness_x >= 0) str += std::string(" rel. thick: x ") + mtools::toString(thickness_x) + " y " + mtools::toString(thickness_y);
-					else str += std::string(" abs. thick: ") + mtools::toString(thickness_x) + " y " + mtools::toString(thickness_y);
+					if (thickness_x >= 0) { os << " rel. thick: x " << thickness_x << " y " << thickness_y; } else { os << " abs. thick: " << (-thickness_x) << " y "  << (-thickness_y); }
 					}
-				return str + "]";
+				os << "]";
+				return os.str();
 				}
 
 

@@ -723,7 +723,12 @@ namespace mtools
 		*
 		* @return  A std::string that represent the color in the form "RGB(rrr,ggg,bbb)".
 		**/
-		std::string toString() const { return std::string("RGBc(") + mtools::toString(comp.R) + "," + mtools::toString(comp.G) + "," + mtools::toString(comp.B) + ":" + mtools::toString(opacity()) + ")"; }
+		std::string toString() const 
+			{ 
+			OSS os; 
+			os << "RGBc(" << comp.R << "," << comp.G << ","  << comp.B << ":"  << opacity() << ")";
+			return os.str();
+			}
 
 
         /**

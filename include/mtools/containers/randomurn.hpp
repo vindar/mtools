@@ -169,7 +169,9 @@ namespace mtools
          **/
         std::string toString(bool debug = false) const
             {
-            return std::string("RandomUrn<") + typeid(T).name() + "> size: " + mtools::toString(size()) + " (" + toStringMemSize(memoryUsed()) + " / " + toStringMemSize(memoryAllocated())  + ")" + (debug ? std::string("\n") + mtools::toString(_tab) : std::string(""));
+			OSS os; 
+			os << "RandomUrn<" << typeid(T).name() << "> size: " << size() << " (" << toStringMemSize(memoryUsed()) << " / " << toStringMemSize(memoryAllocated()) << ")" << (debug ? std::string("\n") + mtools::toString(_tab) : std::string(""));
+            return os.str();
             }
 
 

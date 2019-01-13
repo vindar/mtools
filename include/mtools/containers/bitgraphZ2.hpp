@@ -238,24 +238,26 @@ namespace mtools
         **/
         std::string stats()
         {
-            std::string s;
-            s += "*****************************************************\n";
-            s += "BitGraphZ2 object statistics\n\n";
-            s += "- memory used         : " + toString(memory()) + "Mb\n";
-            s += "- lattice represented : [ " + toString(minV()) + " , " + toString(maxV()) + " ]^2\n";
-            s += "- Main grid size      : [ " + toString(-LL) + " , " + toString(LL-1) + " ]^2 (" + toString((4*sizeof(int32)*LL*LL)/(1024*1024)) + "Mb)\n";
-            s += "- Size of a subsquare : " + toString(N*8) + " x " + toString(N*8) + " (" + toString(sizeof(_MSQ)) + "b each)\n";
-            s += "- Number of subsquare : " + toString(VV) + " (" + toString(((int64)VV)*sizeof(_MSQ) /(1024*1024)) + "Mb)\n\n";
-            s += "Number of point set : " + toString(nbSet()) + "\n";
-            s += "Surrounding square : ";
-            if (minX() != LLONG_MAX) {
-            s += "[ " + toString(minX()) + " , " + toString(maxX()) + " ] x [ " + toString(minY()) + " , " + toString(maxY()) + " ]\n";
-            } else {s += "No point set yet !\n";}
-            s += "Memory used before cleanup\t" + toString(v) + "/" + toString(VV) + " (" + toString((int)(100*(((double)v)/((double)VV))))+ "%)\n";
+			OSS os;
+            os << "*****************************************************\n";
+            os << "BitGraphZ2 object statistics\n\n";
+            os << "- memory used         : " << memory() << "Mb\n";
+            os << "- lattice represented : [ "  << minV() << " , " << maxV() << " ]^2\n";
+            os << "- Main grid size      : [ " << (-LL)  << " , " << (LL-1) << " ]^2 (" << ((4*sizeof(int32)*LL*LL)/(1024*1024)) << "Mb)\n";
+            os << "- Size of a subsquare : " << (N*8) << " x " << (N*8) << " (" << sizeof(_MSQ) << "b each)\n";
+            os << "- Number of subsquare : " << VV << " (" << (((int64)VV)*sizeof(_MSQ) /(1024*1024)) << "Mb)\n\n";
+            os << "Number of point set : " << nbSet() << "\n";
+            os << "Surrounding square : ";
+            if (minX() != LLONG_MAX) 
+				{
+				os << "[ " << minX() << " , " << maxX() << " ] x [ " << minY() << " , " << maxY() << " ]\n";
+				} 
+			else {os << "No point set yet !\n";}
+            os << "Memory used before cleanup\t" << v << "/" << VV << " (" << ((int)(100*(((double)v)/((double)VV)))) << "%)\n";
             cleanup();
-            s += "Memory used after cleanup\t" + toString(v) + "/" + toString(VV) + " (" + toString((int)(100*(((double)v)/((double)VV))))+ "%)\n";
-            s += "*****************************************************\n";
-            return s;            
+            os << "Memory used after cleanup\t" <<v << "/" << VV  << " (" << ((int)(100*(((double)v)/((double)VV)))) << "%)\n";
+            os << "*****************************************************\n";
+            return os.str();   
         }
 
 

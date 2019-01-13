@@ -880,26 +880,26 @@ namespace mtools
         **/
         std::string toString(bool debug = false) const
             {
-            std::string s;
-            s += std::string("Grid_factor<") + mtools::toString(D) + " , " + typeid(T).name() + " , " + mtools::toString(NB_SPECIAL) + " , " + mtools::toString(R)  + ">\n";
-            s += std::string(" - Memory : ") + mtools::toStringMemSize(memoryUsed()) + " / " + mtools::toStringMemSize(memoryAllocated()) + "\n";
-            s += std::string(" - Min position accessed = ") + _rangemin.toString(false) + "\n";
-            s += std::string(" - Max position accessed = ") + _rangemax.toString(false) + "\n";
-            s += std::string(" - Min value created = ") + mtools::toString(_minVal) + "\n";
-            s += std::string(" - Max value created = ") + mtools::toString(_maxVal) + "\n";
-            s += std::string(" - Special object value range [") + mtools::toString(_minSpec) + " , " + mtools::toString(_maxSpec) + "]";     
+			OSS os
+            os << "Grid_factor<" << D << " , " << typeid(T).name() << " , " << NB_SPECIAL << " , " << R << ">\n";
+			os << " - Memory : " << mtools::toStringMemSize(memoryUsed()) << " / " << mools::toStringMemSize(memoryAllocated()) << "\n";
+			os << " - Min position accessed = " << _rangemin.toString(false) << "\n";
+			os << " - Max position accessed = " << _rangemax.toString(false) << "\n";
+			os << " - Min value created = " << _minVal << "\n";
+			os << " - Max value created = " << _maxVal << "\n";
+			os << " - Special object value range [" << _minSpec << " , "  << _maxSpec << "]";
             uint64 totE = 0;
-            if (!_existSpecial()) { s += std::string(" NONE!\n"); } else { s += std::string("\n"); }
+            if (!_existSpecial()) { os << " NONE!\n"; } else { os << "\n"; }
             for (int i = 0;i < _specialRange(); i++)
                 {
-                s += std::string("    [") + ((_tabSpecObj[i] == nullptr) ? " " : "X") + "] value (" + mtools::toString(_minSpec + i) + ") = " + mtools::toString(_tabSpecNB[i]) + "\n";
+                os << "    ["  << ((_tabSpecObj[i] == nullptr) ? " " : "X") << "] value (" << (_minSpec + i) << ") = " << _tabSpecNB[i] << "\n";
                 totE += _tabSpecNB[i];
                 }
-            s += std::string(" - Number of 'normal' objects = ") + mtools::toString(_nbNormalObj) + "\n";
+            os << " - Number of 'normal' objects = " <<_nbNormalObj << "\n";
             totE += _nbNormalObj;
-            s += std::string(" - Total number of objects = ") + mtools::toString(totE) + "\n";
-            if (debug) {s += "\n" + _printTree(_getRoot(),"");}
-            return s;
+            os << " - Total number of objects = " << totE << "\n";
+            if (debug) {os << "\n" << _printTree(_getRoot(),"");}
+            return os.str();
             }
 
 

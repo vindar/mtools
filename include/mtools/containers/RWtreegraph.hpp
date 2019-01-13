@@ -291,19 +291,19 @@ public:
     *****************************************************/
     std::string Stats()
     {
-        std::string s;
-        s += "*****************************************************\n";
-        s += "TreeGraph object statistics\n\n";
-        s += "- Memory allocated         : " + mtools::toString(((sizeof(TreeNode)*tab_size)+(sizeof(size_t)*(tab_size+5)))/(1024*1024)) + "Mb\n";
-        s += "- Number of cleanup done   : " + mtools::toString(NbCleanUp()) + "\n";
-        s += "- Number of step performed : " + mtools::toString(NbSteps()) + "\n"; 
-        s += "- Depth of the memory root : " + mtools::toString(MemoryRootDepth()) + "\n";
-        s += "- Depth of the actual pos  : " + mtools::toString(Depth()) + "\n"; 
-        s += "- total Nb of site created : " + mtools::toString(NbCreated()) + "\n";
-        s += "- total Nb of site visited : " + mtools::toString(NbVisited()) + "\n";
-        s += "- Number of nodes in use   : " + mtools::toString(MemoryUsedSites()) + " / " + mtools::toString(MemoryMaxSites()) + " (" + mtools::toString((int)(((double)MemoryUsedSites())/((double)MemoryMaxSites())*100.0)) + "% occupied)\n";
-        s += "*****************************************************\n";
-        return s;                    
+		OSS os;
+        os << "*****************************************************\n";
+		os << "TreeGraph object statistics\n\n";
+		os << "- Memory allocated         : " << toStringMemSize((sizeof(TreeNode)*tab_size) + (sizeof(size_t)*(tab_size + 5))) << "\n";;
+		os << "- Number of cleanup done   : " NbCleanUp() << "\n";
+		os << "- Number of step performed : " NbSteps() << "\n";
+		os << "- Depth of the memory root : " MemoryRootDepth() << "\n";
+		os << "- Depth of the actual pos  : " Depth() << "\n";
+		os << "- total Nb of site created : " NbCreated() << "\n";
+		os << "- total Nb of site visited : " NbVisited() << "\n";
+		os << "- Number of nodes in use   : " MemoryUsedSites() << " / " << MemoryMaxSites() << " (" << ((int)(((double)MemoryUsedSites())/((double)MemoryMaxSites())*100.0)) << "% occupied)\n";
+		os << "*****************************************************\n";
+        return os.str();                    
     }
 
     

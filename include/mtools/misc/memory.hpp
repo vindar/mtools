@@ -379,11 +379,12 @@ namespace mtools
 		**/
 		std::string toString() const
 			{
-			std::string s = std::string("CstSizeMemoryPool<") + mtools::toString(UNITALLOCSIZE) + ", " + mtools::toString(POOLSIZE) + ">\n";
-			s += std::string(" - number of chunks : ") + mtools::toString(_m_allocatedobj) + " (in " + mtools::toString(footprint() / sizeof(_pool)) + " pools)\n";
-			s += std::string(" - memory allocated : ") + toStringMemSize(used()) + "\n";
-			s += std::string(" - memory footprint : ") + toStringMemSize(footprint()) + "\n";
-			return s;
+			OSS os; 
+			os << "CstSizeMemoryPool<" << UNITALLOCSIZE << ", " << POOLSIZE << ">\n";
+			os << " - number of chunks : " << _m_allocatedobj << " (in " << (footprint() / sizeof(_pool)) << " pools)\n";
+			os << " - memory allocated : " << toStringMemSize(used()) << "\n";
+			os << " - memory footprint : " << toStringMemSize(footprint()) << "\n";
+			return os.str();
 			}
 
 

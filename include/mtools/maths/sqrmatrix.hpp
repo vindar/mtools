@@ -383,13 +383,13 @@ template<class T, size_t N> class SqrMatrix
      **/
 	std::string toString() const
 		{
-		std::string s;
+		OSS os; 
 		for(size_t i=0;i<N;i++)
 			{
-			for(size_t j=0;j<N;j++) {s += mtools::toString((*this)(i,j)) + " \t";}
-			s+= "\n";
+			for(size_t j=0;j<N;j++) { os << ((*this)(i,j)) << " \t";}
+			os << "\n";
 			}
-		return s;
+		return os.str();
 		}
 
 

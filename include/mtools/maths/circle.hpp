@@ -167,7 +167,9 @@ namespace mtools
 			**/
 			std::string toString() const
 				{
-				return(std::string("Circle[center=") + mtools::toString(center) + ", radius=" + mtools::toString(radius) + "]");
+				OSS os; 
+				os << "Circle[center=" << center << ", radius=" << radius << "]";
+				return os.str();
 				}
 
 

@@ -5068,10 +5068,10 @@ namespace mtools
 			 **/
 			std::string toString() const
 				{
-				std::string s("Image [");
-				s += mtools::toString(_lx) + "x" + mtools::toString(_ly) + " stride " + mtools::toString(_stride) + "]";
-				if (refcount() >1) { s += " (SHARED : ref count " + mtools::toString(refcount()) + ")"; }
-				return s;
+				OSS os; 
+				os <<"Image [" << _lx << "x" << _ly << " stride " << _stride << "]";
+				if (refcount() > 1) { os << " (SHARED : ref count "  << refcount() << ")"; }
+				return os.str();
 				}
 
 

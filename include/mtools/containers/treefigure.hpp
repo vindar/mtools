@@ -150,7 +150,7 @@ namespace mtools
 		**/
 		void serialize(OBaseArchive & ar, const int version = 0) const
 			{
-			ar << std::string("TreeFigure< ") + typeid(T).name() + ", " + mtools::toString(N) + ", " + typeid(TFloat).name() + ">\n";
+			ar << std::string("TreeFigure< ") << typeid(T).name() << ", " << N << ", " << typeid(TFloat).name() << ">\n";
 			ar & _minbbox;
 			ar & size(); // number of items
 			size_t nb = iterate_all([&ar](const BoundedObject & bo) -> void  { ar & bo.boundingbox; ar & bo.object; }); 
@@ -551,12 +551,14 @@ namespace mtools
 		**/
 		std::string toString() const
 			{
-			std::string s = std::string("TreeFigure<") + typeid(T).name() + ", " + mtools::toString(N) + ", " + typeid(TFloat).name() + ">\n";
-			s += std::string(" - object inserted : ") + mtools::toString(size()) + "\n";
-			s += std::string(" - memory used : ") + mtools::toStringMemSize(footprint()) + "\n";
-			s += std::string(" - main bounding box    : ") + mtools::toString(_rootNode->_bbox) + "\n";
-			s += std::string(" - minimal bounding box : ") + mtools::toString(_minbbox) + "\n";
-			return s + "---\n"; 
+			OSS os; 
+			os << "TreeFigure<" << typeid(T).name() << ", " << N << ", " << typeid(TFloat).name() << ">\n";
+			os << " - object inserted : " << size() << "\n";
+			os << " - memory used : " << toStringMemSize(footprint()) << "\n";
+			os << " - main bounding box    : " << _rootNode->_bbox << + "\n";
+			os << " - minimal bounding box : " << _minbbox << + "\n";
+			os << "---\n";
+			return os.str();
 			}
 
 
