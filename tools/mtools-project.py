@@ -88,22 +88,29 @@ set(CMAKE_C_COMPILER "${MTOOLS_C_COMPILER}" CACHE STRING "" FORCE)
 
 project([PROJECT_NAME_PLH])
 
-# for linux/macos
 if (NOT WIN32)
-	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -Wall") # compile with warnings enabled
+	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -Wall") 	# build everything with warning enables 
+	target_compile_options(mtools PUBLIC "-std=c++17")	# recent C++ features
 	if (NOT CMAKE_BUILD_TYPE)
-		set(CMAKE_BUILD_TYPE Release)				  # release build is default
+		set(CMAKE_BUILD_TYPE Release)                   # release is the default build
 	endif ()
+elseif ()
+	set(CMAKE_CXX_STANDARD 17)
+	set(CMAKE_CXX_STANDARD_REQUIRED ON)
+	set(CMAKE_CXX_EXTENSIONS OFF)	 
 endif()
+
 
 # add MTOOLS_DEBUG_FLAG in Debug and RelWithDebInfo configuration mode. 
 if(WIN32)
-	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /DMTOOLS_DEBUG_FLAG")
-	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /DMTOOLS_DEBUG_FLAG")
+	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /DMTOOLS_DEBUG_FLAG")	
+	# hack for RelWithDebINfo configuration otherwise compile never ends on MSVC
+	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/Zi /Gm- /Ox /Ob0 /DMTOOLS_DEBUG_FLAG")	
 else()
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DMTOOLS_DEBUG_FLAG")
 	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -DMTOOLS_DEBUG_FLAG")
 endif()
+
 
 
 find_package(mtools REQUIRED)
