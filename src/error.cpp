@@ -76,6 +76,88 @@ namespace mtools
             }
 
 
+		void _stopWithMsg(const std::string & title, const std::string & msg)
+			{
+			if (_error_cb != nullptr) _error_cb(title, msg);
+			display(title, msg);
+			#if (MTOOLS_BASIC_CONSOLE == 0)
+			displayGraphics(title, msg);
+			#endif
+			exit(EXIT_FAILURE);
+			}
+
+		void _error(const std::string & file, int line, const std::string & s)
+			{
+			std::ostringstream os;
+			os << "File : " << truncateFilename(file) << "\nLine : " << line << "\nMessage : " << s;
+			if (_error_cb != nullptr) _error_cb("MTOOLS_ERROR", os.str());
+			_stopWithMsg("MTOOLS_ERROR", os.str());
+			}
+
+		bool _insures1(const std::string & file, int line, const std::string & s)
+			{
+			std::ostringstream os;
+			os << "File : " << truncateFilename(file) << "\nLine : " << line << "\nCondition : " << s;
+			if (_error_cb != nullptr) _error_cb("MTOOLS_INSURE_FAILURE", os.str());
+			_stopWithMsg("MTOOLS_INSURE FAILURE", os.str());
+			return true;
+			}
+
+		bool _insures2(const std::string & file, int line, const std::string & s, const std::string & msg)
+			{
+			std::ostringstream os;
+			os << "File : " << truncateFilename(file) << "\nLine : " << line << "\nCondition : " << s << "\nMessage : " << msg;
+			if (_error_cb != nullptr) _error_cb("MTOOLS_INSURE_FAILURE", os.str());
+			_stopWithMsg("MTOOLS_INSURE FAILURE", os.str());
+			return true;
+			}
+
+
+		bool _asserts1(const std::string & file, int line, const std::string & s)
+			{
+			std::ostringstream os;
+			os << "File : " << truncateFilename(file) << "\nLine : " << line << "\nCondition : " << s;
+			if (_error_cb != nullptr) _error_cb("MTOOLS_ASSERT_FAILURE", os.str());
+			_stopWithMsg("MTOOLS_ASSERT FAILURE", os.str());
+			return true;
+			}
+
+
+		bool _asserts2(const std::string & file, int line, const std::string & s, const std::string & msg)
+			{
+			std::ostringstream os;
+			os << "File : " << truncateFilename(file) << "\nLine : " << line << "\nCondition : " << s << "\nMessage : " << msg;
+			if (_error_cb != nullptr) _error_cb("MTOOLS_ASSERT_FAILURE", os.str());
+			_stopWithMsg("MTOOLS_ASSERT FAILURE", os.str());
+			return true;
+			}
+
+
+		void _throws_debug(const std::string & file, int line, const std::string & s)
+			{
+			_debugs(file, line, s);
+			if (_error_cb != nullptr)
+				{
+				std::ostringstream os;
+				os << "File : " << truncateFilename(file) << "\nLine : " << line << "\nThrow : " << s;
+				_error_cb("MTOOLS_THROW", os.str());
+				}
+			throw s.c_str();
+			}
+
+
+		void _throws_nodebug(const std::string & file, int line, const std::string & s)
+			{
+			if (_error_cb != nullptr)
+				{
+				std::ostringstream os;
+				os << "File : " << truncateFilename(file) << "\nLine : " << line << "\nThrow : " << s;
+				_error_cb("MTOOLS_THROW", os.str());
+				}
+			throw s.c_str();
+			}
+
+
         }
     }
 

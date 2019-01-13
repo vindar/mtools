@@ -33,7 +33,6 @@ namespace mtools
 
 
 
-
 	/* typedef for the error callback function */
 	typedef void(*mtools_error_cb)(const std::string & title, const std::string & msg);
 
@@ -52,14 +51,10 @@ namespace mtools
 
 
 
-
     namespace internals_error
     {
 
-
 	extern mtools_error_cb _error_cb; // the error callback function
-
-
 
     std::string truncateFilename(std::string s);
 
@@ -67,89 +62,23 @@ namespace mtools
 
     void displayGraphics(const std::string & title, const std::string & msg);
 
-    inline void _stopWithMsg(const std::string & title, const std::string & msg)
-        {
-		if (_error_cb != nullptr) _error_cb(title, msg);
-        display(title, msg);
-        #if (MTOOLS_BASIC_CONSOLE == 0)
-        displayGraphics(title, msg);
-        #endif
-        exit(EXIT_FAILURE);
-        }
+	void _stopWithMsg(const std::string & title, const std::string & msg);
 
-    inline void _error(const std::string & file, int line, const std::string & s)
-        {
-		std::ostringstream os;
-		os << "File : " << truncateFilename(file) << "\nLine : " << line << "\nMessage : " << s;
-		if (_error_cb != nullptr) _error_cb("MTOOLS_ERROR", os.str());
-        _stopWithMsg("MTOOLS_ERROR", os.str());
-        }
+	void _error(const std::string & file, int line, const std::string & s);
 
-    inline bool _insures(const std::string & file, int line, const std::string & s)
-        {
-		std::ostringstream os; 
-		os << "File : " << truncateFilename(file) << "\nLine : " << line << "\nCondition : " << s;
-		if (_error_cb != nullptr) _error_cb("MTOOLS_INSURE_FAILURE", os.str());
-		_stopWithMsg("MTOOLS_INSURE FAILURE", os.str());
-        return true;
-        }
+	bool _insures1(const std::string & file, int line, const std::string & s);
 
-	inline bool _insures(const std::string & file, int line, const std::string & s, const std::string & msg)
-		{
-		std::ostringstream os;
-		os << "File : " << truncateFilename(file) << "\nLine : " << line << "\nCondition : " << s << "\nMessage : " << msg;
-		if (_error_cb != nullptr) _error_cb("MTOOLS_INSURE_FAILURE", os.str());
-		_stopWithMsg("MTOOLS_INSURE FAILURE", os.str());
-		return true;
-		}
+	bool _insures2(const std::string & file, int line, const std::string & s, const std::string & msg);
 
+	bool _asserts1(const std::string & file, int line, const std::string & s);
 
-    inline bool _assert(const std::string & file, int line, const std::string & s)
-        {
-		std::ostringstream os;
-		os << "File : " << truncateFilename(file) << "\nLine : " << line << "\nCondition : " << s;
-		if (_error_cb != nullptr) _error_cb("MTOOLS_ASSERT_FAILURE", os.str());
-		_stopWithMsg("MTOOLS_ASSERT FAILURE", os.str());
-        return true;
-        }
-
-
-	inline bool _assert(const std::string & file, int line, const std::string & s, const std::string & msg)
-		{
-		std::ostringstream os;
-		os << "File : " << truncateFilename(file) << "\nLine : " << line << "\nCondition : " << s << "\nMessage : " << msg;
-		if (_error_cb != nullptr) _error_cb("MTOOLS_ASSERT_FAILURE", os.str());
-		_stopWithMsg("MTOOLS_ASSERT FAILURE", os.str());
-		return true;
-		}
-
+	bool _asserts2(const std::string & file, int line, const std::string & s, const std::string & msg);
 
     void _debugs(const std::string & file, int line, const std::string & s);
 
+	void _throws_debug(const std::string & file, int line, const std::string & s);
 
-    inline void _throws_debug(const std::string & file, int line, const std::string & s)
-        {
-		_debugs(file, line, s);
-		if (_error_cb != nullptr)
-			{
-			std::ostringstream os;
-			os << "File : " << truncateFilename(file) << "\nLine : " << line << "\nThrow : " << s;
-			_error_cb("MTOOLS_THROW", os.str());
-			}
-		throw s.c_str();
-        }
-
-
-    inline void _throws_nodebug(const std::string & file, int line, const std::string & s)
-        {
-		if (_error_cb != nullptr)
-			{
-			std::ostringstream os;
-			os << "File : " << truncateFilename(file) << "\nLine : " << line << "\nThrow : " << s;
-			_error_cb("MTOOLS_THROW", os.str());
-			}
-		throw s.c_str();
-        }
+	void _throws_nodebug(const std::string & file, int line, const std::string & s);
 
     }
 }
@@ -166,9 +95,8 @@ namespace mtools
 #define MTOOLS_ERROR(_ex) mtools::internals_error::_error(__FILE__,__LINE__,(std::ostringstream() << _ex).str())
 
 /* Insure macro */
-#define MTOOLS_INSURE_1(_ex)       ((void)( (!!(_ex)) || (mtools::internals_error::_insures(__FILE__ , __LINE__,(#_ex))) ))
-#define MTOOLS_INSURE_2(_ex, _msg) ((void)( (!!(_ex)) || (mtools::internals_error::_insures(__FILE__ , __LINE__, (#_ex) , (std::ostringstream() << _msg).str()))))
-
+#define MTOOLS_INSURE_1(_ex)       ((void)( (!!(_ex)) || (mtools::internals_error::_insures1(__FILE__ , __LINE__,(#_ex))) ))
+#define MTOOLS_INSURE_2(_ex, _msg) ((void)( (!!(_ex)) || (mtools::internals_error::_insures2(__FILE__ , __LINE__, (#_ex) , (std::ostringstream() << _msg).str()))))
 #define MTOOLS_INSURE(...) MTOOLS_MSVC_BUGFIX_EXPAND(MTOOLS_GET_MACRO_1_2_PARAM(__VA_ARGS__, MTOOLS_INSURE_2, MTOOLS_INSURE_1, _UNUSED)(__VA_ARGS__))
 
 
@@ -178,11 +106,12 @@ namespace mtools
 	#define MTOOLS_THROW(_ex) mtools::internals_error::_throws_debug(__FILE__ , __LINE__, (std::ostringstream() << _ex).str())
 
 	#define MTOOLS_DEBUG(_ex) mtools::internals_error::_debugs(__FILE__ , __LINE__, (std::ostringstream() << _ex).str())
-	
+
 	#define MTOOLS_DEBUG_CODE(_code) { _code }
 
-	#define MTOOLS_ASSERT_1(_ex) ((void)( (!!(_ex)) || (mtools::internals_error::_assert(__FILE__ , __LINE__,(#_ex))) ))
-	#define MTOOLS_ASSERT_2(_ex, _msg) ((void)( (!!(_ex)) || (mtools::internals_error::_assert(__FILE__ , __LINE__,(#_ex), (std::ostringstream() << _msg).str()))))
+	#define MTOOLS_ASSERT_1(_ex)	   ((void)( (!!(_ex)) || (mtools::internals_error::_asserts1(__FILE__ , __LINE__,(#_ex)))))
+	#define MTOOLS_ASSERT_2(_ex, _msg) ((void)( (!!(_ex)) || (mtools::internals_error::_asserts2(__FILE__ , __LINE__,(#_ex), (std::ostringstream() << _msg).str()))))
+	#define MTOOLS_ASSERT(...) MTOOLS_MSVC_BUGFIX_EXPAND(MTOOLS_GET_MACRO_1_2_PARAM(__VA_ARGS__, MTOOLS_ASSERT_2, MTOOLS_ASSERT_1, _UNUSED)(__VA_ARGS__))
 
 #else
 
@@ -194,12 +123,9 @@ namespace mtools
 
 	#define MTOOLS_ASSERT_1(_ex) ((void)0)
 	#define MTOOLS_ASSERT_2(_ex, _msg) ((void)0)
-
+	#define MTOOLS_ASSERT(...) ((void)0)
 
 #endif
-
-
-#define MTOOLS_ASSERT(...) MTOOLS_MSVC_BUGFIX_EXPAND(MTOOLS_GET_MACRO_1_2_PARAM(__VA_ARGS__, MTOOLS_ASSERT_2, MTOOLS_ASSERT_1, _UNUSED)(__VA_ARGS__))
 
 
 
