@@ -180,21 +180,28 @@ namespace mtools
             {
             if ((_tab == nullptr) || (_len == 0)) return std::numeric_limits<double>::quiet_NaN();
             if (!((x >= _minDomain) && (x<=_maxDomain))) return std::numeric_limits<double>::quiet_NaN();
-            double _e = (_maxDomain - _minDomain) / _len;
-            if (!((_e >= DBL_MIN * 2) && (_e <= DBL_MAX / 2.0))) return std::numeric_limits<double>::quiet_NaN();
-            int t = interpolationMethod();
-            if (t == INTERPOLATION_NONE)
+            
+			int t = interpolationMethod();
+            
+			if (t == INTERPOLATION_NONE)
                 {
-                size_t n = (size_t)((x - _minDomain) / _e);
+				double _e = (_maxDomain - _minDomain) / _len;
+				if (!((_e >= DBL_MIN * 2) && (_e <= DBL_MAX / 2.0))) return std::numeric_limits<double>::quiet_NaN();
+				size_t n = (size_t)((x - _minDomain) / _e);
                 if (n >= _len) return std::numeric_limits<double>::quiet_NaN();
                 double y;
                 try { y = (double)_tab[n]; } catch (...) { y = std::numeric_limits<double>::quiet_NaN(); }
                 return y;
                 }
-            if (t == INTERPOLATION_LINEAR)
+
+			if (_len <= 1) return std::numeric_limits<double>::quiet_NaN();
+			const double _e = (_maxDomain - _minDomain) / (_len - 1);
+			if (!((_e >= DBL_MIN * 2) && (_e <= DBL_MAX / 2.0))) return std::numeric_limits<double>::quiet_NaN();
+			size_t n = (size_t)((x - _minDomain) / _e);
+			if (n >= _len) std::numeric_limits<double>::quiet_NaN();
+
+			if (t == INTERPOLATION_LINEAR)
                 {
-                size_t n = (size_t)((x - _minDomain) / _e);
-                if (n >= _len) std::numeric_limits<double>::quiet_NaN();
                 double x1 = _minDomain + n*_e;
                 double x2 = x1 + _e;
                 double y1 = std::numeric_limits<double>::quiet_NaN();
@@ -203,9 +210,8 @@ namespace mtools
                 try { y2 = (n+1 >= _len) ? (std::numeric_limits<double>::quiet_NaN()) : ((double)_tab[n + 1]); } catch (...) { y2 = std::numeric_limits<double>::quiet_NaN(); }
                 return linearInterpolation(x, fVec2(x1, y1), fVec2(x2, y2));
                 }
-            size_t n = (size_t)((x - _minDomain) / _e);
-            if (n >= _len) std::numeric_limits<double>::quiet_NaN();
-            double x1 = _minDomain + n*_e;
+
+			double x1 = _minDomain + n*_e;
             double x0 = x1 - _e;
             double x2 = x1 + _e;
             double x3 = x2 + _e;
