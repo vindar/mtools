@@ -103,9 +103,9 @@ namespace mtools
 
 #ifdef MTOOLS_DEBUG_FLAG
 
-	#define MTOOLS_THROW(_ex) mtools::internals_error::_throws_debug(__FILE__ , __LINE__, (std::ostringstream() << _ex).str())
+	#define MTOOLS_THROW(_ex) mtools::internals_error::_throws_debug(__FILE__ , __LINE__, (static_cast<std::ostringstream &>(std::ostringstream() << _ex)).str())
 
-	#define MTOOLS_DEBUG(_ex) mtools::internals_error::_debugs(__FILE__ , __LINE__, (std::ostringstream() << _ex).str())
+	#define MTOOLS_DEBUG(_ex) mtools::internals_error::_debugs(__FILE__ , __LINE__, (static_cast<std::ostringstream &>(std::ostringstream() << _ex)).str())
 
 	#define MTOOLS_DEBUG_CODE(_code) { _code }
 
