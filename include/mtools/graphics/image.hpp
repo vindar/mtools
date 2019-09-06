@@ -1427,50 +1427,55 @@ namespace mtools
 
 
 			/**
-			 * Rescale a sprite image and then blit it onto this image.
-			 *
+			 * Rescale a sprite image and then blit/blend it onto this image.
+			 * 
 			 * All input paramters are valid : regions outside of the source or destination image are
 			 * automatically discarded (considered transparent).
 			 *
-			 * @param	quality  	in [0,10]. 0 = low quality (fast) and 10 = max quality (slow).
+			 * @tparam	BLENDIT	true to use blending instead of blitting.
+			 * @param	quality	in [0,10]. 0 = low quality (fast) and 10 = max quality (slow).
 			 * @param	sprite 	The sprite image to rescale and then blit.
 			 * @param	dest_x 	x-coord of the upper left corner of the destination rectangle.
 			 * @param	dest_y 	y-coord of the upper left corner of the destination rectangle.
 			 * @param	dest_sx	width of the destination rectangle.
 			 * @param	dest_sy	height of the destination rectangle.
+			 * @param	op	   	opacity for blending (only used if blending is enabled with BLENDIT = true)
 			 *
 			 * @return	The real quality of the rescaling performed. At least quality but may be higher.
 			 **/
-			inline int blit_rescaled(int quality, const Image & sprite, int64 dest_x, int64 dest_y, int64 dest_sx, int64 dest_sy)
+			template<bool BLENDIT = false> inline int blit_rescaled(int quality, const Image & sprite, int64 dest_x, int64 dest_y, int64 dest_sx, int64 dest_sy, float op = 1.0f)
 				{
-				return blit_rescaled(quality, sprite, dest_x, dest_y, dest_sx, dest_sy, 0, 0, sprite._lx, sprite._ly);
+				return blit_rescaled<BLENDIT>(quality, sprite, dest_x, dest_y, dest_sx, dest_sy, 0, 0, sprite._lx, sprite._ly, op);
 				}
 
 
 			/**
-			 * Rescale a sprite image and then blit it onto this image.
+			 * Rescale a sprite image and then blit/blend it onto this image.
 			 *
 			 * All input paramters are valid : regions outside of the source or destination image are
 			 * automatically discarded (considered transparent).
 			 *
+			 * @tparam	BLENDIT		true to use blending instead of blitting
 			 * @param	quality  	in [0,10]. 0 = low quality (fast) and 10 = max quality (slow).
 			 * @param	sprite  	The sprite image to rescale and then blit.
 			 * @param	dest_box	The destination rectangle.
+			 * @param	op	   		opacity for blending (only used if blending is enabled with BLENDIT = true)
 			 *
 			 * @return	The real quality of the rescaling performed. At least quality but may be higher.
 			 **/
-			inline int blit_rescaled(int quality, const Image & sprite, const iBox2 & dest_box)
+			template<bool BLENDIT = false> inline int blit_rescaled(int quality, const Image & sprite, const iBox2 & dest_box, float op = 1.0f)
 				{
-				return blit_rescaled(quality, sprite, dest_box.min[0], dest_box.min[1], dest_box.max[0] - dest_box.min[0] + 1, dest_box.max[1] - dest_box.min[1] + 1, 0, 0, sprite._lx, sprite._ly);
+				return blit_rescaled<BLENDIT>(quality, sprite, dest_box.min[0], dest_box.min[1], dest_box.max[0] - dest_box.min[0] + 1, dest_box.max[1] - dest_box.min[1] + 1, 0, 0, sprite._lx, sprite._ly, op);
 				}
 
 
 			/**
-			 * Rescale a portion of a sprite image and then blit it onto this image.
+			 * Rescale a portion of a sprite image and then blit/blend it onto this image.
 			 *
 			 * All input paramters are valid : regions outside of the source or destination image are
 			 * automatically discarded (considered transparent).
 			 *
+			 * @tparam	BLENDIT		true to use blending instead of blitting
 			 * @param	quality  	in [0,10]. 0 = low quality (fast) and 10 = max quality (slow).
 			 * @param	sprite   	The sprite image.
 			 * @param	dest_x   	x-coord of the upper left corner of the destination rectangle.
@@ -1481,10 +1486,11 @@ namespace mtools
 			 * @param	sprite_y 	y-coord of the upper left corner of the sprite rectangle to blit.
 			 * @param	sprite_sx	width of the sprite rectangle.
 			 * @param	sprite_sy	height of the sprite rectangle.
+			 * @param	op	   		opacity for blending (only used if blending is enabled with BLENDIT = true)
 			 *
 			 * @return	The real quality of the rescaling performed. At least quality but may be higher.
 			 **/
-			inline int blit_rescaled(int quality, const Image & sprite, int64 dest_x, int64 dest_y, int64 dest_sx, int64 dest_sy, int64 sprite_x, int64 sprite_y, int64 sprite_sx, int64 sprite_sy)
+			template<bool BLENDIT = false> inline int blit_rescaled(int quality, const Image & sprite, int64 dest_x, int64 dest_y, int64 dest_sx, int64 dest_sy, int64 sprite_x, int64 sprite_y, int64 sprite_sx, int64 sprite_sy, float op = 1.0f)
 				{
 				const int MAX_QUALITY = 10;
 				if (quality <= 0) quality = 0; else if (quality >= MAX_QUALITY) quality = MAX_QUALITY;
@@ -1497,7 +1503,7 @@ namespace mtools
 
 				if (overlapMemoryWith(sprite))
 					{ // this and sprite overlap so we must make a copy of sprite
-					return blit_rescaled(quality, sprite.get_standalone(), dest_x, dest_y, dest_sx, dest_sy, sprite_x, sprite_y, sprite_sx, sprite_sy);
+					return blit_rescaled<BLENDIT>(quality, sprite.get_standalone(), dest_x, dest_y, dest_sx, dest_sy, sprite_x, sprite_y, sprite_sx, sprite_sy, op);
 					}
 
 				if (dest_x < 0)
@@ -1605,19 +1611,40 @@ namespace mtools
 
 				if ((dest_sx == sprite_sx) && (dest_sy == sprite_sy))
 					{ // no rescaling
-					_blitRegion(_data + (dest_y*_stride) + dest_x, _stride, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, dest_sx, dest_sy);
+					if (BLENDIT)
+						{
+						_blendRegionUp(_data + (dest_y*_stride) + dest_x, _stride, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, dest_sx, dest_sy, op);
+						}
+					else
+						{
+						_blitRegion(_data + (dest_y*_stride) + dest_x, _stride, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, dest_sx, dest_sy);
+						}
 					return MAX_QUALITY;
 					}
 				if ((dest_sx <= sprite_sx) && (dest_sy <= sprite_sy))
 					{ // downscaling
 					if ((dest_sx == 1) || (dest_sy == 1))
 						{ // box average does not work for flat images. use _nearest neighbour. (TODO, improve that). 
-						_nearest_neighbour_scaling(_data + (dest_y*_stride) + dest_x, _stride, dest_sx, dest_sy, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, sprite_sx, sprite_sy);
+						if (BLENDIT)
+							{
+							_nearest_neighbour_scaling_blend(_data + (dest_y*_stride) + dest_x, _stride, dest_sx, dest_sy, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, sprite_sx, sprite_sy, op);
+							}
+						else
+							{
+							_nearest_neighbour_scaling(_data + (dest_y*_stride) + dest_x, _stride, dest_sx, dest_sy, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, sprite_sx, sprite_sy);
+							}
 						return MAX_QUALITY; // cannot do any better. 
 						}
 					if (!quality)
 						{ // quality = 0, we use fastest method : nearest neighbour.
-						_nearest_neighbour_scaling(_data + (dest_y*_stride) + dest_x, _stride, dest_sx, dest_sy, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, sprite_sx, sprite_sy);
+						if (BLENDIT)
+							{
+							_nearest_neighbour_scaling_blend(_data + (dest_y*_stride) + dest_x, _stride, dest_sx, dest_sy, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, sprite_sx, sprite_sy, op);
+							}
+						else
+							{
+							_nearest_neighbour_scaling(_data + (dest_y*_stride) + dest_x, _stride, dest_sx, dest_sy, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, sprite_sx, sprite_sy);
+							}
 						return 0; // worst quality. 
 						}
 					// use box average downscaling					
@@ -1638,16 +1665,31 @@ namespace mtools
 					_boxaverage_downscaling(dest_data, dest_stride, dst_sx, dst_sy, src_data, src_stride, src_sx, src_sy, stepx, stepy);
 					return (int)std::min<uint64>(quality_x,quality_y); 
 					}
+
 				if ((dest_sx >= sprite_sx) && (dest_sy >= sprite_sy))
 					{ // upscaling, quality > 0
 					if ((sprite_sx == 1) || (sprite_sy == 1))
 						{ // use _nearest neighbour. (TODO, improve that). 
-						_nearest_neighbour_scaling(_data + (dest_y*_stride) + dest_x, _stride, dest_sx, dest_sy, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, sprite_sx, sprite_sy);
+						if (BLENDIT)
+							{
+							_nearest_neighbour_scaling_blend(_data + (dest_y*_stride) + dest_x, _stride, dest_sx, dest_sy, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, sprite_sx, sprite_sy, op);
+							}
+						else
+							{
+							_nearest_neighbour_scaling(_data + (dest_y*_stride) + dest_x, _stride, dest_sx, dest_sy, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, sprite_sx, sprite_sy);
+							}
 						return MAX_QUALITY; // cannot do any better. 
 						}
 					if (!quality)
 						{ // quality = 0, use fastest method. 
-						_nearest_neighbour_scaling(_data + (dest_y*_stride) + dest_x, _stride, dest_sx, dest_sy, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, sprite_sx, sprite_sy);
+						if (BLENDIT)
+							{
+							_nearest_neighbour_scaling_blend(_data + (dest_y*_stride) + dest_x, _stride, dest_sx, dest_sy, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, sprite_sx, sprite_sy, op);
+							}
+						else
+							{
+							_nearest_neighbour_scaling(_data + (dest_y*_stride) + dest_x, _stride, dest_sx, dest_sy, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, sprite_sx, sprite_sy);
+							}
 						return 0;
 						}
 					// use linear interpolation
@@ -1655,26 +1697,56 @@ namespace mtools
 					return MAX_QUALITY;
 					}
 				// mix up/down scaling -> use nearest neighbour
-				_nearest_neighbour_scaling(_data + (dest_y*_stride) + dest_x, _stride, dest_sx, dest_sy, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, sprite_sx, sprite_sy);
+				if (BLENDIT)
+					{
+					_nearest_neighbour_scaling_blend(_data + (dest_y*_stride) + dest_x, _stride, dest_sx, dest_sy, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, sprite_sx, sprite_sy, op);
+					}
+				else
+					{
+					_nearest_neighbour_scaling(_data + (dest_y*_stride) + dest_x, _stride, dest_sx, dest_sy, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, sprite_sx, sprite_sy);
+					}
 				return MAX_QUALITY;
 				}
 
 
 			/**
-			* Rescale a portion of a sprite image and then blit it onto this image.
-			*
-			* @param	quality  	in [0,10]. 0 = low quality (fast) and 10 = max quality (slow).
-			* @param	sprite	  	The sprite image.
-			* @param	dest_box	The destination rectangle.
-			* @param	sprite_box	The rectangle part of the sprite to rescale and blit.
-			*
-			* @return	The real quality of the rescaling performed. At least quality but may be higher.
-			**/
-			inline int blit_rescaled(int quality, const Image & sprite, const iBox2 & dest_box, const iBox2 & sprite_box)
+			 * Rescale a portion of a sprite image and then blit/blend it onto this image.
+			 *
+			 * @tparam	BLENDIT		true to use blending instead of blitting
+			 * @param	quality   	in [0,10]. 0 = low quality (fast) and 10 = max quality (slow).
+			 * @param	sprite	  	The sprite image.
+			 * @param	dest_box  	The destination rectangle.
+			 * @param	sprite_box	The rectangle part of the sprite to rescale and blit.
+			 * @param	op	   		opacity for blending (only used if blending is enabled with BLENDIT = true)
+			 *
+			 * @return	The real quality of the rescaling performed. At least quality but may be higher.
+			 **/
+			template<bool BLENDIT = false> inline int blit_rescaled(int quality, const Image & sprite, const iBox2 & dest_box, const iBox2 & sprite_box, float op = 1.0f)
 				{
-				return blit_rescaled(quality, sprite, dest_box.min[0], dest_box.min[1], dest_box.max[0] - dest_box.min[0] + 1, dest_box.max[1] - dest_box.min[1] + 1,
-					sprite_box.min[0], sprite_box.min[1], sprite_box.max[0] - sprite_box.min[0] + 1, sprite_box.max[1] - sprite_box.min[1] + 1);
+				return blit_rescaled<BLENDIT>(quality, sprite, dest_box.min[0], dest_box.min[1], dest_box.max[0] - dest_box.min[0] + 1, dest_box.max[1] - dest_box.min[1] + 1,
+					sprite_box.min[0], sprite_box.min[1], sprite_box.max[0] - sprite_box.min[0] + 1, sprite_box.max[1] - sprite_box.min[1] + 1, op);
 				}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -6820,7 +6892,6 @@ namespace mtools
 			   work for downscaling and upscaling both. */
 			static void _nearest_neighbour_scaling(RGBc * dest, int64 dest_stride, int64 dest_lx, int64 dest_ly, RGBc * src, int64 src_stride, int64 src_lx, int64 src_ly)
 				{
-
 				if ((src_lx == dest_lx) && (src_ly == dest_ly)) { _blitRegion(dest, dest_stride, src, src_stride, src_lx, src_ly); return; }
 				MTOOLS_ASSERT((src_lx < 1000000) && (src_ly < 1000000)); // must be smaller than 2^20 to use fp arithmetic with FP_PRECISION = 43
 				const int64 FP_PRECISION = 43;
@@ -6845,6 +6916,37 @@ namespace mtools
 					}
 				}
 
+
+
+			/* apply nearest neighour scaling. fast ! 
+			   work for downscaling and upscaling both.
+			   same as above but use blending */
+			static void _nearest_neighbour_scaling_blend(RGBc * dest, int64 dest_stride, int64 dest_lx, int64 dest_ly, RGBc * src, int64 src_stride, int64 src_lx, int64 src_ly, float op)
+				{
+				if ((src_lx == dest_lx) && (src_ly == dest_ly)) { _blendRegionUp(dest, dest_stride, src, src_stride, src_lx, src_ly, op); return; }
+				MTOOLS_ASSERT((src_lx < 1000000) && (src_ly < 1000000)); // must be smaller than 2^20 to use fp arithmetic with FP_PRECISION = 43
+				const int64 FP_PRECISION = 43;
+				const double fbx = ((double)src_lx) / ((double)dest_lx);
+				const int64  ibx = (int64)(fbx * (((int64)1) << FP_PRECISION));
+				const double fby = ((double)src_ly) / ((double)dest_ly);
+				const int64  iby = (int64)(fby * (((int64)1) << FP_PRECISION));
+				int64 iay = (iby / 2);
+				int64 offdest = 0;
+				const int64 endj = dest_stride*dest_ly;
+				const uint32 iop = (uint32)(256 * op);
+				while (offdest < endj)
+					{
+					const int64 offsrc = src_stride*(iay >> FP_PRECISION);
+					int64 iax = (ibx / 2);
+					for (int i = 0; i < dest_lx; i++)
+						{
+						dest[offdest + i].blend(src[offsrc + (iax >> FP_PRECISION)],iop);
+						iax += ibx;
+						}
+					iay += iby;
+					offdest += dest_stride;
+					}
+				}
 
 
 
