@@ -272,10 +272,10 @@ int main(int argc, char *argv[])
 	auto canvas = makeFigureCanvas();
 
 	canvas(Figure::Text("Hello World !", { 0.0, 0.0 }, { -20.0, 20.0 }, MTOOLS_TEXT_RIGHT | MTOOLS_TEXT_YCENTER, RGBc::c_Red, RGBc::c_Blue.getMultOpacity(0.5) ),0); 
-	canvas(Figure::Text("A", { 0.0, 0.0 }, { 10.0, 0.0 }, MTOOLS_TEXT_LEFT | MTOOLS_TEXT_TOP, RGBc::c_Red, RGBc::c_Blue.getMultOpacity(0.5)), 0);
-	canvas(Figure::Text("B", { 0.0, 0.0 }, { 10.0, 0.0 }, MTOOLS_TEXT_LEFT | MTOOLS_TEXT_BOTTOM, RGBc::c_Red, RGBc::c_Blue.getMultOpacity(0.5)), 0);
+	canvas(Figure::Text("A", { 0.0, 0.0 }, { 10.0, 0.0 }, MTOOLS_TEXT_LEFT | MTOOLS_TEXT_TOP, RGBc::c_Red, RGBc::c_Blue.getMultOpacity(0.5),1.0f,256), 0);
+	canvas(Figure::Text("B", { 0.0, 0.0 }, { 10.0, 0.0 }, MTOOLS_TEXT_LEFT | MTOOLS_TEXT_BOTTOM, RGBc::c_Red, RGBc::c_Blue.getMultOpacity(0.5), 1.0f, 32), 0);
 
-	canvas(Figure::Text("ceci est un text\navec plusieurs lignes\n... yopla :)", { 50.0, 20.0 }, { 100.0, 0.0 }, MTOOLS_TEXT_CENTER, RGBc::c_Black, RGBc::c_Blue.getMultOpacity(0.1)), 0);
+	canvas(Figure::Text("ceci est un text\navec plusieurs lignes\n... yopla :)", { 50.0, 20.0 }, { 130.0, 0.0 }, MTOOLS_TEXT_CENTER, RGBc::c_Black, RGBc::c_Blue.getMultOpacity(0.1f)), 0);
 
 	auto PA = makePlot2DFigure(canvas);
 

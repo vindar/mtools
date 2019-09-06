@@ -2824,6 +2824,8 @@ namespace mtools
 			int				_text_pos;
 			RGBc			_textcolor;
 			RGBc			_bkcolor;
+			float			_op;
+			int				_base_font_size;
 
 			// tmp object recreated when needed.
 			Image	_im;	// the image
@@ -2833,18 +2835,22 @@ namespace mtools
 			/**
 			 * Constructor
 			 *
-			 * @param	text		The text to draw
-			 * @param	pos			position of the text in the canvas.
-			 * @param	txt_pos 	Positioning method which explain which point `pos` refers to w.r.t the text bounding box
-			 * 						(combination of MTOOLS_TEXT_XCENTER, MTOOLS_TEXT_LEFT, MTOOLS_TEXT_RIGHT, MTOOLS_TEXT_TOP, 
-			 * 						MTOOLS_TEXT_BOTTOM, MTOOLS_TEXT_YCENTER)
-			 * @param	boxsize		Size of the bounding box. A negative dimension is adjusted automatically w.r.t. to the other one to
-			 * 						respect the text aspect ratio. Both dimensions cannot be simultaneously negative.
-			 * @param	txtcolor	the text color
-			 * @param	bkcolor 	the background color
+			 * @param	text		  	The text to draw.
+			 * @param	pos			  	position of the text in the canvas.
+			 * @param	size		  	Size of the bounding box. A negative dimension is adjusted
+			 * 							automatically w.r.t. to the other one to respect the text aspect
+			 * 							ratio. Both dimensions cannot be simultaneously negative.
+			 * @param	txt_pos		  	(Optional) Positioning method which explain which point `pos` refers
+			 * 							to w.r.t the text bounding box (combination of MTOOLS_TEXT_XCENTER,
+			 * 							MTOOLS_TEXT_LEFT, MTOOLS_TEXT_RIGHT, MTOOLS_TEXT_TOP,
+			 * 							MTOOLS_TEXT_BOTTOM, MTOOLS_TEXT_YCENTER)
+			 * @param	textcolor	  	the text color.
+			 * @param	bkcolor		  	the background color.
+			 * @param	op			  	global opacity factor to apply to the object (text + background).
+			 * @param	base_font_size	font size to use for drawing (larger = better graphics when zooming but more memory). 
 			 **/
-			Text(std::string text, fVec2 pos, fVec2 size, int txt_pos = MTOOLS_TEXT_XCENTER | MTOOLS_TEXT_YCENTER, RGBc textcolor = RGBc::c_Black, RGBc bkcolor = RGBc::c_Transparent)
-				: _text(text) , _pos(pos) , _size(size) , _text_pos(txt_pos), _textcolor(textcolor), _bkcolor(bkcolor)
+			Text(std::string text, fVec2 pos, fVec2 size, int txt_pos = MTOOLS_TEXT_XCENTER | MTOOLS_TEXT_YCENTER, RGBc textcolor = RGBc::c_Black, RGBc bkcolor = RGBc::c_Transparent, float op = 1.0f, int base_font_size = default_font_size)
+				: _text(text) , _pos(pos) , _size(size) , _text_pos(txt_pos), _textcolor(textcolor), _bkcolor(bkcolor), _op(op), _base_font_size(base_font_size)
 				{
 				MTOOLS_INSURE((_size.X() > 0) || (_size.Y() > 0));	// both size cannot be 0
 				_im.empty();
@@ -2858,7 +2864,7 @@ namespace mtools
 				if (_im.isEmpty()) { createImage(); }						// create image on first use. 
 				const fBox2 imBox = im.imagefBox();							// get the image box
 				const fBox2 rbb = boxTransform(_bb, R, imBox);				// compute the corrsponding subbox to blend into the image
-				im.blit_rescaled((highQuality ? 10 : 0), _im, iBox2(rbb));	// blit (TODO : blend instead). 
+				im.blend_rescaled((highQuality ? 10 : 0), _im, iBox2(rbb), _op);	// blend into im
 				}
 
 
@@ -2884,6 +2890,8 @@ namespace mtools
 				os << "size "		<< _size << "\n";
 				os << "textcolor "	<< _textcolor << "\n";
 				os << "bkcolor "	<< _bkcolor << "\n";
+				os << "opacity " << _op << "\n";
+				os << "base font size " << _base_font_size << "\n";
 				os << "\n";
 				return os.str();
 				}
@@ -2891,13 +2899,13 @@ namespace mtools
 
 			virtual void serialize(OBaseArchive & ar) const override
 				{
-				ar & _text & _pos & _size & _text_pos & _textcolor & _bkcolor;
+				ar & _text & _pos & _size & _text_pos & _textcolor & _bkcolor & _op & _base_font_size;
 				}
 
 
 			virtual void deserialize(IBaseArchive & ar) override
 				{
-				ar & _text & _pos & _size & _text_pos & _textcolor & _bkcolor;
+				ar & _text & _pos & _size & _text_pos & _textcolor & _bkcolor & _op & _base_font_size;
 				_im.empty();
 				makeBB();
 				}
@@ -2906,7 +2914,7 @@ namespace mtools
 			/* construct the bounding box */
 			void makeBB()
 				{
-				iVec2 dim = gFont(default_font_size, MTOOLS_NATIVE_FONT_ABOVE).textDimension(_text); // text dimension
+				iVec2 dim = gFont(_base_font_size, MTOOLS_NATIVE_FONT_ABOVE).textDimension(_text); // text dimension
 				if (_size.X() <= 0.0)
 					{ // must adjust x
 					MTOOLS_INSURE(dim.Y() > 0);
@@ -2933,7 +2941,7 @@ namespace mtools
 			/* recreate the image */
 			void createImage()
 				{
-				auto & font = gFont(default_font_size, MTOOLS_NATIVE_FONT_ABOVE);							// get the font
+				auto & font = gFont(_base_font_size, MTOOLS_NATIVE_FONT_ABOVE);								// get the font
 				iVec2 dim = font.textDimension(_text);														// text dimension
 				_im.resizeRaw(dim, true);																	// resize to the good dimension. 
 				_im.clear(_bkcolor);																		// draw the background					
