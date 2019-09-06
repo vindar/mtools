@@ -1427,55 +1427,50 @@ namespace mtools
 
 
 			/**
-			 * Rescale a sprite image and then blit/blend it onto this image.
+			 * Rescale a sprite image and then blit it onto this image.
 			 * 
 			 * All input paramters are valid : regions outside of the source or destination image are
 			 * automatically discarded (considered transparent).
 			 *
-			 * @tparam	BLENDIT	true to use blending instead of blitting.
 			 * @param	quality	in [0,10]. 0 = low quality (fast) and 10 = max quality (slow).
 			 * @param	sprite 	The sprite image to rescale and then blit.
 			 * @param	dest_x 	x-coord of the upper left corner of the destination rectangle.
 			 * @param	dest_y 	y-coord of the upper left corner of the destination rectangle.
 			 * @param	dest_sx	width of the destination rectangle.
 			 * @param	dest_sy	height of the destination rectangle.
-			 * @param	op	   	opacity for blending (only used if blending is enabled with BLENDIT = true)
 			 *
 			 * @return	The real quality of the rescaling performed. At least quality but may be higher.
 			 **/
-			template<bool BLENDIT = false> inline int blit_rescaled(int quality, const Image & sprite, int64 dest_x, int64 dest_y, int64 dest_sx, int64 dest_sy, float op = 1.0f)
+			inline int blit_rescaled(int quality, const Image & sprite, int64 dest_x, int64 dest_y, int64 dest_sx, int64 dest_sy)
 				{
-				return blit_rescaled<BLENDIT>(quality, sprite, dest_x, dest_y, dest_sx, dest_sy, 0, 0, sprite._lx, sprite._ly, op);
+				return blit_rescaled(quality, sprite, dest_x, dest_y, dest_sx, dest_sy, 0, 0, sprite._lx, sprite._ly);
 				}
 
 
 			/**
-			 * Rescale a sprite image and then blit/blend it onto this image.
+			 * Rescale a sprite image and then blit it onto this image.
 			 *
 			 * All input paramters are valid : regions outside of the source or destination image are
 			 * automatically discarded (considered transparent).
 			 *
-			 * @tparam	BLENDIT		true to use blending instead of blitting
 			 * @param	quality  	in [0,10]. 0 = low quality (fast) and 10 = max quality (slow).
 			 * @param	sprite  	The sprite image to rescale and then blit.
 			 * @param	dest_box	The destination rectangle.
-			 * @param	op	   		opacity for blending (only used if blending is enabled with BLENDIT = true)
 			 *
 			 * @return	The real quality of the rescaling performed. At least quality but may be higher.
 			 **/
-			template<bool BLENDIT = false> inline int blit_rescaled(int quality, const Image & sprite, const iBox2 & dest_box, float op = 1.0f)
+			inline int blit_rescaled(int quality, const Image & sprite, const iBox2 & dest_box)
 				{
-				return blit_rescaled<BLENDIT>(quality, sprite, dest_box.min[0], dest_box.min[1], dest_box.max[0] - dest_box.min[0] + 1, dest_box.max[1] - dest_box.min[1] + 1, 0, 0, sprite._lx, sprite._ly, op);
+				return blit_rescaled(quality, sprite, dest_box.min[0], dest_box.min[1], dest_box.max[0] - dest_box.min[0] + 1, dest_box.max[1] - dest_box.min[1] + 1, 0, 0, sprite._lx, sprite._ly);
 				}
 
 
 			/**
-			 * Rescale a portion of a sprite image and then blit/blend it onto this image.
+			 * Rescale a portion of a sprite image and then blit it onto this image.
 			 *
 			 * All input paramters are valid : regions outside of the source or destination image are
 			 * automatically discarded (considered transparent).
 			 *
-			 * @tparam	BLENDIT		true to use blending instead of blitting
 			 * @param	quality  	in [0,10]. 0 = low quality (fast) and 10 = max quality (slow).
 			 * @param	sprite   	The sprite image.
 			 * @param	dest_x   	x-coord of the upper left corner of the destination rectangle.
@@ -1486,260 +1481,116 @@ namespace mtools
 			 * @param	sprite_y 	y-coord of the upper left corner of the sprite rectangle to blit.
 			 * @param	sprite_sx	width of the sprite rectangle.
 			 * @param	sprite_sy	height of the sprite rectangle.
-			 * @param	op	   		opacity for blending (only used if blending is enabled with BLENDIT = true)
 			 *
 			 * @return	The real quality of the rescaling performed. At least quality but may be higher.
 			 **/
-			template<bool BLENDIT = false> inline int blit_rescaled(int quality, const Image & sprite, int64 dest_x, int64 dest_y, int64 dest_sx, int64 dest_sy, int64 sprite_x, int64 sprite_y, int64 sprite_sx, int64 sprite_sy, float op = 1.0f)
+			inline int blit_rescaled(int quality, const Image & sprite, int64 dest_x, int64 dest_y, int64 dest_sx, int64 dest_sy, int64 sprite_x, int64 sprite_y, int64 sprite_sx, int64 sprite_sy)
 				{
-				const int MAX_QUALITY = 10;
-				if (quality <= 0) quality = 0; else if (quality >= MAX_QUALITY) quality = MAX_QUALITY;
-				if ((dest_sx <= 0) || (dest_sy <= 0)) return MAX_QUALITY; 
-				if ((sprite_sx <= 0) || (sprite_sy <= 0)) return MAX_QUALITY;
-				if ((dest_x >= lx()) || (dest_y >= ly())) return MAX_QUALITY;
-				if ((sprite_x >= sprite.lx()) || (sprite_y >= sprite.ly())) return MAX_QUALITY;
-				if ((dest_x + dest_sx <= 0) || (dest_y + dest_sy <= 0)) return MAX_QUALITY;
-				if ((sprite_x + sprite_sx <= 0) || (sprite_y + sprite_sy <= 0)) return MAX_QUALITY;
-
-				if (overlapMemoryWith(sprite))
-					{ // this and sprite overlap so we must make a copy of sprite
-					return blit_rescaled<BLENDIT>(quality, sprite.get_standalone(), dest_x, dest_y, dest_sx, dest_sy, sprite_x, sprite_y, sprite_sx, sprite_sy, op);
-					}
-
-				if (dest_x < 0)
-					{
-					int64 new_dest_sx = dest_sx + dest_x;
-					if (new_dest_sx <= 0) return MAX_QUALITY;
-					int64 new_dest_x = 0;
-					int64 new_sprite_sx = (int64)(sprite_sx * ((double)new_dest_sx) / ((double)dest_sx));
-					if (new_sprite_sx <= 0) return MAX_QUALITY;
-					int64 new_sprite_x = sprite_x + (int64)(sprite_sx * ((double)(-dest_x)) / ((double)(dest_sx)));
-					dest_x = new_dest_x;
-					dest_sx = new_dest_sx;
-					sprite_x = new_sprite_x;
-					sprite_sx = new_sprite_sx;
-					}
-
-				if (dest_y < 0)
-					{
-					int64 new_dest_sy = dest_sy + dest_y;
-					if (new_dest_sy <= 0) return MAX_QUALITY;
-					int64 new_dest_y = 0;
-					int64 new_sprite_sy = (int64)(sprite_sy * ((double)new_dest_sy) / ((double)dest_sy));
-					if (new_sprite_sy <= 0) return MAX_QUALITY;
-					int64 new_sprite_y = sprite_y + (int64)(sprite_sy * ((double)(-dest_y)) / ((double)(dest_sy)));
-					dest_y = new_dest_y;
-					dest_sy = new_dest_sy;
-					sprite_y = new_sprite_y;
-					sprite_sy = new_sprite_sy;
-					}
-
-				if (sprite_x < 0)
-					{
-					int64 new_sprite_sx = sprite_sx + sprite_x;
-					if (new_sprite_sx <= 0) return MAX_QUALITY;
-					int64 new_sprite_x = 0;
-					int64 new_dest_sx = (int64)(dest_sx * ((double)new_sprite_sx) / ((double)sprite_sx));
-					if (new_dest_sx <= 0) return MAX_QUALITY;
-					int64 new_dest_x = dest_x + (int64)(dest_sx * ((double)(-sprite_x)) / ((double)(sprite_sx)));
-					dest_x = new_dest_x;
-					dest_sx = new_dest_sx;
-					sprite_x = new_sprite_x;
-					sprite_sx = new_sprite_sx;
-					}
-
-				if (sprite_y < 0)
-					{
-					int64 new_sprite_sy = sprite_sy + sprite_y;
-					if (new_sprite_sy <= 0) return MAX_QUALITY;
-					int64 new_sprite_y = 0;
-					int64 new_dest_sy = (int64)(dest_sy * ((double)new_sprite_sy) / ((double)sprite_sy));
-					if (new_dest_sy <= 0) return MAX_QUALITY;
-					int64 new_dest_y = dest_y + (int64)(dest_sy * ((double)(-sprite_y)) / ((double)(sprite_sy)));
-					dest_y = new_dest_y;
-					dest_sy = new_dest_sy;
-					sprite_y = new_sprite_y;
-					sprite_sy = new_sprite_sy;
-					}
-
-				if (dest_x + dest_sx > lx())
-					{
-					int64 new_dest_sx = lx() - dest_x;
-					if (new_dest_sx <= 0) return MAX_QUALITY;
-					int64 new_sprite_sx = (int64)(sprite_sx * ((double)new_dest_sx) / ((double)dest_sx));
-					if (new_sprite_sx <= 0) return MAX_QUALITY;
-					dest_sx = new_dest_sx;
-					sprite_sx = new_sprite_sx;
-					}
-			
-				if (dest_y + dest_sy > ly())
-					{
-					int64 new_dest_sy = ly() - dest_y;
-					if (new_dest_sy <= 0) return MAX_QUALITY;
-					int64 new_sprite_sy = (int64)(sprite_sy * ((double)new_dest_sy) / ((double)dest_sy));
-					if (new_sprite_sy <= 0) return MAX_QUALITY;
-					dest_sy = new_dest_sy;
-					sprite_sy = new_sprite_sy;
-					}
-
-				if (sprite_x + sprite_sx > sprite.lx())
-					{
-					int64 new_sprite_sx = sprite.lx() - sprite_x;
-					if (new_sprite_sx <= 0) return MAX_QUALITY;
-					int64 new_dest_sx = (int64)(dest_sx * ((double)new_sprite_sx) / ((double)sprite_sx));
-					if (new_dest_sx <= 0) return MAX_QUALITY;
-					dest_sx = new_dest_sx;
-					sprite_sx = new_sprite_sx;
-					}
-
-				if (sprite_y + sprite_sy > sprite.ly())
-					{
-					int64 new_sprite_sy = sprite.ly() - sprite_y;
-					if (new_sprite_sy <= 0) return MAX_QUALITY;
-					int64 new_dest_sy = (int64)(dest_sy * ((double)new_sprite_sy) / ((double)sprite_sy));
-					if (new_dest_sy <= 0) return MAX_QUALITY;
-					dest_sy = new_dest_sy;
-					sprite_sy = new_sprite_sy;
-					}
-
-				// normally, this should never fail but we make sure nevertheless since it cost nothing
-				// compared the rest of the method.
-				MTOOLS_INSURE((dest_x >= 0) && (dest_x + dest_sx <= lx()));
-				MTOOLS_INSURE((dest_y >= 0) && (dest_y + dest_sy <= ly()));
-				MTOOLS_INSURE((sprite_x >= 0) && (sprite_x + sprite_sx <= sprite.lx()));
-				MTOOLS_INSURE((sprite_y >= 0) && (sprite_y + sprite_sy <= sprite.ly()));
-
-				if ((dest_sx == sprite_sx) && (dest_sy == sprite_sy))
-					{ // no rescaling
-					if (BLENDIT)
-						{
-						_blendRegionUp(_data + (dest_y*_stride) + dest_x, _stride, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, dest_sx, dest_sy, op);
-						}
-					else
-						{
-						_blitRegion(_data + (dest_y*_stride) + dest_x, _stride, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, dest_sx, dest_sy);
-						}
-					return MAX_QUALITY;
-					}
-				if ((dest_sx <= sprite_sx) && (dest_sy <= sprite_sy))
-					{ // downscaling
-					if ((dest_sx == 1) || (dest_sy == 1))
-						{ // box average does not work for flat images. use _nearest neighbour. (TODO, improve that). 
-						if (BLENDIT)
-							{
-							_nearest_neighbour_scaling_blend(_data + (dest_y*_stride) + dest_x, _stride, dest_sx, dest_sy, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, sprite_sx, sprite_sy, op);
-							}
-						else
-							{
-							_nearest_neighbour_scaling(_data + (dest_y*_stride) + dest_x, _stride, dest_sx, dest_sy, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, sprite_sx, sprite_sy);
-							}
-						return MAX_QUALITY; // cannot do any better. 
-						}
-					if (!quality)
-						{ // quality = 0, we use fastest method : nearest neighbour.
-						if (BLENDIT)
-							{
-							_nearest_neighbour_scaling_blend(_data + (dest_y*_stride) + dest_x, _stride, dest_sx, dest_sy, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, sprite_sx, sprite_sy, op);
-							}
-						else
-							{
-							_nearest_neighbour_scaling(_data + (dest_y*_stride) + dest_x, _stride, dest_sx, dest_sy, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, sprite_sx, sprite_sy);
-							}
-						return 0; // worst quality. 
-						}
-					// use box average downscaling					
-					RGBc * dest_data = _data + (dest_y*_stride) + dest_x;
-					uint64 dest_stride = (uint64)_stride;
-					uint64 dst_sx = (uint64)dest_sx;
-					uint64 dst_sy = (uint64)dest_sy;
-					RGBc * src_data = sprite._data + (sprite_y*sprite._stride);
-					uint64 src_stride = (uint64)sprite._stride;
-					uint64 src_sx = (uint64)sprite_sx;
-					uint64 src_sy = (uint64)sprite_sy;
-					uint64 stepx = (1ULL << (2*(MAX_QUALITY - quality)));
-					int quality_x = quality;
-					while(dst_sx*stepx > src_sx) { stepx >>= 2; quality_x++; }
-					uint64 stepy = (1ULL << (2*(MAX_QUALITY - quality)));
-					int quality_y = quality;
-					while (dst_sy*stepy > src_sy) { stepy >>= 2; quality_y++; }
-					_boxaverage_downscaling(dest_data, dest_stride, dst_sx, dst_sy, src_data, src_stride, src_sx, src_sy, stepx, stepy);
-					return (int)std::min<uint64>(quality_x,quality_y); 
-					}
-
-				if ((dest_sx >= sprite_sx) && (dest_sy >= sprite_sy))
-					{ // upscaling, quality > 0
-					if ((sprite_sx == 1) || (sprite_sy == 1))
-						{ // use _nearest neighbour. (TODO, improve that). 
-						if (BLENDIT)
-							{
-							_nearest_neighbour_scaling_blend(_data + (dest_y*_stride) + dest_x, _stride, dest_sx, dest_sy, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, sprite_sx, sprite_sy, op);
-							}
-						else
-							{
-							_nearest_neighbour_scaling(_data + (dest_y*_stride) + dest_x, _stride, dest_sx, dest_sy, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, sprite_sx, sprite_sy);
-							}
-						return MAX_QUALITY; // cannot do any better. 
-						}
-					if (!quality)
-						{ // quality = 0, use fastest method. 
-						if (BLENDIT)
-							{
-							_nearest_neighbour_scaling_blend(_data + (dest_y*_stride) + dest_x, _stride, dest_sx, dest_sy, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, sprite_sx, sprite_sy, op);
-							}
-						else
-							{
-							_nearest_neighbour_scaling(_data + (dest_y*_stride) + dest_x, _stride, dest_sx, dest_sy, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, sprite_sx, sprite_sy);
-							}
-						return 0;
-						}
-					// use linear interpolation
-					_linear_upscaling(_data + (dest_y*_stride) + dest_x, _stride, dest_sx, dest_sy, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, sprite_sx, sprite_sy);
-					return MAX_QUALITY;
-					}
-				// mix up/down scaling -> use nearest neighbour
-				if (BLENDIT)
-					{
-					_nearest_neighbour_scaling_blend(_data + (dest_y*_stride) + dest_x, _stride, dest_sx, dest_sy, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, sprite_sx, sprite_sy, op);
-					}
-				else
-					{
-					_nearest_neighbour_scaling(_data + (dest_y*_stride) + dest_x, _stride, dest_sx, dest_sy, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, sprite_sx, sprite_sy);
-					}
-				return MAX_QUALITY;
+				return _blit_blend_rescaled<false>(quality, sprite, dest_x, dest_y, dest_sx, dest_sy, sprite_x, sprite_y, sprite_sx, sprite_sy, 1.0f);
 				}
 
 
 			/**
-			 * Rescale a portion of a sprite image and then blit/blend it onto this image.
+			 * Rescale a portion of a sprite image and then blit it onto this image.
 			 *
-			 * @tparam	BLENDIT		true to use blending instead of blitting
 			 * @param	quality   	in [0,10]. 0 = low quality (fast) and 10 = max quality (slow).
 			 * @param	sprite	  	The sprite image.
 			 * @param	dest_box  	The destination rectangle.
 			 * @param	sprite_box	The rectangle part of the sprite to rescale and blit.
-			 * @param	op	   		opacity for blending (only used if blending is enabled with BLENDIT = true)
 			 *
 			 * @return	The real quality of the rescaling performed. At least quality but may be higher.
 			 **/
-			template<bool BLENDIT = false> inline int blit_rescaled(int quality, const Image & sprite, const iBox2 & dest_box, const iBox2 & sprite_box, float op = 1.0f)
+			inline int blit_rescaled(int quality, const Image & sprite, const iBox2 & dest_box, const iBox2 & sprite_box)
 				{
-				return blit_rescaled<BLENDIT>(quality, sprite, dest_box.min[0], dest_box.min[1], dest_box.max[0] - dest_box.min[0] + 1, dest_box.max[1] - dest_box.min[1] + 1,
-					sprite_box.min[0], sprite_box.min[1], sprite_box.max[0] - sprite_box.min[0] + 1, sprite_box.max[1] - sprite_box.min[1] + 1, op);
+				return blit_rescaled(quality, sprite, dest_box.min[0], dest_box.min[1], dest_box.max[0] - dest_box.min[0] + 1, dest_box.max[1] - dest_box.min[1] + 1,
+					sprite_box.min[0], sprite_box.min[1], sprite_box.max[0] - sprite_box.min[0] + 1, sprite_box.max[1] - sprite_box.min[1] + 1);
 				}
 
 
 
+			/**
+			 * Rescale a sprite image and then blend it onto this image.
+			 * 
+			 * All input paramters are valid : regions outside of the source or destination image are
+			 * automatically discarded (considered transparent).
+			 *
+			 * @param	quality	in [0,10]. 0 = low quality (fast) and 10 = max quality (slow).
+			 * @param	sprite 	The sprite image to rescale and then blit.
+			 * @param	dest_x 	x-coord of the upper left corner of the destination rectangle.
+			 * @param	dest_y 	y-coord of the upper left corner of the destination rectangle.
+			 * @param	dest_sx	width of the destination rectangle.
+			 * @param	dest_sy	height of the destination rectangle.
+			 * @param	op 		opacity for blending
+			 *
+			 * @return	The real quality of the rescaling performed. At least quality but may be higher.
+			 **/
+			inline int blend_rescaled(int quality, const Image & sprite, int64 dest_x, int64 dest_y, int64 dest_sx, int64 dest_sy, float op = 1.0f)
+				{
+				return blend_rescaled(quality, sprite, dest_x, dest_y, dest_sx, dest_sy, 0, 0, sprite._lx, sprite._ly, op);
+				}
 
 
+			/**
+			 * Rescale a sprite image and then blend it onto this image.
+			 *
+			 * All input paramters are valid : regions outside of the source or destination image are
+			 * automatically discarded (considered transparent).
+			 *
+			 * @param	quality  	in [0,10]. 0 = low quality (fast) and 10 = max quality (slow).
+			 * @param	sprite  	The sprite image to rescale and then blit.
+			 * @param	dest_box	The destination rectangle.
+			 * @param	op	   		opacity for blending
+			 *
+			 * @return	The real quality of the rescaling performed. At least quality but may be higher.
+			 **/
+			inline int blend_rescaled(int quality, const Image & sprite, const iBox2 & dest_box, float op = 1.0f)
+				{
+				return blend_rescaled(quality, sprite, dest_box.min[0], dest_box.min[1], dest_box.max[0] - dest_box.min[0] + 1, dest_box.max[1] - dest_box.min[1] + 1, 0, 0, sprite._lx, sprite._ly, op);
+				}
 
 
+			/**
+			 * Rescale a portion of a sprite image and then blend it onto this image.
+			 *
+			 * All input paramters are valid : regions outside of the source or destination image are
+			 * automatically discarded (considered transparent).
+			 *
+			 * @param	quality  	in [0,10]. 0 = low quality (fast) and 10 = max quality (slow).
+			 * @param	sprite   	The sprite image.
+			 * @param	dest_x   	x-coord of the upper left corner of the destination rectangle.
+			 * @param	dest_y   	y-coord of the upper left corner of the destination rectangle.
+			 * @param	dest_sx  	width of the destination rectangle.
+			 * @param	dest_sy  	height of the destination rectangle.
+			 * @param	sprite_x 	x-coord of the upper left corner of the sprite rectangle to blit.
+			 * @param	sprite_y 	y-coord of the upper left corner of the sprite rectangle to blit.
+			 * @param	sprite_sx	width of the sprite rectangle.
+			 * @param	sprite_sy	height of the sprite rectangle.
+			 * @param	op	   		opacity for blending
+			 *
+			 * @return	The real quality of the rescaling performed. At least quality but may be higher.
+			 **/
+			inline int blend_rescaled(int quality, const Image & sprite, int64 dest_x, int64 dest_y, int64 dest_sx, int64 dest_sy, int64 sprite_x, int64 sprite_y, int64 sprite_sx, int64 sprite_sy, float op = 1.0f)
+				{
+				return _blit_blend_rescaled<true>(quality, sprite, dest_x, dest_y, dest_sx, dest_sy, sprite_x, sprite_y, sprite_sx, sprite_sy, op);
+				}
 
 
-
-
-
-
-
+			/**
+			 * Rescale a portion of a sprite image and then blend it onto this image.
+			 *
+			 * @param	quality   	in [0,10]. 0 = low quality (fast) and 10 = max quality (slow).
+			 * @param	sprite	  	The sprite image.
+			 * @param	dest_box  	The destination rectangle.
+			 * @param	sprite_box	The rectangle part of the sprite to rescale and blit.
+			 * @param	op	   		opacity for blending
+			 *
+			 * @return	The real quality of the rescaling performed. At least quality but may be higher.
+			 **/
+			inline int blend_rescaled(int quality, const Image & sprite, const iBox2 & dest_box, const iBox2 & sprite_box, float op = 1.0f)
+				{
+				return blend_rescaled(quality, sprite, dest_box.min[0], dest_box.min[1], dest_box.max[0] - dest_box.min[0] + 1, dest_box.max[1] - dest_box.min[1] + 1,
+					sprite_box.min[0], sprite_box.min[1], sprite_box.max[0] - sprite_box.min[0] + 1, sprite_box.max[1] - sprite_box.min[1] + 1, op);
+				}
 
 
 
@@ -6888,59 +6739,235 @@ namespace mtools
 			*******************************************************************************************************************************************************/
 
 
+			/**
+			/* Main sub-method of blit / blend rescale
+			 *
+			 * All input paramters are valid : regions outside of the source or destination image are
+			 * automatically discarded (considered transparent).
+			 *
+			 * @tparam	BLENDIT		true to use blending instead of blitting
+			 * @param	quality  	in [0,10]. 0 = low quality (fast) and 10 = max quality (slow).
+			 * @param	sprite   	The sprite image.
+			 * @param	dest_x   	x-coord of the upper left corner of the destination rectangle.
+			 * @param	dest_y   	y-coord of the upper left corner of the destination rectangle.
+			 * @param	dest_sx  	width of the destination rectangle.
+			 * @param	dest_sy  	height of the destination rectangle.
+			 * @param	sprite_x 	x-coord of the upper left corner of the sprite rectangle to blit.
+			 * @param	sprite_y 	y-coord of the upper left corner of the sprite rectangle to blit.
+			 * @param	sprite_sx	width of the sprite rectangle.
+			 * @param	sprite_sy	height of the sprite rectangle.
+			 * @param	op	   		opacity for blending (only used if blending is enabled with BLENDIT = true)
+			 *
+			 * @return	The real quality of the rescaling performed. At least quality but may be higher.
+			 **/
+			template<bool BLENDIT> inline int _blit_blend_rescaled(int quality, const Image & sprite, int64 dest_x, int64 dest_y, int64 dest_sx, int64 dest_sy, int64 sprite_x, int64 sprite_y, int64 sprite_sx, int64 sprite_sy, float op)
+				{
+				const int MAX_QUALITY = 10;
+				if (quality <= 0) quality = 0; else if (quality >= MAX_QUALITY) quality = MAX_QUALITY;
+				if ((dest_sx <= 0) || (dest_sy <= 0)) return MAX_QUALITY; 
+				if ((sprite_sx <= 0) || (sprite_sy <= 0)) return MAX_QUALITY;
+				if ((dest_x >= lx()) || (dest_y >= ly())) return MAX_QUALITY;
+				if ((sprite_x >= sprite.lx()) || (sprite_y >= sprite.ly())) return MAX_QUALITY;
+				if ((dest_x + dest_sx <= 0) || (dest_y + dest_sy <= 0)) return MAX_QUALITY;
+				if ((sprite_x + sprite_sx <= 0) || (sprite_y + sprite_sy <= 0)) return MAX_QUALITY;
+
+				if (overlapMemoryWith(sprite))
+					{ // this and sprite overlap so we must make a copy of sprite
+					return _blit_blend_rescaled<BLENDIT>(quality, sprite.get_standalone(), dest_x, dest_y, dest_sx, dest_sy, sprite_x, sprite_y, sprite_sx, sprite_sy, op);
+					}
+
+				if (dest_x < 0)
+					{
+					int64 new_dest_sx = dest_sx + dest_x;
+					if (new_dest_sx <= 0) return MAX_QUALITY;
+					int64 new_dest_x = 0;
+					int64 new_sprite_sx = (int64)(sprite_sx * ((double)new_dest_sx) / ((double)dest_sx));
+					if (new_sprite_sx <= 0) return MAX_QUALITY;
+					int64 new_sprite_x = sprite_x + (int64)(sprite_sx * ((double)(-dest_x)) / ((double)(dest_sx)));
+					dest_x = new_dest_x;
+					dest_sx = new_dest_sx;
+					sprite_x = new_sprite_x;
+					sprite_sx = new_sprite_sx;
+					}
+
+				if (dest_y < 0)
+					{
+					int64 new_dest_sy = dest_sy + dest_y;
+					if (new_dest_sy <= 0) return MAX_QUALITY;
+					int64 new_dest_y = 0;
+					int64 new_sprite_sy = (int64)(sprite_sy * ((double)new_dest_sy) / ((double)dest_sy));
+					if (new_sprite_sy <= 0) return MAX_QUALITY;
+					int64 new_sprite_y = sprite_y + (int64)(sprite_sy * ((double)(-dest_y)) / ((double)(dest_sy)));
+					dest_y = new_dest_y;
+					dest_sy = new_dest_sy;
+					sprite_y = new_sprite_y;
+					sprite_sy = new_sprite_sy;
+					}
+
+				if (sprite_x < 0)
+					{
+					int64 new_sprite_sx = sprite_sx + sprite_x;
+					if (new_sprite_sx <= 0) return MAX_QUALITY;
+					int64 new_sprite_x = 0;
+					int64 new_dest_sx = (int64)(dest_sx * ((double)new_sprite_sx) / ((double)sprite_sx));
+					if (new_dest_sx <= 0) return MAX_QUALITY;
+					int64 new_dest_x = dest_x + (int64)(dest_sx * ((double)(-sprite_x)) / ((double)(sprite_sx)));
+					dest_x = new_dest_x;
+					dest_sx = new_dest_sx;
+					sprite_x = new_sprite_x;
+					sprite_sx = new_sprite_sx;
+					}
+
+				if (sprite_y < 0)
+					{
+					int64 new_sprite_sy = sprite_sy + sprite_y;
+					if (new_sprite_sy <= 0) return MAX_QUALITY;
+					int64 new_sprite_y = 0;
+					int64 new_dest_sy = (int64)(dest_sy * ((double)new_sprite_sy) / ((double)sprite_sy));
+					if (new_dest_sy <= 0) return MAX_QUALITY;
+					int64 new_dest_y = dest_y + (int64)(dest_sy * ((double)(-sprite_y)) / ((double)(sprite_sy)));
+					dest_y = new_dest_y;
+					dest_sy = new_dest_sy;
+					sprite_y = new_sprite_y;
+					sprite_sy = new_sprite_sy;
+					}
+
+				if (dest_x + dest_sx > lx())
+					{
+					int64 new_dest_sx = lx() - dest_x;
+					if (new_dest_sx <= 0) return MAX_QUALITY;
+					int64 new_sprite_sx = (int64)(sprite_sx * ((double)new_dest_sx) / ((double)dest_sx));
+					if (new_sprite_sx <= 0) return MAX_QUALITY;
+					dest_sx = new_dest_sx;
+					sprite_sx = new_sprite_sx;
+					}
+			
+				if (dest_y + dest_sy > ly())
+					{
+					int64 new_dest_sy = ly() - dest_y;
+					if (new_dest_sy <= 0) return MAX_QUALITY;
+					int64 new_sprite_sy = (int64)(sprite_sy * ((double)new_dest_sy) / ((double)dest_sy));
+					if (new_sprite_sy <= 0) return MAX_QUALITY;
+					dest_sy = new_dest_sy;
+					sprite_sy = new_sprite_sy;
+					}
+
+				if (sprite_x + sprite_sx > sprite.lx())
+					{
+					int64 new_sprite_sx = sprite.lx() - sprite_x;
+					if (new_sprite_sx <= 0) return MAX_QUALITY;
+					int64 new_dest_sx = (int64)(dest_sx * ((double)new_sprite_sx) / ((double)sprite_sx));
+					if (new_dest_sx <= 0) return MAX_QUALITY;
+					dest_sx = new_dest_sx;
+					sprite_sx = new_sprite_sx;
+					}
+
+				if (sprite_y + sprite_sy > sprite.ly())
+					{
+					int64 new_sprite_sy = sprite.ly() - sprite_y;
+					if (new_sprite_sy <= 0) return MAX_QUALITY;
+					int64 new_dest_sy = (int64)(dest_sy * ((double)new_sprite_sy) / ((double)sprite_sy));
+					if (new_dest_sy <= 0) return MAX_QUALITY;
+					dest_sy = new_dest_sy;
+					sprite_sy = new_sprite_sy;
+					}
+
+				// normally, this should never fail but we make sure nevertheless since it cost nothing
+				// compared the rest of the method.
+				MTOOLS_INSURE((dest_x >= 0) && (dest_x + dest_sx <= lx()));
+				MTOOLS_INSURE((dest_y >= 0) && (dest_y + dest_sy <= ly()));
+				MTOOLS_INSURE((sprite_x >= 0) && (sprite_x + sprite_sx <= sprite.lx()));
+				MTOOLS_INSURE((sprite_y >= 0) && (sprite_y + sprite_sy <= sprite.ly()));
+
+				if ((dest_sx == sprite_sx) && (dest_sy == sprite_sy))
+					{ // no rescaling
+					if (BLENDIT)
+						{
+						_blendRegionUp(_data + (dest_y*_stride) + dest_x, _stride, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, dest_sx, dest_sy, op);
+						}
+					else
+						{
+						_blitRegion(_data + (dest_y*_stride) + dest_x, _stride, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, dest_sx, dest_sy);
+						}
+					return MAX_QUALITY;
+					}
+				if ((dest_sx <= sprite_sx) && (dest_sy <= sprite_sy))
+					{ // downscaling
+					if ((dest_sx == 1) || (dest_sy == 1))
+						{ // box average does not work for flat images. use _nearest neighbour. (TODO, improve that). 
+						_nearest_neighbour_scaling<BLENDIT>(_data + (dest_y*_stride) + dest_x, _stride, dest_sx, dest_sy, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, sprite_sx, sprite_sy, op);
+						return MAX_QUALITY; // cannot do any better. 
+						}
+					if (!quality)
+						{ // quality = 0, we use fastest method : nearest neighbour.
+						_nearest_neighbour_scaling<BLENDIT>(_data + (dest_y*_stride) + dest_x, _stride, dest_sx, dest_sy, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, sprite_sx, sprite_sy, op);
+						return 0; // worst quality. 
+						}
+					// use box average downscaling					
+					RGBc * dest_data = _data + (dest_y*_stride) + dest_x;
+					uint64 dest_stride = (uint64)_stride;
+					uint64 dst_sx = (uint64)dest_sx;
+					uint64 dst_sy = (uint64)dest_sy;
+					RGBc * src_data = sprite._data + (sprite_y*sprite._stride);
+					uint64 src_stride = (uint64)sprite._stride;
+					uint64 src_sx = (uint64)sprite_sx;
+					uint64 src_sy = (uint64)sprite_sy;
+					uint64 stepx = (1ULL << (2*(MAX_QUALITY - quality)));
+					int quality_x = quality;
+					while(dst_sx*stepx > src_sx) { stepx >>= 2; quality_x++; }
+					uint64 stepy = (1ULL << (2*(MAX_QUALITY - quality)));
+					int quality_y = quality;
+					while (dst_sy*stepy > src_sy) { stepy >>= 2; quality_y++; }
+					_boxaverage_downscaling<BLENDIT>(op, dest_data, dest_stride, dst_sx, dst_sy, src_data, src_stride, src_sx, src_sy, stepx, stepy);
+					return (int)std::min<uint64>(quality_x,quality_y); 
+					}
+
+				if ((dest_sx >= sprite_sx) && (dest_sy >= sprite_sy))
+					{ // upscaling, quality > 0
+					if ((sprite_sx == 1) || (sprite_sy == 1))
+						{ // use _nearest neighbour. (TODO, improve that). 
+						_nearest_neighbour_scaling<BLENDIT>(_data + (dest_y*_stride) + dest_x, _stride, dest_sx, dest_sy, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, sprite_sx, sprite_sy, op);
+						return MAX_QUALITY; // cannot do any better. 
+						}
+					if (!quality)
+						{ // quality = 0, use fastest method. 
+						_nearest_neighbour_scaling<BLENDIT>(_data + (dest_y*_stride) + dest_x, _stride, dest_sx, dest_sy, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, sprite_sx, sprite_sy, op);
+						return 0;
+						}
+					// use linear interpolation
+					_linear_upscaling<BLENDIT>(_data + (dest_y*_stride) + dest_x, _stride, dest_sx, dest_sy, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, sprite_sx, sprite_sy, op);
+					return MAX_QUALITY;
+					}
+				// mix up/down scaling -> use nearest neighbour
+				_nearest_neighbour_scaling<BLENDIT>(_data + (dest_y*_stride) + dest_x, _stride, dest_sx, dest_sy, sprite._data + (sprite_y*sprite._stride) + sprite_x, sprite._stride, sprite_sx, sprite_sy, op);
+				return MAX_QUALITY;
+				}
+
+
+
+
 			/* apply nearest neighour scaling. fast ! 
 			   work for downscaling and upscaling both. */
-			static void _nearest_neighbour_scaling(RGBc * dest, int64 dest_stride, int64 dest_lx, int64 dest_ly, RGBc * src, int64 src_stride, int64 src_lx, int64 src_ly)
+			template<bool BLENDIT> static void _nearest_neighbour_scaling(RGBc * dest, int64 dest_stride, int64 dest_lx, int64 dest_ly, RGBc * src, int64 src_stride, int64 src_lx, int64 src_ly, float op)
 				{
 				if ((src_lx == dest_lx) && (src_ly == dest_ly)) { _blitRegion(dest, dest_stride, src, src_stride, src_lx, src_ly); return; }
 				MTOOLS_ASSERT((src_lx < 1000000) && (src_ly < 1000000)); // must be smaller than 2^20 to use fp arithmetic with FP_PRECISION = 43
-				const int64 FP_PRECISION = 43;
-				const double fbx = ((double)src_lx) / ((double)dest_lx);
-				const int64  ibx = (int64)(fbx * (((int64)1) << FP_PRECISION));
-				const double fby = ((double)src_ly) / ((double)dest_ly);
-				const int64  iby = (int64)(fby * (((int64)1) << FP_PRECISION));
-				int64 iay = (iby / 2);
-				int64 offdest = 0;
-				const int64 endj = dest_stride*dest_ly;
-				while (offdest < endj)
-					{
-					const int64 offsrc = src_stride*(iay >> FP_PRECISION);
-					int64 iax = (ibx / 2);
-					for (int i = 0; i < dest_lx; i++)
-						{
-						dest[offdest + i] = src[offsrc + (iax >> FP_PRECISION)];
-						iax += ibx;
-						}
-					iay += iby;
-					offdest += dest_stride;
-					}
-				}
-
-
-
-			/* apply nearest neighour scaling. fast ! 
-			   work for downscaling and upscaling both.
-			   same as above but use blending */
-			static void _nearest_neighbour_scaling_blend(RGBc * dest, int64 dest_stride, int64 dest_lx, int64 dest_ly, RGBc * src, int64 src_stride, int64 src_lx, int64 src_ly, float op)
-				{
-				if ((src_lx == dest_lx) && (src_ly == dest_ly)) { _blendRegionUp(dest, dest_stride, src, src_stride, src_lx, src_ly, op); return; }
-				MTOOLS_ASSERT((src_lx < 1000000) && (src_ly < 1000000)); // must be smaller than 2^20 to use fp arithmetic with FP_PRECISION = 43
-				const int64 FP_PRECISION = 43;
-				const double fbx = ((double)src_lx) / ((double)dest_lx);
-				const int64  ibx = (int64)(fbx * (((int64)1) << FP_PRECISION));
-				const double fby = ((double)src_ly) / ((double)dest_ly);
-				const int64  iby = (int64)(fby * (((int64)1) << FP_PRECISION));
-				int64 iay = (iby / 2);
-				int64 offdest = 0;
-				const int64 endj = dest_stride*dest_ly;
 				const uint32 iop = (uint32)(256 * op);
+				const int64 FP_PRECISION = 43;
+				const double fbx = ((double)src_lx) / ((double)dest_lx);
+				const int64  ibx = (int64)(fbx * (((int64)1) << FP_PRECISION));
+				const double fby = ((double)src_ly) / ((double)dest_ly);
+				const int64  iby = (int64)(fby * (((int64)1) << FP_PRECISION));
+				int64 iay = (iby / 2);
+				int64 offdest = 0;
+				const int64 endj = dest_stride*dest_ly;
 				while (offdest < endj)
 					{
 					const int64 offsrc = src_stride*(iay >> FP_PRECISION);
 					int64 iax = (ibx / 2);
 					for (int i = 0; i < dest_lx; i++)
 						{
-						dest[offdest + i].blend(src[offsrc + (iax >> FP_PRECISION)],iop);
+						if (BLENDIT) dest[offdest + i].blend(src[offsrc + (iax >> FP_PRECISION)], iop); else dest[offdest + i] = src[offsrc + (iax >> FP_PRECISION)];
 						iax += ibx;
 						}
 					iay += iby;
@@ -6949,15 +6976,16 @@ namespace mtools
 				}
 
 
-
-			/* upscale image via linear interpolation. Work only for upscaling.  */ 
-			static void _linear_upscaling(RGBc * dest_data, uint64 dest_stride, uint64 dest_sx, uint64 dest_sy, RGBc * src_data, uint64 src_stride, uint64 src_sx, uint64 src_sy)
+			/* upscale image via linear interpolation. Work only for upscaling. 
+			   set blendit to true to enable blending instead of blitting */ 
+			template<bool BLENDIT> static void _linear_upscaling(RGBc * dest_data, uint64 dest_stride, uint64 dest_sx, uint64 dest_sy, RGBc * src_data, uint64 src_stride, uint64 src_sx, uint64 src_sy, float op)
 				{
 				MTOOLS_ASSERT((src_sx < 1000000) && (src_sy < 1000000)); // must be smaller than 2^20
 				MTOOLS_ASSERT(dest_sx >= src_sx);
 				MTOOLS_ASSERT(dest_sy >= src_sy);
 				MTOOLS_ASSERT(src_sx >= 2);
 				MTOOLS_ASSERT(src_sy >= 2);
+				const uint32 iop = (uint32)(256 * op);
 				const uint64 FP_PRECISION = 43;
 				const uint64 FP_PRECISION_COLOR1 = 33;
 				const uint64 FP_PRECISION_COLOR2 = FP_PRECISION + (FP_PRECISION - FP_PRECISION_COLOR1);
@@ -6996,7 +7024,7 @@ namespace mtools
 							const uint64 rsG = ((h1G * c_offx) + (h2G * offx)) >> FP_PRECISION_COLOR2;
 							const uint64 rsB = ((h1B * c_offx) + (h2B * offx)) >> FP_PRECISION_COLOR2;
 							const uint64 rsA = ((h1A * c_offx) + (h2A * offx)) >> FP_PRECISION_COLOR2;
-							dest_data[jd*dest_stride + id] = RGBc((uint8)rsR, (uint8)rsG, (uint8)rsB, (uint8)rsA);
+							if (BLENDIT) dest_data[jd*dest_stride + id].blend(RGBc((uint8)rsR, (uint8)rsG, (uint8)rsB, (uint8)rsA), iop); else dest_data[jd*dest_stride + id] = RGBc((uint8)rsR, (uint8)rsG, (uint8)rsB, (uint8)rsA);
 							offx += step_x;
 							id++;
 							}
@@ -7010,7 +7038,7 @@ namespace mtools
 
 			/* Call the correct template version of _boxaverage_downscaling2() depending on the input parameters.
 			   this method choose the stepping nto the src image and the value of the BIT_FP template parameter. */
-			static void _boxaverage_downscaling(RGBc * dest_data, uint64 dest_stride, uint64 dest_sx, uint64 dest_sy, RGBc * src_data, uint64 src_stride, uint64 src_lx, uint64 src_ly, uint64 src_stepx = 1, uint64 src_stepy = 1)
+			template<bool BLENDIT> static void _boxaverage_downscaling(const float op, RGBc * dest_data, uint64 dest_stride, uint64 dest_sx, uint64 dest_sy, RGBc * src_data, uint64 src_stride, uint64 src_lx, uint64 src_ly, uint64 src_stepx = 1, uint64 src_stepy = 1)
 				{
 				const uint64 src_sx = src_lx / src_stepx;	// for the _boxaverage method, it is the same as a destination
 				const uint64 src_sy = src_ly / src_stepy;	// image of size (src_lx/src_stepx , src_ly/src_stepy)
@@ -7020,70 +7048,89 @@ namespace mtools
 				if ((src_stepx == 1) && (src_stepy == 1))
 					{ //perfect downscaling
 					uint64 a = 16;
-					if (v <= a) { _boxaverage_downscaling2<10>(dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_sx, src_sy); return; } a *= 4;  // at most 16 pixels per dest pixel
-					if (v <= a) { _boxaverage_downscaling2<9>(dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_sx, src_sy); return; } a *= 4;   // at most 64 pixels per dest pixel
-					if (v <= a) { _boxaverage_downscaling2<8>(dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_sx, src_sy); return; } a *= 4;   // at most 256 pixels per dest pixel
-					if (v <= a) { _boxaverage_downscaling2<7>(dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_sx, src_sy); return; } a *= 4;   // at most 1024 pixels per dest pixel
-					if (v <= a) { _boxaverage_downscaling2<6>(dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_sx, src_sy); return; } a *= 4;   // at most 4096 pixels per dest pixel 
-					if (v <= a) { _boxaverage_downscaling2<5>(dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_sx, src_sy); return; } a *= 4;   // at most 16384 pixels per dest pixel
+					if (v <= a) { _boxaverage_downscaling2<BLENDIT, 10>(op, dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_sx, src_sy); return; } a *= 4;  // at most 16 pixels per dest pixel
+					if (v <= a) { _boxaverage_downscaling2<BLENDIT, 9>(op, dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_sx, src_sy); return; } a *= 4;   // at most 64 pixels per dest pixel
+					if (v <= a) { _boxaverage_downscaling2<BLENDIT, 8>(op, dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_sx, src_sy); return; } a *= 4;   // at most 256 pixels per dest pixel
+					if (v <= a) { _boxaverage_downscaling2<BLENDIT, 7>(op, dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_sx, src_sy); return; } a *= 4;   // at most 1024 pixels per dest pixel
+					if (v <= a) { _boxaverage_downscaling2<BLENDIT, 6>(op, dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_sx, src_sy); return; } a *= 4;   // at most 4096 pixels per dest pixel 
+					if (v <= a) { _boxaverage_downscaling2<BLENDIT, 5>(op, dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_sx, src_sy); return; } a *= 4;   // at most 16384 pixels per dest pixel
 					// scale factor too large. use stochastic anyway. 					
 					uint64 stepx = (bx/128) + 1;
 					uint64 stepy = (by/128) + 1;
-					_boxaverage_downscaling(dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_lx, src_ly, stepx, stepy);
+					_boxaverage_downscaling<BLENDIT>(op, dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_lx, src_ly, stepx, stepy);
 					return; 
 					}
 				else
-					{ // stochastic downscaling. 					
+					{ // stochastic downscaling. 		
+					const uint32 iop = (uint32)(256 * op);
 					uint64 a = 16;
 					FastRNG gen;
 					FastLaw lawx((uint32)src_stepx);
 					FastLaw lawy((uint32)src_stepy);
 					if (v <= a)
 						{ // at most 16 pixels per dest pixel
-						_boxaverage_downscaling2<10, true>( dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_sx, src_sy,
+						_boxaverage_downscaling2<BLENDIT, 10, true>(op, dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_sx, src_sy,
 					        [&](uint64 x, uint64 y) -> RGBc { uint32 g = gen(); return src_data[(y*src_stepy + lawy(g))*src_stride + x*src_stepx + lawx(g >> 16)].color; },
-					        [&](uint64 x, uint64 y, RGBc c) { dest_data[y*dest_stride + x] = c;  });
+					        [&](uint64 x, uint64 y, RGBc c) 
+									{ 
+									if (BLENDIT) dest_data[y*dest_stride + x].blend(c, iop); else dest_data[y*dest_stride + x] = c;  
+									});
 						return;
 						} a *= 4;
 					if (v <= a)
 						{ // at most 64 pixels per dest pixel
-						_boxaverage_downscaling2<9, true>(dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_sx, src_sy,
+						_boxaverage_downscaling2<BLENDIT, 9, true>(op, dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_sx, src_sy,
 							[&](uint64 x, uint64 y) -> RGBc { uint32 g = gen(); return src_data[(y*src_stepy + lawy(g))*src_stride + x*src_stepx + lawx(g >> 16)].color; },
-							[&](uint64 x, uint64 y, RGBc c) { dest_data[y*dest_stride + x] = c;  });
+							[&](uint64 x, uint64 y, RGBc c) 
+									{ 
+									if (BLENDIT) dest_data[y*dest_stride + x].blend(c, iop); else dest_data[y*dest_stride + x] = c;
+									});
 						return;
 						} a *= 4;
 					if (v <= a)
 						{ // at most 256 pixels per dest pixel
-						_boxaverage_downscaling2<8, true>(dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_sx, src_sy,
+						_boxaverage_downscaling2<BLENDIT, 8, true>(op, dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_sx, src_sy,
 							[&](uint64 x, uint64 y) -> RGBc { uint32 g = gen(); return src_data[(y*src_stepy + lawy(g))*src_stride + x*src_stepx + lawx(g >> 16)].color; },
-							[&](uint64 x, uint64 y, RGBc c) { dest_data[y*dest_stride + x] = c;  });
+							[&](uint64 x, uint64 y, RGBc c) 
+									{ 
+									if (BLENDIT) dest_data[y*dest_stride + x].blend(c, iop); else dest_data[y*dest_stride + x] = c;
+									});
 						return;
 						} a *= 4;
 					if (v <= a)
 						{ // at most 1024 pixels per dest pixel
-						_boxaverage_downscaling2<7, true>(dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_sx, src_sy,
+						_boxaverage_downscaling2<BLENDIT, 7, true>(op, dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_sx, src_sy,
 							[&](uint64 x, uint64 y) -> RGBc { uint32 g = gen(); return src_data[(y*src_stepy + lawy(g))*src_stride + x*src_stepx + lawx(g >> 16)].color; },
-							[&](uint64 x, uint64 y, RGBc c) { dest_data[y*dest_stride + x] = c;  });
+							[&](uint64 x, uint64 y, RGBc c) 
+									{ 
+									if (BLENDIT) dest_data[y*dest_stride + x].blend(c, iop); else dest_data[y*dest_stride + x] = c;
+									});
 						return;
 						} a *= 4;
 					if (v <= a)
 						{ // at most 4096 pixels per dest pixel
-						_boxaverage_downscaling2<6, true>(dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_sx, src_sy,
+						_boxaverage_downscaling2<BLENDIT, 6, true>(op, dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_sx, src_sy,
 							[&](uint64 x, uint64 y) -> RGBc { uint32 g = gen(); return src_data[(y*src_stepy + lawy(g))*src_stride + x*src_stepx + lawx(g >> 16)].color; },
-							[&](uint64 x, uint64 y, RGBc c) { dest_data[y*dest_stride + x] = c;  });
+							[&](uint64 x, uint64 y, RGBc c) 
+									{ 
+									if (BLENDIT) dest_data[y*dest_stride + x].blend(c, iop); else dest_data[y*dest_stride + x] = c;
+									});
 						return;
 						} a *= 4;
 					if (v <= a)
 						{ // at most 16384 pixels per dest pixel
-						_boxaverage_downscaling2<5, true>(dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_sx, src_sy,
+						_boxaverage_downscaling2<BLENDIT, 5, true>(op, dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_sx, src_sy,
 							[&](uint64 x, uint64 y) -> RGBc { uint32 g = gen(); return src_data[(y*src_stepy + lawy(g))*src_stride + x*src_stepx + lawx(g >> 16)].color; },
-							[&](uint64 x, uint64 y, RGBc c) { dest_data[y*dest_stride + x] = c;  });
+							[&](uint64 x, uint64 y, RGBc c) 
+									{ 
+									if (BLENDIT) dest_data[y*dest_stride + x].blend(c, iop); else dest_data[y*dest_stride + x] = c;
+									});
 						return;
 						} a *= 4;
 					// downsampling ratio is still too big. increase the step even more.
 					uint64 spc_x = (bx/128) + 1; 
 					uint64 spc_y = (by/128) + 1;
-					_boxaverage_downscaling(dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_lx, src_ly, src_stepx*spc_x, src_stepy*spc_y);
+					_boxaverage_downscaling<BLENDIT>(op, dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_lx, src_ly, src_stepx*spc_x, src_stepy*spc_y);
 					return;
 					}
 				}
@@ -7094,8 +7141,8 @@ namespace mtools
 
 
 			/* call _boxaverage_downscaling_FP32 with the correct template parameters for BIT_FP and BIT_DIV */
-			template<uint64 BIT_FP_REDUCE, bool USE_FUNCION_CALL = false, typename READ_FUNCTOR = _dummy_read_functor, typename WRITE_FUNCTOR = _dummy_write_functor>
-			inline static void _boxaverage_downscaling2(RGBc * dest_data, uint64 dest_stride, uint64 dest_sx, uint64 dest_sy, RGBc * src_data, uint64 src_stride, uint64 src_sx, uint64 src_sy, READ_FUNCTOR funread = _dummy_read_functor(), WRITE_FUNCTOR funwrite = _dummy_write_functor())
+			template<bool BLENDIT, uint64 BIT_FP_REDUCE, bool USE_FUNCION_CALL = false, typename READ_FUNCTOR = _dummy_read_functor, typename WRITE_FUNCTOR = _dummy_write_functor>
+			inline static void _boxaverage_downscaling2(const float op, RGBc * dest_data, uint64 dest_stride, uint64 dest_sx, uint64 dest_sy, RGBc * src_data, uint64 src_stride, uint64 src_sx, uint64 src_sy, READ_FUNCTOR funread = _dummy_read_functor(), WRITE_FUNCTOR funwrite = _dummy_write_functor())
 				{
 				const uint64 bx = (src_sx / dest_sx); // lower bound on horizontal ratio 
 				const uint64 by = (src_sy / dest_sy); // lower bound on vertical ratio
@@ -7104,14 +7151,14 @@ namespace mtools
 				MTOOLS_ASSERT(bit_div >= 47);
 				switch (bit_div)
 					{
-					case 47: { _boxaverage_downscaling_FP32<40, BIT_FP_REDUCE, 48, USE_FUNCION_CALL>(dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_sx, src_sy, funread, funwrite); return; }
-					case 48: { _boxaverage_downscaling_FP32<40, BIT_FP_REDUCE, 48, USE_FUNCION_CALL>(dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_sx, src_sy, funread, funwrite); return; }
-					case 49: { _boxaverage_downscaling_FP32<40, BIT_FP_REDUCE, 49, USE_FUNCION_CALL>(dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_sx, src_sy, funread, funwrite); return; }
-					case 50: { _boxaverage_downscaling_FP32<40, BIT_FP_REDUCE, 50, USE_FUNCION_CALL>(dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_sx, src_sy, funread, funwrite); return; }
-					case 51: { _boxaverage_downscaling_FP32<40, BIT_FP_REDUCE, 51, USE_FUNCION_CALL>(dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_sx, src_sy, funread, funwrite); return; }
-					case 52: { _boxaverage_downscaling_FP32<40, BIT_FP_REDUCE, 52, USE_FUNCION_CALL>(dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_sx, src_sy, funread, funwrite); return; }
-					case 53: { _boxaverage_downscaling_FP32<40, BIT_FP_REDUCE, 53, USE_FUNCION_CALL>(dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_sx, src_sy, funread, funwrite); return; }
-					default: { _boxaverage_downscaling_FP32<40, BIT_FP_REDUCE, 54, USE_FUNCION_CALL>(dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_sx, src_sy, funread, funwrite); return; }
+					case 47: { _boxaverage_downscaling_FP32<BLENDIT, 40, BIT_FP_REDUCE, 48, USE_FUNCION_CALL>(op, dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_sx, src_sy, funread, funwrite); return; }
+					case 48: { _boxaverage_downscaling_FP32<BLENDIT, 40, BIT_FP_REDUCE, 48, USE_FUNCION_CALL>(op, dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_sx, src_sy, funread, funwrite); return; }
+					case 49: { _boxaverage_downscaling_FP32<BLENDIT, 40, BIT_FP_REDUCE, 49, USE_FUNCION_CALL>(op, dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_sx, src_sy, funread, funwrite); return; }
+					case 50: { _boxaverage_downscaling_FP32<BLENDIT, 40, BIT_FP_REDUCE, 50, USE_FUNCION_CALL>(op, dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_sx, src_sy, funread, funwrite); return; }
+					case 51: { _boxaverage_downscaling_FP32<BLENDIT, 40, BIT_FP_REDUCE, 51, USE_FUNCION_CALL>(op, dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_sx, src_sy, funread, funwrite); return; }
+					case 52: { _boxaverage_downscaling_FP32<BLENDIT, 40, BIT_FP_REDUCE, 52, USE_FUNCION_CALL>(op, dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_sx, src_sy, funread, funwrite); return; }
+					case 53: { _boxaverage_downscaling_FP32<BLENDIT, 40, BIT_FP_REDUCE, 53, USE_FUNCION_CALL>(op, dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_sx, src_sy, funread, funwrite); return; }
+					default: { _boxaverage_downscaling_FP32<BLENDIT, 40, BIT_FP_REDUCE, 54, USE_FUNCION_CALL>(op, dest_data, dest_stride, dest_sx, dest_sy, src_data, src_stride, src_sx, src_sy, funread, funwrite); return; }
 					}
 				}
 
@@ -7129,9 +7176,10 @@ namespace mtools
 			   The mehod chosen depend on the value of USE_FUNCION_CALL. In the first case, the last two parameters are ignored (funread, funxrite) and in the second case,
 			   the parameters dest_data,dest_stride,src_data, src_stride are irrelevant...
 			*/
-			template<uint64 BIT_FP = 40, uint64 BIT_FP_REDUCE = 10, uint64 BIT_DIV = 50, bool USE_FUNCION_CALL = false, typename READ_FUNCTOR = _dummy_read_functor, typename WRITE_FUNCTOR = _dummy_write_functor> 
-			static void _boxaverage_downscaling_FP32(RGBc * dest_data, uint64 dest_stride, uint64 dest_sx, uint64 dest_sy, RGBc * src_data, uint64 src_stride, uint64 src_sx, uint64 src_sy, READ_FUNCTOR funread = _dummy_read_functor(), WRITE_FUNCTOR funwrite = _dummy_write_functor())
+			template<bool BLENDIT, uint64 BIT_FP = 40, uint64 BIT_FP_REDUCE = 10, uint64 BIT_DIV = 50, bool USE_FUNCION_CALL = false, typename READ_FUNCTOR = _dummy_read_functor, typename WRITE_FUNCTOR = _dummy_write_functor> 
+			static void _boxaverage_downscaling_FP32(const float op, RGBc * dest_data, uint64 dest_stride, uint64 dest_sx, uint64 dest_sy, RGBc * src_data, uint64 src_stride, uint64 src_sx, uint64 src_sy, READ_FUNCTOR funread = _dummy_read_functor(), WRITE_FUNCTOR funwrite = _dummy_write_functor())
 				{
+					const uint32 iop = (uint32)(256 * op);
 					size_t tmpsize = (size_t)(16 * (dest_sx + 1));
 					uint32 * tmp = (uint32*)malloc(tmpsize);
 					MTOOLS_ASSERT(tmp != nullptr);
@@ -7218,7 +7266,14 @@ namespace mtools
 								uint32 c4 = ((tmp[off + 3] * ONE_OVER_LX_LY_RED) >> BIT_DIV); c4 |= ((c4 & 256) >> 8) * 255;
 								if (!USE_FUNCION_CALL) // <- conditional removed at compile time since USE_FUNCION_CALL is a compile time constant. 
 									{ // fast access, optimized by compiler
-									dest_data[dest_stride*dj + k].color = c1 + (c2 << 8) + (c3 << 16) + (c4 << 24);
+									if (BLENDIT)
+										{
+										dest_data[dest_stride*dj + k].blend(RGBc((uint32)(c1 + (c2 << 8) + (c3 << 16) + (c4 << 24))), iop);
+										}
+									else
+										{
+										dest_data[dest_stride*dj + k].color = c1 + (c2 << 8) + (c3 << 16) + (c4 << 24);
+										}
 									}
 								else
 									{ // use function call instead
@@ -7289,7 +7344,14 @@ namespace mtools
 							uint32 c4 = ((tmp[off + 3] * ONE_OVER_LX_LY_RED) >> BIT_DIV); c4 |= ((c4 & 256) >> 8) * 255;
 							if (!USE_FUNCION_CALL) // <- conditional removed at compile time since USE_FUNCION_CALL is a compile time constant. 
 								{ // fast access, optimized by compiler
-								dest_data[dest_stride*dj + k].color = c1 + (c2 << 8) + (c3 << 16) + (c4 << 24);
+								if (BLENDIT)
+									{
+									dest_data[dest_stride*dj + k].blend(RGBc((uint32)(c1 + (c2 << 8) + (c3 << 16) + (c4 << 24))), iop);
+									}
+								else
+									{
+									dest_data[dest_stride*dj + k].color = c1 + (c2 << 8) + (c3 << 16) + (c4 << 24);
+									}								
 								}
 							else
 								{ // use function call instead
