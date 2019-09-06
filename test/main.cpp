@@ -269,6 +269,26 @@ int main(int argc, char *argv[])
 	{
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
 
+	auto canvas = makeFigureCanvas();
+
+	canvas(Figure::Text("Hello World !", { 0.0, 0.0 }, { -20.0, 20.0 }, MTOOLS_TEXT_RIGHT | MTOOLS_TEXT_YCENTER, RGBc::c_Red, RGBc::c_Blue.getMultOpacity(0.5) ),0); 
+	canvas(Figure::Text("A", { 0.0, 0.0 }, { 10.0, 0.0 }, MTOOLS_TEXT_LEFT | MTOOLS_TEXT_TOP, RGBc::c_Red, RGBc::c_Blue.getMultOpacity(0.5)), 0);
+	canvas(Figure::Text("B", { 0.0, 0.0 }, { 10.0, 0.0 }, MTOOLS_TEXT_LEFT | MTOOLS_TEXT_BOTTOM, RGBc::c_Red, RGBc::c_Blue.getMultOpacity(0.5)), 0);
+
+	canvas(Figure::Text("ceci est un text\navec plusieurs lignes\n... yopla :)", { 50.0, 20.0 }, { 100.0, 0.0 }, MTOOLS_TEXT_CENTER, RGBc::c_Black, RGBc::c_Blue.getMultOpacity(0.1)), 0);
+
+	auto PA = makePlot2DFigure(canvas);
+
+	Plotter2D plotter;              // Create a plotter object
+	plotter[PA];	                // Add the image to the list of objects to draw.  	
+	plotter.autorangeXY();          // Set the plotter range to fit the image.
+	plotter.plot();                 // start interactive display.
+
+	return 0; 
+
+
+
+
 
 	mtools::ostringstream os; 
 

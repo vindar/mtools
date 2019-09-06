@@ -110,13 +110,15 @@ namespace mtools
 
 	// TEXT
 	
+	class Text;
+	
+
 	// MISC
 
 */
 
 
 	/*
-	class FigureText;
 	class FigureImage;
 	class FigureFill;
 	class FigureClip;
@@ -2796,6 +2798,150 @@ namespace mtools
 
 		};
 
+
+
+
+
+
+
+
+		/**
+		* 
+		* Text figure
+		*
+		**/
+		class Text : public internals_figure::FigureInterface
+		{
+
+			static const int default_font_size = 64; 
+
+
+		public:
+
+			std::string		_text;
+			fVec2			_pos;
+			fVec2			_size;
+			int				_text_pos;
+			RGBc			_textcolor;
+			RGBc			_bkcolor;
+
+			// tmp object recreated when needed.
+			Image	_im;	// the image
+			fBox2	_bb;	// corresponding bounding box
+
+
+			/**
+			 * Constructor
+			 *
+			 * @param	text		The text to draw
+			 * @param	pos			position of the text in the canvas.
+			 * @param	txt_pos 	Positioning method which explain which point `pos` refers to w.r.t the text bounding box
+			 * 						(combination of MTOOLS_TEXT_XCENTER, MTOOLS_TEXT_LEFT, MTOOLS_TEXT_RIGHT, MTOOLS_TEXT_TOP, 
+			 * 						MTOOLS_TEXT_BOTTOM, MTOOLS_TEXT_YCENTER)
+			 * @param	boxsize		Size of the bounding box. A negative dimension is adjusted automatically w.r.t. to the other one to
+			 * 						respect the text aspect ratio. Both dimensions cannot be simultaneously negative.
+			 * @param	txtcolor	the text color
+			 * @param	bkcolor 	the background color
+			 **/
+			Text(std::string text, fVec2 pos, fVec2 size, int txt_pos = MTOOLS_TEXT_XCENTER | MTOOLS_TEXT_YCENTER, RGBc textcolor = RGBc::c_Black, RGBc bkcolor = RGBc::c_Transparent)
+				: _text(text) , _pos(pos) , _size(size) , _text_pos(txt_pos), _textcolor(textcolor), _bkcolor(bkcolor)
+				{
+				MTOOLS_INSURE((_size.X() > 0) || (_size.Y() > 0));	// both size cannot be 0
+				_im.empty();
+				makeBB();
+				}
+
+
+			
+			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+				{
+				if (_im.isEmpty()) { createImage(); }						// create image on first use. 
+				const fBox2 imBox = im.imagefBox();							// get the image box
+				const fBox2 rbb = boxTransform(_bb, R, imBox);				// compute the corrsponding subbox to blend into the image
+				im.blit_rescaled((highQuality ? 10 : 0), _im, iBox2(rbb));	// blit (TODO : blend instead). 
+				}
+
+
+			virtual fBox2 boundingBox() const override
+				{
+				return _bb;
+				}
+
+
+			virtual std::string toString(bool debug = false) const override
+				{
+				OSS os; 
+				os << "text [" << _text << "]\n";
+				os << "pos " << _pos << "\n";
+				os << "text pos ";
+				if (_text_pos & MTOOLS_TEXT_XCENTER) os << "MTOOLS_TEXT_XCENTER ";
+				if (_text_pos & MTOOLS_TEXT_LEFT) os << "MTOOLS_TEXT_LEFT ";
+				if (_text_pos & MTOOLS_TEXT_RIGHT) os << "MTOOLS_TEXT_RIGHT ";
+				if (_text_pos & MTOOLS_TEXT_YCENTER) os << "MTOOLS_TEXT_YCENTER ";
+				if (_text_pos & MTOOLS_TEXT_TOP) os << "MTOOLS_TEXT_TOP ";
+				if (_text_pos & MTOOLS_TEXT_BOTTOM) os << "MTOOLS_TEXT_BOTTOM ";
+				os << "\n";
+				os << "size "		<< _size << "\n";
+				os << "textcolor "	<< _textcolor << "\n";
+				os << "bkcolor "	<< _bkcolor << "\n";
+				os << "\n";
+				return os.str();
+				}
+
+
+			virtual void serialize(OBaseArchive & ar) const override
+				{
+				ar & _text & _pos & _size & _text_pos & _textcolor & _bkcolor;
+				}
+
+
+			virtual void deserialize(IBaseArchive & ar) override
+				{
+				ar & _text & _pos & _size & _text_pos & _textcolor & _bkcolor;
+				_im.empty();
+				makeBB();
+				}
+
+
+			/* construct the bounding box */
+			void makeBB()
+				{
+				iVec2 dim = gFont(default_font_size, MTOOLS_NATIVE_FONT_ABOVE).textDimension(_text); // text dimension
+				if (_size.X() <= 0.0)
+					{ // must adjust x
+					MTOOLS_INSURE(dim.Y() > 0);
+					_size.X() = dim.X()*_size.Y() / dim.Y();
+					}
+				else if (_size.Y() <= 0.0)
+					{ // must adjust y
+					MTOOLS_INSURE(dim.X() > 0);
+					_size.Y() = dim.Y()*_size.X() / dim.X();
+					}
+
+				double ox = -_size.X()/2;
+				if (_text_pos & MTOOLS_TEXT_RIGHT)		ox = -_size.X();
+				if (_text_pos & MTOOLS_TEXT_LEFT)		ox = 0;				
+
+				double oy = -_size.Y()/2;
+				if (_text_pos & MTOOLS_TEXT_TOP)		oy = -_size.Y();
+				if (_text_pos & MTOOLS_TEXT_BOTTOM)		oy = 0;
+
+				_bb = fBox2(_pos.X() + ox, _pos.X() + _size.X() + ox, _pos.Y() + oy, _pos.Y() + _size.Y() + oy);
+				}
+
+
+			/* recreate the image */
+			void createImage()
+				{
+				auto & font = gFont(default_font_size, MTOOLS_NATIVE_FONT_ABOVE);							// get the font
+				iVec2 dim = font.textDimension(_text);														// text dimension
+				_im.resizeRaw(dim, true);																	// resize to the good dimension. 
+				_im.clear(_bkcolor);																		// draw the background					
+				_im.draw_text(iVec2{ 0,0 }, _text, MTOOLS_TEXT_LEFT | MTOOLS_TEXT_TOP, _textcolor, &font);	// draw the text				
+				}
+
+
+		};
 
 
 
