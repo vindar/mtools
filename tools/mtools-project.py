@@ -93,6 +93,16 @@ if (NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE Release)
 endif ()
 
+
+find_package(mtools REQUIRED)
+
+file(GLOB project_SRC "*.cpp" "*.hpp" "*.h")
+
+add_executable("${PROJECT_NAME}" ${project_SRC})
+
+target_link_libraries("${PROJECT_NAME}" mtools)
+
+
 # compile options
 if(WIN32)
 	set(CMAKE_CXX_STANDARD 17)
@@ -102,20 +112,11 @@ if(WIN32)
 	# hack for RelWithDebINfo configuration otherwise compile never ends on MSVC
 	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/Zi /Gm- /Ox /Ob0 /DMTOOLS_DEBUG_FLAG")	
 else()
-	target_compile_options(mtools PUBLIC "-std=c++17")
+	target_compile_options("${PROJECT_NAME}" PUBLIC "-std=c++17")
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DMTOOLS_DEBUG_FLAG -Wall")
 	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -DMTOOLS_DEBUG_FLAG -Wall")
 	set(CMAKE_CXX_FLAGS_RELEASE  "${CMAKE_CXX_FLAGS_RELEASE} -Wall")
 endif()
-
-
-find_package(mtools REQUIRED)
-
-file(GLOB project_SRC "*.cpp" "*.hpp" "*.h")
-
-add_executable("${PROJECT_NAME}" ${project_SRC})
-
-target_link_libraries("${PROJECT_NAME}" mtools)
 
 
 #### external dependencies ####
