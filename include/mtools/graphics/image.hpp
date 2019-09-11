@@ -6740,7 +6740,7 @@ namespace mtools
 
 
 			/**
-			/* Main sub-method of blit blend rescale
+			 * Main submethod of blit blend rescale
 			 *
 			 * All input paramters are valid : regions outside of the source or destination image are
 			 * automatically discarded (considered transparent).
