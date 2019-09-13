@@ -763,7 +763,7 @@ namespace mtools
 			 * @param	centerdot position
 			 * @param	col		  color
 			 */
-			SquareDot(fVec2 centerdot, RGBc col) : center(centerdot), pw(0), color(col)
+			SquareDot(fVec2 centerdot, RGBc col) : center(centerdot), pw(1), color(col)
 				{
 				}
 
@@ -1146,6 +1146,7 @@ namespace mtools
 				{
 				el->SetName("polyline");
 				el->setStrokeColor(color);				
+				el->setFillColor(RGBc::c_Transparent);
 				mtools::ostringstream os;
 
 				for (auto P : tab) { os << TX(P.X()) << "," << TY(P.Y()) << " "; }
@@ -1528,6 +1529,7 @@ namespace mtools
 				{
 				el->SetName("polyline");
 				el->setStrokeColor(color);
+				el->setFillColor(RGBc::c_Transparent);
 				mtools::ostringstream os;
 
 				for (auto P : tab) { os << TX(P.X()) << "," << TY(P.Y()) << " "; }
@@ -3548,8 +3550,7 @@ namespace mtools
 			{
 			if (match != 0)
 				{
-//				MTOOLS_ERROR("Class " << (typeid(*((FIGURECLASS*)(void*)))) << " registered class name [" << classname << "] which is already in use by another class !");
-				MTOOLS_ERROR("ERROR");
+				MTOOLS_ERROR("class name [" << classname << "] is already in use by another class !");
 				}
 			Figure::internals_figure::FigureInterface * pf = _archiveInPool<FIGURECLASS>(ar); // create the figure directly in the pool
 			_figLayers[layer].insert(pf->boundingBox(), pf);								// add to the corresponding layer. 

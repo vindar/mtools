@@ -270,17 +270,40 @@ void error_cb(const std::string & title, const std::string & msg)
 
 
 
+
+/*
+
+
+*/
+
+
 void testSVG()
 	{
 	
 		{
-			auto canvas = makeFigureCanvas();
+			auto canvas = makeFigureCanvas(2);
+
+			canvas(Figure::CircleDot(fVec2{ 50, 50 }, RGBc::c_Green), 1);
+			canvas(Figure::SquareDot(fVec2{ 60, 50 }, RGBc::c_Green.getMultOpacity(0.5f)), 1);
+
 
 			canvas(Figure::VerticalLine(0, 0, 100, RGBc::c_Black), 0);
 			canvas(Figure::HorizontalLine(100, 0, 200, RGBc::c_Red.getOpacity(0.2f)), 0);
 			canvas(Figure::Line({ 200, 100 }, { 150,50 }, RGBc::c_Red), 0);
 
+			std::vector<fVec2> tabPL = { fVec2(70, 50), fVec2(80,50), fVec2(75,60) };
+			canvas(Figure::PolyLine(tabPL, RGBc::c_Black, 2), 1);
+
+
+			canvas(Figure::ThickHorizontalLine(-20,-40,50,RGBc::c_Yellow, 20), 0);
+			canvas(Figure::ThickVerticalLine(-20, -50, 50, RGBc::c_Orange, 20), 1);
+
+			canvas(Figure::ThickLine({-50, 30}, {50,-30}, 20, true, RGBc::c_Purple.getMultOpacity(0.5)), 1);
+
 			canvas(Figure::Text("A", { 0.0, 0.0 }, { 10.0, 0.0 }, MTOOLS_TEXT_LEFT | MTOOLS_TEXT_TOP, RGBc::c_Red, RGBc::c_Blue.getMultOpacity(0.5f), 1.0f, 256), 0);
+
+			canvas(Figure::ThickPolyLine(tabPL, 5, true, RGBc::c_Salmon), 0);
+
 
 			canvas.saveSVG("fig.svg");
 
@@ -292,6 +315,8 @@ void testSVG()
 			plotter.plot();                 // start interactive display.
 		}
 		
+
+
 
 			{
 			auto canvas = makeFigureCanvas();
