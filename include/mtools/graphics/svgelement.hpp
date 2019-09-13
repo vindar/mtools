@@ -52,10 +52,9 @@ namespace mtools
 		 * If el is not null, then the object constructed is added as last child of el
 		 * otherwise it is added as last child of xmlDoc
 		 **/
-		SVGElement(tinyxml2::XMLDocument & xmlDoc, SVGElement * father = nullptr) : xml(xmlDoc.NewElement(SVGElement_DEFAULT_NAME)), _xmlDoc(&xmlDoc), _children()
+		SVGElement(tinyxml2::XMLDocument & xmlDoc, tinyxml2::XMLElement * father) : xml(xmlDoc.NewElement(SVGElement_DEFAULT_NAME)), _xmlDoc(&xmlDoc), _children()
 			{
-			if (father != nullptr) father->xml->InsertEndChild(xml);	// put the element as last child of father
-			else xmlDoc.InsertEndChild(xml);							// put the element at the end of the document. 
+			father->InsertEndChild(xml);
 			}
 
 
@@ -74,7 +73,7 @@ namespace mtools
 		 **/
 		SVGElement * NewChildSVGElement(const char * name = SVGElement_DEFAULT_NAME)
 			{
-			SVGElement * el = new SVGElement(*_xmlDoc, this);
+			SVGElement * el = new SVGElement(*_xmlDoc, xml);
 			_children.push_back(el); // we keep ownership: register for deletion when this object is destoyed. 
 			el->SetName(name);
 			return el;
@@ -113,8 +112,23 @@ namespace mtools
 			}
 
 
-		/* give acces to the underlying xml element */
+		/** give acces to the underlying xml element */
 		tinyxml2::XMLElement * xml;
+
+
+		/** Coordinate transform to apply on the x-axis */
+		double tx(double x) const { return x; } 
+		int64 tx(int64 x) const { return x; }
+
+
+		/** Coordinate transform to apply on the y-axis */
+		double ty(double y) const { return -y; }
+		int64 ty(int64 y) const { return -y; }
+
+
+		/** Transform to apply to lenght/radius etc...*/
+		double tr(double r) const { return r; }
+		int64 tr(int64 r) const { return r; }
 
 
 

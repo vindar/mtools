@@ -153,7 +153,11 @@ namespace mtools
 			ar << std::string("TreeFigure< ") << typeid(T).name() << ", " << N << ", " << typeid(TFloat).name() << ">\n";
 			ar & _minbbox;
 			ar & size(); // number of items
-			size_t nb = iterate_all([&ar](const BoundedObject & bo) -> void  { ar & bo.boundingbox; ar & bo.object; }); 
+			size_t nb = iterate_all([&ar](const BoundedObject & bo) -> void  
+				{ 
+				ar & bo.boundingbox; 
+				ar & bo.object; 
+				}); 
 			ar << std::string("\nend of TreeFigure\n");
 			MTOOLS_ASSERT(nb == size());
 			}

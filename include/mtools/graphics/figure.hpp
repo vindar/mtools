@@ -53,7 +53,10 @@ namespace mtools
 
 
 
+
+
 /*
+
 	// DOTS
 
 	class CircleDot;
@@ -103,7 +106,15 @@ namespace mtools
 	class ThickEllipsePart;
 
 
-	// CURVES
+	// TEXT
+
+	class Text;
+
+
+
+
+	*************** TODO  *****************
+    // CURVES
 
 	class QuadBezier;
 	class CubicBezier;
@@ -111,18 +122,6 @@ namespace mtools
 	class ThickQuadBezier;
 	class ThickCubicBezier;
 
-
-	// TEXT
-	
-	class Text;
-	
-
-	// MISC
-
-*/
-
-
-	/*
 	class FigureImage;
 	class FigureFill;
 	class FigureClip;
@@ -131,7 +130,12 @@ namespace mtools
 	template<typename FIGURE1, typename FIGURE2, typename FIGURE3, typename FIGURE4>  class FigureQuadruplet;
 	template<class... FIGURES> class FigureTuple;
 	class FigureGroup;
+
+
 	*/
+
+
+
 
 
 	
@@ -157,6 +161,8 @@ namespace mtools
 	 */
 	template<int N = 5> class FigureCanvas
 	{
+
+		using BBox = Box<double, 2>;	// bounding box structure
 
 	public: 
 
@@ -258,39 +264,173 @@ namespace mtools
 
 
 
-		/** Save the canvas in a file in SVG format. */
-		void saveSVG(const std::string & filename) const
+		/**
+		* Serialize the canvas with all its figures into an archive.
+		**/
+		void serialize(OBaseArchive & ar, const int version = 0) const		
 			{
-
-			tinyxml2::XMLDocument xmlDoc; // main document
-			auto svg = xmlDoc.NewElement("svg");
-
-			auto B = _figLayers->mainBoundingBox()
-
-
-
-			BBox
-			for (size_t i = 0; i < _nbLayers; i++)
+			ar & _nbLayers; ar << "number of layers\n";
+			for (int i = 0; i < _nbLayers; i++)
 				{
-
+				ar << "*** Layer " << i << " ***\n";
+				ar & _figLayers[i].size();	ar << "number of items in layer " << i << "\n";
+				size_t nb = _figLayers[i].iterate_all([&](typename mtools::TreeFigure<typename Figure::internals_figure::FigureInterface *, N, double>::BoundedObject & bo) -> void
+					{
+					ar & (bo.object)->name();
+					ar & (*(bo.object));
+					});
+				ar << "\n";
+				MTOOLS_ASSERT(nb == size());
 				}
-
-
-
-
-			svg->SetAttribute("width", "");
-			svg->SetAttribute("height", "");
-			svg->SetAttribute("viewBox", "0 0 115 190");
-
-			<svg width = "5cm" height = "4cm" version = "1.1"
-				xmlns = "http://www.w3.org/2000/svg">
-
-
 			}
 
 
 
+		/**
+		* Deserialize a canvas
+		* 
+		* If the canvas is not empty, it must have at least as many layer as canvas archive and the
+		* archive is simply added to the current canvas. 
+		* 
+		* If the canvas is empty, its number of layer is increased if needed to fit the number of layer
+		* in the archive.  
+		**/
+		void deserialize(IBaseArchive & ar)
+			{
+			// query the number of layers
+			size_t nblayers_ar;
+			ar & nblayers_ar;
+
+			if (nblayers_ar > _nbLayers)
+				{ // increase the number of layer is needed
+				MTOOLS_INSURE(size() == 0); // make sure the canvas is empty. 
+				delete[] _figLayers;
+				_nbLayers = nblayers_ar;
+				_figLayers = new TreeFigure<Figure::internals_figure::FigureInterface*, N>[_nbLayers];
+				}
+
+			// add all the elements
+			for (int layer = 0; layer < nblayers_ar; layer++)
+				{
+				// number of element in this layer
+				size_t nbitem;
+				ar & nbitem;
+				// add all the elements
+				for (int j = 0; j < nbitem; j++)
+					{
+					_insertArchiveItem(ar, layer);
+					}
+				}
+			}
+
+
+		/**
+		 * Save the canvas in a file in SVG format.
+		 * 
+		 * An archive of the canvas is added at the end of the file so it can be reconstructed
+		 * exactly later using loadSVG()
+		 *
+		 * @param	filename	name of the file. 
+		 **/
+		void saveSVG(const std::string & filename) const
+			{
+			tinyxml2::XMLDocument xmlDoc;									// create main document
+			xmlDoc.InsertEndChild(xmlDoc.NewDeclaration());					// standard xml declaration
+			tinyxml2::XMLElement * svg = xmlDoc.NewElement("svg");			// main svg element
+			xmlDoc.InsertEndChild(svg);										// standard xml declaration
+
+			BBox bb; // global bounding box
+
+			// iterate over all layer, in order
+			for (size_t i = 0; i < _nbLayers; i++)
+				{
+				// increase the bounding box to contain all elements in this layer. 
+				bb.swallowBox(_figLayers[i].mainBoundingBox()); 
+
+				// Insert a group for this layer
+				tinyxml2::XMLElement * layer = xmlDoc.NewElement("g"); 
+				svg->InsertEndChild(layer);
+				layer->SetAttribute("id", (std::string("Figure Layer ") + mtools::toString(i)).c_str());
+
+				// iterate over all element in this layer
+				_figLayers[i].iterate_all([&](typename mtools::TreeFigure<typename Figure::internals_figure::FigureInterface *, N, double>::BoundedObject & bo) -> void
+					{
+					SVGElement el(xmlDoc, layer);								// create an SVGElement for this figure (destroyed out of scope but the tinyxml2::XMLElement survives.
+					el.xml->SetAttribute("id", typeid(*(bo.object)).name());	// id  by its type
+					bo.object->svg(&el);										// draw on the SVGElement
+					});
+				}
+
+			// set dimensions
+			svg->SetAttribute("width", bb.lx());
+			svg->SetAttribute("height", bb.ly());
+			mtools::ostringstream os; 
+			os << bb.min[0] << " " << -(bb.max[1]) << " " << bb.lx() << " " << bb.ly();
+			svg->SetAttribute("viewBox", os.toString().c_str());
+
+			// add archive after svg	
+			tinyxml2::XMLElement * mtoolsarchive = xmlDoc.NewElement("mtools-archive");
+			xmlDoc.InsertEndChild(mtoolsarchive);
+			OStringArchive ar;
+			serialize(ar); 
+			mtoolsarchive->SetText(ar.get().c_str());
+
+			// and save everything
+			xmlDoc.SaveFile(filename.c_str()); 
+			}
+
+
+
+
+		/**
+		 * Loads a canvas from an SVG file. 
+		 * 
+		 * THe SVG file must have been created with the saveSVG() method 
+		 * otherwise the loading will fail. 
+		 * 
+		 * Same procedure as deserialize: the canvas must either be empty
+		 * or have at least as many layer as the number of layer in the 
+		 * SVG file. 
+		 * If canvas is not empty, Figure from the SVG file are simply added
+		 * to those already present in the canvas. 
+		 *
+		 * @param	filename	name of the SVG file
+		 **/
+		void loadSVG(const std::string & filename)
+			{
+			tinyxml2::XMLDocument xmlDoc;
+			if (xmlDoc.LoadFile(filename.c_str()) != 0)
+				{
+				MTOOLS_ERROR("FigureCanvas::loadSVG(). Cannot load file [" << filename << "].");
+				}
+			tinyxml2::XMLElement * elar = xmlDoc.FirstChildElement("mtools-archive"); 
+			if (elar == nullptr)
+				{
+				MTOOLS_ERROR("FigureCanvas::loadSVG(). file [" << filename << "] does not contain a 'mtools-archive' element.");
+				}
+
+			// load the archive 
+			mtools::IStringArchive ar(elar->GetText(), strlen(elar->GetText()));
+
+			// deserialize
+			deserialize(ar);
+			
+			return;
+			}
+
+
+
+
 	private: 
+
+
+		/** insert a figure from an archive */
+		MTOOLS_FORCEINLINE void _insertArchiveItem(mtools::IBaseArchive & ar, size_t layer);
+
+
+		/* used by the macro REGISTER_ARCHIVE_FIGURE_CLASS() */
+		template <typename FIGURECLASS> MTOOLS_FORCEINLINE void _registerArchiveFigureClass(const std::string & classname, mtools::IBaseArchive & ar, size_t layer, int & match);
+
 
 		/* no copy */
 		FigureCanvas(const FigureCanvas &) = delete;
@@ -302,6 +442,15 @@ namespace mtools
 			{
 			void * p = _allocate(sizeof(FIGURECLASS));					// allocate memory in the memory pool for the figure object
 			new (p) FIGURECLASS(figure);								// placement new : copy constructor. 
+			return ((Figure::internals_figure::FigureInterface *)p);	// cast to base class. 
+			}
+
+
+		/* create a figure from an archive derectly inside the memory pool */
+		template<typename FIGURECLASS> MTOOLS_FORCEINLINE Figure::internals_figure::FigureInterface * _archiveInPool(mtools::IBaseArchive & ar)
+			{
+			void * p = _allocate(sizeof(FIGURECLASS));					// allocate memory in the memory pool for the figure object
+			new (p) FIGURECLASS(ar);									// placement new : copy constructor. 
 			return ((Figure::internals_figure::FigureInterface *)p);	// cast to base class. 
 			}
 
@@ -323,13 +472,13 @@ namespace mtools
 		void _deallocateAll();
 
 
-		std::vector<void *>				_vecallocp;	// vector containing pointers to all allocated figures (TEMP WHILE USING MALLOC/FREE). 
+		std::vector<void *>	_vecallocp;	// vector containing pointers to all allocated figures (TEMP WHILE USING MALLOC/FREE). 
 
 		/*********************************************************************************************************/
 
 
-		size_t															_nbLayers;	// number of layers
-		TreeFigure<Figure::internals_figure::FigureInterface*, N> *		_figLayers;	// tree figure object for each layer. 
+		size_t																_nbLayers;	// number of layers
+		TreeFigure<Figure::internals_figure::FigureInterface*, N, double> *	_figLayers;	// tree figure object for each layer. 
 
 
 	};
@@ -341,11 +490,17 @@ namespace mtools
 
 
 
+
+
+
 	/************************************************************************************************************************************
 	*
-	* FIGURE CLASSES
-	* 
+	* FIGURE CLASSES:
+	*
 	* All the classes located inside the Figure namespace are derived from FigureInterface hence can be inserted in a canvas object. 
+	* 
+	* To create a new igure class, use the FIGURECLASS_BEGIN and FIGURECLASS_END MACRO ...
+	* 
 	*
 	*************************************************************************************************************************************/
 
@@ -359,17 +514,27 @@ namespace mtools
 			/**
 			* Interface class for figure objects.
 			*
-			* Any Figure object must derived from thispure virtual base class.
+			* Any Figure object must derived from this pure virtual base class.
+			* 
+			* ANY SUBLCASS MUST ALSO IMPLEMENT A CTOR FOR DESERIALIZATION : `FigureClass(IBaseArchive & ar)`
+			* 
+			* 
 			**/
 			class FigureInterface
 			{
 
 			public:
 
-
 				/** Virtual destructor */
 				virtual ~FigureInterface() {}
 
+
+				/**
+				 * DO NOT IMPLEMENT THIS METHOD WHICH IS CREATED AUTOMATICALLY 
+				 * WHEN USING MACROS 'FIGURECLASS_BEGIN' and 'FIGURECLASS_END'
+				 **/
+				virtual std::string name() const = 0;
+				
 
 				/**
 				* Draws the figure onto an image with a given range.
@@ -395,34 +560,67 @@ namespace mtools
 				*/
 				virtual std::string toString(bool debug = false) const = 0;
 
+
 				/**
 				* Serialize the object.
 				*/
 				virtual void serialize(OBaseArchive & ar) const = 0;
 
+
 				/**
 				* Deserialize this object.
+				* Need not be overriden. 
+				* 
+				* BUT THE OBJECT MUST IMPLEMENT DESERALIZATION VIA THE CTOR `FigureClass(IBaseArchive & ar)`
+				* 
 				*/
-				virtual void deserialize(IBaseArchive & ar) = 0;
-
+				virtual void deserialize(IBaseArchive & ar)
+					{
+					MTOOLS_ERROR(typeid(*this).name() << " does not implement the deserialize() method");
+					}
+	
 
 				/**
 				* Write into the SVGElement el to provide a SVG descritpion of the figure
 				* which will be used when exporting in SVG format.
 				*
-				* el.xml give acces to the underlying tinyxml::XMLElement
+				* el.xml give access to the underlying tinyxml::XMLElement
+				* 
+				* use macro TX(), TY(), TZ() to transform coordinate to SVG coordinate. 
 				*/
 				virtual void svg(mtools::SVGElement * el) const
 				{
 					MTOOLS_DEBUG(std::string("Figure::svg() called but not implemented on ") + typeid(*this).name() + ". Item ignored...");
-					el->Comment((std::string("MISSING FIGURE TYPE [") + +typeid(*this).name() + "]\n" + toString()).c_str());
+					el->Comment((std::string("MISSING FIGURE\n") + toString()).c_str());
 					return;
 				}
+
+
+			private:
 
 			};
 
 		}
 
+
+		/*********************************************************************************************************************
+		* Abusing C preprocessor: macro used for creating Figure classes
+		**********************************************************************************************************************/
+
+		// Convenience macros to transform to SVG coordinates. 
+		#define TX(Z)	(el->tx( Z ))
+		#define TY(Z)	(el->ty( Z ))
+		#define TR(Z)	(el->tr( Z ))
+
+
+		#define FIGURECLASS_BEGIN( CLASSNAME )	class CLASSNAME : public internals_figure::FigureInterface 				\
+													{																	\
+													public:																\
+														static std::string className() { return #CLASSNAME; }			\
+													virtual std::string name() const override { return className(); }		
+
+
+		#define FIGURECLASS_END()					};
 
 
 
@@ -442,17 +640,17 @@ namespace mtools
 
 
 
-		/**
+
+
+
+		/*********************************************************
 		*
 		* Circle Dot
 		*
 		* The radius of a dot is absolute and does not scale with the range.
 		*
-		**/
-		class CircleDot : public internals_figure::FigureInterface
-		{
-
-		public:
+		**********************************************************/
+		FIGURECLASS_BEGIN(CircleDot)
 
 			fVec2	center;			// center
 			double	radius;			// dot radius
@@ -518,7 +716,7 @@ namespace mtools
 			}
 
 
-			virtual void deserialize(IBaseArchive & ar) override
+			CircleDot(IBaseArchive & ar)
 			{
 				ar & center & radius & outlinecolor & fillcolor;
 			}
@@ -526,31 +724,33 @@ namespace mtools
 
 			virtual void svg(mtools::SVGElement * el) const override
 			{
+				el->Comment("SVG cannot represent Figure::CircleDot correctly !");
 				el->SetName("circle");;
 				el->setFillColor(fillcolor);
 				el->setStrokeColor(outlinecolor);
-				el->xml->SetAttribute("cx", center.X());
-				el->xml->SetAttribute("cy", center.Y());
-				el->xml->SetAttribute("r", radius);
+				el->xml->SetAttribute("cx", TX(center.X()));
+				el->xml->SetAttribute("cy", TY(center.Y()));
+				el->xml->SetAttribute("r", radius);	// not using TR() since it should not scale. 
 				el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
 			}
 
-		};
+		FIGURECLASS_END()
+
+
+
+
 
 
 	
-
-		/**
-		* 
+		/*********************************************************
+		*
 		* Square Dot
-		* 
+		*
 		* The radius of a dot is absolute and does not scale with the range.
-		* 
-		**/
-		class SquareDot : public internals_figure::FigureInterface
-		{
+		*
+		**********************************************************/
+		FIGURECLASS_BEGIN(SquareDot)
 
-		public:
 
 			fVec2	center;			// center
 			int32	pw;				// radius
@@ -607,7 +807,7 @@ namespace mtools
 				}
 
 
-			virtual void deserialize(IBaseArchive & ar) override
+			SquareDot(IBaseArchive & ar) 
 				{
 				ar & center & pw & color;
 				}
@@ -615,16 +815,21 @@ namespace mtools
 
 			virtual void svg(mtools::SVGElement * el) const override
 				{
+				el->Comment("SVG cannot represent Figure::SquareDot correctly !");
 				el->SetName("rect");;
 				el->setFillColor(color);
-				el->xml->SetAttribute("x", center.X()-pw);
-				el->xml->SetAttribute("y", center.Y()-pw);
-				el->xml->SetAttribute("width", 2*pw);
-				el->xml->SetAttribute("height", 2*pw);
+				el->xml->SetAttribute("x", TX(center.X())-pw);
+				el->xml->SetAttribute("y", TY(center.Y())-pw);
+				el->xml->SetAttribute("width", 2*pw);  // not using TR() since it should not scale
+				el->xml->SetAttribute("height", 2*pw); //
 				}
 
 
 		};
+
+
+
+
 
 
 
@@ -636,15 +841,17 @@ namespace mtools
 		*************************************************************************************************************************************/
 
 
-		/**
-		*
-		* Horizontal Line
-		*
-		**/
-		class HorizontalLine : public internals_figure::FigureInterface
-		{
 
-		public:
+
+
+
+
+		/*********************************************************
+		* 
+		* Horizontal Line
+		* 
+		**********************************************************/
+		FIGURECLASS_BEGIN(HorizontalLine)
 
 			double x1, x2, y;
 			RGBc	color;
@@ -689,7 +896,7 @@ namespace mtools
 				}
 
 
-			virtual void deserialize(IBaseArchive & ar) override
+			HorizontalLine(IBaseArchive & ar)
 				{
 				ar & x1 & x2 & y & color;
 				}
@@ -699,26 +906,29 @@ namespace mtools
 				{
 				el->SetName("line");;
 				el->setStrokeColor(color);
-				el->xml->SetAttribute("x1", x1);
-				el->xml->SetAttribute("y1", y);
-				el->xml->SetAttribute("x2", x2);
-				el->xml->SetAttribute("y2", y);
+				el->xml->SetAttribute("x1", TX(x1));
+				el->xml->SetAttribute("y1", TY(y));
+				el->xml->SetAttribute("x2", TX(x2));
+				el->xml->SetAttribute("y2", TY(y));
 				el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
 				}
 
-		};
+		FIGURECLASS_END()
 
 
 
-		/**
+
+
+
+
+
+		/*********************************************************
 		*
 		* Vertical Line figure
 		*
-		**/
-		class VerticalLine : public internals_figure::FigureInterface
-		{
+		**********************************************************/
+		FIGURECLASS_BEGIN(VerticalLine)
 
-		public:
 
 			double y1, y2, x;
 			RGBc	color;
@@ -763,7 +973,7 @@ namespace mtools
 				}
 
 
-			virtual void deserialize(IBaseArchive & ar) override
+			VerticalLine(IBaseArchive & ar) 
 				{
 				ar & y1 & y2 & x & color;
 				}
@@ -771,29 +981,31 @@ namespace mtools
 
 			virtual void svg(mtools::SVGElement * el) const override
 				{
-				el->SetName("line");;
+				el->SetName("line");
 				el->setStrokeColor(color);
-				el->xml->SetAttribute("x1", x);
-				el->xml->SetAttribute("y1", y1);
-				el->xml->SetAttribute("x2", x);
-				el->xml->SetAttribute("y2", y2);
+				el->xml->SetAttribute("x1", TX(x));
+				el->xml->SetAttribute("y1", TY(y1));
+				el->xml->SetAttribute("x2", TX(x));
+				el->xml->SetAttribute("y2", TY(y2));
 				el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
 				}
 
-
-		};
-
+		FIGURECLASS_END()
 
 
-		/**
+
+
+
+
+
+
+		/*********************************************************
 		*
 		* Line
 		*
-		**/
-		class Line : public internals_figure::FigureInterface
-		{
+		**********************************************************/
+		FIGURECLASS_BEGIN(Line)
 
-		public:
 
 			fVec2 P1, P2;
 			RGBc  color;
@@ -839,7 +1051,7 @@ namespace mtools
 				}
 
 
-			virtual void deserialize(IBaseArchive & ar) override
+			Line(IBaseArchive & ar)
 				{
 				ar & P1 & P2 & color & pw;
 				}
@@ -849,32 +1061,38 @@ namespace mtools
 			{
 				el->SetName("line");
 				el->setStrokeColor(color);
-				el->xml->SetAttribute("x1", P1.X());
-				el->xml->SetAttribute("y1", P1.Y());
-				el->xml->SetAttribute("x2", P2.X());
-				el->xml->SetAttribute("y2", P2.Y());
-				if (pw > 0) el->xml->SetAttribute("stroke-width", pw);
+				el->xml->SetAttribute("x1", TX(P1.X()));
+				el->xml->SetAttribute("y1", TY(P1.Y()));
+				el->xml->SetAttribute("x2", TX(P2.X()));
+				el->xml->SetAttribute("y2", TY(P2.Y()));
+				if (pw != 0)
+					{
+					el->Comment("SVG cannot accurately represent Figure::Line with non zero penwidth !");
+					}
 				el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
 			}
 
-
-		};
-
+		FIGURECLASS_END()
 
 
-		/**
+
+
+
+
+
+		/*********************************************************
 		*
 		* Polyline
 		*
-		**/
-		class PolyLine : public internals_figure::FigureInterface
-		{
+		**********************************************************/
+		FIGURECLASS_BEGIN(PolyLine)
 
-		public:
 
 			std::vector<fVec2> tab;
 			RGBc  color;
 			int32 pw;
+
+			fBox2 bb; 
 
 
 			/**
@@ -887,6 +1105,7 @@ namespace mtools
 			PolyLine(const std::vector<fVec2> & tab_points, RGBc col, int32 penwidth = 0) : tab(tab_points), color(col), pw(penwidth)
 			{
 				MTOOLS_INSURE(tab_points.size() > 0);
+				bb = getBoundingBox(tab);
 			}
 
 
@@ -898,7 +1117,7 @@ namespace mtools
 
 			virtual fBox2 boundingBox() const override
 			{
-				return getBoundingBox(tab);
+				return bb;
 			}
 
 
@@ -916,9 +1135,10 @@ namespace mtools
 			}
 
 
-			virtual void deserialize(IBaseArchive & ar) override
+			PolyLine(IBaseArchive & ar)
 			{
 				ar & tab & color & pw;
+				bb = getBoundingBox(tab);
 			}
 
 
@@ -928,25 +1148,30 @@ namespace mtools
 				el->setStrokeColor(color);				
 				mtools::ostringstream os;
 
-				for (auto P : tab) { os << P.X() << "," << P.Y() << " "; }
+				for (auto P : tab) { os << TX(P.X()) << "," << TY(P.Y()) << " "; }
 				el->xml->SetAttribute("points", os.toString().c_str());
 
-				if (pw > 0) el->xml->SetAttribute("stroke-width", pw);
+				if (pw != 0)
+					{
+					el->Comment("SVG cannot accurately represent Figure::PolyLine with non zero penwidth !");
+					}
 				el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
 				}
 
-		};
+		FIGURECLASS_END()
 
 
-		/**
+
+
+
+
+
+		/*********************************************************
 		*
 		* Thick Horizontal Line
 		*
-		**/
-		class ThickHorizontalLine : public internals_figure::FigureInterface
-		{
-
-		public:
+		**********************************************************/
+		FIGURECLASS_BEGIN(ThickHorizontalLine)
 
 			double x1, x2, y;
 			double thickness; // positive for relative thickness and negative for absolute thickness
@@ -1001,7 +1226,7 @@ namespace mtools
 			}
 
 
-			virtual void deserialize(IBaseArchive & ar) override
+			ThickHorizontalLine(IBaseArchive & ar) 
 			{
 				ar & x1 & x2 & y & color & thickness;
 			}
@@ -1009,28 +1234,38 @@ namespace mtools
 
 			virtual void svg(mtools::SVGElement * el) const
 				{
-				el->SetName("line");;
+				el->SetName("line");
 				el->setStrokeColor(color);
-				el->xml->SetAttribute("x1", x1);
-				el->xml->SetAttribute("y1", y);
-				el->xml->SetAttribute("x2", x2);
-				el->xml->SetAttribute("y2", y);
-				el->xml->SetAttribute("stroke-width", std::abs(thickness));
+				el->xml->SetAttribute("x1", TX(x1));
+				el->xml->SetAttribute("y1", TY(y));
+				el->xml->SetAttribute("x2", TX(x2));
+				el->xml->SetAttribute("y2", TY(y));
+				if (thickness <= 0)
+					{
+					el->Comment("SVG cannot accurately represent Figure::ThickHorizontalLine with absolute thickness!");
+					el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+					}
+				else
+					{
+					el->xml->SetAttribute("stroke-width", TR(std::abs(thickness)));
+					}
 				}
 
+		FIGURECLASS_END()
 
-		};
 
 
-		/**
+
+
+
+
+
+		/*********************************************************
 		*
 		* Thick Vertical Line
 		*
-		**/
-		class ThickVerticalLine : public internals_figure::FigureInterface
-		{
-
-		public:
+		**********************************************************/
+		FIGURECLASS_BEGIN(ThickVerticalLine)
 
 
 			double y1, y2, x;
@@ -1086,7 +1321,7 @@ namespace mtools
 			}
 
 
-			virtual void deserialize(IBaseArchive & ar) override
+			ThickVerticalLine(IBaseArchive & ar) 
 			{
 				ar & y1 & y2 & x & color & thickness;
 			}
@@ -1094,31 +1329,43 @@ namespace mtools
 
 			virtual void svg(mtools::SVGElement * el) const
 				{
-				el->SetName("line");;
+				el->SetName("line");
 				el->setStrokeColor(color);
-				el->xml->SetAttribute("x1", x);
-				el->xml->SetAttribute("y1", y1);
-				el->xml->SetAttribute("x2", x);
-				el->xml->SetAttribute("y2", y2);
-				el->xml->SetAttribute("stroke-width", std::abs(thickness));
+				el->xml->SetAttribute("x1", TX(x));
+				el->xml->SetAttribute("y1", TY(y1));
+				el->xml->SetAttribute("x2", TX(x));
+				el->xml->SetAttribute("y2", TY(y2));
+				if (thickness <= 0)
+					{
+					el->Comment("SVG cannot accurately represent Figure::ThickVerticalLine with absolute thickness!");
+					el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+					}
+				else
+					{
+					el->xml->SetAttribute("stroke-width", TR(std::abs(thickness)));
+					}
 				}
 
-		};
+		FIGURECLASS_END()
 
 
-		/**
+
+
+
+
+
+		/*********************************************************
 		*
 		* Thick Line
 		*
-		**/
-		class ThickLine : public internals_figure::FigureInterface
-		{
-
-		public:
+		**********************************************************/
+		FIGURECLASS_BEGIN(ThickLine)
 
 			fVec2 P1, P2;
 			RGBc  color;
 			double thick; // positive for relative thickness and negative for absolute thickness
+
+			fBox2 bb; 
 
 
 			/**
@@ -1134,6 +1381,7 @@ namespace mtools
 				MTOOLS_ASSERT(thick >= 0);
 				MTOOLS_ASSERT(P1 != P2);
 				if (!relativethickness) { thick = -thick; }
+				_computeBB();
 				}
 
 
@@ -1147,15 +1395,7 @@ namespace mtools
 
 			virtual fBox2 boundingBox() const override
 				{
-				if (thick >= 0)
-					{
-					fBox2 R;
-					fVec2 H = (P2 - P1).get_rotate90();
-					H.normalize();
-					H *= (thick*0.5);
-					return getBoundingBox(P1 + H, P1 - H, P2 + H, P2 - H);
-					}
-				return getBoundingBox(P1, P2);
+				return bb;
 				}
 
 
@@ -1173,40 +1413,71 @@ namespace mtools
 				}
 
 
-			virtual void deserialize(IBaseArchive & ar) override
+			ThickLine(IBaseArchive & ar)
 				{
 				ar & P1 & P2 & color & thick;
+				_computeBB();
 				}
 
 
 			virtual void svg(mtools::SVGElement * el) const
 				{
-				el->SetName("line");;
+				el->SetName("line");
 				el->setStrokeColor(color);
-				el->xml->SetAttribute("x1", P1.X());
-				el->xml->SetAttribute("y1", P1.Y());
-				el->xml->SetAttribute("x2", P2.X());
-				el->xml->SetAttribute("y2", P2.Y());
-				el->xml->SetAttribute("stroke-width", std::abs(thick));
+				el->xml->SetAttribute("x1", TX(P1.X()));
+				el->xml->SetAttribute("y1", TY(P1.Y()));
+				el->xml->SetAttribute("x2", TX(P2.X()));
+				el->xml->SetAttribute("y2", TY(P2.Y()));
+				if (thick <= 0)
+					{
+					el->Comment("SVG cannot accurately represent Figure::ThickLine with absolute thickness!");
+					el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+					}
+				else
+					{
+					el->xml->SetAttribute("stroke-width", TR(std::abs(thick)));
+					}
 				}
 
-		};
+
+			private:
+
+			/* precompute the bounding box */
+			void _computeBB()
+				{
+				if (thick >= 0)
+					{
+					fBox2 R;
+					fVec2 H = (P2 - P1).get_rotate90();
+					H.normalize();
+					H *= (thick*0.5);
+					bb = getBoundingBox(P1 + H, P1 - H, P2 + H, P2 - H);
+					return;
+					}
+				bb = getBoundingBox(P1, P2);
+				}
+
+
+		FIGURECLASS_END()
 
 
 
-		/**
+
+
+
+
+		/*********************************************************
 		*
-		* ThickPolyline
+		* Thick PolyLine
 		*
-		*/
-		class ThickPolyLine : public internals_figure::FigureInterface
-		{
+		**********************************************************/
+		FIGURECLASS_BEGIN(ThickPolyLine)
 
-		public:
 
 			std::vector<fVec2>	tab;
 			RGBc				color;
 			double				thickness; // >= 0 for relative thickness and < 0 for absolute thickness
+
 			fBox2				bb;
 
 			ThickPolyLine(const std::vector<fVec2> & tab_points, double thick, double relativethickness, RGBc col) : tab(tab_points), color(col), thickness(thick)
@@ -1246,7 +1517,7 @@ namespace mtools
 				}
 
 
-			virtual void deserialize(IBaseArchive & ar) override
+			ThickPolyLine(IBaseArchive & ar)
 				{
 				ar & tab & color & thickness;
 				_constructbb();
@@ -1259,10 +1530,19 @@ namespace mtools
 				el->setStrokeColor(color);
 				mtools::ostringstream os;
 
-				for (auto P : tab) { os << P.X() << "," << P.Y() << " "; }
+				for (auto P : tab) { os << TX(P.X()) << "," << TY(P.Y()) << " "; }
 				el->xml->SetAttribute("points", os.toString().c_str());
 
-				el->xml->SetAttribute("stroke-width", std::abs(thickness));
+				if (thickness <= 0)
+					{
+					el->Comment("SVG cannot accurately represent Figure::ThickLine with absolute thickness!");
+					el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+					}
+				else
+					{
+					el->xml->SetAttribute("stroke-width", TR(std::abs(thickness)));
+					}
+
 				}
 
 
@@ -1286,7 +1566,13 @@ namespace mtools
 				}
 
 
-		};
+		FIGURECLASS_END()
+
+
+
+
+
+
 
 
 
@@ -1297,15 +1583,18 @@ namespace mtools
 		*************************************************************************************************************************************/
 
 
-		/**
+
+
+
+
+
+		/*********************************************************
 		*
 		* BoxRegion : filled a boxed region with a single color.
 		*
-		**/
-		class BoxRegion : public internals_figure::FigureInterface
-		{
+		**********************************************************/
+		FIGURECLASS_BEGIN(BoxRegion)
 
-		public:
 
 			fBox2 box;
 			RGBc  fillcolor;
@@ -1346,23 +1635,26 @@ namespace mtools
 			}
 
 
-			virtual void deserialize(IBaseArchive & ar) override
+			BoxRegion(IBaseArchive & ar) 
 			{
 				ar & box & fillcolor;
 			}
 
-		};
+		FIGURECLASS_END()
 
 
-		/**
+
+
+
+
+
+		/*********************************************************
 		*
 		* Triangle
 		*
-		**/
-		class Triangle : public internals_figure::FigureInterface
-		{
+		**********************************************************/
+		FIGURECLASS_BEGIN(Triangle)
 
-		public:
 
 			fVec2 P1, P2, P3;
 			RGBc  color, fillcolor;
@@ -1417,26 +1709,27 @@ namespace mtools
 				}
 
 
-			virtual void deserialize(IBaseArchive & ar) override
+			Triangle(IBaseArchive & ar)
 				{
 				ar & P1 & P2 & P3 & color & fillcolor;
 				}
 
-		};
+		FIGURECLASS_END()
 
 
 
-		/**
+
+
+
+
+		/*********************************************************
 		*
 		* Quad
 		*
-		**/
-		class Quad : public internals_figure::FigureInterface
-		{
+		**********************************************************/
+		FIGURECLASS_BEGIN(Quad)
 
-		public:
 
-			
 			fVec2 P1, P2, P3, P4;
 			RGBc  color, fillcolor;
 
@@ -1491,28 +1784,32 @@ namespace mtools
 				}
 
 
-			virtual void deserialize(IBaseArchive & ar) override
+			Quad(IBaseArchive & ar)
 				{
 				ar & P1 & P2 & P3 & P4 & color & fillcolor;
 				}
 
-		};
+		FIGURECLASS_END()
 
 
 
-		/**
+
+
+
+
+
+		/*********************************************************
 		*
 		* Polygon
 		*
-		**/
-		class Polygon : public internals_figure::FigureInterface
-		{
+		**********************************************************/
+		FIGURECLASS_BEGIN(Polygon)
 
-		public:
 
 			std::vector<fVec2> tab;
 			RGBc  color, fillcolor;
 
+			fBox2 bb; 
 
 			/**
 			 * Construct a polygon
@@ -1524,6 +1821,7 @@ namespace mtools
 			Polygon(const std::vector<fVec2> & tab_points, RGBc col, RGBc fillcol = RGBc::c_Transparent) : tab(tab_points), color(col), fillcolor(fillcol)
 				{
 				MTOOLS_INSURE(tab_points.size() > 0);
+				bb = getBoundingBox(tab);
 				}
 
 
@@ -1542,7 +1840,7 @@ namespace mtools
 
 			virtual fBox2 boundingBox() const override
 				{
-				return getBoundingBox(tab);
+				return bb;
 				}
 
 
@@ -1562,24 +1860,28 @@ namespace mtools
 				}
 
 
-			virtual void deserialize(IBaseArchive & ar) override
+			Polygon(IBaseArchive & ar) 
 				{
 				ar & tab & color & fillcolor;
+				bb = getBoundingBox(tab);
 				}
 
-		};
+		FIGURECLASS_END()
 
 
 
-		/**
+
+
+
+
+
+
+		/*********************************************************
 		*
 		* Rectangle
 		*
-		**/
-		class Rectangle : public internals_figure::FigureInterface
-		{
-
-		public:
+		**********************************************************/
+		FIGURECLASS_BEGIN(Rectangle)
 
 
 			fBox2 box;
@@ -1634,23 +1936,26 @@ namespace mtools
 				}
 
 
-			virtual void deserialize(IBaseArchive & ar) override
+			Rectangle(IBaseArchive & ar) 
 				{
 				ar & box & color & fillcolor;
 				}
 
-		};
+		FIGURECLASS_END()
 
 
-		/**
+
+
+
+
+
+		/*********************************************************
 		*
-		* Thick Triangle
+		* ThickTriangle
 		*
-		**/
-		class ThickTriangle : public internals_figure::FigureInterface
-		{
+		**********************************************************/
+		FIGURECLASS_BEGIN(ThickTriangle)
 
-		public:
 
 			fVec2 P1, P2, P3;
 			double thickness;	// negative for absolute thickness
@@ -1712,23 +2017,27 @@ namespace mtools
 				}
 
 
-			virtual void deserialize(IBaseArchive & ar) override
+			ThickTriangle(IBaseArchive & ar) 
 				{
 				ar &  P1 & P2 & P3 & thickness & color & fillcolor;
 				}
 
-		};
+		FIGURECLASS_END()
 
 
-		/**
+
+
+
+
+
+
+		/*********************************************************
 		*
-		* Thick Quad
+		* ThickQuad
 		*
-		**/
-		class ThickQuad : public internals_figure::FigureInterface
-		{
+		**********************************************************/
+		FIGURECLASS_BEGIN(ThickQuad)
 
-		public:
 
 			fVec2 P1, P2, P3, P4;
 			double thickness;	// negative for absolute thickness
@@ -1791,33 +2100,32 @@ namespace mtools
 				}
 
 
-			virtual void deserialize(IBaseArchive & ar) override
+			ThickQuad(IBaseArchive & ar) 
 				{
 				ar &  P1 & P2 & P3 & P4 & thickness & color & fillcolor;
 				}
 
-		};
+		FIGURECLASS_END()
 
 
-		/**
+
+
+
+
+
+		/*********************************************************
 		*
-		* Thick Polygon
+		* ThickPolygon
 		*
-		**/
-		class ThickPolygon : public internals_figure::FigureInterface
-		{
+		**********************************************************/
+		FIGURECLASS_BEGIN(ThickPolygon)
 
-		public:
 
 			std::vector<fVec2> tab;
 			double thickness;	// negative for absolute thickness
 			RGBc  color, fillcolor;
 
-
-			/**
-			* Construct a thick polygon
-			*
-			**/
+			fBox2 bb;
 
 
 			/**
@@ -1834,6 +2142,7 @@ namespace mtools
 				MTOOLS_INSURE(tab_points.size() > 0);
 				MTOOLS_ASSERT(thickness >= 0); 
 				if (!relative_thickness) { thickness = -thickness; }
+				bb = getBoundingBox(tab);
 				}
 
 
@@ -1854,7 +2163,7 @@ namespace mtools
 
 			virtual fBox2 boundingBox() const override
 				{
-				return getBoundingBox(tab);
+				return bb;
 				}
 
 
@@ -1874,31 +2183,33 @@ namespace mtools
 				}
 
 
-			virtual void deserialize(IBaseArchive & ar) override
+			ThickPolygon(IBaseArchive & ar) 
 				{
 				ar & tab & thickness & color & fillcolor;
+				bb = getBoundingBox(tab);
 				}
 
-		};
+		FIGURECLASS_END()
 
 
 
 
-		/**
+
+
+
+		/*********************************************************
 		*
-		* Thick Rectangle
+		* ThickRectangle
 		*
-		**/
-		class ThickRectangle : public internals_figure::FigureInterface
-		{
+		**********************************************************/
+		FIGURECLASS_BEGIN(ThickRectangle)
 
-		public:
+
 
 			fBox2 box;
 			double thickness_x;	// negative for absolute thickness
 			double thickness_y;	//
 			RGBc  color, fillcolor;
-
 
 			/**
 			 * Constructor
@@ -1961,12 +2272,20 @@ namespace mtools
 				}
 
 
-			virtual void deserialize(IBaseArchive & ar) override
+			ThickRectangle(IBaseArchive & ar)
 				{
 				ar &  box & thickness_x & thickness_y & color & fillcolor;
 				}
 
-		};
+		FIGURECLASS_END()
+
+
+
+
+
+
+
+
 
 
 		/************************************************************************************************************************************
@@ -1975,15 +2294,21 @@ namespace mtools
 		*
 		*************************************************************************************************************************************/
 
-		/**
-		*
-		* Circle figure
-		*
-		**/
-		class Circle : public internals_figure::FigureInterface
-		{
 
-		public:
+
+
+
+
+
+
+
+		/*********************************************************
+		*
+		* Circle
+		*
+		**********************************************************/
+			FIGURECLASS_BEGIN(Circle)
+
 
 			fVec2	center;
 			double	radius;
@@ -2044,24 +2369,27 @@ namespace mtools
 				}
 
 
-			virtual void deserialize(IBaseArchive & ar) override
+			Circle(IBaseArchive & ar)
 				{
 				ar & center & radius & color & fillcolor;
 				}
 
-		};
+		FIGURECLASS_END()
 
 
 
-		/**
+
+
+
+
+
+		/*********************************************************
 		*
-		* Thick Circle figure
+		* Thick Circle
 		*
-		**/
-		class ThickCircle  : public internals_figure::FigureInterface
-		{
+		**********************************************************/
+		FIGURECLASS_BEGIN(ThickCircle)
 
-		public:
 
 			fVec2	center;
 			double	radius;
@@ -2146,24 +2474,26 @@ namespace mtools
 				}
 
 
-			virtual void deserialize(IBaseArchive & ar) override
+			ThickCircle(IBaseArchive & ar)
 				{
 				ar & center & radius & thickness & color & fillcolor;
 				}
 
-		};
+		FIGURECLASS_END()
 
 
 
-		/**
-		* 
+
+
+
+
+		/*********************************************************
+		*
 		* Circle Part
 		*
-		**/
-		class CirclePart : public internals_figure::FigureInterface
-		{
+		**********************************************************/
+		FIGURECLASS_BEGIN(CirclePart)
 
-		public:
 
 			fVec2	center;
 			double	radius;
@@ -2249,24 +2579,26 @@ namespace mtools
 				}
 
 
-			virtual void deserialize(IBaseArchive & ar) override
+			CirclePart(IBaseArchive & ar)
 				{
 				ar & part & center & radius & color & fillcolor;
 				}
 
-		};
+		FIGURECLASS_END()
+
+
+
 
 
 		
-		/**
-		* 
+
+		/*********************************************************
+		*
 		* Thick Circle Part
 		*
-		**/
-		class ThickCirclePart : public internals_figure::FigureInterface
-		{
+		**********************************************************/
+		FIGURECLASS_BEGIN(ThickCirclePart)
 
-		public:
 
 			fVec2	center;
 			double	radius;
@@ -2376,26 +2708,26 @@ namespace mtools
 				}
 
 
-			virtual void deserialize(IBaseArchive & ar) override
+			ThickCirclePart(IBaseArchive & ar)
 				{
 				ar & part & center & radius & thickness & color & fillcolor;
 				}
 
-		};
+		FIGURECLASS_END()
 
 
 
 
 
-		/**
-		* 
+
+
+		/*********************************************************
+		*
 		* Ellipse
 		*
-		**/
-		class Ellipse : public internals_figure::FigureInterface
-		{
+		**********************************************************/
+		FIGURECLASS_BEGIN(Ellipse)
 
-		public:
 
 			fVec2	center;
 			double	rx;				// x-radius
@@ -2489,24 +2821,27 @@ namespace mtools
 				}
 
 
-			virtual void deserialize(IBaseArchive & ar) override
+			Ellipse(IBaseArchive & ar)
 				{
 				ar & center & rx & ry & color & fillcolor;
 				}
 
-		};
+		FIGURECLASS_END()
 
 
 
-		/**
-		* 
-		* ThickEllipse
+
+
+
+
+
+		/*********************************************************
 		*
-		**/
-		class ThickEllipse : public internals_figure::FigureInterface
-		{
+		* Thick Ellipse
+		*
+		**********************************************************/
+		FIGURECLASS_BEGIN(ThickEllipse)
 
-		public:
 
 			fVec2	center;
 			double	rx;				// x-radius
@@ -2643,24 +2978,26 @@ namespace mtools
 				}
 
 
-			virtual void deserialize(IBaseArchive & ar) override
+			ThickEllipse(IBaseArchive & ar)
 				{
 				ar & center & rx & ry & thickness_x & thickness_y & color & fillcolor;
 				}
 
-		};
+		FIGURECLASS_END()
 
 
 
-		/**
-		* 
-		* Ellipse Part figure
+
+
+
+
+		/*********************************************************
 		*
-		**/
-		class EllipsePart : public internals_figure::FigureInterface
-		{
+		* Ellipse Part
+		*
+		**********************************************************/
+		FIGURECLASS_BEGIN(EllipsePart)
 
-		public:
 
 			/** ellipse parameters **/
 			fVec2	center;			// circle center
@@ -2785,24 +3122,26 @@ namespace mtools
 				}
 
 
-			virtual void deserialize(IBaseArchive & ar) override
+			EllipsePart(IBaseArchive & ar)
 				{
 				ar & part & center & rx & ry  & color & fillcolor;
 				}
 
-		};
+		FIGURECLASS_END()
 
 
 
-		/**
-		* 
-		* Thick Ellipse Part figure
+
+
+
+
+		/*********************************************************
 		*
-		**/
-		class ThickEllipsePart : public internals_figure::FigureInterface
-		{
+		* Thick Ellipse Part
+		*
+		**********************************************************/
+		FIGURECLASS_BEGIN(ThickEllipsePart)
 
-		public:
 
 			/** ellipse parameters **/
 			fVec2	center;			// circle center
@@ -2968,12 +3307,12 @@ namespace mtools
 				}
 
 
-			virtual void deserialize(IBaseArchive & ar) override
+			ThickEllipsePart(IBaseArchive & ar)
 				{
 				ar & part & center & rx & ry & thickness_x & thickness_y & color & fillcolor;
 				}
 
-		};
+		FIGURECLASS_END()
 
 
 
@@ -2982,18 +3321,28 @@ namespace mtools
 
 
 
-		/**
-		* 
-		* Text figure
+
+		/************************************************************************************************************************************
 		*
-		**/
-		class Text : public internals_figure::FigureInterface
-		{
-
-			static const int default_font_size = 64; 
+		* OTHER
+		*
+		*************************************************************************************************************************************/
 
 
-		public:
+
+
+
+
+
+		/*********************************************************
+		*
+		* Text
+		*
+		**********************************************************/
+		FIGURECLASS_BEGIN(Text)
+
+
+			static const int default_font_size = 64;
 
 			std::string		_text;
 			fVec2			_pos;
@@ -3080,7 +3429,7 @@ namespace mtools
 				}
 
 
-			virtual void deserialize(IBaseArchive & ar) override
+			Text(IBaseArchive & ar) 
 				{
 				ar & _text & _pos & _size & _text_pos & _textcolor & _bkcolor & _op & _base_font_size;
 				_im.empty();
@@ -3126,9 +3475,26 @@ namespace mtools
 				}
 
 
-		};
+		FIGURECLASS_END()
 
 
+
+
+
+
+
+
+
+
+/*********************************************************************************************************
+* Undef macro used for creating figure classes
+**********************************************************************************************************/
+
+	#undef TX
+	#undef TY
+	#undef TR
+	#undef FIGURECLASS_BEGIN
+	#undef FIGURECLASS_END
 
 
 
@@ -3148,6 +3514,7 @@ namespace mtools
 
 
 
+
 	/**
 	* Insert a figure into the canvas, inside a given layer
 	*/
@@ -3161,10 +3528,8 @@ namespace mtools
 		}
 
 
-
 	/* delete all allocated memory TODO: REPLACE A BY BETTER VERSION THAN MALLOC/FREE */
-	template<int N>
-	void FigureCanvas<N>::_deallocateAll()
+	template<int N> void FigureCanvas<N>::_deallocateAll()
 		{
 		for (void *  p : _vecallocp) 
 			{
@@ -3173,6 +3538,134 @@ namespace mtools
 			}
 		_vecallocp.clear();
 		}
+
+
+	/* used by the macro REGISTER_ARCHIVE_FIGURE_CLASS() */
+	template<int N>
+	template <typename FIGURECLASS> MTOOLS_FORCEINLINE void FigureCanvas<N>::_registerArchiveFigureClass(const std::string & classname, mtools::IBaseArchive & ar, size_t layer, int & match)
+		{
+		if (classname == FIGURECLASS::className())
+			{
+			if (match != 0)
+				{
+//				MTOOLS_ERROR("Class " << (typeid(*((FIGURECLASS*)(void*)))) << " registered class name [" << classname << "] which is already in use by another class !");
+				MTOOLS_ERROR("ERROR");
+				}
+			Figure::internals_figure::FigureInterface * pf = _archiveInPool<FIGURECLASS>(ar); // create the figure directly in the pool
+			_figLayers[layer].insert(pf->boundingBox(), pf);								// add to the corresponding layer. 
+			match++; 
+			}		
+		}
+
+
+
+
+	// macro for registering a Figure class so it can be archived
+	#define REGISTER_ARCHIVE_FIGURE_CLASS(CLASSNAME)  _registerArchiveFigureClass<CLASSNAME>(classname, ar, layer, match);
+
+
+
+	/**
+	 * Insert a Figure in the canvas, extracted from an archive. 
+	 *
+	 * !!!!!!!! EVERY FigureInterface SUBCLASS MUST BE REGISTERED IN THIS METHOD !!!!!!
+	 * 
+	 **/
+	template<int N> MTOOLS_FORCEINLINE void FigureCanvas<N>::_insertArchiveItem(mtools::IBaseArchive & ar, size_t layer)
+		{
+		MTOOLS_INSURE(layer < _nbLayers);
+		std::string classname;
+		ar & classname;
+		int match = 0; // for sanity check
+
+		//
+		// Every Figure class must be registered below
+		// 
+				
+		/************************************************************************************************************************************
+		* DOTS
+		*************************************************************************************************************************************/
+
+		REGISTER_ARCHIVE_FIGURE_CLASS(Figure::CircleDot);
+
+		REGISTER_ARCHIVE_FIGURE_CLASS(Figure::SquareDot);
+
+		/************************************************************************************************************************************
+		* LINES
+		*************************************************************************************************************************************/
+
+		REGISTER_ARCHIVE_FIGURE_CLASS(Figure::HorizontalLine);
+
+		REGISTER_ARCHIVE_FIGURE_CLASS(Figure::VerticalLine);
+
+		REGISTER_ARCHIVE_FIGURE_CLASS(Figure::Line);
+
+		REGISTER_ARCHIVE_FIGURE_CLASS(Figure::PolyLine);
+
+		REGISTER_ARCHIVE_FIGURE_CLASS(Figure::ThickHorizontalLine);
+
+		REGISTER_ARCHIVE_FIGURE_CLASS(Figure::ThickVerticalLine);
+
+		REGISTER_ARCHIVE_FIGURE_CLASS(Figure::ThickLine);
+
+		REGISTER_ARCHIVE_FIGURE_CLASS(Figure::ThickPolyLine);
+
+		/************************************************************************************************************************************
+		* POLYGON
+		*************************************************************************************************************************************/
+
+		REGISTER_ARCHIVE_FIGURE_CLASS(Figure::BoxRegion);
+
+		REGISTER_ARCHIVE_FIGURE_CLASS(Figure::Triangle);
+
+		REGISTER_ARCHIVE_FIGURE_CLASS(Figure::Quad);
+
+		REGISTER_ARCHIVE_FIGURE_CLASS(Figure::Polygon);
+
+		REGISTER_ARCHIVE_FIGURE_CLASS(Figure::Rectangle);
+
+		REGISTER_ARCHIVE_FIGURE_CLASS(Figure::ThickTriangle);
+
+		REGISTER_ARCHIVE_FIGURE_CLASS(Figure::ThickQuad);
+
+		REGISTER_ARCHIVE_FIGURE_CLASS(Figure::ThickPolygon);
+
+		REGISTER_ARCHIVE_FIGURE_CLASS(Figure::ThickRectangle);
+
+		/************************************************************************************************************************************
+		* CIRCLE / ELLIPSE
+		*************************************************************************************************************************************/
+
+		REGISTER_ARCHIVE_FIGURE_CLASS(Figure::Circle);
+
+		REGISTER_ARCHIVE_FIGURE_CLASS(Figure::ThickCircle);
+
+		REGISTER_ARCHIVE_FIGURE_CLASS(Figure::CirclePart);
+
+		REGISTER_ARCHIVE_FIGURE_CLASS(Figure::ThickCirclePart);
+
+		REGISTER_ARCHIVE_FIGURE_CLASS(Figure::Ellipse);
+
+		REGISTER_ARCHIVE_FIGURE_CLASS(Figure::ThickEllipse);
+
+		REGISTER_ARCHIVE_FIGURE_CLASS(Figure::EllipsePart);
+
+		REGISTER_ARCHIVE_FIGURE_CLASS(Figure::ThickEllipsePart);
+
+		/************************************************************************************************************************************
+		* OTHER
+		*************************************************************************************************************************************/
+
+		REGISTER_ARCHIVE_FIGURE_CLASS(Figure::Text);
+
+		
+		// make sure we had a match, otherwise this means that the classname is not registered
+		if (match == 0) { MTOOLS_ERROR("Figure class name [" << classname << "] is not registered with any class !"); }
+		}
+
+
+
+	#undef REGISTER_ARCHIVE_CLASS
 
 }
 

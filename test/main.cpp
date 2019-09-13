@@ -270,11 +270,53 @@ void error_cb(const std::string & title, const std::string & msg)
 
 
 
+void testSVG()
+	{
+	
+		{
+			auto canvas = makeFigureCanvas();
+
+			canvas(Figure::VerticalLine(0, 0, 100, RGBc::c_Black), 0);
+			canvas(Figure::HorizontalLine(100, 0, 200, RGBc::c_Red.getOpacity(0.2f)), 0);
+			canvas(Figure::Line({ 200, 100 }, { 150,50 }, RGBc::c_Red), 0);
+
+			canvas(Figure::Text("A", { 0.0, 0.0 }, { 10.0, 0.0 }, MTOOLS_TEXT_LEFT | MTOOLS_TEXT_TOP, RGBc::c_Red, RGBc::c_Blue.getMultOpacity(0.5f), 1.0f, 256), 0);
+
+			canvas.saveSVG("fig.svg");
+
+			auto PA = makePlot2DFigure(canvas);
+
+			Plotter2D plotter;              // Create a plotter object
+			plotter[PA];	                // Add the image to the list of objects to draw.  	
+			plotter.autorangeXY();          // Set the plotter range to fit the image.
+			plotter.plot();                 // start interactive display.
+		}
+		
+
+			{
+			auto canvas = makeFigureCanvas();
+			canvas.loadSVG("fig.svg");
+
+			auto PA = makePlot2DFigure(canvas);
+
+			Plotter2D plotter;              // Create a plotter object
+			plotter[PA];	                // Add the image to the list of objects to draw.  	
+			plotter.autorangeXY();          // Set the plotter range to fit the image.
+			plotter.plot();                 // start interactive display.
+			}
+
+	return;
+
+	}
+
+
 
 int main(int argc, char *argv[])
 	{
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
 
+	testSVG(); 
+	return 0; 
 	auto canvas = makeFigureCanvas();
 
 	canvas(Figure::Text("Hello World !", { 0.0, 0.0 }, { -20.0, 20.0 }, MTOOLS_TEXT_RIGHT | MTOOLS_TEXT_YCENTER, RGBc::c_Red, RGBc::c_Blue.getMultOpacity(0.5) ),0); 
