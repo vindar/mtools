@@ -5582,7 +5582,10 @@ namespace mtools
 				int w = winding(tab); // winding direction
 				// we expand the polygon
 				std::vector<fVec2> exttab, inttab; 
-				if (w > 0) internals_polyline::enlargePolygon(tabPoints, thickness, 0, exttab, inttab); else internals_polyline::enlargePolygon(tabPoints, thickness, 0, inttab, exttab);
+
+				if (w > 0) internals_polyline::enlargePolygon(tabPoints, 0, thickness, exttab, inttab); else internals_polyline::enlargePolygon(tabPoints, 0, thickness, inttab, exttab);		// THIS WAY, THICKNESS GOES INWARD 5CHANGE ON 13/09/2019)
+				//if (w > 0) internals_polyline::enlargePolygon(tabPoints, thickness, 0, exttab, inttab); else internals_polyline::enlargePolygon(tabPoints, thickness, 0, inttab, exttab);		// OLD WAY, THICKNESS GOES OUTWARD
+				// 
 				// we transform it to image coord
 				for (size_t i = 0; i < l; i++) 
 					{

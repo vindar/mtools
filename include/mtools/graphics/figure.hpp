@@ -2098,10 +2098,56 @@ namespace mtools
 				ar &  P1 & P2 & P3 & thickness & color & fillcolor;
 				}
 
+
+			virtual void svg(mtools::SVGElement * el) const override
+				{
+				mtools::ostringstream os;
+				os << TX(P1.X()) << "," << TY(P1.Y()) << " " << TX(P2.X()) << "," << TY(P2.Y()) << " " << TX(P3.X()) << "," << TY(P3.Y());
+
+				if (thickness <= 0)
+					{
+					el->Comment("SVG cannot accurately represent Figure::ThickTriangle with absolute thickness!");
+					el->SetName("polygon");
+					el->setFillColor(fillcolor);
+					el->setStrokeColor(color);
+					el->xml->SetAttribute("points", os.toString().c_str());
+					el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+					return;
+					}
+
+				el->SetName("g");
+				const std::string uid = el->getUID();
+
+				auto clip_el = el->NewChildSVGElement("clipPath"); 
+				clip_el->xml->SetAttribute("id", uid.c_str());
+
+				auto path_el = clip_el->NewChildSVGElement("polygon");
+				path_el->setFillColor(RGBc::c_Transparent);
+				path_el->setStrokeColor(RGBc::c_Transparent);
+				path_el->xml->SetAttribute("points", os.toString().c_str());
+				path_el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+				
+				auto fig_el = el->NewChildSVGElement("polygon");
+				fig_el->xml->SetAttribute("clip-path", (mtools::toString("url(#") + uid + ")").c_str());
+				fig_el->setFillColor(fillcolor);
+				fig_el->setStrokeColor(color);
+				fig_el->xml->SetAttribute("points", os.toString().c_str());
+				fig_el->xml->SetAttribute("stroke-width", TR(2*thickness));
+
+				}
+	
+
 		FIGURECLASS_END()
 
 
 
+			/*
+				<g id="Figure Layer 0">
+  <clipPath id="clipPath"> <rect x="15" y="15" width="40" height="40" fill="#FFFFFF" stroke="#000000" /> </clipPath>
+<circle cx="25" cy="25" r="20" style="fill: #0000ff; clip-path: url(#clipPath); " />
+  </g>
+
+			  */
 
 
 

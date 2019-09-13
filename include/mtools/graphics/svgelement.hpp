@@ -1,4 +1,4 @@
-/** @file figure.hpp */
+/** @file svgelement.hpp */
 //
 // Copyright 2015 Arvind Singh
 //
@@ -26,6 +26,8 @@
 #include "../misc/misc.hpp"
 
 #include "tinyxml2.h"
+
+#include <atomic>
 
 
 namespace mtools
@@ -77,6 +79,15 @@ namespace mtools
 			_children.push_back(el); // we keep ownership: register for deletion when this object is destoyed. 
 			el->SetName(name);
 			return el;
+			}
+
+
+		/**
+		 * Return a unique id at each call that can be used as id tag in the SVG file.
+		 **/
+		std::string getUID() const
+			{			
+			return std::string("mtools-fig-id-") + mtools::toString((int64)(_id++));
 			}
 
 
@@ -136,6 +147,7 @@ namespace mtools
 
 		tinyxml2::XMLDocument * _xmlDoc;			// Associated XMLDocument
 		std::vector<SVGElement*> _children;			// vector of all the children that should be deleted when this object is deleted. 
+		static std::atomic<int64> _id;
 	};
 
 
@@ -143,10 +155,5 @@ namespace mtools
 
 
 
-	
+/* end of file */
 
-
-
-
-
-/* end of file SVGElement */
