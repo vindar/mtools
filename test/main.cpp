@@ -265,6 +265,12 @@ void error_cb(const std::string & title, const std::string & msg)
 
 
 
+
+
+
+
+
+
 int main(int argc, char *argv[])
 	{
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows

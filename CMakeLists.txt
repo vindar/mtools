@@ -100,7 +100,10 @@ find_package(JPEG_alt REQUIRED)
 # cimg, use custom find method 
 find_package(CIMG_alt REQUIRED)
 
-if (NOT ZLIB_FOUND OR NOT FLTK_FOUND OR NOT PNG_FOUND OR NOT JPEG_FOUND OR NOT CIMG_FOUND)
+#tinyXML2
+find_package(TinyXML2 REQUIRED)
+
+if (NOT ZLIB_FOUND OR NOT FLTK_FOUND OR NOT PNG_FOUND OR NOT JPEG_FOUND OR NOT CIMG_FOUND OR NOT TinyXML2_FOUND)
 	message(STATUS "")
 	message(STATUS "***************************************************************")	
 	message(STATUS "*                           ERROR                             *")
@@ -262,6 +265,10 @@ target_include_directories(mtools PUBLIC ${JPEG_INCLUDE_DIR})
 
 #link with cimg
 target_include_directories(mtools PUBLIC ${CIMG_INCLUDE_DIR})
+
+#link with TinyXML2
+target_link_libraries(mtools PUBLIC ${TinyXML2_LIBRARIES})
+target_include_directories(mtools PUBLIC ${TinyXML2_INCLUDE_DIRS})
 
 #link with cairo
 if (USE_CAIRO)

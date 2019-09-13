@@ -28,8 +28,12 @@
 #include "font.hpp"
 #include "../containers/treefigure.hpp"
 #include "internal/polyline.hpp"
+#include "svgelement.hpp"
 
 #include <type_traits>
+
+#include "tinyxml2.h"
+
 
 namespace mtools
 {
@@ -253,6 +257,39 @@ namespace mtools
 			}
 
 
+
+		/** Save the canvas in a file in SVG format. */
+		void saveSVG(const std::string & filename) const
+			{
+
+			tinyxml2::XMLDocument xmlDoc; // main document
+			auto svg = xmlDoc.NewElement("svg");
+
+			auto B = _figLayers->mainBoundingBox()
+
+
+
+			BBox
+			for (size_t i = 0; i < _nbLayers; i++)
+				{
+
+				}
+
+
+
+
+			svg->SetAttribute("width", "");
+			svg->SetAttribute("height", "");
+			svg->SetAttribute("viewBox", "0 0 115 190");
+
+			<svg width = "5cm" height = "4cm" version = "1.1"
+				xmlns = "http://www.w3.org/2000/svg">
+
+
+			}
+
+
+
 	private: 
 
 		/* no copy */
@@ -368,15 +405,26 @@ namespace mtools
 				*/
 				virtual void deserialize(IBaseArchive & ar) = 0;
 
+
+				/**
+				* Write into the SVGElement el to provide a SVG descritpion of the figure
+				* which will be used when exporting in SVG format.
+				*
+				* el.xml give acces to the underlying tinyxml::XMLElement
+				*/
+				virtual void svg(mtools::SVGElement * el) const
+				{
+					MTOOLS_DEBUG(std::string("Figure::svg() called but not implemented on ") + typeid(*this).name() + ". Item ignored...");
+					el->Comment((std::string("MISSING FIGURE TYPE [") + +typeid(*this).name() + "]\n" + toString()).c_str());
+					return;
+				}
+
 			};
 
 		}
 
 
 
-
-
-	
 
 
 
@@ -395,11 +443,11 @@ namespace mtools
 
 
 		/**
-		* 
+		*
 		* Circle Dot
-		* 
+		*
 		* The radius of a dot is absolute and does not scale with the range.
-		* 
+		*
 		**/
 		class CircleDot : public internals_figure::FigureInterface
 		{
@@ -413,14 +461,14 @@ namespace mtools
 
 
 			/**
-			 * Construct a circle dot. Unit pixel. 
+			 * Construct a circle dot. Unit pixel.
 			 *
 			 * @param	centerdot position
 			 * @param	color	  color.
 			 */
 			CircleDot(fVec2 centerdot, RGBc color) : center(centerdot), radius(1.0), outlinecolor(color), fillcolor(color)
-				{
-				}
+			{
+			}
 
 
 			/**
@@ -431,54 +479,66 @@ namespace mtools
 			 * @param	color	  color.
 			 */
 			CircleDot(fVec2 centerdot, double rad, RGBc color) : center(centerdot), radius(rad), outlinecolor(color), fillcolor(color)
-				{
+			{
 				MTOOLS_ASSERT(rad >= 0);
-				}
+			}
 
 
 			/** Constructor. Dot with given size and color and outline. **/
 			CircleDot(fVec2 centerdot, double rad, RGBc border_color, RGBc fill_color) : center(centerdot), radius(rad), outlinecolor(border_color), fillcolor(fill_color)
-				{
+			{
 				MTOOLS_ASSERT(rad >= 0);
-				}
+			}
 
 
 			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
-				{
+			{
 				double r = (radius < min_thickness) ? min_thickness : radius;
 				im.canvas_draw_circle_dot(R, center, r, outlinecolor, fillcolor, highQuality, true);
-				}
+			}
 
 
 			virtual fBox2 boundingBox() const override
-				{
+			{
 				return fBox2(center.X(), center.X(), center.Y(), center.Y());
-				}
+			}
 
 
 			virtual std::string toString(bool debug = false) const override
-				{
-				OSS os; 
+			{
+				OSS os;
 				os << "CircleDot [" << center << ", " << radius << "  outline " << outlinecolor << " interior " << fillcolor << "]";
 				return os.str();
-				}
+			}
 
 
 			virtual void serialize(OBaseArchive & ar) const override
-				{
+			{
 				ar & center & radius & outlinecolor & fillcolor;
-				}
+			}
 
 
 			virtual void deserialize(IBaseArchive & ar) override
-				{
+			{
 				ar & center & radius & outlinecolor & fillcolor;
-				}
+			}
+
+
+			virtual void svg(mtools::SVGElement * el) const override
+			{
+				el->SetName("circle");;
+				el->setFillColor(fillcolor);
+				el->setStrokeColor(outlinecolor);
+				el->xml->SetAttribute("cx", center.X());
+				el->xml->SetAttribute("cy", center.Y());
+				el->xml->SetAttribute("r", radius);
+				el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+			}
 
 		};
 
 
-
+	
 
 		/**
 		* 
@@ -552,6 +612,18 @@ namespace mtools
 				ar & center & pw & color;
 				}
 
+
+			virtual void svg(mtools::SVGElement * el) const override
+				{
+				el->SetName("rect");;
+				el->setFillColor(color);
+				el->xml->SetAttribute("x", center.X()-pw);
+				el->xml->SetAttribute("y", center.Y()-pw);
+				el->xml->SetAttribute("width", 2*pw);
+				el->xml->SetAttribute("height", 2*pw);
+				}
+
+
 		};
 
 
@@ -621,6 +693,19 @@ namespace mtools
 				{
 				ar & x1 & x2 & y & color;
 				}
+
+
+			virtual void svg(mtools::SVGElement * el) const override
+				{
+				el->SetName("line");;
+				el->setStrokeColor(color);
+				el->xml->SetAttribute("x1", x1);
+				el->xml->SetAttribute("y1", y);
+				el->xml->SetAttribute("x2", x2);
+				el->xml->SetAttribute("y2", y);
+				el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+				}
+
 		};
 
 
@@ -682,6 +767,19 @@ namespace mtools
 				{
 				ar & y1 & y2 & x & color;
 				}
+
+
+			virtual void svg(mtools::SVGElement * el) const override
+				{
+				el->SetName("line");;
+				el->setStrokeColor(color);
+				el->xml->SetAttribute("x1", x);
+				el->xml->SetAttribute("y1", y1);
+				el->xml->SetAttribute("x2", x);
+				el->xml->SetAttribute("y2", y2);
+				el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+				}
+
 
 		};
 
@@ -745,6 +843,21 @@ namespace mtools
 				{
 				ar & P1 & P2 & color & pw;
 				}
+
+
+			virtual void svg(mtools::SVGElement * el) const override
+			{
+				el->SetName("line");
+				el->setStrokeColor(color);
+				el->xml->SetAttribute("x1", P1.X());
+				el->xml->SetAttribute("y1", P1.Y());
+				el->xml->SetAttribute("x2", P2.X());
+				el->xml->SetAttribute("y2", P2.Y());
+				if (pw > 0) el->xml->SetAttribute("stroke-width", pw);
+				el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+			}
+
+
 		};
 
 
@@ -807,6 +920,20 @@ namespace mtools
 			{
 				ar & tab & color & pw;
 			}
+
+
+			virtual void svg(mtools::SVGElement * el) const override
+				{
+				el->SetName("polyline");
+				el->setStrokeColor(color);				
+				mtools::ostringstream os;
+
+				for (auto P : tab) { os << P.X() << "," << P.Y() << " "; }
+				el->xml->SetAttribute("points", os.toString().c_str());
+
+				if (pw > 0) el->xml->SetAttribute("stroke-width", pw);
+				el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+				}
 
 		};
 
@@ -879,6 +1006,19 @@ namespace mtools
 				ar & x1 & x2 & y & color & thickness;
 			}
 
+
+			virtual void svg(mtools::SVGElement * el) const
+				{
+				el->SetName("line");;
+				el->setStrokeColor(color);
+				el->xml->SetAttribute("x1", x1);
+				el->xml->SetAttribute("y1", y);
+				el->xml->SetAttribute("x2", x2);
+				el->xml->SetAttribute("y2", y);
+				el->xml->SetAttribute("stroke-width", std::abs(thickness));
+				}
+
+
 		};
 
 
@@ -950,6 +1090,18 @@ namespace mtools
 			{
 				ar & y1 & y2 & x & color & thickness;
 			}
+
+
+			virtual void svg(mtools::SVGElement * el) const
+				{
+				el->SetName("line");;
+				el->setStrokeColor(color);
+				el->xml->SetAttribute("x1", x);
+				el->xml->SetAttribute("y1", y1);
+				el->xml->SetAttribute("x2", x);
+				el->xml->SetAttribute("y2", y2);
+				el->xml->SetAttribute("stroke-width", std::abs(thickness));
+				}
 
 		};
 
@@ -1026,6 +1178,18 @@ namespace mtools
 				ar & P1 & P2 & color & thick;
 				}
 
+
+			virtual void svg(mtools::SVGElement * el) const
+				{
+				el->SetName("line");;
+				el->setStrokeColor(color);
+				el->xml->SetAttribute("x1", P1.X());
+				el->xml->SetAttribute("y1", P1.Y());
+				el->xml->SetAttribute("x2", P2.X());
+				el->xml->SetAttribute("y2", P2.Y());
+				el->xml->SetAttribute("stroke-width", std::abs(thick));
+				}
+
 		};
 
 
@@ -1086,6 +1250,19 @@ namespace mtools
 				{
 				ar & tab & color & thickness;
 				_constructbb();
+				}
+
+
+			virtual void svg(mtools::SVGElement * el) const override
+				{
+				el->SetName("polyline");
+				el->setStrokeColor(color);
+				mtools::ostringstream os;
+
+				for (auto P : tab) { os << P.X() << "," << P.Y() << " "; }
+				el->xml->SetAttribute("points", os.toString().c_str());
+
+				el->xml->SetAttribute("stroke-width", std::abs(thickness));
 				}
 
 
