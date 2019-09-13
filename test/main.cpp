@@ -316,6 +316,12 @@ void testSVG()
 			canvas(Figure::Polygon(tabPO, RGBc::c_Green, RGBc::c_Salmon.getMultOpacity(0.0f)), 0);
 
 
+
+			canvas(Figure::Rectangle(fBox2(300, 310, 100, 110), RGBc::c_Black), 1);
+
+			canvas(Figure::ThickTriangle({ 300,100 }, { 305 ,110 }, { 310, 103 }, 2.0, true, RGBc::c_Green.getMultOpacity(0.5), RGBc::c_Cyan.getMultOpacity(0.5)), 0);
+
+
 			canvas.saveSVG("fig.svg");
 
 			auto PA = makePlot2DFigure(canvas);
