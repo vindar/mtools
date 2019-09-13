@@ -304,6 +304,17 @@ void testSVG()
 
 			canvas(Figure::ThickPolyLine(tabPL, 5, true, RGBc::c_Salmon), 0);
 
+			canvas(Figure::Rectangle(fBox2(2,5,2,10), RGBc::c_Red, RGBc::c_Salmon.getMultOpacity(0.5)), 0);
+			
+			canvas(Figure::Triangle({ 2,2 }, { 5 ,10 }, {10, 10}, RGBc::c_Green.getMultOpacity(0.5)), 1);
+
+
+			canvas(Figure::Quad({-100,-100}, {-80, -80}, {-50,-90}, {-30,-130}, RGBc::c_Red, RGBc::c_Salmon.getMultOpacity(0.2f)), 0);
+
+			std::vector<fVec2> tabPO = { { -100,-100 }, { -200, -200 }, { -100,-150 }, { -80,-200 }, { -50,-100 } };
+
+			canvas(Figure::Polygon(tabPO, RGBc::c_Green, RGBc::c_Salmon.getMultOpacity(0.0f)), 0);
+
 
 			canvas.saveSVG("fig.svg");
 

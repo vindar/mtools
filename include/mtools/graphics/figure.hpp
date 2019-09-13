@@ -1241,6 +1241,8 @@ namespace mtools
 				el->xml->SetAttribute("y1", TY(y));
 				el->xml->SetAttribute("x2", TX(x2));
 				el->xml->SetAttribute("y2", TY(y));
+				el->xml->SetAttribute("stroke-linecap", "butt");
+
 				if (thickness <= 0)
 					{
 					el->Comment("SVG cannot accurately represent Figure::ThickHorizontalLine with absolute thickness!");
@@ -1336,6 +1338,8 @@ namespace mtools
 				el->xml->SetAttribute("y1", TY(y1));
 				el->xml->SetAttribute("x2", TX(x));
 				el->xml->SetAttribute("y2", TY(y2));
+				el->xml->SetAttribute("stroke-linecap", "butt");
+
 				if (thickness <= 0)
 					{
 					el->Comment("SVG cannot accurately represent Figure::ThickVerticalLine with absolute thickness!");
@@ -1429,6 +1433,7 @@ namespace mtools
 				el->xml->SetAttribute("y1", TY(P1.Y()));
 				el->xml->SetAttribute("x2", TX(P2.X()));
 				el->xml->SetAttribute("y2", TY(P2.Y()));
+				el->xml->SetAttribute("stroke-linecap", "butt");
 				if (thick <= 0)
 					{
 					el->Comment("SVG cannot accurately represent Figure::ThickLine with absolute thickness!");
@@ -1530,6 +1535,8 @@ namespace mtools
 				el->SetName("polyline");
 				el->setStrokeColor(color);
 				el->setFillColor(RGBc::c_Transparent);
+				el->xml->SetAttribute("stroke-linecap","butt");
+				el->xml->SetAttribute("stroke-linejoin", "miter");
 				mtools::ostringstream os;
 
 				for (auto P : tab) { os << TX(P.X()) << "," << TY(P.Y()) << " "; }
@@ -1642,6 +1649,19 @@ namespace mtools
 				ar & box & fillcolor;
 			}
 
+
+			virtual void svg(mtools::SVGElement * el) const override
+			{
+				el->SetName("rect");
+				el->setStrokeColor(RGBc::c_Transparent);
+				el->setFillColor(fillcolor);
+				el->xml->SetAttribute("x", TX(box.min[0]));
+				el->xml->SetAttribute("y", TY(box.min[1]) + TY(box.ly()));
+				el->xml->SetAttribute("width", TR(box.lx()));
+				el->xml->SetAttribute("height", TR(box.ly()));
+				el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+			}
+
 		FIGURECLASS_END()
 
 
@@ -1715,6 +1735,19 @@ namespace mtools
 				{
 				ar & P1 & P2 & P3 & color & fillcolor;
 				}
+
+
+			virtual void svg(mtools::SVGElement * el) const override
+				{
+				el->SetName("polygon");
+				el->setStrokeColor(color);
+				el->setFillColor(fillcolor);
+				mtools::ostringstream os; 
+				os << TX(P1.X()) << "," << TY(P1.Y()) << " " << TX(P2.X()) << "," << TY(P2.Y()) << " " << TX(P3.X()) << "," << TY(P3.Y());
+				el->xml->SetAttribute("points", os.toString().c_str());
+				el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+				}
+
 
 		FIGURECLASS_END()
 
@@ -1790,6 +1823,19 @@ namespace mtools
 				{
 				ar & P1 & P2 & P3 & P4 & color & fillcolor;
 				}
+
+
+			virtual void svg(mtools::SVGElement * el) const override
+				{
+				el->SetName("polygon");
+				el->setStrokeColor(color);
+				el->setFillColor(fillcolor);
+				mtools::ostringstream os; 
+				os << TX(P1.X()) << "," << TY(P1.Y()) << " " << TX(P2.X()) << "," << TY(P2.Y()) << " " << TX(P3.X()) << "," << TY(P3.Y()) << " " << TX(P4.X()) << "," << TY(P4.Y());
+				el->xml->SetAttribute("points", os.toString().c_str());
+				el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+				}
+
 
 		FIGURECLASS_END()
 
@@ -1868,6 +1914,21 @@ namespace mtools
 				bb = getBoundingBox(tab);
 				}
 
+
+			virtual void svg(mtools::SVGElement * el) const override
+				{
+				el->SetName("polygon");
+				el->setStrokeColor(color);
+				el->setFillColor(fillcolor);
+				mtools::ostringstream os; 
+				for (auto P : tab)
+					{
+					os << TX(P.X()) << "," << TY(P.Y()) << " ";
+					}
+				el->xml->SetAttribute("points", os.toString().c_str());
+				el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+				}
+
 		FIGURECLASS_END()
 
 
@@ -1941,6 +2002,19 @@ namespace mtools
 			Rectangle(IBaseArchive & ar) 
 				{
 				ar & box & color & fillcolor;
+				}
+
+
+			virtual void svg(mtools::SVGElement * el) const override
+				{
+				el->SetName("rect");
+				el->setStrokeColor(color);
+				el->setFillColor(fillcolor);
+				el->xml->SetAttribute("x", TX(box.min[0]));
+				el->xml->SetAttribute("y", TY(box.min[1]) + TY(box.ly()));
+				el->xml->SetAttribute("width", TR(box.lx()));
+				el->xml->SetAttribute("height", TR(box.ly()));
+				el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
 				}
 
 		FIGURECLASS_END()
