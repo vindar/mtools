@@ -85,9 +85,9 @@ namespace mtools
 		/**
 		 * Return a unique id at each call that can be used as id tag in the SVG file.
 		 **/
-		std::string getUID() const
+		std::string getUID(const std::string & name) const
 			{			
-			return std::string("mtools-fig-id-") + mtools::toString((int64)(_id++));
+			return name + "-" + mtools::toString((int64)(_id++));
 			}
 
 

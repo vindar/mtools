@@ -336,6 +336,13 @@ namespace mtools
 			{
 			tinyxml2::XMLDocument xmlDoc;									// create main document
 			xmlDoc.InsertEndChild(xmlDoc.NewDeclaration());					// standard xml declaration
+
+			tinyxml2::XMLComment * com = xmlDoc.NewComment("File generated from a mtools::FigureCanvas object.");
+			xmlDoc.InsertEndChild(com);
+
+			tinyxml2::XMLUnknown * doc = xmlDoc.NewUnknown("DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\"");
+			xmlDoc.InsertEndChild(doc);
+
 			tinyxml2::XMLElement * svg = xmlDoc.NewElement("svg");			// main svg element
 			xmlDoc.InsertEndChild(svg);										// standard xml declaration
 
@@ -355,22 +362,25 @@ namespace mtools
 				// iterate over all element in this layer
 				_figLayers[i].iterate_all([&](typename mtools::TreeFigure<typename Figure::internals_figure::FigureInterface *, N, double>::BoundedObject & bo) -> void
 					{
-					SVGElement el(xmlDoc, layer);								// create an SVGElement for this figure (destroyed out of scope but the tinyxml2::XMLElement survives.
-					el.xml->SetAttribute("id", typeid(*(bo.object)).name());	// id  by its type
-					bo.object->svg(&el);										// draw on the SVGElement
+					SVGElement el(xmlDoc, layer);												// create an SVGElement for this figure (destroyed out of scope but the tinyxml2::XMLElement survives.
+					el.xml->SetAttribute("id", el.getUID(typeid(*(bo.object)).name()).c_str());	// id  by its type
+					bo.object->svg(&el);														// draw on the SVGElement
 					});
 				}
 
-			// set dimensions
+			// set <svg> attributes
+			svg->SetAttribute("version", "1.1");
+			svg->SetAttribute("xmlns", "http://www.w3.org/2000/svg");
+			svg->SetAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
 			svg->SetAttribute("width", bb.lx());
 			svg->SetAttribute("height", bb.ly());
 			mtools::ostringstream os; 
 			os << bb.min[0] << " " << -(bb.max[1]) << " " << bb.lx() << " " << bb.ly();
 			svg->SetAttribute("viewBox", os.toString().c_str());
 
-			// add archive after svg	
-			tinyxml2::XMLElement * mtoolsarchive = xmlDoc.NewElement("mtools-archive");
-			xmlDoc.InsertEndChild(mtoolsarchive);
+			// add archive at the end of the svg element
+			tinyxml2::XMLElement * mtoolsarchive = xmlDoc.NewElement("data-mtools");
+			svg->InsertEndChild(mtoolsarchive);
 			OStringArchive ar;
 			serialize(ar); 
 			mtoolsarchive->SetText(ar.get().c_str());
@@ -403,10 +413,17 @@ namespace mtools
 				{
 				MTOOLS_ERROR("FigureCanvas::loadSVG(). Cannot load file [" << filename << "].");
 				}
-			tinyxml2::XMLElement * elar = xmlDoc.FirstChildElement("mtools-archive"); 
+
+			tinyxml2::XMLElement * svg = xmlDoc.FirstChildElement("svg");
+			if (svg == nullptr)
+				{
+				MTOOLS_ERROR("FigureCanvas::loadSVG(). file [" << filename << "] does not contain a 'svg' element.");
+				}
+
+			tinyxml2::XMLElement * elar = svg->FirstChildElement("data-mtools"); 
 			if (elar == nullptr)
 				{
-				MTOOLS_ERROR("FigureCanvas::loadSVG(). file [" << filename << "] does not contain a 'mtools-archive' element.");
+				MTOOLS_ERROR("FigureCanvas::loadSVG(). file [" << filename << "] does not contain a 'data-mtools' element inside the svg element");
 				}
 
 			// load the archive 
@@ -2116,7 +2133,7 @@ namespace mtools
 					}
 
 				el->SetName("g");
-				const std::string uid = el->getUID();
+				const std::string uid = el->getUID("clippath");
 
 				auto clip_el = el->NewChildSVGElement("clipPath"); 
 				clip_el->xml->SetAttribute("id", uid.c_str());
@@ -2133,21 +2150,11 @@ namespace mtools
 				fig_el->setStrokeColor(color);
 				fig_el->xml->SetAttribute("points", os.toString().c_str());
 				fig_el->xml->SetAttribute("stroke-width", TR(2*thickness));
-
 				}
 	
 
 		FIGURECLASS_END()
 
-
-
-			/*
-				<g id="Figure Layer 0">
-  <clipPath id="clipPath"> <rect x="15" y="15" width="40" height="40" fill="#FFFFFF" stroke="#000000" /> </clipPath>
-<circle cx="25" cy="25" r="20" style="fill: #0000ff; clip-path: url(#clipPath); " />
-  </g>
-
-			  */
 
 
 
@@ -2225,6 +2232,43 @@ namespace mtools
 			ThickQuad(IBaseArchive & ar) 
 				{
 				ar &  P1 & P2 & P3 & P4 & thickness & color & fillcolor;
+				}
+
+
+			virtual void svg(mtools::SVGElement * el) const override
+				{
+				mtools::ostringstream os;
+				os << TX(P1.X()) << "," << TY(P1.Y()) << " " << TX(P2.X()) << "," << TY(P2.Y()) << " " << TX(P3.X()) << "," << TY(P3.Y()) << " " << TX(P4.X()) << "," << TY(P4.Y());
+
+				if (thickness <= 0)
+					{
+					el->Comment("SVG cannot accurately represent Figure::ThickQuad with absolute thickness!");
+					el->SetName("polygon");
+					el->setFillColor(fillcolor);
+					el->setStrokeColor(color);
+					el->xml->SetAttribute("points", os.toString().c_str());
+					el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+					return;
+					}
+
+				el->SetName("g");
+				const std::string uid = el->getUID("clippath");
+
+				auto clip_el = el->NewChildSVGElement("clipPath"); 
+				clip_el->xml->SetAttribute("id", uid.c_str());
+
+				auto path_el = clip_el->NewChildSVGElement("polygon");
+				path_el->setFillColor(RGBc::c_Transparent);
+				path_el->setStrokeColor(RGBc::c_Transparent);
+				path_el->xml->SetAttribute("points", os.toString().c_str());
+				path_el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+				
+				auto fig_el = el->NewChildSVGElement("polygon");
+				fig_el->xml->SetAttribute("clip-path", (mtools::toString("url(#") + uid + ")").c_str());
+				fig_el->setFillColor(fillcolor);
+				fig_el->setStrokeColor(color);
+				fig_el->xml->SetAttribute("points", os.toString().c_str());
+				fig_el->xml->SetAttribute("stroke-width", TR(2*thickness));
 				}
 
 		FIGURECLASS_END()
@@ -2311,6 +2355,47 @@ namespace mtools
 				bb = getBoundingBox(tab);
 				}
 
+
+			virtual void svg(mtools::SVGElement * el) const override
+				{
+				mtools::ostringstream os;
+				for (auto P : tab)
+					{
+					os << TX(P.X()) << "," << TY(P.Y()) << " ";
+					}
+
+				if (thickness <= 0)
+					{
+					el->Comment("SVG cannot accurately represent Figure::ThickPolygon with absolute thickness!");
+					el->SetName("polygon");
+					el->setFillColor(fillcolor);
+					el->setStrokeColor(color);
+					el->xml->SetAttribute("points", os.toString().c_str());
+					el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+					return;
+					}
+
+				el->SetName("g");
+				const std::string uid = el->getUID("clippath");
+
+				auto clip_el = el->NewChildSVGElement("clipPath"); 
+				clip_el->xml->SetAttribute("id", uid.c_str());
+
+				auto path_el = clip_el->NewChildSVGElement("polygon");
+				path_el->setFillColor(RGBc::c_Transparent);
+				path_el->setStrokeColor(RGBc::c_Transparent);
+				path_el->xml->SetAttribute("points", os.toString().c_str());
+				path_el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+				
+				auto fig_el = el->NewChildSVGElement("polygon");
+				fig_el->xml->SetAttribute("clip-path", (mtools::toString("url(#") + uid + ")").c_str());
+				fig_el->setFillColor(fillcolor);
+				fig_el->setStrokeColor(color);
+				fig_el->xml->SetAttribute("points", os.toString().c_str());
+				fig_el->xml->SetAttribute("stroke-width", TR(2*thickness));
+				}
+
+
 		FIGURECLASS_END()
 
 
@@ -2325,7 +2410,6 @@ namespace mtools
 		*
 		**********************************************************/
 		FIGURECLASS_BEGIN(ThickRectangle)
-
 
 
 			fBox2 box;
@@ -2397,6 +2481,59 @@ namespace mtools
 			ThickRectangle(IBaseArchive & ar)
 				{
 				ar &  box & thickness_x & thickness_y & color & fillcolor;
+				}
+
+
+			virtual void svg(mtools::SVGElement * el) const override
+				{
+				if ((thickness_x <= 0)||(thickness_y <= 0))
+					{
+					el->Comment("SVG cannot accurately represent Figure::ThickRectangle with absolute thickness!");
+					el->SetName("rect");
+					el->setStrokeColor(color);
+					el->setFillColor(fillcolor);
+					el->xml->SetAttribute("x", TX(box.min[0]));
+					el->xml->SetAttribute("y", TY(box.min[1]) + TY(box.ly()));
+					el->xml->SetAttribute("width", TR(box.lx()));
+					el->xml->SetAttribute("height", TR(box.ly()));
+					el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+					return;
+					}
+
+				double thick = thickness_x;
+				if (thickness_x != thickness_y)
+					{
+					thick = (thickness_x + thickness_y) / 2;
+					el->Comment((mtools::toString("SVG cannot accurately represent Figure::ThickRectangle with different x/y thickness. Using middle thickness value: ") + mtools::doubleToStringNice(thick)).c_str() );
+					}
+
+				double x = box.min[0] + thick/2;
+				double y = box.min[1] + thick/2;
+				double lx = box.lx() - thick;
+				double ly = box.ly() - thick;
+
+				auto el2 = el->NewChildSVGElement("rect");
+				el2->setStrokeColor(color);
+				el2->setFillColor(RGBc::c_Transparent);
+				el2->xml->SetAttribute("x", TX(x));
+				el2->xml->SetAttribute("y", TY(y) + TY(ly));
+				el2->xml->SetAttribute("width", TR(lx));
+				el2->xml->SetAttribute("height", TR(ly));
+				el2->xml->SetAttribute("stroke-width", thick);
+
+				x = box.min[0] + thick;
+				y = box.min[1] + thick;
+				lx = box.lx() - 2*thick;
+				ly = box.ly() - 2*thick;
+
+				auto el3 = el->NewChildSVGElement("rect");
+				el3->setStrokeColor(RGBc::c_Transparent);
+				el3->setFillColor(fillcolor);
+				el3->xml->SetAttribute("x", TX(x));
+				el3->xml->SetAttribute("y", TY(y) + TY(ly));
+				el3->xml->SetAttribute("width", TR(lx));
+				el3->xml->SetAttribute("height", TR(ly));
+				el3->xml->SetAttribute("vector-effect", "non-scaling-stroke");
 				}
 
 		FIGURECLASS_END()
@@ -2494,6 +2631,19 @@ namespace mtools
 			Circle(IBaseArchive & ar)
 				{
 				ar & center & radius & color & fillcolor;
+				}
+
+
+			virtual void svg(mtools::SVGElement * el) const override
+				{
+				el->SetName("circle");
+				el->setStrokeColor(color);
+				el->setFillColor(fillcolor);
+				el->xml->SetAttribute("cx", TX(center.X()));
+				el->xml->SetAttribute("cy", TY(center.Y()));
+				el->xml->SetAttribute("r", TR(radius));
+				el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+				return;
 				}
 
 		FIGURECLASS_END()
@@ -2601,6 +2751,41 @@ namespace mtools
 				ar & center & radius & thickness & color & fillcolor;
 				}
 
+
+			virtual void svg(mtools::SVGElement * el) const override
+				{
+				if (thickness <= 0)
+					{
+					el->Comment("SVG cannot accurately represent Figure::ThickCircle with absolute thickness!");
+					el->SetName("circle");
+					el->setStrokeColor(color);
+					el->setFillColor(fillcolor);
+					el->xml->SetAttribute("cx", TX(center.X()));
+					el->xml->SetAttribute("cy", TY(center.Y()));
+					el->xml->SetAttribute("r", TR(radius));
+					el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+					return;
+					}
+
+				
+				SVGElement * el2 = el->NewChildSVGElement("circle");
+				el2->setStrokeColor(RGBc::c_Transparent);
+				el2->setFillColor(fillcolor);
+				el2->xml->SetAttribute("cx", TX(center.X()));
+				el2->xml->SetAttribute("cy", TY(center.Y()));
+				el2->xml->SetAttribute("r", TR(radius - thickness));
+				el2->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+				
+				SVGElement * el3 = el->NewChildSVGElement("circle");
+				el3->setStrokeColor(color);
+				el3->setFillColor(RGBc::c_Transparent);
+				el3->xml->SetAttribute("cx", TX(center.X()));
+				el3->xml->SetAttribute("cy", TY(center.Y()));
+				el3->xml->SetAttribute("r", TR(radius - thickness/2));
+				el3->xml->SetAttribute("stroke-width", thickness);
+				return;
+				}
+
 		FIGURECLASS_END()
 
 
@@ -2704,6 +2889,65 @@ namespace mtools
 			CirclePart(IBaseArchive & ar)
 				{
 				ar & part & center & radius & color & fillcolor;
+				}
+
+
+			virtual void svg(mtools::SVGElement * el) const override
+				{
+				fBox2 B = _clippoly(); 
+
+				el->SetName("g");
+				const std::string uid = el->getUID("clippath");
+
+				auto clip_el = el->NewChildSVGElement("clipPath"); 
+				clip_el->xml->SetAttribute("id", uid.c_str());
+
+				auto path_el = clip_el->NewChildSVGElement("rect");
+				path_el->setFillColor(RGBc::c_Transparent);
+				path_el->setStrokeColor(RGBc::c_Transparent);
+				path_el->xml->SetAttribute("x", TX(B.min[0]));
+				path_el->xml->SetAttribute("y", TY(B.min[1]) + TY(B.ly()));
+				path_el->xml->SetAttribute("width", TR(B.lx()));
+				path_el->xml->SetAttribute("height", TR(B.ly()));
+				path_el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+
+				auto fig_el = el->NewChildSVGElement("circle");
+				fig_el->setStrokeColor(color);
+				fig_el->setFillColor(fillcolor);
+				fig_el->xml->SetAttribute("clip-path", (mtools::toString("url(#") + uid + ")").c_str());
+				fig_el->xml->SetAttribute("cx", TX(center.X()));
+				fig_el->xml->SetAttribute("cy", TY(center.Y()));
+				fig_el->xml->SetAttribute("r", TR(radius));
+				fig_el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+				return;	
+				}
+
+
+			private:
+
+				/* return the clipping box */
+				fBox2 _clippoly() const
+				{
+					fVec2 P2 = { center.X()      ,  center.Y() + radius };
+					fVec2 P3 = { center.X() + radius ,  center.Y() + radius };
+					fVec2 P4 = { center.X() - radius ,  center.Y() };
+					fVec2 P5 = { center.X()      ,  center.Y() };
+					fVec2 P6 = { center.X() + radius ,  center.Y() };
+					fVec2 P7 = { center.X() - radius ,  center.Y() - radius };
+					fVec2 P8 = { center.X()      ,  center.Y() - radius };
+					switch (part)
+					{
+					case BOX_SPLIT_UP: { return fBox2(P4, P3, true); }
+					case BOX_SPLIT_DOWN: { return fBox2(P7, P6, true); }
+					case BOX_SPLIT_LEFT: { return fBox2(P7, P2, true); }
+					case BOX_SPLIT_RIGHT: { return fBox2(P8, P3, true); }
+					case BOX_SPLIT_UP_LEFT: { return fBox2(P4, P2, true); }
+					case BOX_SPLIT_UP_RIGHT: { return fBox2(P5, P3, true); }
+					case BOX_SPLIT_DOWN_LEFT: { return fBox2(P7, P5, true); }
+					case BOX_SPLIT_DOWN_RIGHT: { return fBox2(P8, P6, true); }
+					}
+					MTOOLS_ERROR("Should not be here, unknown part");
+					return fBox2();
 				}
 
 		FIGURECLASS_END()
@@ -2835,6 +3079,76 @@ namespace mtools
 				ar & part & center & radius & thickness & color & fillcolor;
 				}
 
+
+			virtual void svg(mtools::SVGElement * el) const override
+				{
+				fBox2 B = _clippoly(); 
+
+				el->SetName("g");
+				const std::string uid = el->getUID("clippath");
+
+				auto clip_el = el->NewChildSVGElement("clipPath"); 
+				clip_el->xml->SetAttribute("id", uid.c_str());
+
+				auto path_el = clip_el->NewChildSVGElement("rect");
+				path_el->setFillColor(RGBc::c_Transparent);
+				path_el->setStrokeColor(RGBc::c_Transparent);
+				path_el->xml->SetAttribute("x", TX(B.min[0]));
+				path_el->xml->SetAttribute("y", TY(B.min[1]) + TY(B.ly()));
+				path_el->xml->SetAttribute("width", TR(B.lx()));
+				path_el->xml->SetAttribute("height", TR(B.ly()));
+				path_el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+
+				auto fig_el = el->NewChildSVGElement("circle");
+				fig_el->setStrokeColor(color);
+				fig_el->setFillColor(fillcolor);
+				fig_el->xml->SetAttribute("clip-path", (mtools::toString("url(#") + uid + ")").c_str());
+				fig_el->xml->SetAttribute("cx", TX(center.X()));
+				fig_el->xml->SetAttribute("cy", TY(center.Y()));
+
+				if (thickness <= 0)
+					{
+					fig_el->Comment("SVG cannot accurately represent Figure::ThickCirclePart with absolute thickness!");
+					fig_el->xml->SetAttribute("r", TR(radius));
+					fig_el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+					return;
+					}
+
+				// TODO : improve the svg code below using a <mask> instead so that the
+				// stroke is not drawn over the interior  which cause defects when using transparency 
+				fig_el->xml->SetAttribute("r", TR(radius - thickness/2));
+				fig_el->xml->SetAttribute("stroke-width", thickness);
+				return;
+				}
+
+
+			private:
+
+				/* return the clipping box */
+				fBox2 _clippoly() const
+				{
+					fVec2 P2 = { center.X()      ,  center.Y() + radius };
+					fVec2 P3 = { center.X() + radius ,  center.Y() + radius };
+					fVec2 P4 = { center.X() - radius ,  center.Y() };
+					fVec2 P5 = { center.X()      ,  center.Y() };
+					fVec2 P6 = { center.X() + radius ,  center.Y() };
+					fVec2 P7 = { center.X() - radius ,  center.Y() - radius };
+					fVec2 P8 = { center.X()      ,  center.Y() - radius };
+					switch (part)
+					{
+					case BOX_SPLIT_UP: { return fBox2(P4, P3, true); }
+					case BOX_SPLIT_DOWN: { return fBox2(P7, P6, true); }
+					case BOX_SPLIT_LEFT: { return fBox2(P7, P2, true); }
+					case BOX_SPLIT_RIGHT: { return fBox2(P8, P3, true); }
+					case BOX_SPLIT_UP_LEFT: { return fBox2(P4, P2, true); }
+					case BOX_SPLIT_UP_RIGHT: { return fBox2(P5, P3, true); }
+					case BOX_SPLIT_DOWN_LEFT: { return fBox2(P7, P5, true); }
+					case BOX_SPLIT_DOWN_RIGHT: { return fBox2(P8, P6, true); }
+					}
+					MTOOLS_ERROR("Should not be here, unknown part");
+					return fBox2();
+				}
+
 		FIGURECLASS_END()
 
 
@@ -2947,6 +3261,21 @@ namespace mtools
 				{
 				ar & center & rx & ry & color & fillcolor;
 				}
+
+
+			virtual void svg(mtools::SVGElement * el) const override
+				{
+				el->SetName("ellipse");
+				el->setStrokeColor(color);
+				el->setFillColor(fillcolor);
+				el->xml->SetAttribute("cx", TX(center.X()));
+				el->xml->SetAttribute("cy", TY(center.Y()));
+				el->xml->SetAttribute("rx", TR(rx));
+				el->xml->SetAttribute("ry", TR(ry));
+				el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+				return;
+				}
+
 
 		FIGURECLASS_END()
 
@@ -3105,6 +3434,44 @@ namespace mtools
 				ar & center & rx & ry & thickness_x & thickness_y & color & fillcolor;
 				}
 
+
+			virtual void svg(mtools::SVGElement * el) const override
+				{
+
+				if ((thickness_x  <= 0)||((thickness_y <= 0)))
+					{
+					el->Comment("SVG cannot accurately represent Figure::ThickEllipse with absolute thickness!");
+					el->SetName("ellipse");
+					el->setStrokeColor(color);
+					el->setFillColor(fillcolor);
+					el->xml->SetAttribute("cx", TX(center.X()));
+					el->xml->SetAttribute("cy", TY(center.Y()));
+					el->xml->SetAttribute("rx", TR(rx));
+					el->xml->SetAttribute("ry", TR(ry));
+					el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+					return;
+					}
+
+				double thick = thickness_x;
+				if (thickness_x != thickness_y)
+					{
+					thick = (thickness_x + thickness_y) / 2;
+					el->Comment((mtools::toString("SVG cannot accurately represent Figure::ThickEllipse with different x/y thickness. Using middle thickness value: ") + mtools::doubleToStringNice(thick)).c_str());
+					}
+
+				// TODO : improve the svg code below using a <mask> instead so that the
+				// stroke is not drawn over the interior  which cause defects when using transparency 
+				el->SetName("ellipse");
+				el->setStrokeColor(color);
+				el->setFillColor(fillcolor);
+				el->xml->SetAttribute("cx", TX(center.X()));
+				el->xml->SetAttribute("cy", TY(center.Y()));
+				el->xml->SetAttribute("rx", TR(rx - thick/2));
+				el->xml->SetAttribute("ry", TR(ry - thick/2));
+				el->xml->SetAttribute("stroke-width", thick);
+				return;
+				}
+
 		FIGURECLASS_END()
 
 
@@ -3247,6 +3614,67 @@ namespace mtools
 			EllipsePart(IBaseArchive & ar)
 				{
 				ar & part & center & rx & ry  & color & fillcolor;
+				}
+
+
+
+			virtual void svg(mtools::SVGElement * el) const override
+				{
+				fBox2 B = _clippoly(); 
+
+				el->SetName("g");
+				const std::string uid = el->getUID("clippath");
+
+				auto clip_el = el->NewChildSVGElement("clipPath"); 
+				clip_el->xml->SetAttribute("id", uid.c_str());
+
+				auto path_el = clip_el->NewChildSVGElement("rect");
+				path_el->setFillColor(RGBc::c_Transparent);
+				path_el->setStrokeColor(RGBc::c_Transparent);
+				path_el->xml->SetAttribute("x", TX(B.min[0]));
+				path_el->xml->SetAttribute("y", TY(B.min[1]) + TY(B.ly()));
+				path_el->xml->SetAttribute("width", TR(B.lx()));
+				path_el->xml->SetAttribute("height", TR(B.ly()));
+				path_el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+				
+				auto fig_el = el->NewChildSVGElement("ellipse");
+				fig_el->setStrokeColor(color);
+				fig_el->setFillColor(fillcolor);
+				fig_el->xml->SetAttribute("cx", TX(center.X()));
+				fig_el->xml->SetAttribute("cy", TY(center.Y()));
+				fig_el->xml->SetAttribute("rx", TR(rx));
+				fig_el->xml->SetAttribute("ry", TR(ry));
+				fig_el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+				fig_el->xml->SetAttribute("clip-path", (mtools::toString("url(#") + uid + ")").c_str());
+				}
+
+
+
+			private:
+
+		/* return the clipping box */
+			fBox2 _clippoly() const
+				{	
+				fVec2 P2 = { center.X()      ,  center.Y() + ry };
+				fVec2 P3 = { center.X() + rx ,  center.Y() + ry };
+				fVec2 P4 = { center.X() - rx ,  center.Y() };
+				fVec2 P5 = { center.X()      ,  center.Y() };
+				fVec2 P6 = { center.X() + rx ,  center.Y() };
+				fVec2 P7 = { center.X() - rx ,  center.Y() - ry };
+				fVec2 P8 = { center.X()      ,  center.Y() - ry };
+				switch (part)
+				{
+				case BOX_SPLIT_UP: { return fBox2(P4, P3, true); }
+				case BOX_SPLIT_DOWN: { return fBox2(P7, P6, true); }
+				case BOX_SPLIT_LEFT: { return fBox2(P7, P2, true); }
+				case BOX_SPLIT_RIGHT: { return fBox2(P8, P3, true); }
+				case BOX_SPLIT_UP_LEFT: { return fBox2(P4, P2, true); }
+				case BOX_SPLIT_UP_RIGHT: { return fBox2(P5, P3, true); }
+				case BOX_SPLIT_DOWN_LEFT: { return fBox2(P7, P5, true); }
+				case BOX_SPLIT_DOWN_RIGHT: { return fBox2(P8, P6, true); }
+				}
+				MTOOLS_ERROR("Should not be here, unknown part");
+				return fBox2();
 				}
 
 		FIGURECLASS_END()
@@ -3432,6 +3860,91 @@ namespace mtools
 			ThickEllipsePart(IBaseArchive & ar)
 				{
 				ar & part & center & rx & ry & thickness_x & thickness_y & color & fillcolor;
+				}
+
+
+
+
+
+
+			virtual void svg(mtools::SVGElement * el) const override
+				{
+				fBox2 B = _clippoly(); 
+
+				el->SetName("g");
+				const std::string uid = el->getUID("clippath");
+
+				auto clip_el = el->NewChildSVGElement("clipPath"); 
+				clip_el->xml->SetAttribute("id", uid.c_str());
+
+				auto path_el = clip_el->NewChildSVGElement("rect");
+				path_el->setFillColor(RGBc::c_Transparent);
+				path_el->setStrokeColor(RGBc::c_Transparent);
+				path_el->xml->SetAttribute("x", TX(B.min[0]));
+				path_el->xml->SetAttribute("y", TY(B.min[1]) + TY(B.ly()));
+				path_el->xml->SetAttribute("width", TR(B.lx()));
+				path_el->xml->SetAttribute("height", TR(B.ly()));
+				path_el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+
+
+				auto fig_el = el->NewChildSVGElement("ellipse");
+				fig_el->setStrokeColor(color);
+				fig_el->setFillColor(fillcolor);
+				fig_el->xml->SetAttribute("clip-path", (mtools::toString("url(#") + uid + ")").c_str());
+				fig_el->xml->SetAttribute("cx", TX(center.X()));
+				fig_el->xml->SetAttribute("cy", TY(center.Y()));
+
+
+				if ((thickness_x  <= 0)||((thickness_y <= 0)))
+					{
+					fig_el->Comment("SVG cannot accurately represent Figure::ThickEllipsePart with absolute thickness!");
+					fig_el->xml->SetAttribute("rx", TR(rx));
+					fig_el->xml->SetAttribute("ry", TR(ry));
+					fig_el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+					return;
+					}
+
+				double thick = thickness_x;
+				if (thickness_x != thickness_y)
+					{
+					thick = (thickness_x + thickness_y) / 2;
+					fig_el->Comment((mtools::toString("SVG cannot accurately represent Figure::ThickEllipsePart with different x/y thickness. Using middle thickness value: ") + mtools::doubleToStringNice(thick)).c_str());
+					}
+
+				// TODO : improve the svg code below using a <mask> instead so that the
+				// stroke is not drawn over the interior  which cause defects when using transparency 
+				fig_el->xml->SetAttribute("rx", TR(rx - thick/2));
+				fig_el->xml->SetAttribute("ry", TR(ry - thick/2));
+				fig_el->xml->SetAttribute("stroke-width", thick);
+				return;
+				}
+
+
+			private:
+
+				/* return the clipping box */
+				fBox2 _clippoly() const
+				{
+					fVec2 P2 = { center.X()      ,  center.Y() + ry };
+					fVec2 P3 = { center.X() + rx ,  center.Y() + ry };
+					fVec2 P4 = { center.X() - rx ,  center.Y() };
+					fVec2 P5 = { center.X()      ,  center.Y() };
+					fVec2 P6 = { center.X() + rx ,  center.Y() };
+					fVec2 P7 = { center.X() - rx ,  center.Y() - ry };
+					fVec2 P8 = { center.X()      ,  center.Y() - ry };
+					switch (part)
+					{
+					case BOX_SPLIT_UP: { return fBox2(P4, P3, true); }
+					case BOX_SPLIT_DOWN: { return fBox2(P7, P6, true); }
+					case BOX_SPLIT_LEFT: { return fBox2(P7, P2, true); }
+					case BOX_SPLIT_RIGHT: { return fBox2(P8, P3, true); }
+					case BOX_SPLIT_UP_LEFT: { return fBox2(P4, P2, true); }
+					case BOX_SPLIT_UP_RIGHT: { return fBox2(P5, P3, true); }
+					case BOX_SPLIT_DOWN_LEFT: { return fBox2(P7, P5, true); }
+					case BOX_SPLIT_DOWN_RIGHT: { return fBox2(P8, P6, true); }
+					}
+					MTOOLS_ERROR("Should not be here, unknown part");
+					return fBox2();
 				}
 
 		FIGURECLASS_END()

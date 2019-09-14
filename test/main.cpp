@@ -322,6 +322,22 @@ void testSVG()
 			canvas(Figure::ThickTriangle({ 300,100 }, { 305 ,110 }, { 310, 103 }, 2.0, true, RGBc::c_Green.getMultOpacity(0.5), RGBc::c_Cyan.getMultOpacity(0.5)), 0);
 
 
+
+			canvas(Figure::Rectangle(fBox2(200, 220, 100, 130), RGBc::c_Black), 1);
+			canvas(Figure::ThickRectangle(fBox2(200, 220, 100, 130), 5 , 5, true, RGBc::c_Cyan.getMultOpacity(0.5f), RGBc::c_Yellow.getMultOpacity(0.5f)), 0);
+
+
+
+			canvas(Figure::Rectangle(fBox2(-60, 00, 90, 110), RGBc::c_Black), 1);
+
+			//canvas(Figure::ThickEllipse({ -30, 100 },30,10,5,5,true,RGBc::c_Blue.getMultOpacity(0.5), RGBc::c_Gray), 1);
+
+			canvas(Figure::ThickCirclePart(BOX_SPLIT_LEFT, { -30, 100 } , 10, 3, true, RGBc::c_Gray, RGBc::c_Blue.getMultOpacity(0.5)), 1);
+			canvas(Figure::ThickCirclePart(BOX_SPLIT_UP_RIGHT, { -30, 100 }, 10, 5,  true, RGBc::c_Gray, RGBc::c_Red.getMultOpacity(0.5)), 1);
+			canvas(Figure::ThickCirclePart(BOX_SPLIT_DOWN_RIGHT, { -30, 100 },  10, 5,  false, RGBc::c_Gray,  RGBc::c_Green.getMultOpacity(0.5)), 1);
+
+
+
 			canvas.saveSVG("fig.svg");
 
 			auto PA = makePlot2DFigure(canvas);
