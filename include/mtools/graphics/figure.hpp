@@ -111,9 +111,8 @@ namespace mtools
 	class Text;
 
 
-
-
 	*************** TODO  *****************
+	
     // CURVES
 
 	class QuadBezier;
@@ -123,8 +122,11 @@ namespace mtools
 	class ThickCubicBezier;
 
 	class FigureImage;
+
 	class FigureFill;
+
 	class FigureClip;
+
 	template<typename FIGURE1, typename FIGURE2>  class FigurePair;
 	template<typename FIGURE1, typename FIGURE2, typename FIGURE3>  class FigureTriplet;
 	template<typename FIGURE1, typename FIGURE2, typename FIGURE3, typename FIGURE4>  class FigureQuadruplet;
