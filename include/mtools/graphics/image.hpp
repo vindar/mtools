@@ -1697,12 +1697,12 @@ namespace mtools
 				if (color.isOpaque()) { blending = false; }
 				if (penwidth <= 0)
 					{
-					if (blending) _updatePixel<true, true, false, false>(P.X(), P.Y(), color, 0, 0); else _updatePixel<false, true, false, false>(P.X(), P.Y(), color, 0, penwidth);
+					if (blending) _updatePixel<true, true, false, false>(P.X(), P.Y(), color, 0, 0); else _updatePixel<false, true, false, false>(P.X(), P.Y(), color, 0, 0);
 					}
 				else
 					{
 					//_correctPenOpacity(color, penwidth); // no  correction needed here
-					if (blending) _updatePixel<true, true, false, true>(P.X(), P.Y(), color, 0, 0); else _updatePixel<false, true, false, true>(P.X(), P.Y(), color, 0, penwidth);
+					if (blending) _updatePixel<true, true, false, true>(P.X(), P.Y(), color, 0, penwidth); else _updatePixel<false, true, false, true>(P.X(), P.Y(), color, 0, penwidth);
 					}
 				}
 
