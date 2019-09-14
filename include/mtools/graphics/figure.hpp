@@ -282,7 +282,6 @@ namespace mtools
 					ar & (*(bo.object));
 					});
 				ar << "\n";
-				MTOOLS_ASSERT(nb == size());
 				}
 			}
 
@@ -1086,7 +1085,7 @@ namespace mtools
 				el->xml->SetAttribute("y2", TY(P2.Y()));
 				if (pw != 0)
 					{
-					el->Comment("SVG cannot accurately represent Figure::Line with non zero penwidth !");
+					el->Comment("SVG cannot accurately represent Figure::Line with non zero penwidth, use ThickLine instead.");
 					}
 				el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
 			}
@@ -1173,7 +1172,7 @@ namespace mtools
 
 				if (pw != 0)
 					{
-					el->Comment("SVG cannot accurately represent Figure::PolyLine with non zero penwidth !");
+					el->Comment("SVG cannot accurately represent Figure::PolyLine with non zero penwidth, use ThickPolyLine instead.");
 					}
 				el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
 				}
@@ -4017,7 +4016,8 @@ namespace mtools
 				{
 				MTOOLS_INSURE((_size.X() > 0) || (_size.Y() > 0));	// both size cannot be 0
 				_im.empty();
-				makeBB();
+				iVec2 idim = gFont(_base_font_size, MTOOLS_NATIVE_FONT_ABOVE).textDimension(_text);
+				_bb = computeBB({ (double)idim.X(), (double)idim.Y() });
 				}
 
 
@@ -4070,35 +4070,37 @@ namespace mtools
 				{
 				ar & _text & _pos & _size & _text_pos & _textcolor & _bkcolor & _op & _base_font_size;
 				_im.empty();
-				makeBB();
+				iVec2 idim = gFont(_base_font_size, MTOOLS_NATIVE_FONT_ABOVE).textDimension(_text);
+				_bb = computeBB({(double)idim.X(), (double)idim.Y()});
 				}
 
 
-			/* construct the bounding box */
-			void makeBB()
+			/* compute the real bounding box from a template size */
+			 fBox2 computeBB(fVec2 dim) const
 				{
-				iVec2 dim = gFont(_base_font_size, MTOOLS_NATIVE_FONT_ABOVE).textDimension(_text); // text dimension
-				if (_size.X() <= 0.0)
+				fVec2 rsize = _size;
+				if (rsize.X() <= 0.0)
 					{ // must adjust x
 					MTOOLS_INSURE(dim.Y() > 0);
-					_size.X() = dim.X()*_size.Y() / dim.Y();
+					rsize.X() = dim.X()*rsize.Y() / dim.Y();
 					}
-				else if (_size.Y() <= 0.0)
+				else if (rsize.Y() <= 0.0)
 					{ // must adjust y
 					MTOOLS_INSURE(dim.X() > 0);
-					_size.Y() = dim.Y()*_size.X() / dim.X();
+					rsize.Y() = dim.Y()*rsize.X() / dim.X();
 					}
 
-				double ox = -_size.X()/2;
-				if (_text_pos & MTOOLS_TEXT_RIGHT)		ox = -_size.X();
+				double ox = -rsize.X()/2;
+				if (_text_pos & MTOOLS_TEXT_RIGHT)		ox = -rsize.X();
 				if (_text_pos & MTOOLS_TEXT_LEFT)		ox = 0;				
 
-				double oy = -_size.Y()/2;
-				if (_text_pos & MTOOLS_TEXT_TOP)		oy = -_size.Y();
+				double oy = -rsize.Y()/2;
+				if (_text_pos & MTOOLS_TEXT_TOP)		oy = -rsize.Y();
 				if (_text_pos & MTOOLS_TEXT_BOTTOM)		oy = 0;
 
-				_bb = fBox2(_pos.X() + ox, _pos.X() + _size.X() + ox, _pos.Y() + oy, _pos.Y() + _size.Y() + oy);
+				return fBox2(_pos.X() + ox, _pos.X() + rsize.X() + ox, _pos.Y() + oy, _pos.Y() + rsize.Y() + oy);
 				}
+
 
 
 			/* recreate the image */
@@ -4110,6 +4112,161 @@ namespace mtools
 				_im.clear(_bkcolor);																		// draw the background					
 				_im.draw_text(iVec2{ 0,0 }, _text, MTOOLS_TEXT_LEFT | MTOOLS_TEXT_TOP, _textcolor, &font);	// draw the text				
 				}
+
+
+
+			/**   
+			 * Return the size of the text when printed using Arial font in 64px height. 			 * 
+			 * 
+			 * THe width of the Arial font characters obtained using with the javascript below. 
+			 * Just run the script in Firefox, open the console with [CTRL]+[SHIFT]+K and copy the result. 
+			 * 
+			 <!DOCTYPE HTML>
+			<html>
+				<head>
+					<style>
+					body {
+					margin: 0px;
+					padding: 0px;
+					}
+					</style>
+				</head>
+			<body data-rsssl=1>
+			<canvas id="myCanvas" width="578" height="200"></canvas>
+				<script>
+				var canvas = document.getElementById('myCanvas');
+				var context = canvas.getContext('2d');
+				context.font = '64px Times';
+				var i;
+				var s = "{";
+				for (i = 0; i < 256; i++) 
+					{
+					var text = String.fromCharCode(i)		 
+					var metrics = context.measureText(text);
+					var width = metrics.width;
+					s += width.toString() + ((i != (255)) ? "," : "}");
+					} 		 		 
+				console.log(s); // output result to console. 
+				</script>
+			</body>
+		    </html> 
+			 **/
+			fVec2 textsize_in_Arial_64px() const
+				{
+				const double fontsize = 64; 
+				constexpr static double arial_64px_width[256] = { 0,0,0,0,0,0,0,0,0,16,16,16,16,16,0,0,0,0,0,0,0,0,0,0,0,0,0,0,16,16,16,16,16,21.316667556762695,
+					26.133333206176758,32,32,53.31666564941406,49.78333282470703,11.533333778381348,21.316667556762695,21.316667556762695,32,
+					36.099998474121094,16,21.316667556762695,16,17.78333282470703,32,32,32,32,32,32,32,32,32,32,17.78333282470703,17.78333282470703,
+					36.099998474121094,36.099998474121094,36.099998474121094,28.399999618530273,58.93333435058594,46.21666717529297,42.68333435058594,
+					42.68333435058594,46.21666717529297,39.099998474121094,35.599998474121094,46.21666717529297,46.21666717529297,21.316667556762695,
+					24.899999618530273,46.21666717529297,39.099998474121094,56.900001525878906,46.21666717529297,46.21666717529297,35.599998474121094,
+					46.21666717529297,42.68333435058594,35.599998474121094,39.099998474121094,46.21666717529297,46.21666717529297,60.400001525878906,
+					46.21666717529297,46.21666717529297,39.099998474121094,21.316667556762695,17.78333282470703,21.316667556762695,30.03333282470703,
+					32,21.316667556762695,28.399999618530273,32,28.399999618530273,32,28.399999618530273,21.316667556762695,32,32,17.78333282470703,
+					17.78333282470703,32,17.78333282470703,49.78333282470703,32,32,32,32,21.316667556762695,24.899999618530273,17.78333282470703,32,
+					32,46.21666717529297,32,32,28.399999618530273,30.71666717529297,12.816666603088379,30.71666717529297,34.63333511352539,0,0,0,0,0,
+					0,16,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,16,21.316667556762695,32,32,32,32,12.816666603088379,32,21.316667556762695,
+					48.63333511352539,17.649999618530273,32,36.099998474121094,0,48.63333511352539,32,25.600000381469727,35.13333511352539,19.183332443237305,
+					19.183332443237305,21.316667556762695,36.88333511352539,29,21.316667556762695,21.316667556762695,19.183332443237305,19.850000381469727,32,
+					48,48,48,28.399999618530273,46.21666717529297,46.21666717529297,46.21666717529297,46.21666717529297,46.21666717529297,46.21666717529297,
+					56.900001525878906,42.68333435058594,39.099998474121094,39.099998474121094,39.099998474121094,39.099998474121094,21.316667556762695,
+					21.316667556762695,21.316667556762695,21.316667556762695,46.21666717529297,46.21666717529297,46.21666717529297,46.21666717529297,
+					46.21666717529297,46.21666717529297,46.21666717529297,36.099998474121094,46.21666717529297,46.21666717529297,46.21666717529297,
+					46.21666717529297,46.21666717529297,46.21666717529297,35.599998474121094,32,28.399999618530273,28.399999618530273,28.399999618530273,
+					28.399999618530273,28.399999618530273,28.399999618530273,42.68333435058594,28.399999618530273,28.399999618530273,28.399999618530273,
+					28.399999618530273,28.399999618530273,17.78333282470703,17.78333282470703,17.78333282470703,17.78333282470703,32,32,32,32,32,32,32,
+					35.13333511352539,32,32,32,32,32,32,32,32 };
+
+				if (_text.size() == 0) return fVec2(0.0, 0.0);
+				double mx = 0, x = 0;
+				double my = 64.0;
+				for (size_t i = 0; i < _text.size(); i++)
+					{
+					const char c = _text[i];
+					if (c >= 32) { x += arial_64px_width[c]; }
+					else if (c == '\t') { x += 4 * arial_64px_width[' ']; }
+					else if (c == '\n') { if (x > mx) { mx = x; } x = 0;  my += fontsize; }
+					}
+				if (x > mx) { mx = x; }
+				return fVec2(mx, my);
+				}
+
+
+			/** parse the text before putting it in SVG. */
+			std::vector<std::string> parseSVGtext() const
+				{
+				std::vector<std::string> svec; 
+				mtools::ostringstream os;
+				for(size_t i=0; i < _text.size(); i++)
+					{
+					const char c = _text[i]; 
+					if ((c > 32)&&(c < 128)) { os << c; }
+					else if (c == '\t') { for (int j = 0; j < 4; j++) { os << (char)(0xC2) << (char)(0xA0); } }
+					else if (c == '\n') { svec.push_back(os.str()); os.clear(); }
+					else if (c == ' ') { os << (char)(0xC2) << (char)(0xA0); }
+					}
+				svec.push_back(os.str());
+				return svec;
+				}
+
+
+			virtual void svg(mtools::SVGElement * el) const override
+				{
+				const double fontsize = 64;
+				fVec2 adim = textsize_in_Arial_64px();	// size of the text template in 64px using Arial font
+
+				fBox2 box = computeBB(adim);			// compute the bounding box. 
+
+				// draw the background first if needed
+				RGBc bkcol = _bkcolor.getMultOpacity(_op);
+				if (bkcol.opacity() > 0)
+					{ 
+					el->SetName("g");
+					auto bk_el = el->NewChildSVGElement("rect");
+					bk_el->setStrokeColor(RGBc::c_Transparent);
+					bk_el->setFillColor(bkcol);
+					bk_el->xml->SetAttribute("x", TX(box.min[0]));
+					bk_el->xml->SetAttribute("y", TY(box.min[1]) + TY(box.ly()));
+					bk_el->xml->SetAttribute("width", TR(box.lx()));
+					bk_el->xml->SetAttribute("height", TR(box.ly()));
+					bk_el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+					el = el->NewChildSVGElement("text");
+					}
+
+				if ((box.lx() <= 0)||(box.ly() <= 0)) return; // no text to draw
+
+				double fs = fontsize * box.ly() / adim.Y();		// compute the font size
+				double xx = TX(box.min[0]);						// and the position
+				double yy = TY(box.min[1]) + TY(box.ly()) - TY(fs/2 + 5.5);	// 5.5 is for centering...
+
+				// main text element. 
+				el->SetName("text");
+				el->xml->SetAttribute("x", xx);
+				el->xml->SetAttribute("y", yy);
+				el->xml->SetAttribute("font-size", fs);
+				el->xml->SetAttribute("font-family", "Arial");
+				el->xml->SetAttribute("dominant-baseline", "middle");
+				el->xml->SetAttribute("text-anchor", "start");
+				el->setFillColor(_textcolor.getMultOpacity(_op));
+
+				// draw text line by line
+				auto svec = parseSVGtext();  // parse lines, indent and add non breable spaces
+				for (size_t i=0; i< svec.size(); i++)
+					{
+					auto tspan_el = el->NewChildSVGElement("tspan");
+					tspan_el->xml->SetAttribute("x", xx);
+					tspan_el->xml->SetAttribute("dy", ((i == 0) ? 0.0 : fs));
+					tspan_el->xml->SetAttribute("white-space", "pre");
+					tspan_el->xml->SetText(svec[i].c_str());
+					}
+
+				return;
+				}
+
+
+
+
+
 
 
 		FIGURECLASS_END()

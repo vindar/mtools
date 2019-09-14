@@ -300,7 +300,6 @@ void testSVG()
 
 			canvas(Figure::ThickLine({-50, 30}, {50,-30}, 20, true, RGBc::c_Purple.getMultOpacity(0.5)), 1);
 
-			canvas(Figure::Text("A", { 0.0, 0.0 }, { 10.0, 0.0 }, MTOOLS_TEXT_LEFT | MTOOLS_TEXT_TOP, RGBc::c_Red, RGBc::c_Blue.getMultOpacity(0.5f), 1.0f, 256), 0);
 
 			canvas(Figure::ThickPolyLine(tabPL, 5, true, RGBc::c_Salmon), 0);
 
@@ -338,6 +337,14 @@ void testSVG()
 
 
 
+
+			std::string s = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. \nLorem Ipsum has been the industry's standard dummy text ever since the 1500s,\nwhen an unknown printer took a galley of type and scrambled it to make a type\nspecimen book. It has survived not only five centuries, but also the leap into\nelectronic typesetting, remaining essentially unchanged. It was popularised in\nthe 1960s with the release of Letraset sheets containing Lorem Ipsum passages, \nand more recently with desktop publishing software like Aldus PageMaker\nincluding versions of Lorem Ipsum. Why do we use it ?";
+
+
+			canvas(Figure::Text(s, { 200, 100 }, { 0, 50 }, MTOOLS_TEXT_TOPRIGHT, RGBc::c_Red, RGBc::c_Blue.getMultOpacity(0.5f), 1.0f, 256), 0);
+
+			/*Petit texte\n  qui ne semble\n\tpas long  ...*/
+
 			canvas.saveSVG("fig.svg");
 
 			auto PA = makePlot2DFigure(canvas);
@@ -369,9 +376,39 @@ void testSVG()
 
 
 
+
+/*
+
+-> decoupage en ligne
+-> expension du texte en supprimant les \t et en remplacant par 4 space
+-> calcul de la longueur d'unr ligne en police 44
+-> calcul de la hauteur d'une ligne
+
+
+*/
+
+void testfont()
+{
+//	std::string s = "Ceciestuntestpourvoirsicamarche."; 
+	std::string s = "b  b  b  b  b  b";
+	cout << gFont(64, MTOOLS_EXACT_FONT).textDimension(s) << "\n";
+	cout.getKey();
+
+}
+
+
 int main(int argc, char *argv[])
 	{
+
+
+
+
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
+
+
+
+
+//	testfont();
 
 	testSVG(); 
 	return 0; 
