@@ -28,7 +28,7 @@ void testplotfigure()
 	cout << "Creating... ";
 
 	int nb = 1;
-	const double L = 50000;
+	//const double L = 50000;
 	
 	for (int k = 0; k < nb; k++)
 		{

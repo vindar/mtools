@@ -38,7 +38,7 @@ namespace mtools
 
 
 	/**
-	/* Class that extend tinyxml::XMLElement to provide useful method when writing SVG documents.
+	 * Class that extend tinyxml::XMLElement to provide useful method when writing SVG documents.
 	 *
 	 * TODO : find a way to derive from tinyxml::XMLElement (not possible before ctor/dtor are private).
 	 **/

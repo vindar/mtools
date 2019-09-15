@@ -272,11 +272,11 @@ namespace mtools
 		void serialize(OBaseArchive & ar, const int version = 0) const		
 			{
 			ar & _nbLayers; ar << "number of layers\n";
-			for (int i = 0; i < _nbLayers; i++)
+			for (size_t i = 0; i < _nbLayers; i++)
 				{
 				ar << "*** Layer " << i << " ***\n";
 				ar & _figLayers[i].size();	ar << "number of items in layer " << i << "\n";
-				size_t nb = _figLayers[i].iterate_all([&](typename mtools::TreeFigure<typename Figure::internals_figure::FigureInterface *, N, double>::BoundedObject & bo) -> void
+				_figLayers[i].iterate_all([&](typename mtools::TreeFigure<typename Figure::internals_figure::FigureInterface *, N, double>::BoundedObject & bo) -> void
 					{
 					ar & (bo.object)->name();
 					ar & (*(bo.object));
@@ -311,13 +311,13 @@ namespace mtools
 				}
 
 			// add all the elements
-			for (int layer = 0; layer < nblayers_ar; layer++)
+			for (size_t layer = 0; layer < nblayers_ar; layer++)
 				{
 				// number of element in this layer
 				size_t nbitem;
 				ar & nbitem;
 				// add all the elements
-				for (int j = 0; j < nbitem; j++)
+				for (size_t j = 0; j < nbitem; j++)
 					{
 					_insertArchiveItem(ar, layer);
 					}
@@ -4184,7 +4184,7 @@ namespace mtools
 				for (size_t i = 0; i < _text.size(); i++)
 					{
 					const char c = _text[i];
-					if (c >= 32) { x += arial_64px_width[c]; }
+					if (c >= 32) { x += arial_64px_width[(size_t)(c)]; }
 					else if (c == '\t') { x += 4 * arial_64px_width[' ']; }
 					else if (c == '\n') { if (x > mx) { mx = x; } x = 0;  my += vspace; }
 					}

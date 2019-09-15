@@ -12,7 +12,7 @@ find_package(TinyXML2 CONFIG QUIET)
 
 if(TinyXML2_FOUND)
 
-  message(STATUS "Found TinyXML2 via Config file: ${TinyXML2_DIR}")
+  message(STATUS "Found TinyXML2 via Config file: [${TinyXML2_DIR}]")
   if(NOT TINYXML2_LIBRARY)
     # in this case, we're probably using TinyXML2 version 5.0.0 or greater
     # in which case tinyxml2 is an exported target and we should use that
@@ -32,6 +32,9 @@ else()
   find_package_handle_standard_args(TinyXML2 DEFAULT_MSG TINYXML2_LIBRARY TINYXML2_INCLUDE_DIR)
 
   mark_as_advanced(TINYXML2_INCLUDE_DIR TINYXML2_LIBRARY)
+
+  message(STATUS "Found TinyXML2 [${TinyXML2_DIR}]")
+
 endif()
 
 # Set mixed case INCLUDE_DIRS and LIBRARY variables from upper case ones.
