@@ -338,10 +338,10 @@ void testSVG()
 
 
 
-			std::string s = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. \nLorem Ipsum has been the industry's standard dummy text ever since the 1500s,\nwhen an unknown printer took a galley of type and scrambled it to make a type\nspecimen book. It has survived not only five centuries, but also the leap into\nelectronic typesetting, remaining essentially unchanged. It was popularised in\nthe 1960s with the release of Letraset sheets containing Lorem Ipsum passages, \nand more recently with desktop publishing software like Aldus PageMaker\nincluding versions of Lorem Ipsum. Why do we use it ?";
+			std::string s = "Lorem Ipsum";
 
 
-			canvas(Figure::Text(s, { 200, 100 }, { 0, 50 }, MTOOLS_TEXT_TOPRIGHT, RGBc::c_Red, RGBc::c_Blue.getMultOpacity(0.5f), 1.0f, 256), 0);
+			canvas(Figure::Text(s, { 200, 100 }, { 0, 50 }, MTOOLS_TEXT_TOPRIGHT, RGBc::c_Red, RGBc::c_Blue.getMultOpacity(0.5f), 1.0f, 64), 0);
 
 			/*Petit texte\n  qui ne semble\n\tpas long  ...*/
 

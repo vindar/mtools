@@ -124,18 +124,19 @@ namespace mtools
 
 
 		/* no stroke */
-		void noStroke(mtools::RGBc color)
+		void noStroke()
 			{
 			xml->SetAttribute("stroke", "none");
 			xml->SetAttribute("stroke-opacity", 0);
+			xml->SetAttribute("vector-effect", "non-scaling-stroke");
 			}
 
 		/* no stroke */
-		void noFill(mtools::RGBc color)
-		{
+		void noFill()
+			{
 			xml->SetAttribute("fill", "none");
 			xml->SetAttribute("fill-opacity", 0);
-		}
+			}
 
 		/** give acces to the underlying xml element */
 		tinyxml2::XMLElement * xml;

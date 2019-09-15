@@ -364,8 +364,11 @@ namespace mtools
 				_figLayers[i].iterate_all([&](typename mtools::TreeFigure<typename Figure::internals_figure::FigureInterface *, N, double>::BoundedObject & bo) -> void
 					{
 					SVGElement el(xmlDoc, layer);												// create an SVGElement for this figure (destroyed out of scope but the tinyxml2::XMLElement survives.
-					el.xml->SetAttribute("id", el.getUID(typeid(*(bo.object)).name()).c_str());	// id  by its type
-					bo.object->svg(&el);														// draw on the SVGElement
+
+					auto p = typeid(*(bo.object)).name();
+					MTOOLS_INSURE(strlen(p) > 14);							// make sure its contains "class mtools::..."
+					el.xml->SetAttribute("id", el.getUID(p+14).c_str());	// id  by its type
+					bo.object->svg(&el);									// draw on the SVGElement
 					});
 				}
 
@@ -1164,7 +1167,7 @@ namespace mtools
 				{
 				el->SetName("polyline");
 				el->setStrokeColor(color);				
-				el->setFillColor(RGBc::c_Transparent);
+				el->noFill();
 				mtools::ostringstream os;
 
 				for (auto P : tab) { os << TX(P.X()) << "," << TY(P.Y()) << " "; }
@@ -1552,7 +1555,7 @@ namespace mtools
 				{
 				el->SetName("polyline");
 				el->setStrokeColor(color);
-				el->setFillColor(RGBc::c_Transparent);
+				el->noFill();
 				el->xml->SetAttribute("stroke-linecap","butt");
 				el->xml->SetAttribute("stroke-linejoin", "miter");
 				mtools::ostringstream os;
@@ -1671,13 +1674,12 @@ namespace mtools
 			virtual void svg(mtools::SVGElement * el) const override
 			{
 				el->SetName("rect");
-				el->setStrokeColor(RGBc::c_Transparent);
+				el->noStroke();
 				el->setFillColor(fillcolor);
 				el->xml->SetAttribute("x", TX(box.min[0]));
 				el->xml->SetAttribute("y", TY(box.min[1]) + TY(box.ly()));
 				el->xml->SetAttribute("width", TR(box.lx()));
 				el->xml->SetAttribute("height", TR(box.ly()));
-				el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
 			}
 
 		FIGURECLASS_END()
@@ -2140,10 +2142,9 @@ namespace mtools
 				clip_el->xml->SetAttribute("id", uid.c_str());
 
 				auto path_el = clip_el->NewChildSVGElement("polygon");
-				path_el->setFillColor(RGBc::c_Transparent);
-				path_el->setStrokeColor(RGBc::c_Transparent);
+				path_el->noFill();
+				path_el->noStroke();
 				path_el->xml->SetAttribute("points", os.toString().c_str());
-				path_el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
 				
 				auto fig_el = el->NewChildSVGElement("polygon");
 				fig_el->xml->SetAttribute("clip-path", (mtools::toString("url(#") + uid + ")").c_str());
@@ -2259,10 +2260,9 @@ namespace mtools
 				clip_el->xml->SetAttribute("id", uid.c_str());
 
 				auto path_el = clip_el->NewChildSVGElement("polygon");
-				path_el->setFillColor(RGBc::c_Transparent);
-				path_el->setStrokeColor(RGBc::c_Transparent);
+				path_el->noFill();
+				path_el->noStroke();
 				path_el->xml->SetAttribute("points", os.toString().c_str());
-				path_el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
 				
 				auto fig_el = el->NewChildSVGElement("polygon");
 				fig_el->xml->SetAttribute("clip-path", (mtools::toString("url(#") + uid + ")").c_str());
@@ -2383,10 +2383,9 @@ namespace mtools
 				clip_el->xml->SetAttribute("id", uid.c_str());
 
 				auto path_el = clip_el->NewChildSVGElement("polygon");
-				path_el->setFillColor(RGBc::c_Transparent);
-				path_el->setStrokeColor(RGBc::c_Transparent);
+				path_el->noFill();
+				path_el->noStroke();
 				path_el->xml->SetAttribute("points", os.toString().c_str());
-				path_el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
 				
 				auto fig_el = el->NewChildSVGElement("polygon");
 				fig_el->xml->SetAttribute("clip-path", (mtools::toString("url(#") + uid + ")").c_str());
@@ -2515,7 +2514,7 @@ namespace mtools
 
 				auto el2 = el->NewChildSVGElement("rect");
 				el2->setStrokeColor(color);
-				el2->setFillColor(RGBc::c_Transparent);
+				el2->noFill();
 				el2->xml->SetAttribute("x", TX(x));
 				el2->xml->SetAttribute("y", TY(y) + TY(ly));
 				el2->xml->SetAttribute("width", TR(lx));
@@ -2528,13 +2527,12 @@ namespace mtools
 				ly = box.ly() - 2*thick;
 
 				auto el3 = el->NewChildSVGElement("rect");
-				el3->setStrokeColor(RGBc::c_Transparent);
+				el3->noStroke();
 				el3->setFillColor(fillcolor);
 				el3->xml->SetAttribute("x", TX(x));
 				el3->xml->SetAttribute("y", TY(y) + TY(ly));
 				el3->xml->SetAttribute("width", TR(lx));
 				el3->xml->SetAttribute("height", TR(ly));
-				el3->xml->SetAttribute("vector-effect", "non-scaling-stroke");
 				}
 
 		FIGURECLASS_END()
@@ -2770,16 +2768,15 @@ namespace mtools
 
 				
 				SVGElement * el2 = el->NewChildSVGElement("circle");
-				el2->setStrokeColor(RGBc::c_Transparent);
+				el2->noStroke();
 				el2->setFillColor(fillcolor);
 				el2->xml->SetAttribute("cx", TX(center.X()));
 				el2->xml->SetAttribute("cy", TY(center.Y()));
 				el2->xml->SetAttribute("r", TR(radius - thickness));
-				el2->xml->SetAttribute("vector-effect", "non-scaling-stroke");
 				
 				SVGElement * el3 = el->NewChildSVGElement("circle");
 				el3->setStrokeColor(color);
-				el3->setFillColor(RGBc::c_Transparent);
+				el3->noFill();
 				el3->xml->SetAttribute("cx", TX(center.X()));
 				el3->xml->SetAttribute("cy", TY(center.Y()));
 				el3->xml->SetAttribute("r", TR(radius - thickness/2));
@@ -2904,13 +2901,12 @@ namespace mtools
 				clip_el->xml->SetAttribute("id", uid.c_str());
 
 				auto path_el = clip_el->NewChildSVGElement("rect");
-				path_el->setFillColor(RGBc::c_Transparent);
-				path_el->setStrokeColor(RGBc::c_Transparent);
+				path_el->noFill();
+				path_el->noStroke();
 				path_el->xml->SetAttribute("x", TX(B.min[0]));
 				path_el->xml->SetAttribute("y", TY(B.min[1]) + TY(B.ly()));
 				path_el->xml->SetAttribute("width", TR(B.lx()));
 				path_el->xml->SetAttribute("height", TR(B.ly()));
-				path_el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
 
 				auto fig_el = el->NewChildSVGElement("circle");
 				fig_el->setStrokeColor(color);
@@ -3092,13 +3088,12 @@ namespace mtools
 				clip_el->xml->SetAttribute("id", uid.c_str());
 
 				auto path_el = clip_el->NewChildSVGElement("rect");
-				path_el->setFillColor(RGBc::c_Transparent);
-				path_el->setStrokeColor(RGBc::c_Transparent);
+				path_el->noFill();
+				path_el->noStroke();
 				path_el->xml->SetAttribute("x", TX(B.min[0]));
 				path_el->xml->SetAttribute("y", TY(B.min[1]) + TY(B.ly()));
 				path_el->xml->SetAttribute("width", TR(B.lx()));
 				path_el->xml->SetAttribute("height", TR(B.ly()));
-				path_el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
 
 				auto fig_el = el->NewChildSVGElement("circle");
 				fig_el->setStrokeColor(color);
@@ -3630,13 +3625,12 @@ namespace mtools
 				clip_el->xml->SetAttribute("id", uid.c_str());
 
 				auto path_el = clip_el->NewChildSVGElement("rect");
-				path_el->setFillColor(RGBc::c_Transparent);
-				path_el->setStrokeColor(RGBc::c_Transparent);
+				path_el->noFill();
+				path_el->noStroke();
 				path_el->xml->SetAttribute("x", TX(B.min[0]));
 				path_el->xml->SetAttribute("y", TY(B.min[1]) + TY(B.ly()));
 				path_el->xml->SetAttribute("width", TR(B.lx()));
 				path_el->xml->SetAttribute("height", TR(B.ly()));
-				path_el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
 				
 				auto fig_el = el->NewChildSVGElement("ellipse");
 				fig_el->setStrokeColor(color);
@@ -3879,14 +3873,12 @@ namespace mtools
 				clip_el->xml->SetAttribute("id", uid.c_str());
 
 				auto path_el = clip_el->NewChildSVGElement("rect");
-				path_el->setFillColor(RGBc::c_Transparent);
-				path_el->setStrokeColor(RGBc::c_Transparent);
+				path_el->noFill();
+				path_el->noStroke();
 				path_el->xml->SetAttribute("x", TX(B.min[0]));
 				path_el->xml->SetAttribute("y", TY(B.min[1]) + TY(B.ly()));
 				path_el->xml->SetAttribute("width", TR(B.lx()));
 				path_el->xml->SetAttribute("height", TR(B.ly()));
-				path_el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
-
 
 				auto fig_el = el->NewChildSVGElement("ellipse");
 				fig_el->setStrokeColor(color);
@@ -4121,71 +4113,79 @@ namespace mtools
 			 * THe width of the Arial font characters obtained using with the javascript below. 
 			 * Just run the script in Firefox, open the console with [CTRL]+[SHIFT]+K and copy the result. 
 			 * 
-			 <!DOCTYPE HTML>
+			<!DOCTYPE HTML>
 			<html>
-				<head>
-					<style>
-					body {
+			<head>
+				<style>
+				body {
 					margin: 0px;
 					padding: 0px;
 					}
-					</style>
-				</head>
+				</style>
+			</head>
 			<body data-rsssl=1>
-			<canvas id="myCanvas" width="578" height="200"></canvas>
+				<canvas id="myCanvas" width="578" height="200"></canvas>
 				<script>
 				var canvas = document.getElementById('myCanvas');
 				var context = canvas.getContext('2d');
-				context.font = '64px Times';
+				context.font = '64px Arial';
 				var i;
 				var s = "{";
-				for (i = 0; i < 256; i++) 
-					{
+				var j = 0; 
+				for (i = 0; i < 256; i++) {
 					var text = String.fromCharCode(i)		 
 					var metrics = context.measureText(text);
 					var width = metrics.width;
-					s += width.toString() + ((i != (255)) ? "," : "}");
+					j++; 
+					s += width.toString() + ((i != 255) ? "," : "}");
+					if (j == 10) {
+						s += "\n";			
+						j = 0; 
+						}
 					} 		 		 
 				console.log(s); // output result to console. 
 				</script>
 			</body>
-		    </html> 
+			</html>   
 			 **/
-			fVec2 textsize_in_Arial_64px() const
+			fVec2 textsize_in_Arial_64px(const double vspace) const
 				{
-				const double fontsize = 64; 
-				constexpr static double arial_64px_width[256] = { 0,0,0,0,0,0,0,0,0,16,16,16,16,16,0,0,0,0,0,0,0,0,0,0,0,0,0,0,16,16,16,16,16,21.316667556762695,
-					26.133333206176758,32,32,53.31666564941406,49.78333282470703,11.533333778381348,21.316667556762695,21.316667556762695,32,
-					36.099998474121094,16,21.316667556762695,16,17.78333282470703,32,32,32,32,32,32,32,32,32,32,17.78333282470703,17.78333282470703,
-					36.099998474121094,36.099998474121094,36.099998474121094,28.399999618530273,58.93333435058594,46.21666717529297,42.68333435058594,
-					42.68333435058594,46.21666717529297,39.099998474121094,35.599998474121094,46.21666717529297,46.21666717529297,21.316667556762695,
-					24.899999618530273,46.21666717529297,39.099998474121094,56.900001525878906,46.21666717529297,46.21666717529297,35.599998474121094,
-					46.21666717529297,42.68333435058594,35.599998474121094,39.099998474121094,46.21666717529297,46.21666717529297,60.400001525878906,
-					46.21666717529297,46.21666717529297,39.099998474121094,21.316667556762695,17.78333282470703,21.316667556762695,30.03333282470703,
-					32,21.316667556762695,28.399999618530273,32,28.399999618530273,32,28.399999618530273,21.316667556762695,32,32,17.78333282470703,
-					17.78333282470703,32,17.78333282470703,49.78333282470703,32,32,32,32,21.316667556762695,24.899999618530273,17.78333282470703,32,
-					32,46.21666717529297,32,32,28.399999618530273,30.71666717529297,12.816666603088379,30.71666717529297,34.63333511352539,0,0,0,0,0,
-					0,16,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,16,21.316667556762695,32,32,32,32,12.816666603088379,32,21.316667556762695,
-					48.63333511352539,17.649999618530273,32,36.099998474121094,0,48.63333511352539,32,25.600000381469727,35.13333511352539,19.183332443237305,
-					19.183332443237305,21.316667556762695,36.88333511352539,29,21.316667556762695,21.316667556762695,19.183332443237305,19.850000381469727,32,
-					48,48,48,28.399999618530273,46.21666717529297,46.21666717529297,46.21666717529297,46.21666717529297,46.21666717529297,46.21666717529297,
-					56.900001525878906,42.68333435058594,39.099998474121094,39.099998474121094,39.099998474121094,39.099998474121094,21.316667556762695,
-					21.316667556762695,21.316667556762695,21.316667556762695,46.21666717529297,46.21666717529297,46.21666717529297,46.21666717529297,
-					46.21666717529297,46.21666717529297,46.21666717529297,36.099998474121094,46.21666717529297,46.21666717529297,46.21666717529297,
-					46.21666717529297,46.21666717529297,46.21666717529297,35.599998474121094,32,28.399999618530273,28.399999618530273,28.399999618530273,
-					28.399999618530273,28.399999618530273,28.399999618530273,42.68333435058594,28.399999618530273,28.399999618530273,28.399999618530273,
-					28.399999618530273,28.399999618530273,17.78333282470703,17.78333282470703,17.78333282470703,17.78333282470703,32,32,32,32,32,32,32,
-					35.13333511352539,32,32,32,32,32,32,32,32 };
+				constexpr static double arial_64px_width[256] = { 0,0,0,0,0,0,0,0,0,17.78333282470703,
+							17.78333282470703,17.78333282470703,17.78333282470703,17.78333282470703,0,0,0,0,0,0,
+							0,0,0,0,0,0,0,0,17.78333282470703,17.78333282470703,
+							17.78333282470703,17.78333282470703,17.78333282470703,17.78333282470703,22.71666717529297,35.599998474121094,35.599998474121094,56.900001525878906,42.68333435058594,12.216666221618652,
+							21.316667556762695,21.316667556762695,24.899999618530273,37.38333511352539,17.78333282470703,21.316667556762695,17.78333282470703,17.78333282470703,35.599998474121094,35.599998474121094,
+							35.599998474121094,35.599998474121094,35.599998474121094,35.599998474121094,35.599998474121094,35.599998474121094,35.599998474121094,35.599998474121094,17.78333282470703,17.78333282470703,
+							37.38333511352539,37.38333511352539,37.38333511352539,35.599998474121094,64.96666717529297,42.68333435058594,42.68333435058594,46.21666717529297,46.21666717529297,42.68333435058594,
+							39.099998474121094,49.78333282470703,46.21666717529297,17.78333282470703,32,42.68333435058594,35.599998474121094,53.31666564941406,46.21666717529297,49.78333282470703,
+							42.68333435058594,49.78333282470703,46.21666717529297,42.68333435058594,39.099998474121094,46.21666717529297,42.68333435058594,60.400001525878906,42.68333435058594,42.68333435058594,
+							39.099998474121094,17.78333282470703,17.78333282470703,17.78333282470703,30.03333282470703,35.599998474121094,21.316667556762695,35.599998474121094,35.599998474121094,32,
+							35.599998474121094,35.599998474121094,17.78333282470703,35.599998474121094,35.599998474121094,14.216666221618652,14.216666221618652,32,14.216666221618652,53.31666564941406,
+							35.599998474121094,35.599998474121094,35.599998474121094,35.599998474121094,21.316667556762695,32,17.78333282470703,35.599998474121094,32,46.21666717529297,
+							32,32,32,21.383333206176758,16.633333206176758,21.383333206176758,37.38333511352539,0,0,0,
+							0,0,0,17.78333282470703,0,0,0,0,0,0,
+							0,0,0,0,0,0,0,0,0,0,
+							0,0,0,0,0,0,0,0,0,0,
+							17.78333282470703,21.316667556762695,35.599998474121094,35.599998474121094,35.599998474121094,35.599998474121094,16.633333206176758,35.599998474121094,21.316667556762695,47.150001525878906,
+							23.683332443237305,35.599998474121094,37.38333511352539,0,47.150001525878906,35.349998474121094,25.600000381469727,35.13333511352539,21.316667556762695,21.316667556762695,
+							21.316667556762695,36.88333511352539,34.38333511352539,21.316667556762695,21.316667556762695,21.316667556762695,23.383333206176758,35.599998474121094,53.38333511352539,53.38333511352539,
+							53.38333511352539,39.099998474121094,42.68333435058594,42.68333435058594,42.68333435058594,42.68333435058594,42.68333435058594,42.68333435058594,64,46.21666717529297,
+							42.68333435058594,42.68333435058594,42.68333435058594,42.68333435058594,17.78333282470703,17.78333282470703,17.78333282470703,17.78333282470703,46.21666717529297,46.21666717529297,
+							49.78333282470703,49.78333282470703,49.78333282470703,49.78333282470703,49.78333282470703,37.38333511352539,49.78333282470703,46.21666717529297,46.21666717529297,46.21666717529297,
+							46.21666717529297,42.68333435058594,42.68333435058594,39.099998474121094,35.599998474121094,35.599998474121094,35.599998474121094,35.599998474121094,35.599998474121094,35.599998474121094,
+							56.900001525878906,32,35.599998474121094,35.599998474121094,35.599998474121094,35.599998474121094,17.78333282470703,17.78333282470703,17.78333282470703,17.78333282470703,
+							35.599998474121094,35.599998474121094,35.599998474121094,35.599998474121094,35.599998474121094,35.599998474121094,35.599998474121094,35.13333511352539,39.099998474121094,35.599998474121094,
+							35.599998474121094,35.599998474121094,35.599998474121094,32,35.599998474121094,32 };
 
 				if (_text.size() == 0) return fVec2(0.0, 0.0);
 				double mx = 0, x = 0;
-				double my = 64.0;
+				double my = vspace;
 				for (size_t i = 0; i < _text.size(); i++)
 					{
 					const char c = _text[i];
 					if (c >= 32) { x += arial_64px_width[c]; }
 					else if (c == '\t') { x += 4 * arial_64px_width[' ']; }
-					else if (c == '\n') { if (x > mx) { mx = x; } x = 0;  my += fontsize; }
+					else if (c == '\n') { if (x > mx) { mx = x; } x = 0;  my += vspace; }
 					}
 				if (x > mx) { mx = x; }
 				return fVec2(mx, my);
@@ -4212,10 +4212,12 @@ namespace mtools
 
 			virtual void svg(mtools::SVGElement * el) const override
 				{
-				const double fontsize = 64;
-				fVec2 adim = textsize_in_Arial_64px();	// size of the text template in 64px using Arial font
+				const double fontsize = 64;				// real font size
+				const double vspace = 82;				// vertical spacing to use
 
-				fBox2 box = computeBB(adim);			// compute the bounding box. 
+
+				fVec2 adim = textsize_in_Arial_64px(vspace); // size of the text template in 64px using Arial font with given spacing 
+				fBox2 box = computeBB(adim);				 // compute the bounding box. 
 
 				// draw the background first if needed
 				RGBc bkcol = _bkcolor.getMultOpacity(_op);
@@ -4223,21 +4225,22 @@ namespace mtools
 					{ 
 					el->SetName("g");
 					auto bk_el = el->NewChildSVGElement("rect");
-					bk_el->setStrokeColor(RGBc::c_Transparent);
+					bk_el->noStroke();
 					bk_el->setFillColor(bkcol);
 					bk_el->xml->SetAttribute("x", TX(box.min[0]));
 					bk_el->xml->SetAttribute("y", TY(box.min[1]) + TY(box.ly()));
 					bk_el->xml->SetAttribute("width", TR(box.lx()));
 					bk_el->xml->SetAttribute("height", TR(box.ly()));
-					bk_el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
 					el = el->NewChildSVGElement("text");
 					}
 
-				if ((box.lx() <= 0)||(box.ly() <= 0)) return; // no text to draw
+				if ((box.lx() <= 0)||(box.ly() <= 0)) return;	// no text to draw
 
-				double fs = fontsize * box.ly() / adim.Y();		// compute the font size
-				double xx = TX(box.min[0]);						// and the position
-				double yy = TY(box.min[1]) + TY(box.ly()) - TY(fs/2 + 5.5);	// 5.5 is for centering...
+				const double fs = fontsize * box.ly() / adim.Y();				// compute scaled font size
+				const double vs = vspace * box.ly() / adim.Y();					// and the scaled vertical spacing
+				const double xx = TX(box.min[0]);								// and the position
+				const double yy = TY(box.min[1]) + TY(box.ly()) - TY(fs/2);		//
+				const double ce = (vspace-fontsize) * box.ly() / (2*adim.Y());	// needed to center when vertical spacing is larger then fontsize.
 
 				// main text element. 
 				el->SetName("text");
@@ -4250,12 +4253,12 @@ namespace mtools
 				el->setFillColor(_textcolor.getMultOpacity(_op));
 
 				// draw text line by line
-				auto svec = parseSVGtext();  // parse lines, indent and add non breable spaces
+				auto svec = parseSVGtext();  // parse lines, indent and add non breakable spaces
 				for (size_t i=0; i< svec.size(); i++)
 					{
 					auto tspan_el = el->NewChildSVGElement("tspan");
 					tspan_el->xml->SetAttribute("x", xx);
-					tspan_el->xml->SetAttribute("dy", ((i == 0) ? 0.0 : fs));
+					tspan_el->xml->SetAttribute("dy", ((i == 0) ? ce : vs));
 					tspan_el->xml->SetAttribute("white-space", "pre");
 					tspan_el->xml->SetText(svec[i].c_str());
 					}
