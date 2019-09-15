@@ -4111,7 +4111,8 @@ namespace mtools
 			 * Return the size of the text when printed using Arial font in 64px height. 			 * 
 			 * 
 			 * THe width of the Arial font characters obtained using with the javascript below. 
-			 * Just run the script in Firefox, open the console with [CTRL]+[SHIFT]+K and copy the result. 
+			 * Just run the javascript  script in Firefox, open the console with [CTRL]+[SHIFT]+K 
+			 * and copy the result. 
 			 * 
 			<!DOCTYPE HTML>
 			<html>
