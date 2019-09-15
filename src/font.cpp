@@ -257,6 +257,12 @@ namespace mtools
 		}
 
 
+	int gFontNearestSize(int fontsize, int  method)
+		{
+		internals_font::_creategFont();
+		return internals_font::_gfont->nearestSize(fontsize, method);
+		}
+
 
 	int gFontFindSize(const std::string & text, mtools::iVec2 boxsize, int  method, int minheight, int maxheight)
 		{

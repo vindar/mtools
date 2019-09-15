@@ -490,6 +490,20 @@ namespace mtools
 		const Font & gFont(int fontsize, int  method = MTOOLS_NATIVE_FONT_BELOW);
 
 
+
+		/**
+		 * Return the size of the nearest font matching the method criteria for the global font.
+		 *
+		 * @param	fontsize	the requested size of the font.
+		 * @param	method  	method to choose the font in case no native font matches this size. One
+		 * 						of MTOOLS_EXACT_FONT, MTOOLS_NATIVE_FONT_BELOW, MTOOLS_NATIVE_FONT_ABOVE.
+		 *
+		 * @return	The corresponding size.
+		 **/
+		int gFontNearestSize(int fontsize, int  method = MTOOLS_NATIVE_FONT_BELOW);
+
+
+
 		/**
 		 * Compute the global font required size in order to adjust a text to a given box.
 		 * 

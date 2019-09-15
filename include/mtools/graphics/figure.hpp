@@ -3969,22 +3969,21 @@ namespace mtools
 		**********************************************************/
 		FIGURECLASS_BEGIN(Text)
 
+			static const int max_font_size = 128;	//maximum font size to use
 
-			static const int default_font_size = 64;
+			std::string		_text;				// text to draw
+			fVec2			_pos;				// position in the canvas
+			fVec2			_size;				// size of the box (0 if auto adjust in a dimension). 
+			int				_text_pos;			// localistion of the anchor point of the text box
+			RGBc			_textcolor;			// text color
+			RGBc			_bkcolor;			// background color
+			float			_op;				// global opacity multiplier
 
-			std::string		_text;
-			fVec2			_pos;
-			fVec2			_size;
-			int				_text_pos;
-			RGBc			_textcolor;
-			RGBc			_bkcolor;
-			float			_op;
-			int				_base_font_size;
+			fBox2			_canvas_bb;			// bounding box on the canvas
+			iVec2			_text_max_font_dim;	// size of the text when using max size font
 
-			// tmp object recreated when needed.
-			Image	_im;	// the image
-			fBox2	_bb;	// corresponding bounding box
-
+			Image			_im;				// last image used
+			int				_im_font_size;		// font size used for the image
 
 			/**
 			 * Constructor
@@ -4001,34 +4000,42 @@ namespace mtools
 			 * @param	textcolor	  	the text color.
 			 * @param	bkcolor		  	the background color.
 			 * @param	op			  	global opacity factor to apply to the object (text + background).
-			 * @param	base_font_size	font size to use for drawing (larger = better graphics when zooming but more memory). 
 			 **/
-			Text(std::string text, fVec2 pos, fVec2 size, int txt_pos = MTOOLS_TEXT_XCENTER | MTOOLS_TEXT_YCENTER, RGBc textcolor = RGBc::c_Black, RGBc bkcolor = RGBc::c_Transparent, float op = 1.0f, int base_font_size = default_font_size)
-				: _text(text) , _pos(pos) , _size(size) , _text_pos(txt_pos), _textcolor(textcolor), _bkcolor(bkcolor), _op(op), _base_font_size(base_font_size)
+			Text(std::string text, fVec2 pos, fVec2 size, int txt_pos = MTOOLS_TEXT_XCENTER | MTOOLS_TEXT_YCENTER, RGBc textcolor = RGBc::c_Black, RGBc bkcolor = RGBc::c_Transparent, float op = 1.0f)
+				: _text(text) , _pos(pos) , _size(size) , _text_pos(txt_pos), _textcolor(textcolor), _bkcolor(bkcolor), _op(op)
 				{
-				MTOOLS_INSURE((_size.X() > 0) || (_size.Y() > 0));	// both size cannot be 0
-				_im.empty();
-				iVec2 idim = gFont(_base_font_size, MTOOLS_NATIVE_FONT_ABOVE).textDimension(_text);
-				_bb = computeBB({ (double)idim.X(), (double)idim.Y() });
+				MTOOLS_INSURE((_size.X() > 0) || (_size.Y() > 0));	// both size cannot be simultaneously 0
+
+				_text_max_font_dim = gFont(max_font_size, MTOOLS_NATIVE_FONT_ABOVE).textDimension(_text);	// compute text dimensions with max font size				
+				if ((_text_max_font_dim.X() == 0) || (_text_max_font_dim.Y() == 0)) { _text_max_font_dim.X() = 0;  MTOOLS_DEBUG("Figure::Text has no text to draw !"); }
+
+				_canvas_bb = _canvas_compute_bb({ (double)_text_max_font_dim.X(), (double)_text_max_font_dim.Y() }); // compute the bounding box of the text in the canvas. 
+
+				_im.empty();		// no image drawn yet
+				_im_font_size = 0;  // so no font size
 				}
 
 
 			
 			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 				{
-				if (_im.isEmpty()) { createImage(); }						// create image on first use. 
-				const fBox2 imBox = im.imagefBox();							// get the image box
-				const fBox2 rbb = boxTransform(_bb, R, imBox);				// compute the corrsponding subbox to blend into the image
+				if (_text_max_font_dim.X() == 0) return;							// nothing to draw. 
+				_recreateImage(im, R);												// recreate the image if needed
+				const fBox2 imBox = im.imagefBox();									// get the image box
+				const fBox2 rbb = boxTransform(_canvas_bb, R, imBox);				// compute the corresponding subbox to blend into the image
 				im.blend_rescaled((highQuality ? 10 : 0), _im, iBox2(rbb), _op);	// blend into im
 				}
 
 
+
+			/* return the bounding box */
 			virtual fBox2 boundingBox() const override
 				{
-				return _bb;
+				return _canvas_bb;
 				}
 
 
+			/* print info int a std::string */
 			virtual std::string toString(bool debug = false) const override
 				{
 				OSS os; 
@@ -4046,30 +4053,109 @@ namespace mtools
 				os << "textcolor "	<< _textcolor << "\n";
 				os << "bkcolor "	<< _bkcolor << "\n";
 				os << "opacity " << _op << "\n";
-				os << "base font size " << _base_font_size << "\n";
 				os << "\n";
 				return os.str();
 				}
 
 
+			/* serialize the figure */ 
 			virtual void serialize(OBaseArchive & ar) const override
 				{
-				ar & _text & _pos & _size & _text_pos & _textcolor & _bkcolor & _op & _base_font_size;
+				ar & _text & _pos & _size & _text_pos & _textcolor & _bkcolor & _op;
 				}
 
 
+			/* ctor for deserialization*/
 			Text(IBaseArchive & ar) 
 				{
-				ar & _text & _pos & _size & _text_pos & _textcolor & _bkcolor & _op & _base_font_size;
-				_im.empty();
-				iVec2 idim = gFont(_base_font_size, MTOOLS_NATIVE_FONT_ABOVE).textDimension(_text);
-				_bb = computeBB({(double)idim.X(), (double)idim.Y()});
+				ar & _text & _pos & _size & _text_pos & _textcolor & _bkcolor & _op;
+
+				_text_max_font_dim = gFont(max_font_size, MTOOLS_NATIVE_FONT_ABOVE).textDimension(_text);	// compute text dimensions with max font size				
+				if ((_text_max_font_dim.X() == 0) || (_text_max_font_dim.Y() == 0)) { _text_max_font_dim.X() = 0;  MTOOLS_DEBUG("Figure::Text has no text to draw !"); }
+
+				_canvas_bb = _canvas_compute_bb({ (double)_text_max_font_dim.X(), (double)_text_max_font_dim.Y() }); // compute the bounding box of the text in the canvas. 
+
+				_im.empty();		// no image drawn yet
+				_im_font_size = 0;  // so no font size
 				}
 
 
-			/* compute the real bounding box from a template size */
-			 fBox2 computeBB(fVec2 dim) const
+
+
+			virtual void svg(mtools::SVGElement * el) const override
 				{
+				const double fontsize = 64;				// real font size
+				const double vspace = 82;				// vertical spacing to use
+
+				if (_text_max_font_dim.X() == 0)
+					{
+					el->Comment("Empty text, doing nothing.");
+					return;
+					}
+
+				fVec2 adim = _textsize_in_Arial_64px(vspace);	// size of the text template in 64px using Arial font with given spacing 
+				fBox2 box = _canvas_compute_bb(adim);			// compute the bounding box. 
+
+				// draw the background first if needed
+				RGBc bkcol = _bkcolor.getMultOpacity(_op);
+				if (bkcol.opacity() > 0)
+					{ 
+					el->SetName("g");
+					auto bk_el = el->NewChildSVGElement("rect");
+					bk_el->noStroke();
+					bk_el->setFillColor(bkcol);
+					bk_el->xml->SetAttribute("x", TX(box.min[0]));
+					bk_el->xml->SetAttribute("y", TY(box.min[1]) + TY(box.ly()));
+					bk_el->xml->SetAttribute("width", TR(box.lx()));
+					bk_el->xml->SetAttribute("height", TR(box.ly()));
+					el = el->NewChildSVGElement("text");
+					}
+
+				if ((box.lx() <= 0)||(box.ly() <= 0)) return;	// no text to draw
+
+				const double fs = fontsize * box.ly() / adim.Y();				// compute scaled font size
+				const double vs = vspace * box.ly() / adim.Y();					// and the scaled vertical spacing
+				const double xx = TX(box.min[0]);								// and the position
+				const double yy = TY(box.min[1]) + TY(box.ly()) - TY(fs/2);		//
+				const double ce = (vspace-fontsize) * box.ly() / (2*adim.Y());	// needed to center when vertical spacing is larger then fontsize.
+
+				// main text element. 
+				el->SetName("text");
+				el->xml->SetAttribute("x", xx);
+				el->xml->SetAttribute("y", yy);
+				el->xml->SetAttribute("font-size", fs);
+				el->xml->SetAttribute("font-family", "Arial");
+				el->xml->SetAttribute("dominant-baseline", "middle");
+				el->xml->SetAttribute("text-anchor", "start");
+				el->setFillColor(_textcolor.getMultOpacity(_op));
+
+				// draw text line by line
+				auto svec = _parseSVGtext();  // parse lines, indent and add non breakable spaces
+				for (size_t i=0; i< svec.size(); i++)
+					{
+					auto tspan_el = el->NewChildSVGElement("tspan");
+					tspan_el->xml->SetAttribute("x", xx);
+					tspan_el->xml->SetAttribute("dy", ((i == 0) ? ce : vs));
+					tspan_el->xml->SetAttribute("white-space", "pre");
+					tspan_el->xml->SetText(svec[i].c_str());
+					}
+
+				return;
+				}
+
+
+
+		private:
+
+
+
+
+			/* compute the canvas bounding box when the text has ratio dim (for some font) */
+			 fBox2 _canvas_compute_bb(fVec2 dim) const
+				{
+
+				 if ((dim.X() == 0) || (dim.Y() == 0)) { dim = { 1.0,1.0 }; } // empty text has unit ratio
+
 				fVec2 rsize = _size;
 				if (rsize.X() <= 0.0)
 					{ // must adjust x
@@ -4094,17 +4180,36 @@ namespace mtools
 				}
 
 
-
-			/* recreate the image */
-			void createImage()
-				{
-				auto & font = gFont(_base_font_size, MTOOLS_NATIVE_FONT_ABOVE);								// get the font
-				iVec2 dim = font.textDimension(_text);														// text dimension
-				_im.resizeRaw(dim, true);																	// resize to the good dimension. 
-				_im.clear(_bkcolor);																		// draw the background					
-				_im.draw_text(iVec2{ 0,0 }, _text, MTOOLS_TEXT_LEFT | MTOOLS_TEXT_TOP, _textcolor, &font);	// draw the text				
+			 /* Compute the real font size that should be on the screen */
+			 double _screenFontSize(Image & im, const fBox2 & R) const
+				{	
+				 const fBox2 imBox = im.imagefBox();								// get the image box
+				 const fBox2 rbb = boxTransform(_canvas_bb, R, imBox);				// compute the corresponding subbox to blend into the image
+				 return(rbb.ly() * max_font_size / _text_max_font_dim.Y());		
 				}
 
+
+
+
+			/* recreate the image only if needed, optimized for a given screen range*/
+			void _recreateImage(Image & im, const fBox2 & R)
+				{
+				double screen_fs = _screenFontSize(im, R);						// find the real (double valued) fontsize needed. 
+				if (screen_fs < 4) screen_fs = 4;								// clamp font size value
+				if (screen_fs > max_font_size) screen_fs = max_font_size;		//
+
+				int good_fs = gFontNearestSize((int)ceil(screen_fs), MTOOLS_NATIVE_FONT_ABOVE);	// convert to the closest native font	
+
+				if ((_im_font_size >= good_fs) && ((double)_im_font_size <= (2*good_fs))) return; // no need to recreate image
+
+				// ok, we recreate the image with font size good_fs
+				auto & font = gFont(good_fs);																// get the font
+				iVec2 dim = font.textDimension(_text);														// text dimension
+				_im.resizeRaw(dim, true);																	// resize to the good dimension (release previous buffer) 
+				_im.clear(_bkcolor);																		// draw the background					
+				_im.draw_text(iVec2{ 0,0 }, _text, MTOOLS_TEXT_LEFT | MTOOLS_TEXT_TOP, _textcolor, &font);	// draw the text				
+				_im_font_size = good_fs;																	// remember the new font size for the image
+				}
 
 
 			/**   
@@ -4149,7 +4254,7 @@ namespace mtools
 			</body>
 			</html>   
 			 **/
-			fVec2 textsize_in_Arial_64px(const double vspace) const
+			fVec2 _textsize_in_Arial_64px(const double vspace) const
 				{
 				constexpr static double arial_64px_width[256] = { 0,0,0,0,0,0,0,0,0,17.78333282470703,
 							17.78333282470703,17.78333282470703,17.78333282470703,17.78333282470703,0,0,0,0,0,0,
@@ -4193,8 +4298,9 @@ namespace mtools
 				}
 
 
+
 			/** parse the text before putting it in SVG. */
-			std::vector<std::string> parseSVGtext() const
+			std::vector<std::string> _parseSVGtext() const
 				{
 				std::vector<std::string> svec; 
 				mtools::ostringstream os;
@@ -4209,65 +4315,6 @@ namespace mtools
 				svec.push_back(os.str());
 				return svec;
 				}
-
-
-			virtual void svg(mtools::SVGElement * el) const override
-				{
-				const double fontsize = 64;				// real font size
-				const double vspace = 82;				// vertical spacing to use
-
-
-				fVec2 adim = textsize_in_Arial_64px(vspace); // size of the text template in 64px using Arial font with given spacing 
-				fBox2 box = computeBB(adim);				 // compute the bounding box. 
-
-				// draw the background first if needed
-				RGBc bkcol = _bkcolor.getMultOpacity(_op);
-				if (bkcol.opacity() > 0)
-					{ 
-					el->SetName("g");
-					auto bk_el = el->NewChildSVGElement("rect");
-					bk_el->noStroke();
-					bk_el->setFillColor(bkcol);
-					bk_el->xml->SetAttribute("x", TX(box.min[0]));
-					bk_el->xml->SetAttribute("y", TY(box.min[1]) + TY(box.ly()));
-					bk_el->xml->SetAttribute("width", TR(box.lx()));
-					bk_el->xml->SetAttribute("height", TR(box.ly()));
-					el = el->NewChildSVGElement("text");
-					}
-
-				if ((box.lx() <= 0)||(box.ly() <= 0)) return;	// no text to draw
-
-				const double fs = fontsize * box.ly() / adim.Y();				// compute scaled font size
-				const double vs = vspace * box.ly() / adim.Y();					// and the scaled vertical spacing
-				const double xx = TX(box.min[0]);								// and the position
-				const double yy = TY(box.min[1]) + TY(box.ly()) - TY(fs/2);		//
-				const double ce = (vspace-fontsize) * box.ly() / (2*adim.Y());	// needed to center when vertical spacing is larger then fontsize.
-
-				// main text element. 
-				el->SetName("text");
-				el->xml->SetAttribute("x", xx);
-				el->xml->SetAttribute("y", yy);
-				el->xml->SetAttribute("font-size", fs);
-				el->xml->SetAttribute("font-family", "Arial");
-				el->xml->SetAttribute("dominant-baseline", "middle");
-				el->xml->SetAttribute("text-anchor", "start");
-				el->setFillColor(_textcolor.getMultOpacity(_op));
-
-				// draw text line by line
-				auto svec = parseSVGtext();  // parse lines, indent and add non breakable spaces
-				for (size_t i=0; i< svec.size(); i++)
-					{
-					auto tspan_el = el->NewChildSVGElement("tspan");
-					tspan_el->xml->SetAttribute("x", xx);
-					tspan_el->xml->SetAttribute("dy", ((i == 0) ? ce : vs));
-					tspan_el->xml->SetAttribute("white-space", "pre");
-					tspan_el->xml->SetText(svec[i].c_str());
-					}
-
-				return;
-				}
-
-
 
 
 

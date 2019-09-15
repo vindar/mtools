@@ -335,13 +335,10 @@ void testSVG()
 			canvas(Figure::ThickCirclePart(BOX_SPLIT_UP_RIGHT, { -30, 100 }, 10, 5,  true, RGBc::c_Gray, RGBc::c_Red.getMultOpacity(0.5)), 1);
 			canvas(Figure::ThickCirclePart(BOX_SPLIT_DOWN_RIGHT, { -30, 100 },  10, 5,  false, RGBc::c_Gray,  RGBc::c_Green.getMultOpacity(0.5)), 1);
 
+			std::string s = "Le Lorem Ipsum est simplement du faux texte employé dans la composition et la mise en page avant impression.\nLe Lorem Ipsum est le faux texte standard de l'imprimerie depuis les années 1500, quand un imprimeur anonyme\nassembla ensemble des morceaux de texte pour réaliser un livre spécimen de polices de texte. Il n'a pas fait\nque survivre cinq siècles, mais s'est aussi adapté à la bureautique informatique, sans que son contenu n'en soit\nmodifié. Il a été popularisé dans les années 1960 grâce à la vente de feuilles Letraset contenant des passages du\nLorem Ipsum, et, plus récemment, par son inclusion dans des applications de mise en page de texte, comme Aldus\nPageMaker.";
 
 
-
-			std::string s = "Lorem Ipsum";
-
-
-			canvas(Figure::Text(s, { 200, 100 }, { 0, 50 }, MTOOLS_TEXT_TOPRIGHT, RGBc::c_Red, RGBc::c_Blue.getMultOpacity(0.5f), 1.0f, 64), 0);
+			canvas(Figure::Text(s, { 200, 100 }, { 0, 50 }, MTOOLS_TEXT_TOPRIGHT, RGBc::c_Black, RGBc::c_Red.getMultOpacity(0.2f), 1.0f), 0);
 
 			/*Petit texte\n  qui ne semble\n\tpas long  ...*/
 
@@ -415,8 +412,8 @@ int main(int argc, char *argv[])
 	auto canvas = makeFigureCanvas();
 
 	canvas(Figure::Text("Hello World !", { 0.0, 0.0 }, { -20.0, 20.0 }, MTOOLS_TEXT_RIGHT | MTOOLS_TEXT_YCENTER, RGBc::c_Red, RGBc::c_Blue.getMultOpacity(0.5) ),0); 
-	canvas(Figure::Text("A", { 0.0, 0.0 }, { 10.0, 0.0 }, MTOOLS_TEXT_LEFT | MTOOLS_TEXT_TOP, RGBc::c_Red, RGBc::c_Blue.getMultOpacity(0.5),1.0f,256), 0);
-	canvas(Figure::Text("B", { 0.0, 0.0 }, { 10.0, 0.0 }, MTOOLS_TEXT_LEFT | MTOOLS_TEXT_BOTTOM, RGBc::c_Red, RGBc::c_Blue.getMultOpacity(0.5), 1.0f, 32), 0);
+	canvas(Figure::Text("A", { 0.0, 0.0 }, { 10.0, 0.0 }, MTOOLS_TEXT_LEFT | MTOOLS_TEXT_TOP, RGBc::c_Red, RGBc::c_Blue.getMultOpacity(0.5),1.0f), 0);
+	canvas(Figure::Text("B", { 0.0, 0.0 }, { 10.0, 0.0 }, MTOOLS_TEXT_LEFT | MTOOLS_TEXT_BOTTOM, RGBc::c_Red, RGBc::c_Blue.getMultOpacity(0.5), 1.0f), 0);
 
 	canvas(Figure::Text("ceci est un text\navec plusieurs lignes\n... yopla :)", { 50.0, 20.0 }, { 130.0, 0.0 }, MTOOLS_TEXT_CENTER, RGBc::c_Black, RGBc::c_Blue.getMultOpacity(0.1f)), 0);
 
