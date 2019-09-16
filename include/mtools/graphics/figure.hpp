@@ -332,9 +332,14 @@ namespace mtools
 		 * later using loadSVG()
 		 *
 		 * @param	filename	name of the file.
-		 * @param	minBB   	True to use the minimal bounding box, false to use the main bounding box.
+		 * @param	minBB   	(Optional) True to use the minimal bounding box, false to use the main
+		 * 						bounding box.
+		 * @param	SVGSize 	(Optional) Size of the svg drawing. If both number are negative, natural
+		 * 						size is used. If only one number is negative, it is adjusted to keep the
+		 * 						aspect ratio. If both number are positve, the size is maximized in order to
+		 * 						keep the aspect ratio and stay in these dimensions.
 		 **/
-		void saveSVG(const std::string & filename, bool minBB = true) const
+		void saveSVG(const std::string & filename, bool minBB = true, fVec2 SVGSize = fVec2(-1, -1)) const
 			{
 			tinyxml2::XMLDocument xmlDoc;									// create main document
 			xmlDoc.InsertEndChild(xmlDoc.NewDeclaration());					// standard xml declaration
@@ -373,12 +378,40 @@ namespace mtools
 					});
 				}
 
+			// compute the size of the SVG drawing. 
+			double svg_lx, svg_ly;
+			if ((SVGSize.X() <= 0) && (SVGSize.Y() <= 0))
+				{	
+				svg_lx = bb.lx(); 
+				svg_ly = bb.ly(); 
+				}
+			else
+				{
+				if (SVGSize.X() <= 0)
+					{
+					svg_ly = SVGSize.Y();
+					svg_lx = bb.lx() * SVGSize.Y() / bb.ly();
+					}
+				else if (SVGSize.Y() <= 0)
+					{
+					svg_lx = SVGSize.X();
+					svg_ly = bb.ly() * SVGSize.X() / bb.lx();
+					}
+				else
+					{
+					fBox2 BR = fBox2(0.0, SVGSize.X(), 0.0, SVGSize.Y()).fixedRatioEnclosedRect(bb.lx() / bb.ly());
+					svg_lx = BR.lx(); 
+					svg_ly = BR.ly();
+					}
+				}
+			 
+			
 			// set <svg> attributes
 			svg->SetAttribute("version", "1.1");
 			svg->SetAttribute("xmlns", "http://www.w3.org/2000/svg");
 			svg->SetAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
-			svg->SetAttribute("width", bb.lx());
-			svg->SetAttribute("height", bb.ly());
+			svg->SetAttribute("width", svg_lx);
+			svg->SetAttribute("height", svg_ly);
 			mtools::ostringstream os; 
 			os << bb.min[0] << " " << -(bb.max[1]) << " " << bb.lx() << " " << bb.ly();
 			svg->SetAttribute("viewBox", os.toString().c_str());

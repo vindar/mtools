@@ -283,6 +283,7 @@ void testSVG()
 		{
 			auto canvas = makeFigureCanvas(2);
 
+			/*
 			canvas(Figure::CircleDot(fVec2{ 50, 50 }, RGBc::c_Green), 1);
 			canvas(Figure::SquareDot(fVec2{ 60, 50 }, RGBc::c_Green.getMultOpacity(0.5f)), 1);
 
@@ -334,11 +335,15 @@ void testSVG()
 			canvas(Figure::ThickCirclePart(BOX_SPLIT_LEFT, { -30, 100 } , 10, 3, true, RGBc::c_Gray, RGBc::c_Blue.getMultOpacity(0.5)), 1);
 			canvas(Figure::ThickCirclePart(BOX_SPLIT_UP_RIGHT, { -30, 100 }, 10, 5,  true, RGBc::c_Gray, RGBc::c_Red.getMultOpacity(0.5)), 1);
 			canvas(Figure::ThickCirclePart(BOX_SPLIT_DOWN_RIGHT, { -30, 100 },  10, 5,  false, RGBc::c_Gray,  RGBc::c_Green.getMultOpacity(0.5)), 1);
+			*/
 
-			std::string s = "Le Lorem Ipsum est simplement du faux texte employé dans la composition et la mise en page avant impression.\nLe Lorem Ipsum est le faux texte standard de l'imprimerie depuis les années 1500, quand un imprimeur anonyme\nassembla ensemble des morceaux de texte pour réaliser un livre spécimen de polices de texte. Il n'a pas fait\nque survivre cinq siècles, mais s'est aussi adapté à la bureautique informatique, sans que son contenu n'en soit\nmodifié. Il a été popularisé dans les années 1960 grâce à la vente de feuilles Letraset contenant des passages du\nLorem Ipsum, et, plus récemment, par son inclusion dans des applications de mise en page de texte, comme Aldus\nPageMaker.";
+			std::string s = "Lorem Ipsum";
+
+			canvas(Figure::Text(s, { 50, 100 }, { 200, 0 }, MTOOLS_TEXT_CENTERTOP, RGBc::c_Black, RGBc::c_Red.getMultOpacity(0.2f), 1.0f), 0);
+			canvas(Figure::ThickRectangle(fBox2(0,50,0,100),1,1, true, RGBc::c_Red), 0);
 
 
-			canvas(Figure::Text(s, { 200, 100 }, { 0, 50 }, MTOOLS_TEXT_TOPRIGHT, RGBc::c_Black, RGBc::c_Red.getMultOpacity(0.2f), 1.0f), 0);
+			canvas.saveSVG("azerty.svg", true, {0, 500});
 
 			/*Petit texte\n  qui ne semble\n\tpas long  ...*/
 
@@ -397,12 +402,7 @@ void testfont()
 int main(int argc, char *argv[])
 	{
 
-
-
-
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
-
-
 
 
 //	testfont();
