@@ -223,6 +223,17 @@ void makeDrawing()
 		}
 
 	cout << " done in " << Chronometer() << " ms\n";
+
+	if (L <= 10000)
+		{
+		canvas.saveSVG("noodle.svg");
+		cout << "Canvas saved as [noodle.svg]";
+		}
+	else
+		{
+		cout << "L = " << L << " is too large for saving in svg file\n";
+		}
+
 	Plotter2D plotter;
 	auto P = makePlot2DFigure(canvas);
 	plotter[P];
