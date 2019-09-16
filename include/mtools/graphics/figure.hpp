@@ -328,12 +328,13 @@ namespace mtools
 		/**
 		 * Save the canvas in a file in SVG format.
 		 * 
-		 * An archive of the canvas is added at the end of the file so it can be reconstructed
-		 * exactly later using loadSVG()
+		 * An archive of the canvas is added at the end of the file so it can be reconstructed exactly
+		 * later using loadSVG()
 		 *
-		 * @param	filename	name of the file. 
+		 * @param	filename	name of the file.
+		 * @param	minBB   	True to use the minimal bounding box, false to use the main bounding box.
 		 **/
-		void saveSVG(const std::string & filename) const
+		void saveSVG(const std::string & filename, bool minBB = true) const
 			{
 			tinyxml2::XMLDocument xmlDoc;									// create main document
 			xmlDoc.InsertEndChild(xmlDoc.NewDeclaration());					// standard xml declaration
@@ -353,7 +354,7 @@ namespace mtools
 			for (size_t i = 0; i < _nbLayers; i++)
 				{
 				// increase the bounding box to contain all elements in this layer. 
-				bb.swallowBox(_figLayers[i].mainBoundingBox()); 
+				bb.swallowBox( minBB ? _figLayers[i].minBoundingBox() : _figLayers[i].mainBoundingBox());
 
 				// Insert a group for this layer
 				tinyxml2::XMLElement * layer = xmlDoc.NewElement("g"); 
