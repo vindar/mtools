@@ -686,8 +686,8 @@ namespace mtools
 			 * @param	color	  color.
 			 */
 			CircleDot(fVec2 centerdot, RGBc color) : center(centerdot), radius(1.0), outlinecolor(color), fillcolor(color)
-			{
-			}
+				{
+				}
 
 
 			/**
@@ -698,9 +698,9 @@ namespace mtools
 			 * @param	color	  color.
 			 */
 			CircleDot(fVec2 centerdot, double rad, RGBc color) : center(centerdot), radius(rad), outlinecolor(color), fillcolor(color)
-			{
+				{
 				MTOOLS_ASSERT(rad >= 0);
-			}
+				}
 
 
 			/** Constructor. Dot with given size and color and outline. **/
@@ -744,16 +744,15 @@ namespace mtools
 
 
 			virtual void svg(mtools::SVGElement * el) const override
-			{
+				{
 				el->Comment("SVG cannot represent Figure::CircleDot correctly !");
 				el->SetName("circle");;
 				el->setFillColor(fillcolor);
-				el->setStrokeColor(outlinecolor);
 				el->xml->SetAttribute("cx", TX(center.X()));
 				el->xml->SetAttribute("cy", TY(center.Y()));
-				el->xml->SetAttribute("r", radius);	// not using TR() since it should not scale. 
-				el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
-			}
+				el->xml->SetAttribute("r", radius);	
+				el->tinyStroke(outlinecolor,fillcolor,radius); 
+				}
 
 		FIGURECLASS_END()
 
@@ -843,6 +842,7 @@ namespace mtools
 				el->xml->SetAttribute("y", TY(center.Y())-pw);
 				el->xml->SetAttribute("width", 2*pw);  // not using TR() since it should not scale
 				el->xml->SetAttribute("height", 2*pw); //
+				el->noStroke();
 				}
 
 
@@ -925,13 +925,12 @@ namespace mtools
 
 			virtual void svg(mtools::SVGElement * el) const override
 				{
-				el->SetName("line");;
-				el->setStrokeColor(color);
+				el->SetName("line");
 				el->xml->SetAttribute("x1", TX(x1));
 				el->xml->SetAttribute("y1", TY(y));
 				el->xml->SetAttribute("x2", TX(x2));
 				el->xml->SetAttribute("y2", TY(y));
-				el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+				el->tinyStroke(color, x2 - x1);
 				}
 
 		FIGURECLASS_END()
@@ -1003,12 +1002,11 @@ namespace mtools
 			virtual void svg(mtools::SVGElement * el) const override
 				{
 				el->SetName("line");
-				el->setStrokeColor(color);
 				el->xml->SetAttribute("x1", TX(x));
 				el->xml->SetAttribute("y1", TY(y1));
 				el->xml->SetAttribute("x2", TX(x));
 				el->xml->SetAttribute("y2", TY(y2));
-				el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+				el->tinyStroke(color, y2 - y1);
 				}
 
 		FIGURECLASS_END()
@@ -1081,16 +1079,11 @@ namespace mtools
 			virtual void svg(mtools::SVGElement * el) const override
 			{
 				el->SetName("line");
-				el->setStrokeColor(color);
 				el->xml->SetAttribute("x1", TX(P1.X()));
 				el->xml->SetAttribute("y1", TY(P1.Y()));
 				el->xml->SetAttribute("x2", TX(P2.X()));
 				el->xml->SetAttribute("y2", TY(P2.Y()));
-				if (pw != 0)
-					{
-					el->Comment("SVG cannot accurately represent Figure::Line with non zero penwidth, use ThickLine instead.");
-					}
-				el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+				el->tinyStroke(color, (P2 - P1).norm());
 			}
 
 		FIGURECLASS_END()
@@ -1166,18 +1159,13 @@ namespace mtools
 			virtual void svg(mtools::SVGElement * el) const override
 				{
 				el->SetName("polyline");
-				el->setStrokeColor(color);				
+				el->tinyStroke(color, bb);
+
 				el->noFill();
 				mtools::ostringstream os;
 
 				for (auto P : tab) { os << TX(P.X()) << "," << TY(P.Y()) << " "; }
 				el->xml->SetAttribute("points", os.toString().c_str());
-
-				if (pw != 0)
-					{
-					el->Comment("SVG cannot accurately represent Figure::PolyLine with non zero penwidth, use ThickPolyLine instead.");
-					}
-				el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
 				}
 
 		FIGURECLASS_END()
@@ -1266,8 +1254,7 @@ namespace mtools
 
 				if (thickness <= 0)
 					{
-					el->Comment("SVG cannot accurately represent Figure::ThickHorizontalLine with absolute thickness!");
-					el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+					el->tinyStroke(color, x1 - x2);
 					}
 				else
 					{
@@ -1363,8 +1350,7 @@ namespace mtools
 
 				if (thickness <= 0)
 					{
-					el->Comment("SVG cannot accurately represent Figure::ThickVerticalLine with absolute thickness!");
-					el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+					el->tinyStroke(color, y1 - y2);
 					}
 				else
 					{
@@ -1457,8 +1443,7 @@ namespace mtools
 				el->xml->SetAttribute("stroke-linecap", "butt");
 				if (thick <= 0)
 					{
-					el->Comment("SVG cannot accurately represent Figure::ThickLine with absolute thickness!");
-					el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+					el->tinyStroke(color, bb);
 					}
 				else
 					{
@@ -1565,8 +1550,7 @@ namespace mtools
 
 				if (thickness <= 0)
 					{
-					el->Comment("SVG cannot accurately represent Figure::ThickLine with absolute thickness!");
-					el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+					el->tinyStroke(color, bb);
 					}
 				else
 					{
@@ -1760,12 +1744,11 @@ namespace mtools
 			virtual void svg(mtools::SVGElement * el) const override
 				{
 				el->SetName("polygon");
-				el->setStrokeColor(color);
 				el->setFillColor(fillcolor);
 				mtools::ostringstream os; 
 				os << TX(P1.X()) << "," << TY(P1.Y()) << " " << TX(P2.X()) << "," << TY(P2.Y()) << " " << TX(P3.X()) << "," << TY(P3.Y());
 				el->xml->SetAttribute("points", os.toString().c_str());
-				el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+				el->tinyStroke(color, fillcolor, getBoundingBox(P1, P2, P3));
 				}
 
 
@@ -1853,7 +1836,7 @@ namespace mtools
 				mtools::ostringstream os; 
 				os << TX(P1.X()) << "," << TY(P1.Y()) << " " << TX(P2.X()) << "," << TY(P2.Y()) << " " << TX(P3.X()) << "," << TY(P3.Y()) << " " << TX(P4.X()) << "," << TY(P4.Y());
 				el->xml->SetAttribute("points", os.toString().c_str());
-				el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+				el->tinyStroke(color, fillcolor, getBoundingBox(P1, P2, P3, P4));
 				}
 
 
@@ -1946,7 +1929,7 @@ namespace mtools
 					os << TX(P.X()) << "," << TY(P.Y()) << " ";
 					}
 				el->xml->SetAttribute("points", os.toString().c_str());
-				el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+				el->tinyStroke(color, fillcolor, bb);
 				}
 
 		FIGURECLASS_END()
@@ -2034,7 +2017,7 @@ namespace mtools
 				el->xml->SetAttribute("y", TY(box.min[1]) + TY(box.ly()));
 				el->xml->SetAttribute("width", TR(box.lx()));
 				el->xml->SetAttribute("height", TR(box.ly()));
-				el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+				el->tinyStroke(color, fillcolor, box);
 				}
 
 		FIGURECLASS_END()
@@ -2126,12 +2109,10 @@ namespace mtools
 
 				if (thickness <= 0)
 					{
-					el->Comment("SVG cannot accurately represent Figure::ThickTriangle with absolute thickness!");
 					el->SetName("polygon");
-					el->setFillColor(fillcolor);
-					el->setStrokeColor(color);
 					el->xml->SetAttribute("points", os.toString().c_str());
-					el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+					el->setFillColor(fillcolor);
+					el->tinyStroke(color, fillcolor, getBoundingBox(P1, P2, P3));
 					return;
 					}
 
@@ -2244,12 +2225,10 @@ namespace mtools
 
 				if (thickness <= 0)
 					{
-					el->Comment("SVG cannot accurately represent Figure::ThickQuad with absolute thickness!");
 					el->SetName("polygon");
-					el->setFillColor(fillcolor);
-					el->setStrokeColor(color);
 					el->xml->SetAttribute("points", os.toString().c_str());
-					el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+					el->setFillColor(fillcolor);
+					el->tinyStroke(color, fillcolor, getBoundingBox(P1, P2, P3, P4));
 					return;
 					}
 
@@ -2367,12 +2346,10 @@ namespace mtools
 
 				if (thickness <= 0)
 					{
-					el->Comment("SVG cannot accurately represent Figure::ThickPolygon with absolute thickness!");
 					el->SetName("polygon");
-					el->setFillColor(fillcolor);
-					el->setStrokeColor(color);
 					el->xml->SetAttribute("points", os.toString().c_str());
-					el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+					el->setFillColor(fillcolor);
+					el->tinyStroke(color, fillcolor, bb);
 					return;
 					}
 
@@ -2488,15 +2465,13 @@ namespace mtools
 				{
 				if ((thickness_x <= 0)||(thickness_y <= 0))
 					{
-					el->Comment("SVG cannot accurately represent Figure::ThickRectangle with absolute thickness!");
 					el->SetName("rect");
-					el->setStrokeColor(color);
 					el->setFillColor(fillcolor);
 					el->xml->SetAttribute("x", TX(box.min[0]));
 					el->xml->SetAttribute("y", TY(box.min[1]) + TY(box.ly()));
 					el->xml->SetAttribute("width", TR(box.lx()));
 					el->xml->SetAttribute("height", TR(box.ly()));
-					el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+					el->tinyStroke(color, fillcolor, box);
 					return;
 					}
 
@@ -2636,12 +2611,11 @@ namespace mtools
 			virtual void svg(mtools::SVGElement * el) const override
 				{
 				el->SetName("circle");
-				el->setStrokeColor(color);
 				el->setFillColor(fillcolor);
 				el->xml->SetAttribute("cx", TX(center.X()));
 				el->xml->SetAttribute("cy", TY(center.Y()));
 				el->xml->SetAttribute("r", TR(radius));
-				el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+				el->tinyStroke(color, fillcolor, boundingBox());
 				return;
 				}
 
@@ -2755,14 +2729,12 @@ namespace mtools
 				{
 				if (thickness <= 0)
 					{
-					el->Comment("SVG cannot accurately represent Figure::ThickCircle with absolute thickness!");
 					el->SetName("circle");
-					el->setStrokeColor(color);
 					el->setFillColor(fillcolor);
 					el->xml->SetAttribute("cx", TX(center.X()));
 					el->xml->SetAttribute("cy", TY(center.Y()));
 					el->xml->SetAttribute("r", TR(radius));
-					el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+					el->tinyStroke(color, fillcolor, boundingBox());
 					return;
 					}
 
@@ -2909,14 +2881,13 @@ namespace mtools
 				path_el->xml->SetAttribute("height", TR(B.ly()));
 
 				auto fig_el = el->NewChildSVGElement("circle");
-				fig_el->setStrokeColor(color);
 				fig_el->setFillColor(fillcolor);
 				fig_el->xml->SetAttribute("clip-path", (mtools::toString("url(#") + uid + ")").c_str());
 				fig_el->xml->SetAttribute("cx", TX(center.X()));
 				fig_el->xml->SetAttribute("cy", TY(center.Y()));
 				fig_el->xml->SetAttribute("r", TR(radius));
-				fig_el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
-				return;	
+				fig_el->tinyStroke(color, fillcolor, boundingBox());
+				return;
 				}
 
 
@@ -3104,9 +3075,8 @@ namespace mtools
 
 				if (thickness <= 0)
 					{
-					fig_el->Comment("SVG cannot accurately represent Figure::ThickCirclePart with absolute thickness!");
 					fig_el->xml->SetAttribute("r", TR(radius));
-					fig_el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+					fig_el->tinyStroke(color, fillcolor, boundingBox());
 					return;
 					}
 
@@ -3262,13 +3232,12 @@ namespace mtools
 			virtual void svg(mtools::SVGElement * el) const override
 				{
 				el->SetName("ellipse");
-				el->setStrokeColor(color);
 				el->setFillColor(fillcolor);
 				el->xml->SetAttribute("cx", TX(center.X()));
 				el->xml->SetAttribute("cy", TY(center.Y()));
 				el->xml->SetAttribute("rx", TR(rx));
 				el->xml->SetAttribute("ry", TR(ry));
-				el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+				el->tinyStroke(color, fillcolor, boundingBox());
 				return;
 				}
 
@@ -3438,13 +3407,12 @@ namespace mtools
 					{
 					el->Comment("SVG cannot accurately represent Figure::ThickEllipse with absolute thickness!");
 					el->SetName("ellipse");
-					el->setStrokeColor(color);
 					el->setFillColor(fillcolor);
 					el->xml->SetAttribute("cx", TX(center.X()));
 					el->xml->SetAttribute("cy", TY(center.Y()));
 					el->xml->SetAttribute("rx", TR(rx));
 					el->xml->SetAttribute("ry", TR(ry));
-					el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+					el->tinyStroke(color, fillcolor, boundingBox());
 					return;
 					}
 
@@ -3633,13 +3601,12 @@ namespace mtools
 				path_el->xml->SetAttribute("height", TR(B.ly()));
 				
 				auto fig_el = el->NewChildSVGElement("ellipse");
-				fig_el->setStrokeColor(color);
 				fig_el->setFillColor(fillcolor);
 				fig_el->xml->SetAttribute("cx", TX(center.X()));
 				fig_el->xml->SetAttribute("cy", TY(center.Y()));
 				fig_el->xml->SetAttribute("rx", TR(rx));
 				fig_el->xml->SetAttribute("ry", TR(ry));
-				fig_el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+				fig_el->tinyStroke(color, fillcolor, boundingBox());
 				fig_el->xml->SetAttribute("clip-path", (mtools::toString("url(#") + uid + ")").c_str());
 				}
 
@@ -3890,10 +3857,9 @@ namespace mtools
 
 				if ((thickness_x  <= 0)||((thickness_y <= 0)))
 					{
-					fig_el->Comment("SVG cannot accurately represent Figure::ThickEllipsePart with absolute thickness!");
 					fig_el->xml->SetAttribute("rx", TR(rx));
 					fig_el->xml->SetAttribute("ry", TR(ry));
-					fig_el->xml->SetAttribute("vector-effect", "non-scaling-stroke");
+					fig_el->tinyStroke(color, fillcolor, boundingBox());
 					return;
 					}
 
