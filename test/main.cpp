@@ -337,23 +337,23 @@ void testSVG()
 			canvas(Figure::ThickCirclePart(BOX_SPLIT_DOWN_RIGHT, { -30, 100 },  10, 5,  false, RGBc::c_Gray,  RGBc::c_Green.getMultOpacity(0.5)), 1);
 			*/
 
-			std::string s = "Lorem Ipsum";
+			std::string s = "Lorem Ipsum venit";
 
-			canvas(Figure::Text(s, { 50, 100 }, { 200, 0 }, MTOOLS_TEXT_CENTERTOP, RGBc::c_Black, RGBc::c_Red.getMultOpacity(0.2f), 1.0f), 0);
-			canvas(Figure::ThickRectangle(fBox2(0,50,0,100),1,1, true, RGBc::c_Red), 0);
+			canvas(Figure::Text(s, { 0, 0 }, { 0, 20 }, MTOOLS_TEXT_CENTERTOP, RGBc::c_Black, RGBc::c_Red.getMultOpacity(0.2f), 1.0f), 0);
+			//canvas(Figure::ThickRectangle(fBox2(0,50,0,100),1,1, true, RGBc::c_Red), 0);
 
 
-			canvas.saveSVG("azerty.svg", true, {0, 500});
-
-			/*Petit texte\n  qui ne semble\n\tpas long  ...*/
-
-			canvas.saveSVG("fig.svg");
+			//canvas.saveSVG("azerty.svg", true, {0, 500});
 
 			auto PA = makePlot2DFigure(canvas);
 
 			Plotter2D plotter;              // Create a plotter object
 			plotter[PA];	                // Add the image to the list of objects to draw.  	
-			plotter.autorangeXY();          // Set the plotter range to fit the image.
+
+
+			plotter.range().setRange(fBox2(0, 200, -100,100));
+
+
 			plotter.plot();                 // start interactive display.
 		}
 		

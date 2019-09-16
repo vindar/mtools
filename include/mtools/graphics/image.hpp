@@ -6786,7 +6786,7 @@ namespace mtools
 					int64 new_dest_x = 0;
 					int64 new_sprite_sx = (int64)(sprite_sx * ((double)new_dest_sx) / ((double)dest_sx));
 					if (new_sprite_sx <= 0) return MAX_QUALITY;
-					int64 new_sprite_x = sprite_x + (int64)(sprite_sx * ((double)(-dest_x)) / ((double)(dest_sx)));
+					int64 new_sprite_x = sprite_x + (sprite_sx - new_sprite_sx);				//	int64 new_sprite_x = sprite_x + (int64)(sprite_sx * ((double)(-dest_x)) / ((double)(dest_sx)));  [old version] 
 					dest_x = new_dest_x;
 					dest_sx = new_dest_sx;
 					sprite_x = new_sprite_x;
@@ -6800,7 +6800,7 @@ namespace mtools
 					int64 new_dest_y = 0;
 					int64 new_sprite_sy = (int64)(sprite_sy * ((double)new_dest_sy) / ((double)dest_sy));
 					if (new_sprite_sy <= 0) return MAX_QUALITY;
-					int64 new_sprite_y = sprite_y + (int64)(sprite_sy * ((double)(-dest_y)) / ((double)(dest_sy)));
+					int64 new_sprite_y = sprite_y + (sprite_sy - new_sprite_sy);				 // int64 new_sprite_y = sprite_y + (int64)(sprite_sy * ((double)(-dest_y)) / ((double)(dest_sy))); [old version]
 					dest_y = new_dest_y;
 					dest_sy = new_dest_sy;
 					sprite_y = new_sprite_y;
@@ -6814,7 +6814,7 @@ namespace mtools
 					int64 new_sprite_x = 0;
 					int64 new_dest_sx = (int64)(dest_sx * ((double)new_sprite_sx) / ((double)sprite_sx));
 					if (new_dest_sx <= 0) return MAX_QUALITY;
-					int64 new_dest_x = dest_x + (int64)(dest_sx * ((double)(-sprite_x)) / ((double)(sprite_sx)));
+					int64 new_dest_x = dest_x + (dest_sx - new_dest_sx);						//int64 new_dest_x = dest_x + (int64)(dest_sx * ((double)(-sprite_x)) / ((double)(sprite_sx))); [old version]
 					dest_x = new_dest_x;
 					dest_sx = new_dest_sx;
 					sprite_x = new_sprite_x;
@@ -6828,7 +6828,7 @@ namespace mtools
 					int64 new_sprite_y = 0;
 					int64 new_dest_sy = (int64)(dest_sy * ((double)new_sprite_sy) / ((double)sprite_sy));
 					if (new_dest_sy <= 0) return MAX_QUALITY;
-					int64 new_dest_y = dest_y + (int64)(dest_sy * ((double)(-sprite_y)) / ((double)(sprite_sy)));
+					int64 new_dest_y = dest_y + (dest_sy - new_dest_sy);						// int64 new_dest_y = dest_y + (int64)(dest_sy * ((double)(-sprite_y)) / ((double)(sprite_sy))); [old version]
 					dest_y = new_dest_y;
 					dest_sy = new_dest_sy;
 					sprite_y = new_sprite_y;
@@ -6911,7 +6911,7 @@ namespace mtools
 					uint64 dest_stride = (uint64)_stride;
 					uint64 dst_sx = (uint64)dest_sx;
 					uint64 dst_sy = (uint64)dest_sy;
-					RGBc * src_data = sprite._data + (sprite_y*sprite._stride);
+					RGBc * src_data = sprite._data + (sprite_y*sprite._stride) + sprite_x;
 					uint64 src_stride = (uint64)sprite._stride;
 					uint64 src_sx = (uint64)sprite_sx;
 					uint64 src_sy = (uint64)sprite_sy;
