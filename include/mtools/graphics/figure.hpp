@@ -247,6 +247,28 @@ namespace mtools
 
 
 		/**
+		 * return the main bounding box for all layers
+		 **/
+		MTOOLS_FORCEINLINE BBox mainBoundingBox() const
+			{
+			BBox bb;
+			for (size_t i = 0; i < _nbLayers; i++) { bb.swallowBox(_figLayers[i].mainBoundingBox()); }
+			return bb;
+			}
+
+
+		 /**
+		  * return the minimum bounding box for all objects in all layers
+		  **/
+		MTOOLS_FORCEINLINE BBox minBoundingBox() const
+			{
+			BBox bb;
+			for (size_t i = 0; i < _nbLayers; i++) { bb.swallowBox(_figLayers[i].minBoundingBox()); }
+			return bb;
+			}
+
+
+		/**
 		* Return the number of objects in a given layer.
 		*/
 		MTOOLS_FORCEINLINE size_t size(size_t layer) const
