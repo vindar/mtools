@@ -4384,12 +4384,12 @@ namespace mtools
 			fBox2 _global_bb;											// the bounding box (relative to the group origin)
 			std::vector<internals_figure::FigureInterface *> _figvec;	// the vector containing all the figures
 			fVec2 _origin;												// position of the origin of the group with respect to the parent. 
-
+			fVec2 _scale;												// scale of the local corrdinated wrt the global coordinates
 
 			/**
 			* empty group
 			*/
-			Group() : _global_bb(), _figvec(), _origin(0.0,0.0) , _dis(false)
+			Group() : _global_bb(), _figvec(), _origin(0.0,0.0) , _scale(1.0,1.0), _dis(false)
 				{
 				}
 
@@ -4424,7 +4424,7 @@ namespace mtools
 			/**
 			 * Move constructor. Transfer object and ownership. 
 			 */
-			Group(Group && grp) : _global_bb(grp._global_bb), _figvec(std::move(grp._figvec)), _origin(grp._origin), _dis(grp._dis)
+			Group(Group && grp) : _global_bb(grp._global_bb), _figvec(std::move(grp._figvec)), _origin(grp._origin), _scale(grp._scale), _dis(grp._dis)
 				{
 				grp._global_bb.clear();
 				grp._figvec.clear();
@@ -4440,6 +4440,7 @@ namespace mtools
 				_global_bb = grp._global_bb;
 				_figvec.operator=(std::move(grp._figvec));
 				_origin = grp._origin;
+				_scale = grp._scale;
 				_dis = grp._dis;
 				grp._global_bb.clear();
 				grp._figvec.clear();
@@ -4459,10 +4460,22 @@ namespace mtools
 			 * Set the local origin for this group of figure. 
 			 * (ie translation from the global coordinate). 
 			 */
-			void setOrigin(fVec2 & origin)
+			void setOrigin(fVec2 & origin = fVec2(0.0,0.0))
 				{
 				_origin = origin; 
 				}
+
+
+			/**
+			 * Set the scale of local coord. w.r.t. the global ones
+			 */
+			void setScale(fVec2 & scale = fVec2(1.0,1.0))
+			{
+				MTOOLS_INSURE(scale.X() > 0);
+				MTOOLS_INSURE(scale.Y() > 0);
+				_scale = scale;
+			}
+
 
 
 			/**
@@ -4514,13 +4527,16 @@ namespace mtools
 				{
 				if (_dis) { MTOOLS_ERROR("Cannot print Group infos after it has been inserted in a canvas !"); }
 				OSS os;
-				os << "Group with " << _figvec << " objects. bounding box :" << _global_bb << "\n";
-				os << "------\n";
+				os << "Group with " << _figvec << " objects.\n";
+				os << "- bounding box: " << _global_bb << "\n";
+				os << "- translate: " << _origin << "\n";
+				os << "- scale: " << _scale << "\n";
+				os << "------------\n";
 				for (auto p : _figvec)
 					{
 					os << p->toString(debug);
 					}
-				os << "------\n";
+				os << "------------\n";
 				return os.str();
 				}
 
@@ -4530,6 +4546,7 @@ namespace mtools
 				{
 				if (_dis) { MTOOLS_ERROR("Cannot serialize Group after it has been inserted in a canvas !"); }
 				ar & _origin;
+				ar & _scale;
 				ar & (_figvec.size());
 				for (auto p : _figvec) { ar & (*p);	}
 				}
@@ -4539,6 +4556,7 @@ namespace mtools
 			Group(IBaseArchive & ar) : _global_bb(), _figvec(), _dis(false)
 				{
 				ar & _origin;
+				ar & _scale;
 				size_t l;
 				ar & l;
 				_figvec.reserve(l);
