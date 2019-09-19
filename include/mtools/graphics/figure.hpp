@@ -4367,11 +4367,15 @@ namespace mtools
 
 			/*********************************************************
 			*
-			* Group : group several figures together and draw then in order.
+			* Group : group several figures together;
+			*          -> Figure are drawn in order of insertion 
+			*          -> A transformation may be applied (shift and scaling). 
 			*
-			*
-			* All objects must be added to the group BEFORE inserting into a canvas.
-			* The group is emptied when inserted.
+			* ALL OBJECT AND TRANSFORMATION SHOULD BE DONE BEFORE INSERTING THE
+			* GROUP INTO A CANVAS.
+			* 
+			* After insertion in a canvas, the object become disabled and 
+			* cannot be used anymore.
 			*
 			**********************************************************/
 			FIGURECLASS_BEGIN(Group)
@@ -4383,13 +4387,14 @@ namespace mtools
 
 			fBox2 _global_bb;											// the bounding box (relative to the group origin)
 			std::vector<internals_figure::FigureInterface *> _figvec;	// the vector containing all the figures
-			fVec2 _origin;												// position of the origin of the group with respect to the parent. 
-			fVec2 _scale;												// scale of the local corrdinated wrt the global coordinates
+			fVec2 _anchor_global;										// position of the anchor (ie reference) point in local coord.
+			fVec2 _anchor_local;										// position of the anchor (ie reference) point in global coord.
+			fVec2 _scale;												// scaling of the local corrdinates wrt the global ones
 
 			/**
 			* empty group
 			*/
-			Group() : _global_bb(), _figvec(), _origin(0.0,0.0) , _scale(1.0,1.0), _dis(false)
+			Group() : _global_bb(), _figvec(), _anchor_global(0.0,0.0) , _anchor_local(0.0, 0.0), _scale(1.0,1.0), _dis(false)
 				{
 				}
 
@@ -4424,7 +4429,7 @@ namespace mtools
 			/**
 			 * Move constructor. Transfer object and ownership. 
 			 */
-			Group(Group && grp) : _global_bb(grp._global_bb), _figvec(std::move(grp._figvec)), _origin(grp._origin), _scale(grp._scale), _dis(grp._dis)
+			Group(Group && grp) : _global_bb(grp._global_bb), _figvec(std::move(grp._figvec)), _anchor_global(grp._anchor_global), _anchor_local(grp._anchor_local), _scale(grp._scale), _dis(grp._dis)
 				{
 				grp._global_bb.clear();
 				grp._figvec.clear();
@@ -4439,7 +4444,8 @@ namespace mtools
 				_clear();
 				_global_bb = grp._global_bb;
 				_figvec.operator=(std::move(grp._figvec));
-				_origin = grp._origin;
+				_anchor_global = grp._anchor_global;
+				_anchor_local = grp._anchor_local;
 				_scale = grp._scale;
 				_dis = grp._dis;
 				grp._global_bb.clear();
@@ -4457,24 +4463,154 @@ namespace mtools
 
 
 			/**
-			 * Set the local origin for this group of figure. 
-			 * (ie translation from the global coordinate). 
-			 */
-			void setOrigin(fVec2 & origin = fVec2(0.0,0.0))
+			 * Query the position of the anchor (reference) point in the local coordinate
+			 *
+			 * The affine transformation applied to the group is such that
+			 *   - a scaling of local coordinate is performed.   
+			 *   - the anchor point in local coord is mapped to its global coordinate. 
+			 **/
+			fVec2 anchorLocal() const { return _anchor_local; }
+
+
+			/**
+			 * Set the position of the anchor (reference) point in the local coordinate
+			 *
+			 * The affine transformation applied to the group is such that
+			 *   - a scaling of local coordinate is performed.
+			 *   - the anchor point in local coord is mapped to its global coordinate.
+			 **/
+			void setAnchorLocal(fVec2 pos = { 0.0,0.0 }) { _anchor_local = pos; }
+
+
+			/**
+			 * Set the position of the anchor (reference) point in the local coordinate One of
+			 * MTOOLS_POS_BOTTOMLEFT,  MTOOLS_POS_BOTTOMCENTER ...
+			 * Position is computed w.r.t. to the min bounding box of the whole group. 
+			 * 
+			 * The affine transformation applied to the group is such that
+			 *   - a scaling of local coordinate is performed.
+			 *   - the anchor point in local coord is mapped to its global coordinate.
+			 **/
+			void setAnchorLocal(int anchor_type) { _anchor_local = _global_bb.get_anchor(anchor_type); }
+
+
+			/**
+			 * Query the position of the anchor (reference) point in the local coordinate
+			 *
+			 * The affine transformation applied to the group is such that
+			 *   - a scaling of local coordinate is performed.
+			 *   - the anchor point in local coord is mapped to its global coordinate.
+			 **/
+			fVec2 anchorGlobal() const { return _anchor_global; }
+
+
+			/**
+			 * Set the position of the anchor (reference) point in the local coordinate
+			 *
+			 * The affine transformation applied to the group is such that
+			 *   - a scaling of local coordinate is performed.
+			 *   - the anchor point in local coord is mapped to its global coordinate.
+			 **/
+			void setAnchorGlobal(fVec2 pos = { 0.0,0.0 }) { _anchor_global = pos; }
+
+
+			/**
+			 * Return the scale of the local coord.
+			 *
+			 * The affine transformation applied to the group is such that
+			 *   - a scaling of local coordinate is performed.
+			 *   - the anchor point in local coord is mapped to its global coordinate.
+			 **/
+			fVec2 scale() const { return _scale; }
+
+
+			/**
+			 * Set the scale for the local coordinate
+			 *
+			 * The affine transformation applied to the group is such that
+			 *   - a scaling of local coordinate is performed.
+			 *   - the anchor point in local coord is mapped to its global coordinate.
+			 **/
+			void setScale(fVec2 scale)
 				{
-				_origin = origin; 
+				MTOOLS_INSURE(scale.X() > 0);
+				MTOOLS_INSURE(scale.Y() > 0);
+				_scale = scale;
 				}
 
 
 			/**
-			 * Set the scale of local coord. w.r.t. the global ones
-			 */
-			void setScale(fVec2 & scale = fVec2(1.0,1.0))
-			{
-				MTOOLS_INSURE(scale.X() > 0);
-				MTOOLS_INSURE(scale.Y() > 0);
-				_scale = scale;
-			}
+			 * Set the scale for the local coordinate, same ratio on X and Y coord.
+			 *
+			 * The affine transformation applied to the group is such that
+			 *   - a scaling of local coordinate is performed.
+			 *   - the anchor point in local coord is mapped to its global coordinate.
+			 **/
+			void setScale(double r = 1.0)
+				{
+				MTOOLS_INSURE(r > 0);
+				_scale = { r,r };
+				}
+
+
+			/**
+			 * Move the group so that the anchor point (ie TOPLEFT, BOTOOM_RIGHT etc...)
+			 * is located at position pos in the global coordinate. 
+			 *
+			 * The affine transformation applied to the group is such that
+			 *   - a scaling of local coordinate is performed.
+			 *   - the anchor point in local coord is mapped to its global coordinate.
+			 *
+			 * @param	pos		   	The position.
+			 * @param	anchor_type	Type of the anchor.
+			 **/
+			void moveGroup(fVec2 pos, int anchor_type)
+				{
+				_anchor_local = _global_bb.get_anchor(anchor_type);
+				_anchor_global = pos;
+				}
+
+
+			/**
+			 * Center the group at a given position (using its min bounding box). 
+			 *
+			 * @param	pos	new position for the center of the min bounding box of the group.
+			 **/
+			void centerAt(fVec2 pos)
+				{
+				moveGroup(pos, MTOOLS_POS_CENTER);
+				}
+
+
+			/**
+			 * Adjust the tranformation (local_anchor, global_anchor and scale) in such way that the
+			 * bounding box for all the elements in the group fit tightly inside a given box R.
+			 *
+			 * @param	R			   	To box to in which to fit the group.
+			 * @param	keepAspectRatio	True to keep the aspect ratio (and center), false to use the whole
+			 * 							box.
+			 **/
+			void fitInside(fBox2 R, bool keepAspectRatio)
+				{
+				MTOOLS_INSURE(!(_global_bb.isEmpty()));
+				MTOOLS_INSURE(!(R.isEmpty()));
+				_anchor_local  = _global_bb.get_anchor(MTOOLS_POS_CENTER);
+				_anchor_global = R.get_anchor(MTOOLS_POS_CENTER);
+				const double sx = R.lx() / _global_bb.lx();
+				const double sy = R.ly() / _global_bb.ly();
+				if (keepAspectRatio)
+					{
+					const double ss = std::min(sx, sy);
+					_scale.X() = ss;
+					_scale.Y() = ss;
+					}
+				else
+					{
+					_scale.X() = sx;
+					_scale.Y() = sy;
+					}
+				}
+
 
 
 
@@ -4514,7 +4650,7 @@ namespace mtools
 				}
 
 
-			/** Return the main bounding box */
+			/** Return the main bounding box (in global coordinates) */
 			virtual fBox2 boundingBox() const override
 				{
 				if (_dis) { MTOOLS_ERROR("Cannot get Group bounding box group after it has been inserted in a canvas !"); }
@@ -4529,7 +4665,8 @@ namespace mtools
 				OSS os;
 				os << "Group with " << _figvec << " objects.\n";
 				os << "- bounding box: " << _global_bb << "\n";
-				os << "- translate: " << _origin << "\n";
+				os << "- anchor local: " << _anchor_local << "\n";
+				os << "- anchor global: " << _anchor_global << "\n";
 				os << "- scale: " << _scale << "\n";
 				os << "------------\n";
 				for (auto p : _figvec)
@@ -4545,7 +4682,8 @@ namespace mtools
 			virtual void serialize(OBaseArchive & ar) const override
 				{
 				if (_dis) { MTOOLS_ERROR("Cannot serialize Group after it has been inserted in a canvas !"); }
-				ar & _origin;
+				ar & _anchor_local;
+				ar & _anchor_global;
 				ar & _scale;
 				ar & (_figvec.size());
 				for (auto p : _figvec) { ar & (*p);	}
@@ -4555,7 +4693,8 @@ namespace mtools
 			/** deserialization ctor */
 			Group(IBaseArchive & ar) : _global_bb(), _figvec(), _dis(false)
 				{
-				ar & _origin;
+				ar & _anchor_local;
+				ar & _anchor_global;
 				ar & _scale;
 				size_t l;
 				ar & l;
@@ -4573,10 +4712,14 @@ namespace mtools
 				{
 				if (_dis) { MTOOLS_ERROR("Cannot call Group::svg() after group has been inserted in a canvas !"); }
 				el->SetName("g");
-				if (_origin != fVec2(0.0, 0.0))
-					{
-					el->xml->SetAttribute("transform", (std::string("translate(") + mtools::toString(_origin.X()) + "," + mtools::toString(_origin.Y()) + ")").c_str());
-					}
+
+				mtools::ostringstream os; 
+				if (_anchor_global != fVec2(0.0, 0.0)) { os << "translate(" << _anchor_global.X() << " " << -_anchor_global.Y() << ") "; }
+				if (_scale != fVec2(1.0, 1.0)) { os << "scale(" << _scale.X() << " " << _scale.Y() << ") "; }
+				if (_anchor_local != fVec2(0.0, 0.0)) { os << "translate(" << -_anchor_local.X() << " " << _anchor_local.Y() << ") "; }
+				std::string tran_str = os.toString();
+				if (tran_str.size() >0) { el->xml->SetAttribute("transform", tran_str.c_str()); }
+
 				for (auto p : _figvec)
 					{
 					mtools::SVGElement * chel =el->NewChildSVGElement(); // create a child xml element
@@ -4594,17 +4737,33 @@ namespace mtools
 			Group & operator=(const Group & grp);
 
 
+			/** Convert coordinate from local to global */
+			MTOOLS_FORCEINLINE 	fVec2 _coordLocalToGlobal(const fVec2 P) const
+				{
+				return ((P - _anchor_local)*_scale + _anchor_global);
+				}
+
+			/** Convert coordinate from global to local to global */
+			MTOOLS_FORCEINLINE 	fVec2 _coordGlobalToLocal(const fVec2 P) const
+				{
+				return ((P - _anchor_global)/_scale + _anchor_local);
+				}
+
 			/** Transform a box from the local group coordinates to the global parent coordinates. */
 			MTOOLS_FORCEINLINE 	fBox2 _coordLocalToGlobal(const fBox2 & B) const
 				{
-				return fBox2(B.min[0] + _origin.X(), B.max[0] + _origin.X(), B.min[1] + _origin.Y(), B.max[1] + _origin.Y()); 
+				fVec2 P = _coordLocalToGlobal(fVec2(B.min[0], B.min[1]));
+				fVec2 Q = _coordLocalToGlobal(fVec2(B.max[0], B.max[1]));
+				return fBox2(P.X(), Q.X(), P.Y(), Q.Y());
 				}
 
 
 			/** Transform a box from the global parent coordinates to the local group coordinates. */
 			MTOOLS_FORCEINLINE fBox2 _coordGlobalToLocal(const fBox2 & B) const 
 				{
-				return fBox2(B.min[0] - _origin.X(), B.max[0] - _origin.X(), B.min[1] - _origin.Y(), B.max[1] - _origin.Y()); 
+				fVec2 P = _coordGlobalToLocal(fVec2(B.min[0], B.min[1]));
+				fVec2 Q = _coordGlobalToLocal(fVec2(B.max[0], B.max[1]));
+				return fBox2(P.X(), Q.X(), P.Y(), Q.Y());
 				}
 
 
