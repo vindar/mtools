@@ -48,10 +48,9 @@ namespace mtools
 			}
 		}
 
-
 	template<int N> class FigureCanvas;	// main figure canvas class
 
-
+	template<int N> Figure::internals_figure::FigureInterface * deserializeFigure(IBaseArchive & ar, FigureCanvas<N> * canvas, size_t layer);
 
 
 
@@ -165,6 +164,9 @@ namespace mtools
 	{
 
 		using BBox = Box<double, 2>;	// bounding box structure
+
+		template <int N, typename FIGURECLASS> friend
+			void _deserializeFigure(Figure::internals_figure::FigureInterface* & pfig, FigureCanvas<N> * canvas, const std::string & classname, mtools::IBaseArchive & ar, size_t layer, int & match);
 
 	public: 
 
@@ -341,7 +343,8 @@ namespace mtools
 				// add all the elements
 				for (size_t j = 0; j < nbitem; j++)
 					{
-					_insertArchiveItem(ar, layer);
+					Figure::internals_figure::FigureInterface * pfig = deserializeFigure(ar, this, layer);
+					_figLayers[layer].insert(pfig->boundingBox(), pfig);
 					}
 				}
 			}
@@ -500,15 +503,6 @@ namespace mtools
 
 	private: 
 
-
-		/** insert a figure from an archive */
-		MTOOLS_FORCEINLINE void _insertArchiveItem(mtools::IBaseArchive & ar, size_t layer);
-
-
-		/* used by the macro REGISTER_ARCHIVE_FIGURE_CLASS() */
-		template <typename FIGURECLASS> MTOOLS_FORCEINLINE void _registerArchiveFigureClass(const std::string & classname, mtools::IBaseArchive & ar, size_t layer, int & match);
-
-
 		/* no copy */
 		FigureCanvas(const FigureCanvas &) = delete;
 		FigureCanvas & operator=(const FigureCanvas &) = delete;
@@ -552,7 +546,6 @@ namespace mtools
 		std::vector<void *>	_vecallocp;	// vector containing pointers to all allocated figures (TEMP WHILE USING MALLOC/FREE). 
 
 		/*********************************************************************************************************/
-
 
 		size_t																_nbLayers;	// number of layers
 		TreeFigure<Figure::internals_figure::FigureInterface*, N, double> *	_figLayers;	// tree figure object for each layer. 
@@ -902,7 +895,7 @@ namespace mtools
 				}
 
 
-		};
+		FIGURECLASS_END()
 
 
 
@@ -4349,6 +4342,123 @@ namespace mtools
 
 
 
+		/*********************************************************
+		*
+		* Group : group several figures together and draw then in order.
+		*
+		**********************************************************/
+		FIGURECLASS_BEGIN(Group)
+
+
+			fBox2 _global_bb;
+			std::vector<internals_figure::FigureInterface *> _figvec;
+
+
+			/**
+			* empty group
+			*/
+			Group() : _global_bb(), _figvec()
+				{
+				}
+
+
+			/** dtor */
+			virtual ~Group()
+				{
+				clear();
+				}
+
+
+			/**
+			 * Pushes an object at th back of the list
+			 * (i.e. drawn last)
+			**/
+			template<class FIGURECLASS> void push(FIGURECLASS & fig)
+				{
+				_figvec.push_back(new<FIGURECLASS>(fig)); // push a copy at the end of the vector
+				_global_bb.swallowBox(_figvec.back()->boundingBox());	// increase the size of the main bounding box.
+				}
+
+
+			/** Remove all figures in the group */
+			void clear()
+				{
+				_global_bb.clear();
+				for(auto p : _figvec) { delete p; }
+				_figvec.clear();
+				}
+
+
+			/** draw onto the image */
+			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+				{
+				for (auto p : _figvec)
+					{ // draw in order
+					if (!(intersectionRect(p->boundingBox(), R).isEmpty()))
+						{ // only if visible
+						p->draw(im, R, highQuality, min_thickness);
+						}
+					}
+				}
+
+
+			/** Return the main bounding box */
+			virtual fBox2 boundingBox() const override
+				{
+				return _global_bb;
+				}
+
+
+			/** Dump info into a string */
+			virtual std::string toString(bool debug = false) const override
+				{
+				OSS os; 
+				os << "Group with " << _figvec << " objects. bounding box :" << _global_bb << "\n";
+				os << "------\n";
+				for (auto p : _figvec)
+					{
+					os << p->toString(debug);
+					}
+				os << "------\n";
+				return os.str();
+				}
+
+
+			/** serialize */
+			virtual void serialize(OBaseArchive & ar) const override
+				{
+				ar & (_figvec.size());
+				for (auto p : _figvec) { ar & (*p);	}
+				}
+
+
+			/** deserialization ctor */
+			Group(IBaseArchive & ar) : _global_bb(), _figvec()
+				{
+				size_t l;
+				ar & l;
+				_figvec.reserve(l);
+				for (size_t i = 0; i < l; i++)
+					{
+					// TODO : create the correct object. 
+					_global_bb.swallowBox(_figvec.back()->boundingBox());	// increase the size of the main bounding box.
+					}
+				}
+
+
+			/* draw onto the svg */
+			virtual void svg(mtools::SVGElement * el) const override
+				{
+				el->SetName("g");
+				for (auto p : _figvec)
+					{
+					mtools::SVGElement * chel =el->NewChildSVGElement(); // create a child xml element
+					p->svg(chel); // draw the svg on the child
+					}
+				}
+
+
+		FIGURECLASS_END()
 
 
 
@@ -4366,9 +4476,6 @@ namespace mtools
 
 
 	}
-
-
-
 
 
 
@@ -4407,47 +4514,53 @@ namespace mtools
 		}
 
 
+
 	/* used by the macro REGISTER_ARCHIVE_FIGURE_CLASS() */
-	template<int N>
-	template <typename FIGURECLASS> MTOOLS_FORCEINLINE void FigureCanvas<N>::_registerArchiveFigureClass(const std::string & classname, mtools::IBaseArchive & ar, size_t layer, int & match)
+	template <int N, typename FIGURECLASS> MTOOLS_FORCEINLINE 
+		void _deserializeFigure( Figure::internals_figure::FigureInterface* & pfig,  
+			                     FigureCanvas<N> * canvas, 
+			                     const std::string & classname, 
+			                     mtools::IBaseArchive & ar, 
+			                     size_t layer, int & match)
 		{
 		if (classname == FIGURECLASS::className())
 			{
-			if (match != 0)
+			if (match != 0) { MTOOLS_ERROR("class name [" << classname << "] is already in use by another class !"); }
+			if (canvas != nullptr)
 				{
-				MTOOLS_ERROR("class name [" << classname << "] is already in use by another class !");
+				pfig = canvas->_archiveInPool<FIGURECLASS>(ar);
 				}
-			Figure::internals_figure::FigureInterface * pf = _archiveInPool<FIGURECLASS>(ar); // create the figure directly in the pool
-			_figLayers[layer].insert(pf->boundingBox(), pf);								// add to the corresponding layer. 
+			else
+				{
+				pfig = new FIGURECLASS(ar);
+				}
 			match++; 
-			}		
+			}
 		}
 
 
-
-
 	// macro for registering a Figure class so it can be archived
-	#define REGISTER_ARCHIVE_FIGURE_CLASS(CLASSNAME)  _registerArchiveFigureClass<CLASSNAME>(classname, ar, layer, match);
+	#define REGISTER_ARCHIVE_FIGURE_CLASS(CLASSNAME) _deserializeFigure<N,CLASSNAME>(pfig, canvas, classname, ar, layer, match);
 
 
-
-	/**
-	 * Insert a Figure in the canvas, extracted from an archive. 
-	 *
-	 * !!!!!!!! EVERY FigureInterface SUBCLASS MUST BE REGISTERED IN THIS METHOD !!!!!!
-	 * 
-	 **/
-	template<int N> MTOOLS_FORCEINLINE void FigureCanvas<N>::_insertArchiveItem(mtools::IBaseArchive & ar, size_t layer)
+	template<int N> Figure::internals_figure::FigureInterface * deserializeFigure(IBaseArchive & ar, FigureCanvas<N> * canvas, size_t layer)
 		{
-		MTOOLS_INSURE(layer < _nbLayers);
+		MTOOLS_INSURE((canvas == nullptr) || (layer < canvas->nbLayers()));
 		std::string classname;
 		ar & classname;
-		int match = 0; // for sanity check
-
-		//
-		// Every Figure class must be registered below
+		int match = 0;
+		Figure::internals_figure::FigureInterface * pfig = nullptr;
+		
+		// **********************************************************************************************************************************
+		// **********************************************************************************************************************************
+		// **********************************************************************************************************************************
 		// 
-				
+		// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Every Figure class MUST be registered below !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		// 
+		// **********************************************************************************************************************************
+		// **********************************************************************************************************************************
+		// **********************************************************************************************************************************
+
 		/************************************************************************************************************************************
 		* DOTS
 		*************************************************************************************************************************************/
@@ -4524,16 +4637,29 @@ namespace mtools
 
 		REGISTER_ARCHIVE_FIGURE_CLASS(Figure::Text);
 
-		
+		REGISTER_ARCHIVE_FIGURE_CLASS(Figure::Group);
+
 		// make sure we had a match, otherwise this means that the classname is not registered
 		if (match == 0) { MTOOLS_ERROR("Figure class name [" << classname << "] is not registered with any class !"); }
+		return pfig; // return the figure pointer.
 		}
 
 
+	#undef REGISTER_ARCHIVE_FIGURE_CLASS
 
-	#undef REGISTER_ARCHIVE_CLASS
 
 }
+
+
+
+
+
+
+
+
+
+
+
 
 
 
