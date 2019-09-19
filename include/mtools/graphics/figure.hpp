@@ -4381,15 +4381,15 @@ namespace mtools
 
 			 template<int N> friend class FigureCanvas;
 
-
-			fBox2 _global_bb;
-			std::vector<internals_figure::FigureInterface *> _figvec;
+			fBox2 _global_bb;											// the bounding box (relative to the group origin)
+			std::vector<internals_figure::FigureInterface *> _figvec;	// the vector containing all the figures
+			fVec2 _origin;												// position of the origin of the group with respect to the parent. 
 
 
 			/**
 			* empty group
 			*/
-			Group() : _global_bb(), _figvec(), _dis(false)
+			Group() : _global_bb(), _figvec(), _origin(0.0,0.0) , _dis(false)
 				{
 				}
 
@@ -4424,7 +4424,7 @@ namespace mtools
 			/**
 			 * Move constructor. Transfer object and ownership. 
 			 */
-			Group(Group && grp) : _global_bb(grp._global_bb), _figvec(std::move(grp._figvec)), _dis(grp._dis)
+			Group(Group && grp) : _global_bb(grp._global_bb), _figvec(std::move(grp._figvec)), _origin(grp._origin), _dis(grp._dis)
 				{
 				grp._global_bb.clear();
 				grp._figvec.clear();
@@ -4439,6 +4439,7 @@ namespace mtools
 				_clear();
 				_global_bb = grp._global_bb;
 				_figvec.operator=(std::move(grp._figvec));
+				_origin = grp._origin;
 				_dis = grp._dis;
 				grp._global_bb.clear();
 				grp._figvec.clear();
@@ -4451,6 +4452,16 @@ namespace mtools
 			virtual ~Group()
 				{
 				_clear();
+				}
+
+
+			/**
+			 * Set the local origin for this group of figure. 
+			 * (ie translation from the global coordinate). 
+			 */
+			void setOrigin(fVec2 & origin)
+				{
+				_origin = origin; 
 				}
 
 
@@ -4479,11 +4490,12 @@ namespace mtools
 			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 				{
 				if (_dis) { MTOOLS_ERROR("Cannot draw() group after it has been inserted in a canvas !"); }
+				fBox2 nR = _coordGlobalToLocal(R);
 				for (auto p : _figvec)
 					{ // draw in order
-					if (!(intersectionRect(p->boundingBox(), R).isEmpty()))
+					if (!(intersectionRect(p->boundingBox(), nR).isEmpty()))
 						{ // only if visible
-						p->draw(im, R, highQuality, min_thickness);
+						p->draw(im, nR, highQuality, min_thickness);
 						}
 					}
 				}
@@ -4493,7 +4505,7 @@ namespace mtools
 			virtual fBox2 boundingBox() const override
 				{
 				if (_dis) { MTOOLS_ERROR("Cannot get Group bounding box group after it has been inserted in a canvas !"); }
-				return _global_bb;
+				return _coordLocalToGlobal(_global_bb);
 				}
 
 
@@ -4517,6 +4529,7 @@ namespace mtools
 			virtual void serialize(OBaseArchive & ar) const override
 				{
 				if (_dis) { MTOOLS_ERROR("Cannot serialize Group after it has been inserted in a canvas !"); }
+				ar & _origin;
 				ar & (_figvec.size());
 				for (auto p : _figvec) { ar & (*p);	}
 				}
@@ -4525,6 +4538,7 @@ namespace mtools
 			/** deserialization ctor */
 			Group(IBaseArchive & ar) : _global_bb(), _figvec(), _dis(false)
 				{
+				ar & _origin;
 				size_t l;
 				ar & l;
 				_figvec.reserve(l);
@@ -4541,12 +4555,17 @@ namespace mtools
 				{
 				if (_dis) { MTOOLS_ERROR("Cannot call Group::svg() after group has been inserted in a canvas !"); }
 				el->SetName("g");
+				if (_origin != fVec2(0.0, 0.0))
+					{
+					el->xml->SetAttribute("transform", (std::string("translate(") + mtools::toString(_origin.X()) + "," + mtools::toString(_origin.Y()) + ")").c_str());
+					}
 				for (auto p : _figvec)
 					{
 					mtools::SVGElement * chel =el->NewChildSVGElement(); // create a child xml element
 					p->svg(chel); // draw the svg on the child
 					}
 				}
+
 
 		private:
 
@@ -4555,6 +4574,21 @@ namespace mtools
 
 			// no assignement
 			Group & operator=(const Group & grp);
+
+
+			/** Transform a box from the local group coordinates to the global parent coordinates. */
+			MTOOLS_FORCEINLINE 	fBox2 _coordLocalToGlobal(const fBox2 & B) const
+				{
+				return fBox2(B.min[0] + _origin.X(), B.max[0] + _origin.X(), B.min[1] + _origin.Y(), B.max[1] + _origin.Y()); 
+				}
+
+
+			/** Transform a box from the global parent coordinates to the local group coordinates. */
+			MTOOLS_FORCEINLINE fBox2 _coordGlobalToLocal(const fBox2 & B) const 
+				{
+				return fBox2(B.min[0] - _origin.X(), B.max[0] - _origin.X(), B.min[1] - _origin.Y(), B.max[1] - _origin.Y()); 
+				}
+
 
 			// Remove all figures, private version 
 			void _clear()
