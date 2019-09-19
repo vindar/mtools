@@ -37,6 +37,26 @@ namespace mtools
     {
  
 
+
+	/* positioning constants to use with the getAnchor() method */
+	static const int MTOOLS_POS_XCENTER = 0;
+	static const int MTOOLS_POS_LEFT = 1;
+	static const int MTOOLS_POS_RIGHT = 2;
+	static const int MTOOLS_POS_YCENTER = 0;
+	static const int MTOOLS_POS_TOP = 4;
+	static const int MTOOLS_POS_BOTTOM = 8;
+	static const int MTOOLS_POS_TOPLEFT = MTOOLS_POS_TOP | MTOOLS_POS_LEFT;
+	static const int MTOOLS_POS_TOPRIGHT = MTOOLS_POS_TOP | MTOOLS_POS_RIGHT;
+	static const int MTOOLS_POS_BOTTOMLEFT = MTOOLS_POS_BOTTOM | MTOOLS_POS_LEFT;
+	static const int MTOOLS_POS_BOTTOMRIGHT = MTOOLS_POS_BOTTOM | MTOOLS_POS_RIGHT;
+	static const int MTOOLS_POS_CENTER = MTOOLS_POS_XCENTER | MTOOLS_POS_YCENTER;
+	static const int MTOOLS_POS_CENTERLEFT = MTOOLS_POS_YCENTER | MTOOLS_POS_LEFT;
+	static const int MTOOLS_POS_CENTERRIGHT = MTOOLS_POS_YCENTER | MTOOLS_POS_RIGHT;
+	static const int MTOOLS_POS_CENTERTOP = MTOOLS_POS_XCENTER | MTOOLS_POS_TOP;
+	static const int MTOOLS_POS_CENTERBOTTOM = MTOOLS_POS_XCENTER | MTOOLS_POS_BOTTOM;
+
+
+
 	/* Definition of constants use for the split() method*/
 	
 	/* Split in half */
@@ -450,6 +470,36 @@ namespace mtools
 					}
 				return *this;
 				}
+
+
+			/**
+			 * Return the border point on the box corresponding to one of the 9 possible anchor points.
+			 * One of MTOOLS_POS_XCENTER, 
+			 *
+			 * @param	anchor_type	One of MTOOLS_POS_TOPLEFT, MTOOLS_POS_TOPRIGHT, MTOOLS_POS_CENTER ...
+			 *
+			 * @return	The corresponding point
+			 **/
+			Vec<T, 2> get_anchor(int anchor_type)
+				{
+				static_assert(N == 2, "get_anchor is only implemented for box of dimension 2");
+				switch (anchor_type)
+					{
+					case MTOOLS_POS_TOPLEFT:		return Vec<T, 2>(min[0], max[1]);
+					case MTOOLS_POS_TOPRIGHT:		return Vec<T, 2>(max[0], max[1]);
+					case MTOOLS_POS_BOTTOMLEFT:		return Vec<T, 2>(min[0], min[1]);
+					case MTOOLS_POS_BOTTOMRIGHT:	return Vec<T, 2>(max[0], min[1]);
+					case MTOOLS_POS_CENTER:			return Vec<T, 2>((min[0] + max[0]) / 2, (min[1] + max[1]) / 2);
+					case MTOOLS_POS_CENTERLEFT:		return Vec<T, 2>(min[0], (min[1] + max[1]) / 2);
+					case MTOOLS_POS_CENTERRIGHT:	return Vec<T, 2>(max[0], (min[1] + max[1]) / 2);
+					case MTOOLS_POS_CENTERTOP:		return Vec<T, 2>((min[0] + max[0]) / 2, max[1]);
+					case MTOOLS_POS_CENTERBOTTOM:	return Vec<T, 2>((min[0] + max[0]) / 2, min[1]);
+					default: { (void)(0); }
+					}
+				MTOOLS_ERROR("Incorrect anchor type.");
+				return Vec<T, 2>();
+				}
+
 
 
             /**
