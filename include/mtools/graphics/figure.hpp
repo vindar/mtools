@@ -42,10 +42,14 @@ namespace mtools
 	/* Forward declarations */
 	namespace Figure
 		{
+
 		namespace internals_figure
 			{
 			class FigureInterface;		// interface for a figure object
 			}
+
+		class Group;	// need specific code using move semantic when pushing it into a canvas. 
+
 		}
 
 	template<int N> class FigureCanvas;	// main figure canvas class
@@ -108,6 +112,8 @@ namespace mtools
 	// TEXT
 
 	class Text;
+
+	class Group;
 
 
 	*************** TODO  *****************
@@ -219,6 +225,14 @@ namespace mtools
 		 * (IMPLEMENTATION AT BOTTOM OF FILE)
 		 */
 		template<typename FIGURECLASS> MTOOLS_FORCEINLINE void operator()(const FIGURECLASS & figure, size_t layer = 0);
+
+
+		/**
+		* Insert a group into a canvas, inside a given layer
+		* The group is emptied. 
+		* Special implementation using move semantics.
+		*/
+		MTOOLS_FORCEINLINE void operator()(Figure::Group & grp, size_t layer = 0);
 
 
 		/**   
@@ -513,6 +527,15 @@ namespace mtools
 			{
 			void * p = _allocate(sizeof(FIGURECLASS));					// allocate memory in the memory pool for the figure object
 			new (p) FIGURECLASS(figure);								// placement new : copy constructor. 
+			return ((Figure::internals_figure::FigureInterface *)p);	// cast to base class. 
+			}
+
+
+		/* Make a copy of the figure object inside the memory pool, use move constructor */
+		template<typename FIGURECLASS> MTOOLS_FORCEINLINE Figure::internals_figure::FigureInterface * _copyInPoolWithMove(FIGURECLASS & figure)
+			{
+			void * p = _allocate(sizeof(FIGURECLASS));					// allocate memory in the memory pool for the figure object
+			new (p) FIGURECLASS(std::move(figure));						// placement new : move constructor. 
 			return ((Figure::internals_figure::FigureInterface *)p);	// cast to base class. 
 			}
 
@@ -4335,19 +4358,28 @@ namespace mtools
 
 
 
-		FIGURECLASS_END()
+			FIGURECLASS_END()
 
 
 
 
 
 
-		/*********************************************************
-		*
-		* Group : group several figures together and draw then in order.
-		*
-		**********************************************************/
-		FIGURECLASS_BEGIN(Group)
+			/*********************************************************
+			*
+			* Group : group several figures together and draw then in order.
+			*
+			*
+			* All objects must be added to the group BEFORE inserting into a canvas.
+			* The group is emptied when inserted.
+			*
+			**********************************************************/
+			FIGURECLASS_BEGIN(Group)
+				
+
+
+
+			 template<int N> friend class FigureCanvas;
 
 
 			fBox2 _global_bb;
@@ -4357,25 +4389,79 @@ namespace mtools
 			/**
 			* empty group
 			*/
-			Group() : _global_bb(), _figvec()
+			Group() : _global_bb(), _figvec(), _dis(false)
 				{
 				}
+
+
+			/**
+			* group with 1 object
+			*/
+			template<class FIGURECLASS1> Group(FIGURECLASS1 & fig1) : Group()
+				{
+				push(fig1);
+				}
+
+
+			/**
+			* group with 2 object
+			*/
+			template<class FIGURECLASS1, class FIGURECLASS2> Group(FIGURECLASS1 & fig1, FIGURECLASS2 & fig2) : Group(fig1)
+				{
+				push(fig2);
+				}
+
+
+			/**
+			* group with 3 object
+			*/
+			template<class FIGURECLASS1, class FIGURECLASS2, class FIGURECLASS3> Group(FIGURECLASS1 & fig1, FIGURECLASS2 & fig2, FIGURECLASS3 & fig3) : Group(fig1, fig2)
+				{
+				push(fig3);
+				}
+
+
+			/**
+			 * Move constructor. Transfer object and ownership. 
+			 */
+			Group(Group && grp) : _global_bb(grp._global_bb), _figvec(std::move(grp._figvec)), _dis(grp._dis)
+				{
+				grp._global_bb.clear();
+				grp._figvec.clear();
+				}
+
+
+			/**
+			* Move assignement. Transfer object and ownership.
+			*/
+			Group & operator=(Group && grp)
+				{
+				_clear();
+				_global_bb = grp._global_bb;
+				_figvec.operator=(std::move(grp._figvec));
+				_dis = grp._dis;
+				grp._global_bb.clear();
+				grp._figvec.clear();
+				}
+
+
 
 
 			/** dtor */
 			virtual ~Group()
 				{
-				clear();
+				_clear();
 				}
 
 
 			/**
-			 * Pushes an object at th back of the list
+			 * Pushes an object at the back of the list
 			 * (i.e. drawn last)
 			**/
 			template<class FIGURECLASS> void push(FIGURECLASS & fig)
 				{
-				_figvec.push_back(new<FIGURECLASS>(fig)); // push a copy at the end of the vector
+				if (_dis) { MTOOLS_ERROR("Cannot push object in Figure::Group object after it has been inserted in a canvas !"); }
+				_figvec.push_back(new FIGURECLASS(fig)); // push a copy at the end of the vector
 				_global_bb.swallowBox(_figvec.back()->boundingBox());	// increase the size of the main bounding box.
 				}
 
@@ -4383,15 +4469,16 @@ namespace mtools
 			/** Remove all figures in the group */
 			void clear()
 				{
-				_global_bb.clear();
-				for(auto p : _figvec) { delete p; }
-				_figvec.clear();
+				if (_dis) { MTOOLS_ERROR("Cannot clear() group after it has been inserted in a canvas !"); }
+				_clear();
 				}
+
 
 
 			/** draw onto the image */
 			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 				{
+				if (_dis) { MTOOLS_ERROR("Cannot draw() group after it has been inserted in a canvas !"); }
 				for (auto p : _figvec)
 					{ // draw in order
 					if (!(intersectionRect(p->boundingBox(), R).isEmpty()))
@@ -4405,6 +4492,7 @@ namespace mtools
 			/** Return the main bounding box */
 			virtual fBox2 boundingBox() const override
 				{
+				if (_dis) { MTOOLS_ERROR("Cannot get Group bounding box group after it has been inserted in a canvas !"); }
 				return _global_bb;
 				}
 
@@ -4412,7 +4500,8 @@ namespace mtools
 			/** Dump info into a string */
 			virtual std::string toString(bool debug = false) const override
 				{
-				OSS os; 
+				if (_dis) { MTOOLS_ERROR("Cannot print Group infos after it has been inserted in a canvas !"); }
+				OSS os;
 				os << "Group with " << _figvec << " objects. bounding box :" << _global_bb << "\n";
 				os << "------\n";
 				for (auto p : _figvec)
@@ -4427,21 +4516,22 @@ namespace mtools
 			/** serialize */
 			virtual void serialize(OBaseArchive & ar) const override
 				{
+				if (_dis) { MTOOLS_ERROR("Cannot serialize Group after it has been inserted in a canvas !"); }
 				ar & (_figvec.size());
 				for (auto p : _figvec) { ar & (*p);	}
 				}
 
 
 			/** deserialization ctor */
-			Group(IBaseArchive & ar) : _global_bb(), _figvec()
+			Group(IBaseArchive & ar) : _global_bb(), _figvec(), _dis(false)
 				{
 				size_t l;
 				ar & l;
 				_figvec.reserve(l);
 				for (size_t i = 0; i < l; i++)
 					{
-					// TODO : create the correct object. 
-					_global_bb.swallowBox(_figvec.back()->boundingBox());	// increase the size of the main bounding box.
+					_figvec.push_back(deserializeFigure<0>(ar, nullptr, 0));	// deserialize and add to the vector.
+					_global_bb.swallowBox(_figvec.back()->boundingBox());		// increase the size of the main bounding box.
 					}
 				}
 
@@ -4449,6 +4539,7 @@ namespace mtools
 			/* draw onto the svg */
 			virtual void svg(mtools::SVGElement * el) const override
 				{
+				if (_dis) { MTOOLS_ERROR("Cannot call Group::svg() after group has been inserted in a canvas !"); }
 				el->SetName("g");
 				for (auto p : _figvec)
 					{
@@ -4456,6 +4547,27 @@ namespace mtools
 					p->svg(chel); // draw the svg on the child
 					}
 				}
+
+		private:
+
+			// no copy
+			Group(const Group & grp);
+
+			// no assignement
+			Group & operator=(const Group & grp);
+
+			// Remove all figures, private version 
+			void _clear()
+				{
+				_global_bb.clear();
+				for (auto p : _figvec) { delete p; }
+				_figvec.clear();
+				}
+
+			// disable the group (called by canvas after insertion
+			void _disable() { _dis = true; }
+
+			bool _dis; // disabled flag
 
 
 		FIGURECLASS_END()
@@ -4500,6 +4612,21 @@ namespace mtools
 		_figLayers[layer].insert(pf->boundingBox(), pf);	// add to the corresponding layer. 
 		return;
 		}
+
+
+	/**
+	* Insert a figure into the canvas, inside a given layer ; specific implementation for Groups. 
+	*/
+	template<int N> MTOOLS_FORCEINLINE void FigureCanvas<N>::operator()(Figure::Group & grp, size_t layer)
+		{
+		MTOOLS_INSURE(layer < _nbLayers);
+		Figure::internals_figure::FigureInterface * pf = _copyInPoolWithMove(grp);		// copy the object in the memory pool
+		_figLayers[layer].insert(pf->boundingBox(), pf);								// add to the corresponding layer. 
+		grp._disable();																	// disable the group object since it  has been inserted
+		return;
+		}
+
+
 
 
 	/* delete all allocated memory TODO: REPLACE A BY BETTER VERSION THAN MALLOC/FREE */
