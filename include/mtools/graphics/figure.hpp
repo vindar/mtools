@@ -618,58 +618,108 @@ namespace mtools
 
 			public:
 
+
 				/** Virtual destructor */
 				virtual ~FigureInterface() {}
 
 
+				/** default ctor */
+				FigureInterface() : _anchor_local({ 0.0,0.0 }), _anchor_global({ 0.0,0.0 }), _scale({ 1.0, 1.0 })
+				{
+				}
+
+
+				/** default copy ctor */
+				FigureInterface(const FigureInterface &) = default; 
+
+
+				/** default move ctor */
+				FigureInterface(FigureInterface &&) = default;
+
+
+				/* default assignement */
+				FigureInterface & operator=(const FigureInterface &) = default;
+
+
+				/* default move assignement */
+				FigureInterface & operator=(FigureInterface &&) = default;
+
+
+				/** The derived ctor for deserialization MUST call this base ctor ! */
+				FigureInterface(IBaseArchive & ar)
+					{
+					ar & _anchor_local;
+					ar & _anchor_global;
+					ar & _scale;
+					}
+
+
 				/**
-				 * DO NOT IMPLEMENT THIS METHOD WHICH IS CREATED AUTOMATICALLY 
+				 * DO NOT RE-IMPLEMENT THIS METHOD WHICH IS CREATED AUTOMATICALLY 
 				 * WHEN USING MACROS 'FIGURECLASS_BEGIN' and 'FIGURECLASS_END'
 				 **/
 				virtual std::string name() const = 0;
-				
+			
 
 				/**
 				* Draws the figure onto an image with a given range.
+				*
+				* MUST BE OVERRIDEN IN virt_draw()
 				*
 				* @param [in,out]	im		    the image to draw onto.
 				* @param 			R		    the range.
 				* @param 		  	highQuality True when high quality drawing is requested and false otherwise
 				* @param 		  	min_thick   minimum thickness to use when drawing
 				*/
-				virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) = 0;
+				void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness)
+					{
+					virt_draw(im, _coordGlobalToLocal(R), highQuality, min_thickness);
+					}
 
 
 				/**
 				* Return the object's bounding box.
 				*
+				* MUST BE OVERRIDEN IN virt_boundingBox()
+				*
 				* @return	A fBox2.
 				*/
-				virtual fBox2 boundingBox() const = 0;
+				fBox2 boundingBox() const
+					{
+					return _coordLocalToGlobal(virt_boundingBox());
+					}
 
 
 				/**
 				* Print info about the object into an std::string.
+				*
+				* MUST BE OVERRIDEN IN virt_toString()
+				* 
 				*/
-				virtual std::string toString(bool debug = false) const = 0;
+				std::string toString(bool debug = false) const
+					{
+					mtools::ostringstream os;
+					os << virt_toString(debug);
+					os << "with transform\n";
+					os << "anchor_local : " << _anchor_local << "\n";
+					os << "anchor_global : " << _anchor_global << "\n";
+					os << "scale : " << _scale << "\n";
+					return os.toString();
+					}
 
 
 				/**
 				* Serialize the object.
+				*
+				* MUST BE OVERRIDEN IN virt_serialize()
+				*
 				*/
-				virtual void serialize(OBaseArchive & ar) const = 0;
-
-
-				/**
-				* Deserialize this object.
-				* Need not be overriden. 
-				* 
-				* BUT THE OBJECT MUST IMPLEMENT DESERALIZATION VIA THE CTOR `FigureClass(IBaseArchive & ar)`
-				* 
-				*/
-				virtual void deserialize(IBaseArchive & ar)
+				void serialize(OBaseArchive & ar)
 					{
-					MTOOLS_ERROR(typeid(*this).name() << " does not implement the deserialize() method");
+					ar & _anchor_local;
+					ar & _anchor_global;
+					ar & _scale;
+					virt_serialize(ar);
 					}
 	
 
@@ -680,16 +730,244 @@ namespace mtools
 				* el.xml give access to the underlying tinyxml::XMLElement
 				* 
 				* use macro TX(), TY(), TZ() to transform coordinate to SVG coordinate. 
+				*
+				* MUST BE OVERRIDEN IN virt_svg()
 				*/
-				virtual void svg(mtools::SVGElement * el) const
+				void svg(mtools::SVGElement * el) const
+					{
+					mtools::ostringstream os;
+					if (_anchor_global != fVec2(0.0, 0.0)) { os << "translate(" << _anchor_global.X() << " " << -_anchor_global.Y() << ") "; }
+					if (_scale != fVec2(1.0, 1.0)) { os << "scale(" << _scale.X() << " " << _scale.Y() << ") "; }
+					if (_anchor_local != fVec2(0.0, 0.0)) { os << "translate(" << -_anchor_local.X() << " " << _anchor_local.Y() << ") "; }
+					std::string tran_str = os.toString();
+					if (tran_str.size() > 0) { el->xml->SetAttribute("transform", tran_str.c_str()); }
+					virt_svg(el);
+					}
+
+
+				/**
+				* Deserialize this object. NOT ALLOWED !
+				*/
+				void deserialize(IBaseArchive & ar)
+					{
+					MTOOLS_ERROR(typeid(*this).name() << " does not implement the deserialize() method");
+					}
+
+
+
+
+			/**
+			 * Query the position of the anchor (reference) point in the local coordinate
+			 *
+			 * The affine transformation applied to the group is such that
+			 *   - a scaling of local coordinate is performed.   
+			 *   - the anchor point in local coord is mapped to its global coordinate. 
+			 **/
+			fVec2 anchorLocal() const { return _anchor_local; }
+
+
+			/**
+			 * Set the position of the anchor (reference) point in the local coordinate
+			 *
+			 * The affine transformation applied to the group is such that
+			 *   - a scaling of local coordinate is performed.
+			 *   - the anchor point in local coord is mapped to its global coordinate.
+			 **/
+			void setAnchorLocal(fVec2 pos = { 0.0,0.0 }) { _anchor_local = pos; }
+
+
+			/**
+			 * Set the position of the anchor (reference) point in the local coordinate One of
+			 * MTOOLS_POS_BOTTOMLEFT,  MTOOLS_POS_BOTTOMCENTER ...
+			 * Position is computed w.r.t. to the min bounding box of the whole group. 
+			 * 
+			 * The affine transformation applied to the group is such that
+			 *   - a scaling of local coordinate is performed.
+			 *   - the anchor point in local coord is mapped to its global coordinate.
+			 **/
+			void setAnchorLocal(int anchor_type) { _anchor_local = virt_boundingBox().get_anchor(anchor_type); }
+
+
+			/**
+			 * Query the position of the anchor (reference) point in the local coordinate
+			 *
+			 * The affine transformation applied to the group is such that
+			 *   - a scaling of local coordinate is performed.
+			 *   - the anchor point in local coord is mapped to its global coordinate.
+			 **/
+			fVec2 anchorGlobal() const { return _anchor_global; }
+
+
+			/**
+			 * Set the position of the anchor (reference) point in the local coordinate
+			 *
+			 * The affine transformation applied to the group is such that
+			 *   - a scaling of local coordinate is performed.
+			 *   - the anchor point in local coord is mapped to its global coordinate.
+			 **/
+			void setAnchorGlobal(fVec2 pos = { 0.0,0.0 }) { _anchor_global = pos; }
+
+
+			/**
+			 * Return the scale of the local coord.
+			 *
+			 * The affine transformation applied to the group is such that
+			 *   - a scaling of local coordinate is performed.
+			 *   - the anchor point in local coord is mapped to its global coordinate.
+			 **/
+			fVec2 scale() const { return _scale; }
+
+
+			/**
+			 * Set the scale for the local coordinate
+			 *
+			 * The affine transformation applied to the group is such that
+			 *   - a scaling of local coordinate is performed.
+			 *   - the anchor point in local coord is mapped to its global coordinate.
+			 **/
+			void setScale(fVec2 scale)
 				{
-					MTOOLS_DEBUG(std::string("Figure::svg() called but not implemented on ") + typeid(*this).name() + ". Item ignored...");
-					el->Comment((std::string("MISSING FIGURE\n") + toString()).c_str());
-					return;
+				MTOOLS_INSURE(scale.X() > 0);
+				MTOOLS_INSURE(scale.Y() > 0);
+				_scale = scale;
 				}
 
 
+			/**
+			 * Set the scale for the local coordinate, same ratio on X and Y coord.
+			 *
+			 * The affine transformation applied to the group is such that
+			 *   - a scaling of local coordinate is performed.
+			 *   - the anchor point in local coord is mapped to its global coordinate.
+			 **/
+			void setScale(double r = 1.0)
+				{
+				MTOOLS_INSURE(r > 0);
+				_scale = { r,r };
+				}
+
+
+			/**
+			 * Move the group so that the anchor point (ie TOPLEFT, BOTOOM_RIGHT etc...)
+			 * is located at position pos in the global coordinate. 
+			 *
+			 * The affine transformation applied to the group is such that
+			 *   - a scaling of local coordinate is performed.
+			 *   - the anchor point in local coord is mapped to its global coordinate.
+			 *
+			 * @param	pos		   	The position.
+			 * @param	anchor_type	Type of the anchor.
+			 **/
+			void moveGroup(fVec2 pos, int anchor_type)
+				{
+				_anchor_local = virt_boundingBox().get_anchor(anchor_type);
+				_anchor_global = pos;
+				}
+
+
+			/**
+			 * Center the group at a given position (using its min bounding box). 
+			 *
+			 * @param	pos	new position for the center of the min bounding box of the group.
+			 **/
+			void centerAt(fVec2 pos)
+				{
+				moveGroup(pos, MTOOLS_POS_CENTER);
+				}
+
+
+			/**
+			 * Adjust the tranformation (local_anchor, global_anchor and scale) in such way that the
+			 * bounding box for all the elements in the group fit tightly inside a given box R.
+			 *
+			 * @param	R			   	To box to in which to fit the group.
+			 * @param	keepAspectRatio	True to keep the aspect ratio (and center), false to use the whole
+			 * 							box.
+			 **/
+			void fitInside(fBox2 R, bool keepAspectRatio)
+				{
+				fBox2 bb = virt_boundingBox();
+				MTOOLS_INSURE(!(bb.isEmpty()));
+				MTOOLS_INSURE(!(R.isEmpty()));
+				_anchor_local  = bb.get_anchor(MTOOLS_POS_CENTER);
+				_anchor_global = R.get_anchor(MTOOLS_POS_CENTER);
+				const double sx = R.lx() / bb.lx();
+				const double sy = R.ly() / bb.ly();
+				if (keepAspectRatio)
+					{
+					const double ss = std::min(sx, sy);
+					_scale.X() = ss;
+					_scale.Y() = ss;
+					}
+				else
+					{
+					_scale.X() = sx;
+					_scale.Y() = sy;
+					}
+				}
+
+
+
+			protected:
+
+
+				// **********************************************
+				// BELOW ARE THE METHOD THAT SHOULD BE OVERRIDEN   
+				// **********************************************
+
+
+				virtual void virt_draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) = 0;
+
+
+				virtual fBox2 virt_boundingBox() const = 0;
+
+
+				virtual std::string virt_toString(bool debug = false) const = 0;
+
+
+				virtual void virt_serialize(OBaseArchive & ar) const = 0;
+	
+
+				virtual void virt_svg(mtools::SVGElement * el) const
+					{
+					MTOOLS_DEBUG(std::string("Figure::svg() called but not implemented on ") + typeid(*this).name() + ". Item ignored...");
+					el->Comment((std::string("MISSING FIGURE\n") + toString()).c_str());
+					return;
+					}
+
+
 			private:
+
+
+				/** Convert coordinate from local to global */
+				MTOOLS_FORCEINLINE 	fVec2 _coordLocalToGlobal(const fVec2 P) const { return ((P - _anchor_local)*_scale + _anchor_global); }
+
+				/** Convert coordinate from global to local to global */
+				MTOOLS_FORCEINLINE 	fVec2 _coordGlobalToLocal(const fVec2 P) const { return ((P - _anchor_global) / _scale + _anchor_local); }
+
+				/** Transform a box from the local group coordinates to the global parent coordinates. */
+				MTOOLS_FORCEINLINE 	fBox2 _coordLocalToGlobal(const fBox2 & B) const 
+					{
+					fVec2 P = _coordLocalToGlobal(fVec2(B.min[0], B.min[1]));
+					fVec2 Q = _coordLocalToGlobal(fVec2(B.max[0], B.max[1]));
+					return fBox2(P.X(), Q.X(), P.Y(), Q.Y());
+					}
+
+				/** Transform a box from the global parent coordinates to the local group coordinates. */
+				MTOOLS_FORCEINLINE fBox2 _coordGlobalToLocal(const fBox2 & B) const
+					{
+					fVec2 P = _coordGlobalToLocal(fVec2(B.min[0], B.min[1]));
+					fVec2 Q = _coordGlobalToLocal(fVec2(B.max[0], B.max[1]));
+					return fBox2(P.X(), Q.X(), P.Y(), Q.Y());
+					}
+
+
+
+				fVec2 _anchor_local;
+				fVec2 _anchor_global; 
+				fVec2 _scale;
+
+
 
 			};
 
@@ -782,20 +1060,20 @@ namespace mtools
 			}
 
 
-			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+			virtual void virt_draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 			{
 				double r = (radius < min_thickness) ? min_thickness : radius;
 				im.canvas_draw_circle_dot(R, center, r, outlinecolor, fillcolor, highQuality, true);
 			}
 
 
-			virtual fBox2 boundingBox() const override
+			virtual fBox2 virt_boundingBox() const override
 			{
 				return fBox2(center.X(), center.X(), center.Y(), center.Y());
 			}
 
 
-			virtual std::string toString(bool debug = false) const override
+			virtual std::string virt_toString(bool debug = false) const override
 			{
 				OSS os;
 				os << "CircleDot [" << center << ", " << radius << "  outline " << outlinecolor << " interior " << fillcolor << "]";
@@ -803,19 +1081,19 @@ namespace mtools
 			}
 
 
-			virtual void serialize(OBaseArchive & ar) const override
+			virtual void virt_serialize(OBaseArchive & ar) const override
 			{
 				ar & center & radius & outlinecolor & fillcolor;
 			}
 
 
-			CircleDot(IBaseArchive & ar)
+			CircleDot(IBaseArchive & ar) : FigureInterface(ar)
 			{
 				ar & center & radius & outlinecolor & fillcolor;
 			}
 
 
-			virtual void svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el) const override
 				{
 				el->Comment("SVG cannot represent Figure::CircleDot correctly !");
 				el->SetName("circle");;
@@ -873,19 +1151,19 @@ namespace mtools
 				}
 
 
-			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+			virtual void virt_draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 				{
 				im.canvas_draw_square_dot(R, center, color, true, pw);
 				}
 
 
-			virtual fBox2 boundingBox() const override
+			virtual fBox2 virt_boundingBox() const override
 				{
 				return fBox2(center.X(), center.X(), center.Y(), center.Y());
 				}
 
 
-			virtual std::string toString(bool debug = false) const override
+			virtual std::string virt_toString(bool debug = false) const override
 				{
 				OSS os; 
 				os <<"SquareDot [" << center << ", " << pw << ", " << color << "]";
@@ -893,19 +1171,19 @@ namespace mtools
 				}
 
 
-			virtual void serialize(OBaseArchive & ar) const override
+			virtual void virt_serialize(OBaseArchive & ar) const override
 				{
 				ar & center & pw & color;
 				}
 
 
-			SquareDot(IBaseArchive & ar) 
+			SquareDot(IBaseArchive & ar) : FigureInterface(ar)
 				{
 				ar & center & pw & color;
 				}
 
 
-			virtual void svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el) const override
 				{
 				el->Comment("SVG cannot represent Figure::SquareDot correctly !");
 				el->SetName("rect");;
@@ -963,19 +1241,19 @@ namespace mtools
 				}
 
 
-			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+			virtual void virt_draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 				{
 				im.canvas_draw_horizontal_line(R, y, x1, x2, color, true, true, min_thickness);
 				}
 
 
-			virtual fBox2 boundingBox() const override
+			virtual fBox2 virt_boundingBox() const override
 				{
 				return getBoundingBox(fVec2{ x1, y }, fVec2{ x2, y });
 				}
 
 
-			virtual std::string toString(bool debug = false) const override
+			virtual std::string virt_toString(bool debug = false) const override
 				{
 				OSS os; 
 				os << "HorizontalLine [" << x1 << " - " << x2 << ", " << y << " " << color << "]";
@@ -983,19 +1261,19 @@ namespace mtools
 				}
 
 
-			virtual void serialize(OBaseArchive & ar) const override
+			virtual void virt_serialize(OBaseArchive & ar) const override
 				{
 				ar & x1 & x2 & y & color;
 				}
 
 
-			HorizontalLine(IBaseArchive & ar)
+			HorizontalLine(IBaseArchive & ar) : FigureInterface(ar)
 				{
 				ar & x1 & x2 & y & color;
 				}
 
 
-			virtual void svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el) const override
 				{
 				el->SetName("line");
 				el->xml->SetAttribute("x1", TX(x1));
@@ -1039,19 +1317,19 @@ namespace mtools
 				}
 
 
-			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+			virtual void virt_draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 				{
 				im.canvas_draw_vertical_line(R, x, y1, y2, color, true, true, min_thickness);
 				}
 				
 
-			virtual fBox2 boundingBox() const override
+			virtual fBox2 virt_boundingBox() const override
 				{
 				return getBoundingBox(fVec2{ x, y1 }, fVec2{ x, y2 });
 				}
 
 
-			virtual std::string toString(bool debug = false) const override
+			virtual std::string virt_toString(bool debug = false) const override
 				{
 				OSS os;
 				os << "VerticalLine [" << x << ", " << y1 << " - " << y2 << " " << color << "]";
@@ -1059,19 +1337,19 @@ namespace mtools
 				}
 
 
-			virtual void serialize(OBaseArchive & ar) const override
+			virtual void virt_serialize(OBaseArchive & ar) const override
 				{
 				ar & y1 & y2 & x & color;
 				}
 
 
-			VerticalLine(IBaseArchive & ar) 
+			VerticalLine(IBaseArchive & ar) : FigureInterface(ar) 
 				{
 				ar & y1 & y2 & x & color;
 				}
 
 
-			virtual void svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el) const override
 				{
 				el->SetName("line");
 				el->xml->SetAttribute("x1", TX(x));
@@ -1116,19 +1394,19 @@ namespace mtools
 				}
 
 
-			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+			virtual void virt_draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 				{
 				im.canvas_draw_line(R, P1, P2, color, true, highQuality, true, pw, min_thickness);
 				}
 
 
-			virtual fBox2 boundingBox() const override
+			virtual fBox2 virt_boundingBox() const override
 				{
 				return fBox2(std::min<double>(P1.X(), P2.X()), std::max<double>(P1.X(), P2.X()), std::min<double>(P1.Y(), P2.Y()), std::max<double>(P1.Y(), P2.Y()));
 				}
 
 
-			virtual std::string toString(bool debug = false) const override
+			virtual std::string virt_toString(bool debug = false) const override
 				{
 				OSS os; 
 				os <<"Line [" << P1 << ", " << P2 << " (" << pw << ") " << color << "]";
@@ -1136,19 +1414,19 @@ namespace mtools
 				}
 
 
-			virtual void serialize(OBaseArchive & ar) const override
+			virtual void virt_serialize(OBaseArchive & ar) const override
 				{
 				ar & P1 & P2 & color & pw;
 				}
 
 
-			Line(IBaseArchive & ar)
+			Line(IBaseArchive & ar) : FigureInterface(ar)
 				{
 				ar & P1 & P2 & color & pw;
 				}
 
 
-			virtual void svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el) const override
 			{
 				el->SetName("line");
 				el->xml->SetAttribute("x1", TX(P1.X()));
@@ -1195,19 +1473,19 @@ namespace mtools
 			}
 
 
-			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+			virtual void virt_draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 			{
 				im.canvas_draw_polyline(R, tab, color, true, highQuality, true, pw, min_thickness);
 			}
 
 
-			virtual fBox2 boundingBox() const override
+			virtual fBox2 virt_boundingBox() const override
 			{
 				return bb;
 			}
 
 
-			virtual std::string toString(bool debug = false) const override
+			virtual std::string virt_toString(bool debug = false) const override
 			{
 				OSS os; 
 				os << "PolyLine [" << tab << " - " << color << "(" << pw << ")" << "]";
@@ -1215,20 +1493,20 @@ namespace mtools
 			}
 
 
-			virtual void serialize(OBaseArchive & ar) const override
+			virtual void virt_serialize(OBaseArchive & ar) const override
 			{
 				ar & tab & color & pw;
 			}
 
 
-			PolyLine(IBaseArchive & ar)
+			PolyLine(IBaseArchive & ar) : FigureInterface(ar)
 			{
 				ar & tab & color & pw;
 				bb = getBoundingBox(tab);
 			}
 
 
-			virtual void svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el) const override
 				{
 				el->SetName("polyline");
 				el->tinyStroke(color, bb);
@@ -1277,7 +1555,7 @@ namespace mtools
 			}
 
 
-			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+			virtual void virt_draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 			{
 				const bool relative = (thickness >= 0);
 				const double thick = (relative ? thickness : -thickness);
@@ -1285,14 +1563,14 @@ namespace mtools
 			}
 
 
-			virtual fBox2 boundingBox() const override
+			virtual fBox2 virt_boundingBox() const override
 			{
 				if (thickness > 0) { const double ht = thickness / 2;  return fBox2(x1, x2, y - ht, y + ht); }
 				else { return fBox2(x1, x2, y, y); }
 			}
 
 
-			virtual std::string toString(bool debug = false) const override
+			virtual std::string virt_toString(bool debug = false) const override
 			{
 				OSS os; 
 				os << "ThickHorizontalLine [" << x1 << " - " << x2 << ", " << y << " " << color;
@@ -1302,19 +1580,19 @@ namespace mtools
 			}
 
 
-			virtual void serialize(OBaseArchive & ar) const override
+			virtual void virt_serialize(OBaseArchive & ar) const override
 			{
 				ar & x1 & x2 & y & color & thickness;
 			}
 
 
-			ThickHorizontalLine(IBaseArchive & ar) 
+			ThickHorizontalLine(IBaseArchive & ar) : FigureInterface(ar) 
 			{
 				ar & x1 & x2 & y & color & thickness;
 			}
 
 
-			virtual void svg(mtools::SVGElement * el) const
+			virtual void virt_svg(mtools::SVGElement * el) const
 				{
 				el->SetName("line");
 				el->setStrokeColor(color);
@@ -1373,7 +1651,7 @@ namespace mtools
 			}
 
 
-			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+			virtual void virt_draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 			{
 				const bool relative = (thickness >= 0);
 				const double thick = (relative ? thickness : -thickness);
@@ -1381,14 +1659,14 @@ namespace mtools
 			}
 
 
-			virtual fBox2 boundingBox() const override
+			virtual fBox2 virt_boundingBox() const override
 			{
 				if (thickness > 0) { const double ht = thickness / 2;  return fBox2(x - ht, x + ht, y1, y2); }
 				else { return fBox2(x, x, y1, y2); }
 			}
 
 
-			virtual std::string toString(bool debug = false) const override
+			virtual std::string virt_toString(bool debug = false) const override
 			{
 				OSS os; 
 				os << "ThickVerticalLine [" << x << ", " << y1 << " - " << y2 << " " << color;
@@ -1398,19 +1676,19 @@ namespace mtools
 			}
 
 
-			virtual void serialize(OBaseArchive & ar) const override
+			virtual void virt_serialize(OBaseArchive & ar) const override
 			{
 				ar & y1 & y2 & x & color & thickness;
 			}
 
 
-			ThickVerticalLine(IBaseArchive & ar) 
+			ThickVerticalLine(IBaseArchive & ar) : FigureInterface(ar) 
 			{
 				ar & y1 & y2 & x & color & thickness;
 			}
 
 
-			virtual void svg(mtools::SVGElement * el) const
+			virtual void virt_svg(mtools::SVGElement * el) const
 				{
 				el->SetName("line");
 				el->setStrokeColor(color);
@@ -1469,7 +1747,7 @@ namespace mtools
 				}
 
 
-			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+			virtual void virt_draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 				{
 				const bool rel = (thick >= 0);
 				const double tt = (rel ? thick : -thick);
@@ -1477,13 +1755,13 @@ namespace mtools
 				}
 
 
-			virtual fBox2 boundingBox() const override
+			virtual fBox2 virt_boundingBox() const override
 				{
 				return bb;
 				}
 
 
-			virtual std::string toString(bool debug = false) const override
+			virtual std::string virt_toString(bool debug = false) const override
 				{
 				OSS os; 
 				os << "ThickLine [" << P1 << ", " << P2 << " - " << ((thick >= 0) ? "rel. thick. (" : "abs. thick. (") << std::abs(thick) << ") " << color << "]";
@@ -1491,20 +1769,20 @@ namespace mtools
 				}
 
 
-			virtual void serialize(OBaseArchive & ar) const override
+			virtual void virt_serialize(OBaseArchive & ar) const override
 				{
 				ar & P1 & P2 & color & thick;
 				}
 
 
-			ThickLine(IBaseArchive & ar)
+			ThickLine(IBaseArchive & ar) : FigureInterface(ar)
 				{
 				ar & P1 & P2 & color & thick;
 				_computeBB();
 				}
 
 
-			virtual void svg(mtools::SVGElement * el) const
+			virtual void virt_svg(mtools::SVGElement * el) const
 				{
 				el->SetName("line");
 				el->setStrokeColor(color);
@@ -1573,7 +1851,7 @@ namespace mtools
 				}
 
 
-			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+			virtual void virt_draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 				{
 				const bool rel = (thickness >= 0);
 				const double tt = (rel ? thickness : -thickness);
@@ -1581,13 +1859,13 @@ namespace mtools
 				}
 
 
-			virtual fBox2 boundingBox() const override
+			virtual fBox2 virt_boundingBox() const override
 				{
 				return bb;
 				}
 
 
-			virtual std::string toString(bool debug = false) const override
+			virtual std::string virt_toString(bool debug = false) const override
 				{
 				OSS os; 
 				os << "ThickPolyLine [" << tab << " - " << ((thickness >= 0) ? "rel. thick. (" : "abs. thick. (") << std::abs(thickness) << ") " << color << "]";
@@ -1595,20 +1873,20 @@ namespace mtools
 				}
 
 
-			virtual void serialize(OBaseArchive & ar) const override
+			virtual void virt_serialize(OBaseArchive & ar) const override
 				{
 				ar & tab & color & thickness;
 				}
 
 
-			ThickPolyLine(IBaseArchive & ar)
+			ThickPolyLine(IBaseArchive & ar) : FigureInterface(ar)
 				{
 				ar & tab & color & thickness;
 				_constructbb();
 				}
 
 
-			virtual void svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el) const override
 				{
 				el->SetName("polyline");
 				el->setStrokeColor(color);
@@ -1695,19 +1973,19 @@ namespace mtools
 			}
 
 
-			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+			virtual void virt_draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 			{
 				im.canvas_draw_box(R, box, fillcolor, true, min_thickness);
 			}
 
 
-			virtual fBox2 boundingBox() const override
+			virtual fBox2 virt_boundingBox() const override
 			{
 				return box;
 			}
 
 
-			virtual std::string toString(bool debug = false) const override
+			virtual std::string virt_toString(bool debug = false) const override
 				{
 				OSS os; 
 				os << "BoxedRegion [" << box << " - " << fillcolor << "]";
@@ -1715,19 +1993,19 @@ namespace mtools
 				}
 
 
-			virtual void serialize(OBaseArchive & ar) const override
+			virtual void virt_serialize(OBaseArchive & ar) const override
 			{
 				ar & box & fillcolor;
 			}
 
 
-			BoxRegion(IBaseArchive & ar) 
+			BoxRegion(IBaseArchive & ar) : FigureInterface(ar) 
 			{
 				ar & box & fillcolor;
 			}
 
 
-			virtual void svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el) const override
 			{
 				el->SetName("rect");
 				el->noStroke();
@@ -1772,7 +2050,7 @@ namespace mtools
 				}
 
 
-			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+			virtual void virt_draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 				{
 				if (fillcolor.isTransparent())
 					{
@@ -1785,13 +2063,13 @@ namespace mtools
 				}
 
 
-			virtual fBox2 boundingBox() const override
+			virtual fBox2 virt_boundingBox() const override
 				{
 				return getBoundingBox(P1,P2,P3);
 				}
 
 
-			virtual std::string toString(bool debug = false) const override
+			virtual std::string virt_toString(bool debug = false) const override
 				{
 				OSS os; 
 				os << "Triangle [" << P1 << ", " << P2 << ", " << P3 << " - " << color;
@@ -1801,19 +2079,19 @@ namespace mtools
 				}
 
 
-			virtual void serialize(OBaseArchive & ar) const override
+			virtual void virt_serialize(OBaseArchive & ar) const override
 				{
 				ar & P1 & P2 & P3 & color & fillcolor;
 				}
 
 
-			Triangle(IBaseArchive & ar)
+			Triangle(IBaseArchive & ar) : FigureInterface(ar)
 				{
 				ar & P1 & P2 & P3 & color & fillcolor;
 				}
 
 
-			virtual void svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el) const override
 				{
 				el->SetName("polygon");
 				el->setFillColor(fillcolor);
@@ -1859,7 +2137,7 @@ namespace mtools
 				}
 
 
-			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+			virtual void virt_draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 				{
 				if (fillcolor.isTransparent())
 					{
@@ -1872,13 +2150,13 @@ namespace mtools
 				}
 
 
-			virtual fBox2 boundingBox() const override
+			virtual fBox2 virt_boundingBox() const override
 				{
 				return getBoundingBox(P1,P2,P3,P4);
 				}
 
 
-			virtual std::string toString(bool debug = false) const override
+			virtual std::string virt_toString(bool debug = false) const override
 				{
 				OSS os; 
 				os << "Quad [" <<  P1 << ", " << P2 << ", " << P3 << ", " << P4 << " - " << color;
@@ -1888,19 +2166,19 @@ namespace mtools
 				}
 
 
-			virtual void serialize(OBaseArchive & ar) const override
+			virtual void virt_serialize(OBaseArchive & ar) const override
 				{
 				ar & P1 & P2 & P3 & P4 & color & fillcolor;
 				}
 
 
-			Quad(IBaseArchive & ar)
+			Quad(IBaseArchive & ar) : FigureInterface(ar)
 				{
 				ar & P1 & P2 & P3 & P4 & color & fillcolor;
 				}
 
 
-			virtual void svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el) const override
 				{
 				el->SetName("polygon");
 				el->setStrokeColor(color);
@@ -1948,7 +2226,7 @@ namespace mtools
 				}
 
 
-			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+			virtual void virt_draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 				{
 				if (fillcolor.isTransparent())
 					{
@@ -1961,13 +2239,13 @@ namespace mtools
 				}
 
 
-			virtual fBox2 boundingBox() const override
+			virtual fBox2 virt_boundingBox() const override
 				{
 				return bb;
 				}
 
 
-			virtual std::string toString(bool debug = false) const override
+			virtual std::string virt_toString(bool debug = false) const override
 				{
 				OSS os; 
 				os << "Polygon [" << tab << " - " << color;
@@ -1977,20 +2255,20 @@ namespace mtools
 				}
 
 
-			virtual void serialize(OBaseArchive & ar) const override
+			virtual void virt_serialize(OBaseArchive & ar) const override
 				{
 				ar & tab & color & fillcolor;
 				}
 
 
-			Polygon(IBaseArchive & ar) 
+			Polygon(IBaseArchive & ar) : FigureInterface(ar) 
 				{
 				ar & tab & color & fillcolor;
 				bb = getBoundingBox(tab);
 				}
 
 
-			virtual void svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el) const override
 				{
 				el->SetName("polygon");
 				el->setStrokeColor(color);
@@ -2039,7 +2317,7 @@ namespace mtools
 				}
 
 
-			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+			virtual void virt_draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 				{
 				if (fillcolor.isTransparent())
 					{
@@ -2052,13 +2330,13 @@ namespace mtools
 				}
 
 
-			virtual fBox2 boundingBox() const override
+			virtual fBox2 virt_boundingBox() const override
 				{
 				return box;
 				}
 
 
-			virtual std::string toString(bool debug = false) const override
+			virtual std::string virt_toString(bool debug = false) const override
 				{
 				OSS os; 
 				os << "Rectangle [" << box << " - " << color; 
@@ -2068,19 +2346,19 @@ namespace mtools
 				}
 
 
-			virtual void serialize(OBaseArchive & ar) const override
+			virtual void virt_serialize(OBaseArchive & ar) const override
 				{
 				ar & box & color & fillcolor;
 				}
 
 
-			Rectangle(IBaseArchive & ar) 
+			Rectangle(IBaseArchive & ar) : FigureInterface(ar) 
 				{
 				ar & box & color & fillcolor;
 				}
 
 
-			virtual void svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el) const override
 				{
 				el->SetName("rect");
 				el->setStrokeColor(color);
@@ -2131,7 +2409,7 @@ namespace mtools
 				}
 
 
-			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+			virtual void virt_draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 				{
 				const bool rel = (thickness >= 0);
 				const double tt = (rel ? thickness : -thickness);
@@ -2146,13 +2424,13 @@ namespace mtools
 				}
 
 
-			virtual fBox2 boundingBox() const override
+			virtual fBox2 virt_boundingBox() const override
 				{
 				return getBoundingBox(P1, P2, P3);
 				}
 
 
-			virtual std::string toString(bool debug = false) const override
+			virtual std::string virt_toString(bool debug = false) const override
 				{
 				OSS os; 
 				os << "ThickTriangle [" << P1 << ", " << P2 << ", " << P3 << " - " << ((thickness >= 0) ? " rel. thick. (" : "abs. thick. (") << std::abs(thickness) << ") " << color;
@@ -2162,19 +2440,19 @@ namespace mtools
 				}
 
 
-			virtual void serialize(OBaseArchive & ar) const override
+			virtual void virt_serialize(OBaseArchive & ar) const override
 				{
 				ar &  P1 & P2 & P3 & thickness & color & fillcolor;
 				}
 
 
-			ThickTriangle(IBaseArchive & ar) 
+			ThickTriangle(IBaseArchive & ar) : FigureInterface(ar) 
 				{
 				ar &  P1 & P2 & P3 & thickness & color & fillcolor;
 				}
 
 
-			virtual void svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el) const override
 				{
 				mtools::ostringstream os;
 				os << TX(P1.X()) << "," << TY(P1.Y()) << " " << TX(P2.X()) << "," << TY(P2.Y()) << " " << TX(P3.X()) << "," << TY(P3.Y());
@@ -2247,7 +2525,7 @@ namespace mtools
 				}
 
 
-			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+			virtual void virt_draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 				{
 				const bool rel = (thickness >= 0);
 				const double tt = (rel ? thickness : -thickness);
@@ -2262,13 +2540,13 @@ namespace mtools
 				}
 
 
-			virtual fBox2 boundingBox() const override
+			virtual fBox2 virt_boundingBox() const override
 				{
 				return getBoundingBox(P1, P2, P3, P4);
 				}
 
 
-			virtual std::string toString(bool debug = false) const override
+			virtual std::string virt_toString(bool debug = false) const override
 				{
 				OSS os; 
 				os << "ThickQuad [" << P1 << ", " << P2 << ", " << P3 << ", " << P4 << " - " << ((thickness >= 0) ? " rel. thick. (" : "abs. thick. (") << std::abs(thickness) << ") " << color;
@@ -2278,19 +2556,19 @@ namespace mtools
 				}
 
 
-			virtual void serialize(OBaseArchive & ar) const override
+			virtual void virt_serialize(OBaseArchive & ar) const override
 				{
 				ar &  P1 & P2 & P3 & P4 & thickness & color & fillcolor;
 				}
 
 
-			ThickQuad(IBaseArchive & ar) 
+			ThickQuad(IBaseArchive & ar) : FigureInterface(ar) 
 				{
 				ar &  P1 & P2 & P3 & P4 & thickness & color & fillcolor;
 				}
 
 
-			virtual void svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el) const override
 				{
 				mtools::ostringstream os;
 				os << TX(P1.X()) << "," << TY(P1.Y()) << " " << TX(P2.X()) << "," << TY(P2.Y()) << " " << TX(P3.X()) << "," << TY(P3.Y()) << " " << TX(P4.X()) << "," << TY(P4.Y());
@@ -2364,7 +2642,7 @@ namespace mtools
 				}
 
 
-			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+			virtual void virt_draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 				{
 				const bool rel = (thickness >= 0);
 				const double tt = (rel ? thickness : -thickness);
@@ -2379,13 +2657,13 @@ namespace mtools
 				}
 
 
-			virtual fBox2 boundingBox() const override
+			virtual fBox2 virt_boundingBox() const override
 				{
 				return bb;
 				}
 
 
-			virtual std::string toString(bool debug = false) const override
+			virtual std::string virt_toString(bool debug = false) const override
 				{
 				OSS os; 
 				os << "ThickPolygon [" << tab << " - " << ((thickness >= 0) ? " rel. thick. (" : "abs. thick. (") << std::abs(thickness) << ") " << color;
@@ -2395,20 +2673,20 @@ namespace mtools
 				}
 
 
-			virtual void serialize(OBaseArchive & ar) const override
+			virtual void virt_serialize(OBaseArchive & ar) const override
 				{
 				ar & tab & thickness & color & fillcolor;
 				}
 
 
-			ThickPolygon(IBaseArchive & ar) 
+			ThickPolygon(IBaseArchive & ar) : FigureInterface(ar) 
 				{
 				ar & tab & thickness & color & fillcolor;
 				bb = getBoundingBox(tab);
 				}
 
 
-			virtual void svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el) const override
 				{
 				mtools::ostringstream os;
 				for (auto P : tab)
@@ -2489,7 +2767,7 @@ namespace mtools
 				}
 
 
-			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+			virtual void virt_draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 				{
 				const bool rel = (thickness_x >= 0);
 				const double tx = (rel ? thickness_x : -thickness_x); 
@@ -2505,13 +2783,13 @@ namespace mtools
 				}
 
 
-			virtual fBox2 boundingBox() const override
+			virtual fBox2 virt_boundingBox() const override
 				{
 				return box;
 				}
 
 
-			virtual std::string toString(bool debug = false) const override
+			virtual std::string virt_toString(bool debug = false) const override
 				{
 				OSS os; 
 				os << "ThickRectangle [" << box <<  ((thickness_x >= 0) ? "rel. thick. (" : "abs. thick. (")  << std::abs(thickness_x) << "," << std::abs(thickness_y) << ") " << color;
@@ -2521,19 +2799,19 @@ namespace mtools
 				}
 
 
-			virtual void serialize(OBaseArchive & ar) const override
+			virtual void virt_serialize(OBaseArchive & ar) const override
 				{
 				ar &  box & thickness_x & thickness_y & color & fillcolor;
 				}
 
 
-			ThickRectangle(IBaseArchive & ar)
+			ThickRectangle(IBaseArchive & ar) : FigureInterface(ar)
 				{
 				ar &  box & thickness_x & thickness_y & color & fillcolor;
 				}
 
 
-			virtual void svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el) const override
 				{
 				if ((thickness_x <= 0)||(thickness_y <= 0))
 					{
@@ -2648,17 +2926,17 @@ namespace mtools
 				}
 
 
-			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+			virtual void virt_draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 				{
 				if (fillcolor.isTransparent()) { im.canvas_draw_circle(R, center, radius, color, highQuality); }
 				else { im.canvas_draw_filled_circle(R, center, radius, color, fillcolor, highQuality); }
 				}
 
 
-			virtual fBox2 boundingBox() const override { return fBox2(center.X() - radius, center.X() + radius, center.Y() - radius, center.Y() + radius); }
+			virtual fBox2 virt_boundingBox() const override { return fBox2(center.X() - radius, center.X() + radius, center.Y() - radius, center.Y() + radius); }
 
 
-			virtual std::string toString(bool debug = false) const override
+			virtual std::string virt_toString(bool debug = false) const override
 				{
 				OSS os; 
 				os << "Circle [" << center << " " << radius << " " << color;
@@ -2668,26 +2946,26 @@ namespace mtools
 				}
 
 
-			virtual void serialize(OBaseArchive & ar) const override
+			virtual void virt_serialize(OBaseArchive & ar) const override
 				{
 				ar & center & radius & color & fillcolor;
 				}
 
 
-			Circle(IBaseArchive & ar)
+			Circle(IBaseArchive & ar) : FigureInterface(ar)
 				{
 				ar & center & radius & color & fillcolor;
 				}
 
 
-			virtual void svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el) const override
 				{
 				el->SetName("circle");
 				el->setFillColor(fillcolor);
 				el->xml->SetAttribute("cx", TX(center.X()));
 				el->xml->SetAttribute("cy", TY(center.Y()));
 				el->xml->SetAttribute("r", TR(radius));
-				el->tinyStroke(color, fillcolor, boundingBox());
+				el->tinyStroke(color, fillcolor, virt_boundingBox());
 				return;
 				}
 
@@ -2751,7 +3029,7 @@ namespace mtools
 				}
 
 
-			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+			virtual void virt_draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 				{
 				if (thickness == 0.0)
 					{
@@ -2768,10 +3046,10 @@ namespace mtools
 				}
 
 
-			virtual fBox2 boundingBox() const override { return fBox2(center.X() - radius, center.X() + radius, center.Y() - radius, center.Y() + radius); }
+			virtual fBox2 virt_boundingBox() const override { return fBox2(center.X() - radius, center.X() + radius, center.Y() - radius, center.Y() + radius); }
 
 
-			virtual std::string toString(bool debug = false) const override
+			virtual std::string virt_toString(bool debug = false) const override
 				{
 				OSS os; 
 				os << "ThickCircle [" << center << " " << radius << " " << color;
@@ -2785,19 +3063,19 @@ namespace mtools
 				}
 
 
-			virtual void serialize(OBaseArchive & ar) const override
+			virtual void virt_serialize(OBaseArchive & ar) const override
 				{
 				ar & center & radius & thickness & color & fillcolor;
 				}
 
 
-			ThickCircle(IBaseArchive & ar)
+			ThickCircle(IBaseArchive & ar) : FigureInterface(ar)
 				{
 				ar & center & radius & thickness & color & fillcolor;
 				}
 
 
-			virtual void svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el) const override
 				{
 				if (thickness <= 0)
 					{
@@ -2806,7 +3084,7 @@ namespace mtools
 					el->xml->SetAttribute("cx", TX(center.X()));
 					el->xml->SetAttribute("cy", TY(center.Y()));
 					el->xml->SetAttribute("r", TR(radius));
-					el->tinyStroke(color, fillcolor, boundingBox());
+					el->tinyStroke(color, fillcolor, virt_boundingBox());
 					return;
 					}
 
@@ -2886,20 +3164,20 @@ namespace mtools
 				}
 
 
-			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+			virtual void virt_draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 				{
 				if (fillcolor.isTransparent()) { im.canvas_draw_part_circle(R, part, center, radius, color, highQuality); }
 				else { im.canvas_draw_part_filled_circle(R, part, center, radius, color, fillcolor, highQuality); }
 				}
 
 
-			virtual fBox2 boundingBox() const override
+			virtual fBox2 virt_boundingBox() const override
 				{
 				return fBox2(center.X() - radius, center.X() + radius, center.Y() - radius, center.Y() + radius).get_split(part);
 				}
 
 
-			virtual std::string toString(bool debug = false) const override
+			virtual std::string virt_toString(bool debug = false) const override
 				{
 				OSS os; 
 				os << "CirclePart [";
@@ -2922,19 +3200,19 @@ namespace mtools
 				}
 
 
-			virtual void serialize(OBaseArchive & ar) const override
+			virtual void virt_serialize(OBaseArchive & ar) const override
 				{
 				ar & part & center & radius & color & fillcolor;
 				}
 
 
-			CirclePart(IBaseArchive & ar)
+			CirclePart(IBaseArchive & ar) : FigureInterface(ar)
 				{
 				ar & part & center & radius & color & fillcolor;
 				}
 
 
-			virtual void svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el) const override
 				{
 				fBox2 B = _clippoly(); 
 
@@ -2958,7 +3236,7 @@ namespace mtools
 				fig_el->xml->SetAttribute("cx", TX(center.X()));
 				fig_el->xml->SetAttribute("cy", TY(center.Y()));
 				fig_el->xml->SetAttribute("r", TR(radius));
-				fig_el->tinyStroke(color, fillcolor, boundingBox());
+				fig_el->tinyStroke(color, fillcolor, virt_boundingBox());
 				return;
 				}
 
@@ -3058,7 +3336,7 @@ namespace mtools
 				}
 
 
-			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+			virtual void virt_draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 				{
 				if (thickness == 0.0)
 					{
@@ -3075,13 +3353,13 @@ namespace mtools
 				}
 
 
-			virtual fBox2 boundingBox() const override
+			virtual fBox2 virt_boundingBox() const override
 				{
 				return fBox2(center.X() - radius, center.X() + radius, center.Y() - radius, center.Y() + radius).get_split(part);
 				}
 
 
-			virtual std::string toString(bool debug = false) const override
+			virtual std::string virt_toString(bool debug = false) const override
 				{
 				OSS os;
 				os << "ThickCirclePart ["; 
@@ -3108,19 +3386,19 @@ namespace mtools
 				}
 
 
-			virtual void serialize(OBaseArchive & ar) const override
+			virtual void virt_serialize(OBaseArchive & ar) const override
 				{
 				ar & part & center & radius & thickness & color & fillcolor;
 				}
 
 
-			ThickCirclePart(IBaseArchive & ar)
+			ThickCirclePart(IBaseArchive & ar) : FigureInterface(ar)
 				{
 				ar & part & center & radius & thickness & color & fillcolor;
 				}
 
 
-			virtual void svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el) const override
 				{
 				fBox2 B = _clippoly(); 
 
@@ -3148,7 +3426,7 @@ namespace mtools
 				if (thickness <= 0)
 					{
 					fig_el->xml->SetAttribute("r", TR(radius));
-					fig_el->tinyStroke(color, fillcolor, boundingBox());
+					fig_el->tinyStroke(color, fillcolor, virt_boundingBox());
 					return;
 					}
 
@@ -3266,20 +3544,20 @@ namespace mtools
 				MTOOLS_ASSERT(!B.isEmpty());
 				}
 
-			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+			virtual void virt_draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 				{
 				if (fillcolor.isTransparent()) { im.canvas_draw_ellipse(R, center, rx, ry, color, highQuality); }
 				else { im.canvas_draw_filled_ellipse(R, center, rx, ry, color, fillcolor, highQuality); }
 				}
 
 
-			virtual fBox2 boundingBox() const override
+			virtual fBox2 virt_boundingBox() const override
 				{
 				return fBox2(center.X() - rx, center.X() + rx, center.Y() - ry, center.Y() + ry);
 				}
 
 
-			virtual std::string toString(bool debug = false) const override
+			virtual std::string virt_toString(bool debug = false) const override
 				{
 				OSS os; 
 				os << "Ellipse [" << center << " " << rx << " " << ry << " " << color; 
@@ -3289,19 +3567,19 @@ namespace mtools
 				}
 
 
-			virtual void serialize(OBaseArchive & ar) const override
+			virtual void virt_serialize(OBaseArchive & ar) const override
 				{
 				ar & center & rx & ry & color & fillcolor; 
 				}
 
 
-			Ellipse(IBaseArchive & ar)
+			Ellipse(IBaseArchive & ar) : FigureInterface(ar)
 				{
 				ar & center & rx & ry & color & fillcolor;
 				}
 
 
-			virtual void svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el) const override
 				{
 				el->SetName("ellipse");
 				el->setFillColor(fillcolor);
@@ -3309,7 +3587,7 @@ namespace mtools
 				el->xml->SetAttribute("cy", TY(center.Y()));
 				el->xml->SetAttribute("rx", TR(rx));
 				el->xml->SetAttribute("ry", TR(ry));
-				el->tinyStroke(color, fillcolor, boundingBox());
+				el->tinyStroke(color, fillcolor, virt_boundingBox());
 				return;
 				}
 
@@ -3422,7 +3700,7 @@ namespace mtools
 				}
 
 
-			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+			virtual void virt_draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 				{
 				if ((thickness_x == 0.0) && (thickness_y == 0.0))
 					{
@@ -3440,13 +3718,13 @@ namespace mtools
 				}
 
 
-			virtual fBox2 boundingBox() const override
+			virtual fBox2 virt_boundingBox() const override
 				{
 				return fBox2(center.X() - rx, center.X() + rx, center.Y() - ry, center.Y() + ry);
 				}
 
 
-			virtual std::string toString(bool debug = false) const override
+			virtual std::string virt_toString(bool debug = false) const override
 				{
 				OSS os; 
 				os << "ThickEllipse [" << center << " " << rx << " " << ry << " " << color;
@@ -3460,19 +3738,19 @@ namespace mtools
 				}
 
 
-			virtual void serialize(OBaseArchive & ar) const override
+			virtual void virt_serialize(OBaseArchive & ar) const override
 				{
 				ar & center & rx & ry & thickness_x & thickness_y & color & fillcolor; 
 				}
 
 
-			ThickEllipse(IBaseArchive & ar)
+			ThickEllipse(IBaseArchive & ar) : FigureInterface(ar)
 				{
 				ar & center & rx & ry & thickness_x & thickness_y & color & fillcolor;
 				}
 
 
-			virtual void svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el) const override
 				{
 
 				if ((thickness_x  <= 0)||((thickness_y <= 0)))
@@ -3484,7 +3762,7 @@ namespace mtools
 					el->xml->SetAttribute("cy", TY(center.Y()));
 					el->xml->SetAttribute("rx", TR(rx));
 					el->xml->SetAttribute("ry", TR(ry));
-					el->tinyStroke(color, fillcolor, boundingBox());
+					el->tinyStroke(color, fillcolor, virt_boundingBox());
 					return;
 					}
 
@@ -3605,20 +3883,20 @@ namespace mtools
 				}
 
 
-			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+			virtual void virt_draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 				{
 				if (fillcolor.isTransparent()) { im.canvas_draw_part_ellipse(R, part, center, rx, ry, color, highQuality); }
 				else { im.canvas_draw_part_filled_ellipse(R, part, center, rx, ry, color, fillcolor, highQuality); }
 				}
 
 
-			virtual fBox2 boundingBox() const override
+			virtual fBox2 virt_boundingBox() const override
 				{
 				return fBox2(center.X() - rx, center.X() + rx, center.Y() - ry, center.Y() + ry).get_split(part);
 				}
 
 
-			virtual std::string toString(bool debug = false) const override
+			virtual std::string virt_toString(bool debug = false) const override
 				{
 				OSS os;
 				os << "EllipsePart [";
@@ -3641,20 +3919,20 @@ namespace mtools
 				}
 
 
-			virtual void serialize(OBaseArchive & ar) const override
+			virtual void virt_serialize(OBaseArchive & ar) const override
 				{
 				ar & part & center & rx & ry  & color & fillcolor;
 				}
 
 
-			EllipsePart(IBaseArchive & ar)
+			EllipsePart(IBaseArchive & ar) : FigureInterface(ar)
 				{
 				ar & part & center & rx & ry  & color & fillcolor;
 				}
 
 
 
-			virtual void svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el) const override
 				{
 				fBox2 B = _clippoly(); 
 
@@ -3678,7 +3956,7 @@ namespace mtools
 				fig_el->xml->SetAttribute("cy", TY(center.Y()));
 				fig_el->xml->SetAttribute("rx", TR(rx));
 				fig_el->xml->SetAttribute("ry", TR(ry));
-				fig_el->tinyStroke(color, fillcolor, boundingBox());
+				fig_el->tinyStroke(color, fillcolor, virt_boundingBox());
 				fig_el->xml->SetAttribute("clip-path", (mtools::toString("url(#") + uid + ")").c_str());
 				}
 
@@ -3834,7 +4112,7 @@ namespace mtools
 				}
 
 
-			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+			virtual void virt_draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 				{
 				if ((thickness_x == 0.0) && (thickness_y == 0.0))
 					{
@@ -3852,13 +4130,13 @@ namespace mtools
 				}
 
 
-			virtual fBox2 boundingBox() const override
+			virtual fBox2 virt_boundingBox() const override
 				{
 				return fBox2(center.X() - rx, center.X() + rx, center.Y() - ry, center.Y() + ry).get_split(part);
 				}
 
 
-			virtual std::string toString(bool debug = false) const override
+			virtual std::string virt_toString(bool debug = false) const override
 				{
 				OSS os; 
 				os << "ThickEllipsePart [";
@@ -3885,13 +4163,13 @@ namespace mtools
 				}
 
 
-			virtual void serialize(OBaseArchive & ar) const override
+			virtual void virt_serialize(OBaseArchive & ar) const override
 				{
 				ar & part & center & rx & ry & thickness_x & thickness_y & color & fillcolor;
 				}
 
 
-			ThickEllipsePart(IBaseArchive & ar)
+			ThickEllipsePart(IBaseArchive & ar) : FigureInterface(ar)
 				{
 				ar & part & center & rx & ry & thickness_x & thickness_y & color & fillcolor;
 				}
@@ -3901,7 +4179,7 @@ namespace mtools
 
 
 
-			virtual void svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el) const override
 				{
 				fBox2 B = _clippoly(); 
 
@@ -3931,7 +4209,7 @@ namespace mtools
 					{
 					fig_el->xml->SetAttribute("rx", TR(rx));
 					fig_el->xml->SetAttribute("ry", TR(ry));
-					fig_el->tinyStroke(color, fillcolor, boundingBox());
+					fig_el->tinyStroke(color, fillcolor, virt_boundingBox());
 					return;
 					}
 
@@ -4055,7 +4333,7 @@ namespace mtools
 
 
 			
-			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+			virtual void virt_draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 				{
 				if (_text_max_font_dim.X() == 0) return;							// nothing to draw. 
 				_recreateImage(im, R);												// recreate the image if needed
@@ -4067,14 +4345,14 @@ namespace mtools
 
 
 			/* return the bounding box */
-			virtual fBox2 boundingBox() const override
+			virtual fBox2 virt_boundingBox() const override
 				{
 				return _canvas_bb;
 				}
 
 
 			/* print info int a std::string */
-			virtual std::string toString(bool debug = false) const override
+			virtual std::string virt_toString(bool debug = false) const override
 				{
 				OSS os; 
 				os << "text [" << _text << "]\n";
@@ -4097,14 +4375,14 @@ namespace mtools
 
 
 			/* serialize the figure */ 
-			virtual void serialize(OBaseArchive & ar) const override
+			virtual void virt_serialize(OBaseArchive & ar) const override
 				{
 				ar & _text & _pos & _size & _text_pos & _textcolor & _bkcolor & _op;
 				}
 
 
 			/* ctor for deserialization*/
-			Text(IBaseArchive & ar) 
+			Text(IBaseArchive & ar) : FigureInterface(ar) 
 				{
 				ar & _text & _pos & _size & _text_pos & _textcolor & _bkcolor & _op;
 
@@ -4120,7 +4398,7 @@ namespace mtools
 
 
 
-			virtual void svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el) const override
 				{
 				const double fontsize = 64;				// real font size
 				const double vspace = 82;				// vertical spacing to use
@@ -4369,14 +4647,12 @@ namespace mtools
 			*
 			* Group : group several figures together;
 			*          -> Figure are drawn in order of insertion 
-			*          -> A transformation may be applied (shift and scaling). 
 			*
 			* ALL OBJECT AND TRANSFORMATION SHOULD BE DONE BEFORE INSERTING THE
 			* GROUP INTO A CANVAS.
 			* 
 			* After insertion in a canvas, the object become disabled and 
 			* cannot be used anymore.
-			*
 			**********************************************************/
 			FIGURECLASS_BEGIN(Group)
 				
@@ -4387,14 +4663,11 @@ namespace mtools
 
 			fBox2 _global_bb;											// the bounding box (relative to the group origin)
 			std::vector<internals_figure::FigureInterface *> _figvec;	// the vector containing all the figures
-			fVec2 _anchor_global;										// position of the anchor (ie reference) point in local coord.
-			fVec2 _anchor_local;										// position of the anchor (ie reference) point in global coord.
-			fVec2 _scale;												// scaling of the local corrdinates wrt the global ones
 
 			/**
 			* empty group
 			*/
-			Group() : _global_bb(), _figvec(), _anchor_global(0.0,0.0) , _anchor_local(0.0, 0.0), _scale(1.0,1.0), _dis(false)
+			Group() : internals_figure::FigureInterface(), _global_bb(), _figvec(), _dis(false)
 				{
 				}
 
@@ -4429,7 +4702,7 @@ namespace mtools
 			/**
 			 * Move constructor. Transfer object and ownership. 
 			 */
-			Group(Group && grp) : _global_bb(grp._global_bb), _figvec(std::move(grp._figvec)), _anchor_global(grp._anchor_global), _anchor_local(grp._anchor_local), _scale(grp._scale), _dis(grp._dis)
+			Group(Group && grp) : internals_figure::FigureInterface(std::move(grp)), _global_bb(grp._global_bb), _figvec(std::move(grp._figvec)), _dis(grp._dis)
 				{
 				grp._global_bb.clear();
 				grp._figvec.clear();
@@ -4441,17 +4714,14 @@ namespace mtools
 			*/
 			Group & operator=(Group && grp)
 				{
+				((internals_figure::FigureInterface*)this)->operator=(std::move(grp));
 				_clear();
 				_global_bb = grp._global_bb;
 				_figvec.operator=(std::move(grp._figvec));
-				_anchor_global = grp._anchor_global;
-				_anchor_local = grp._anchor_local;
-				_scale = grp._scale;
 				_dis = grp._dis;
-				grp._global_bb.clear();
+ 				grp._global_bb.clear();
 				grp._figvec.clear();
 				}
-
 
 
 
@@ -4460,157 +4730,6 @@ namespace mtools
 				{
 				_clear();
 				}
-
-
-			/**
-			 * Query the position of the anchor (reference) point in the local coordinate
-			 *
-			 * The affine transformation applied to the group is such that
-			 *   - a scaling of local coordinate is performed.   
-			 *   - the anchor point in local coord is mapped to its global coordinate. 
-			 **/
-			fVec2 anchorLocal() const { return _anchor_local; }
-
-
-			/**
-			 * Set the position of the anchor (reference) point in the local coordinate
-			 *
-			 * The affine transformation applied to the group is such that
-			 *   - a scaling of local coordinate is performed.
-			 *   - the anchor point in local coord is mapped to its global coordinate.
-			 **/
-			void setAnchorLocal(fVec2 pos = { 0.0,0.0 }) { _anchor_local = pos; }
-
-
-			/**
-			 * Set the position of the anchor (reference) point in the local coordinate One of
-			 * MTOOLS_POS_BOTTOMLEFT,  MTOOLS_POS_BOTTOMCENTER ...
-			 * Position is computed w.r.t. to the min bounding box of the whole group. 
-			 * 
-			 * The affine transformation applied to the group is such that
-			 *   - a scaling of local coordinate is performed.
-			 *   - the anchor point in local coord is mapped to its global coordinate.
-			 **/
-			void setAnchorLocal(int anchor_type) { _anchor_local = _global_bb.get_anchor(anchor_type); }
-
-
-			/**
-			 * Query the position of the anchor (reference) point in the local coordinate
-			 *
-			 * The affine transformation applied to the group is such that
-			 *   - a scaling of local coordinate is performed.
-			 *   - the anchor point in local coord is mapped to its global coordinate.
-			 **/
-			fVec2 anchorGlobal() const { return _anchor_global; }
-
-
-			/**
-			 * Set the position of the anchor (reference) point in the local coordinate
-			 *
-			 * The affine transformation applied to the group is such that
-			 *   - a scaling of local coordinate is performed.
-			 *   - the anchor point in local coord is mapped to its global coordinate.
-			 **/
-			void setAnchorGlobal(fVec2 pos = { 0.0,0.0 }) { _anchor_global = pos; }
-
-
-			/**
-			 * Return the scale of the local coord.
-			 *
-			 * The affine transformation applied to the group is such that
-			 *   - a scaling of local coordinate is performed.
-			 *   - the anchor point in local coord is mapped to its global coordinate.
-			 **/
-			fVec2 scale() const { return _scale; }
-
-
-			/**
-			 * Set the scale for the local coordinate
-			 *
-			 * The affine transformation applied to the group is such that
-			 *   - a scaling of local coordinate is performed.
-			 *   - the anchor point in local coord is mapped to its global coordinate.
-			 **/
-			void setScale(fVec2 scale)
-				{
-				MTOOLS_INSURE(scale.X() > 0);
-				MTOOLS_INSURE(scale.Y() > 0);
-				_scale = scale;
-				}
-
-
-			/**
-			 * Set the scale for the local coordinate, same ratio on X and Y coord.
-			 *
-			 * The affine transformation applied to the group is such that
-			 *   - a scaling of local coordinate is performed.
-			 *   - the anchor point in local coord is mapped to its global coordinate.
-			 **/
-			void setScale(double r = 1.0)
-				{
-				MTOOLS_INSURE(r > 0);
-				_scale = { r,r };
-				}
-
-
-			/**
-			 * Move the group so that the anchor point (ie TOPLEFT, BOTOOM_RIGHT etc...)
-			 * is located at position pos in the global coordinate. 
-			 *
-			 * The affine transformation applied to the group is such that
-			 *   - a scaling of local coordinate is performed.
-			 *   - the anchor point in local coord is mapped to its global coordinate.
-			 *
-			 * @param	pos		   	The position.
-			 * @param	anchor_type	Type of the anchor.
-			 **/
-			void moveGroup(fVec2 pos, int anchor_type)
-				{
-				_anchor_local = _global_bb.get_anchor(anchor_type);
-				_anchor_global = pos;
-				}
-
-
-			/**
-			 * Center the group at a given position (using its min bounding box). 
-			 *
-			 * @param	pos	new position for the center of the min bounding box of the group.
-			 **/
-			void centerAt(fVec2 pos)
-				{
-				moveGroup(pos, MTOOLS_POS_CENTER);
-				}
-
-
-			/**
-			 * Adjust the tranformation (local_anchor, global_anchor and scale) in such way that the
-			 * bounding box for all the elements in the group fit tightly inside a given box R.
-			 *
-			 * @param	R			   	To box to in which to fit the group.
-			 * @param	keepAspectRatio	True to keep the aspect ratio (and center), false to use the whole
-			 * 							box.
-			 **/
-			void fitInside(fBox2 R, bool keepAspectRatio)
-				{
-				MTOOLS_INSURE(!(_global_bb.isEmpty()));
-				MTOOLS_INSURE(!(R.isEmpty()));
-				_anchor_local  = _global_bb.get_anchor(MTOOLS_POS_CENTER);
-				_anchor_global = R.get_anchor(MTOOLS_POS_CENTER);
-				const double sx = R.lx() / _global_bb.lx();
-				const double sy = R.ly() / _global_bb.ly();
-				if (keepAspectRatio)
-					{
-					const double ss = std::min(sx, sy);
-					_scale.X() = ss;
-					_scale.Y() = ss;
-					}
-				else
-					{
-					_scale.X() = sx;
-					_scale.Y() = sy;
-					}
-				}
-
 
 
 
@@ -4636,38 +4755,34 @@ namespace mtools
 
 
 			/** draw onto the image */
-			virtual void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+			virtual void virt_draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
 				{
 				if (_dis) { MTOOLS_ERROR("Cannot draw() group after it has been inserted in a canvas !"); }
-				fBox2 nR = _coordGlobalToLocal(R);
 				for (auto p : _figvec)
 					{ // draw in order
-					if (!(intersectionRect(p->boundingBox(), nR).isEmpty()))
-						{ // only if visible
-						p->draw(im, nR, highQuality, min_thickness);
+					if (!(intersectionRect(p->boundingBox(), R).isEmpty()))
+						{ // draw only if visible
+						p->draw(im, R, highQuality, min_thickness);
 						}
 					}
 				}
 
 
 			/** Return the main bounding box (in global coordinates) */
-			virtual fBox2 boundingBox() const override
+			virtual fBox2 virt_boundingBox() const override
 				{
 				if (_dis) { MTOOLS_ERROR("Cannot get Group bounding box group after it has been inserted in a canvas !"); }
-				return _coordLocalToGlobal(_global_bb);
+				return _global_bb;
 				}
 
 
 			/** Dump info into a string */
-			virtual std::string toString(bool debug = false) const override
+			virtual std::string virt_toString(bool debug = false) const override
 				{
 				if (_dis) { MTOOLS_ERROR("Cannot print Group infos after it has been inserted in a canvas !"); }
 				OSS os;
 				os << "Group with " << _figvec << " objects.\n";
 				os << "- bounding box: " << _global_bb << "\n";
-				os << "- anchor local: " << _anchor_local << "\n";
-				os << "- anchor global: " << _anchor_global << "\n";
-				os << "- scale: " << _scale << "\n";
 				os << "------------\n";
 				for (auto p : _figvec)
 					{
@@ -4679,23 +4794,17 @@ namespace mtools
 
 
 			/** serialize */
-			virtual void serialize(OBaseArchive & ar) const override
+			virtual void virt_serialize(OBaseArchive & ar) const override
 				{
 				if (_dis) { MTOOLS_ERROR("Cannot serialize Group after it has been inserted in a canvas !"); }
-				ar & _anchor_local;
-				ar & _anchor_global;
-				ar & _scale;
 				ar & (_figvec.size());
 				for (auto p : _figvec) { ar & (*p);	}
 				}
 
 
 			/** deserialization ctor */
-			Group(IBaseArchive & ar) : _global_bb(), _figvec(), _dis(false)
+			Group(IBaseArchive & ar) : FigureInterface(ar), _global_bb(), _figvec(), _dis(false)
 				{
-				ar & _anchor_local;
-				ar & _anchor_global;
-				ar & _scale;
 				size_t l;
 				ar & l;
 				_figvec.reserve(l);
@@ -4708,18 +4817,10 @@ namespace mtools
 
 
 			/* draw onto the svg */
-			virtual void svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el) const override
 				{
 				if (_dis) { MTOOLS_ERROR("Cannot call Group::svg() after group has been inserted in a canvas !"); }
 				el->SetName("g");
-
-				mtools::ostringstream os; 
-				if (_anchor_global != fVec2(0.0, 0.0)) { os << "translate(" << _anchor_global.X() << " " << -_anchor_global.Y() << ") "; }
-				if (_scale != fVec2(1.0, 1.0)) { os << "scale(" << _scale.X() << " " << _scale.Y() << ") "; }
-				if (_anchor_local != fVec2(0.0, 0.0)) { os << "translate(" << -_anchor_local.X() << " " << _anchor_local.Y() << ") "; }
-				std::string tran_str = os.toString();
-				if (tran_str.size() >0) { el->xml->SetAttribute("transform", tran_str.c_str()); }
-
 				for (auto p : _figvec)
 					{
 					mtools::SVGElement * chel =el->NewChildSVGElement(); // create a child xml element
@@ -4735,36 +4836,6 @@ namespace mtools
 
 			// no assignement
 			Group & operator=(const Group & grp);
-
-
-			/** Convert coordinate from local to global */
-			MTOOLS_FORCEINLINE 	fVec2 _coordLocalToGlobal(const fVec2 P) const
-				{
-				return ((P - _anchor_local)*_scale + _anchor_global);
-				}
-
-			/** Convert coordinate from global to local to global */
-			MTOOLS_FORCEINLINE 	fVec2 _coordGlobalToLocal(const fVec2 P) const
-				{
-				return ((P - _anchor_global)/_scale + _anchor_local);
-				}
-
-			/** Transform a box from the local group coordinates to the global parent coordinates. */
-			MTOOLS_FORCEINLINE 	fBox2 _coordLocalToGlobal(const fBox2 & B) const
-				{
-				fVec2 P = _coordLocalToGlobal(fVec2(B.min[0], B.min[1]));
-				fVec2 Q = _coordLocalToGlobal(fVec2(B.max[0], B.max[1]));
-				return fBox2(P.X(), Q.X(), P.Y(), Q.Y());
-				}
-
-
-			/** Transform a box from the global parent coordinates to the local group coordinates. */
-			MTOOLS_FORCEINLINE fBox2 _coordGlobalToLocal(const fBox2 & B) const 
-				{
-				fVec2 P = _coordGlobalToLocal(fVec2(B.min[0], B.min[1]));
-				fVec2 Q = _coordGlobalToLocal(fVec2(B.max[0], B.max[1]));
-				return fBox2(P.X(), Q.X(), P.Y(), Q.Y());
-				}
 
 
 			// Remove all figures, private version 

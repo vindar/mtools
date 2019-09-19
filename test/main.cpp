@@ -283,7 +283,7 @@ void testSVG()
 		{
 			auto canvas = makeFigureCanvas(2);
 
-			/*
+			
 			canvas(Figure::CircleDot(fVec2{ 50, 50 }, RGBc::c_Green), 1);
 			canvas(Figure::SquareDot(fVec2{ 60, 50 }, RGBc::c_Green.getMultOpacity(0.5f)), 1);
 
@@ -335,12 +335,13 @@ void testSVG()
 			canvas(Figure::ThickCirclePart(BOX_SPLIT_LEFT, { -30, 100 } , 10, 3, true, RGBc::c_Gray, RGBc::c_Blue.getMultOpacity(0.5)), 1);
 			canvas(Figure::ThickCirclePart(BOX_SPLIT_UP_RIGHT, { -30, 100 }, 10, 5,  true, RGBc::c_Gray, RGBc::c_Red.getMultOpacity(0.5)), 1);
 			canvas(Figure::ThickCirclePart(BOX_SPLIT_DOWN_RIGHT, { -30, 100 },  10, 5,  false, RGBc::c_Gray,  RGBc::c_Green.getMultOpacity(0.5)), 1);
-			*/
+			
 
 			std::string s = "Lorem Ipsum venit";
-
-			canvas(Figure::Text(s, { 0, 0 }, { 0, 20 }, MTOOLS_TEXT_CENTERTOP, RGBc::c_Black, RGBc::c_Red.getMultOpacity(0.2f), 1.0f), 0);
-			//canvas(Figure::ThickRectangle(fBox2(0,50,0,100),1,1, true, RGBc::c_Red), 0);
+			auto TT = Figure::Text(s, { 0, 0 }, { 0, 20 }, MTOOLS_TEXT_CENTERTOP, RGBc::c_Black, RGBc::c_Red.getMultOpacity(0.2f), 1.0f);
+			TT.setScale(4.0);
+			canvas(TT, 0);
+			canvas(Figure::ThickRectangle(fBox2(0,50,0,100),1,1, true, RGBc::c_Red), 0);
 
 
 			//canvas.saveSVG("azerty.svg", true, {0, 500});
