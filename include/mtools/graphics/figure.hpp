@@ -116,6 +116,8 @@ namespace mtools
 
 	class Group;
 
+	class Pair;
+	
 
 	*************** TODO  *****************
 	
@@ -129,16 +131,9 @@ namespace mtools
 
 	class FigureImage;
 
-	class FigureFill;
+	class Fill;
 
-	class FigureClip;
-
-	template<typename FIGURE1, typename FIGURE2>  class FigurePair;
-	template<typename FIGURE1, typename FIGURE2, typename FIGURE3>  class FigureTriplet;
-	template<typename FIGURE1, typename FIGURE2, typename FIGURE3, typename FIGURE4>  class FigureQuadruplet;
-	template<class... FIGURES> class FigureTuple;
-	class FigureGroup;
-
+	class Clip;
 
 	*/
 
