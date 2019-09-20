@@ -4757,6 +4757,13 @@ namespace mtools
 				}
 
 
+			/**
+			 * operator() is the same as push().
+			**/
+			template<class FIGURECLASS> void operator()(FIGURECLASS & fig) { push(fig); }
+
+
+
 			/** Remove all figures in the group */
 			void clear()
 				{
