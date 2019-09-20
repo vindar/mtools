@@ -49,6 +49,7 @@ namespace mtools
 			}
 
 		class Group;	// need specific code using move semantic when pushing it into a canvas. 
+		class Pair;		// need specific code using move semantic when pushing it into a canvas. 
 
 		}
 
@@ -233,6 +234,14 @@ namespace mtools
 		* Special implementation using move semantics.
 		*/
 		MTOOLS_FORCEINLINE void operator()(Figure::Group & grp, size_t layer = 0);
+
+
+		/**
+		* Insert a pair into a canvas, inside a given layer
+		* The group is emptied.
+		* Special implementation using move semantics.
+		*/
+		MTOOLS_FORCEINLINE void operator()(Figure::Pair & grp, size_t layer = 0);
 
 
 		/**   
@@ -4674,6 +4683,8 @@ namespace mtools
 
 			/**
 			* group with 1 object
+  		    * Use move operation so the object is (possibly) emptied.
+			*
 			*/
 			template<class FIGURECLASS1> Group(FIGURECLASS1 & fig1) : Group()
 				{
@@ -4683,6 +4694,8 @@ namespace mtools
 
 			/**
 			* group with 2 object
+			* Use move operation so the object is (possibly) emptied.
+			*
 			*/
 			template<class FIGURECLASS1, class FIGURECLASS2> Group(FIGURECLASS1 & fig1, FIGURECLASS2 & fig2) : Group(fig1)
 				{
@@ -4692,6 +4705,8 @@ namespace mtools
 
 			/**
 			* group with 3 object
+			* Use move operation so the object is (possibly) emptied.
+			*
 			*/
 			template<class FIGURECLASS1, class FIGURECLASS2, class FIGURECLASS3> Group(FIGURECLASS1 & fig1, FIGURECLASS2 & fig2, FIGURECLASS3 & fig3) : Group(fig1, fig2)
 				{
@@ -4735,12 +4750,14 @@ namespace mtools
 
 			/**
 			 * Pushes an object at the back of the list
+			 * Use move operation so the object is (possibly) emptied. 
+			 *
 			 * (i.e. drawn last)
 			**/
 			template<class FIGURECLASS> void push(FIGURECLASS & fig)
 				{
 				if (_dis) { MTOOLS_ERROR("Cannot push object in Figure::Group object after it has been inserted in a canvas !"); }
-				_figvec.push_back(new FIGURECLASS(fig)); // push a copy at the end of the vector
+				_figvec.push_back(new FIGURECLASS(std::move(fig))); // push a copy at the end of the vector 
 				_global_bb.swallowBox(_figvec.back()->boundingBox());	// increase the size of the main bounding box.
 				}
 
@@ -4857,6 +4874,161 @@ namespace mtools
 
 
 
+
+
+
+
+
+			/*********************************************************
+			*
+			* Pair : put to figure together and draw then in order
+			*
+			* ALL OBJECT AND TRANSFORMATION SHOULD BE DONE BEFORE INSERTING THE
+			* GROUP INTO A CANVAS.
+			* 
+			* After insertion in a canvas, the object become disabled and 
+			* cannot be used anymore.
+			**********************************************************/
+			FIGURECLASS_BEGIN(Pair)
+				
+
+			 template<int N> friend class FigureCanvas;
+
+			fBox2 _global_bb;								
+			internals_figure::FigureInterface * _fig1;	
+			internals_figure::FigureInterface * _fig2;
+
+
+			/**
+			* ctor. Construct the pair of figure
+			* 
+			* Use move operation so the objects are (possibly) emptied.
+			*
+			*/
+			template<class FIGURECLASS1, class FIGURECLASS2> Pair(FIGURECLASS1 & fig1, FIGURECLASS2 & fig2) : internals_figure::FigureInterface(), _global_bb(), _dis(false)
+				{
+				_fig2 = new FIGURECLASS1(std::move(fig2));
+				_fig1 = new FIGURECLASS1(std::move(fig1));
+				_global_bb.swallowBox(_fig1->boundingBox());
+				_global_bb.swallowBox(_fig2->boundingBox());
+				}
+
+
+			/**
+			 * Move constructor. Transfer object and ownership. 
+			 */
+			Pair(Pair && grp) : internals_figure::FigureInterface(std::move(grp)), _global_bb(grp._global_bb), _fig1(grp._fig1), _fig2(grp._fig2), _dis(grp._dis)
+				{
+				grp._global_bb.clear();
+				grp._fig1 = nullptr;
+				grp._fig2 = nullptr;
+				}
+
+
+			/**
+			* Move assignement. Transfer object and ownership.
+			*/
+			Pair & operator=(Pair && grp)
+				{
+				((internals_figure::FigureInterface*)this)->operator=(std::move(grp));
+				_global_bb = grp._global_bb;
+				_fig1 = grp._fig1;
+				_fig2 = grp._fig2;
+				_dis = grp._dis;
+ 				grp._global_bb.clear();
+				grp._fig1 = nullptr;
+				grp._fig2 = nullptr;
+				}
+
+
+			/** dtor */
+			virtual ~Pair()
+				{
+				delete _fig1; 
+				delete _fig2;
+				}
+
+
+			/** draw onto the image */
+			virtual void virt_draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override
+				{
+				if (_dis) { MTOOLS_ERROR("Cannot draw() pair after it has been inserted in a canvas !"); }
+				if (!(intersectionRect(_fig1->boundingBox(), R).isEmpty())) { _fig1->draw(im, R, highQuality, min_thickness); }
+				if (!(intersectionRect(_fig2->boundingBox(), R).isEmpty())) { _fig2->draw(im, R, highQuality, min_thickness); }			
+				}
+
+
+			/** Return the main bounding box (in global coordinates) */
+			virtual fBox2 virt_boundingBox() const override
+				{
+				if (_dis) { MTOOLS_ERROR("Cannot get Group bounding box group after it has been inserted in a canvas !"); }
+				return _global_bb;
+				}
+
+
+			/** Dump info into a string */
+			virtual std::string virt_toString(bool debug = false) const override
+				{
+				if (_dis) { MTOOLS_ERROR("Cannot print Pair infos after it has been inserted in a canvas !"); }
+				OSS os;
+				os << "Pairs of figures with bounding box: " << _global_bb << "\n";
+				os << "------------\n";
+				os << _fig1->toString(debug);
+				os << _fig2->toString(debug);
+				os << "------------\n";
+				return os.str();
+				}
+
+
+			/** serialize */
+			virtual void virt_serialize(OBaseArchive & ar) const override
+				{
+				if (_dis) { MTOOLS_ERROR("Cannot serialize Group after it has been inserted in a canvas !"); }
+				ar & (*_fig1);
+				ar & (*_fig2);
+				}
+
+
+			/** deserialization ctor */
+			Pair(IBaseArchive & ar) : FigureInterface(ar), _global_bb(),  _dis(false)
+				{
+				_fig1 = deserializeFigure<0>(ar, nullptr, 0);
+				_fig2 = deserializeFigure<0>(ar, nullptr, 0);
+				_global_bb.swallowBox(_fig1->boundingBox());
+				_global_bb.swallowBox(_fig2->boundingBox());
+				}
+
+
+			/* draw onto the svg */
+			virtual void virt_svg(mtools::SVGElement * el) const override
+				{
+				if (_dis) { MTOOLS_ERROR("Cannot call Group::svg() after group has been inserted in a canvas !"); }
+				el->SetName("g");
+				mtools::SVGElement * chel1 = el->NewChildSVGElement();  
+				_fig1->svg(chel1);
+				mtools::SVGElement * chel2 = el->NewChildSVGElement();
+				_fig2->svg(chel2);
+				}
+
+
+		private:
+
+			// no copy
+			Pair(const Pair & grp);
+
+			// no assignement
+			Pair & operator=(const Pair & grp);
+
+			// disable the group (called by canvas after insertion
+			void _disable() { _dis = true; }
+
+			bool _dis; // disabled flag
+
+
+		FIGURECLASS_END()
+
+
+
 /*********************************************************************************************************
 * Undef macro used for creating figure classes
 **********************************************************************************************************/
@@ -4908,6 +5080,18 @@ namespace mtools
 		return;
 		}
 
+
+	/**
+	* Insert a figure into the canvas, inside a given layer ; specific implementation for Pair. 
+	*/
+	template<int N> MTOOLS_FORCEINLINE void FigureCanvas<N>::operator()(Figure::Pair & grp, size_t layer)
+		{
+		MTOOLS_INSURE(layer < _nbLayers);
+		Figure::internals_figure::FigureInterface * pf = _copyInPoolWithMove(grp);		// copy the object in the memory pool
+		_figLayers[layer].insert(pf->boundingBox(), pf);								// add to the corresponding layer. 
+		grp._disable();																	// disable the group object since it  has been inserted
+		return;
+		}
 
 
 
@@ -5047,6 +5231,9 @@ namespace mtools
 		REGISTER_ARCHIVE_FIGURE_CLASS(Figure::Text);
 
 		REGISTER_ARCHIVE_FIGURE_CLASS(Figure::Group);
+
+		REGISTER_ARCHIVE_FIGURE_CLASS(Figure::Pair);
+
 
 		// make sure we had a match, otherwise this means that the classname is not registered
 		if (match == 0) { MTOOLS_ERROR("Figure class name [" << classname << "] is not registered with any class !"); }
