@@ -167,8 +167,8 @@ namespace mtools
 
 		using BBox = Box<double, 2>;	// bounding box structure
 
-		template <int N, typename FIGURECLASS> friend
-			void _deserializeFigure(Figure::internals_figure::FigureInterface* & pfig, FigureCanvas<N> * canvas, const std::string & classname, mtools::IBaseArchive & ar, size_t layer, int & match);
+		template <int K, typename FIGURECLASS> friend
+			void _deserializeFigure(Figure::internals_figure::FigureInterface* & pfig, FigureCanvas<K> * canvas, const std::string & classname, mtools::IBaseArchive & ar, size_t layer, int & match);
 
 	public: 
 
@@ -4940,6 +4940,7 @@ namespace mtools
  				grp._global_bb.clear();
 				grp._fig1 = nullptr;
 				grp._fig2 = nullptr;
+				return(*this);
 				}
 
 
@@ -5111,9 +5112,9 @@ namespace mtools
 
 
 	/* used by the macro REGISTER_ARCHIVE_FIGURE_CLASS() */
-	template <int N, typename FIGURECLASS> MTOOLS_FORCEINLINE 
+	template <int K, typename FIGURECLASS> MTOOLS_FORCEINLINE 
 		void _deserializeFigure( Figure::internals_figure::FigureInterface* & pfig,  
-			                     FigureCanvas<N> * canvas, 
+			                     FigureCanvas<K> * canvas, 
 			                     const std::string & classname, 
 			                     mtools::IBaseArchive & ar, 
 			                     size_t layer, int & match)
@@ -5123,7 +5124,7 @@ namespace mtools
 			if (match != 0) { MTOOLS_ERROR("class name [" << classname << "] is already in use by another class !"); }
 			if (canvas != nullptr)
 				{
-				pfig = canvas->_archiveInPool<FIGURECLASS>(ar);
+				pfig = canvas->_archiveInPool<typename FIGURECLASS>(ar);
 				}
 			else
 				{
