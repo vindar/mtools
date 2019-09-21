@@ -1944,7 +1944,7 @@ namespace mtools
 			/**
 			* construct a filled box with a given color
 			*/
-			BoxRegion(fBox2 & B, RGBc fillcol) : box(B), fillcolor(fillcol)
+			BoxRegion(const fBox2 & B, RGBc fillcol) : box(B), fillcolor(fillcol)
 			{
 				MTOOLS_ASSERT(!B.isEmpty());
 			}
