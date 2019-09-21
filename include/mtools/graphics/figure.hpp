@@ -338,34 +338,7 @@ namespace mtools
 		* If the canvas is empty, its number of layer is increased if needed to fit the number of layer
 		* in the archive.  
 		**/
-		void deserialize(IBaseArchive & ar)
-			{
-			// query the number of layers
-			size_t nblayers_ar;
-			ar & nblayers_ar;
-
-			if (nblayers_ar > _nbLayers)
-				{ // increase the number of layer is needed
-				MTOOLS_INSURE(size() == 0); // make sure the canvas is empty. 
-				delete[] _figLayers;
-				_nbLayers = nblayers_ar;
-				_figLayers = new TreeFigure<Figure::internals_figure::FigureInterface*, N>[_nbLayers];
-				}
-
-			// add all the elements
-			for (size_t layer = 0; layer < nblayers_ar; layer++)
-				{
-				// number of element in this layer
-				size_t nbitem;
-				ar & nbitem;
-				// add all the elements
-				for (size_t j = 0; j < nbitem; j++)
-					{
-					Figure::internals_figure::FigureInterface * pfig = deserializeFigure(ar, this, layer);
-					_figLayers[layer].insert(pfig->boundingBox(), pfig);
-					}
-				}
-			}
+		void deserialize(IBaseArchive & ar);
 
 
 		/**
@@ -4731,6 +4704,7 @@ namespace mtools
 				_dis = grp._dis;
  				grp._global_bb.clear();
 				grp._figvec.clear();
+				return (*this);
 				}
 
 
@@ -5054,6 +5028,39 @@ namespace mtools
 
 
 	/*****************POSTPONED FROM FigureCanvas ***************/
+
+
+
+	/** Implementation */
+	template<int N> void  FigureCanvas<N>::deserialize(IBaseArchive & ar)
+		{
+			// query the number of layers
+			size_t nblayers_ar;
+			ar & nblayers_ar;
+
+			if (nblayers_ar > _nbLayers)
+			{ // increase the number of layer is needed
+				MTOOLS_INSURE(size() == 0); // make sure the canvas is empty. 
+				delete[] _figLayers;
+				_nbLayers = nblayers_ar;
+				_figLayers = new TreeFigure<Figure::internals_figure::FigureInterface*, N>[_nbLayers];
+			}
+
+			// add all the elements
+			for (size_t layer = 0; layer < nblayers_ar; layer++)
+			{
+				// number of element in this layer
+				size_t nbitem;
+				ar & nbitem;
+				// add all the elements
+				for (size_t j = 0; j < nbitem; j++)
+				{
+					Figure::internals_figure::FigureInterface * pfig = deserializeFigure(ar, this, layer);
+					_figLayers[layer].insert(pfig->boundingBox(), pfig);
+				}
+			}
+		}
+
 
 
 
