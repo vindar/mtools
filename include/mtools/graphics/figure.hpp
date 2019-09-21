@@ -4636,7 +4636,7 @@ namespace mtools
 
 
 
-			 template<int N> friend class FigureCanvas;
+			 template<int N> friend class mtools::FigureCanvas<N>;
 
 			fBox2 _global_bb;											// the bounding box (relative to the group origin)
 			std::vector<internals_figure::FigureInterface *> _figvec;	// the vector containing all the figures
