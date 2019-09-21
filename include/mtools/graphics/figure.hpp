@@ -4749,6 +4749,13 @@ namespace mtools
 
 
 
+			/**
+			 * operator() is the same as push().
+			**/
+			template<class FIGURECLASS> void operator()(FIGURECLASS && fig) { push(fig); }
+
+
+
 			/** Remove all figures in the group */
 			void clear()
 				{
@@ -4893,6 +4900,45 @@ namespace mtools
 			*
 			*/
 			template<class FIGURECLASS1, class FIGURECLASS2> Pair(FIGURECLASS1 & fig1, FIGURECLASS2 & fig2) : internals_figure::FigureInterface(), _global_bb(), _dis(false)
+				{
+				_fig2 = new FIGURECLASS1(std::move(fig2));
+				_fig1 = new FIGURECLASS1(std::move(fig1));
+				_global_bb.swallowBox(_fig1->boundingBox());
+				_global_bb.swallowBox(_fig2->boundingBox());
+				}
+
+
+			/**
+			* ctor. Construct the pair of figure, from r-value references
+			* 
+			* Use move operation so the objects are (possibly) emptied.
+			*
+			*/
+			template<class FIGURECLASS1, class FIGURECLASS2> Pair(FIGURECLASS1 && fig1, FIGURECLASS2 && fig2) : internals_figure::FigureInterface(), _global_bb(), _dis(false)
+				{
+				_fig2 = new FIGURECLASS1(std::move(fig2));
+				_fig1 = new FIGURECLASS1(std::move(fig1));
+				_global_bb.swallowBox(_fig1->boundingBox());
+				_global_bb.swallowBox(_fig2->boundingBox());
+				}
+
+
+			/**
+			* ctor. Mixing l-value and r-value references
+			*/
+			template<class FIGURECLASS1, class FIGURECLASS2> Pair(FIGURECLASS1 & fig1, FIGURECLASS2 && fig2) : internals_figure::FigureInterface(), _global_bb(), _dis(false)
+				{
+				_fig2 = new FIGURECLASS1(std::move(fig2));
+				_fig1 = new FIGURECLASS1(std::move(fig1));
+				_global_bb.swallowBox(_fig1->boundingBox());
+				_global_bb.swallowBox(_fig2->boundingBox());
+				}
+
+
+			/**
+			* ctor. Mixing l-value and r-value references
+			*/
+			template<class FIGURECLASS1, class FIGURECLASS2> Pair(FIGURECLASS1 && fig1, FIGURECLASS2 & fig2) : internals_figure::FigureInterface(), _global_bb(), _dis(false)
 				{
 				_fig2 = new FIGURECLASS1(std::move(fig2));
 				_fig1 = new FIGURECLASS1(std::move(fig1));
