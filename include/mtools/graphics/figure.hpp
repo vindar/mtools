@@ -4732,6 +4732,17 @@ namespace mtools
 
 
 			/**
+			 * Same with r-value reference
+			**/
+			template<class FIGURECLASS> void push(FIGURECLASS && fig)
+			{
+				if (_dis) { MTOOLS_ERROR("Cannot push object in Figure::Group object after it has been inserted in a canvas !"); }
+				_figvec.push_back(new FIGURECLASS(std::move(fig))); // push a copy at the end of the vector 
+				_global_bb.swallowBox(_figvec.back()->boundingBox());	// increase the size of the main bounding box.
+			}
+
+
+			/**
 			 * operator() is the same as push().
 			**/
 			template<class FIGURECLASS> void operator()(FIGURECLASS & fig) { push(fig); }
