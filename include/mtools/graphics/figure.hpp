@@ -545,7 +545,7 @@ namespace mtools
 
 
 		/* create a figure from an archive derectly inside the memory pool */
-		template<typename FIGURECLASS> MTOOLS_FORCEINLINE Figure::internals_figure::FigureInterface * _archiveInPool(mtools::IBaseArchive & ar)
+		template<typename FIGURECLASS> MTOOLS_FORCEINLINE Figure::internals_figure::FigureInterface * _archiveInPool(mtools::IBaseArchive & ar, FIGURECLASS * dummy)
 			{
 			void * p = _allocate(sizeof(FIGURECLASS));					// allocate memory in the memory pool for the figure object
 			new (p) FIGURECLASS(ar);									// placement new : copy constructor. 
@@ -5124,7 +5124,7 @@ namespace mtools
 			if (match != 0) { MTOOLS_ERROR("class name [" << classname << "] is already in use by another class !"); }
 			if (canvas != nullptr)
 				{
-				pfig = canvas->_archiveInPool<typename FIGURECLASS>(ar);
+				pfig = canvas->_archiveInPool(ar, (FIGURECLASS*)(0)); 
 				}
 			else
 				{
