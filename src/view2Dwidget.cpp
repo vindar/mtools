@@ -480,6 +480,7 @@ namespace mtools
                             redrawView();
                             return 1;
                             }
+						return 1;
                         if (_notCB != nullptr) { _notCB(_notData, key); } // forward other key stoke if a callback if defined
                         return 1;
                         }
