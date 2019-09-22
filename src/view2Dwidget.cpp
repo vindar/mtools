@@ -398,7 +398,7 @@ namespace mtools
                     case FL_KEYDOWN:
 						{
 						std::cerr << "D";
-
+						return 1;
                         take_focus();
 						int key = Fl::event_key();
                         if ((key == FL_BackSpace) || (key == FL_Delete))
@@ -480,7 +480,6 @@ namespace mtools
                             redrawView();
                             return 1;
                             }
-						return 1;
                         if (_notCB != nullptr) { _notCB(_notData, key); } // forward other key stoke if a callback if defined
                         return 1;
                         }
