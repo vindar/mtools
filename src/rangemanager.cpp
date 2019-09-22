@@ -162,11 +162,7 @@ namespace mtools
                 _range = mtools::left(_range);
                 _fixRange();
                 if (!_rangeOK(_range)) { _range = oldr; }
-				if (_range != oldr)  
-					{ 
-					std::cerr << "B"; std::cerr.flush();
-					if (!rangeNotification(true, false, false)) { _range = oldr;  resok = false; } 
-					}
+				if (_range != oldr)  {  if (!rangeNotification(true, false, false)) { _range = oldr;  resok = false; } }
                 MTOOLS_ASSERT(_rangeOK(_range));
                 _mut.unlock();
                 return resok;

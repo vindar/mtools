@@ -1011,7 +1011,6 @@ namespace mtools
         bool Plotter2DWindow::rangeManagerCB_static(void* data, void * data2, bool changedRange, bool changedWinSize, bool changedFixAspectRatio) { MTOOLS_ASSERT(data != nullptr); return ((Plotter2DWindow *)data)->rangeManagerCB(changedRange, changedWinSize, changedFixAspectRatio); }
         bool Plotter2DWindow::rangeManagerCB(bool changedRange, bool changedWinSize, bool changedFixAspectRatio)
             {
-			std::cerr << "C";
 			// here, we may, or may not, be in the fltk thread.
             fBox2 R = ((RangeManager*)_RM)->getRange();             // get the new range
             iVec2 winSize = ((RangeManager*)_RM)->getWinSize();     // get the new window size
