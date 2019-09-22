@@ -156,15 +156,21 @@ namespace mtools
 
         bool RangeManager::left()
             {
+				std::cerr << "A"; std::cerr.flush();
                 if (!_mut.try_lock_for(std::chrono::milliseconds(MAXLOCKTIME))) return false;
+				std::cerr << "B"; std::cerr.flush();
                 bool resok = true;
                 mtools::fBox2 oldr = _range;
                 _range = mtools::left(_range);
                 _fixRange();
+				std::cerr << "C"; std::cerr.flush();
                 if (!_rangeOK(_range)) { _range = oldr; }
                 if (_range != oldr) { if (!rangeNotification(true, false, false)) { _range = oldr;  resok = false; } }
+				std::cerr << "D"; std::cerr.flush();
                 MTOOLS_ASSERT(_rangeOK(_range));
                 _mut.unlock();
+				std::cerr << "E"; std::cerr.flush();
+
                 return resok;
             }
 
