@@ -16,6 +16,8 @@ int main(int argc, char *argv[])
 
 	std::cout << "HELLO WORLD3\n";
 
+	std::cerr << "BLOP"; 
+
 	auto P = makePlot2DFun(f, "sin");
 
 	std::cout << "HELLO WORLD4\n";
