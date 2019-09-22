@@ -485,8 +485,6 @@ namespace mtools
                         }
                     case FL_KEYUP:
 						{
-						std::cerr << "U";
-
 						return 1; 
 						}
                     }
@@ -524,6 +522,10 @@ namespace mtools
                     }
                 }
             else { ImageWidget::draw(); } // redraw the whole thing otherwise
+
+			std::cerr << "begin draw2\n";
+			std::cerr << mtools::ChronometerMicro() << "\n";
+
             _zoom2 = { -1, -1 };
             _prevMouse = { -1, -1 };
             if (_RM == nullptr) { return; }
