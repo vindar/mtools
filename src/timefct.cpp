@@ -113,6 +113,16 @@ namespace mtools
         }
 
 
+	uint64 ChronometerMicro()
+		{
+		static std::chrono::high_resolution_clock::time_point prev = std::chrono::high_resolution_clock::now();
+		std::chrono::high_resolution_clock::time_point next = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<long double> elapsed = std::chrono::duration_cast<std::chrono::duration<long double>>(next - prev);
+		prev = next;
+		return (uint64)std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
+		}
+
+
     std::string durationToString(uint64 milliseconds, bool printMilliseconds)
         {
 		OSS os;
