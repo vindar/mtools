@@ -172,17 +172,10 @@ namespace mtools
 
         void ImageWidget::draw()
             {
-			std::cerr << "ID 1\n";
-			std::cerr << mtools::ChronometerMicro() << "\n";
             if ((!_initdraw) || (w() > ((int)_ox)) || (h() > ((int)_oy))) { Fl_Window::draw(); } // first time or base widget showing : redraw it.
-			std::cerr << "ID 2\n";
-			std::cerr << mtools::ChronometerMicro() << "\n";
-
 
                 {
                 std::lock_guard<std::recursive_mutex> lock(_mutim);
-				std::cerr << "ID 3\n";
-				std::cerr << mtools::ChronometerMicro() << "\n";
 
                 if (!_initdraw)
                     { 
@@ -194,13 +187,13 @@ namespace mtools
                 int ly = ((int)_oy > h()) ? h() : (int)_oy;
                 if ((_offbuf == ((Fl_Offscreen)0)) || (_ox <= 0) || (_oy <= 0)) { return; }
 
-				std::cerr << "ID 4\n";
-				std::cerr << mtools::ChronometerMicro() << "\n";
+				mtools::ChronometerMicro();
 
                 fl_copy_offscreen(0, 0, lx, ly, (Fl_Offscreen)_offbuf, 0, 0);
 
-				std::cerr << "ID 5\n";
-				std::cerr << mtools::ChronometerMicro() << "\n";
+				double a = mtools::ChronometerMicro();
+
+				std::cerr << "a=" << a << "\n";
 
                 }
             }

@@ -567,8 +567,6 @@ namespace mtools
                         }
                     }
                 }
-			std::cerr << "end draw\n";
-			std::cerr << mtools::ChronometerMicro() << "\n";
             }
 
 
