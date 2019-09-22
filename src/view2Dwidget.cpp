@@ -395,9 +395,11 @@ namespace mtools
                         return 1;
                         }
                     case FL_KEYDOWN:
-                        {
+						{
+						std::cout << "A";
                         take_focus();
-                        int key = Fl::event_key();
+						std::cout << "B";
+						int key = Fl::event_key();
                         if ((key == FL_BackSpace) || (key == FL_Delete))
                             {
                             _RM->canonicalRange();
@@ -432,8 +434,11 @@ namespace mtools
                             }
                         if (key == FL_Left)
                             {
+							std::cout << "C";
                             _RM->left();
-                            redrawView();
+							std::cout << "D";
+							redrawView();
+							std::cout << "E";
                             return 1;
                             }
                         if (key == FL_Right)
