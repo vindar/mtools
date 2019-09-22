@@ -934,7 +934,7 @@ namespace mtools
 					std::cerr << "1"; std::cerr.flush();
 					//_PW->improveImageFactor(_mainImage); // set the image
 					std::cerr << "2"; std::cerr.flush();
-					_PW->redrawView(); // redraw the view.
+					//_PW->redrawView(); // redraw the view.
 					std::cerr << "3"; std::cerr.flush();
 					return;
                     }
