@@ -384,7 +384,7 @@ namespace mtools
                         Fl::awake();
                         while (status() != THREAD_STOPPING)
                             {
-                            Fl::wait(1.0);
+                            Fl::wait(0.01);
                             _processMsg();
                             if (status() != THREAD_STOPPING)
                                 {
