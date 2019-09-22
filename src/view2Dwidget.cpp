@@ -132,11 +132,8 @@ namespace mtools
 
         void View2DWidget::redrawView()
             {
-			std::cerr << "X"; std::cerr.flush();
             redraw(); 
-			std::cerr << "Y"; std::cerr.flush();
-			flush();
-			std::cerr << "Z"; std::cerr.flush();
+//			flush();
 			}
 
 

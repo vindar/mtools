@@ -931,11 +931,8 @@ namespace mtools
 				_mainImageQuality = q;
                 if (_mainImageQuality != 0) // make sure the quality is indeed not zero. 
                     {
-					std::cerr << "1"; std::cerr.flush();
 					_PW->improveImageFactor(_mainImage); // set the image
-					std::cerr << "2"; std::cerr.flush();
 					_PW->redrawView(); // redraw the view.
-					std::cerr << "3"; std::cerr.flush();
 					return;
                     }
                 }
