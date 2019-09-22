@@ -187,13 +187,7 @@ namespace mtools
                 int ly = ((int)_oy > h()) ? h() : (int)_oy;
                 if ((_offbuf == ((Fl_Offscreen)0)) || (_ox <= 0) || (_oy <= 0)) { return; }
 
-				mtools::ChronometerMicro();
-
-                fl_copy_offscreen(0, 0, lx, ly, (Fl_Offscreen)_offbuf, 0, 0);
-
-				double a = mtools::ChronometerMicro();
-
-				std::cerr << "a=" << a << "\n";
+            //    fl_copy_offscreen(0, 0, lx, ly, (Fl_Offscreen)_offbuf, 0, 0);
 
                 }
             }
