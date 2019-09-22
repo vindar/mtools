@@ -521,9 +521,16 @@ namespace mtools
                         }
                     }
                 }
-            else { ImageWidget::draw(); } // redraw the whole thing otherwise
+            else 
+				{ 
+				
+				std::cerr << "begin draw 2\n";
+				std::cerr << mtools::ChronometerMicro() << "\n";
 
-			std::cerr << "begin draw2\n";
+				ImageWidget::draw();
+				} // redraw the whole thing otherwise
+
+			std::cerr << "begin draw 3\n";
 			std::cerr << mtools::ChronometerMicro() << "\n";
 
             _zoom2 = { -1, -1 };
