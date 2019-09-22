@@ -132,8 +132,15 @@ namespace mtools
 
         void View2DWidget::redrawView()
             {
+			std::cerr << "before redraw\n";
+			std::cerr << mtools::ChronometerMicro() << "\n";
             redraw(); 
+			std::cerr << "after redraw\n";
+			std::cerr << mtools::ChronometerMicro() << "\n";
 			flush();
+			std::cerr << "after flush\n";
+			std::cerr << mtools::ChronometerMicro() << "\n";
+
 			}
 
 
@@ -445,14 +452,8 @@ namespace mtools
                             }
                         if (key == FL_Up)
                             {
-							std::cerr << "Enteringup\n";
-							std::cerr << mtools::ChronometerMicro() << "\n";;
 							_RM->up();
-							std::cerr << "after up\n";
-							std::cerr << mtools::ChronometerMicro() << "\n";
                             redrawView();
-							std::cerr << "after redraw\n";
-							std::cerr << mtools::ChronometerMicro() << "\n";
 							return 1;
                             }
                         if (key == FL_Down)
