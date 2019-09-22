@@ -435,7 +435,7 @@ namespace mtools
                         if (key == FL_Left)
                             {
 							std::cerr << "C"; std::cerr.flush();
-                            _RM->left();
+                           // _RM->left();
 							std::cerr << "D"; std::cerr.flush();
 							redrawView();
 							std::cerr << "E"; std::cerr.flush();
