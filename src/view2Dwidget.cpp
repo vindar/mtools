@@ -325,6 +325,8 @@ namespace mtools
 
         int View2DWidget::handle(int e)
                 {
+				std::cerr << ".";
+
                 if (_RM == nullptr) return ImageWidget::handle(e); // no range manager, disabled the widget and ignore events.
                 switch (e)
                     {
