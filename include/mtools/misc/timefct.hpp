@@ -51,12 +51,22 @@ namespace mtools
 
     /**
      * Simple Chronometer. Each call return the number of milliseconds elapsed since the previous
-     * call to the Chronometer.
+     * call to Chronometer()
+     * Separate counter from ChronometerMicro()
      *
      * @return  the time elapsed since the last call in milliseconds.
      **/
     uint64 Chronometer();
 
+
+	/**
+	 * Simple Chronometer. Each call return the number of microseconds elapsed since the previous
+	 * call to ChronometerMicro().
+	 * Separate counter from Chronometer()
+	 *
+	 * @return  the time elapsed since the last call in microseconds
+	 **/
+	uint64 ChronometerMicro();
 
 
 	/**
