@@ -1011,7 +1011,8 @@ namespace mtools
         bool Plotter2DWindow::rangeManagerCB_static(void* data, void * data2, bool changedRange, bool changedWinSize, bool changedFixAspectRatio) { MTOOLS_ASSERT(data != nullptr); return ((Plotter2DWindow *)data)->rangeManagerCB(changedRange, changedWinSize, changedFixAspectRatio); }
         bool Plotter2DWindow::rangeManagerCB(bool changedRange, bool changedWinSize, bool changedFixAspectRatio)
             {
-            // here, we may, or may not, be in the fltk thread.
+			std::cerr << "C";
+			// here, we may, or may not, be in the fltk thread.
             fBox2 R = ((RangeManager*)_RM)->getRange();             // get the new range
             iVec2 winSize = ((RangeManager*)_RM)->getWinSize();     // get the new window size
             bool fixedAR = ((RangeManager*)_RM)->fixedAspectRatio();  // get the fixed aspect ratio status
@@ -1023,13 +1024,14 @@ namespace mtools
             if (isFltkThread()) 
 				{ 
 				rangeManagerCB2(R, winSize, fixedAR, changedRange, changedWinSize, changedFixAspectRatio); 
-				std::cerr << "A";
+				std::cerr << "D";
 				}
             else {
-				std::cerr << "B";
+				std::cerr << "E";
 				mtools::IndirectMemberProc<internals_graphics::Plotter2DWindow, fBox2, iVec2, bool, bool, bool, bool> proxy(*this, &Plotter2DWindow::rangeManagerCB2, R, winSize, fixedAR, changedRange, changedWinSize, changedFixAspectRatio);
                  mtools::runInFltkThread(proxy);
-                 }
+				 std::cerr << "F";
+				}
             // back to our original thread.
             return true; // accept the change
             }
