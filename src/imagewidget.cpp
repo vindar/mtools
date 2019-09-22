@@ -172,6 +172,9 @@ namespace mtools
 
         void ImageWidget::draw()
             {
+
+			static const uchar * bb = new uchar[2000 * 2000*3];
+
             if ((!_initdraw) || (w() > ((int)_ox)) || (h() > ((int)_oy))) { Fl_Window::draw(); } // first time or base widget showing : redraw it.
 
                 {
@@ -187,7 +190,16 @@ namespace mtools
                 int ly = ((int)_oy > h()) ? h() : (int)_oy;
                 if ((_offbuf == ((Fl_Offscreen)0)) || (_ox <= 0) || (_oy <= 0)) { return; }
 
-            //    fl_copy_offscreen(0, 0, lx, ly, (Fl_Offscreen)_offbuf, 0, 0);
+				ChronometerMicro();
+				fl_draw_image(bb, 0, 0, lx, ly, 3, 0);
+				double  a = ChronometerMicro();
+				std::cerr << "CA = " << a << "\n";;
+
+
+				ChronometerMicro();
+				fl_copy_offscreen(0, 0, lx, ly,(Fl_Offscreen)_offbuf, 0, 0);
+				double  b = ChronometerMicro();
+				std::cerr << "CB = " << a << "\n";
 
                 }
             }
