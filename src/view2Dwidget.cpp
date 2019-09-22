@@ -397,7 +397,8 @@ namespace mtools
                         }
                     case FL_KEYDOWN:
 						{
-						std::cerr << "D";
+						std::cerr << "Entering Left\n";
+						std::cerr << mtools::ChronometerMicro() << "\n";;
 						return 1;
                         take_focus();
 						int key = Fl::event_key();
@@ -447,8 +448,6 @@ namespace mtools
                             }
                         if (key == FL_Up)
                             {
-							std::cerr << "Entering Left\n";
-							std::cerr << mtools::ChronometerMicro() << "\n";;
                             _RM->up();
 							std::cerr << "Exit Left\n";
 							std::cerr << mtools::ChronometerMicro() << "\n";
