@@ -445,11 +445,11 @@ namespace mtools
                             }
                         if (key == FL_Up)
                             {
-							cout << "Entering Left\n";
-							cout << mtools::ChronometerMicro() << "\n";;
+							std::cerr << "Entering Left\n";
+							std::cerr << mtools::ChronometerMicro() << "\n";;
                             _RM->up();
-							cout << "Exit Left\n";
-							cout << mtools::ChronometerMicro() << "\n";;
+							std::cerr << "Exit Left\n";
+							std::cerr << mtools::ChronometerMicro() << "\n";
 
                             redrawView();
                             return 1;
