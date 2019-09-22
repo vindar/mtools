@@ -133,7 +133,7 @@ namespace mtools
         void View2DWidget::redrawView()
             {
             redraw(); 
-//			flush();
+			flush();
 			}
 
 
@@ -445,7 +445,12 @@ namespace mtools
                             }
                         if (key == FL_Up)
                             {
+							cout << "Entering Left\n";
+							cout << mtools::ChronometerMicro() << "\n";;
                             _RM->up();
+							cout << "Exit Left\n";
+							cout << mtools::ChronometerMicro() << "\n";;
+
                             redrawView();
                             return 1;
                             }
