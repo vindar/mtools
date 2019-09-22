@@ -1020,12 +1020,9 @@ namespace mtools
                 _vecPlot[i]->setParam(R, winSize); // set the parameters for all the object in the plotter
                 }
             // we run rangeManagerCB2 in fltk
-			std::cerr << "D";
 			if (isFltkThread())
 				{ 
-				std::cerr << "E";
 				rangeManagerCB2(R, winSize, fixedAR, changedRange, changedWinSize, changedFixAspectRatio);
-				std::cerr << "F";
 				}
             else {
 				mtools::IndirectMemberProc<internals_graphics::Plotter2DWindow, fBox2, iVec2, bool, bool, bool, bool> proxy(*this, &Plotter2DWindow::rangeManagerCB2, R, winSize, fixedAR, changedRange, changedWinSize, changedFixAspectRatio);
@@ -1039,14 +1036,20 @@ namespace mtools
         /* this part is run in fltk */
         void Plotter2DWindow::rangeManagerCB2(fBox2 R, iVec2 winSize,bool fixedAR, bool changedRange, bool changedWinSize, bool changedFixAspectRatio)
             {
+			std::cerr << "A";
             setImageSize((int)winSize.X(), (int)winSize.Y(), _nbchannels);    // resize the image if needed
-            setRangeInput(R);                                       // update the range widgets
-            setRatioTextLabel();                                    // and the aspect ratio text
+			std::cerr << "B";
+			setRangeInput(R);                                       // update the range widgets
+			std::cerr << "C";
+			setRatioTextLabel();                                    // and the aspect ratio text
+			std::cerr << "D";
             _w_fixedratio->value(fixedAR ? 1 : 0);                  // update the fixed apsect ratio checkbox
             _w_zoomfactortext->copy_label((std::string("[") + toString(winSize.X()) + "x" + toString(winSize.Y()) + "]").c_str()); // update the View size text
             _w_zoomfactortext->redraw_label();
-            updateView();                                           // finally, we update the view
-            }
+			std::cerr << "E";
+			updateView();                                           // finally, we update the view
+			std::cerr << "F";
+		}
 
 
 
