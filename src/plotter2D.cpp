@@ -1021,16 +1021,16 @@ namespace mtools
                 _vecPlot[i]->setParam(R, winSize); // set the parameters for all the object in the plotter
                 }
             // we run rangeManagerCB2 in fltk
-            if (isFltkThread()) 
+			std::cerr << "D";
+			if (isFltkThread())
 				{ 
-				rangeManagerCB2(R, winSize, fixedAR, changedRange, changedWinSize, changedFixAspectRatio); 
-				std::cerr << "D";
+				std::cerr << "E";
+				rangeManagerCB2(R, winSize, fixedAR, changedRange, changedWinSize, changedFixAspectRatio);
+				std::cerr << "F";
 				}
             else {
-				std::cerr << "E";
 				mtools::IndirectMemberProc<internals_graphics::Plotter2DWindow, fBox2, iVec2, bool, bool, bool, bool> proxy(*this, &Plotter2DWindow::rangeManagerCB2, R, winSize, fixedAR, changedRange, changedWinSize, changedFixAspectRatio);
                  mtools::runInFltkThread(proxy);
-				 std::cerr << "F";
 				}
             // back to our original thread.
             return true; // accept the change
