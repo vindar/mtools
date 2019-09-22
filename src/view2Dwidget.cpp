@@ -396,9 +396,9 @@ namespace mtools
                         }
                     case FL_KEYDOWN:
 						{
-						std::cout << "A";
+						std::cerr << "A"; std::cerr.flush();
                         take_focus();
-						std::cout << "B";
+						std::cerr << "B"; std::cerr.flush();
 						int key = Fl::event_key();
                         if ((key == FL_BackSpace) || (key == FL_Delete))
                             {
@@ -434,11 +434,11 @@ namespace mtools
                             }
                         if (key == FL_Left)
                             {
-							std::cout << "C";
+							std::cerr << "C"; std::cerr.flush();
                             _RM->left();
-							std::cout << "D";
+							std::cerr << "D"; std::cerr.flush();
 							redrawView();
-							std::cout << "E";
+							std::cerr << "E"; std::cerr.flush();
                             return 1;
                             }
                         if (key == FL_Right)
