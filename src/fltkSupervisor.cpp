@@ -385,6 +385,7 @@ namespace mtools
                         while (status() != THREAD_STOPPING)
                             {
                             Fl::wait(0.01);
+							std::cerr << ".";
                             _processMsg();
                             if (status() != THREAD_STOPPING)
                                 {
@@ -497,7 +498,7 @@ namespace mtools
                             {
                             case Msg::NEW_MSG: { ((IndirectCtor*)q)->construct(); break; }
                             case Msg::DELETE_MSG: { ((IndirectDtor*)q)->destroy(); break; }
-                            case Msg::RUN_MSG: { ((IndirectCall*)q)->call(); break; }
+                            case Msg::RUN_MSG: {  ((IndirectCall*)q)->call(); break; }
                             default: { MTOOLS_DEBUG("fltkSupervisor::_processMsg, unknown message !"); return; }
                             }
                         std::unique_lock<std::mutex> lock(_cvmut);
