@@ -397,9 +397,6 @@ namespace mtools
                         }
                     case FL_KEYDOWN:
 						{
-						std::cerr << "Entering Left\n";
-						std::cerr << mtools::ChronometerMicro() << "\n";;
-						return 1;
                         take_focus();
 						int key = Fl::event_key();
                         if ((key == FL_BackSpace) || (key == FL_Delete))
@@ -448,12 +445,15 @@ namespace mtools
                             }
                         if (key == FL_Up)
                             {
-                            _RM->up();
-							std::cerr << "Exit Left\n";
+							std::cerr << "Enteringup\n";
+							std::cerr << mtools::ChronometerMicro() << "\n";;
+							_RM->up();
+							std::cerr << "after up\n";
 							std::cerr << mtools::ChronometerMicro() << "\n";
-
                             redrawView();
-                            return 1;
+							std::cerr << "after redraw\n";
+							std::cerr << mtools::ChronometerMicro() << "\n";
+							return 1;
                             }
                         if (key == FL_Down)
                             {
