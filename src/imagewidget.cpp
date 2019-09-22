@@ -193,13 +193,13 @@ namespace mtools
 				ChronometerMicro();
 				fl_draw_image(bb, 0, 0, lx, ly, 3, 0);
 				double  a = ChronometerMicro();
-				std::cerr << "CA = " << a << "\n";;
+				std::cerr << "CA = " << a << "\n";
 
 
 				ChronometerMicro();
 				fl_copy_offscreen(0, 0, lx, ly,(Fl_Offscreen)_offbuf, 0, 0);
 				double  b = ChronometerMicro();
-				std::cerr << "CB = " << a << "\n";
+				std::cerr << "CB = " << b << "\n";
 
                 }
             }
