@@ -9,6 +9,7 @@ double f(double x) { return sin(x); }
 
 int main(int argc, char *argv[])
 	{
+	MTOOLS_SWAP_THREADS(argc, argv);
 
 
 	Plotter2D plotter;
