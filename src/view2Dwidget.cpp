@@ -325,8 +325,6 @@ namespace mtools
 
         int View2DWidget::handle(int e)
                 {
-				std::cerr << ".";
-
                 if (_RM == nullptr) return ImageWidget::handle(e); // no range manager, disabled the widget and ignore events.
                 switch (e)
                     {
@@ -399,6 +397,8 @@ namespace mtools
                         }
                     case FL_KEYDOWN:
 						{
+						std::cerr << "D";
+
                         take_focus();
 						int key = Fl::event_key();
                         if ((key == FL_BackSpace) || (key == FL_Delete))
@@ -483,7 +483,12 @@ namespace mtools
                         if (_notCB != nullptr) { _notCB(_notData, key); } // forward other key stoke if a callback if defined
                         return 1;
                         }
-                    case FL_KEYUP: return 1;
+                    case FL_KEYUP:
+						{
+						std::cerr << "U";
+
+						return 1; 
+						}
                     }
                 return ImageWidget::handle(e);
                 }
