@@ -132,13 +132,13 @@ namespace mtools
 
         void View2DWidget::redrawView()
             {
-			std::cerr << "before redraw\n";
+			std::cerr << "AAAAAAAA\n";
 			std::cerr << mtools::ChronometerMicro() << "\n";
             redraw(); 
-			std::cerr << "after redraw\n";
+			std::cerr << "BBBBBBB\n";
 			std::cerr << mtools::ChronometerMicro() << "\n";
 			flush();
-			std::cerr << "after flush\n";
+			std::cerr << "CCCCCCC\n";
 			std::cerr << mtools::ChronometerMicro() << "\n";
 
 			}
@@ -497,6 +497,9 @@ namespace mtools
 
         void View2DWidget::draw()
         {
+			std::cerr << "begin draw\n";
+			std::cerr << mtools::ChronometerMicro() << "\n";
+
             if (damage() == FL_DAMAGE_USER1) // erase only the overlay.
                 {
                 if (_isIn(_prevMouse)) // erase the cross if it was previously drawn
@@ -572,6 +575,8 @@ namespace mtools
                         }
                     }
                 }
+			std::cerr << "end draw\n";
+			std::cerr << mtools::ChronometerMicro() << "\n";
             }
 
 
