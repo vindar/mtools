@@ -888,7 +888,6 @@ namespace mtools
          * does not update the view if the resulting quality is zero */
         void Plotter2DWindow::updateView(bool withreset)
             {
-			std::cerr << "A"; std::cerr.flush();
 			//#define PLOTTER2D_NBRETRY_NOWAIT 100
 			#define PLOTTER2D_NBRETRY_WAIT   20
 			#define PLOTTER2D_WAITIME 1
@@ -909,7 +908,6 @@ namespace mtools
 				_mainImageQuality = quality();
 				}
 			*/
-			std::cerr << "B"; std::cerr.flush();
 			retry = 0;
 			while ((_mainImageQuality == 0) && (retry < maxretry))
 				{ // quality is zero, we wait a little between retry
@@ -917,12 +915,10 @@ namespace mtools
 				retry++;
 				_mainImageQuality = quality();
 				}
-			std::cerr << "C"; std::cerr.flush();
             if (_mainImageQuality > 0)
                 { // ok, there should be something to draw.. (we now interrupt every worker thread)
                 if (_usesolidBK) { _mainImage->clear(((RGBc)_solidBKcolor).getOpaque()); } else { _mainImage->checkerboard(); }// draw the background of the image
                 int q = 100;
-				std::cerr << "1"; std::cerr.flush();
 				for (int i = (int)_vecPlot.size(); i > 0; i--)
                     {
                     if (_vecPlot[i - 1]->enable())
@@ -932,21 +928,19 @@ namespace mtools
                         if (r < q) { q = r; }
                         }
                     }
-				std::cerr << "2"; std::cerr.flush();
 				_mainImageQuality = q;
                 if (_mainImageQuality != 0) // make sure the quality is indeed not zero. 
                     {
-					std::cerr << "3"; std::cerr.flush();
+					std::cerr << "1"; std::cerr.flush();
 					_PW->improveImageFactor(_mainImage); // set the image
-                    _PW->redrawView(); // redraw the view.
-					std::cerr << "4"; std::cerr.flush();
+					std::cerr << "2"; std::cerr.flush();
+					_PW->redrawView(); // redraw the view.
+					std::cerr << "3"; std::cerr.flush();
 					return;
                     }
                 }
                 // no, still nothing, we draw whatever we can from the previously displayed image  
-			std::cerr << "D"; std::cerr.flush();
 			_PW->displayMovedImage(RGBc::c_Gray);
-			std::cerr << "E"; std::cerr.flush();
 			//#undef PLOTTER2D_NBRETRY_NOWAIT
 			#undef PLOTTER2D_NBRETRY_WAIT
 			#undef PLOTTER2D_WAITIME
