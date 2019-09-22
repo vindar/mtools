@@ -894,7 +894,7 @@ namespace mtools
 			#define PLOTTER2D_WAITIME 1
 			#define PLOTTER2D_INITIAL_WAITIME 15
 
-			std::this_thread::sleep_for(std::chrono::milliseconds(PLOTTER2D_INITIAL_WAITIME));	// always wait a little to give worker thread time to work. 
+			//std::this_thread::sleep_for(std::chrono::milliseconds(PLOTTER2D_INITIAL_WAITIME));	// always wait a little to give worker thread time to work. 
 
             int maxretry = (withreset ? PLOTTER2D_NBRETRY_WAIT : 0);
             if (withreset) _PW->discardImage(); else { _mainImage->checkerboard(); }  // do it now while worker thread continu
@@ -1036,19 +1036,13 @@ namespace mtools
         /* this part is run in fltk */
         void Plotter2DWindow::rangeManagerCB2(fBox2 R, iVec2 winSize,bool fixedAR, bool changedRange, bool changedWinSize, bool changedFixAspectRatio)
             {
-			std::cerr << "A";
             setImageSize((int)winSize.X(), (int)winSize.Y(), _nbchannels);    // resize the image if needed
-			std::cerr << "B";
 			setRangeInput(R);                                       // update the range widgets
-			std::cerr << "C";
 			setRatioTextLabel();                                    // and the aspect ratio text
-			std::cerr << "D";
             _w_fixedratio->value(fixedAR ? 1 : 0);                  // update the fixed apsect ratio checkbox
             _w_zoomfactortext->copy_label((std::string("[") + toString(winSize.X()) + "x" + toString(winSize.Y()) + "]").c_str()); // update the View size text
             _w_zoomfactortext->redraw_label();
-			std::cerr << "E";
 			updateView();                                           // finally, we update the view
-			std::cerr << "F";
 		}
 
 
