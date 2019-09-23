@@ -194,6 +194,8 @@ namespace mtools
 			/** Wait until GL initialization is complete and the object can be used for drawing */
 			void waitForInit();
 
+			void init();
+
             /**
              * Set the image to display. The image is cached into an offscreen buffer used when the window
              * must be redrawn. This method is threadsafe.
@@ -263,7 +265,7 @@ namespace mtools
 
 
 
-	using ImageWidget = ImageWidgetGL; 
+	using ImageWidget = ImageWidgetFL; 
 
 
 

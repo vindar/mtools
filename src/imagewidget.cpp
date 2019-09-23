@@ -271,12 +271,32 @@ namespace mtools
 
 			void ImageWidgetGL::waitForInit()
 				{
-				static const int WAIT_TIME_MS = 50; 
+				static const int WAIT_TIME_MS = 50;
 				while (((bool)_init_done) == false)
 					{
 					redraw(); // ask for a redraw to complete the initialization
-					if (mtools::isFltkThread()) { flush(); } else { Fl::awake();} 
-					if (((bool)_init_done) == false) { std::this_thread::sleep_for(std::chrono::milliseconds(WAIT_TIME_MS)); }
+					if (mtools::isFltkThread()) { redraw();  flush(); }
+					else { Fl::awake(); }
+					if (((bool)_init_done) == false) 
+						{ 
+						std::this_thread::sleep_for(std::chrono::milliseconds(WAIT_TIME_MS)); 
+						std::cout << "z";
+						if (mtools::isFltkThread()) { redraw();  flush(); } else { Fl::awake(); }
+						}
+					}
+				}
+
+
+			void ImageWidgetGL::init()
+				{
+				if (((bool)_init_done) == false)
+					{ // initialization, performed only once
+					glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);   // use actual texture colors
+					glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+					glGenTextures(2, (GLuint*)_texID);							// generate 2 textures
+					_tex_lx = 0; _tex_ly = 0;									// no buffer assigned yet
+					MTOOLS_INSURE(glGetError() == GL_NO_ERROR);					// check everything is ok.
+					_init_done = true;
 					}
 				}
 
@@ -291,11 +311,13 @@ namespace mtools
 					mtools::runInFltkThread(ID);
 					return;
 					}
-				waitForInit();
+
+				if (((bool)_init_done) == false) return;
+				//waitForInit();
 
 				// only one thread can access OpenGL at a time, ok since we are in the FLTK thread.... 
-
 				make_current(); // select the opengl context for this window. 
+
 
 				if (im->isEmpty())
 					{ // empty image so we draw nothing
@@ -349,11 +371,11 @@ namespace mtools
 					mtools::IndirectMemberProc<ImageWidgetGL, const ProgressImg *> ID((*this), &ImageWidgetGL::setImage, im);
 					mtools::runInFltkThread(ID);
 					return;
-					}
-				if (im->isEmpty()) setImage();
+					}		
+				if (im->isEmpty()) { setImage(); return; }
 				_tmp_im.resizeRaw(im->width(), im->height(),false);		// resize if needed
 				im->blit(_tmp_im, 1.0f, false);							// blit into a Image
-				setImage(im);
+				setImage(&_tmp_im);
 				}
 
 		
@@ -369,17 +391,8 @@ namespace mtools
 				{
 				if (!valid())
 					{ // windows is not valid (size may have changed)
-					valid(1);
-									
-					if (((bool)_init_done) == false)
-						{ // initialization, performed only once
-						glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);   // use actual texture colors
-						glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-						glGenTextures(2, (GLuint*)_texID);							// generate 2 textures
-						_tex_lx = 0; _tex_ly = 0;									// no buffer assigned yet
-						MTOOLS_INSURE(glGetError() == GL_NO_ERROR);					// check everything is ok.
-						_init_done = true;
-						}
+					valid(1);								
+					init(); 
 
 					const int ww = w();
 					const int hh = h();
