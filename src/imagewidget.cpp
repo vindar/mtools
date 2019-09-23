@@ -18,6 +18,29 @@
 // along with mtools  If not, see <http://www.gnu.org/licenses/>.
 
 
+/*
+
+#if defined(__APPLE__)
+#  include <OpenGL/gl3.h> // defines OpenGL 3.0+ functions
+#else
+#  if defined(WIN32)
+#    define GLEW_STATIC 1
+#  endif
+#  include <GL/glew.h>
+#endif
+
+*/
+
+#include <FL/gl.h>
+
+
+
+#include <stdio.h>
+#include <math.h>
+#include <FL/Fl.H>
+#include <FL/Fl_Window.H>
+
+
 #include "graphics/internal/imagewidget.hpp"
 
 
@@ -28,7 +51,7 @@ namespace mtools
     {
 
 
-        ImageWidget::ImageWidget(int X, int Y, int W, int H, const char *l) : 
+        ImageWidgetFL::ImageWidgetFL(int X, int Y, int W, int H, const char *l) : 
 			Fl_Window(X, Y, W, H, l), _offbuf((Fl_Offscreen)0), 
 			_ox(0), _oy(0), 
 			_initdraw(false), _saved_im(nullptr), _saved_im32(nullptr)
@@ -37,7 +60,7 @@ namespace mtools
 
 
         
-		ImageWidget::~ImageWidget()
+		ImageWidgetFL::~ImageWidgetFL()
             {
             if (_offbuf != ((Fl_Offscreen)0)) { fl_delete_offscreen((Fl_Offscreen)(_offbuf)); }
             delete _saved_im; _saved_im = nullptr;
@@ -45,7 +68,7 @@ namespace mtools
             }
 
 
-        void ImageWidget::setImage(const Image * im)
+        void ImageWidgetFL::setImage(const Image * im)
         {
             std::lock_guard<std::recursive_mutex> lock(_mutim);
             if ((im == nullptr) || (im->isEmpty()))
@@ -79,7 +102,7 @@ namespace mtools
         }
 
 
-        void ImageWidget::_drawLine_callback(void * data, int x, int y, int w, uchar *buf)
+        void ImageWidgetFL::_drawLine_callback(void * data, int x, int y, int w, uchar *buf)
             {
             const Image * im = (const Image *)data;
 			const RGBc * p = im->offset(x, y);
@@ -96,7 +119,7 @@ namespace mtools
 
 
 
-        void ImageWidget::setImage(const ProgressImg * im)
+        void ImageWidgetFL::setImage(const ProgressImg * im)
             {
             std::lock_guard<std::recursive_mutex> lock(_mutim);
             if ((im == nullptr) || (im->isEmpty()))
@@ -130,7 +153,7 @@ namespace mtools
             }
 
 
-        void ImageWidget::_drawLine_callback2(void * data, int x, int y, int w, uchar *buf)
+        void ImageWidgetFL::_drawLine_callback2(void * data, int x, int y, int w, uchar *buf)
             {
 			const ProgressImg * im = (const ProgressImg *)data;
 			const uint32  nb = *(im->normData()) + 1; // all pixels have the same normaliszation
@@ -157,7 +180,7 @@ namespace mtools
 
 
 
-        void ImageWidget::partDraw(const iBox2 & r)
+        void ImageWidgetFL::partDraw(const iBox2 & r)
             {
             if (!_initdraw) { draw(); return; }
             else
@@ -170,7 +193,7 @@ namespace mtools
             }
 
 
-        void ImageWidget::draw()
+        void ImageWidgetFL::draw()
             {
             if ((!_initdraw) || (w() > ((int)_ox)) || (h() > ((int)_oy))) { Fl_Window::draw(); } // first time or base widget showing : redraw it.
                 {
@@ -191,6 +214,240 @@ namespace mtools
             }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+			ImageWidgetGL::ImageWidgetGL(int X, int Y, int W, int H, const char *l) 
+			                  : Fl_Gl_Window(X, Y, W, H, l),  _ox(0), _oy(0), _tex_lx(0), _tex_ly(0), _texID{0,0}, _current_tex(0), _init_done(false), _tmp_im()
+					{ 
+
+					// OPENGL 3
+					// mode(FL_RGB8 | FL_DOUBLE | FL_OPENGL3); // set the mode for OPENGL 3
+
+					}
+
+
+			ImageWidgetGL::~ImageWidgetGL()
+					{
+					_ox = 0; 
+					_oy = 0; 
+					_tex_lx = 0; 
+					_tex_ly = 0; 
+					glDeleteTextures(1, (GLuint*)&(_texID[0])); _texID[0] = 0;
+					glDeleteTextures(1, (GLuint*)&(_texID[1])); _texID[1] = 0;
+					}
+
+
+
+
+			// OPENGL 3
+			/*
+			int ImageWidgetGL::handle(int event) 
+				{
+				static int first = 1;
+				if (first && event == FL_SHOW && shown()) 
+					{
+					first = 0;
+					make_current();
+					#ifndef __APPLE__
+					GLenum err = glewInit(); // defines pters to functions of OpenGL V 1.2 and above
+					if (err) Fl::warning("glewInit() failed returning %u", err);
+					#endif
+					}
+				return Fl_Gl_Window::handle(event);
+				}
+			*/
+
+
+
+			void ImageWidgetGL::waitForInit()
+				{
+				static const int WAIT_TIME_MS = 50; 
+				while (((bool)_init_done) == false)
+					{
+					redraw(); // ask for a redraw to complete the initialization
+					if (mtools::isFltkThread()) { flush(); } else { Fl::awake();} 
+					if (((bool)_init_done) == false) { std::this_thread::sleep_for(std::chrono::milliseconds(WAIT_TIME_MS)); }
+					}
+				}
+
+
+
+			void ImageWidgetGL::setImage(const Image * im)
+				{
+				// run in fltk thread
+				if (!mtools::isFltkThread())
+					{
+					mtools::IndirectMemberProc<ImageWidgetGL, const Image *> ID((*this), &ImageWidgetGL::setImage, im);
+					mtools::runInFltkThread(ID);
+					return;
+					}
+				waitForInit();
+
+				// only one thread can access OpenGL at a time, ok since we are in the FLTK thread.... 
+
+				make_current(); // select the opengl context for this window. 
+
+				if (im->isEmpty())
+					{ // empty image so we draw nothing
+					_ox = 0;
+					_oy = 0;
+					}
+				else
+					{ // non empty image
+					_ox = (int)im->width();		// new image size
+					_oy = (int)im->height();		//
+					int new_tex_lx = mtools::pow2roundup(_ox);	// new texture size
+					int new_tex_ly = mtools::pow2roundup(_oy);	// 
+
+					if ((new_tex_lx != _tex_lx) || (new_tex_ly != _tex_ly))
+						{ // we must (re)-create new textures with the correct size
+						_tex_lx = new_tex_lx;	// save new texture size
+						_tex_ly = new_tex_ly;	//
+
+						glBindTexture(GL_TEXTURE_2D, _texID[0]);
+						glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, new_tex_lx, new_tex_ly, 0, GL_BGRA_EXT, GL_UNSIGNED_BYTE, nullptr);	// allocate memory but copy nothing
+						glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+						glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+						MTOOLS_INSURE(glGetError() == GL_NO_ERROR);
+
+						glBindTexture(GL_TEXTURE_2D, _texID[1]);
+						glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, new_tex_lx, new_tex_ly, 0, GL_BGRA_EXT, GL_UNSIGNED_BYTE, nullptr);	// allocate memory but copy nothing
+						glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+						glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+						MTOOLS_INSURE(glGetError() == GL_NO_ERROR);
+						}
+					// update the part of the texture that contain the image
+
+					_current_tex = 1 - _current_tex; // swap texture
+
+					glBindTexture(GL_TEXTURE_2D, _texID[_current_tex]);
+					glPixelStorei(GL_UNPACK_ROW_LENGTH, (GLint)im->stride());
+					glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, _ox, _oy, GL_BGRA_EXT, GL_UNSIGNED_BYTE, im->data()); // copy image to texture
+					MTOOLS_INSURE(glGetError() == GL_NO_ERROR);
+					}			
+				redraw();	// schedule redraw soon		
+				}
+
+
+
+
+			void ImageWidgetGL::setImage(const ProgressImg * im)
+				{
+				// run in fltk thread
+  				if (!mtools::isFltkThread())
+					{
+					mtools::IndirectMemberProc<ImageWidgetGL, const ProgressImg *> ID((*this), &ImageWidgetGL::setImage, im);
+					mtools::runInFltkThread(ID);
+					return;
+					}
+				if (im->isEmpty()) setImage();
+				_tmp_im.resizeRaw(im->width(), im->height(),false);		// resize if needed
+				im->blit(_tmp_im, 1.0f, false);							// blit into a Image
+				setImage(im);
+				}
+
+		
+
+			void ImageWidgetGL::partDraw(const iBox2 & r)
+				{
+				draw(); // TODO IMPROVE THAT !
+				}
+
+
+
+			void ImageWidgetGL::draw()
+				{
+				if (!valid())
+					{ // windows is not valid (size may have changed)
+					valid(1);
+									
+					if (((bool)_init_done) == false)
+						{ // initialization, performed only once
+						glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);   // use actual texture colors
+						glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+						glGenTextures(2, (GLuint*)_texID);							// generate 2 textures
+						_tex_lx = 0; _tex_ly = 0;									// no buffer assigned yet
+						MTOOLS_INSURE(glGetError() == GL_NO_ERROR);					// check everything is ok.
+						_init_done = true;
+						}
+
+					const int ww = w();
+					const int hh = h();
+					MTOOLS_INSURE((ww > 0) && (hh > 0));
+
+					// set viewport
+					glViewport(0, 0, ww, hh); // Viewport
+					glMatrixMode(GL_PROJECTION);
+					glLoadIdentity();
+					glMatrixMode(GL_MODELVIEW);
+					glLoadIdentity();
+					MTOOLS_INSURE(glGetError() == GL_NO_ERROR);
+					}
+
+				// Clear the screen to Gray
+				glClearColor(0.5, 0.5, 0.5, 1.0);
+				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+				// size of windows and image
+				const double W = (double)w();			// screen size
+				const double H = (double)h();			//
+				const double OX = (double)_ox;			// image_size
+				const double OY = (double)_oy;			//
+
+				// quits if there is no image to draw.
+				if ((OX == 0) || (OY == 0)) return;	
+
+				// load current texture
+				glBindTexture(GL_TEXTURE_2D, _texID[_current_tex]);
+				glEnable(GL_TEXTURE_2D);
+
+				// compute coordinates
+				GLfloat tx, ty;
+				GLfloat vx, vy;
+				if (OX <= W)
+					{
+					tx = 1.0; 
+					vx = -1.0f + (GLfloat)(2*(OX/W));
+					}
+				else
+					{
+					tx = (GLfloat)(W/OX);
+					vx = 1.0f;
+					}
+				if (OY <= H)
+					{
+					ty = 1.0f; 
+					vy = -1.0f + (GLfloat)(2*(OY/H)); 
+					}
+				else
+					{
+					ty= (GLfloat)(H/OY);
+					vy = 1.0f;
+					}
+				tx *= (GLfloat)(OX / _tex_lx);	
+				ty *= (GLfloat)(OY / _tex_ly);
+
+				// blit on screen
+				glLoadIdentity();
+				glBegin(GL_QUADS);
+				glTexCoord2f(0.0f, ty);		glVertex2f(-1.0,    -vy);	// top left
+				glTexCoord2f(tx, ty);		glVertex2f(vx,      -vy);	// top right
+				glTexCoord2f(tx, 0.0f);		glVertex2f(vx,     1.0);	// bottom right
+				glTexCoord2f(0.0f, 0.0f);	glVertex2f(-1.0,   1.0);    // bottom left
+				glEnd();
+
+				MTOOLS_INSURE(glGetError() == GL_NO_ERROR);	// check for errors
+				}
 
 
 
