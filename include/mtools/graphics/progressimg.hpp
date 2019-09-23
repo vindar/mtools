@@ -292,7 +292,7 @@ namespace mtools
 			*                      BLIT_REMOVE_TRANSPARENT_BLACK.
 			**/
 
-			void blit(Image & im, float op = 1.0f, bool reverse = true, int blitType = BLIT_CLASSIC)
+			void blit(Image & im, float op = 1.0f, bool reverse = true, int blitType = BLIT_CLASSIC) const
 				{
 				switch (blitType)
 					{
@@ -308,7 +308,7 @@ namespace mtools
 
 
 			/* blitting procedure, traditionnal blending version */
-			void blit_classic(Image & im, float op, bool reverse)
+			void blit_classic(Image & im, float op, bool reverse) const
 				{
 				const uint32 op32 = (uint32)(256 * op);
 				if ((op32 == 0) || (im.isEmpty()) || (width() == 0) || (height() == 0)) return;
@@ -330,7 +330,7 @@ namespace mtools
 
 
 			/* blitting procedure, remove fully transparent white pixel */
-			void blit_removeWhite(Image & im, const float op = 1.0f, bool reverse = true)
+			void blit_removeWhite(Image & im, const float op = 1.0f, bool reverse = true) const
 				{
 				if ((op <= 0.0f) || (im.isEmpty()) || (width() == 0) || (height() == 0)) return;
 				const int64 lx = im.lx(); MTOOLS_INSURE(lx == (int64)width());
@@ -351,7 +351,7 @@ namespace mtools
 
 
 			/* blitting procedure, remove fully transparent black pixel */
-			void blit_removeBlack(Image & im, const float op = 1.0f, bool reverse = true)
+			void blit_removeBlack(Image & im, const float op = 1.0f, bool reverse = true) const
 				{
 				if ((op <= 0.0f) || (im.isEmpty()) || (width() == 0) || (height() == 0)) return;
 				const int64 lx = im.lx(); MTOOLS_INSURE(lx == (int64)width());
