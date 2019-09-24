@@ -190,12 +190,6 @@ namespace mtools
         protected:
 
 
-
-			/** Wait until GL initialization is complete and the object can be used for drawing */
-			void waitForInit();
-
-			void init();
-
             /**
              * Set the image to display. The image is cached into an offscreen buffer used when the window
              * must be redrawn. This method is threadsafe.
@@ -244,6 +238,10 @@ namespace mtools
 
             private:
 
+
+			/* initialisation for opengl */
+			void init();
+
             std::atomic<int>  _ox, _oy;         // size of image. 
 
 			std::atomic<int>  _tex_lx, _tex_ly; // size of the textures 
@@ -255,6 +253,8 @@ namespace mtools
 
 			Image				_tmp_im;		//  temp image for progress image
 
+			bool				_missed_draw;	// true if a drawing was missed before opengl initialization
+
 
 		};
 
@@ -265,7 +265,7 @@ namespace mtools
 
 
 
-	using ImageWidget = ImageWidgetFL; 
+	using ImageWidget = ImageWidgetGL; 
 
 
 

@@ -227,7 +227,7 @@ namespace mtools
 
 
 			ImageWidgetGL::ImageWidgetGL(int X, int Y, int W, int H, const char *l) 
-			                  : Fl_Gl_Window(X, Y, W, H, l),  _ox(0), _oy(0), _tex_lx(0), _tex_ly(0), _texID{0,0}, _current_tex(0), _init_done(false), _tmp_im()
+			                  : Fl_Gl_Window(X, Y, W, H, l),  _ox(0), _oy(0), _tex_lx(0), _tex_ly(0), _texID{0,0}, _current_tex(0), _init_done(false), _tmp_im(), _missed_draw(false)
 					{ 
 
 					// OPENGL 3
@@ -269,37 +269,6 @@ namespace mtools
 
 
 
-			void ImageWidgetGL::waitForInit()
-				{
-				static const int WAIT_TIME_MS = 50;
-				while (((bool)_init_done) == false)
-					{
-					redraw(); // ask for a redraw to complete the initialization
-					if (mtools::isFltkThread()) { redraw();  flush(); }
-					else { Fl::awake(); }
-					if (((bool)_init_done) == false) 
-						{ 
-						std::this_thread::sleep_for(std::chrono::milliseconds(WAIT_TIME_MS)); 
-						std::cout << "z";
-						if (mtools::isFltkThread()) { redraw();  flush(); } else { Fl::awake(); }
-						}
-					}
-				}
-
-
-			void ImageWidgetGL::init()
-				{
-				if (((bool)_init_done) == false)
-					{ // initialization, performed only once
-					glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);   // use actual texture colors
-					glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-					glGenTextures(2, (GLuint*)_texID);							// generate 2 textures
-					_tex_lx = 0; _tex_ly = 0;									// no buffer assigned yet
-					MTOOLS_INSURE(glGetError() == GL_NO_ERROR);					// check everything is ok.
-					_init_done = true;
-					}
-				}
-
 
 
 			void ImageWidgetGL::setImage(const Image * im)
@@ -312,12 +281,15 @@ namespace mtools
 					return;
 					}
 
-				if (((bool)_init_done) == false) return;
-				//waitForInit();
+				if (((bool)_init_done) == false)
+					{ // we ust wait for init to complete, store the image for the time being. 
+					if (im != (&_tmp_im)) { _tmp_im = im->get_standalone(); }	// save the image
+					_missed_draw = true;										// set the flag to draw the save image at initialization
+					return;
+					}
 
 				// only one thread can access OpenGL at a time, ok since we are in the FLTK thread.... 
 				make_current(); // select the opengl context for this window. 
-
 
 				if (im->isEmpty())
 					{ // empty image so we draw nothing
@@ -328,6 +300,7 @@ namespace mtools
 					{ // non empty image
 					_ox = (int)im->width();		// new image size
 					_oy = (int)im->height();		//
+
 					int new_tex_lx = mtools::pow2roundup(_ox);	// new texture size
 					int new_tex_ly = mtools::pow2roundup(_oy);	// 
 
@@ -355,6 +328,7 @@ namespace mtools
 					glBindTexture(GL_TEXTURE_2D, _texID[_current_tex]);
 					glPixelStorei(GL_UNPACK_ROW_LENGTH, (GLint)im->stride());
 					glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, _ox, _oy, GL_BGRA_EXT, GL_UNSIGNED_BYTE, im->data()); // copy image to texture
+									
 					MTOOLS_INSURE(glGetError() == GL_NO_ERROR);
 					}			
 				redraw();	// schedule redraw soon		
@@ -373,8 +347,32 @@ namespace mtools
 					return;
 					}		
 				if (im->isEmpty()) { setImage(); return; }
-				_tmp_im.resizeRaw(im->width(), im->height(),false);		// resize if needed
-				im->blit(_tmp_im, 1.0f, false);							// blit into a Image
+
+				const int lx = im->width();
+				const int ly = im->height();
+
+				_tmp_im.resizeRaw(lx,ly,false);		// resize if needed
+
+				const uint32  nb = *(im->normData()) + 1; // all pixels have the same normaliszation
+				RGBc * pdst = _tmp_im.data();
+				const RGBc64 * psrc = im->imData();
+				const size_t stride_dst = lx; 
+				const size_t stride_src = _tmp_im.stride();
+
+				if (nb == 1)
+					{
+					for (int j = 0; j < ly; j++)
+						{
+						for (int i = 0; i < lx; i++) { pdst[i] = psrc[i]; pdst[i].comp.A = 255; } pdst += stride_dst; psrc += stride_src;
+						}
+					}
+				else
+					{
+					for (int j = 0; j < ly; j++)
+						{
+						for (int i = 0; i < lx; i++) { pdst[i].fromRGBc64(psrc[i], nb); pdst[i].comp.A = 255; } pdst += stride_dst; psrc += stride_src;
+						}
+					}
 				setImage(&_tmp_im);
 				}
 
@@ -405,6 +403,7 @@ namespace mtools
 					glMatrixMode(GL_MODELVIEW);
 					glLoadIdentity();
 					MTOOLS_INSURE(glGetError() == GL_NO_ERROR);
+
 					}
 
 				// Clear the screen to Gray
@@ -465,6 +464,24 @@ namespace mtools
 
 
 
+			void ImageWidgetGL::init()
+				{
+				if (((bool)_init_done) == false)
+					{ // initialization, performed only once
+					glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);   // use actual texture colors
+					glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+					glGenTextures(2, (GLuint*)_texID);							// generate 2 textures
+					_tex_lx = 0; _tex_ly = 0;									// no buffer assigned yet
+					MTOOLS_INSURE(glGetError() == GL_NO_ERROR);					// check everything is ok.
+					_init_done = true;
+
+					if (_missed_draw)
+						{ // we missed a drawing so we do it now 
+						setImage(&_tmp_im);
+						_missed_draw = false;
+						}
+					}
+				}
 
 
 

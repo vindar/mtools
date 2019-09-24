@@ -166,9 +166,11 @@ namespace mtools
 						}
 					psrc += pad;
 					}
-				*_stocIm->normData() = 0;
+				*_stocIm->normData() = 0; // ! only set the normalization for the first pixel !
 				_nbRounds = 1;
-				setImage(_stocIm);
+
+				setImage(im);	// set the image (not the sotchastic saved one). 
+
 				_discardIm =false;
 				redrawView();
                 return;
@@ -184,9 +186,9 @@ namespace mtools
 						*(pdest++) = im->operator()(i*_zoomFactor + rx, j*_zoomFactor + ry);
                         }
                     }
-				*_stocIm->normData() = 0;
+				*_stocIm->normData() = 0;	// ! only set the normalization for the first pixel !
 				_nbRounds = 1;
-                setImage(_stocIm);
+                setImage(_stocIm);// beware that the normalization is only correct on the first pixel
                 _discardIm = false;
 				redrawView();
                 return;
@@ -207,8 +209,8 @@ namespace mtools
 						}
 					}
 				_nbRounds++;
-				*_stocIm->normData() = _nbRounds - 1;
-				setImage(_stocIm);
+				*_stocIm->normData() = _nbRounds - 1; // ! only set the normalization for the first pixel !
+				setImage(_stocIm);// beware that the normalization is only correct on the first pixel
 				redrawView();
 				return;
 				}
@@ -226,7 +228,7 @@ namespace mtools
 					p++;
 					}
 				_nbRounds /= 2;
-				*_stocIm->normData() = _nbRounds - 1;
+				*_stocIm->normData() = _nbRounds - 1; // ! only set the normalization for the first pixel !
 				}
 
             for (int64 j = 0; j < ly; j++)
@@ -242,9 +244,9 @@ namespace mtools
 					pdest++;
                     }
                 }
-            _nbRounds += NBR;
-			*_stocIm->normData() = _nbRounds - 1;
-			setImage(_stocIm);
+            _nbRounds += NBR; 
+			*_stocIm->normData() = _nbRounds - 1; // ! only set the normalization for the first pixel !
+			setImage(_stocIm);	// beware that the normalization is only correct on the first pixel
             redrawView();
             }
 
@@ -300,16 +302,9 @@ namespace mtools
 
 
 
-
-
-
-
-
-
-
         void View2DWidget::resize(int X, int Y, int	W, int H)
             {
-            Fl_Window::resize(X, Y, W, H);
+			ImageWidget::resize(X, Y, W, H);
             if (_RM != nullptr)
                 {
                 iVec2 oSize = _RM->getWinSize();
