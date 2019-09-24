@@ -306,14 +306,14 @@ namespace mtools
 					return;
 					}
 
-				if (((bool)_init_done) == false)
-					{ // we ust wait for init to complete, store the image for the time being. 
+				if  ((context() == nullptr) || (((bool)_init_done) == false) ) // not opengl context yet (maybe because we are minimized) or not init yet.
+					{ 
 					if (im != (&_tmp_im)) { _tmp_im = im->get_standalone(); }	// save the image
-					_missed_draw = true;										// set the flag to draw the save image at initialization
+					_missed_draw = true;										// set the flag to draw next time draw() is called
 					return;
 					}
 
-				// only one thread can access OpenGL at a time, ok since we are in the FLTK thread.... 
+				// ok, we are in fltk thread, context is valid so we can do opengl stuffs
 				make_current(); // select the opengl context for this window. 
 
 				if (im->isEmpty())
@@ -428,10 +428,13 @@ namespace mtools
 					glMatrixMode(GL_MODELVIEW);
 					glLoadIdentity();
 					MTOOLS_INSURE(glGetError() == GL_NO_ERROR);
-
 					}
 
-
+				if (_missed_draw)
+					{ // we missed a drawing so we do it now 
+					setImage(&_tmp_im);
+					_missed_draw = false;
+					}
 
 				// Clear the screen to Gray
 				// glClearColor(0.5, 0.5, 0.5, 1.0);
@@ -503,12 +506,6 @@ namespace mtools
 					_tex_lx = 0; _tex_ly = 0;									// no buffer assigned yet
 					MTOOLS_INSURE(glGetError() == GL_NO_ERROR);					// check everything is ok.
 					_init_done = true;
-
-					if (_missed_draw)
-						{ // we missed a drawing so we do it now 
-						setImage(&_tmp_im);
-						_missed_draw = false;
-						}
 					}
 				}
 
@@ -564,7 +561,7 @@ namespace mtools
 			if (!bkcolor.isTransparent())
 				{
 				set_color(bkcolor);
-				glRectf(fB.min[0], fB.min[1], fB.max[0], fB.max[1]);
+				glRectf((GLfloat)fB.min[0], (GLfloat)fB.min[1], (GLfloat)fB.max[0], (GLfloat)fB.max[1]);
 				}
 
 			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);   // use actual texture colors
@@ -572,7 +569,6 @@ namespace mtools
 			gl_font(1, fontsize);
 			set_color(RGBc::c_Red);
 			gl_draw(text.c_str(), text.size(), (GLfloat)(fB.min[0]) + offx, (GLfloat)(fB.min[1]) + offy);
-			std::cerr << "{" << text << "} ";
 
 			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);   // use actual texture colors
 			return;

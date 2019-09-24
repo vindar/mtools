@@ -108,10 +108,12 @@ double f(double x)
 void test()
 	{
 	auto P = makePlot2DFun(f, "sin");
+	auto Q = makePlot2DFun(f, "sin");
 
 	Plotter2D plotter;
 	plotter[P]; 
-	plotter.autorangeXY(); 
+	plotter[Q];
+	plotter.autorangeXY();
 
 	plotter.plot(); 
 	plotter.remove(P);
