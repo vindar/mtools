@@ -6,7 +6,11 @@
 #include <FL/Fl.H>
 #include <FL/Fl_Gl_Window.H>
 #include <FL/gl.h>
-#include <GL/glu.h>
+#  ifdef __APPLE__
+ #    include <OpenGL/glu.h>
+ #  else
+ #    include <GL/glu.h>
+ #  endif
 #include <string.h>
 #include <stdio.h>
 // Tetrahedron points
@@ -85,6 +89,7 @@ int main() {
 	win.show();
 	return(Fl::run());
 }
+
 */
 
 
@@ -94,17 +99,14 @@ using namespace mtools;
 
 
 
-
 double f(double x)
 {
 	return sin(x);
 }
 
-int main(int argc, char *argv[])
-{
-	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
 
-
+void test()
+	{
 	auto P = makePlot2DFun(f, "sin");
 
 	Plotter2D plotter;
@@ -112,7 +114,14 @@ int main(int argc, char *argv[])
 	plotter.autorangeXY(); 
 
 	plotter.plot(); 
+	plotter.remove(P);
+	}
 
+int main(int argc, char *argv[])
+{
+	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
+
+	test();
 
 
 }

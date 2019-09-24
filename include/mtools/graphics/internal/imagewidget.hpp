@@ -113,6 +113,11 @@ namespace mtools
 
 
 
+
+            /** Query if partdraw() is implemented (yes on the FLTK version). */
+            bool hasPartDraw() const { return true; }
+ 
+
             /**
              * Redraws a part of the screen. Should be called only from the draw method of child widget.
              *
@@ -126,16 +131,16 @@ namespace mtools
 
 
 			/** only to be called from the draw method of a child widget. After having called draw() on this object */
-			void draw_line(iVec2 & P1, iVec2 & P2);
+			void draw_line(iVec2 P1, iVec2 P2);
 
 
 			/** only to be called from the draw method of a child widget. After having called draw() on this object */
-			void draw_rect(iBox2 & B);
+			void draw_rect(iBox2 B);
 
 
 			/** only to be called from the draw method of a child widget. After having called draw() on this object 
 			    text is draw from botom left on the box, offset move the text up and left w.r.t.  the box */
-			void draw_text(std::string & text, iBox2 B, int fontsize, int text_offx, int text_offy, RGBc color, RGBc bkcolor);
+			void draw_text(const std::string & text, iBox2 B, int fontsize, int text_offx, int text_offy, RGBc color, RGBc bkcolor);
 
 
             /* draw the widget */
@@ -199,7 +204,7 @@ namespace mtools
 
 
 			// OPENGL 3
-			/*
+            /*
 			virtual int handle(int event);
 			*/
 
@@ -241,10 +246,11 @@ namespace mtools
             int oy() const { return _oy; }
 
 
+            /** Query if partdraw() is implemented (not on the OpenGL version). */
+            bool hasPartDraw() const { return false; }
+
             /**
-             * Redraws a part of the screen. Should be called only from the draw method of child widget.
-             *
-             * @param   r   The portion to redraw
+             * not implemented for the OpenGL version
              **/
 			void partDraw(const iBox2 & r);
 
@@ -254,16 +260,16 @@ namespace mtools
 
 
 			/** only to be called from the draw method of a child widget. After having called draw() on this object */
-			void draw_line(iVec2 & P1, iVec2 & P2);
+			void draw_line(iVec2 P1, iVec2 P2);
 
 
 			/** only to be called from the draw method of a child widget. After having called draw() on this object */
-			void draw_rect(iBox2 & B);
+			void draw_rect(iBox2 B);
 
 
 			/** only to be called from the draw method of a child widget. After having called draw() on this object
 				text is draw from botom left on the box, offset move the text up and left w.r.t.  the box */
-			void draw_text(std::string & text, iBox2 B, int fontsize, int text_offx, int text_offy, RGBc color, RGBc bkcolor);
+			void draw_text(std::string text, iBox2 B, int fontsize, int text_offx, int text_offy, RGBc color, RGBc bkcolor);
 
 
 			/** Draws the window, override from Fl_Gl_Window */
@@ -297,9 +303,15 @@ namespace mtools
 
 
 
+#if defined(__APPLE__)
+    // On MacOS, use OPenGL because direct FLTK drawing method are VERY slow...
+	using ImageWidget = ImageWidgetGL;
 
-
+#else
+    // use FLTK drawing
 	using ImageWidget = ImageWidgetFL; 
+#endif
+
 
 
 

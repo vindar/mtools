@@ -483,33 +483,33 @@ namespace mtools
 
         void View2DWidget::draw()
         {
-            if (damage() == FL_DAMAGE_USER1) // erase only the overlay.
-                {
+            if (hasPartDraw() && (damage() == FL_DAMAGE_USER1)) 
+                { // erase only the overlay
                 if (_isIn(_prevMouse)) // erase the cross if it was previously drawn
                     {
-                    partDraw(iBox2(0, w()-1, _prevMouse.Y(), _prevMouse.Y()));
-                    partDraw(iBox2(_prevMouse.X(), _prevMouse.X(), 0, h()-1));
+                    ImageWidget::partDraw(iBox2(0, w()-1, _prevMouse.Y(), _prevMouse.Y()));
+                    ImageWidget::partDraw(iBox2(_prevMouse.X(), _prevMouse.X(), 0, h()-1));
                     }
                 if (_isIn(_zoom2)) // erase the rectangles if previously drawn
                     {
                     iBox2 R(_zoom1, _zoom2, true);
-                    partDraw(iBox2(R.min[0], R.min[0], R.min[1], R.max[1]));
-                    partDraw(iBox2(R.max[0], R.max[0], R.min[1], R.max[1]));
-                    partDraw(iBox2(R.min[0], R.max[0], R.min[1], R.min[1]));
-                    partDraw(iBox2(R.min[0], R.max[0], R.max[1], R.max[1]));
+                    ImageWidget::partDraw(iBox2(R.min[0], R.min[0], R.min[1], R.max[1]));
+                    ImageWidget::partDraw(iBox2(R.max[0], R.max[0], R.min[1], R.max[1]));
+                    ImageWidget::partDraw(iBox2(R.min[0], R.max[0], R.min[1], R.min[1]));
+                    ImageWidget::partDraw(iBox2(R.min[0], R.max[0], R.max[1], R.max[1]));
                     if (fixedRatio())
                         {
-                        partDraw(iBox2(_encR.min[0], _encR.min[0], _encR.min[1], _encR.max[1]));
-                        partDraw(iBox2(_encR.max[0], _encR.max[0], _encR.min[1], _encR.max[1]));
-                        partDraw(iBox2(_encR.min[0], _encR.max[0], _encR.min[1], _encR.min[1]));
-                        partDraw(iBox2(_encR.min[0], _encR.max[0], _encR.max[1], _encR.max[1]));
+                        ImageWidget::partDraw(iBox2(_encR.min[0], _encR.min[0], _encR.min[1], _encR.max[1]));
+                        ImageWidget::partDraw(iBox2(_encR.max[0], _encR.max[0], _encR.min[1], _encR.max[1]));
+                        ImageWidget::partDraw(iBox2(_encR.min[0], _encR.max[0], _encR.min[1], _encR.min[1]));
+                        ImageWidget::partDraw(iBox2(_encR.min[0], _encR.max[0], _encR.max[1], _encR.max[1]));
                         }
                     }
                 }
             else 
-				{ 			
+				{ // redraw the whole window			
 				ImageWidget::draw();
-				} // redraw the whole thing otherwise
+				} 
 
             _zoom2 = { -1, -1 };
             _prevMouse = { -1, -1 };

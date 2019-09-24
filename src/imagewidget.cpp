@@ -19,7 +19,6 @@
 
 
 /*
-
 #if defined(__APPLE__)
 #  include <OpenGL/gl3.h> // defines OpenGL 3.0+ functions
 #else
@@ -28,12 +27,9 @@
 #  endif
 #  include <GL/glew.h>
 #endif
-
 */
 
 #include <FL/gl.h>
-
-
 
 #include <stdio.h>
 #include <math.h>
@@ -220,13 +216,13 @@ namespace mtools
 			}
 
 
-		void ImageWidgetFL::draw_line(iVec2 & P1, iVec2 & P2)
+		void ImageWidgetFL::draw_line(iVec2 P1, iVec2 P2)
 			{
 			fl_line((int)P1.X(), (int)P1.Y(), (int)P2.X(), (int)P2.Y());
 			}
 
 
-		void ImageWidgetFL::draw_rect(iBox2 & B)
+		void ImageWidgetFL::draw_rect(iBox2 B)
 			{
 			fl_line((int)B.min[0], (int)B.min[1], (int)B.max[0], (int)B.min[1]);
 			fl_line((int)B.min[0], (int)B.max[1], (int)B.max[0], (int)B.max[1]);
@@ -235,7 +231,7 @@ namespace mtools
 			}
 
 
-		void ImageWidgetFL::draw_text(std::string & text, iBox2 B, int fontsize, int text_offx, int text_offy, RGBc color, RGBc bkcolor)
+		void ImageWidgetFL::draw_text(const std::string & text, iBox2 B, int fontsize, int text_offx, int text_offy, RGBc color, RGBc bkcolor)
 			{
 			if (!bkcolor.isTransparent())
 				{
@@ -255,7 +251,7 @@ namespace mtools
 
 
 
-	// for windows, we may need to define GL_BGRA is we do not load OpenGL 3
+	// for windows, we may need to define GL_BGRA if we do not load OpenGL 3
 	#ifdef GL_BGRA_EXT
 	#ifndef GL_BGRA
 	#define GL_BGRA GL_BGRA_EXT
@@ -265,7 +261,8 @@ namespace mtools
 			ImageWidgetGL::ImageWidgetGL(int X, int Y, int W, int H, const char *l) 
 			                  : Fl_Gl_Window(X, Y, W, H, l),  _ox(0), _oy(0), _tex_lx(0), _tex_ly(0), _texID{0,0}, _current_tex(0), _init_done(false), _tmp_im(), _missed_draw(false)
 					{ 
-					mode(FL_RGB8 | FL_DOUBLE | FL_OPENGL3); // set the mode
+					//mode(FL_RGB8 | FL_DOUBLE); // set the mode
+					//mode(FL_RGB8 | FL_DOUBLE | FL_OPENGL3); // set the mode
 					}
 
 
@@ -278,9 +275,6 @@ namespace mtools
 					glDeleteTextures(1, (GLuint*)&(_texID[0])); _texID[0] = 0;
 					glDeleteTextures(1, (GLuint*)&(_texID[1])); _texID[1] = 0;
 					}
-
-
-
 
 			// OPENGL 3
 			/*
@@ -298,9 +292,7 @@ namespace mtools
 					}
 				return Fl_Gl_Window::handle(event);
 				}
-			*/
-
-
+			*/			
 
 
 
@@ -413,7 +405,7 @@ namespace mtools
 
 			void ImageWidgetGL::partDraw(const iBox2 & r)
 				{
-				draw(); // TODO IMPROVE THAT !
+				MTOOLS_ERROR("Not implemented, should not have been called !");
 				}
 
 
@@ -492,35 +484,8 @@ namespace mtools
 				glTexCoord2f(tx, ty);		glVertex2f(vx,      -vy);	// top right
 				glTexCoord2f(tx, 0.0f);		glVertex2f(vx,     1.0);	// bottom right
 				glTexCoord2f(0.0f, 0.0f);	glVertex2f(-1.0,   1.0);    // bottom left
-				glEnd();
-				
+				glEnd();		
 				glDisable(GL_TEXTURE_2D);			
-
-
-
-
-				// color
-				glColor3f(1.0, 0, 0);
-
-				// line
-				glBegin(GL_LINES);
-				glVertex2f(0.0f, 0.0f);
-				glVertex2f(0.4f, 0.8f);
-				glEnd();
-
-
-				//
-				glColor3f(0, 0, 0);
-				glRectf(0.4f, 0.4f, 0.8f, 0.5f);
-
-				// text
-				glColor3f(1, 1, 1);
-				std::string str("Hello");
-				gl_font(1, 12);
-				gl_draw(str.c_str(), str.size(), 0.4f,0.4f);
-
-
-
 
 				MTOOLS_INSURE(glGetError() == GL_NO_ERROR);	// check for errors
 				}
@@ -532,7 +497,7 @@ namespace mtools
 				{
 				if (((bool)_init_done) == false)
 					{ // initialization, performed only once
-					glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);   // use actual texture colors
+					glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);   // use actual texture colors
 					glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 					glGenTextures(2, (GLuint*)_texID);							// generate 2 textures
 					_tex_lx = 0; _tex_ly = 0;									// no buffer assigned yet
@@ -551,25 +516,66 @@ namespace mtools
 
 		void ImageWidgetGL::set_color(RGBc col)
 			{
+			glColor3f(col.comp.R/255.0f, col.comp.G/255.0f, col.comp.B/255.0f);
 			}
 
 
-		void ImageWidgetGL::draw_line(iVec2 & P1, iVec2 & P2)
+		void ImageWidgetGL::draw_line(iVec2 P1, iVec2 P2)
 			{
+			const double ww = (double)w();
+			const double hh = (double)h();
+			const fBox2 srcB(-0.5,ww-0.5,-0.5,hh-0.5);
+			const fBox2 dstB(-1.0,1.0,-1.0,1.0);
+			fVec2 fP1 = boxTransform<true>((fVec2)P1, srcB, dstB);
+			fVec2 fP2 = boxTransform<true>((fVec2)P2, srcB, dstB);
+			glBegin(GL_LINES);
+			glVertex2f((GLfloat)fP1.X(), (GLfloat)fP1.Y());
+			glVertex2f((GLfloat)fP2.X(), (GLfloat)fP2.Y());
+			glEnd();
 			}
 
 
-		void ImageWidgetGL::draw_rect(iBox2 & B)
+		void ImageWidgetGL::draw_rect(iBox2 B)
 			{
+			const double ww = (double)w();
+			const double hh = (double)h();
+			const fBox2 srcB(-0.5,ww-0.5,-0.5,hh-0.5);
+			const fBox2 dstB(-1.0,1.0,-1.0,1.0);
+			fBox2 fB = boxTransform<true>((fBox2)B, srcB, dstB);
+			glBegin(GL_LINES);
+			glVertex2f((GLfloat)fB.min[0], (GLfloat)fB.min[1]); glVertex2f((GLfloat)fB.max[0], (GLfloat)fB.min[1]);
+			glVertex2f((GLfloat)fB.min[0], (GLfloat)fB.max[1]); glVertex2f((GLfloat)fB.max[0], (GLfloat)fB.max[1]);
+			glVertex2f((GLfloat)fB.min[0], (GLfloat)fB.min[1]); glVertex2f((GLfloat)fB.min[0], (GLfloat)fB.max[1]);
+			glVertex2f((GLfloat)fB.max[0], (GLfloat)fB.min[1]); glVertex2f((GLfloat)fB.max[0], (GLfloat)fB.max[1]);
+			glEnd();
 			}
 
 
-		void ImageWidgetGL::draw_text(std::string & text, iBox2 B, int fontsize, int text_offx, int text_offy, RGBc color, RGBc bkcolor)
+		void ImageWidgetGL::draw_text(std::string text, iBox2 B, int fontsize, int text_offx, int text_offy, RGBc color, RGBc bkcolor)
 			{
+			const double ww = (double)w();
+			const double hh = (double)h();
+			const fBox2 srcB(-0.0,ww-1,-0.0,hh-1.0);
+			const fBox2 dstB(-1.0,1.0,-1.0,1.0);
+			fBox2 fB = boxTransform<true>((fBox2)B, srcB, dstB);
+			const float offx = (GLfloat)((2*text_offx)/ww);
+			const float offy = (GLfloat)((2*text_offy)/hh);
+			
 			if (!bkcolor.isTransparent())
 				{
-				0;
+				set_color(bkcolor);
+				glRectf(fB.min[0], fB.min[1], fB.max[0], fB.max[1]);
 				}
+
+			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);   // use actual texture colors
+
+			gl_font(1, fontsize);
+			set_color(RGBc::c_Red);
+			gl_draw(text.c_str(), text.size(), (GLfloat)(fB.min[0]) + offx, (GLfloat)(fB.min[1]) + offy);
+			std::cerr << "{" << text << "} ";
+
+			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);   // use actual texture colors
+			return;
 			}
 
 
