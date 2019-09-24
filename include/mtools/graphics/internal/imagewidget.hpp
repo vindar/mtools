@@ -121,6 +121,23 @@ namespace mtools
             void partDraw(const iBox2 & r);
 
 
+			/** only to be called from the draw method of a child widget. After having called draw() on this object */
+			void set_color(RGBc col);
+
+
+			/** only to be called from the draw method of a child widget. After having called draw() on this object */
+			void draw_line(iVec2 & P1, iVec2 & P2);
+
+
+			/** only to be called from the draw method of a child widget. After having called draw() on this object */
+			void draw_rect(iBox2 & B);
+
+
+			/** only to be called from the draw method of a child widget. After having called draw() on this object 
+			    text is draw from botom left on the box, offset move the text up and left w.r.t.  the box */
+			void draw_text(std::string & text, iBox2 B, int fontsize, int text_offx, int text_offy, RGBc color, RGBc bkcolor);
+
+
             /* draw the widget */
             virtual void draw();
 
@@ -232,6 +249,23 @@ namespace mtools
 			void partDraw(const iBox2 & r);
 
 
+			/** only to be called from the draw method of a child widget. After having called draw() on this object */
+			void set_color(RGBc col);
+
+
+			/** only to be called from the draw method of a child widget. After having called draw() on this object */
+			void draw_line(iVec2 & P1, iVec2 & P2);
+
+
+			/** only to be called from the draw method of a child widget. After having called draw() on this object */
+			void draw_rect(iBox2 & B);
+
+
+			/** only to be called from the draw method of a child widget. After having called draw() on this object
+				text is draw from botom left on the box, offset move the text up and left w.r.t.  the box */
+			void draw_text(std::string & text, iBox2 B, int fontsize, int text_offx, int text_offy, RGBc color, RGBc bkcolor);
+
+
 			/** Draws the window, override from Fl_Gl_Window */
 			void draw();
 
@@ -265,7 +299,7 @@ namespace mtools
 
 
 
-	using ImageWidget = ImageWidgetGL; 
+	using ImageWidget = ImageWidgetFL; 
 
 
 

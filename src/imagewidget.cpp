@@ -214,6 +214,38 @@ namespace mtools
             }
 
 
+		void ImageWidgetFL::set_color(RGBc col)
+			{
+			fl_color(col.comp.R, col.comp.G, col.comp.B);
+			}
+
+
+		void ImageWidgetFL::draw_line(iVec2 & P1, iVec2 & P2)
+			{
+			fl_line((int)P1.X(), (int)P1.Y(), (int)P2.X(), (int)P2.Y());
+			}
+
+
+		void ImageWidgetFL::draw_rect(iBox2 & B)
+			{
+			fl_line((int)B.min[0], (int)B.min[1], (int)B.max[0], (int)B.min[1]);
+			fl_line((int)B.min[0], (int)B.max[1], (int)B.max[0], (int)B.max[1]);
+			fl_line((int)B.min[0], (int)B.min[1], (int)B.min[0], (int)B.max[1]);
+			fl_line((int)B.max[0], (int)B.min[1], (int)B.max[0], (int)B.max[1]);
+			}
+
+
+		void ImageWidgetFL::draw_text(std::string & text, iBox2 B, int fontsize, int text_offx, int text_offy, RGBc color, RGBc bkcolor)
+			{
+			if (!bkcolor.isTransparent())
+				{
+				set_color(bkcolor);
+				fl_rectf((int)B.min[0], (int)B.min[1], (int)(B.lx() + 1), (int)(B.ly() + 1));
+				}
+			set_color(color);
+			fl_font(FL_HELVETICA, fontsize);
+			fl_draw(text.c_str(), (int)(B.min[0] + text_offx), (int)(B.max[1] - fl_descent() - text_offy));
+			}
 
 
 
@@ -223,16 +255,17 @@ namespace mtools
 
 
 
-
-
+	// for windows, we may need to define GL_BGRA is we do not load OpenGL 3
+	#ifdef GL_BGRA_EXT
+	#ifndef GL_BGRA
+	#define GL_BGRA GL_BGRA_EXT
+	#endif
+	#endif
 
 			ImageWidgetGL::ImageWidgetGL(int X, int Y, int W, int H, const char *l) 
 			                  : Fl_Gl_Window(X, Y, W, H, l),  _ox(0), _oy(0), _tex_lx(0), _tex_ly(0), _texID{0,0}, _current_tex(0), _init_done(false), _tmp_im(), _missed_draw(false)
 					{ 
-
-					// OPENGL 3
-					// mode(FL_RGB8 | FL_DOUBLE | FL_OPENGL3); // set the mode for OPENGL 3
-
+					mode(FL_RGB8 | FL_DOUBLE | FL_OPENGL3); // set the mode
 					}
 
 
@@ -310,13 +343,13 @@ namespace mtools
 						_tex_ly = new_tex_ly;	//
 
 						glBindTexture(GL_TEXTURE_2D, _texID[0]);
-						glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, new_tex_lx, new_tex_ly, 0, GL_BGRA_EXT, GL_UNSIGNED_BYTE, nullptr);	// allocate memory but copy nothing
+						glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, new_tex_lx, new_tex_ly, 0, GL_BGRA, GL_UNSIGNED_BYTE, nullptr);	// allocate memory but copy nothing
 						glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 						glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 						MTOOLS_INSURE(glGetError() == GL_NO_ERROR);
 
 						glBindTexture(GL_TEXTURE_2D, _texID[1]);
-						glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, new_tex_lx, new_tex_ly, 0, GL_BGRA_EXT, GL_UNSIGNED_BYTE, nullptr);	// allocate memory but copy nothing
+						glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, new_tex_lx, new_tex_ly, 0, GL_BGRA, GL_UNSIGNED_BYTE, nullptr);	// allocate memory but copy nothing
 						glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 						glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 						MTOOLS_INSURE(glGetError() == GL_NO_ERROR);
@@ -327,7 +360,7 @@ namespace mtools
 
 					glBindTexture(GL_TEXTURE_2D, _texID[_current_tex]);
 					glPixelStorei(GL_UNPACK_ROW_LENGTH, (GLint)im->stride());
-					glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, _ox, _oy, GL_BGRA_EXT, GL_UNSIGNED_BYTE, im->data()); // copy image to texture
+					glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, _ox, _oy, GL_BGRA, GL_UNSIGNED_BYTE, im->data()); // copy image to texture
 									
 					MTOOLS_INSURE(glGetError() == GL_NO_ERROR);
 					}			
@@ -348,8 +381,8 @@ namespace mtools
 					}		
 				if (im->isEmpty()) { setImage(); return; }
 
-				const int lx = im->width();
-				const int ly = im->height();
+				const size_t lx = im->width();
+				const size_t ly = im->height();
 
 				_tmp_im.resizeRaw(lx,ly,false);		// resize if needed
 
@@ -361,16 +394,16 @@ namespace mtools
 
 				if (nb == 1)
 					{
-					for (int j = 0; j < ly; j++)
+					for (size_t j = 0; j < ly; j++)
 						{
-						for (int i = 0; i < lx; i++) { pdst[i] = psrc[i]; pdst[i].comp.A = 255; } pdst += stride_dst; psrc += stride_src;
+						for (size_t i = 0; i < lx; i++) { pdst[i] = psrc[i]; pdst[i].comp.A = 255; } pdst += stride_dst; psrc += stride_src;
 						}
 					}
 				else
 					{
-					for (int j = 0; j < ly; j++)
+					for (size_t j = 0; j < ly; j++)
 						{
-						for (int i = 0; i < lx; i++) { pdst[i].fromRGBc64(psrc[i], nb); pdst[i].comp.A = 255; } pdst += stride_dst; psrc += stride_src;
+						for (size_t i = 0; i < lx; i++) { pdst[i].fromRGBc64(psrc[i], nb); pdst[i].comp.A = 255; } pdst += stride_dst; psrc += stride_src;
 						}
 					}
 				setImage(&_tmp_im);
@@ -406,8 +439,10 @@ namespace mtools
 
 					}
 
+
+
 				// Clear the screen to Gray
-				glClearColor(0.5, 0.5, 0.5, 1.0);
+				// glClearColor(0.5, 0.5, 0.5, 1.0);
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 				// size of windows and image
@@ -422,6 +457,7 @@ namespace mtools
 				// load current texture
 				glBindTexture(GL_TEXTURE_2D, _texID[_current_tex]);
 				glEnable(GL_TEXTURE_2D);
+				glDisable(GL_DEPTH_TEST);
 
 				// compute coordinates
 				GLfloat tx, ty;
@@ -448,15 +484,43 @@ namespace mtools
 					}
 				tx *= (GLfloat)(OX / _tex_lx);	
 				ty *= (GLfloat)(OY / _tex_ly);
-
-				// blit on screen
-				glLoadIdentity();
+				
+				// blit on screen				
+				glLoadIdentity();				
 				glBegin(GL_QUADS);
 				glTexCoord2f(0.0f, ty);		glVertex2f(-1.0,    -vy);	// top left
 				glTexCoord2f(tx, ty);		glVertex2f(vx,      -vy);	// top right
 				glTexCoord2f(tx, 0.0f);		glVertex2f(vx,     1.0);	// bottom right
 				glTexCoord2f(0.0f, 0.0f);	glVertex2f(-1.0,   1.0);    // bottom left
 				glEnd();
+				
+				glDisable(GL_TEXTURE_2D);			
+
+
+
+
+				// color
+				glColor3f(1.0, 0, 0);
+
+				// line
+				glBegin(GL_LINES);
+				glVertex2f(0.0f, 0.0f);
+				glVertex2f(0.4f, 0.8f);
+				glEnd();
+
+
+				//
+				glColor3f(0, 0, 0);
+				glRectf(0.4f, 0.4f, 0.8f, 0.5f);
+
+				// text
+				glColor3f(1, 1, 1);
+				std::string str("Hello");
+				gl_font(1, 12);
+				gl_draw(str.c_str(), str.size(), 0.4f,0.4f);
+
+
+
 
 				MTOOLS_INSURE(glGetError() == GL_NO_ERROR);	// check for errors
 				}
@@ -482,6 +546,32 @@ namespace mtools
 						}
 					}
 				}
+
+
+
+		void ImageWidgetGL::set_color(RGBc col)
+			{
+			}
+
+
+		void ImageWidgetGL::draw_line(iVec2 & P1, iVec2 & P2)
+			{
+			}
+
+
+		void ImageWidgetGL::draw_rect(iBox2 & B)
+			{
+			}
+
+
+		void ImageWidgetGL::draw_text(std::string & text, iBox2 B, int fontsize, int text_offx, int text_offy, RGBc color, RGBc bkcolor)
+			{
+			if (!bkcolor.isTransparent())
+				{
+				0;
+				}
+			}
+
 
 
 

@@ -515,37 +515,30 @@ namespace mtools
             _prevMouse = { -1, -1 };
             if (_RM == nullptr) { return; }
             if ((_zoomFactor > 1)||(_crossOn))
-                {
-                fl_color(FL_BLACK);
-                fl_rectf(w() - 105, 5 , 100, 20);
-                fl_color(FL_WHITE);
-                fl_font(FL_HELVETICA, 12);
-                fl_draw((std::string("[") + toString(((int64)_zoomFactor)*w()) + " x " + toString(((int64)_zoomFactor)*h()) + "]").c_str(), w()-100, 20);
+                {	
+				// draw text for image size				
+				draw_text((std::string("[") + toString(((int64)_zoomFactor)*w()) + " x " + toString(((int64)_zoomFactor)*h()) + "]"), iBox2(w() - 105, w() - 5, 5, 25), 12, 5, 2, RGBc::c_White, RGBc::c_Black);
                 }
             if (_isIn(_currentMouse))
                 {
                 if (_crossOn)
                     {
                     _prevMouse = _currentMouse;
-                    fl_color(FL_BLACK);
-                    if ((_prevMouse.X() >= 0) && (_prevMouse.X() < ((ox() < w()) ? ox() : w()) )) { fl_line((int)_prevMouse.X(), 0, (int)_prevMouse.X(), ((oy() < h()) ? oy() : h() ) - 1); }
-                    if ((_prevMouse.X() >= 0) && (_prevMouse.Y() < ((oy() < h()) ? oy() : h()) )) { fl_line(0, (int)_prevMouse.Y(), ((ox() < w()) ? ox() : w()) - 1, (int)_prevMouse.Y()); }
-                    fl_rectf(5, 5, 170, 35);
-                    fl_color(FL_WHITE);
-                    fl_font(FL_HELVETICA, 12);
+					// draw the mouse cross
+					set_color(RGBc::c_Black);
+					if ((_prevMouse.X() >= 0) && (_prevMouse.X() < ((ox() < w()) ? ox() : w()))) { draw_line(iVec2( (int)_prevMouse.X(), 0 ), iVec2( (int)_prevMouse.X() , ((oy() < h()) ? oy() : h()) - 1 )); }
+					if ((_prevMouse.X() >= 0) && (_prevMouse.Y() < ((oy() < h()) ? oy() : h()))) { draw_line(iVec2( 0, (int)_prevMouse.Y() ), iVec2( ((ox() < w()) ? ox() : w()) - 1, (int)_prevMouse.Y() )); }
                     fVec2 pos = _RM->pixelToAbs({ ((int64)_zoomFactor)*_prevMouse.X(), ((int64)_zoomFactor)*_prevMouse.Y() });
-                    fl_draw((std::string("X = ") + mtools::doubleToStringNice(pos.X())).c_str(), 10, 20);
-                    fl_draw((std::string("Y = ") + mtools::doubleToStringNice(pos.Y())).c_str(), 10, 35);
+					iBox2 BT(5, 175, 5, 40);
+					draw_text((std::string("X = ") + mtools::doubleToStringNice(pos.X())), BT, 12, 5, 2, RGBc::c_White, RGBc::c_Black);
+					draw_text((std::string("Y = ") + mtools::doubleToStringNice(pos.Y())), BT, 12, 5, 15, RGBc::c_White, RGBc::c_Transparent);
                     }
                 if (_zoomOn)
                     {
                     _zoom2 = _currentMouse;
                     iBox2 R(_zoom1, _zoom2, true);
-                    if (fixedRatio()) fl_color(FL_GRAY); else fl_color(FL_RED);
-                    fl_line((int)R.min[0], (int)R.min[1], (int)R.min[0], (int)R.max[1]);
-                    fl_line((int)R.max[0], (int)R.min[1], (int)R.max[0], (int)R.max[1]);
-                    fl_line((int)R.min[0], (int)R.min[1], (int)R.max[0], (int)R.min[1]);
-                    fl_line((int)R.min[0], (int)R.max[1], (int)R.max[0], (int)R.max[1]);
+                    if (fixedRatio()) set_color(RGBc::c_Gray); else set_color(RGBc::c_Red);
+					draw_rect(R);
                     if (fixedRatio())
                         {
                         fBox2 range = _RM->getRange();
@@ -554,11 +547,8 @@ namespace mtools
                         auto v1 = _RM->absToPix(fVec2{ bR.min[0], bR.min[1] }); v1 /= ((int64)_zoomFactor);
                         auto v2 = _RM->absToPix(fVec2{ bR.max[0], bR.max[1] }); v2 /= ((int64)_zoomFactor);
                         _encR = iBox2( v1, v2, true );
-                        fl_color(FL_RED);
-                        fl_line((int)_encR.min[0], (int)_encR.min[1], (int)_encR.min[0], (int)_encR.max[1]);
-                        fl_line((int)_encR.max[0], (int)_encR.min[1], (int)_encR.max[0], (int)_encR.max[1]);
-                        fl_line((int)_encR.min[0], (int)_encR.min[1], (int)_encR.max[0], (int)_encR.min[1]);
-                        fl_line((int)_encR.min[0], (int)_encR.max[1], (int)_encR.max[0], (int)_encR.max[1]);
+						set_color(RGBc::c_Red);
+						draw_rect(_encR);
                         }
                     }
                 }
