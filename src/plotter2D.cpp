@@ -452,6 +452,10 @@ namespace mtools
             }
 
 
+
+
+
+
         /* remove every object in the plotter */
         void Plotter2DWindow::removeAll()
             {
@@ -578,10 +582,11 @@ namespace mtools
 
         /* Constructor : Construct the plotter window but do not show it */
         Plotter2DWindow::Plotter2DWindow(bool addAxes, bool addGrid, int X, int Y, int W, int H) : _mainImage(nullptr), _mainImageQuality(0), _RM(nullptr), _shown(false), _nbchannels(3), _usesolidBK(true), _solidBKcolor(RGBc::c_White), _refreshrate(0), _sensibility(Plotter2D::DEFAULT_SENSIBILITY), _axePlot(nullptr), _gridPlot(nullptr)
-        {
-            convertWindowCoord(W, H, X, Y);
+			{
+			W += 320; 
+			H += 20;
 
-            _w_mainWin = new Fl_Double_Window(X, Y, W, H, "Plotter 2D"); // the main window
+            _w_mainWin = new Fl_Double_Window(0, 0, W, H, "Plotter 2D"); // the main window
 
             _w_menuGroup = new Fl_Group(0, 0, 300, H); // the option group
 
@@ -800,7 +805,7 @@ namespace mtools
             _w_mainWin->end();
             _w_mainWin->resizable(_w_viewGroup);
 
-            _w_mainWin->size_range(Plotter2D::MIN_W, Plotter2D::MIN_H);     // min and max size of the plotter window
+            _w_mainWin->size_range(Plotter2D::MIN_W + 320, Plotter2D::MIN_H + 20);     // min and max size of the plotter window
             _w_mainWin->callback(windowCB_static, this);                    // callback when the user pressed the close button
 
             _RM = new RangeManager(_PW->viewSizeFactor());                                              // create the range manager
@@ -827,8 +832,10 @@ namespace mtools
             _insertAxesObject(addAxes); // create the objects and update the widgets
             _insertGridObject(addGrid); //
 
+			setDrawingSize(W - 320, H - 20);	// fix the size. 
+			setWindowPos(X, Y);					// and the position
+			}
 
-        }
 
 
         /* destructor, remove all the object, all the timers and then destroy the plotter window*/
@@ -1731,8 +1738,8 @@ namespace mtools
         /* convert to real coordinates */
         void Plotter2DWindow::convertWindowCoord(int & W, int & H, int & X, int & Y)
         {
-            if (W < Plotter2D::MIN_W) W = Plotter2D::MIN_W;
-            if (H < Plotter2D::MIN_H) H = Plotter2D::MIN_H;
+            if (W < (Plotter2D::MIN_W + 320)) W = Plotter2D::MIN_W + 320;
+            if (H < (Plotter2D::MIN_H + 20)) H = Plotter2D::MIN_H + 20;
             int sx, sy, sw, sh;
             Fl::screen_xywh(sx, sy, sw, sh);
             if (X == Plotter2D::POS_RIGHT) { X = sw - W; }
@@ -1761,19 +1768,21 @@ namespace mtools
 
 
         void Plotter2DWindow::setDrawingSize(int W, int H)
-        {
+			{
+			if (W < (Plotter2D::MIN_W)) W = Plotter2D::MIN_W;
+			if (H < (Plotter2D::MIN_H)) H = Plotter2D::MIN_H;
             setWindowSize(W + 320, H + 20); // resize the whole window
             _PW->resize(310, 10, W, H);     // and make sure the view is exactly as we want it to be.
-        }
+			}
 
 
         void Plotter2DWindow::setWindowSize(int W, int H)
-        {
+			{
             int X = _w_mainWin->x();
             int Y = _w_mainWin->y();
             convertWindowCoord(W, H, X, Y);
             _w_mainWin->resize(X, Y, W, H);
-        }
+			}
 
 
 
@@ -1819,7 +1828,7 @@ namespace mtools
 
     Plotter2D::Plotter2D(bool addAxes, bool addGrid, int W, int H, int X, int Y)
         {
-            _plotterWin = mtools::newInFltkThread<internals_graphics::Plotter2DWindow, bool, bool, int, int, int, int>(std::move(addAxes), std::move(addGrid), std::move(X), std::move(Y), std::move(W), std::move(H)); // create the plotter window if FLTK
+        _plotterWin = mtools::newInFltkThread<internals_graphics::Plotter2DWindow, bool, bool, int, int, int, int>(std::move(addAxes), std::move(addGrid), std::move(X), std::move(Y), std::move(W), std::move(H)); // create the plotter window if FLTK
         MTOOLS_INSURE(_plotterWin != nullptr);
         }
 
@@ -1884,6 +1893,13 @@ namespace mtools
 
 
     void Plotter2D::remove(internals_graphics::Plotter2DObj & obj) { remove(&obj); }
+
+
+	void Plotter2D::clear()
+		{
+		mtools::IndirectMemberProc<internals_graphics::Plotter2DWindow> proxy(*_plotterWin, &internals_graphics::Plotter2DWindow::removeAll);
+		mtools::runInFltkThread(proxy);                                                                                                  
+		}
 
 
     void Plotter2D::useSolidBackground(bool use)
