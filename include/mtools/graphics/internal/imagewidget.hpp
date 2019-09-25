@@ -303,14 +303,14 @@ namespace mtools
 
 
 
-//#if defined(__APPLE__)
+#if defined(__APPLE__)
     // On MacOS, use OPenGL because direct FLTK drawing method are VERY slow...
 	using ImageWidget = ImageWidgetGL;
 
-//#else
+#else
     // use FLTK drawing
-	//using ImageWidget = ImageWidgetFL; 
-//#endif
+	using ImageWidget = ImageWidgetFL; 
+#endif
 
 
 

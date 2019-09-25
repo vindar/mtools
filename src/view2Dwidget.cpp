@@ -530,8 +530,8 @@ namespace mtools
 					if ((_prevMouse.X() >= 0) && (_prevMouse.Y() < ((oy() < h()) ? oy() : h()))) { draw_line(iVec2( 0, (int)_prevMouse.Y() ), iVec2( ((ox() < w()) ? ox() : w()) - 1, (int)_prevMouse.Y() )); }
                     fVec2 pos = _RM->pixelToAbs({ ((int64)_zoomFactor)*_prevMouse.X(), ((int64)_zoomFactor)*_prevMouse.Y() });
 					iBox2 BT(5, 175, 5, 40);
-					draw_text((std::string("X = ") + mtools::doubleToStringNice(pos.X())), BT, 12, 5, 2, RGBc::c_White, RGBc::c_Black);
-					draw_text((std::string("Y = ") + mtools::doubleToStringNice(pos.Y())), BT, 12, 5, 15, RGBc::c_White, RGBc::c_Transparent);
+					draw_text((std::string("X=") + mtools::doubleToStringNice(pos.X())), BT, 12, 5, 2, RGBc::c_White, RGBc::c_Black);
+					draw_text((std::string("Y=") + mtools::doubleToStringNice(pos.Y())), BT, 12, 5, 15, RGBc::c_White, RGBc::c_Transparent);
                     }
                 if (_zoomOn)
                     {
