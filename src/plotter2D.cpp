@@ -1886,6 +1886,12 @@ namespace mtools
     void Plotter2D::remove(internals_graphics::Plotter2DObj & obj) { remove(&obj); }
 
 
+	void Plotter2D::clear()
+		{
+		mtools::IndirectMemberProc<internals_graphics::Plotter2DWindow> proxy(*_plotterWin, &internals_graphics::Plotter2DWindow::removeAll);
+		mtools::runInFltkThread(proxy);
+		}
+
     void Plotter2D::useSolidBackground(bool use)
         {
         _plotterWin->_usesolidBK = use;

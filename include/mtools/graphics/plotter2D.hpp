@@ -69,12 +69,12 @@ class Plotter2D
     static const int POS_CENTER = -2;       ///< the center of the screen
 
     static const int DEFAULT_W = 1120;      ///< default width of the plotter window
-    static const int DEFAULT_H = 820;       ///< default height of the plotter window
+    static const int DEFAULT_H = 720;       ///< default height of the plotter window
     static const int DEFAULT_X = POS_RIGHT; ///< default X position of the plotter window
     static const int DEFAULT_Y = POS_TOP;   ///< default Y position of the plotter window
 
-    static const int MIN_W = 600;           ///< min width of the plotter window
-    static const int MIN_H = 600;           ///< min height of the plotter window
+    static const int MIN_W = 620;           ///< min width of the plotter window
+    static const int MIN_H = 570;           ///< min height of the plotter window
 
     static const int DEFAULT_SENSIBILITY = 1; ///< default delta in quality needed to trigger an update of the window.
 
@@ -211,6 +211,12 @@ class Plotter2D
      * @param [in,out]  obj the object to remove.
      **/
     void remove(internals_graphics::Plotter2DObj & obj);
+
+
+	/**
+	 * Removes all objects in the plotter. 
+	 **/
+	void clear();
 
 
     /**
