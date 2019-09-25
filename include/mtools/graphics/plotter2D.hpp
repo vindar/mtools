@@ -69,7 +69,7 @@ class Plotter2D
     static const int POS_CENTER = -2;       ///< the center of the screen
 
     static const int DEFAULT_W = 1120;      ///< default width of the plotter window
-    static const int DEFAULT_H = 720;       ///< default height of the plotter window
+    static const int DEFAULT_H = 620;       ///< default height of the plotter window
     static const int DEFAULT_X = POS_RIGHT; ///< default X position of the plotter window
     static const int DEFAULT_Y = POS_TOP;   ///< default Y position of the plotter window
 
