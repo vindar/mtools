@@ -1,4 +1,4 @@
-/*
+
 #include <FL/Fl.H>
 #include <FL/Fl_Gl_Window.H>
 #include <FL/gl.h>
@@ -19,7 +19,7 @@ class MyGlWindow : public Fl_Gl_Window {
 			for (int i = 0; i < 10; i++)
 			{
 				std::ostringstream oss;
-				oss << " = " << (i + 10 * j); /// <- no bug without the " = "...
+				oss << " x " << (i + 10 * j); /// <- no bug without the " = "...
 				gl_draw(oss.str().c_str(), oss.str().size(), -1.0f + 0.2f*i, -1.0f + +0.15f*j + 0.1);
 			}
 	}
@@ -36,8 +36,8 @@ int main() {
 	return(Fl::run());
 }
 
-*/
 
+/*
 
 #include <mtools/mtools.hpp>
 
@@ -73,3 +73,4 @@ int main(int argc, char *argv[])
 
 
 }
+*/

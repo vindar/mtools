@@ -517,7 +517,7 @@ namespace mtools
             if ((_zoomFactor > 1)||(_crossOn))
                 {	
 				// draw text for image size				
-				draw_text((std::string("[") + toString(((int64)_zoomFactor)*w()) + " x " + toString(((int64)_zoomFactor)*h()) + "]"), iBox2(w() - 105, w() - 5, 5, 25), 12, 5, 2, RGBc::c_White, RGBc::c_Black);
+				draw_text((std::string("[") + toString(((int64)_zoomFactor)*w()) + "x" + toString(((int64)_zoomFactor)*h()) + "]"), iBox2(w() - 105, w() - 5, 5, 25), 12, 5, 2, RGBc::c_White, RGBc::c_Black);
                 }
             if (_isIn(_currentMouse))
                 {
