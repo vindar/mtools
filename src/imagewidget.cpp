@@ -557,7 +557,8 @@ namespace mtools
 			fBox2 fB = boxTransform<true>((fBox2)B, srcB, dstB);
 			const float offx = (GLfloat)((2*text_offx)/ww);
 			const float offy = (GLfloat)((2*text_offy)/hh);
-			
+			const float ffo = (GLfloat)((2*fontsize) / hh);
+
 			if (!bkcolor.isTransparent())
 				{
 				set_color(bkcolor);
@@ -567,8 +568,8 @@ namespace mtools
 			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);   // use actual texture colors
 
 			gl_font(1, fontsize);
-			set_color(RGBc::c_Red);
-			gl_draw(text.c_str(), text.size(), (GLfloat)(fB.min[0]) + offx, (GLfloat)(fB.min[1]) + offy);
+			set_color(color);
+			gl_draw(text.c_str(), text.size(), (GLfloat)(fB.min[0]) + offx, (GLfloat)(fB.min[1]) + offy + ffo/2);
 
 			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);   // use actual texture colors
 			return;
