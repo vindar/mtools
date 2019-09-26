@@ -569,7 +569,7 @@ namespace mtools
 
 			gl_font(1, fontsize);
 			set_color(color);
-			gl_draw(text.c_str(), text.size(), (GLfloat)(fB.min[0]) + offx, (GLfloat)(fB.min[1]) + offy + ffo/2);
+			gl_draw(text.c_str(), (int)text.size(), (GLfloat)(fB.min[0]) + offx, (GLfloat)(fB.min[1]) + offy + ffo/2);
 
 			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);   // use actual texture colors
 			return;
