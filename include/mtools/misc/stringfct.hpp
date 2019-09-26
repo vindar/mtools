@@ -837,7 +837,6 @@ namespace mtools
         if (input_enc == enc_unknown) { input_enc = (isValidUtf8(s) ? enc_utf8 : enc_iso8859); }
         if (input_enc == enc_utf8)
             {
-            #if defined (COMPILER_HAS_CODECVT)
 			#if defined (_MSC_VER)
 			#pragma warning (push)
 			#pragma warning (disable:4996)
@@ -847,9 +846,6 @@ namespace mtools
 			#if defined (_MSC_VER)
 			#pragma warning (pop)
 			#endif
-            #else
-            //TODO, for the time being, we just convert as if in iso 8859-1 ....
-            #endif
             }
         std::wstring ws(s.length(), L' ');
         for (size_t i = 0; i < s.length(); i++) { unsigned char c = static_cast<unsigned char>(s[i]);  ws[i] = static_cast<wchar_t>(c); }

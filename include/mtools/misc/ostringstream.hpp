@@ -24,14 +24,7 @@
 #include "metaprog.hpp"
 #include "misc.hpp"
 
-#if defined (_MSC_VER)
-// header missing with libstdc++
 #include <codecvt>
-#define COMPILER_HAS_CODECVT
-#endif
-
-
-
 #include <locale>
 #include <sstream>
 #include <cfloat>
@@ -244,7 +237,6 @@ namespace mtools
 				{
                 if (os.encoding() == enc_utf8)
                     {
-                    #if defined (COMPILER_HAS_CODECVT)
 					#if defined (_MSC_VER)
 					#pragma warning (push)
 					#pragma warning (disable:4996)
@@ -255,20 +247,6 @@ namespace mtools
 					#if defined (_MSC_VER)
 					#pragma warning (pop)
 					#endif
-					#else
-                    std::string s; s.reserve(ws.size()+1);
-                    for (auto wit = ws.begin(); wit != ws.end(); wit++)
-                        {
-                        auto c = *wit;
-                        if (c<0x80) {s.append(1,c);}
-                        else if (c<0x800) { s.append(1,192+c/64), s.append(1,128+c%64); }
-                        else if (c-0xd800u<0x800) {s.append(1,' ');}
-                        else if (c<0x10000) {s.append(1,224+c/4096); s.append(1,128+c/64%64); s.append(1,128+c%64);}
-                        else if (c<0x110000) {s.append(1,240+c/262144); s.append(1,128+c/4096%64); s.append(1,128+c/64%64); s.append(1,128+c%64);}
-                        else {s.append(1,' ');}
-                        }
-                    return;
-                    #endif
                     }
                 std::string s(ws.length(), ' ');
                 auto it = s.begin();

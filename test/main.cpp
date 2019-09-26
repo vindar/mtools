@@ -1,4 +1,4 @@
-
+/*
 #include <FL/Fl.H>
 #include <FL/Fl_Gl_Window.H>
 #include <FL/gl.h>
@@ -37,7 +37,7 @@ int main() {
 }
 
 
-/*
+*/
 
 #include <mtools/mtools.hpp>
 
@@ -69,8 +69,11 @@ int main(int argc, char *argv[])
 {
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
 
+cout << "Hello Word..";
+int a;
+cout >> a; 
+cout << " " << a << " <- blop ééé";
 	test();
 
 
 }
-*/
