@@ -47,25 +47,28 @@ A recent version of CMake is required (>= 3.10).
 
 Several flag can be set to configure the library: 
 
+	- USE_COTIRE [default 0]
+	  If set, use precompiled headers. 
+
     - CONSOLE_ONLY [default 0] 
       If set to 1, this flag disable mtools::cout console. 
    
-    - USE_SSE [default  0]
+    - USE_SSE [default = 0]
       Experimental, if set to 1, use SSE specific code. 
    
-    - USE_CAIRO [default = 1 if Cairo present, 0 otherwise]
+    - USE_CAIRO [default = 1 if Cairo found]
       If set to 1, use the Cairo library. 
 
-    - USE_OPENGL [default = 1 if OpenGL present, 0 otherwise]
+    - USE_OPENGL [default = 1 if OpenGL found]
       If set to 1, use OpenGL. 
    
-    - USE_OPENCL [default = 1 if OpenCL present, 0 otherwise]
+    - USE_OPENCL [default = 0]
       If set to 1, use OpenCL for specific GPU accelerated code.
    
-    - USE_OPENMP [default = 1 if OpenMP supported, 0 otherwise]
+    - USE_OPENMP [default = 0]
       If set to 1, use OpenMP. 
 
-    - LOCAL_INSTALL [default 1] 
+    - LOCAL_INSTALL [default  = 1] 
       By default the library in not installed but used directly from 
       the build tree. If LOCAL_INSTALL=0, then the library will be 
       installed inside the directory pointed by CMAKE_INSTALL_PREFIX. 
@@ -78,9 +81,9 @@ the environment variable CMAKE_CXX_COMPILER
 Examples: 
 
  cmake-mtools                                    [default build]
- cmake-mtools -DCONSOLE_ONLY=1 -DUSE_CAIRO=0     [no graphics and do not use cairo]
+ cmake-mtools -DCONSOLE_ONLY=1 -DUSE_OPENGL=0    [no graphics and do not use OpenGL]
  cmake-mtools -DLOCAL_INSTALL=0                  [default build, install at default location]
- cmake-mtools -DUSE_OPENCL=0 -DCMAKE_CXX_COMPILER=/usr/bin/g++-7 [no opencl and use G++7 to build]
+ cmake-mtools -DCMAKE_CXX_COMPILER=/usr/bin/g++-9 [se G++9 to build the library]
  cmake-mtools -DLOCAL_INSTALL=0	-DCMAKE_INSTALL_PREFIX=/usr/local  [custom install dir]
 	
 
@@ -90,11 +93,11 @@ Examples:
 *********************************************************************
 
 
-1) Make sure you use a recent version of gcc. Version 7 or later should do. 
+1) Make sure you use a recent version of gcc. Version 9 or later should do. 
    
 2) Make sure that cmake, python, pkg-config and the required libraries are 
    installed (at least Zlib, libPNG, libJPEG, FLTK, Cimg and TinyXML2)   
-     - FLTK version should be at least 1.3.4
+     - FLTK version should be at least 1.3.5. 
      - CImg is header only: just copy CImg.h somewhere the compiler can find it. 
 		
 3) Generate the makefiles
@@ -134,7 +137,11 @@ Examples:
    CMAKE_CXX_COMPILER variable. 
 
          cd mtools
-         ./cmake-mtools [-DCMAKE_CXX_COMPILER=/usr/local/g++-7 -...]
+         ./cmake-mtools [-DCMAKE_CXX_COMPILER=/usr/local/g++-9 -D...]
+	   
+	-> Make sure to enable OpenGL (i.e. option -DUSE_OPENGL=1 which is on by default)
+	   otherwise plotting will be very slow on Mac OS. 
+	   
 	   
 4) Build the library
     
@@ -157,7 +164,14 @@ Examples:
 
 1) Install CMake (and optionally Git for updating vcpkg). 
 
-2) Installing the support libraries:
+2) Install python 3. In order to use for command line argument 
+   to be correctly parsed when a python script is called from the windows shell,
+   the registry key [HKEY_CLASSES_ROOT\Applications\python.exe\shell\open\command]
+   should have value something like ["C:\Users\Vindar\Anaconda3\python.exe" "%1" %*]
+   if [%* is missing, had it. 
+   
+
+3) Installing the support libraries:
 
    The easiest way it to use Microsoft's vcpkg package manager. 
    Installation is straightforward: open a powershell where vcpkg 
@@ -183,6 +197,12 @@ Examples:
         .\vcpkg.exe install zlib libpng libjpeg-turbo fltk opengl pixman cairo cimg tinyxml2
 		 
    All set !
+
+
+4) BUG (September 2019). 
+   There is a problem with FLTK built by vcpkg. Built it separately and then 
+   replace the corresponding libraries and headers files in the vcpkg tree. 
+
 	
 2) Generate the Visual studio solution files:
 
