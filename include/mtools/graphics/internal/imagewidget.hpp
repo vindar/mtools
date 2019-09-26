@@ -29,8 +29,11 @@
 #include <FL/fl_draw.H>
 #include <FL/Fl_Double_Window.H>
 
-#include <FL/Fl_Gl_Window.H>
 
+
+#if (MTOOLS_USE_OPENGL)
+	#include <FL/Fl_Gl_Window.H>
+#endif
 
 #include <atomic>
 #include <thread>
@@ -169,6 +172,7 @@ namespace mtools
 
 
 
+#if (MTOOLS_USE_OPENGL)
 
 
         /**
@@ -269,7 +273,7 @@ namespace mtools
 
 			/** only to be called from the draw method of a child widget. After having called draw() on this object
 				text is draw from botom left on the box, offset move the text up and left w.r.t.  the box */
-			void draw_text(std::string text, iBox2 B, int fontsize, int text_offx, int text_offy, RGBc color, RGBc bkcolor);
+			void draw_text(const std::string & text, iBox2 B, int fontsize, int text_offx, int text_offy, RGBc color, RGBc bkcolor);
 
 
 			/** Draws the window, override from Fl_Gl_Window */
@@ -298,12 +302,13 @@ namespace mtools
 
 		};
 
+#endif // end of #if (MTOOLS_USE_OPENGL)
 
 
 
 
+#if defined(__APPLE__) && (MTOOLS_USE_OPENGL)
 
-#if defined(__APPLE__)
     // On MacOS, use OPenGL because direct FLTK drawing method are VERY slow...
 	using ImageWidget = ImageWidgetGL;
 
@@ -311,17 +316,6 @@ namespace mtools
     // use FLTK drawing
 	using ImageWidget = ImageWidgetFL; 
 #endif
-
-
-
-
-
-
-
-
-
-
-
 
 
 

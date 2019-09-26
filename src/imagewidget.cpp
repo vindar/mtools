@@ -18,18 +18,11 @@
 // along with mtools  If not, see <http://www.gnu.org/licenses/>.
 
 
-/*
-#if defined(__APPLE__)
-#  include <OpenGL/gl3.h> // defines OpenGL 3.0+ functions
-#else
-#  if defined(WIN32)
-#    define GLEW_STATIC 1
-#  endif
-#  include <GL/glew.h>
-#endif
-*/
+#include "mtools_config.hpp"
 
-#include <FL/gl.h>
+#if (MTOOLS_USE_OPENGL)
+	#include <FL/gl.h>
+#endif
 
 #include <stdio.h>
 #include <math.h>
@@ -248,7 +241,7 @@ namespace mtools
 
 
 
-
+#if (MTOOLS_USE_OPENGL)
 
 
 	// for windows, we may need to define GL_BGRA if we do not load OpenGL 3
@@ -548,7 +541,7 @@ namespace mtools
 			}
 
 
-		void ImageWidgetGL::draw_text(std::string text, iBox2 B, int fontsize, int text_offx, int text_offy, RGBc color, RGBc bkcolor)
+		void ImageWidgetGL::draw_text(const std::string & text, iBox2 B, int fontsize, int text_offx, int text_offy, RGBc color, RGBc bkcolor)
 			{
 			const double ww = (double)w();
 			const double hh = (double)h();
@@ -574,6 +567,9 @@ namespace mtools
 			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);   // use actual texture colors
 			return;
 			}
+
+
+#endif // end of #if (MTOOLS_USE_OPENGL)
 
 
 
