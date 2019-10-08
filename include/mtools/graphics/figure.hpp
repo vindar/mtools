@@ -133,8 +133,6 @@ namespace mtools
 
 	class Fill;
 
-	class Clip;
-
 	*/
 
 
@@ -601,7 +599,7 @@ namespace mtools
 
 
 				/** default ctor */
-				FigureInterface() : _anchor_local({ 0.0,0.0 }), _anchor_global({ 0.0,0.0 }), _scale({ 1.0, 1.0 })
+				FigureInterface() : _clip_local(), _clip_global(), _anchor_local({ 0.0,0.0 }), _anchor_global({ 0.0,0.0 }), _scale({ 1.0, 1.0 })
 				{
 				}
 
@@ -625,6 +623,8 @@ namespace mtools
 				/** The derived ctor for deserialization MUST call this base ctor ! */
 				FigureInterface(IBaseArchive & ar)
 					{
+					ar & _clip_local; 
+					ar & _clip_global;
 					ar & _anchor_local;
 					ar & _anchor_global;
 					ar & _scale;
@@ -648,8 +648,17 @@ namespace mtools
 				* @param 		  	highQuality True when high quality drawing is requested and false otherwise
 				* @param 		  	min_thick   minimum thickness to use when drawing
 				*/
-				void draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness)
+				void draw(Image & im, fBox2 R, bool highQuality, double min_thickness)
 					{
+					if (!_clip_global.isEmpty()) R.intersectionBox(_clip_global);	// global clipping
+					if (!_clip_local.isEmpty())
+						{
+						_coordLocalToGlobal()
+						}
+
+
+					auto R2 = intersectionRect(R,_)
+
 					virt_draw(im, _coordGlobalToLocal(R), highQuality, min_thickness);
 					}
 
@@ -681,6 +690,8 @@ namespace mtools
 					os << "anchor_local : " << _anchor_local << "\n";
 					os << "anchor_global : " << _anchor_global << "\n";
 					os << "scale : " << _scale << "\n";
+					if (!_clip_local.isEmpty()) os << "clip_local : " << _clip_local << "\n";
+					if (!_clip_global.isEmpty()) os << "clip_global : " << _clip_global << "\n";
 					return os.toString();
 					}
 
@@ -693,6 +704,8 @@ namespace mtools
 				*/
 				void serialize(OBaseArchive & ar)
 					{
+					ar & _clip_local; 
+					ar & _clip_global;
 					ar & _anchor_local;
 					ar & _anchor_global;
 					ar & _scale;
@@ -712,6 +725,9 @@ namespace mtools
 				*/
 				void svg(mtools::SVGElement * el) const
 					{
+
+					// TODO CLIPPING 
+					
 					mtools::ostringstream os;
 					if (_anchor_global != fVec2(0.0, 0.0)) { os << "translate(" << _anchor_global.X() << " " << -_anchor_global.Y() << ") "; }
 					if (_scale != fVec2(1.0, 1.0)) { os << "scale(" << _scale.X() << " " << _scale.Y() << ") "; }
@@ -884,6 +900,53 @@ namespace mtools
 				}
 
 
+			/**
+			 * Set the clipping rectangle in global coordinates.
+			 * 
+			 * There are two clipping rectangle: one in local coordinates and the other in global coordinates.
+			 * Only the part of the figure that is in the intersection of both clipping rectangle is drawn.
+			 * If a clipping rectangle is empty, then it is ignored (in particular, no clipping occur if
+			 * both global and local clipping rectangle are empty, which is default behaviour).
+			 *
+			 * @param	B	The clipping rect in global coord. Empty to disable global clipping (default).
+			**/
+			void setClipGlobal(fBox2 B = fBox2()) { _clip_global = B; }
+
+
+			/**
+			 * Query the clipping rectangle in global coordinates. Empty if not used.
+			 *
+			 * There are two clipping rectangle: one in local coordinates and the other in global coordinates.
+			 * Only the part of the figure that is in the intersection of both clipping rectangle is drawn.
+			 * If a clipping rectangle is empty, then it is ignored (in particular, no clipping occur if
+			 * both global and local clipping rectangle are empty, which is default behaviour).
+			**/
+			fBox2 clipGlobal() { return _clip_global; }
+
+
+			/**
+			 * Set the clipping rectangle in local coordinates.
+			 *
+			 * There are two clipping rectangle: one in local coordinates and the other in global coordinates.
+			 * Only the part of the figure that is in the intersection of both clipping rectangle is drawn.
+			 * If a clipping rectangle is empty, then it is ignored (in particular, no clipping occur if
+			 * both global and local clipping rectangle are empty, which is default behaviour).
+			 *
+			 * @param	B	The clipping rect in global coord. Empty to disable global clipping (default).
+			**/
+			void setClipLocal(fBox2 B = fBox2()) { _clip_local = B; }
+
+
+			/**
+			 * Query the clipping rectangle in local coordinates. Empty if not used.
+			 *
+			 * There are two clipping rectangle: one in local coordinates and the other in global coordinates.
+			 * Only the part of the figure that is in the intersection of both clipping rectangle is drawn.
+			 * If a clipping rectangle is empty, then it is ignored (in particular, no clipping occur if
+			 * both global and local clipping rectangle are empty, which is default behaviour).
+			**/
+			inline fBox2 clipLocal() { return _clip_local; }
+
 
 			protected:
 
@@ -939,12 +1002,12 @@ namespace mtools
 					}
 
 
+				fBox2 _clip_local;
+				fBox2 _clip_global;
 
 				fVec2 _anchor_local;
 				fVec2 _anchor_global; 
 				fVec2 _scale;
-
-
 
 			};
 
@@ -964,9 +1027,8 @@ namespace mtools
 		#define FIGURECLASS_BEGIN( CLASSNAME )	class CLASSNAME : public internals_figure::FigureInterface 				\
 													{																	\
 													public:																\
-														static std::string className() { return #CLASSNAME; }			\
-													virtual std::string name() const override { return className(); }		
-
+													static std::string className() { return #CLASSNAME; }				\
+													virtual std::string name() const override { return className(); }	\
 
 		#define FIGURECLASS_END()					};
 
