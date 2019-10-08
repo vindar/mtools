@@ -650,16 +650,43 @@ namespace mtools
 				*/
 				void draw(Image & im, fBox2 R, bool highQuality, double min_thickness)
 					{
-					if (!_clip_global.isEmpty()) R.intersectionBox(_clip_global);	// global clipping
-					if (!_clip_local.isEmpty())
-						{
-						_coordLocalToGlobal()
+					if ((_clip_global.isEmpty()) && (_clip_local.isEmpty()))
+						{ // no clipping, fast. 
+						virt_draw(im, _coordGlobalToLocal(R), highQuality, min_thickness);
+						return;
 						}
 
+					Image new_im(im, true); // make a shallow copy of the image
 
-					auto R2 = intersectionRect(R,_)
+					if (!_clip_global.isEmpty())
+						{ // global clipping
+						const fBox2 R2 = intersectionRect(R, _clip_global); 
+						if ((R2.lx() <= 0) && (R2.ly() <= 0)) return; // stronger than isEmpty(), discard if aera is null. 
+						const fBox2 imB2 = boxTransform(R2, R, new_im.imagefBox());
+						int64 xmin = (int64)std::round(imB2.min[0]); if (xmin < 0) xmin = 0; 
+						int64 xmax = (int64)std::round(imB2.max[0]); if (xmax >= new_im.lx()) xmax = new_im.lx() - 1;
+						int64 ymin = (int64)std::round(imB2.min[1]); if (ymin < 0) ymin = 0;
+						int64 ymax = (int64)std::round(imB2.max[1]); if (ymax >= new_im.ly()) ymax = new_im.ly() - 1;
+						if ((xmax < xmin) || (ymax < ymin)) return; // nothing to draw (but should not happen)
+						new_im.crop(iBox2(xmin, xmax, ymin, ymax), true);	// shallow sub image. 
+						R = R2;	// update the range
+						}
 
-					virt_draw(im, _coordGlobalToLocal(R), highQuality, min_thickness);
+					if (!_clip_local.isEmpty())
+						{ // local clipping
+						const fBox2 R2 = intersectionRect(R, _coordLocalToGlobal(_clip_local));
+						if ((R2.lx() <= 0) && (R2.ly() <= 0)) return; // stronger than isEmpty(), discard if aera is null. 
+						const fBox2 imB2 = boxTransform(R2, R, new_im.imagefBox());
+						int64 xmin = (int64)std::round(imB2.min[0]); if (xmin < 0) xmin = 0;
+						int64 xmax = (int64)std::round(imB2.max[0]); if (xmax >= new_im.lx()) xmax = new_im.lx() - 1;
+						int64 ymin = (int64)std::round(imB2.min[1]); if (ymin < 0) ymin = 0;
+						int64 ymax = (int64)std::round(imB2.max[1]); if (ymax >= new_im.ly()) ymax = new_im.ly() - 1;
+						if ((xmax < xmin) || (ymax < ymin)) return; // nothing to draw (but should not happen)
+						new_im.crop(iBox2(xmin, xmax, ymin, ymax), true);	// shallow sub image. 
+						R = R2; // update the range. 
+						}
+					virt_draw(new_im, _coordGlobalToLocal(R), highQuality, min_thickness);
+					return;
 					}
 
 
@@ -672,6 +699,8 @@ namespace mtools
 				*/
 				fBox2 boundingBox() const
 					{
+					// here we do not use the clipping rectangle because we do not want to return a empty rect. 
+					// TODO : improve htis. 
 					return _coordLocalToGlobal(virt_boundingBox());
 					}
 
@@ -686,10 +715,13 @@ namespace mtools
 					{
 					mtools::ostringstream os;
 					os << virt_toString(debug);
-					os << "with transform\n";
-					os << "anchor_local : " << _anchor_local << "\n";
-					os << "anchor_global : " << _anchor_global << "\n";
-					os << "scale : " << _scale << "\n";
+					if ((_anchor_global != fVec2(0.0, 0.0)) || (_anchor_local != fVec2(0.0, 0.0)) || (_scale != fVec2(1.0, 1.0)))
+						{
+						os << "with transform\n";
+						os << "anchor_local : " << _anchor_local << "\n";
+						os << "anchor_global : " << _anchor_global << "\n";
+						os << "scale : " << _scale << "\n";
+						}
 					if (!_clip_local.isEmpty()) os << "clip_local : " << _clip_local << "\n";
 					if (!_clip_global.isEmpty()) os << "clip_global : " << _clip_global << "\n";
 					return os.toString();
@@ -725,15 +757,41 @@ namespace mtools
 				*/
 				void svg(mtools::SVGElement * el) const
 					{
+					if ((!_clip_global.isEmpty()) || (!_clip_local.isEmpty()))
+						{ // clipping is on
+						el->SetName("g");
+						const fBox2 Rclip = intersectionRect(_clip_global, _coordLocalToGlobal(_clip_local));	// clipping rectangle
+						if ((Rclip.lx() <= 0) || (Rclip.ly() <= 0))
+							{ // nothing to draw
+							el->Comment("Clipping to an empty rectangle");
+							return;
+							}
+						const std::string uid = el->getUID("clippath");
+						auto clip_el = el->NewChildSVGElement("clipPath");
+						clip_el->xml->SetAttribute("id", uid.c_str());
+						auto path_el = clip_el->NewChildSVGElement("rect");
+						path_el->noFill();
+						path_el->noStroke();
+						path_el->xml->SetAttribute("x", Rclip.min[0]);
+						path_el->xml->SetAttribute("y", -Rclip.max[1]); // invert Y coord.  
+						path_el->xml->SetAttribute("width", Rclip.lx());
+						path_el->xml->SetAttribute("height", Rclip.ly());
+						el = el->NewChildSVGElement("g");
+						el->xml->SetAttribute("clip-path", (mtools::toString("url(#") + uid + ")").c_str());
+						el = el->NewChildSVGElement("g");
+						}
 
-					// TODO CLIPPING 
-					
 					mtools::ostringstream os;
 					if (_anchor_global != fVec2(0.0, 0.0)) { os << "translate(" << _anchor_global.X() << " " << -_anchor_global.Y() << ") "; }
 					if (_scale != fVec2(1.0, 1.0)) { os << "scale(" << _scale.X() << " " << _scale.Y() << ") "; }
 					if (_anchor_local != fVec2(0.0, 0.0)) { os << "translate(" << -_anchor_local.X() << " " << _anchor_local.Y() << ") "; }
 					std::string tran_str = os.toString();
-					if (tran_str.size() > 0) { el->xml->SetAttribute("transform", tran_str.c_str()); }
+					if (tran_str.size() > 0) 
+						{ // there is a transformation
+						el->SetName("g");
+						el->xml->SetAttribute("transform", tran_str.c_str()); 
+						el = el->NewChildSVGElement("g");
+						}
 					virt_svg(el);
 					}
 
@@ -1028,7 +1086,7 @@ namespace mtools
 													{																	\
 													public:																\
 													static std::string className() { return #CLASSNAME; }				\
-													virtual std::string name() const override { return className(); }	\
+													virtual std::string name() const override { return className(); }
 
 		#define FIGURECLASS_END()					};
 

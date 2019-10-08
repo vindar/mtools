@@ -53,26 +53,35 @@ double f(double x)
 
 void test()
 	{
-	auto P = makePlot2DFun(f, "sin");
-	auto Q = makePlot2DFun(f, "sin");
+
+	auto canvas = makeFigureCanvas();
+
+	Figure::Circle C({ 0.0,0.0 }, 50, RGBc::c_Black, RGBc::c_Red);
+	C.setAnchorGlobal({ 100.0, 200.0 });
+
+	C.setClipGlobal(fBox2(100.0,150.0, 200.0, 400.0));
+	C.setClipLocal(fBox2(-30.0, 30.0, -20.0, 45.0));
+
+	Figure::Rectangle RR(fBox2(100.0, 130.0, 200.0, 245.0), RGBc::c_Black, RGBc::c_Green.getMultOpacity(0.3));
+
+	canvas(RR, 0);
+	canvas(C, 0);
+
+	auto PC = makePlot2DFigure(canvas);
+
+	canvas.saveSVG("test.svg");
 
 	Plotter2D plotter;
-	plotter[P]; 
-	plotter[Q];
+	plotter[PC];
 	plotter.autorangeXY();
-
 	plotter.plot(); 
-	plotter.remove(P);
 	}
 
 int main(int argc, char *argv[])
 {
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
 
-cout << "Hello Word..";
-int a;
-cout >> a; 
-cout << " " << a << " <- blop ééé";
+
 	test();
 
 
