@@ -65,15 +65,22 @@ void test()
 	plotter.remove(P);
 	}
 
+
+
+
 int main(int argc, char *argv[])
 {
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
 
-cout << "Hello Word..";
-int a;
-cout >> a; 
-cout << " " << a << " <- blop ééé";
-	test();
 
+
+	cout << overlay_string("012345678901234567890123456789", "azerty", 0, MTOOLS_POS_CENTER) << "\n";
+	cout << overlay_string("012345678901234567890123456789", "azerty", 0, MTOOLS_POS_LEFT) << "\n";
+	cout << overlay_string("012345678901234567890123456789", "azerty", 0, MTOOLS_POS_RIGHT) << "\n";
+
+
+
+	cout.getKey(); 
+	return 0; 
 
 }
