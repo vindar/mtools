@@ -19,10 +19,47 @@
 
 
 #include "misc/stringfct.hpp"
-
+#include "maths/box.hpp"  // for MTOOLS_POS_LEFT ...
 
 namespace mtools
 {
+
+
+	std::string overlay_string(std::string back_str, const std::string & front_str, size_t pos, int centering, char padding_char)
+		{
+		const int64 l = (int64)front_str.size();
+		if (l == 0) return back_str;
+		int64_t posa, posb;
+		if (centering == MTOOLS_POS_LEFT)
+			{
+			posa = pos;
+			posb = pos + l - 1;
+			}
+		else if (centering == MTOOLS_POS_RIGHT)
+			{
+			posa = pos - l + 1;
+			posb = pos;
+			}
+		else
+			{
+			posa = pos - (l / 2);
+			posb = posa + l - 1;
+			}
+		if (posa < 0)
+			{
+			back_str = std::string(-posa, padding_char) + back_str;
+			posb -= posa;
+			posa = 0;
+			}
+		if (posb >= (int64)back_str.size())
+			{
+			back_str = back_str + std::string(posb - back_str.size() + 1, padding_char);
+			}
+
+		for (int64 i = posa; i <= posb; i++) { back_str[i] = front_str[i-posa]; }
+		return back_str;
+		}
+
 
 
     size_t replace(std::string & buffer, const std::string & oldstr, const std::string & newstr)

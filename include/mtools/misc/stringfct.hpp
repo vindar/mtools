@@ -34,6 +34,128 @@ namespace mtools
 
 
 	/**
+	 * Overlay a 'front' string onto a 'back' string at a given position. extend the background
+	 * string with padding char is needed.
+	 *
+	 * @param	back_str		The back string.
+	 * @param	front_str   	The front string.
+	 * @param	pos				The position to use for the front string.
+	 * @param	centering   	The centering method for the front string. This is the positon of the
+	 * 							anchor point in the front string. One of MTOOLS_POS_CENTER,
+	 * 							MTOOLS_POS_LEFT, MTOOLS_POS_RIGHT. this is.
+	 * @param	padding_char	(Optional) The padding character (default ' ' )
+	 *
+	 * @return	A std::string.
+	 **/
+	std::string overlay_string(std::string back_str, const std::string & front_str, size_t pos, int centering, char padding_char = ' ');
+
+
+
+	/**
+	 * Justify a string to the left, making it a given length
+	 * does nothing if the string is longer than len.
+	 *
+	 * @param	s				the string to justify
+	 * @param	len				desired length
+	 * @param	padding_char	(Optional) The padding character (default " ")
+	 *
+	 * @return	the padded string.
+	 **/
+	inline std::string justify_left(const std::string & s, size_t len, char padding_char = ' ')
+		{
+		if (s.size() >= len) return s;
+		return s + std::string(len - s.size(), padding_char);
+		}
+
+
+	/**
+	 * Justify a string to the left, making it a given length
+	 * does nothing if the string is longer than len.
+	 *
+	 * @param	s				the string to justify
+	 * @param	len_str			template string, only its length is used.
+	 * @param	padding_char	(Optional) The padding character (default " ")
+	 *
+	 * @return	the padded string.
+	 **/
+	inline std::string justify_left(const std::string & s, const std::string & len_str, char padding_char = ' ')
+		{
+		return justify_left(s, len_str.size(), padding_char);
+		}
+
+
+	/**
+	 * Justify a string to the right, making it a given length
+	 * does nothing if the string is longer than len.
+	 *
+	 * @param	s				the string to justify
+	 * @param	len				desired length
+	 * @param	padding_char	(Optional) The padding character (default " ")
+	 *
+	 * @return	the padded string.
+	 **/
+	inline std::string justify_right(const std::string & s, size_t len, char padding_char = ' ')
+		{
+		if (s.size() >= len) return s;
+		return std::string(len - s.size(), padding_char) + s;
+		}
+
+
+	/**
+	 * Justify a string to the right, making it a given length
+	 * does nothing if the string is longer than len.
+	 *
+	 * @param	s				the string to justify
+	 * @param	len_str			template string, only its length is used.
+	 * @param	padding_char	(Optional) The padding character (default " ")
+	 *
+	 * @return	the padded string.
+	 **/
+	inline std::string justify_right(const std::string & s, const std::string & len_str, char padding_char = ' ')
+		{
+		return justify_right(s, len_str.size(), padding_char);
+		}
+
+
+	/**
+	 * Justify a string by centering, making it a given length
+	 * does nothing if the string is longer than len.
+	 *
+	 * @param	s				the string to justify
+	 * @param	len				desired length
+	 * @param	padding_char	(Optional) The padding character (default " ")
+	 *
+	 * @return	the padded string.
+	 **/
+	inline std::string justify_center(const std::string & s, size_t len, char padding_char = ' ')
+		{
+		if (s.size() >= len) return s;
+		size_t a = (len - s.size()) / 2;
+		size_t b = (len - s.size()) - a;
+		return std::string(a, ' ') + s + std::string(b, ' ');
+		}
+
+
+	/**
+	 * Justify a string by centering, making it a given length
+	 * does nothing if the string is longer than len.
+	 *
+	 * @param	s				the string to justify
+	 * @param	len_str			template string, only its length is used.
+	 * @param	padding_char	(Optional) The padding character (default " ")
+	 *
+	 * @return	the padded string.
+	 **/
+	inline std::string justify_center(const std::string & s, const std::string & len_str, char padding_char = ' ')
+		{
+		return justify_center(s, len_str.size(), padding_char);
+		}
+
+
+
+
+
+	/**
 	* Very basic tokenizer.
 	*
 	* @param	str				  	The string to tokenize
