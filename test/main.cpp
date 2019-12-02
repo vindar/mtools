@@ -73,10 +73,17 @@ int main(int argc, char *argv[])
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
 
 
+	mtools::ostringstream os;
 
-	cout << overlay_string("012345678901234567890123456789", "azerty", 0, MTOOLS_POS_CENTER) << "\n";
-	cout << overlay_string("012345678901234567890123456789", "azerty", 0, MTOOLS_POS_LEFT) << "\n";
-	cout << overlay_string("012345678901234567890123456789", "azerty", 0, MTOOLS_POS_RIGHT) << "\n";
+	os << "wish | population (%) | families (%) |" << "\n";
+
+	int w = 0;
+	std::string bk = "     |                |              |";
+	bk = mtools::overlay_string(bk, mtools::toString(w), 0, MTOOLS_POS_LEFT);
+	bk = mtools::overlay_string(bk, mtools::toString(14678) + " (" + mtools::toString(82) + "%)", 7, MTOOLS_POS_LEFT);
+	os << bk << "\n";
+
+
 
 
 

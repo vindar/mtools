@@ -56,7 +56,7 @@ namespace mtools
 			back_str = back_str + std::string(posb - back_str.size() + 1, padding_char);
 			}
 
-		for (int64 i = posa; i <= posb; i++) { back_str[i] = front_str[i]; }
+		for (int64 i = posa; i <= posb; i++) { back_str[i] = front_str[i-posa]; }
 		return back_str;
 		}
 
