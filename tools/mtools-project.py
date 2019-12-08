@@ -93,14 +93,26 @@ if (NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE Release)
 endif ()
 
+# add the project main directory as a possible location for findXXX.cmake scripts. 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR})
 
 find_package(mtools REQUIRED)
+
+
+######### external dependencies #########
+
+# (look also for FindXXX.cmake in the project dir.)
+# for exemple 
+# find_package(GUROBI REQUIRED)
+
+#########################################
+
 
 file(GLOB project_SRC "*.cpp" "*.hpp" "*.h")
 
 add_executable("${PROJECT_NAME}" ${project_SRC})
 
-target_link_libraries("${PROJECT_NAME}" mtools)
+target_link_libraries("${PROJECT_NAME}" PUBLIC mtools)
 
 
 # compile options
@@ -119,13 +131,13 @@ else()
 endif()
 
 
-#### external dependencies ####
+######### external dependencies #########
 
 # add here other dependencies such as:
 #    find_package(GSL)
-#    target_link_libraries("${PROJECT_NAME}" GSL::gsl)
+#    target_link_libraries("${PROJECT_NAME}" PUBLIC GSL::gsl)
 
-###############################
+#########################################
 
 
 # set the project as the default startup project in visual studio.
