@@ -168,7 +168,7 @@ Examples:
    to be correctly parsed when a python script is called from the windows shell,
    the registry key [HKEY_CLASSES_ROOT\Applications\python.exe\shell\open\command]
    should have value something like ["C:\Users\Vindar\Anaconda3\python.exe" "%1" %*]
-   if [%* is missing, had it. 
+   if %* is missing, add it. 
    
 
 3) Installing the support libraries:
@@ -186,7 +186,7 @@ Examples:
    The library should be build for the triplet [x64-windows]. To make 
    it  the default triplet, create a system environment variable: 
 	
-        VCPKG_DEFAULT_TRIPLET=x86-windows
+        VCPKG_DEFAULT_TRIPLET=x64-windows
 	
    You MUST also create the system environment variable:
 	
