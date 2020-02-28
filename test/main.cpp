@@ -84,7 +84,7 @@ int main(int argc, char *argv[])
 	os << bk << "\n";
 
 
-
+	cout << os << "\n";
 
 
 	cout.getKey(); 

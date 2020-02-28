@@ -105,7 +105,7 @@ struct PoissonPoint
 /* point ordering by time of arrival */
 struct PPPCompareTime
     {
-    bool  operator()(const PoissonPoint & P1, const PoissonPoint & P2)
+    bool  operator()(const PoissonPoint & P1, const PoissonPoint & P2) const
         {
         if (P1.t < P2.t) return true;
         if (P1.t > P2.t) return false;
@@ -113,7 +113,7 @@ struct PPPCompareTime
 	return false;
         }
 
-    bool  operator()(const pPoissonPoint & P1, const pPoissonPoint & P2)
+    bool  operator()(const pPoissonPoint & P1, const pPoissonPoint & P2) const
         {
         if (P1->t < P2->t) return true;
         if (P1->t > P2->t) return false;
@@ -126,7 +126,7 @@ struct PPPCompareTime
 /* point ordering by value */
 struct PPPCompareSpace
     {
-    bool  operator()(const PoissonPoint & P1, const PoissonPoint & P2)
+    bool  operator()(const PoissonPoint & P1, const PoissonPoint & P2) const
         {
         if (P1.x < P2.x) return true;
         if (P1.x > P2.x) return false;
@@ -134,7 +134,7 @@ struct PPPCompareSpace
 	return false;
         }
 
-    bool  operator()(const pPoissonPoint & P1, const pPoissonPoint & P2)
+    bool  operator()(const pPoissonPoint & P1, const pPoissonPoint & P2) const 
         {
         if (P1->x < P2->x) return true;
         if (P1->x > P2->x) return false;
