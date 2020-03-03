@@ -526,7 +526,7 @@ namespace mtools
 	public:
 
 		/** Constructor. Initially disabled, and not active: nothing is drawn. */
-		FigureDrawerWorker() : ThreadWorker(), _queue(QUEUE_SIZE), _nb_drawn(0), _im(nullptr), _R(fBox2()), _hq(true), _min_thick(Image::DEFAULT_MIN_THICKNESS)
+		FigureDrawerWorker() : ThreadWorker(), _queue(QUEUE_SIZE), _nb_drawn(0), _im(nullptr), _R(fBox2()), _hq(true), _min_thick(Image::DEFAULT_MIN_THICKNESS), _emptyqueue(false)
 		{
 		}
 
@@ -574,11 +574,13 @@ namespace mtools
 			}
 
 
-		/* current progress w.r.t. the queue size, between 0 and 45 (queue empty) */
+		/* current progress w.r.t. the queue size, between 0 and 45 (queue empty and drawing completed) */
 		MTOOLS_FORCEINLINE int current_prog() const
 			{
+			if (((bool)_emptyqueue) == true) return 45; 
 			const size_t qs = _queue.size();
-			return ((qs == 0) ?  45 : ((int)((45 * _nb_drawn) / (_nb_drawn + qs))));
+			if (qs == 0) return 44; 
+			return ((int)((44 * _nb_drawn) / (_nb_drawn + qs)));
 			}
 
 
@@ -590,6 +592,7 @@ namespace mtools
 		**/
 		virtual void work() override
 			{
+			_emptyqueue = false;
 			double min_thick = _min_thick;
 			bool hq = _hq;
 			fBox2 R = _R;
@@ -599,7 +602,8 @@ namespace mtools
 			while (1)
 				{
 				Figure::internals_figure::FigureInterface * obj;
-				while (!_queue.pop(obj)) { check(); std::this_thread::yield(); }
+				while (!_queue.pop(obj)) { _emptyqueue = true;  check(); std::this_thread::yield(); }
+				_emptyqueue = false;
 				obj->draw(*im, R, hq, min_thick);
 				_nb_drawn++;
 				check();
@@ -643,6 +647,7 @@ namespace mtools
 		std::atomic<fBox2>  _R;																	// range to use
 		std::atomic<bool>	_hq;																// true for high quality drawing
 		std::atomic<double> _min_thick;															// minimum thickness used when drawing
+		std::atomic<bool>	_emptyqueue;														// true if queue was empty at last query
 	};
 
 
