@@ -1939,7 +1939,7 @@ namespace mtools
 
 			fBox2				bb;
 
-			ThickPolyLine(const std::vector<fVec2> & tab_points, double thick, double relativethickness, RGBc col) : tab(tab_points), color(col), thickness(thick)
+			ThickPolyLine(const std::vector<fVec2> & tab_points, double thick, bool relativethickness, RGBc col) : tab(tab_points), color(col), thickness(thick)
 				{
 				MTOOLS_INSURE(tab_points.size() > 0);
 				MTOOLS_INSURE(thick >= 0);
