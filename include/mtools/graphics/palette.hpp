@@ -261,6 +261,7 @@ namespace mtools
 		extern const ColorPalette hard_12;			// hard color
 		extern const ColorPalette soft_12;			// soft 'pastel' oclors
 		extern const ColorPalette mix_32;			// mix of 32 diferent oclor starting from RGB. 
+		extern const ColorPalette mix_16;			// a mix of 16 different colors
 
 		}
 
