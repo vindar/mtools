@@ -293,7 +293,7 @@ namespace mtools
 				_figDrawers[i].stopAll();
 				_ims[i].first.resizeRaw(imageSize);
 				_ims[i].first.clear(RGBc::c_Transparent);
-				_figDrawers[i].restart(_R, _hq, _min_thick);
+				_figDrawers[i].restart((_ims[i].second ? _R : fBox2()), _hq, _min_thick); // an empty box means layer is disable
 				}
 			}
 
@@ -305,7 +305,7 @@ namespace mtools
 				{
 				_figDrawers[i].stopAll();
 				_ims[i].first.clear(RGBc::c_Transparent);
-				_figDrawers[i].restart(_R, _hq, _min_thick);
+				_figDrawers[i].restart((_ims[i].second ? _R : fBox2()), _hq, _min_thick); // an empty box means layer is disable
 				}
 			Plotter2DObj::refresh();
 			}
@@ -316,14 +316,19 @@ namespace mtools
 			const size_t n = nbLayers();
 			if (n == 0) return 100;
 			int totq = 0;
+			int ntl = 0;
 			if ((opacity < 1.0f) && (n > 1))
 				{ // use temporary image 
 				_tmpIm.resizeRaw(im.dimension());
 				_tmpIm.clear(RGBc::c_Transparent);
 				for (size_t i = 0; i < n; i++)
 					{
-					totq += _figDrawers[i].quality();
-					if (_ims[i].second) _tmpIm.blend(_ims[i].first, { 0,0 });
+					if (_ims[i].second)
+						{
+						totq += _figDrawers[i].quality();
+						_tmpIm.blend(_ims[i].first, { 0,0 });
+						ntl++;
+						}
 					}
 				im.blend(_tmpIm, { 0,0 }, opacity);
 				}
@@ -331,11 +336,15 @@ namespace mtools
 				{ // direct blending without temp image. 
 				for (size_t i = 0; i < n; i++)
 					{
-					totq += _figDrawers[i].quality();
-					if (_ims[i].second) im.blend(_ims[i].first, { 0,0 });
+					if (_ims[i].second)
+						{
+						totq += _figDrawers[i].quality();
+						im.blend(_ims[i].first, { 0,0 });
+						ntl++;
+						}
 					}
-				}
-			return (totq / (int)n);
+				}			
+			return ((ntl == 0) ? 100 : (totq / ntl));
 			}
 
 
@@ -344,8 +353,16 @@ namespace mtools
 			const size_t n = nbLayers();
 			if (n == 0) return 100;
 			int totq = 0;
-			for (size_t i = 0; i < n; i++)  totq += _figDrawers[i].quality();
-			return (totq / (int)n);
+			int ntl = 0; 
+			for (size_t i = 0; i < n; i++)
+				{
+				if (_ims[i].second)
+					{
+					totq += _figDrawers[i].quality();
+					ntl++; 
+					}				
+				}
+			return ((ntl == 0) ? 100 : (totq / ntl));
 			}
 
 
@@ -604,7 +621,7 @@ namespace mtools
 				Figure::internals_figure::FigureInterface * obj;
 				while (!_queue.pop(obj)) { _emptyqueue = true;  check(); std::this_thread::yield(); }
 				_emptyqueue = false;
-				obj->draw(*im, R, hq, min_thick);
+				if (!R.isEmpty()) { obj->draw(*im, R, hq, min_thick); }
 				_nb_drawn++;
 				check();
 				}
@@ -769,7 +786,7 @@ namespace mtools
 		/** Return the quality of the image currently drawn. 100 = finished drawing. */
 		int quality() const
 			{
-			if (_figTree->size() == 0) return 100;
+			if ((((fBox2)_R).isEmpty()) || (_figTree->size() == 0)) return 100;
 			if (_phase == 0)
 				{
 				int64 u = _nb;
@@ -796,24 +813,26 @@ namespace mtools
 		**/
 		virtual void work() override
 			{
-			_phase = 0; // iterating
-			const int64 Nth = _images.size();	// number of worker threads.
-			int64 th = 0;						// index of the thread to use. 
-												// iterate over the figures to draw
-			fBox2 oR = zoomOut((fBox2)_R);
+			if (!(((fBox2)_R).isEmpty()))
+				{ // only send work to thread is _R is not empty (meaning layer not disabled). 
+				_phase = 0; // iterating
+				const int64 Nth = _images.size();	// number of worker threads.
+				int64 th = 0;						// index of the thread to use. 
+													// iterate over the figures to draw
+				fBox2 oR = zoomOut((fBox2)_R);
 
-			_figTree->iterate_intersect(oR,
-				[&](typename mtools::TreeFigure<typename Figure::internals_figure::FigureInterface *, N, double>::BoundedObject & bo) -> void
-				{
-				do
+				_figTree->iterate_intersect(oR,
+					[&](typename mtools::TreeFigure<typename Figure::internals_figure::FigureInterface*, N, double>::BoundedObject& bo) -> void
 					{
-					check(); // check if we should interrupt 
-					th++;
-					if (th >= Nth) th = 0;
-					} 
-				while (!_workers[th].pushfigure(bo.object));
-				_nb++;
-				});
+						do
+						{
+							check(); // check if we should interrupt 
+							th++;
+							if (th >= Nth) th = 0;
+						} while (!_workers[th].pushfigure(bo.object));
+						_nb++;
+					});
+				}
 			_phase = 1; // finished iterating.
 			}
 
