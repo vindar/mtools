@@ -98,6 +98,22 @@ namespace mtools
 
 
 			/**
+			* Read a single char, arduino like.
+			**/
+			inline int read()
+				{
+				if (available() > 0) 
+					{
+					uint8_t c = 0;
+					read((char *)&c, 1);
+					return c;
+					}
+				return -1;
+				}
+
+
+
+			/**
 			 * Query the number of bytes ready in the RX buffer. 
 			 *
 			 * @return	The number of bytes available (>= 0) or a negative number if an error occured.
@@ -114,6 +130,15 @@ namespace mtools
 			* @return	number of byte written (len if everything is ok).
 			**/
 			int write(const char * buffer, size_t len);
+
+
+			/**
+			* Write a single char. 
+			**/
+			inline int write(char c)
+				{
+				return write(&c, 1);
+				}
 
 
 			/**
