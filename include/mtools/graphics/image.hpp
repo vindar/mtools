@@ -876,6 +876,201 @@ namespace mtools
 			/******************************************************************************************************************************************************
 			*******************************************************************************************************************************************************
 			*																				   																      *
+			*                                                            ROTATION / MIRRORING                                                                  *
+			*																																					  *
+			*******************************************************************************************************************************************************
+			*******************************************************************************************************************************************************/
+
+
+
+			/**
+			 * Flip the image horizontally (in place, keep the smae memory buffer). 
+			 **/
+			inline void hmirror()
+				{
+				if (isEmpty()) return;
+				const int64 n = _ly / 2;
+				for(int64 j = 0; j < n; j++)
+					{
+					const int64 k1 = j * _stride;	
+					const int64 k2 = (_ly - 1 - j) * _stride;
+					for (int64 i = 0; i < _lx; i++)
+						{
+						const auto c = _data[k1 + i];
+						_data[k1 + i]= _data[k2 + i];
+						_data[k2 + i] = c;
+						}
+					}
+				}
+
+
+			/**
+			 * Return a (deep) copy of the image flipped horizontally.
+			 **/
+			inline Image get_hmirror() const
+				{
+				if (isEmpty()) return Image();
+				Image im(_lx, _ly);
+				for(int j=0; j<_ly; j++)
+					{
+					for(int i=0; i<_lx; i++)
+						{
+						im._data[j * im._stride + i] = _data[(_ly - 1 - j) * _stride + i];
+						}
+					}
+				return im;
+				}
+
+
+			/**
+			 * Flip the image vertically (in place, keep the same memory buffer).
+			 **/
+			inline void vmirror()
+				{
+				if (isEmpty()) return;
+				const int64 n = _lx/2;
+				for(int64 j = 0; j < _ly; j++)
+					{
+					const int64 k = j * _stride;	
+					for (int64 i = 0; i < n; i++)
+						{
+						auto & a = _data[k + i];
+						auto & b = _data[k + (_lx - 1 - i)];
+						const auto c = a; a = b;  b = c;
+						}
+					}
+				}
+
+			/**
+			 * Return a (deep) copy of the image flipped vertically.
+			 **/
+			inline Image get_vmirror() const
+				{
+				if (isEmpty()) return Image();
+				Image im(_lx, _ly);
+				for(int j=0; j<_ly; j++)
+					{
+					for(int i=0; i<_lx; i++)
+						{
+						im._data[j * im._stride + i] = _data[j * _stride + (_lx - 1 - i)];
+						}
+					}
+				return im;
+				}
+
+
+			/**
+			 * Rotate the image 90 degree clockwise 
+			 * 
+			 * This operation permutes the image dimensions (lx,ly) and create a new memory buffer.  
+			 **/
+			inline void rotate90()
+				{
+				*this = get_rotate90();
+				}
+
+
+			/**
+			 * Return a (deep) copy of the image rotated by 90 degree clockwise.
+			 **/
+			inline Image get_rotate90() const
+				{
+				if (isEmpty()) return Image();
+				Image im(_ly, _lx);
+				for(int j=0; j<_lx; j++)
+					{
+					for(int i=0; i<_ly; i++)
+						{
+						im._data[j * im._stride + i] = _data[(_ly - 1 - i) * _stride + j];
+						}
+					}
+				return im;
+				}
+
+
+
+			/**
+			 * Rotate the image 180 degree (in place, keep the same memory buffer).
+			 **/
+			inline void rotate180()
+				{
+				if (isEmpty()) return;
+				const int64 n = _ly / 2;
+				for(int64 j = 0; j < n; j++)
+					{
+					const int64 k1 = j * _stride;	
+					const int64 k2 = (_ly - 1 - j) * _stride;
+					for (int64 i = 0; i < _lx; i++)
+						{
+						auto & a = _data[k1 + i];
+						auto & b = _data[k2 + (_lx - 1 - i)];
+						const auto c = a; a = b; b = c;
+						}
+					}		
+				if (_ly & 1)
+					{
+					const int64 k = n * _stride;
+					const int64 m = _lx / 2;
+					for (int64 i = 0; i < m; i++)
+						{
+						auto & a = _data[k + i];
+						auto & b = _data[k + (_lx - 1 - i)];
+						const auto c = a; a = b; b = c;
+						}
+					}
+				}
+
+
+			/**
+			 * Return a (deep) copy of the image rotated by 180 degree.
+			 **/
+			inline Image get_rotate180() const
+				{
+				if (isEmpty()) return Image();
+				Image im(_lx, _ly);
+				for(int j=0; j<_ly; j++)
+					{
+					for(int i=0; i<_lx; i++)
+						{
+						im._data[j * im._stride + i] = _data[(_ly - 1 - j) * _stride + (_lx - 1 - i)];
+						}
+					}
+				return im;
+				}
+
+
+			/**
+			 * Rotate the image 270 degree clockwise (ie 90 degree counterclockwise).
+			 *
+			 * This operation permutes the image dimensions (lx,ly) and create a new memory buffer.
+			 **/
+			inline void rotate270()
+				{
+				*this = get_rotate270();
+				}
+
+
+			/**
+			 * Return a (deep) copy of the image rotated by 270 degree clockwise (ie 90 degree counterclockwise).
+			 **/
+			inline Image get_rotate270() const
+				{
+				if (isEmpty()) return Image();
+				Image im(_ly, _lx);
+				for(int j=0; j<_lx; j++)
+					{
+					for(int i=0; i<_ly; i++)
+						{
+						im._data[j * im._stride + i] = _data[i * _stride + (_lx - 1 -j)];
+						}
+					}
+				return im;
+				}
+
+
+			/******************************************************************************************************************************************************
+			*******************************************************************************************************************************************************
+			*																				   																      *
 			*                                                      BLITTING / BLENDING / MASKING                                                                  *
 			*																																					  *
 			*******************************************************************************************************************************************************

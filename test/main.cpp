@@ -77,6 +77,26 @@ void test()
 
 
 
+
+
+class ImageExtWidget : public internals_graphics::ImageWidget
+	{
+
+
+
+	virtual void setImage(const Image* im = nullptr) override;
+
+
+	virtual void setImage(const ProgressImg* im = nullptr) override;
+
+
+
+
+	};
+
+
+
+
 mtools::internals_graphics::ImageWidget * IW;
 
 
@@ -90,87 +110,91 @@ class ImageCropper : public internals_graphics::ImageWidget
 public:
 
 
-	ImageCropper(int X, int Y, int W, int H, const char * name) : internals_graphics::ImageWidget(X, Y, W, H, name)
-		{
+	ImageCropper(int X, int Y, int W, int H, const char* name) : internals_graphics::ImageWidget(X, Y, W, H, name)
+	{
 		im.clear(RGBc::c_Yellow);
-		im.draw_circle(iVec2{ 400,300 }, 200, RGBc::c_Red);
+		im.draw_circle(iVec2{ 250,300 }, 200, RGBc::c_Red);
+		im.draw_text({ 100,100 }, "Hello World\n", MTOOLS_TEXT_TOPLEFT, RGBc::c_Blue, 80);
+
+		im = im.get_rotate270();
+
 		setImage(&im);
-		}
+	}
 
 protected:
 
 
 	/* fltk handle method */
 	virtual int handle(int e) override
+	{
+
+		switch (e)
 		{
+		case FL_LEAVE: {  return 1; }
+		case FL_ENTER: { take_focus(); return 1; }
+		case FL_FOCUS: return 1;
+		case FL_UNFOCUS: return 1;
+			/*
+		case FL_KEYDOWN:
+			{
+			take_focus();
+			int key = Fl::event_key();
+			if (key == FL_Page_Up)
+				{
+				_RM->zoomIn();
+				redrawView();
+				return 1;
+				}
 
-                switch (e)
-                    {
-                    case FL_LEAVE: {  return 1; }
-                    case FL_ENTER: { take_focus(); return 1; }
-                    case FL_FOCUS: return 1;
-                    case FL_UNFOCUS: return 1;
-						/*
-					case FL_KEYDOWN:
-						{
-                        take_focus();
-						int key = Fl::event_key();
-                        if (key == FL_Page_Up)
-                            {
-                            _RM->zoomIn();
-                            redrawView();
-                            return 1;
-                            }
-
-                        if (key == FL_Page_Down)
-                            {
-                            _RM->zoomOut();
-                            redrawView();
-                            return 1;
-                            }
-                        if (key == FL_Left)
-                            {
-                            _RM->left();
-							redrawView();
-                            return 1;
-                            }
-                        if (key == FL_Right)
-                            {
-                            _RM->right();
-                            redrawView();
-                            return 1;
-                            }
-                        if (key == FL_Up)
-                            {
-							_RM->up();
-                            redrawView();
-							return 1;
-                            }
-                        if (key == FL_Down)
-                            {
-                            _RM->down();
-                            redrawView();
-                            return 1;
-                            }
-                        return 1;
-                        }
-                    case FL_KEYUP:
-						{
-						return 1; 
-						}
-						*/
-                    }
+			if (key == FL_Page_Down)
+				{
+				_RM->zoomOut();
+				redrawView();
+				return 1;
+				}
+			if (key == FL_Left)
+				{
+				_RM->left();
+				redrawView();
+				return 1;
+				}
+			if (key == FL_Right)
+				{
+				_RM->right();
+				redrawView();
+				return 1;
+				}
+			if (key == FL_Up)
+				{
+				_RM->up();
+				redrawView();
+				return 1;
+				}
+			if (key == FL_Down)
+				{
+				_RM->down();
+				redrawView();
+				return 1;
+				}
+			return 1;
+			}
+		case FL_KEYUP:
+			{
+			return 1;
+			}
+			*/
+		}
 
 
 
 		return internals_graphics::ImageWidget::handle(e);
-		}
+	}
 
 	/* fltk method : draw the widget */
 	virtual void draw() override
-		{
+	{
 		internals_graphics::ImageWidget::draw();
-		}
+	}
 
 };
 
@@ -178,15 +202,68 @@ protected:
 
 
 
+/*
+
+Class de base
+
+class FlImageDisplay
+{
+
+	setImage();
+	setRange();
+
+
+
+}
+
+
+/*
+*
+* Image with size (ix, iy)
+* VIew with size (lx,ly)
+* 
+* 
+* 
+* 
+* 
+* 
+* 
+* 
+* 
+* INTERACTION
+* 
+*  - no interaction.
+*  - allow panning ?
+*  - allow zooming ?
+*  - allow selection ? 
+*  - allow closing windows. 
+* 
+* 
+* MISC :
+* 
+* - Add info at begining. 
+* - add confirmation at closing. 
+* 
+* 
+
+*/
+
+
+
+
 
 int fltk_fun()
+{
+	IW = new ImageCropper(100, 100, 800, 600, "test");
+	IW->show();
+	return 0;
+}
+
+int showo()	
 	{
-	IW = new ImageCropper(100, 100, 800, 600,"test");	
 	IW->show();
 	return 0;
 	}
-
-
 
 int main(int argc, char *argv[])
 {
@@ -199,7 +276,12 @@ int main(int argc, char *argv[])
 	
 
 	cout << " ....\n";
-	while(1) { Sleep(1); }
+	while(1) 
+		{ 
+		Sleep(1000);
+	//	mtools::IndirectFun<int> proxyshow(&showo);
+	//	mtools::runInFltkThread(proxyshow);
+		}
 	cout << "done !\n\n";
 	cout.getKey(); 
 	return 0; 
