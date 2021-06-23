@@ -41,6 +41,12 @@ int main() {
 
 #include <mtools/mtools.hpp>
 
+#include "mtools/graphics/internal/view2Dwidget.hpp"
+
+#include "mtools/graphics/internal/imagewidget.hpp"
+
+
+
 using namespace mtools;
 
 
@@ -68,25 +74,133 @@ void test()
 
 
 
+
+
+
+mtools::internals_graphics::ImageWidget * IW;
+
+
+Image im(800, 600);
+
+class ImageCropper : public internals_graphics::ImageWidget
+{
+
+	
+
+public:
+
+
+	ImageCropper(int X, int Y, int W, int H, const char * name) : internals_graphics::ImageWidget(X, Y, W, H, name)
+		{
+		im.clear(RGBc::c_Yellow);
+		im.draw_circle(iVec2{ 400,300 }, 200, RGBc::c_Red);
+		setImage(&im);
+		}
+
+protected:
+
+
+	/* fltk handle method */
+	virtual int handle(int e) override
+		{
+
+                switch (e)
+                    {
+                    case FL_LEAVE: {  return 1; }
+                    case FL_ENTER: { take_focus(); return 1; }
+                    case FL_FOCUS: return 1;
+                    case FL_UNFOCUS: return 1;
+						/*
+					case FL_KEYDOWN:
+						{
+                        take_focus();
+						int key = Fl::event_key();
+                        if (key == FL_Page_Up)
+                            {
+                            _RM->zoomIn();
+                            redrawView();
+                            return 1;
+                            }
+
+                        if (key == FL_Page_Down)
+                            {
+                            _RM->zoomOut();
+                            redrawView();
+                            return 1;
+                            }
+                        if (key == FL_Left)
+                            {
+                            _RM->left();
+							redrawView();
+                            return 1;
+                            }
+                        if (key == FL_Right)
+                            {
+                            _RM->right();
+                            redrawView();
+                            return 1;
+                            }
+                        if (key == FL_Up)
+                            {
+							_RM->up();
+                            redrawView();
+							return 1;
+                            }
+                        if (key == FL_Down)
+                            {
+                            _RM->down();
+                            redrawView();
+                            return 1;
+                            }
+                        return 1;
+                        }
+                    case FL_KEYUP:
+						{
+						return 1; 
+						}
+						*/
+                    }
+
+
+
+		return internals_graphics::ImageWidget::handle(e);
+		}
+
+	/* fltk method : draw the widget */
+	virtual void draw() override
+		{
+		internals_graphics::ImageWidget::draw();
+		}
+
+};
+
+
+
+
+
+
+int fltk_fun()
+	{
+	IW = new ImageCropper(100, 100, 800, 600,"test");	
+	IW->show();
+	return 0;
+	}
+
+
+
 int main(int argc, char *argv[])
 {
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
 
+	cout << "Hello ";
 
-	mtools::ostringstream os;
+	mtools::IndirectFun<int> proxy(&fltk_fun);
+	mtools::runInFltkThread(proxy); 
+	
 
-	os << "wish | population (%) | families (%) |" << "\n";
-
-	int w = 0;
-	std::string bk = "     |                |              |";
-	bk = mtools::overlay_string(bk, mtools::toString(w), 0, MTOOLS_POS_LEFT);
-	bk = mtools::overlay_string(bk, mtools::toString(14678) + " (" + mtools::toString(82) + "%)", 7, MTOOLS_POS_LEFT);
-	os << bk << "\n";
-
-
-	cout << os << "\n";
-
-
+	cout << " ....\n";
+	while(1) { Sleep(1); }
+	cout << "done !\n\n";
 	cout.getKey(); 
 	return 0; 
 
