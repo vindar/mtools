@@ -73,18 +73,40 @@ void test()
 
 
 
-
-
-
-
-
-
-class ImageExtWidget : public internals_graphics::ImageWidget
+/** 
+ *An imaget widget extent. 
+ * 
+ **/
+class ImageWidgetExt : public internals_graphics::ImageWidget
 	{
 
 
+	public:
+
+
+        /**
+         * Constructor. Same as every FLTK widget. By default, no image is associated with the window
+         * (so that it is drawn with its background color).
+         *
+         * @param   X   The X coordinate.
+         * @param   Y   The Y coordinate.
+         * @param   W   The width.
+         * @param   H   The height.
+         * @param   l   (Optional) name of the window.
+        **/
+		ImageWidgetExt(int X, int Y, int W, int H, const char* l = 0);
+
+
+		/** Destructor. */
+		virtual ~ImageWidgetExt();
+
+
+
+
+	protected:
 
 	virtual void setImage(const Image* im = nullptr) override;
+
 
 
 	virtual void setImage(const ProgressImg* im = nullptr) override;
