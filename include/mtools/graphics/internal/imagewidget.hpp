@@ -88,7 +88,7 @@ namespace mtools
              *
              * @param   im  the new image to display, nullptr for no image at all.
              **/
-            void setImage(const Image * im = nullptr);
+            virtual void setImage(const Image * im = nullptr);
 
 
             /**
@@ -100,7 +100,7 @@ namespace mtools
              * 
              * @param [in,out]  im  the new image to display or nullptr to remove it.
              **/
-            void setImage(const ProgressImg * im = nullptr);
+            virtual void setImage(const ProgressImg * im = nullptr);
 
 
             /**
