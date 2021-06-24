@@ -81,30 +81,106 @@ class ImageWidgetExt : public internals_graphics::ImageWidget
 	{
 
 
+
+	private:
+
+		iVec2 _prev_mouse;		// previous mouse position
+		iVec2 _current_mouse;	// mouse position
+
+		iVec2 _mouse_sel1;		// mouse position at start of selection
+		iVec2 _pos_sel1;		// position of start of selection (in the image space). 
+		iBox2 _selectR;			// the currently selected region
+
+		bool _select_on;		// true if when are currently selecting a region by dragging with left button. 
+
+
+		bool _move_allowed;		// true if the user is allowed to change the range. 
+		bool _select_allowed;	// true if the user is allowed to change the range. 
+
+		const Image* _extim;	// the image external source image  
+		Image _im;				// internal image that mirror that drawn. 		
+		fBox2 _viewR;			// the rectangle dislayed by the window. 
+
 	public:
 
         /**
-         * Constructor. NO image is associated by default. Draw a gray background. 
+         * Constructor. No image is associated by default. Draw a gray background. 
          *
-         * @param   X   The X coordinate.
-         * @param   Y   The Y coordinate.
-         * @param   W   The width.
-         * @param   H   The height.
+         * @param   X   The X coordinate of the window
+         * @param   Y   The Y coordinate of the window
+         * @param   W   The width of the window
+         * @param   H   The height of the window
          * @param   l   (Optional) name of the window.
         **/
-		ImageWidgetExt(int X, int Y, int W, int H, const char* l = 0) : internals_graphics::ImageWidget(X, Y, W, H, l), _extim(nullptr), _im(W,H)
+		ImageWidgetExt(int X, int Y, int W, int H, const char* l = 0) : internals_graphics::ImageWidget(X, Y, W, H, l), 			
+			_prev_mouse(-1,-1), 
+			_current_mouse(-1,-1), 
+			_mouse_sel1(-1,-1), 
+			_pos_sel1(-1,-1),
+			_selectR(),
+			_select_on(false), 
+			_move_allowed(false), 
+			_select_allowed(false), 
+			_extim(nullptr), 
+			_im(W,H)
 			{
 			MTOOLS_INSURE(W > 0);
 			MTOOLS_INSURE(H > 0);
 			setDefaultRange();
 			_im.clear(RGBc::c_Gray);
-			internals_graphics::ImageWidget::setImage(&_im);
+			internals_graphics::ImageWidget::setImage(&_im);			
 			}
 
 
 		/** Destructor. */
 		virtual ~ImageWidgetExt()
 			{
+			}
+
+
+		/**
+		 * Decide whether user is allowed to move/zoom around the image.
+		 *
+		 * @param	status True to allow and false to deny.
+		 */
+		void allowUserMove(bool status)
+			{
+			_move_allowed = status;
+			}
+
+
+		/**
+		 * Decide whether user is allowed to modify the selected region
+		 *
+		 * @param	status True to allow and false to deny.
+		 */
+		void allowUserSelection(bool status)
+			{
+			_select_allowed = status;
+			}
+
+
+		/**
+		 * Sets the current selection rectange.
+		 *
+		 * @param [in,out]	selectRect The selection rectangle. empty when no region currently selected. 
+		 */
+		void setSelection(iVec2 & selectRect = iVec2())
+			{
+			_selectR = selectRect = iVec2();
+			}
+
+
+		/**
+		 * Return the currently selected region. Return an empty rectangle when no region is selected.
+		 *
+		 * @param	clipWithImage (Optional) True to clip the selection rectangle with the image bounding
+		 * 						  box.
+		 */
+		iBox2 getSelection(bool clipWithImage = true)
+			{
+			if ((_extim == nullptr) || (_extim->isEmpty())) return iBox2(); // no selection without an image
+			return (clipWithImage ? (mtools::intersectionRect(_selectR, _extim->imageBox())) : _selectR);
 			}
 
 
@@ -196,9 +272,8 @@ class ImageWidgetExt : public internals_graphics::ImageWidget
 			{
 			if ((_extim != nullptr) && (_extim->isEmpty() == false))
 				{
-				const int Lim = (int)_im.ly() - 1;
-				const int Lextim = (int)_extim->ly() - 1;
-	
+				const bool sel = !(_selectR.isEmpty());
+				const RGBc dcol = RGBc::c_Black.getMultOpacity(0.5);
 				const int W = (int)_im.lx();
 				const int H = (int)_im.ly();
 				const double ex = _viewR.lx() / W;
@@ -211,7 +286,9 @@ class ImageWidgetExt : public internals_graphics::ImageWidget
 						{
 						int ix = (int)x;
 						int iy = (int)y;
-						_im(i, Lim - j) = _extim->getPixel(ix, Lextim - iy, RGBc::c_Gray);
+						RGBc col = _extim->getPixel(ix, iy, RGBc::c_Gray);
+						if ((sel)&&(!_selectR.isInside({ ix,iy })))	col.blend(dcol);
+						_im(i, j) = col;
 						x += ex;
 						}
 					y += ey;
@@ -220,86 +297,252 @@ class ImageWidgetExt : public internals_graphics::ImageWidget
 			}
 
 
+
+		bool _isIn(iVec2 m)
+			{
+			return ((m.X() >= 0) && (m.Y() >= 0) && (m.X() < w()) && (m.Y() < h()));
+			}
+
+        void _saveMouse()
+            {
+            _current_mouse = iVec2(Fl::event_x(), Fl::event_y());
+            }
+
+		bool _canZoomIn()
+			{
+			if ((_extim == nullptr) || (_extim->isEmpty())) return false;
+			if ((_viewR.lx() >= 1.0) && (_viewR.ly() >= 1.0)) return true;
+			return false;
+			}
+
+		bool _canZoomOut()
+			{
+			if ((_extim == nullptr) || (_extim->isEmpty())) return false;			
+			if ((_viewR.lx() > 5 * _extim->lx()) && (_viewR.ly() > 5 * _extim->ly())) return false;
+			return true;
+			}
+
+		bool _canSeeImage(const fBox2 & R)
+			{
+			if (R.max[0] <= 0.0) return false;
+			if (R.min[0] >= (double)(_extim->lx())) return false;
+			if (R.max[1] <= 0.0) return false;
+			if (R.min[1] >= (double)(_extim->ly())) return false;
+			return true;
+			}
+
+		iVec2 _viewToImage(iVec2 pos)
+			{
+			int x = (int)(_viewR.min[0] + (_viewR.lx() * ((double)pos.X() + 0.5)) / (_im.lx()) - 0.5);
+			int y = (int)(_viewR.min[1] + (_viewR.ly() * ((double)pos.Y() + 0.5)) / (_im.ly()) - 0.5);
+			return iVec2(x, y);
+			}
+
+
 protected:
+
+
+
 
 		/* fltk handle method */
 		virtual int handle(int e) override
 			{
+
+			if ((_extim == nullptr) || (_extim->isEmpty()))
+				{ // no interaction when image not set. 
+				return internals_graphics::ImageWidget::handle(e);
+				}
+
 			switch (e)
 			{
-			case FL_LEAVE: {  return 1; }
-			case FL_ENTER: { take_focus(); return 1; }
+
+			case FL_LEAVE: 
+				{  
+				_saveMouse();
+				return 1; 
+				}
+
+			case FL_ENTER: 
+				{ 
+				_saveMouse();
+				take_focus(); 
+				return 1; 
+				}
+
 			case FL_FOCUS: return 1;
+
 			case FL_UNFOCUS: return 1;
 			
-			case FL_KEYDOWN:
+			case FL_MOVE:
+				{
+				_saveMouse();
+				if (!_isIn(_current_mouse)) { return 1; } else { take_focus(); }
+				return 1;
+				}
+
+			case FL_PUSH:
 				{
 				take_focus();
-				int key = Fl::event_key();
-				if (key == FL_Escape)
-					{
-					if (_move_allowed)
+				_saveMouse();
+				if (!_isIn(_current_mouse)) { return 1; }
+
+				int button = Fl::event_button();
+				if (button == FL_LEFT_MOUSE)
+					{ // start selection
+					if (_select_allowed)
 						{
-						setDefaultRange();
-						redrawNow();
-						}
-					return 1;
-					}
-				if (key == FL_Page_Up)
-					{
-					if (_move_allowed)
-						{
-						_viewR = mtools::zoomIn(_viewR);
+						_select_on = true;
+						_mouse_sel1 = _current_mouse;
+						_pos_sel1 = _viewToImage(_mouse_sel1);
 						redrawNow();
 						}
 					return 1;
 					}
 
-				if (key == FL_Page_Down)
-					{
-					if (_move_allowed)
+				return 1;
+				}
+
+			case FL_RELEASE:
+				{
+				_saveMouse();
+				int button = Fl::event_button();
+				if (button == FL_LEFT_MOUSE)
+					{ 
+					if (_select_allowed)
 						{
-						_viewR = mtools::zoomOut(_viewR);
-						redrawNow();
+						if (_mouse_sel1 == _current_mouse)
+							{ // mouse did not move, remove selection
+							_selectR = iBox2(); 
+							}
+						_select_on = false;
 						}
+					redrawNow();
 					return 1;
 					}
-				if (key == FL_Left)
+				return 1;
+				}
+
+			case FL_DRAG:
+				{
+				_saveMouse();
+
+				if (_select_on)
 					{
-					if (_move_allowed)
-						{
-						_viewR = mtools::left(_viewR);
-						redrawNow();
-						}
+					auto pos_sel2 = _viewToImage(_current_mouse);
+					_selectR = iBox2(_pos_sel1, pos_sel2, true);
+					redrawNow();
 					return 1;
 					}
-				if (key == FL_Right)
-					{
-					if (_move_allowed)
+
+				return 1;
+				}
+
+			case FL_MOUSEWHEEL:
+				{
+				_saveMouse();
+				take_focus();
+				if ((_isIn(_current_mouse)) && (_move_allowed))
+					{					
+					int d = Fl::event_dy();
+					if ((d < 0) && (_canZoomIn()))
 						{
-						_viewR = mtools::right(_viewR);
+						fBox2 R = mtools::zoomIn(_viewR);
+						if (_canSeeImage(R)) _viewR = R;
+						_select_on = false;
 						redrawNow();
+						return 1; 
 						}
-					return 1;
-					}
-				if (key == FL_Up)
-					{
-					if (_move_allowed)
+					if ((d > 0) && (_canZoomOut()))
 						{
-						_viewR = mtools::up(_viewR);
+						fBox2 R = mtools::zoomOut(_viewR);
+						if (_canSeeImage(R)) _viewR = R; 
+						_select_on = false;
 						redrawNow();
+						return 1;
 						}
-					return 1;
 					}
-				if (key == FL_Down)
+				return 1;
+				}
+
+			case FL_KEYDOWN:
+				{
+				_select_on = false;
+				take_focus();
+				int key = Fl::event_key();
+				switch (key)
 					{
-					if (_move_allowed)
-						{
-						_viewR = mtools::down(_viewR);
-						redrawNow();
-						}
-					return 1;
+					case FL_Delete:
+					case FL_BackSpace:
+						if (_select_allowed)
+							{
+							_selectR = iBox2();
+							redrawNow();
+							}
+						return 1;
+
+					case FL_Escape:
+						if (_move_allowed)
+							{
+							setDefaultRange();
+							redrawNow();
+							}
+						return 1;
+
+					case FL_Page_Up:
+						if ((_move_allowed)&&(_canZoomIn()))
+							{
+							fBox2 R = mtools::zoomIn(_viewR);
+							if (_canSeeImage(R)) _viewR = R;
+							redrawNow();
+							}
+						return 1;
+
+					case FL_Page_Down:
+						if ((_move_allowed)&&(_canZoomOut()))
+							{
+							fBox2 R = mtools::zoomOut(_viewR);
+							if (_canSeeImage(R)) _viewR = R;
+							redrawNow();
+							}
+						return 1;
+
+					case FL_Left:
+						if (_move_allowed)
+							{
+							fBox2 R = mtools::left(_viewR);
+							if (_canSeeImage(R)) _viewR = R;
+							redrawNow();
+							}
+						return 1;
+
+					case FL_Right:
+						if (_move_allowed)
+							{
+							fBox2 R = mtools::right(_viewR);
+							if (_canSeeImage(R)) _viewR = R;
+							redrawNow();
+							}
+						return 1;
+
+					case FL_Down:
+						if (_move_allowed)
+							{
+							fBox2 R = mtools::up(_viewR);
+							if (_canSeeImage(R)) _viewR = R;
+							redrawNow();
+							}
+						return 1;
+
+					case FL_Up:
+						if (_move_allowed)
+							{
+							fBox2 R = mtools::down(_viewR);
+							if (_canSeeImage(R)) _viewR = R;
+							redrawNow();
+							}
+						return 1;
 					}
+				// key not handled
 				return 1;
 				}
 
@@ -317,15 +560,18 @@ protected:
 		virtual void draw() override
 			{
 			internals_graphics::ImageWidget::draw();
+
+			if (_select_on)
+				{
+				if (_mouse_sel1 != _current_mouse)
+					{
+					draw_rect(iBox2(_mouse_sel1, _current_mouse, true));
+					}
+				}
+
 			}
 
 
-	private:
-
-		const Image* _extim;	// the image external source image  
-		Image _im;				// internal image that mirror that drawn. 		
-		fBox2 _viewR;			// the rectangle dislayed by the window. 
-		bool _move_allowed;		// true if the user is allowed to change the range. 
 	};
 
 
@@ -351,6 +597,8 @@ public:
 		im.draw_circle(iVec2{ 250,300 }, 200, RGBc::c_Red);
 		im.draw_text({ 100,100 }, "Hello World\n", MTOOLS_TEXT_TOPLEFT, RGBc::c_Blue, 80);
 		set(&im);
+		allowUserMove(true);
+		allowUserSelection(true);
 		}
 
 protected:
