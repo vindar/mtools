@@ -200,6 +200,70 @@ namespace mtools
 
 
             /**
+            * Translate the box by a given vector
+            *
+            * @param   V   the translation vector
+            **/
+            inline void operator+=(Vec<T, N> V)
+                {
+                for (size_t i = 0; i < N; i++)
+                    {
+                    min[i] += V[i];
+                    max[i] += V[i];
+                    }
+                }
+
+
+             /**
+             * Return a copy of the box translated by a given vector
+             *
+             * @param   V   the translation vector
+             **/
+            inline Box<T,N> operator+(Vec<T, N> V) const 
+                {
+                Box<T, N> B;
+                for (size_t i = 0; i < N; i++)
+                    {
+                    B.min[i] = min[i] + V[i];
+                    B.max[i] = max[i] + V[i];
+                    }
+                return B;
+                }
+
+
+            /**
+            * Translate the box by a given vector
+            *
+            * @param   V   the translation vector
+            **/
+            inline void operator-=(Vec<T, N> V)
+                {
+                for (size_t i = 0; i < N; i++)
+                    {
+                    min[i] -= V[i];
+                    max[i] -= V[i];
+                    }
+                }
+
+
+             /**
+             * Return a copy of the box translated by a given vector
+             *
+             * @param   V   the translation vector
+             **/
+            inline Box<T,N> operator-(Vec<T, N> V) const 
+                {
+                Box<T, N> B;
+                for (size_t i = 0; i < N; i++)
+                    {
+                    B.min[i] = min[i] - V[i];
+                    B.max[i] = max[i] - V[i];
+                    }
+                return B;
+                }
+
+
+            /**
             * Query if the rectangle is empty i.e. if at least a length in a direction is strictly negative.
             *
             * @return  true if empty, false if not.
