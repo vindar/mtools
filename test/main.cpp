@@ -73,6 +73,15 @@ void test()
 
 
 
+namespace mtools
+{
+
+
+
+
+
+}
+
 /** 
  *An image widget extent. 
  * 
@@ -338,6 +347,12 @@ class ImageWidgetExt : public internals_graphics::ImageWidget
 			return iVec2(x, y);
 			}
 
+		fVec2 _viewToImagef(iVec2 pos)
+			{
+			double x = _viewR.min[0] + (_viewR.lx() * ((double)pos.X() + 0.5)) / (_im.lx()) ;
+			double y = _viewR.min[1] + (_viewR.ly() * ((double)pos.Y() + 0.5)) / (_im.ly()) ;
+			return fVec2(x, y);
+			}
 
 protected:
 
@@ -439,14 +454,14 @@ protected:
 
 			case FL_MOUSEWHEEL:
 				{
-				_saveMouse();
+				//_saveMouse();
 				take_focus();
 				if ((_isIn(_current_mouse)) && (_move_allowed))
 					{					
 					int d = Fl::event_dy();
 					if ((d < 0) && (_canZoomIn()))
 						{
-						fBox2 R = mtools::zoomIn(_viewR);
+						fBox2 R = mtools::zoomIn(_viewR, _viewToImagef(_current_mouse));
 						if (_canSeeImage(R)) _viewR = R;
 						_select_on = false;
 						redrawNow();
@@ -454,8 +469,8 @@ protected:
 						}
 					if ((d > 0) && (_canZoomOut()))
 						{
-						fBox2 R = mtools::zoomOut(_viewR);
-						if (_canSeeImage(R)) _viewR = R; 
+						fBox2 R = mtools::zoomOut(_viewR, _viewToImagef(_current_mouse));
+						if (_canSeeImage(R)) _viewR = R;
 						_select_on = false;
 						redrawNow();
 						return 1;
@@ -675,9 +690,32 @@ int showo()
 	return 0;
 	}
 
+
+
+
+double ss(double x)
+	{
+	if (x <= 1) return x;
+	if (x > 1) return 2 - x;
+
+	return (2 * sin(x)) / (x * x + 1);
+	}
+
+
 int main(int argc, char *argv[])
 {
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
+
+
+	{
+		Plotter2D plotter;
+		auto P = makePlot2DFun(ss);
+		plotter[P];
+		plotter.autorangeXY();
+		plotter.plot();
+	}
+
+
 
 	cout << "Hello ";
 
