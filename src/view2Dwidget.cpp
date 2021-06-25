@@ -382,12 +382,12 @@ namespace mtools
                         }
                     case FL_MOUSEWHEEL:
                         {
-                        take_focus();
-                        _saveMouse();
+                        take_focus();                        
                         if (!_isIn(_currentMouse)) { if (_zoomOn) { _zoomOn = false; redrawView(); return 1; } }
                         int d = Fl::event_dy();
-                        if (d < 0) { _RM->zoomIn();  redrawView(); return 1; }
-                        if (d > 0) { _RM->zoomOut(); redrawView(); return 1; }
+                        fVec2 pos = _RM->pixelToAbs({ ((int64)_zoomFactor) * _currentMouse.X(), ((int64)_zoomFactor) * _currentMouse.Y() });
+                        if (d < 0) { _RM->zoomIn(pos);  redrawView(); return 1; }
+                        if (d > 0) { _RM->zoomOut(pos); redrawView(); return 1; }                        
                         return 1;
                         }
                     case FL_KEYDOWN:

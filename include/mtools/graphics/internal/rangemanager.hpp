@@ -182,7 +182,7 @@ namespace mtools
              * Zoom in.
              *
              * @return  true if the operation succeded and false if its failed (either the lock could not be
-             *          aquired in time or the notification callback rejected the range).
+             *          acquired in time or the notification callback rejected the range).
              **/
             bool zoomIn();
 
@@ -191,9 +191,28 @@ namespace mtools
              * Zoom out.
              *
              * @return  true if the operation succeded and false if its failed (either the lock could not be
-             *          aquired in time or the notification callback rejected the range).
+             *          acquired in time or the notification callback rejected the range).
              **/
             bool zoomOut();
+
+
+            /**
+             * Zoom in (relative to a given center)
+             *
+             * @return  true if the operation succeded and false if its failed (either the lock could not be
+             *          acquired in time or the notification callback rejected the range).
+             **/
+            bool zoomIn(fVec2 center);
+
+
+            /**
+             * Zoom out (relative to a given center)
+             *
+             * @return  true if the operation succeded and false if its failed (either the lock could not be
+             *          acquired in time or the notification callback rejected the range).
+             **/
+            bool zoomOut(fVec2 center);
+
 
     protected:
 

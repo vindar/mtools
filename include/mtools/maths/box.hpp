@@ -946,7 +946,7 @@ namespace mtools
 
 
     /**
-    * Zoom inside the rectangle (reduce the radius by 1/10th).
+    * Zoom inside the rectangle (reduce the radius by 1/5th).
     **/
     template<typename T, size_t N> inline Box<T,N> zoomIn(Box<T,N> B)
         {
@@ -960,7 +960,7 @@ namespace mtools
 
 
     /**
-    * Zoom outside of the rectangle (increase radius by 1/8th).
+    * Zoom outside of the rectangle (increase radius by 1/4th).
     **/
     template<typename T, size_t N> inline Box<T,N> zoomOut(Box<T,N> B)
         {
@@ -971,6 +971,40 @@ namespace mtools
             }
         return B;
         }
+
+
+
+	/**
+	* Zoom inside the rectangle while keeping a given center position fixed 
+    * (reduce the radius by 1/10th).
+	**/
+	template<typename T, size_t N> inline Box<T, N> zoomIn(Box<T, N> B, Vec<T,N> Pcenter)
+		{
+		for (size_t i = 0; i < N; i++)
+			{
+			const T w = (9*(B.max[i] - B.min[i])) / 10;
+			const T l = (Pcenter[i] - B.min[i]) / 10;
+			B.min[i] += l; B.max[i] = B.min[i] + w;
+			}
+		return B;
+		}
+
+
+	/**
+	* Zoom outside the rectangle while keeping a given center position fixed.
+    * (increases the radius by 1/8th).
+	**/
+	template<typename T, size_t N> inline Box<T, N> zoomOut(Box<T, N> B, Vec<T,N> Pcenter)
+		{
+		for (size_t i = 0; i < N; i++)
+			{
+			const T w = (10*(B.max[i] - B.min[i])) / 9;
+			const T l = (Pcenter[i] - B.min[i]) / 9;
+			B.min[i] -= l; B.max[i] = B.min[i] + w;
+			}
+		return B;
+		}
+
 
 
     /**

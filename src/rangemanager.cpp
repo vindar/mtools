@@ -216,6 +216,41 @@ namespace mtools
             }
 
 
+        bool RangeManager::zoomIn(fVec2 center)
+            {
+                if (!_mut.try_lock_for(std::chrono::milliseconds(MAXLOCKTIME))) return false;
+                bool resok = true;
+                mtools::fBox2 oldr = _range;
+                _range = mtools::zoomIn(_range, center);
+                _fixRange();
+                if (!_rangeOK(_range)) { _range = oldr; }
+                if (_range != oldr) { if (!rangeNotification(true, false, false)) { _range = oldr;  resok = false; } }
+                MTOOLS_ASSERT(_rangeOK(_range));
+                _mut.unlock();
+                return resok;
+            }
+
+
+        bool RangeManager::zoomOut(fVec2 center)
+            {
+                if (!_mut.try_lock_for(std::chrono::milliseconds(MAXLOCKTIME))) return false;
+                bool resok = true;
+                mtools::fBox2 oldr = _range;
+                _range = mtools::zoomOut(_range, center);
+                _fixRange();
+                if (!_rangeOK(_range)) { _range = oldr; }
+                if (_range != oldr) { if (!rangeNotification(true, false, false)) { _range = oldr;  resok = false; } }
+                MTOOLS_ASSERT(_rangeOK(_range));
+                _mut.unlock();
+                return resok;
+            }
+
+
+
+
+
+
+
 
         bool RangeManager::winSize(mtools::iVec2 newWinSize)
             {
