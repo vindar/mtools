@@ -128,15 +128,65 @@ void testImageDisplay()
 
 
 
+	
+
+
+
+
+
+
+
+
+
+
+
 
 int main(int argc, char *argv[])
 {
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
 
-	testImageDisplay();
+	auto b = mtools::loadStringFromFile("lena.jpg");
+
+	Image im; 
+	cout << "loading = " << im.load_raw_jpg(b) << "\n";
+
+	Plotter2D plot;
+	auto P = makePlot2DImage(im);
+	plot[P];
+	plot.autorangeXY();
+	plot.plot();
+
+
+	//testImageDisplay();
 
 	cout << "done !\n\n";
 	cout.getKey(); 
 	return 0; 
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

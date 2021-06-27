@@ -89,6 +89,28 @@ namespace mtools
 	{
 
 
+	namespace internals_graphics
+		{
+
+		/** for the libjpeg library error handling */
+		struct jpegErrorManager 
+			{
+			struct jpeg_error_mgr pub;	
+			jmp_buf setjmp_buffer;
+			};
+
+
+		/** called when there is an error while using libjpeg */
+		inline void jpegErrorExit(j_common_ptr cinfo)
+			{
+			jpegErrorManager* myerr = (jpegErrorManager*)cinfo->err; //	cinfo->err actually points to a jpegErrorManager struct
+			longjmp(myerr->setjmp_buffer, 1); // jump to the setjmp point
+			}
+
+		}
+
+
+
 	/* forward declaration */
 	class Font;
 
@@ -96,8 +118,7 @@ namespace mtools
 	/**
 	 * Class representing a true color image  
 	 * 
-	 * Each pixel stores a 32bit integer in RGBc format: the color are ordered: G R B A (yes...
-	 * because that is what cairo want).
+	 * Each pixel stores a 32bit integer in RGBc format: the color are ordered: B G R A 
 	 * 
 	 * The pixels buffer is in row major order, starting from the upper left corner, going right and
 	 * down. The image can have an optional padding at the end of each row which means that the image 
@@ -4767,6 +4788,95 @@ namespace mtools
 			*/
 
 #endif 
+
+
+            /**
+             * Load an image from a raw jpeg buffer. Uses libjpeg to decompress the buffer into the image.
+             *
+             * @param   buffer  buffer containing the compressed image in jpeg format.
+             *
+             * @returns True if it succeeds, false if it fails.
+            **/
+			bool load_raw_jpg(std::string buffer)
+				{
+				return load_raw_jpg(buffer.data(), buffer.size());
+				}
+
+
+            /**
+             * Load an image from a raw jpeg buffer. Uses libjpeg to decompress the buffer into the image.
+             *
+             * @param   jpg_buffer      buffer containing the compressed image in jpeg format.
+             * @param   jpg_buffer_len  number of bytes in the buffer.
+             *
+             * @returns true is decompression succeeded and false if an error occurred. In this case, the
+             *          image is left empty.
+            **/
+			bool load_raw_jpg(const char * jpg_buffer, size_t jpg_buffer_len)
+				{
+				if ((jpg_buffer == nullptr) || (jpg_buffer_len == 0))
+					{
+					empty();
+					return false;
+					}
+
+				struct jpeg_decompress_struct cinfo;
+
+				internals_graphics::jpegErrorManager jerr;
+				cinfo.err = jpeg_std_error(&jerr.pub);
+
+				jerr.pub.error_exit = internals_graphics::jpegErrorExit;
+
+				if (setjmp(jerr.setjmp_buffer))
+					{ // if we arrive here, it means an error occurs whiole decompressing the image. 
+					jpeg_destroy_decompress(&cinfo);
+					empty();
+					return false;
+					}
+
+				jpeg_create_decompress(&cinfo);
+
+				jpeg_mem_src(&cinfo, (const unsigned char*)jpg_buffer, (unsigned long)jpg_buffer_len);
+
+				int rc = jpeg_read_header(&cinfo, TRUE);
+				if (rc != 1)
+					{ // not a correct jpeg file
+					jpeg_destroy_decompress(&cinfo);
+					empty();
+					return false;
+					}
+
+				jpeg_start_decompress(&cinfo);
+
+				const auto width = cinfo.output_width;
+				const auto height = cinfo.output_height;
+				const auto pixel_size = cinfo.output_components;
+
+				if ((width <= 0) || (height <= 0) || (pixel_size <= 0))
+					{
+					jpeg_destroy_decompress(&cinfo);
+					empty();
+					return false;
+					}
+
+				resizeRaw(width, height);
+				clear(RGBc::c_Gray);
+
+				cinfo.out_color_space = JCS_EXT_BGRA;  // matches byte ordering with RGBc
+
+				while (cinfo.output_scanline < height)
+					{
+					unsigned char* buffer_array[1];
+					buffer_array[0] = (unsigned char*)(_data + (cinfo.output_scanline * _stride));
+					jpeg_read_scanlines(&cinfo, buffer_array, 1);
+					}
+
+				jpeg_finish_decompress(&cinfo);
+				jpeg_destroy_decompress(&cinfo);
+				return true;
+				}
+
+
 
 
 			/**
