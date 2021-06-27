@@ -113,6 +113,11 @@ namespace mtools
 
 
 
+			/** Flushes any ongoing buffered data. */
+			void flush();
+
+
+
 			/**
 			 * Query the number of bytes ready in the RX buffer. 
 			 *

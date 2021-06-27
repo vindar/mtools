@@ -127,6 +127,15 @@ namespace mtools
 		}
 
 
+
+	void SerialPort::flush()
+		{
+		FlushFileBuffers(_phandle->x);
+		}
+
+
+
+
 	int SerialPort::read(char * buffer, size_t len)
 		{
 		if (_phandle->x  == INVALID_HANDLE_VALUE) return -1;
