@@ -83,7 +83,7 @@ namespace mtools
 							        
 		/**
 		* Assume Little endian computer. 
-		* memory layout BRGA
+		* memory layout BGRA
 		**/
 		struct _RGBc_component
             {
