@@ -60,6 +60,7 @@
 #include "misc/metaprog.hpp"
 #include "misc/misc.hpp"
 #include "misc/timefct.hpp"
+#include "misc/crc16_ccitt.hpp"
 
 
 // random
