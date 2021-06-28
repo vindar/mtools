@@ -18,11 +18,17 @@
 // along with mtools  If not, see <http://www.gnu.org/licenses/>.
 
 
+
+#include "mtools/misc/error.hpp"
+
 #include "io/serialport.hpp"
 
 #ifdef _WIN32 
 #include <windows.h>
 #endif 
+
+
+#include "mtools/io/console.hpp"
 
 
 namespace mtools
@@ -50,6 +56,7 @@ namespace mtools
 
 	SerialPort::SerialPort() : _phandle(new SerialPortHandle)
 				{
+				_clearqueue();
 				_phandle->x = INVALID_HANDLE_VALUE;
 				}
 
@@ -57,11 +64,13 @@ namespace mtools
 	SerialPort::~SerialPort()
 				{
 				close();
+				_clearqueue();
 				}
 
 
 	int SerialPort::open(std::string portName, int baudRate, bool parityCheck, int parity, int stopBits)
 		{
+		_clearqueue();
 		if (_phandle->x != INVALID_HANDLE_VALUE) { return -1; }
 		portName = std::string("\\\\.\\") + portName;
 		_phandle->x = CreateFile(portName.c_str(), GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, NULL, NULL);
@@ -116,6 +125,7 @@ namespace mtools
 		ClearCommError(_phandle->x , &error, &stat);
 		CloseHandle(_phandle->x );
 		_phandle->x  = INVALID_HANDLE_VALUE;
+		_clearqueue();
 		}
 
 
@@ -136,41 +146,60 @@ namespace mtools
 
 
 
-	int SerialPort::read(char * buffer, size_t len)
-		{
-		if (_phandle->x  == INVALID_HANDLE_VALUE) return -1;
-		COMSTAT stat;
-		DWORD error;
-		if (!ClearCommError(_phandle->x , &error, &stat)) { close(); return -2; }
-		if (error != 0) { close(); return -3; }
-		if (stat.cbInQue > 0)
-			{
-			if (len < (size_t)stat.cbInQue) { stat.cbInQue = (DWORD)len; }
-			DWORD nbread = 0;
-			if (!ReadFile(_phandle->x , (LPVOID)buffer, stat.cbInQue, &nbread, NULL)) { close(); return -4; }
-			return((int)nbread);
-			}
-		return 0;
-		}
-
-
-	int SerialPort::available()
+	int64_t SerialPort::read(char * buffer, int64_t len)
 		{
 		if (_phandle->x == INVALID_HANDLE_VALUE) return -1;
-		COMSTAT stat;
-		DWORD error;
-		if (!ClearCommError(_phandle->x, &error, &stat)) { close(); return -2; }
-		if (error != 0) { close(); return -3; }
-		return (int)stat.cbInQue;
+		if (_queueavail() == 0) poll();
+		if (len < 0) return -1;
+		if (len == 0) return 0;
+		const int64_t av = _queueavail();
+		const int64_t l = (av < len) ? av : len;
+		_popfromqueue(buffer, l);
+		return l;
 		}
 
 
-	int SerialPort::write(const char * buffer, size_t len)
+	int64_t SerialPort::poll()
+		{
+		if (_phandle->x == INVALID_HANDLE_VALUE) return -1;
+		const int buf_size = 32*1024;
+		char buf[buf_size];
+		while (1)
+			{
+			COMSTAT stat;
+			stat.cbInQue = 0;
+			DWORD error;
+			if (!ClearCommError(_phandle->x, &error, &stat)) { close(); return -2; }
+			if (error != 0) { close(); return -2; }
+			int av = stat.cbInQue;
+			if (av <= 0) return _queueavail();
+			while (av > 0)
+				{
+				const int tr = (av > buf_size) ? buf_size : av;
+				DWORD nbread = 0;
+				if (!ReadFile(_phandle->x, (LPVOID)buf, tr, &nbread, NULL)) { close(); return -2; }
+				if (nbread == 0) return _queueavail();
+				if (nbread > 0) _pushtoqueue(buf, nbread);				
+				av -= nbread;
+				}
+			}
+		}
+
+
+	int64_t SerialPort::available()
+		{
+		if (_phandle->x == INVALID_HANDLE_VALUE) return -1;
+		if (_queueavail() == 0) poll();
+		return _queueavail();		
+		}
+
+
+	int64_t SerialPort::write(const char * buffer, int64_t len)
 		{
 		if (!status()) return -1;
 		DWORD nbwritten = 0;
 		if (!WriteFile(_phandle->x , buffer, (DWORD)len, &nbwritten, NULL)) { close(); return -2; }
-		return((int)nbwritten);
+		return((int64_t)nbwritten);
 		}
 
 
@@ -201,6 +230,79 @@ namespace mtools
 		while ((i < buffer_size) && (buffer[i] != 0));
 		return portList;
 		}
+
+
+
+	void  SerialPort::_pushtoqueue(const char* buffer, int64_t len)
+		{
+		if ((len <= 0) || (buffer == nullptr)) return;
+		_queuesize += len;
+		while (len > 0)
+			{
+			const int64_t avail = QUEUE_BUFFER_SIZE - ind_queue_write; // available in the current array
+			if (avail <= 0)
+				{
+				MTOOLS_INSURE(avail == 0);
+				_queue.push(new std::array<char, QUEUE_BUFFER_SIZE>);
+				ind_queue_write = 0;
+				}
+			else
+				{
+				const int64_t w = (len > avail) ? avail : len; // number of bytes we can write
+				auto pa = _queue.back();
+				memcpy(pa->data() + ind_queue_write, buffer, w);
+				ind_queue_write += w;
+				len -= w;
+				buffer += w;
+				}
+			}
+		}
+
+
+	void  SerialPort::_popfromqueue(char* dest, int64_t len)
+		{
+		MTOOLS_INSURE(dest != nullptr);
+		MTOOLS_INSURE(len <= _queuesize);
+		_queuesize -= len;
+		while (len > 0)
+			{
+			const int64_t avail = QUEUE_BUFFER_SIZE - ind_queue_read; // available in the current array
+			if (avail <= 0)
+				{
+				MTOOLS_INSURE(avail == 0);
+				MTOOLS_INSURE(_queue.size() > 1);
+				auto ar = _queue.front();
+				delete ar;
+				_queue.pop();
+				ind_queue_read = 0;
+				}
+			else
+				{
+				const int64_t r = (len > avail) ? avail : len; // number of bytes we can read
+				auto pa = _queue.front();
+				memcpy(dest, pa->data() + ind_queue_read, r);
+				ind_queue_read += r;
+				len -= r;
+				dest += r;
+				}
+			}
+		}
+
+
+	void SerialPort::_clearqueue()
+		{
+		while (_queue.size() > 0)
+			{
+			auto ar = _queue.front();
+			delete ar;
+			_queue.pop();
+			}
+		_queue.push(new std::array<char, QUEUE_BUFFER_SIZE>);
+		_queuesize = 0;
+		ind_queue_read = 0;
+		ind_queue_write = 0;
+		}
+
 
 
 #endif // end of #ifdef _WIN32

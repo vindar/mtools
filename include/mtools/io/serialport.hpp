@@ -25,6 +25,8 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <queue>
+#include <array>
 
 namespace mtools
 	{
@@ -39,11 +41,12 @@ namespace mtools
 	class SerialPort
 		{
 
-
 		public:
+
 
 			/** Default constructor. */
 			SerialPort();
+
 
 
 			/** Destructor. */
@@ -94,7 +97,7 @@ namespace mtools
 			 *
 			 * @return	Number of bytes written in the buffer or a negative number if an error occured.
 			 **/
-			int read(char * buffer, size_t len);
+			int64_t read(char * buffer, int64_t len);
 
 
 			/**
@@ -119,11 +122,23 @@ namespace mtools
 
 
 			/**
-			 * Query the number of bytes ready in the RX buffer. 
+			 * Query the number of bytes ready to be read.
 			 *
-			 * @return	The number of bytes available (>= 0) or a negative number if an error occured.
+			 * @return	The number of bytes available (>= 0) or a negative number if an error occurred.
 			 **/
-			int available();
+			int64_t available();
+
+
+            /**
+             * poll the serial port.
+             * 
+             * Similar to available() but tries to increase the number of received bytes even when the
+             * number of bytes currently available is non-zero. Calling this too often instead of
+             * available() may slow down the stream.
+             *
+             * @returns The number of bytes available (>= 0) or a negative number if an error occurred.
+            **/
+			int64_t poll();
 
 
 			/**
@@ -134,13 +149,13 @@ namespace mtools
 			*
 			* @return	number of byte written (len if everything is ok).
 			**/
-			int write(const char * buffer, size_t len);
+			int64_t write(const char * buffer, int64_t len);
 
 
 			/**
 			* Write a single char. 
 			**/
-			inline int write(char c)
+			inline int64_t write(char c)
 				{
 				return write(&c, 1);
 				}
@@ -162,7 +177,29 @@ namespace mtools
 
 		private:
 
-			
+
+
+			/** for the receive queue */
+
+			static const int64_t QUEUE_BUFFER_SIZE = 64 * 1024; // 64K buffers
+
+			std::queue<std::array<char, QUEUE_BUFFER_SIZE>*  > _queue;	// the queue
+			int64_t _queuesize;	// number of bytes available
+			int64_t ind_queue_read; // read index in the current (front) array
+			int64_t ind_queue_write; // write index in the current (back) array
+
+			/** add a buffer to the queue */
+			void _pushtoqueue(const char* buffer, int64_t len);
+		
+			/** remove a buffer from the queue */
+			void _popfromqueue(char* dest, int64_t len);
+	
+			/** clear the queue completely */
+			void _clearqueue();
+
+			/** return the number of bytes available in the queue */
+			int64_t _queueavail() const { return _queuesize; }
+
 			struct SerialPortHandle; // forward declaration
 
 			std::unique_ptr<SerialPortHandle> _phandle;

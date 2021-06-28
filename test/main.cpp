@@ -141,23 +141,48 @@ void testImageDisplay()
 
 
 
+
+
+
+char bb[10000000];
+
 int main(int argc, char *argv[])
 {
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
 
-	auto b = mtools::loadStringFromFile("lena.jpg");
 
-	Image im; 
-	cout << "loading = " << im.load_raw_jpg(b) << "\n";
+	SerialPort sp;
 
-	Plotter2D plot;
-	auto P = makePlot2DImage(im);
-	plot[P];
-	plot.autorangeXY();
-	plot.plot();
+	sp.open("COM18", 2000000);
+
+	while (1)
+		{
+		Sleep(10);
+
+		const int l = 15; 
+		cout << "- sending " << l << "\n";
+
+		sp.write(l);
+		sp.flush();
+
+		Chrono ch;
+		ch.reset();
+
+		int r = 0; 
+
+		while (r < l * 1024)
+			{			
+			if (sp.available()) sp.read();
+			r++;		
+			}
+
+		int el = (int)ch.elapsed();
+		cout << " received in " << el << "ms\n";
+		}
 
 
-	//testImageDisplay();
+
+
 
 	cout << "done !\n\n";
 	cout.getKey(); 
