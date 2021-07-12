@@ -316,6 +316,8 @@ if (NOT CMAKE_BUILD_TYPE)
 endif ()
 
 if(WIN32)
+	target_compile_options(mtools PUBLIC "/MP")
+	target_compile_options(mtools PUBLIC "/std:c++17")
 	set(CMAKE_CXX_STANDARD 17)
 	set(CMAKE_CXX_STANDARD_REQUIRED ON)
 	set(CMAKE_CXX_EXTENSIONS OFF)
