@@ -76,6 +76,13 @@ namespace mtools
 			int open(std::string portName, int baudRate = 115200, bool parityCheck = false, int parity = SERIALPORT_PARITY_NONE, int stopBits = SERIALPORT_STOPBITS_1);
 
 
+			/**
+			* Try to reconnect on the same port open previously with open()
+            * Use this only after calling open() and in case of connexion failure.
+			**/
+			int reconnect();
+
+
 			/** Closes the serial port. */
 			void close();
 
@@ -200,6 +207,7 @@ namespace mtools
 			/** return the number of bytes available in the queue */
 			int64_t _queueavail() const { return _queuesize; }
 
+
 			struct SerialPortHandle; // forward declaration
 
 			std::unique_ptr<SerialPortHandle> _phandle;
@@ -207,6 +215,12 @@ namespace mtools
 			/* no copy */
 			SerialPort(const SerialPort &) = delete;
 			SerialPort & operator=(const SerialPort &) = delete;
+
+			std::string	_portname;
+			int _baudrate;
+			bool _paritycheck;
+			int _parity;
+			int _stopbits;
 
 		};
 

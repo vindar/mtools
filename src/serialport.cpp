@@ -64,29 +64,27 @@ namespace mtools
 	SerialPort::~SerialPort()
 				{
 				close();
-				_clearqueue();
 				}
 
 
-	int SerialPort::open(std::string portName, int baudRate, bool parityCheck, int parity, int stopBits)
+	int SerialPort::reconnect()
 		{
-		_clearqueue();
-		if (_phandle->x != INVALID_HANDLE_VALUE) { return -1; }
-		portName = std::string("\\\\.\\") + portName;
+		close();
+		std::string portName = std::string("\\\\.\\") + _portname;
 		_phandle->x = CreateFile(portName.c_str(), GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, NULL, NULL);
 		if (_phandle->x == INVALID_HANDLE_VALUE) { return -2; }
 		DCB dcb;
 		memset(&dcb, 0, sizeof(dcb));
 		dcb.DCBlength = sizeof(dcb);
 		if (!GetCommState(_phandle->x , &dcb)) { close(); return -3; }
-		dcb.BaudRate = (DWORD)baudRate;
+		dcb.BaudRate = (DWORD)_baudrate;
 		dcb.ByteSize = 8;
-		dcb.fParity = (parityCheck) ? 1 : 0;
+		dcb.fParity = (_paritycheck) ? 1 : 0;
 		dcb.fDtrControl = DTR_CONTROL_ENABLE;  // DTR flow control
 		dcb.fRtsControl = RTS_CONTROL_ENABLE;  // RTS flow control
 		dcb.fBinary = 1;
 		dcb.fAbortOnError = TRUE;        // Do not abort reads/writes on error
-		switch (parity)
+		switch (_parity)
 			{
 			case SERIALPORT_PARITY_NONE: { dcb.Parity = NOPARITY; break; }
 			case SERIALPORT_PARITY_ODD: { dcb.Parity = ODDPARITY; break; }
@@ -94,7 +92,7 @@ namespace mtools
 			case SERIALPORT_PARITY_MARK: { dcb.Parity = MARKPARITY; break; }
 			case SERIALPORT_PARITY_SPACE: { dcb.Parity = SPACEPARITY; break; }
 			}
-		switch (stopBits)
+		switch (_stopbits)
 			{
 			case SERIALPORT_STOPBITS_1: { dcb.StopBits = ONESTOPBIT; break; }
 			case SERIALPORT_STOPBITS_1_5: { dcb.StopBits = ONE5STOPBITS; break; }
@@ -117,15 +115,27 @@ namespace mtools
 		}
 
 
+	int SerialPort::open(std::string portName, int baudRate, bool parityCheck, int parity, int stopBits)
+		{
+		if (_phandle->x != INVALID_HANDLE_VALUE) { return -1; }
+		_portname = portName;
+		_baudrate = baudRate;
+		_paritycheck = parityCheck;
+		_parity = parity;
+		_stopbits = stopBits;
+		return reconnect();
+		}
+
+
 	void SerialPort::close()
 		{
+		_clearqueue();
 		if (_phandle->x  == INVALID_HANDLE_VALUE) return;
 		COMSTAT stat;
 		DWORD error;
 		ClearCommError(_phandle->x , &error, &stat);
 		CloseHandle(_phandle->x );
 		_phandle->x  = INVALID_HANDLE_VALUE;
-		_clearqueue();
 		}
 
 
