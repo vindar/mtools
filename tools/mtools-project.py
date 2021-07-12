@@ -117,6 +117,7 @@ target_link_libraries("${PROJECT_NAME}" PUBLIC mtools)
 
 # compile options
 if(WIN32)
+	target_compile_options("${PROJECT_NAME}" PUBLIC "/std:c++17")
 	set(CMAKE_CXX_STANDARD 17)
 	set(CMAKE_CXX_STANDARD_REQUIRED ON)
 	set(CMAKE_CXX_EXTENSIONS OFF)
