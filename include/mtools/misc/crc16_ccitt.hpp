@@ -52,7 +52,7 @@ namespace mtools
         /**
         * Compute the crc for a given buffer.
         **/
-        uint16_t ccitt(const uint8_t* data, const uint16_t data_len)
+        uint16_t ccitt(const uint8_t* data, const size_t data_len)
             {
             reset();
             return ccitt_upd(data, data_len);
@@ -63,9 +63,9 @@ namespace mtools
         /**
         * Add additional data.
         **/
-        uint16_t ccitt_upd(const uint8_t* data, uint16_t data_len)
+        uint16_t ccitt_upd(const uint8_t* data, size_t data_len)
             {
-            for (unsigned int i = 0; i < data_len; ++i)
+            for (size_t i = 0; i < data_len; ++i)
                 {
                 uint16_t dbyte = data[i];
                 _crc ^= dbyte << 8;
