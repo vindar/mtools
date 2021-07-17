@@ -159,7 +159,7 @@ namespace mtools
 		startDisplay();
 		while (isDisplayOn())
 			{
-			Sleep(1);
+			std::this_thread::yield();
 			}
 		}
 
@@ -179,19 +179,7 @@ namespace mtools
 
 	bool ImageDisplay::isDisplayOn()
 		{
-
 		return _iwe->shown(); // is it safe to call this outside of the FLTK thread ?
-
-		/*
-		Sleep(1); // needed to prevent hanging with too many messages. 
-		if (!mtools::isFltkThread())
-			{
-			mtools::IndirectMemberFun<ImageDisplay, bool> proxy(*this, &ImageDisplay::isDisplayOn);
-			mtools::runInFltkThread(proxy);
-			return (*proxy.result());
-			}
-		return _iwe->shown();
-		*/
 		}
 
 
