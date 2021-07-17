@@ -157,7 +157,8 @@ int main(int argc, char *argv[])
 
 	while (1)
 		{
-		Sleep(10);
+		//std::this_thread::sleep_for(10);
+	//	Sleep(10);
 
 		const int l = 15; 
 		cout << "- sending " << l << "\n";
