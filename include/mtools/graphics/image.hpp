@@ -4836,7 +4836,7 @@ namespace mtools
 
 				jpeg_create_decompress(&cinfo);
 
-				jpeg_mem_src(&cinfo, (const unsigned char*)jpg_buffer, (unsigned long)jpg_buffer_len);
+				jpeg_mem_src(&cinfo, (unsigned char*)jpg_buffer, (unsigned long)jpg_buffer_len);
 
 				int rc = jpeg_read_header(&cinfo, TRUE);
 				if (rc != 1)
