@@ -108,7 +108,7 @@ find_package(mtools REQUIRED)
 #########################################
 
 
-file(GLOB project_SRC "*.cpp" "*.hpp" "*.h")
+file(GLOB project_SRC "*.cpp" "*.hpp" "*.h" "*.c" "*.inl")
 
 add_executable("${PROJECT_NAME}" ${project_SRC})
 
