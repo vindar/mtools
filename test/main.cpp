@@ -133,6 +133,53 @@ void testImageDisplay()
 
 
 
+void testDelaunayVoronoi()
+	{
+	mtools::MT2004_64 gen(0);
+	mtools::DelaunayVoronoi DV;
+
+	// add 100 points uniformly distributed in [0,1]^2
+	for (int i = 0; i < 100; i++) DV.DelaunayVertices.push_back(mtools::fVec2(Unif(gen), Unif(gen)));
+		
+	// compute the Delaunay trianulation and Voronoi diagram
+	DV.compute(); 
+
+	// draw the graphs
+	mtools::Plotter2D plotter; 
+	auto canvas = mtools::makeFigureCanvas(2);
+
+	// draw the Delaunay triangulation
+	int nb_D_e = (int)DV.DelaunayEdgesIndices.size();
+	for (int k = 0; k < nb_D_e; k++)
+		{
+		mtools::iVec2 e = DV.DelaunayEdgesIndices[k];
+		canvas(mtools::Figure::Line(DV.DelaunayVertices[e.X()], DV.DelaunayVertices[e.Y()], mtools::RGBc::c_Red), 0);
+		}
+
+	// draw the Voronoi diagram
+	int nb_V_e = (int)DV.VoronoiEdgesIndices.size();
+	for (int k = 0; k < nb_V_e; k++)
+		{
+		auto e = DV.VoronoiEdgesIndices[k];
+		mtools::fVec2 P1 = DV.VoronoiVertices[e.X()];
+		if (e.Y() == -1)
+			{ // semi-infinite ray
+			mtools::fVec2 N = DV.VoronoiNormals[e.X()];
+			canvas(mtools::Figure::Line(P1, P1 + N, mtools::RGBc::c_Green), 1);
+			}
+		else
+			{ // regular edge
+			mtools::fVec2 P2 = DV.VoronoiVertices[e.Y()];
+			canvas(mtools::Figure::Line(P1, P2, mtools::RGBc::c_Black), 1);
+			}
+		}
+
+	// plot
+	auto P = mtools::makePlot2DFigure(canvas, 4, "Delaunay Voronoi");
+	plotter[P];
+	plotter.range().setRange({ 0,1,0,1 });
+	plotter.plot();
+	}
 
 
 
@@ -150,6 +197,8 @@ int main(int argc, char *argv[])
 {
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
 
+	testDelaunayVoronoi();
+	return 0;
 
 	SerialPort sp;
 

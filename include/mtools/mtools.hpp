@@ -48,6 +48,7 @@
 #include "maths/graph.hpp"
 #include "maths/circlePacking.hpp"
 #include "maths/bezier.hpp"
+#include "maths/DelaunayVoronoi.hpp"
 
 
 //misc

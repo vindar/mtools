@@ -206,8 +206,8 @@ configure_file(mtools_config.hpp.in "${CMAKE_SOURCE_DIR}/include/mtools/mtools_c
 ###############################################################################
 # list all sources and header files of the library. 
 ###############################################################################
-file(GLOB_RECURSE _mtools_cpp_files ./src/*.cpp)
-file(GLOB_RECURSE _mtools_hpp_files ./include/*.hpp ./include/*.h)
+file(GLOB_RECURSE _mtools_cpp_files ./src/*.cpp ./src/*.c)
+file(GLOB_RECURSE _mtools_hpp_files ./include/*.hpp ./include/*.h ./include/*.inl)
 
 
 ###############################################################################
