@@ -1,6 +1,6 @@
-/** @file circle.hpp */
+/** @file DelaunayVoronoi.hpp */
 //
-// Copyright 2015 Arvind Singh
+// Copyright 2021 Arvind Singh
 //
 // This file is part of the mtools library.
 //
