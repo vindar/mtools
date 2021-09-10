@@ -217,7 +217,7 @@ int main(int argc, char *argv[])
             addParticules(maxNN - NN);
             cout << "Simulation completed ! \n";
             P.autoredraw(0);
-            int64 l = (int64)maxd + 1;
+            double l = (double)maxd + 1;
             P.range().setRange(fBox2(-l, l, -l, l));
             P.redraw();
             P.plot();
