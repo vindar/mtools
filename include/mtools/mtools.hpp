@@ -119,6 +119,7 @@
 #include "containers/empiricalDistribution.hpp"
 #include "containers/extab.hpp"
 #include "containers/treefigure.hpp"
+#include "containers/pointspace.hpp"
 
 
 /* end of file */
