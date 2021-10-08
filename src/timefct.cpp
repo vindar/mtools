@@ -124,7 +124,8 @@ namespace mtools
 
 
     std::string durationToString(uint64 milliseconds, bool printMilliseconds)
-        {
+        {      
+        if (milliseconds == 0) {return ((printMilliseconds) ? "0 ms. " : "0 sec. "); }
 		OSS os;
         uint64 days = milliseconds / (1000 * 60 * 60 * 24);
         milliseconds = milliseconds % (1000 * 60 * 60 * 24);
