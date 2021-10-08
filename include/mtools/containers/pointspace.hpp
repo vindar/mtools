@@ -465,39 +465,6 @@ namespace mtools
                 }
 
 
-            
-            template<typename MetricObj>
-            void closest(const mtools::fVec<DIM>& pos, const MetricObj& mo, double& best_d, PointSpaceObj<DIM, T>*& best_o)
-                {
-                // find the closest among the siblings. 
-                for (int k = 0; k < nb_siblings; k++)
-                    {
-                    double d = mo(pos, obj[k]._position);
-                    if (d < best_d)
-                        {
-                        best_d = d;
-                        best_o = &(obj[k]);
-                        }
-                    }
-                // recurse inside subboxes that cannot be excluded
-                for (int i = 0; i < 2; i++)
-                    {
-                    if (childs[i] != nullptr)
-                        {
-                        const double lower_bound_d = mo(pos, subBox(i));
-                        if (lower_bound_d <= best_d)
-                            { // we must look into this subbox
-                            (childs[i])->closest(pos, mo, best_d, best_o);
-                            }
-                        }
-                    }
-                }
-
-
-           
-        private: 
-
-
             /** for debugging purpose */
             std::string _spaces(int n)
                 {
@@ -1051,7 +1018,23 @@ namespace mtools
 
 
             /**
-             * Iterate over all entries in the container which are in the box B.
+            * Add into a vector a pointer for each element in the container which are inside a given (closed) box B.
+            * 
+            * - The vector is not cleared. 
+            * - Return the number of element found and added into the vector.
+            **/
+            size_t vector(std::vector<PointSpaceObj<DIM, T>*>& vec, fBox<DIM>& B) const
+                {
+                size_t nb = 0;
+                iterate_const(B, [&](const PointSpaceObj & obj) {
+                    vec.push_back((PointSpaceObj<DIM, T>*)&obj);
+                    });
+                return nb;
+                }
+
+
+            /**
+             * Iterate over all entries in the container which are in the (colsed) box B.
              *
              * Return true if iteration completed and false if it was interrupted.
              * 
