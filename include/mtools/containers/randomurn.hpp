@@ -86,6 +86,22 @@ namespace mtools
 
 
         /**
+        * Reserve a given ammount of storage in the vector
+        * (no reallocation shall occur before the reserved capacity is full). 
+        * 
+        **/
+        inline void reserve(size_t vec_size) { _tab.reserve(vec_size); }
+
+
+        /**
+         * Max number of elements that can be put in the urn
+         * without having to reallocate the vector. 
+         * 
+         **/
+        inline size_t capacity() const { return _tab.capacity(); }
+
+
+        /**
          * Number of elements in the urn.
          *
          * @return  The current number of elements in the urn
@@ -193,13 +209,37 @@ namespace mtools
 
 
         /**
-        * serialise/deserialize the urn. Works with boost and with the custom serialization classes
-        * OBaseArchive and IBaseArchive. the method performs both serialization and deserialization.
+        * serialise the urn.
         **/
-        template<typename ARCHIVE> void serialize(ARCHIVE & ar, const int version = 0)
+        void serialize(mtools::OBaseArchive & ar, const int version = 0) const
             {
-            ar & _tab;
+            ar << "RandomUrn";
+            ar & _tab.capacity();
+            ar & _tab.size();
+            ar << "\n";
+            for (size_t i = 0; i < _tab.size(); i++)
+                {
+                ar& _tab[i];
+                }
             }
+
+        /**
+        * deserialise the urn. Empty the current content first
+        **/
+        void deserialize(mtools::IBaseArchive & ar)
+            {
+            size_t cap;
+            ar& cap;
+            size_t s;
+            ar& s; 
+            _tab.reserve(cap);
+            _tab.resize(s);
+            for (size_t i = 0; i < s; i++)
+                {
+                ar & _tab[i];
+                }
+            }
+
 
 
     private: 
