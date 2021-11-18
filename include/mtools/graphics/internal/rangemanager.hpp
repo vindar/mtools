@@ -32,7 +32,7 @@
 namespace mtools
 {
     /* forward declaration */
-    class Plot2DComposer;
+    // class Plot2DComposer; // not implemented
 
     namespace internals_graphics
     {
@@ -55,7 +55,7 @@ namespace mtools
         class RangeManager
         {
             friend class View2DWidget;
-            friend class Plot2DComposer;
+            // friend class Plot2DComposer; // not implemented
 
             public:
 

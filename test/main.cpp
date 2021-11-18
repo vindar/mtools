@@ -193,11 +193,137 @@ void testDelaunayVoronoi()
 
 char bb[10000000];
 
+
+
+
+
+namespace mtools
+{
+
+
+
+	class Drawer2D
+		{
+
+		public:
+
+
+		/**
+		* Default ctor. Empty drawer (no image and no object inserted)
+        **/
+		Drawer2D()
+			{
+
+			}
+
+
+		/**
+		* Reset the object to its initial state (no image and no object inserted)
+		**/
+		void reset();
+
+
+		/**
+		* Set the image to draw onto
+		**/
+		void setImage(Image & im);
+
+
+		/**
+		* Return the RangeManager object used to set the
+        * range.
+		**/
+		mtools::internals_graphics::RangeManager & range();
+
+
+		/**
+		* Fill the image with a uniform color
+		**/
+		void drawBackground(RGBc color);
+
+
+		/**
+		* Fill the image with a checker board pattern
+		**/
+		void drawCheckerBoard();
+
+		/**
+		* Draw all the object onto the image onto the image. 
+		**/
+		void draw(mtools::Image im, int min_quality = 100);
+
+
+		void save(const std::string filename, bool add_number = true, int skip)
+
+
+
+		void insert(mtools::internals_graphics::Plotter2DObj& obj);
+
+		void remove(mtools::internals_graphics::Plotter2DObj& obj);
+
+		void removeAll();
+
+
+
+		Drawer2D & operator[](mtools::internals_graphics::Plotter2DObj& obj);
+
+
+			void test()
+				{
+
+				Image img(1000, 800);
+
+				auto P = makePlot2DImage(im, 3, "im");
+				((mtools::internals_graphics::Plotter2DObj *)(&P))->resetDrawing();
+
+				}
+
+		};
+
+}
+
+
+
+
+
+double sc(double s)
+	{
+	if (s == 0) return 1.0;
+	return sin(s) / s;
+	}
+
+
+void testdrawer()
+	{
+
+	Display2D disp;
+
+	disp.test();
+
+
+	}
+
+
+
+
+
+
+
+
+
+
 int main(int argc, char *argv[])
 {
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
 
-	testDelaunayVoronoi();
+	//testDelaunayVoronoi();
+	
+	Plotter2D plot; 
+
+
+	testdrawer();
+
+
 	return 0;
 
 	SerialPort sp;
