@@ -202,72 +202,165 @@ namespace mtools
 
 
 
+	/**
+	* Class that draws Plotter2Dobj into an image (without
+	*
+	*
+	**/
 	class Drawer2D
 		{
+
+		std::vector<internals_graphics::Plotter2DObj*> _tabobj;	// vector containing pointers to all object inserted
+		Image *	_im;	// the image to draw onto
+		int		_nbframe; // number of frame created. 
+
+		internals_graphics::RangeManager _rm; // the range manager 
+
+
+		Drawer2D(const Drawer2D&) = delete;                  // no copy
+		Drawer2D & operator=(const Drawer2D&) = delete;      //
+
+		static const int _DEFAULT_LX = 800;
+		static const int _DEFAULT_LY = 600;
+
 
 		public:
 
 
 		/**
-		* Default ctor. Empty drawer (no image and no object inserted)
+		* Default ctor. 
+		* Create an empty drawer (no image and no object inserted)
         **/
-		Drawer2D()
+		Drawer2D() : _tabobj(),  _im(nullptr), _nbframe(0), _rm(iVec2(_DEFAULT_LX, _DEFAULT_LY))
 			{
+			reset();
+			}
+
+
+		/**
+		* Reset the object to its initial state. 
+		* Remove all objects from the plotter as well as the image.
+		**/
+		void reset()
+			{
+			removeAll();
+			_im = nullptr;
+			_nbframe = 0;
+			_rm.reset(); 
 
 			}
 
 
 		/**
-		* Reset the object to its initial state (no image and no object inserted)
+		* Set the image to draw onto.
 		**/
-		void reset();
+		void setImage(Image& im)
+			{			
+			_im = &im; 
+			if (!(_im->isEmpty()))
+				{
+				_rm.winSize(im.dimension());
+				// change the range ?
+				}
+
+			}
 
 
 		/**
-		* Set the image to draw onto
+		* Remove the image (if any).
 		**/
-		void setImage(Image & im);
+		void setImage()
+			{
+			_im = nullptr;			
+			}
 
 
 		/**
 		* Return the RangeManager object used to set the
         * range.
 		**/
-		mtools::internals_graphics::RangeManager & range();
+		internals_graphics::RangeManager & range()
+			{
+			return _rm; 
+			}
 
 
 		/**
 		* Fill the image with a uniform color
 		**/
-		void drawBackground(RGBc color);
+		void drawBackground(RGBc color)
+			{
+			_im->clear(color);
+			}
 
 
 		/**
 		* Fill the image with a checker board pattern
 		**/
-		void drawCheckerBoard();
+		void drawCheckerBoard()
+			{
+			_im->checkerboard();
+			}
+
 
 		/**
-		* Draw all the object onto the image onto the image. 
+		* Draw all the objects onto the image. 
+		* do not erase the image prior to drawing
 		**/
-		void draw(mtools::Image im, int min_quality = 100);
+		void draw(mtools::Image im, int min_quality = 100)
+			{
+
+			}
 
 
-		void save(const std::string filename, bool add_number = true, int skip)
+		/**
+		* save the image with a givne name and optionnal frame number.
+		**/
+		void save(const std::string filename, bool add_number = true)
+			{
+
+			}
+
+
+		/**
+		* Insert an object
+		**/
+		void insert(mtools::internals_graphics::Plotter2DObj& obj)
+			{
+
+			}
+
+
+		/**
+		* Remove an object
+		**/
+		void remove(mtools::internals_graphics::Plotter2DObj& obj)
+			{
+
+			}
+
+
+		/**
+		* Remove all objects
+		**/
+		void removeAll()
+			{
+
+			}
+
+
+		/**
+		* Insert an object.
+		**/
+		Drawer2D& operator[](mtools::internals_graphics::Plotter2DObj& obj)
+			{
+			insert(obj);
+			return(*this);
+			}
 
 
 
-		void insert(mtools::internals_graphics::Plotter2DObj& obj);
-
-		void remove(mtools::internals_graphics::Plotter2DObj& obj);
-
-		void removeAll();
-
-
-
-		Drawer2D & operator[](mtools::internals_graphics::Plotter2DObj& obj);
-
-
+		/*
 			void test()
 				{
 
@@ -277,6 +370,7 @@ namespace mtools
 				((mtools::internals_graphics::Plotter2DObj *)(&P))->resetDrawing();
 
 				}
+				*/
 
 		};
 
@@ -288,6 +382,10 @@ namespace mtools
 
 double sc(double s)
 	{
+
+	auto P = makePlot2DAxes();
+	
+
 	if (s == 0) return 1.0;
 	return sin(s) / s;
 	}
@@ -296,9 +394,9 @@ double sc(double s)
 void testdrawer()
 	{
 
-	Display2D disp;
+	//Display2D disp;
 
-	disp.test();
+	//disp.test();
 
 
 	}

@@ -34,7 +34,7 @@ namespace mtools
 {
 
     // forward declaration
-    class Display2D; 
+    class Drawer2D; 
 
 
     namespace internals_graphics
@@ -455,9 +455,8 @@ namespace mtools
 
 
             friend class Plotter2DWindow;   // give access to private members for Plotter2D
-            friend class mtools::Display2D; // give access to private memebers for Display2D
+            friend class Drawer2D; // give access to private memebers for Drawer2D
 
-            //friend class Plot2DComposer; // not implemented
 
             static const int _REQUEST_DETACH = 0;       ///< code when requesting to be detached
             static const int _REQUEST_REFRESH = 1;      ///< code when requesting a refresh of the picture
