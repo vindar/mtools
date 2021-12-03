@@ -224,6 +224,42 @@ namespace mtools
 		static const int _DEFAULT_LY = 600;
 
 
+		static void objectCB_static(void* data, void* data2, void* obj, int code);
+		void objectCB(void* obj, int code);
+
+
+
+		void add(internals_graphics::Plotter2DObj* obj);
+
+		void remove(internals_graphics::Plotter2DObj* obj);
+
+		void moveUp(internals_graphics::Plotter2DObj* obj)
+			{
+			for (int i = 0; i < (int)_tabobj.size(); i++)
+				{
+				if (_tabobj[i] == obj)
+					{
+					if (i == 0) return; // nothing to do if already on top
+					auto obj2 = _tabobj[i - 1];
+					_tabobj[i - 1] = obj;
+					_tabobj[i] = obj2;
+					return;
+					}
+				}
+			MTOOLS_DEBUG("Plotter2DWindow::moveUp(), object not found.");
+			}
+
+		void moveDown(internals_graphics::Plotter2DObj* obj);
+
+		void moveTop(internals_graphics::Plotter2DObj* obj);
+
+		void moveBottom(internals_graphics::Plotter2DObj* obj);
+
+		void removeAll();
+
+		void fixObjectWindow();
+
+
 		public:
 
 
@@ -243,11 +279,10 @@ namespace mtools
 		**/
 		void reset()
 			{
-			removeAll();
-			_im = nullptr;
+			removeAll(); // remove objects
+			_im = nullptr; // remove image
 			_nbframe = 0;
 			_rm.reset(); 
-
 			}
 
 
@@ -262,7 +297,8 @@ namespace mtools
 				_rm.winSize(im.dimension());
 				// change the range ?
 				}
-
+			// notify objects ? 
+			// ....
 			}
 
 
@@ -314,13 +350,27 @@ namespace mtools
 
 
 		/**
-		* save the image with a givne name and optionnal frame number.
+		* save the image with a given name and optional frame number.
+        * 
+		* filename should be given with the extension (.png for example).
 		**/
-		void save(const std::string filename, bool add_number = true)
+		void save(const std::string filename, bool add_number = true, int nb_digits = 6)
 			{
-
+			if (_im == nullptr) return;
+			if (add_number)
+				_im->save(filename.c_str(), ++_nbframe, nb_digits);
+			else
+				_im->save(filename.c_str());
 			}
 
+
+		/**
+		* Return the number of frames saved to disk. 
+		**/
+		int nbFrames() const
+			{
+			return _nbframe;
+			}
 
 		/**
 		* Insert an object
@@ -374,6 +424,89 @@ namespace mtools
 
 		};
 
+
+
+
+
+
+
+
+
+        /* called by the inserted object when it want a redraw or when it detaches itself, always called from FLTK */
+        void Drawer2D::objectCB_static(void * data, void * data2, void * obj, int code) { MTOOLS_ASSERT(data != nullptr); ((Drawer2D*)data)->objectCB(obj, code); }
+        void Drawer2D::objectCB(void * obj, int code)
+            {
+            MTOOLS_ASSERT(isFltkThread());
+            switch (code)
+                {
+                case internals_graphics::Plotter2DObj::_REQUEST_DETACH:
+                    { // the object is detaching itself
+                    remove((Plotter2DObj*)obj);
+                    return;
+                    }
+                case internals_graphics::Plotter2DObj::_REQUEST_REFRESH:
+                    {
+                    return;
+                    }
+                case internals_graphics::Plotter2DObj::_REQUEST_YIELDFOCUS:
+                    {
+                    return;
+                    }
+                case internals_graphics::Plotter2DObj::_REQUEST_UP:
+                    {
+                    moveUp((internals_graphics::Plotter2DObj*)obj);
+                    return;
+                    }
+                case internals_graphics::Plotter2DObj::_REQUEST_DOWN:
+                    {
+                    moveDown((internals_graphics::Plotter2DObj*)obj);
+                    return;
+                    }
+                case internals_graphics::Plotter2DObj::_REQUEST_TOP:
+                    {
+                    moveTop((internals_graphics::Plotter2DObj*)obj);
+                    return;
+                    }
+                case internals_graphics::Plotter2DObj::_REQUEST_BOTTOM:
+                    {
+                    moveBottom((internals_graphics::Plotter2DObj*)obj);
+                    return;
+                    }
+                case internals_graphics::Plotter2DObj::_REQUEST_USERANGEX:
+                    {
+                    useRangeX((internals_graphics::Plotter2DObj*)obj);
+                    return;
+                    }
+                case internals_graphics::Plotter2DObj::_REQUEST_USERANGEY:
+                    {
+                    useRangeY((internals_graphics::Plotter2DObj*)obj);
+                    return;
+                    }
+                case internals_graphics::Plotter2DObj::_REQUEST_USERANGEXY:
+                    {
+                    useRangeXY((internals_graphics::Plotter2DObj*)obj);
+                    _PW->take_focus();
+                    }
+                case internals_graphics::Plotter2DObj::_REQUEST_FIXOBJECTWIN:
+                    {
+                    fixObjectWindow();
+                    return;
+                    }
+                }
+            MTOOLS_ERROR("Plotter2DWindow::objectCB, incorrect code!");
+            }
+
+
+
+
+
+
+
+
+
+
+
+
 }
 
 
@@ -393,6 +526,11 @@ double sc(double s)
 
 void testdrawer()
 	{
+
+	Image im(800, 600);
+
+	im.checkerboard(RGBc::c_Red);
+	im.save("hello.png", 123, 6);
 
 	//Display2D disp;
 
