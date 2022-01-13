@@ -366,7 +366,7 @@ namespace mtools
 
 
 
-		void Drawer2D::draw(int min_quality = 100)
+		void Drawer2D::draw(int min_quality)
 			{
 
 			}
