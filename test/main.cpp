@@ -177,10 +177,22 @@ void testDelaunayVoronoi()
 		}
 
 	// plot
+
+
+
+	Drawer2D drawer(1000,1000,true,true);
+
 	auto P = mtools::makePlot2DFigure(canvas, 4, "Delaunay Voronoi");
-	plotter[P];
-	plotter.range().setRange({ 0,1,0,1 });
-	plotter.plot();
+
+	drawer[P];
+	drawer.range().setRange({ 0,1,0,1 });
+	drawer.range().zoomOut(); 
+
+	drawer.drawBackground(RGBc::c_White);
+	drawer.drawAndSave("im.png");
+
+	drawer.waitForClose();
+	
 	}
 
 
@@ -243,8 +255,10 @@ int main(int argc, char *argv[])
 {
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
 
-	//testDelaunayVoronoi();
+	testDelaunayVoronoi();
 	
+	return 0;
+
 	Plotter2D plot; 
 
 
