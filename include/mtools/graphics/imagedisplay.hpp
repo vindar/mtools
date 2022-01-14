@@ -59,7 +59,7 @@ namespace mtools
          * @param   allow_select                    true to allow the user to select a rectangular region
          * @param   force_selection_before_closing  true to force user to select a region before closing the window
         **/
-		ImageDisplay(int W, int H, int X, int Y, const char* title = nullptr,
+		ImageDisplay(int W, int H, int X = 0, int Y = 0, const char* title = nullptr,
 					bool allow_resizing = true,
 					bool allow_move = true,
 					bool allow_close = true,
@@ -220,6 +220,14 @@ namespace mtools
 		* Stop displaying (i.e.) hide the window. 
 		**/
 		void stopDisplay();
+
+
+
+		/**
+		* Wait until the display is closed/hidden.
+        * Return immediately if display is not on
+		**/
+		void waitForClose();
 
 
         /**
