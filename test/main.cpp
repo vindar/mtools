@@ -179,7 +179,7 @@ void testDelaunayVoronoi()
 	// plot
 
 
-
+	
 	Drawer2D drawer(1000,1000,true,true);
 
 	auto P = mtools::makePlot2DFigure(canvas, 4, "Delaunay Voronoi");

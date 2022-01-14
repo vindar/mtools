@@ -17,6 +17,7 @@
 // You should have received a copy of the GNU General Public License
 // along with mtools  If not, see <http://www.gnu.org/licenses/>.
 
+#pragma once
 
 #include "../misc/error.hpp"
 #include "../misc/internal/mtools_export.hpp"
@@ -42,6 +43,18 @@ namespace mtools
 	* Class that draws Plotter2Dobj into an image (without interaction). 
     * 
     * Useful for creating animation as a sequence of images.
+    * 
+	* 
+    * Using ffmpeg to create a video from a bunch of images:
+    * 
+	*   ffmpeg -framerate 30 -start_number 0 -i im_%06d.png -c:v libx264 -pix_fmt yuv420p vid.mp4
+	* 
+    * - framerate 30 : number of image per second
+    * - start_number 0 : numbering normally start from 0 with Drawer2D  (optionnal because this is the default param)
+    * - im_%06d.png : images are numbered 'im000001.png' 'im_000002.png' ... (ie numbering with 6 digits).   
+    * - c:v libx264 -pix_fmt yuv420p : choose .mp4 codec for html compatibility
+	* - vid.mp4: output file 
+    * 
 	**/
 	class Drawer2D
 		{
@@ -262,7 +275,7 @@ namespace mtools
 		void save(const std::string filename, bool add_number = true, int nb_digits = 6)
 			{
 			if (add_number)
-				_im.save(filename.c_str(), ++_nbframe, nb_digits);
+				_im.save(filename.c_str(), _nbframe++, nb_digits);
 			else
 				_im.save(filename.c_str());
 			}

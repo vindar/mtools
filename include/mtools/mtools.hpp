@@ -108,6 +108,7 @@
 #include "graphics/figure.hpp"
 #include "graphics/plot2Dfigure.hpp"
 #include "graphics/imagedisplay.hpp"
+#include "graphics/drawer2D.hpp"
 
 
 // containers
