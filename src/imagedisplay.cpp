@@ -196,6 +196,15 @@ namespace mtools
 		}
 
 
+	void ImageDisplay::waitForClose()
+		{
+		while (_iwe->shown())
+			{ // wait 10s
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+			}
+		}
+
+
 	void  ImageDisplay::autoredraw(int fps)
 		{
 		if (!mtools::isFltkThread())
