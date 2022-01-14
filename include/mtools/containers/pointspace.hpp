@@ -49,12 +49,18 @@ namespace mtools
     template<int DIM> struct EuclidianMetric
         {
 
+        /**
+        * Compute the distance between two points P1 and P2.
+        **/
         double operator()(const mtools::fVec<DIM> & P, const mtools::fVec<DIM>& Q) const
             {
             return dist(P, Q);
             }
 
 
+        /**
+        * Compute a LOWER BOUND on the distance between point P and box B.
+        **/
         double operator()(const mtools::fVec<DIM>& P, const mtools::fBox<DIM>& B) const
             {
             const mtools::fVec<DIM> C = B.center(); // distance to center
@@ -66,6 +72,50 @@ namespace mtools
 
 
 
+    /**
+    * Functor object to compute the euclidian metric on a torus [0,1]^DIM
+    *
+    * used when computing distances such as for methods 
+    * PointSpace::iterateBall() or PointSpace::findNearest()
+    **/
+    template<int DIM> struct TorusMetric
+        {
+
+        /**
+        * Compute the distance between two points P1 and P2 on the torus [0,1]^DIM.
+        **/
+        double operator()(const mtools::fVec<DIM>& P1, const mtools::fVec<DIM>& P2) const
+            {
+            return distTorus(P1, P2);
+            }
+
+        /**
+        * Compute a LOWER BOUND on the distance between point P and box B on the torus [0,1]^DIM.
+        **/
+        double operator()(const mtools::fVec<DIM>& P, const mtools::fBox<DIM>& B) const
+            {
+            const mtools::fVec<DIM> C = B.center(); // distance to center
+            const double d = distTorus(C, P) - distTorus(C, B.min); // lower bound cannot be closer than that
+            return d;
+            }
+
+
+        /**
+        * Compute the distance between two points P1 and P2 on the torus [0,1]^DIM.
+        **/
+        double distTorus(const mtools::fVec<DIM>& P1, const mtools::fVec<DIM>& P2) const
+            {
+            double sum = 0;
+            for (int k = 0; k < DIM; k++)
+                {
+                const double dx = std::abs(P2[k] - P1[k]);
+                const double a = (dx > 0.5) ? (1.0 - dx) : dx;
+                sum += (a * a);
+                }
+            return std::sqrt(sum);
+            }
+
+        };
 
 
 
