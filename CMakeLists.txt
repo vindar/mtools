@@ -198,6 +198,10 @@ else ()
     set(MTOOLS_OPENMP 0)
 endif ()
 
+
+set(MTOOLS_TGX 1)
+
+
 message(STATUS "")
 
 configure_file(mtools_config.hpp.in "${CMAKE_SOURCE_DIR}/include/mtools/mtools_config.hpp" @ONLY)

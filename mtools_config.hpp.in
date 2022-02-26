@@ -23,6 +23,8 @@
 
 #define MTOOLS_USE_OPENGL @MTOOLS_OPENGL@ 
 
+#define MTOOLS_TGX_EXTENSIONS @MTOOLS_TGX@ 
+ 
  
 /* end of mtools_config.hpp */            
  

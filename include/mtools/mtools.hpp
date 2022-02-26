@@ -75,10 +75,6 @@
 #include "random/krikunlaw.hpp"
 
 
-//extensions
-#include "extensions/openCL.hpp"
-
-
 // graphics
 #include "graphics/rgbc.hpp"
 #include "graphics/palette.hpp"
@@ -121,6 +117,11 @@
 #include "containers/extab.hpp"
 #include "containers/treefigure.hpp"
 #include "containers/pointspace.hpp"
+
+
+//extensions
+#include "extensions/openCL.hpp"
+#include "extensions/tgx/tgx_ext.hpp"
 
 
 /* end of file */
