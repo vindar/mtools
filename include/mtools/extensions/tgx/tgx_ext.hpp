@@ -25,7 +25,7 @@
 #if (MTOOLS_TGX_EXTENSIONS)
 
 // add the tgx library, which in turn will load the tgx_ext_XXX.h file inside its classes. 
-#include "../../../tgx/src/tgx.h"
+#include <tgx.h>
 
 #endif
 /* end of file */

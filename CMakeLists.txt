@@ -79,11 +79,11 @@ message(STATUS "")
 
 
 
-
 #### REQUIRED ####
 message(STATUS "")
 message(STATUS "Checking external dependencies.")
 message(STATUS "")
+
 
 # zlib 
 find_package(ZLIB REQUIRED)
@@ -133,6 +133,9 @@ find_package(OpenCL)
 
 #openmp
 find_package(OpenMP)
+
+#tgx
+find_package(TGX)
 
 
 ###############################################################################
@@ -199,7 +202,15 @@ else ()
 endif ()
 
 
-set(MTOOLS_TGX 1)
+if (TGX_FOUND)
+    option(USE_TGX "build with TGX support" ON)
+endif()
+if (USE_TGX)
+    set(MTOOLS_TGX 1)
+else ()
+    set(MTOOLS_TGX 0)
+endif ()
+
 
 
 message(STATUS "")
@@ -213,14 +224,31 @@ configure_file(mtools_config.hpp.in "${CMAKE_SOURCE_DIR}/include/mtools/mtools_c
 file(GLOB_RECURSE _mtools_cpp_files ./src/*.cpp ./src/*.c)
 file(GLOB_RECURSE _mtools_hpp_files ./include/*.hpp ./include/*.h ./include/*.inl)
 
+if (USE_TGX)
+    file(GLOB_RECURSE _tgx_hpp_files "${TGX_INCLUDE_DIR}/*.h" "${TGX_INCLUDE_DIR}/*.hpp" "${TGX_INCLUDE_DIR}/*.inl")
+    file(GLOB_RECURSE _tgx_cpp_files "${TGX_INCLUDE_DIR}/*.cpp" "${TGX_INCLUDE_DIR}/*.c")
+endif()
+
 
 ###############################################################################
 # create the library
 ###############################################################################
 
-add_library(mtools STATIC ${_mtools_cpp_files} ${_mtools_hpp_files})
+
+if (USE_TGX)
+    # with tgx
+    add_library(mtools STATIC ${_mtools_cpp_files} ${_mtools_hpp_files} ${_tgx_cpp_files} ${_tgx_hpp_files})
+	target_include_directories(mtools PUBLIC ${TGX_INCLUDE_DIR})
+
+else()
+    # without tgx
+    add_library(mtools STATIC ${_mtools_cpp_files} ${_mtools_hpp_files})
+
+endif()
 
 target_include_directories(mtools PRIVATE ./include/mtools)         # for commodity, so that cpp source file of the lib do not need to subdir mtools. 
+
+
 
 # set property for cotire (optional precompiled header tool) does nothing if not present
 set_target_properties(mtools PROPERTIES
@@ -234,6 +262,11 @@ if (LOCAL_INSTALL)
     # local installation
     target_include_directories(mtools PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)		# - local include directory
 else()
+
+    if (USE_TGX)
+        message(FATAL_ERROR "Cannot perform system wide installation with TGX extension: use local install instead..." )
+    endif()
+    
 	# system wide installation
     target_include_directories(mtools PUBLIC                            
                                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>   # - local include dir : when building mtools, test and the example
@@ -300,6 +333,7 @@ if (USE_OPENMP)
 	target_link_libraries(mtools PUBLIC ${OpenMP_CXX_LIBRARIES})
 	target_compile_options(mtools PUBLIC ${OpenMP_CXX_FLAGS})
 endif ()
+
 
 
 # if cotire present and USE_COTIRE is on, use it
@@ -369,8 +403,8 @@ endif()
 ###############################################################################
 # test project.
 ###############################################################################
-file(GLOB _test_mtools_cpp_files ./test/*.cpp)
-file(GLOB _test_mtools_hpp_files ./test/*.hpp ./test/*.h)
+file(GLOB _test_mtools_cpp_files ./test/*.cpp ./test/*.c)
+file(GLOB _test_mtools_hpp_files ./test/*.hpp ./test/*.h ./test/*.inl)
 
 
 add_executable(test_mtools ${_test_mtools_cpp_files} ${_test_mtools_hpp_files})
@@ -403,6 +437,16 @@ foreach(_source IN ITEMS ${_mtools_hpp_files} ${_mtools_cpp_files})
     source_group("${_group_path}" FILES "${_source}")
 endforeach()
 
+if (USE_TGX)
+    foreach(_source IN ITEMS ${_tgx_cpp_files})
+        source_group("tgx/src" FILES "${_source}")
+    endforeach()
+    
+    foreach(_source IN ITEMS ${_tgx_hpp_files})
+        source_group("tgx/include" FILES "${_source}")
+    endforeach()
+    
+endif()
 
 ###############################################################################
 # vs filters for test_mtools: organized according to the directory structure. 
@@ -484,6 +528,12 @@ if (USE_OPENMP)
     message(STATUS "  USE_OPENMP = 1    (enabled, version ${MTOOLS_OPENMP_VERSION})")
 else ()
     message(STATUS "  USE_OPENMP = 0    (disabled)")
+endif ()
+
+if (USE_TGX)
+    message(STATUS "  USE_TGX = 1       (enabled)")
+else ()
+    message(STATUS "  USE_TGX = 0       (disabled)")
 endif ()
 
 message(STATUS "")
