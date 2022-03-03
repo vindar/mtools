@@ -22,7 +22,15 @@
 // **** WE ARE INSIDE THE tgx::Vec3 class ****
 
 
-
+    /**
+     * Print info about the Vec3 object
+     **/
+    std::string toString() const
+        {
+        mtools::OSS os;
+        os << "tgx::Vec3<" << typeid(T).name() <<  ">(" << x << " , " << y << " , " << z << ")";
+        return os.str();
+        }
 
 /* end of file */
 

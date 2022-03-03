@@ -23,6 +23,16 @@
 
 
 
+    /**
+     * Print info about the RGBf color object
+     **/
+    std::string toString() const
+        {
+        mtools::OSS os;
+        os << "tgx::RGBf(" << R << " , " << G << " , " << B <<  ")";
+        return os.str();
+        }
+
 
 /* end of file */
 

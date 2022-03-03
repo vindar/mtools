@@ -22,6 +22,15 @@
 // **** WE ARE INSIDE THE tgx::RGB565 class ****
 
 
+    /**
+     * Print info about the RGB565 color object
+     **/
+    std::string toString() const
+        {
+        mtools::OSS os;
+        os << "tgx::RGB565(" << R << " , " << G << " , " << B <<  ")";
+        return os.str();
+        }
 
 
 /* end of file */

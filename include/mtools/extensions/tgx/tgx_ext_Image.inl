@@ -22,6 +22,32 @@
 // **** WE ARE INSIDE THE tgx::Image class ****
 
 
+    /**
+     * Print info about the tgx::Image object
+     **/
+    std::string toString() const
+        {
+        mtools::OSS os;
+        os << "tgx::Image<" << typeid(color_t).name() << "> ";
+        if (isValid())
+            {
+            os << "\n  - size : " << lx() << " x " << ly();
+            if (stride() == lx())
+                {
+                os << " [default stride]\n";
+                }
+            else
+                {
+                os << " [stride " << stride() << "]\n";
+                }
+            os << "  - pointer : " << data() << "\n";
+            }
+        else
+            {
+            os << " (EMPTY)";
+            }
+        return os.str(); 
+        }
 
 
 /* end of file */

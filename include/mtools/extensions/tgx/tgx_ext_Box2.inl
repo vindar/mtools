@@ -25,15 +25,12 @@
 
 
     /**
-     * Print the rectangle into a std::string.
-     *
-     * @return  a string in the form "[X1,X2]x[Y1,Y2]x...".
+     * Print info about the Box2 object
      **/
     std::string toString() const
         {
         mtools::OSS os;
-        os << (isEmpty() ? "(empty tgx::Box2)" : "");
-        os << "[" << minX << "," << maxX << "] x [" << minY << "," << maxY << "]";
+        os << "tgx::Box2<" << typeid(T).name() << "> [" << minX << "," << maxX << "] x [" << minY << "," << maxY << "]" << (isEmpty() ? " (empty) " : "");
         return os.str();
         }
 

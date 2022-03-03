@@ -22,6 +22,16 @@
 // **** WE ARE INSIDE THE tgx::HSV class ****
 
 
+    /**
+     * Print info about the HSV color object
+     **/
+    std::string toString() const
+        {
+        mtools::OSS os;
+        os << "tgx::HSV(" << H << " , " << S << " , " << V << ")";
+        return os.str();
+        }
+
 
 
 /* end of file */

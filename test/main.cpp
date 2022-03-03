@@ -204,15 +204,15 @@ void testdrawer()
 
 
 
-
+int a[100];
 
 int main(int argc, char *argv[])
 {
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
 
+	tgx::Image<tgx::RGB565> im((void*)nullptr, 320,240);
 
-	tgx::fBox2 BB; 
-	mtools::cout << BB << "\n";
+	cout << im.toString() << "\n";
 	cout.getKey();
 	return 0;
 

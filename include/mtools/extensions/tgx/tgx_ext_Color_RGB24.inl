@@ -22,6 +22,17 @@
 // **** WE ARE INSIDE THE tgx::RGB24 class ****
 
 
+    /**
+     * Print info about the RGB24 color object
+     **/
+    std::string toString() const
+        {
+        mtools::OSS os;
+        os << "tgx::RGB24(" << R << " , " << G << " , " << B << ")";
+        return os.str();
+        }
+
+
 
 
 /* end of file */

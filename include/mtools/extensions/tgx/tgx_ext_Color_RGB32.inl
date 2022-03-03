@@ -22,6 +22,17 @@
 // **** WE ARE INSIDE THE tgx::RGB32 class ****
 
 
+    /**
+     * Print info about the RGB32 color object
+     **/
+    std::string toString() const
+        {
+        mtools::OSS os;
+        os << "tgx::RGB32(" << R << " , " << G << " , " << B << " , " << A << ")";
+        return os.str();
+        }
+
+
 
 
 /* end of file */

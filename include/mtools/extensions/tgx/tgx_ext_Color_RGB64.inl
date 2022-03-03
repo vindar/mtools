@@ -21,6 +21,16 @@
 
 // **** WE ARE INSIDE THE tgx::RGB64 class ****
 
+    /**
+     * Print info about the RGB64 color object
+     **/
+    std::string toString() const
+        {
+        mtools::OSS os;
+        os << "tgx::RGB64(" << R << " , " << G << " , " << B << " , " << A << ")";
+        return os.str();
+        }
+
 
 
 
