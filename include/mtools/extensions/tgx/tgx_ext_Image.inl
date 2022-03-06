@@ -23,7 +23,10 @@
 
 
 //
-// The mtools::Image class contain a method to convert from mtools:
+// The mtools::Image class contain methods:
+// 
+// - to construct a mtools::Image from a tgx::Image<color_t>  -> deep copy with color conversion.
+// - to convert from mtools::Image to tgx::Image<tgx::RGB32>   -> view (shallow copy). 
 // 
 
 

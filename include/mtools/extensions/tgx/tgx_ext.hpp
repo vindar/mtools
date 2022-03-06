@@ -33,6 +33,8 @@
 
 	/**
 	* Conversion from mtools::Image to tgx::Image<RGB32>
+    * 
+	* Just a view: no color conversion.
 	**/
 	mtools::Image::operator tgx::Image<tgx::RGB32>() const
 		{
@@ -42,6 +44,9 @@
 
 	/**
 	* Constructor from a tgx::Image. 
+    * 
+	* Creates a deep copy !
+    * 
 	**/
 	template<typename color_t>
 	mtools::Image::Image(const tgx::Image<color_t>& im) : Image()
