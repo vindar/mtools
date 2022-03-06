@@ -22,6 +22,14 @@
 // **** WE ARE INSIDE THE tgx::RGBf class ****
 
 
+    /**
+     * serialise/deserialize the object.
+     **/
+    template<typename U> void serialize(U& Archive, const int version = 0)
+        {
+        Archive & R & G & B;
+        }
+
 
     /**
      * Print info about the RGBf color object

@@ -21,6 +21,17 @@
 
 // **** WE ARE INSIDE THE tgx::RGB64 class ****
 
+
+    /**
+     * serialise/deserialize the object.
+     **/
+    template<typename U> void serialize(U& Archive, const int version = 0)
+        {
+        Archive & R & G & B & A;
+        }
+
+
+
     /**
      * Print info about the RGB64 color object
      **/

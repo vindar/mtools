@@ -21,6 +21,14 @@
 
 // **** WE ARE INSIDE THE tgx::Vec2 class ****
 
+    /**
+     * serialise/deserialize the object.
+     **/
+    template<typename U> void serialize(U& Archive, const int version = 0)
+        {
+        Archive & x & y;
+        }
+
 
     /**
      * Print info about the Vec2 object
@@ -30,6 +38,25 @@
         mtools::OSS os;
         os << "tgx::Vec2<" << typeid(T).name() <<  ">(" << x << " , " << y << ")";
         return os.str();
+        }
+
+
+    /**
+    * Explicit conversion to a mtools::Vec<U,2>
+    **/
+    template<typename U>
+    explicit operator mtools::Vec<U,2>() 
+        { 
+        return mtools::Vec<U, 2>((U)x, (U)y); 
+        }
+
+
+    /**
+    * ctor from a mtools::Vec<U,2>
+    **/
+    template<typename U>
+    Vec2(const mtools::Vec<U, 2> & V) : x((T)V.X()), y((T)V.Y())
+        {
         }
 
 

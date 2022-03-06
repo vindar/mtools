@@ -210,7 +210,20 @@ int main(int argc, char *argv[])
 {
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
 
-	tgx::Image<tgx::RGB565> im((void*)nullptr, 320,240);
+
+	tgx::fVec4 V(1, 2,3, 5);
+
+	mtools::fVec4 VV(V);
+
+	auto W = (tgx::iVec4)VV;
+
+	mtools::cout << W << "\n";
+
+
+
+
+
+	tgx::Image<tgx::RGB565> im((void*)a, 320,240);
 
 	cout << im.toString() << "\n";
 	cout.getKey();

@@ -168,6 +168,28 @@ namespace mtools
 				}
 
 
+            /**
+            * Constructor. Specific for dimension 3.
+            **/
+            Box(const T & xmin, const T & xmax, const T & ymin, const T & ymax, const T& zmin, const T& zmax) : min(xmin,ymin,zmin) , max(xmax,ymax,zmax)
+                {
+                static_assert(N == 3, "dimension must be equal to 3");
+                }
+
+			/**
+			* Constructor. Specific for dimension 3.
+			**/
+			Box(const T & xmin, const T & xmax, const T & ymin, const T & ymax, const T& zmin, const T& zmax, bool reorderifneeded) : min(xmin, ymin, zmin), max(xmax, ymax, zmax)
+				{
+				static_assert(N == 3, "dimension must be equal to 3");
+				if (reorderifneeded)
+					{
+					if (min[0] > max[0]) mtools::swap(min[0], max[0]);
+					if (min[1] > max[1]) mtools::swap(min[1], max[1]);
+					if (min[2] > max[2]) mtools::swap(min[2], max[2]);
+					}
+				}
+
 
            /**
             * Default copy constructor.

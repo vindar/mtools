@@ -114,6 +114,17 @@ namespace mtools
 
 
         /**
+         * Constructor for 4-dim vector
+         *
+         * @param   x   The x coordinate.
+         * @param   y   The y coordinate.
+         * @param   z   The z coordinate.
+         * @param   w   The w coordinate.
+         **/
+        Vec(const T& x, const T& y, const T& z, const T& w) { static_assert(N == 4, "template parameter N must be 4");  _m_tab[0] = x; _m_tab[1] = y; _m_tab[2] = z; _m_tab[3] = w;  return; }
+
+
+        /**
         * Default copy constructor.
         **/
         Vec(const Vec & V) = default;
@@ -274,6 +285,14 @@ namespace mtools
           **/
          inline T & Z() { static_assert(N > 2, "template parameter N must be at least 3"); return _m_tab[2]; }
          inline const T & Z() const { static_assert(N > 2, "template parameter N must be at least 3"); return _m_tab[2]; }
+
+
+         /**
+          * Gets the W coordinate (fourth coordinate).
+          **/
+         inline T& W() { static_assert(N > 3, "template parameter N must be at least 4"); return _m_tab[3]; }
+         inline const T& W() const { static_assert(N > 3, "template parameter N must be at least 4"); return _m_tab[3]; }
+
 
 
          /**
@@ -538,6 +557,12 @@ namespace mtools
 
 
     /**
+     * 4-dim integer vector
+     **/
+    typedef iVec<4> iVec4;
+
+
+    /**
      * 2-dim floating point vector
      **/
     typedef fVec<2> fVec2;
@@ -547,6 +572,13 @@ namespace mtools
      * 3-dim floating point vector
      **/
     typedef fVec<3> fVec3;
+
+
+    /**
+     * 4-dim floating point vector
+     **/
+    typedef fVec<4> fVec4;
+
 
 
 

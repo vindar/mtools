@@ -23,6 +23,14 @@
 
 
 
+    /**
+     * serialise/deserialize the object.
+     **/
+    template<typename U> void serialize(U& Archive, const int version = 0)
+        {
+        Archive & minX & minY & maxX & maxY;
+        }
+
 
     /**
      * Print info about the Box2 object
@@ -35,6 +43,23 @@
         }
 
 
+    /**
+    * (explicit) Conversion to mtools::Box2<U> 
+    **/
+    template<typename U>
+    explicit operator mtools::Box<U, 2>() const
+        {
+        return mtools::Box<U, 2>((U)minX, (U)maxX, (U)minY, (U)maxY);
+        }
+
+
+    /**
+    * ctor from a mtools::Box<U,2>
+    **/
+    template<typename U>
+    Box2(const mtools::Box<U, 2> & B) : minX((T)B.min[0]), maxX((T)B.max[0]), minY((T)B.min[1]), maxY((T)B.max[1])
+        {
+        }
 
 
 /* end of file */

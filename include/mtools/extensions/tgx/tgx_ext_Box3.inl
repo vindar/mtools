@@ -23,6 +23,14 @@
 
 
 
+    /**
+     * serialise/deserialize the object.
+     **/
+    template<typename U> void serialize(U& Archive, const int version = 0)
+        {
+        Archive & minX & minY & minZ & maxX & maxY & maxZ;
+        }
+
 
     /**
      * Print info about the Box3 object
@@ -32,6 +40,25 @@
         mtools::OSS os;
         os << "tgx::Box3<" << typeid(T).name() << "> [" << minX << "," << maxX << "] x [" << minY << "," << maxY << "] x [" << minZ << "," << maxZ << "]" << (isEmpty() ? " (empty) " : "");
         return os.str();
+        }
+
+
+    /**
+    * (explicit) Conversion to mtools::Box3<U> 
+    **/
+    template<typename U>
+    explicit operator mtools::Box<U, 3>() const
+        {
+        return mtools::Box<U, 3>((U)minX, (U)maxX, (U)minY, (U)maxY, (U)minZ, (U)maxZ);
+        }
+
+
+    /**
+    * ctor from a mtools::Box<U,3>
+    **/
+    template<typename U>
+    Box3(const mtools::Box<U, 3> & B) : minX((T)B.min[0]), maxX((T)B.max[0]), minY((T)B.min[1]), maxY((T)B.max[1]), minZ((T)B.min[2]), maxZ((T)B.max[2])
+        {
         }
 
 
