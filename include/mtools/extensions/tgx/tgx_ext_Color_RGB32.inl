@@ -45,7 +45,7 @@
     /**
     * Conversion to a mtools::RGBc
     **/
-    explicit operator mtools::RGBc() 
+    explicit operator mtools::RGBc() const
         { 
         return mtools::RGBc(R, G, B, A); 
         }

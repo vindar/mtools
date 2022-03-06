@@ -47,7 +47,7 @@
     /**
     * Conversion to a mtools::RGBc
     **/
-    explicit operator mtools::RGBc() 
+    explicit operator mtools::RGBc() const
         {
         return mtools::RGBc((((uint8_t)R) << 3) | (((uint8_t)R) >> 2),
                             (((uint8_t)G) << 2) | (((uint8_t)G) >> 4),

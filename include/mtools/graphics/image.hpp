@@ -45,6 +45,18 @@
 #include "../io/console.hpp"
 
 
+#if (MTOOLS_TGX_EXTENSIONS)
+// forward declaration
+namespace tgx
+	{
+	
+	struct RGB32;
+
+	template<typename color_t> class Image;
+	
+	}
+#endif
+
 // use libpng
 #define cimg_use_png
 // use libjpeg
@@ -165,6 +177,8 @@ namespace mtools
 			*																																					  *
 			*******************************************************************************************************************************************************
 			*******************************************************************************************************************************************************/
+
+
 
 			/**
 			 * Default constructor.
@@ -484,6 +498,26 @@ namespace mtools
 					}
 				return *this;
 				}
+
+
+
+#if (MTOOLS_TGX_EXTENSIONS)
+
+			/**
+			* Conversion to a mtools::RGBc
+			**/
+			operator tgx::Image<tgx::RGB32>() const;
+
+
+			/**
+			* Constructor from a tgx::Image. 
+			**/
+			template<typename color_t>
+			Image(const tgx::Image<color_t>& im);
+
+#endif
+
+
 
 
 			/******************************************************************************************************************************************************

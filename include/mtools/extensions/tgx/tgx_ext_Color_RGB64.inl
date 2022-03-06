@@ -46,7 +46,7 @@
     /**
     * Conversion to a mtools::RGBc
     **/
-    explicit operator mtools::RGBc() 
+    explicit operator mtools::RGBc() const
         { 
         return mtools::RGBc(tgx::RGB32(*this)); 
         }

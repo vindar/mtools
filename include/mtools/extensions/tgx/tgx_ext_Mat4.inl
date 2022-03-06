@@ -21,6 +21,30 @@
 
 // **** WE ARE INSIDE THE tgx::Mat4 class ****
 
+    /**
+     * serialise/deserialize the object.
+     **/
+    template<typename U> void serialize(U& Archive, const int version = 0)
+        {
+        Archive & M;
+        }
+
+
+
+    /**
+     * Print info about the Vec2 object
+     **/
+    std::string toString() const
+        {
+        const size_t l = 19;
+        mtools::OSS os;
+        os << "tgx::Mat4<" << typeid(T).name() << ">\n";
+        os << mtools::justify_left(mtools::toString(M[0]),l,' ') << " " << mtools::justify_left(mtools::toString(M[4]), l, ' ') << " " << mtools::justify_left(mtools::toString(M[8]), l, ' ') << " " << mtools::justify_left(mtools::toString(M[12]), l, ' ') << "\n";
+        os << mtools::justify_left(mtools::toString(M[1]), l, ' ') << " " << mtools::justify_left(mtools::toString(M[5]), l, ' ') << " " << mtools::justify_left(mtools::toString(M[9]), l, ' ') << " " << mtools::justify_left(mtools::toString(M[13]), l, ' ') << "\n";
+        os << mtools::justify_left(mtools::toString(M[2]), l, ' ') << " " << mtools::justify_left(mtools::toString(M[6]), l, ' ') << " " << mtools::justify_left(mtools::toString(M[10]), l, ' ') << " " << mtools::justify_left(mtools::toString(M[14]), l, ' ') << "\n";
+        os << mtools::justify_left(mtools::toString(M[3]), l, ' ') << " " << mtools::justify_left(mtools::toString(M[7]), l, ' ') << " " << mtools::justify_left(mtools::toString(M[11]), l, ' ') << " " << mtools::justify_left(mtools::toString(M[15]), l, ' ') << "\n";
+        return os.str();
+        }
 
 
 

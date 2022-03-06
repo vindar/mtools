@@ -215,6 +215,41 @@ int main(int argc, char *argv[])
 {
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
 
+	Image iim(400, 200);
+
+	iim.clear(RGBc::c_Green);
+	iim.draw_circle(iVec2{ 200, 100 }, 50, RGBc::c_Red);
+
+	auto tim = (tgx::Image<tgx::RGB32>)iim;
+
+	tim.fillCircle({ 200,100 }, 30, tgx::RGB32_White, tgx::RGB32_Blue);
+	Image vim(tim);
+
+	mtools::cout << tim;
+	mtools::cout << vim;
+
+		{
+
+		ImageDisplay ID(800,400);
+		ID.setImage(&vim);
+		ID.display();
+		}
+
+
+
+
+
+	tgx::fMat4 M;
+
+	M.setRotate(0.1, { 1,0,0 });
+
+	{
+		mtools::OFileArchive ar("restM.txt");
+		ar & M; 
+	 }
+	mtools::cout << M << "\n";
+
+
 	auto C = mtools::RGBc::c_Salmon.getMultOpacity(0.5f);
 
 	mtools::cout << C << "\n";

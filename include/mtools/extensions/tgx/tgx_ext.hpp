@@ -28,5 +28,37 @@
 #include <tgx.h>
 
 #endif
+
+
+
+	/**
+	* Conversion from mtools::Image to tgx::Image<RGB32>
+	**/
+	mtools::Image::operator tgx::Image<tgx::RGB32>() const
+		{
+		return tgx::Image<tgx::RGB32>(data(), lx(), ly(), stride());
+		}
+
+
+	/**
+	* Constructor from a tgx::Image. 
+	**/
+	template<typename color_t>
+	mtools::Image::Image(const tgx::Image<color_t>& im) : Image()
+		{
+		if (im.isValid())
+			{
+			*this = Image(im.lx(), im.ly());
+			for (int y = 0; y < im.ly(); y++)
+				{
+				for (int x = 0; x < im.lx(); x++)
+					{
+					setPixel(x, y, (mtools::RGBc)(im.readPixel<false>(x, y)));
+					}
+				}
+			}
+		}
+
+
 /* end of file */
 

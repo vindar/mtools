@@ -22,6 +22,12 @@
 // **** WE ARE INSIDE THE tgx::Image class ****
 
 
+//
+// The mtools::Image class contain a method to convert from mtools:
+// 
+
+
+
     /**
      * Print info about the tgx::Image object
      **/
@@ -48,6 +54,11 @@
             }
         return os.str(); 
         }
+
+
+
+
+
 
 
 /* end of file */
