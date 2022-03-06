@@ -44,5 +44,24 @@
         }
 
 
+    /**
+    * Conversion to a mtools::RGBc
+    **/
+    explicit operator mtools::RGBc() 
+        {
+        return mtools::RGBc((((uint8_t)R) << 3) | (((uint8_t)R) >> 2),
+                            (((uint8_t)G) << 2) | (((uint8_t)G) >> 4),
+                            (((uint8_t)B) << 3) | (((uint8_t)B) >> 2) );
+        }
+
+
+    /**
+    * ctor from a mtools::RGBc
+    **/
+    RGB565(const mtools::RGBc col) : RGB565( ((int)col.comp.R) >> 3, ((int)col.comp.G) >> 2, ((int)col.comp.B) >> 3)
+        {
+        }
+
+
 /* end of file */
 

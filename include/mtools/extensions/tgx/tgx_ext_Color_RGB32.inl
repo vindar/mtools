@@ -42,6 +42,21 @@
         }
 
 
+    /**
+    * Conversion to a mtools::RGBc
+    **/
+    explicit operator mtools::RGBc() 
+        { 
+        return mtools::RGBc(R, G, B, A); 
+        }
+
+
+    /**
+    * ctor from a mtools::RGBc
+    **/
+    RGB32(const mtools::RGBc col) : RGB32((int)col.comp.R, (int)col.comp.G, (int)col.comp.B, (int)col.comp.A)
+        {
+        }
 
 
 /* end of file */

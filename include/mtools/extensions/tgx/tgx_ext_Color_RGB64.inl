@@ -43,6 +43,23 @@
         }
 
 
+    /**
+    * Conversion to a mtools::RGBc
+    **/
+    explicit operator mtools::RGBc() 
+        { 
+        return mtools::RGBc(tgx::RGB32(*this)); 
+        }
+
+
+    /**
+    * ctor from a mtools::RGBc
+    **/
+    RGB64(const mtools::RGBc col) : RGB64(tgx::RGB32(col))
+        {
+        }
+
+
 
 
 /* end of file */

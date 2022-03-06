@@ -204,23 +204,24 @@ void testdrawer()
 
 
 
+
 int a[100];
+
+typedef tgx::RGBf TT;
+
+
 
 int main(int argc, char *argv[])
 {
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
 
+	auto C = mtools::RGBc::c_Salmon.getMultOpacity(0.5f);
 
-	tgx::fVec4 V(1, 2,3, 5);
-
-	mtools::fVec4 VV(V);
-
-	auto W = (tgx::iVec4)VV;
-
-	mtools::cout << W << "\n";
-
-
-
+	mtools::cout << C << "\n";
+	TT cc = TT(C);
+	mtools::cout << cc << "\n";
+	mtools::RGBc d = (mtools::RGBc)cc; 
+	mtools::cout << d << "\n";
 
 
 	tgx::Image<tgx::RGB565> im((void*)a, 320,240);

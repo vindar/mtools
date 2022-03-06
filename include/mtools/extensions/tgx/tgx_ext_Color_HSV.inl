@@ -43,6 +43,24 @@
         }
 
 
+    /**
+    * Conversion to a mtools::RGBc
+    **/
+    explicit operator mtools::RGBc() 
+        { 
+        tgx::RGB24 c(*this);
+        return mtools::RGBc(c.R, c.G, c.B); 
+        }
+
+
+    /**
+    * ctor from a mtools::RGBc
+    **/
+    HSV(const mtools::RGBc col) : HSV(tgx::RGB24((int)col.comp.R, (int)col.comp.G, (int)col.comp.B))
+        {
+        }
+
+
 
 /* end of file */
 
