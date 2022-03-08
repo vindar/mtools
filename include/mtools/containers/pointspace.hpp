@@ -617,7 +617,7 @@ namespace mtools
                 {
                 if (_calldtor)
                     {
-                    _nodePool.destroyAndFreeAll<PointSpaceNode<DIM, T, NB_OBJ_PER_NODE> >(true);
+                    _nodePool.template destroyAndFreeAll<PointSpaceNode<DIM, T, NB_OBJ_PER_NODE> >(true);
                     }
                 }
 
@@ -701,7 +701,7 @@ namespace mtools
             /**
              * Query whether destructors are called when a T object is deleted/removed.
             **/
-            void callDtors() const
+            bool callDtors() const
                 {
                 return _calldtor;
                 }
@@ -787,7 +787,7 @@ namespace mtools
                 {
                 if (_calldtor)
                     {
-                    _nodePool.destroyAndFreeAll<PointSpaceNode<DIM, T, NB_OBJ_PER_NODE> >(false);
+                    _nodePool.template destroyAndFreeAll<PointSpaceNode<DIM, T, NB_OBJ_PER_NODE> >(false);
                     }
                 else
                     {
@@ -841,7 +841,7 @@ namespace mtools
             **/
             template<typename OARCHIVE> void serialize(OARCHIVE & ar) const
                 {
-                ar << "PointSpace<" << DIM << "," << typeid(A).name() << ">\n";
+                ar << "PointSpace<" << DIM << "," << typeid(T).name() << ">\n";
                 ar & DIM; ar << "\n";
                 ar & _bounding_box; ar << "\n";
                 ar & _nb_obj; ar << "\n";
@@ -964,7 +964,7 @@ namespace mtools
                 {
                 if (hint != nullptr)
                     {
-                    auto node = hint->_getNode<NB_OBJ_PER_NODE>();
+                    auto node = hint->template _getNode<NB_OBJ_PER_NODE>();
                     if (node->boundaryBox.isInside(pos))
                         {
                         _nb_obj++;
@@ -1018,7 +1018,7 @@ namespace mtools
                 {
                 if (hint != nullptr)
                     {
-                    auto node = hint->_getNode<NB_OBJ_PER_NODE>();
+                    auto node = hint->template _getNode<NB_OBJ_PER_NODE>();
                     if (node->boundaryBox.isInside(pos))
                         {
                         _nb_obj++;
@@ -1050,7 +1050,7 @@ namespace mtools
             **/
             void remove(PointSpaceObj<DIM, T> * obj)
                 {
-                PointSpaceNode<DIM, T, NB_OBJ_PER_NODE>* node = obj->_getNode< NB_OBJ_PER_NODE>();
+                PointSpaceNode<DIM, T, NB_OBJ_PER_NODE>* node = obj->template _getNode< NB_OBJ_PER_NODE>();
                 if (_calldtor) 
                     { 
                     node->remove<true, sizeof(PointSpaceNode < DIM, T, NB_OBJ_PER_NODE>), NB_NODE_PER_MEM_POOL >(obj->_child_index, &_nodePool); 
@@ -1081,7 +1081,7 @@ namespace mtools
             size_t vector(std::vector<PointSpaceObj<DIM, T>*>& vec, fBox<DIM>& B) const
                 {
                 size_t nb = 0;
-                iterate_const(B, [&](const PointSpaceObj & obj) {
+                iterate_const(B, [&](const PointSpaceObj<DIM, T> & obj) {
                     vec.push_back((PointSpaceObj<DIM, T>*)&obj);
                     });
                 return nb;
