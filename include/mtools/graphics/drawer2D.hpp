@@ -231,7 +231,7 @@ namespace mtools
 		/**
 		* Set the size of the image. 
 		**/
-		void imageSize(mtools::iVec2 & imsize)
+		void imageSize(mtools::iVec2 imsize)
 			{			
 			_disp.removeImage();
 			_im.resizeRaw(imsize);
