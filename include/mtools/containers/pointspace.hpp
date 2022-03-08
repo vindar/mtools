@@ -120,6 +120,11 @@ namespace mtools
 
 
 
+    // forward declaration
+    template<int, typename, size_t> class PointSpaceNode;
+    template<int, typename, size_t, size_t> class PointSpace;
+
+
 
     /**
     * Structure that encapsulate a d-dimensional point with a given payload (data). 
