@@ -55,7 +55,7 @@ namespace mtools
         class RangeManager
         {
             friend class View2DWidget;
-            friend class Drawer2D; 
+            friend class mtools::Drawer2D; 
 
             public:
 
