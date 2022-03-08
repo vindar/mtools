@@ -357,7 +357,8 @@ namespace mtools
         // e = output list of edges of the triangulation
         // v = output voronoi diagram
         // Q = quiet, no info
-        triangulate("czevQ", &in, &mid, &vorout);
+        char param[6] = "czevQ";
+        triangulate(param, &in, &mid, &vorout);
 
         _copy(VoronoiVertices, vorout.pointlist, vorout.numberofpoints);
         trifree(vorout.pointlist);
