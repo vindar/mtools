@@ -55,7 +55,7 @@
     * ctor from a mtools::Vec<U,3>
     **/
     template<typename U>
-    Vec3(const mtools::Vec<U, 3> & V) : Vec2((T)V.X(), (T)V.Y()), z((T)V.Z())
+    Vec3(const mtools::Vec<U, 3> & V) : tgx::Vec2<T>((T)V.X(), (T)V.Y()), z((T)V.Z())
         {
         }
 

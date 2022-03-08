@@ -215,6 +215,8 @@ int main(int argc, char *argv[])
 {
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
 
+	tgx::fVec3 Y(mtools::fVec3(1, 2, 3));
+	mtools::cout << Y << "\n\n";
 	Image iim(400, 200);
 
 	iim.clear(RGBc::c_Green);
