@@ -59,6 +59,8 @@ namespace mtools
         class Plotter2DObj
         {
 
+            friend class Drawer2D; 
+
         public:
 
             /**
