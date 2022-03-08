@@ -4896,7 +4896,7 @@ namespace mtools
 				resizeRaw(width, height);
 				clear(RGBc::c_Gray);
 
-				cinfo.out_color_space = JCS_EXT_BGRA;  // matches byte ordering with RGBc
+				cinfo.out_color_space = J_COLOR_SPACE::JCS_EXT_BGRA;  // matches byte ordering with RGBc
 
 				while (cinfo.output_scanline < height)
 					{

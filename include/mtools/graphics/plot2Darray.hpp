@@ -198,7 +198,7 @@ namespace mtools
 			const double _e = (_maxDomain - _minDomain) / (_len - 1);
 			if (!((_e >= DBL_MIN * 2) && (_e <= DBL_MAX / 2.0))) return std::numeric_limits<double>::quiet_NaN();
 			size_t n = (size_t)((x - _minDomain) / _e);
-			if (n >= _len) std::numeric_limits<double>::quiet_NaN();
+			if (n >= _len) return std::numeric_limits<double>::quiet_NaN();
 
 			if (t == INTERPOLATION_LINEAR)
                 {

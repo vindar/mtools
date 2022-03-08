@@ -38,7 +38,7 @@
 	**/
 	mtools::Image::operator tgx::Image<tgx::RGB32>() const
 		{
-		return tgx::Image<tgx::RGB32>(data(), lx(), ly(), stride());
+		return tgx::Image<tgx::RGB32>(data(), (int)lx(), (int)ly(), (int)stride());
 		}
 
 
