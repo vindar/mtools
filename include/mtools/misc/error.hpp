@@ -114,7 +114,7 @@ namespace mtools
 
 #else
 
-	#define MTOOLS_THROW(_ex) mtools::internals_error::_throws_nodebug(__FILE__ , __LINE__, ((std::ostringstream() << _ex)).str())
+	#define MTOOLS_THROW(_ex) mtools::internals_error::_throws_nodebug(__FILE__ , __LINE__, (((std::ostringstream)(std::ostringstream() << _ex)).str()) )
 
 	#define MTOOLS_DEBUG(_ex) ((void)0)
 
