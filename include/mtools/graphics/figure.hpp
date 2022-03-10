@@ -5005,7 +5005,7 @@ namespace mtools
 			FIGURECLASS_BEGIN(Pair)
 				
 
-			 template<int N> friend class FigureCanvas;
+			 template<int N> friend class mtools::FigureCanvas;
 
 			fBox2 _global_bb;								
 			internals_figure::FigureInterface * _fig1;	
