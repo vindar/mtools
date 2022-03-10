@@ -631,7 +631,7 @@ namespace mtools
 		/**
 		* Process incomming messages
 		**/
-		virtual int message(int64 code)
+		virtual int message(int64 code) override
 			{
 			switch (code)
 				{
@@ -840,7 +840,7 @@ namespace mtools
 		/**
 		* Process incomming messages
 		**/
-		virtual int message(int64 code)
+		virtual int message(int64 code) override
 			{
 			switch (code)
 				{

@@ -759,7 +759,7 @@ class IntegerEmpiricalDistribution
 			os << " - P(X = +infty) = " << probaPlusInfinity() << "   \t(" << nbPlusInfinity() << " values)\n";
 			os << " - P(X = 0) = " << probaZero() << "   \t(" << nbZero() <<  " values)\n";
 			os << " - P(X < 0) = " << probaNegative() << "   \t(" << nbNegative() << " values)\n";
-			os << " - P(X > 0) = " << probaPositive() << "   \t(" << nbPositive() + " values)\n";
+			os << " - P(X > 0) = " << probaPositive() << "   \t(" << nbPositive() << " values)\n";
 			return os.str();
 			}
 
