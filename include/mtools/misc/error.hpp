@@ -85,7 +85,6 @@ namespace mtools
 
 
 
-
 /* used for overloading macro with 1 or 2 parameters, see : https://stackoverflow.com/questions/11761703/overloading-macro-on-number-of-arguments/11763196 */
 #define MTOOLS_MSVC_BUGFIX_EXPAND(x) x
 #define MTOOLS_GET_MACRO_1_2_PARAM(_1, _2, _name, ...) _name
