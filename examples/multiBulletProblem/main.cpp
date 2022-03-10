@@ -132,6 +132,8 @@ public:
 	const std::vector< std::pair<int64, fVec2> > & results() const { return _res; }
 
 
+	struct MultiBulletProblem_default_functor;
+
 	/**
 	* Run the dynamic up to a given time.
 	*
