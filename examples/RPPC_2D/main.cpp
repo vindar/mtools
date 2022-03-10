@@ -224,7 +224,7 @@ void makeDelaunay()
     mtools::cout << "Computing the Voronoi diagram... ";
     mtools::Chrono ch;
     DV.DelaunayVertices.clear();
-    for (size_t k = 0; k < (int)vec.size(); k++)
+    for (size_t k = 0; k < (size_t)vec.size(); k++)
         {
         DV.DelaunayVertices.push_back(vec[k]->position());
         }
@@ -263,7 +263,7 @@ void drawRNNT()
             }
         }
 
-    for (int k = 0; k < DV.VoronoiEdgesIndices.size(); k++)
+    for (int k = 0; k < (int)DV.VoronoiEdgesIndices.size(); k++)
         {
         auto e = DV.VoronoiEdgesIndices[k];
         auto f = DV.DelaunayEdgesIndices[k];

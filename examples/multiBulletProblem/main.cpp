@@ -105,7 +105,7 @@ public:
 		_index_to_iterator.resize(l + n);
 		const size_t a = _event_add.size();
 		_event_add.resize(a + n);
-		std::memmove(&(_event_add[a]), &(_event_add[0]), n * sizeof(std::pair<double, int64>));
+		std::memmove((void *)(&(_event_add[a])), (void *)(&(_event_add[0])), n * sizeof(std::pair<double, int64>));
 		for (size_t i = 0; i < n; i++)
 		{
 			const double t = tab[i].second;						// apparition time

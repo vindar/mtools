@@ -258,7 +258,7 @@ namespace mtools
             ~PointSpaceNode()
                 {
                 PointSpaceObj<DIM, T>* o = (PointSpaceObj<DIM, T>*)obj;
-                for (int k = 0; k < SIZE; k++)
+                for (int k = 0; k < (int)SIZE; k++)
                     {
                     if (o[k]._child_index == k)
                         { // object alive so we destroy it
@@ -301,7 +301,7 @@ namespace mtools
             PointSpaceNode(const fBox<DIM>& B, int32_t split_index) : childs{ nullptr,nullptr }, father(nullptr), boundaryBox(B), nb_siblings(0), next_free(0), splitting_index(split_index)
                 {
                 PointSpaceObj<DIM, T>* o = (PointSpaceObj<DIM, T>*)obj;                
-                for (int k = 0; k < SIZE - 1; k++) { o[k]._setNextFree(k + 1); }
+                for (size_t k = 0; k < SIZE - 1; k++) { o[k]._setNextFree(k + 1); }
                 o[SIZE - 1]._setLastFree();
                 }
 
@@ -331,7 +331,7 @@ namespace mtools
                 new (&(o[0].data)) T;
                 o[0]._position = pos;
                 o[0]._child_index = 0;
-                for(int k = 1; k < SIZE - 1; k++) { o[k]._setNextFree(k + 1); }
+                for(int k = 1; k < (int)SIZE - 1; k++) { o[k]._setNextFree(k + 1); }
                 o[SIZE - 1]._setLastFree();
                 }
 
@@ -402,11 +402,11 @@ namespace mtools
             PointSpaceObj<DIM, T>* addObj(const mtools::fVec<DIM>& pos, mtools::CstSizeMemoryPool<SIZE_NODE, POOL_SIZE>* nodePool)
                 {
                 MTOOLS_INSURE(boundaryBox.isInside(pos));
-                if (nb_siblings < SIZE)
+                if (nb_siblings < (int32_t)SIZE)
                     { // we can add it here
                     nb_siblings++;
                     const int32_t nf = next_free;
-                    MTOOLS_INSURE((nf >= 0) && (nf < SIZE)); // should be valid !
+                    MTOOLS_INSURE((nf >= 0) && (nf < (int32_t)SIZE)); // should be valid !
                     PointSpaceObj<DIM, T> * o = ((PointSpaceObj<DIM, T>*)obj) + nf;
                     new (&(o->data)) T; // copy ctor
                     next_free = o->_nextFree();
@@ -490,7 +490,7 @@ namespace mtools
                 os << _spaces(sp) << " - boundary box : " << boundaryBox << "\n";
                 os << _spaces(sp) << " - nb siblings  : " << nb_siblings << " / " << SIZE << "\n";
                 PointSpaceObj<DIM, T>* o = ((PointSpaceObj<DIM, T>*)obj);
-                for (int k = 0; k < SIZE; k++)
+                for (int k = 0; k < (int)SIZE; k++)
                     {
                     os << _spaces(sp) << "   |-> [" << k << "] ";
                     if (o[k]._child_index >= 0)
@@ -1821,7 +1821,7 @@ namespace mtools
                 if (!fun_box(node->boundaryBox)) return true; // do not explore this node
 
                 PointSpaceObj<DIM, T>* o = (PointSpaceObj<DIM, T>*)node->obj;
-                for (int k = 0; k < NB_OBJ_PER_NODE; k++)
+                for (int k = 0; k < (int)NB_OBJ_PER_NODE; k++)
                     {
                     if (o[k]._child_index == k)
                         {
