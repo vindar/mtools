@@ -170,6 +170,10 @@ else ()
 endif ()
 
 
+# for the time being, we disable usage of libjpeg-turbo specifics (even if loaded)
+set(MTOOLS_JPEG_TURBO 0)
+
+
 if (OpenGL_OpenGL_FOUND)
     option(USE_OPENGL "build with OpenGL support" ON)    
 endif()

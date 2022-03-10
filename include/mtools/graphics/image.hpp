@@ -4824,6 +4824,9 @@ namespace mtools
 #endif 
 
 
+
+#if (MTOOLS_USE_JPEG_TURBO)
+
             /**
              * Load an image from a raw jpeg buffer. Uses libjpeg to decompress the buffer into the image.
              *
@@ -4910,7 +4913,7 @@ namespace mtools
 				return true;
 				}
 
-
+#endif
 
 
 			/**
