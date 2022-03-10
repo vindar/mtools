@@ -132,7 +132,15 @@ public:
 	const std::vector< std::pair<int64, fVec2> > & results() const { return _res; }
 
 
-	struct MultiBulletProblem_default_functor;
+private:
+
+	struct MultiBulletProblem_default_functor
+		{
+		/** The default collision function remove both particles. */
+		MTOOLS_FORCEINLINE std::pair<bool, bool> operator()(fVec2 pos, int64 index_left, int64 index_right) { return{ true,true }; }
+		};
+
+public:
 
 	/**
 	* Run the dynamic up to a given time.
@@ -338,19 +346,9 @@ public:
 
 
 
-
-
-
-
 private:
 
-	friend struct MultiBulletComparator;
-
-	struct MultiBulletProblem_default_functor
-	{
-		/** The default collision function remove both particles. */
-		MTOOLS_FORCEINLINE std::pair<bool, bool> operator()(fVec2 pos, int64 index_left, int64 index_right) { return{ true,true }; }
-	};
+	friend struct MultiBulletComparator;	
 
 	static MultiBulletProblem_default_functor multiBulletProblem_default_functor;	// unique instance of the class. 
 
