@@ -232,7 +232,7 @@ namespace mtools
 
 
                 ProxyArg(const ProxyArg &) = default;               // default copy ctor
-                ProxyArg& operator=(const ProxyArg &) = default;    // and assignement operator
+                // ProxyArg& operator=(const ProxyArg &) = default;    // and assignement operator
 
             private:
 

@@ -287,7 +287,7 @@ class ImageWidgetExt : public ImageWidget
 		void _callback(Fl_Widget* W);
 
 
-		virtual void resize(int X, int Y, int W, int H);
+		virtual void resize(int X, int Y, int W, int H) override;
 
 
 		/** Updates the _im from _extim according to the current range */

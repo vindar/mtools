@@ -1689,7 +1689,7 @@ namespace mtools
 			}
 
 
-			virtual void virt_svg(mtools::SVGElement * el) const
+			virtual void virt_svg(mtools::SVGElement * el) const override
 				{
 				el->SetName("line");
 				el->setStrokeColor(color);
@@ -1785,7 +1785,7 @@ namespace mtools
 			}
 
 
-			virtual void virt_svg(mtools::SVGElement * el) const
+			virtual void virt_svg(mtools::SVGElement * el) const override
 				{
 				el->SetName("line");
 				el->setStrokeColor(color);
@@ -1879,7 +1879,7 @@ namespace mtools
 				}
 
 
-			virtual void virt_svg(mtools::SVGElement * el) const
+			virtual void virt_svg(mtools::SVGElement * el) const override
 				{
 				el->SetName("line");
 				el->setStrokeColor(color);
@@ -4703,7 +4703,7 @@ namespace mtools
 					{
 					const char c = _text[i];
 					if (c >= 32) { x += arial_64px_width[(size_t)(c)]; }
-					else if (c == '\t') { x += 4 * arial_64px_width[' ']; }
+					else if (c == '\t') { x += 4 * arial_64px_width[(size_t)(' ')]; }
 					else if (c == '\n') { if (x > mx) { mx = x; } x = 0;  my += vspace; }
 					}
 				if (x > mx) { mx = x; }
@@ -4720,7 +4720,7 @@ namespace mtools
 				for(size_t i=0; i < _text.size(); i++)
 					{
 					const char c = _text[i]; 
-					if ((c > 32)&&(c < 128)) { os << c; }
+					if ((c > 32)&&((unsigned char)c < 128)) { os << c; }
 					else if (c == '\t') { for (int j = 0; j < 4; j++) { os << (char)(0xC2) << (char)(0xA0); } }
 					else if (c == '\n') { svec.push_back(os.str()); os.clear(); }
 					else if (c == ' ') { os << (char)(0xC2) << (char)(0xA0); }
@@ -5005,7 +5005,7 @@ namespace mtools
 			FIGURECLASS_BEGIN(Pair)
 				
 
-			 template<int N> friend class mtools::FigureCanvas;
+			template<int N> friend class mtools::FigureCanvas;
 
 			fBox2 _global_bb;								
 			internals_figure::FigureInterface * _fig1;	
