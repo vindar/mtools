@@ -126,7 +126,7 @@ Examples:
 1) All the support libraries can be installed with homebrew 
    (http://brew.sh). For instance:
    
-         brew install python pkg-config glib libpng libjpeg freetype cimg pixman cairo fltk tinyxml2
+         brew install cmake python pkg-config glib libpng jpeg-turbo freetype cimg pixman cairo fltk tinyxml2
 		
 2) gcc is recommended over clang (although both compiler should 
    work). It can be installed with

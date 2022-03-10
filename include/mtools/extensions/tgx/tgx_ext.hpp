@@ -27,9 +27,6 @@
 // add the tgx library, which in turn will load the tgx_ext_XXX.h file inside its classes. 
 #include <tgx.h>
 
-#endif
-
-
 
 	/**
 	* Conversion from mtools::Image to tgx::Image<RGB32>
@@ -63,6 +60,10 @@
 				}
 			}
 		}
+
+
+
+#endif
 
 
 /* end of file */
