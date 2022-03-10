@@ -92,30 +92,30 @@ namespace mtools
 
 
 /* Error macro : use stringstream so we can use << to concatenate messages */
-#define MTOOLS_ERROR(_ex) mtools::internals_error::_error(__FILE__,__LINE__,(static_cast<std::ostringstream &>(std::ostringstream() << _ex)).str())
+#define MTOOLS_ERROR(_ex) mtools::internals_error::_error(__FILE__,__LINE__,(static_cast<std::ostringstream>(std::ostringstream() << _ex)).str())
 
 /* Insure macro */
 #define MTOOLS_INSURE_1(_ex)       ((void)( (!!(_ex)) || (mtools::internals_error::_insures1(__FILE__ , __LINE__,(#_ex))) ))
-#define MTOOLS_INSURE_2(_ex, _msg) ((void)( (!!(_ex)) || (mtools::internals_error::_insures2(__FILE__ , __LINE__, (#_ex) , (static_cast<std::ostringstream &>(std::ostringstream() << _msg)).str()))))
+#define MTOOLS_INSURE_2(_ex, _msg) ((void)( (!!(_ex)) || (mtools::internals_error::_insures2(__FILE__ , __LINE__, (#_ex) , (static_cast<std::ostringstream>(std::ostringstream() << _msg)).str()))))
 #define MTOOLS_INSURE(...) MTOOLS_MSVC_BUGFIX_EXPAND(MTOOLS_GET_MACRO_1_2_PARAM(__VA_ARGS__, MTOOLS_INSURE_2, MTOOLS_INSURE_1, _UNUSED)(__VA_ARGS__))
 
 
 
 #ifdef MTOOLS_DEBUG_FLAG
 
-	#define MTOOLS_THROW(_ex) mtools::internals_error::_throws_debug(__FILE__ , __LINE__, (static_cast<std::ostringstream &>(std::ostringstream() << _ex)).str())
+	#define MTOOLS_THROW(_ex) mtools::internals_error::_throws_debug(__FILE__ , __LINE__, (static_cast<std::ostringstream>(std::ostringstream() << _ex)).str())
 
-	#define MTOOLS_DEBUG(_ex) mtools::internals_error::_debugs(__FILE__ , __LINE__, (static_cast<std::ostringstream &>(std::ostringstream() << _ex)).str())
+	#define MTOOLS_DEBUG(_ex) mtools::internals_error::_debugs(__FILE__ , __LINE__, (static_cast<std::ostringstream>(std::ostringstream() << _ex)).str())
 
 	#define MTOOLS_DEBUG_CODE(_code) { _code }
 
 	#define MTOOLS_ASSERT_1(_ex)	   ((void)( (!!(_ex)) || (mtools::internals_error::_asserts1(__FILE__ , __LINE__,(#_ex)))))
-	#define MTOOLS_ASSERT_2(_ex, _msg) ((void)( (!!(_ex)) || (mtools::internals_error::_asserts2(__FILE__ , __LINE__,(#_ex), (static_cast<std::ostringstream &>(std::ostringstream() << _msg)).str()))))
+	#define MTOOLS_ASSERT_2(_ex, _msg) ((void)( (!!(_ex)) || (mtools::internals_error::_asserts2(__FILE__ , __LINE__,(#_ex), (static_cast<std::ostringstream>(std::ostringstream() << _msg)).str()))))
 	#define MTOOLS_ASSERT(...) MTOOLS_MSVC_BUGFIX_EXPAND(MTOOLS_GET_MACRO_1_2_PARAM(__VA_ARGS__, MTOOLS_ASSERT_2, MTOOLS_ASSERT_1, _UNUSED)(__VA_ARGS__))
 
 #else
 
-	#define MTOOLS_THROW(_ex) mtools::internals_error::_throws_nodebug(__FILE__ , __LINE__, (static_cast<std::ostringstream &>(std::ostringstream() << _ex)).str())
+	#define MTOOLS_THROW(_ex) mtools::internals_error::_throws_nodebug(__FILE__ , __LINE__, (static_cast<std::ostringstream>(std::ostringstream() << _ex)).str())
 
 	#define MTOOLS_DEBUG(_ex) ((void)0)
 
