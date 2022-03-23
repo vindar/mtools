@@ -13,10 +13,12 @@ tgx::Image<tgx::RGB32> tgxim(fbim);
 
 
 
-const int LOADED_SHADERS = TGX_SHADER_PERSPECTIVE | TGX_SHADER_ZBUFFER | TGX_SHADER_GOURAUD;
-tgx::Renderer3D<tgx::RGB32, LX, LY, LOADED_SHADERS> renderer; 
+typedef uint16_t ZBUF_t;
 
-float zbuf[LX * LY]; 
+const int LOADED_SHADERS = TGX_SHADER_PERSPECTIVE | TGX_SHADER_ZBUFFER | TGX_SHADER_GOURAUD | TGX_SHADER_FLAT;
+tgx::Renderer3D<tgx::RGB32, LX, LY, LOADED_SHADERS, ZBUF_t> renderer;
+
+ZBUF_t zbuf[LX * LY];
 
 ImageDisplay ID(LX, LY);
 
@@ -31,27 +33,29 @@ int main(int argc, char *argv[])
 	renderer.setOffset(0, 0);
 	renderer.setImage(&tgxim);
 	renderer.setZbuffer(zbuf);
-	renderer.setPerspective(45, ((float)LX) / LY, 0.1f, 1000.0f);  // set the perspective projection matrix.     
+	renderer.setPerspective(45, ((float)LX) / LY, 1.0f, 100.0f);  // set the perspective projection matrix.     
 	renderer.setMaterial(tgx::RGBf(0.85f, 0.55f, 0.25f), 0.2f, 0.7f, 0.8f, 64); // bronze color with a lot of specular reflexion. 
 	renderer.setShaders(TGX_SHADER_GOURAUD);
+	
 
-
+	
 
 	ID.setImage(&fbim);
 	ID.startDisplay();
 	while (ID.isDisplayOn())
 		{
-		tgxim.fillScreen(tgx::RGB32_Blue);
+		tgxim.fillScreen(tgx::RGB32_White);
 
 		renderer.clearZbuffer();
 
-		renderer.setModelPosScaleRot({ 0, 0.5f, -35 }, { 13,13,13 }, a);
-
+		renderer.setMaterialColor(tgx::RGBf(0, 1, 0));
+		renderer.setModelPosScaleRot({ 0, 0.5f, -35 }, { 1,1,1 }, a);
 		renderer.drawMesh(&buddha, false);
+		
 
 		ID.redrawNow();
 
-		a += 0.5f;
+		a += 2.0f;
 		}
 
 
