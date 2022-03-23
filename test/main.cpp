@@ -1,320 +1,62 @@
 #include <mtools/mtools.hpp>
 using namespace mtools;
 
+#include "buddha.h"
 
 
-double f(double x)
-	{
-	return sin(x);
-	}
 
+const int LX = 1000; 
+const int LY = 1000; 
 
-void test()
-	{
-	auto P = makePlot2DFun(f, "sin");
-	auto Q = makePlot2DFun(f, "sin");
+Image fbim(LX, LY);
+tgx::Image<tgx::RGB32> tgxim(fbim);
 
-	Plotter2D plotter;
-	plotter[P]; 
-	plotter[Q];
-	plotter.autorangeXY();
 
-	plotter.plot(); 
-	plotter.remove(P);
-	}
 
+const int LOADED_SHADERS = TGX_SHADER_PERSPECTIVE | TGX_SHADER_ZBUFFER | TGX_SHADER_GOURAUD;
+tgx::Renderer3D<tgx::RGB32, LX, LY, LOADED_SHADERS> renderer; 
 
+float zbuf[LX * LY]; 
 
+ImageDisplay ID(LX, LY);
 
 
-
-
-
-Image im(500, 600);
-
-
-
-
-
-
-void testImageDisplay()
-{
-	MT2004_64 gen;
-	im.clear(RGBc::c_Yellow);
-	im.draw_circle(iVec2{ 250,300 }, 200, RGBc::c_Red);
-	im.draw_text({ 100,100 }, "Hello World\n", MTOOLS_TEXT_TOPLEFT, RGBc::c_Blue, 80);
-
-
-	ImageDisplay ID(800, 600, 100, 100, "ImageDisplay",false);
-
-	ID.allowUserSelection(true);
-	ID.forceSelectionBeforeClosing(true);
-	ID.setSelection(iBox2(0, 50, 100, 200));
-
-
-	ID(im);
-
-	cout << "START  !\n";
-
-
-	ID.autoredraw(100);
-
-	ID.startDisplay();
-
-	while (ID.isDisplayOn()) 
-		{ 
-		double a = Unif(gen) * 500;
-		double b = Unif(gen) * 600;
-		double c = Unif(gen) * 10;
-
-		int R = Unif(gen) * 255;
-		int G = Unif(gen) * 255;
-		int B = Unif(gen) * 255;
-		RGBc col(R, G, B);
-
-		im.draw_filled_circle({ a,b }, c, col, col);
-		}
-
-
-	cout << ID.getSelection(true) << "\n";
-
-	return;
-}
-
-
-
-
-
-	
-
-
-
-
-void testDelaunayVoronoi()
-	{
-	mtools::MT2004_64 gen(0);
-	mtools::DelaunayVoronoi DV;
-
-	// add 100 points uniformly distributed in [0,1]^2
-	for (int i = 0; i < 100; i++) DV.DelaunayVertices.push_back(mtools::fVec2(Unif(gen), Unif(gen)));
-		
-	// compute the Delaunay trianulation and Voronoi diagram
-	DV.compute(); 
-
-	// draw the graphs
-	mtools::Plotter2D plotter; 
-	auto canvas = mtools::makeFigureCanvas(2);
-
-	// draw the Delaunay triangulation
-	int nb_D_e = (int)DV.DelaunayEdgesIndices.size();
-	for (int k = 0; k < nb_D_e; k++)
-		{
-		mtools::iVec2 e = DV.DelaunayEdgesIndices[k];
-		canvas(mtools::Figure::Line(DV.DelaunayVertices[e.X()], DV.DelaunayVertices[e.Y()], mtools::RGBc::c_Red), 0);
-		}
-
-	// draw the Voronoi diagram
-	int nb_V_e = (int)DV.VoronoiEdgesIndices.size();
-	for (int k = 0; k < nb_V_e; k++)
-		{
-		auto e = DV.VoronoiEdgesIndices[k];
-		mtools::fVec2 P1 = DV.VoronoiVertices[e.X()];
-		if (e.Y() == -1)
-			{ // semi-infinite ray
-			mtools::fVec2 N = DV.VoronoiNormals[e.X()];
-			canvas(mtools::Figure::Line(P1, P1 + N, mtools::RGBc::c_Green), 1);
-			}
-		else
-			{ // regular edge
-			mtools::fVec2 P2 = DV.VoronoiVertices[e.Y()];
-			canvas(mtools::Figure::Line(P1, P2, mtools::RGBc::c_Black), 1);
-			}
-		}
-
-	// plot
-
-
-	
-	Drawer2D drawer(1000,1000,true,true);
-
-	auto P = mtools::makePlot2DFigure(canvas, 4, "Delaunay Voronoi");
-
-	drawer[P];
-	drawer.range().setRange({ 0,1,0,1 });
-	drawer.range().zoomOut(); 
-
-	drawer.drawBackground(RGBc::c_White);
-	drawer.drawAndSave("im.png");
-
-	drawer.waitForClose();
-	
-	}
-
-
-
-
-
-
-
-
-
-
-
-char bb[10000000];
-
-
-
-
-
-namespace mtools
-{
-
-
-}
-
-
-
-
-
-double sc(double s)
-	{
-
-	auto P = makePlot2DAxes();
-	
-
-	if (s == 0) return 1.0;
-	return sin(s) / s;
-	}
-
-
-void testdrawer()
-	{
-
-	//Display2D disp;
-
-	//disp.test();
-
-
-	}
-
-
-
-
-
-
-
-
-
-int a[100];
-
-typedef tgx::RGBf TT;
-
-
+float a = 0;
 
 int main(int argc, char *argv[])
 {
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
 
-	tgx::fVec3 Y(mtools::fVec3(1, 2, 3));
-	mtools::cout << Y << "\n\n";
-	Image iim(400, 200);
+	// setup the 3D renderer.
+	renderer.setOffset(0, 0);
+	renderer.setImage(&tgxim);
+	renderer.setZbuffer(zbuf);
+	renderer.setPerspective(45, ((float)LX) / LY, 0.1f, 1000.0f);  // set the perspective projection matrix.     
+	renderer.setMaterial(tgx::RGBf(0.85f, 0.55f, 0.25f), 0.2f, 0.7f, 0.8f, 64); // bronze color with a lot of specular reflexion. 
+	renderer.setShaders(TGX_SHADER_GOURAUD);
 
-	iim.clear(RGBc::c_Green);
-	iim.draw_circle(iVec2{ 200, 100 }, 50, RGBc::c_Red);
 
-	auto tim = (tgx::Image<tgx::RGB32>)iim;
 
-	tim.fillCircle({ 200,100 }, 30, tgx::RGB32_White, tgx::RGB32_Blue);
-	Image vim(tim);
-
-	mtools::cout << tim;
-	mtools::cout << vim;
-
+	ID.setImage(&fbim);
+	ID.startDisplay();
+	while (ID.isDisplayOn())
 		{
+		tgxim.fillScreen(tgx::RGB32_Blue);
 
-		ImageDisplay ID(800,400);
-		ID.setImage(&vim);
-		ID.display();
+		renderer.clearZbuffer();
+
+		renderer.setModelPosScaleRot({ 0, 0.5f, -35 }, { 13,13,13 }, a);
+
+		renderer.drawMesh(&buddha, false);
+
+		ID.redrawNow();
+
+		a += 0.5f;
 		}
 
 
-
-
-
-	tgx::fMat4 M;
-
-	M.setRotate(0.1, { 1,0,0 });
-
-	{
-		mtools::OFileArchive ar("restM.txt");
-		ar & M; 
-	 }
-	mtools::cout << M << "\n";
-
-
-	auto C = mtools::RGBc::c_Salmon.getMultOpacity(0.5f);
-
-	mtools::cout << C << "\n";
-	TT cc = TT(C);
-	mtools::cout << cc << "\n";
-	mtools::RGBc d = (mtools::RGBc)cc; 
-	mtools::cout << d << "\n";
-
-
-	tgx::Image<tgx::RGB565> im((void*)a, 320,240);
-
-	cout << im.toString() << "\n";
-	cout.getKey();
-	return 0;
-
-	testDelaunayVoronoi();
-	
-	return 0;
-
-	Plotter2D plot; 
-
-
-	testdrawer();
-
-
-	return 0;
-
-	SerialPort sp;
-
-	sp.open("COM18", 2000000);
-
-	while (1)
-		{
-		//std::this_thread::sleep_for(10);
-	//	Sleep(10);
-
-		const int l = 15; 
-		cout << "- sending " << l << "\n";
-
-		sp.write(l);
-		sp.flush();
-
-		Chrono ch;
-		ch.reset();
-
-		int r = 0; 
-
-		while (r < l * 1024)
-			{			
-			if (sp.available()) sp.read();
-			r++;		
-			}
-
-		int el = (int)ch.elapsed();
-		cout << " received in " << el << "ms\n";
-		}
-
-
-
-
-
-	cout << "done !\n\n";
-	cout.getKey(); 
+	//cout << "done !\n\n";
+	//cout.getKey(); 
 	return 0; 
 
 }
