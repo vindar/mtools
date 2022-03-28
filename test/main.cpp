@@ -25,6 +25,11 @@ ImageDisplay ID(LX, LY);
 
 float a = 0;
 
+
+char cb[1000000];
+
+
+
 int main(int argc, char *argv[])
 {
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
@@ -37,8 +42,13 @@ int main(int argc, char *argv[])
 	renderer.setMaterial(tgx::RGBf(0.85f, 0.55f, 0.25f), 0.2f, 0.7f, 0.8f, 64); // bronze color with a lot of specular reflexion. 
 	renderer.setShaders(TGX_SHADER_GOURAUD);
 	
-
+	size_t ram1u = 17;
+	size_t ram2u = 18;
+	auto bb = tgx::cacheMesh(&buddha, (void*)cb, 240000, nullptr, 0, "VNTIF", &ram1u, &ram2u);
 	
+	mtools::cout << ram1u << "\n";
+	mtools::cout << ram2u << "\n";
+
 
 	ID.setImage(&fbim);
 	ID.startDisplay();
@@ -49,8 +59,8 @@ int main(int argc, char *argv[])
 		renderer.clearZbuffer();
 
 		renderer.setMaterialColor(tgx::RGBf(0, 1, 0));
-		renderer.setModelPosScaleRot({ 0, 0.5f, -35 }, { 1,1,1 }, a);
-		renderer.drawMesh(&buddha, false);
+		renderer.setModelPosScaleRot({ 0, 0.5f, -35 }, { 10,10,10 }, a);
+		renderer.drawMesh(bb, false);
 		
 
 		ID.redrawNow();
