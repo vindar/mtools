@@ -16,7 +16,7 @@ tgx::Image<tgx::RGB32> tgxim(fbim);
 typedef uint16_t ZBUF_t;
 
 const int LOADED_SHADERS = TGX_SHADER_PERSPECTIVE | TGX_SHADER_ZBUFFER | TGX_SHADER_GOURAUD | TGX_SHADER_FLAT;
-tgx::Renderer3D<tgx::RGB32, LX, LY, LOADED_SHADERS, ZBUF_t> renderer;
+tgx::Renderer3D<tgx::RGB32, LOADED_SHADERS, ZBUF_t> renderer;
 
 ZBUF_t zbuf[LX * LY];
 
@@ -35,6 +35,7 @@ int main(int argc, char *argv[])
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
 
 	// setup the 3D renderer.
+	renderer.setViewportSize(LX, LY);
 	renderer.setOffset(0, 0);
 	renderer.setImage(&tgxim);
 	renderer.setZbuffer(zbuf);
@@ -46,9 +47,8 @@ int main(int argc, char *argv[])
 	size_t ram2u = 18;
 	auto bb = tgx::cacheMesh(&buddha, (void*)cb, 240000, nullptr, 0, "VNTIF", &ram1u, &ram2u);
 	
-	mtools::cout << ram1u << "\n";
-	mtools::cout << ram2u << "\n";
-
+	
+	cout.getKey();
 
 	ID.setImage(&fbim);
 	ID.startDisplay();
@@ -59,13 +59,14 @@ int main(int argc, char *argv[])
 		renderer.clearZbuffer();
 
 		renderer.setMaterialColor(tgx::RGBf(0, 1, 0));
-		renderer.setModelPosScaleRot({ 0, 0.5f, -35 }, { 10,10,10 }, a);
+		renderer.setModelPosScaleRot({ 0, a, -35 }, { 10,10,10 }, 0);
 		renderer.drawMesh(bb, false);
 		
 
 		ID.redrawNow();
 
-		a += 2.0f;
+		a += 0.1f;
+		Sleep(100);
 		}
 
 
