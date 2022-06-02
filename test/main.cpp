@@ -30,9 +30,54 @@ char cb[1000000];
 
 
 
+
+float test(const tgx::RGBf & col)
+	{
+	return col.B;
+	}
+
+
+tgx::RGBf mult_op(tgx::RGBf colA, tgx::RGBf colB)
+	{
+	return tgx::RGBf(colA.R * colB.R, colA.G * colB.G, colA.B * colB.B);
+	}
+
+
+void testblend()
+	{
+
+	ImageDisplay ID(LX, LY);
+
+	Image src(200, 200);
+	tgx::Image<tgx::RGB32> tgx_src(src);
+	tgx_src.fillScreenHGradient(tgx::RGB32_Purple, tgx::RGB32_Orange);
+	tgx_src.fillCircle({ 100, 100 }, 80, tgx::RGB32_Salmon, tgx::RGB32_Black);
+
+	Image dst(320, 240);
+	tgx::Image<tgx::RGB32> tgx_dst(dst);
+	tgx_dst.fillScreenVGradient(tgx::RGB32_Green, tgx::RGB32_White);
+
+	tgx_dst.blend(tgx_src, { 60 , 20 }, mult_op);
+
+	ID.setImage(&dst);
+	ID.display(); 
+	return;
+	}
+
+
+
 int main(int argc, char *argv[])
 {
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
+
+
+	testblend(); 
+	return 0; 
+
+
+
+
+
 
 	// setup the 3D renderer.
 	renderer.setViewportSize(LX, LY);
