@@ -57,7 +57,13 @@ void testblend()
 	tgx::Image<tgx::RGB32> tgx_dst(dst);
 	tgx_dst.fillScreenVGradient(tgx::RGB32_Green, tgx::RGB32_White);
 
-	tgx_dst.blend(tgx_src, { 60 , 20 }, mult_op);
+	//tgx_dst.blit(tgx_src, { 60 , 20 }, mult_op);
+
+
+	tgx_dst.blitScaledRotated(tgx_src, tgx_src.dim()/2, tgx_dst.dim()/2, 1.0f, 45, [](tgx::RGB32 src, tgx::RGB32 dst) { return tgx::RGB32(src.G, src.R, src.B); });
+
+	//tgx_dst.copyFrom(tgx_dst, [](tgx::RGB32 src, tgx::RGB32 dst) {return tgx::RGB32(src.G, src.R, src.B); });
+
 
 	ID.setImage(&dst);
 	ID.display(); 
