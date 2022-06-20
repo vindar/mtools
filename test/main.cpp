@@ -77,8 +77,8 @@ int main(int argc, char *argv[])
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
 
 
-	testblend(); 
-	return 0; 
+	//testblend(); 
+	//return 0; 
 
 
 
@@ -113,6 +113,7 @@ int main(int argc, char *argv[])
 		renderer.setModelPosScaleRot({ 0, a, -35 }, { 10,10,10 }, 0);
 		renderer.drawMesh(bb, false);
 		
+
 
 		ID.redrawNow();
 
