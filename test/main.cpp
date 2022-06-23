@@ -72,6 +72,14 @@ void testblend()
 
 
 
+template<typename color_t> 
+void drawBottomRightCorner(tgx::Image<color_t> & im, int x, int y, int r, color_t color)
+	{
+	tgx::Image<color_t> sub_im = im.getCrop({ x, x + r + 1, y, y + r + 1}); // create a sub image for clipping
+	sub_im.drawCircle({ 0,0 }, r, color); // draw the circle on the sub image 
+	}
+
+
 int main(int argc, char *argv[])
 {
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
@@ -113,6 +121,12 @@ int main(int argc, char *argv[])
 		renderer.setModelPosScaleRot({ 0, a, -35 }, { 10,10,10 }, 0);
 		renderer.drawMesh(bb, false);
 		
+		//tgxim._drawCircleHelper<true>(100, 100, 50, 15, tgx::RGB32_Black);
+
+		tgxim.drawLine({ 100, 100 },{200, 100},tgx::RGB32_Green);
+		tgxim.drawLine({ 100, 100 }, { 100, 200 }, tgx::RGB32_Green);
+
+		drawBottomRightCorner(tgxim, 100, 100, 50, tgx::RGB32_Black);
 
 
 		ID.redrawNow();
