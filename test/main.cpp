@@ -4,6 +4,8 @@ using namespace mtools;
 #include "buddha.h"
 
 
+using namespace std::placeholders;
+
 
 const int LX = 1000; 
 const int LY = 1000; 
@@ -79,6 +81,22 @@ void drawBottomRightCorner(tgx::Image<color_t> & im, int x, int y, int r, color_
 	sub_im.drawCircle({ 0,0 }, r, color); // draw the circle on the sub image 
 	}
 
+class TT
+{
+public:
+
+
+	TT(double c) : a(c) {}
+
+
+	double ff(double x)
+		{
+		return a * x;
+		}
+
+private:
+	double a; 
+};
 
 int main(int argc, char *argv[])
 {
@@ -89,7 +107,23 @@ int main(int argc, char *argv[])
 	//return 0; 
 
 
+	TT tt(0.5);
 
+	{
+
+
+		auto hh = std::bind(&TT::ff, &tt, _1);
+		cout << hh(3.0);
+
+		auto P1 = makePlot2DFun([&](double x) {return x * x; }, "lambda");
+		auto P2 = makePlot2DFun( std::bind(&TT::ff, &tt, _1), "lambda");
+
+		Plotter2D plotter;
+		plotter[P1];
+		plotter[P2];
+		plotter.autorangeXY();
+		plotter.plot();
+	}
 
 
 
