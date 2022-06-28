@@ -94,9 +94,75 @@ public:
 		return a * x;
 		}
 
+
+	RGBc getcol(int64 x, int64 y)
+		{
+		return (x * x + y * y < 100*a) ? RGBc::c_Green : RGBc::c_Transparent;
+		}
+
+
 private:
 	double a; 
 };
+
+
+RGBc getcol(int64 x, int64 y)
+	{
+	return (x * x + y * y < 100) ? RGBc::c_Red : RGBc::c_Transparent;
+	}
+
+
+        template<typename T> class GetC
+            {
+            static void * dumptr;
+            typedef typename std::decay<mtools::RGBc>::type decayrgb;
+
+			/*
+            template<typename U> static decltype((*(U*)(0)).getColor(iVec2{ 0,0 }, dumptr)) vers1(int);
+            template<typename> static metaprog::no vers1(...);
+            static const bool version1 = std::is_same<typename std::decay<decltype(vers1<T>(0))>::type, decayrgb>::value;
+
+
+			
+            template<typename U> static decltype((*(U*)(0)).getColor(iVec2{ 0,0 })) vers2(int);
+            template<typename> static metaprog::no vers2(...);
+            static const bool version2 = std::is_same<typename std::decay<decltype(vers2<T>(0))>::type, decayrgb >::value;
+
+            template<typename U> static decltype((*(U*)(0)).getColor(0, 0, dumptr)) vers3(int);
+            template<typename> static metaprog::no vers3(...);
+            static const bool version3 = std::is_same<typename std::decay<decltype(vers3<T>(0))>::type, decayrgb >::value;
+
+            template<typename U> static decltype((*(U*)(0)).getColor(0, 0)) vers4(int);
+            template<typename> static metaprog::no vers4(...);
+            static const bool version4 = std::is_same<typename std::decay<decltype(vers4<T>(0))>::type, decayrgb >::value;
+
+			
+            template<typename U> static decltype((*(U*)(0))(iVec2{ 0,0 }, dumptr)) vers5(int);
+            template<typename> static metaprog::no vers5(...);
+            static const bool version5 = std::is_same<typename std::decay<decltype(vers5<T>(0))>::type, decayrgb >::value;
+
+			*/
+			
+            template<typename U> static decltype((*(U*)(0))(iVec2{ 0,0 })) vers6(int);
+            template<typename> static metaprog::no vers6(...);
+            static const bool version6 = std::is_same<typename std::decay<decltype(vers6<T>(0))>::type, decayrgb >::value;
+
+			/*
+            template<typename U> static decltype((*(U*)(0))(0, 0, dumptr)) vers7(int);
+            template<typename> static metaprog::no vers7(...);
+            static const bool version7 = std::is_same<typename std::decay<decltype(vers7<T>(0))>::type, decayrgb >::value;
+
+            template<typename U> static decltype((*(U*)(0))(0, 0)) vers8(int);
+            template<typename> static metaprog::no vers8(...);
+            static const bool version8 = std::is_same<typename std::decay<decltype(vers8<T>(0))>::type, decayrgb >::value;
+			*/
+
+
+            public:
+
+				static const bool has_getColor = version1; // | version2 | version3 | version4 | version5 | version6 | version7 | version8;
+
+            };
 
 int main(int argc, char *argv[])
 {
@@ -115,13 +181,27 @@ int main(int argc, char *argv[])
 		auto hh = std::bind(&TT::ff, &tt, _1);
 		cout << hh(3.0);
 
-		auto P1 = makePlot2DFun([&](double x) {return x * x; }, "lambda");
-		auto P2 = makePlot2DFun( std::bind(&TT::ff, &tt, _1), "lambda");
+		auto P1 = makePlot2DFun([&](double x) {return x * x; }, std::string("lambda"));
+		auto P2 = makePlot2DFun(&TT::ff, tt, 0, 1, "lambda");
+
+		//auto P3 = makePlot2DLattice(&TT::getcol, &tt, "zz");	
+		
+		auto bb = std::bind(&TT::getcol, tt, std::placeholders::_1, std::placeholders::_2);
+		
+
+		cout << "has color : " << GetC<decltype(bb)>::has_getColor << "\n";
+
+
+		//auto P3 = makePlot2DLattice(bb);
+			
+
+		//cout << bb(2, 4);
 
 		Plotter2D plotter;
 		plotter[P1];
 		plotter[P2];
-		plotter.autorangeXY();
+		//plotter[P3];
+		plotter.range().setRange({ -20,20, -20, 20 });
 		plotter.plot();
 	}
 

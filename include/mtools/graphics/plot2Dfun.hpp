@@ -48,10 +48,11 @@ namespace mtools
      *
      * @return  A Plot2DFun object containing the function.
      **/
-    template<typename F>  Plot2DFun<F>  makePlot2DFun(F  & obj, std::string name = "Function") 
+    template<typename F>  auto makePlot2DFun(F  & obj, const std::string & name = "Function") 
         {
-        return Plot2DFun<F>(obj,name);
+        return Plot2DFun(obj,name);
         }
+
 
 
     /**
@@ -75,6 +76,44 @@ namespace mtools
         {
         return Plot2DFun<F>(obj, minDomain, maxDomain, name);
         }
+
+
+    /**
+     * Factory for creating Plot of functions from a class method.
+     * 
+     * GIVING THE PLOT A NAME IS COMPULSORY.
+     * 
+     * @code{.cpp}
+     *            
+     *    struct T
+     *      {
+     *      double f(double) { return 3; }
+     *      };
+     *    
+     *    T obj; // object instance
+     *    auto P = makePlot2DFun(&T::f, &obj, "plot name");  // bind to obj.f()
+     *    
+     * @endcode.
+     **/
+    template<typename F, typename O > auto makePlot2DFun(F && method, O && obj, const std::string & name)
+        {
+        return Plot2DFun(std::bind(method, obj, std::placeholders::_1), name);
+        }        
+
+
+    /**
+     * Factory function for creating Plot of functions from a class method.
+     *
+     * GIVING THE PLOT A NAME IS COMPULSORY.
+     * 
+     * Same as above but specify the defintion domain. 
+     **/
+    template<typename F, typename O > auto makePlot2DFun(F&& method, O&& obj, double minDomain, double maxDomain, std::string name)
+        {
+        return Plot2DFun(std::bind(method, obj, std::placeholders::_1), minDomain, maxDomain, name);
+        }
+
+
 
 
 
