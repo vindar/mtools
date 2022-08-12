@@ -367,12 +367,17 @@ void testblend()
 	ID.startDisplay();
 	float eps = 0.1f;
 
+
+
+
 	while (ID.isDisplayOn())
 		{
 
 		tgx_dst.fillScreen(tgx::RGB32_Black);
 		_fillSmoothRoundedRect(tgx_dst, tgx::iBox2(100, 200, 130, 230), r, ccc2, 0.5f);
 		_smoothRoundedRect(tgx_dst, tgx::iBox2(100, 200, 130, 230), r, ccc, 1.0f);
+		dst.draw_thick_filled_ellipse({ 100, 40 }, 100, 30, 10, 10, RGBc::c_Red, RGBc::c_White, true, true, false);
+
 		ID.redrawNow();
 
 		r += eps;
