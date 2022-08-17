@@ -1,7 +1,7 @@
 #include <mtools/mtools.hpp>
 using namespace mtools;
 
-#include "buddha.h"
+//#include "buddha.h"
 
 
 
@@ -34,6 +34,169 @@ char cb[1000000];
 
 
 
+
+
+void test_0()
+	{
+	ImageDisplay ID(320, 240);
+	Image dst(320, 240);
+
+	tgx::Image<tgx::RGB32> t(dst);
+
+
+	auto b = t[{10, 30, 40, 70}];
+
+	cout << b << "\n";
+	cout << t.lx() << "\n";
+	cout << t.ly() << "\n";
+	cout << t.width() << "\n";
+	cout << t.height() << "\n";
+	cout << t.stride() << "\n";
+	cout << t.dim() << "\n";
+	cout << t.imageBox() << "\n";
+	cout << t.data() << "\n";
+	
+	t.fillScreen(tgx::RGB32_Black);
+
+	t.drawPixel({ 100,100 }, tgx::RGB32_Red);
+	t.drawPixel({ 110,110 }, tgx::RGB32_Red, 0.5f);
+	t.drawPixel({ 50,100 }, tgx::RGB32_Red);
+	t.drawPixel({ 60,110 }, tgx::RGB32_Red, 0.5f);
+
+	cout << t.readPixel({ 100, 100 }) << "\n";
+
+	cout << t({ 50, 100 }) << "\n";
+	cout << t({ 60, 11 }) << "\n";
+
+	t.iterate([](tgx::iVec2 pos, tgx::RGB32& col) {cout << pos << "  " << col << "\n";  return true; },{100, 103,100,102});
+
+	ID.setImage(&dst);
+	ID.display(); 
+	}
+
+
+void test_1()
+	{
+	ImageDisplay ID(320, 240);
+	Image dst(320, 240);
+	Image sprite(30, 40);
+
+	tgx::Image<tgx::RGB32> t(dst);
+	tgx::Image<tgx::RGB32> s(sprite);
+
+	s.fillScreen(tgx::RGB32_Blue);
+	s.drawCircle({ 5,5 }, 20, tgx::RGB32_Red);
+	s.drawCircle({ 20,15}, 5, tgx::RGB32_Green);
+
+	t.fillScreen(tgx::RGB32_White);
+
+	t.blit(s, { 300,230 });
+
+	t.blit(s, { -10,20 }, [](tgx::RGB32 A, tgx::RGB32 B) {return A; });
+
+	t.blitMasked(s, tgx::RGB32_Blue, { -10,80 } );
+
+	t.blitMasked(s, tgx::RGB32_Red, { 100,100 }, 0.5f);
+
+	t.fillRect({ 305, 320, 230, 240 }, tgx::RGB32_Yellow);
+
+	t.blitBackward(s, { -0, -0 });
+
+	t.fillRect( { 150, 200, 150, 200 }, tgx::RGB32_Black);
+
+	t.blit(s, { 151,151 });
+
+	t.blitBackward(s, { 150, 150 });
+
+
+	t.blitScaledRotated(s, { 0,0 }, { 100, 100 }, 10.0f, 45, 0.4f);
+
+	t.blitScaledRotated(s, { 15,20 }, { 100, 100 }, 0.5f, -30, [](tgx::RGB32 A, tgx::RGB32 B) {return tgx::RGB32_Lime; });
+
+	s.fillScreen(tgx::RGB32_Green);
+	s.drawRect( { 5, 25, 5, 35 }, tgx::RGB32_Orange, 1.0f);
+
+	t.blitScaledRotatedMasked(s, tgx::RGB32_Green, { 15,20 }, { 40, 40 }, 1, 60, 0.5f);
+
+
+
+	t.fillScreen(tgx::RGB32_Black);
+	t.copyFrom(s,1.0f); // default blending does not work because drawTexturedQuad need fix !
+
+	cout << t.reduceHalf();
+	cout << t.reduceHalf();
+
+	t.drawCircle({ 80,80 }, 100, tgx::RGB32_Orange);
+
+	cout << t.fill({ 85, 85 },tgx::RGB32_Orange, tgx::RGB32_Black);
+	ID.setImage(&dst);
+	ID.display();
+
+	}
+
+
+
+void test_2()
+	{
+	ImageDisplay ID(320, 240);
+	Image dst(320, 240);
+	Image sprite(30, 40);
+
+	tgx::Image<tgx::RGB32> t(dst);
+	tgx::Image<tgx::RGB32> s(sprite);
+
+
+	t.fillScreenHGradient(tgx::RGB32_Green, tgx::RGB32_Yellow);
+	t.fillScreenVGradient(tgx::RGB32_Blue, tgx::RGB32_Orange);
+	t.fillScreen(tgx::RGB32_Black);
+
+	t.drawFastHLine({ 3,3 }, 3, tgx::RGB32_White);
+	t.drawFastVLine({ 3,3 }, 4, tgx::RGB32_Blue, 0.5f);
+	t.drawFastHLine({ 3,5 }, 3, tgx::RGB32_White,0.5f);
+	t.drawFastVLine({ 6,3 }, 5, tgx::RGB32_Orange);
+
+
+	tgx::iVec2 PA({ 8,3 });
+	tgx::iVec2 PB({ 130,30 });
+	tgx::iVec2 PC({ 80,80 });
+	tgx::iVec2 PD({ 10,50 });
+
+	t.drawPixel(PA, tgx::RGB32_Red);
+	t.drawPixel(PB, tgx::RGB32_Red);
+	t.drawSegment(PA, false, PB, true, tgx::RGB32_White, 0.5f);
+
+	tgx::iVec2 TT[4] = { PA,PB,PC , PD };
+
+	t.drawPolyLine(4, TT, tgx::RGB32_Green, 0.5f);
+	t.drawPolygon(4, TT, tgx::RGB32_Blue, 0.5f);
+
+	ID.setImage(&dst);
+	ID.display();
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 float test(const tgx::RGBf & col)
 	{
 	return col.B;
@@ -61,55 +224,60 @@ void _fillSmoothQuarterEllipse(tgx::Image<tgx::RGB32> & im, tgx::fVec2 C, float 
 	auto B = im.imageBox();
 
 	B &= tgx::iBox2(
-		((dir_x > 0) ? (int)roundf(C.x - rx) : (int)roundf(C.x) + ((vertical_center_line) ? 0 : 1)),
-		((dir_x > 0) ? ((int)roundf(C.x) - ((vertical_center_line) ? 0 : 1)) : (int)roundf(C.x + rx)),
-		((dir_y > 0) ? ((int)roundf(C.y) + ((horizontal_center_line) ? 0 : 1)) : (int)roundf(C.y - ry)),
-		((dir_y > 0) ? (int)roundf(C.y + ry) : (int)roundf(C.y) - ((horizontal_center_line) ? 0 : 1)));
+		((dir_x > 0) ? (int)floorf(C.x - rx + 0.5f) : (int)roundf(C.x) + ((vertical_center_line) ? 0 : 1)),
+		((dir_x > 0) ? ((int)roundf(C.x) - ((vertical_center_line) ? 0 : 1)) : (int)ceilf(C.x + rx - 0.5f)),
+		((dir_y > 0) ? ((int)roundf(C.y) + ((horizontal_center_line) ? 0 : 1)) : (int)floorf(C.y - ry + 0.5f)),
+		((dir_y > 0) ? (int)ceilf(C.y + ry - 0.5f) : (int)roundf(C.y) - ((horizontal_center_line) ? 0 : 1)));
 	if (B.isEmpty()) return; 
 	if (dir_y < 0) { tgx::swap(B.minY, B.maxY); }
 	B.maxY += dir_y;
 	if (dir_x < 0) { tgx::swap(B.minX, B.maxX); }
 	B.maxX += dir_x;
 	
-	/*
-	const float RT = (R < 0.5f) ? 4*R*R : (R + 0.5f);
-	const float RA2 = RT*RT;
-	const float RB2 = (R < 0.5f) ? -1 : (R - 0.5f)* (R - 0.5f);
-	*/
+	const float thickness = 4.0f;
 
-	const float tt = ry;  tgx::min(rx, ry);
+	const float inv_rx2 = 1.0f / (rx * rx);
+	const float inv_ry2 = 1.0f / (ry * ry);
 
 	int i_min = B.minX;
 	for (int j = B.minY; j != B.maxY; j += dir_y)
 		{
-		float dy2 = (j-C.y)/ry; dy2 *= dy2;
+		const float dy = (j - C.y);
+		const float dy2 = dy*dy*inv_ry2;
+		const float zy = fabsf(dy) * inv_ry2;
 		for(int i = i_min; i != B.maxX; i += dir_x)
 			{
-			float dx2 = (i-C.x)/rx; dx2 *= dx2;
-
-
-//			const float tt = (dx2 >= 0.5f) ? rx : ry;
-
-//			const float tt = ((dx2 * rx) + (dy2 * ry)) / (dx2 + dy2);
-
-			const float a = dx2 / (dx2 + dy2);
-//			const float tt = (rx * a + ry * (1 - a))*0.8f;
-
-			const float e2 = (dx2 + dy2 - 1) * tt;
-			if (e2 > 1) { i_min = i + dir_x; continue; }
-			if (e2 < -1) 
-				{ 
-				const int h = B.maxX - dir_x - i;
-				
+			const float dx = (i - C.x);
+			const float dx2 = dx*dx*inv_rx2;
+			const float zx = fabsf(dx) * inv_rx2;
+			const float tt = 2 * tgx::max(zx, zy);
+			const float e2 = (dx2 + dy2 - 1);
+			if (e2 > tt) { i_min = i + dir_x; continue; }
+			if (e2 < -thickness*tt) 
+				{/*
+				const int h = B.maxX - dir_x - i;	
 				if (h >= 0)
 					im.drawFastHLine<false>({ i,j }, h + 1, color, opacity);
 				else
 					im.drawFastHLine<false>({ B.maxX - dir_x,j },  1 - h, color, opacity);
-					
+					*/
 				break;
-				
 				}
-			const float alpha =  (-e2 + 1) / 2;
+
+
+			float alpha = 1.0f;
+			if (e2 > 0)
+				{
+				alpha = 1.0f - (e2 / tt); 
+				}
+			else if (e2 < (1 - thickness) * tt)
+				{
+				alpha = thickness + (e2 / tt);
+				}
+			
+			//const float alpha = 1.0f - fabs(e2 / (4*tt)); // single line
+			//const float alpha =  (1 -(e2/tt)) * 0.5f ; // fill
+
 			im.drawPixel<false>({ i,j }, color, alpha*opacity);
 			}
 		}
@@ -134,10 +302,10 @@ void _fillSmoothQuarterCircle(tgx::Image<tgx::RGB32> & im, tgx::fVec2 C, float R
 	const int dir_y = (quarter & 2) ? -1 : 1;
 	auto B = im.imageBox();
 	B &= tgx::iBox2(
-		((dir_x > 0) ? (int)roundf(C.x - R) : (int)roundf(C.x) + ((vertical_center_line) ? 0 : 1)),
-		((dir_x > 0) ? ((int)roundf(C.x) - ((vertical_center_line) ? 0 : 1)) : (int)roundf(C.x + R)),
-		((dir_y > 0) ? ((int)roundf(C.y) + ((horizontal_center_line) ? 0 : 1)) : (int)roundf(C.y - R)),
-		((dir_y > 0) ? (int)roundf(C.y + R) : (int)roundf(C.y) - ((horizontal_center_line) ? 0 : 1)));
+		((dir_x > 0) ? (int)floorf(C.x - R + 0.5f) : (int)roundf(C.x) + ((vertical_center_line) ? 0 : 1)),
+		((dir_x > 0) ? ((int)roundf(C.x) - ((vertical_center_line) ? 0 : 1)) : (int)ceilf(C.x + R - 0.5f)),
+		((dir_y > 0) ? ((int)roundf(C.y) + ((horizontal_center_line) ? 0 : 1)) : (int)floorf(C.y - R + 0.5f)),
+		((dir_y > 0) ? (int)ceilf(C.y + R - 0.5f) : (int)roundf(C.y) - ((horizontal_center_line) ? 0 : 1)));
 	if (B.isEmpty()) return; 
 	if (dir_y < 0) { tgx::swap(B.minY, B.maxY); }
 	B.maxY += dir_y;
@@ -159,9 +327,9 @@ void _fillSmoothQuarterCircle(tgx::Image<tgx::RGB32> & im, tgx::fVec2 C, float R
 				{ 
 				const int h = B.maxX - dir_x - i;
 				if (h >= 0)
-					im.drawFastHLine<false>({ i,j }, h + 1, color, opacity);
+					im.drawFastHLine({ i,j }, h + 1, color, opacity);
 				else
-					im.drawFastHLine<false>({ B.maxX - dir_x,j },  1 - h, color, opacity);
+					im.drawFastHLine({ B.maxX - dir_x,j },  1 - h, color, opacity);
 				break; 
 				}
 			const float alpha = RT - sqrtf(e2);
@@ -196,10 +364,15 @@ void _smoothQuarterCircle(tgx::Image<tgx::RGB32> & im, tgx::fVec2 C, float R, in
 	const int dir_y = (quarter & 2) ? -1 : 1;
 	auto B = im.imageBox();
 	B &= tgx::iBox2(
+		((dir_x > 0) ? (int)floorf(C.x - R + 0.5f) : (int)roundf(C.x) + ((vertical_center_line) ? 0 : 1)),
+		((dir_x > 0) ? ((int)roundf(C.x) - ((vertical_center_line) ? 0 : 1)) : (int)ceilf(C.x + R - 0.5f)),
+		((dir_y > 0) ? ((int)roundf(C.y) + ((horizontal_center_line) ? 0 : 1)) : (int)floorf(C.y - R + 0.5f)),
+		((dir_y > 0) ? (int)ceilf(C.y + R - 0.5f) : (int)roundf(C.y) - ((horizontal_center_line) ? 0 : 1)));
+/*	B &= tgx::iBox2(
 		((dir_x > 0) ? (int)roundf(C.x - R - 0.5f) : (int)roundf(C.x) + ((vertical_center_line) ? 0 : 1)),
 		((dir_x > 0) ? ((int)roundf(C.x) - ((vertical_center_line) ? 0 : 1)) : (int)roundf(C.x + R + 0.5f)),
 		((dir_y > 0) ? ((int)roundf(C.y) + ((horizontal_center_line) ? 0 : 1)) : (int)roundf(C.y - R - 0.5f)),
-		((dir_y > 0) ? (int)roundf(C.y + R + 0.5f) : (int)roundf(C.y) - ((horizontal_center_line) ? 0 : 1)));
+		((dir_y > 0) ? (int)roundf(C.y + R + 0.5f) : (int)roundf(C.y) - ((horizontal_center_line) ? 0 : 1))); */
 	if (B.isEmpty()) return; 
 	if (dir_y < 0) { tgx::swap(B.minY, B.maxY); }
 	B.maxY += dir_y;
@@ -250,10 +423,10 @@ void _smoothWideQuarterCircle(tgx::Image<tgx::RGB32> & im, tgx::fVec2 C, float R
 	const int dir_y = (quarter & 2) ? -1 : 1;
 	auto B = im.imageBox();
 	B &= tgx::iBox2(
-		((dir_x > 0) ? (int)roundf(C.x - R - 0.5f) : (int)roundf(C.x) + ((vertical_center_line) ? 0 : 1)),
-		((dir_x > 0) ? ((int)roundf(C.x) - ((vertical_center_line) ? 0 : 1)) : (int)roundf(C.x + R + 0.5f)),
-		((dir_y > 0) ? ((int)roundf(C.y) + ((horizontal_center_line) ? 0 : 1)) : (int)roundf(C.y - R - 0.5f)),
-		((dir_y > 0) ? (int)roundf(C.y + R + 0.5f) : (int)roundf(C.y) - ((horizontal_center_line) ? 0 : 1)));
+		((dir_x > 0) ? (int)floorf(C.x - R + 0.5f) : (int)roundf(C.x) + ((vertical_center_line) ? 0 : 1)),
+		((dir_x > 0) ? ((int)roundf(C.x) - ((vertical_center_line) ? 0 : 1)) : (int)ceilf(C.x + R - 0.5f)),
+		((dir_y > 0) ? ((int)roundf(C.y) + ((horizontal_center_line) ? 0 : 1)) : (int)floorf(C.y - R + 0.5f)),
+		((dir_y > 0) ? (int)ceilf(C.y + R - 0.5f) : (int)roundf(C.y) - ((horizontal_center_line) ? 0 : 1)));
 	if (B.isEmpty()) return; 
 	if (dir_y < 0) { tgx::swap(B.minY, B.maxY); }
 	B.maxY += dir_y;
@@ -347,7 +520,7 @@ void _fillSmoothRoundedRect(tgx::Image<tgx::RGB32>& im, const tgx::iBox2& B, flo
 void _fillSmoothRect(tgx::Image<tgx::RGB32>& im, const tgx::fBox2& B, tgx::RGB32 color, float opacity)
 	{
 	if (B.isEmpty()) return;
-	tgx::iBox2 eB(floorf(B.minX + 0.5f), ceilf(B.maxX - 0.5f), floorf(B.minY + 0.5f), ceilf(B.maxY - 0.5f));
+	tgx::iBox2 eB((int)floorf(B.minX + 0.5f), (int)ceilf(B.maxX - 0.5f), (int)floorf(B.minY + 0.5f), (int)ceilf(B.maxY - 0.5f));
 	if (eB.minX == eB.maxX)
 		{ // just a vertical line
 		if (eB.minY == eB.maxY)
@@ -441,10 +614,10 @@ void _smoothRoundedRect(tgx::Image<tgx::RGB32>& im, const tgx::iBox2& B, float c
 	const int x2 = (int)roundf(B.maxX - corner_radius + eps);
 	const int y1 = (int)roundf(B.minY + corner_radius - eps);
 	const int y2 = (int)roundf(B.maxY - corner_radius + eps);
-	im.drawFastHLine<true>({ x1,B.minY }, x2 - x1 + 1, color, opacity);
-	im.drawFastHLine<true>({ x1, B.maxY }, x2 - x1 + 1, color, opacity);
-	im.drawFastVLine<true>({ B.minX,y1 }, y2 - y1 + 1, color, opacity);
-	im.drawFastVLine<true>({ B.maxX,y1 }, y2 - y1 + 1, color, opacity);
+	im.drawFastHLine({ x1,B.minY }, x2 - x1 + 1, color, opacity);
+	im.drawFastHLine({ x1, B.maxY }, x2 - x1 + 1, color, opacity);
+	im.drawFastVLine({ B.minX,y1 }, y2 - y1 + 1, color, opacity);
+	im.drawFastVLine({ B.maxX,y1 }, y2 - y1 + 1, color, opacity);
 	}
 
 
@@ -590,12 +763,7 @@ void testblend()
 
 
 	float rr = 20; 
-/*
-	_quarterCircle(tgx_dst, { 100,100 }, rr, 1, 1, 1, 1, ccc);
-	_quarterCircle(tgx_dst, { 100,100 }, rr, -1, 0, 1, 1, ccc);
-	_quarterCircle(tgx_dst, { 100,100 }, rr, 1, 1, -1, 0, ccc);
-	_quarterCircle(tgx_dst, { 100,100 }, rr, -1, 0, -1, 0, ccc);
-*/
+
 
 	//_fillSmoothCircle(tgx_dst, { 100,100 }, rr, ccc);
 	//_smoothCircle(tgx_dst, { 150,100 }, rr, ccc);
@@ -618,9 +786,7 @@ void testblend()
 
 
 
-	/*
-	tgx_dst.drawCircle({ 100, 100 }, rr+3, tgx::RGB32_Red);
-	tgx_dst.drawCircle({ 150, 100 }, rr + 3, tgx::RGB32_Red);
+	
 
 	_smoothCircle(tgx_dst, { 30,100 }, 100, ccc);
 	_smoothWideCircle(tgx_dst, { 150,100 }, 150, 10, ccc);
@@ -630,7 +796,7 @@ void testblend()
 	_fillSmoothRect(tgx_dst, tgx::fBox2(9.5, 10.0, 10.5, 11), ccc, 0.5f);
 
 	tgx_dst.drawLine({ 0,0 }, { 9, 9 }, tgx::RGB32_Red);
-	*/
+	
 
 	float r = 0; 
 	ID.setImage(&dst);
@@ -639,7 +805,7 @@ void testblend()
 
 	dst.draw_ellipse( fVec2{ 100, 50 }, 100.0f, 30.0f, RGBc::c_White, true, false);
 
-	_fillSmoothEllipse(tgx_dst, tgx::fVec2{ 100, 50 }, 90, 25, ccc, 1.0f);
+	_fillSmoothEllipse(tgx_dst, tgx::fVec2{ 100, 50 }, 9, 6, ccc, 1.0f);
 
 	while (ID.isDisplayOn())
 		{
@@ -673,8 +839,11 @@ int main(int argc, char *argv[])
 {
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
 	 
+	test_0();
+    test_1();
+	test_2();
 
-	testblend(); 
+//	testblend(); 
 	return 0; 
 
 
@@ -691,7 +860,7 @@ int main(int argc, char *argv[])
 	
 	size_t ram1u = 17;
 	size_t ram2u = 18;
-	auto bb = tgx::cacheMesh(&buddha, (void*)cb, 240000, nullptr, 0, "VNTIF", &ram1u, &ram2u);
+//	auto bb = tgx::cacheMesh(&buddha, (void*)cb, 240000, nullptr, 0, "VNTIF", &ram1u, &ram2u);
 	
 	
 	cout.getKey();
@@ -706,7 +875,7 @@ int main(int argc, char *argv[])
 
 		renderer.setMaterialColor(tgx::RGBf(0, 1, 0));
 		renderer.setModelPosScaleRot({ 0, a, -35 }, { 10,10,10 }, 0);
-		renderer.drawMesh(bb, false);
+	//	renderer.drawMesh(bb, false);
 		
 		//tgxim._drawCircleHelper<true>(100, 100, 50, 15, tgx::RGB32_Black);
 
