@@ -188,6 +188,32 @@ void test_2()
 
 
 
+void test_3()
+	{
+	ImageDisplay ID(320, 240);
+	Image dst(320, 240);
+	Image sprite(30, 40);
+
+	tgx::Image<tgx::RGB32> t(dst);
+	tgx::Image<tgx::RGB32> s(sprite);
+
+	t.fillScreen(tgx::RGB32_Black);
+
+	tgx::iVec2 PA({ 8,3 });
+	tgx::iVec2 PB({ 130,30 });
+	tgx::iVec2 PC({ 100,110 });
+	tgx::iVec2 PD({ 10,130 });
+	tgx::iVec2 PE({ 2,60 });
+
+
+	t.drawTriangle(PA, PB, PC, tgx::RGB32_Green, 0.2f);
+
+	//t.fillTriangle(PA, PC, PD, tgx::RGB32_Orange, tgx::RGB32_Purple,0.1f);
+
+	ID.setImage(&dst);
+	ID.display();
+	}
+
 
 
 
@@ -852,8 +878,9 @@ int main(int argc, char *argv[])
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
 	 
 	//test_0();
-   // test_1();
-	test_2();
+    //test_1();
+	//test_2();
+	test_3();
 
 //	testblend(); 
 	return 0; 
