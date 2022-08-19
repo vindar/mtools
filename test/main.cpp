@@ -158,17 +158,29 @@ void test_2()
 
 	tgx::iVec2 PA({ 8,3 });
 	tgx::iVec2 PB({ 130,30 });
-	tgx::iVec2 PC({ 80,80 });
-	tgx::iVec2 PD({ 10,50 });
+	tgx::iVec2 PC({ 100,110 });
+	tgx::iVec2 PD({ 10,130 });
+	tgx::iVec2 PE({ 2,60 });
+
+
 
 	t.drawPixel(PA, tgx::RGB32_Red);
 	t.drawPixel(PB, tgx::RGB32_Red);
 	t.drawSegment(PA, false, PB, true, tgx::RGB32_White, 0.5f);
 
+
+
 	tgx::iVec2 TT[4] = { PA,PB,PC , PD };
+	tgx::iVec2 TT5[5] = { PA,PB,PC , PD, PE };
 
 	t.drawPolyLine(4, TT, tgx::RGB32_Green, 0.5f);
 	t.drawPolygon(4, TT, tgx::RGB32_Blue, 0.5f);
+	t.drawQuadBezier(PA, PC, PB, 1.0f, true, tgx::RGB32_Green, 0.2f);
+	t.drawQuadBezier(PA, PC, PB, 6.0f, false, tgx::RGB32_Red);
+	t.drawCubicBezier(PA, PD, PB, PC, true, tgx::RGB32_Yellow, 0.5f);
+	t.drawQuadSpline(5, TT5, true, tgx::RGB32_Lime, 0.3f);
+	t.drawCubicSpline(5, TT5, true, tgx::RGB32_Orange);
+	t.drawClosedSpline(5, TT5, tgx::RGB32_Maroon, 0.5f);
 
 	ID.setImage(&dst);
 	ID.display();
@@ -839,8 +851,8 @@ int main(int argc, char *argv[])
 {
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
 	 
-	test_0();
-    test_1();
+	//test_0();
+   // test_1();
 	test_2();
 
 //	testblend(); 
