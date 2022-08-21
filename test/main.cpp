@@ -201,12 +201,26 @@ void test_3()
 
 	tgx::iVec2 PA({ 8,3 });
 	tgx::iVec2 PB({ 130,30 });
-	tgx::iVec2 PC({ 100,110 });
+	tgx::iVec2 PC({ 70,110 });
+	tgx::iVec2 PC2({ 70,110 });
+
 	tgx::iVec2 PD({ 10,130 });
 	tgx::iVec2 PE({ 2,60 });
 
 
 	t.drawTriangle(PA, PB, PC, tgx::RGB32_Green, 0.2f);
+
+
+ 	t._bseg_draw(PA, PC2, true, tgx::RGB32_Red, 0, 256, true);
+
+//	t._bseg_avoid2(PA, PC, PE, PD, true, false, false, tgx::RGB32_White, 0, 128, true);
+
+	//t._bseg_avoid11(PA, PC, PB, PD, true, false, tgx::RGB32_White, 0, 128, true);
+
+	//t._bseg_avoid21(PA, PC, PB, PD, PE, true, false, true, tgx::RGB32_White, 0, 128, true);
+
+	t._bseg_avoid22(PA, PC, PB, PD, PE, PC2, true, false, true, false, tgx::RGB32_White, 0, 128, true);
+
 
 	//t.fillTriangle(PA, PC, PD, tgx::RGB32_Orange, tgx::RGB32_Purple,0.1f);
 
