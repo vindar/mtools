@@ -188,8 +188,63 @@ void test_2()
 
 
 
+
+tgx::fVec2 PP(int j, int N, float C, float R)
+	{
+	const float a = (2 * M_PI * j) / N;
+	return tgx::fVec2(C + R * cosf(a), C + R * sinf(a));
+	}
+
+
+
+mtools::Image im1(300, 300);
+mtools::Image im2(300, 300);
+tgx::Image<tgx::RGB32> tim1(im1);
+tgx::Image<tgx::RGB32> tim2(im2);
+
+void testl(const tgx::fVec2& PA, const tgx::fVec2& PB)
+	{
+	tim1.fillScreen(tgx::RGB32_Black);
+	tim2.fillScreen(tgx::RGB32_Black);	
+	tim1._bseg_draw(PA, PB, true, tgx::RGB32_White, 1, 256, true);
+	tim2._bseg_draw(PB, PA, true, tgx::RGB32_White, 1, 256, true);
+
+	for (int i = 0; i < 300; i++)
+		{
+		for (int j= 0; j < 300; j++)
+			{
+			if (tim1({ i, j }) != tim2({ i, j }))
+				{
+				cout << "\n" << PA << "    " << PB << " : ";
+				cout << "************* Error ! **********************\n";
+				char a;
+				cout.getKey();
+				return;
+				}
+			}
+		}
+	cout << ".";
+	}
+
+void testline()
+	{
+	MT2004_64 gen(0); 
+
+	while (1)
+		{
+		fVec2 PA(Unif(gen) * 300, Unif(gen) * 300);
+		fVec2 PB(Unif(gen) * 300, Unif(gen) * 300);
+		testl(PA, PB); 
+		}
+	}
+
+
+
+
+
 void test_3()
 	{
+//	testline(); 
 	ImageDisplay ID(320, 240);
 	Image dst(320, 240);
 	Image sprite(30, 40);
@@ -208,10 +263,11 @@ void test_3()
 	tgx::iVec2 PE({ 2,60 });
 
 
-	t.drawTriangle(PA, PB, PC, tgx::RGB32_Green, 0.2f);
+//	t.drawTriangle(PA, PB, PC, tgx::RGB32_Green, 0.2f);
 
 
- 	t._bseg_draw(PA, PC2, true, tgx::RGB32_Red, 0, 256, true);
+
+// 	t._bseg_draw(PA, PC2, true, tgx::RGB32_Red, 0, 256, true);
 
 //	t._bseg_avoid2(PA, PC, PE, PD, true, false, false, tgx::RGB32_White, 0, 128, true);
 
@@ -219,10 +275,96 @@ void test_3()
 
 	//t._bseg_avoid21(PA, PC, PB, PD, PE, true, false, true, tgx::RGB32_White, 0, 128, true);
 
-	t._bseg_avoid22(PA, PC, PB, PD, PE, PC2, true, false, true, false, tgx::RGB32_White, 0, 128, true);
+	//t._bseg_avoid22(PA, PC, PB, PD, PE, PC2, true, false, true, false, tgx::RGB32_White, 0, 128, true);
 
 
 	//t.fillTriangle(PA, PC, PD, tgx::RGB32_Orange, tgx::RGB32_Purple,0.1f);
+
+
+//	t._bseg_fill_triangle(tgx::fVec2(PA), tgx::fVec2(PB), tgx::fVec2(PD), tgx::RGB32_Red, 0.5f);
+	//t._bseg_fill_triangle(PA, PB, PD , tgx::RGB32_Green, 180.0f/256.0f);
+
+	//t._bseg_draw(PA, PB, true, tgx::RGB32_Green, 1, 180, true);
+	//t._bseg_draw(PB, PD, true, tgx::RGB32_Green, 1, 180, true);
+	//t._bseg_draw(PD, PA, true, tgx::RGB32_Green, 1, 180, true);
+	//t._bseg_draw(tgx::fVec2(PA), tgx::fVec2(PB), true, tgx::RGB32_Green, 1, 188, true);
+
+//	t._bseg_draw(tgx::fVec2(PA), tgx::fVec2(PB), true, tgx::RGB32_Red, 1, 256, true);
+//	t._bseg_draw(tgx::fVec2(PB), tgx::fVec2(PD), true, tgx::RGB32_Red, 1, 256, true);
+//	t._bseg_draw(tgx::fVec2(PD), tgx::fVec2(PA), true, tgx::RGB32_Red, 1, 256, true);
+
+
+	//t.fillSmoothTriangle(PA, PB, PD, tgx::RGB32_Green, 0.5f);
+	//t.fillSmoothTriangle(PC, PE, PA, tgx::RGB32_Red, 0.5f);
+
+
+	int N = 100;
+	float R = 50.5;
+	float C = 60;
+	float rr = 1.5;
+	int o = 128; 
+
+	tgx::fVec2 O = tgx::fVec2(2+R, 2+R);
+
+	
+	
+	for (int j = 0; j < N; j++)
+		{
+		auto PA = PP(j-1, N, C, R);
+		auto PB = PP(j, N, C, R);
+		auto PC = PP(j+1, N, C, R);
+
+		auto QA = PP(j - 1, N, C, R - rr);
+		auto QB = PP(j, N, C, R - rr);
+		auto QC = PP(j + 1, N, C, R - rr);
+
+
+		t._bseg_draw(PB, PC, false,tgx::RGB32_Red, 1, o, true);
+		t._bseg_draw(QB, QC, false, tgx::RGB32_Red, -1, o, true);
+
+		t._bseg_fill_triangle(QB, PB, PC, tgx::RGB32_Red, o/256.0f);
+		t._bseg_fill_triangle(QB, PC, QC, tgx::RGB32_Red, o / 256.0f);
+		
+		t._bseg_avoid22(QB, PB, QA, PC, QA, PC, true, true, true, true, tgx::RGB32_Red, 0, o, true);
+		t._bseg_avoid21(QB, PC, QA, QC, PB, true, true, true, tgx::RGB32_Red, 0, o, true);
+
+//		t._bseg_avoid11(O, PB, PA, PA, true, true, tgx::RGB32_Red, 0, o, true);
+		
+		//t.drawPixel(tgx::iVec2(floorf(PB.x), floorf(PB.y)), tgx::RGB32_Lime);
+		}
+	
+
+	/*
+		{
+		tgx::fVec2 P2(2.2f, 0.8f);
+		tgx::fVec2 P3(0.4f, 3.4f);
+
+		tgx::BSeg seg23(P2, P3);
+		tgx::BSeg seg32 = seg23.get_reverse();
+
+		cout << "a";
+		}
+	
+	*/
+
+	/*
+		{
+		int j = 9;
+		tgx::fVec2 PA = PP(j - 1, N, R);
+		tgx::fVec2 PB = PP(j, N, R);
+		tgx::fVec2 PC = PP(j + 1, N, R);
+		t._bseg_draw(PB, PC, true, tgx::RGB32_Blue, 0, o, true);
+		t._bseg_fill_triangle(PB, PC, O, tgx::RGB32_Red, o / 256.0f);
+		t._bseg_draw(O, PB, true, tgx::RGB32_Green, 0, o, true);
+		t._bseg_draw(O, PC, true, tgx::RGB32_Green, 0, o, true);
+
+		tgx::iVec2  KB(tgx::iVec2((int)roundf(PB.x), (int)roundf(PB.y)));
+		tgx::iVec2  KC(tgx::iVec2((int)roundf(PC.x), (int)roundf(PC.y)));
+
+		t.drawPixel(KB, tgx::RGB32_Lime);
+		t.drawPixel(KC, tgx::RGB32_Lime);
+		}
+	*/	
 
 	ID.setImage(&dst);
 	ID.display();
