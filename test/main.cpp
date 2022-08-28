@@ -217,7 +217,6 @@ void testl(const tgx::fVec2& PA, const tgx::fVec2& PB)
 				{
 				cout << "\n" << PA << "    " << PB << " : ";
 				cout << "************* Error ! **********************\n";
-				char a;
 				cout.getKey();
 				return;
 				}
@@ -237,6 +236,50 @@ void testline()
 		testl(PA, PB); 
 		}
 	}
+
+
+
+
+void drawCircl(tgx::Image<tgx::RGB32> & t)
+	{
+	const float R = 50.5f;
+	const float C = 60;
+	const float rr = 40.0f;
+	const int o = 128;
+
+	const int N = (int)(  R);
+
+	tgx::fVec2 O = tgx::fVec2(2 + R, 2 + R);
+
+	for (int j = 0; j < N; j++)
+		{
+		auto PA = PP(j - 1, N, C, R);
+		auto PB = PP(j, N, C, R);
+		auto PC = PP(j + 1, N, C, R);
+		auto QA = PP(j - 1, N, C, R - rr);
+		auto QB = PP(j, N, C, R - rr);
+		auto QC = PP(j + 1, N, C, R - rr);
+		t._bseg_draw(PB, PC, false, tgx::RGB32_Red, 1, o, true);
+		t._bseg_draw(QB, QC, false, tgx::RGB32_Red, -1, o, true);
+		t._bseg_fill_triangle(QB, PB, PC, tgx::RGB32_Red, o / 256.0f);
+		t._bseg_fill_triangle(QB, PC, QC, tgx::RGB32_Red, o / 256.0f);
+		t._bseg_avoid22(QB, PB, QA, PC, QA, PC, true, true, true, true, tgx::RGB32_Red, 0, o, true);
+		t._bseg_avoid21(QB, PC, QA, QC, PB, true, true, true, tgx::RGB32_Red, 0, o, true);
+		}
+	}
+
+
+
+void _fillSmoothCircle(tgx::Image<tgx::RGB32>& im, tgx::fVec2 C, float R, tgx::RGB32 color, float opacity = 1.0f);
+
+void drawCircl2(tgx::Image<tgx::RGB32>& t)
+	{
+	const float R = 50.5f;
+	const float C = 60;
+	const float rr = 40.0f;
+	_fillSmoothCircle(t, { C,C }, R, tgx::RGB32_Red, 0.5f);
+	}
+
 
 
 
@@ -297,16 +340,15 @@ void test_3()
 	//t.fillSmoothTriangle(PA, PB, PD, tgx::RGB32_Green, 0.5f);
 	//t.fillSmoothTriangle(PC, PE, PA, tgx::RGB32_Red, 0.5f);
 
-
-	int N = 100;
-	float R = 50.5;
+	/*
+	float R = 50.5f;
 	float C = 60;
-	float rr = 1.5;
+	float rr = 30.0f;
 	int o = 128; 
 
-	tgx::fVec2 O = tgx::fVec2(2+R, 2+R);
+	int N = (int)(2*R);
 
-	
+	tgx::fVec2 O = tgx::fVec2(2+R, 2+R);
 	
 	for (int j = 0; j < N; j++)
 		{
@@ -332,7 +374,53 @@ void test_3()
 		
 		//t.drawPixel(tgx::iVec2(floorf(PB.x), floorf(PB.y)), tgx::RGB32_Lime);
 		}
-	
+	*/
+
+//	drawCircl(t); 
+
+
+
+
+	/*
+	mtools::Chrono ch;
+	ch.reset();
+	for (int k = 0; k < 10000; k++)
+		{
+		drawCircl2(t);
+		}
+	cout << ch.elapsed() << "\n";
+	cout.getKey();
+	*/
+
+		{
+		tgx::fVec2 P1(2, 2);
+		tgx::fVec2 P2(180, 40);
+
+		tgx::BSeg seg(P1, P2);
+
+		bool xmajor = seg.x_major();
+		cout << "xmajor" << xmajor << "\n";
+
+		while (seg.len() > 0)
+			{
+			int dir;
+			int aa = (xmajor ? seg.AA<1, true>(dir) : seg.AA<1, false>(dir));
+			
+			tgx::iVec2 pos = seg.pos();
+			tgx::iVec2 pos2 = (xmajor) ? tgx::iVec2(pos.x, pos.y + dir) : tgx::iVec2(pos.x + dir, pos.y);
+
+			int aa2 = 256 - aa;
+
+
+			cout << dir << "  " <<pos << "   " << pos2 << "   " << aa << "\n";
+			t.drawPixel(pos, tgx::RGB32_Red, aa / 256.0f);
+			t.drawPixel(pos2, tgx::RGB32_Red, aa2 / 256.0f);
+			seg.move();
+			}
+
+
+		}
+		
 
 	/*
 		{
@@ -533,7 +621,7 @@ void _fillSmoothQuarterCircle(tgx::Image<tgx::RGB32> & im, tgx::fVec2 C, float R
 	return;
 	}
 
-void _fillSmoothCircle(tgx::Image<tgx::RGB32>& im, tgx::fVec2 C, float R, tgx::RGB32 color, float opacity = 1.0f)
+void _fillSmoothCircle(tgx::Image<tgx::RGB32>& im, tgx::fVec2 C, float R, tgx::RGB32 color, float opacity)
 	{
 	// check radius >0  and im valid...
 	_fillSmoothQuarterCircle(im, C, R, 0, 1, 1, color, opacity);
