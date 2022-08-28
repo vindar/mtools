@@ -281,6 +281,102 @@ void drawCircl2(tgx::Image<tgx::RGB32>& t)
 	}
 
 
+void plotLineAA(tgx::Image<tgx::RGB32>& im, int x0, int y0, int x1, int y1, tgx::RGB32 color, float opacity = 1.0f)
+	{
+	int dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+	int dy = abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+	int x2, e2, err = dx - dy; /* error value e_xy */
+	int ed = dx + dy == 0 ? 1 : sqrt((float)dx * dx + (float)dy * dy);
+	for (; ; ) 
+		{ /* pixel loop */
+		im.drawPixel({x0, y0}, color, 1.0f - opacity * (abs(err - dx + dy) / ((float)ed)) );
+		e2 = err; x2 = x0;
+		if (2 * e2 >= -dx) 
+			{ /* x step */
+			if (x0 == x1) break;
+			if (e2 + dy < ed)  im.drawPixel({ x0, y0 + sy }, color, 1.0f - opacity * ((e2 + dy) / ((float)ed)));
+			err -= dy; x0 += sx;
+			}
+		if (2 * e2 <= dy) 
+			{ /* y step */
+			if (y0 == y1) break;
+			if (dx - e2 < ed) im.drawPixel({ x2 + sx, y0 }, color, 1.0f - opacity * ((dx - e2) / ((float)ed)));
+			err += dx; y0 += sy;
+			}
+		}
+	}
+
+
+int iPartOfNumber(float a)
+	{
+	return (int)a;
+	}
+
+float rfPartOfNumber(float a)
+	{
+	return a - iPartOfNumber(a);
+	}
+
+
+void drawWuLine(tgx::Image<tgx::RGB32> & im, int x0, int y0, int x1, int y1, tgx::RGB32 color, float opacity)
+	{
+	int steep = abs(y1 - y0) > abs(x1 - x0);
+
+	// swap the co-ordinates if slope > 1 or we draw backwards
+	if (steep)
+		{
+		tgx::swap(x0, y0);
+		tgx::swap(x1, y1);
+		}
+	if (x0 > x1)
+		{
+		tgx::swap(x0, x1);
+		tgx::swap(y0, y1);
+		}
+
+	//compute the slope
+	float dx = x1 - x0;
+	float dy = y1 - y0;
+	float gradient = dy / dx;
+	if (dx == 0.0) gradient = 1;
+
+	int xpxl1 = x0;
+	int xpxl2 = x1;
+	float intersectY = y0;
+
+	// main loop
+	if (steep)
+		{
+		int x;
+		for (x = xpxl1; x <= xpxl2; x++)
+			{
+			im.drawPixel({ iPartOfNumber(intersectY), x }, color, opacity *rfPartOfNumber(intersectY));
+			im.drawPixel({ iPartOfNumber(intersectY) - 1, x }, color, opacity* rfPartOfNumber(intersectY));
+			intersectY += gradient;
+			}
+		}
+	else
+		{
+		int x;
+		for (x = xpxl1; x <= xpxl2; x++)
+			{
+			// pixel coverage is determined by fractional
+			// part of y co-ordinate
+			int yy = iPartOfNumber(intersectY);
+			float a = rfPartOfNumber(intersectY);
+			im.drawPixel({ x, yy }, color, opacity*a);
+			im.drawPixel({ x, yy-1 }, color, opacity* (1-a));
+			intersectY += gradient;
+			}
+		}
+	}
+
+
+
+
+
+
+
 
 
 
@@ -393,11 +489,11 @@ void test_3()
 	*/
 
 		{
-		tgx::fVec2 P1(2, 2);
-		tgx::fVec2 P2(180, 40);
+		tgx::fVec2 P2(90, 2);
+		tgx::fVec2 P1(2, 180);
 
+		/*
 		tgx::BSeg seg(P1, P2);
-
 		bool xmajor = seg.x_major();
 		cout << "xmajor" << xmajor << "\n";
 
@@ -418,10 +514,18 @@ void test_3()
 			seg.move();
 			}
 
+		plotLineAA(t, P1.x, P1.y + 3, P2.x, P2.y + 3, tgx::RGB32_Red, 1.0f);
 
-		}
+
+		dst._lineBresenhamAA<true, true, false>(mtools::iVec2(P1.x , P1.y + 6), mtools::iVec2(P2.x, P2.y + 6), mtools::RGBc::c_Red, true, 1);
 		
 
+		drawWuLine(t, P1.x, P1.y + 12, P2.x, P2.y + 12, tgx::RGB32_Red, 1.0f);
+		*/
+
+		t.drawSmoothLine(P1, P2, tgx::RGB32_Red, 1.0f);
+		}
+		
 	/*
 		{
 		tgx::fVec2 P2(2.2f, 0.8f);
