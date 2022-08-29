@@ -202,40 +202,7 @@ mtools::Image im2(300, 300);
 tgx::Image<tgx::RGB32> tim1(im1);
 tgx::Image<tgx::RGB32> tim2(im2);
 
-void testl(const tgx::fVec2& PA, const tgx::fVec2& PB)
-	{
-	tim1.fillScreen(tgx::RGB32_Black);
-	tim2.fillScreen(tgx::RGB32_Black);	
-	tim1._bseg_draw(PA, PB, true, tgx::RGB32_White, 1, 256, true);
-	tim2._bseg_draw(PB, PA, true, tgx::RGB32_White, 1, 256, true);
 
-	for (int i = 0; i < 300; i++)
-		{
-		for (int j= 0; j < 300; j++)
-			{
-			if (tim1({ i, j }) != tim2({ i, j }))
-				{
-				cout << "\n" << PA << "    " << PB << " : ";
-				cout << "************* Error ! **********************\n";
-				cout.getKey();
-				return;
-				}
-			}
-		}
-	cout << ".";
-	}
-
-void testline()
-	{
-	MT2004_64 gen(0); 
-
-	while (1)
-		{
-		fVec2 PA(Unif(gen) * 300, Unif(gen) * 300);
-		fVec2 PB(Unif(gen) * 300, Unif(gen) * 300);
-		testl(PA, PB); 
-		}
-	}
 
 
 
@@ -259,12 +226,12 @@ void drawCircl(tgx::Image<tgx::RGB32> & t)
 		auto QA = PP(j - 1, N, C, R - rr);
 		auto QB = PP(j, N, C, R - rr);
 		auto QC = PP(j + 1, N, C, R - rr);
-		t._bseg_draw(PB, PC, false, tgx::RGB32_Red, 1, o, true);
-		t._bseg_draw(QB, QC, false, tgx::RGB32_Red, -1, o, true);
-		t._bseg_fill_triangle(QB, PB, PC, tgx::RGB32_Red, o / 256.0f);
-		t._bseg_fill_triangle(QB, PC, QC, tgx::RGB32_Red, o / 256.0f);
-		t._bseg_avoid22(QB, PB, QA, PC, QA, PC, true, true, true, true, tgx::RGB32_Red, 0, o, true);
-		t._bseg_avoid21(QB, PC, QA, QC, PB, true, true, true, tgx::RGB32_Red, 0, o, true);
+		//t._bseg_draw(PB, PC, false, tgx::RGB32_Red, 1, o, true);
+		//t._bseg_draw(QB, QC, false, tgx::RGB32_Red, -1, o, true);
+		//t._bseg_fill_triangle(QB, PB, PC, tgx::RGB32_Red, o / 256.0f);
+		//t._bseg_fill_triangle(QB, PC, QC, tgx::RGB32_Red, o / 256.0f);
+		//t._bseg_avoid22(QB, PB, QA, PC, QA, PC, true, true, true, true, tgx::RGB32_Red, 0, o, true);
+		//t._bseg_avoid21(QB, PC, QA, QC, PB, true, true, true, tgx::RGB32_Red, 0, o, true);
 		}
 	}
 
@@ -318,64 +285,6 @@ float rfPartOfNumber(float a)
 	}
 
 
-void drawWuLine(tgx::Image<tgx::RGB32> & im, int x0, int y0, int x1, int y1, tgx::RGB32 color, float opacity)
-	{
-	int steep = abs(y1 - y0) > abs(x1 - x0);
-
-	// swap the co-ordinates if slope > 1 or we draw backwards
-	if (steep)
-		{
-		tgx::swap(x0, y0);
-		tgx::swap(x1, y1);
-		}
-	if (x0 > x1)
-		{
-		tgx::swap(x0, x1);
-		tgx::swap(y0, y1);
-		}
-
-	//compute the slope
-	float dx = x1 - x0;
-	float dy = y1 - y0;
-	float gradient = dy / dx;
-	if (dx == 0.0) gradient = 1;
-
-	int xpxl1 = x0;
-	int xpxl2 = x1;
-	float intersectY = y0;
-
-	// main loop
-	if (steep)
-		{
-		int x;
-		for (x = xpxl1; x <= xpxl2; x++)
-			{
-			im.drawPixel({ iPartOfNumber(intersectY), x }, color, opacity *rfPartOfNumber(intersectY));
-			im.drawPixel({ iPartOfNumber(intersectY) - 1, x }, color, opacity* rfPartOfNumber(intersectY));
-			intersectY += gradient;
-			}
-		}
-	else
-		{
-		int x;
-		for (x = xpxl1; x <= xpxl2; x++)
-			{
-			// pixel coverage is determined by fractional
-			// part of y co-ordinate
-			int yy = iPartOfNumber(intersectY);
-			float a = rfPartOfNumber(intersectY);
-			im.drawPixel({ x, yy }, color, opacity*a);
-			im.drawPixel({ x, yy-1 }, color, opacity* (1-a));
-			intersectY += gradient;
-			}
-		}
-	}
-
-
-
-
-
-
 
 
 
@@ -402,39 +311,9 @@ void test_3()
 	tgx::iVec2 PE({ 2,60 });
 
 
-//	t.drawTriangle(PA, PB, PC, tgx::RGB32_Green, 0.2f);
 
 
-
-// 	t._bseg_draw(PA, PC2, true, tgx::RGB32_Red, 0, 256, true);
-
-//	t._bseg_avoid2(PA, PC, PE, PD, true, false, false, tgx::RGB32_White, 0, 128, true);
-
-	//t._bseg_avoid11(PA, PC, PB, PD, true, false, tgx::RGB32_White, 0, 128, true);
-
-	//t._bseg_avoid21(PA, PC, PB, PD, PE, true, false, true, tgx::RGB32_White, 0, 128, true);
-
-	//t._bseg_avoid22(PA, PC, PB, PD, PE, PC2, true, false, true, false, tgx::RGB32_White, 0, 128, true);
-
-
-	//t.fillTriangle(PA, PC, PD, tgx::RGB32_Orange, tgx::RGB32_Purple,0.1f);
-
-
-//	t._bseg_fill_triangle(tgx::fVec2(PA), tgx::fVec2(PB), tgx::fVec2(PD), tgx::RGB32_Red, 0.5f);
-	//t._bseg_fill_triangle(PA, PB, PD , tgx::RGB32_Green, 180.0f/256.0f);
-
-	//t._bseg_draw(PA, PB, true, tgx::RGB32_Green, 1, 180, true);
-	//t._bseg_draw(PB, PD, true, tgx::RGB32_Green, 1, 180, true);
-	//t._bseg_draw(PD, PA, true, tgx::RGB32_Green, 1, 180, true);
-	//t._bseg_draw(tgx::fVec2(PA), tgx::fVec2(PB), true, tgx::RGB32_Green, 1, 188, true);
-
-//	t._bseg_draw(tgx::fVec2(PA), tgx::fVec2(PB), true, tgx::RGB32_Red, 1, 256, true);
-//	t._bseg_draw(tgx::fVec2(PB), tgx::fVec2(PD), true, tgx::RGB32_Red, 1, 256, true);
-//	t._bseg_draw(tgx::fVec2(PD), tgx::fVec2(PA), true, tgx::RGB32_Red, 1, 256, true);
-
-
-	//t.fillSmoothTriangle(PA, PB, PD, tgx::RGB32_Green, 0.5f);
-	//t.fillSmoothTriangle(PC, PE, PA, tgx::RGB32_Red, 0.5f);
+	
 
 	/*
 	float R = 50.5f;
@@ -489,41 +368,13 @@ void test_3()
 	*/
 
 		{
-		tgx::fVec2 P2(90, 2);
-		tgx::fVec2 P1(2, 180);
-
-		/*
-		tgx::BSeg seg(P1, P2);
-		bool xmajor = seg.x_major();
-		cout << "xmajor" << xmajor << "\n";
-
-		while (seg.len() > 0)
-			{
-			int dir;
-			int aa = (xmajor ? seg.AA<1, true>(dir) : seg.AA<1, false>(dir));
-			
-			tgx::iVec2 pos = seg.pos();
-			tgx::iVec2 pos2 = (xmajor) ? tgx::iVec2(pos.x, pos.y + dir) : tgx::iVec2(pos.x + dir, pos.y);
-
-			int aa2 = 256 - aa;
-
-
-			cout << dir << "  " <<pos << "   " << pos2 << "   " << aa << "\n";
-			t.drawPixel(pos, tgx::RGB32_Red, aa / 256.0f);
-			t.drawPixel(pos2, tgx::RGB32_Red, aa2 / 256.0f);
-			seg.move();
-			}
-
-		plotLineAA(t, P1.x, P1.y + 3, P2.x, P2.y + 3, tgx::RGB32_Red, 1.0f);
-
-
-		dst._lineBresenhamAA<true, true, false>(mtools::iVec2(P1.x , P1.y + 6), mtools::iVec2(P2.x, P2.y + 6), mtools::RGBc::c_Red, true, 1);
-		
-
-		drawWuLine(t, P1.x, P1.y + 12, P2.x, P2.y + 12, tgx::RGB32_Red, 1.0f);
-		*/
+		tgx::fVec2 P2(10, 10.5);
+		tgx::fVec2 P1(120, 10.5);
 
 		t.drawSmoothLine(P1, P2, tgx::RGB32_Red, 1.0f);
+		
+		t.drawSmoothWedgeLine(P2, P1,  10, 17, true, tgx::RGB32_Green, 0.5f);
+		t.drawSmoothWedgeLine(P2, P1,  10, 17, false, tgx::RGB32_Red, 0.5f);
 		}
 		
 	/*
