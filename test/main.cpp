@@ -237,15 +237,8 @@ void drawCircl(tgx::Image<tgx::RGB32> & t)
 
 
 
-void _fillSmoothCircle(tgx::Image<tgx::RGB32>& im, tgx::fVec2 C, float R, tgx::RGB32 color, float opacity = 1.0f);
 
-void drawCircl2(tgx::Image<tgx::RGB32>& t)
-	{
-	const float R = 50.5f;
-	const float C = 60;
-	const float rr = 40.0f;
-	_fillSmoothCircle(t, { C,C }, R, tgx::RGB32_Red, 0.5f);
-	}
+
 
 
 void plotLineAA(tgx::Image<tgx::RGB32>& im, int x0, int y0, int x1, int y1, tgx::RGB32 color, float opacity = 1.0f)
@@ -407,7 +400,9 @@ void test_3()
 
 
 
-	t.fillEllipse({ 150, 150 }, { 50, 20 }, tgx::RGB32_Red, tgx::RGB32_Green, 0.3f);
+//	t.drawCircle({150, 150 }, 50,  tgx::RGB32_Green, 0.3f);
+	
+	t.fillSmoothEllipse({ 150, 150 }, { 50, 30 }, tgx::RGB32_Red, 0.5f);
 
 	/*
 		{
@@ -485,256 +480,6 @@ fVec2 prot(double a, fVec2 P)
 
 
 
-void _fillSmoothQuarterEllipse(tgx::Image<tgx::RGB32> & im, tgx::fVec2 C, float rx, float ry, int quarter, bool vertical_center_line, bool horizontal_center_line, tgx::RGB32 color, float opacity = 1.0f)
-	{
-	// check radius >0  and im valid...
-	const int dir_x = (quarter & 1) ? -1 : 1;
-	const int dir_y = (quarter & 2) ? -1 : 1;
-	auto B = im.imageBox();
-
-	B &= tgx::iBox2(
-		((dir_x > 0) ? (int)floorf(C.x - rx + 0.5f) : (int)roundf(C.x) + ((vertical_center_line) ? 0 : 1)),
-		((dir_x > 0) ? ((int)roundf(C.x) - ((vertical_center_line) ? 0 : 1)) : (int)ceilf(C.x + rx - 0.5f)),
-		((dir_y > 0) ? ((int)roundf(C.y) + ((horizontal_center_line) ? 0 : 1)) : (int)floorf(C.y - ry + 0.5f)),
-		((dir_y > 0) ? (int)ceilf(C.y + ry - 0.5f) : (int)roundf(C.y) - ((horizontal_center_line) ? 0 : 1)));
-	if (B.isEmpty()) return; 
-	if (dir_y < 0) { tgx::swap(B.minY, B.maxY); }
-	B.maxY += dir_y;
-	if (dir_x < 0) { tgx::swap(B.minX, B.maxX); }
-	B.maxX += dir_x;
-	
-	const float thickness = 4.0f;
-
-	const float inv_rx2 = 1.0f / (rx * rx);
-	const float inv_ry2 = 1.0f / (ry * ry);
-
-	int i_min = B.minX;
-	for (int j = B.minY; j != B.maxY; j += dir_y)
-		{
-		const float dy = (j - C.y);
-		const float dy2 = dy*dy*inv_ry2;
-		const float zy = fabsf(dy) * inv_ry2;
-		for(int i = i_min; i != B.maxX; i += dir_x)
-			{
-			const float dx = (i - C.x);
-			const float dx2 = dx*dx*inv_rx2;
-			const float zx = fabsf(dx) * inv_rx2;
-			const float tt = 2 * tgx::max(zx, zy);
-			const float e2 = (dx2 + dy2 - 1);
-			if (e2 > tt) { i_min = i + dir_x; continue; }
-			if (e2 < -thickness*tt) 
-				{/*
-				const int h = B.maxX - dir_x - i;	
-				if (h >= 0)
-					im.drawFastHLine<false>({ i,j }, h + 1, color, opacity);
-				else
-					im.drawFastHLine<false>({ B.maxX - dir_x,j },  1 - h, color, opacity);
-					*/
-				break;
-				}
-
-
-			float alpha = 1.0f;
-			if (e2 > 0)
-				{
-				alpha = 1.0f - (e2 / tt); 
-				}
-			else if (e2 < (1 - thickness) * tt)
-				{
-				alpha = thickness + (e2 / tt);
-				}
-			
-			//const float alpha = 1.0f - fabs(e2 / (4*tt)); // single line
-			//const float alpha =  (1 -(e2/tt)) * 0.5f ; // fill
-
-			im.drawPixel<false>({ i,j }, color, alpha*opacity);
-			}
-		}
-	return;
-	}
-
-void _fillSmoothEllipse(tgx::Image<tgx::RGB32>& im, tgx::fVec2 C, float rx, float ry, tgx::RGB32 color, float opacity = 1.0f)
-	{
-	// check radius >0  and im valid...
-	_fillSmoothQuarterEllipse(im, C, rx, ry, 0, 1, 1, color, opacity);
-	_fillSmoothQuarterEllipse(im, C, rx, ry, 1, 0, 1, color, opacity);
-	_fillSmoothQuarterEllipse(im, C, rx, ry, 2, 1, 0, color, opacity);
-	_fillSmoothQuarterEllipse(im, C, rx, ry, 3, 0, 0, color, opacity);
-	}
-
-
-
-void _fillSmoothQuarterCircle(tgx::Image<tgx::RGB32> & im, tgx::fVec2 C, float R, int quarter, bool vertical_center_line, bool horizontal_center_line, tgx::RGB32 color, float opacity = 1.0f)
-	{
-	// check radius >0  and im valid...
-	const int dir_x = (quarter & 1) ? -1 : 1;
-	const int dir_y = (quarter & 2) ? -1 : 1;
-	auto B = im.imageBox();
-	B &= tgx::iBox2(
-		((dir_x > 0) ? (int)floorf(C.x - R + 0.5f) : (int)roundf(C.x) + ((vertical_center_line) ? 0 : 1)),
-		((dir_x > 0) ? ((int)roundf(C.x) - ((vertical_center_line) ? 0 : 1)) : (int)ceilf(C.x + R - 0.5f)),
-		((dir_y > 0) ? ((int)roundf(C.y) + ((horizontal_center_line) ? 0 : 1)) : (int)floorf(C.y - R + 0.5f)),
-		((dir_y > 0) ? (int)ceilf(C.y + R - 0.5f) : (int)roundf(C.y) - ((horizontal_center_line) ? 0 : 1)));
-	if (B.isEmpty()) return; 
-	if (dir_y < 0) { tgx::swap(B.minY, B.maxY); }
-	B.maxY += dir_y;
-	if (dir_x < 0) { tgx::swap(B.minX, B.maxX); }
-	B.maxX += dir_x;
-	const float RT = (R < 0.5f) ? 4*R*R : (R + 0.5f);
-	const float RA2 = RT*RT;
-	const float RB2 = (R < 0.5f) ? -1 : (R - 0.5f)* (R - 0.5f);
-	int i_min = B.minX;
-	for (int j = B.minY; j != B.maxY; j += dir_y)
-		{
-		float dy2 = (j - C.y); dy2 *= dy2;
-		for(int i = i_min; i != B.maxX; i += dir_x)
-			{
-			float dx2 = (i - C.x); dx2 *= dx2;
-			const float e2 = dx2 + dy2;
-			if (e2 >= RA2) { i_min = i + dir_x; continue; }
-			if (e2 <= RB2) 
-				{ 
-				const int h = B.maxX - dir_x - i;
-				if (h >= 0)
-					im.drawFastHLine({ i,j }, h + 1, color, opacity);
-				else
-					im.drawFastHLine({ B.maxX - dir_x,j },  1 - h, color, opacity);
-				break; 
-				}
-			const float alpha = RT - sqrtf(e2);
-			im.drawPixel<false>({ i,j }, color, alpha*opacity);
-			}
-		}
-	return;
-	}
-
-void _fillSmoothCircle(tgx::Image<tgx::RGB32>& im, tgx::fVec2 C, float R, tgx::RGB32 color, float opacity)
-	{
-	// check radius >0  and im valid...
-	_fillSmoothQuarterCircle(im, C, R, 0, 1, 1, color, opacity);
-	_fillSmoothQuarterCircle(im, C, R, 1, 0, 1, color, opacity);
-	_fillSmoothQuarterCircle(im, C, R, 2, 1, 0, color, opacity);
-	_fillSmoothQuarterCircle(im, C, R, 3, 0, 0, color, opacity);
-	}
-
-
-
-
-
-
-//
-//  2    x=1, y=-1  |  3   x=-1; y=-1
-//   ---------------------------------
-//  0    x=1, y=1   |  1   x=-1, y=1
-void _smoothQuarterCircle(tgx::Image<tgx::RGB32> & im, tgx::fVec2 C, float R, int quarter, bool vertical_center_line, bool horizontal_center_line, tgx::RGB32 color, float opacity = 1.0f)
-	{
-	// check radius >0  and im valid...
-	const int dir_x = (quarter & 1) ? -1 : 1;
-	const int dir_y = (quarter & 2) ? -1 : 1;
-	auto B = im.imageBox();
-	B &= tgx::iBox2(
-		((dir_x > 0) ? (int)floorf(C.x - R + 0.5f) : (int)roundf(C.x) + ((vertical_center_line) ? 0 : 1)),
-		((dir_x > 0) ? ((int)roundf(C.x) - ((vertical_center_line) ? 0 : 1)) : (int)ceilf(C.x + R - 0.5f)),
-		((dir_y > 0) ? ((int)roundf(C.y) + ((horizontal_center_line) ? 0 : 1)) : (int)floorf(C.y - R + 0.5f)),
-		((dir_y > 0) ? (int)ceilf(C.y + R - 0.5f) : (int)roundf(C.y) - ((horizontal_center_line) ? 0 : 1)));
-/*	B &= tgx::iBox2(
-		((dir_x > 0) ? (int)roundf(C.x - R - 0.5f) : (int)roundf(C.x) + ((vertical_center_line) ? 0 : 1)),
-		((dir_x > 0) ? ((int)roundf(C.x) - ((vertical_center_line) ? 0 : 1)) : (int)roundf(C.x + R + 0.5f)),
-		((dir_y > 0) ? ((int)roundf(C.y) + ((horizontal_center_line) ? 0 : 1)) : (int)roundf(C.y - R - 0.5f)),
-		((dir_y > 0) ? (int)roundf(C.y + R + 0.5f) : (int)roundf(C.y) - ((horizontal_center_line) ? 0 : 1))); */
-	if (B.isEmpty()) return; 
-	if (dir_y < 0) { tgx::swap(B.minY, B.maxY); }
-	B.maxY += dir_y;
-	if (dir_x < 0) { tgx::swap(B.minX, B.maxX); }
-	B.maxX += dir_x;
-	const float RA2 = (R < 1) ? (4*R*R) : (R + 1) * (R + 1);
-	const float RB2 = (R < 1) ? -1 : (R - 1)* (R - 1);
-	if (R < 1) opacity *= R; 
-	int i_min = B.minX;
-	for (int j = B.minY; j != B.maxY; j += dir_y)
-		{
-		float dy2 = (j - C.y); dy2 *= dy2;
-		for(int i = i_min; i != B.maxX; i += dir_x)
-			{
-			float dx2 = (i - C.x); dx2 *= dx2;
-			const float e2 = dx2 + dy2;
-			if (e2 >= RA2) { i_min = i + dir_x; continue; }
-			if (e2 <= RB2) break; 
-			const float alpha = 1.0f - fabsf(R - sqrtf(e2));
-			im.drawPixel<false>({ i,j }, color, alpha*opacity);
-			}
-		}
-	return;
-	}
-
-
-void _smoothCircle(tgx::Image<tgx::RGB32>& im, tgx::fVec2 C, float R, tgx::RGB32 color, float opacity = 1.0f)
-	{
-	// check radius >0  and im valid...
-	_smoothQuarterCircle(im, C, R, 0, 1, 1, color, opacity);
-	_smoothQuarterCircle(im, C, R, 1, 0, 1, color, opacity);
-	_smoothQuarterCircle(im, C, R, 2, 1, 0, color, opacity);
-	_smoothQuarterCircle(im, C, R, 3, 0, 0, color, opacity);
-	}
-
-
-
-
-//
-//  2    x=1, y=-1  |  3   x=-1; y=-1
-//   ---------------------------------
-//  0    x=1, y=1   |  1   x=-1, y=1
-void _smoothWideQuarterCircle(tgx::Image<tgx::RGB32> & im, tgx::fVec2 C, float R, float thickness, int quarter, bool vertical_center_line, bool horizontal_center_line, tgx::RGB32 color, float opacity = 1.0f)
-	{
-	if (thickness > R) thickness = R; 
-	// check radius >0  and im valid...
-	const int dir_x = (quarter & 1) ? -1 : 1;
-	const int dir_y = (quarter & 2) ? -1 : 1;
-	auto B = im.imageBox();
-	B &= tgx::iBox2(
-		((dir_x > 0) ? (int)floorf(C.x - R + 0.5f) : (int)roundf(C.x) + ((vertical_center_line) ? 0 : 1)),
-		((dir_x > 0) ? ((int)roundf(C.x) - ((vertical_center_line) ? 0 : 1)) : (int)ceilf(C.x + R - 0.5f)),
-		((dir_y > 0) ? ((int)roundf(C.y) + ((horizontal_center_line) ? 0 : 1)) : (int)floorf(C.y - R + 0.5f)),
-		((dir_y > 0) ? (int)ceilf(C.y + R - 0.5f) : (int)roundf(C.y) - ((horizontal_center_line) ? 0 : 1)));
-	if (B.isEmpty()) return; 
-	if (dir_y < 0) { tgx::swap(B.minY, B.maxY); }
-	B.maxY += dir_y;
-	if (dir_x < 0) { tgx::swap(B.minX, B.maxX); }
-	B.maxX += dir_x;
-	const float RA2 = (R < 1) ? (4*R*R) : (R + 1) * (R + 1);
-	const float RB2 = (R < 1) ? -1 : (R - thickness)*(R-thickness);
-	if (R < 1) opacity *= R; 
-	if (thickness < 0.5f) opacity *= (thickness * 2);
-	int i_min = B.minX;
-	for (int j = B.minY; j != B.maxY; j += dir_y)
-		{
-		float dy2 = (j - C.y); dy2 *= dy2;
-		for(int i = i_min; i != B.maxX; i += dir_x)
-			{
-			float dx2 = (i - C.x); dx2 *= dx2;
-			const float e2 = dx2 + dy2;
-			if (e2 >= RA2) { i_min = i + dir_x; continue; }
-			if (e2 <= RB2) break; 
-			const float se = sqrtf(e2);
-			const float d2 = se - R;  const float alpha2 = (d2 > 0) ? (1.0f - d2) : 1.0f;
-			const float d1 = se - (R - thickness); const float alpha1 = (d1 < 1) ? d1 : 1.0f;
-			const float alpha = alpha1 * alpha2;
-			im.drawPixel<false>({ i,j }, color, alpha * opacity);
-			cout << alpha << "\n";
-			}
-		}
-	return;
-	}
-
-
-void _smoothWideCircle(tgx::Image<tgx::RGB32>& im, tgx::fVec2 C, float R, float thickness, tgx::RGB32 color, float opacity = 1.0f)
-	{
-	// check radius >0  and im valid...
-	_smoothWideQuarterCircle(im, C, R, thickness, 0, 1, 1, color, opacity);
-	_smoothWideQuarterCircle(im, C, R, thickness, 1, 0, 1, color, opacity);
-	_smoothWideQuarterCircle(im, C, R, thickness, 2, 1, 0, color, opacity);
-	_smoothWideQuarterCircle(im, C, R, thickness, 3, 0, 0, color, opacity);
-	}
 
 
 
@@ -742,6 +487,16 @@ void _smoothWideCircle(tgx::Image<tgx::RGB32>& im, tgx::fVec2 C, float R, float 
 
 
 
+
+
+
+
+
+
+
+
+
+/*
 void _fillSmoothRoundedRect(tgx::Image<tgx::RGB32>& im, const tgx::iBox2& B, float corner_radius, tgx::RGB32 color, float opacity = 1.0f)
 	{
 	// check radius >0 and B not empty and im valid...
@@ -770,7 +525,7 @@ void _fillSmoothRoundedRect(tgx::Image<tgx::RGB32>& im, const tgx::iBox2& B, flo
 	im.fillRect(iBox2(B.minX, x1-1, y1,y2), color, opacity);
 	im.fillRect(iBox2(x2+1, B.maxX, y1,y2), color, opacity);
 	}
-
+	*/
 
 
 
@@ -786,6 +541,7 @@ void _fillSmoothRoundedRect(tgx::Image<tgx::RGB32>& im, const tgx::iBox2& B, flo
 *     to fill/color the pixel completele, the box B must therefore be aligned with
 *     half integer values !
 **/
+/*
 void _fillSmoothRect(tgx::Image<tgx::RGB32>& im, const tgx::fBox2& B, tgx::RGB32 color, float opacity)
 	{
 	if (B.isEmpty()) return;
@@ -831,33 +587,15 @@ void _fillSmoothRect(tgx::Image<tgx::RGB32>& im, const tgx::fBox2& B, tgx::RGB32
 	im.drawFastVLine({ eB.maxX, eB.minY + 1 }, eB.maxY - eB.minY - 1, color, opacity * a_right);
 	return;
 	}
+	*/
+
+
+
+
+
 
 
 /*
-        10    10      0.5
-        10.5  10      1.0
-		9.51  10      0.01
-
-		
-
-        B     eB
-	    0     0       0.5
-	  -0.5    0       1
-	   0.49   0       0.01
-
-		0.5 + B - eB
-*/
-void _drawWideSmoothRect(const fBox2& B, float thickness, tgx::RGB32 color, float opacity)
-	{
-
-	}
-
-
-
-
-
-
-
 void _smoothRoundedRect(tgx::Image<tgx::RGB32>& im, const tgx::iBox2& B, float corner_radius, tgx::RGB32 color, float opacity = 1.0f)
 	{
 	// check radius >0 and B not empty and im valid...
@@ -922,7 +660,7 @@ void _smoothWideRoundedRect(tgx::Image<tgx::RGB32>& im, const tgx::iBox2& B, flo
 	_fillSmoothRect(im, tgx::fBox2(B.maxX - thickness + 0.5f, B.maxX + 0.5f, y1-0.5f, y2+0.5f), color, opacity);
 
 	}
-
+*/
 
 
 
@@ -1054,7 +792,7 @@ void testblend()
 
 
 
-
+	/*
 	
 
 	_smoothCircle(tgx_dst, { 30,100 }, 100, ccc);
@@ -1075,17 +813,10 @@ void testblend()
 	dst.draw_ellipse( fVec2{ 100, 50 }, 100.0f, 30.0f, RGBc::c_White, true, false);
 
 	_fillSmoothEllipse(tgx_dst, tgx::fVec2{ 100, 50 }, 9, 6, ccc, 1.0f);
-
+	
 	while (ID.isDisplayOn())
 		{
 		
-		/*
-
-		tgx_dst.fillScreen(tgx::RGB32_Black);
-		_fillSmoothRoundedRect(tgx_dst, tgx::iBox2(100, 200, 130, 230), r, ccc2, 0.5f);
-		_smoothRoundedRect(tgx_dst, tgx::iBox2(100, 200, 130, 230), r, ccc, 1.0f);
-		dst.draw_thick_filled_ellipse({ 100, 40 }, 100, 30, 10, 10, RGBc::c_Red, RGBc::c_White, true, true, false);
-		*/
 
 		ID.redrawNow();
 
@@ -1094,6 +825,7 @@ void testblend()
 		if (r < 0) { r = 0; eps = -eps; }
 		}
 	return;
+	*/
 	}
 
 
