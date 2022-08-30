@@ -406,6 +406,9 @@ void test_3()
 	t.fillRectVGradient(B, tgx::RGB32_Blue, tgx::RGB32_White, 0.5f);
 
 
+
+	t.fillEllipse({ 150, 150 }, { 50, 20 }, tgx::RGB32_Red, tgx::RGB32_Green, 0.3f);
+
 	/*
 		{
 		tgx::fVec2 P2(2.2f, 0.8f);
