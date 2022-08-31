@@ -317,10 +317,11 @@ void test_3()
 //	t.drawTriangle({ 10, 5 }, { 80, 70 }, { 30, 120 }, tgx::RGB32_Red,1.0f);
 
 	iVec2 P1(5, 5);
-	iVec2 P2(10, 15);
-	iVec2 P3(20, 6);
+	iVec2 P2(50, 25);
+	iVec2 P3(20, 100);
 
 
+	/*
 	{
 		mtools::Chrono ch;
 		ch.reset();
@@ -331,10 +332,12 @@ void test_3()
 		int e = ch.elapsed();
 		cout << "elapsed triangle old = " << e << "\n";
 	}
+	*/
+
+	t.drawSmoothTriangle(P1, P2, P3, tgx::RGB32_Red, 0.5f);
 
 
-
-	t.fillSmoothQuad({ -10, 5 }, { 80.5, 70.5 }, { 130, 120 }, { 30, 200 }, tgx::RGB32_Red, 0.6f);
+	//t.fillSmoothQuad({ -10, 5 }, { 80.5, 70.5 }, { 130, 120 }, { 30, 200 }, tgx::RGB32_Red);
 
 
 
