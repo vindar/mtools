@@ -173,7 +173,7 @@ void test_2()
 	tgx::iVec2 TT[4] = { PA,PB,PC , PD };
 	tgx::iVec2 TT5[5] = { PA,PB,PC , PD, PE };
 
-	t.drawPolyLine(4, TT, tgx::RGB32_Green, 0.5f);
+	t.drawPolyline(4, TT, tgx::RGB32_Green, 0.5f);
 	t.drawPolygon(4, TT, tgx::RGB32_Blue, 0.5f);
 	t.drawQuadBezier(PA, PC, PB, 1.0f, true, tgx::RGB32_Green, 0.2f);
 	t.drawQuadBezier(PA, PC, PB, 6.0f, false, tgx::RGB32_Red);
@@ -344,17 +344,17 @@ void test_3()
 
 //	t.fillSmoothTriangle({ 1,1 }, { 100, 3 }, { 30,90 }, tgx::RGB32_Red);
 
+	tgx::RGB32 c = tgx::RGB32_Red;
 
 	tgx::fVec2 tabP[4] =
 		{
 		{3, 3}, {50, 3}, {40,80}, {5,70}
 		};
 
+	//t.fillSmoothPolygon(4, tabP, c);
 
 
-//	t.drawSmoothThickPolygon(3,tabP, 5, tgx::RGB32_Red, 1.0f);
-
-	t.drawSmoothThickQuad(P4,P3,P2, P1, 5, tgx::RGB32_Red, 1.0f);
+	t.drawSmoothPolygon(4, tabP, tgx::RGB32_Green, 0.5f);
 
 	ID.setImage(&dst);
 	ID.display();
@@ -364,15 +364,13 @@ void test_3()
 
 
 
-
-
-
-
-
 int main(int argc, char *argv[])
 {
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
 	 
+
+
+
 	//test_0();
     //test_1();
 	//test_2();
