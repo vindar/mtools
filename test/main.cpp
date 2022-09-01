@@ -318,7 +318,8 @@ void test_3()
 
 	iVec2 P1(5, 5);
 	iVec2 P2(50, 25);
-	iVec2 P3(20, 100);
+	iVec2 P3(50, 100);
+	iVec2 P4(10, 120);
 
 
 	/*
@@ -334,12 +335,26 @@ void test_3()
 	}
 	*/
 
-	t.drawSmoothTriangle(P1, P2, P3, tgx::RGB32_Red, 0.5f);
+//	t.drawSmoothTriangle(P1, P2, P3, tgx::RGB32_Red, 0.5f);
 
 
 	//t.fillSmoothQuad({ -10, 5 }, { 80.5, 70.5 }, { 130, 120 }, { 30, 200 }, tgx::RGB32_Red);
 
+//	dst.draw_thick_triangle({ 1,1 }, { 100, 3 }, { 30,90 }, 10, RGBc::c_Red, true, true);
 
+//	t.fillSmoothTriangle({ 1,1 }, { 100, 3 }, { 30,90 }, tgx::RGB32_Red);
+
+
+	tgx::fVec2 tabP[4] =
+		{
+		{3, 3}, {50, 3}, {40,80}, {5,70}
+		};
+
+
+
+//	t.drawSmoothThickPolygon(3,tabP, 5, tgx::RGB32_Red, 1.0f);
+
+	t.drawSmoothThickQuad(P4,P3,P2, P1, 5, tgx::RGB32_Red, 1.0f);
 
 	ID.setImage(&dst);
 	ID.display();
