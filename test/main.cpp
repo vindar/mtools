@@ -36,6 +36,44 @@ char cb[1000000];
 
 
 
+/* CREATION OF IMAGES AND SUB - IMAGE */
+template<typename color_t> void tgx_test_section0()
+	{
+	tgx::Image<color_t> im1;
+	tgx::Image<color_t> im2((tgx::RGB565*)nullptr, 100, 200);
+	tgx::Image<color_t> im3((tgx::RGB565*)nullptr, { 100,200 }, 2);
+	tgx::Image<color_t> im4(im3, {0, 50, 20, 100});
+	tgx::Image<color_t> im5(im4);
+	im1 = im5;
+	im2.set((tgx::RGB565*)nullptr, 300, 200);
+	im3.set((tgx::RGB565*)nullptr, {100, 50});
+	im4.crop({5, 6, 10, 20});
+	im5 = im1.getCrop({ 6, 7,8, 9 }, true);
+	im3 = im2[{ 6, 7, 8, 9 }];
+	volatile bool b = im3.isValid();
+	im4.setInvalid();
+	}
+
+
+void test_all()
+	{
+	tgx_test_section0<tgx::RGB32>();
+
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void test_0()
 	{
 	ImageDisplay ID(320, 240);
@@ -368,7 +406,7 @@ int main(int argc, char *argv[])
 {
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
 	 
-
+	test_all();
 
 
 	//test_0();
