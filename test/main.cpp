@@ -49,7 +49,8 @@ template<typename color_t> void tgx_test_section0()
 	im3.set((tgx::RGB565*)nullptr, {100, 50});
 	im4.crop({5, 6, 10, 20});
 	im5 = im1.getCrop({ 6, 7,8, 9 }, true);
-	im3 = im2[{ 6, 7, 8, 9 }];
+	im3 = im2(tgx::iBox2{ 6, 7, 8, 9 });
+	im4 = im2(6, 80, 8, 900);
 	volatile bool b = im3.isValid();
 	im4.setInvalid();
 	}
@@ -82,7 +83,7 @@ void test_0()
 	tgx::Image<tgx::RGB32> t(dst);
 
 
-	auto b = t[{10, 30, 40, 70}];
+	auto b = t(10, 30, 40, 70 );
 
 	cout << b << "\n";
 	cout << t.lx() << "\n";
