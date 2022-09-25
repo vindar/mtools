@@ -421,7 +421,7 @@ void test_3()
 		tab[0] = A;
 		int nb = 1;
 
-		const float LEN = 30;
+		const float LEN = 3;
 		float delta = LEN / ((C - A).norm() + (C - B).norm()); 
 		delta *= LEN * (((1 - delta) * (1 - delta)) * A + (delta * delta) * B + 2 * delta * (1 - delta) * C - A).invnorm_fast();
 		float tt = 0; 
@@ -463,15 +463,16 @@ void test_3()
 
 		//t.drawSmoothThickPolyline(nb, tab, 4, true, tgx::RGB32_Green, 1.0f);
 
-		int kk = 0; 
-		t.drawSmoothPolyline(
-			[&kk, &nb, &tab ](tgx::fVec2 & P) 
-				{ 
-				if (kk == nb) return false;  
-				P = tab[kk++];
-				return true;
-				},
-		tgx::RGB32_Green, 0.5f);
+			{
+			tgx::iVec2 tabi[1000];
+			for (int i = 0; i < nb; i++)
+				{
+				tabi[i] = iVec2(tab[i]);
+				}
+			//t.drawPolygon(nb, tabi, tgx::RGB32_Green, 0.5f);
+			}
+
+		t.drawSmoothPolygon(nb,tab, tgx::RGB32_Red, 0.5f);
 	
 
 
