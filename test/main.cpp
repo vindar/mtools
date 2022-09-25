@@ -408,8 +408,8 @@ void test_3()
 
 	{
 		tgx::fVec2 A(30, 30);
-		tgx::fVec2 B(30, 150);
-		tgx::fVec2 C(300, 220);
+		tgx::fVec2 B(30, 70);
+		tgx::fVec2 C(320, 80);
 
 		t.drawQuadBezier(tgx::iVec2(A), tgx::iVec2(B), tgx::iVec2(C), 1.0f, true, tgx::RGB32_Red, 0.5f);
 
@@ -421,7 +421,7 @@ void test_3()
 		tab[0] = A;
 		int nb = 1;
 
-		const float LEN = 3;
+		const float LEN = 5;
 		float delta = LEN / ((C - A).norm() + (C - B).norm()); 
 		delta *= LEN * (((1 - delta) * (1 - delta)) * A + (delta * delta) * B + 2 * delta * (1 - delta) * C - A).invnorm_fast();
 		float tt = 0; 
@@ -439,17 +439,26 @@ void test_3()
 				}			
 			tt += delta;
 			delta *= LEN*fast_invsqrt(d2);			
+
 			if (tt >= 1)
 				{
-				tab[nb++] = B;
-				cout << 1.0f << "   " << (tab[nb - 1] - tab[nb - 2]).norm() << " END\n";
+				if ((B - tab[nb - 1]).norm() <= 1)
+					{
+					tab[nb- 1] = B;
+					cout << "ERASE PREVIOUS \n";
+					}
+				else
+					{
+					tab[nb++] = B;
+					}
+				cout << 1.0f << "   " << (tab[nb - 1] - tab[nb - 2]).norm() << " ERASE PREVIOUS\n";
 				break;
 				}
 			tab[nb++] = Q;			
 			cout << tt - delta << "    " << (tab[nb - 1] - tab[nb - 2]).norm() << "\n";
 			}
 		cout << "nb = " << nb << "\n";
-		t.drawSmoothThickPolyline(nb, tab, 10, true, tgx::RGB32_Green, 0.5f);
+		t.drawSmoothThickPolyline(nb, tab, 4, true, tgx::RGB32_Green, 0.5f);
 
 	}
 
