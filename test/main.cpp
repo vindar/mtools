@@ -409,9 +409,9 @@ void test_3()
 	{
 		tgx::fVec2 A(30, 30);
 		tgx::fVec2 B(30, 70);
-		tgx::fVec2 C(320, 80);
+		tgx::fVec2 C(320, 50);
 
-		t.drawQuadBezier(tgx::iVec2(A), tgx::iVec2(B), tgx::iVec2(C), 1.0f, true, tgx::RGB32_Red, 0.5f);
+		//t.drawQuadBezier(tgx::iVec2(A), tgx::iVec2(B), tgx::iVec2(C), 1.0f, true, tgx::RGB32_Red, 0.5f);
 
 		const int N = 1000;
 
@@ -421,7 +421,7 @@ void test_3()
 		tab[0] = A;
 		int nb = 1;
 
-		const float LEN = 5;
+		const float LEN = 30;
 		float delta = LEN / ((C - A).norm() + (C - B).norm()); 
 		delta *= LEN * (((1 - delta) * (1 - delta)) * A + (delta * delta) * B + 2 * delta * (1 - delta) * C - A).invnorm_fast();
 		float tt = 0; 
@@ -458,7 +458,26 @@ void test_3()
 			cout << tt - delta << "    " << (tab[nb - 1] - tab[nb - 2]).norm() << "\n";
 			}
 		cout << "nb = " << nb << "\n";
-		t.drawSmoothThickPolyline(nb, tab, 4, true, tgx::RGB32_Green, 0.5f);
+
+
+
+		//t.drawSmoothThickPolyline(nb, tab, 4, true, tgx::RGB32_Green, 1.0f);
+
+		int kk = 0; 
+		t.drawSmoothPolyline(
+			[&kk, &nb, &tab ](tgx::fVec2 & P) 
+				{ 
+				if (kk == nb) return false;  
+				P = tab[kk++];
+				return true;
+				},
+		tgx::RGB32_Green, 0.5f);
+	
+
+
+
+
+
 
 	}
 
