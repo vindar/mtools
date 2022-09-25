@@ -387,13 +387,72 @@ void test_3()
 
 	tgx::fVec2 tabP[4] =
 		{
-		{3, 3}, {50, 3}, {40,80}, {5,70}
+		{10, 10}, {150, 50}, {170,200}, {20,230}
 		};
+
+	tgx::iVec2 tabPi[4] =
+		{
+		{10, 10}, {150, 50}, {170,200}, {20,230}
+		};
+
 
 	//t.fillSmoothPolygon(4, tabP, c);
 
+	//t.drawSmoothThickPolyline(4, tabP, 3.6, false, tgx::RGB32_Green, 1.0f);
+//	t.drawPolyline(4, tabPi, tgx::RGB32_Green, 1.0f);
+//	t.drawSmoothThickPolygon(4, tabP, 5, tgx::RGB32_Green, 0.5f);
 
-	t.drawSmoothPolygon(4, tabP, tgx::RGB32_Green, 0.5f);
+
+
+
+
+	{
+		tgx::fVec2 A(30, 30);
+		tgx::fVec2 B(30, 150);
+		tgx::fVec2 C(300, 220);
+
+		t.drawQuadBezier(tgx::iVec2(A), tgx::iVec2(B), tgx::iVec2(C), 1.0f, true, tgx::RGB32_Red, 0.5f);
+
+		const int N = 1000;
+
+		tgx::fVec2 tab[N];
+
+
+		tab[0] = A;
+		int nb = 1;
+
+		const float LEN = 3;
+		float delta = LEN / ((C - A).norm() + (C - B).norm()); 
+		delta *= LEN * (((1 - delta) * (1 - delta)) * A + (delta * delta) * B + 2 * delta * (1 - delta) * C - A).invnorm_fast();
+		float tt = 0; 
+
+		while(1)
+			{
+			float uu = tt + delta; 
+			tgx::fVec2 P = tab[nb-1];
+			tgx::fVec2 Q = ((1 - uu) * (1 - uu)) * A + (uu * uu) * B + 2 * uu * (1 - uu) * C;
+			float d2 = (P - Q).norm2();
+			if (d2 > (LEN + 1)*(LEN+1))
+				{ // too large
+				delta /= 2; 
+				continue;
+				}			
+			tt += delta;
+			delta *= LEN*fast_invsqrt(d2);			
+			if (tt >= 1)
+				{
+				tab[nb++] = B;
+				cout << 1.0f << "   " << (tab[nb - 1] - tab[nb - 2]).norm() << " END\n";
+				break;
+				}
+			tab[nb++] = Q;			
+			cout << tt - delta << "    " << (tab[nb - 1] - tab[nb - 2]).norm() << "\n";
+			}
+		cout << "nb = " << nb << "\n";
+		t.drawSmoothThickPolyline(nb, tab, 10, true, tgx::RGB32_Green, 0.5f);
+
+	}
+
 
 	ID.setImage(&dst);
 	ID.display();
