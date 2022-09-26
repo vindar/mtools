@@ -493,12 +493,20 @@ void test_3()
 			*/
 
 
-			t.fillSmoothThickQuad({ 50, 150 }, { 200, 100 }, {100, 80},  {30, 30}, 5, tgx::RGB32_Green, tgx::RGB32_Red, 0.5f);
+		//t.fillSmoothThickQuad({ 50, 150 }, { 200, 100 }, {100, 80},  {30, 30}, 5, tgx::RGB32_Green, tgx::RGB32_Red, 0.5f);
 
 
 
+	    t.fillSmoothThickRoundRect(tgx::fBox2(10.0, 100, 20, 50), 15, 1.51f, tgx::RGB32_Blue, tgx::RGB32_Red, 0.5f);
+		//t.drawSmoothThickRoundRect(tgx::fBox2(10.5f, 100.5f, 20.5f, 50.5f), 8, 3, tgx::RGB32_Red, 0.5f);
 
+		//t.fillSmoothRoundRect(tgx::fBox2(10.5f, 100.5f, 20.5f, 50.5f), 8, tgx::RGB32_Blue, tgx::RGB32_Red, 0.5f);
+
+
+//			t.fillThickRect(tgx::iBox2(10, 100, 20, 50), 10, tgx::RGB32_Red, tgx::RGB32_Blue, 0.5f);
+//			t.drawCircle({ 13,20 }, 5, tgx::RGB32_Green);
 	}		
+	
 
 
 	ID.setImage(&dst);
