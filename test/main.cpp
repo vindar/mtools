@@ -461,26 +461,44 @@ void test_3()
 
 
 
-		//t.drawSmoothThickPolyline(nb, tab, 4, true, tgx::RGB32_Green, 1.0f);
+		//t.fillSmoothThickPolygon(nb-1, tab, 3, tgx::RGB32_Green, tgx::RGB32_Red, 0.5f);
 
+		//t.drawSmoothThickPolyline(nb, tab, 4, true, tgx::RGB32_Green, 0.5f);
+		//t.drawSmoothThickPolygon(nb, tab, 4, tgx::RGB32_Red, 0.5f);
 			{
 			tgx::iVec2 tabi[1000];
 			for (int i = 0; i < nb; i++)
 				{
 				tabi[i] = iVec2(tab[i]);
 				}
-			//t.drawPolygon(nb, tabi, tgx::RGB32_Green, 0.5f);
+		//t.drawPolygon(nb, tabi, tgx::RGB32_Green, 0.5f);
+		//t.fillPolygon(nb, tabi, tgx::RGB32_Green, 0.5f);
 			}
 
-		t.drawSmoothPolygon(nb,tab, tgx::RGB32_Red, 0.5f);
+		//t.fillSmoothPolygon(nb,tab, tgx::RGB32_Red, 0.5f);
 	
+			/*
+			const int nbb = 3;
+			int n = 0; 
+			t.fillSmoothThickPolygon(
+				[&](tgx::fVec2 & P)
+					{
+					if (n >= nbb) n = 0;
+					P.x = 100 + 60*cosf(2 * PI * n / nbb);
+					P.y = 100 + 50*sinf(2 * PI * n / nbb);
+					n++;
+					return (n < nbb);
+					},
+			10 , tgx::RGB32_Green, tgx::RGB32_Red, 0.5f);
+			*/
+
+
+			t.fillSmoothThickQuad({ 50, 150 }, { 200, 100 }, {100, 80},  {30, 30}, 5, tgx::RGB32_Green, tgx::RGB32_Red, 0.5f);
 
 
 
 
-
-
-	}
+	}		
 
 
 	ID.setImage(&dst);
@@ -489,12 +507,38 @@ void test_3()
 
 
 
+	void printcolor(tgx::RGB565 col)
+	{
+		std::cout << "0x" << std::hex << col.val << "\n";
+	}
 
 
 int main(int argc, char *argv[])
 {
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
-	 
+
+
+	printcolor(tgx::RGB565_Black);
+	printcolor(tgx::RGB565_White);
+	printcolor(tgx::RGB565_Red);
+	printcolor(tgx::RGB565_Blue);
+	printcolor(tgx::RGB565_Green);
+	printcolor(tgx::RGB565_Purple);
+	printcolor(tgx::RGB565_Orange);
+	printcolor(tgx::RGB565_Cyan);
+	printcolor(tgx::RGB565_Lime);
+	printcolor(tgx::RGB565_Salmon);
+	printcolor(tgx::RGB565_Maroon);
+	printcolor(tgx::RGB565_Yellow);
+	printcolor(tgx::RGB565_Magenta);
+	printcolor(tgx::RGB565_Olive);
+	printcolor(tgx::RGB565_Teal);
+	printcolor(tgx::RGB565_Gray);
+	printcolor(tgx::RGB565_Silver);
+	printcolor(tgx::RGB565_Navy);
+
+
+
 	test_all();
 
 
