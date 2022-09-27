@@ -245,8 +245,140 @@ tgx::Image<tgx::RGB32> tim2(im2);
 
 
 
+inline float _triangleAera(tgx::fVec2 P1, tgx::fVec2 P2, tgx::fVec2 P3)
+	{
+	return P1.x * (P2.y - P3.y) + P2.x * (P3.y - P1.y) + P3.x * (P1.y - P2.y);
+	}
+
+
+
+void plotRationalBezier2(tgx::Image<tgx::RGB32>& im, tgx::fVec2 P1, tgx::fVec2 P2, tgx::fVec2 PC, float w, tgx::RGB32 col)
+{
+
+	for (int i = 0; i < 10000; i++)
+	{
+		float t = i / 10000.0;
+		tgx::fVec2 Q = (P1 * ((1 - t) * (1 - t)) +
+			PC * w * (2 * t * (1 - t)) +
+			P2 * (t * t)) / ((1 - t) * (1 - t) + w * 2 * t * (1 - t) + t * t);
+		im.drawPixel(tgx::iVec2(Q), col);
+	}
+	return;
+}
+
+
+
+
+void plotRationalBezier(tgx::Image<tgx::RGB32>& im, tgx::fVec2 P1, tgx::fVec2 P2, tgx::fVec2 PC, float w, tgx::RGB32 col)
+	{
+	const float l = 0.25f; 
+	float a = _triangleAera(P1, P2, PC);
+
+	cout << sqrt(a * a / (P1 - P2).norm2()) << "\n";
+
+	if (a * a < l * (P1 - P2).norm2())
+		{
+		cout << (P1-P2).norm() << "\n";
+		im.drawSmoothLine(P1, P2, col);
+		}
+	else
+		{
+		float t = 0.5f; 
+
+		float ua = (1-t) + w*t;
+		float ub = w*(1-t) + t;
+		float u3 = ((1-t)*ua + t*ub);
+		
+		tgx::fVec2 PA = (P1*(1-t) + PC*(w*t)) / ua;
+		tgx::fVec2 PB = (PC*w*(1-t) + P2*t) / ub;
+		tgx::fVec2 P3 = (PA*(1-t)*ua + PB*ub*t) / u3;
+
+		float wa = ua/sqrtf(u3);
+		float wb = ub/sqrtf(u3);
+
+		plotRationalBezier(im, P1, P3, PA, wa, col);
+		plotRationalBezier(im, P2, P3, PB, wb, col);
+	}
+
+	return;
+	}
+
+
+
+
+
+
+bool nextSplitRQB(tgx::fVec2 P1, tgx::fVec2 P2, tgx::fVec2 PC, float w, tgx::fVec2 & Q, tgx::fVec2 & PB, float & wb)
+	{
+	const int MAX_ITER = 20; 
+	const float l = 0.25f;
+	const float a = _triangleAera(P1, P2, PC);
+	if (a * a < l * (P1 - P2).norm2())
+		{ // done !
+		return true;
+		}
+	float t = 0.5f;
+	int d = 0; 
+	while (1)
+		{
+		float ua = (1 - t) + w * t;
+		float ub = w * (1 - t) + t;
+		float u3 = ((1 - t) * ua + t * ub);
+
+		tgx::fVec2 PA = (P1 * (1 - t) + PC * (w * t)) / ua;
+		PB = (PC * w * (1 - t) + P2 * t) / ub;
+		Q = (PA * (1 - t) * ua + PB * ub * t) / u3;
+		
+		const float a  = _triangleAera(P1, Q, PA);
+		const float n2 = (P1 - Q).norm2();
+		if ((n2 < 2)||(a * a < l * n2) || (d++ > MAX_ITER))
+			{ // done !
+			wb = ub / sqrtf(u3);
+			return false;
+			}
+		t /= 2; 
+		}
+	}
+
+
+
+void plotRationalBezier3(tgx::Image<tgx::RGB32>& im, tgx::fVec2 P1, tgx::fVec2 P2, tgx::fVec2 PC, float w, tgx::RGB32 col)
+	{
+	while (1)
+		{
+		tgx::fVec2 Q, PB;
+		float wb;
+		if (nextSplitRQB(P1, P2, PC, w, Q, PB, wb))
+			{
+			cout << "last = " << (P2 - P1).norm() << "\n";
+			im.drawSmoothLine(P1, P2, col);
+			return;
+			}
+		cout << (Q - P1).norm() << "\n";
+		im.drawSmoothLine(P1, Q, col);
+		P1 = Q; 
+		PC = PB; 
+		w = wb; 
+		}
+	}
+
+
+
+
+
+
+
+
+
+
+
 void test_3()
 {
+
+//	mtools::cout << _triangleAera({ 0,5 }, { 100,5 }, {9, 6}) << "\n";
+//	mtools::cout.getKey(); 
+
+
 	//	testline(); 
 	ImageDisplay ID(320, 240);
 	Image dst(320, 240);
@@ -256,6 +388,40 @@ void test_3()
 	tgx::Image<tgx::RGB32> s(sprite);
 
 	t.fillScreen(tgx::RGB32_Black);
+
+
+	{
+	tgx::fVec2 P1(10, 10);
+	tgx::fVec2 PC(200, 10);
+	tgx::fVec2 PC2(100, 230);
+	tgx::fVec2 P2(40, 130);
+	float w = 2;
+
+	t.fillSmoothCircle(P1, 2, tgx::RGB32_Green);
+	t.fillSmoothCircle(P2, 2, tgx::RGB32_Green);
+	t.fillSmoothCircle(PC, 2, tgx::RGB32_Green);
+	t.fillSmoothCircle(PC2, 2, tgx::RGB32_Green);
+
+	const float dd = 0; 
+
+
+
+	t.drawSmoothThickCubicBezier(P1, P2, PC2, PC, 2.5, true, tgx::RGB32_Red);
+
+//	t.drawCubicBezier(tgx::iVec2(P1), tgx::iVec2(P2), tgx::iVec2(PC2), tgx::iVec2(PC), true, tgx::RGB32_Blue, 0.5f);
+
+
+	ID.setImage(&dst);
+	ID.display();
+	return;
+	}
+	
+
+
+
+
+
+
 
 	tgx::iVec2 PA({ 8,3 });
 	tgx::iVec2 PB({ 130,30 });
@@ -497,7 +663,12 @@ void test_3()
 
 
 
-	    t.fillSmoothThickRoundRect(tgx::fBox2(10.0, 100, 20, 50), 15, 1.51f, tgx::RGB32_Blue, tgx::RGB32_Red, 0.5f);
+	    //t.fillSmoothThickRoundRect(tgx::fBox2(10.0, 100, 20, 50), 15, 1.51f, tgx::RGB32_Blue, tgx::RGB32_Red, 0.5f);
+	    
+	    
+		t.fillSmoothThickEllipse({ 50, 50 }, { 30, 20 }, 5, tgx::RGB32_Green, tgx::RGB32_Red, 0.5f);
+
+
 		//t.drawSmoothThickRoundRect(tgx::fBox2(10.5f, 100.5f, 20.5f, 50.5f), 8, 3, tgx::RGB32_Red, 0.5f);
 
 		//t.fillSmoothRoundRect(tgx::fBox2(10.5f, 100.5f, 20.5f, 50.5f), 8, tgx::RGB32_Blue, tgx::RGB32_Red, 0.5f);
