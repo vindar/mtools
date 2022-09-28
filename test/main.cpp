@@ -4,6 +4,14 @@ using namespace mtools;
 //#include "buddha.h"
 
 
+#include "FreeSansBold12pt7b.h"
+#include "FreeSerif9pt7b.h"
+#include "Picopixel.h"
+#include "TomThumb.h"
+
+#include "font_Courgette_lite.h"
+#include "font_Roboto_Bold_AA2.h"
+#include "font_FontdinerSwanky_AA4.h"
 
 mtools::MT2004_64 gen(123);
 
@@ -271,6 +279,28 @@ void test_3()
 	t.fillScreen(tgx::RGB32_Black);
 
 
+	t.fillRect(iBox2(50, 100, 50, 100), tgx::RGB32_Blue, 1.0f);
+	t.drawLine({ 50,50 }, {100, 100}, tgx::RGB32_Yellow, 0.5f);
+
+	const char text[] = "Hello World ! j M p b A";
+
+	//t.drawText(text, { 10, 10 }, tgx::RGB32_White, Picopixel, false);
+
+//#include "font_Courgette_lite.h"
+//#include "font_Roboto_Bold_AA2.h"
+//#include "font_FontdinerSwanky_AA4.h"
+
+
+	{
+		auto font = font_Roboto_Bold_AA2_12;
+		iVec2 pos = { 50, 50 };
+		auto B = t.measureText(text, pos, font, false);
+		t.fillRect(B, tgx::RGB32_Green, 0.3f);
+		t.drawText(text, pos , tgx::RGB32_White, font, false);
+	}
+	
+
+
 	tgx::iVec2 tabI[6] = { tgx::iVec2(10, 40), tgx::iVec2(40, 5), tgx::iVec2(110, 30), tgx::iVec2(150,70), tgx::iVec2(100, 150), tgx::iVec2(20, 130) };
 	tgx::fVec2 tabF[6];
 	for (int k = 0; k < 6; k++) 
@@ -305,7 +335,7 @@ void test_3()
 	//t.fillSmoothClosedSpline(6, tabF, tgx::RGB32_Red, 0.5f);
 //	t.drawSmoothThickQuadSpline(6, tabF, 6, tgx::END_STRAIGHT,  tgx::END_ROUNDED, tgx::RGB32_Red, 0.5f);
 
-	t.drawSmoothThickCubicBezier(tabF[0], tabF[4], tabF[3], tabF[5], 8, tgx::END_ROUNDED, tgx::END_ARROW_1, tgx::RGB32_Red, 0.5f);
+//	t.drawSmoothThickCubicBezier(tabF[0], tabF[4], tabF[3], tabF[5], 8, tgx::END_ROUNDED, tgx::END_ARROW_1, tgx::RGB32_Red, 0.5f);
 	//t.drawSmoothThickCubicBezier(tabF[0], tabF[4], tabF[3], tabF[5], 8, true, false, tgx::RGB32_Red, 0.5f);
 
 
