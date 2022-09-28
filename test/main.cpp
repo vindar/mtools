@@ -309,11 +309,12 @@ void test_3()
 	bool wrap = true; 
 	bool sa0 = false; 
 
-	auto B = t.measureText(txt, { 20,50 }, font_Roboto_Bold_AA2_12, anc, wrap, sa0);
+	auto B = t.measureText(txt, { 20,50 }, font_FontdinerSwanky_AA4_14, anc, wrap, sa0);
 
+	// FreeSansBold12pt7b
 //	t.fillRect(B, tgx::RGB32_Green, 0.5f);
 
-	t.drawText(txt, { 20, 50 }, font_Roboto_Bold_AA2_12, tgx::RGB32_White, 1.0f,  anc,wrap, sa0);
+	t.drawTextEx(txt, { 20, 50 }, tgx::TOP | tgx::LEFT, font_FontdinerSwanky_AA4_14, true, false, tgx::RGB32_White, 0.3f);
 
 
 
