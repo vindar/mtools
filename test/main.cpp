@@ -279,8 +279,8 @@ void test_3()
 	t.fillScreen(tgx::RGB32_Black);
 
 
-	t.fillRect(iBox2(50, 100, 50, 100), tgx::RGB32_Blue, 1.0f);
-	t.drawLine({ 50,50 }, {100, 100}, tgx::RGB32_Yellow, 0.5f);
+//	t.fillRect(iBox2(50, 100, 50, 100), tgx::RGB32_Blue, 1.0f);
+//	t.drawLine({ 50,50 }, {100, 100}, tgx::RGB32_Yellow, 0.5f);
 
 	const char text[] = "Hello World ! j M p b A";
 
@@ -291,6 +291,36 @@ void test_3()
 //#include "font_FontdinerSwanky_AA4.h"
 
 
+	cout << t.measureText("C'est infinissable jp\nhello\ni", { 0, 0 }, font_Roboto_Bold_AA2_12) << "\n";
+	cout << t.measureText("C'est infinissable jp\nhello\ni", { 0, 0 }, font_Roboto_Bold_AA2_12, tgx::LEFT | tgx::BOTTOM) << "\n";
+	cout << t.measureText("C'est infinissable jp\nhello\ni", { 0, 0 }, font_Roboto_Bold_AA2_12, tgx::TOP) << "\n";
+	cout << t.measureText("C'est infinissable jp\nhello\ni", { 0, 0 }, font_Roboto_Bold_AA2_12, tgx::RIGHT | tgx::BASELINE) << "\n";
+	cout << t.measureText("C'est infinissable jp\nhello\ni", { 0, 0 }, font_Roboto_Bold_AA2_12, tgx::CENTER) << "\n";
+
+
+
+	t.drawLine({ 0,50, }, { 200, 50 }, tgx::RGB32_Blue);
+	t.drawLine({ 20,0, }, { 20, 200 }, tgx::RGB32_Blue);
+
+	const char* txt = "Hello World!jp\nThis is a test\nAnd it is not the only one.... Yes baby ! I love you more than I can say. But I say more than I can tell, trust in me... please !";
+	char c = 'A'; 
+
+	auto anc = tgx::LEFT | tgx::CENTER;
+	bool wrap = true; 
+	bool sa0 = false; 
+
+	auto B = t.measureText(txt, { 20,50 }, font_Roboto_Bold_AA2_12, anc, wrap, sa0);
+
+//	t.fillRect(B, tgx::RGB32_Green, 0.5f);
+
+	t.drawText(txt, { 20, 50 }, font_Roboto_Bold_AA2_12, tgx::RGB32_White, 1.0f,  anc,wrap, sa0);
+
+
+
+
+
+
+	/*
 	{
 		auto font = font_Roboto_Bold_AA2_12;
 		iVec2 pos = { 50, 50 };
@@ -299,7 +329,7 @@ void test_3()
 		t.drawText(text, pos , tgx::RGB32_White, font, false);
 	}
 	
-
+	*/
 
 	tgx::iVec2 tabI[6] = { tgx::iVec2(10, 40), tgx::iVec2(40, 5), tgx::iVec2(110, 30), tgx::iVec2(150,70), tgx::iVec2(100, 150), tgx::iVec2(20, 130) };
 	tgx::fVec2 tabF[6];
