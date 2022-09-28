@@ -291,7 +291,7 @@ void test_3()
 	//t.drawSmoothThickClosedSpline(6, tabF, 3, tgx::RGB32_Red, 0.5f);
 	
 	//t.fillSmoothClosedSpline(6, tabF, tgx::RGB32_Red, 0.5f);
-	t.fillSmoothThickClosedSpline(6, tabF, 1.5f, tgx::RGB32_Blue, tgx::RGB32_Red, 0.5f);
+	t.drawSmoothThickQuadSpline(6, tabF, 6, tgx::END_STRAIGHT,  tgx::END_ROUNDED, tgx::RGB32_Red, 0.5f);
 
 	//t.drawSmoothThickQuadBezier(tabF[0], tabF[4], tabF[3], 5, 8, false, true, tgx::RGB32_Red, 0.5f);
 	//t.drawSmoothThickCubicBezier(tabF[0], tabF[4], tabF[3], tabF[5], 8, true, false, tgx::RGB32_Red, 0.5f);
