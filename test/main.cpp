@@ -271,17 +271,27 @@ void test_3()
 	t.fillScreen(tgx::RGB32_Black);
 
 
-	tgx::iVec2 tabI[6] = { tgx::iVec2(10, 20), tgx::iVec2(40, 5), tgx::iVec2(110, 30), tgx::iVec2(150,70), tgx::iVec2(100, 150), tgx::iVec2(20, 130) };
+	tgx::iVec2 tabI[6] = { tgx::iVec2(10, 40), tgx::iVec2(40, 5), tgx::iVec2(110, 30), tgx::iVec2(150,70), tgx::iVec2(100, 150), tgx::iVec2(20, 130) };
 	tgx::fVec2 tabF[6];
 	for (int k = 0; k < 6; k++) 
 		{ 
 		tabF[k] = tgx::fVec2(tabI[k]); 
-		t.fillSmoothCircle(tabF[k], 2, tgx::RGB32_Yellow);
+	//	t.fillSmoothCircle(tabF[k], 2, tgx::RGB32_Yellow);
 		}
 
+
+
+//	t.drawSmoothWedgeLine(tabF[0], tabF[2], 0, tgx::END_ROUNDED, 20, tgx::END_ROUNDED, tgx::RGB32_Red, 0.5f);
+
 	
-	//t.drawQuadSpline(6, tabI, true, tgx::RGB32_Green, 1.0f);
-//	t.drawSmoothThickQuadSpline(6, tabF, 6, true, true, tgx::RGB32_Blue, 0.5f);
+
+//t.drawQuadSpline(6, tabI, true, tgx::RGB32_Green, 1.0f);
+
+	//t.drawSmoothThickPolyline(6, tabF, 8, tgx::END_ARROW_SKEWED_2, tgx::END_STRAIGHT, tgx::RGB32_Red, 0.5f);
+
+	t.fillSmoothThickClosedSpline(6, tabF, 8, tgx::RGB32_Blue, tgx::RGB32_Red, 0.5f);
+
+	//t.drawSmoothThickQuadSpline(6, tabF, 6, tgx::END_ROUNDED, tgx::END_STRAIGHT, tgx::RGB32_Red, 0.5f);
 	//t.drawSmoothThickCubicSpline(6, tabF, 6, false, true, tgx::RGB32_Red, 0.5f);
 	//t.drawCubicSpline(6, tabI,true, tgx::RGB32_Red, 0.1f);
 
@@ -291,7 +301,7 @@ void test_3()
 	//t.drawSmoothThickClosedSpline(6, tabF, 3, tgx::RGB32_Red, 0.5f);
 	
 	//t.fillSmoothClosedSpline(6, tabF, tgx::RGB32_Red, 0.5f);
-	t.drawSmoothThickQuadSpline(6, tabF, 6, tgx::END_STRAIGHT,  tgx::END_ROUNDED, tgx::RGB32_Red, 0.5f);
+//	t.drawSmoothThickQuadSpline(6, tabF, 6, tgx::END_STRAIGHT,  tgx::END_ROUNDED, tgx::RGB32_Red, 0.5f);
 
 	//t.drawSmoothThickQuadBezier(tabF[0], tabF[4], tabF[3], 5, 8, false, true, tgx::RGB32_Red, 0.5f);
 	//t.drawSmoothThickCubicBezier(tabF[0], tabF[4], tabF[3], tabF[5], 8, true, false, tgx::RGB32_Red, 0.5f);
