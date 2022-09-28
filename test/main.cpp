@@ -289,7 +289,9 @@ void test_3()
 
 	//t.drawSmoothThickPolyline(6, tabF, 8, tgx::END_ARROW_SKEWED_2, tgx::END_STRAIGHT, tgx::RGB32_Red, 0.5f);
 
-	t.fillSmoothThickClosedSpline(6, tabF, 8, tgx::RGB32_Blue, tgx::RGB32_Red, 0.5f);
+
+
+	//t.fillSmoothThickClosedSpline(6, tabF, 8, tgx::RGB32_Blue, tgx::RGB32_Red, 0.5f);
 
 	//t.drawSmoothThickQuadSpline(6, tabF, 6, tgx::END_ROUNDED, tgx::END_STRAIGHT, tgx::RGB32_Red, 0.5f);
 	//t.drawSmoothThickCubicSpline(6, tabF, 6, false, true, tgx::RGB32_Red, 0.5f);
@@ -303,7 +305,7 @@ void test_3()
 	//t.fillSmoothClosedSpline(6, tabF, tgx::RGB32_Red, 0.5f);
 //	t.drawSmoothThickQuadSpline(6, tabF, 6, tgx::END_STRAIGHT,  tgx::END_ROUNDED, tgx::RGB32_Red, 0.5f);
 
-	//t.drawSmoothThickQuadBezier(tabF[0], tabF[4], tabF[3], 5, 8, false, true, tgx::RGB32_Red, 0.5f);
+	t.drawSmoothThickCubicBezier(tabF[0], tabF[4], tabF[3], tabF[5], 8, tgx::END_ROUNDED, tgx::END_ARROW_1, tgx::RGB32_Red, 0.5f);
 	//t.drawSmoothThickCubicBezier(tabF[0], tabF[4], tabF[3], tabF[5], 8, true, false, tgx::RGB32_Red, 0.5f);
 
 
