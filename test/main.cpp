@@ -257,6 +257,21 @@ tgx::Image<tgx::RGB32> tim2(im2);
 
 
 
+bool collide(tgx::Image<tgx::RGB32>& im)
+	{
+	bool bug = false;
+	im.iterate(
+		[&](tgx::iVec2 pos, tgx::RGB32 col)
+		{
+		if ((col.R > 0) && (col.G > 0))
+			{
+			bug = true;  return false;
+			}
+			return true;
+		}
+		);
+	return bug;
+	}
 
 
 
@@ -276,12 +291,43 @@ void test_3()
 	tgx::Image<tgx::RGB32> t(dst);
 	tgx::Image<tgx::RGB32> s(sprite);
 
-	t.fillScreen(tgx::RGB32_Black);
+	ID.setImage(&dst);
+	ID.startDisplay();
 
 
+	tgx::fVec2 C(100 + 10*Unif(gen), 100.5 + 10 * Unif(gen));
+	float R = 100 * (Unif(gen) + 0.1f);
+	float a = M_PI*2*Unif(gen);
+	while (1)
+		{
+		a += 0.0001f;
+		tgx::fVec2 A(C.x + R * cos(a), C.y + R * sin(a));
+		tgx::BSeg seg(C, A);
 
-	tgx::fVec2 C(100, 100);
-	float R = 50; 
+		t.fillScreen(tgx::RGB32_Black);
+		t._bseg_draw(seg, true, true, tgx::RGB32_Red, 0, 128, true);
+
+		int kx, ky, mino, maxo;
+		seg.equation(kx, ky, mino, maxo, 1);
+
+		t.iterate(
+			[&](tgx::iVec2 pos, tgx::RGB32 & col)
+			{
+				int o = kx * pos.x + ky * pos.y;
+				if ((o < mino) || (o > maxo))
+					col.blend(tgx::RGB32_Green, 0.5f);
+				return true;
+			}
+			);
+
+		if (collide(t))
+			{
+			cout << "Found !\n";
+			ID.redrawNow();
+			}
+
+		}
+
 
 
 
@@ -290,8 +336,6 @@ void test_3()
 	float a2 = 10;
 
 
-	ID.setImage(&dst);
-	ID.startDisplay(); 
 	while (1)
 		{
 
