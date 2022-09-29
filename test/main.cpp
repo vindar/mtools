@@ -320,6 +320,12 @@ void test_3()
 
 
 
+	t.drawSmoothWedgeLine({ 10, 10 }, { 120, 10 }, 1, tgx::END_ROUNDED, 3, tgx::END_ROUNDED, tgx::RGB32_Red, 1.0f);
+
+	float y = 5; 
+	t._drawWedgeLine(10, 10 + y, 120, 10 + y, 1.1, 3, tgx::RGB32_Red, 1.0f);
+
+
 
 	/*
 	{
