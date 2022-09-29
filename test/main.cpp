@@ -297,6 +297,8 @@ void test_3()
 
 	tgx::fVec2 C(100 + 10*Unif(gen), 100.5 + 10 * Unif(gen));
 	float R = 100 * (Unif(gen) + 0.1f);
+
+	/*
 	float a = M_PI*2*Unif(gen);
 	while (1)
 		{
@@ -328,27 +330,29 @@ void test_3()
 
 		}
 
+		*/
 
+	t.drawSmoothCircle({ 100,100 }, 100, tgx::RGB32_Red);
 
-
-
-	float a1 = 40;
-	float a2 = 10;
+	float a1 = 332;
+	float a2 = 45.001;
 
 
 	while (1)
 		{
 
-		a1 += 0.14578f;
-		a2 += 0.1f;
+		a2 += 0.14578f;
+		a1 += 0.1f;
+
 
 		t.fillScreen(tgx::RGB32_Black);
 		t.fillSmoothCirclePie(C, R, a1, a2, tgx::RGB32_Orange, 0.5f);
+		t.fillSmoothCirclePie(C, R, a2, a1, tgx::RGB32_Cyan, 0.5f);
 		ID.redrawNow();
 		}
 
 
-	t.fillSmoothCirclePie(C, R, a1, a2, tgx::RGB32_Orange, 0.5f);
+	t.fillSmoothCirclePie(C, R, a1, a2, tgx::RGB32_Green, 0.5f);
 
 
 	/*
