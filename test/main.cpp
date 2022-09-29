@@ -279,51 +279,113 @@ void test_3()
 	t.fillScreen(tgx::RGB32_Black);
 
 
-//	t.fillRect(iBox2(50, 100, 50, 100), tgx::RGB32_Blue, 1.0f);
-//	t.drawLine({ 50,50 }, {100, 100}, tgx::RGB32_Yellow, 0.5f);
 
-	const char text[] = "Hello World ! j M p b A";
-
-	//t.drawText(text, { 10, 10 }, tgx::RGB32_White, Picopixel, false);
-
-//#include "font_Courgette_lite.h"
-//#include "font_Roboto_Bold_AA2.h"
-//#include "font_FontdinerSwanky_AA4.h"
-
-
-	cout << t.measureText("C'est infinissable jp\nhello\ni", { 0, 0 }, font_Roboto_Bold_AA2_12) << "\n";
-	cout << t.measureText("C'est infinissable jp\nhello\ni", { 0, 0 }, font_Roboto_Bold_AA2_12, tgx::LEFT | tgx::BOTTOM) << "\n";
-	cout << t.measureText("C'est infinissable jp\nhello\ni", { 0, 0 }, font_Roboto_Bold_AA2_12, tgx::TOP) << "\n";
-	cout << t.measureText("C'est infinissable jp\nhello\ni", { 0, 0 }, font_Roboto_Bold_AA2_12, tgx::RIGHT | tgx::BASELINE) << "\n";
-	cout << t.measureText("C'est infinissable jp\nhello\ni", { 0, 0 }, font_Roboto_Bold_AA2_12, tgx::CENTER) << "\n";
-
-
-
-	t.drawLine({ 0,50, }, { 200, 50 }, tgx::RGB32_Blue);
-	t.drawLine({ 20,0, }, { 20, 200 }, tgx::RGB32_Blue);
-
-	const char* txt = "Hello World!jp\nThis is a test\nAnd it is not the only one.... Yes baby ! I love you more than I can say. But I say more than I can tell, trust in me... please !";
-	char c = 'A'; 
-
-	auto anc = tgx::LEFT | tgx::CENTER;
-	bool wrap = true; 
-	bool sa0 = false; 
-
-	auto B = t.measureText(txt, { 20,50 }, font_FontdinerSwanky_AA4_14, anc, wrap, sa0);
-
-	// FreeSansBold12pt7b
-//	t.fillRect(B, tgx::RGB32_Green, 0.5f);
-
-	t.drawTextEx(txt, { 20, 50 }, tgx::TOP | tgx::LEFT, font_FontdinerSwanky_AA4_14, true, false, tgx::RGB32_White, 0.3f);
+	tgx::fVec2 C(100, 100);
+	float R = 50; 
 
 
 
 
+	float a1 = 40;
+	float a2 = 10;
 
-	t.drawSmoothWedgeLine({ 10, 10 }, { 120, 10 }, 1, tgx::END_ROUNDED, 3, tgx::END_ROUNDED, tgx::RGB32_Red, 1.0f);
 
-	float y = 5; 
-	t._drawWedgeLine(10, 10 + y, 120, 10 + y, 1.1, 3, tgx::RGB32_Red, 1.0f);
+	ID.setImage(&dst);
+	ID.startDisplay(); 
+	while (1)
+		{
+
+		a1 += 0.14578f;
+		a2 += 0.1f;
+
+		t.fillScreen(tgx::RGB32_Black);
+		t.fillSmoothCirclePie(C, R, a1, a2, tgx::RGB32_Orange, 0.5f);
+		ID.redrawNow();
+		}
+
+
+	t.fillSmoothCirclePie(C, R, a1, a2, tgx::RGB32_Orange, 0.5f);
+
+
+	/*
+	//t._rectifyAngles(a1, a2); 
+
+	const float rad1 = a1*M_2PI / 360;
+	const float rad2 = a2*M_2PI / 360;
+	fVec2 A1(C.x + R * sin(rad1), C.y - R * cos(rad1));
+	fVec2 A2(C.x + 2*R * sin(rad2), C.y - 2*R * cos(rad2));
+
+	t.drawSmoothLine(C, A1, tgx::RGB32_White);
+	t.drawSmoothLine(C, A2, tgx::RGB32_White);
+	t.drawSmoothCircle(C, R, tgx::RGB32_White, 0.5f);
+
+	
+	for(int i=0; i<4; i++)
+		{
+		float m, M;
+		switch(i)
+			{
+			case 0: m = 180; M = 270; break;
+			case 1: m = 90; M = 180; break;
+			case 2: m = 270; M = 360; break;
+			default: m = 0; M = 90; break;
+			}
+		bool b1 = (a1 >= m) && (a1 <= M);
+		bool b2 = (a2 >= m) && (a2 <= M);
+		if (b1)
+			{
+			if (b2)
+				t._fillSmoothQuarterCircleInterHP2(i, C, R, tgx::RGB32_Blue, 0.5f, tgx::BSeg(C, A1), 1, tgx::BSeg(C, A2), -1);
+			else
+				t._fillSmoothQuarterCircleInterHP1(i, C, R, tgx::RGB32_Blue, 0.5f, tgx::BSeg(C, A1), 1);
+			}
+		else 
+			{
+			if (b2)
+				t._fillSmoothQuarterCircleInterHP1(i, C, R, tgx::RGB32_Blue, 0.5f, tgx::BSeg(C, A2), -1);
+			else
+				{
+				switch (i)
+					{
+					case 0:
+						{
+						if (a1 > 270) continue;
+						if ((a2 > 90) && (a2 < 180)) continue;
+						break;
+						}
+					case 1:
+						{
+						if ((a1 > 180) && (a1 < 270)) continue;
+						if (a2 < 90) continue;
+						break;
+						}
+
+					case 2:
+						{
+						if (a1 < 90) continue;
+						if ((a2 > 180) && (a2 < 270)) continue;
+						break;
+						}
+
+					default:
+						{
+						if ((a1 > 90) && (a1 < 180)) continue;
+						if (a2 > 270) continue;
+						break;
+						}
+					}
+				t._fillSmoothQuarterCircleInterHP2(i, C, R, tgx::RGB32_Blue, 0.5f, tgx::BSeg(C, A1), 1, tgx::BSeg(C, A2), -1);
+				}
+			}
+		}
+
+		*/
+/*
+	t._fillSmoothQuarterCircleInterHP2(0, C, R, tgx::RGB32_Blue, 0.5f, tgx::BSeg(C, A1), 1, tgx::BSeg(C, A2), 1);
+	t._fillSmoothQuarterCircleInterHP2(1, C, R, tgx::RGB32_Green, 0.5f, tgx::BSeg(C, A1), 1, tgx::BSeg(C, A2),1);
+	t._fillSmoothQuarterCircleInterHP2(2, C, R, tgx::RGB32_Red, 0.5f, tgx::BSeg(C, A1), 1, tgx::BSeg(C, A2), 1);
+	t._fillSmoothQuarterCircleInterHP2(3, C, R, tgx::RGB32_Yellow, 0.5f, tgx::BSeg(C, A1), 1, tgx::BSeg(C, A2), 1);
+	*/
 
 
 
