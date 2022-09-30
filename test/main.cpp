@@ -346,11 +346,16 @@ void test_3()
 
 
 		t.fillScreen(tgx::RGB32_Black);
-		//t.fillSmoothCirclePie(C, R, a1, a2, tgx::RGB32_Orange, 0.5f);
-		//t.fillSmoothCirclePie(C, R, a2, a1, tgx::RGB32_Cyan, 0.5f);
+
+//		t.drawSmoothCircleArc(C, R, a1, a2,  tgx::RGB32_Orange, 0.5f);
+//		t.drawSmoothCircleArc(C, R, a2, a1,  tgx::RGB32_Cyan, 0.5f);
+
+
+		t.fillSmoothThickCirclePie(C, R, a1, a2, 10.0f, tgx::RGB32_Orange, tgx::RGB32_Cyan, 0.5f);
+		t.fillSmoothThickCirclePie(C, R, a2, a1, 10.0f, tgx::RGB32_Green, tgx::RGB32_Red, 0.5f);
 		
 
-		t.fillSmoothThickCircle(C, 100, 5.5, tgx::RGB32_White, tgx::RGB32_Red, 0.5f);
+		//t.drawSmoothEllipse(C, { 100, 50 }, tgx::RGB32_White, 0.5f);
 
 		ID.redrawNow();
 		}
