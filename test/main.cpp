@@ -64,7 +64,7 @@ template<typename color_t> void tgx_test_section0()
 	}
 
 
-void test_all()
+void test_all() 
 	{
 	tgx_test_section0<tgx::RGB32>();
 
@@ -283,6 +283,14 @@ bool collide(tgx::Image<tgx::RGB32>& im)
 void test_3()
 {
 
+
+	fBox2 B = { 123, 34, 56 , 78 };
+
+	tgx::Image<tgx::RGB565> imf; 
+	imf({ 123, 56, 78, 34 });
+
+
+
 	//	testline(); 
 	ImageDisplay ID(320, 240);
 	Image dst(320, 240);
@@ -332,7 +340,7 @@ void test_3()
 
 		*/
 
-	t.drawSmoothCircle({ 100,100 }, 100, tgx::RGB32_Red);
+	t.drawCircleAA({ 100,100 }, 100, tgx::RGB32_Red);
 
 	float a1 = 332;
 	float a2 = 45.001;
@@ -347,21 +355,21 @@ void test_3()
 
 		t.fillScreen(tgx::RGB32_Black);
 
-//		t.drawSmoothCircleArc(C, R, a1, a2,  tgx::RGB32_Orange, 0.5f);
-//		t.drawSmoothCircleArc(C, R, a2, a1,  tgx::RGB32_Cyan, 0.5f);
+//		t.drawCircleArcAA(C, R, a1, a2,  tgx::RGB32_Orange, 0.5f);
+//		t.drawCircleArcAA(C, R, a2, a1,  tgx::RGB32_Cyan, 0.5f);
 
 
-		t.fillSmoothThickCirclePie(C, R, a1, a2, 10.0f, tgx::RGB32_Orange, tgx::RGB32_Cyan, 0.5f);
-		t.fillSmoothThickCirclePie(C, R, a2, a1, 10.0f, tgx::RGB32_Green, tgx::RGB32_Red, 0.5f);
+		t.fillThickCircleSectorAA(C, R, a1, a2, 10.0f, tgx::RGB32_Orange, tgx::RGB32_Cyan, 0.5f);
+		t.fillThickCircleSectorAA(C, R, a2, a1, 10.0f, tgx::RGB32_Green, tgx::RGB32_Red, 0.5f);
 		
 
-		//t.drawSmoothEllipse(C, { 100, 50 }, tgx::RGB32_White, 0.5f);
+		//t.drawEllipseAA(C, { 100, 50 }, tgx::RGB32_White, 0.5f);
 
 		ID.redrawNow();
 		}
 
 
-	t.fillSmoothCirclePie(C, R, a1, a2, tgx::RGB32_Green, 0.5f);
+	t.fillCircleSectorAA(C, R, a1, a2, tgx::RGB32_Green, 0.5f);
 
 
 	/*
@@ -372,9 +380,9 @@ void test_3()
 	fVec2 A1(C.x + R * sin(rad1), C.y - R * cos(rad1));
 	fVec2 A2(C.x + 2*R * sin(rad2), C.y - 2*R * cos(rad2));
 
-	t.drawSmoothLine(C, A1, tgx::RGB32_White);
-	t.drawSmoothLine(C, A2, tgx::RGB32_White);
-	t.drawSmoothCircle(C, R, tgx::RGB32_White, 0.5f);
+	t.drawLineAA(C, A1, tgx::RGB32_White);
+	t.drawLineAA(C, A2, tgx::RGB32_White);
+	t.drawCircleAA(C, R, tgx::RGB32_White, 0.5f);
 
 	
 	for(int i=0; i<4; i++)
@@ -462,40 +470,40 @@ void test_3()
 	for (int k = 0; k < 6; k++) 
 		{ 
 		tabF[k] = tgx::fVec2(tabI[k]); 
-	//	t.fillSmoothCircle(tabF[k], 2, tgx::RGB32_Yellow);
+	//	t.fillCircleAA(tabF[k], 2, tgx::RGB32_Yellow);
 		}
 
 
 
-//	t.drawSmoothWedgeLine(tabF[0], tabF[2], 0, tgx::END_ROUNDED, 20, tgx::END_ROUNDED, tgx::RGB32_Red, 0.5f);
+//	t.drawWedgeLineAA(tabF[0], tabF[2], 0, tgx::END_ROUNDED, 20, tgx::END_ROUNDED, tgx::RGB32_Red, 0.5f);
 
 	
 
 //t.drawQuadSpline(6, tabI, true, tgx::RGB32_Green, 1.0f);
 
-	//t.drawSmoothThickPolyline(6, tabF, 8, tgx::END_ARROW_SKEWED_2, tgx::END_STRAIGHT, tgx::RGB32_Red, 0.5f);
+	//t.drawThickPolylineAA(6, tabF, 8, tgx::END_ARROW_SKEWED_2, tgx::END_STRAIGHT, tgx::RGB32_Red, 0.5f);
 
 
 
-	//t.fillSmoothThickClosedSpline(6, tabF, 8, tgx::RGB32_Blue, tgx::RGB32_Red, 0.5f);
+	//t.fillThickClosedSplineAA(6, tabF, 8, tgx::RGB32_Blue, tgx::RGB32_Red, 0.5f);
 
-	//t.drawSmoothThickQuadSpline(6, tabF, 6, tgx::END_ROUNDED, tgx::END_STRAIGHT, tgx::RGB32_Red, 0.5f);
-	//t.drawSmoothThickCubicSpline(6, tabF, 6, false, true, tgx::RGB32_Red, 0.5f);
+	//t.drawThickQuadSplineAA(6, tabF, 6, tgx::END_ROUNDED, tgx::END_STRAIGHT, tgx::RGB32_Red, 0.5f);
+	//t.drawThickCubicSplineAA(6, tabF, 6, false, true, tgx::RGB32_Red, 0.5f);
 	//t.drawCubicSpline(6, tabI,true, tgx::RGB32_Red, 0.1f);
 
 
 	//t.drawClosedSpline(6, tabI, tgx::RGB32_Green, 1.0f);
 
-	//t.drawSmoothThickClosedSpline(6, tabF, 3, tgx::RGB32_Red, 0.5f);
+	//t.drawThickClosedSplineAA(6, tabF, 3, tgx::RGB32_Red, 0.5f);
 	
-	//t.fillSmoothClosedSpline(6, tabF, tgx::RGB32_Red, 0.5f);
-//	t.drawSmoothThickQuadSpline(6, tabF, 6, tgx::END_STRAIGHT,  tgx::END_ROUNDED, tgx::RGB32_Red, 0.5f);
+	//t.fillClosedSplineAA(6, tabF, tgx::RGB32_Red, 0.5f);
+//	t.drawThickQuadSplineAA(6, tabF, 6, tgx::END_STRAIGHT,  tgx::END_ROUNDED, tgx::RGB32_Red, 0.5f);
 
-//	t.drawSmoothThickCubicBezier(tabF[0], tabF[4], tabF[3], tabF[5], 8, tgx::END_ROUNDED, tgx::END_ARROW_1, tgx::RGB32_Red, 0.5f);
-	//t.drawSmoothThickCubicBezier(tabF[0], tabF[4], tabF[3], tabF[5], 8, true, false, tgx::RGB32_Red, 0.5f);
+//	t.drawThickCubicBezierAA(tabF[0], tabF[4], tabF[3], tabF[5], 8, tgx::END_ROUNDED, tgx::END_ARROW_1, tgx::RGB32_Red, 0.5f);
+	//t.drawThickCubicBezierAA(tabF[0], tabF[4], tabF[3], tabF[5], 8, true, false, tgx::RGB32_Red, 0.5f);
 
 
-//	t.drawSmoothWedgeLine(tabF[0], tabF[1], 25, true, 10, false, tgx::RGB32_Red, 0.5f);
+//	t.drawWedgeLineAA(tabF[0], tabF[1], 25, true, 10, false, tgx::RGB32_Red, 0.5f);
 
 
 	ID.setImage(&dst);
