@@ -13,6 +13,10 @@ using namespace mtools;
 #include "font_Roboto_Bold_AA2.h"
 #include "font_FontdinerSwanky_AA4.h"
 
+
+#include "classicGFXfont.h"
+
+
 mtools::MT2004_64 gen(123);
 
 using namespace std::placeholders;
@@ -280,9 +284,120 @@ bool collide(tgx::Image<tgx::RGB32>& im)
 
 
 
+
+
+
+
+/*
+void printout()
+{
+
+	cout << "uint8_t classicGFXFontBitmaps[1280] = {";
+		int n = 0; 
+	for(int i = 0; i < 1280; i++)
+		{
+		cout << classicGFXFontBitmaps[i];
+		if (i != 1279) cout << ", ";
+		n++; 
+		if (n == 16) {
+			n = 0;  cout << "\n    ";
+		}
+		}
+	cout << "};";
+
+	}
+
+
+
+
+
+int getbit(int c, int x, int y)
+	{
+	unsigned char u = gfxfont[5 * c + x];
+	return ((u & (1<< y)) ? 1 : 0); 
+	}
+
+
+
+void createClassicGFXFont()
+	{
+	int g = 0; 
+	cout << "GFXglyph classicGFXFontGlyphs[256] = {";
+	for (int c = 0; c < 256; c++)
+		{
+		classicGFXFontGlyphs[c].bitmapOffset = 5 * c; 
+		classicGFXFontGlyphs[c].width = 5;
+		classicGFXFontGlyphs[c].height = 8;
+		classicGFXFontGlyphs[c].xAdvance = 6;
+		classicGFXFontGlyphs[c].xOffset = 0; 
+		classicGFXFontGlyphs[c].yOffset = 0;
+
+		cout << "{" << 5 * c << ",5,8,6,0,0}";
+		if (c < 255) cout << ",";
+		g++;
+		if (g == 8)
+			{
+			g = 0;
+			cout << "\n    ";
+			}
+
+		int k = 0, o = 0;
+		uint8_t val = 0; 
+		for (int j = 0; j < 8; j++)
+		{
+			for (int i = 0; i < 5; i++)
+				{
+				int b = getbit(c, i, j);
+				if (b != 0) 
+					{
+					val += (1 << (7-o)); 
+					}
+				o++; 
+				if (o == 8)
+					{
+					classicGFXFontBitmaps[5 * c + k] =  val;
+					val = 0; 
+					o = 0; 
+					k++;
+					}
+				}
+			}	
+		
+		}
+	cout << "};";
+	//printout();
+}
+
+
+
+
+
+
+
+
+
+void drawgfxchar(tgx::Image<tgx::RGB32> & im, int c, int x, int y)
+	{
+	for (int8_t i = 0; i < 5; i++) 
+		{
+		uint8_t line = gfxfont[c * 5 + i];
+		for (int8_t j = 0; j < 8; j++, line >>= 1) 
+			{
+			if (line & 1) 
+				{
+				im(x + i, y + j) = tgx::RGB32_White;
+				}
+			}
+		}
+	}
+
+
+	*/
+
 void test_3()
 {
 
+//	cout << "font size = " << sizeof(gfxfont) << "\n";
 
 	fBox2 B = { 123, 34, 56 , 78 };
 
@@ -300,6 +415,34 @@ void test_3()
 	tgx::Image<tgx::RGB32> s(sprite);
 
 	ID.setImage(&dst);
+
+
+
+
+
+
+	t.clear(tgx::RGB32_Black);
+
+
+	{
+	//createClassicGFXFont();
+
+		int u = 0, v = 0; 
+		for (int k = 0; k < 256; k++)
+			{
+			if (u >= 32) { u = 0; v++;}
+			//drawgfxchar(t, k, 2 + u * 6, 2 + v * 8);
+			t.drawChar((char)k, { 2 + u * 6, 2 + v * 9 }, classicGFXfont, tgx::RGB32_Red);
+			u++; 
+			}
+
+
+		ID.redrawNow();
+
+		ID.display();
+		return;
+	}
+
 	ID.startDisplay();
 
 
