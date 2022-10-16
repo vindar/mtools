@@ -770,6 +770,32 @@ namespace mtools
 
 
             /**
+             * Return the square of the distance between the filled closed box 
+             * and a given point. 
+             *  
+             * Return 0 if the point P belong to the closed box. 
+             * 
+             * Returned value has no meaning if the box is empty. 
+            **/
+            inline T dist2(const Vec<T, N>& P)
+                {
+                T d2 = 0; 
+                for (size_t i = 0; i < N; i++)
+                    {
+                    const auto m = min[i] - P[i];
+                    if (m > 0) d2 += (m * m);
+                    else
+                        {
+                        auto M = P[i] - max[i];
+                        if (M > 0) d2 += (M * M);
+                        }
+                    }
+                return d2;
+                }
+
+
+
+            /**
             * Intersect the box with another one. Return true if the box was modified.
             **/
             inline bool intersectionBox(const Box<T, N> & B)

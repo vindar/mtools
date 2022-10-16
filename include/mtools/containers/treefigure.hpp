@@ -523,6 +523,129 @@ namespace mtools
 				}
 			}
 
+		/**
+		* Iterate over all objects.
+		* the function 'fun' must be callable in the form 'void fun(const T &)'.
+		*/
+		template<typename FUNCTION> size_t iterate_all_T(FUNCTION fun) const 
+			{
+			std::vector<_TreeNode* > stack1; 
+			std::vector<_TreeNode* > stack2;
+			std::vector<_TreeNode* > * pcurrentStack = &stack1;
+			std::vector<_TreeNode* > * pnextStack = &stack2;
+			pcurrentStack->push_back(_rootNode);
+			size_t nb = 0;
+			while (1)
+				{
+				const size_t currentsize = pcurrentStack->size();
+				if (currentsize == 0)
+					{
+					MTOOLS_ASSERT(nb == size());
+					return nb;
+					}
+				for (size_t i = 0; i < currentsize; i++)
+					{
+					_TreeNode * node = pcurrentStack->operator[](i);					
+					_ListNode * LN = node->_first_irreducible;
+					while (LN != nullptr) { fun(LN->_bobj.object);  LN = LN->_next; nb++; }
+					LN = node->_first_reducible;
+					while (LN != nullptr) { fun(LN->_bobj.object);	LN = LN->_next; nb++; }
+					for (int j = 0; j < 15; j++)
+						{
+						if (node->_son[j] != nullptr) { pnextStack->push_back(node->_son[j]);  }
+						}
+					}
+				pcurrentStack->clear();
+				mtools::swap(pcurrentStack, pnextStack);
+				}
+			}
+
+
+
+        /**
+         * Find the object which is closest from a given point
+         *
+         * dist must have signature compatible with:
+         * 
+		 *   TFloat dist(Vec<TFloat, 2> P, const T & obj)
+         *   
+		 * and must return the distance between P and the obj. 
+         * 
+		 * return a const reference to the object that is closest to P. 
+        **/
+		template<typename FUNCTION>	const T * findClosestFromPoint(Vec<TFloat, 2>& P, FUNCTION dist)
+			{
+			TFloat d2 = std::numeric_limits<TFloat>::max(); // current minimun square distance found. 
+			T * besto = nullptr;			// current closest object. 
+			std::vector<_TreeNode*> stack1;
+			std::vector<_TreeNode*> stack2;
+			std::vector<_TreeNode*> * pcurrentStack = &stack1;
+			std::vector<_TreeNode*> * pnextStack = &stack2;
+			pcurrentStack->push_back(_rootNode);
+			while(1)
+				{
+				const size_t currentsize = pcurrentStack->size();
+				if (currentsize == 0) { return besto; }	// done.
+				pnextStack->clear();
+				for (size_t i = 0; i < currentsize; i++)
+					{
+					_TreeNode * node = pcurrentStack->operator[](i);
+					
+					// explore all irreducible objects of the node.
+					_ListNode* LN = node->_first_irreducible;
+					while (LN != nullptr)
+						{
+						if (LN->_bobj.boundingbox.dist2(P) < d2)
+							{ // possibly closer
+							TFloat d = dist(P, LN->_bobj.object);
+							d = d * d;
+							if (d < d2)
+								{ // yes, new closest object
+								d2 = d;
+								besto = &(LN->_bobj.object);
+								if (d2 == 0) return besto;
+								}
+							}
+						LN = LN->_next;
+						}
+					
+					// explore all reducible objects of the node.
+					LN = node->_first_reducible;
+					while (LN != nullptr)
+						{
+						if (LN->_bobj.boundingbox.dist2(P) < d2)
+							{ // possibly closer
+							TFloat d = dist(P, LN->_bobj.object);
+							d = d * d;
+							if (d < d2)
+								{ // yes, new closest object
+								d2 = d;
+								besto = &(LN->_bobj.object);
+								if (d2 == 0) return besto; 
+								}
+							}
+						LN = LN->_next;
+						}
+
+					// add all sub-nodes to be explored at the next stage.
+					for (int j = 0; j < 15; j++)
+						{
+						if (node->_son[j] != nullptr)
+							{
+							if (node->_son[j]->_bbox.dist2(P) < d2)
+								{ // ok, may contain closer objects.
+								pnextStack->push_back(node->_son[j]);
+								}
+							}
+						}
+					}
+				mtools::swap(pcurrentStack, pnextStack);
+				}
+			}
+
+
+
+
 
 		/**
 		* Return the main bounding box that contains all items currently inserted.
