@@ -466,6 +466,53 @@ void test_3()
 
 
 
+tgx::RGB32 blend_op(tgx::RGB32 src, tgx::RGB32 dst)
+	{
+	dst.blend256(src, 128);
+	return dst;
+	}
+
+
+void test_f()
+	{
+	ImageDisplay ID(320, 240);
+	Image dst(480, 320);
+	Image sprite(50, 30);
+
+	tgx::Image<tgx::RGB32> f(dst);
+	tgx::Image<tgx::RGB32> t = f(tgx::iBox2(10, 469, 10, 309));
+	f.clear(tgx::RGB565_Yellow);
+	t.clear(tgx::RGB565_White);
+
+	tgx::Image<tgx::RGB32> s(sprite);
+
+
+	s.clear(tgx::RGB32_Black);
+	s.drawRect({ 0,49,0,29 }, tgx::RGB32_Red, 1.0f);
+	s.drawTextEx("Hello", { 25,15 }, tgx::CENTER, font_Roboto_Bold_AA2_12, true, true, tgx::RGB32_Red);
+
+	
+
+	int x = 15; 
+	int y = 15; 
+
+	
+	t.drawLine({ 0,y }, { 480,y }, tgx::RGB32_Gray);
+	t.drawLine({ x,0 }, { x,320 }, tgx::RGB32_Gray);
+
+
+	t.blitRotated(s, { x,y }, 270, 0.5f		);
+
+
+
+	ID.setImage(&dst);
+	ID.display();
+
+	}
+
+
+
+
 int main(int argc, char *argv[])
 {
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
@@ -473,13 +520,13 @@ int main(int argc, char *argv[])
 
 
 
-	test_all();
+	test_f();
 
 
 	//test_0();
     //test_1();
 	//test_2();
-	test_3();
+	//test_3();
 
 //	testblend(); 
 	return 0; 
