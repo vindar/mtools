@@ -31,7 +31,7 @@ tgx::Image<tgx::RGB32> tgxim(fbim);
 
 typedef uint16_t ZBUF_t;
 
-const int LOADED_SHADERS = TGX_SHADER_PERSPECTIVE | TGX_SHADER_ZBUFFER | TGX_SHADER_GOURAUD | TGX_SHADER_FLAT;
+const tgx::Shader LOADED_SHADERS = tgx::SHADER_PERSPECTIVE | tgx::SHADER_ZBUFFER | tgx::SHADER_GOURAUD | tgx::SHADER_FLAT;
 tgx::Renderer3D<tgx::RGB32, LOADED_SHADERS, ZBUF_t> renderer;
 
 ZBUF_t zbuf[LX * LY];
@@ -479,6 +479,11 @@ void test_f()
 	Image dst(480, 320);
 	Image sprite(50, 30);
 
+
+	tgx::fBox2 B; 
+	B.split(tgx::SPLIT_LEFT);
+
+
 	tgx::Image<tgx::RGB32> f(dst);
 	tgx::Image<tgx::RGB32> t = f(tgx::iBox2(10, 469, 10, 309));
 	f.clear(tgx::RGB565_Yellow);
@@ -513,10 +518,23 @@ void test_f()
 
 
 
+
+void fs(tgx::iVec2 v)
+	{
+	cout << "iVec2 : " << v << "\n";
+	}
+
+template<typename Dummy = void>
+void fs(tgx::fVec2 v)
+	{
+	cout << "fVec2 : " << v << "\n";
+	}
+
+
+
 int main(int argc, char *argv[])
 {
 	MTOOLS_SWAP_THREADS(argc, argv);         // required on OSX, does nothing on Linux/Windows
-
 
 
 
