@@ -489,6 +489,20 @@ void test_f()
 	f.clear(tgx::RGB565_Yellow);
 	t.clear(tgx::RGB565_White);
 
+
+
+	{
+	tgx::RGBf bb[100 * 60];
+	tgx::Image<tgx::RGBf> s2(bb, 50, 30, 55);
+	s2.clear((tgx::RGBf)tgx::RGB32_Black);
+	s2.drawRect({ 0,49,0,29 }, (tgx::RGBf)tgx::RGB32_Red, 1.0f);
+	s2.drawTextEx("Hello", { 25,15 }, tgx::CENTER, font_Roboto_Bold_AA2_12, true, true, (tgx::RGBf)tgx::RGB32_Red);
+	auto s3 = s2.convert<tgx::RGB32>();
+	int x = 60;
+	int y = 15;
+	t.blitRotated(s3, { x,y }, 270, 0.5f);
+	}
+
 	tgx::Image<tgx::RGB32> s(sprite);
 
 
@@ -496,7 +510,6 @@ void test_f()
 	s.drawRect({ 0,49,0,29 }, tgx::RGB32_Red, 1.0f);
 	s.drawTextEx("Hello", { 25,15 }, tgx::CENTER, font_Roboto_Bold_AA2_12, true, true, tgx::RGB32_Red);
 
-	
 
 	int x = 15; 
 	int y = 15; 
