@@ -59,7 +59,7 @@ template<typename color_t> void tgx_test_section0()
 	im2.set((tgx::RGB565*)nullptr, 300, 200);
 	im3.set((tgx::RGB565*)nullptr, {100, 50});
 	im4.crop({5, 6, 10, 20});
-	im5 = im1.getCrop({ 6, 7,8, 9 }, true);
+	im5 = im1.getCrop({ 6, 7,8, 9 });
 	im3 = im2(tgx::iBox2{ 6, 7, 8, 9 });
 	im4 = im2(6, 80, 8, 900);
 	volatile bool b = im3.isValid();
