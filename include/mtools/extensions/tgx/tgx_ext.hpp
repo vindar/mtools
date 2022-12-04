@@ -33,7 +33,7 @@
     * 
 	* Just a view: no color conversion.
 	**/
-	mtools::Image::operator tgx::Image<tgx::RGB32>() const
+	inline mtools::Image::operator tgx::Image<tgx::RGB32>() const
 		{
 		return tgx::Image<tgx::RGB32>(data(), (int)lx(), (int)ly(), (int)stride());
 		}
