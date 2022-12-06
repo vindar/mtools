@@ -57,7 +57,7 @@ if (VCPKG_TOOLCHAIN)
 		select_library_configurations(FLTK) # create FLTK_LIBRARIES from FLTK_LIBRARY_DEBUG and FLTK_LIBRARY_RELEASE		
 		list (GET FLTK_LIBRARY_RELEASE 0 RELPATH)
 		list (GET FLTK_LIBRARY_DEBUG 0 DEBPATH)		
-		message(STATUS "Found FLTK (via vcpkg): release [${RELPATH}]  debug [${DEBPATH}]")		
+		message(STATUS "Found FLTK (via vcpkg): release [${RELPATH}]  debug [${DEBPATH}] options [${FLTK_OPTIONS}]")		
 		set(FLTK_FOUND 1)
 	endif()
 endif()
