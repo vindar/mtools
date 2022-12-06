@@ -290,7 +290,16 @@ target_link_libraries(mtools PUBLIC ${ZLIB_LIBRARIES})
 target_include_directories(mtools PUBLIC ${ZLIB_INCLUDE_DIRS})
 
 #link with fltk
-target_link_libraries(mtools PUBLIC ${FLTK_LIBRARIES})
+if (WIN32)
+    target_link_libraries(mtools PUBLIC ${FLTK_LIBRARIES})
+else()
+    if (USE_OPENGL)    
+        target_link_libraries(mtools PUBLIC ${FLTK_LIBRARIES_GL})
+    else()
+        target_link_libraries(mtools PUBLIC ${FLTK_LIBRARIES})
+    endif()
+endif()
+
 target_include_directories(mtools PUBLIC ${FLTK_INCLUDE_DIR})
 target_compile_options(mtools PUBLIC ${FLTK_OPTIONS})
 

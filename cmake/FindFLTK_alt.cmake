@@ -7,6 +7,7 @@
 #
 #     FLTK_OPTIONS      - list of option to pass to the compiler
 #     FLTK_LIBRARIES    - list of libraries
+#     FLTK_LIBRARIES_GL - list of libraries
 #     FLTK_INCLUDE_DIR  - fltk include directory (contains the /FL sub-directory)
 #
 
@@ -74,7 +75,11 @@ if (NOT FLTK_FOUND)
 			string(REGEX REPLACE "\n$" "" FLTK_OPTIONS "${FLTK_OPTIONS}")
 			string(STRIP ${FLTK_OPTIONS} FLTK_OPTIONS)
 
-		execute_process(COMMAND "${FLTKCONFIG_PROG}" "--ldflags" "--use-gl" "--use-glut" OUTPUT_VARIABLE FLTK_LIBRARIES OUTPUT_STRIP_TRAILING_WHITESPACE)
+		execute_process(COMMAND "${FLTKCONFIG_PROG}" "--ldflags" "--use-gl" "--use-glut" OUTPUT_VARIABLE FLTK_LIBRARIES_GL OUTPUT_STRIP_TRAILING_WHITESPACE)
+			string(REGEX REPLACE "\n$" "" FLTK_LIBRARIES_GL "${FLTK_LIBRARIES_GL}")
+			string(STRIP ${FLTK_LIBRARIES_GL} FLTK_LIBRARIES_GL)
+
+		execute_process(COMMAND "${FLTKCONFIG_PROG}" "--ldflags" OUTPUT_VARIABLE FLTK_LIBRARIES OUTPUT_STRIP_TRAILING_WHITESPACE)
 			string(REGEX REPLACE "\n$" "" FLTK_LIBRARIES "${FLTK_LIBRARIES}")
 			string(STRIP ${FLTK_LIBRARIES} FLTK_LIBRARIES)
 
