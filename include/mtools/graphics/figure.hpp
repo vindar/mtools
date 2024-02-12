@@ -352,8 +352,11 @@ namespace mtools
 		 * 						size is used. If only one number is negative, it is adjusted to keep the
 		 * 						aspect ratio. If both number are positve, the size is maximized in order to
 		 * 						keep the aspect ratio and stay in these dimensions.
+         *                      
+		 * @param   add_info	(Optional) True to add information about the canvas in the SVG file that allows 
+         *                      to reconstruct the canvas later.
 		 **/
-		void saveSVG(const std::string & filename, bool minBB = true, fVec2 SVGSize = fVec2(-1, -1)) const
+		void saveSVG(const std::string & filename, bool minBB = true, fVec2 SVGSize = fVec2(-1, -1), bool add_info = true) const
 			{
 			tinyxml2::XMLDocument xmlDoc;									// create main document
 			xmlDoc.InsertEndChild(xmlDoc.NewDeclaration());					// standard xml declaration
@@ -431,11 +434,14 @@ namespace mtools
 			svg->SetAttribute("viewBox", os.toString().c_str());
 
 			// add archive at the end of the svg element
-			tinyxml2::XMLElement * mtoolsarchive = xmlDoc.NewElement("data-mtools");
-			svg->InsertEndChild(mtoolsarchive);
-			OStringArchive ar;
-			serialize(ar); 
-			mtoolsarchive->SetText(ar.get().c_str());
+			if (add_info)
+				{
+				tinyxml2::XMLElement* mtoolsarchive = xmlDoc.NewElement("data-mtools");
+				svg->InsertEndChild(mtoolsarchive);
+				OStringArchive ar;
+				serialize(ar);
+				mtoolsarchive->SetText(ar.get().c_str());				
+                }
 
 			// and save everything
 			xmlDoc.SaveFile(filename.c_str()); 
