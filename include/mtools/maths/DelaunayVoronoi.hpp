@@ -94,6 +94,19 @@ namespace mtools
     public:
 
 
+        void clear()
+            {
+            VoronoiVertices.clear();
+            DelaunayEdgesIndices.clear();
+            DelaunayTrianglesIndices.clear();
+            VoronoiEdgesIndices.clear();
+            VoronoiNormals.clear();
+            DelaunayVertices.clear();
+            }
+
+
+
+
         /**   
          * ctor. Does nothing
          * Waits for compute() to be called. 
