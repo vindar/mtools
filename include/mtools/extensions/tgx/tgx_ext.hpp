@@ -55,7 +55,7 @@
 				{
 				for (int x = 0; x < im.lx(); x++)
 					{
-					setPixel(x, y, (mtools::RGBc)(im.template readPixel<false>(x, y)));
+					setPixel(x, y, (mtools::RGBc)(im.template readPixel<false>({ x, y })));
 					}
 				}
 			}
