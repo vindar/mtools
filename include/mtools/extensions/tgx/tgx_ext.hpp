@@ -63,6 +63,65 @@
 
 
 
+
+	void mtools::Image::draw_circle_arc(mtools::fVec2 center, double radius, double angle_start, double angle_end, mtools::RGBc color, float opacity)
+		{
+		tgx::Image<tgx::RGB32> im(*this);
+		im.drawCircleArcAA(tgx::fVec2(center), (float)radius, (float)angle_start, (float)angle_end, tgx::RGB32(color), opacity);
+		}
+
+
+
+    void mtools::Image::draw_thick_circle_arc(mtools::fVec2 center, double radius, double angle_start, double angle_end, double thickness, mtools::RGBc color, float opacity)
+        {
+		tgx::Image<tgx::RGB32> im(*this);
+		im.drawThickCircleArcAA(tgx::fVec2(center), (float)radius, (float)angle_start, (float)angle_end, (float)thickness, tgx::RGB32(color), opacity);
+        }
+
+
+
+    void mtools::Image::draw_circle_sector(mtools::fVec2 center, double r, double angle_start, double angle_end, mtools::RGBc color, float opacity)
+        {
+		tgx::Image<tgx::RGB32> im(*this);
+		im.fillCircleSectorAA(tgx::fVec2(center), (float)r, (float)angle_start, (float)angle_end, tgx::RGB32(color), opacity);
+        }
+
+
+    void mtools::Image::draw_thick_circle_sector(mtools::fVec2 center, double r, double angle_start, double angle_end, double thickness, mtools::RGBc color_interior, mtools::RGBc color_border, float opacity)
+        {
+		tgx::Image<tgx::RGB32> im(*this);
+		im.fillThickCircleSectorAA(tgx::fVec2(center), (float)r, (float)angle_start, (float)angle_end, (float)thickness, tgx::RGB32(color_interior), tgx::RGB32(color_border), opacity);
+        }
+
+	
+#else
+
+void mtools::Image::draw_circle_arc(mtools::fVec2 center, double radius, double angle_start, double angle_end, mtools::RGBc color, float opacity)
+	{
+	MTOOLS_ERROR("Image::draw_circle_arc() not implemtented (because tgx is not available) !")
+	}
+
+
+
+void mtools::Image::draw_thick_circle_arc(mtools::fVec2 center, double radius, double angle_start, double angle_end, double thickness, mtools::RGBc color, float opacity)
+	{
+	MTOOLS_ERROR("Image::draw_thick_circle_arc() not implemtented (because tgx is not available) !")
+	}
+
+
+
+void mtools::Image::draw_circle_sector(mtools::fVec2 center, double r, double angle_start, double angle_end, mtools::RGBc color, float opacity)
+	{
+	MTOOLS_ERROR("Image::draw_circle_sector() not implemtented (because tgx is not available) !")
+	}
+
+
+void mtools::Image::draw_thick_circle_sector(mtools::fVec2 center, double r, double angle_start, double angle_end, double thickness, mtools::RGBc color_interior, mtools::RGBc color_border, float opacity)
+	{
+	MTOOLS_ERROR("Image::draw_thick_circle_sector not implemtented (because tgx is not available) !")
+	}
+
+
 #endif
 
 

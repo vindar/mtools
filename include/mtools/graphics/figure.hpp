@@ -4369,6 +4369,210 @@ namespace mtools
 
 
 
+
+
+
+
+		/*********************************************************
+		*
+		* Circle Arc
+		*
+		**********************************************************/
+		FIGURECLASS_BEGIN(CircleArc)
+
+
+			fVec2	center;
+			double	radius;
+			double	start_angle;
+			double	end_angle;
+			RGBc	color;
+
+
+            /**
+             * Construct an Circle Arc.
+             * 
+             * the arc is drawn moving clockwise from angle_start until reaching angle_end.
+             * 
+             * | angle (in degrees)  | position |
+             * |---------------------|----------|
+             * |          0          |  12AM    |
+             * |         90          |   3AM    |
+             * |        180          |   6AM    |
+             * |        270          |   9AM    |
+             *
+             * @param   c          circle center position.
+             * @param   r          circle radius.
+             * @param   startangle angle in degrees of the begigining of the arc.
+             * @param   endangle   angle in degrees of the end  of the arc.
+             * @param   col        color to use.
+             */
+			CircleArc(fVec2 c, double r, double startangle, double endangle, RGBc col) : center(c), radius(r), start_angle(startangle), end_angle(endangle), color(col)
+                {
+				MTOOLS_ASSERT(r >= 0);
+				}
+
+
+			virtual void virt_draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override				
+				{
+				if (radius > 0) im.canvas_draw_circle_arc(R,center,radius, start_angle, end_angle, color);
+                }
+
+
+			virtual fBox2 virt_boundingBox() const override
+				{
+				return fBox2(center.X() - radius, center.X() + radius, center.Y() - radius, center.Y() + radius); // TODO: improve the bounding box (can do better than the whole circle)
+				}
+
+
+			virtual std::string virt_toString(bool debug = false) const override
+				{
+				OSS os; 
+				os << "Circle Arc [" << center << " " << radius << " " << start_angle << " " << end_angle << " " << color << "]";
+				return os.str();
+				}
+
+
+			virtual void virt_serialize(OBaseArchive & ar) const override
+				{
+				ar & center & radius & start_angle & end_angle & color; 
+				}
+
+
+			CircleArc(IBaseArchive & ar) : FigureInterface(ar)
+				{
+				ar & center& radius & start_angle & end_angle & color;
+				}
+
+
+			virtual void virt_svg(mtools::SVGElement * el) const override
+				{
+				/* TODO				
+				*/
+				}
+
+
+		FIGURECLASS_END()
+
+
+
+
+
+
+		/*********************************************************
+		*
+		* Thick Circle Arc
+		*
+		**********************************************************/
+		FIGURECLASS_BEGIN(ThickCircleArc)
+
+
+			fVec2	center;
+			double	radius;
+			double	start_angle;
+			double	end_angle;
+			double thickness;
+			RGBc	color;
+
+
+            /**
+             * Construct an Circle Arc.
+             * 
+             * the arc is drawn moving clockwise from angle_start until reaching angle_end.
+             * 
+             * | angle (in degrees)  | position |
+             * |---------------------|----------|
+             * |          0          |  12AM    |
+             * |         90          |   3AM    |
+             * |        180          |   6AM    |
+             * |        270          |   9AM    |
+             *
+             * @param   c          circle center position.
+             * @param   r          circle radius.
+             * @param   startangle angle in degrees of the begigining of the arc.
+             * @param   endangle   angle in degrees of the end  of the arc.
+             * @param   thick      The thickness.
+             * @param   col        color to use.
+             */
+			ThickCircleArc(fVec2 c, double r, double startangle, double endangle, double thick, RGBc col) : center(c), radius(r), start_angle(startangle), end_angle(endangle), thickness(thick), color(col)
+                {
+				MTOOLS_ASSERT(r >= 0);
+				MTOOLS_ASSERT(thick >= 0);
+				}
+
+
+			virtual void virt_draw(Image & im, const fBox2 & R, bool highQuality, double min_thickness) override				
+				{
+				if ((radius > 0)&&(thickness > 0)) im.canvas_draw_thick_circle_arc(R,center,radius, start_angle, end_angle, thickness, color);
+                }
+
+
+			virtual fBox2 virt_boundingBox() const override
+				{
+				return fBox2(center.X() - radius, center.X() + radius, center.Y() - radius, center.Y() + radius); // TODO: improve the bounding box (can do better than the whole circle)
+				}
+
+
+			virtual std::string virt_toString(bool debug = false) const override
+				{
+				OSS os; 
+				os << "Thick Circle Arc [" << center << " " << radius << " " << start_angle << " " << end_angle << " " << thickness << " " << color << "]";
+				return os.str();
+				}
+
+
+			virtual void virt_serialize(OBaseArchive & ar) const override
+				{
+				ar & center & radius & start_angle & end_angle & thickness & color; 
+				}
+
+
+			ThickCircleArc(IBaseArchive & ar) : FigureInterface(ar)
+				{
+				ar & center& radius & start_angle & end_angle & thickness & color;
+				}
+
+
+			virtual void virt_svg(mtools::SVGElement * el) const override
+				{
+				/* TODO				
+				*/
+				}
+
+
+		FIGURECLASS_END()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 		/************************************************************************************************************************************
 		*
 		* OTHER
