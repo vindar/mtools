@@ -2947,7 +2947,7 @@ namespace mtools
 				el2->xml->SetAttribute("y", TY(y) + TY(ly));
 				el2->xml->SetAttribute("width", TR(lx));
 				el2->xml->SetAttribute("height", TR(ly));
-				el2->xml->SetAttribute("stroke-width", thick);
+				el2->xml->SetAttribute("stroke-width", TR(std::abs(thick)));
 
 				x = box.min[0] + thick;
 				y = box.min[1] + thick;
@@ -3191,7 +3191,7 @@ namespace mtools
 					return;
 					}
 
-				
+			
 				SVGElement * el2 = el->NewChildSVGElement("circle");
 				el2->noStroke();
 				el2->setFillColor(fillcolor);
@@ -3205,7 +3205,7 @@ namespace mtools
 				el3->xml->SetAttribute("cx", TX(center.X()));
 				el3->xml->SetAttribute("cy", TY(center.Y()));
 				el3->xml->SetAttribute("r", TR(radius - thickness/2));
-				el3->xml->SetAttribute("stroke-width", thickness);
+				el3->xml->SetAttribute("stroke-width", TR(std::abs(thickness)));
 				return;
 				}
 
@@ -3536,7 +3536,7 @@ namespace mtools
 				// TODO : improve the svg code below using a <mask> instead so that the
 				// stroke is not drawn over the interior  which cause defects when using transparency 
 				fig_el->xml->SetAttribute("r", TR(radius - thickness/2));
-				fig_el->xml->SetAttribute("stroke-width", thickness);
+				fig_el->xml->SetAttribute("stroke-width", TR(std::abs(thickness)));
 				return;
 				}
 
@@ -3885,7 +3885,7 @@ namespace mtools
 				el->xml->SetAttribute("cy", TY(center.Y()));
 				el->xml->SetAttribute("rx", TR(rx - thick/2));
 				el->xml->SetAttribute("ry", TR(ry - thick/2));
-				el->xml->SetAttribute("stroke-width", thick);
+				el->xml->SetAttribute("stroke-width", TR(std::abs(thick)));
 				return;
 				}
 
@@ -4327,7 +4327,7 @@ namespace mtools
 				// stroke is not drawn over the interior  which cause defects when using transparency 
 				fig_el->xml->SetAttribute("rx", TR(rx - thick/2));
 				fig_el->xml->SetAttribute("ry", TR(ry - thick/2));
-				fig_el->xml->SetAttribute("stroke-width", thick);
+				fig_el->xml->SetAttribute("stroke-width", TR(std::abs(thick)));
 				return;
 				}
 
@@ -4446,8 +4446,20 @@ namespace mtools
 
 			virtual void virt_svg(mtools::SVGElement * el) const override
 				{
-				/* TODO				
-				*/
+				const double rad_start = start_angle * PI / 180;
+                const double rad_end = end_angle * PI / 180;
+				fVec2 P1 = center + fVec2(radius * sin(rad_start), radius * cos(rad_start));
+                fVec2 P2 = center + fVec2(radius * sin(rad_end), radius * cos(rad_end));
+				double aa = end_angle - start_angle;
+                if (aa < 0) aa += 360;
+                const bool large_arc = (aa > 180);
+					
+				el->SetName("path");
+				el->noFill();
+				el->tinyStroke(color, virt_boundingBox());
+				mtools::ostringstream oss; 
+                oss << "M " << TX(P1.X()) << " " << TY(P1.Y()) << " A " << TR(radius) << " " << TR(radius) << " 0 " << (large_arc ? "1" : "0") << " 1 " << TX(P2.X()) << " " << TY(P2.Y());
+				el->xml->SetAttribute("d", oss.str().c_str()); 
 				}
 
 
@@ -4470,7 +4482,7 @@ namespace mtools
 			double	radius;
 			double	start_angle;
 			double	end_angle;
-			double thickness;
+			double  thickness;
 			RGBc	color;
 
 
@@ -4534,8 +4546,22 @@ namespace mtools
 
 			virtual void virt_svg(mtools::SVGElement * el) const override
 				{
-				/* TODO				
-				*/
+                const double t = std::abs(thickness);
+				const double rad_start = start_angle * PI / 180;
+				const double rad_end = end_angle * PI / 180;
+				fVec2 P1 = center + fVec2((radius - t/2)* sin(rad_start), (radius - t/2) * cos(rad_start));
+				fVec2 P2 = center + fVec2((radius - t/2)* sin(rad_end), (radius - t/2) * cos(rad_end));
+				double aa = end_angle - start_angle;
+				if (aa < 0) aa += 360;
+				const bool large_arc = (aa > 180);
+
+				el->SetName("path");
+				el->noFill();
+				el->setStrokeColor(color);
+                el->xml->SetAttribute("stroke-width", TR(t));
+				mtools::ostringstream oss;
+				oss << "M " << TX(P1.X()) << " " << TY(P1.Y()) << " A " << TR(radius - t/2) << " " << TR(radius - t/2) << " 0 " << (large_arc ? "1" : "0") << " 1 " << TX(P2.X()) << " " << TY(P2.Y());
+				el->xml->SetAttribute("d", oss.str().c_str());
 				}
 
 
@@ -4543,6 +4569,231 @@ namespace mtools
 
 
 
+
+
+
+		/*********************************************************
+		*
+		* Circle Sector
+		*
+		**********************************************************/
+		FIGURECLASS_BEGIN(CircleSector)
+
+
+		fVec2	center;
+		double	radius;
+		double	start_angle;
+		double	end_angle;
+		RGBc	color;
+
+		/**
+		 * Draw a filled circle sector/slice/pie using the tgx:: methods. Only available is tgx is available.
+		 *
+		 * the arc is drawn moving clockwise from angle_start until reaching angle_end.
+		 * | angle (in degrees)  | position |
+		 * |---------------------|----------|
+		 * |          0          |  12AM    |
+		 * |         90          |   3AM    |
+		 * |        180          |   6AM    |
+		 * |        270          |   9AM    |
+		 *
+		 * @param  center      circle center position.
+		 * @param  r           circle radius.
+		 * @param  angle_start angle in degrees of the begigining of the arc.
+		 * @param  angle_end   angle in degrees of the end  of the arc.
+		 * @param  color       color to use.
+		 * @param  opacity     (Optional) Opacity multiplier in [0.0f, 1.0f].
+		 */
+		CircleSector(fVec2 c, double r, double startangle, double endangle, RGBc col) : center(c), radius(r), start_angle(startangle), end_angle(endangle), color(col)
+			{
+			MTOOLS_ASSERT(r >= 0);
+			}
+
+
+		virtual void virt_draw(Image& im, const fBox2& R, bool highQuality, double min_thickness) override
+			{
+			if (radius > 0) im.canvas_draw_circle_sector(R, center, radius, start_angle, end_angle, color);
+			}
+
+
+		virtual fBox2 virt_boundingBox() const override
+			{
+			return fBox2(center.X() - radius, center.X() + radius, center.Y() - radius, center.Y() + radius); // TODO: improve the bounding box (can do better than the whole circle)
+			}
+
+
+		virtual std::string virt_toString(bool debug = false) const override
+			{
+			OSS os;
+			os << "Circle Sector [" << center << " " << radius << " " << start_angle << " " << end_angle << " " << color << "]";
+			return os.str();
+			}
+
+
+		virtual void virt_serialize(OBaseArchive& ar) const override
+			{
+			ar& center& radius& start_angle& end_angle& color;
+			}
+
+
+		CircleSector(IBaseArchive& ar) : FigureInterface(ar)
+			{
+			ar& center& radius& start_angle& end_angle& color;
+			}
+
+
+		virtual void virt_svg(mtools::SVGElement* el) const override
+			{
+			const double rad_start = start_angle * PI / 180;
+			const double rad_end = end_angle * PI / 180;
+			fVec2 P1 = center + fVec2(radius * sin(rad_start), radius * cos(rad_start));
+			fVec2 P2 = center + fVec2(radius * sin(rad_end), radius * cos(rad_end));
+			double aa = end_angle - start_angle;
+			if (aa < 0) aa += 360;
+			const bool large_arc = (aa > 180);
+
+			el->SetName("g");
+
+			const std::string uid = el->getUID("clippath");
+			auto clip_el = el->NewChildSVGElement("clipPath");
+			clip_el->xml->SetAttribute("id", uid.c_str());
+
+			auto path_el = clip_el->NewChildSVGElement("path");
+			mtools::ostringstream oss;
+			oss << "M " << TX(P2.X()) << " " << TY(P2.Y()) << " L " << TX(center.X()) << " " << TY(center.Y()) << " L " << TX(P1.X()) << " " << TY(P1.Y()) << " A " << TR(radius) << " " << TR(radius) << " 0 " << (large_arc ? "1" : "0") << " 1 " << TX(P2.X()) << " " << TY(P2.Y());
+			path_el->xml->SetAttribute("d", oss.toString().c_str());			
+
+			auto fig_el = el->NewChildSVGElement("circle");
+			fig_el->noStroke();
+			fig_el->setFillColor(color);
+			fig_el->xml->SetAttribute("clip-path", (mtools::toString("url(#") + uid + ")").c_str());
+			fig_el->xml->SetAttribute("cx", TX(center.X()));
+			fig_el->xml->SetAttribute("cy", TY(center.Y()));
+			fig_el->xml->SetAttribute("r", TR(radius));
+			return;
+			}
+
+
+		FIGURECLASS_END()
+
+
+
+
+
+
+
+
+
+
+		/*********************************************************
+		*
+		* Thick Circle Sector
+		*
+		**********************************************************/
+		FIGURECLASS_BEGIN(ThickCircleSector)
+
+
+		fVec2	center;
+		double	radius;
+		double	start_angle;
+		double	end_angle;
+		double  thickness;
+		RGBc	color_interior;
+		RGBc	color_border;
+
+
+        /**
+         * Draw a filled thick circle sector/slice/pie using the tgx:: methods. Only available is tgx is
+         * available.
+         * 
+         * the arc is drawn moving clockwise from angle_start until reaching angle_end.
+         * | angle (in degrees)  | position |
+         * |---------------------|----------|
+         * |          0          |  12AM    |
+         * |         90          |   3AM    |
+         * |        180          |   6AM    |
+         * |        270          |   9AM    |
+         *
+         * @param   c               circle center position.
+         * @param   r               circle radius.
+         * @param   startangle      angle in degrees of the begigining of the arc.
+         * @param   endangle        angle in degrees of the end  of the arc.
+         * @param   thick           the thickness
+         * @param   colorinterior   color for the interior of the circle pie
+         * @param   colorborder     color for the bordeer of the circle pie
+         */
+		ThickCircleSector(fVec2 c, double r, double startangle, double endangle, double thick, RGBc colorinterior, RGBc colorborder) : center(c), radius(r), start_angle(startangle), end_angle(endangle), thickness(thick), color_interior(colorinterior), color_border(colorborder)
+			{
+			MTOOLS_ASSERT(r >= 0);
+			MTOOLS_ASSERT(thick >= 0);
+			}
+
+
+		virtual void virt_draw(Image& im, const fBox2& R, bool highQuality, double min_thickness) override
+			{
+			if (radius > 0) im.canvas_draw_thick_circle_sector(R, center, radius, start_angle, end_angle, thickness, color_interior, color_border);
+			}
+
+
+		virtual fBox2 virt_boundingBox() const override
+			{
+			return fBox2(center.X() - radius, center.X() + radius, center.Y() - radius, center.Y() + radius); // TODO: improve the bounding box (can do better than the whole circle)
+			}
+
+
+		virtual std::string virt_toString(bool debug = false) const override
+			{
+			OSS os;
+			os << "Thick Circle Sector [" << center << " " << radius << " " << start_angle << " " << end_angle << " " << thickness << " " << color_interior << " " << color_border << "]";
+			return os.str();
+			}
+
+
+		virtual void virt_serialize(OBaseArchive& ar) const override
+			{
+			ar& center& radius& start_angle& end_angle& thickness& color_interior & color_border;
+			}
+
+
+		ThickCircleSector(IBaseArchive& ar) : FigureInterface(ar)
+			{
+			ar& center& radius& start_angle& end_angle& thickness& color_interior & color_border;
+			}
+
+
+		virtual void virt_svg(mtools::SVGElement* el) const override
+			{
+			const double rad_start = start_angle * PI / 180;
+			const double rad_end = end_angle * PI / 180;
+			fVec2 P1 = center + fVec2(radius * sin(rad_start), radius * cos(rad_start));
+			fVec2 P2 = center + fVec2(radius * sin(rad_end), radius * cos(rad_end));
+			double aa = end_angle - start_angle;
+			if (aa < 0) aa += 360;
+			const bool large_arc = (aa > 180);
+
+			el->SetName("g");
+			const std::string uid = el->getUID("clippath");
+			auto clip_el = el->NewChildSVGElement("clipPath");
+			clip_el->xml->SetAttribute("id", uid.c_str());
+
+			auto path_el = clip_el->NewChildSVGElement("path");
+			mtools::ostringstream oss;
+			oss << "M " << TX(P2.X()) << " " << TY(P2.Y()) << " L " << TX(center.X()) << " " << TY(center.Y()) << " L " << TX(P1.X()) << " " << TY(P1.Y()) << " A " << TR(radius) << " " << TR(radius) << " 0 " << (large_arc ? "1" : "0") << " 1 " << TX(P2.X()) << " " << TY(P2.Y());
+			path_el->xml->SetAttribute("d", oss.toString().c_str());			
+
+			auto fig_el = el->NewChildSVGElement("circle");
+			fig_el->setStrokeColor(color_border);
+			fig_el->setFillColor(color_interior);
+			fig_el->xml->SetAttribute("stroke-width", TR(thickness));
+			fig_el->xml->SetAttribute("clip-path", (mtools::toString("url(#") + uid + ")").c_str());
+			fig_el->xml->SetAttribute("cx", TX(center.X()));
+			fig_el->xml->SetAttribute("cy", TY(center.Y()));
+			fig_el->xml->SetAttribute("r", TR(radius - thickness/2));
+			return;
+			}
+
+
+		FIGURECLASS_END()
 
 
 

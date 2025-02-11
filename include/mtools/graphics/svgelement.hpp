@@ -153,7 +153,8 @@ namespace mtools
 
 		void tinyStroke(RGBc color, RGBc fillcolor, double x, double y, double scalefactor = 1000.0)
 			{
-			if ((color.opacity() == 0) || (color == fillcolor)) { noStroke(); return; }				
+			//if ((color.opacity() == 0) || (color == fillcolor)) { noStroke(); return; }		
+			setStrokeColor(color);
 			xml->SetAttribute("stroke-width", (std::abs(x) + std::abs(y)) / scalefactor);
 			xml->SetAttribute("vector-effect", "non-scaling-stroke");
 			Comment("SVG cannot represent non scaling stroke !");
@@ -161,7 +162,8 @@ namespace mtools
 
 		void tinyStroke(RGBc color, double x, double y, double scalefactor = 1000.0)
 			{
-			if (color.opacity() == 0) { noStroke(); return; }				
+			//if (color.opacity() == 0) { noStroke(); return; }	
+			setStrokeColor(color);
 			xml->SetAttribute("stroke-width", (std::abs(x) + std::abs(y)) / scalefactor);
 			xml->SetAttribute("vector-effect", "non-scaling-stroke");
 			Comment("SVG cannot represent non scaling stroke !");
@@ -176,7 +178,9 @@ namespace mtools
 
 		void tinyStroke(RGBc color, RGBc fillcolor, double r, double scalefactor = 1000.0)
 			{
-			if ((color.opacity() == 0) || (color == fillcolor)) { noStroke(); return; }
+			//if ((color.opacity() == 0) || (color == fillcolor)) { noStroke(); return; }
+			setStrokeColor(color);
+			setFillColor(fillcolor);
 			xml->SetAttribute("stroke-width", std::abs(r) / scalefactor);
 			xml->SetAttribute("vector-effect", "non-scaling-stroke");
 			Comment("SVG cannot represent non scaling stroke !");
@@ -184,7 +188,8 @@ namespace mtools
 
 		void tinyStroke(RGBc color, double r, double scalefactor = 1000.0)
 			{
-			if (color.opacity() == 0) { noStroke(); return; }
+			//if (color.opacity() == 0) { noStroke(); return; }
+			setStrokeColor(color);
 			xml->SetAttribute("stroke-width", std::abs(r) / scalefactor);
 			xml->SetAttribute("vector-effect", "non-scaling-stroke");
 			Comment("SVG cannot represent non scaling stroke !");
@@ -200,8 +205,10 @@ namespace mtools
 
 		void tinyStroke(RGBc color, RGBc fillcolor, fBox2 bb, double scalefactor = 1000.0)
 			{
-			if ((color.opacity() == 0) || (color == fillcolor)) { noStroke(); return; }
-			const double r = bb.max[0] - bb.min[0] + bb.max[1] - bb.min[1];;
+			//if ((color.opacity() == 0) || (color == fillcolor)) { noStroke(); return; }
+			setStrokeColor(color);
+			setFillColor(fillcolor);
+			const double r = bb.max[0] - bb.min[0] + bb.max[1] - bb.min[1];;			
 			xml->SetAttribute("stroke-width", r / scalefactor);
 			xml->SetAttribute("vector-effect", "non-scaling-stroke");
 			Comment("SVG cannot represent non scaling stroke !");
@@ -209,7 +216,8 @@ namespace mtools
 
 		void tinyStroke(RGBc color, fBox2 bb, double scalefactor = 1000.0)
 			{
-			if (color.opacity() == 0) { noStroke(); return; }
+			//if (color.opacity() == 0) { noStroke(); return; }
+			setStrokeColor(color);
 			const double r = bb.max[0] - bb.min[0] + bb.max[1] - bb.min[1];;
 			xml->SetAttribute("stroke-width", r / scalefactor);
 			xml->SetAttribute("vector-effect", "non-scaling-stroke");
