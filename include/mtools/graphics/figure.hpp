@@ -370,14 +370,52 @@ namespace mtools
 			tinyxml2::XMLElement * svg = xmlDoc.NewElement("svg");			// main svg element
 			xmlDoc.InsertEndChild(svg);										// standard xml declaration
 
+			// minimum bounding box for all the object in the canvas
 			BBox bb; // global bounding box
+			for (size_t i = 0; i < _nbLayers; i++)
+				{
+				// increase the bounding box to contain all elements in this layer. 
+				bb.swallowBox(minBB ? _figLayers[i].minBoundingBox() : _figLayers[i].mainBoundingBox());
+				}
+			// compute the size of the SVG drawing. 
+			double svg_lx, svg_ly;
+			if ((SVGSize.X() <= 0) && (SVGSize.Y() <= 0))
+				{
+				svg_lx = bb.lx();
+				svg_ly = bb.ly();
+				} 
+			else
+				{
+				if (SVGSize.X() <= 0)
+					{
+					svg_ly = SVGSize.Y();
+					svg_lx = bb.lx() * SVGSize.Y() / bb.ly();
+					} 
+				else if (SVGSize.Y() <= 0)
+					{
+					svg_lx = SVGSize.X();
+					svg_ly = bb.ly() * SVGSize.X() / bb.lx();
+					} 
+				else
+					{
+					fBox2 BR = fBox2(0.0, SVGSize.X(), 0.0, SVGSize.Y()).fixedRatioEnclosedRect(bb.lx() / bb.ly());
+					svg_lx = BR.lx();
+					svg_ly = BR.ly();
+					}
+				}
+			// set <svg> attributes
+			svg->SetAttribute("version", "1.1");
+			svg->SetAttribute("xmlns", "http://www.w3.org/2000/svg");
+			svg->SetAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
+			svg->SetAttribute("width", svg_lx);
+			svg->SetAttribute("height", svg_ly);
+			mtools::ostringstream os;
+			os << bb.min[0] << " " << -(bb.max[1]) << " " << bb.lx() << " " << bb.ly();
+			svg->SetAttribute("viewBox", os.toString().c_str());
 
 			// iterate over all layer, in order
 			for (size_t i = 0; i < _nbLayers; i++)
 				{
-				// increase the bounding box to contain all elements in this layer. 
-				bb.swallowBox( minBB ? _figLayers[i].minBoundingBox() : _figLayers[i].mainBoundingBox());
-
 				// Insert a group for this layer
 				tinyxml2::XMLElement * layer = xmlDoc.NewElement("g"); 
 				svg->InsertEndChild(layer);
@@ -386,53 +424,14 @@ namespace mtools
 				// iterate over all element in this layer
 				_figLayers[i].iterate_all([&](typename mtools::TreeFigure<typename Figure::internals_figure::FigureInterface *, N, double>::BoundedObject & bo) -> void
 					{
-					SVGElement el(xmlDoc, layer);												// create an SVGElement for this figure (destroyed out of scope but the tinyxml2::XMLElement survives.
-
+					SVGElement el(xmlDoc, layer);	// create an SVGElement for this figure (destroyed out of scope but the tinyxml2::XMLElement survives.
 					auto p = typeid(*(bo.object)).name();
 					MTOOLS_INSURE(strlen(p) > 14);							// make sure its contains "class mtools::..."
 					el.xml->SetAttribute("id", el.getUID(p+14).c_str());	// id  by its type
-					bo.object->svg(&el);									// draw on the SVGElement
+					bo.object->svg(&el, fVec2(svg_lx, svg_ly), bb);			// draw on the SVGElement
 					});
 				}
-
-			// compute the size of the SVG drawing. 
-			double svg_lx, svg_ly;
-			if ((SVGSize.X() <= 0) && (SVGSize.Y() <= 0))
-				{	
-				svg_lx = bb.lx(); 
-				svg_ly = bb.ly(); 
-				}
-			else
-				{
-				if (SVGSize.X() <= 0)
-					{
-					svg_ly = SVGSize.Y();
-					svg_lx = bb.lx() * SVGSize.Y() / bb.ly();
-					}
-				else if (SVGSize.Y() <= 0)
-					{
-					svg_lx = SVGSize.X();
-					svg_ly = bb.ly() * SVGSize.X() / bb.lx();
-					}
-				else
-					{
-					fBox2 BR = fBox2(0.0, SVGSize.X(), 0.0, SVGSize.Y()).fixedRatioEnclosedRect(bb.lx() / bb.ly());
-					svg_lx = BR.lx(); 
-					svg_ly = BR.ly();
-					}
-				}
-			 
-			
-			// set <svg> attributes
-			svg->SetAttribute("version", "1.1");
-			svg->SetAttribute("xmlns", "http://www.w3.org/2000/svg");
-			svg->SetAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
-			svg->SetAttribute("width", svg_lx);
-			svg->SetAttribute("height", svg_ly);
-			mtools::ostringstream os; 
-			os << bb.min[0] << " " << -(bb.max[1]) << " " << bb.lx() << " " << bb.ly();
-			svg->SetAttribute("viewBox", os.toString().c_str());
-
+		
 			// add archive at the end of the svg element
 			if (add_info)
 				{
@@ -761,7 +760,7 @@ namespace mtools
 				*
 				* MUST BE OVERRIDEN IN virt_svg()
 				*/
-				void svg(mtools::SVGElement * el) const
+				void svg(mtools::SVGElement * el, fVec2 svg_size, fBox2 svg_box) const
 					{
 					if ((!_clip_global.isEmpty()) || (!_clip_local.isEmpty()))
 						{ // clipping is on
@@ -798,7 +797,7 @@ namespace mtools
 						el->xml->SetAttribute("transform", tran_str.c_str()); 
 						el = el->NewChildSVGElement("g");
 						}
-					virt_svg(el);
+					virt_svg(el, svg_size, svg_box);
 					}
 
 
@@ -1012,6 +1011,13 @@ namespace mtools
 			inline fBox2 clipLocal() { return _clip_local; }
 
 
+
+			/**
+			* Size of a pixel given the size of the SVG drawing and the bounding box of the figure.
+			**/
+			static inline double pixelSize(fVec2 svg_size, fBox2 svg_box) { return svg_box.lx() / svg_size.X(); }
+
+
 			protected:
 
 
@@ -1032,7 +1038,7 @@ namespace mtools
 				virtual void virt_serialize(OBaseArchive & ar) const = 0;
 	
 
-				virtual void virt_svg(mtools::SVGElement * el) const
+				virtual void virt_svg(mtools::SVGElement * el, fVec2 svg_size, fBox2 svg_box) const
 					{
 					MTOOLS_DEBUG(std::string("Figure::svg() called but not implemented on ") + typeid(*this).name() + ". Item ignored...");
 					el->Comment((std::string("MISSING FIGURE\n") + toString()).c_str());
@@ -1196,7 +1202,7 @@ namespace mtools
 			}
 
 
-			virtual void virt_svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el, fVec2 svg_size, fBox2 svg_box) const override
 				{
 				el->Comment("SVG cannot represent Figure::CircleDot correctly !");
 				el->SetName("circle");;
@@ -1204,15 +1210,15 @@ namespace mtools
 				el->setStrokeColor(outlinecolor);
 				el->xml->SetAttribute("cx", TX(center.X()));
 				el->xml->SetAttribute("cy", TY(center.Y()));
-				el->xml->SetAttribute("r", radius);	
-				el->tinyStroke(radius); 
+				el->xml->SetAttribute("r", radius * pixelSize(svg_size,svg_box));
+				el->tinyStroke(svg_size, svg_box);
 				}
 
 		FIGURECLASS_END()
 
 
 
-
+			
 
 
 	
@@ -1287,15 +1293,16 @@ namespace mtools
 				}
 
 
-			virtual void virt_svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el, fVec2 svg_size, fBox2 svg_box) const override
 				{
 				el->Comment("SVG cannot represent Figure::SquareDot correctly !");
 				el->SetName("rect");;
 				el->setFillColor(color);
-				el->xml->SetAttribute("x", TX(center.X())-pw);
-				el->xml->SetAttribute("y", TY(center.Y())-pw);
-				el->xml->SetAttribute("width", 2*pw);  // not using TR() since it should not scale
-				el->xml->SetAttribute("height", 2*pw); //
+				const double l = pw * pixelSize(svg_size, svg_box);
+				el->xml->SetAttribute("x", TX(center.X())-l);
+				el->xml->SetAttribute("y", TY(center.Y())-l);
+				el->xml->SetAttribute("width", 2*l);  // not using TR() since it should not scale
+				el->xml->SetAttribute("height", 2*l); //
 				el->noStroke();
 				}
 
@@ -1377,7 +1384,7 @@ namespace mtools
 				}
 
 
-			virtual void virt_svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el, fVec2 svg_size, fBox2 svg_box) const override
 				{
 				el->SetName("line");
 				el->xml->SetAttribute("x1", TX(x1));
@@ -1385,7 +1392,7 @@ namespace mtools
 				el->xml->SetAttribute("x2", TX(x2));
 				el->xml->SetAttribute("y2", TY(y));
 				el->setStrokeColor(color);
-				el->tinyStroke(x2 - x1);
+				el->tinyStroke(svg_size, svg_box);
 				}
 
 		FIGURECLASS_END()
@@ -1454,7 +1461,7 @@ namespace mtools
 				}
 
 
-			virtual void virt_svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el, fVec2 svg_size, fBox2 svg_box) const override
 				{
 				el->SetName("line");
 				el->xml->SetAttribute("x1", TX(x));
@@ -1462,7 +1469,7 @@ namespace mtools
 				el->xml->SetAttribute("x2", TX(x));
 				el->xml->SetAttribute("y2", TY(y2));
 				el->setStrokeColor(color);
-				el->tinyStroke(y2 - y1);
+				el->tinyStroke(svg_size, svg_box);
 				}
 
 		FIGURECLASS_END()
@@ -1532,7 +1539,7 @@ namespace mtools
 				}
 
 
-			virtual void virt_svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el, fVec2 svg_size, fBox2 svg_box) const override
 			{
 				el->SetName("line");
 				el->xml->SetAttribute("x1", TX(P1.X()));
@@ -1540,7 +1547,7 @@ namespace mtools
 				el->xml->SetAttribute("x2", TX(P2.X()));
 				el->xml->SetAttribute("y2", TY(P2.Y()));
 				el->setStrokeColor(color);
-				el->tinyStroke((P2 - P1).norm());
+				el->tinyStroke(svg_size, svg_box);
 			}
 
 		FIGURECLASS_END()
@@ -1613,15 +1620,13 @@ namespace mtools
 			}
 
 
-			virtual void virt_svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el, fVec2 svg_size, fBox2 svg_box) const override
 				{
 				el->SetName("polyline");
 				el->setStrokeColor(color);
-				el->tinyStroke(bb);
-
+				el->tinyStroke(svg_size, svg_box);
 				el->noFill();
 				mtools::ostringstream os;
-
 				for (auto P : tab) { os << TX(P.X()) << "," << TY(P.Y()) << " "; }
 				el->xml->SetAttribute("points", os.toString().c_str());
 				}
@@ -1700,7 +1705,7 @@ namespace mtools
 			}
 
 
-			virtual void virt_svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el, fVec2 svg_size, fBox2 svg_box) const override
 				{
 				el->SetName("line");
 				el->setStrokeColor(color);
@@ -1712,7 +1717,7 @@ namespace mtools
 
 				if (thickness <= 0)
 					{
-					el->tinyStroke(x1 - x2);
+					el->tinyStroke(svg_size, svg_box);
 					}
 				else
 					{
@@ -1796,7 +1801,7 @@ namespace mtools
 			}
 
 
-			virtual void virt_svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el, fVec2 svg_size, fBox2 svg_box) const override
 				{
 				el->SetName("line");
 				el->setStrokeColor(color);
@@ -1808,7 +1813,7 @@ namespace mtools
 
 				if (thickness <= 0)
 					{
-					el->tinyStroke(y1 - y2);
+					el->tinyStroke(svg_size, svg_box);
 					}
 				else
 					{
@@ -1890,7 +1895,7 @@ namespace mtools
 				}
 
 
-			virtual void virt_svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el, fVec2 svg_size, fBox2 svg_box) const override
 				{
 				el->SetName("line");
 				el->setStrokeColor(color);
@@ -1901,7 +1906,7 @@ namespace mtools
 				el->xml->SetAttribute("stroke-linecap", "butt");
 				if (thick <= 0)
 					{
-					el->tinyStroke(bb);
+					el->tinyStroke(svg_size, svg_box);
 					}
 				else
 					{
@@ -1994,7 +1999,7 @@ namespace mtools
 				}
 
 
-			virtual void virt_svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el, fVec2 svg_size, fBox2 svg_box) const override
 				{
 				el->SetName("polyline");
 				el->setStrokeColor(color);
@@ -2008,7 +2013,7 @@ namespace mtools
 
 				if (thickness <= 0)
 					{
-					el->tinyStroke(bb);
+					el->tinyStroke(svg_size, svg_box);
 					}
 				else
 					{
@@ -2113,7 +2118,7 @@ namespace mtools
 			}
 
 
-			virtual void virt_svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el, fVec2 svg_size, fBox2 svg_box) const override
 			{
 				el->SetName("rect");
 				el->noStroke();
@@ -2199,7 +2204,7 @@ namespace mtools
 				}
 
 
-			virtual void virt_svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el, fVec2 svg_size, fBox2 svg_box) const override
 				{
 				el->SetName("polygon");
 				el->setFillColor(fillcolor);
@@ -2207,7 +2212,7 @@ namespace mtools
 				mtools::ostringstream os; 
 				os << TX(P1.X()) << "," << TY(P1.Y()) << " " << TX(P2.X()) << "," << TY(P2.Y()) << " " << TX(P3.X()) << "," << TY(P3.Y());
 				el->xml->SetAttribute("points", os.toString().c_str());
-				el->tinyStroke(getBoundingBox(P1, P2, P3));
+				el->tinyStroke(svg_size, svg_box);
 				}
 
 
@@ -2287,7 +2292,7 @@ namespace mtools
 				}
 
 
-			virtual void virt_svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el, fVec2 svg_size, fBox2 svg_box) const override
 				{
 				el->SetName("polygon");
 				el->setStrokeColor(color);
@@ -2295,7 +2300,7 @@ namespace mtools
 				mtools::ostringstream os; 
 				os << TX(P1.X()) << "," << TY(P1.Y()) << " " << TX(P2.X()) << "," << TY(P2.Y()) << " " << TX(P3.X()) << "," << TY(P3.Y()) << " " << TX(P4.X()) << "," << TY(P4.Y());
 				el->xml->SetAttribute("points", os.toString().c_str());
-				el->tinyStroke(getBoundingBox(P1, P2, P3, P4));
+				el->tinyStroke(svg_size, svg_box);
 				}
 
 
@@ -2377,7 +2382,7 @@ namespace mtools
 				}
 
 
-			virtual void virt_svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el, fVec2 svg_size, fBox2 svg_box) const override
 				{
 				el->SetName("polygon");
 				el->setStrokeColor(color);
@@ -2388,7 +2393,7 @@ namespace mtools
 					os << TX(P.X()) << "," << TY(P.Y()) << " ";
 					}
 				el->xml->SetAttribute("points", os.toString().c_str());
-				el->tinyStroke(bb);
+				el->tinyStroke(svg_size, svg_box);
 				}
 
 		FIGURECLASS_END()
@@ -2467,7 +2472,7 @@ namespace mtools
 				}
 
 
-			virtual void virt_svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el, fVec2 svg_size, fBox2 svg_box) const override
 				{
 				el->SetName("rect");
 				el->setStrokeColor(color);
@@ -2476,7 +2481,7 @@ namespace mtools
 				el->xml->SetAttribute("y", TY(box.min[1]) + TY(box.ly()));
 				el->xml->SetAttribute("width", TR(box.lx()));
 				el->xml->SetAttribute("height", TR(box.ly()));
-				el->tinyStroke(box);
+				el->tinyStroke(svg_size, svg_box);
 				}
 
 		FIGURECLASS_END()
@@ -2561,7 +2566,7 @@ namespace mtools
 				}
 
 
-			virtual void virt_svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el, fVec2 svg_size, fBox2 svg_box) const override
 				{
 				mtools::ostringstream os;
 				os << TX(P1.X()) << "," << TY(P1.Y()) << " " << TX(P2.X()) << "," << TY(P2.Y()) << " " << TX(P3.X()) << "," << TY(P3.Y());
@@ -2572,7 +2577,7 @@ namespace mtools
 					el->xml->SetAttribute("points", os.toString().c_str());
 					el->setFillColor(fillcolor);
 					el->setStrokeColor(color);
-					el->tinyStroke(getBoundingBox(P1, P2, P3));
+					el->tinyStroke(svg_size, svg_box);
 					return;
 					}
 
@@ -2678,7 +2683,7 @@ namespace mtools
 				}
 
 
-			virtual void virt_svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el, fVec2 svg_size, fBox2 svg_box) const override
 				{
 				mtools::ostringstream os;
 				os << TX(P1.X()) << "," << TY(P1.Y()) << " " << TX(P2.X()) << "," << TY(P2.Y()) << " " << TX(P3.X()) << "," << TY(P3.Y()) << " " << TX(P4.X()) << "," << TY(P4.Y());
@@ -2689,7 +2694,7 @@ namespace mtools
 					el->xml->SetAttribute("points", os.toString().c_str());
 					el->setFillColor(fillcolor);
 					el->setStrokeColor(color);
-					el->tinyStroke(getBoundingBox(P1, P2, P3, P4));
+					el->tinyStroke(svg_size, svg_box);
 					return;
 					}
 
@@ -2797,7 +2802,7 @@ namespace mtools
 				}
 
 
-			virtual void virt_svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el, fVec2 svg_size, fBox2 svg_box) const override
 				{
 				mtools::ostringstream os;
 				for (auto P : tab)
@@ -2811,7 +2816,7 @@ namespace mtools
 					el->xml->SetAttribute("points", os.toString().c_str());
 					el->setFillColor(fillcolor);
 					el->setStrokeColor(color);
-					el->tinyStroke(bb);
+					el->tinyStroke(svg_size, svg_box);
 					return;
 					}
 
@@ -2923,7 +2928,7 @@ namespace mtools
 				}
 
 
-			virtual void virt_svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el, fVec2 svg_size, fBox2 svg_box) const override
 				{
 				if ((thickness_x <= 0)||(thickness_y <= 0))
 					{
@@ -2934,7 +2939,7 @@ namespace mtools
 					el->xml->SetAttribute("y", TY(box.min[1]) + TY(box.ly()));
 					el->xml->SetAttribute("width", TR(box.lx()));
 					el->xml->SetAttribute("height", TR(box.ly()));
-					el->tinyStroke(box);
+					el->tinyStroke(svg_size, svg_box);
 					return;
 					}
 
@@ -3071,7 +3076,7 @@ namespace mtools
 				}
 
 
-			virtual void virt_svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el, fVec2 svg_size, fBox2 svg_box) const override
 				{
 				el->SetName("circle");
 				el->setFillColor(fillcolor);
@@ -3079,7 +3084,7 @@ namespace mtools
 				el->xml->SetAttribute("cx", TX(center.X()));
 				el->xml->SetAttribute("cy", TY(center.Y()));
 				el->xml->SetAttribute("r", TR(radius));
-				el->tinyStroke(virt_boundingBox());
+				el->tinyStroke(svg_size, svg_box);
 				return;
 				}
 
@@ -3189,7 +3194,7 @@ namespace mtools
 				}
 
 
-			virtual void virt_svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el, fVec2 svg_size, fBox2 svg_box) const override
 				{
 				if (thickness <= 0)
 					{
@@ -3199,7 +3204,7 @@ namespace mtools
 					el->xml->SetAttribute("cx", TX(center.X()));
 					el->xml->SetAttribute("cy", TY(center.Y()));
 					el->xml->SetAttribute("r", TR(radius));
-					el->tinyStroke(virt_boundingBox());
+					el->tinyStroke(svg_size, svg_box);
 					return;
 					}
 
@@ -3327,7 +3332,7 @@ namespace mtools
 				}
 
 
-			virtual void virt_svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el, fVec2 svg_size, fBox2 svg_box) const override
 				{
 				fBox2 B = _clippoly(); 
 
@@ -3352,7 +3357,7 @@ namespace mtools
 				fig_el->xml->SetAttribute("cx", TX(center.X()));
 				fig_el->xml->SetAttribute("cy", TY(center.Y()));
 				fig_el->xml->SetAttribute("r", TR(radius));
-				fig_el->tinyStroke(virt_boundingBox());
+				fig_el->tinyStroke(svg_size, svg_box);
 				return;
 				}
 
@@ -3514,7 +3519,7 @@ namespace mtools
 				}
 
 
-			virtual void virt_svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el, fVec2 svg_size, fBox2 svg_box) const override
 				{
 				fBox2 B = _clippoly(); 
 
@@ -3542,7 +3547,7 @@ namespace mtools
 				if (thickness <= 0)
 					{
 					fig_el->xml->SetAttribute("r", TR(radius));
-					fig_el->tinyStroke(virt_boundingBox());
+					fig_el->tinyStroke(svg_size, svg_box);
 					return;
 					}
 
@@ -3695,7 +3700,7 @@ namespace mtools
 				}
 
 
-			virtual void virt_svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el, fVec2 svg_size, fBox2 svg_box) const override
 				{
 				el->SetName("ellipse");
 				el->setFillColor(fillcolor);
@@ -3704,7 +3709,7 @@ namespace mtools
 				el->xml->SetAttribute("cy", TY(center.Y()));
 				el->xml->SetAttribute("rx", TR(rx));
 				el->xml->SetAttribute("ry", TR(ry));
-				el->tinyStroke(virt_boundingBox());
+				el->tinyStroke(svg_size, svg_box);
 				return;
 				}
 
@@ -3867,7 +3872,7 @@ namespace mtools
 				}
 
 
-			virtual void virt_svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el, fVec2 svg_size, fBox2 svg_box) const override
 				{
 
 				if ((thickness_x  <= 0)||((thickness_y <= 0)))
@@ -3880,7 +3885,7 @@ namespace mtools
 					el->xml->SetAttribute("cy", TY(center.Y()));
 					el->xml->SetAttribute("rx", TR(rx));
 					el->xml->SetAttribute("ry", TR(ry));
-					el->tinyStroke(virt_boundingBox());
+					el->tinyStroke(svg_size, svg_box);
 					return;
 					}
 
@@ -4050,7 +4055,7 @@ namespace mtools
 
 
 
-			virtual void virt_svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el, fVec2 svg_size, fBox2 svg_box) const override
 				{
 				fBox2 B = _clippoly(); 
 
@@ -4075,7 +4080,7 @@ namespace mtools
 				fig_el->xml->SetAttribute("cy", TY(center.Y()));
 				fig_el->xml->SetAttribute("rx", TR(rx));
 				fig_el->xml->SetAttribute("ry", TR(ry));
-				fig_el->tinyStroke(virt_boundingBox());
+				fig_el->tinyStroke(svg_size, svg_box);
 				fig_el->xml->SetAttribute("clip-path", (mtools::toString("url(#") + uid + ")").c_str());
 				}
 
@@ -4298,7 +4303,7 @@ namespace mtools
 
 
 
-			virtual void virt_svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el, fVec2 svg_size, fBox2 svg_box) const override
 				{
 				fBox2 B = _clippoly(); 
 
@@ -4328,7 +4333,7 @@ namespace mtools
 					{
 					fig_el->xml->SetAttribute("rx", TR(rx));
 					fig_el->xml->SetAttribute("ry", TR(ry));
-					fig_el->tinyStroke(virt_boundingBox());
+					fig_el->tinyStroke(svg_size, svg_box);
 					return;
 					}
 
@@ -4434,11 +4439,37 @@ namespace mtools
                 }
 
 
+			void _incBB(fBox2& bb, fVec2 A, fVec2 B) const
+				{
+				fVec2 O = (A + B) * 0.5;
+				fVec2 U = (O - center);
+				const double h = radius - U.norm();
+				U.normalize();
+				fVec2 C = A + U * h;
+				fVec2 D = B + U * h;
+				bb.swallowPoint(A);
+				bb.swallowPoint(B);
+				bb.swallowPoint(C);
+				bb.swallowPoint(D);
+				}
+
+
 			virtual fBox2 virt_boundingBox() const override
 				{
-                return fBox2(-1, 1, -1, 1); // TODO: improve the bounding box (can do better than the whole circle)
-                
-				//return fBox2(center.X() - radius, center.X() + radius, center.Y() - radius, center.Y() + radius); // TODO: improve the bounding box (can do better than the whole circle)
+				const int nb_split = 16;
+				double delta = end_angle - start_angle;
+				if (delta < 0) delta += 360;
+				delta /= nb_split;
+				fBox2 bb;
+				for (int k = 0; k < nb_split; k++)
+					{
+					const double rad_start = (start_angle + k * delta) * PI / 180;
+					const double rad_end = (start_angle + (k + 1) * delta) * PI / 180;
+					fVec2 A = center + fVec2(radius * sin(rad_start), radius * cos(rad_start));
+					fVec2 B = center + fVec2(radius * sin(rad_end), radius * cos(rad_end));
+					_incBB(bb, A, B);
+					}
+				return bb;
 				}
 
 
@@ -4462,7 +4493,7 @@ namespace mtools
 				}
 
 
-			virtual void virt_svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el, fVec2 svg_size, fBox2 svg_box) const override
 				{
 				const double rad_start = start_angle * PI / 180;
                 const double rad_end = end_angle * PI / 180;
@@ -4475,7 +4506,7 @@ namespace mtools
 				el->SetName("path");
 				el->noFill();
 				el->setStrokeColor(color);
-				el->tinyStroke(virt_boundingBox());
+				el->tinyStroke(svg_size, svg_box);
 				mtools::ostringstream oss; 
                 oss << "M " << TX(P1.X()) << " " << TY(P1.Y()) << " A " << TR(radius) << " " << TR(radius) << " 0 " << (large_arc ? "1" : "0") << " 1 " << TX(P2.X()) << " " << TY(P2.Y());
 				el->xml->SetAttribute("d", oss.str().c_str()); 
@@ -4537,11 +4568,38 @@ namespace mtools
                 }
 
 
+
+			void _incBB(fBox2 & bb, fVec2 A, fVec2 B) const 
+				{
+				fVec2 O = (A + B)*0.5;
+				fVec2 U = (O - center);
+				const double h = radius - U.norm();
+				U.normalize();				
+				fVec2 C = A + U * h;
+				fVec2 D = B + U * h;
+				bb.swallowPoint(A);
+				bb.swallowPoint(B);
+				bb.swallowPoint(C);
+				bb.swallowPoint(D);
+				}
+
+
 			virtual fBox2 virt_boundingBox() const override
 				{
-				return fBox2(-1, 1, -1, 1); // TODO: improve the bounding box (can do better than the whole circle)
-
-//				return fBox2(center.X() - radius, center.X() + radius, center.Y() - radius, center.Y() + radius); // TODO: improve the bounding box (can do better than the whole circle)
+				const int nb_split = 16;
+				double delta = end_angle - start_angle;
+				if (delta < 0) delta += 360;
+				delta /= nb_split;
+				fBox2 bb; 
+				for (int k = 0; k < nb_split; k++)
+					{
+					const double rad_start = (start_angle + k * delta) * PI / 180;
+					const double rad_end = (start_angle + (k+1) * delta) * PI / 180;
+					fVec2 A = center + fVec2(radius * sin(rad_start), radius * cos(rad_start));
+					fVec2 B = center + fVec2(radius * sin(rad_end), radius * cos(rad_end));
+					_incBB(bb, A, B);
+					}
+				return bb; 
 				}
 
 
@@ -4565,7 +4623,7 @@ namespace mtools
 				}
 
 
-			virtual void virt_svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el, fVec2 svg_size, fBox2 svg_box) const override
 				{
                 const double t = std::abs(thickness);
 				const double rad_start = start_angle * PI / 180;
@@ -4663,7 +4721,7 @@ namespace mtools
 			}
 
 
-		virtual void virt_svg(mtools::SVGElement* el) const override
+		virtual void virt_svg(mtools::SVGElement* el, fVec2 svg_size, fBox2 svg_box) const override
 			{
 			const double rad_start = start_angle * PI / 180;
 			const double rad_end = end_angle * PI / 180;
@@ -4782,7 +4840,7 @@ namespace mtools
 			}
 
 
-		virtual void virt_svg(mtools::SVGElement* el) const override
+		virtual void virt_svg(mtools::SVGElement* el, fVec2 svg_size, fBox2 svg_box) const override
 			{
 			const double rad_start = start_angle * PI / 180;
 			const double rad_end = end_angle * PI / 180;
@@ -4977,7 +5035,7 @@ namespace mtools
 
 
 
-			virtual void virt_svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el, fVec2 svg_size, fBox2 svg_box) const override
 				{
 				const double fontsize = 64;				// real font size
 				const double vspace = 82;				// vertical spacing to use
@@ -5429,14 +5487,14 @@ namespace mtools
 
 
 			/* draw onto the svg */
-			virtual void virt_svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el, fVec2 svg_size, fBox2 svg_box) const override
 				{
 				if (_dis) { MTOOLS_ERROR("Cannot call Group::svg() after group has been inserted in a canvas !"); }
 				el->SetName("g");
 				for (auto p : _figvec)
 					{
 					mtools::SVGElement * chel =el->NewChildSVGElement(); // create a child xml element
-					p->svg(chel); // draw the svg on the child
+					p->svg(chel, svg_size, svg_box); // draw the svg on the child
 					}
 				}
 
@@ -5635,14 +5693,14 @@ namespace mtools
 
 
 			/* draw onto the svg */
-			virtual void virt_svg(mtools::SVGElement * el) const override
+			virtual void virt_svg(mtools::SVGElement * el, fVec2 svg_size, fBox2 svg_box) const override
 				{
 				if (_dis) { MTOOLS_ERROR("Cannot call Group::svg() after group has been inserted in a canvas !"); }
 				el->SetName("g");
 				mtools::SVGElement * chel1 = el->NewChildSVGElement();  
-				_fig1->svg(chel1);
+				_fig1->svg(chel1, svg_size, svg_box);
 				mtools::SVGElement * chel2 = el->NewChildSVGElement();
-				_fig2->svg(chel2);
+				_fig2->svg(chel2, svg_size, svg_box);
 				}
 
 

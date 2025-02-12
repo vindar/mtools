@@ -142,8 +142,15 @@ namespace mtools
 			}
 
 
-		/* set a very small stroke to mathc the size (a,b) of the object
-		   dirty hack since */
+
+		void tinyStroke(fVec2 svg_size, fBox2 svg_box)
+			{		
+			xml->SetAttribute("stroke-width", 0.5);
+			xml->SetAttribute("vector-effect", "non-scaling-stroke");
+			Comment("SVG cannot represent non scaling stroke !");
+			}
+
+		/*
 		void tinyStroke(double x, double y, double scalefactor = 1000.0)
 			{
 			//xml->SetAttribute("stroke-width", (std::abs(x) + std::abs(y))/scalefactor);
@@ -168,28 +175,25 @@ namespace mtools
 			xml->SetAttribute("vector-effect", "non-scaling-stroke");
 			Comment("SVG cannot represent non scaling stroke !");
 			}
-
-
+		*/
 
 
 		/** give acces to the underlying xml element */
 		tinyxml2::XMLElement * xml;
 
-
 		/** Coordinate transform to apply on the x-axis */
-		double tx(double x) const { return x; } 
-		int64 tx(int64 x) const { return x; }
+		static double tx(double x) { return x; } 
+		static int64 tx(int64 x)  { return x; }
 
 
 		/** Coordinate transform to apply on the y-axis */
-		double ty(double y) const { return -y; }
-		int64 ty(int64 y) const { return -y; }
+		static double ty(double y) { return -y; }
+		static int64 ty(int64 y) { return -y; }
 
 
 		/** Transform to apply to lenght/radius etc...*/
-		double tr(double r) const { return r; }
-		int64 tr(int64 r) const { return r; }
-
+		static double tr(double r) { return r; }
+		static int64 tr(int64 r)  { return r; }
 
 
 	private:
