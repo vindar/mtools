@@ -12562,16 +12562,83 @@ namespace mtools
 
 
 
+
+
+			/**
+			 * Sub procedure for drawin a circle sector. The sector must have total angle < 180 degrees
+			 *
+			 * @param           imrange     image range
+			 * @param           center      circle center.
+			 * @param           radius      circle radius.
+			 * @param           angle_start start angle in degree (from 12AM, going clockwise)
+			 * @param           aa          true to use antialising on this side of the arc.
+			 * @param           angle_end   end angle in degrees (from 12AM, going clockwise)
+			 * @param           aa          true to use antialising on this side of the arc.
+			 * @param           color       color.
+			 *
+			 * @returns A fBox2.
+			 */
+			fBox2 _draw_circle_sector_sub(fBox2 imrange, mtools::fVec2 center, double radius, double angle_start, bool aa_start, double angle_end, bool aa_end, mtools::RGBc color)
+				{
+				fBox2 bb = circleSectorBoundingBox(center, radius, angle_start, angle_end); // bounding box for the sector
+				if (angle_end < angle_start)  angle_end += 360;
+				MTOOLS_ASSERT((angle_end - angle_start) < 180);
+
+				const double rad_start = angle_start * PI / 180;
+				const fVec2 A = center + fVec2(radius * sin(rad_start), radius * cos(rad_start));
+				double ax, ay, aoff;
+				_lineEq(center, A, ax, ay, aoff);
+				double ainc = (aa_start) ? 0 : mtools::INF;
+
+				const double rad_end = angle_end * PI / 180;
+				const fVec2 B = center + fVec2(radius * sin(rad_end), radius * cos(rad_end));
+				double bx, by, boff;
+				_lineEq(center, B, bx, by, boff);
+				double binc = (aa_end) ? 0 : mtools::INF;
+
+				_drawEQO(
+					[center, radius](fVec2 P)
+					{
+					const double r = (P - center).norm();
+					return radius - r;					
+					}
+					,
+					[ax, ay, aoff, ainc](fVec2 P)
+					{
+					const double d = P.X() * ax + P.Y() * ay - aoff;
+					return d + ((d > 0) ? ainc : -ainc);
+					}
+					,
+					[bx, by, boff, binc](fVec2 P)
+					{
+					const double d = P.X() * bx + P.Y() * by - boff;
+					return -d + ((d < 0) ? binc : -binc);
+					}
+				, imrange, bb, color);
+				return bb;
+				}
+
+
+
 			void _draw_circle_sector(fBox2 imrange, mtools::fVec2 center, double radius, double angle_start, double angle_end, mtools::RGBc color)
 				{
-				return;
+				if (angle_end < angle_start)  angle_end += 360;
+				const int N = (int)((angle_end - angle_start) / 180) + 2; // number of number of sub-sector to draw
+				const double angle = (angle_end - angle_start) / N; // angle of each sub-arc    
+				_draw_circle_sector_sub(imrange, center, radius, angle_start, true, angle_start + angle, false, color); // first sub-arc
+				for (int j = 1; j < N - 1; j++)
+					{
+					_draw_circle_sector_sub(imrange, center, radius, angle_start + j * angle, false, angle_start + (j + 1) * angle, false, color);
+					}
+				_draw_circle_sector_sub(imrange, center, radius, angle_start + (N - 1) * angle, false, angle_end, true, color); // last sub-arc    
 				}
 
 
 
 			void _draw_thick_circle_sector(fBox2 imrange, mtools::fVec2 center, double radius, double angle_start, double angle_end, double thickness, mtools::RGBc color_interior, RGBc color_border)
 				{  
-				return;
+				_draw_circle_sector(imrange, center, radius - thickness, angle_start, angle_end, color_interior);
+				_draw_thick_circle_arc(imrange, center, radius, angle_start, angle_end, thickness, color_border);
 				}
 
 
