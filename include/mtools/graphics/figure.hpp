@@ -4420,7 +4420,9 @@ namespace mtools
 
 			virtual fBox2 virt_boundingBox() const override
 				{
-				return fBox2(center.X() - radius, center.X() + radius, center.Y() - radius, center.Y() + radius); // TODO: improve the bounding box (can do better than the whole circle)
+                return fBox2(-1, 1, -1, 1); // TODO: improve the bounding box (can do better than the whole circle)
+                
+				//return fBox2(center.X() - radius, center.X() + radius, center.Y() - radius, center.Y() + radius); // TODO: improve the bounding box (can do better than the whole circle)
 				}
 
 
@@ -4520,7 +4522,9 @@ namespace mtools
 
 			virtual fBox2 virt_boundingBox() const override
 				{
-				return fBox2(center.X() - radius, center.X() + radius, center.Y() - radius, center.Y() + radius); // TODO: improve the bounding box (can do better than the whole circle)
+				return fBox2(-1, 1, -1, 1); // TODO: improve the bounding box (can do better than the whole circle)
+
+//				return fBox2(center.X() - radius, center.X() + radius, center.Y() - radius, center.Y() + radius); // TODO: improve the bounding box (can do better than the whole circle)
 				}
 
 
