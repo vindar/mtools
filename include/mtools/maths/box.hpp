@@ -1383,6 +1383,92 @@ namespace mtools
 		return B;
 		}
 
+
+
+
+
+    /** this sub method only works when angle_end - angle_start < 180 */
+    inline fBox2 _circleArcBoundingBox_sub(fVec2 center, double radius, double thickness, double angle_start, double angle_end)
+        {
+        MTOOLS_ASSERT(angle_end > angle_start);
+        MTOOLS_ASSERT((angle_end - angle_start) < 180);
+        const double rad_start = angle_start * PI / 180;
+        const double rad_end = angle_end * PI / 180;
+        fVec2 E = center + fVec2((radius - thickness) * sin(rad_start), (radius - thickness) * cos(rad_start));
+        fVec2 F = center + fVec2((radius - thickness) * sin(rad_end), (radius - thickness) * cos(rad_end));
+        fVec2 G = center + fVec2(radius * sin((rad_start + rad_end) * 0.5), radius * cos((rad_start + rad_end) * 0.5));
+        fVec2 U = (G - center).get_rotate90();
+        U.normalize();
+        U *= radius * tan((rad_end - rad_start) * 0.5);
+        fVec2 C = G + U;
+        fVec2 D = G - U;
+        fBox2 bb;
+        bb.swallowPoint(E);
+        bb.swallowPoint(F);
+        bb.swallowPoint(C);
+        bb.swallowPoint(D);
+        return bb;
+        }
+
+
+    /**
+     * Return a bounding box for a (thick) circle arc.
+     *
+     * The arc is drawn clockwise, from angle_start to angle_end given in degree
+     * and starting at 12AM.
+     *
+     * the total angle = (angle_end - angle_start) must be smaller than 180 degrees.
+     *
+     * @param   center      circle center
+     * @param   radius      circle radius
+     * @param   thickness   arc thickness (going inside the circle)
+     * @param   angle_start start angle in degree (from 12AM, going clockwise)
+     * @param   angle_end   end angle in degrees (from 12AM, going clockwise)
+     *
+     * @returns a bounding box for the arc.
+     **/
+    inline fBox2 circleArcBoundingBox(fVec2 center, double radius, double thickness, double angle_start, double angle_end)
+        {
+        if (angle_end < angle_start)  angle_end += 360;        
+        const double angle = angle_end - angle_start;
+        MTOOLS_ASSERT((angle >= 0)&&(angle <= 360));
+        if (angle < 120)
+            {
+            return _circleArcBoundingBox_sub(center, radius, thickness, angle_start, angle_end);
+            }
+        if (angle < 270)
+            {
+            const double mid = (angle_start + angle_end) * 0.5;
+            fBox2 bb = _circleArcBoundingBox_sub(center, radius, thickness, angle_start, mid);
+            bb.swallowBox(_circleArcBoundingBox_sub(center, radius, thickness, mid, angle_end));
+            return bb; 
+            }
+        return fBox2(center.X() - radius, center.X() + radius, center.Y() - radius, center.Y() + radius);
+        }
+
+
+    /**
+     * Return a bounding box for a circle sector
+     *
+     * The sector is drawn clockwise, from angle_start to angle_end given in degree
+     * and starting at 12AM.
+     *
+     * the total angle = (angle_end - angle_start) must be smaller than 180 degrees.
+     *
+     * @param   center      circle center
+     * @param   radius      circle radius
+     * @param   angle_start start angle in degree (from 12AM, going clockwise)
+     * @param   angle_end   end angle in degrees (from 12AM, going clockwise)
+     *
+     * @returns a bounding box for the circle sector.
+     **/
+    inline fBox2 circleSectorBoundingBox(fVec2 center, double radius, double angle_start, double angle_end)
+        {
+        return circleArcBoundingBox(center, radius, radius, angle_start, angle_end);
+        }
+
+
+
 }
 
 /* end of file */
