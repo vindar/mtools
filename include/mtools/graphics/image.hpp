@@ -3888,7 +3888,7 @@ namespace mtools
 
 
             /**
-             * Draw a circle arc using the tgx:: methods. Only available is tgx is available.
+             * Draw a circle arc.
              * 
              * the arc is drawn moving clockwise from angle_start until reaching angle_end.
              * | angle (in degrees)  | position |
@@ -3903,13 +3903,16 @@ namespace mtools
              * @param   angle_start angle in degrees of the begigining of the arc.
              * @param   angle_end   angle in degrees of the end  of the arc.
              * @param   color       color to use.
-             * @param   opacity     (Optional) Opacity multiplier in [0.0f, 1.0f].
              */
-			void draw_circle_arc(fVec2 center,  double radius, double angle_start, double angle_end, RGBc color, float opacity = 1.0f);
+			void draw_circle_arc(fVec2 center,  double radius, double angle_start, double angle_end, RGBc color)
+				{
+				if (isEmpty()) return;
+				_draw_circle_arc(imagefBox(), center, radius, angle_start, angle_end, color);
+				}
 
 
              /**
-              * Draw a circle arc using the tgx:: methods. Only available is tgx is available.
+              * Draw a circle arc.
               * 
               * the arc is drawn moving clockwise from angle_start until reaching angle_end.
               * | angle (in degrees)  | position |
@@ -3925,13 +3928,17 @@ namespace mtools
               * @param  angle_end   angle in degrees of the end  of the arc.
               * @param  thickness   The thickness of the arc, going 'inside' the circle.
               * @param  color       color to use.
-              * @param  opacity     (Optional) Opacity multiplier in [0.0f, 1.0f].
               */
-			 void draw_thick_circle_arc(fVec2 center, double radius, double angle_start, double angle_end, double thickness, RGBc color, float opacity = 1.0f);
+			 void draw_thick_circle_arc(fVec2 center, double radius, double angle_start, double angle_end, double thickness, RGBc color)
+				 {
+				 if (isEmpty()) return;
+				 _draw_thick_circle_arc(imagefBox(), center, radius, angle_start, angle_end, thickness, color);
+				 }
+
 
 
              /**
-              * Draw a filled circle sector/slice/pie using the tgx:: methods. Only available is tgx is available.
+              * Draw a filled circle sector/slice/pie.
               * 
               * the arc is drawn moving clockwise from angle_start until reaching angle_end.
               * | angle (in degrees)  | position |
@@ -3946,13 +3953,16 @@ namespace mtools
               * @param  angle_start angle in degrees of the begigining of the arc.
               * @param  angle_end   angle in degrees of the end  of the arc.
               * @param  color       color to use.
-              * @param  opacity     (Optional) Opacity multiplier in [0.0f, 1.0f].
               */
-			 void draw_circle_sector(fVec2 center, double r, double angle_start, double angle_end, RGBc color, float opacity = 1.0f);
+			 void draw_circle_sector(fVec2 center, double r, double angle_start, double angle_end, RGBc color)
+				 {
+				 if (isEmpty()) return;
+				 _draw_circle_sector(imagefBox(), center, r, angle_start, angle_end, color);
+				 }
 
 
 			 /**
-			  * Draw a filled circle sector/slice/pie with a thick border of a different colors using the tgx:: methods. Only available is tgx is available.
+			  * Draw a filled circle sector/slice/pie with a thick border of a different colors.
 			  *
 			  * the arc is drawn moving clockwise from angle_start until reaching angle_end.
 			  * | angle (in degrees)  | position |
@@ -3969,9 +3979,12 @@ namespace mtools
 			  * @param   thickness       border thickness going 'inside' the circle.
 			  * @param   color_interior  color for the interior.
 			  * @param   color_border    color for the boundary.
-			  * @param   opacity         (Optional) Opacity multiplier in [0.0f, 1.0f].
 			 **/
-			 void draw_thick_circle_sector(fVec2 center, double r, double angle_start, double angle_end, double thickness, RGBc color_interior, RGBc color_border, float opacity = 1.0f);
+			 void draw_thick_circle_sector(fVec2 center, double r, double angle_start, double angle_end, double thickness, RGBc color_interior, RGBc color_border)
+				 {
+				 if (isEmpty()) return;
+				 _draw_thick_circle_sector(imagefBox(), center, r, angle_start, angle_end, thickness, color_interior, color_border);
+				 }
 
 
 
@@ -6806,8 +6819,12 @@ namespace mtools
 
 
 
+
+
+
+
 			/**
-			 * Draw a circle arc with a given bounding box using the tgx:: methods. Only available is tgx is available.
+			 * Draw a circle arc with a given bounding box.
 			 *
 			 * @note High quality drawing with anti-aliasing and sub-pixel precision.
 			 *
@@ -6825,18 +6842,16 @@ namespace mtools
 			 * @param   angle_start angle in degrees of the begigining of the arc.
 			 * @param   angle_end   angle in degrees of the end  of the arc.
 			 * @param   color       color to use.
-			 * @param   opacity     (Optional) Opacity multiplier in [0.0f, 1.0f].
 			 */
-			void canvas_draw_circle_arc(const fBox2& R, fVec2 center, double radius, double angle_start, double angle_end, RGBc color, float opacity = 1.0f)
+			void canvas_draw_circle_arc(const fBox2& R, fVec2 center, double radius, double angle_start, double angle_end, RGBc color)
 				{
 				if (isEmpty()) return;
-				const fBox2 imBox = imagefBox();
-				draw_circle_arc(boxTransform(center, R, imBox), boxTransform_dx(radius, R, imBox), angle_start, angle_end, color, opacity); // TODO : use ellipse arc (when implemented in tgx:: to deal with non equal proportion dx/dy)
+				_draw_circle_arc(R, center, radius, angle_start, angle_end, color);
 				}
 
 
 			/**
-			 * Draw a thick circle arc with a given bounding box using the tgx:: methods. Only available is tgx is available.
+			 * Draw a thick circle arc with a given bounding box.
 			 *
 			 * the arc is drawn moving clockwise from angle_start until reaching angle_end.
 			 * | angle (in degrees)  | position |
@@ -6853,20 +6868,18 @@ namespace mtools
 			 * @param  angle_end   angle in degrees of the end  of the arc.
 			 * @param  thickness   The thickness of the arc, going 'inside' the circle.
 			 * @param  color       color to use.
-			 * @param  opacity     (Optional) Opacity multiplier in [0.0f, 1.0f].
 			 */
-			void canvas_draw_thick_circle_arc(const fBox2& R, fVec2 center, double radius, double angle_start, double angle_end, double thickness, RGBc color, float opacity = 1.0f)
+			void canvas_draw_thick_circle_arc(const fBox2& R, fVec2 center, double radius, double angle_start, double angle_end, double thickness, RGBc color)
 				{
 				if (isEmpty()) return;
-				const fBox2 imBox = imagefBox();
-				draw_thick_circle_arc(boxTransform(center, R, imBox), boxTransform_dx(radius, R, imBox), angle_start, angle_end, boxTransform_dx(thickness, R, imBox), color, opacity); // TODO : use ellipse arc (when implemented in tgx:: to deal with non equal proportion dx/dy)
+				_draw_thick_circle_arc(R, center, radius, angle_start, angle_end, thickness, color);
 				}
 
 
 
 
 			/**
-			 * Draw a filled circle sector/slice/pie with a given bounding box using the tgx:: methods. Only available is tgx is available.
+			 * Draw a filled circle sector/slice/pie with a given bounding box.
 			 *
 			 * the arc is drawn moving clockwise from angle_start until reaching angle_end.
 			 * | angle (in degrees)  | position |
@@ -6882,19 +6895,17 @@ namespace mtools
 			 * @param  angle_start angle in degrees of the begigining of the arc.
 			 * @param  angle_end   angle in degrees of the end  of the arc.
 			 * @param  color       color to use.
-			 * @param  opacity     (Optional) Opacity multiplier in [0.0f, 1.0f].
 			 */
-			void canvas_draw_circle_sector(const fBox2& R, fVec2 center, double r, double angle_start, double angle_end, RGBc color, float opacity = 1.0f)
+			void canvas_draw_circle_sector(const fBox2& R, fVec2 center, double r, double angle_start, double angle_end, RGBc color)
 				{
 				if (isEmpty()) return;
-				const fBox2 imBox = imagefBox();
-				draw_circle_sector(boxTransform(center, R, imBox), boxTransform_dx(r, R, imBox), angle_start, angle_end, color, opacity); // TODO : use ellipse pie (when implemented in tgx:: to deal with non equal proportion dx/dy)
+				_draw_circle_sector(R, center, r, angle_start, angle_end, color);
 				}
 
 
 
 			/**
-			 * Draw a filled circle sector/slice/pie with a thick border of a different color with a given bounding box using the tgx:: methods. Only available is tgx is available.
+			 * Draw a filled circle sector/slice/pie with a thick border of a different color with a given bounding box.
 			 *
 			 * the arc is drawn moving clockwise from angle_start until reaching angle_end.
 			 * | angle (in degrees)  | position |
@@ -6912,13 +6923,11 @@ namespace mtools
 			 * @param   thickness       border thickness going 'inside' the circle.
 			 * @param   color_interior  color for the interior.
 			 * @param   color_border    color for the boundary.
-			 * @param   opacity         (Optional) Opacity multiplier in [0.0f, 1.0f].
 			**/
-			void canvas_draw_thick_circle_sector(const fBox2& R, fVec2 center, double r, double angle_start, double angle_end, double thickness, RGBc color_interior, RGBc color_border, float opacity = 1.0f)
+			void canvas_draw_thick_circle_sector(const fBox2& R, fVec2 center, double r, double angle_start, double angle_end, double thickness, RGBc color_interior, RGBc color_border)
 				{
 				if (isEmpty()) return;
-				const fBox2 imBox = imagefBox();
-				draw_thick_circle_sector(boxTransform(center, R, imBox), boxTransform_dx(r, R, imBox), angle_start, angle_end, boxTransform_dx(thickness, R, imBox), color_interior, color_border, opacity); // TODO : use ellipse pie (when implemented in tgx:: to deal with non equal proportion dx/dy)
+				_draw_thick_circle_sector(R, center, r, angle_start, angle_end, thickness, color_interior, color_border);
 				}
 
 
@@ -12390,6 +12399,184 @@ namespace mtools
 						}					
 				}
 			}
+
+
+
+			/******************************************************************************************************************************************************
+			*																				   																      *
+			*                                                               CIRCLES SECTOR / CIRCLE PIES                                                          *
+            *                                                                     			                                                                      *																																					  *
+			*******************************************************************************************************************************************************/
+
+
+
+			/**
+             * Draw according to parametric equations.
+			 *
+			 * @param           eqo1  The first equation object. eqo(fVec2) -> double : distance to boundary (<0 outside >1 when completely inside)
+			 * @param           eqo2  The second equation object. eqo(fVec2) -> double : distance to boundary (<0 outside >1 when completely inside)
+			 * @param           eqo3  The third equation object. eqo(fVec2) -> double : distance to boundary (<0 outside >1 when completely inside)
+			 * @param [in,out]  imrange The range represented by the image.
+			 * @param           bb    The bounding box of the drawing
+			 * @param           col   The color to use
+			 */
+			template<typename EQO1, typename EQO2, typename EQO3>
+			void _drawEQO(EQO1 eqo1, EQO2 eqo2, EQO3 eqo3,fBox2 imrange, fBox2 bb, RGBc col)
+				{
+				// compute the subpart of the image that is scan for drawing. 
+				const fBox2 imb = imagefBox();
+				const mtools::fBox2 tb = mtools::boxTransform(intersectionRect(imrange, bb), imrange, imb); // map to onto the the natural image dimensions. 
+				const int64 minx = std::max((int64)std::round(tb.min[0]) - 1, (int64)0);
+				const int64 maxx = std::min((int64)std::round(tb.max[0]) + 1, (int64)lx() - 1);
+				const int64 miny = std::max((int64)std::round(tb.min[1]) - 1, (int64)0);
+				const int64 maxy = std::min((int64)std::round(tb.max[1]) + 1, (int64)ly() - 1);
+
+				fVec2 P = boxTransform(fVec2((double)minx, (double)miny), imb, imrange); // point P to draw at position (ix,iy) on the image
+				const double dx = boxTransform_dx(1, imb, imrange); P.X() -= dx;
+				const double stx = P.X();
+				const double dy = boxTransform_dy(1, imb, imrange); P.Y() += dy;
+				const double rr = 2 / (dx + dy);
+
+				for (int64 iy = miny; iy <= maxy; iy++)
+					{
+					P.X() = stx;
+					P.Y() -= dy;
+					for (int64 ix = minx; ix <= maxx; ix++)
+						{
+						//this->operator()(ix, iy).blend(RGBc::c_Green, 0.3f); // for debugging
+						P.X() += dx;
+						fVec2 Q = boxTransform(fVec2((double)ix, (double)iy), imb, imrange);
+						const double d1 = std::min(1.0, (double)(eqo1(P) * rr) + 0.5); if (d1 <= 0) continue;
+						const double d2 = std::min(1.0, (double)(eqo2(P) * rr) + 0.5); if (d2 <= 0) continue;
+						const double d3 = std::min(1.0, (double)(eqo3(P) * rr) + 0.5); if (d3 <= 0) continue;
+						const float op = (float)(d1 * d2 * d3);
+						if (op > 0) this->operator()(ix, iy).blend(col, op);
+						}
+					}
+				}
+
+
+			/**
+			 * Compute the equation of the line passing through A and B
+			 *
+			 * x*kx + y*ky > off : we are on the right of line A->B
+			 * x*kx + y*ky < off : we are on the left of line A->B
+			 *
+			 * @param A   the first point
+			 * @param B   the second point
+			 * @param [in,out]  kx  x coefficient of the line equation
+			 * @param [in,out]  ky  y coefficient of the line equation
+			 * @param [in,out]  off offset
+			 */
+			static void _lineEq(fVec2 A, fVec2 B, double& kx, double& ky, double& off)
+				{
+				fVec2 U = (B - A);
+				U = fVec2(U.Y(), -U.X());
+				U.normalize();
+				kx = U.X();
+				ky = U.Y();
+				off = A.X() * kx + A.Y() * ky;
+				}
+
+
+			/**
+			 * Sub procedure for drawin a circle arc The arc must have total angle < 180 degrees
+			 *
+			 * @param           imrange     image range
+			 * @param           center      circle center.
+			 * @param           radius      circle radius.
+			 * @param           thickness   thicknes (going inside the circle)
+			 * @param           angle_start start angle in degree (from 12AM, going clockwise)
+			 * @param           aa          true to use antialising on this side of the arc.
+			 * @param           angle_end   end angle in degrees (from 12AM, going clockwise)
+			 * @param           aa          true to use antialising on this side of the arc.
+			 * @param           color       color.
+			 *
+			 * @returns A fBox2.
+			 */
+			fBox2 _draw_circle_arc_sub(fBox2 imrange, mtools::fVec2 center, double radius, double thickness, double angle_start, bool aa_start, double angle_end, bool aa_end, mtools::RGBc color)
+				{
+				fBox2 bb = circleArcBoundingBox(center, radius, thickness, angle_start, angle_end); // bounding box for the arc
+				if (angle_end < angle_start)  angle_end += 360;
+				MTOOLS_ASSERT((angle_end - angle_start) < 180);
+
+				const double rad_start = angle_start * PI / 180;
+				const fVec2 A = center + fVec2(radius * sin(rad_start), radius * cos(rad_start));
+				double ax, ay, aoff;
+				_lineEq(center, A, ax, ay, aoff);
+				double ainc = (aa_start) ? 0 : mtools::INF;
+
+				const double rad_end = angle_end * PI / 180;
+				const fVec2 B = center + fVec2(radius * sin(rad_end), radius * cos(rad_end));
+				double bx, by, boff;
+				_lineEq(center, B, bx, by, boff);
+				double binc = (aa_end) ? 0 : mtools::INF;
+
+				_drawEQO(
+					[center, radius, thickness](fVec2 P)
+					{
+					const double r = (P - center).norm();
+					if (r > radius) return radius - r;
+					if (r < radius - thickness) return r - radius + thickness;
+					return std::min(radius - r, r - radius + thickness);
+					}
+					,
+					[ax, ay, aoff, ainc](fVec2 P)
+					{
+					const double d = P.X() * ax + P.Y() * ay - aoff;
+					return d + ((d > 0) ? ainc : -ainc);
+					}
+					,
+					[bx, by, boff, binc](fVec2 P)
+					{
+					const double d = P.X() * bx + P.Y() * by - boff;
+					return -d + ((d < 0) ? binc : -binc);
+					}
+				, imrange, bb, color);
+				return bb;
+				}
+
+			
+			void _draw_thick_circle_arc(fBox2 imrange, mtools::fVec2 center, double radius, double angle_start, double angle_end, double thickness, mtools::RGBc color)
+				{
+				if (angle_end < angle_start)  angle_end += 360;
+				const int N = (int)((angle_end - angle_start) / 16) + 2; // nuber of number of sub-arc to draw
+				const double angle = (angle_end - angle_start) / N; // angle of each sub-arc    
+				_draw_circle_arc_sub(imrange, center, radius, thickness, angle_start, true, angle_start + angle, false, color); // first sub-arc
+				for (int j = 1; j < N - 1; j++)
+					{
+					_draw_circle_arc_sub(imrange, center, radius, thickness, angle_start + j * angle, false, angle_start + (j + 1) * angle, false, color);
+					}
+				_draw_circle_arc_sub(imrange, center, radius, thickness, angle_start + (N - 1) * angle, false, angle_end, true, color); // last sub-arc    
+				}
+
+
+			void _draw_circle_arc(fBox2 imrange, mtools::fVec2 center, double radius, double angle_start, double angle_end, mtools::RGBc color)
+				{
+                fBox2 imb = imagefBox();
+				const double px = boxTransform_dx(1, imb, imrange);
+				const double py = boxTransform_dx(1, imb, imrange);
+				const double th = (px + py) / 2;
+				_draw_thick_circle_arc(imrange, center, radius, angle_start, angle_end, th, color);
+				}
+
+
+
+			void _draw_circle_sector(fBox2 imrange, mtools::fVec2 center, double radius, double angle_start, double angle_end, mtools::RGBc color)
+				{
+				return;
+				}
+
+
+
+			void _draw_thick_circle_sector(fBox2 imrange, mtools::fVec2 center, double radius, double angle_start, double angle_end, double thickness, mtools::RGBc color_interior, RGBc color_border)
+				{  
+				return;
+				}
+
+
+
+
 
 
 

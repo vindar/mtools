@@ -4410,7 +4410,7 @@ namespace mtools
 
 
             /**
-             * Construct an Circle Arc.
+             * Construct a circle Arc.
              * 
              * the arc is drawn moving clockwise from angle_start until reaching angle_end.
              * 
@@ -4439,38 +4439,10 @@ namespace mtools
                 }
 
 
-			void _incBB(fBox2& bb, fVec2 A, fVec2 B) const
-				{
-				fVec2 O = (A + B) * 0.5;
-				fVec2 U = (O - center);
-				const double h = radius - U.norm();
-				U.normalize();
-				fVec2 C = A + U * h;
-				fVec2 D = B + U * h;
-				bb.swallowPoint(A);
-				bb.swallowPoint(B);
-				bb.swallowPoint(C);
-				bb.swallowPoint(D);
-				}
-
-
 			virtual fBox2 virt_boundingBox() const override
 				{
-				const int nb_split = 16;
-				double delta = end_angle - start_angle;
-				if (delta < 0) delta += 360;
-				delta /= nb_split;
-				fBox2 bb;
-				for (int k = 0; k < nb_split; k++)
-					{
-					const double rad_start = (start_angle + k * delta) * PI / 180;
-					const double rad_end = (start_angle + (k + 1) * delta) * PI / 180;
-					fVec2 A = center + fVec2(radius * sin(rad_start), radius * cos(rad_start));
-					fVec2 B = center + fVec2(radius * sin(rad_end), radius * cos(rad_end));
-					_incBB(bb, A, B);
-					}
-				return bb;
-				}
+                return circleArcBoundingBox(center, radius, 0, start_angle, end_angle);
+                }
 
 
 			virtual std::string virt_toString(bool debug = false) const override
@@ -4501,8 +4473,7 @@ namespace mtools
                 fVec2 P2 = center + fVec2(radius * sin(rad_end), radius * cos(rad_end));
 				double aa = end_angle - start_angle;
                 if (aa < 0) aa += 360;
-                const bool large_arc = (aa > 180);
-					
+                const bool large_arc = (aa > 180);					
 				el->SetName("path");
 				el->noFill();
 				el->setStrokeColor(color);
@@ -4537,7 +4508,7 @@ namespace mtools
 
 
             /**
-             * Construct an Circle Arc.
+             * Construct a thick circle Arc.
              * 
              * the arc is drawn moving clockwise from angle_start until reaching angle_end.
              * 
@@ -4569,37 +4540,10 @@ namespace mtools
 
 
 
-			void _incBB(fBox2 & bb, fVec2 A, fVec2 B) const 
-				{
-				fVec2 O = (A + B)*0.5;
-				fVec2 U = (O - center);
-				const double h = radius - U.norm();
-				U.normalize();				
-				fVec2 C = A + U * h;
-				fVec2 D = B + U * h;
-				bb.swallowPoint(A);
-				bb.swallowPoint(B);
-				bb.swallowPoint(C);
-				bb.swallowPoint(D);
-				}
-
 
 			virtual fBox2 virt_boundingBox() const override
 				{
-				const int nb_split = 16;
-				double delta = end_angle - start_angle;
-				if (delta < 0) delta += 360;
-				delta /= nb_split;
-				fBox2 bb; 
-				for (int k = 0; k < nb_split; k++)
-					{
-					const double rad_start = (start_angle + k * delta) * PI / 180;
-					const double rad_end = (start_angle + (k+1) * delta) * PI / 180;
-					fVec2 A = center + fVec2(radius * sin(rad_start), radius * cos(rad_start));
-					fVec2 B = center + fVec2(radius * sin(rad_end), radius * cos(rad_end));
-					_incBB(bb, A, B);
-					}
-				return bb; 
+				return circleArcBoundingBox(center, radius, thickness, start_angle, end_angle);
 				}
 
 
@@ -4666,7 +4610,7 @@ namespace mtools
 		RGBc	color;
 
 		/**
-		 * Draw a filled circle sector/slice/pie using the tgx:: methods. Only available is tgx is available.
+		 * Draw a filled circle sector/slice/pie.
 		 *
 		 * the arc is drawn moving clockwise from angle_start until reaching angle_end.
 		 * | angle (in degrees)  | position |
@@ -4697,7 +4641,7 @@ namespace mtools
 
 		virtual fBox2 virt_boundingBox() const override
 			{
-			return fBox2(center.X() - radius, center.X() + radius, center.Y() - radius, center.Y() + radius); // TODO: improve the bounding box (can do better than the whole circle)
+			return circleSectorBoundingBox(center, radius, start_angle, end_angle);
 			}
 
 
@@ -4782,8 +4726,7 @@ namespace mtools
 
 
         /**
-         * Draw a filled thick circle sector/slice/pie using the tgx:: methods. Only available is tgx is
-         * available.
+         * Draw a filled thick circle sector/slice/pie.
          * 
          * the arc is drawn moving clockwise from angle_start until reaching angle_end.
          * | angle (in degrees)  | position |
@@ -4816,7 +4759,7 @@ namespace mtools
 
 		virtual fBox2 virt_boundingBox() const override
 			{
-			return fBox2(center.X() - radius, center.X() + radius, center.Y() - radius, center.Y() + radius); // TODO: improve the bounding box (can do better than the whole circle)
+			return circleSectorBoundingBox(center, radius, start_angle, end_angle);
 			}
 
 
