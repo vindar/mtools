@@ -1201,10 +1201,11 @@ namespace mtools
 				el->Comment("SVG cannot represent Figure::CircleDot correctly !");
 				el->SetName("circle");;
 				el->setFillColor(fillcolor);
+				el->setStrokeColor(outlinecolor);
 				el->xml->SetAttribute("cx", TX(center.X()));
 				el->xml->SetAttribute("cy", TY(center.Y()));
 				el->xml->SetAttribute("r", radius);	
-				el->tinyStroke(outlinecolor,fillcolor,radius); 
+				el->tinyStroke(radius); 
 				}
 
 		FIGURECLASS_END()
@@ -1383,7 +1384,8 @@ namespace mtools
 				el->xml->SetAttribute("y1", TY(y));
 				el->xml->SetAttribute("x2", TX(x2));
 				el->xml->SetAttribute("y2", TY(y));
-				el->tinyStroke(color, x2 - x1);
+				el->setStrokeColor(color);
+				el->tinyStroke(x2 - x1);
 				}
 
 		FIGURECLASS_END()
@@ -1459,7 +1461,8 @@ namespace mtools
 				el->xml->SetAttribute("y1", TY(y1));
 				el->xml->SetAttribute("x2", TX(x));
 				el->xml->SetAttribute("y2", TY(y2));
-				el->tinyStroke(color, y2 - y1);
+				el->setStrokeColor(color);
+				el->tinyStroke(y2 - y1);
 				}
 
 		FIGURECLASS_END()
@@ -1536,7 +1539,8 @@ namespace mtools
 				el->xml->SetAttribute("y1", TY(P1.Y()));
 				el->xml->SetAttribute("x2", TX(P2.X()));
 				el->xml->SetAttribute("y2", TY(P2.Y()));
-				el->tinyStroke(color, (P2 - P1).norm());
+				el->setStrokeColor(color);
+				el->tinyStroke((P2 - P1).norm());
 			}
 
 		FIGURECLASS_END()
@@ -1612,7 +1616,8 @@ namespace mtools
 			virtual void virt_svg(mtools::SVGElement * el) const override
 				{
 				el->SetName("polyline");
-				el->tinyStroke(color, bb);
+				el->setStrokeColor(color);
+				el->tinyStroke(bb);
 
 				el->noFill();
 				mtools::ostringstream os;
@@ -1707,7 +1712,7 @@ namespace mtools
 
 				if (thickness <= 0)
 					{
-					el->tinyStroke(color, x1 - x2);
+					el->tinyStroke(x1 - x2);
 					}
 				else
 					{
@@ -1803,7 +1808,7 @@ namespace mtools
 
 				if (thickness <= 0)
 					{
-					el->tinyStroke(color, y1 - y2);
+					el->tinyStroke(y1 - y2);
 					}
 				else
 					{
@@ -1896,7 +1901,7 @@ namespace mtools
 				el->xml->SetAttribute("stroke-linecap", "butt");
 				if (thick <= 0)
 					{
-					el->tinyStroke(color, bb);
+					el->tinyStroke(bb);
 					}
 				else
 					{
@@ -2003,7 +2008,7 @@ namespace mtools
 
 				if (thickness <= 0)
 					{
-					el->tinyStroke(color, bb);
+					el->tinyStroke(bb);
 					}
 				else
 					{
@@ -2198,10 +2203,11 @@ namespace mtools
 				{
 				el->SetName("polygon");
 				el->setFillColor(fillcolor);
+				el->setStrokeColor(color);
 				mtools::ostringstream os; 
 				os << TX(P1.X()) << "," << TY(P1.Y()) << " " << TX(P2.X()) << "," << TY(P2.Y()) << " " << TX(P3.X()) << "," << TY(P3.Y());
 				el->xml->SetAttribute("points", os.toString().c_str());
-				el->tinyStroke(color, fillcolor, getBoundingBox(P1, P2, P3));
+				el->tinyStroke(getBoundingBox(P1, P2, P3));
 				}
 
 
@@ -2289,7 +2295,7 @@ namespace mtools
 				mtools::ostringstream os; 
 				os << TX(P1.X()) << "," << TY(P1.Y()) << " " << TX(P2.X()) << "," << TY(P2.Y()) << " " << TX(P3.X()) << "," << TY(P3.Y()) << " " << TX(P4.X()) << "," << TY(P4.Y());
 				el->xml->SetAttribute("points", os.toString().c_str());
-				el->tinyStroke(color, fillcolor, getBoundingBox(P1, P2, P3, P4));
+				el->tinyStroke(getBoundingBox(P1, P2, P3, P4));
 				}
 
 
@@ -2382,7 +2388,7 @@ namespace mtools
 					os << TX(P.X()) << "," << TY(P.Y()) << " ";
 					}
 				el->xml->SetAttribute("points", os.toString().c_str());
-				el->tinyStroke(color, fillcolor, bb);
+				el->tinyStroke(bb);
 				}
 
 		FIGURECLASS_END()
@@ -2470,7 +2476,7 @@ namespace mtools
 				el->xml->SetAttribute("y", TY(box.min[1]) + TY(box.ly()));
 				el->xml->SetAttribute("width", TR(box.lx()));
 				el->xml->SetAttribute("height", TR(box.ly()));
-				el->tinyStroke(color, fillcolor, box);
+				el->tinyStroke(box);
 				}
 
 		FIGURECLASS_END()
@@ -2565,7 +2571,8 @@ namespace mtools
 					el->SetName("polygon");
 					el->xml->SetAttribute("points", os.toString().c_str());
 					el->setFillColor(fillcolor);
-					el->tinyStroke(color, fillcolor, getBoundingBox(P1, P2, P3));
+					el->setStrokeColor(color);
+					el->tinyStroke(getBoundingBox(P1, P2, P3));
 					return;
 					}
 
@@ -2681,7 +2688,8 @@ namespace mtools
 					el->SetName("polygon");
 					el->xml->SetAttribute("points", os.toString().c_str());
 					el->setFillColor(fillcolor);
-					el->tinyStroke(color, fillcolor, getBoundingBox(P1, P2, P3, P4));
+					el->setStrokeColor(color);
+					el->tinyStroke(getBoundingBox(P1, P2, P3, P4));
 					return;
 					}
 
@@ -2802,7 +2810,8 @@ namespace mtools
 					el->SetName("polygon");
 					el->xml->SetAttribute("points", os.toString().c_str());
 					el->setFillColor(fillcolor);
-					el->tinyStroke(color, fillcolor, bb);
+					el->setStrokeColor(color);
+					el->tinyStroke(bb);
 					return;
 					}
 
@@ -2920,11 +2929,12 @@ namespace mtools
 					{
 					el->SetName("rect");
 					el->setFillColor(fillcolor);
+					el->setStrokeColor(color);
 					el->xml->SetAttribute("x", TX(box.min[0]));
 					el->xml->SetAttribute("y", TY(box.min[1]) + TY(box.ly()));
 					el->xml->SetAttribute("width", TR(box.lx()));
 					el->xml->SetAttribute("height", TR(box.ly()));
-					el->tinyStroke(color, fillcolor, box);
+					el->tinyStroke(box);
 					return;
 					}
 
@@ -3065,10 +3075,11 @@ namespace mtools
 				{
 				el->SetName("circle");
 				el->setFillColor(fillcolor);
+				el->setStrokeColor(color);
 				el->xml->SetAttribute("cx", TX(center.X()));
 				el->xml->SetAttribute("cy", TY(center.Y()));
 				el->xml->SetAttribute("r", TR(radius));
-				el->tinyStroke(color, fillcolor, virt_boundingBox());
+				el->tinyStroke(virt_boundingBox());
 				return;
 				}
 
@@ -3184,10 +3195,11 @@ namespace mtools
 					{
 					el->SetName("circle");
 					el->setFillColor(fillcolor);
+					el->setStrokeColor(color);
 					el->xml->SetAttribute("cx", TX(center.X()));
 					el->xml->SetAttribute("cy", TY(center.Y()));
 					el->xml->SetAttribute("r", TR(radius));
-					el->tinyStroke(color, fillcolor, virt_boundingBox());
+					el->tinyStroke(virt_boundingBox());
 					return;
 					}
 
@@ -3335,11 +3347,12 @@ namespace mtools
 
 				auto fig_el = el->NewChildSVGElement("circle");
 				fig_el->setFillColor(fillcolor);
+				fig_el->setStrokeColor(color);
 				fig_el->xml->SetAttribute("clip-path", (mtools::toString("url(#") + uid + ")").c_str());
 				fig_el->xml->SetAttribute("cx", TX(center.X()));
 				fig_el->xml->SetAttribute("cy", TY(center.Y()));
 				fig_el->xml->SetAttribute("r", TR(radius));
-				fig_el->tinyStroke(color, fillcolor, virt_boundingBox());
+				fig_el->tinyStroke(virt_boundingBox());
 				return;
 				}
 
@@ -3529,7 +3542,7 @@ namespace mtools
 				if (thickness <= 0)
 					{
 					fig_el->xml->SetAttribute("r", TR(radius));
-					fig_el->tinyStroke(color, fillcolor, virt_boundingBox());
+					fig_el->tinyStroke(virt_boundingBox());
 					return;
 					}
 
@@ -3686,11 +3699,12 @@ namespace mtools
 				{
 				el->SetName("ellipse");
 				el->setFillColor(fillcolor);
+				el->setStrokeColor(color);
 				el->xml->SetAttribute("cx", TX(center.X()));
 				el->xml->SetAttribute("cy", TY(center.Y()));
 				el->xml->SetAttribute("rx", TR(rx));
 				el->xml->SetAttribute("ry", TR(ry));
-				el->tinyStroke(color, fillcolor, virt_boundingBox());
+				el->tinyStroke(virt_boundingBox());
 				return;
 				}
 
@@ -3861,11 +3875,12 @@ namespace mtools
 					el->Comment("SVG cannot accurately represent Figure::ThickEllipse with absolute thickness!");
 					el->SetName("ellipse");
 					el->setFillColor(fillcolor);
+					el->setStrokeColor(color);
 					el->xml->SetAttribute("cx", TX(center.X()));
 					el->xml->SetAttribute("cy", TY(center.Y()));
 					el->xml->SetAttribute("rx", TR(rx));
 					el->xml->SetAttribute("ry", TR(ry));
-					el->tinyStroke(color, fillcolor, virt_boundingBox());
+					el->tinyStroke(virt_boundingBox());
 					return;
 					}
 
@@ -4055,11 +4070,12 @@ namespace mtools
 				
 				auto fig_el = el->NewChildSVGElement("ellipse");
 				fig_el->setFillColor(fillcolor);
+				fig_el->setStrokeColor(color);
 				fig_el->xml->SetAttribute("cx", TX(center.X()));
 				fig_el->xml->SetAttribute("cy", TY(center.Y()));
 				fig_el->xml->SetAttribute("rx", TR(rx));
 				fig_el->xml->SetAttribute("ry", TR(ry));
-				fig_el->tinyStroke(color, fillcolor, virt_boundingBox());
+				fig_el->tinyStroke(virt_boundingBox());
 				fig_el->xml->SetAttribute("clip-path", (mtools::toString("url(#") + uid + ")").c_str());
 				}
 
@@ -4312,7 +4328,7 @@ namespace mtools
 					{
 					fig_el->xml->SetAttribute("rx", TR(rx));
 					fig_el->xml->SetAttribute("ry", TR(ry));
-					fig_el->tinyStroke(color, fillcolor, virt_boundingBox());
+					fig_el->tinyStroke(virt_boundingBox());
 					return;
 					}
 
@@ -4458,7 +4474,8 @@ namespace mtools
 					
 				el->SetName("path");
 				el->noFill();
-				el->tinyStroke(color, virt_boundingBox());
+				el->setStrokeColor(color);
+				el->tinyStroke(virt_boundingBox());
 				mtools::ostringstream oss; 
                 oss << "M " << TX(P1.X()) << " " << TY(P1.Y()) << " A " << TR(radius) << " " << TR(radius) << " 0 " << (large_arc ? "1" : "0") << " 1 " << TX(P2.X()) << " " << TY(P2.Y());
 				el->xml->SetAttribute("d", oss.str().c_str()); 
