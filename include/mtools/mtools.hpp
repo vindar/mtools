@@ -49,7 +49,7 @@
 #include "maths/circlePacking.hpp"
 #include "maths/bezier.hpp"
 #include "maths/DelaunayVoronoi.hpp"
-
+#include "maths/FunctionExtremas.hpp"
 
 //misc
 #include "misc/error.hpp"

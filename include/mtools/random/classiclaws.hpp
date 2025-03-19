@@ -154,10 +154,45 @@ namespace mtools
      **/
     template<class random_t> inline double Unif_highprecision(random_t & gen) 
         {
-        double b = 1.0, a = Unif(gen);
-        while (a*256 < 1.0) { b /= 256; a = Unif(gen()); }
+        double b = 1.0;
+        double a = Unif(gen);
+        while (a*256 < 1.0) { b /= 256; a = Unif(gen); }
         return a*b;
         }
+
+
+    /**
+     * Return a random variable uniformely distributed in [0,1]^D.
+     *
+     * @tparam  D       dimension of the space.
+     * @param [in,out]  gen The random number generator.     
+     *
+     * @returns the random point.
+     **/
+    template<int D, typename random_t> fVec<D> Unif_dimD(random_t & gen)
+        {
+        fVec<D> P;
+        for(int i = 0; i < D; i++) { P[i] = Unif_highprecision(gen); }
+        return P;
+        }
+
+
+    /**
+     * Return a random variable uniformely distributed in a given box of R^D.
+     *
+     * @tparam  D               dimension of the space.
+     * @param   box             the box
+     * @param [in,out]  gen     The random number generator.
+     *
+     * @returns the random point.
+     */
+    template<int D, typename random_t> fVec<D> Unif_dimD(const fBox<D>& box, random_t & gen)
+        {
+        fVec<D> P;
+        for (int i = 0; i < D; i++) { P[i] = (Unif_highprecision(gen) * (box.max[i] - box.min[i])) + box.min[i]; }
+        return P;
+        }
+
 
 
     /**
@@ -859,6 +894,53 @@ namespace mtools
             std::vector<double> logfact;
 
         };
+
+
+
+
+
+    /**
+     * Simulate a Poisson point process PPP with a given density inside a box of R^d.
+     *
+     * @tparam          D                  dimension of the space.
+     * @param           gen                The random number generator.
+     * @param           density            the density function, signature fVec<D> -> double.
+     * @param [in,out]  boundary           the boundary box.
+     * @param           maxdensity         (Optional) the maximum density (-1 is unknown, max
+     *                                     density is then estimated by sampling points and taking a
+     *                                     some margin).
+     * @param           mesh_points (Optional)    number of sampling points in each direction (total sampled points is mesh^D).
+     * @param           max_margin         (Optional) margin to use for the estimated maximum of the density if not specified.
+     *
+     * @returns A vector containing the points of the Poisson point process.
+     **/
+    template<int D, typename DENSITY_FUN, typename random_t> std::vector<mtools::fVec<D>> PoissonPointProcess(random_t& gen, DENSITY_FUN& density, fBox<D>& boundary, double maxdensity = -1, size_t mesh_points = 100, double max_margin = 1.0)
+        {
+        // estimate the maximum of the density if not provided
+        if (maxdensity < 0)
+            {
+            maxdensity = maxFunctionValue<D>(density, boundary, mesh_points);
+            maxdensity *= (1 + max_margin);
+            }
+        // compute the area of the box
+        double aera = boundary.area();
+        aera *= maxdensity;
+        // generate the number of points in the box
+        PoissonLaw Poisson(aera);
+        int64 nb_points = (int64)Poisson(gen);
+        // generate the points of the PPP using the rejection method
+        std::vector<fVec<D>> points;
+        for (int64 i = 0; i < nb_points; i++)
+            {
+            fVec<D> P = Unif_dimD<D>(boundary, gen);
+            const double u = Unif_highprecision(gen) * maxdensity;
+            if (u < density(P)) { points.push_back(P); }
+            }
+        return points;
+        }
+
+
+
 
 
 
