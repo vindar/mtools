@@ -940,6 +940,37 @@ namespace mtools
         }
 
 
+    /**
+    * Version 1D
+    **/
+    template<typename DENSITY_FUN, typename random_t> std::vector<double> PoissonPointProcess(random_t& gen, DENSITY_FUN & density, double xmin, double xmax, double maxdensity = -1, size_t mesh_points = 10000, double max_margin = 1.0)
+        {
+        // estimate the maximum of the density if not provided
+        if (maxdensity < 0)
+            {
+            maxdensity = -mtools::INF;
+            for (int k = 0; k < mesh_points; k++)
+                {
+                double x = xmin + (xmax - xmin)*k / (mesh_points - 1);
+                maxdensity = std::max(maxdensity, density(x));
+                }   
+            maxdensity *= (1 + max_margin);
+            }
+        // compute the area of the box
+        double aera = (xmax - xmin) * maxdensity;
+        // generate the number of points in the box
+        PoissonLaw Poisson(aera);
+        int64 nb_points = (int64)Poisson(gen);
+        // generate the points of the PPP using the rejection method
+        std::vector<double> points;
+        for (int64 i = 0; i < nb_points; i++)
+            {
+            double p = Unif_highprecision(gen)*(xmax - xmin) + xmin;
+            const double u = Unif_highprecision(gen) * maxdensity;
+            if (u < density(p)) { points.push_back(p); }
+            }
+        return points;
+        }
 
 
 
