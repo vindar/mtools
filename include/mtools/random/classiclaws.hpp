@@ -966,7 +966,7 @@ namespace mtools
         fBox1 b;
         b.min[0] = xmin; 
         b.max[0] = xmax;
-        auto V = PoissonPointProcess(gen, [](fVec1 x) { return density(x[0]); }, b, maxdensity, nb_sampling, max_margin);
+        auto V = PoissonPointProcess(gen, [&density](fVec1 x) { return density(x[0]); }, b, maxdensity, nb_sampling, max_margin);
         std::vector<double> res;
         res.reserve(V.size());
         for (auto& v : V) { res.push_back(v[0]); }
@@ -1103,7 +1103,7 @@ namespace mtools
         fBox1 b;
         b.min[0] = xmin;
         b.max[0] = xmax;
-        auto V = PoissonPointProcess_fast(gen, [](fVec1 x) { return density(x[0]); }, b, nb_splits, nb_samples, max_margin);
+        auto V = PoissonPointProcess_fast(gen, [&density](fVec1 x) { return density(x[0]); }, b, nb_splits, nb_samples, max_margin);
         std::vector<double> res;
         res.reserve(V.size());
         for (auto& v : V) { res.push_back(v[0]); }
