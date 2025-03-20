@@ -940,8 +940,92 @@ namespace mtools
         }
 
 
+
+
+    template<int D, typename DENSITY_FUN> double _rejectedRatio(DENSITY_FUN fun, fBox<D> B, double threshold, size_t nb_samples)
+        {
+        size_t nb_reject = 0;
+        for (size_t i = 0; i < nb_samples; i++)
+            {
+            const fVec<D> P = Unif_dimD<D>(B, gen);
+            if (Unif_highprecision(gen) * threshold >= fun(P)) { nb_reject++; }
+            }
+        return (((double)nb_reject) / nb_samples) * threshold * B.area();
+        }
+
+
+    template<int D, typename DENSITY_FUN> std::vector<fBox<D> > _splitBoxToMinimizeRejection(DENSITY_FUN fun, fBox<D> B, size_t nbsplit = 100, size_t mesh = 100, size_t nb_samples = 10000, double max_margin = 1.0)
+        {
+        std::multimap<double, fBox<D> > mapB;
+        const double rr = -_rejectedRatio(fun, B, maxFunctionValue<D>(fun, B, mesh) * (max_margin + 1), nb_samples);
+        mapB.insert({ rr, B });
+        while ((mapB.size() < nbsplit))
+            {
+            B = mapB.begin()->second;
+            //double er = -mapB.begin()->first / (maxFunctionValue<D>(fun, B, mesh) * (max_margin + 1) * B.area());
+            //if (er < 0.99) break;
+            mapB.erase(mapB.begin());
+            int bestk = -1;
+            double bestrr1 = -mtools::INF;
+            double bestrr2 = -mtools::INF;
+            for (int k = 0; k < D; k++)
+                {
+                const fBox<D> B1 = B.get_split(k, true);
+                const double rr1 = -_rejectedRatio(fun, B1, maxFunctionValue<D>(fun, B1, mesh) * (max_margin + 1), nb_samples);
+                const fBox<D> B2 = B.get_split(k, false);
+                const double rr2 = -_rejectedRatio(fun, B2, maxFunctionValue<D>(fun, B2, mesh) * (max_margin + 1), nb_samples);
+                if (std::min(rr1, rr2) > std::min(bestrr1, bestrr2))
+                    {
+                    bestrr1 = rr1;
+                    bestrr2 = rr2;
+                    bestk = k;
+                    }
+                }
+            MTOOLS_INSURE(bestk >= 0);
+            mapB.insert({ bestrr1, B.get_split(bestk, true) });
+            mapB.insert({ bestrr2, B.get_split(bestk, false) });
+            }
+        std::vector<fBox<D> > res;
+        res.reserve(mapB.size());
+        for (auto& [d, b] : mapB) { res.push_back(b); }
+        return res;
+        }
+
+
     /**
-    * Version 1D
+     * Simulate a Poisson point process PPP with a given density inside a box of R^d.
+     * -> Fast version by splitting the box into smaller sub-boxes to minimize rejection. 
+     *
+     * @tparam          D                  dimension of the space.
+     * @param           gen                The random number generator.
+     * @param           density            the density function, signature fVec<D> -> double.
+     * @param [in,out]  boundary           the boundary box.
+     * @param           nb_split           (Optional) number of splitting of the main boundary box.
+     * @param           mesh_points (Optional)    number of sampling points in each direction (total sampled points is mesh^D).
+     * @param           max_margin         (Optional) margin to use for the estimated maximum of the density if not specified.
+     *
+     * @returns A vector containing the points of the Poisson point process.
+     **/
+    template<int D, typename DENSITY_FUN, typename random_t> std::vector<mtools::fVec<D>> PoissonPointProcess_fast(random_t& gen, DENSITY_FUN& density, fBox<D>& boundary, size_t nb_split = 50, size_t mesh_points = 100, double max_margin = 1.0)
+        {
+        size_t nb_samples = 1;
+        for (int k = 0; k < D; k++) { nb_samples *= mesh_points; }
+        nb_samples /= 10;
+        if (nb_samples < 10) { nb_samples = 10; }
+        auto VB = _splitBoxToMinimizeRejection(density, boundary, nb_split, mesh_points, nb_samples);
+        std::vector<fVec<D>> res;
+        for (auto b : VB)
+            {
+            std::vector<fVec<D>> points = PoissonPointProcess(gen, density, b, -1, mesh_points, max_margin);
+            res.insert(res.end(), points.begin(), points.end());
+            }
+        return res;
+        }
+
+
+
+    /**
+    * Simulate a 1D Poisson point process PPP with a given density.
     **/
     template<typename DENSITY_FUN, typename random_t> std::vector<double> PoissonPointProcess(random_t& gen, DENSITY_FUN & density, double xmin, double xmax, double maxdensity = -1, size_t mesh_points = 10000, double max_margin = 1.0)
         {

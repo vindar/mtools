@@ -31,23 +31,23 @@ namespace mtools
 	{
 
 
-
     /**
-     * Estimate the maximum of a d-dimensional function f inside a box of R^d using a grid of mesh_points^d points.
+     * Estimate the minimum and maximum of a d-dimensional function f inside a box of R^d using a grid of mesh_points^d points.
      *
      * @tparam  D       dimension of the space
      * @param           f                  the function with signature fVec<D> -> double.
      * @param [in,out]  boundary           The boundary.
-     * @param           mesh_points        The number of sampling pointfor each directions (total sampled points is mesh^D).
+     * @param           mesh_points        The number of sampling point for each directions (total sampled points is mesh^D).
      *
-     * @returns A double.
+     * @returns a pair containing the smallest and largest value found.
      */
-    template<int D, typename FUN> double maxFunctionValue(FUN& f, const fBox<D>& boundary, size_t mesh_points)
+    template<int D, typename FUN> std::pair<double, double> minMaxFunctionValue(FUN& f, const fBox<D>& boundary, size_t mesh_points)
         {
         size_t tot = 1; // total number of points to sample
         for (int i = 0; i < D; i++) { tot *= mesh_points; }
         iVec<D> I; // index of the current point
         for (int i = 0; i < D; i++) { I[i] = 0; }
+        double minv = mtools::INF; // minimum value found
         double maxv = -mtools::INF; // maximum value found
         for (size_t n = 0; n < tot; n++)
             {
@@ -57,8 +57,11 @@ namespace mtools
                 P[d] = boundary.min[d] + (boundary.max[d] - boundary.min[d]) * (((double)I[d]) / (mesh_points - 1));
                 }
             const double v = f(P);
-            if (v > maxv) { maxv = v; }
-
+            if (!std::isnan(v))
+                {
+                if (v > maxv) { maxv = v; }
+                if (v < minv) { minv = v; }
+                }
             for (int d = 0; d < D; d++)
                 { //compute the next index I
                 I[d]++;
@@ -66,8 +69,46 @@ namespace mtools
                 I[d] = 0;
                 }
             }
-        return maxv;
+        return { minv , maxv };
         }
+
+
+
+    /**
+     * Estimate the minimum of a d-dimensional function f inside a box of R^d using a grid of mesh_points^d points.
+     *
+     * @tparam  D       dimension of the space
+     * @param           f                  the function with signature fVec<D> -> double.
+     * @param [in,out]  boundary           The boundary.
+     * @param           mesh_points        The number of sampling point for each directions (total sampled points is mesh^D).
+     *
+     * @returns the smallest value found.
+     */
+    template<int D, typename FUN> double minFunctionValue(FUN& f, const fBox<D>& boundary, size_t mesh_points)
+        {
+        return minMaxFunctionValue(f, boundary, mesh_points).first;
+        }
+
+
+    /**
+     * Estimate the maximum of a d-dimensional function f inside a box of R^d using a grid of mesh_points^d points.
+     *
+     * @tparam  D       dimension of the space
+     * @param           f                  the function with signature fVec<D> -> double.
+     * @param [in,out]  boundary           The boundary.
+     * @param           mesh_points        The number of sampling point for each directions (total sampled points is mesh^D).
+     *
+     * @returns the largest value found.
+     */
+    template<int D, typename FUN> double maxFunctionValue(FUN& f, const fBox<D>& boundary, size_t mesh_points)
+        {
+        return minMaxFunctionValue(f, boundary, mesh_points).second;
+        }
+
+
+
+
+
 
 
 
