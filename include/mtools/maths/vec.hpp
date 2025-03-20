@@ -545,6 +545,12 @@ namespace mtools
 
 
     /**
+     * 1-dim integer vector
+     **/
+    typedef iVec<1> iVec1;
+
+
+    /**
      * 2-dim integer vector
      **/
     typedef iVec<2> iVec2;
@@ -561,6 +567,11 @@ namespace mtools
      **/
     typedef iVec<4> iVec4;
 
+
+     /**
+     * 1-dim floating point vector
+     **/
+    typedef fVec<1> fVec1;
 
     /**
      * 2-dim floating point vector

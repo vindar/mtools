@@ -89,6 +89,12 @@ namespace mtools
 
 
     /**
+    * 1-dim integer valued box
+    **/
+    typedef iBox<1> iBox1;
+
+
+    /**
     * 2-dim integer valued box
     **/
     typedef iBox<2> iBox2;
@@ -98,6 +104,11 @@ namespace mtools
     * 3-dim integer valued box
     **/
     typedef iBox<3> iBox3;
+
+    /**
+    * 1-dim float-valued box
+    **/
+    typedef fBox<1> fBox1;
 
 
     /**
@@ -144,6 +155,15 @@ namespace mtools
 			 * Constructor from a single point. 
 			 **/
 			Box(const Vec<T, N> & vec) : min(vec), max(vec) {}
+
+
+            /**
+            * Constructor. Specific for dimension 1.
+            **/
+            Box(const T& xmin, const T& xmax) : min(xmin), max(xmax)
+                {
+                static_assert(N == 2, "dimension must be equal to 1");
+                }
 
 
             /**

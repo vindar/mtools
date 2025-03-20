@@ -899,6 +899,7 @@ namespace mtools
 
 
 
+
     /**
      * Simulate a Poisson point process PPP with a given density inside a box of R^d.
      *
@@ -941,7 +942,7 @@ namespace mtools
 
 
 
-
+    /** used by PoissonPointProcess_fast() */
     template<int D, typename DENSITY_FUN> double _rejectedRatio(DENSITY_FUN fun, fBox<D> B, double threshold, size_t nb_samples)
         {
         size_t nb_reject = 0;
@@ -954,6 +955,7 @@ namespace mtools
         }
 
 
+    /** used by PoissonPointProcess_fast() */
     template<int D, typename DENSITY_FUN> std::vector<fBox<D> > _splitBoxToMinimizeRejection(DENSITY_FUN fun, fBox<D> B, size_t nbsplit = 100, size_t mesh = 100, size_t nb_samples = 10000, double max_margin = 1.0)
         {
         std::multimap<double, fBox<D> > mapB;
@@ -1027,39 +1029,23 @@ namespace mtools
     /**
     * Simulate a 1D Poisson point process PPP with a given density.
     **/
-    template<typename DENSITY_FUN, typename random_t> std::vector<double> PoissonPointProcess(random_t& gen, DENSITY_FUN & density, double xmin, double xmax, double maxdensity = -1, size_t mesh_points = 10000, double max_margin = 1.0)
+    template<typename DENSITY_FUN, typename random_t> std::vector<double> PoissonPointProcess(
+        random_t& gen, DENSITY_FUN & density, double xmin, double xmax, double maxdensity = -1, size_t mesh_points = 10000, double max_margin = 1.0)
         {
-        // estimate the maximum of the density if not provided
-        if (maxdensity < 0)
-            {
-            maxdensity = -mtools::INF;
-            for (int k = 0; k < mesh_points; k++)
-                {
-                double x = xmin + (xmax - xmin)*k / (mesh_points - 1);
-                maxdensity = std::max(maxdensity, density(x));
-                }   
-            maxdensity *= (1 + max_margin);
-            }
-        // compute the area of the box
-        double aera = (xmax - xmin) * maxdensity;
-        // generate the number of points in the box
-        PoissonLaw Poisson(aera);
-        int64 nb_points = (int64)Poisson(gen);
-        // generate the points of the PPP using the rejection method
-        std::vector<double> points;
-        for (int64 i = 0; i < nb_points; i++)
-            {
-            double p = Unif_highprecision(gen)*(xmax - xmin) + xmin;
-            const double u = Unif_highprecision(gen) * maxdensity;
-            if (u < density(p)) { points.push_back(p); }
-            }
-        return points;
+        auto V = PoissonPointProcess(gen, [](fVec1 x) { return density(x[0]); }, fBox1(xmin, xmax), maxdensity, mesh_points, max_margin);
+        std::vector<double> res;
+        res.reserve(V.size());
+        for (auto& v : V) { res.push_back(v[0]); }
+        return res;
         }
 
 
 
+    
 
-	/**
+
+
+	/** 
 	* Symmetric distribution over an the integer interval {0,1,..,N-1}
 	*
 	* VERY VERY FAST !
