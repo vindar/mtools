@@ -159,11 +159,13 @@ namespace mtools
 
             /**
             * Constructor. Specific for dimension 1.
+            * 
+            * ****** CANNOT DEFINE THIS CONSTRUCTOR TO PREVENT INTERFERENCE WITH {a,b} between fVec2 and fBox 
             **/
-            Box(const T& xmin, const T& xmax) : min(xmin), max(xmax)
-                {
-                static_assert(N == 2, "dimension must be equal to 1");
-                }
+            //Box(const T& xmin, const T& xmax) : min(xmin), max(xmax)
+            //    {
+            //    static_assert(N == 2, "dimension must be equal to 1");
+            //    }
 
 
             /**

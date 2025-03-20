@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
 	mtools::parseCommandLine(argc, argv, true); // parse the command line, interactive mode
 	
 
-	auto V = mtools::PoissonPointProcess_fast(gen, ff, fBox2(-5, 7, -15, 10), 50, 1000);
+	auto V = mtools::PoissonPointProcess_fast(gen, ff, fBox2(-5, 7, -15, 10));
 	//auto V = mtools::PoissonPointProcess(gen, ff, fBox2(-5, 7, -15, 10), -1, 1000);
 
 

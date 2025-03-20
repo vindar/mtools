@@ -901,31 +901,38 @@ namespace mtools
 
 
     /**
-     * Simulate a Poisson point process PPP with a given density inside a box of R^d.
+     * Simulate a D-dimensional Poisson point process PPP with a given density inside a box of R^d.
      *
      * @tparam          D                  dimension of the space.
      * @param           gen                The random number generator.
      * @param           density            the density function, signature fVec<D> -> double.
-     * @param [in,out]  boundary           the boundary box.
-     * @param           maxdensity         (Optional) the maximum density (-1 is unknown, max
-     *                                     density is then estimated by sampling points and taking a
-     *                                     some margin).
-     * @param           mesh_points (Optional)    number of sampling points in each direction (total sampled points is mesh^D).
-     * @param           max_margin         (Optional) margin to use for the estimated maximum of the density if not specified.
+     * @param           boundary           the boundary box.
+     * @param           maxdensity  (Optional) the maximum density (<= 0 is unknown, max density is then estimated by sampling points and taking a some margin).
+     * @param           nb_sampling (Optional) number of sampling points to estimated the maximum density when maxdensity is not known (0 for automatic choice)
+     * @param           max_margin  (Optional) margin to use for the estimated maximum of the density if not specified.
      *
-     * @returns A vector containing the points of the Poisson point process.
+     * @returns A vector<fVec<D>> containing the points of the Poisson point process.
      **/
-    template<int D, typename DENSITY_FUN, typename random_t> std::vector<mtools::fVec<D>> PoissonPointProcess(random_t& gen, DENSITY_FUN& density, fBox<D>& boundary, double maxdensity = -1, size_t mesh_points = 100, double max_margin = 1.0)
+    template<int D, typename DENSITY_FUN, typename random_t> std::vector<mtools::fVec<D>> PoissonPointProcess(random_t& gen, DENSITY_FUN& density, fBox<D> boundary, double maxdensity = 0, size_t nb_sampling = 0, double max_margin = 1.0)
         {
         // estimate the maximum of the density if not provided
-        if (maxdensity < 0)
+        if (maxdensity <= 0)
             {
-            maxdensity = maxFunctionValue<D>(density, boundary, mesh_points);
-            maxdensity *= (1 + max_margin);
+            if (nb_sampling == 0)
+                {
+                switch (D)
+                    {
+                    case 1: nb_sampling = 100; break;
+                    case 2: nb_sampling = 10000; break;
+                    default: nb_sampling = 100000; break;
+                    }
+                }
+            size_t mesh_points = (size_t)std::round(std::pow(nb_sampling, 1.0 / D));
+            if (mesh_points < 2) mesh_points = 2;
+            maxdensity = maxFunctionValue<D>(density, boundary, mesh_points) * (1.0 + std::max(max_margin,0.0));
             }
         // compute the area of the box
-        double aera = boundary.area();
-        aera *= maxdensity;
+        double aera = boundary.area() * maxdensity;
         // generate the number of points in the box
         PoissonLaw Poisson(aera);
         int64 nb_points = (int64)Poisson(gen);
@@ -939,6 +946,35 @@ namespace mtools
             }
         return points;
         }
+
+
+    /**
+     * Simulate a 1D Poisson point process PPP with a given density inside an interval [minx,maxx].
+     *
+     * @param [in,out]  gen         The random number generator.
+     * @param [in,out]  density     the density function, signature double -> double.
+     * @param           xmin        the min value of the interval
+     * @param           xmax        the max value of the interval
+     * @param           maxdensity  (Optional) the maximum density (<= 0 is unknown, max density is then estimated by sampling points and taking a some margin).
+     * @param           nb_sampling (Optional) number of sampling points to estimated the maximum density when maxdensity is not known (0 for automatic choice)
+     * @param           max_margin  (Optional) margin to use for the estimated maximum of the density if not specified.
+     *
+     * @returns A vector<double> containing the points of the Poisson point process.
+     */
+    template<typename DENSITY_FUN, typename random_t> std::vector<double> PoissonPointProcess(random_t& gen, DENSITY_FUN& density, double xmin, double xmax, double maxdensity = 0, size_t nb_sampling = 0, double max_margin = 1.0)
+        {
+        fBox1 b;
+        b.min[0] = xmin; 
+        b.max[0] = xmax;
+        auto V = PoissonPointProcess(gen, [](fVec1 x) { return density(x[0]); }, b, maxdensity, nb_sampling, max_margin);
+        std::vector<double> res;
+        res.reserve(V.size());
+        for (auto& v : V) { res.push_back(v[0]); }
+        return res;
+        }
+
+
+
 
 
 
@@ -956,7 +992,7 @@ namespace mtools
 
 
     /** used by PoissonPointProcess_fast() */
-    template<int D, typename DENSITY_FUN> std::vector<fBox<D> > _splitBoxToMinimizeRejection(DENSITY_FUN fun, fBox<D> B, size_t nbsplit = 100, size_t mesh = 100, size_t nb_samples = 10000, double max_margin = 1.0)
+    template<int D, typename DENSITY_FUN> std::vector<fBox<D> > _splitBoxToMinimizeRejection(DENSITY_FUN fun, fBox<D> B, size_t nbsplit, size_t mesh, size_t nb_samples, double max_margin)
         {
         std::multimap<double, fBox<D> > mapB;
         const double rr = -_rejectedRatio(fun, B, maxFunctionValue<D>(fun, B, mesh) * (max_margin + 1), nb_samples);
@@ -964,8 +1000,6 @@ namespace mtools
         while ((mapB.size() < nbsplit))
             {
             B = mapB.begin()->second;
-            //double er = -mapB.begin()->first / (maxFunctionValue<D>(fun, B, mesh) * (max_margin + 1) * B.area());
-            //if (er < 0.99) break;
             mapB.erase(mapB.begin());
             int bestk = -1;
             double bestrr1 = -mtools::INF;
@@ -995,49 +1029,87 @@ namespace mtools
 
 
     /**
-     * Simulate a Poisson point process PPP with a given density inside a box of R^d.
+     * Simulate a D-dimensional Poisson point process PPP with a given density inside a box of R^d.
      * -> Fast version by splitting the box into smaller sub-boxes to minimize rejection. 
      *
      * @tparam          D                  dimension of the space.
      * @param           gen                The random number generator.
      * @param           density            the density function, signature fVec<D> -> double.
-     * @param [in,out]  boundary           the boundary box.
-     * @param           nb_split           (Optional) number of splitting of the main boundary box.
-     * @param           mesh_points (Optional)    number of sampling points in each direction (total sampled points is mesh^D).
-     * @param           max_margin         (Optional) margin to use for the estimated maximum of the density if not specified.
+     * @param           boundary           the boundary box.
+     * @param           nb_splits          (Optional) number of splitting of the main boundary box  (0 for automatic choice).
+     * @param           nb_samples         (Optional) number of sample in each box to estimated maximum of density and estimate rejection (0 for automatic choice).
+     * @param           max_margin         (Optional) margin to use for the estimated maximum of the density.
      *
      * @returns A vector containing the points of the Poisson point process.
      **/
-    template<int D, typename DENSITY_FUN, typename random_t> std::vector<mtools::fVec<D>> PoissonPointProcess_fast(random_t& gen, DENSITY_FUN& density, fBox<D>& boundary, size_t nb_split = 50, size_t mesh_points = 100, double max_margin = 1.0)
+    template<int D, typename DENSITY_FUN, typename random_t> std::vector<mtools::fVec<D>> PoissonPointProcess_fast(random_t& gen, DENSITY_FUN& density, fBox<D> boundary, size_t nb_splits = 0, size_t nb_samples = 0, double max_margin = 1.0)
         {
-        size_t nb_samples = 1;
-        for (int k = 0; k < D; k++) { nb_samples *= mesh_points; }
-        nb_samples /= 10;
-        if (nb_samples < 10) { nb_samples = 10; }
-        auto VB = _splitBoxToMinimizeRejection(density, boundary, nb_split, mesh_points, nb_samples);
+        if (nb_splits == 0)
+            {
+            switch (D)
+                {
+                case 1: nb_splits = 20; break;
+                case 2: nb_splits = 40; break;
+                default: nb_splits = 60; break;
+                }
+            }
+
+        if (nb_samples == 0)
+            {
+            switch (D)
+                {
+                case 1: nb_samples = 100; break;
+                case 2: nb_samples = 10000; break;
+                default: nb_samples = 100000; break;
+                }
+            }
+
+        size_t mesh_points = (size_t)std::round(std::pow(nb_samples, 1.0 / D));
+        if (mesh_points < 2) mesh_points = 2;
+
+        const size_t sample_gen_ratio = 10;
+        size_t nb_samples_gen = nb_samples/sample_gen_ratio;
+        if (nb_samples_gen < 10) nb_samples_gen = 10;
+
+        auto VB = _splitBoxToMinimizeRejection(density, boundary, nb_splits, mesh_points, nb_samples_gen, max_margin);
+
         std::vector<fVec<D>> res;
         for (auto b : VB)
             {
-            std::vector<fVec<D>> points = PoissonPointProcess(gen, density, b, -1, mesh_points, max_margin);
+            std::vector<fVec<D>> points = PoissonPointProcess(gen, density, b, 0, nb_samples, max_margin);
             res.insert(res.end(), points.begin(), points.end());
             }
         return res;
         }
 
 
-
     /**
-    * Simulate a 1D Poisson point process PPP with a given density.
-    **/
-    template<typename DENSITY_FUN, typename random_t> std::vector<double> PoissonPointProcess(
-        random_t& gen, DENSITY_FUN & density, double xmin, double xmax, double maxdensity = -1, size_t mesh_points = 10000, double max_margin = 1.0)
+     * Simulate a 1-dimensional Poisson point process PPP with a given density inside a interval [minx,maxx].
+     * -> Fast version by splitting the box into smaller sub-boxes to minimize rejection.
+     *
+     * @tparam          D                  dimension of the space.
+     * @param           gen                The random number generator.
+     * @param           density            the density function, signature fVec<D> -> double.
+     * @param           xmin                the min value of the interval
+     * @param           xmax                the max value of the interval
+     * @param           nb_splits          (Optional) number of splitting of the main boundary box  (0 for automatic choice).
+     * @param           nb_samples         (Optional) number of sample in each box to estimated maximum of density and estimate rejection (0 for automatic choice).
+     * @param           max_margin         (Optional) margin to use for the estimated maximum of the density.
+     *
+     * @returns A vector<double> containing the points of the Poisson point process.
+     **/
+    template<typename DENSITY_FUN, typename random_t> std::vector<double> PoissonPointProcess_fast(random_t& gen, DENSITY_FUN& density, double xmin, double xmax, size_t nb_splits = 0, size_t nb_samples = 0, double max_margin = 1.0)
         {
-        auto V = PoissonPointProcess(gen, [](fVec1 x) { return density(x[0]); }, fBox1(xmin, xmax), maxdensity, mesh_points, max_margin);
+        fBox1 b;
+        b.min[0] = xmin;
+        b.max[0] = xmax;
+        auto V = PoissonPointProcess_fast(gen, [](fVec1 x) { return density(x[0]); }, b, nb_splits, nb_samples, max_margin);
         std::vector<double> res;
         res.reserve(V.size());
         for (auto& v : V) { res.push_back(v[0]); }
         return res;
         }
+
 
 
 
