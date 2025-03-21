@@ -922,14 +922,14 @@ namespace mtools
                 {
                 switch (D)
                     {
-                    case 1: nb_sampling = 100; break;
+                    case 1: nb_sampling = 1000; break;
                     case 2: nb_sampling = 10000; break;
-                    default: nb_sampling = 100000; break;
+                    default: nb_sampling = 10000; break;
                     }
                 }
             size_t mesh_points = (size_t)std::round(std::pow(nb_sampling, 1.0 / D));
-            if (mesh_points < 2) mesh_points = 2;
-            maxdensity = maxFunctionValue<D>(density, boundary, mesh_points) * (1.0 + std::max(max_margin,0.0));
+            if (mesh_points < 7) mesh_points = 7;
+            maxdensity = maxFunction<D>(density, boundary, mesh_points) * (1.0 + std::max(max_margin,0.0));
             }
         // compute the area of the box
         double aera = boundary.area() * maxdensity;
@@ -995,7 +995,7 @@ namespace mtools
     template<int D, typename DENSITY_FUN> std::vector<fBox<D> > _splitBoxToMinimizeRejection(DENSITY_FUN fun, fBox<D> B, size_t nbsplit, size_t mesh, size_t nb_samples, double max_margin)
         {
         std::multimap<double, fBox<D> > mapB;
-        const double rr = -_rejectedRatio(fun, B, maxFunctionValue<D>(fun, B, mesh) * (max_margin + 1), nb_samples);
+        const double rr = -_rejectedRatio(fun, B, maxFunction<D>(fun, B, mesh) * (max_margin + 1), nb_samples);
         mapB.insert({ rr, B });
         while ((mapB.size() < nbsplit))
             {
@@ -1007,9 +1007,9 @@ namespace mtools
             for (int k = 0; k < D; k++)
                 {
                 const fBox<D> B1 = B.get_split(k, true);
-                const double rr1 = -_rejectedRatio(fun, B1, maxFunctionValue<D>(fun, B1, mesh) * (max_margin + 1), nb_samples);
+                const double rr1 = -_rejectedRatio(fun, B1, maxFunction<D>(fun, B1, mesh) * (max_margin + 1), nb_samples);
                 const fBox<D> B2 = B.get_split(k, false);
-                const double rr2 = -_rejectedRatio(fun, B2, maxFunctionValue<D>(fun, B2, mesh) * (max_margin + 1), nb_samples);
+                const double rr2 = -_rejectedRatio(fun, B2, maxFunction<D>(fun, B2, mesh) * (max_margin + 1), nb_samples);
                 if (std::min(rr1, rr2) > std::min(bestrr1, bestrr2))
                     {
                     bestrr1 = rr1;
@@ -1058,9 +1058,9 @@ namespace mtools
             {
             switch (D)
                 {
-                case 1: nb_samples = 100; break;
+                case 1: nb_samples = 1000; break;
                 case 2: nb_samples = 10000; break;
-                default: nb_samples = 100000; break;
+                default: nb_samples = 10000; break;
                 }
             }
 
