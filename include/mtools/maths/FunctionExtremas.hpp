@@ -73,7 +73,7 @@ namespace mtools
      * @param           boundary    The boundary box
      * @param           mesh_points number of sampling point in each direction (-1 for automatic choice)
      *
-     * @returns the position of the largest value found
+     * @returns the position and value of the largest value found
      */
     template<int D, typename FUN> fVec<D> argMaxFunction(FUN& f, fBox<D> boundary, size_t mesh_points = -1)
         {
@@ -97,22 +97,23 @@ namespace mtools
             double v = f(P);
             if (v > bestv) { bestv = v; bestP = P; }
             fBox<D> B;
+            int nbn = 0; 
             for (int i = 0; i < D; i++) 
                 { 
-                double l= (boundary.max[i] - boundary.min[i]) * 2.0 / (mesh_points - 1); 
+                double l = (boundary.max[i] - boundary.min[i]) / 3;
                 B.min[i] = P[i] - l;
                 B.max[i] = P[i] + l;
-                /*if (l <= 0) {
-                    cout << "break at " << depth << "\n";  
-                    break;
-                    }*/
+                if (l <= 0) { nbn++; }
                 }
+            if (nbn == D) 
+                { // no more space to search
+                //cout << "break at depth=" << depth << "\n";
+                break; 
+                } 
             boundary = intersectionRect(boundary, B); // reduce the search area
-            if (boundary.area() <= 0) {
-                //cout << "break volume at " << depth << "\n";
-                break;
-                }
             }
+        //cout << "best value = " << bestv << "\n";
+        //cout << "best pos = " << bestP << "\n";
         return bestP; 
         }
 
