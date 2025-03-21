@@ -963,6 +963,7 @@ namespace mtools
      */
     template<typename DENSITY_FUN, typename random_t> std::vector<double> PoissonPointProcess(random_t& gen, DENSITY_FUN& density, double xmin, double xmax, double maxdensity = 0, size_t nb_sampling = 0, double max_margin = 1.0)
         {
+        if (xmax < xmin) std::swap(xmin, xmax);
         fBox1 b;
         b.min[0] = xmin; 
         b.max[0] = xmax;
@@ -1100,6 +1101,7 @@ namespace mtools
      **/
     template<typename DENSITY_FUN, typename random_t> std::vector<double> PoissonPointProcess_fast(random_t& gen, DENSITY_FUN& density, double xmin, double xmax, size_t nb_splits = 0, size_t nb_samples = 0, double max_margin = 1.0)
         {
+        if (xmax < xmin) std::swap(xmin, xmax);
         fBox1 b;
         b.min[0] = xmin;
         b.max[0] = xmax;
