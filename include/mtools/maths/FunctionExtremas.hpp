@@ -71,19 +71,18 @@ namespace mtools
      *
      * @param [in,out]  f           the function with signature fVec<D> -> double.
      * @param           boundary    The boundary box
-     * @param           mesh_points number of sampling point in each direction (-1 for automatic choice)
+     * @param           mesh_points number of sampling point in each direction (0 for automatic choice)
      *
-     * @returns the position and value of the largest value found
+     * @returns the position of the largest value found
      */
-    template<int D, typename FUN> fVec<D> argMaxFunction(FUN& f, fBox<D> boundary, size_t mesh_points = -1)
+    template<int D, typename FUN> fVec<D> argMaxFunction(FUN& f, fBox<D> boundary, size_t mesh_points = 0)
         {
-        if (mesh_points < 0) 
+        if (mesh_points == 0) 
             {
             switch (D)
                 {
                 case 1: mesh_points = 1001; break;
-                case 2: mesh_points = 101; break;
-                default: mesh_points = 11; break;
+                default: mesh_points = 101; break;
                 }
             }
         mesh_points = std::max(mesh_points, (size_t)7); // at least 7 point in each direction
@@ -119,18 +118,61 @@ namespace mtools
 
 
     /**
+     * Estimate the position of the maximum of a 1-dimensional function f inside an interval [xmin, xmax]
+     *
+     * @param [in,out]  f           the function with signature double -> double.
+     * @param           xmin        the min value of the interval
+     * @oaram           xmax        the max value of the interval
+     * @param           mesh_points number of sampling point (0 for automatic choice)
+     *
+     * @returns the position of the largest value found
+     */
+    template<typename FUN> double argMaxFunction_1D(FUN& f, double xmin, double xmax, size_t mesh_points = 0)
+        {
+        // TODO: improve algo in 1D using Newton...
+        if (xmax > xmin) { std::swap(xmin, xmax); }
+        fBox1 B; 
+        B.min[0] = xmin;
+        B.max[0] = xmax;
+        return (argMaxFunction([&f](fVec1 P) {return f(P[0]); }, B, mesh_points))[0];
+        }
+
+
+    /**
      * Estimate the maximum of a d-dimensional function f inside a box of R^d.
      *
      * @param [in,out]  f           the function with signature fVec<D> -> double.
      * @param           boundary    The boundary box
-     * @param           mesh_points number of sampling point in each direction (-1 for automatic choice)
+     * @param           mesh_points number of sampling point in each direction (0 for automatic choice)
      *
      * @returns the largest value found.
      */
-    template<int D, typename FUN> double maxFunction(FUN& f, fBox<D> boundary, size_t mesh_points)
+    template<int D, typename FUN> double maxFunction(FUN& f, fBox<D> boundary, size_t mesh_points= 0)
         {
         return f(argMaxFunction(f,boundary,mesh_points));
         }
+
+
+    /**
+     * Estimate the maximum of a 1-dimensional function f inside an interval [minx, maxx]
+     *
+     * @param [in,out]  f           the function with signature double -> double.
+     * @param           xmin        the min value of the interval
+     * @oaram           xmax        the max value of the interval
+     * @param           mesh_points number of sampling point (0 for automatic choice)
+     *
+     * @returns the maximum value found.
+     */
+    template<typename FUN> double maxFunction_1D(FUN& f, double xmin, double xmax, size_t mesh_points = 0)
+        {
+        return f(argMaxFunction_1D(f, xmin, xmax, mesh_points));
+        }
+
+
+
+
+
+
 
 
 
@@ -175,19 +217,18 @@ namespace mtools
      *
      * @param [in,out]  f           the function with signature fVec<D> -> double.
      * @param           boundary    The boundary box
-     * @param           mesh_points number of sampling point in each direction (-1 for automatic choice)
+     * @param           mesh_points number of sampling point in each direction (0 for automatic choice)
      *
      * @returns the position of the smallest value found
      */
-    template<int D, typename FUN> fVec<D> argMinFunction(FUN& f, fBox<D> boundary, size_t mesh_points = -1)
+    template<int D, typename FUN> fVec<D> argMinFunction(FUN& f, fBox<D> boundary, size_t mesh_points = 0)
         {
-        if (mesh_points < 0)
+        if (mesh_points == 0)
             {
             switch (D)
                 {
                 case 1: mesh_points = 1001; break;
-                case 2: mesh_points = 101; break;
-                default: mesh_points = 11; break;
+                default: mesh_points = 101; break;
                 }
             }
         mesh_points = std::max(mesh_points, (size_t)7); // at least 7 point in each direction
@@ -223,19 +264,56 @@ namespace mtools
 
 
     /**
+     * Estimate the position of the maximum of a 1-dimensional function f inside an interval [xmin, xmax]
+     *
+     * @param [in,out]  f           the function with signature double -> double.
+     * @param           xmin        the min value of the interval
+     * @oaram           xmax        the max value of the interval
+     * @param           mesh_points number of sampling point (0 for automatic choice)
+     *
+     * @returns the position of the smallest value found
+     */
+    template<typename FUN> double argMinFunction_1D(FUN& f, double xmin, double xmax, size_t mesh_points = 0)
+        {
+        // TODO: improve algo in 1D using Newton...
+        if (xmax > xmin) { std::swap(xmin, xmax); }
+        fBox1 B; 
+        B.min[0] = xmin;
+        B.max[0] = xmax;
+        return (argMinFunction([&f](fVec1 P) {return f(P[0]); }, B, mesh_points))[0];
+        }
+
+
+    /**
      * Estimate the minimum of a d-dimensional function f inside a box of R^d.
      *
      * @param [in,out]  f           the function with signature fVec<D> -> double.
      * @param           boundary    The boundary box
-     * @param           mesh_points number of sampling point in each direction (-1 for automatic choice)
+     * @param           mesh_points number of sampling point in each direction (0 for automatic choice)
      *
      * @returns the minimum value found.
      */
-    template<int D, typename FUN> double minFunction(FUN& f, fBox<D> boundary, size_t mesh_points = -1)
+    template<int D, typename FUN> double minFunction(FUN& f, fBox<D> boundary, size_t mesh_points = 0)
         {
         return f(argMinFunction(f, boundary, mesh_points));
         }
 
+
+
+    /**
+     * Estimate the minimum of a 1-dimensional function f inside an interval [minx, maxx]
+     *
+     * @param [in,out]  f           the function with signature double -> double.
+     * @param           xmin        the min value of the interval   
+     * @oaram           xmax        the max value of the interval                              
+     * @param           mesh_points number of sampling point (0 for automatic choice)
+     *
+     * @returns the minimum value found.
+     */
+    template<typename FUN> double minFunction_1D(FUN& f, double xmin, double xmax, size_t mesh_points = 0)
+        {
+        return f(argMinFunction_1D(f, xmin, xmax, mesh_points));
+        }
 
 
 	}
