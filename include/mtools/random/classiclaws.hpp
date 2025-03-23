@@ -979,16 +979,22 @@ namespace mtools
 
 
     /** used by PoissonPointProcess_fast() */
-    template<int D, typename DENSITY_FUN, typename DENSITY_MAX> double _rejectedRatio(DENSITY_FUN & fun, fBox<D> B, DENSITY_MAX& density_max, size_t nb_samples)
+    template<int D, typename DENSITY_FUN, typename DENSITY_MAX, typename random_t> double _rejectedRatio(random_t & gen, DENSITY_FUN & fun, fBox<D> B, DENSITY_MAX& density_max, size_t nb_samples)
         {       
         const double min_aera = 10e-30;
         const double poisson_stop = 5.0; 
         const double stop_reject = 0.3; 
         
         const double A = B.area();
-        if (A < min_aera) { return 1.0; } // no more splitting
+        if (A < min_aera) 
+            { // no more splitting
+            return 1.0; 
+            } 
         const double threshold = density_max(B);
-        if (A * threshold <= poisson_stop) { return 2.0; } // no more splitting
+        if (A * threshold <= poisson_stop) 
+            { // no more splitting
+            return 2.0; 
+            } 
         size_t nb_reject = 0;
         for (size_t i = 0; i < nb_samples; i++)
             {
@@ -996,21 +1002,37 @@ namespace mtools
             if (Unif(gen) * threshold >= fun(P)) { nb_reject++; }
             }
         double rej = ((double)nb_reject) / nb_samples;
-        if (rej < stop_reject) { return 3.0; } // no more splitting
+        if (rej < stop_reject) 
+            { // no more splitting
+            return 3.0; 
+            } 
         //cout << "box : " << B << "\n";
         //cout << "max : " << threshold << "\n\n";        
         return -A*rej*threshold;
         }
 
 
+
+
+
+    template<int D> std::pair< fBox<D>,fBox<D> > _getSplitForRejection(fBox<D> B, size_t dim, double u) 
+        {
+        fBox<D> B1(B);
+        fBox<D> B2(B);
+        double x = B.min[dim] + u * (B.max[dim] - B.min[dim]);
+        B1.max[dim] = x;
+        B2.min[dim] = x;
+        return { B1,B2 };
+        }
+
     
 
 
     /** used by PoissonPointProcess_fast() */
-    template<int D, typename DENSITY_FUN, typename DENSITY_MAX> std::vector<fBox<D> > _splitBoxToMinimizeRejection(DENSITY_FUN & fun, DENSITY_MAX & density_max, fBox<D> B, size_t nbsplit, size_t nb_samples)
+    template<int D, typename DENSITY_FUN, typename DENSITY_MAX, typename random_t > std::vector<fBox<D> > _splitBoxToMinimizeRejection(random_t & gen, DENSITY_FUN & fun, DENSITY_MAX & density_max, fBox<D> B, size_t nbsplit, size_t nb_samples)
         {
         std::multimap<double, fBox<D> > mapB;
-        const double rr = _rejectedRatio(fun, B, density_max, nb_samples);
+        const double rr = _rejectedRatio(gen, fun, B, density_max, nb_samples);
         mapB.insert({ rr, B });
         while ((mapB.size() < nbsplit))
             {
@@ -1024,11 +1046,9 @@ namespace mtools
             fBox<D> bestB2;
             for (int k = 0; k < D; k++)
                 {
-                //cout << "\nsplit " << k << "\n";
-                const fBox<D> B1 = B.get_split(k, true);
-                const double rr1 = _rejectedRatio(fun, B1, density_max, nb_samples);
-                const fBox<D> B2 = B.get_split(k, false);
-                const double rr2 = _rejectedRatio(fun, B2, density_max, nb_samples);
+                auto [B1, B2] = _getSplitForRejection(B, k, (Unif(gen)/3.0) + (1/3.0));
+                const double rr1 = _rejectedRatio(gen, fun, B1, density_max, nb_samples);
+                const double rr2 = _rejectedRatio(gen, fun, B2, density_max, nb_samples);
                 if (std::min(rr1, rr2) > std::min(bestrr1, bestrr2))
                     {
                     bestrr1 = rr1;
@@ -1068,8 +1088,8 @@ namespace mtools
             {
             switch (D)
                 {
-                case 1: nb_splits = 100; break;
-                default: nb_splits = 1000; break;
+                case 1: nb_splits = 500; break;
+                default: nb_splits = 5000; break;
                 }
             }
         if (nb_samples == 0)
@@ -1080,7 +1100,7 @@ namespace mtools
                 default: nb_samples = 1000; break;
                 }
             }
-        auto VB = _splitBoxToMinimizeRejection(density, density_max, boundary, nb_splits, nb_samples);
+        auto VB = _splitBoxToMinimizeRejection(gen, density, density_max, boundary, nb_splits, nb_samples);
         std::vector<fVec<D>> res;
         for (auto b : VB)
             {
