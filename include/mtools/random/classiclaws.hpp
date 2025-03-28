@@ -900,6 +900,96 @@ namespace mtools
 
 
 
+
+    /**
+     * Use the rejection sampling alogrithm to create a sample of points in a box of R^D according to a given density.
+     *
+     * @param [in,out]  gen         The random generator
+     * @param [in,out]  density     the density function, signature fVec<D> -> double.
+     * @param           boundary    the boundary box
+     * @param           nb_points   Number of points to sample
+     * @param           maxdensity  (Optional) the maximum density. value <= 0 means unknown: the max density is then estimated by sampling points and taking a some margin.
+     * @param           mesh        (Optional) the mesh size to use for estimating max density when unknown (0 for automatic choice)
+     * @param           max_margin  (Optional) margin to use for the estimated maximum of the density if not specified (1 is default).
+     *
+     * @returns A std::vector<mtools::fVec<D>>
+     */
+    
+    template<int D, typename DENSITY_FUN, typename random_t> std::vector<mtools::fVec<D>> rejectionSampling(random_t& gen, DENSITY_FUN& density, fBox<D> boundary, size_t nb_points, double maxdensity = 0, size_t mesh = 0, double max_margin = 1.0)
+        {
+        if (maxdensity <= 0)
+            { // estimate the maximum of the density
+            if (mesh == 0)
+                {
+                switch (D)
+                    {
+                    case 1: mesh = 1001; break;
+                    default: mesh = 101; break;
+                    }
+                }
+            maxdensity = maxFunction<D>(density, boundary, mesh) * (1.0 + std::max(max_margin, 0.0));
+            }
+        std::vector<fVec<D>> points;
+        points.reserve(nb_points);
+        // generate the points of the PPP using the rejection method
+        while(nb_points > 0)
+            {
+            const fVec<D> P = Unif_dimD<D>(boundary, gen);
+            const double h = density(P);
+            MTOOLS_INSURE(h <= maxdensity);
+            const double u = Unif_highprecision(gen) * maxdensity;
+            if (u < h) { points.push_back(P); nb_points--; }
+            }
+        return points;
+        }
+
+
+
+    /**
+     * Use the rejection sampling alogrithm to create a sample of points in an interval [a,b] according to a given density. 1D version. 
+     *
+     * @param [in,out]  gen         The random generator
+     * @param [in,out]  density     the density function, signature double -> double.
+     * @param           xmin        the min value of the interval [xmin,xmax]
+     * @param           xmax        the max value of the interval [xmin,xmax]
+     * @param           nb_points   Number of points to sample
+     * @param           maxdensity  (Optional) the maximum density. value <= 0 means unknown: the max density is then estimated by sampling points and taking a some margin.
+     * @param           mesh        (Optional) the mesh size to use for estimating max density when unknown (0 for automatic choice)
+     * @param           max_margin  (Optional) margin to use for the estimated maximum of the density if not specified (1 is default).
+     *
+     * @returns A std::vector<mtools::fVec<D>>
+     */
+
+    template<typename DENSITY_FUN, typename random_t> std::vector<double> rejectionSampling(random_t& gen, DENSITY_FUN& density, double xmin, double xmax, size_t nb_points, double maxdensity = 0, size_t mesh = 0, double max_margin = 1.0)
+        {
+        if (xmin > xmax) swap(xmin, xmax);
+        if (maxdensity <= 0)
+            { // estimate the maximum of the density
+            if (mesh == 0) mesh = 1001;
+            maxdensity = maxFunction_1D(density, xmin, xmax, mesh) * (1.0 + std::max(max_margin, 0.0));
+            }
+        std::vector<double> points;
+        points.reserve(nb_points);
+        // generate the points of the PPP using the rejection method
+        while (nb_points > 0)
+            {
+            const double P = (Unif(gen)*(xmax - xmin)) + xmin;
+            const double h = density(P);
+            MTOOLS_INSURE(h <= maxdensity);
+            const double u = Unif_highprecision(gen) * maxdensity;
+            if (u < h) { points.push_back(P); nb_points--; }
+            }
+        return points;
+        }
+
+
+
+
+
+
+
+
+
     /**
      * Simulate a D-dimensional Poisson point process PPP with a given density inside a box of R^d.
      * 
