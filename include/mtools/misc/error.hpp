@@ -98,7 +98,7 @@ namespace mtools
 }
 
 
-#define MTOOLS_ERROR_OSS(_ex) (((internals_error::ErrorOSS()) << _ex).str())
+#define MTOOLS_ERROR_OSS(_ex) (((mtools::internals_error::ErrorOSS()) << _ex).str())
 
 /* used for overloading macro with 1 or 2 parameters, see : https://stackoverflow.com/questions/11761703/overloading-macro-on-number-of-arguments/11763196 */
 #define MTOOLS_MSVC_BUGFIX_EXPAND(x) x
